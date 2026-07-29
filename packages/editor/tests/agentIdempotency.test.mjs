@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   createExecuteFingerprint,
+  IdempotencyCapacityError,
   IdempotencyConflictError,
   IdempotentRequestCache,
 } from '../src/agent/idempotency.ts';
@@ -84,6 +85,44 @@ test('failed writes remain retryable and the completed cache is bounded', async 
 
   assert.equal(attempts, 3);
   assert.equal(evicted.replayed, false);
+});
+
+test('unique pending writes are bounded while duplicates still join at capacity', async () => {
+  const cache = new IdempotentRequestCache(8, (value) => value, 1);
+  let executions = 0;
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+
+  const first = cache.run('request-a', 'same', async () => {
+    executions += 1;
+    await gate;
+    return 'first';
+  });
+  const duplicate = cache.run('request-a', 'same', async () => {
+    executions += 1;
+    return 'duplicate-must-not-run';
+  });
+  await assert.rejects(
+    cache.run('request-b', 'other', async () => 'other'),
+    (error) => {
+      assert.ok(error instanceof IdempotencyCapacityError);
+      assert.equal(error.pendingEntries, 1);
+      assert.equal(error.maxPendingEntries, 1);
+      return true;
+    },
+  );
+
+  release();
+  const [initial, replay] = await Promise.all([first, duplicate]);
+  assert.equal(executions, 1);
+  assert.equal(initial.value, 'first');
+  assert.equal(replay.value, 'first');
+  assert.equal(replay.replayed, true);
+
+  const afterRelease = await cache.run('request-b', 'other', async () => 'other');
+  assert.equal(afterRelease.value, 'other');
 });
 
 test('execute fingerprints ignore JSON object key order', () => {

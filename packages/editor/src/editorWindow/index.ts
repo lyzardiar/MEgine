@@ -13,6 +13,9 @@ export {
   getOpenEditorWindows,
   registerEditorWindowType,
   createRegisteredEditorWindow,
+  listRegisteredEditorWindowTypes,
+  subscribeEditorWindowTypes,
+  getEditorWindowTypeRevision,
 } from './registry';
 export type {
   MenuItemAction,
@@ -21,13 +24,16 @@ export type {
   MenuItemOptions,
   MenuItemSource,
   MenuItemValidate,
+  EditorWindowTypeInfo,
 } from './registry';
 export { EditorWindowHost } from './EditorWindowHost';
 export { RegisteredEditorWindowHost } from './RegisteredEditorWindowHost';
 
 /** Side-effect: register Window menu items */
 import './windows/DecoratorGalleryWindow';
+import './windows/DocumentationWindow';
 import './assetMenuItems';
 import './assetImportMenuItem';
+import './componentMenuItems';
 import './gameObjectMenuItems';
 import './prefabMenuItems';

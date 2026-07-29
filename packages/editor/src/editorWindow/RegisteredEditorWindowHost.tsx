@@ -1,4 +1,10 @@
+import type { ReactNode } from 'react';
 import { createRegisteredEditorWindow } from './registry';
+import { EditorWindowErrorBoundary } from './EditorWindowErrorBoundary';
+
+function RegisteredEditorWindowBody(props: { render: () => ReactNode }) {
+  return props.render();
+}
 
 export function RegisteredEditorWindowHost(props: { typeId: string }) {
   const definition = createRegisteredEditorWindow(props.typeId);
@@ -11,5 +17,11 @@ export function RegisteredEditorWindowHost(props: { typeId: string }) {
       </main>
     );
   }
-  return <main className="registered-window-standalone">{definition.render()}</main>;
+  return (
+    <main className="registered-window-standalone">
+      <EditorWindowErrorBoundary title={definition.title} resetKey={props.typeId}>
+        <RegisteredEditorWindowBody render={definition.render} />
+      </EditorWindowErrorBoundary>
+    </main>
+  );
 }

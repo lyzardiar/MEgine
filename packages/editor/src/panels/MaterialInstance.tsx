@@ -14,6 +14,10 @@ import {
   type MaterialAsset,
 } from '../materialAsset';
 import {
+  dropChangedCleanDrafts,
+  resourceEditorDocuments,
+} from '../workspaceDocuments';
+import {
   applyMaterialInstance,
   createMaterialInstanceAsset,
   loadResolvedMaterialAsset,
@@ -30,7 +34,13 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerCloseDocumentParticipant,
+  registerDiscardDocumentParticipant,
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import type {
   EditorUndoCheckpoint,
   EditorUndoToken,
@@ -38,6 +48,7 @@ import type {
 import {
   broadcastProjectAssetsChanged,
   openMaterialAsset,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import type { MaterialEditorProps } from './Material';
@@ -162,6 +173,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
   const [shaderKeywords, setShaderKeywords] = useState<SurfaceShaderKeyword[]>([]);
   const [shaderTextures, setShaderTextures] = useState<SurfaceShaderTexture[]>([]);
@@ -171,6 +183,9 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, InstanceDraft>());
   const instanceRef = useRef<MaterialInstanceAsset | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   const editTransaction = useRef<{
     instance: MaterialInstanceAsset;
     checkpoint: EditorUndoCheckpoint;
@@ -185,6 +200,8 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -195,7 +212,12 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && instance) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && instance && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, { instance: structuredClone(instance), savedText });
       setDraftEpoch((value) => value + 1);
     }
@@ -207,7 +229,8 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     setSavedText('');
     setLoading(false);
     if (!props.assetPath) return () => { cancelled = true; };
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       replaceInstance(structuredClone(draft.instance));
@@ -216,7 +239,10 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       return () => { cancelled = true; };
     }
     setLoading(true);
-    void Promise.all([readProjectAssetText(props.assetPath), refreshProjectFiles()])
+    void Promise.all([
+      readProjectAssetText(props.assetPath, { replaceWriteBaseline: true }),
+      refreshProjectFiles(),
+    ])
       .then(([text]) => {
         if (cancelled) return;
         const parsed = parseMaterialInstanceAsset(text);
@@ -231,7 +257,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   const documentAt = async (path: string): Promise<MaterialInstanceAsset> => {
     const normalized = normalizeProjectAssetPath(path);
@@ -326,16 +352,57 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const dirty = Boolean(instance && serialized !== savedText);
   const anyDirty = dirty || [...drafts.current.values()].some(instanceDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'material-instance',
+    'material',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, instanceDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
+
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
 
   useEffect(() => {
-    const refresh = () => {
+    const refresh = (event: Event) => {
       void refreshProjectFiles().finally(() => {
         setAssetRevision((revision) => revision + 1);
       });
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        instanceDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) {
+          props.undoService.clear(`material-instance:${path}`);
+        }
+        setDraftEpoch((value) => value + 1);
+      }
+      if (
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
+      ) return;
+      if (dirty) {
+        setError(
+          'Material Instance changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
     };
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
-  }, []);
+  }, [dirty, props.assetPath]);
 
   const materialAssets = useMemo(() => {
     void assetRevision;
@@ -575,7 +642,12 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       }
       setAssetRevision((revision) => revision + 1);
       props.onAssetsChanged();
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onLog(`Saved ${path}`);
       return true;
     } catch (reason) {
@@ -626,9 +698,91 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Material Instance could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !instanceDraftDirty(entry[1])) {
+      throw new Error(`No dirty Material Instance draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      const resolved = await resolveDocumentMaterial(draftPath);
+      await validateResolvedCustomParameters(resolved);
+      const text = serializeMaterialInstanceAsset(draft.instance);
+      await writeProjectAssetText(draftPath, text);
+      drafts.current.set(draftPath, {
+        instance: parseMaterialInstanceAsset(text),
+        savedText: text,
+      });
+      await refreshProjectFiles();
+      setAssetRevision((revision) => revision + 1);
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Material Instances', () => (
     anyDirty && !saving ? saveAll : null
   )), [anyDirty, dirty, instance, props.assetPath, savedText, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Material Instances', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && instanceDraftDirty(draft)
+      ? () => saveDocument(path)
+      : null;
+  }), [dirty, draftEpoch, instance, props.assetPath, savedText, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Material Instances', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`material-instance:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !instanceDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`material-instance:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Material Instances', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`material-instance:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`material-instance:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onCloseAsset, saving]);
 
   const createNew = async () => {
     try {
@@ -728,6 +882,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
         <button type="button" aria-label="Redo" disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
         <button type="button" disabled={!dirty || saving} onClick={revert}>Revert</button>
+        <button type="button" disabled={loading || saving} onClick={reloadFromDisk}>Reload</button>
         <button type="button" disabled={!dirty || saving || !effective} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
         </button>

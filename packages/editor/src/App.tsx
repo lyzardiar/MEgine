@@ -22,6 +22,7 @@ import {
   listScenes,
   normalizeSceneName,
   readSceneJson,
+  refreshSceneLibrary,
   reloadSceneFromBackend,
   renameScene,
   sceneExists,
@@ -36,6 +37,7 @@ import { Hierarchy } from './panels/Hierarchy';
 import { Inspector } from './panels/Inspector';
 import { Console } from './panels/Console';
 import {
+  broadcastProjectAssetsExternalChanges,
   OPEN_ANIMATION_CLIP_EVENT,
   openAnimationClipAsset,
   OPEN_TIMELINE_ASSET_EVENT,
@@ -56,6 +58,7 @@ import {
 } from './assetEditorEvents';
 import {
   pollProjectFileChanges,
+  projectAssetHasExternalWriteConflict,
   refreshProjectFiles,
   type ProjectAssetChange,
 } from './projectAssets';
@@ -70,11 +73,8 @@ import {
   type AgentWorkspaceDocument,
   type AgentWorkspaceProvider,
 } from './agent/AgentBridge';
-import {
-  animatorDocumentKind,
-  materialDocumentKind,
-} from './agent/resourceTargets';
-import { logService } from './agent/LogService';
+import { resourceEditorPreservesDrafts } from './agent/resourceTargets';
+import { formatConsoleLog, logService } from './agent/LogService';
 import { BridgeError, type PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
@@ -97,12 +97,21 @@ import {
   restoreDesktopSceneRecovery,
 } from './transport/desktopProjectSession';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
-import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
 import {
+  getGameLayerOptions,
+  getTagOptions,
+  loadSortingLayers,
+  SORTING_LAYERS_CHANGED_EVENT,
+} from './sortingLayers';
+import {
+  closeResourceDocument,
+  discardResourceDocument,
   mergeSaveAllResults,
   RemoteSaveCoordinator,
   saveAllResources,
+  saveResourceDocument,
   type RemoteSavePeer,
+  type ResourceDocumentOperation,
   type SaveAllResult,
 } from './saveAll';
 import { buildWorldTransforms } from './worldTransform';
@@ -115,6 +124,21 @@ import {
   createEditorCloseState,
   editorCloseWarning,
 } from './editorClose';
+import { alertEditor, confirmEditor, promptEditor } from './editorDialog';
+import { createEditorBroadcastChannel } from './editorInstance.ts';
+import {
+  initializeSceneViewPreferencesEvents,
+  readSceneViewPreferences,
+  SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+  updateSceneViewPreferences,
+  type SceneViewPreferencesChangeDetail,
+} from './sceneViewPreferences';
+import {
+  gateWorkspaceResourceSelection,
+  mergeWorkspaceResourceDocuments,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from './workspaceDocuments';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
@@ -141,8 +165,8 @@ function allowsEditorHistoryShortcut(el: EventTarget | null) {
   return !['text', 'search', 'password', 'email', 'url', 'tel'].includes(el.type);
 }
 
-function askSceneName(title: string, initial: string): string | null {
-  const raw = window.prompt(title, initial);
+async function askSceneName(title: string, initial: string): Promise<string | null> {
+  const raw = await promptEditor(title, initial, { title: 'Scene Name' });
   if (raw == null) return null;
   return normalizeSceneName(raw);
 }
@@ -154,14 +178,18 @@ function sameAssetPath(left: string | null, right: string): boolean {
 
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
+  | { type: 'scene-library-changed'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
   | { type: 'timeline-preview'; sender: string; preview: TimelineScenePreview | null }
+  | { type: 'request-clear-logs'; sender: string }
   | { type: 'request-dirty-state'; sender: string }
   | {
       type: 'request-save-resources';
       sender: string;
       requestId: string;
       targets: string[];
+      paths?: string[];
+      operation?: ResourceDocumentOperation;
     }
   | {
       type: 'save-resources-result';
@@ -178,6 +206,7 @@ type WorkspaceSyncMessage =
       panel: string;
       dirty: boolean;
       resourceDirty: boolean;
+      documents?: WorkspaceResourceDocument[];
     }
   | {
       type: 'scene-state';
@@ -210,8 +239,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(store.snapshot());
   const [mode, setMode] = useState<EditorMode>('edit');
   const [gizmo, setGizmo] = useState<GizmoMode>('translate');
-  const [pivotMode, setPivotMode] = useState<ToolPivotMode>('pivot');
-  const [handleOrientation, setHandleOrientation] = useState<ToolHandleOrientation>('local');
+  const [pivotMode, setPivotMode] = useState<ToolPivotMode>(
+    () => readSceneViewPreferences().pivotMode,
+  );
+  const [handleOrientation, setHandleOrientation] =
+    useState<ToolHandleOrientation>(
+      () => readSceneViewPreferences().handleOrientation,
+    );
   const [viewTab, setViewTab] = useState<'scene' | 'game'>('scene');
   const [gameResolution, setGameResolution] = useState(store.gameResolution);
   const [hierFilter, setHierFilter] = useState('');
@@ -236,6 +270,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [buildSettingsDirty, setBuildSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
+  const [animationDocuments, setAnimationDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [sequencerDocuments, setSequencerDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [animatorDocuments, setAnimatorDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [materialDocuments, setMaterialDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [shaderDocuments, setShaderDocuments] = useState<WorkspaceResourceDocument[]>([]);
   const [visiblePanels, setVisiblePanels] = useState<ReadonlySet<PanelKind>>(
     () => new Set(props.detachedPanel
       ? [props.detachedPanel]
@@ -255,7 +294,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, []);
   const updatePanelLayout = useCallback((layout: PanelLayoutSnapshot) => {
     panelLayoutRef.current = layout;
-    if (!props.detachedPanel) agentBridge.observe();
+    if (!props.detachedPanel) {
+      agentBridge.observe();
+      agentBridge.observeWorkspace();
+    }
   }, [props.detachedPanel]);
   const [assetReloadEpoch, setAssetReloadEpoch] = useState({
     animation: 0,
@@ -288,11 +330,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (buildSettingsDirty) dirty.add('build');
     return dirty;
   }, [animationDirty, animatorDirty, buildSettingsDirty, materialDirty, projectSettingsDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
-  const [logs, setLogs] = useState<string[]>([
-    'MEngine Editor',
-    '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
-    '新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存',
-  ]);
+  const [logs, setLogs] = useState<string[]>(
+    () => logService.getEntries().map(formatConsoleLog),
+  );
   const [selected, setSelected] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const logEnd = useRef(0);
@@ -330,14 +370,51 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     panel: string;
     dirty: boolean;
     resourceDirty: boolean;
+    documents: WorkspaceResourceDocument[];
   }>());
   const remoteSaveCoordinator = useRef<RemoteSaveCoordinator | null>(null);
   const saveResourcesInFlight = useRef<Promise<SaveAllResult> | null>(null);
+  const saveDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
+  const discardDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
+  const closeDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
   const recoveryTimer = useRef<number | null>(null);
   const lastRecoveryError = useRef<string | null>(null);
   const lastAssetPollError = useRef<string | null>(null);
   const recoveryReady = useRef(false);
   const recoveryCheckpointActive = useRef(false);
+  const localResourceDocuments = useMemo(() => mergeWorkspaceResourceDocuments(
+    gateWorkspaceResourceSelection(animationDocuments, timelineAssetPath == null),
+    gateWorkspaceResourceSelection(sequencerDocuments, timelineAssetPath != null),
+    animatorDocuments,
+    materialDocuments,
+    shaderDocuments,
+    resourceEditorDocuments('sprite', 'spriteEditor', spritePath, spriteDirty, []),
+    resourceEditorDocuments(
+      'sprite-atlas',
+      'spriteAtlas',
+      spriteAtlasPath,
+      spriteAtlasDirty,
+      [],
+    ),
+  ).map((document) => ({
+    ...document,
+    conflicted: document.dirty
+      && projectAssetHasExternalWriteConflict(document.path),
+  })), [
+    animationDocuments,
+    animatorDocuments,
+    materialDocuments,
+    sequencerDocuments,
+    shaderDocuments,
+    spriteAtlasDirty,
+    spriteAtlasPath,
+    spriteDirty,
+    spritePath,
+    sceneTick,
+    timelineAssetPath,
+  ]);
+  const localResourceDocumentsRef = useRef(localResourceDocuments);
+  localResourceDocumentsRef.current = localResourceDocuments;
 
   useEffect(() => undoService.subscribe(() => setUndoRevision(undoService.revision)), [undoService]);
   const syncTimer = useRef<number | null>(null);
@@ -370,6 +447,51 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     }
   };
 
+  const saveLocalResourceDocument = async (path: string): Promise<SaveAllResult> => {
+    const key = path.replace(/\\/g, '/').toLocaleLowerCase();
+    const existing = saveDocumentInFlight.current.get(key);
+    if (existing) return existing;
+    const request = saveResourceDocument(path);
+    saveDocumentInFlight.current.set(key, request);
+    try {
+      return await request;
+    } finally {
+      if (saveDocumentInFlight.current.get(key) === request) {
+        saveDocumentInFlight.current.delete(key);
+      }
+    }
+  };
+
+  const discardLocalResourceDocument = async (path: string): Promise<SaveAllResult> => {
+    const key = path.replace(/\\/g, '/').toLocaleLowerCase();
+    const existing = discardDocumentInFlight.current.get(key);
+    if (existing) return existing;
+    const request = discardResourceDocument(path);
+    discardDocumentInFlight.current.set(key, request);
+    try {
+      return await request;
+    } finally {
+      if (discardDocumentInFlight.current.get(key) === request) {
+        discardDocumentInFlight.current.delete(key);
+      }
+    }
+  };
+
+  const closeLocalResourceDocument = async (path: string): Promise<SaveAllResult> => {
+    const key = path.replace(/\\/g, '/').toLocaleLowerCase();
+    const existing = closeDocumentInFlight.current.get(key);
+    if (existing) return existing;
+    const request = closeResourceDocument(path);
+    closeDocumentInFlight.current.set(key, request);
+    try {
+      return await request;
+    } finally {
+      if (closeDocumentInFlight.current.get(key) === request) {
+        closeDocumentInFlight.current.delete(key);
+      }
+    }
+  };
+
   const waitForLocalResourcesClean = async (timeoutMs = 2_000): Promise<boolean> => {
     const deadline = Date.now() + timeoutMs;
     do {
@@ -377,6 +499,59 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (!resourceDirtyRef.current) return true;
     } while (Date.now() < deadline);
     return !resourceDirtyRef.current;
+  };
+
+  const waitForLocalResourceDocumentClean = async (
+    path: string,
+    timeoutMs = 2_000,
+  ): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      const document = localResourceDocumentsRef.current.find(
+        (candidate) => sameAssetPath(candidate.path, path),
+      );
+      if (document && !document.dirty) return true;
+    } while (Date.now() < deadline);
+    const document = localResourceDocumentsRef.current.find(
+      (candidate) => sameAssetPath(candidate.path, path),
+    );
+    return Boolean(document && !document.dirty);
+  };
+
+  const waitForLocalResourceDocumentDiscarded = async (
+    path: string,
+    timeoutMs = 2_000,
+  ): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      const document = localResourceDocumentsRef.current.find(
+        (candidate) => sameAssetPath(candidate.path, path),
+      );
+      if (!document || !document.dirty) return true;
+    } while (Date.now() < deadline);
+    return !localResourceDocumentsRef.current.some(
+      (candidate) => sameAssetPath(candidate.path, path) && candidate.dirty,
+    );
+  };
+
+  const waitForLocalResourceDocumentClosed = async (
+    path: string,
+    timeoutMs = 2_000,
+  ): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      if (!localResourceDocumentsRef.current.some(
+        (candidate) => sameAssetPath(candidate.path, path),
+      )) {
+        return true;
+      }
+    } while (Date.now() < deadline);
+    return !localResourceDocumentsRef.current.some(
+      (candidate) => sameAssetPath(candidate.path, path),
+    );
   };
 
   useEffect(() => {
@@ -402,6 +577,33 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     return agentBridge.connectEventSources();
   }, [props.detachedPanel, store]);
 
+  useEffect(() => {
+    initializeSceneViewPreferencesEvents();
+    const applyPreferences = (
+      preferences: SceneViewPreferencesChangeDetail['preferences'],
+    ) => {
+      setPivotMode(preferences.pivotMode);
+      setHandleOrientation(preferences.handleOrientation);
+    };
+    const onPreferencesChanged = (event: Event) => {
+      applyPreferences(
+        (event as CustomEvent<SceneViewPreferencesChangeDetail>).detail
+          .preferences,
+      );
+    };
+    window.addEventListener(
+      SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+      onPreferencesChanged,
+    );
+    applyPreferences(readSceneViewPreferences());
+    return () => {
+      window.removeEventListener(
+        SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+        onPreferencesChanged,
+      );
+    };
+  }, []);
+
   const postWorkspaceDirtyState = () => {
     syncChannel.current?.postMessage({
       type: 'dirty-state',
@@ -410,10 +612,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       panel: props.detachedPanel ?? 'main window',
       dirty: workspaceDirtyRef.current,
       resourceDirty: resourceDirtyRef.current,
+      documents: structuredClone(localResourceDocumentsRef.current),
     } satisfies WorkspaceSyncMessage);
   };
 
-  const queryRemoteDirtyPeers = async (resourceOnly = false): Promise<RemoteSavePeer[]> => {
+  const queryRemoteWorkspacePeers = async () => {
     const channel = syncChannel.current;
     if (!channel) return [];
     channel.postMessage({
@@ -422,18 +625,31 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     } satisfies WorkspaceSyncMessage);
     await new Promise((resolve) => window.setTimeout(resolve, 120));
     const cutoff = Date.now() - 5_000;
-    const dirty: RemoteSavePeer[] = [];
+    const peers: Array<{
+      sender: string;
+      timestamp: number;
+      panel: string;
+      dirty: boolean;
+      resourceDirty: boolean;
+      documents: WorkspaceResourceDocument[];
+    }> = [];
     for (const [sender, peer] of remoteDirtyPeers.current) {
       if (peer.timestamp < cutoff) {
         remoteDirtyPeers.current.delete(sender);
-      } else if (resourceOnly ? peer.resourceDirty : peer.dirty) {
-        dirty.push({ sender, panel: peer.panel });
+      } else {
+        peers.push({ sender, ...peer });
       }
     }
-    return dirty.sort((left, right) => (
+    return peers.sort((left, right) => (
       left.panel.localeCompare(right.panel) || left.sender.localeCompare(right.sender)
     ));
   };
+
+  const queryRemoteDirtyPeers = async (resourceOnly = false): Promise<RemoteSavePeer[]> => (
+    (await queryRemoteWorkspacePeers())
+      .filter((peer) => resourceOnly ? peer.resourceDirty : peer.dirty)
+      .map((peer) => ({ sender: peer.sender, panel: peer.panel }))
+  );
 
   const queryRemoteDirtyPanels = async (): Promise<string[]> => {
     const dirty = new Set((await queryRemoteDirtyPeers()).map((peer) => peer.panel));
@@ -588,6 +804,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const bumpScenes = () => setSceneTick((t) => t + 1);
+  const postSceneLibraryChanged = () => {
+    syncChannel.current?.postMessage({
+      type: 'scene-library-changed',
+      sender: syncSender.current,
+    } satisfies WorkspaceSyncMessage);
+  };
 
   useEffect(() => {
     const openMaterial = (event: Event) => {
@@ -612,18 +834,24 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       setAnimationAssetPath(path);
       setTimelineAssetPath(null);
     };
-    const openSprite = (event: Event) => {
+    const openSprite = async (event: Event) => {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path !== 'string' || !path) return;
       if (spriteDirty && path !== spritePath
-        && !window.confirm('Sprite import settings have unsaved changes. Discard them and open another texture?')) return;
+        && !await confirmEditor(
+          'Sprite import settings have unsaved changes. Discard them and open another texture?',
+          { title: 'Unsaved Sprite Settings', confirmLabel: 'Discard and Open' },
+        )) return;
       setSpritePath(path);
     };
-    const openSpriteAtlas = (event: Event) => {
+    const openSpriteAtlas = async (event: Event) => {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path !== 'string' || !path) return;
       if (spriteAtlasDirty && path !== spriteAtlasPath
-        && !window.confirm('Sprite Atlas has unsaved changes. Discard them and open another atlas?')) return;
+        && !await confirmEditor(
+          'Sprite Atlas has unsaved changes. Discard them and open another atlas?',
+          { title: 'Unsaved Sprite Atlas', confirmLabel: 'Discard and Open' },
+        )) return;
       setSpriteAtlasPath(path);
     };
     const assetsChanged = (event: Event) => {
@@ -689,18 +917,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, [spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath]);
 
   useEffect(() => {
-    const onExternalChange = (event: Event) => {
+    const onExternalChange = async (event: Event) => {
       const detail = (event as CustomEvent<{
         changes?: ProjectAssetChange[];
       }>).detail;
       const changes = detail?.changes ?? [];
+      await refreshProjectFiles();
+      bumpScenes();
       const changed = new Map(changes.map((change) => [change.relPath.toLocaleLowerCase(), change]));
-      const reload = (
+      const reload = async (
         panel: keyof typeof assetReloadEpoch,
         path: string | null,
         dirty: boolean,
         setPath: (path: string | null) => void,
-      ) => {
+      ): Promise<void> => {
         if (!path) return;
         const hashIndex = path.indexOf('#');
         const filePath = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
@@ -711,10 +941,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             : undefined);
         if (!change) return;
         if (dirty) {
-          const discard = window.confirm(
+          const discard = await confirmEditor(
             `${path} 已在磁盘外部变化，并与本地未保存草稿冲突。\n\n`
             + '确定：丢弃该编辑器窗口中的未保存草稿并加载磁盘版本。\n'
             + '取消：保留本地草稿（保存会被阻止，避免覆盖外部版本）。',
+            {
+              title: '外部文件冲突',
+              confirmLabel: '丢弃并重载',
+            },
           );
           if (!discard) {
             log(`${path} 的本地草稿已保留；保存会被阻止，直到重新加载磁盘版本。`, 'warn');
@@ -748,13 +982,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         setAssetReloadEpoch((current) => ({ ...current, [panel]: current[panel] + 1 }));
         log(`已从磁盘重新加载 ${canonicalPath}`);
       };
-      reload('animation', animationAssetPath, animationDirty, setAnimationAssetPath);
-      reload('sequencer', timelineAssetPath, sequencerDirty, setTimelineAssetPath);
-      reload('animator', animatorPath, animatorDirty, setAnimatorPath);
-      reload('material', materialPath, materialDirty, setMaterialPath);
-      reload('shader', shaderPath, shaderDirty, setShaderPath);
-      reload('sprite', spritePath, spriteDirty, setSpritePath);
-      reload('spriteAtlas', spriteAtlasPath, spriteAtlasDirty, setSpriteAtlasPath);
+      await reload('animation', animationAssetPath, animationDirty, setAnimationAssetPath);
+      await reload('sequencer', timelineAssetPath, sequencerDirty, setTimelineAssetPath);
+      await reload('animator', animatorPath, animatorDirty, setAnimatorPath);
+      await reload('material', materialPath, materialDirty, setMaterialPath);
+      await reload('shader', shaderPath, shaderDirty, setShaderPath);
+      await reload('sprite', spritePath, spriteDirty, setSpritePath);
+      await reload('spriteAtlas', spriteAtlasPath, spriteAtlasDirty, setSpriteAtlasPath);
 
       const currentSceneName = sceneNameRef.current;
       if (currentSceneName) {
@@ -769,10 +1003,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           } else {
             const nextPath = sceneChange.current?.relPath ?? currentScenePath;
             const nextName = nextPath.split('/').pop()?.replace(/\.mscene$/i, '') ?? currentSceneName;
-            if (sceneDirtyRef.current && !window.confirm(
+            if (sceneDirtyRef.current && !await confirmEditor(
               `${currentScenePath} 已在磁盘外部修改，并与当前未保存场景冲突。\n\n`
               + '确定：丢弃当前未保存修改并加载磁盘版本。\n'
               + '取消：保留内存场景（直接保存会被阻止）。',
+              {
+                title: '外部场景冲突',
+                confirmLabel: '丢弃并重载',
+              },
             )) {
               log(`${currentScenePath} 的内存修改已保留；直接保存会被阻止。`, 'warn');
               return;
@@ -800,8 +1038,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
     logService.log(msg, level);
-    const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
-    const next = [...logsRef.current, `${prefix}${msg}`].slice(-300);
+    const next = [...logsRef.current, formatConsoleLog({ level, message: msg })].slice(-300);
     logsRef.current = next;
     logEnd.current = next.length;
     setLogs(next);
@@ -859,9 +1096,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         const changes = await pollProjectFileChanges();
         lastAssetPollError.current = null;
         if (!disposed && changes.length > 0) {
-          const detail = { changes, detectedAt: Date.now() };
-          window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, { detail }));
-          window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, { detail }));
+          broadcastProjectAssetsExternalChanges(changes);
           const counts = changes.reduce((result, change) => {
             result[change.type] += 1;
             return result;
@@ -927,8 +1162,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   useEffect(() => {
-    if (typeof BroadcastChannel === 'undefined') return;
-    const channel = new BroadcastChannel(WORKSPACE_CHANNEL);
+    const channel = createEditorBroadcastChannel(WORKSPACE_CHANNEL);
+    if (!channel) return;
     syncChannel.current = channel;
     const saveCoordinator = new RemoteSaveCoordinator((request) => {
       channel.postMessage({
@@ -936,6 +1171,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sender: syncSender.current,
         requestId: request.requestId,
         targets: request.targets,
+        ...(request.paths ? { paths: request.paths } : {}),
+        ...(request.operation ? { operation: request.operation } : {}),
       } satisfies WorkspaceSyncMessage);
     });
     remoteSaveCoordinator.current = saveCoordinator;
@@ -946,12 +1183,37 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         postWorkspaceDirtyState();
         return;
       }
+      if (message.type === 'request-clear-logs') {
+        if (!props.detachedPanel) agentBridge.clearLogs();
+        return;
+      }
       if (message.type === 'request-save-resources') {
         if (!message.targets.includes(syncSender.current)) return;
         void (async () => {
+          const operation = message.operation ?? 'save';
+          const discarding = operation === 'discard';
+          const closing = operation === 'close';
           let result: SaveAllResult;
           try {
-            result = await saveLocalResources();
+            result = message.paths?.length
+              ? mergeSaveAllResults(await Promise.all(
+                  message.paths.map((path) => (
+                    closing
+                      ? closeLocalResourceDocument(path)
+                      : discarding
+                      ? discardLocalResourceDocument(path)
+                      : saveLocalResourceDocument(path)
+                  )),
+                ))
+              : operation === 'save'
+                ? await saveLocalResources()
+                : {
+                    saved: [],
+                    failures: [{
+                      label: props.detachedPanel ?? 'Workspace resources',
+                      error: `${operation} requires at least one exact document path`,
+                    }],
+                  };
           } catch (reason) {
             result = {
               saved: [],
@@ -961,15 +1223,46 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }],
             };
           }
-          const resourcesClean = result.failures.length > 0
-            ? !resourceDirtyRef.current
-            : await waitForLocalResourcesClean();
+          const resourcesClean = message.paths?.length
+            ? (
+                result.failures.length > 0
+                  ? message.paths.every((path) => {
+                      const document = localResourceDocumentsRef.current.find(
+                        (candidate) => sameAssetPath(candidate.path, path),
+                      );
+                      return closing
+                        ? !document
+                        : discarding
+                        ? !document || !document.dirty
+                        : Boolean(document && !document.dirty);
+                    })
+                  : (await Promise.all(
+                      message.paths.map((path) => (
+                        closing
+                          ? waitForLocalResourceDocumentClosed(path)
+                          : discarding
+                          ? waitForLocalResourceDocumentDiscarded(path)
+                          : waitForLocalResourceDocumentClean(path)
+                      )),
+                    )).every(Boolean)
+              )
+            : (
+                result.failures.length > 0
+                  ? !resourceDirtyRef.current
+                  : await waitForLocalResourcesClean()
+              );
           if (!resourcesClean && result.failures.length === 0) {
             result = {
               ...result,
               failures: [{
-                label: props.detachedPanel ?? 'Workspace resources',
-                error: 'Workspace remains dirty after its Save All participants completed',
+                label: message.paths?.join(', ') ?? props.detachedPanel ?? 'Workspace resources',
+                error: message.paths?.length
+                  ? closing
+                    ? 'The requested document remains open after its close participant completed'
+                    : `The requested document remains dirty after its ${
+                        discarding ? 'discard' : 'save'
+                      } participant completed`
+                  : 'Workspace remains dirty after its Save All participants completed',
               }],
             };
           }
@@ -1010,19 +1303,30 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         return;
       }
       if (message.type === 'dirty-state') {
+        const previous = remoteDirtyPeers.current.get(message.sender);
+        const documents = mergeWorkspaceResourceDocuments(message.documents ?? []);
+        const changed = (
+          previous?.panel !== message.panel
+          || previous?.dirty !== message.dirty
+          || previous?.resourceDirty !== message.resourceDirty
+          || JSON.stringify(previous?.documents ?? []) !== JSON.stringify(documents)
+        );
         remoteDirtyPeers.current.set(message.sender, {
           timestamp: message.timestamp,
           panel: message.panel,
           dirty: message.dirty,
           resourceDirty: message.resourceDirty,
+          documents,
         });
         if (remoteTimelinePreview.current?.sender === message.sender) {
           remoteTimelinePreview.current.lastSeenAt = Date.now();
         }
+        if (changed && !props.detachedPanel) agentBridge.observeWorkspace();
         return;
       }
       if (message.type === 'window-closing') {
-        remoteDirtyPeers.current.delete(message.sender);
+        const removedDirtyPeer = remoteDirtyPeers.current.delete(message.sender);
+        if (removedDirtyPeer && !props.detachedPanel) agentBridge.observeWorkspace();
         if (!localTimelinePreview.current && remoteTimelinePreview.current?.sender === message.sender) {
           remoteTimelinePreview.current = null;
           if (store.clearTimelinePreview()) setSnap(store.snapshot());
@@ -1032,6 +1336,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (message.type === 'request-scene') {
         broadcastScene(true);
+        return;
+      }
+      if (message.type === 'scene-library-changed') {
+        void refreshSceneLibrary()
+          .then(() => {
+            bumpScenes();
+            if (!props.detachedPanel) agentBridge.observe();
+          })
+          .catch((reason) => {
+            console.error('Failed to refresh the cross-window scene library', reason);
+          });
         return;
       }
       if (message.type !== 'scene-state' || message.timestamp < lastRemoteTimestamp.current) return;
@@ -1074,9 +1389,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         setSelectedIds(store.selectedIds);
         setGameResolution(store.gameResolution);
         if (Array.isArray(message.logs)) {
-          logsRef.current = message.logs;
-          logEnd.current = message.logs.length;
-          setLogs(message.logs);
+          logService.syncConsoleLines(
+            message.logs,
+            props.detachedPanel ? 'main-window' : 'detached-window',
+          );
+          const nextLogs = logService.getEntries().map(formatConsoleLog);
+          logsRef.current = nextLogs;
+          logEnd.current = nextLogs.length;
+          setLogs(nextLogs);
         }
         setTreeTick((tick) => tick + 1);
       } catch (reason) {
@@ -1138,10 +1458,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => {
     postWorkspaceDirtyState();
+    if (!props.detachedPanel) agentBridge.observeWorkspace();
   }, [hasUnsavedChanges, props.detachedPanel]);
+
+  const localResourceDocumentSignature = JSON.stringify(localResourceDocuments);
+  useEffect(() => {
+    postWorkspaceDirtyState();
+    if (!props.detachedPanel) agentBridge.observeWorkspace();
+  }, [localResourceDocumentSignature, props.detachedPanel]);
 
   useEffect(() => {
     if (booted.current) broadcastScene(true);
+    if (!props.detachedPanel) agentBridge.observeWorkspace();
   }, [
     animationAssetPath,
     animatorPath,
@@ -1150,11 +1478,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     spriteAtlasPath,
     spritePath,
     timelineAssetPath,
+    sceneName,
   ]);
 
-  const confirmDiscardSceneChanges = (action: string) => (
+  const confirmDiscardSceneChanges = async (action: string) => (
     !sceneDirtyRef.current
-    || window.confirm(`当前场景有未保存的修改。${action}将丢失这些修改，是否继续？`)
+    || await confirmEditor(`当前场景有未保存的修改。${action}将丢失这些修改，是否继续？`, {
+      title: '未保存的场景修改',
+      confirmLabel: '丢弃并继续',
+    })
   );
 
   const openSceneByName = async (
@@ -1167,7 +1499,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (!silent) log(`Scene not found: ${name}`, 'warn');
       return false;
     }
-    if (!silent && !confirmDiscardSceneChanges(`打开 ${sceneFileName(name)}`)) return false;
+    if (!silent && !await confirmDiscardSceneChanges(`打开 ${sceneFileName(name)}`)) return false;
     try {
       store.loadSceneJson(json);
       const openedFingerprint = store.sceneContentFingerprint();
@@ -1204,6 +1536,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const json = store.saveSceneJson(name);
       const savedFingerprint = store.sceneContentFingerprint();
       await writeScene(name, json);
+      postSceneLibraryChanged();
       recoveryCheckpointActive.current = false;
       savedSceneFingerprint.current = savedFingerprint;
       if (props.detachedPanel) {
@@ -1234,16 +1567,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     return persistScene(current);
   };
 
-  const saveScene = () => {
+  const saveScene = async () => {
     const current = sceneNameRef.current;
     if (current) {
-      void persistScene(current);
+      await persistScene(current);
       return;
     }
-    const name = askSceneName('保存场景 — 请输入名称', 'Untitled');
+    const name = await askSceneName('保存场景 — 请输入名称', 'Untitled');
     if (!name) return;
-    if (sceneExists(name) && !window.confirm(`场景「${name}」已存在，要覆盖吗？`)) return;
-    void persistScene(name);
+    if (sceneExists(name) && !await confirmEditor(`场景「${name}」已存在，要覆盖吗？`, {
+      title: '覆盖场景',
+      confirmLabel: '覆盖',
+    })) return;
+    await persistScene(name);
   };
 
   const saveEverything = async (unnamedScene?: string): Promise<boolean> => {
@@ -1255,7 +1591,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sceneSaved = await persistScene(current);
       } else {
         const name = unnamedScene
-          ?? askSceneName('保存场景 — 请输入名称', 'Untitled');
+          ?? await askSceneName('保存场景 — 请输入名称', 'Untitled');
         sceneSaved = Boolean(name) && await persistScene(name!);
       }
     }
@@ -1274,22 +1610,29 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     return false;
   };
 
-  const saveSceneAs = () => {
-    const name = askSceneName('另存为 — 请输入新名称', sceneNameRef.current ?? 'Untitled');
+  const saveSceneAs = async () => {
+    const name = await askSceneName('另存为 — 请输入新名称', sceneNameRef.current ?? 'Untitled');
     if (!name) return;
     if (sceneExists(name) && name !== sceneNameRef.current) {
-      if (!window.confirm(`场景「${name}」已存在，要覆盖吗？`)) return;
+      if (!await confirmEditor(`场景「${name}」已存在，要覆盖吗？`, {
+        title: '覆盖场景',
+        confirmLabel: '覆盖',
+      })) return;
     }
-    void persistScene(name);
+    await persistScene(name);
   };
 
-  const newScene = () => {
-    const name = askSceneName('新建场景 — 请输入名称', 'NewScene');
+  const newScene = async () => {
+    const name = await askSceneName('新建场景 — 请输入名称', 'NewScene');
     if (!name) return;
-    if (sceneExists(name) && !window.confirm(`场景「${name}」已存在，要覆盖吗？`)) return;
-    if (!confirmDiscardSceneChanges('新建场景')) return;
+    if (sceneExists(name) && !await confirmEditor(`场景「${name}」已存在，要覆盖吗？`, {
+      title: '覆盖场景',
+      confirmLabel: '覆盖',
+    })) return;
+    if (!await confirmDiscardSceneChanges('新建场景')) return;
     store.newScene();
-    void persistScene(name).then(() => refresh());
+    await persistScene(name);
+    refresh();
   };
 
   agentSceneProviderRef.current = {
@@ -1461,6 +1804,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sceneNameRef.current = renamed;
         setSceneName(renamed);
       }
+      postSceneLibraryChanged();
       bumpScenes();
       refresh();
       log(`Renamed ${sceneFileName(oldName)} to ${sceneFileName(renamed)} from AgentBridge`);
@@ -1492,12 +1836,66 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         );
       }
       await deleteScene(name, expectedRevision);
+      postSceneLibraryChanged();
       bumpScenes();
       refresh();
       log(`Deleted ${sceneFileName(name)} from AgentBridge`);
       return { name };
     },
   };
+  const collectWorkspaceDocumentMutationTargets = async (requestedPath: string) => {
+    const remotePeers = await queryRemoteWorkspacePeers();
+    const localMatches = localResourceDocumentsRef.current.filter(
+      (document) => sameAssetPath(document.path, requestedPath),
+    );
+    const remoteMatches = remotePeers.flatMap((peer) => (
+      peer.documents
+        .filter((document) => sameAssetPath(document.path, requestedPath))
+        .map((document) => ({ peer, document }))
+    ));
+    return [
+      ...localMatches.map((document) => ({
+        host: 'main',
+        panel: document.panel,
+        document,
+        peer: null,
+      })),
+      ...remoteMatches.map(({ peer, document }) => ({
+        host: peer.sender,
+        panel: peer.panel,
+        document,
+        peer,
+      })),
+    ];
+  };
+  const resolveWorkspaceDocumentMutationTarget = async (requestedPath: string) => {
+    const matches = await collectWorkspaceDocumentMutationTargets(requestedPath);
+    if (matches.length === 0) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `No open resource document matches "${requestedPath}"`,
+      );
+    }
+    const dirtyMatches = matches.filter((match) => match.document.dirty);
+    const canonicalPath = (dirtyMatches[0] ?? matches[0]).document.path;
+    if (dirtyMatches.length === 0) return { canonicalPath, target: null, matches };
+    const dirtyHosts = new Set(dirtyMatches.map((match) => match.host));
+    if (dirtyHosts.size > 1 || dirtyMatches.length > 1) {
+      throw new BridgeError(
+        'CONFLICT',
+        `Multiple editor windows contain dirty drafts for "${canonicalPath}"`,
+        {
+          hosts: dirtyMatches.map((match) => ({
+            panel: match.panel,
+            sender: match.host,
+            kind: match.document.kind,
+          })),
+        },
+      );
+    }
+    return { canonicalPath, target: dirtyMatches[0], matches };
+  };
+
   agentWorkspaceProviderRef.current = {
     assertDiskMutationAllowed: async (options = {}) => {
       if ((!options.allowSceneDirty && sceneDirtyRef.current) || resourceDirtyRef.current) {
@@ -1515,8 +1913,290 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
     },
     closeProject: closeWorkspaceProject,
+    saveDocument: async (requestedPath: string) => {
+      const { canonicalPath, target } = await resolveWorkspaceDocumentMutationTarget(
+        requestedPath,
+      );
+      if (!target) {
+        return { path: canonicalPath, saved: false, unchanged: true };
+      }
+      if (target.document.conflicted) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Document "${canonicalPath}" changed on disk after its draft was loaded`,
+          {
+            path: canonicalPath,
+            allowedActions: [
+              'workspace.discard_document',
+              'workspace.reload_document',
+              'workspace.close_document with dirtyAction=discard',
+            ],
+          },
+        );
+      }
+      let result: SaveAllResult;
+      if (target.peer) {
+        const coordinator = remoteSaveCoordinator.current;
+        if (!coordinator) {
+          throw new BridgeError(
+            'NOT_READY',
+            'Workspace save channel is unavailable',
+          );
+        }
+        result = await coordinator.request(
+          [{ sender: target.peer.sender, panel: target.peer.panel }],
+          [canonicalPath],
+        );
+      } else {
+        result = await saveLocalResourceDocument(canonicalPath);
+        if (
+          result.failures.length === 0
+          && !await waitForLocalResourceDocumentClean(canonicalPath)
+        ) {
+          result = {
+            ...result,
+            failures: [{
+              label: canonicalPath,
+              error: 'The requested document remains dirty after its save participant completed',
+            }],
+          };
+        }
+      }
+      if (result.failures.length > 0) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Could not save "${canonicalPath}": ${
+            result.failures.map((failure) => failure.error).join('; ')
+          }`,
+          { failures: structuredClone(result.failures) },
+        );
+      }
+      if (result.saved.length === 0) {
+        throw new BridgeError(
+          'NOT_READY',
+          `No resource editor accepted the save request for "${canonicalPath}"`,
+        );
+      }
+      postWorkspaceDirtyState();
+      return { path: canonicalPath, saved: true, unchanged: false };
+    },
+    discardDocument: async (requestedPath: string) => {
+      const { canonicalPath, target } = await resolveWorkspaceDocumentMutationTarget(
+        requestedPath,
+      );
+      if (!target) {
+        return { path: canonicalPath, discarded: false, unchanged: true };
+      }
+      let result: SaveAllResult;
+      if (target.peer) {
+        const coordinator = remoteSaveCoordinator.current;
+        if (!coordinator) {
+          throw new BridgeError(
+            'NOT_READY',
+            'Workspace document channel is unavailable',
+          );
+        }
+        result = await coordinator.request(
+          [{ sender: target.peer.sender, panel: target.peer.panel }],
+          [canonicalPath],
+          'discard',
+        );
+      } else {
+        result = await discardLocalResourceDocument(canonicalPath);
+        if (
+          result.failures.length === 0
+          && !await waitForLocalResourceDocumentDiscarded(canonicalPath)
+        ) {
+          result = {
+            ...result,
+            failures: [{
+              label: canonicalPath,
+              error: 'The requested document remains dirty after its discard participant completed',
+            }],
+          };
+        }
+      }
+      if (result.failures.length > 0) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Could not discard "${canonicalPath}": ${
+            result.failures.map((failure) => failure.error).join('; ')
+          }`,
+          { failures: structuredClone(result.failures) },
+        );
+      }
+      if (result.saved.length === 0) {
+        throw new BridgeError(
+          'NOT_READY',
+          `No resource editor accepted the discard request for "${canonicalPath}"`,
+        );
+      }
+      postWorkspaceDirtyState();
+      return { path: canonicalPath, discarded: true, unchanged: false };
+    },
+    reloadDocument: async (requestedPath: string) => {
+      const initial = await resolveWorkspaceDocumentMutationTarget(requestedPath);
+      const canonicalPath = initial.canonicalPath;
+      if (initial.matches.length > 1) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Multiple editor windows contain "${canonicalPath}"`,
+          {
+            hosts: initial.matches.map((match) => ({
+              panel: match.panel,
+              sender: match.host,
+              kind: match.document.kind,
+              dirty: match.document.dirty,
+            })),
+          },
+        );
+      }
+      const [match] = initial.matches;
+      const target: AgentResourceEditorTarget = {
+        kind: match.document.kind,
+        panel: match.document.panel,
+        path: canonicalPath,
+      };
+      const discarded = match.document.dirty;
+      if (discarded) {
+        await agentWorkspaceProviderRef.current!.discardDocument(canonicalPath);
+      }
+
+      const remaining = await collectWorkspaceDocumentMutationTargets(canonicalPath);
+      if (remaining.length > 1) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Multiple editor windows still contain "${canonicalPath}" after discard`,
+          {
+            hosts: remaining.map((candidate) => ({
+              panel: candidate.panel,
+              sender: candidate.host,
+              kind: candidate.document.kind,
+              dirty: candidate.document.dirty,
+            })),
+          },
+        );
+      }
+      if (remaining.length === 1) {
+        await agentWorkspaceProviderRef.current!.closeDocument(
+          canonicalPath,
+          'reject',
+        );
+      }
+      await agentWorkspaceProviderRef.current!.openAsset(target);
+      return { target, discarded };
+    },
+    closeDocument: async (
+      requestedPath: string,
+      dirtyAction: 'reject' | 'save' | 'discard' = 'reject',
+    ) => {
+      const initial = await resolveWorkspaceDocumentMutationTarget(requestedPath);
+      const canonicalPath = initial.canonicalPath;
+      const wasDirty = initial.target != null;
+      let appliedDirtyAction: 'none' | 'save' | 'discard' = 'none';
+      if (wasDirty) {
+        if (dirtyAction === 'reject') {
+          throw new BridgeError(
+            'CONFLICT',
+            `Document "${canonicalPath}" has unsaved changes`,
+            {
+              path: canonicalPath,
+              allowedDirtyActions: ['save', 'discard'],
+            },
+          );
+        }
+        if (dirtyAction === 'save') {
+          appliedDirtyAction = 'save';
+          await agentWorkspaceProviderRef.current!.saveDocument(canonicalPath);
+        } else {
+          appliedDirtyAction = 'discard';
+          await agentWorkspaceProviderRef.current!.discardDocument(canonicalPath);
+        }
+      }
+
+      const matches = wasDirty
+        ? await collectWorkspaceDocumentMutationTargets(canonicalPath)
+        : initial.matches;
+      if (matches.length === 0) {
+        postWorkspaceDirtyState();
+        return {
+          path: canonicalPath,
+          closed: true,
+          dirtyAction: appliedDirtyAction,
+        };
+      }
+      if (matches.length > 1) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Multiple editor windows contain "${canonicalPath}"`,
+          {
+            hosts: matches.map((match) => ({
+              panel: match.panel,
+              sender: match.host,
+              kind: match.document.kind,
+              dirty: match.document.dirty,
+            })),
+          },
+        );
+      }
+
+      const [target] = matches;
+      let result: SaveAllResult;
+      if (target.peer) {
+        const coordinator = remoteSaveCoordinator.current;
+        if (!coordinator) {
+          throw new BridgeError(
+            'NOT_READY',
+            'Workspace document channel is unavailable',
+          );
+        }
+        result = await coordinator.request(
+          [{ sender: target.peer.sender, panel: target.peer.panel }],
+          [canonicalPath],
+          'close',
+        );
+      } else {
+        result = await closeLocalResourceDocument(canonicalPath);
+        if (
+          result.failures.length === 0
+          && !await waitForLocalResourceDocumentClosed(canonicalPath)
+        ) {
+          result = {
+            ...result,
+            failures: [{
+              label: canonicalPath,
+              error: 'The requested document remains open after its close participant completed',
+            }],
+          };
+        }
+      }
+      if (result.failures.length > 0) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Could not close "${canonicalPath}": ${
+            result.failures.map((failure) => failure.error).join('; ')
+          }`,
+          { failures: structuredClone(result.failures) },
+        );
+      }
+      if (result.saved.length === 0) {
+        throw new BridgeError(
+          'NOT_READY',
+          `No resource editor accepted the close request for "${canonicalPath}"`,
+        );
+      }
+      postWorkspaceDirtyState();
+      return {
+        path: canonicalPath,
+        closed: true,
+        dirtyAction: appliedDirtyAction,
+      };
+    },
     listDocuments: async () => {
-      const remoteDirty = new Set(await queryRemoteDirtyPanels());
+      const remotePeers = await queryRemoteWorkspacePeers();
+      const remoteDirty = new Set(
+        remotePeers.filter((peer) => peer.dirty).map((peer) => peer.panel),
+      );
       const documents: AgentWorkspaceDocument[] = [
         {
           kind: 'scene',
@@ -1527,63 +2207,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           dirty: sceneDirtyRef.current,
         },
       ];
-      if (timelineAssetPath) {
-        documents.push({
-          kind: 'timeline',
-          panel: 'timeline',
-          path: timelineAssetPath,
-          dirty: sequencerDirty || remoteDirty.has('timeline'),
-        });
-      } else if (animationAssetPath) {
-        documents.push({
-          kind: 'animation',
-          panel: 'timeline',
-          path: animationAssetPath,
-          dirty: animationDirty || remoteDirty.has('timeline'),
-        });
-      }
-      const resources: AgentWorkspaceDocument[] = [
-        {
-          kind: animatorDocumentKind(animatorPath),
-          panel: 'animator',
-          path: animatorPath,
-          dirty: animatorDirty,
-        },
-        {
-          kind: materialDocumentKind(materialPath),
-          panel: 'material',
-          path: materialPath,
-          dirty: materialDirty,
-        },
-        {
-          kind: 'shader',
-          panel: 'shader',
-          path: shaderPath,
-          dirty: shaderDirty,
-        },
-        {
-          kind: 'sprite',
-          panel: 'spriteEditor',
-          path: spritePath,
-          dirty: spriteDirty,
-        },
-        {
-          kind: 'sprite-atlas',
-          panel: 'spriteAtlas',
-          path: spriteAtlasPath,
-          dirty: spriteAtlasDirty,
-        },
-      ];
-      documents.push(...resources
-        .filter((document) => (
-          document.path !== null
-          || document.dirty
-          || remoteDirty.has(document.panel)
-        ))
-        .map((document) => ({
-          ...document,
-          dirty: document.dirty || remoteDirty.has(document.panel),
-        })));
+      const resourceDocuments = mergeWorkspaceResourceDocuments(
+        localResourceDocumentsRef.current,
+        ...remotePeers.map((peer) => peer.documents),
+      );
+      documents.push(...resourceDocuments);
       if (buildSettingsDirty || remoteDirty.has('build')) {
         documents.push({
           kind: 'build-settings',
@@ -1642,14 +2270,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         }
       })();
       if (!sameAssetPath(currentPath, target.path)) {
-        if (locallyDirty) {
+        const preservesDrafts = resourceEditorPreservesDrafts(target.kind);
+        if (locallyDirty && !preservesDrafts) {
           throw new BridgeError(
             'CONFLICT',
             `${target.panel} has unsaved changes; save all before opening another asset`,
           );
         }
         const remoteDirty = await queryRemoteDirtyPanels();
-        if (remoteDirty.includes(target.panel)) {
+        if (remoteDirty.includes(target.panel) && !preservesDrafts) {
           throw new BridgeError(
             'CONFLICT',
             `Detached ${target.panel} has unsaved changes; save all before opening another asset`,
@@ -1760,7 +2389,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         : [];
       if (scope === 'application') dirtyPanels.push(...await queryRemoteDirtyPanels());
       const warning = editorCloseWarning(dirtyPanels, scope === 'application');
-      if (warning && !window.confirm(warning)) {
+      if (warning && !await confirmEditor(warning, {
+        title: '关闭编辑器',
+        confirmLabel: '关闭',
+      })) {
         cancelEditorClose(state);
         return;
       }
@@ -1780,7 +2412,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       cancelEditorClose(state);
       const message = error instanceof Error ? error.message : String(error);
       console.error('Failed to close the editor', error);
-      window.alert(`关闭编辑器失败：${message}`);
+      await alertEditor(`关闭编辑器失败：${message}`, { title: '关闭失败' });
     }
   };
 
@@ -1789,10 +2421,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const dirtyPanels = await queryProjectDirtyPanels();
       if (
         dirtyPanels.length > 0
-        && !window.confirm(
+        && !await confirmEditor(
           `以下窗口有未保存的场景或资源修改：\n\n`
           + `${dirtyPanels.map((panel) => `• ${panel}`).join('\n')}`
           + '\n\n关闭工程将丢失这些修改，是否继续？',
+          {
+            title: '关闭工程',
+            confirmLabel: '丢弃并关闭',
+          },
         )
       ) {
         return;
@@ -1801,7 +2437,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       window.location.reload();
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
-      window.alert(`关闭工程失败：${message}`);
+      await alertEditor(`关闭工程失败：${message}`, { title: '关闭失败' });
     }
   };
 
@@ -1834,16 +2470,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     };
   }, []);
 
-  const openSceneDialog = () => {
+  const openSceneDialog = async () => {
     const scenes = listScenes();
     if (!scenes.length) {
       log('还没有已保存的场景。先 File → New Scene 并命名。', 'warn');
       return;
     }
     const hint = scenes.map((s) => s.name).join(', ');
-    const name = askSceneName(`打开场景（已有: ${hint}）`, scenes[0].name);
+    const name = await askSceneName(`打开场景（已有: ${hint}）`, scenes[0].name);
     if (!name) return;
-    void openSceneByName(name);
+    await openSceneByName(name);
   };
 
   const applyEditorPrefs = (prefs: {
@@ -1900,9 +2536,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           recoveryCheckpointActive.current = recovery != null;
           if (recovery) {
             const recordedAt = new Date(recovery.recordedAtMs).toLocaleString();
-            const shouldRestore = window.confirm(
+            const shouldRestore = await confirmEditor(
               `检测到 ${sceneFileName(recovery.sceneName)} 的自动恢复点（${recordedAt}，${recovery.entityCount} 个节点）。\n\n`
               + '确定：恢复未保存修改；取消：丢弃该恢复点并继续打开磁盘版本。',
+              {
+                title: '场景自动恢复',
+                confirmLabel: '恢复',
+                cancelLabel: '丢弃',
+              },
             );
             if (shouldRestore) {
               const restored = await restoreDesktopSceneRecovery();
@@ -1922,7 +2563,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         } catch (reason) {
           recoveryCheckpointActive.current = true;
           log(`自动恢复点无法读取: ${String(reason)}`, 'error');
-          if (window.confirm('自动恢复文件已损坏或不兼容。是否删除它，避免下次启动再次提示？')) {
+          if (await confirmEditor(
+            '自动恢复文件已损坏或不兼容。是否删除它，避免下次启动再次提示？',
+            {
+              title: '恢复文件损坏',
+              confirmLabel: '删除',
+            },
+          )) {
             try {
               await discardDesktopSceneRecovery();
               recoveryCheckpointActive.current = false;
@@ -1990,17 +2637,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (ctrl && e.key.toLowerCase() === 'n') {
         e.preventDefault();
-        newScene();
+        void newScene();
         return;
       }
       if (ctrl && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        saveScene();
+        void saveScene();
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'o') {
         e.preventDefault();
-        openSceneDialog();
+        void openSceneDialog();
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'd') {
@@ -2144,8 +2791,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           store.setGizmo(m);
           refresh();
         }}
-        onPivotMode={setPivotMode}
-        onHandleOrientation={setHandleOrientation}
+        onPivotMode={(next) => {
+          updateSceneViewPreferences({ pivotMode: next });
+        }}
+        onHandleOrientation={(next) => {
+          updateSceneViewPreferences({ handleOrientation: next });
+        }}
         onPlay={() => {
           store.play();
           setViewTab('game');
@@ -2403,6 +3054,28 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.setActive(entity, active);
                 refresh();
               }}
+              tagOptions={getTagOptions()}
+              layerOptions={getGameLayerOptions()}
+              onSetTag={(entity, tag) => {
+                store.setTag(entity, tag);
+                refresh();
+              }}
+              onSetLayer={(entity, layer) => {
+                store.setLayer(entity, layer);
+                refresh();
+              }}
+              onSetActives={(entities, active) => {
+                store.setActives(entities, active);
+                refresh();
+              }}
+              onSetTags={(entities, tag) => {
+                store.setTags(entities, tag);
+                refresh();
+              }}
+              onSetLayers={(entities, layer) => {
+                store.setLayers(entities, layer);
+                refresh();
+              }}
               onChangeTransform={(entity, transform) => {
                 store.setTransform(entity, transform);
                 refresh();
@@ -2419,10 +3092,30 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   log(`Cannot add ${type}`, 'warn');
                 }
               }}
+              onAddComponents={(entities, type, value) => {
+                const changed = store.addComponents(entities, type, value);
+                if (changed > 0) {
+                  log(`Added ${type} to ${changed} GameObjects`);
+                  refresh();
+                } else {
+                  log(`Cannot add ${type} to the selection`, 'warn');
+                }
+              }}
               onRemoveComponent={(entity, type) => {
                 if (store.removeComponent(entity, type)) {
                   log(`Removed ${type}`);
                   refresh();
+                } else {
+                  log(`Cannot remove ${type}; another component may require it`, 'warn');
+                }
+              }}
+              onRemoveComponents={(entities, type) => {
+                const changed = store.removeComponents(entities, type);
+                if (changed > 0) {
+                  log(`Removed ${type} from ${changed} GameObjects`);
+                  refresh();
+                } else {
+                  log(`Cannot remove ${type} from the selection; another component may require it`, 'warn');
                 }
               }}
               onSetComponent={(entity, type, value) => {
@@ -2448,6 +3141,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onSetComponents={(type, updates) => {
                 store.setComponents(type, updates);
+                refresh();
+              }}
+              onPatchComponents={(type, updates) => {
+                store.patchComponents(type, updates);
                 refresh();
               }}
               onPatchComponent={(entity, type, patch) => {
@@ -2504,6 +3201,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                       sceneNameRef.current = next;
                       setSceneName(next);
                     }
+                    postSceneLibraryChanged();
                     bumpScenes();
                     log(`Renamed ${sceneFileName(oldName)} → ${sceneFileName(next)}`);
                   }
@@ -2517,6 +3215,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onDeleteScene={async (name) => {
                 try {
                   await deleteScene(name);
+                  postSceneLibraryChanged();
                   bumpScenes();
                   log(`Deleted ${sceneFileName(name)}`);
                   return true;
@@ -2528,8 +3227,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onPrepareAssetTransaction={async () => {
                 if (hasUnsavedChanges) {
-                  if (!window.confirm(
+                  if (!await confirmEditor(
                     'This asset transaction changes project files on disk. Save the current scene and all resource documents before continuing?',
+                    {
+                      title: 'Save Before Asset Transaction',
+                      confirmLabel: 'Save and Continue',
+                    },
                   )) return false;
                   if (!await saveEverything()) return false;
                   workspaceDirtyRef.current = false;
@@ -2543,7 +3246,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 if (remoteDirty.length > 0) {
                   const panels = remoteDirty.join(', ');
                   log(`Asset transaction blocked by unsaved changes in detached window(s): ${panels}.`, 'warn');
-                  window.alert(`Save or discard changes in the detached window(s) before changing project assets:\n\n${panels}`);
+                  await alertEditor(
+                    `Save or discard changes in the detached window(s) before changing project assets:\n\n${panels}`,
+                    { title: 'Asset Transaction Blocked' },
+                  );
                   return false;
                 }
                 return true;
@@ -2659,6 +3365,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   }}
                   onAssetsChanged={bumpScenes}
                   onDirtyChange={setAnimationDirty}
+                  onDocumentsChange={setAnimationDocuments}
                   onLog={log}
                   undoService={undoService}
                   onGlobalUndo={() => {
@@ -2704,6 +3411,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   onClearPreview={clearLocalTimelinePreview}
                   onAssetsChanged={bumpScenes}
                   onDirtyChange={setSequencerDirty}
+                  onDocumentsChange={setSequencerDocuments}
                   onLog={log}
                   undoService={undoService}
                   onGlobalUndo={() => {
@@ -2725,6 +3433,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
               playMode={mode !== 'edit'}
               onOpenAsset={setAnimatorPath}
+              onCloseAsset={() => setAnimatorPath(null)}
               onAssignAnimator={(entity, path) => {
                 const current = store.authoredEntities()
                   .find((entry) => entry.entity === entity)
@@ -2756,6 +3465,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setAnimatorDirty}
+              onDocumentsChange={setAnimatorDocuments}
               onLog={log}
               undoService={undoService}
               onGlobalUndo={() => {
@@ -2774,6 +3484,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               assetPath={materialPath}
               selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
               onOpenAsset={setMaterialPath}
+              onCloseAsset={() => setMaterialPath(null)}
               onAssignMaterial={(entity, path) => {
                 const result = store.assignMaterial(entity, path);
                 if (!result) {
@@ -2787,6 +3498,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setMaterialDirty}
+              onDocumentsChange={setMaterialDocuments}
               onLog={log}
               undoService={undoService}
               onGlobalUndo={() => {
@@ -2804,8 +3516,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               key={`shader:${assetReloadEpoch.shader}`}
               assetPath={shaderPath}
               onOpenAsset={setShaderPath}
+              onCloseAsset={() => setShaderPath(null)}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setShaderDirty}
+              onDocumentsChange={setShaderDocuments}
               onLog={log}
               undoService={undoService}
               onGlobalUndo={() => {
@@ -2822,6 +3536,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <SpriteEditor
               key={`sprite:${assetReloadEpoch.sprite}`}
               assetPath={spritePath}
+              onCloseAsset={() => setSpritePath(null)}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setSpriteDirty}
               onLog={log}
@@ -2831,6 +3546,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <SpriteAtlasEditor
               key={`sprite-atlas:${assetReloadEpoch.spriteAtlas}`}
               assetPath={spriteAtlasPath}
+              onCloseAsset={() => setSpriteAtlasPath(null)}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setSpriteAtlasDirty}
               onLog={log}
@@ -2851,7 +3567,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           projectSettings: (
             <ProjectSettings onDirtyChange={setProjectSettingsDirty} onLog={log} />
           ),
-          console: <Console lines={logs} />,
+          console: (
+            <Console
+              lines={logs}
+              onClear={() => {
+                if (!props.detachedPanel) {
+                  agentBridge.clearLogs();
+                  return;
+                }
+                syncChannel.current?.postMessage({
+                  type: 'request-clear-logs',
+                  sender: syncSender.current,
+                } satisfies WorkspaceSyncMessage);
+              }}
+            />
+          ),
           profiler: <Profiler />,
         }}
       />

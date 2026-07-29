@@ -14,12 +14,20 @@ pub struct EntitySnapshot {
     pub sibling_index: i32,
     #[serde(default = "default_true")]
     pub active: bool,
+    #[serde(default = "default_tag")]
+    pub tag: String,
+    #[serde(default)]
+    pub layer: u8,
     #[serde(default)]
     pub components: HashMap<String, Value>,
 }
 
 fn default_true() -> bool {
     true
+}
+
+fn default_tag() -> String {
+    "Untagged".into()
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -68,6 +76,8 @@ impl WorldSnapshot {
                 parent,
                 sibling_index: world.sibling_index(e),
                 active: world.entity_active(e),
+                tag: world.entity_tag(e).into(),
+                layer: world.entity_layer(e),
                 components,
             });
         }
@@ -104,6 +114,8 @@ mod tests {
         let snapshot: WorldSnapshot = serde_json::from_str(json).unwrap();
         assert_eq!(snapshot.sim_frame, 4);
         assert_eq!(snapshot.clear_color, [0.2, 0.3, 0.4, 1.0]);
+        assert_eq!(snapshot.entities[0].tag, "Untagged");
+        assert_eq!(snapshot.entities[0].layer, 0);
         assert_eq!(snapshot.entities[0].sibling_index, 3);
         assert!(!snapshot.entities[0].active);
         assert_eq!(snapshot.entities[0].components["Custom"]["value"], 42);

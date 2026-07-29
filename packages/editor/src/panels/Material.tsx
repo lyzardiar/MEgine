@@ -17,6 +17,12 @@ import {
   type MaterialAsset,
 } from '../materialAsset';
 import {
+  dropChangedCleanDrafts,
+  mergeWorkspaceResourceDocuments,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
+import {
   listProjectFiles,
   normalizeProjectAssetPath,
   projectAssetUrl,
@@ -26,7 +32,13 @@ import {
   type ProjectFileAsset,
 } from '../projectAssets';
 import { pingProjectAsset } from '../pingBus';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerCloseDocumentParticipant,
+  registerDiscardDocumentParticipant,
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import type {
   EditorUndoCheckpoint,
   EditorUndoService,
@@ -38,6 +50,7 @@ import {
   broadcastProjectAssetsChanged,
   openMaterialAsset,
   openSurfaceShaderAsset,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import { MaterialInstanceEditor } from './MaterialInstance';
@@ -151,6 +164,7 @@ function MaterialTextureSlot(props: {
   }));
   return (
     <div
+      aria-label={`${props.label} texture drop target`}
       className={`material-texture-slot${props.missing ? ' missing' : ''}`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={props.onDrop}
@@ -164,6 +178,7 @@ function MaterialTextureSlot(props: {
           type="button"
           className="material-texture-thumb"
           disabled={!current}
+          aria-label={`${props.label} texture preview`}
           title={current ? 'Ping texture in Project' : props.value ? 'Texture is missing' : 'No texture assigned'}
           onClick={() => current && pingProjectAsset(current.relPath, current.folder)}
         >
@@ -183,6 +198,8 @@ function MaterialTextureSlot(props: {
           type="button"
           title={`Select ${props.label}`}
           aria-label={`Select ${props.label}`}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={() => {
             setAnchor(pickerButton.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);
@@ -220,9 +237,11 @@ export type MaterialEditorProps = {
   assetPath: string | null;
   selectedEntity: SnapshotEntity | null;
   onOpenAsset: (path: string) => void;
+  onCloseAsset: () => void;
   onAssignMaterial: (entity: number, path: string) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -235,15 +254,19 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
   const [shaderKeywords, setShaderKeywords] = useState<SurfaceShaderKeyword[]>([]);
   const [shaderTextures, setShaderTextures] = useState<SurfaceShaderTexture[]>([]);
   const [shaderParameterError, setShaderParameterError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { material: MaterialAsset; savedText: string }>());
   const materialRef = useRef<MaterialAsset | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   const editTransaction = useRef<{
     material: MaterialAsset;
     checkpoint: EditorUndoCheckpoint;
@@ -258,6 +281,8 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -268,11 +293,17 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && material) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && material && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, {
         material: structuredClone(material),
         savedText,
       });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath;
     editTransaction.current = null;
@@ -283,7 +314,8 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     if (!props.assetPath) {
       return () => { cancelled = true; };
     }
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       replaceMaterial(structuredClone(draft.material));
@@ -292,7 +324,10 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
       return () => { cancelled = true; };
     }
     setLoading(true);
-    void Promise.all([readProjectAssetText(props.assetPath), refreshProjectFiles()])
+    void Promise.all([
+      readProjectAssetText(props.assetPath, { replaceWriteBaseline: true }),
+      refreshProjectFiles(),
+    ])
       .then(([text]) => {
         if (cancelled) return;
         const parsed = parseMaterialAsset(text);
@@ -309,7 +344,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   const serialized = useMemo(
     () => material ? serializeMaterialAsset(material) : '',
@@ -317,6 +352,11 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   );
   const dirty = Boolean(material && serialized !== savedText);
   const anyDirty = dirty || [...drafts.current.values()].some(materialDraftDirty);
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
   const projectAssets = useMemo(() => {
     void assetRevision;
     return listProjectFiles();
@@ -366,15 +406,48 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   useEffect(() => {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'material',
+    'material',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, materialDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
   useEffect(() => {
-    const refresh = () => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
+  useEffect(() => {
+    const refresh = (event: Event) => {
       void refreshProjectFiles().finally(() => {
         setAssetRevision((revision) => revision + 1);
       });
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        materialDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`material:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
+      if (
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
+      ) return;
+      if (dirty) {
+        setError(
+          'Material changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
     };
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
-  }, []);
+  }, [dirty, props.assetPath]);
   const canAssign = Boolean(
     props.assetPath
     && props.selectedEntity?.components.MeshRenderer,
@@ -500,7 +573,12 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
         setDraftEpoch((value) => value + 1);
       }
       props.onAssetsChanged();
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onLog(`Saved ${path}`);
       return true;
     } catch (reason) {
@@ -543,9 +621,90 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Material could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !materialDraftDirty(entry[1])) {
+      throw new Error(`No dirty Material draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      await validateCustomParameters(draft.material);
+      const text = serializeMaterialAsset(draft.material);
+      await writeProjectAssetText(draftPath, text);
+      drafts.current.set(draftPath, {
+        material: parseMaterialAsset(text),
+        savedText: text,
+      });
+      await refreshProjectFiles();
+      setAssetRevision((revision) => revision + 1);
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Materials', () => (
     anyDirty && !saving ? saveAll : null
   )), [anyDirty, dirty, material, props.assetPath, savedText, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Materials', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && materialDraftDirty(draft)
+      ? () => saveDocument(path)
+      : null;
+  }), [dirty, draftEpoch, material, props.assetPath, savedText, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Materials', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`material:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !materialDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`material:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Materials', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`material:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`material:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onCloseAsset, saving]);
 
   const createNew = async () => {
     try {
@@ -638,6 +797,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
         <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''}`} disabled={!props.undoService.canUndo} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
         <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''}`} disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
+        <button type="button" disabled={loading || saving} onClick={reloadFromDisk}>Reload</button>
         <button type="button" disabled={!dirty || saving} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
         </button>
@@ -1097,10 +1257,20 @@ export function MaterialEditor(props: MaterialEditorProps) {
   const isInstance = props.assetPath?.toLowerCase().endsWith('.minst') === true;
   const [materialDirty, setMaterialDirty] = useState(false);
   const [instanceDirty, setInstanceDirty] = useState(false);
+  const [materialDocuments, setMaterialDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [instanceDocuments, setInstanceDocuments] = useState<WorkspaceResourceDocument[]>([]);
 
   useEffect(() => {
     props.onDirtyChange(materialDirty || instanceDirty);
   }, [instanceDirty, materialDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(
+    () => mergeWorkspaceResourceDocuments(materialDocuments, instanceDocuments),
+    [instanceDocuments, materialDocuments],
+  );
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
 
   return (
     <>
@@ -1109,6 +1279,7 @@ export function MaterialEditor(props: MaterialEditorProps) {
           {...props}
           assetPath={isInstance ? null : props.assetPath}
           onDirtyChange={setMaterialDirty}
+          onDocumentsChange={setMaterialDocuments}
         />
       </div>
       <div className="material-editor-route" hidden={!isInstance}>
@@ -1116,6 +1287,7 @@ export function MaterialEditor(props: MaterialEditorProps) {
           {...props}
           assetPath={isInstance ? props.assetPath : null}
           onDirtyChange={setInstanceDirty}
+          onDocumentsChange={setInstanceDocuments}
         />
       </div>
     </>

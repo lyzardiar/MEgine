@@ -4,11 +4,21 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "bin": {
-    "mengine-mcp": "./mcp/server.mjs"
+    "mengine-mcp": "./mcp/server.mjs",
+    "mengine-agent": "./cli/editor.mjs",
+    "mengine-agent-http": "./http/server.mjs"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "cli": "node cli/editor.mjs",
+    "http": "node http/server.mjs",
     "mcp": "node mcp/server.mjs"
   },
   "dependencies": {

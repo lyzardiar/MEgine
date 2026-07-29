@@ -18,10 +18,10 @@
  */
 
 import fs from 'node:fs';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
-import readline from 'node:readline';
 import { pathToFileURL } from 'node:url';
 
 const SUPPORTED_PROTOCOL_VERSIONS = Object.freeze([
@@ -32,9 +32,27 @@ const SUPPORTED_PROTOCOL_VERSIONS = Object.freeze([
 ]);
 const PROTOCOL_VERSION = SUPPORTED_PROTOCOL_VERSIONS[0];
 const REQUEST_TIMEOUT_MS = 20000;
+const BUILD_ARTIFACT_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 const BRIDGE_CONNECT_ATTEMPTS = 30;
 const BRIDGE_CONNECT_RETRY_MS = 200;
+const SUBSCRIPTION_RECONNECT_MS = 1_000;
+const MAX_PENDING_BRIDGE_REQUESTS = 64;
+const MAX_ACTIVE_MCP_REQUESTS = 128;
+const MAX_MCP_SESSION_REQUEST_IDS = 65_536;
+const MAX_MCP_INPUT_LINE_BYTES = 64 * 1024 * 1024;
+const MAX_MCP_OUTBOUND_QUEUED_BYTES = 192 * 1024 * 1024;
+const MCP_OUTPUT_PAUSE_BYTES = 64 * 1024 * 1024;
+const MCP_RATE_LIMIT_RETRY_AFTER_MS = 250;
 const MCP_SESSION_ID = crypto.randomUUID();
+const DANGEROUS_AGENT_COMMANDS = Object.freeze([
+  'scene.delete',
+  'asset.trash',
+  'build.start',
+  'build.run',
+  'build.history.create_patch',
+  'build.history.restore',
+]);
+const DANGEROUS_AGENT_COMMAND_SET = new Set(DANGEROUS_AGENT_COMMANDS);
 
 // ── Discovery ────────────────────────────────────────────────────────────
 
@@ -92,8 +110,10 @@ function readDiscovery() {
 
 let activeConnection = null;
 let connectionAttempt = null;
+let subscriptionReconnectTimer = null;
 let successfulConnections = 0;
 const pending = new Map();
+const mcpRequestContext = new AsyncLocalStorage();
 
 class BridgeConnectionError extends Error {
   constructor(message, { sent = false, discovery = null, cause } = {}) {
@@ -131,6 +151,13 @@ class BridgeOutcomeUnknownError extends Error {
   }
 }
 
+class McpRequestCancelledError extends Error {
+  constructor() {
+    super('MCP request cancelled');
+    this.name = 'McpRequestCancelledError';
+  }
+}
+
 class ToolInputValidationError extends Error {
   constructor(toolName, issues) {
     super(`Invalid arguments for tool "${toolName}"`);
@@ -165,6 +192,7 @@ function connectBridge(discovery) {
           `[mengine-mcp] reconnected to editor bridge on port ${discovery.port}\n`,
         );
       }
+      resourceSubscriptions.invalidateAll();
       resolve(connection);
     });
     socket.addEventListener('message', (event) => {
@@ -174,11 +202,12 @@ function connectBridge(discovery) {
       } catch {
         return;
       }
+      if (resourceSubscriptions.handleBridgeMessage(msg)) return;
       if (msg.id != null && pending.has(msg.id)) {
         const entry = pending.get(msg.id);
         if (entry.socket !== socket) return;
         pending.delete(msg.id);
-        clearTimeout(entry.timer);
+        entry.cleanup();
         if (msg.error) {
           entry.reject(new BridgeRpcError(
             msg.error.code,
@@ -201,12 +230,13 @@ function connectBridge(discovery) {
       for (const [id, entry] of pending) {
         if (entry.socket !== socket) continue;
         pending.delete(id);
-        clearTimeout(entry.timer);
+        entry.cleanup();
         entry.reject(new BridgeConnectionError(
           'Editor bridge connection closed',
           { sent: true, discovery },
         ));
       }
+      scheduleSubscriptionReconnect();
     });
   });
 }
@@ -239,9 +269,53 @@ async function connectLatestBridge() {
   throw lastError;
 }
 
-function rpcOnce(connection, method, params) {
+function scheduleSubscriptionReconnect(delayMs = SUBSCRIPTION_RECONNECT_MS) {
+  if (
+    inputClosed
+    || outputFailed
+    || !resourceSubscriptions.hasSubscriptions
+    || activeConnection?.socket.readyState === WebSocket.OPEN
+    || subscriptionReconnectTimer
+  ) return;
+  subscriptionReconnectTimer = setTimeout(async () => {
+    subscriptionReconnectTimer = null;
+    if (
+      inputClosed
+      || outputFailed
+      || !resourceSubscriptions.hasSubscriptions
+      || activeConnection?.socket.readyState === WebSocket.OPEN
+    ) return;
+    try {
+      const connection = await ensureBridgeConnected();
+      if (connection.socket.readyState !== WebSocket.OPEN) {
+        scheduleSubscriptionReconnect();
+      }
+    } catch {
+      scheduleSubscriptionReconnect();
+    }
+  }, delayMs);
+  subscriptionReconnectTimer.unref();
+}
+
+function cancelSubscriptionReconnectIfIdle() {
+  if (resourceSubscriptions.hasSubscriptions || !subscriptionReconnectTimer) return;
+  clearTimeout(subscriptionReconnectTimer);
+  subscriptionReconnectTimer = null;
+}
+
+function rpcOnce(
+  connection,
+  method,
+  params,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+  signal = mcpRequestContext.getStore()?.signal,
+) {
   return new Promise((resolve, reject) => {
     const { socket, discovery } = connection;
+    if (signal?.aborted) {
+      reject(new McpRequestCancelledError());
+      return;
+    }
     if (socket.readyState !== WebSocket.OPEN) {
       reject(new BridgeConnectionError(
         'Not connected to the editor bridge',
@@ -249,25 +323,74 @@ function rpcOnce(connection, method, params) {
       ));
       return;
     }
+    if (pending.size >= MAX_PENDING_BRIDGE_REQUESTS) {
+      reject(new BridgeRpcError(
+        'RATE_LIMITED',
+        'Too many MCP requests are already waiting for the editor bridge',
+        {
+          pendingBridgeRequests: pending.size,
+          maxPendingBridgeRequests: MAX_PENDING_BRIDGE_REQUESTS,
+          retryAfterMs: MCP_RATE_LIMIT_RETRY_AFTER_MS,
+        },
+      ));
+      return;
+    }
     const id = crypto.randomUUID();
-    const timer = setTimeout(() => {
+    let sent = false;
+    let timer;
+    const cleanup = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', cancel);
+    };
+    const cancel = () => {
+      if (!pending.delete(id)) return;
+      cleanup();
+      if (sent && socket.readyState === WebSocket.OPEN) {
+        try {
+          socket.send(JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'cancel',
+            params: { requestId: id },
+          }));
+        } catch {
+          // Cancellation remains local if the bridge is already unavailable.
+        }
+      }
+      reject(new McpRequestCancelledError());
+    };
+    timer = setTimeout(() => {
       pending.delete(id);
+      cleanup();
+      if (activeConnection?.socket === socket) activeConnection = null;
+      try {
+        socket.close(1011, 'AgentBridge request timed out');
+      } catch {
+        // The timeout error below remains authoritative even if the socket
+        // implementation is already closing.
+      }
       reject(new BridgeConnectionError(
         `Editor bridge request timed out (${method})`,
         { sent: true, discovery },
       ));
-    }, REQUEST_TIMEOUT_MS);
+    }, timeoutMs);
     pending.set(id, {
       socket,
       timer,
+      cleanup,
       resolve,
       reject,
     });
+    signal?.addEventListener('abort', cancel, { once: true });
+    if (signal?.aborted) {
+      cancel();
+      return;
+    }
     try {
       socket.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+      sent = true;
     } catch (error) {
       pending.delete(id);
-      clearTimeout(timer);
+      cleanup();
       reject(new BridgeConnectionError(
         `Could not send editor bridge request: ${error?.message || String(error)}`,
         { discovery },
@@ -284,10 +407,18 @@ function sameEditorProcess(left, right) {
   return left.port === right.port && left.token === right.token;
 }
 
-async function rpc(method, params, { retryAcrossEditorRestart = false } = {}) {
+async function rpc(
+  method,
+  params,
+  {
+    retryAcrossEditorRestart = false,
+    timeoutMs = REQUEST_TIMEOUT_MS,
+    signal,
+  } = {},
+) {
   const firstConnection = await ensureBridgeConnected();
   try {
-    return await rpcOnce(firstConnection, method, params);
+    return await rpcOnce(firstConnection, method, params, timeoutMs, signal);
   } catch (error) {
     if (!(error instanceof BridgeConnectionError)) throw error;
 
@@ -335,33 +466,88 @@ async function rpc(method, params, { retryAcrossEditorRestart = false } = {}) {
         retryConnection.discovery,
       );
     }
-    return await rpcOnce(retryConnection, method, params);
+    return await rpcOnce(retryConnection, method, params, timeoutMs, signal);
   }
 }
 
-async function bridgeQuery(query, args = {}) {
+async function bridgeQuery(query, args = {}, options = {}) {
   const result = await rpc(
     'query',
     { query, args },
-    { retryAcrossEditorRestart: true },
+    {
+      retryAcrossEditorRestart: true,
+      signal: options.signal,
+    },
   );
   return result?.data;
 }
 
-async function bridgeExecute(command, args = {}, options = {}) {
-  return await rpc('execute', {
+function bridgeExecuteParams(command, args = {}, options = {}) {
+  const params = {
     command,
     args,
     requestId: options.requestId,
     screenshot: Boolean(options.screenshot),
     expectedSceneRevision: options.expectedSceneRevision,
-  });
+  };
+  if (DANGEROUS_AGENT_COMMAND_SET.has(command)) {
+    const approvalToken =
+      options.approvalToken ?? process.env.MENGINE_AGENT_APPROVAL_TOKEN;
+    if (approvalToken != null) {
+      params.approvalToken = approvalToken;
+    }
+  }
+  return params;
+}
+
+async function bridgeExecute(command, args = {}, options = {}) {
+  const longRunning = command === 'build.verify';
+  return await rpc(
+    'execute',
+    bridgeExecuteParams(command, args, options),
+    {
+      timeoutMs: longRunning
+        ? BUILD_ARTIFACT_REQUEST_TIMEOUT_MS
+        : REQUEST_TIMEOUT_MS,
+      signal: options.signal,
+    },
+  );
+}
+
+function closeBridgeConnection() {
+  const connection = activeConnection;
+  activeConnection = null;
+  if (connection?.socket.readyState === WebSocket.OPEN) {
+    connection.socket.close();
+  }
 }
 
 // ── Tool definitions ─────────────────────────────────────────────────────
 
 function textContent(value) {
   return [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }];
+}
+
+function screenshotContent(screenshot, envelope) {
+  if (!screenshot || typeof screenshot !== 'object') {
+    return textContent(envelope);
+  }
+  const { dataUrl, ...metadata } = screenshot;
+  const payload = envelope === undefined
+    ? metadata
+    : envelope && typeof envelope === 'object' && !Array.isArray(envelope)
+      ? { ...envelope, screenshot: metadata }
+      : { result: envelope, screenshot: metadata };
+  const content = textContent(payload);
+  const base64 = typeof dataUrl === 'string' ? dataUrl.split(',')[1] || '' : '';
+  if (base64) {
+    content.push({
+      type: 'image',
+      data: base64,
+      mimeType: screenshot.mime || 'image/png',
+    });
+  }
+  return content;
 }
 
 function schemaTypeMatches(value, expected) {
@@ -571,12 +757,7 @@ function execTool(
             Object.entries(result).filter(([key]) => key !== 'screenshot'),
           )
         : result;
-      const content = textContent(response);
-      if (result?.screenshot?.dataUrl) {
-        const base64 = String(result.screenshot.dataUrl).split(',')[1] || '';
-        content.push({ type: 'image', data: base64, mimeType: result.screenshot.mime || 'image/png' });
-      }
-      return content;
+      return screenshotContent(result?.screenshot, response);
     },
   };
 }
@@ -677,6 +858,87 @@ const WORLD_COMMAND_SCHEMA = {
   ],
 };
 
+const INTENT_SCHEMA = {
+  oneOf: [
+    {
+      type: 'object',
+      properties: {
+        kind: { const: 'SpawnMesh' },
+        mesh: { type: 'string', minLength: 1, maxLength: 1024 },
+        material: { type: 'string', minLength: 1, maxLength: 1024 },
+        at: finiteNumberTuple(3),
+        name: { type: 'string', minLength: 1, maxLength: 1024 },
+      },
+      required: ['kind', 'mesh', 'at'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        kind: { const: 'SetTransform' },
+        entity: ENTITY_ID_SCHEMA,
+        position: finiteNumberTuple(3),
+        rotation: finiteNumberTuple(4),
+        scale: finiteNumberTuple(3),
+      },
+      required: ['kind', 'entity'],
+      additionalProperties: false,
+      anyOf: [
+        { required: ['position'] },
+        { required: ['rotation'] },
+        { required: ['scale'] },
+      ],
+    },
+    {
+      type: 'object',
+      properties: {
+        kind: { const: 'SetClearColor' },
+        color: {
+          type: 'array',
+          minItems: 4,
+          maxItems: 4,
+          items: { type: 'number', minimum: 0, maximum: 1 },
+        },
+      },
+      required: ['kind', 'color'],
+      additionalProperties: false,
+    },
+  ],
+};
+
+const UI_SNAPSHOT_REVISION_SCHEMA = Object.freeze({
+  type: 'string',
+  pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+  maxLength: 64,
+  description: 'Exact snapshotRevision returned with the selector by get_window_ui',
+});
+
+function nonEmptyStringSchema(description) {
+  return {
+    type: 'string',
+    minLength: 1,
+    pattern: '\\S',
+    description,
+  };
+}
+
+function uiInteractionProperties(selectorDescription) {
+  return {
+    windowLabel: { type: 'string', description: 'Window label (default: main)' },
+    selector: { type: 'string', description: selectorDescription },
+    expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
+  };
+}
+
+function uiModifierProperties() {
+  return {
+    shiftKey: { type: 'boolean', description: 'Dispatch with Shift held' },
+    ctrlKey: { type: 'boolean', description: 'Dispatch with Control held' },
+    altKey: { type: 'boolean', description: 'Dispatch with Alt held' },
+    metaKey: { type: 'boolean', description: 'Dispatch with Meta held' },
+  };
+}
+
 const TOOLS = [
   {
     name: 'get_project_state',
@@ -695,9 +957,16 @@ const TOOLS = [
   {
     name: 'get_project_settings',
     description:
-      'Read persisted Project Settings without opening or focusing the settings panel. Returns the ordered Sorting Layers and the exact file revision required for updates.',
+      'Read persisted Project Settings without opening or focusing the settings panel. Returns Tags, named GameObject Layers, ordered Sorting Layers, and the exact file revision required for updates.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('project.settings')),
+  },
+  {
+    name: 'validate_project_scripts',
+    description:
+      'Run the exact PC Player TypeScript checks without emitting files, changing build output, or opening a window. Returns a stable source revision plus bounded structured diagnostics with project-relative file, one-based line/column, TypeScript error code, and message.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('project.script_diagnostics')),
   },
   execTool(
     'open_project',
@@ -769,6 +1038,38 @@ const TOOLS = [
     },
     ['layers', 'expectedRevision'],
   ),
+  execTool(
+    'set_tags_and_layers',
+    'Strictly validate and revision-safely replace the complete Tag and named GameObject Layer lists without opening or focusing a window. Include Untagged and layer 0 Default, then pass the exact revision from get_project_settings.',
+    'project.settings.set_tags_and_layers',
+    {
+      tags: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 64,
+        items: { type: 'string', minLength: 1, maxLength: 64 },
+      },
+      gameLayers: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 32,
+        items: {
+          type: 'object',
+          required: ['index', 'name'],
+          properties: {
+            index: { type: 'integer', minimum: 0, maximum: 31 },
+            name: { type: 'string', minLength: 1, maxLength: 64 },
+          },
+          additionalProperties: false,
+        },
+      },
+      expectedRevision: {
+        type: ['string', 'null'],
+        description: 'Exact current revision, or null only when the file is missing',
+      },
+    },
+    ['tags', 'gameLayers', 'expectedRevision'],
+  ),
   {
     name: 'get_editor_state',
     description:
@@ -804,7 +1105,7 @@ const TOOLS = [
       type: 'object',
       required: ['name'],
       properties: {
-        name: { type: 'string', description: 'Existing scene name, with or without .mscene' },
+        name: nonEmptyStringSchema('Existing scene name, with or without .mscene'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('scene.delete_preview', args)),
@@ -836,7 +1137,7 @@ const TOOLS = [
   {
     name: 'get_editor_events',
     description:
-      'Read cursor-based editor events without foreground polling. Topics cover project lifecycle, scene, selection, mode, logs, panels, builds, and assets. Continue with nextSequence; truncated=true means older events expired.',
+      'Read currently buffered cursor-based editor events. Topics cover project lifecycle, scene, selection, mode, logs, panels, builds, and assets. Continue with nextSequence; truncated=true means older events expired.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -853,11 +1154,17 @@ const TOOLS = [
               'scene.changed',
               'selection.changed',
               'mode.changed',
+              'dialog.changed',
               'log.added',
               'log.cleared',
               'panel.changed',
+              'workspace.changed',
+              'window.changed',
+              'window.types.changed',
+              'menu.changed',
               'view.changed',
               'build.progress',
+              'build.artifacts',
               'build.settings',
               'project.settings',
               'asset.changed',
@@ -875,6 +1182,62 @@ const TOOLS = [
       },
     },
     handler: async (args) => textContent(await bridgeQuery('events.get', args)),
+  },
+  {
+    name: 'wait_for_editor_events',
+    description:
+      'Wait up to 15 seconds for matching editor events instead of polling. Pass the exact cursor from editor state or the previous event page; timedOut=true is a normal empty result. At most 64 waits may be pending; excess requests return RATE_LIMITED with retry guidance.',
+    inputSchema: {
+      type: 'object',
+      required: ['afterSequence'],
+      properties: {
+        afterSequence: {
+          type: 'integer',
+          minimum: 0,
+          description: 'Exact cursor from editor state, get_editor_events, or a previous wait',
+        },
+        topics: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: [
+              'scene.changed',
+              'selection.changed',
+              'mode.changed',
+              'dialog.changed',
+              'log.added',
+              'log.cleared',
+              'panel.changed',
+              'workspace.changed',
+              'window.changed',
+              'window.types.changed',
+              'menu.changed',
+              'view.changed',
+              'build.progress',
+              'build.artifacts',
+              'build.settings',
+              'project.settings',
+              'asset.changed',
+              'project.changed',
+            ],
+          },
+          description: 'Optional topic filter',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 1000,
+          description: 'Maximum events in chronological order (default 100)',
+        },
+        timeoutMs: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 15000,
+          description: 'Maximum wait duration (default 15000)',
+        },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('events.wait', args)),
   },
   {
     name: 'get_entity',
@@ -903,12 +1266,13 @@ const TOOLS = [
   {
     name: 'find_entities',
     description:
-      'Find live scene entities by case-insensitive name substring, exact component type, and/or active state. Returns compact paged records; continue with nextOffset until null, then use get_entity or get_entity_component for values.',
+      'Find live scene entities by case-insensitive name substring, exact component type, and/or active state. Returns compact paged records; continue with nextOffset until null and pass the first page sceneRevision as expectedSceneRevision on every continuation. Scene changes fail with STALE_REVISION instead of returning a torn entity list.',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
-        name: { type: 'string', description: 'Case-insensitive entity name substring' },
-        component: { type: 'string', description: 'Exact component type to require' },
+        name: nonEmptyStringSchema('Case-insensitive entity name substring'),
+        component: nonEmptyStringSchema('Exact component type to require'),
         active: { type: 'boolean', description: 'Filter by active state' },
         limit: {
           type: 'integer',
@@ -922,7 +1286,26 @@ const TOOLS = [
           maximum: 1000000,
           description: 'Zero-based match cursor from the previous page (default 0)',
         },
+        expectedSceneRevision: {
+          type: 'integer',
+          minimum: 0,
+          maximum: Number.MAX_SAFE_INTEGER,
+          description: 'sceneRevision from the first page; required when offset is greater than 0',
+        },
       },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedSceneRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
     },
     handler: async (args) => textContent(await bridgeQuery('entity.find', args)),
   },
@@ -934,7 +1317,7 @@ const TOOLS = [
       required: ['id', 'component'],
       properties: {
         id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
-        component: { type: 'string', description: 'Exact component type' },
+        component: nonEmptyStringSchema('Exact component type'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('entity.get_component', args)),
@@ -956,7 +1339,7 @@ const TOOLS = [
   {
     name: 'take_screenshot',
     description:
-      'Capture a PNG screenshot. target=scene/game captures the rendered viewport; target=window captures an editor window off-screen without activating it, so foreground work is not interrupted. Returns an image for visual verification.',
+      'Capture a bounded PNG screenshot. target=scene/game captures the rendered viewport; target=window captures an editor window off-screen without activating it, so foreground work is not interrupted. Bitmap captures are serialized and rate-limited. Returns an image for visual verification.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -969,19 +1352,61 @@ const TOOLS = [
           type: 'string',
           description: 'For target=window, a label returned by list_windows (default: main)',
         },
+        maxSize: {
+          type: 'integer',
+          minimum: 256,
+          maximum: 4096,
+          description: 'Maximum output width or height in pixels (default: 2048)',
+        },
       },
+      additionalProperties: false,
     },
     handler: async (args) => {
       const target = args.target || 'scene';
+      const maxSize = args.maxSize || 2048;
       const shot =
         target === 'window'
           ? await bridgeQuery('view.window_screenshot', {
               windowLabel: args.windowLabel || 'main',
+              maxSize,
             })
-          : await bridgeQuery('view.screenshot', { target });
-      const base64 = String(shot.dataUrl).split(',')[1] || '';
-      return [{ type: 'image', data: base64, mimeType: shot.mime || 'image/png' }];
+          : await bridgeQuery('view.screenshot', { target, maxSize });
+      return screenshotContent(shot);
     },
+  },
+  {
+    name: 'capture_window_region',
+    description:
+      'Capture only one CSS-pixel rectangle from any editor window without activating it. Coordinates align with element rects returned by get_window_ui, making this the efficient visual-evidence path for a specific panel, field, or control. The complete region must fit inside the current WebView viewport.',
+    inputSchema: {
+      type: 'object',
+      required: ['x', 'y', 'width', 'height'],
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'Window label returned by list_windows (default: main)',
+        },
+        x: { type: 'integer', minimum: 0, maximum: 100000 },
+        y: { type: 'integer', minimum: 0, maximum: 100000 },
+        width: { type: 'integer', minimum: 1, maximum: 100000 },
+        height: { type: 'integer', minimum: 1, maximum: 100000 },
+        maxSize: {
+          type: 'integer',
+          minimum: 256,
+          maximum: 4096,
+          description: 'Maximum output width or height in pixels (default: 2048)',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => screenshotContent(await bridgeQuery('view.capture_region', {
+      windowLabel: args.windowLabel || 'main',
+      x: args.x,
+      y: args.y,
+      width: args.width,
+      height: args.height,
+      maxSize: args.maxSize || 2048,
+    })),
   },
   {
     name: 'list_windows',
@@ -991,11 +1416,49 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
   {
+    name: 'list_editor_window_types',
+    description:
+      'List every registered auxiliary editor window type with its exact typeId, title, default size, and project requirement. Use open_editor_window after a project is ready.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    handler: async () => textContent(await bridgeQuery('window.types')),
+  },
+  {
+    name: 'get_active_dialog',
+    description:
+      'Read the active non-blocking editor alert, confirmation, or prompt with its exact id, full message, labels, and prompt default. Returns null when no editor dialog is open.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'A label returned by list_windows (default: main)',
+        },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('dialog.state', {
+      windowLabel: args.windowLabel || 'main',
+    })),
+  },
+  {
+    name: 'list_active_dialogs',
+    description:
+      'List every active non-blocking alert, confirmation, or prompt across all editor windows, including exact window labels and dialog ids.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    handler: async () => textContent(await bridgeQuery('dialog.list')),
+  },
+  {
     name: 'list_open_documents',
     description:
       'List the current scene and every open resource document with dirty state, active/detached state, and the exact window label to inspect or capture.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('workspace.documents')),
+  },
+  {
+    name: 'list_panels',
+    description:
+      'List every editor panel with its title, active/docked/detached state, stable dock path, exact host window label, and native visibility/focus state. The response retries briefly across detach/dock transitions and reports whether the dock and native-window snapshots agree.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('panel.list')),
   },
   {
     name: 'get_panel_layout',
@@ -1007,9 +1470,10 @@ const TOOLS = [
   {
     name: 'get_window_ui',
     description:
-      'Get one page of a background-safe semantic editor-window snapshot: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Continue with nextOffset until null to retrieve all semantic content without OCR, scrolling, or activating the editor.',
+      'Get one page of a background-safe semantic editor-window snapshot: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Continue with nextOffset until null and pass the first page snapshotRevision as expectedSnapshotRevision on every continuation; stale pages fail instead of skipping or duplicating changed content.',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         windowLabel: {
           type: 'string',
@@ -1027,35 +1491,55 @@ const TOOLS = [
           maximum: 1000000,
           description: 'Zero-based semantic element cursor from the previous page (default: 0)',
         },
+        expectedSnapshotRevision: {
+          type: 'string',
+          pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 64,
+          description: 'snapshotRevision from the first page; required when offset is greater than 0',
+        },
       },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedSnapshotRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
     },
     handler: async (args) =>
       textContent(await bridgeQuery('window.ui_snapshot', {
         windowLabel: args.windowLabel || 'main',
         maxElements: typeof args.maxElements === 'number' ? args.maxElements : 2000,
         offset: typeof args.offset === 'number' ? args.offset : 0,
+        expectedSnapshotRevision: typeof args.expectedSnapshotRevision === 'string'
+          ? args.expectedSnapshotRevision
+          : undefined,
       })),
   },
   {
     name: 'read_window_ui_content',
     description:
-      'Read exact, unnormalized text or value content from one selector returned by get_window_ui. Use nextOffset until null for long or unsaved editor content. Password values are never returned.',
+      'Read exact, unnormalized text, value, or serialized select/datalist options from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
     inputSchema: {
       type: 'object',
-      required: ['selector', 'field'],
+      required: ['selector', 'expectedSnapshotRevision', 'field'],
       properties: {
         windowLabel: {
           type: 'string',
           description: 'A label returned by list_windows (default: main)',
         },
-        selector: {
-          type: 'string',
-          description: 'Exact selector returned by get_window_ui',
-        },
+        selector: nonEmptyStringSchema('Exact selector returned by get_window_ui'),
+        expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
         field: {
           type: 'string',
-          enum: ['text', 'value'],
-          description: 'Exact content source to read',
+          enum: ['text', 'value', 'options'],
+          description: 'Exact text, value, or serialized select/datalist option source to read',
         },
         offset: {
           type: 'integer',
@@ -1069,16 +1553,39 @@ const TOOLS = [
           maximum: 100000,
           description: 'Maximum characters on this page (default: 10000)',
         },
+        expectedContentRevision: {
+          type: 'string',
+          pattern: '^content-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 72,
+          description: 'contentRevision from the first page; required when offset is greater than 0',
+        },
       },
       additionalProperties: false,
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedContentRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
     },
     handler: async (args) =>
       textContent(await bridgeQuery('window.ui_content', {
         windowLabel: args.windowLabel || 'main',
         selector: args.selector,
+        expectedSnapshotRevision: args.expectedSnapshotRevision,
         field: args.field,
         offset: typeof args.offset === 'number' ? args.offset : 0,
         maxChars: typeof args.maxChars === 'number' ? args.maxChars : 10000,
+        expectedContentRevision: typeof args.expectedContentRevision === 'string'
+          ? args.expectedContentRevision
+          : undefined,
       })),
   },
   {
@@ -1105,23 +1612,54 @@ const TOOLS = [
       return textContent(await bridgeQuery('console.get_logs', queryArgs));
     },
   },
+  execTool(
+    'clear_console_logs',
+    'Clear both the structured AgentBridge log buffer and the visible editor Console panel as an idempotent background-safe write.',
+    'console.clear',
+    {},
+    [],
+  ),
   {
-    name: 'clear_console_logs',
+    name: 'get_profiler_samples',
     description:
-      'Clear both the structured AgentBridge log buffer and the visible editor Console panel.',
-    inputSchema: { type: 'object', properties: {} },
-    handler: async () => textContent(await bridgeQuery('console.clear')),
-  },
-  {
-    name: 'list_assets',
-    description:
-      'List the current project asset index with paths, kinds, GUID/meta health, sizes, and optimistic-lock revisions. Supports filters and bounded pages; continue with nextOffset until null.',
+      'Read bounded Scene or Game editor Canvas preview samples plus latest, average, p95, and peak frame/paint metrics. This is editor CPU telemetry, not native Player GPU or memory profiling.',
     inputSchema: {
       type: 'object',
       properties: {
+        source: {
+          type: 'string',
+          enum: ['scene', 'game'],
+          description: 'Viewport source; defaults to game',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 480,
+          description: 'Recent samples to return; defaults to 120',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => textContent(await bridgeQuery('profiler.get_samples', args)),
+  },
+  execTool(
+    'clear_profiler_samples',
+    'Clear Scene and Game editor-profiler samples across every editor window as an idempotent background-safe write.',
+    'profiler.clear',
+    {},
+    [],
+  ),
+  {
+    name: 'list_assets',
+    description:
+      'List the current project asset index with paths, kinds, GUID/meta health, sizes, and optimistic-lock revisions. Supports filters and bounded pages; continue with nextOffset until null and pass the first page indexRevision as expectedIndexRevision on every continuation. Disk or editor changes fail with STALE_REVISION instead of returning a torn index.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
         search: { type: 'string', description: 'Case-insensitive path/name substring' },
         kind: { type: 'string', description: 'Exact asset kind filter' },
-        folder: { type: 'string', description: 'Assets folder prefix, e.g. Assets/Scripts' },
+        folder: nonEmptyStringSchema('Assets folder prefix, e.g. Assets/Scripts'),
         limit: { type: 'integer', minimum: 1, maximum: 5000, description: 'Maximum rows (default 1000)' },
         offset: {
           type: 'integer',
@@ -1129,9 +1667,86 @@ const TOOLS = [
           maximum: 1000000,
           description: 'Zero-based asset cursor from the previous page (default 0)',
         },
+        expectedIndexRevision: {
+          type: 'string',
+          pattern: '^asset-index-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 80,
+          description: 'indexRevision from the first page; required when offset is greater than 0',
+        },
       },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedIndexRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
     },
     handler: async (args) => textContent(await bridgeQuery('asset.list', args)),
+  },
+  {
+    name: 'list_sprites',
+    description:
+      'List stable sprite ids, source texture paths, slice names, source rectangles, pivots, and pixels-per-unit values. Supports filtered revision-safe pages; pass the first spriteRevision on every continuation so changed imports fail with STALE_REVISION instead of returning torn references.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        search: { type: 'string', description: 'Case-insensitive id, name, path, or slice-name substring' },
+        folder: nonEmptyStringSchema('Assets folder prefix'),
+        limit: { type: 'integer', minimum: 1, maximum: 5000, description: 'Maximum rows (default 1000)' },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 1000000,
+          description: 'Zero-based sprite cursor from the previous page (default 0)',
+        },
+        expectedSpriteRevision: {
+          type: 'string',
+          pattern: '^sprite-index-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 80,
+          description: 'spriteRevision from the first page; required when offset is greater than 0',
+        },
+      },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedSpriteRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
+    },
+    handler: async (args) => textContent(await bridgeQuery('sprite.list', args)),
+  },
+  {
+    name: 'get_sprite_import_settings',
+    description:
+      'Read normalized Sprite Editor mode, pixels-per-unit, slices, texture dimensions, and the exact sidecar revision. The revision is null while a texture still uses implicit Single defaults.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['path'],
+      properties: {
+        path: nonEmptyStringSchema(
+          'Sprite-compatible texture path or exact texture#slice reference',
+        ),
+      },
+    },
+    handler: async (args) => textContent(
+      await bridgeQuery('sprite.import_settings', args),
+    ),
   },
   {
     name: 'read_asset_text',
@@ -1141,7 +1756,7 @@ const TOOLS = [
       type: 'object',
       required: ['path'],
       properties: {
-        path: { type: 'string', description: 'Asset path under Assets/' },
+        path: nonEmptyStringSchema('Asset path under Assets/'),
         maxBytes: { type: 'integer', minimum: 1, maximum: 8388608, description: 'Read limit (default 1 MiB)' },
       },
     },
@@ -1155,7 +1770,7 @@ const TOOLS = [
       type: 'object',
       required: ['path'],
       properties: {
-        path: { type: 'string', description: 'Asset path under Assets/' },
+        path: nonEmptyStringSchema('Asset path under Assets/'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.find_references', args)),
@@ -1168,8 +1783,10 @@ const TOOLS = [
       type: 'object',
       required: ['sourcePath', 'destinationPath'],
       properties: {
-        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
-        destinationPath: { type: 'string', description: 'Unused destination path with the same extension' },
+        sourcePath: nonEmptyStringSchema('Existing asset path under Assets/'),
+        destinationPath: nonEmptyStringSchema(
+          'Unused destination path with the same extension',
+        ),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.rename_preview', args)),
@@ -1182,8 +1799,10 @@ const TOOLS = [
       type: 'object',
       required: ['sourcePath', 'destinationPath'],
       properties: {
-        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
-        destinationPath: { type: 'string', description: 'Unused destination path with the same extension' },
+        sourcePath: nonEmptyStringSchema('Existing asset path under Assets/'),
+        destinationPath: nonEmptyStringSchema(
+          'Unused destination path with the same extension',
+        ),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.duplicate_preview', args)),
@@ -1196,7 +1815,7 @@ const TOOLS = [
       type: 'object',
       required: ['sourcePath'],
       properties: {
-        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
+        sourcePath: nonEmptyStringSchema('Existing asset path under Assets/'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.trash_preview', args)),
@@ -1204,9 +1823,45 @@ const TOOLS = [
   {
     name: 'list_asset_trash',
     description:
-      'List recoverable project Trash entries with exact record revisions required by restore_asset.',
-    inputSchema: { type: 'object', properties: {} },
-    handler: async () => textContent(await bridgeQuery('asset.trash_list')),
+      'List recoverable project Trash entries with exact record revisions required by restore_asset. Continuation pages require the first trashRevision so concurrent Trash changes fail instead of returning torn results.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 1000,
+          description: 'Maximum Trash entries (default 100)',
+        },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 1000000,
+          description: 'Zero-based Trash cursor from the previous page (default 0)',
+        },
+        expectedTrashRevision: {
+          type: 'string',
+          pattern: '^asset-trash-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 80,
+          description: 'trashRevision from the first page; required when offset is greater than 0',
+        },
+      },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedTrashRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
+    },
+    handler: async (args) => textContent(await bridgeQuery('asset.trash_list', args)),
   },
   {
     name: 'get_build_settings',
@@ -1223,6 +1878,13 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('build.status')),
   },
   {
+    name: 'get_build_artifact_status',
+    description:
+      'Get the active or most recent asynchronous history-patch, history-restore, or patch-verify job. Poll until status is succeeded or failed; these integrity-sensitive jobs are not cancellable.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('build.artifact_status')),
+  },
+  {
     name: 'get_build_history',
     description: 'Get recent PC build history entries and validation counts.',
     inputSchema: {
@@ -1233,12 +1895,65 @@ const TOOLS = [
     },
     handler: async (args) => textContent(await bridgeQuery('build.history', args)),
   },
+  {
+    name: 'get_build_patches',
+    description:
+      'Get signed automatic and historical build patches, including exact ids, hashes, sizes, signing keys, and whether an archived base is available for verification.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'integer', minimum: 1, maximum: 100, description: 'Maximum patch entries (default 50)' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('build.patches', args)),
+  },
+  {
+    name: 'compare_build_history',
+    description:
+      'Compare two exact build history entries without opening or focusing Build Settings. Returns added, removed, changed, and unchanged packaged files.',
+    inputSchema: {
+      type: 'object',
+      required: ['previousId', 'currentId'],
+      properties: {
+        previousId: nonEmptyStringSchema('Older history id from get_build_history'),
+        currentId: nonEmptyStringSchema('Newer history id from get_build_history'),
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('build.history.compare', args)),
+  },
 
   {
     name: 'list_commands',
     description: 'List every editor command (id, category, description, readOnly) the agent can invoke via the write tools.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('commands.list')),
+  },
+  {
+    name: 'list_queries',
+    description:
+      'List every transport-level read query (id, category, description, readOnly) available through the native WebSocket and one-shot CLI.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('queries.list')),
+  },
+  {
+    name: 'describe_query',
+    description:
+      'Get the complete JSON Schema for one transport-level read query argument object.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id: { type: 'string', minLength: 1, pattern: '\\S', description: 'Exact id returned by list_queries' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('queries.describe', args)),
+  },
+  {
+    name: 'list_intents',
+    description:
+      'List supported high-level editor intents with their complete JSON Schemas before applying one.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('intents.list')),
   },
   {
     name: 'describe_command',
@@ -1248,7 +1963,7 @@ const TOOLS = [
       type: 'object',
       required: ['id'],
       properties: {
-        id: { type: 'string', description: 'Exact id returned by list_commands' },
+        id: nonEmptyStringSchema('Exact id returned by list_commands'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('commands.describe', args)),
@@ -1256,11 +1971,11 @@ const TOOLS = [
   {
     name: 'list_menu_items',
     description:
-      'List registered Unity-style editor menu items with exact path, shortcut, priority, and current enabled state. Optionally filter by root such as Window, Assets, or GameObject.',
+      'List registered Unity-style editor menu items with exact path, shortcut, priority, enabled state, and whether Agent invocation is safe. Foreground-only items include the domain-tool alternative when one exists.',
     inputSchema: {
       type: 'object',
       properties: {
-        root: { type: 'string', description: 'Optional exact root menu name' },
+        root: nonEmptyStringSchema('Optional exact root menu name'),
       },
     },
     handler: async (args) =>
@@ -1296,6 +2011,15 @@ const TOOLS = [
       },
     },
     ['commands'],
+  ),
+  execTool(
+    'apply_intent',
+    'Validate, expand, and atomically apply one supported high-level intent without activating the editor window.',
+    'intent.apply',
+    {
+      intent: INTENT_SCHEMA,
+    },
+    ['intent'],
   ),
   execTool(
     'new_scene',
@@ -1337,6 +2061,59 @@ const TOOLS = [
       overwrite: { type: 'boolean', description: 'Allow replacing that unnamed-scene destination (default false)' },
     },
     [],
+  ),
+  execTool(
+    'save_document',
+    'Save exactly one open dirty resource document by its Assets/... path without saving the scene or any other resource draft. Clean documents return unchanged=true; documents that are not open are rejected.',
+    'workspace.save_document',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact open resource document path returned by list_open_documents',
+      },
+    },
+    ['path'],
+  ),
+  execTool(
+    'discard_document',
+    'Discard exactly one open dirty resource draft by its Assets/... path without changing its file or any other resource draft. Clean documents return unchanged=true; documents that are not open are rejected.',
+    'workspace.discard_document',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact open resource document path returned by list_open_documents',
+      },
+    },
+    ['path'],
+  ),
+  execTool(
+    'reload_document',
+    'Discard one exact resource draft when needed, close that document, and reload its latest disk version in the matching hidden, unfocused resource editor. No other document is changed.',
+    'workspace.reload_document',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact open resource document path returned by list_open_documents',
+      },
+    },
+    ['path'],
+  ),
+  execTool(
+    'close_document',
+    'Close exactly one open resource document by its Assets/... path. Dirty documents are rejected unless dirtyAction explicitly saves or discards that one draft first.',
+    'workspace.close_document',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact open resource document path returned by list_open_documents',
+      },
+      dirtyAction: {
+        type: 'string',
+        enum: ['reject', 'save', 'discard'],
+        description: 'Dirty document policy (default reject)',
+      },
+    },
+    ['path'],
   ),
   execTool(
     'load_scene_json',
@@ -1411,7 +2188,7 @@ const TOOLS = [
   ),
   execTool(
     'open_asset',
-    'Open a supported material, material-instance, shader, animator, avatar-mask, animation, timeline, sprite-compatible texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Refuses to switch away from unsaved resource work.',
+    'Open a supported material, material-instance, shader, animator, avatar-mask, animation, timeline, sprite-compatible texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Refuses when the target host is visible or focused, and returns only after the exact document is active.',
     'asset.open',
     {
       path: {
@@ -1484,6 +2261,71 @@ const TOOLS = [
       },
     },
     ['path', 'contents', 'expectedRevision'],
+  ),
+  execTool(
+    'set_sprite_import_settings',
+    'Apply complete normalized Sprite Editor settings without opening or focusing the editor. Pass the exact revision returned by get_sprite_import_settings, or null only while defaults are implicit. Unsaved resource documents block the write.',
+    'sprite.import_settings.set',
+    {
+      path: {
+        type: 'string',
+        description: 'Sprite-compatible texture path under Assets/',
+      },
+      settings: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['mode', 'pixelsPerUnit', 'slices'],
+        properties: {
+          mode: {
+            type: 'string',
+            enum: ['single', 'multiple'],
+            description: 'Single texture sprite or named multiple slices',
+          },
+          pixelsPerUnit: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            maximum: 100000,
+          },
+          slices: {
+            type: 'array',
+            maxItems: 4096,
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['name', 'rect', 'pivot'],
+              properties: {
+                name: {
+                  type: 'string',
+                  minLength: 1,
+                  maxLength: 64,
+                },
+                rect: {
+                  type: 'array',
+                  minItems: 4,
+                  maxItems: 4,
+                  items: { type: 'integer', minimum: 0 },
+                  description:
+                    'Top-left pixel rectangle [x, y, width, height]',
+                },
+                pivot: {
+                  type: 'array',
+                  minItems: 2,
+                  maxItems: 2,
+                  items: { type: 'number', minimum: 0, maximum: 1 },
+                  description: 'Normalized bottom-left pivot [x, y]',
+                },
+              },
+            },
+          },
+        },
+      },
+      expectedRevision: {
+        type: ['string', 'null'],
+        description:
+          'Exact revision from get_sprite_import_settings, or null while defaults are implicit',
+      },
+    },
+    ['path', 'settings', 'expectedRevision'],
   ),
   execTool(
     'rename_asset',
@@ -1615,6 +2457,53 @@ const TOOLS = [
     ['executable', 'expectedContentHash'],
   ),
   execTool(
+    'run_pc_player',
+    'Launch a validated published Player. This creates a visible application window and may take foreground, so call it only after the user explicitly requests a launch and pass allowForegroundLaunch=true.',
+    'build.run',
+    {
+      executable: {
+        type: 'string',
+        description: 'Published Player executable from a successful build result or current build history',
+      },
+      allowForegroundLaunch: {
+        type: 'boolean',
+        const: true,
+        description: 'Required acknowledgement that the launched Player creates a visible window',
+      },
+    },
+    ['executable', 'allowForegroundLaunch'],
+  ),
+  execTool(
+    'create_build_history_patch',
+    'Start asynchronous creation and verification of a signed patch between two archived builds without opening Build Settings. Poll get_build_artifact_status. Both ids must be compatible signed content archives, and MENGINE_SIGNING_KEY must be configured.',
+    'build.history.create_patch',
+    {
+      previousId: { type: 'string', description: 'Older history id from get_build_history' },
+      currentId: { type: 'string', description: 'Newer history id from get_build_history' },
+    },
+    ['previousId', 'currentId'],
+  ),
+  execTool(
+    'restore_build_history',
+    'Start asynchronous reconstruction of one signed archived build, verify it with an explicit trusted Ed25519 public-key path, and atomically publish it. Poll get_build_artifact_status. The previous published build is preserved on failure.',
+    'build.history.restore',
+    {
+      historyId: { type: 'string', description: 'Signed archived history id from get_build_history' },
+      publicKeyPath: { type: 'string', description: 'Absolute trusted Ed25519 public-key file path' },
+    },
+    ['historyId', 'publicKeyPath'],
+  ),
+  execTool(
+    'verify_build_patch',
+    'Start asynchronous verification of one signed build patch against a matching archived base using an explicit trusted Ed25519 public-key path. Poll get_build_artifact_status. No editor window or native picker is opened.',
+    'build.patch.verify',
+    {
+      patchId: { type: 'string', description: 'Exact patch id from get_build_patches' },
+      publicKeyPath: { type: 'string', description: 'Absolute trusted Ed25519 public-key file path' },
+    },
+    ['patchId', 'publicKeyPath'],
+  ),
+  execTool(
     'create_gameobject',
     'Create a new GameObject with optional components and parent. Returns the new entity id.',
     'entity.create',
@@ -1706,6 +2595,26 @@ const TOOLS = [
     id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     active: { type: 'boolean', description: 'Active flag' },
   }, ['id', 'active']),
+  execTool('set_entities_active', 'Enable or disable entities as one undo transaction.', 'entity.set_actives', {
+    ids: { type: 'array', minItems: 1, maxItems: 256, items: ENTITY_ID_SCHEMA, description: 'Entity ids to activate or deactivate together' },
+    active: { type: 'boolean', description: 'Shared active state' },
+  }, ['ids', 'active']),
+  execTool('set_entity_tag', 'Set an entity classification tag.', 'entity.set_tag', {
+    id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
+    tag: { type: 'string', minLength: 1, maxLength: 64, description: 'Tag value' },
+  }, ['id', 'tag']),
+  execTool('set_entity_tags', 'Set one classification tag on entities as one undo transaction.', 'entity.set_tags', {
+    ids: { type: 'array', minItems: 1, maxItems: 256, items: ENTITY_ID_SCHEMA, description: 'Entity ids whose tags should be changed together' },
+    tag: { type: 'string', minLength: 1, maxLength: 64, description: 'Shared GameObject classification tag' },
+  }, ['ids', 'tag']),
+  execTool('set_entity_layer', 'Set an entity GameObject layer index.', 'entity.set_layer', {
+    id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
+    layer: { type: 'integer', minimum: 0, maximum: 31, description: 'Layer index' },
+  }, ['id', 'layer']),
+  execTool('set_entity_layers', 'Set one GameObject layer on entities as one undo transaction.', 'entity.set_layers', {
+    ids: { type: 'array', minItems: 1, maxItems: 256, items: ENTITY_ID_SCHEMA, description: 'Entity ids whose GameObject layers should be changed together' },
+    layer: { type: 'integer', minimum: 0, maximum: 31, description: 'Shared GameObject layer index' },
+  }, ['ids', 'layer']),
   execTool('reparent_entities', 'Reparent entities under a new parent.', 'entity.reparent', {
     ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to reparent' },
     parent: { type: ['integer', 'null'], minimum: 0, description: 'New parent id (null = root)' },
@@ -1720,20 +2629,63 @@ const TOOLS = [
     type: { type: 'string', description: 'Component type, e.g. MeshRenderer, Rigidbody, AutoRotate' },
     value: { type: 'object', description: 'Initial component value (optional)' },
   }, ['entity', 'type']),
+  execTool('add_component_to_entities', 'Add one component to entities as one undo transaction.', 'component.add_many', {
+    entities: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 256,
+      items: ENTITY_ID_SCHEMA,
+      description: 'Entity ids that should receive the component together',
+    },
+    type: { type: 'string', description: 'Component type, e.g. MeshRenderer, Rigidbody, AutoRotate' },
+    value: { type: 'object', description: 'Optional shared initial value; known components use catalog defaults when omitted' },
+  }, ['entities', 'type']),
   execTool('remove_component', 'Remove a component from an entity.', 'component.remove', {
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type to remove' },
   }, ['entity', 'type']),
+  execTool('remove_component_from_entities', 'Remove one shared component from entities as one undo transaction.', 'component.remove_many', {
+    entities: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 256,
+      items: ENTITY_ID_SCHEMA,
+      description: 'Entity ids that should lose the shared component together',
+    },
+    type: { type: 'string', description: 'Shared component type to remove' },
+  }, ['entities', 'type']),
   execTool('set_component', 'Replace a component value on an entity.', 'component.set', {
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type' },
     value: { type: 'object', description: 'Full component value' },
   }, ['entity', 'type', 'value']),
+  execTool('set_component_on_entities', 'Replace one shared component on entities as one undo transaction.', 'component.set_many', {
+    entities: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 256,
+      items: ENTITY_ID_SCHEMA,
+      description: 'Entity ids whose shared component should be replaced together',
+    },
+    type: { type: 'string', description: 'Shared component type' },
+    value: { type: 'object', description: 'Complete shared component value' },
+  }, ['entities', 'type', 'value']),
   execTool('patch_component', 'Shallow-merge fields into a component on an entity.', 'component.patch', {
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type' },
     patch: { type: 'object', description: 'Fields to merge' },
   }, ['entity', 'type', 'patch']),
+  execTool('patch_component_on_entities', 'Shallow-merge fields into one shared component on entities as one undo transaction.', 'component.patch_many', {
+    entities: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 256,
+      items: ENTITY_ID_SCHEMA,
+      description: 'Entity ids whose shared component should be patched together',
+    },
+    type: { type: 'string', description: 'Shared component type' },
+    patch: { type: 'object', description: 'Shared fields to shallow-merge' },
+  }, ['entities', 'type', 'patch']),
   execTool(
     'invoke_component_method',
     'Invoke one method registered by a Behaviour component. Query get_component_schema first for the exact method list. The edit-mode path is undoable when the method changes serialized fields.',
@@ -1769,6 +2721,46 @@ const TOOLS = [
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     delta: { ...finiteNumberTuple(3), description: 'Local-position delta [x, y, z]' },
   }, ['entity', 'delta']),
+  execTool(
+    'set_rect_transform',
+    'Set exact serialized RectTransform fields as one undoable edit. Omitted fields retain their current values; anchors and pivot are normalized 0..1 tuples.',
+    'rect.set',
+    {
+      entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id with RectTransform' },
+      anchoredPosition: { ...finiteNumberTuple(2), description: '[x, y]' },
+      sizeDelta: { ...finiteNumberTuple(2), description: '[width, height]' },
+      pivot: {
+        ...finiteNumberTuple(2),
+        items: { type: 'number', minimum: 0, maximum: 1 },
+        description: 'Normalized pivot [x, y]',
+      },
+      anchorMin: {
+        ...finiteNumberTuple(2),
+        items: { type: 'number', minimum: 0, maximum: 1 },
+        description: 'Normalized minimum anchor [x, y]',
+      },
+      anchorMax: {
+        ...finiteNumberTuple(2),
+        items: { type: 'number', minimum: 0, maximum: 1 },
+        description: 'Normalized maximum anchor [x, y]',
+      },
+      localRotation: { type: 'number', description: 'Local Z rotation in degrees' },
+      localScale: { ...finiteNumberTuple(2), description: 'Local UI scale [x, y]' },
+    },
+    ['entity'],
+    undefined,
+    {
+      anyOf: [
+        { required: ['anchoredPosition'] },
+        { required: ['sizeDelta'] },
+        { required: ['pivot'] },
+        { required: ['anchorMin'] },
+        { required: ['anchorMax'] },
+        { required: ['localRotation'] },
+        { required: ['localScale'] },
+      ],
+    },
+  ),
   execTool('set_selection', 'Set the selection to the given entity ids.', 'selection.set', {
     ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to select' },
     mode: { type: 'string', enum: ['replace', 'add', 'toggle'], description: 'Selection mode (default replace)' },
@@ -1827,6 +2819,146 @@ const TOOLS = [
     },
     ['resolution'],
   ),
+  execTool(
+    'set_scene_view_preferences',
+    'Persist Scene View editing preferences without raising or focusing the editor. Omitted fields retain their current values and changes propagate to every window in the current editor instance.',
+    'view.set_scene_preferences',
+    {
+      mode2D: {
+        type: 'boolean',
+        description: 'Lock the Scene view to its 2D canvas plane',
+      },
+      gridVisible: {
+        type: 'boolean',
+        description: 'Show the pixel grid while the Scene view is in 2D mode',
+      },
+      smartGuidesEnabled: {
+        type: 'boolean',
+        description: 'Snap RectTransforms to Canvas and sibling guides',
+      },
+      pivotMode: {
+        type: 'string',
+        enum: ['pivot', 'center'],
+        description: 'Place transform handles at the pivot or selection center',
+      },
+      handleOrientation: {
+        type: 'string',
+        enum: ['local', 'global'],
+        description: 'Orient transform handles in local or global axes',
+      },
+      snap: {
+        type: 'object',
+        properties: {
+          enabled: {
+            type: 'boolean',
+            description: 'Enable persistent transform snapping',
+          },
+          move: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            maximum: 1000000,
+            description: 'Move snap increment',
+          },
+          rotate: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            maximum: 1000000,
+            description: 'Rotation snap increment in degrees',
+          },
+          scale: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            maximum: 1000000,
+            description: 'Scale snap increment',
+          },
+        },
+        additionalProperties: false,
+        anyOf: [
+          { required: ['enabled'] },
+          { required: ['move'] },
+          { required: ['rotate'] },
+          { required: ['scale'] },
+        ],
+      },
+    },
+    [],
+    undefined,
+    {
+      anyOf: [
+        { required: ['mode2D'] },
+        { required: ['gridVisible'] },
+        { required: ['smartGuidesEnabled'] },
+        { required: ['pivotMode'] },
+        { required: ['handleOrientation'] },
+        { required: ['snap'] },
+      ],
+    },
+  ),
+  execTool(
+    'set_timeline_preferences',
+    'Persist Animation Timeline and Sequencer editing preferences without raising or focusing the editor. Omitted fields retain their current values and changes propagate to every window in the current editor instance.',
+    'view.set_timeline_preferences',
+    {
+      animationTimeline: {
+        type: 'object',
+        properties: {
+          timeDisplayMode: {
+            type: 'string',
+            enum: ['frames', 'seconds'],
+            description:
+              'Display Animation Timeline time as frames or seconds',
+          },
+          snapping: {
+            type: 'boolean',
+            description:
+              'Snap Animation Timeline keys and events to frame-aligned targets',
+          },
+        },
+        additionalProperties: false,
+        anyOf: [
+          { required: ['timeDisplayMode'] },
+          { required: ['snapping'] },
+        ],
+      },
+      sequencer: {
+        type: 'object',
+        properties: {
+          snapping: {
+            type: 'boolean',
+            description: 'Snap Sequencer clips and markers to editing targets',
+          },
+          rippleMode: {
+            type: 'boolean',
+            description:
+              'Shift the affected track suffix while moving Sequencer items',
+          },
+          inspectorOpen: {
+            type: 'boolean',
+            description: 'Show the Sequencer Inspector',
+          },
+          loopPreview: {
+            type: 'boolean',
+            description: 'Loop the Sequencer edit preview range',
+          },
+        },
+        additionalProperties: false,
+        anyOf: [
+          { required: ['snapping'] },
+          { required: ['rippleMode'] },
+          { required: ['inspectorOpen'] },
+          { required: ['loopPreview'] },
+        ],
+      },
+    },
+    [],
+    undefined,
+    {
+      anyOf: [
+        { required: ['animationTimeline'] },
+        { required: ['sequencer'] },
+      ],
+    },
+  ),
   execTool('play', 'Enter play mode.', 'playback.play', {}, []),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}, []),
   execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}, []),
@@ -1849,12 +2981,12 @@ const TOOLS = [
   execTool('set_gizmo', 'Set the active transform gizmo.', 'gizmo.set', {
     mode: { type: 'string', enum: ['translate', 'rotate', 'scale', 'rect'], description: 'Gizmo mode' },
   }, ['mode']),
-  execTool('focus_panel', 'Activate a docked editor panel by kind without raising or focusing the native editor window. Detached panels remain detached and are not raised.', 'panel.focus', {
+  execTool('focus_panel', 'Activate an editor panel by kind without raising or focusing its native window, and return only after layout state confirms it is active. If activation would change a visible or focused host, the command refuses; already-active panels return unchanged.', 'panel.focus', {
     kind: { ...PANEL_KIND_SCHEMA, description: 'Panel kind' },
   }, ['kind']),
   execTool(
     'detach_panel',
-    'Detach a clean panel into its own hidden, background-observable editor window. The new native window is created with visible=false and focus=false.',
+    'Detach a clean panel into its own hidden, background-observable editor window. Refuses when changing the main layout would disturb a visible or focused window. The new native window is created with visible=false and focus=false.',
     'panel.detach',
     {
       kind: { ...PANEL_KIND_SCHEMA, description: 'Core editor panel kind' },
@@ -1863,7 +2995,7 @@ const TOOLS = [
   ),
   execTool(
     'dock_panel',
-    'Dock a clean detached panel back into the main workspace without raising or focusing either native window.',
+    'Dock a clean detached panel back into the main workspace only while both affected native windows are hidden and unfocused.',
     'panel.dock',
     {
       kind: { ...PANEL_KIND_SCHEMA, description: 'Core editor panel kind' },
@@ -1872,14 +3004,14 @@ const TOOLS = [
   ),
   execTool(
     'reset_panel_layout',
-    'Reset the dock workspace to its default layout. This also closes detached panel windows.',
+    'Reset the dock workspace to its complete default layout only while every affected native window is hidden and unfocused. Already-default layouts return unchanged.',
     'panel.reset_layout',
     {},
     [],
   ),
   execTool(
     'invoke_menu_item',
-    'Invoke a registered Unity-style menu item by the exact path returned by list_menu_items. Menu actions may intentionally open native dialogs or windows; prefer domain-specific tools for background work.',
+    'Invoke an Agent-safe registered menu item by the exact path returned by list_menu_items. Commands requiring foreground input or stricter domain safety are rejected; use the returned agentAlternative domain tool. Editor confirmations remain observable through get_active_dialog.',
     'menu.invoke',
     {
       path: { type: 'string', description: 'Exact registered path, e.g. Window/General/Console' },
@@ -1887,53 +3019,93 @@ const TOOLS = [
     ['path'],
   ),
   execTool(
-    'click_window_ui',
-    'Click an element returned by get_window_ui without activating or raising the editor window. Prefer domain-specific tools when available.',
-    'window.ui_click',
+    'respond_to_dialog',
+    'Accept or cancel the exact active editor dialog without activating or raising its native window. Read get_active_dialog first and pass its current dialogId; prompt values are bounded to 4096 characters.',
+    'dialog.respond',
     {
       windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      dialogId: { type: 'string', description: 'Exact current id from get_active_dialog' },
+      action: { type: 'string', enum: ['accept', 'cancel'] },
+      value: {
+        type: 'string',
+        maxLength: 4096,
+        description: 'Prompt value when accepting a prompt dialog',
+      },
     },
-    ['selector'],
+    ['dialogId', 'action'],
+  ),
+  execTool(
+    'close_editor_window',
+    'Close one exact hidden, unfocused registered auxiliary editor window created by this Agent session. Visible, focused, pre-existing, main, and panel windows are refused so background automation cannot disrupt the user.',
+    'window.close',
+    {
+      windowLabel: {
+        type: 'string',
+        description: 'Exact editor-* label returned by list_windows',
+      },
+    },
+    ['windowLabel'],
+  ),
+  execTool(
+    'open_editor_window',
+    'Open one exact registered auxiliary editor window as a hidden, unfocused native WebView after a project is ready. Reuses an existing window only when it is already hidden and unfocused; never hides, focuses, or claims a foreground window.',
+    'window.open_editor',
+    {
+      typeId: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 256,
+        description: 'Exact typeId returned by list_editor_window_types',
+      },
+    },
+    ['typeId'],
+  ),
+  execTool(
+    'click_window_ui',
+    'Click an element returned by get_window_ui with optional Shift/Control/Alt/Meta modifiers only when its editor window is hidden and unfocused. Prefer domain-specific tools when available.',
+    'window.ui_click',
+    {
+      ...uiInteractionProperties('Exact selector returned by get_window_ui'),
+      ...uiModifierProperties(),
+    },
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'double_click_window_ui',
-    'Double-click an element marked with the doubleClick action by get_window_ui without activating or raising the editor window.',
+    'Double-click an element marked with the doubleClick action by get_window_ui with optional modifiers only when its editor window is hidden and unfocused.',
     'window.ui_double_click',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact selector returned by get_window_ui'),
+      ...uiModifierProperties(),
     },
-    ['selector'],
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'open_window_ui_context_menu',
-    'Open the context menu for an element marked with the contextClick action by get_window_ui without activating or raising the editor window.',
+    'Open the context menu for an element marked with the contextClick action by get_window_ui with optional modifiers only when its editor window is hidden and unfocused.',
     'window.ui_context_click',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact selector returned by get_window_ui'),
+      ...uiModifierProperties(),
     },
-    ['selector'],
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'set_window_ui_value',
-    'Set an input, textarea, select, or contenteditable value returned by get_window_ui without activating the editor window.',
+    'Set an input, textarea, select, or contenteditable value returned by get_window_ui only when its editor window is hidden and unfocused.',
     'window.ui_set_value',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact selector returned by get_window_ui'),
       value: { type: 'string', description: 'New value' },
     },
-    ['selector', 'value'],
+    ['selector', 'expectedSnapshotRevision', 'value'],
   ),
   execTool(
     'scroll_window_ui',
-    'Scroll a container marked with the scroll action by get_window_ui. This is background-safe and enables inspection of virtualized content without foreground input.',
+    'Scroll a container marked with the scroll action by get_window_ui only when its editor window is hidden and unfocused. This enables inspection of virtualized content without foreground input.',
     'window.ui_scroll',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact scrollable selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact scrollable selector returned by get_window_ui'),
       deltaX: {
         type: 'number',
         minimum: -1000000,
@@ -1947,7 +3119,79 @@ const TOOLS = [
         description: 'Vertical CSS-pixel delta',
       },
     },
-    ['selector', 'deltaY'],
+    ['selector', 'expectedSnapshotRevision', 'deltaY'],
+  ),
+  execTool(
+    'drag_window_ui',
+    'Drag a source marked with the dragTo action by get_window_ui onto another semantic element with optional modifiers. The editor window must be hidden and unfocused; the HTML drag events never move the OS cursor.',
+    'window.ui_drag_to',
+    {
+      ...uiInteractionProperties('Exact draggable source selector returned by get_window_ui'),
+      ...uiModifierProperties(),
+      targetSelector: { type: 'string', description: 'Exact drop target selector returned by get_window_ui' },
+    },
+    ['selector', 'expectedSnapshotRevision', 'targetSelector'],
+  ),
+  execTool(
+    'drag_window_ui_by',
+    'Perform a bounded pointer drag with optional modifiers from the center of an element marked with the dragBy action by get_window_ui. The editor window must be hidden and unfocused, and the endpoint must stay inside the same WebView.',
+    'window.ui_drag_by',
+    {
+      ...uiInteractionProperties('Exact pointer-gesture selector returned by get_window_ui'),
+      ...uiModifierProperties(),
+      deltaX: {
+        type: 'number',
+        minimum: -1000000,
+        maximum: 1000000,
+        description: 'Horizontal CSS-pixel displacement; may be zero',
+      },
+      deltaY: {
+        type: 'number',
+        minimum: -1000000,
+        maximum: 1000000,
+        description: 'Vertical CSS-pixel displacement; may be zero',
+      },
+    },
+    ['selector', 'expectedSnapshotRevision', 'deltaX', 'deltaY'],
+  ),
+  execTool(
+    'hover_window_ui',
+    'Hover an element marked with the hover action by get_window_ui only when its editor window is hidden and unfocused. Hover transitions never move the OS cursor.',
+    'window.ui_hover',
+    {
+      ...uiInteractionProperties('Exact hover-capable selector returned by get_window_ui'),
+    },
+    ['selector', 'expectedSnapshotRevision'],
+  ),
+  execTool(
+    'press_window_ui_key',
+    'Press an allow-listed semantic key with optional modifiers on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused.',
+    'window.ui_press_key',
+    {
+      ...uiInteractionProperties('Exact keyboard target selector returned by get_window_ui'),
+      ...uiModifierProperties(),
+      key: {
+        type: 'string',
+        enum: [
+          'Enter',
+          'Escape',
+          'Tab',
+          'Space',
+          'ArrowUp',
+          'ArrowDown',
+          'ArrowLeft',
+          'ArrowRight',
+          'Home',
+          'End',
+          'PageUp',
+          'PageDown',
+          'Backspace',
+          'Delete',
+        ],
+        description: 'Allow-listed semantic key with optional modifier flags',
+      },
+    },
+    ['selector', 'expectedSnapshotRevision', 'key'],
   ),
 ];
 
@@ -1955,6 +3199,97 @@ for (const tool of TOOLS) {
   if (tool.inputSchema.additionalProperties === undefined) {
     tool.inputSchema.additionalProperties = false;
   }
+}
+
+const ADDITIVE_BRIDGE_COMMANDS = new Set([
+  'project.create',
+  'asset.import_file',
+  'asset.create',
+  'asset.instantiate',
+  'prefab.create',
+  'asset.duplicate',
+  'entity.create',
+  'entity.create_typed',
+  'entity.duplicate',
+  'component.add',
+  'component.add_many',
+  'window.open_editor',
+]);
+
+const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
+  'console.clear',
+  'profiler.clear',
+  'project.forget_recent',
+  'project.settings.set_sorting_layers',
+  'project.settings.set_tags_and_layers',
+  'scene.save',
+  'scene.save_all',
+  'workspace.save_document',
+  'workspace.discard_document',
+  'workspace.reload_document',
+  'asset.open',
+  'build.settings.set_scenes',
+  'build.settings.set_asset_policy',
+  'build.cancel',
+  'build.verify',
+  'selection.set',
+  'selection.reveal',
+  'entity.rename',
+  'entity.set_active',
+  'entity.set_actives',
+  'entity.set_tag',
+  'entity.set_tags',
+  'entity.set_layer',
+  'entity.set_layers',
+  'entity.reparent',
+  'entity.reorder',
+  'component.set',
+  'component.set_many',
+  'component.patch',
+  'component.patch_many',
+  'transform.set',
+  'playback.play',
+  'playback.stop',
+  'gizmo.set',
+  'view.frame_selected',
+  'view.set_camera',
+  'view.set_game_resolution',
+  'view.set_scene_preferences',
+  'view.set_timeline_preferences',
+  'sprite.import_settings.set',
+  'panel.focus',
+  'panel.reset_layout',
+  'window.open_editor',
+]);
+
+const OPEN_WORLD_BRIDGE_COMMANDS = new Set([
+  'project.open',
+  'project.create',
+  'asset.import_file',
+  'build.start',
+  'build.verify',
+  'build.run',
+  'build.history.create_patch',
+  'build.history.restore',
+  'build.patch.verify',
+]);
+
+function toolAnnotations(tool) {
+  const bridgeCommand = tool.bridgeCommand;
+  if (typeof bridgeCommand !== 'string') {
+    return {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    };
+  }
+  return {
+    readOnlyHint: false,
+    destructiveHint: !ADDITIVE_BRIDGE_COMMANDS.has(bridgeCommand),
+    idempotentHint: IDEMPOTENT_BRIDGE_COMMANDS.has(bridgeCommand),
+    openWorldHint: OPEN_WORLD_BRIDGE_COMMANDS.has(bridgeCommand),
+  };
 }
 
 function bridgeResource(uri, name, description, query, args = {}) {
@@ -1982,6 +3317,18 @@ const RESOURCES = [
     'project.settings',
   ),
   bridgeResource(
+    'mengine://project/script/diagnostics',
+    'Project Script Diagnostics',
+    'Revisioned TypeScript diagnostics from the exact PC Player compiler settings, without emitted files.',
+    'project.script_diagnostics',
+  ),
+  bridgeResource(
+    'mengine://project/recent',
+    'Recent Projects',
+    'Bounded recent-project list used by the desktop project hub.',
+    'project.recent',
+  ),
+  bridgeResource(
     'mengine://editor/state',
     'Editor State',
     'Current editor, scene revision, selection, playback, history, view, and project summary.',
@@ -2000,10 +3347,46 @@ const RESOURCES = [
     'window.list',
   ),
   bridgeResource(
+    'mengine://editor/window/types',
+    'Editor Window Type Catalog',
+    'Registered auxiliary editor window types available for background-safe creation.',
+    'window.types',
+  ),
+  bridgeResource(
+    'mengine://editor/menus',
+    'Editor Menu Catalog',
+    'Complete Unity-style menu catalog with live enabled state and Agent alternatives.',
+    'menu.list',
+  ),
+  bridgeResource(
+    'mengine://editor/dialogs',
+    'Active Editor Dialogs',
+    'Active non-blocking alerts, confirmations, and prompts across every editor window.',
+    'dialog.list',
+  ),
+  bridgeResource(
     'mengine://editor/documents',
     'Open Resource Documents',
     'Open docked resource editors with dirty and active state.',
     'workspace.documents',
+  ),
+  bridgeResource(
+    'mengine://assets/index',
+    'Project Asset Index',
+    'First bounded revision-safe page of project assets.',
+    'asset.list',
+  ),
+  bridgeResource(
+    'mengine://assets/sprites',
+    'Project Sprite Index',
+    'First bounded revision-safe page of texture and sprite-slice references.',
+    'sprite.list',
+  ),
+  bridgeResource(
+    'mengine://assets/trash',
+    'Project Asset Trash',
+    'Recoverable project asset Trash entries.',
+    'asset.trash_list',
   ),
   bridgeResource(
     'mengine://editor/panels',
@@ -2042,6 +3425,12 @@ const RESOURCES = [
     'commands.list',
   ),
   bridgeResource(
+    'mengine://queries',
+    'Agent Query Catalog',
+    'All supported transport-level read queries with categories and descriptions.',
+    'queries.list',
+  ),
+  bridgeResource(
     'mengine://build/settings',
     'PC Build Settings',
     'Revision-safe scene ordering, content policy, shader policy, and output configuration.',
@@ -2052,6 +3441,24 @@ const RESOURCES = [
     'PC Build Status',
     'Current asynchronous PC build progress and outcome.',
     'build.status',
+  ),
+  bridgeResource(
+    'mengine://build/artifact',
+    'Build Artifact Job Status',
+    'Current asynchronous history patch, restore, or verification job state.',
+    'build.artifact_status',
+  ),
+  bridgeResource(
+    'mengine://build/history',
+    'Build History',
+    'Most recent signed PC build history entries with bounded default pagination.',
+    'build.history',
+  ),
+  bridgeResource(
+    'mengine://build/patches',
+    'Build Patch Inventory',
+    'Most recent signed build patches with bounded default pagination.',
+    'build.patches',
   ),
   bridgeResource(
     'mengine://console/logs',
@@ -2068,20 +3475,574 @@ const RESOURCE_READERS = Object.fromEntries(
   ]),
 );
 
+const EVENT_RESOURCE_URIS = Object.freeze({
+  'project.changed': Object.freeze([
+    'mengine://project/state',
+    'mengine://project/recent',
+    'mengine://editor/state',
+    'mengine://editor/scenes',
+    'mengine://editor/windows',
+    'mengine://editor/window/types',
+    'mengine://editor/menus',
+    'mengine://editor/documents',
+    'mengine://assets/index',
+    'mengine://assets/sprites',
+    'mengine://assets/trash',
+    'mengine://editor/panels',
+    'mengine://scene/snapshot',
+    'mengine://scene/hierarchy',
+    'mengine://scene/selection',
+    'mengine://project/settings',
+    'mengine://project/script/diagnostics',
+    'mengine://build/settings',
+    'mengine://build/status',
+    'mengine://build/artifact',
+    'mengine://build/history',
+    'mengine://build/patches',
+  ]),
+  'scene.changed': Object.freeze([
+    'mengine://editor/state',
+    'mengine://editor/scenes',
+    'mengine://editor/menus',
+    'mengine://scene/snapshot',
+    'mengine://scene/hierarchy',
+  ]),
+  'selection.changed': Object.freeze([
+    'mengine://editor/state',
+    'mengine://editor/menus',
+    'mengine://scene/selection',
+  ]),
+  'mode.changed': Object.freeze([
+    'mengine://editor/state',
+    'mengine://editor/menus',
+  ]),
+  'dialog.changed': Object.freeze(['mengine://editor/dialogs']),
+  'panel.changed': Object.freeze([
+    'mengine://editor/state',
+    'mengine://editor/windows',
+    'mengine://editor/documents',
+    'mengine://editor/panels',
+  ]),
+  'workspace.changed': Object.freeze(['mengine://editor/documents']),
+  'window.changed': Object.freeze(['mengine://editor/windows']),
+  'window.types.changed': Object.freeze(['mengine://editor/window/types']),
+  'menu.changed': Object.freeze(['mengine://editor/menus']),
+  'view.changed': Object.freeze(['mengine://editor/state']),
+  'build.progress': Object.freeze([
+    'mengine://build/status',
+    'mengine://build/artifact',
+  ]),
+  'build.artifacts': Object.freeze([
+    'mengine://build/history',
+    'mengine://build/patches',
+  ]),
+  'build.settings': Object.freeze(['mengine://build/settings']),
+  'project.settings': Object.freeze(['mengine://project/settings']),
+  'asset.changed': Object.freeze([
+    'mengine://project/state',
+    'mengine://editor/scenes',
+    'mengine://editor/documents',
+    'mengine://assets/index',
+    'mengine://assets/sprites',
+    'mengine://assets/trash',
+    'mengine://project/script/diagnostics',
+  ]),
+  'log.added': Object.freeze(['mengine://console/logs']),
+  'log.cleared': Object.freeze(['mengine://console/logs']),
+});
+
+class ResourceSubscriptions {
+  constructor(resourceUris, eventResourceUris, notify) {
+    this.resourceUris = new Set(resourceUris);
+    this.eventResourceUris = eventResourceUris;
+    this.notify = notify;
+    this.subscribed = new Set();
+    this.pending = new Set();
+    this.flushScheduled = false;
+  }
+
+  get hasSubscriptions() {
+    return this.subscribed.size > 0;
+  }
+
+  subscribe(uri) {
+    if (!this.resourceUris.has(uri)) {
+      throw new Error(`Unknown resource: ${String(uri)}`);
+    }
+    this.subscribed.add(uri);
+  }
+
+  unsubscribe(uri) {
+    if (!this.resourceUris.has(uri)) {
+      throw new Error(`Unknown resource: ${String(uri)}`);
+    }
+    if (!this.subscribed.delete(uri)) {
+      throw new Error(`Resource is not subscribed: ${uri}`);
+    }
+    this.pending.delete(uri);
+  }
+
+  invalidateAll() {
+    for (const uri of this.subscribed) this.pending.add(uri);
+    this.scheduleFlush();
+  }
+
+  handleBridgeMessage(message) {
+    if (
+      !message
+      || typeof message !== 'object'
+      || message.jsonrpc !== '2.0'
+      || message.method !== 'event'
+      || typeof message.params?.topic !== 'string'
+    ) return false;
+    const resourceUris = this.eventResourceUris[message.params.topic];
+    if (!resourceUris) return true;
+    for (const uri of resourceUris) {
+      if (this.subscribed.has(uri)) this.pending.add(uri);
+    }
+    this.scheduleFlush();
+    return true;
+  }
+
+  scheduleFlush() {
+    if (this.pending.size === 0 || this.flushScheduled) return;
+    this.flushScheduled = true;
+    queueMicrotask(() => this.flush());
+  }
+
+  flush() {
+    this.flushScheduled = false;
+    const uris = [...this.pending];
+    this.pending.clear();
+    for (const uri of uris) {
+      if (this.subscribed.has(uri)) this.notify(uri);
+    }
+  }
+}
+
+const resourceSubscriptions = new ResourceSubscriptions(
+  RESOURCES.map((resource) => resource.uri),
+  EVENT_RESOURCE_URIS,
+  (uri) => {
+    if (mcpLifecycleState !== 'operational' || inputClosed) return;
+    send({
+      jsonrpc: '2.0',
+      method: 'notifications/resources/updated',
+      params: { uri },
+    });
+  },
+);
+
+const MAX_PROMPT_ARGUMENT_LENGTH = 4_096;
+
+const PROMPTS = Object.freeze([
+  Object.freeze({
+    name: 'create_ui_button',
+    title: 'Create a UI Button',
+    description:
+      'Create and verify a background-safe UI button using current component schemas and revision-guarded domain tools.',
+    arguments: Object.freeze([
+      Object.freeze({
+        name: 'label',
+        title: 'Button Label',
+        description: 'Visible button label (default: Button).',
+      }),
+      Object.freeze({
+        name: 'parentEntity',
+        title: 'Parent Entity',
+        description: 'Optional numeric parent entity id, supplied as a string.',
+      }),
+      Object.freeze({
+        name: 'callback',
+        title: 'Callback',
+        description: 'Optional desired callback behaviour or exact registered component method.',
+      }),
+    ]),
+  }),
+  Object.freeze({
+    name: 'setup_3d_scene',
+    title: 'Set Up a Basic 3D Scene',
+    description:
+      'Create and verify a camera, directional light, and cube without overwriting existing work.',
+    arguments: Object.freeze([
+      Object.freeze({
+        name: 'sceneName',
+        title: 'Scene Name',
+        description: 'Optional new scene name. Existing scenes are never overwritten by this workflow.',
+      }),
+      Object.freeze({
+        name: 'cubeName',
+        title: 'Cube Name',
+        description: 'Optional cube name (default: Cube).',
+      }),
+    ]),
+  }),
+  Object.freeze({
+    name: 'inspect_and_fix',
+    title: 'Inspect and Fix the Current Scene',
+    description:
+      'Inspect semantic state, logs, and background visual evidence, then make the smallest verifiable fix.',
+    arguments: Object.freeze([
+      Object.freeze({
+        name: 'goal',
+        title: 'Inspection Goal',
+        description: 'What should be checked or corrected.',
+        required: true,
+      }),
+    ]),
+  }),
+]);
+
+const AUTONOMOUS_WORKFLOW_PREAMBLE = [
+  'Execute this workflow through the MEngine MCP server without activating, raising, focusing, or otherwise disturbing any editor window.',
+  'Safety and discovery rules:',
+  '1. Read mengine://project/state and mengine://editor/state first. Stop and report the observed state if no project is open or the editor is not ready.',
+  '2. Read mengine://scene/snapshot and mengine://schema/components before editing. Prefer domain tools; use semantic window UI only when no domain tool exists.',
+  '3. Before each revision-sensitive write, use the latest scene revision as expectedSceneRevision. After a successful write, use its returned revision or refresh the snapshot before the next write.',
+  '4. Treat RATE_LIMITED as retryable only after retryAfterMs. Re-read state after UNKNOWN_OUTCOME. Never guess whether a timed-out write succeeded.',
+  '5. Do not discard dirty work, overwrite a scene, delete content, or save changes unless the original user request explicitly authorizes that action.',
+].join('\n');
+
+class PromptInputValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'PromptInputValidationError';
+  }
+}
+
+function promptArgumentValue(args, name, fallback) {
+  const value = args[name];
+  return value == null || value.length === 0 ? fallback : value;
+}
+
+const PROMPT_RENDERERS = Object.freeze({
+  create_ui_button: (args) => {
+    const label = promptArgumentValue(args, 'label', 'Button');
+    const parentEntity = promptArgumentValue(args, 'parentEntity', '<not specified>');
+    const callback = promptArgumentValue(args, 'callback', '<not specified>');
+    return [
+      AUTONOMOUS_WORKFLOW_PREAMBLE,
+      '',
+      'Goal: create one functional UI button and verify both its authored state and rendered appearance.',
+      `Requested label: ${JSON.stringify(label)}`,
+      `Requested parent entity id: ${JSON.stringify(parentEntity)}`,
+      `Requested callback: ${JSON.stringify(callback)}`,
+      '',
+      'Workflow:',
+      '1. Inspect the current selection and scene hierarchy. Read get_component_schema for the UI components actually present; never invent component field names.',
+      '2. Use create_typed with kind "ui_button". It will create required implicit UI parents when needed. If a parent id was supplied, validate it with get_entity and use reparent_entities only after creation.',
+      '3. Inspect the returned entity and its children. Apply the requested label through the exact UI Text schema using patch_component or set_component, preserving unrelated fields.',
+      '4. If a callback was requested, bind it only through a callback/event field or registered component method confirmed by get_component_schema. If the requested binding is unsupported, leave the button intact and report the limitation instead of fabricating a field.',
+      '5. Re-read the created entity and get_scene_changes from the baseline revision. Capture a game screenshot with take_screenshot to confirm the label and layout without bringing the editor forward.',
+      '6. Report created entity ids, component changes, scene revision, screenshot result, and any unsupported callback detail. Do not save unless the original request requires it.',
+    ].join('\n');
+  },
+  setup_3d_scene: (args) => {
+    const sceneName = promptArgumentValue(args, 'sceneName', '<use current scene>');
+    const cubeName = promptArgumentValue(args, 'cubeName', 'Cube');
+    return [
+      AUTONOMOUS_WORKFLOW_PREAMBLE,
+      '',
+      'Goal: create a minimal, inspectable 3D scene containing a Camera, Directional Light, and Cube.',
+      `Requested scene name: ${JSON.stringify(sceneName)}`,
+      `Requested cube name: ${JSON.stringify(cubeName)}`,
+      '',
+      'Workflow:',
+      '1. Read list_scenes and the full scene snapshot. If a new scene name was supplied, call new_scene only when that name does not exist and current dirty work will not be discarded. Never set overwrite or discardDirty for this workflow.',
+      '2. Reuse suitable existing active Camera, Directional Light, or Cube entities when that avoids duplicates. Otherwise create them with create_typed using kinds "camera", "directional_light", and "cube".',
+      '3. Read each created or reused entity. Use set_transform with current expectedSceneRevision to place the camera so the cube is visible, keep the cube near the origin, and orient the light through schema-supported values. Preserve unrelated component fields.',
+      '4. Verify the final entities with get_entity and get_scene_changes from the baseline revision. Capture both scene and game screenshots with take_screenshot; correct only evidence-backed framing or lighting problems.',
+      '5. Report entity ids, whether each entity was reused or created, final revision, and screenshot evidence. Do not save the scene unless the original request explicitly asks for persistence.',
+    ].join('\n');
+  },
+  inspect_and_fix: (args) => [
+    AUTONOMOUS_WORKFLOW_PREAMBLE,
+    '',
+    'Goal: inspect the current editor state and apply only a minimal evidence-backed correction.',
+    `Inspection goal: ${JSON.stringify(args.goal)}`,
+    '',
+    'Workflow:',
+    '1. Record the baseline scene revision. Read the current selection, selected entities and components, recent console logs, and relevant component schemas.',
+    '2. Capture a background-safe scene screenshot. Capture the game view or a bounded whole-window screenshot only when it materially helps diagnose the stated goal.',
+    '3. Explain the observed defect from semantic state, logs, or pixels before changing anything. If no defect is confirmed, make no write and report what was checked.',
+    '4. Apply the smallest domain-tool change that addresses the confirmed cause. Preserve unrelated values and pass the exact current expectedSceneRevision.',
+    '5. Verify with get_scene_changes from the baseline revision, re-read every changed entity/component, review new error logs, and capture the same screenshot target for before/after comparison.',
+    '6. Report the confirmed cause, exact edits, final revision, and verification evidence. Do not save unless the original request explicitly asks for it.',
+  ].join('\n'),
+});
+
+function renderPrompt(name, args = {}) {
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    throw new PromptInputValidationError('prompts/get requires a non-empty name');
+  }
+  const prompt = PROMPTS.find((candidate) => candidate.name === name);
+  if (!prompt) {
+    throw new PromptInputValidationError(`Unknown prompt: ${name}`);
+  }
+  if (!args || typeof args !== 'object' || Array.isArray(args)) {
+    throw new PromptInputValidationError('Prompt arguments must be an object of strings');
+  }
+
+  const argumentMetadata = new Map(
+    (prompt.arguments ?? []).map((argument) => [argument.name, argument]),
+  );
+  for (const argumentName of Object.keys(args)) {
+    if (!argumentMetadata.has(argumentName)) {
+      throw new PromptInputValidationError(
+        `Unknown argument for ${name}: ${argumentName}`,
+      );
+    }
+  }
+  for (const argument of argumentMetadata.values()) {
+    const value = args[argument.name];
+    if (value === undefined) {
+      if (argument.required) {
+        throw new PromptInputValidationError(
+          `Missing required argument for ${name}: ${argument.name}`,
+        );
+      }
+      continue;
+    }
+    if (typeof value !== 'string') {
+      throw new PromptInputValidationError(
+        `Prompt argument ${argument.name} must be a string`,
+      );
+    }
+    if (argument.required && value.trim().length === 0) {
+      throw new PromptInputValidationError(
+        `Prompt argument ${argument.name} must not be empty`,
+      );
+    }
+    if (value.length > MAX_PROMPT_ARGUMENT_LENGTH) {
+      throw new PromptInputValidationError(
+        `Prompt argument ${argument.name} exceeds ${MAX_PROMPT_ARGUMENT_LENGTH} characters`,
+      );
+    }
+  }
+
+  return {
+    description: prompt.description,
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: PROMPT_RENDERERS[prompt.name](args),
+      },
+    }],
+  };
+}
+
 const SERVER_INSTRUCTIONS = [
   'MEngine MCP controls the running editor without activating or raising its native windows.',
-  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, and mengine://commands before editing.',
+  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, mengine://queries, and mengine://commands before editing.',
   'Read tools may run concurrently. Editor writes are serialized in arrival order.',
+  'The MCP adapter bounds active and in-flight requests; RATE_LIMITED includes current capacity and retryAfterMs when a caller should retry later.',
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
-  'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe.',
-  'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. Poll get_events for incremental observation during longer workflows.',
+  'Dangerous scene deletion, asset trash, build, Player launch, and build-artifact commands may return PERMISSION_DENIED when the editor policy is deny or token. Approved adapters forward MENGINE_AGENT_APPROVAL_TOKEN automatically; never place approval tokens in tool arguments or logs.',
+  'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector; stale revisions are rejected before dispatch. Successful UI writes settle two target-window render opportunities and return a postSnapshotRevision when post-action semantic observation succeeds.',
+  'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
+  'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',
+  'MCP hosts may subscribe to any listed mengine:// resource. Editor events emit coalesced notifications/resources/updated invalidations, and a Bridge reconnect invalidates every active subscription so the host can re-read authoritative state.',
 ].join('\n');
 
 // ── MCP stdio protocol ───────────────────────────────────────────────────
 
+class BoundedNdjsonDecoder {
+  constructor(maxLineBytes, { onLine, onOverflow }) {
+    if (!Number.isSafeInteger(maxLineBytes) || maxLineBytes < 1) {
+      throw new Error('maxLineBytes must be a positive safe integer');
+    }
+    this.maxLineBytes = maxLineBytes;
+    this.onLine = onLine;
+    this.onOverflow = onOverflow;
+    this.chunks = [];
+    this.lineBytes = 0;
+    this.discarding = false;
+  }
+
+  write(chunk) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    let start = 0;
+    while (start < buffer.length) {
+      const newline = buffer.indexOf(0x0A, start);
+      const end = newline < 0 ? buffer.length : newline;
+      this.append(buffer.subarray(start, end));
+      if (newline < 0) return;
+      this.finishLine();
+      start = newline + 1;
+    }
+  }
+
+  end() {
+    if (this.discarding) {
+      this.reset();
+      return;
+    }
+    if (this.lineBytes > 0 || this.chunks.length > 0) this.finishLine();
+  }
+
+  append(segment) {
+    if (this.discarding || segment.length === 0) return;
+    if (this.lineBytes + segment.length > this.maxLineBytes) {
+      this.chunks = [];
+      this.lineBytes = 0;
+      this.discarding = true;
+      this.onOverflow(this.maxLineBytes);
+      return;
+    }
+    // Copy the slice so a short unfinished line cannot retain a very large
+    // source chunk after the data callback returns.
+    this.chunks.push(Buffer.from(segment));
+    this.lineBytes += segment.length;
+  }
+
+  finishLine() {
+    if (this.discarding) {
+      this.reset();
+      return;
+    }
+    let line = Buffer.concat(this.chunks, this.lineBytes).toString('utf8');
+    this.reset();
+    if (line.endsWith('\r')) line = line.slice(0, -1);
+    this.onLine(line);
+  }
+
+  reset() {
+    this.chunks = [];
+    this.lineBytes = 0;
+    this.discarding = false;
+  }
+}
+
+class BoundedWriteQueue {
+  constructor(stream, maxQueuedBytes, {
+    onError = () => {},
+    onOverflow = () => {},
+    onStateChange = () => {},
+  } = {}) {
+    if (!Number.isSafeInteger(maxQueuedBytes) || maxQueuedBytes < 1) {
+      throw new Error('maxQueuedBytes must be a positive safe integer');
+    }
+    this.stream = stream;
+    this.maxQueuedBytes = maxQueuedBytes;
+    this.onError = onError;
+    this.onOverflow = onOverflow;
+    this.onStateChange = onStateChange;
+    this.entries = [];
+    this.queuedBytes = 0;
+    this.writing = false;
+  }
+
+  enqueue(value) {
+    const byteLength = Buffer.byteLength(value, 'utf8');
+    if (
+      byteLength > this.maxQueuedBytes
+      || this.queuedBytes + byteLength > this.maxQueuedBytes
+    ) {
+      this.onOverflow({
+        byteLength,
+        queuedBytes: this.queuedBytes,
+        maxQueuedBytes: this.maxQueuedBytes,
+      });
+      return false;
+    }
+    this.entries.push({ value, byteLength });
+    this.queuedBytes += byteLength;
+    this.onStateChange(this);
+    this.flush();
+    return true;
+  }
+
+  get idle() {
+    return !this.writing && this.entries.length === 0;
+  }
+
+  flush() {
+    if (this.writing || this.entries.length === 0) return;
+    this.writing = true;
+    const entry = this.entries[0];
+    const complete = (error) => {
+      if (!this.writing) return;
+      this.writing = false;
+      if (error) {
+        this.entries = [];
+        this.queuedBytes = 0;
+        this.onError(error);
+        this.onStateChange(this);
+        return;
+      }
+      this.entries.shift();
+      this.queuedBytes -= entry.byteLength;
+      this.onStateChange(this);
+      queueMicrotask(() => this.flush());
+    };
+    try {
+      this.stream.write(entry.value, complete);
+    } catch (error) {
+      complete(error);
+    }
+  }
+}
+
+let activeMcpRequests = 0;
+let inputClosed = false;
+let outputFailed = false;
+let mcpExitCode = 0;
+let mcpLifecycleState = 'awaitingInitialize';
+const activeMcpRequestControllers = new Map();
+const seenMcpRequestIds = new Set();
+
+const outputQueue = new BoundedWriteQueue(
+  process.stdout,
+  MAX_MCP_OUTBOUND_QUEUED_BYTES,
+  {
+    onError: (error) => failMcpOutput(
+      `stdout failed: ${error?.message || String(error)}`,
+    ),
+    onOverflow: ({ byteLength, queuedBytes, maxQueuedBytes }) => failMcpOutput(
+      `stdout queue limit exceeded (${byteLength} byte response, `
+        + `${queuedBytes}/${maxQueuedBytes} bytes already queued)`,
+    ),
+    onStateChange: () => {
+      updateMcpInputFlow();
+      maybeFinishMcpProcess();
+    },
+  },
+);
+
+function updateMcpInputFlow() {
+  if (inputClosed) return;
+  if (
+    activeMcpRequests >= MAX_ACTIVE_MCP_REQUESTS
+    || outputQueue.queuedBytes >= MCP_OUTPUT_PAUSE_BYTES
+  ) {
+    process.stdin.pause();
+  } else {
+    process.stdin.resume();
+  }
+}
+
+function failMcpOutput(message) {
+  if (outputFailed) return;
+  outputFailed = true;
+  mcpExitCode = 1;
+  inputClosed = true;
+  process.stderr.write(`[mengine-mcp] fatal: ${message}\n`);
+  process.stdin.destroy();
+  closeBridgeConnection();
+  maybeFinishMcpProcess();
+}
+
+function maybeFinishMcpProcess() {
+  if (!inputClosed || activeMcpRequests > 0 || !outputQueue.idle) return;
+  closeBridgeConnection();
+  process.exit(mcpExitCode);
+}
+
 function send(message) {
-  process.stdout.write(JSON.stringify(message) + '\n');
+  if (outputFailed) return;
+  outputQueue.enqueue(`${JSON.stringify(message)}\n`);
 }
 
 function respond(id, result) {
@@ -2181,17 +4142,51 @@ function toolErrorContent(error) {
   });
 }
 
-async function handleMessage(msg) {
+function initializeParamsError(params) {
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    return 'initialize requires parameters';
+  }
+  if (typeof params.protocolVersion !== 'string' || params.protocolVersion.length === 0) {
+    return 'initialize requires a non-empty protocolVersion';
+  }
+  if (
+    !params.capabilities
+    || typeof params.capabilities !== 'object'
+    || Array.isArray(params.capabilities)
+  ) {
+    return 'initialize requires a capabilities object';
+  }
+  if (
+    !params.clientInfo
+    || typeof params.clientInfo !== 'object'
+    || Array.isArray(params.clientInfo)
+    || typeof params.clientInfo.name !== 'string'
+    || params.clientInfo.name.length === 0
+    || typeof params.clientInfo.version !== 'string'
+    || params.clientInfo.version.length === 0
+  ) {
+    return 'initialize requires clientInfo with non-empty name and version';
+  }
+  return null;
+}
+
+async function handleMessage(msg, signal) {
   const { id, method, params } = msg;
   switch (method) {
     case 'initialize': {
-      if (typeof params?.protocolVersion !== 'string' || params.protocolVersion.length === 0) {
-        respondError(id, -32602, 'initialize requires a non-empty protocolVersion');
+      if (mcpLifecycleState !== 'awaitingInitialize') {
+        respondError(id, -32600, 'MCP session is already initialized');
         return;
       }
+      const paramsError = initializeParamsError(params);
+      if (paramsError) {
+        respondError(id, -32602, paramsError);
+        return;
+      }
+      mcpLifecycleState = 'awaitingInitialized';
       respond(id, {
         protocolVersion: negotiateProtocolVersion(params.protocolVersion),
-        capabilities: { tools: {}, resources: {} },
+        capabilities: { tools: {}, resources: { subscribe: true }, prompts: {} },
         serverInfo: { name: 'mengine-editor', version: '0.1.0' },
         instructions: SERVER_INSTRUCTIONS,
       });
@@ -2199,13 +4194,32 @@ async function handleMessage(msg) {
     }
     case 'notifications/initialized':
     case 'initialized':
+      if (mcpLifecycleState === 'awaitingInitialized') {
+        mcpLifecycleState = 'operational';
+      }
       return; // notification, no response
     case 'ping':
       respond(id, {});
       return;
+    case 'prompts/list':
+      respond(id, { prompts: PROMPTS });
+      return;
+    case 'prompts/get':
+      try {
+        respond(id, renderPrompt(params?.name, params?.arguments ?? {}));
+      } catch (error) {
+        if (!(error instanceof PromptInputValidationError)) throw error;
+        respondError(id, -32602, error.message);
+      }
+      return;
     case 'tools/list':
       respond(id, {
-        tools: TOOLS.map((t) => ({ name: t.name, description: t.description, inputSchema: t.inputSchema })),
+        tools: TOOLS.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema,
+          annotations: toolAnnotations(tool),
+        })),
       });
       return;
     case 'tools/call': {
@@ -2220,8 +4234,10 @@ async function handleMessage(msg) {
         const content = await tool.handler(args, {
           requestId: automaticWriteRequestId(msg),
         });
+        if (signal.aborted) return;
         respond(id, { content, isError: false });
       } catch (error) {
+        if (signal.aborted || error instanceof McpRequestCancelledError) return;
         respond(id, {
           content: toolErrorContent(error),
           isError: true,
@@ -2239,6 +4255,24 @@ async function handleMessage(msg) {
     case 'resources/templates/list':
       respond(id, { resourceTemplates: [] });
       return;
+    case 'resources/subscribe':
+      try {
+        resourceSubscriptions.subscribe(params?.uri);
+        scheduleSubscriptionReconnect(0);
+        respond(id, {});
+      } catch (error) {
+        respondError(id, -32602, error.message);
+      }
+      return;
+    case 'resources/unsubscribe':
+      try {
+        resourceSubscriptions.unsubscribe(params?.uri);
+        cancelSubscriptionReconnectIfIdle();
+        respond(id, {});
+      } catch (error) {
+        respondError(id, -32602, error.message);
+      }
+      return;
     case 'resources/read': {
       const reader = RESOURCE_READERS[params?.uri];
       if (!reader) {
@@ -2247,10 +4281,12 @@ async function handleMessage(msg) {
       }
       try {
         const data = await reader();
+        if (signal.aborted) return;
         respond(id, {
           contents: [{ uri: params.uri, mimeType: 'application/json', text: JSON.stringify(data, null, 2) }],
         });
       } catch (error) {
+        if (signal.aborted || error instanceof McpRequestCancelledError) return;
         respondError(
           id,
           -32603,
@@ -2265,6 +4301,162 @@ async function handleMessage(msg) {
         respondError(id, -32601, `Method not found: ${method}`);
       }
   }
+}
+
+function mcpRequestKey(requestId) {
+  return `${typeof requestId}:${String(requestId)}`;
+}
+
+const MCP_REQUEST_METHODS = new Set([
+  'initialize',
+  'ping',
+  'prompts/list',
+  'prompts/get',
+  'tools/list',
+  'tools/call',
+  'resources/list',
+  'resources/templates/list',
+  'resources/subscribe',
+  'resources/unsubscribe',
+  'resources/read',
+]);
+
+const MCP_NOTIFICATION_METHODS = new Set([
+  'notifications/initialized',
+  'initialized',
+  'notifications/cancelled',
+]);
+
+function admitMcpRequestId(message) {
+  if (!Object.hasOwn(message, 'id')) return true;
+  const requestKey = mcpRequestKey(message.id);
+  if (seenMcpRequestIds.has(requestKey)) {
+    respondError(message.id, -32600, 'Request id was already used in this MCP session');
+    return false;
+  }
+  if (seenMcpRequestIds.size >= MAX_MCP_SESSION_REQUEST_IDS) {
+    respondError(
+      message.id,
+      -32000,
+      'MCP session request-id capacity reached; restart the MCP server',
+      {
+        code: 'RATE_LIMITED',
+        maxSessionRequestIds: MAX_MCP_SESSION_REQUEST_IDS,
+      },
+    );
+    return false;
+  }
+  seenMcpRequestIds.add(requestKey);
+  return true;
+}
+
+function validateMcpMethodEnvelope(message) {
+  const hasRequestId = Object.hasOwn(message, 'id');
+  if (MCP_REQUEST_METHODS.has(message.method) && !hasRequestId) {
+    // A JSON-RPC notification must never receive a response, even when the
+    // method is only valid as an MCP request.
+    return false;
+  }
+  if (MCP_NOTIFICATION_METHODS.has(message.method) && hasRequestId) {
+    respondError(message.id, -32600, `${message.method} must be a notification`);
+    return false;
+  }
+  return true;
+}
+
+function validateMcpLifecycle(message) {
+  if (
+    message.method === 'initialize'
+    || message.method === 'ping'
+    || MCP_NOTIFICATION_METHODS.has(message.method)
+  ) {
+    return true;
+  }
+  if (mcpLifecycleState === 'operational') return true;
+  if (Object.hasOwn(message, 'id')) {
+    respondError(
+      message.id,
+      -32002,
+      mcpLifecycleState === 'awaitingInitialize'
+        ? 'Server not initialized; send initialize first'
+        : 'Server initialization is incomplete; send notifications/initialized',
+      { lifecycleState: mcpLifecycleState },
+    );
+  }
+  return false;
+}
+
+function cancelMcpRequest(message) {
+  if (Object.hasOwn(message, 'id')) return;
+  const requestId = message.params?.requestId;
+  if (typeof requestId !== 'string' && !Number.isSafeInteger(requestId)) return;
+  const entry = activeMcpRequestControllers.get(mcpRequestKey(requestId));
+  if (!entry || entry.method === 'initialize') return;
+  entry.controller.abort();
+  process.stderr.write(
+    `[mengine-mcp] cancelled request ${JSON.stringify(requestId)}\n`,
+  );
+}
+
+function dispatchMcpMessage(msg) {
+  if (!admitMcpRequestId(msg) || !validateMcpMethodEnvelope(msg)) return;
+  if (msg.method === 'notifications/cancelled') {
+    cancelMcpRequest(msg);
+    return;
+  }
+  if (!validateMcpLifecycle(msg)) return;
+  if (activeMcpRequests >= MAX_ACTIVE_MCP_REQUESTS) {
+    if (msg.id !== undefined && msg.id !== null) {
+      respondError(
+        msg.id,
+        -32000,
+        'Too many MCP requests are already active',
+        {
+          code: 'RATE_LIMITED',
+          activeRequests: activeMcpRequests,
+          maxActiveRequests: MAX_ACTIVE_MCP_REQUESTS,
+          retryAfterMs: MCP_RATE_LIMIT_RETRY_AFTER_MS,
+        },
+      );
+    }
+    return;
+  }
+  const hasRequestId = msg.id !== undefined && msg.id !== null;
+  const requestKey = hasRequestId ? mcpRequestKey(msg.id) : null;
+  const controller = new AbortController();
+  if (requestKey) {
+    activeMcpRequestControllers.set(requestKey, {
+      controller,
+      method: msg.method,
+    });
+  }
+  activeMcpRequests += 1;
+  updateMcpInputFlow();
+  mcpRequestContext.run(
+    { signal: controller.signal },
+    () => handleMessage(msg, controller.signal),
+  )
+    .catch((error) => {
+      if (hasRequestId && !controller.signal.aborted) {
+        respondError(
+          msg.id,
+          -32603,
+          String(error?.message || error),
+          structuredError(error),
+        );
+      }
+    })
+    .finally(() => {
+      if (
+        requestKey
+        && activeMcpRequestControllers.get(requestKey)?.controller === controller
+      ) {
+        activeMcpRequestControllers.delete(requestKey);
+      }
+      activeMcpRequests -= 1;
+      updateMcpInputFlow();
+      maybeFinishMcpProcess();
+    });
 }
 
 function stableJson(value) {
@@ -2296,8 +4488,7 @@ function automaticWriteRequestId(message) {
 async function main() {
   process.stderr.write('[mengine-mcp] ready; editor bridge connects on first read or write\n');
 
-  const rl = readline.createInterface({ input: process.stdin, terminal: false });
-  rl.on('line', (line) => {
+  const consumeLine = (line) => {
     const trimmed = line.trim();
     if (!trimmed) return;
     let msg;
@@ -2314,18 +4505,35 @@ async function main() {
       });
       return;
     }
-    handleMessage(msg).catch((error) => {
-      if (msg.id !== undefined && msg.id !== null) {
-        respondError(
-          msg.id,
-          -32603,
-          String(error?.message || error),
-          structuredError(error),
-        );
-      }
-    });
+    dispatchMcpMessage(msg);
+  };
+  const decoder = new BoundedNdjsonDecoder(MAX_MCP_INPUT_LINE_BYTES, {
+    onLine: consumeLine,
+    onOverflow: (maxLineBytes) => respondError(
+      null,
+      -32600,
+      'Invalid Request',
+      {
+        reason: `Request line exceeds the ${maxLineBytes} byte limit`,
+        maxLineBytes,
+      },
+    ),
   });
-  rl.on('close', () => process.exit(0));
+  process.stdin.on('data', (chunk) => decoder.write(chunk));
+  process.stdin.on('end', () => {
+    decoder.end();
+    inputClosed = true;
+    maybeFinishMcpProcess();
+  });
+  process.stdin.on('error', (error) => {
+    mcpExitCode = 1;
+    process.stderr.write(
+      `[mengine-mcp] stdin failed: ${error?.message || String(error)}\n`,
+    );
+    inputClosed = true;
+    maybeFinishMcpProcess();
+  });
+  process.stdin.resume();
 }
 
 const launchedAsMain =
@@ -2341,12 +4549,26 @@ if (launchedAsMain) {
 
 export {
   BridgeOutcomeUnknownError,
+  EVENT_RESOURCE_URIS,
   RESOURCES,
+  ResourceSubscriptions,
   SERVER_INSTRUCTIONS,
+  PROMPTS,
+  BoundedNdjsonDecoder,
+  BoundedWriteQueue,
+  bridgeExecuteParams,
+  bridgeExecute,
+  bridgeQuery,
+  closeBridgeConnection,
+  DANGEROUS_AGENT_COMMANDS,
   incomingMessageError,
   negotiateProtocolVersion,
+  rpcOnce,
+  renderPrompt,
   SUPPORTED_PROTOCOL_VERSIONS,
+  screenshotContent,
   structuredError,
+  toolAnnotations,
   ToolInputValidationError,
   TOOLS,
   validateToolArguments,

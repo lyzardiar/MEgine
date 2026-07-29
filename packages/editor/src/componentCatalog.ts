@@ -1,7 +1,7 @@
 import { getBehaviour, listBehaviours } from '@mengine/behaviour';
-import { defaultRectTransform, stretchRectTransform } from './ui/rectLayout';
-import { createGridComponent, createTilemapComponent } from './tilemapModel';
-import { createEnvironmentLightComponent } from './environmentLightModel';
+import { defaultRectTransform, stretchRectTransform } from './ui/rectLayout.ts';
+import { createGridComponent, createTilemapComponent } from './tilemapModel.ts';
+import { createEnvironmentLightComponent } from './environmentLightModel.ts';
 
 /** Built-in (non-Behaviour) components for Add Component menu. */
 export type ComponentCatalogEntry = {
@@ -634,6 +634,19 @@ export function componentRequirements(type: string): readonly string[] {
   const behaviour = getBehaviour(type);
   if (behaviour) return behaviour.requires;
   return BUILTIN_CATALOG.find((entry) => entry.type === type)?.requires ?? [];
+}
+
+export function componentRemovalBlockers(
+  components: Readonly<Record<string, unknown>>,
+  type: string,
+): string[] {
+  return Object.keys(components)
+    .filter((candidate) => (
+      candidate !== type
+      && components[candidate] != null
+      && componentRequirements(candidate).includes(type)
+    ))
+    .sort((left, right) => left.localeCompare(right));
 }
 
 export function createUiCanvasComponents(): Record<string, unknown> {

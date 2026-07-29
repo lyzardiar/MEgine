@@ -41,12 +41,56 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     64,
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['project.settings.set_tags_and_layers'].required,
+    ['tags', 'gameLayers', 'expectedRevision'],
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['project.settings.set_tags_and_layers'].properties.gameLayers.maxItems,
+    32,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['entity.set_layer'].properties.layer.maximum,
+    31,
+  );
+  for (const command of ['entity.set_actives', 'entity.set_tags', 'entity.set_layers']) {
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.ids.minItems, 1);
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.ids.maxItems, 256);
+  }
+  assert.equal(COMMAND_PARAMS_SCHEMAS['component.add_many'].properties.entities.minItems, 1);
+  assert.equal(COMMAND_PARAMS_SCHEMAS['component.add_many'].properties.entities.maxItems, 256);
+  assert.equal(COMMAND_PARAMS_SCHEMAS['component.remove_many'].properties.entities.minItems, 1);
+  assert.equal(COMMAND_PARAMS_SCHEMAS['component.remove_many'].properties.entities.maxItems, 256);
+  for (const command of ['component.set_many', 'component.patch_many']) {
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.entities.minItems, 1);
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.entities.maxItems, 256);
+  }
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['scene.load_json'].required,
     ['json'],
   );
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['asset.open'].required,
     ['path'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['workspace.save_document'].required,
+    ['path'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['workspace.discard_document'].required,
+    ['path'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['workspace.reload_document'].required,
+    ['path'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['workspace.close_document'].required,
+    ['path'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['workspace.close_document'].properties.dirtyAction.enum,
+    ['reject', 'save', 'discard'],
   );
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['asset.create'].required,
@@ -94,12 +138,28 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['kind'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['build.run'].required,
+    ['executable', 'allowForegroundLaunch'],
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['build.run'].properties.allowForegroundLaunch.const,
+    true,
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['asset.write_text'].required,
     ['path', 'contents', 'expectedRevision'],
   );
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['batch.apply'].properties.commands.maxItems,
     256,
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['intent.apply'].required,
+    ['intent'],
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['intent.apply'].properties.intent.oneOf.length,
+    3,
   );
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['entity.create_typed'].properties.kind.enum,
@@ -112,6 +172,45 @@ test('command schemas expose exact high-risk guards and shared optimistic option
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['transform.translate'].properties.delta.maxItems,
     3,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences'].anyOf.length,
+    6,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences']
+      .properties.snap.anyOf.length,
+    4,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences']
+      .properties.snap.properties.move.exclusiveMinimum,
+    0,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_timeline_preferences'].anyOf.length,
+    2,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_timeline_preferences']
+      .properties.animationTimeline.anyOf.length,
+    2,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_timeline_preferences']
+      .properties.sequencer.anyOf.length,
+    4,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['sprite.import_settings.set']
+      .properties.settings.properties.slices.maxItems,
+    4_096,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['sprite.import_settings.set']
+      .properties.settings.properties.slices.items
+      .properties.rect.maxItems,
+    4,
   );
   assert.equal(
     COMMAND_EXECUTION_OPTIONS_SCHEMA.properties.expectedSceneRevision.minimum,

@@ -6,6 +6,7 @@ import {
   instantiableAssetTarget,
   isAgentCreatableAssetKind,
   materialDocumentKind,
+  resourceEditorPreservesDrafts,
   resourceEditorTarget,
 } from '../src/agent/resourceTargets.ts';
 
@@ -37,6 +38,22 @@ test('resource targets preserve logical subtypes hosted by shared editor panels'
   assert.equal(animatorDocumentKind('Assets/Movement.mcontroller'), 'animator');
   assert.equal(materialDocumentKind('Assets/Metal.minst'), 'material-instance');
   assert.equal(materialDocumentKind('Assets/Metal.mmat'), 'material');
+});
+
+test('only resource editors with cached-document state permit dirty background switching', () => {
+  for (const kind of [
+    'animation',
+    'animator',
+    'avatar-mask',
+    'material',
+    'material-instance',
+    'shader',
+    'timeline',
+  ]) {
+    assert.equal(resourceEditorPreservesDrafts(kind), true, kind);
+  }
+  assert.equal(resourceEditorPreservesDrafts('sprite'), false);
+  assert.equal(resourceEditorPreservesDrafts('sprite-atlas'), false);
 });
 
 test('creatable authored resource kinds are stable and self-validating', () => {

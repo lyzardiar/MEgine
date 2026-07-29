@@ -34,6 +34,7 @@ import {
   Play,
   Plus,
   Redo2,
+  RefreshCw,
   Repeat2,
   Save,
   Square,
@@ -47,7 +48,13 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerCloseDocumentParticipant,
+  registerDiscardDocumentParticipant,
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import type {
   EditorUndoCheckpoint,
   EditorUndoService,
@@ -74,9 +81,16 @@ import {
   type TimelineTrackGroup,
 } from '../timelineAsset';
 import {
+  broadcastProjectAssetsChanged,
   openTimelineAsset,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
+import {
+  dropChangedCleanDrafts,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
 import { clearAudioWaveforms } from '../audioWaveform';
 import {
   parseAnimationClip,
@@ -91,6 +105,13 @@ import {
   buildTimelineScenePreview,
   type TimelineScenePreview,
 } from '../timelineScenePreview';
+import {
+  initializeTimelineEditorPreferencesEvents,
+  readTimelineEditorPreferences,
+  TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+  updateTimelineEditorPreferences,
+  type TimelineEditorPreferencesChangeDetail,
+} from '../timelineEditorPreferences';
 import { AudioWaveform } from './AudioWaveform';
 import {
   TimelineAudioPreviewController,
@@ -140,10 +161,6 @@ import {
   type SequencerTrackDropTarget,
 } from '../sequencerEditing';
 
-const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
-const SEQUENCER_RIPPLE_KEY = 'mengine.sequencer.ripple';
-const SEQUENCER_INSPECTOR_KEY = 'mengine.sequencer.inspector';
-const SEQUENCER_LOOP_PREVIEW_KEY = 'mengine.sequencer.loop_preview';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
 const EMPTY_PREVIEW_ANIMATION_CLIPS: ReadonlyMap<string, AnimationClip> = new Map();
 const EMPTY_PREVIEW_CONTROL_ASSETS: ReadonlyMap<string, TimelineAsset> = new Map();
@@ -157,38 +174,6 @@ const EMPTY_AUDIO_PREVIEW_STATUS: TimelineAudioPreviewStatus = {
 function clampTimelineAudioFades(clip: TimelineAudioClip): void {
   clip.fade_in = Math.max(0, Math.min(clip.duration, clip.fade_in));
   clip.fade_out = Math.max(0, Math.min(clip.duration, clip.fade_out));
-}
-
-function loadSequencerSnapping(): boolean {
-  try {
-    return localStorage.getItem(SEQUENCER_SNAPPING_KEY) !== '0';
-  } catch {
-    return true;
-  }
-}
-
-function loadSequencerRipple(): boolean {
-  try {
-    return localStorage.getItem(SEQUENCER_RIPPLE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function loadSequencerInspector(): boolean {
-  try {
-    return localStorage.getItem(SEQUENCER_INSPECTOR_KEY) !== '0';
-  } catch {
-    return true;
-  }
-}
-
-function loadSequencerLoopPreview(): boolean {
-  try {
-    return localStorage.getItem(SEQUENCER_LOOP_PREVIEW_KEY) === '1';
-  } catch {
-    return false;
-  }
 }
 
 function safeName(raw: string): string {
@@ -212,7 +197,7 @@ export async function createProjectTimeline(
   const path = uniqueTimelinePath(safe);
   await writeProjectAssetText(path, serializeTimelineAsset(createTimelineAsset(safe)));
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   if (open) openTimelineAsset(path);
   return path;
 }
@@ -245,6 +230,7 @@ export type SequencerProps = {
   onClearPreview: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -334,13 +320,22 @@ export function Sequencer(props: SequencerProps) {
   const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [payloadInvalid, setPayloadInvalid] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [snapping, setSnapping] = useState(loadSequencerSnapping);
-  const [rippleMode, setRippleMode] = useState(loadSequencerRipple);
-  const [inspectorOpen, setInspectorOpen] = useState(loadSequencerInspector);
-  const [loopPreview, setLoopPreview] = useState(loadSequencerLoopPreview);
+  const [snapping, setSnapping] = useState(
+    () => readTimelineEditorPreferences().sequencer.snapping,
+  );
+  const [rippleMode, setRippleMode] = useState(
+    () => readTimelineEditorPreferences().sequencer.rippleMode,
+  );
+  const [inspectorOpen, setInspectorOpen] = useState(
+    () => readTimelineEditorPreferences().sequencer.inspectorOpen,
+  );
+  const [loopPreview, setLoopPreview] = useState(
+    () => readTimelineEditorPreferences().sequencer.loopPreview,
+  );
   const [previewRange, setPreviewRange] = useState<SequencerPreviewRange>({ start: 0, end: 5 });
   const [draggingPreviewEdge, setDraggingPreviewEdge] = useState<SequencerPreviewRangeEdge | null>(null);
   const [panning, setPanning] = useState(false);
@@ -358,7 +353,7 @@ export function Sequencer(props: SequencerProps) {
   const [previewControlLoadKey, setPreviewControlLoadKey] = useState('');
   const [previewWarning, setPreviewWarning] = useState<string | null>(null);
   const [previewAssetEpoch, setPreviewAssetEpoch] = useState(0);
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const loadedPath = useRef('');
   const drafts = useRef(new Map<string, Draft>());
   const assetRef = useRef<TimelineAsset | null>(null);
@@ -378,6 +373,9 @@ export function Sequencer(props: SequencerProps) {
   const panDrag = useRef<{ pointerId: number; clientX: number; scrollLeft: number } | null>(null);
   const trackDragCleanup = useRef<(() => void) | null>(null);
   const previewDuration = useRef(5);
+  const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   const audioPreviewController = useMemo(
     () => new TimelineAudioPreviewController(setAudioPreviewStatus),
     [],
@@ -556,15 +554,57 @@ export function Sequencer(props: SequencerProps) {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
 
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'timeline',
+    'timeline',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, sequencerDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
   useEffect(() => {
-    const clear = () => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
+
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    setPlaying(false);
+    audioPreviewController.invalidate();
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
+
+  useEffect(() => {
+    const clear = (event: Event) => {
       clearAudioWaveforms();
       audioPreviewController.invalidate();
       setPreviewAssetEpoch((value) => value + 1);
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        sequencerDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`timeline:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
+      if (
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
+      ) return;
+      if (dirty) {
+        setError(
+          'Timeline changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
     };
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
     return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
-  }, [audioPreviewController]);
+  }, [audioPreviewController, dirty, props.assetPath]);
 
   useEffect(() => {
     audioPreviewController.activate();
@@ -691,6 +731,8 @@ export function Sequencer(props: SequencerProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const activeTransaction = inspectorEdit.current;
     if (
       activeTransaction?.historyToken
@@ -715,7 +757,12 @@ export function Sequencer(props: SequencerProps) {
     setTrackDragVisual(null);
     setGroupDragVisual(null);
     const previous = loadedPath.current;
-    if (previous && asset) {
+    const closingPrevious = sameSaveDocumentPath(previous, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previous!);
+    }
+    if (previous && asset && !forceReload && !closingPrevious) {
       drafts.current.set(previous, {
         asset: structuredClone(asset), savedText, time,
         selection: selection ? { ...selection } : null,
@@ -723,6 +770,7 @@ export function Sequencer(props: SequencerProps) {
         selectedTrackIds: [...selectedTrackIds],
         previewRange: { ...previewRange },
       });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath ?? '';
     setPlaying(false);
@@ -740,7 +788,8 @@ export function Sequencer(props: SequencerProps) {
     setError(null);
     setPayloadInvalid(false);
     if (!props.assetPath) return () => { cancelled = true; };
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       const restoredAsset = structuredClone(draft.asset);
@@ -761,7 +810,7 @@ export function Sequencer(props: SequencerProps) {
       return () => { cancelled = true; };
     }
     setLoading(true);
-    void readProjectAssetText(props.assetPath)
+    void readProjectAssetText(props.assetPath, { replaceWriteBaseline: true })
       .then((text) => {
         if (cancelled) return;
         const loaded = parseTimelineAsset(text);
@@ -777,7 +826,7 @@ export function Sequencer(props: SequencerProps) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   useEffect(() => {
     if (!asset) return;
@@ -965,6 +1014,12 @@ export function Sequencer(props: SequencerProps) {
       setSavedText(text);
       drafts.current.delete(props.assetPath);
       await refreshProjectFiles();
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
       return true;
@@ -973,6 +1028,38 @@ export function Sequencer(props: SequencerProps) {
       setError(message);
       props.onLog(`Timeline 保存失败：${message}`, 'error');
       return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Timeline could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !sequencerDraftDirty(entry[1])) {
+      throw new Error(`No dirty Timeline draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      validateTimelineAsset(draft.asset);
+      const text = serializeTimelineAsset(draft.asset);
+      await writeProjectAssetText(draftPath, text);
+      drafts.current.set(draftPath, {
+        ...draft,
+        asset: parseTimelineAsset(text),
+        savedText: text,
+      });
+      await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
     } finally {
       setSaving(false);
     }
@@ -992,12 +1079,62 @@ export function Sequencer(props: SequencerProps) {
           asset: parseTimelineAsset(text),
           savedText: text,
         });
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
       }
       setDraftEpoch((value) => value + 1);
       await refreshProjectFiles();
       props.onAssetsChanged();
     };
   }), [anyDirty, asset, dirty, payloadInvalid, props.assetPath, savedText]);
+  useEffect(() => registerSaveDocumentParticipant('Timelines', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && sequencerDraftDirty(draft)
+      ? () => saveDocument(path)
+      : null;
+  }), [asset, dirty, draftEpoch, payloadInvalid, props.assetPath, savedText, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Timelines', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`timeline:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !sequencerDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`timeline:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Timelines', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`timeline:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onClose();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`timeline:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onClose, saving]);
 
   useEffect(() => {
     if (!props.previewEnabled || !playing || !asset) return;
@@ -2475,6 +2612,39 @@ export function Sequencer(props: SequencerProps) {
     };
   }, [props.undoService]);
 
+  useEffect(() => {
+    initializeTimelineEditorPreferencesEvents();
+    const applyPreferences = (
+      preferences: TimelineEditorPreferencesChangeDetail['preferences'],
+    ) => {
+      const next = preferences.sequencer;
+      if (rippleMode !== next.rippleMode) finishKeyboardNudge();
+      if (inspectorOpen && !next.inspectorOpen) finishInspectorEdit();
+      if (snapping && !next.snapping) setSnapGuide(null);
+      setSnapping(next.snapping);
+      setRippleMode(next.rippleMode);
+      setInspectorOpen(next.inspectorOpen);
+      setLoopPreview(next.loopPreview);
+    };
+    const onPreferencesChanged = (event: Event) => {
+      applyPreferences(
+        (event as CustomEvent<TimelineEditorPreferencesChangeDetail>)
+          .detail.preferences,
+      );
+    };
+    window.addEventListener(
+      TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+      onPreferencesChanged,
+    );
+    applyPreferences(readTimelineEditorPreferences());
+    return () => {
+      window.removeEventListener(
+        TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+        onPreferencesChanged,
+      );
+    };
+  }, [inspectorOpen, props.undoService, rippleMode, snapping]);
+
   if (!props.assetPath) return null;
   if (!asset) {
     return (
@@ -2755,13 +2925,9 @@ export function Sequencer(props: SequencerProps) {
     revealPreviewRangeEdge(edge);
   };
   const toggleLoopPreview = () => {
-    const next = !loopPreview;
-    setLoopPreview(next);
-    try {
-      localStorage.setItem(SEQUENCER_LOOP_PREVIEW_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateTimelineEditorPreferences({
+      sequencer: { loopPreview: !loopPreview },
+    });
   };
   const toggleEditPlayback = () => {
     void audioPreviewController.unlock();
@@ -2820,34 +2986,19 @@ export function Sequencer(props: SequencerProps) {
     });
   };
   const toggleSnapping = () => {
-    const next = !snapping;
-    setSnapping(next);
-    if (!next) setSnapGuide(null);
-    try {
-      localStorage.setItem(SEQUENCER_SNAPPING_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateTimelineEditorPreferences({
+      sequencer: { snapping: !snapping },
+    });
   };
   const toggleRippleMode = () => {
-    finishKeyboardNudge();
-    const next = !rippleMode;
-    setRippleMode(next);
-    try {
-      localStorage.setItem(SEQUENCER_RIPPLE_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateTimelineEditorPreferences({
+      sequencer: { rippleMode: !rippleMode },
+    });
   };
   const toggleInspector = () => {
-    const next = !inspectorOpen;
-    if (!next) finishInspectorEdit();
-    setInspectorOpen(next);
-    try {
-      localStorage.setItem(SEQUENCER_INSPECTOR_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateTimelineEditorPreferences({
+      sequencer: { inspectorOpen: !inspectorOpen },
+    });
   };
   const beginTrackPan = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 1) return;
@@ -2959,7 +3110,19 @@ export function Sequencer(props: SequencerProps) {
           }, group.locked ? 'Unlock Timeline Track Group' : 'Lock Timeline Track Group')}
         ><Lock size={11} /></button>
       </div>
-      <div className="sequencer-lane sequencer-group-lane" onClick={() => applySelection({ track: -1, marker: null, groupId: group.id })}>
+      <div
+        className="sequencer-lane sequencer-group-lane"
+        role="button"
+        tabIndex={0}
+        aria-label={`${group.name} group lane`}
+        aria-pressed={selection?.groupId === group.id}
+        onClick={() => applySelection({ track: -1, marker: null, groupId: group.id })}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          applySelection({ track: -1, marker: null, groupId: group.id });
+        }}
+      >
         <span>{group.track_ids.length} track{group.track_ids.length === 1 ? '' : 's'}{selectedHeaderCount > 0 ? ` · ${selectedHeaderCount} track${selectedHeaderCount === 1 ? '' : 's'} selected` : ''}{selectedItemCount > 0 ? ` · ${selectedItemCount} item${selectedItemCount === 1 ? '' : 's'} selected` : ''}{group.solo ? ' · SOLO' : ''}{group.muted ? ' · MUTED' : ''}{group.locked ? ' · LOCKED' : ''}</span>
         {snapGuide != null && <i className="sequencer-snap-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }} />}
         <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
@@ -2971,6 +3134,7 @@ export function Sequencer(props: SequencerProps) {
     <div
       className={`timeline-panel sequencer-panel${trackDragVisual || groupDragVisual ? ' track-dragging' : ''}`}
       tabIndex={0}
+      aria-label="Sequencer workspace"
       onPointerDownCapture={(event) => {
         finishKeyboardNudge();
         const target = event.target as HTMLElement;
@@ -3121,6 +3285,7 @@ export function Sequencer(props: SequencerProps) {
           <button type="button" className={`timeline-icon-button sequencer-inspector-toggle${inspectorOpen ? ' active' : ''}`} aria-label={inspectorOpen ? 'Hide Timeline Inspector' : 'Show Timeline Inspector'} title={inspectorOpen ? 'Hide Timeline Inspector' : 'Show Timeline Inspector'} onClick={toggleInspector}>
             {inspectorOpen ? <PanelRightClose size={13} /> : <PanelRightOpen size={13} />}
           </button>
+          <button type="button" className="timeline-icon-button" aria-label="Reload Timeline" title="Reload Timeline from disk" disabled={loading || saving} onClick={reloadFromDisk}><RefreshCw size={14} /></button>
           <button type="button" className="timeline-icon-button" aria-label="Save Timeline" title={saving ? 'Saving' : 'Save Timeline (Ctrl+S)'} disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /></button>
           <button type="button" className="timeline-icon-button" aria-label="Back to Animation Clip editor" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
         </div>
@@ -3221,6 +3386,7 @@ export function Sequencer(props: SequencerProps) {
             <div className="sequencer-track-header">Tracks</div>
             <div
               className="sequencer-ruler"
+              aria-label="Scrub Sequencer time ruler"
               onPointerDown={(event) => {
                 if (event.button !== 0) return;
                 rulerScrubPointer.current = event.pointerId;
@@ -3359,13 +3525,19 @@ export function Sequencer(props: SequencerProps) {
                   onClick={() => update((draft) => { draft.tracks[trackIndex].muted = !draft.tracks[trackIndex].muted; }, track.muted ? 'Unmute Timeline Track' : 'Mute Timeline Track')}
                 >M</button>
               </div>
-              <div className="sequencer-lane" onDoubleClick={(event) => {
-                if (event.target !== event.currentTarget) return;
-                const bounds = event.currentTarget.getBoundingClientRect();
-                const markerTime = snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset);
-                scrub(markerTime);
-                addTrackItem(trackIndex, markerTime);
-              }} onPointerDown={(event) => startMarquee(event, trackIndex)}>
+              <div
+                className="sequencer-lane"
+                role="group"
+                aria-label={`${track.name} ${track.type} lane`}
+                onDoubleClick={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  const bounds = event.currentTarget.getBoundingClientRect();
+                  const markerTime = snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset);
+                  scrub(markerTime);
+                  addTrackItem(trackIndex, markerTime);
+                }}
+                onPointerDown={(event) => startMarquee(event, trackIndex)}
+              >
                 {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
                 {track.type === 'signal' && track.markers.map((marker, markerIndex) => (
                   <button

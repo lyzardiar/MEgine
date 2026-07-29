@@ -6,6 +6,7 @@ import {
   subscribeMenuItems,
   type MenuItemContext,
 } from '../editorWindow';
+import { moveMenuItemFocus } from '../menuKeyboardNavigation';
 import { PopupMenuItems } from './PopupMenu';
 
 export type CtxAction =
@@ -104,8 +105,19 @@ export function HierarchyContextMenu(props: {
       className="hier-ctx popup-menu"
       style={position}
       role="menu"
+      aria-label="Hierarchy context menu"
       onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(event) => {
+        if (moveMenuItemFocus(event.currentTarget, event.target, event.key)) {
+          event.preventDefault();
+          event.stopPropagation();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          onCloseRef.current();
+        }
+      }}
     >
       <Item action="cut" label="Cut" hint="Ctrl+X" disabled={!props.hasSelection} />
       <Item action="copy" label="Copy" hint="Ctrl+C" disabled={!props.hasSelection} />
@@ -114,16 +126,16 @@ export function HierarchyContextMenu(props: {
       <Item action="rename" label="Rename" hint="F2" disabled={!props.hasSelection} />
       <Item action="duplicate" label="Duplicate" hint="Ctrl+D" disabled={!props.hasSelection} />
       <Item action="delete" label="Delete" hint="Del" disabled={!props.hasSelection} />
-      <div className="sep" />
+      <div className="sep" role="separator" />
       <PopupMenuItems
         entries={gameObjectItems}
         context={props.menuContext}
         onSelect={props.onClose}
       />
-      <div className="sep" />
+      <div className="sep" role="separator" />
       <Item action="selectChildren" label="Select Children" disabled={!props.hasSelection} />
       <Item action="frame" label="Frame Selected" hint="F" disabled={!props.hasSelection} />
-      <div className="sep" />
+      <div className="sep" role="separator" />
       <Item action="expandAll" label="Expand All" />
       <Item action="collapseAll" label="Collapse All" />
     </div>

@@ -12,6 +12,7 @@ import {
 import { cursorPosition, getCurrentWindow } from '@tauri-apps/api/window';
 import {
   CORE_PANEL_IDS,
+  PANEL_TITLES,
   closeAllDetachedPanelWindows,
   closeDetachedPanelWindow,
   createPanelChannel,
@@ -71,33 +72,24 @@ export type DockPanelContents = Omit<Record<PanelKind, ReactNode>, 'scene' | 'ga
 
 const LAYOUT_KEY = 'mengine.dock.layout.v4';
 
-const PANEL_TITLE: Record<PanelKind, string> = {
-  hierarchy: 'Hierarchy',
-  scene: 'Scene',
-  game: 'Game',
-  inspector: 'Inspector / Property',
-  project: 'Project',
-  console: 'Console',
-  profiler: 'Profiler',
-  timeline: 'Timeline',
-  animator: 'Animator',
-  material: 'Material',
-  shader: 'Surface Shader',
-  spriteEditor: 'Sprite Editor',
-  spriteAtlas: 'Sprite Atlas',
-  build: 'Build Settings',
-  projectSettings: 'Project Settings',
-};
-
 const ALL_PANELS: PanelKind[] = [...CORE_PANEL_IDS];
 
 CORE_PANEL_IDS.forEach((panel, index) => {
   registerMenuItem(
-    `Window/General/${PANEL_TITLE[panel]}`,
-    () => {
-      window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: panel }));
+    `Window/General/${PANEL_TITLES[panel]}`,
+    (context) => {
+      window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
+        detail: {
+          panel,
+          activateWindow: context.source !== 'agent',
+        },
+      }));
     },
-    { priority: 100 + index },
+    {
+      priority: 100 + index,
+      agentInvokable: false,
+      agentAlternative: 'focus_panel',
+    },
   );
 });
 
@@ -106,15 +98,28 @@ registerMenuItem(
   () => {
     window.dispatchEvent(new CustomEvent(RESET_DOCK_LAYOUT_EVENT));
   },
-  { priority: 850 },
+  {
+    priority: 850,
+    agentInvokable: false,
+    agentAlternative: 'reset_panel_layout',
+  },
 );
 
 registerMenuItem(
   'Edit/Project Settings...',
-  () => {
-    window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'projectSettings' }));
+  (context) => {
+    window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
+      detail: {
+        panel: 'projectSettings',
+        activateWindow: context.source !== 'agent',
+      },
+    }));
   },
-  { priority: 900 },
+  {
+    priority: 900,
+    agentInvokable: false,
+    agentAlternative: 'focus_panel',
+  },
 );
 
 let _idSeq = 0;
@@ -614,6 +619,7 @@ function saveTree(tree: DockNode) {
 
 function Splitter(props: {
   direction: 'horizontal' | 'vertical';
+  label: string;
   onDrag: (delta: number) => void;
 }) {
   const dragging = useRef(false);
@@ -645,6 +651,7 @@ function Splitter(props: {
   return (
     <div
       className={`dock-splitter ${props.direction}`}
+      aria-label={props.label}
       onMouseDown={(e) => {
         e.preventDefault();
         dragging.current = true;
@@ -710,6 +717,7 @@ function DockLeaf(props: {
   return (
     <div
       className="dock-pane"
+      aria-label={`Dock ${node.panels.map((panel) => PANEL_TITLES[panel]).join(', ')} drop target`}
       ref={frameRef}
       data-dock-leaf-id={node.id}
       onDragOver={(e) => {
@@ -729,16 +737,23 @@ function DockLeaf(props: {
       }}
     >
       <div className={`dock${isDropHere ? ' dock-drop-target' : ''}`}>
-        <div className="dock-tabs">
+        <div className="dock-tabs" role="tablist" aria-label="Dock panels">
           {node.panels.map((kind) => {
             const dirty = props.dirtyPanels.has(kind);
+            const tabId = `dock-tab-${node.id}-${kind}`;
+            const panelId = `dock-panel-${node.id}-${kind}`;
             return (
               <button
                 key={kind}
+                id={tabId}
                 type="button"
+                role="tab"
+                aria-selected={active === kind}
+                aria-controls={panelId}
+                data-agent-drag-by="true"
                 className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}${dirty ? ' dirty' : ''}`}
                 title={dirty
-                  ? `Save ${PANEL_TITLE[kind]} before moving or detaching it`
+                  ? `Save ${PANEL_TITLES[kind]} before moving or detaching it`
                   : '拖到面板中间=叠页签；拖到边缘=上下左右拆分'}
                 onClick={(event) => {
                   if (suppressClick.current) {
@@ -806,7 +821,7 @@ function DockLeaf(props: {
                   if (current?.started) props.onDragEnd();
                 }}
               >
-                {PANEL_TITLE[kind]}{dirty ? ' *' : ''}
+                {PANEL_TITLES[kind]}{dirty ? ' *' : ''}
               </button>
             );
           })}
@@ -815,9 +830,9 @@ function DockLeaf(props: {
               type="button"
               className="dock-popout"
               title={props.dirtyPanels.has(active)
-                ? `Save ${PANEL_TITLE[active]} before detaching it`
-                : `Open ${PANEL_TITLE[active]} as a native window`}
-              aria-label={`Detach ${PANEL_TITLE[active]}`}
+                ? `Save ${PANEL_TITLES[active]} before detaching it`
+                : `Open ${PANEL_TITLES[active]} as a native window`}
+              aria-label={`Detach ${PANEL_TITLES[active]}`}
               disabled={props.dirtyPanels.has(active)}
               onClick={() => props.onDetach(active)}
             >
@@ -828,13 +843,19 @@ function DockLeaf(props: {
         <div className="dock-content">
           {node.panels.map((panel) => {
             if (!dockPanelShouldMount(panel, active, mountedPanels)) return null;
+            const tabId = `dock-tab-${node.id}-${panel}`;
+            const panelId = `dock-panel-${node.id}-${panel}`;
             return (
               <div
                 key={panel}
+                id={panelId}
                 className={`dock-panel-slot${active === panel ? '' : ' hidden'}`}
+                role="tabpanel"
+                aria-label={`${PANEL_TITLES[panel]} panel`}
+                aria-labelledby={tabId}
                 aria-hidden={active !== panel}
               >
-                <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLE[panel]}…</div>}>
+                <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLES[panel]}…</div>}>
                   {props.panelContent(panel)}
                 </Suspense>
               </div>
@@ -901,6 +922,11 @@ function DockNodeView(props: {
       </div>
       <Splitter
         direction={horizontal ? 'horizontal' : 'vertical'}
+        label={`Resize dock split between ${
+          [...collectPanels(node.a)].map((panel) => PANEL_TITLES[panel]).join(', ')
+        } and ${
+          [...collectPanels(node.b)].map((panel) => PANEL_TITLES[panel]).join(', ')
+        }`}
         onDrag={(delta) => {
           const box = boxRef.current;
           if (!box) return;
@@ -1011,8 +1037,11 @@ export function DockWorkspace(props: {
   useEffect(() => {
     if (props.detachedPanel) return;
     const resetLayout = () => {
-      void closeAllDetachedPanelWindows();
-      setTree(defaultTree());
+      void closeAllDetachedPanelWindows()
+        .then(() => setTree(defaultTree()))
+        .catch((error) => {
+          console.error('Failed to close detached panels before resetting layout', error);
+        });
     };
     window.addEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);
     return () => window.removeEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);
@@ -1234,13 +1263,17 @@ export function DockWorkspace(props: {
   if (props.detachedPanel) {
     const detachedDirty = props.dirtyPanels?.has(props.detachedPanel) ?? false;
     return (
-      <div className="dock-workspace detached-panel-workspace">
+      <div
+        className="dock-workspace detached-panel-workspace"
+        role="region"
+        aria-label={`${PANEL_TITLES[props.detachedPanel]} panel`}
+      >
         <div className="detached-dock-header">
           <button
             type="button"
             className="detached-dock-drag"
             title={detachedDirty
-              ? `Save ${PANEL_TITLE[props.detachedPanel]} before moving it`
+              ? `Save ${PANEL_TITLES[props.detachedPanel]} before moving it`
               : '拖回主窗口中的目标区域即可重新停靠'}
             disabled={detachedDirty}
             onPointerDown={(event) => {
@@ -1249,14 +1282,14 @@ export function DockWorkspace(props: {
               void dragDetachedPanelWindow(props.detachedPanel!);
             }}
           >
-            <span className="detached-dock-tab">{PANEL_TITLE[props.detachedPanel]}</span>
+            <span className="detached-dock-tab">{PANEL_TITLES[props.detachedPanel]}</span>
           </button>
           <div className="detached-dock-controls">
             <button
               type="button"
               className="detached-dock-return"
               title={detachedDirty
-                ? `Save ${PANEL_TITLE[props.detachedPanel]} before docking it`
+                ? `Save ${PANEL_TITLES[props.detachedPanel]} before docking it`
                 : '停靠回主窗口'}
               aria-label="停靠回主窗口"
               disabled={detachedDirty}
@@ -1290,7 +1323,7 @@ export function DockWorkspace(props: {
           </div>
         </div>
         <div className="detached-panel-content">
-          <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLE[props.detachedPanel]}…</div>}>
+          <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLES[props.detachedPanel]}…</div>}>
             {panelContent(props.detachedPanel)}
           </Suspense>
         </div>

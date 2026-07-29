@@ -1765,7 +1765,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
   function normalizeSortingLayers(value: unknown) {
     const source = value && typeof value === 'object'
-      ? value as { version?: unknown; layers?: unknown }
+      ? value as { version?: unknown; layers?: unknown; tags?: unknown; gameLayers?: unknown }
       : null;
     if (source?.version !== 1) {
       throw new Error(`unsupported sorting layer version ${String(source?.version)}`);
@@ -1794,7 +1794,63 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       layers.push({ id, name });
     }
     if (!ids.has('default')) layers.unshift({ id: 'default', name: 'Default' });
-    return { version: 1 as const, layers };
+    if (layers.length > 64) {
+      throw new Error('sorting layers must contain at most 64 entries including Default');
+    }
+
+    const rawTags = source.tags ?? ['Untagged'];
+    if (!Array.isArray(rawTags) || rawTags.length > 64) {
+      throw new Error('tags must contain at most 64 entries');
+    }
+    const tagNames = new Set<string>();
+    const tags: string[] = [];
+    for (const entry of rawTags) {
+      let tag = typeof entry === 'string' ? entry.trim() : '';
+      if (!tag || [...tag].length > 64) throw new Error(`invalid tag name '${tag}'`);
+      const key = tag.toLocaleLowerCase();
+      if (key === 'untagged') tag = 'Untagged';
+      if (tagNames.has(key)) throw new Error(`duplicate tag '${tag}'`);
+      tagNames.add(key);
+      tags.push(tag);
+    }
+    const defaultTagIndex = tags.findIndex((tag) => tag.toLocaleLowerCase() === 'untagged');
+    if (defaultTagIndex < 0) {
+      tags.unshift('Untagged');
+    } else if (defaultTagIndex > 0) {
+      tags.splice(defaultTagIndex, 1);
+      tags.unshift('Untagged');
+    }
+    if (tags.length > 64) {
+      throw new Error('tags must contain at most 64 entries including Untagged');
+    }
+
+    const rawGameLayers = source.gameLayers ?? [{ index: 0, name: 'Default' }];
+    if (!Array.isArray(rawGameLayers) || rawGameLayers.length > 32) {
+      throw new Error('GameObject layers must contain at most 32 entries');
+    }
+    const gameLayerIndices = new Set<number>();
+    const gameLayerNames = new Set<string>();
+    const gameLayers: Array<{ index: number; name: string }> = [];
+    for (const entry of rawGameLayers) {
+      if (!entry || typeof entry !== 'object') throw new Error('invalid GameObject layer entry');
+      const candidate = entry as { index?: unknown; name?: unknown };
+      const index = Number(candidate.index);
+      let name = typeof candidate.name === 'string' ? candidate.name.trim() : '';
+      if (!Number.isInteger(index) || index < 0 || index >= 32) {
+        throw new Error(`invalid GameObject layer index '${String(candidate.index)}'`);
+      }
+      if (index === 0) name = 'Default';
+      const nameKey = name.toLocaleLowerCase();
+      if (!name || [...name].length > 64) throw new Error(`invalid GameObject layer name '${name}'`);
+      if (gameLayerIndices.has(index)) throw new Error(`duplicate GameObject layer index '${index}'`);
+      if (gameLayerNames.has(nameKey)) throw new Error(`duplicate GameObject layer name '${name}'`);
+      gameLayerIndices.add(index);
+      gameLayerNames.add(nameKey);
+      gameLayers.push({ index, name });
+    }
+    if (!gameLayerIndices.has(0)) gameLayers.push({ index: 0, name: 'Default' });
+    gameLayers.sort((a, b) => a.index - b.index);
+    return { version: 1 as const, layers, tags, gameLayers };
   }
 
   function readSortingLayers() {
@@ -1805,7 +1861,12 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     const sortingLayersPath = resolveSortingLayersPath(false);
     if (!sortingLayersPath || !fs.existsSync(sortingLayersPath)) {
       return {
-        settings: { version: 1 as const, layers: [{ id: 'default', name: 'Default' }] },
+        settings: {
+          version: 1 as const,
+          layers: [{ id: 'default', name: 'Default' }],
+          tags: ['Untagged'],
+          gameLayers: [{ index: 0, name: 'Default' }],
+        },
         revision: null,
       };
     }

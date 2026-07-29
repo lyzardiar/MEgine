@@ -74,6 +74,8 @@ import {
   type AssetTrashPlan,
 } from '../assetTrash';
 import { broadcastProjectAssetsChanged } from '../assetEditorEvents';
+import { confirmEditor } from '../editorDialog';
+import { moveMenuItemFocus } from '../menuKeyboardNavigation';
 
 const STATIC_FOLDERS = [
   'Assets',
@@ -186,11 +188,28 @@ export function Project(props: {
   } | null>(null);
   const lastClick = useRef<{ key: string; t: number }>({ key: '', t: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const referenceRequest = useRef(0);
   const renameRequest = useRef(0);
   const duplicateRequest = useRef(0);
   const trashRequest = useRef(0);
+
+  useEffect(() => {
+    if (!ctx) return;
+    const closeOnPointerDown = (event: PointerEvent) => {
+      if (!contextMenuRef.current?.contains(event.target as Node)) setCtx(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setCtx(null);
+    };
+    window.addEventListener('pointerdown', closeOnPointerDown, true);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('pointerdown', closeOnPointerDown, true);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [ctx]);
 
   useEffect(() => {
     void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
@@ -422,13 +441,19 @@ export function Project(props: {
     });
   };
 
-  const requestDeleteScene = (name: string) => {
+  const requestDeleteScene = async (name: string) => {
     setCtx(null);
     if (name === props.activeScene) {
       props.onLog?.('The active scene cannot be deleted. Open another scene first.', 'warn');
       return;
     }
-    if (!window.confirm(`Delete ${sceneFileName(name)} permanently? This cannot be undone.`)) {
+    if (!await confirmEditor(
+      `Delete ${sceneFileName(name)} permanently? This cannot be undone.`,
+      {
+        title: 'Delete Scene',
+        confirmLabel: 'Delete Permanently',
+      },
+    )) {
       return;
     }
     void Promise.resolve(props.onDeleteScene(name)).then((ok) => {
@@ -908,13 +933,22 @@ export function Project(props: {
   };
 
   return (
-    <div className="project-layout" ref={rootRef} tabIndex={0}>
-      <div className="project-tree">
+    <div className="project-layout" ref={rootRef} tabIndex={0} aria-label="Project browser">
+      <div className="project-tree" role="tree" aria-label="Project folders">
         {folders.map((f) => (
           <div
             key={f}
             className={`row${folder === f ? ' active' : ''}`}
+            role="treeitem"
+            tabIndex={0}
+            aria-label={f}
+            aria-selected={folder === f}
             onClick={() => setFolder(f)}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              setFolder(f);
+            }}
           >
             <Folder size={13} strokeWidth={1.6} aria-hidden="true" />
             <span>{f.replace('Assets/', '') || 'Assets'}</span>
@@ -927,6 +961,8 @@ export function Project(props: {
         </div>
         <div
           className={`project-grid${draggingFiles ? ' file-drop-active' : ''}`}
+          role="region"
+          aria-label={`${folder} contents`}
           onContextMenu={(event) => {
             event.preventDefault();
             setCtx({ x: event.clientX, y: event.clientY, asset: null });
@@ -983,6 +1019,8 @@ export function Project(props: {
               role="button"
               tabIndex={0}
               aria-label={`${a.name} (${a.kind})`}
+              data-agent-blocked-actions={a.kind === 'script' ? 'doubleClick keyPress' : undefined}
+              data-agent-alternative={a.kind === 'script' ? 'read_asset_text' : undefined}
               draggable={
                 a.kind === 'sprite'
                 || a.kind === 'spine'
@@ -1087,6 +1125,7 @@ export function Project(props: {
               {isEditing ? (
                 <input
                   className="asset-rename"
+                  aria-label={`Rename ${a.name}`}
                   autoFocus
                   value={editValue}
                   onClick={(e) => e.stopPropagation()}
@@ -1127,14 +1166,30 @@ export function Project(props: {
       {ctx &&
         createPortal(
           <div
+            ref={contextMenuRef}
             className="hier-ctx"
             style={{ left: ctx.x, top: ctx.y }}
+            role="menu"
+            aria-label={ctx.asset ? `${ctx.asset.name} asset context menu` : `${folder} context menu`}
             onPointerDown={(e) => e.stopPropagation()}
+            onKeyDown={(event) => {
+              if (moveMenuItemFocus(event.currentTarget, event.target, event.key)) {
+                event.preventDefault();
+                event.stopPropagation();
+              } else if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                setCtx(null);
+              }
+            }}
           >
             {!ctx.asset && (
               <>
                 <button
                   type="button"
+                  role="menuitem"
+                  data-agent-interaction="blocked"
+                  data-agent-alternative="import_asset_file"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1146,6 +1201,7 @@ export function Project(props: {
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1161,6 +1217,7 @@ export function Project(props: {
               <>
                 <button
                   type="button"
+                  role="menuitem"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1172,6 +1229,7 @@ export function Project(props: {
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1187,6 +1245,7 @@ export function Project(props: {
               <>
                 <button
                   type="button"
+                  role="menuitem"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1198,6 +1257,7 @@ export function Project(props: {
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1208,6 +1268,7 @@ export function Project(props: {
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   disabled={ctx.asset.sceneName === props.activeScene}
                   title={ctx.asset.sceneName === props.activeScene
                     ? 'Open another scene before deleting the active scene'
@@ -1226,6 +1287,7 @@ export function Project(props: {
               <>
                 <button
                   type="button"
+                  role="menuitem"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1236,6 +1298,7 @@ export function Project(props: {
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1246,6 +1309,7 @@ export function Project(props: {
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1259,6 +1323,7 @@ export function Project(props: {
             {ctx.asset && ctx.asset.assetPath && (
               <button
                 type="button"
+                role="menuitem"
                 onPointerDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -1268,8 +1333,8 @@ export function Project(props: {
                 Find References
               </button>
             )}
-            <div className="sep" />
-            <button type="button" onPointerDown={() => setCtx(null)}>
+            <div className="sep" role="separator" />
+            <button type="button" role="menuitem" onPointerDown={() => setCtx(null)}>
               Cancel
             </button>
           </div>,
@@ -1656,6 +1721,7 @@ export function Project(props: {
               <button
                 type="button"
                 aria-label="Close asset Trash preview"
+                autoFocus
                 disabled={assetTrash.applying}
                 onClick={closeAssetTrash}
               >×</button>
@@ -1797,6 +1863,7 @@ export function Project(props: {
               <button
                 type="button"
                 aria-label="Close project Trash"
+                autoFocus
                 disabled={trashBrowser.restoring != null}
                 onClick={() => setTrashBrowser(null)}
               >×</button>

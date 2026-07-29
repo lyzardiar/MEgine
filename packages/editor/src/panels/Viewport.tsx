@@ -113,10 +113,16 @@ import type { SpineCanvasRuntime, SpineDrawResult } from '../spine/spineCanvasRu
 import {
   EMPTY_SNAP_ACCUMULATOR,
   advanceSnap,
-  normalizeSceneSnapSettings,
   type SceneSnapSettings,
   type SnapAccumulator,
 } from '../sceneSnap';
+import {
+  initializeSceneViewPreferencesEvents,
+  readSceneViewPreferences,
+  SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+  updateSceneViewPreferences,
+  type SceneViewPreferencesChangeDetail,
+} from '../sceneViewPreferences';
 import {
   marqueeHitIds,
   normalizeMarquee,
@@ -193,51 +199,6 @@ import {
   invalidateEnvironmentPreviews,
   type EnvironmentBackground,
 } from '../environmentPreview';
-
-const SCENE_2D_KEY = 'mengine.scene.2d';
-const SCENE_SNAP_KEY = 'mengine.scene.snap';
-const SCENE_GRID_KEY = 'mengine.scene.grid';
-const SCENE_SMART_GUIDES_KEY = 'mengine.scene.smart-guides';
-
-function loadScene2D(): boolean {
-  try {
-    return localStorage.getItem(SCENE_2D_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function loadSceneSnap(): SceneSnapSettings {
-  try {
-    return normalizeSceneSnapSettings(JSON.parse(localStorage.getItem(SCENE_SNAP_KEY) ?? '{}'));
-  } catch {
-    return normalizeSceneSnapSettings(null);
-  }
-}
-
-function saveSceneSnap(settings: SceneSnapSettings): void {
-  try {
-    localStorage.setItem(SCENE_SNAP_KEY, JSON.stringify(settings));
-  } catch {
-    /* ignore unavailable storage */
-  }
-}
-
-function loadSceneGrid(): boolean {
-  try {
-    return localStorage.getItem(SCENE_GRID_KEY) !== '0';
-  } catch {
-    return true;
-  }
-}
-
-function loadSmartGuides(): boolean {
-  try {
-    return localStorage.getItem(SCENE_SMART_GUIDES_KEY) !== '0';
-  } catch {
-    return true;
-  }
-}
 
 function drawCanvasGrid(
   ctx: CanvasRenderingContext2D,
@@ -566,15 +527,39 @@ export function Viewport(props: {
   // Expose this viewport's canvas to the AgentBridge so AI agents can capture
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
-    return agentBridge.registerViewportCapture(props.tab, (format, quality) => {
+    return agentBridge.registerViewportCapture(props.tab, (format, quality, maxSize = 2_048) => {
       const canvas = canvasRef.current;
       if (!canvas) return null;
       try {
+        const sourceWidth = canvas.width;
+        const sourceHeight = canvas.height;
+        const sourceMax = Math.max(sourceWidth, sourceHeight);
+        if (sourceMax <= 0) return null;
+        const requestedScale = Math.min(1, maxSize / sourceMax);
+        let outputCanvas = canvas;
+        if (requestedScale < 1) {
+          const scaled = document.createElement('canvas');
+          scaled.width = Math.max(1, Math.round(sourceWidth * requestedScale));
+          scaled.height = Math.max(1, Math.round(sourceHeight * requestedScale));
+          const context = scaled.getContext('2d');
+          if (!context) return null;
+          context.drawImage(canvas, 0, 0, scaled.width, scaled.height);
+          outputCanvas = scaled;
+        }
+        const outputScale = Math.min(
+          outputCanvas.width / sourceWidth,
+          outputCanvas.height / sourceHeight,
+        );
+        const dataUrl = outputCanvas.toDataURL(format, quality);
         return {
-          dataUrl: canvas.toDataURL(format, quality),
-          width: canvas.width,
-          height: canvas.height,
+          dataUrl,
+          width: outputCanvas.width,
+          height: outputCanvas.height,
           mime: format,
+          sourceWidth,
+          sourceHeight,
+          scale: outputScale,
+          capturedAt: Date.now(),
         };
       } catch {
         return null;
@@ -700,10 +685,14 @@ export function Viewport(props: {
   const [tick, setTick] = useState(0);
   const [uiStats, setUiStats] = useState({ elements: 0, batches: 0 });
   const [spriteDropActive, setSpriteDropActive] = useState(false);
-  const [scene2D, setScene2D] = useState(loadScene2D);
+  const [scene2D, setScene2D] = useState(
+    () => readSceneViewPreferences().mode2D,
+  );
   const scene2DRef = useRef(scene2D);
   scene2DRef.current = scene2D;
-  const [sceneGrid, setSceneGrid] = useState(loadSceneGrid);
+  const [sceneGrid, setSceneGrid] = useState(
+    () => readSceneViewPreferences().gridVisible,
+  );
   const sceneGridRef = useRef(sceneGrid);
   sceneGridRef.current = sceneGrid;
   const [tilePaintEnabled, setTilePaintEnabled] = useState(false);
@@ -715,7 +704,9 @@ export function Viewport(props: {
   const [tileTool, setTileTool] = useState<TilemapTool>('paint');
   const tileToolRef = useRef(tileTool);
   tileToolRef.current = tileTool;
-  const [smartGuidesEnabled, setSmartGuidesEnabled] = useState(loadSmartGuides);
+  const [smartGuidesEnabled, setSmartGuidesEnabled] = useState(
+    () => readSceneViewPreferences().smartGuidesEnabled,
+  );
   const smartGuidesEnabledRef = useRef(smartGuidesEnabled);
   smartGuidesEnabledRef.current = smartGuidesEnabled;
   const smartGuidesRef = useRef<RectSmartGuide[]>([]);
@@ -728,7 +719,9 @@ export function Viewport(props: {
   const [sceneZoomPercent, setSceneZoomPercent] = useState(100);
   const sceneCanvasScaleRef = useRef(1);
   const sceneZoomPercentRef = useRef(100);
-  const [snapSettings, setSnapSettings] = useState(loadSceneSnap);
+  const [snapSettings, setSnapSettings] = useState(
+    () => readSceneViewPreferences().snap,
+  );
   const snapSettingsRef = useRef(snapSettings);
   snapSettingsRef.current = snapSettings;
   const [snapSettingsOpen, setSnapSettingsOpen] = useState(false);
@@ -746,8 +739,18 @@ export function Viewport(props: {
         setSnapSettingsOpen(false);
       }
     };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setSnapSettingsOpen(false);
+    };
     window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
+    window.addEventListener('keydown', closeWithEscape, true);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', closeWithEscape, true);
+    };
   }, [snapSettingsOpen]);
 
   useEffect(() => {
@@ -755,8 +758,18 @@ export function Viewport(props: {
     const close = (event: PointerEvent) => {
       if (!alignElementRef.current?.contains(event.target as Node)) setAlignOpen(false);
     };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setAlignOpen(false);
+    };
     window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
+    window.addEventListener('keydown', closeWithEscape, true);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', closeWithEscape, true);
+    };
   }, [alignOpen]);
 
   useEffect(() => {
@@ -2917,14 +2930,12 @@ export function Viewport(props: {
     syncCamToStore();
   };
 
-  const applyScene2D = (on: boolean) => {
+  const applyScene2DState = (on: boolean, force = false) => {
+    const changed = scene2DRef.current !== on;
+    scene2DRef.current = on;
     setScene2D(on);
     if (!on) setTilePaintEnabled(false);
-    try {
-      localStorage.setItem(SCENE_2D_KEY, on ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
+    if (!changed && !force) return;
     if (on) {
       savedOrbitRef.current = {
         yaw: liveCam.current.yaw,
@@ -2952,6 +2963,10 @@ export function Viewport(props: {
     setTick((t) => t + 1);
   };
 
+  const applyScene2D = (on: boolean) => {
+    updateSceneViewPreferences({ mode2D: on });
+  };
+
   const applySceneZoom = (targetScale: number) => {
     if (!scene2DRef.current) return;
     const target = normalizeSceneZoom(targetScale);
@@ -2968,34 +2983,52 @@ export function Viewport(props: {
   };
 
   const updateSnapSettings = (patch: Partial<SceneSnapSettings>) => {
-    const next = normalizeSceneSnapSettings({ ...snapSettingsRef.current, ...patch });
-    snapSettingsRef.current = next;
-    setSnapSettings(next);
-    saveSceneSnap(next);
+    updateSceneViewPreferences({ snap: patch });
   };
 
   const toggleSceneGrid = () => {
-    const next = !sceneGridRef.current;
-    sceneGridRef.current = next;
-    setSceneGrid(next);
-    try {
-      localStorage.setItem(SCENE_GRID_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateSceneViewPreferences({ gridVisible: !sceneGridRef.current });
   };
 
   const toggleSmartGuides = () => {
-    const next = !smartGuidesEnabledRef.current;
-    smartGuidesEnabledRef.current = next;
-    setSmartGuidesEnabled(next);
-    if (!next) smartGuidesRef.current = [];
-    try {
-      localStorage.setItem(SCENE_SMART_GUIDES_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateSceneViewPreferences({
+      smartGuidesEnabled: !smartGuidesEnabledRef.current,
+    });
   };
+
+  useEffect(() => {
+    initializeSceneViewPreferencesEvents();
+    const applyPreferences = (
+      preferences: SceneViewPreferencesChangeDetail['preferences'],
+      force = false,
+    ) => {
+      applyScene2DState(preferences.mode2D, force);
+      sceneGridRef.current = preferences.gridVisible;
+      setSceneGrid(preferences.gridVisible);
+      smartGuidesEnabledRef.current = preferences.smartGuidesEnabled;
+      setSmartGuidesEnabled(preferences.smartGuidesEnabled);
+      if (!preferences.smartGuidesEnabled) smartGuidesRef.current = [];
+      snapSettingsRef.current = preferences.snap;
+      setSnapSettings(preferences.snap);
+    };
+    const onPreferencesChanged = (event: Event) => {
+      applyPreferences(
+        (event as CustomEvent<SceneViewPreferencesChangeDetail>).detail
+          .preferences,
+      );
+    };
+    window.addEventListener(
+      SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+      onPreferencesChanged,
+    );
+    applyPreferences(readSceneViewPreferences(), true);
+    return () => {
+      window.removeEventListener(
+        SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+        onPreferencesChanged,
+      );
+    };
+  }, []);
 
   const runRectAlignment = (command: RectAlignmentCommand) => {
     const current = propsRef.current;
@@ -3329,7 +3362,9 @@ export function Viewport(props: {
                 type="button"
                 className={snapSettingsOpen ? 'active' : ''}
                 aria-label="Snap settings"
+                aria-haspopup="dialog"
                 aria-expanded={snapSettingsOpen}
+                aria-controls="scene-snap-settings-dialog"
                 title="Snap settings"
                 onClick={() => setSnapSettingsOpen((open) => !open)}
               >
@@ -3337,7 +3372,12 @@ export function Viewport(props: {
               </button>
             </div>
             {snapSettingsOpen && (
-              <div className="scene-snap-popup" role="dialog" aria-label="Scene Snapping">
+              <div
+                id="scene-snap-settings-dialog"
+                className="scene-snap-popup"
+                role="dialog"
+                aria-label="Scene Snapping"
+              >
                 <strong>RectTransform Snapping</strong>
                 <label>
                   Move
@@ -3379,7 +3419,9 @@ export function Viewport(props: {
             <button
               type="button"
               aria-label="Align RectTransforms"
+              aria-haspopup="dialog"
               aria-expanded={alignOpen}
+              aria-controls="scene-rect-alignment-dialog"
               disabled={alignableRectCount < 2}
               className={alignOpen ? 'active' : ''}
               title="Align selected RectTransforms to the primary selection"
@@ -3389,7 +3431,12 @@ export function Viewport(props: {
               <ChevronDown size={11} aria-hidden />
             </button>
             {alignOpen && (
-              <div className="scene-align-popup" role="dialog" aria-label="Rect Alignment">
+              <div
+                id="scene-rect-alignment-dialog"
+                className="scene-align-popup"
+                role="dialog"
+                aria-label="Rect Alignment"
+              >
                 <strong>Align to Primary</strong>
                 <div className="scene-align-grid">
                   {([

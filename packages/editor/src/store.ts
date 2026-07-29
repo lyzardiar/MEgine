@@ -13,6 +13,7 @@ import {
   quatNormalize,
 } from './math3d';
 import {
+  componentRemovalBlockers,
   componentRequirements,
   createComponentDefaults,
   createParticleEmitter2D,
@@ -65,6 +66,7 @@ import {
   type EditorUndoToken,
 } from './editorUndoService';
 import { sceneContentFingerprint } from './sceneFingerprint';
+import { normalizeEntityTag, normalizeGameLayerIndex } from './sortingLayerModel';
 import type { GizmoMode } from './editorTool';
 import {
   rotateTransformAround,
@@ -136,6 +138,8 @@ export interface EntityRec {
   parent?: number | null;
   siblingIndex: number;
   active: boolean;
+  tag: string;
+  layer: number;
   components: Record<string, unknown>;
 }
 
@@ -158,6 +162,8 @@ function normalizeEntity(e: Partial<EntityRec> & { entity: number; components: R
     parent: e.parent ?? null,
     siblingIndex: e.siblingIndex ?? 0,
     active: e.active ?? true,
+    tag: normalizeEntityTag(e.tag),
+    layer: normalizeGameLayerIndex(e.layer),
     components: e.components,
   };
 }
@@ -506,6 +512,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const id = spawnAt(entry.node.name, components, nodeParent, false);
       const entity = find(id)!;
       entity.active = entry.node.active;
+      entity.tag = entry.node.tag;
+      entity.layer = entry.node.layer;
       entity.siblingIndex = entry.siblingIndex;
       entitiesByNode.set(entry.node.id, id);
       if (entry.parentNodeId == null) root = id;
@@ -603,6 +611,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           siblingIndex:
             isRoot ? nextSiblingIndex(newPar) : s.siblingIndex,
           active: s.active,
+          tag: s.tag,
+          layer: s.layer,
           components: clonedComponents.get(oldId) ?? structuredClone(s.components),
         }),
       );
@@ -643,6 +653,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       parent: e.parent,
       siblingIndex: e.siblingIndex,
       active: e.active,
+      tag: e.tag,
+      layer: e.layer,
       components: e.components,
     }));
     if (mode !== 'edit') return structuredClone(entities);
@@ -664,6 +676,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           parent: e.parent,
           siblingIndex: e.siblingIndex,
           active: e.active,
+          tag: e.tag,
+          layer: e.layer,
           components: e.components,
         })),
         frame,
@@ -891,10 +905,48 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       e.name = n;
     },
     setActive(id: number, activeFlag: boolean) {
-      const e = find(id);
-      if (!e || e.active === activeFlag) return;
-      pushUndo(activeFlag ? 'Activate GameObject' : 'Deactivate GameObject');
-      e.active = activeFlag;
+      return this.setActives([id], activeFlag) > 0;
+    },
+    setActives(ids: readonly number[], activeFlag: boolean) {
+      if (mode !== 'edit') return 0;
+      const targets = [...new Set(ids)]
+        .map((id) => find(id))
+        .filter((entity): entity is EntityRec => (
+          entity != null && entity.active !== activeFlag
+        ));
+      if (!targets.length) return 0;
+      const action = activeFlag ? 'Activate' : 'Deactivate';
+      pushUndo(`${action} GameObject${targets.length > 1 ? 's' : ''}`);
+      for (const entity of targets) entity.active = activeFlag;
+      return targets.length;
+    },
+    setTag(id: number, value: string) {
+      return this.setTags([id], value) > 0;
+    },
+    setTags(ids: readonly number[], value: string) {
+      if (mode !== 'edit') return 0;
+      const tag = normalizeEntityTag(value);
+      const targets = [...new Set(ids)]
+        .map((id) => find(id))
+        .filter((entity): entity is EntityRec => entity != null && entity.tag !== tag);
+      if (!targets.length) return 0;
+      pushUndo(targets.length > 1 ? 'Set GameObject Tags' : 'Set GameObject Tag');
+      for (const entity of targets) entity.tag = tag;
+      return targets.length;
+    },
+    setLayer(id: number, value: number) {
+      return this.setLayers([id], value) > 0;
+    },
+    setLayers(ids: readonly number[], value: number) {
+      if (mode !== 'edit') return 0;
+      const layer = normalizeGameLayerIndex(value);
+      const targets = [...new Set(ids)]
+        .map((id) => find(id))
+        .filter((entity): entity is EntityRec => entity != null && entity.layer !== layer);
+      if (!targets.length) return 0;
+      pushUndo(targets.length > 1 ? 'Set GameObject Layers' : 'Set GameObject Layer');
+      for (const entity of targets) entity.layer = layer;
+      return targets.length;
     },
     setParent(ids: number[], parent: number | null, atIndex?: number, withUndo = true) {
       const current = list();
@@ -1136,6 +1188,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
             parent: newPar,
             siblingIndex: isRoot ? nextSiblingIndex(parent) : s.siblingIndex,
             active: s.active,
+            tag: s.tag,
+            layer: s.layer,
             components: clonedComponents.get(s.entity) ?? structuredClone(s.components),
           }),
         );
@@ -1222,31 +1276,53 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return true;
     },
     addComponent(entity: number, type: string, value: Record<string, unknown>) {
-      if (mode !== 'edit') return false;
-      const e = find(entity);
-      if (!e) return false;
-      if (e.components[type] != null) return false;
-      pushUndo(`Add ${type}`);
-      e.components[type] = value;
-      // RequireComponent: auto-add missing deps
+      return this.addComponents([entity], type, value) > 0;
+    },
+    addComponents(
+      entities: readonly number[],
+      type: string,
+      value: Record<string, unknown>,
+    ) {
+      if (mode !== 'edit') return 0;
+      const targets = [...new Set(entities)]
+        .map((entity) => find(entity))
+        .filter((entity): entity is EntityRec => (
+          entity != null && entity.components[type] == null
+        ));
+      if (!targets.length) return 0;
+      pushUndo(targets.length > 1 ? `Add ${type} to GameObjects` : `Add ${type}`);
       const requirements = componentRequirements(type);
-      if (requirements.length) {
+      for (const entity of targets) {
+        entity.components[type] = structuredClone(value);
         for (const dep of requirements) {
-          if (e.components[dep] != null) continue;
+          if (entity.components[dep] != null) continue;
           const defaults = createComponentDefaults(dep);
-          if (defaults) e.components[dep] = defaults;
+          if (defaults) entity.components[dep] = defaults;
         }
       }
-      return true;
+      return targets.length;
     },
     removeComponent(entity: number, type: string) {
-      if (mode !== 'edit') return false;
-      if (type === 'Transform') return false;
-      const e = find(entity);
-      if (!e || e.components[type] == null) return false;
-      pushUndo(`Remove ${type}`);
-      delete e.components[type];
-      return true;
+      return this.removeComponents([entity], type) > 0;
+    },
+    removeComponents(entities: readonly number[], type: string) {
+      if (mode !== 'edit' || type === 'Transform') return 0;
+      const targets = [...new Set(entities)].map((entity) => find(entity));
+      if (
+        !targets.length
+        || targets.some((entity) => (
+          entity == null
+          || entity.components[type] == null
+          || componentRemovalBlockers(entity.components, type).length > 0
+        ))
+      ) {
+        return 0;
+      }
+      pushUndo(targets.length > 1 ? `Remove ${type} from GameObjects` : `Remove ${type}`);
+      for (const entity of targets) {
+        delete entity!.components[type];
+      }
+      return targets.length;
     },
     setComponent(entity: number, type: string, value: Record<string, unknown>) {
       const e = find(entity);
@@ -1258,16 +1334,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         : normalizedValue;
     },
     patchComponent(entity: number, type: string, patch: Record<string, unknown>) {
-      const e = find(entity);
-      if (!e || e.components[type] == null) return;
-      if (mode === 'edit' && !gizmoDragging) pushUndo(`Edit ${type}`);
-      const safePatch = type === 'TimelineDirector'
-        ? resetTimelineBindingsOnAssetChange(e.components[type], patch)
-        : patch;
-      e.components[type] = withEntityReferenceMetadata(type, {
-        ...(e.components[type] as object),
-        ...safePatch,
-      });
+      this.patchComponents(type, [{ entity, patch }]);
     },
     assignMaterial(
       entity: number,
@@ -1371,7 +1438,37 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (mode === 'edit' && !gizmoDragging) pushUndo(`Set ${type}`);
       for (const update of applicable) {
         const entity = find(update.entity);
-        if (entity) entity.components[type] = structuredClone(update.value);
+        if (!entity) continue;
+        const normalizedValue = withEntityReferenceMetadata(
+          type,
+          structuredClone(update.value),
+        );
+        entity.components[type] = type === 'TimelineDirector'
+          ? resetTimelineBindingsOnAssetChange(entity.components[type], normalizedValue)
+          : normalizedValue;
+      }
+      return true;
+    },
+    patchComponents(
+      type: string,
+      updates: Array<{ entity: number; patch: Record<string, unknown> }>,
+    ) {
+      const applicable = updates.filter((update) => find(update.entity)?.components[type] != null);
+      if (!applicable.length) return false;
+      if (mode === 'edit' && !gizmoDragging) pushUndo(`Edit ${type}`);
+      for (const update of applicable) {
+        const entity = find(update.entity);
+        if (!entity) continue;
+        const safePatch = type === 'TimelineDirector'
+          ? resetTimelineBindingsOnAssetChange(
+            entity.components[type],
+            structuredClone(update.patch),
+          )
+          : structuredClone(update.patch);
+        entity.components[type] = withEntityReferenceMetadata(type, {
+          ...(entity.components[type] as object),
+          ...safePatch,
+        });
       }
       return true;
     },

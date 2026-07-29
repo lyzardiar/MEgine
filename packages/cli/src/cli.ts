@@ -17,6 +17,7 @@ import {
   buildPcPackage,
   createPcPatchPackage,
   hostBuildPlatform,
+  validateProjectTypeScript,
   verifyPcBuildDirectory,
   verifyPcPatchDirectory,
   type BuildCacheStats,
@@ -107,6 +108,7 @@ Commands:
   build <project> [options]   Build a directly runnable PC player
   export-pc <project>         Alias of build for compatibility
   verify-build <dir>          Verify payload hashes and its Ed25519 signature
+  validate-scripts <project>  Type-check project scripts without emitting files
   create-patch <base> <target> Create a signed incremental patch directory
   verify-patch <base> <patch> Verify a signed patch and its complete trust chain
   apply-patch <base> <patch>  Apply a signed patch through atomic staging
@@ -165,6 +167,11 @@ function verifyBuild(values: string[]) {
   console.log(`Content: ${manifest.contentHash}`);
   console.log(`Artifact signature: Ed25519 ${manifest.signature?.keyId}`);
   console.log(`Files: ${manifest.files.length}`);
+}
+
+function validateScripts(values: string[]) {
+  if (values.length !== 1) throw new Error('validate-scripts requires one project directory');
+  console.log(JSON.stringify(validateProjectTypeScript(resolve(values[0]))));
 }
 
 function createPatch(values: string[]) {
@@ -543,6 +550,9 @@ try {
       break;
     case 'verify-build':
       verifyBuild(rest);
+      break;
+    case 'validate-scripts':
+      validateScripts(rest);
       break;
     case 'create-patch':
       createPatch(rest);

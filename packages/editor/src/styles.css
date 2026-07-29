@@ -3137,11 +3137,69 @@ body.insp-scrubbing * {
 }
 
 /* Console */
+.console-panel {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  background: #1f1f1f;
+}
+
+.console-toolbar {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--u-border);
+  background: var(--u-panel-2);
+}
+
+.console-toolbar button {
+  min-width: 44px;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid var(--u-border);
+  border-radius: 2px;
+  background: var(--u-toolbar-hi);
+  color: var(--u-text);
+  font-size: 11px;
+}
+
+.console-toolbar button:hover:not(:disabled),
+.console-toolbar button.active {
+  border-color: var(--u-selected);
+  color: var(--u-text-bright);
+}
+
+.console-toolbar button:disabled {
+  opacity: 0.45;
+}
+
+.console-toolbar input {
+  min-width: 100px;
+  max-width: 260px;
+  height: 22px;
+  margin-left: auto;
+  padding: 0 6px;
+  border: 1px solid var(--u-border);
+  border-radius: 2px;
+  outline: none;
+  background: var(--u-input);
+  color: var(--u-text-bright);
+  font-size: 11px;
+}
+
+.console-toolbar input:focus {
+  border-color: var(--u-selected);
+}
+
 .console-body {
+  flex: 1;
+  min-height: 0;
   font-family: var(--u-mono);
   font-size: 11px;
   padding: 6px 8px;
-  height: 100%;
   overflow: auto;
   background: #1f1f1f;
 }
@@ -3154,6 +3212,12 @@ body.insp-scrubbing * {
 
 .console-line.warn { color: #e0b44c; }
 .console-line.error { color: #e06c75; }
+
+.console-empty {
+  padding: 8px 0;
+  color: var(--u-muted);
+  font-style: italic;
+}
 
 /* Animation Timeline */
 .timeline-panel {
@@ -6992,6 +7056,33 @@ body.insp-scrubbing * {
   padding: 8px 10px 12px;
 }
 
+.editor-window-error {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  color: var(--u-text);
+}
+
+.editor-window-error h2,
+.editor-window-error p {
+  margin: 0;
+}
+
+.editor-window-error pre {
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  color: #ffb4ab;
+  background: rgba(160, 32, 32, 0.18);
+  border: 1px solid rgba(255, 128, 128, 0.28);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.editor-window-error button {
+  justify-self: start;
+}
+
 .editor-window-resize {
   position: absolute;
   right: 0;
@@ -8017,3 +8108,50 @@ input[type='search']::-webkit-search-decoration { -webkit-appearance: none; }
 
 /* Text selection in Unity's signature blue */
 ::selection { background: rgba(44, 93, 135, 0.75); color: #fff; }
+.editor-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 55%);
+}
+
+.editor-dialog {
+  width: min(560px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid #555d6d;
+  border-radius: 8px;
+  background: #252830;
+  color: #eef1f7;
+  box-shadow: 0 18px 64px rgb(0 0 0 / 55%);
+}
+
+.editor-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.editor-dialog-message {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  color: #d7dce7;
+  line-height: 1.45;
+}
+
+.editor-dialog-input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.editor-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}

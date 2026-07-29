@@ -10,8 +10,18 @@
  * work in any mode.
  */
 import type { WorldCommand } from '@mengine/api';
+import {
+  expandIntent,
+  validateIntent,
+  type Intent,
+} from '@mengine/agent';
 import { getBehaviour } from '@mengine/behaviour';
+import {
+  componentRemovalBlockers,
+  createComponentDefaults,
+} from '../componentCatalog.ts';
 import type { EditorStore } from '../store';
+import { readRectTransform } from '../ui/rectLayout.ts';
 import { BridgeError, type ScreenshotResult } from './protocol.ts';
 import {
   COMMAND_PARAMS_SCHEMAS,
@@ -34,6 +44,12 @@ export interface CommandResult {
   eventSequence?: number;
   /** Optional post-action viewport screenshot for visual verification. */
   screenshot?: ScreenshotResult;
+  /** True when the caller explicitly requested post-action visual verification. */
+  screenshotRequested?: boolean;
+  /** Whether the requested post-action screenshot was captured. */
+  screenshotCaptured?: boolean;
+  /** Bounded diagnostic when the write completed but screenshot capture failed. */
+  screenshotError?: string;
 }
 
 type CommandHandler = (ctx: CommandContext, args: Record<string, unknown>) => CommandResult;
@@ -69,6 +85,14 @@ function entityIdArray(args: Record<string, unknown>, key: string): number[] {
     throw new BridgeError('INVALID_ARGS', `"${key}" must be an array of non-negative safe integers`);
   }
   return [...new Set(value as number[])];
+}
+
+function nonEmptyEntityIdArray(args: Record<string, unknown>, key: string): number[] {
+  const ids = entityIdArray(args, key);
+  if (!ids.length) {
+    throw new BridgeError('INVALID_ARGS', `"${key}" must contain at least one entity id`);
+  }
+  return ids;
 }
 
 function bool(args: Record<string, unknown>, key: string): boolean {
@@ -173,6 +197,26 @@ function requireComponent(ctx: CommandContext, entityIdValue: number, type: stri
     );
   }
   return entity.components[type];
+}
+
+function requireRemovableComponent(
+  ctx: CommandContext,
+  entityIdValue: number,
+  type: string,
+) {
+  const entity = requireEntity(ctx, entityIdValue);
+  requireComponent(ctx, entityIdValue, type);
+  if (type === 'Transform') {
+    throw new BridgeError('INVALID_ARGS', 'The required Transform component cannot be removed');
+  }
+  const blockers = componentRemovalBlockers(entity.components, type);
+  if (blockers.length) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `Entity ${entityIdValue} cannot remove "${type}" because it is required by: ${blockers.join(', ')}`,
+    );
+  }
+  return entity;
 }
 
 type BatchEntity = {
@@ -423,6 +467,29 @@ function worldCommandBatch(
   return commands;
 }
 
+function applyWorldCommands(
+  ctx: CommandContext,
+  commands: WorldCommand[],
+): {
+  commandCount: number;
+  entityCount: number;
+  created: number[];
+  removed: number[];
+} {
+  const beforeIds = new Set(ctx.store.snapshot().entities.map((entity) => entity.entity));
+  if (!ctx.store.applyCommands(commands)) {
+    throw new BridgeError('INTERNAL', 'The editor did not apply the validated command batch');
+  }
+  const after = ctx.store.snapshot().entities;
+  const afterIds = new Set(after.map((entity) => entity.entity));
+  return {
+    commandCount: commands.length,
+    entityCount: after.length,
+    created: [...afterIds].filter((entity) => !beforeIds.has(entity)),
+    removed: [...beforeIds].filter((entity) => !afterIds.has(entity)),
+  };
+}
+
 /** Capture the selected object created by a spawn call, including composite spawns. */
 function captureSpawned(ctx: CommandContext, spawn: () => void): number | null {
   const before = new Set(ctx.store.snapshot().entities.map((e) => e.entity));
@@ -479,20 +546,48 @@ const KIND_SPAWNERS: Record<TypedEntityKind, (store: EditorStore) => void> = {
 export const WRITE_COMMANDS: Record<string, CommandHandler> = {
   'batch.apply': (ctx, args) => {
     requireEditMode(ctx);
-    const beforeIds = new Set(ctx.store.snapshot().entities.map((entity) => entity.entity));
     const commands = worldCommandBatch(ctx, args);
-    if (!ctx.store.applyCommands(commands)) {
-      throw new BridgeError('INTERNAL', 'The editor did not apply the validated command batch');
+    return {
+      ok: true,
+      data: applyWorldCommands(ctx, commands),
+    };
+  },
+  'intent.apply': (ctx, args) => {
+    requireEditMode(ctx);
+    const validation = validateIntent(args.intent);
+    if (!validation.ok) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Invalid intent: ${validation.errors.join('; ')}`,
+      );
     }
-    const after = ctx.store.snapshot().entities;
-    const afterIds = new Set(after.map((entity) => entity.entity));
+    const intent = args.intent as Intent;
+    if (intent.kind === 'SetTransform') {
+      requireEntity(ctx, intent.entity);
+      if (!ctx.store.getTransform(intent.entity)) {
+        throw new BridgeError(
+          'COMPONENT_NOT_FOUND',
+          `Entity ${intent.entity} has no Transform component`,
+        );
+      }
+    }
+    let expanded: WorldCommand[];
+    try {
+      expanded = expandIntent(intent, {
+        getTransform: (entity) => ctx.store.getTransform(entity),
+      });
+    } catch (error) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        error instanceof Error ? error.message : 'Invalid intent',
+      );
+    }
+    const commands = worldCommandBatch(ctx, { commands: expanded });
     return {
       ok: true,
       data: {
-        commandCount: commands.length,
-        entityCount: after.length,
-        created: [...afterIds].filter((entity) => !beforeIds.has(entity)),
-        removed: [...beforeIds].filter((entity) => !afterIds.has(entity)),
+        intentKind: intent.kind,
+        ...applyWorldCommands(ctx, commands),
       },
     };
   },
@@ -581,6 +676,52 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.setActive(id, active);
     return { ok: true, data: { entity: id, active } };
   },
+  'entity.set_actives': (ctx, args) => {
+    requireEditMode(ctx);
+    const ids = nonEmptyEntityIdArray(args, 'ids');
+    const active = bool(args, 'active');
+    requireEntities(ctx, ids);
+    const changed = ctx.store.setActives(ids, active);
+    return { ok: true, data: { entities: ids, active, changed } };
+  },
+  'entity.set_tag': (ctx, args) => {
+    requireEditMode(ctx);
+    const id = entityId(args, 'id');
+    const tag = str(args, 'tag');
+    requireEntity(ctx, id);
+    ctx.store.setTag(id, tag);
+    return { ok: true, data: { entity: id, tag } };
+  },
+  'entity.set_tags': (ctx, args) => {
+    requireEditMode(ctx);
+    const ids = nonEmptyEntityIdArray(args, 'ids');
+    const tag = str(args, 'tag');
+    requireEntities(ctx, ids);
+    const changed = ctx.store.setTags(ids, tag);
+    return { ok: true, data: { entities: ids, tag, changed } };
+  },
+  'entity.set_layer': (ctx, args) => {
+    requireEditMode(ctx);
+    const id = entityId(args, 'id');
+    const layer = entityId(args, 'layer');
+    if (layer > 31) {
+      throw new BridgeError('INVALID_ARGS', '"layer" must be an integer from 0 to 31');
+    }
+    requireEntity(ctx, id);
+    ctx.store.setLayer(id, layer);
+    return { ok: true, data: { entity: id, layer } };
+  },
+  'entity.set_layers': (ctx, args) => {
+    requireEditMode(ctx);
+    const ids = nonEmptyEntityIdArray(args, 'ids');
+    const layer = entityId(args, 'layer');
+    if (layer > 31) {
+      throw new BridgeError('INVALID_ARGS', '"layer" must be an integer from 0 to 31');
+    }
+    requireEntities(ctx, ids);
+    const changed = ctx.store.setLayers(ids, layer);
+    return { ok: true, data: { entities: ids, layer, changed } };
+  },
   'entity.reparent': (ctx, args) => {
     requireEditMode(ctx);
     const ids = entityIdArray(args, 'ids');
@@ -644,7 +785,15 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     const entity = entityId(args, 'entity');
     const type = str(args, 'type');
     requireEntity(ctx, entity);
-    const value = record(args, 'value', {});
+    const value = args.value === undefined
+      ? createComponentDefaults(type)
+      : record(args, 'value');
+    if (!value) {
+      throw new BridgeError(
+        'COMPONENT_NOT_FOUND',
+        `Unknown component type "${type}"; provide an explicit value for a custom component`,
+      );
+    }
     const added = ctx.store.addComponent(entity, type, value);
     if (!added) {
       throw new BridgeError(
@@ -654,19 +803,65 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     }
     return { ok: true, data: { entity, component: type } };
   },
+  'component.add_many': (ctx, args) => {
+    requireEditMode(ctx);
+    const entities = nonEmptyEntityIdArray(args, 'entities');
+    const type = str(args, 'type');
+    requireEntities(ctx, entities, 'entities');
+    const records = entities.map((entity) => requireEntity(ctx, entity));
+    const existing = records
+      .filter((entity) => entity.components[type] != null)
+      .map((entity) => entity.entity);
+    if (existing.length) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Component "${type}" already exists on entities: ${existing.join(', ')}`,
+      );
+    }
+    const value = args.value === undefined
+      ? createComponentDefaults(type)
+      : record(args, 'value');
+    if (!value) {
+      throw new BridgeError(
+        'COMPONENT_NOT_FOUND',
+        `Unknown component type "${type}"; provide an explicit value for a custom component`,
+      );
+    }
+    const changed = ctx.store.addComponents(entities, type, value);
+    if (changed !== entities.length) {
+      throw new BridgeError(
+        'INTERNAL',
+        `The editor added "${type}" to ${changed} of ${entities.length} entities`,
+      );
+    }
+    return { ok: true, data: { entities, component: type, changed } };
+  },
   'component.remove': (ctx, args) => {
     requireEditMode(ctx);
     const entity = entityId(args, 'entity');
     const type = str(args, 'type');
-    requireComponent(ctx, entity, type);
-    if (type === 'Transform') {
-      throw new BridgeError('INVALID_ARGS', 'The required Transform component cannot be removed');
-    }
+    requireRemovableComponent(ctx, entity, type);
     const removed = ctx.store.removeComponent(entity, type);
     if (!removed) {
       throw new BridgeError('INTERNAL', `The editor did not remove component "${type}"`);
     }
-    return { ok: true };
+    return { ok: true, data: { entity, component: type } };
+  },
+  'component.remove_many': (ctx, args) => {
+    requireEditMode(ctx);
+    const entities = nonEmptyEntityIdArray(args, 'entities');
+    const type = str(args, 'type');
+    for (const entity of entities) {
+      requireRemovableComponent(ctx, entity, type);
+    }
+    const changed = ctx.store.removeComponents(entities, type);
+    if (changed !== entities.length) {
+      throw new BridgeError(
+        'INTERNAL',
+        `The editor removed "${type}" from ${changed} of ${entities.length} entities`,
+      );
+    }
+    return { ok: true, data: { entities, component: type, changed } };
   },
   'component.set': (ctx, args) => {
     requireEditMode(ctx);
@@ -676,6 +871,24 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.setComponent(entity, type, record(args, 'value'));
     return { ok: true, data: { entity, component: type } };
   },
+  'component.set_many': (ctx, args) => {
+    requireEditMode(ctx);
+    const entities = nonEmptyEntityIdArray(args, 'entities');
+    const type = str(args, 'type');
+    for (const entity of entities) requireComponent(ctx, entity, type);
+    const value = record(args, 'value');
+    const changed = ctx.store.setComponents(
+      type,
+      entities.map((entity) => ({ entity, value })),
+    );
+    if (!changed) {
+      throw new BridgeError('INTERNAL', `The editor did not replace component "${type}"`);
+    }
+    return {
+      ok: true,
+      data: { entities, component: type, changed: entities.length },
+    };
+  },
   'component.patch': (ctx, args) => {
     requireEditMode(ctx);
     const entity = entityId(args, 'entity');
@@ -683,6 +896,24 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     requireComponent(ctx, entity, type);
     ctx.store.patchComponent(entity, type, record(args, 'patch'));
     return { ok: true, data: { entity, component: type } };
+  },
+  'component.patch_many': (ctx, args) => {
+    requireEditMode(ctx);
+    const entities = nonEmptyEntityIdArray(args, 'entities');
+    const type = str(args, 'type');
+    for (const entity of entities) requireComponent(ctx, entity, type);
+    const patch = record(args, 'patch');
+    const changed = ctx.store.patchComponents(
+      type,
+      entities.map((entity) => ({ entity, patch })),
+    );
+    if (!changed) {
+      throw new BridgeError('INTERNAL', `The editor did not patch component "${type}"`);
+    }
+    return {
+      ok: true,
+      data: { entities, component: type, changed: entities.length },
+    };
   },
   'component.invoke': (ctx, args) => {
     const entity = entityId(args, 'entity');
@@ -763,6 +994,65 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     };
     ctx.store.setTransform(entity, next);
     return { ok: true, data: { entity, delta, transform: next } };
+  },
+  'rect.set': (ctx, args) => {
+    requireEditMode(ctx);
+    const entity = entityId(args, 'entity');
+    const current = readRectTransform(requireComponent(ctx, entity, 'RectTransform'));
+    const anchoredPosition = finiteTuple(args, 'anchoredPosition', 2);
+    const sizeDelta = finiteTuple(args, 'sizeDelta', 2);
+    const pivot = finiteTuple(args, 'pivot', 2);
+    const anchorMin = finiteTuple(args, 'anchorMin', 2);
+    const anchorMax = finiteTuple(args, 'anchorMax', 2);
+    const localRotation = optionalFiniteNumber(args, 'localRotation');
+    const localScale = finiteTuple(args, 'localScale', 2);
+    if (
+      !anchoredPosition
+      && !sizeDelta
+      && !pivot
+      && !anchorMin
+      && !anchorMax
+      && localRotation === undefined
+      && !localScale
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'rect.set requires at least one RectTransform field',
+      );
+    }
+    const requireUnitTuple = (value: number[] | undefined, key: string): void => {
+      if (value?.some((item) => item < 0 || item > 1)) {
+        throw new BridgeError('INVALID_ARGS', `"${key}" values must be between 0 and 1`);
+      }
+    };
+    requireUnitTuple(pivot, 'pivot');
+    requireUnitTuple(anchorMin, 'anchorMin');
+    requireUnitTuple(anchorMax, 'anchorMax');
+    const nextAnchorMin = (anchorMin ?? current.anchor_min) as [number, number];
+    const nextAnchorMax = (anchorMax ?? current.anchor_max) as [number, number];
+    if (
+      nextAnchorMin[0] > nextAnchorMax[0]
+      || nextAnchorMin[1] > nextAnchorMax[1]
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"anchorMin" must not exceed "anchorMax" on either axis',
+      );
+    }
+    const next = {
+      ...current,
+      ...(anchoredPosition
+        ? { anchored_position: anchoredPosition as [number, number] }
+        : {}),
+      ...(sizeDelta ? { size_delta: sizeDelta as [number, number] } : {}),
+      ...(pivot ? { pivot: pivot as [number, number] } : {}),
+      ...(anchorMin ? { anchor_min: nextAnchorMin } : {}),
+      ...(anchorMax ? { anchor_max: nextAnchorMax } : {}),
+      ...(localRotation === undefined ? {} : { local_rotation: localRotation }),
+      ...(localScale ? { local_scale: localScale as [number, number] } : {}),
+    };
+    ctx.store.setComponent(entity, 'RectTransform', next);
+    return { ok: true, data: { entity, rectTransform: structuredClone(next) } };
   },
 
   // ── Playback / history / view ──────────────────────────────────────────
@@ -882,15 +1172,24 @@ export interface CommandMeta extends CommandSummary {
 
 const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'batch.apply', category: 'batch', description: 'Validate and apply up to 256 WorldCommands as one undo transaction', readOnly: false },
+  { id: 'intent.apply', category: 'intent', description: 'Validate, expand, and atomically apply one supported high-level intent', readOnly: false },
+  { id: 'dialog.respond', category: 'dialog', description: 'Accept or cancel the exact active non-blocking editor dialog', readOnly: false },
+  { id: 'console.clear', category: 'console', description: 'Clear structured logs and the visible Console panel as one background-safe write', readOnly: false },
+  { id: 'profiler.clear', category: 'profiler', description: 'Clear Scene and Game editor-profiler samples across all editor windows', readOnly: false },
   { id: 'project.open', category: 'project', description: 'Open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.create', category: 'project', description: 'Create and open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.close', category: 'project', description: 'Close the active project and return to the project hub', readOnly: false },
   { id: 'project.forget_recent', category: 'project', description: 'Remove a path from the recent-project list', readOnly: false },
   { id: 'project.settings.set_sorting_layers', category: 'project', description: 'Revision-safely replace the ordered project sorting layers', readOnly: false },
+  { id: 'project.settings.set_tags_and_layers', category: 'project', description: 'Revision-safely replace project tags and named GameObject layers', readOnly: false },
   { id: 'scene.new', category: 'scene', description: 'Create and save a named scene without opening a dialog', readOnly: false },
   { id: 'scene.open', category: 'scene', description: 'Open a named scene without opening a dialog', readOnly: false },
   { id: 'scene.save', category: 'scene', description: 'Save the current scene, optionally under a new name', readOnly: false },
   { id: 'scene.save_all', category: 'scene', description: 'Save the scene and every open resource document', readOnly: false },
+  { id: 'workspace.save_document', category: 'workspace', description: 'Save exactly one open resource document by path without saving other drafts', readOnly: false },
+  { id: 'workspace.discard_document', category: 'workspace', description: 'Discard exactly one open dirty resource draft by path without changing its file or other drafts', readOnly: false },
+  { id: 'workspace.reload_document', category: 'workspace', description: 'Discard one exact draft if needed and reload that resource document from disk', readOnly: false },
+  { id: 'workspace.close_document', category: 'workspace', description: 'Close exactly one open resource document with an explicit dirty-document policy', readOnly: false },
   { id: 'scene.load_json', category: 'scene', description: 'Atomically replace the current authored scene world from validated JSON', readOnly: false },
   { id: 'scene.rename', category: 'scene', description: 'Rename a scene asset while preserving its identity and build references', readOnly: false },
   { id: 'scene.delete', category: 'scene', description: 'Permanently delete a scene after revalidating an exact preview token', readOnly: false },
@@ -901,8 +1200,9 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'prefab.apply', category: 'prefab', description: 'Revision-safely apply an instance hierarchy to its prefab asset', readOnly: false },
   { id: 'prefab.revert', category: 'prefab', description: 'Revert an instance hierarchy from an exact prefab asset revision', readOnly: false },
   { id: 'prefab.unpack', category: 'prefab', description: 'Remove prefab linkage while preserving the authored hierarchy', readOnly: false },
-  { id: 'asset.open', category: 'asset', description: 'Open a supported resource asset in its docked editor without raising a window', readOnly: false },
+  { id: 'asset.open', category: 'asset', description: 'Open a supported resource asset only in a hidden, unfocused editor host', readOnly: false },
   { id: 'asset.write_text', category: 'asset', description: 'Create or revision-safely update a UTF-8 text asset', readOnly: false },
+  { id: 'sprite.import_settings.set', category: 'asset', description: 'Apply normalized Sprite Editor settings with an exact sidecar revision guard', readOnly: false },
   { id: 'asset.rename', category: 'asset', description: 'Apply a previewed reference-aware asset rename', readOnly: false },
   { id: 'asset.duplicate', category: 'asset', description: 'Apply a previewed asset duplicate with a new GUID', readOnly: false },
   { id: 'asset.trash', category: 'asset', description: 'Move an unreferenced previewed asset to project Trash', readOnly: false },
@@ -912,6 +1212,10 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'build.start', category: 'build', description: 'Start an asynchronous PC Player build', readOnly: false },
   { id: 'build.cancel', category: 'build', description: 'Request cancellation of the active AgentBridge build', readOnly: false },
   { id: 'build.verify', category: 'build', description: 'Verify a published Player and packaged content without opening a window', readOnly: false },
+  { id: 'build.run', category: 'build', description: 'Launch a validated published Player after explicit foreground acknowledgement', readOnly: false },
+  { id: 'build.history.create_patch', category: 'build', description: 'Start signed patch creation between two archived build artifacts', readOnly: false },
+  { id: 'build.history.restore', category: 'build', description: 'Start trusted verification and atomic publication of one archived build', readOnly: false },
+  { id: 'build.patch.verify', category: 'build', description: 'Start trusted verification of a signed build patch against an archived base', readOnly: false },
   { id: 'selection.set', category: 'selection', description: 'Set the selection to the given entity ids', readOnly: false },
   { id: 'selection.reveal', category: 'selection', description: 'Select an entity and expand its ancestors (ping)', readOnly: false },
   { id: 'entity.create', category: 'entity', description: 'Create a GameObject with optional components and parent', readOnly: false },
@@ -920,15 +1224,25 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'entity.duplicate', category: 'entity', description: 'Duplicate the given (or currently selected) entities', readOnly: false },
   { id: 'entity.rename', category: 'entity', description: 'Rename an entity', readOnly: false },
   { id: 'entity.set_active', category: 'entity', description: 'Enable or disable an entity', readOnly: false },
+  { id: 'entity.set_actives', category: 'entity', description: 'Enable or disable entities as one undo transaction', readOnly: false },
+  { id: 'entity.set_tag', category: 'entity', description: 'Set an entity classification tag', readOnly: false },
+  { id: 'entity.set_tags', category: 'entity', description: 'Set one classification tag on entities as one undo transaction', readOnly: false },
+  { id: 'entity.set_layer', category: 'entity', description: 'Set an entity GameObject layer index', readOnly: false },
+  { id: 'entity.set_layers', category: 'entity', description: 'Set one GameObject layer on entities as one undo transaction', readOnly: false },
   { id: 'entity.reparent', category: 'entity', description: 'Reparent entities under a new parent', readOnly: false },
   { id: 'entity.reorder', category: 'entity', description: 'Move an entity to a sibling index under its current parent', readOnly: false },
-  { id: 'component.add', category: 'component', description: 'Add a component to an entity', readOnly: false },
+  { id: 'component.add', category: 'component', description: 'Add a component to an entity, using catalog defaults when value is omitted', readOnly: false },
+  { id: 'component.add_many', category: 'component', description: 'Add one component to entities as one undo transaction', readOnly: false },
   { id: 'component.remove', category: 'component', description: 'Remove a component from an entity', readOnly: false },
+  { id: 'component.remove_many', category: 'component', description: 'Remove one shared component from entities as one undo transaction', readOnly: false },
   { id: 'component.set', category: 'component', description: 'Replace a component value on an entity', readOnly: false },
+  { id: 'component.set_many', category: 'component', description: 'Replace one shared component on entities as one undo transaction', readOnly: false },
   { id: 'component.patch', category: 'component', description: 'Shallow-merge fields into a component on an entity', readOnly: false },
+  { id: 'component.patch_many', category: 'component', description: 'Shallow-merge fields into one shared component on entities as one undo transaction', readOnly: false },
   { id: 'component.invoke', category: 'component', description: 'Invoke one registered Behaviour method on an entity', readOnly: false },
   { id: 'transform.set', category: 'transform', description: 'Set position/rotation/scale on an entity transform', readOnly: false },
   { id: 'transform.translate', category: 'transform', description: 'Translate an entity by a local-position delta', readOnly: false },
+  { id: 'rect.set', category: 'rect', description: 'Set exact RectTransform fields while preserving omitted values', readOnly: false },
   { id: 'playback.play', category: 'playback', description: 'Enter play mode', readOnly: false },
   { id: 'playback.pause', category: 'playback', description: 'Toggle pause', readOnly: false },
   { id: 'playback.stop', category: 'playback', description: 'Stop playback and return to edit mode', readOnly: false },
@@ -939,16 +1253,24 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'view.frame_selected', category: 'view', description: 'Frame the selected object in the scene view', readOnly: false },
   { id: 'view.set_camera', category: 'view', description: 'Set the background-safe Scene view orbit camera', readOnly: false },
   { id: 'view.set_game_resolution', category: 'view', description: 'Persist an exact Game View resolution or Free Aspect', readOnly: false },
-  { id: 'panel.focus', category: 'panel', description: 'Activate a docked panel without raising the editor window', readOnly: false },
-  { id: 'panel.detach', category: 'panel', description: 'Detach a clean panel into a hidden background-observable window', readOnly: false },
-  { id: 'panel.dock', category: 'panel', description: 'Dock a clean detached panel back into the main workspace', readOnly: false },
-  { id: 'panel.reset_layout', category: 'panel', description: 'Reset the dock workspace to its default layout', readOnly: false },
+  { id: 'view.set_scene_preferences', category: 'view', description: 'Persist Scene 2D, grid, smart-guide, and snapping preferences across editor windows', readOnly: false },
+  { id: 'view.set_timeline_preferences', category: 'view', description: 'Persist Animation Timeline and Sequencer editing preferences across editor windows', readOnly: false },
+  { id: 'panel.focus', category: 'panel', description: 'Activate a panel only when its host mutation cannot disturb a foreground window', readOnly: false },
+  { id: 'panel.detach', category: 'panel', description: 'Detach a clean panel only while the main workspace is hidden and unfocused', readOnly: false },
+  { id: 'panel.dock', category: 'panel', description: 'Dock a clean panel only while both affected windows are hidden and unfocused', readOnly: false },
+  { id: 'panel.reset_layout', category: 'panel', description: 'Reset layout only while every affected panel host is hidden and unfocused', readOnly: false },
   { id: 'menu.invoke', category: 'menu', description: 'Invoke a registered Unity-style menu item by exact path', readOnly: false },
-  { id: 'window.ui_click', category: 'window', description: 'Click a semantic UI element in an editor window without activating it', readOnly: false },
-  { id: 'window.ui_double_click', category: 'window', description: 'Double-click a semantic UI element in an editor window without activating it', readOnly: false },
-  { id: 'window.ui_context_click', category: 'window', description: 'Open the context menu for a semantic UI element without activating the editor window', readOnly: false },
-  { id: 'window.ui_set_value', category: 'window', description: 'Set an input value in an editor window without activating it', readOnly: false },
-  { id: 'window.ui_scroll', category: 'window', description: 'Scroll a semantic UI container in an editor window without activating it', readOnly: false },
+  { id: 'window.close', category: 'window', description: 'Close one exact hidden, unfocused auxiliary editor window created by this Agent session', readOnly: false },
+  { id: 'window.open_editor', category: 'window', description: 'Open or safely reuse one hidden, unfocused registered auxiliary editor window', readOnly: false },
+  { id: 'window.ui_click', category: 'window', description: 'Click a semantic UI element with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
+  { id: 'window.ui_double_click', category: 'window', description: 'Double-click a semantic UI element with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
+  { id: 'window.ui_context_click', category: 'window', description: 'Open a semantic context menu with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
+  { id: 'window.ui_set_value', category: 'window', description: 'Set an input value inside a hidden, unfocused editor window', readOnly: false },
+  { id: 'window.ui_scroll', category: 'window', description: 'Scroll a semantic UI container inside a hidden, unfocused editor window', readOnly: false },
+  { id: 'window.ui_drag_to', category: 'window', description: 'Drag one semantic UI element to another with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
+  { id: 'window.ui_drag_by', category: 'window', description: 'Perform a bounded pointer drag with optional modifiers inside a hidden, unfocused editor WebView', readOnly: false },
+  { id: 'window.ui_hover', category: 'window', description: 'Hover one semantic UI element inside a hidden, unfocused editor window', readOnly: false },
+  { id: 'window.ui_press_key', category: 'window', description: 'Press an allow-listed semantic key with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
 ];
 
 export const COMMAND_META: CommandMeta[] = COMMAND_SUMMARIES.map((summary) => {

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from 'react';
 import {
   closeEditorWindow,
   focusEditorWindow,
@@ -7,6 +13,11 @@ import {
   updateEditorWindow,
   type EditorWindowInstance,
 } from './registry';
+import { EditorWindowErrorBoundary } from './EditorWindowErrorBoundary';
+
+function EditorWindowBody(props: { render: () => ReactNode }) {
+  return props.render();
+}
 
 function WindowFrame(props: { win: EditorWindowInstance }) {
   const { win } = props;
@@ -64,9 +75,14 @@ function WindowFrame(props: { win: EditorWindowInstance }) {
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+    window.addEventListener('blur', onUp);
     return () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('blur', onUp);
+      drag.current = null;
+      resize.current = null;
+      document.body.classList.remove('ew-dragging');
     };
   }, [win.id]);
 
@@ -100,6 +116,7 @@ function WindowFrame(props: { win: EditorWindowInstance }) {
   return (
     <div
       className="editor-window"
+      aria-label={`${win.title} window`}
       style={{
         left: geom.x,
         top: geom.y,
@@ -108,7 +125,11 @@ function WindowFrame(props: { win: EditorWindowInstance }) {
       }}
       onMouseDown={() => focusEditorWindow(win.id)}
     >
-      <div className="editor-window-title" onMouseDown={onTitleDown}>
+      <div
+        className="editor-window-title"
+        aria-label={`Move ${win.title} window`}
+        onMouseDown={onTitleDown}
+      >
         <span className="editor-window-title-text">{win.title}</span>
         <button
           type="button"
@@ -123,8 +144,16 @@ function WindowFrame(props: { win: EditorWindowInstance }) {
           ×
         </button>
       </div>
-      <div className="editor-window-body">{win.render()}</div>
-      <div className="editor-window-resize" onMouseDown={onResizeDown} />
+      <div className="editor-window-body">
+        <EditorWindowErrorBoundary title={win.title} resetKey={win.render}>
+          <EditorWindowBody render={win.render} />
+        </EditorWindowErrorBoundary>
+      </div>
+      <div
+        className="editor-window-resize"
+        aria-label={`Resize ${win.title} window`}
+        onMouseDown={onResizeDown}
+      />
     </div>
   );
 }

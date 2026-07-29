@@ -27,7 +27,18 @@ function createContext() {
       parent: null,
       siblingIndex: 1,
       active: true,
-      components: { Transform: {} },
+      components: {
+        Transform: {},
+        RectTransform: {
+          anchor_min: [0.5, 0.5],
+          anchor_max: [0.5, 0.5],
+          pivot: [0.5, 0.5],
+          anchored_position: [0, 0],
+          size_delta: [100, 100],
+          local_rotation: 0,
+          local_scale: [1, 1],
+        },
+      },
     },
   ];
   const calls = [];
@@ -48,6 +59,20 @@ function createContext() {
     duplicateSelection: () => 3,
     rename: (...args) => calls.push(['rename', ...args]),
     setActive: (...args) => calls.push(['setActive', ...args]),
+    setActives: (...args) => {
+      calls.push(['setActives', ...args]);
+      return args[0].length;
+    },
+    setTag: (...args) => calls.push(['setTag', ...args]),
+    setTags: (...args) => {
+      calls.push(['setTags', ...args]);
+      return args[0].length;
+    },
+    setLayer: (...args) => calls.push(['setLayer', ...args]),
+    setLayers: (...args) => {
+      calls.push(['setLayers', ...args]);
+      return args[0].length;
+    },
     setParent: (...args) => {
       calls.push(['setParent', ...args]);
       const [ids, parent, index] = args;
@@ -64,12 +89,28 @@ function createContext() {
       calls.push(['addComponent', ...args]);
       return true;
     },
+    addComponents: (...args) => {
+      calls.push(['addComponents', ...args]);
+      return args[0].length;
+    },
     removeComponent: (...args) => {
       calls.push(['removeComponent', ...args]);
       return true;
     },
+    removeComponents: (...args) => {
+      calls.push(['removeComponents', ...args]);
+      return args[0].length;
+    },
     setComponent: (...args) => calls.push(['setComponent', ...args]),
+    setComponents: (...args) => {
+      calls.push(['setComponents', ...args]);
+      return true;
+    },
     patchComponent: (...args) => calls.push(['patchComponent', ...args]),
+    patchComponents: (...args) => {
+      calls.push(['patchComponents', ...args]);
+      return true;
+    },
     invokeBehaviourMethod: (entity, type, method) => {
       calls.push(['invokeBehaviourMethod', entity, type, method]);
       if (type === TEST_BEHAVIOUR_TYPE && method === 'resetAngle') {
@@ -163,10 +204,11 @@ function run(ctx, command, args = {}) {
   return WRITE_COMMANDS[command](ctx, args);
 }
 
-function assertBridgeError(fn, code) {
+function assertBridgeError(fn, code, messagePattern) {
   assert.throws(fn, (error) => {
     assert.equal(error?.name, 'BridgeError');
     assert.equal(error?.code, code);
+    if (messagePattern) assert.match(error.message, messagePattern);
     return true;
   });
 }
@@ -200,6 +242,45 @@ test('uses exact booleans and validates entity existence', () => {
     'ENTITY_NOT_FOUND',
   );
   assert.equal(calls.length, 1);
+});
+
+test('sets entity tags and bounded GameObject layers through the store', () => {
+  const { ctx, calls } = createContext();
+  run(ctx, 'entity.set_tag', { id: 1, tag: 'Player' });
+  run(ctx, 'entity.set_layer', { id: 1, layer: 8 });
+  assert.deepEqual(calls, [
+    ['setTag', 1, 'Player'],
+    ['setLayer', 1, 8],
+  ]);
+  assertBridgeError(
+    () => run(ctx, 'entity.set_layer', { id: 1, layer: 32 }),
+    'INVALID_ARGS',
+  );
+});
+
+test('batch metadata commands validate every entity and use one store transaction', () => {
+  const { ctx, calls } = createContext();
+  const active = run(ctx, 'entity.set_actives', { ids: [1, 2], active: false });
+  const tags = run(ctx, 'entity.set_tags', { ids: [1, 2], tag: 'Enemy' });
+  const layers = run(ctx, 'entity.set_layers', { ids: [1, 2], layer: 9 });
+  assert.deepEqual(calls, [
+    ['setActives', [1, 2], false],
+    ['setTags', [1, 2], 'Enemy'],
+    ['setLayers', [1, 2], 9],
+  ]);
+  assert.deepEqual(active.data, { entities: [1, 2], active: false, changed: 2 });
+  assert.deepEqual(tags.data, { entities: [1, 2], tag: 'Enemy', changed: 2 });
+  assert.deepEqual(layers.data, { entities: [1, 2], layer: 9, changed: 2 });
+
+  assertBridgeError(
+    () => run(ctx, 'entity.set_tags', { ids: [1, 999], tag: 'Player' }),
+    'ENTITY_NOT_FOUND',
+  );
+  assertBridgeError(
+    () => run(ctx, 'entity.set_layers', { ids: [], layer: 0 }),
+    'INVALID_ARGS',
+  );
+  assert.equal(calls.length, 3);
 });
 
 test('accepts entity id zero when it exists in a loaded scene', () => {
@@ -302,6 +383,168 @@ test('component set and patch require an existing component and object payload',
   assert.deepEqual(calls, [
     ['patchComponent', 1, 'MeshRenderer', { material: 'default' }],
   ]);
+});
+
+test('component add uses catalog defaults unless a custom value is explicit', () => {
+  const { ctx, calls } = createContext();
+
+  run(ctx, 'component.add', { entity: 1, type: 'Camera2D' });
+  assert.deepEqual(calls, [[
+    'addComponent',
+    1,
+    'Camera2D',
+    {
+      size: 5,
+      primary: false,
+      clear_flags: 'solid_color',
+      background_color: [0.1, 0.1, 0.14, 1],
+    },
+  ]]);
+
+  assertBridgeError(
+    () => run(ctx, 'component.add', { entity: 1, type: 'CustomComponent' }),
+    'COMPONENT_NOT_FOUND',
+  );
+  run(ctx, 'component.add', {
+    entity: 1,
+    type: 'CustomComponent',
+    value: { enabled: true },
+  });
+  assert.deepEqual(calls.at(-1), [
+    'addComponent',
+    1,
+    'CustomComponent',
+    { enabled: true },
+  ]);
+});
+
+test('component batch add validates all targets before one store transaction', () => {
+  const { ctx, calls, entities } = createContext();
+  const result = run(ctx, 'component.add_many', {
+    entities: [1, 2],
+    type: 'DirectionalLight',
+  });
+  assert.deepEqual(calls, [[
+    'addComponents',
+    [1, 2],
+    'DirectionalLight',
+    {
+      color: [1, 1, 0.95, 1],
+      intensity: 1,
+      cast_shadows: true,
+      shadow_strength: 1,
+      shadow_bias: 0.0015,
+      shadow_normal_bias: 0.02,
+      shadow_distance: 30,
+    },
+  ]]);
+  assert.deepEqual(result.data, {
+    entities: [1, 2],
+    component: 'DirectionalLight',
+    changed: 2,
+  });
+
+  entities[1].components.DirectionalLight = {};
+  assertBridgeError(
+    () => run(ctx, 'component.add_many', {
+      entities: [1, 2],
+      type: 'DirectionalLight',
+    }),
+    'INVALID_ARGS',
+  );
+  assert.equal(calls.length, 1);
+});
+
+test('component removal protects dependencies and batches one complete transaction', () => {
+  const { ctx, calls, entities } = createContext();
+  entities[0].components.MaterialPropertyBlock = {};
+  assertBridgeError(
+    () => run(ctx, 'component.remove', {
+      entity: 1,
+      type: 'MeshRenderer',
+    }),
+    'INVALID_ARGS',
+    /required by: MaterialPropertyBlock/,
+  );
+  assert.deepEqual(calls, []);
+
+  entities[0].components.PointLight = {};
+  entities[1].components.PointLight = {};
+  const result = run(ctx, 'component.remove_many', {
+    entities: [1, 2],
+    type: 'PointLight',
+  });
+  assert.deepEqual(calls, [['removeComponents', [1, 2], 'PointLight']]);
+  assert.deepEqual(result.data, {
+    entities: [1, 2],
+    component: 'PointLight',
+    changed: 2,
+  });
+
+  delete entities[1].components.PointLight;
+  assertBridgeError(
+    () => run(ctx, 'component.remove_many', {
+      entities: [1, 2],
+      type: 'PointLight',
+    }),
+    'COMPONENT_NOT_FOUND',
+  );
+  assert.equal(calls.length, 1);
+});
+
+test('component batch set and patch validate all targets before one store transaction', () => {
+  const { ctx, calls, entities } = createContext();
+  entities[0].components.PointLight = { intensity: 8, range: 10 };
+  entities[1].components.PointLight = { intensity: 4, range: 6 };
+
+  const setResult = run(ctx, 'component.set_many', {
+    entities: [1, 2],
+    type: 'PointLight',
+    value: { intensity: 3, range: 12 },
+  });
+  assert.deepEqual(calls, [[
+    'setComponents',
+    'PointLight',
+    [
+      { entity: 1, value: { intensity: 3, range: 12 } },
+      { entity: 2, value: { intensity: 3, range: 12 } },
+    ],
+  ]]);
+  assert.deepEqual(setResult.data, {
+    entities: [1, 2],
+    component: 'PointLight',
+    changed: 2,
+  });
+
+  const patchResult = run(ctx, 'component.patch_many', {
+    entities: [1, 2],
+    type: 'PointLight',
+    patch: { intensity: 5 },
+  });
+  assert.deepEqual(calls[1], [
+    'patchComponents',
+    'PointLight',
+    [
+      { entity: 1, patch: { intensity: 5 } },
+      { entity: 2, patch: { intensity: 5 } },
+    ],
+  ]);
+  assert.deepEqual(patchResult.data, {
+    entities: [1, 2],
+    component: 'PointLight',
+    changed: 2,
+  });
+
+  delete entities[1].components.PointLight;
+  assertBridgeError(
+    () => run(ctx, 'component.patch_many', {
+      entities: [1, 2],
+      type: 'PointLight',
+      patch: { intensity: 7 },
+    }),
+    'COMPONENT_NOT_FOUND',
+  );
+  assert.equal(calls.length, 2);
 });
 
 test('component method invocation accepts only registered Behaviour methods', () => {
@@ -410,6 +653,68 @@ test('world command batches validate completely before one atomic store call', (
   assert.equal(entities[0].components.MeshRenderer, undefined);
 });
 
+test('high-level intents reuse atomic world-command validation and preserve transforms', () => {
+  const { ctx, calls, entities } = createContext();
+
+  assertBridgeError(
+    () => run(ctx, 'intent.apply', {
+      intent: {
+        kind: 'SpawnEnemy',
+        archetype: 'placeholder',
+        at: [0, 0, 0],
+      },
+    }),
+    'INVALID_ARGS',
+  );
+  assert.deepEqual(calls, []);
+
+  const transformResult = run(ctx, 'intent.apply', {
+    intent: {
+      kind: 'SetTransform',
+      entity: 1,
+      position: [5, 6, 7],
+    },
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'applyCommands');
+  assert.deepEqual(calls[0][1], [{
+    op: 'setComponent',
+    entity: 1,
+    component: 'Transform',
+    value: {
+      position: [5, 6, 7],
+      rotation: [0, 0, 0, 1],
+      scale: [1, 1, 1],
+    },
+  }]);
+  assert.deepEqual(transformResult.data, {
+    intentKind: 'SetTransform',
+    commandCount: 1,
+    entityCount: 2,
+    created: [],
+    removed: [],
+  });
+  assert.deepEqual(entities[0].components.Transform.position, [5, 6, 7]);
+
+  const spawnResult = run(ctx, 'intent.apply', {
+    intent: {
+      kind: 'SpawnMesh',
+      mesh: 'sphere',
+      at: [1, 2, 3],
+      name: 'Orb',
+    },
+  });
+  assert.equal(calls.length, 2);
+  assert.deepEqual(spawnResult.data, {
+    intentKind: 'SpawnMesh',
+    commandCount: 1,
+    entityCount: 3,
+    created: [3],
+    removed: [],
+  });
+  assert.equal(entities[2].name, 'Orb');
+});
+
 test('transform updates require finite tuples with exact dimensions', () => {
   const { ctx, calls } = createContext();
 
@@ -437,6 +742,54 @@ test('transform updates require finite tuples with exact dimensions', () => {
       scale: [1, 1, 1],
     },
   ]);
+});
+
+test('RectTransform updates preserve omitted fields and reject invalid normalized geometry', () => {
+  const { ctx, calls } = createContext();
+
+  assertBridgeError(
+    () => run(ctx, 'rect.set', { entity: 1, sizeDelta: [200, 80] }),
+    'COMPONENT_NOT_FOUND',
+  );
+  assertBridgeError(
+    () => run(ctx, 'rect.set', { entity: 2 }),
+    'INVALID_ARGS',
+  );
+  assertBridgeError(
+    () => run(ctx, 'rect.set', { entity: 2, pivot: [-0.1, 0.5] }),
+    'INVALID_ARGS',
+  );
+  assertBridgeError(
+    () => run(ctx, 'rect.set', {
+      entity: 2,
+      anchorMin: [0.8, 0],
+      anchorMax: [0.2, 1],
+    }),
+    'INVALID_ARGS',
+  );
+  assert.deepEqual(calls, []);
+
+  const result = run(ctx, 'rect.set', {
+    entity: 2,
+    anchoredPosition: [12, -4],
+    sizeDelta: [240, 80],
+    pivot: [0, 1],
+    anchorMin: [0, 0],
+    anchorMax: [1, 1],
+    localRotation: 15,
+    localScale: [-1, 2],
+  });
+  const expected = {
+    anchor_min: [0, 0],
+    anchor_max: [1, 1],
+    pivot: [0, 1],
+    anchored_position: [12, -4],
+    size_delta: [240, 80],
+    local_rotation: 15,
+    local_scale: [-1, 2],
+  };
+  assert.deepEqual(calls[0], ['setComponent', 2, 'RectTransform', expected]);
+  assert.deepEqual(result.data, { entity: 2, rectTransform: expected });
 });
 
 test('relative translation, sibling reorder, and Scene camera control use native store paths', () => {

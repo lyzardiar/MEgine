@@ -1,0 +1,50 @@
+.mengine-documentation {
+  box-sizing: border-box;
+  height: 100%;
+  overflow: auto;
+  padding: 20px 24px 32px;
+  color: var(--u-text, #d8dbe2);
+  background: var(--u-panel, #1c1f26);
+  line-height: 1.5;
+}
+
+.mengine-documentation h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.mengine-documentation h2 {
+  margin: 24px 0 8px;
+  font-size: 15px;
+}
+
+.mengine-documentation p,
+.mengine-documentation ol,
+.mengine-documentation dl {
+  margin: 8px 0;
+}
+
+.mengine-documentation dt {
+  margin-top: 8px;
+  color: var(--u-text-bright, #f2f4f8);
+  font-weight: 600;
+}
+
+.mengine-documentation dd {
+  margin-left: 0;
+  color: var(--u-muted, #a5abb7);
+}
+
+.mengine-documentation code {
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #b9d7ff;
+  background: #11141a;
+}
+
+.mengine-documentation .documentation-paths {
+  padding: 10px 12px;
+  border: 1px solid #343a46;
+  border-radius: 4px;
+  background: #151820;
+}

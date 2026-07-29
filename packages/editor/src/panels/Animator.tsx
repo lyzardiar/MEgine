@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FocusEvent as ReactFocusEvent,
@@ -9,6 +10,12 @@ import {
 import type { WorldSnapshotView } from '@mengine/api';
 import { Redo2, Undo2 } from 'lucide-react';
 import { createAnimationClip, serializeAnimationClip } from '../animationClip';
+import {
+  dropChangedCleanDrafts,
+  mergeWorkspaceResourceDocuments,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
 import {
   animatorParameterValues,
   animatorLayerWeightValues,
@@ -31,7 +38,13 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerCloseDocumentParticipant,
+  registerDiscardDocumentParticipant,
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import type {
   EditorUndoCheckpoint,
   EditorUndoService,
@@ -39,7 +52,9 @@ import type {
 } from '../editorUndoService';
 import { AvatarMaskEditor } from './AvatarMask';
 import {
+  broadcastProjectAssetsChanged,
   openAnimatorAsset,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 
@@ -72,7 +87,8 @@ export async function createProjectAnimatorControllerDetailed(
     serializeAnimatorController(createAnimatorController(controllerName, clipPath)),
   );
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: clipPath });
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: controllerPath });
   if (open) openAnimatorAsset(controllerPath);
   return {
     primaryPath: controllerPath,
@@ -209,7 +225,16 @@ function AnimatorStateGraph(props: {
                 && (transition.from === '*' || transition.from === currentState);
               return (
                 <g key={index} className={`animator-graph-edge${props.selectedTransition === index ? ' selected' : ''}${active ? ' active' : ''}`}>
-                  <line className="hit" x1={x1} y1={y1} x2={x2} y2={y2} onPointerDown={() => props.onSelectTransition(index)} />
+                  <line
+                    className="hit"
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    role="button"
+                    aria-label={`Select transition ${transition.from} to ${transition.to}`}
+                    onPointerDown={() => props.onSelectTransition(index)}
+                  />
                   <line x1={x1} y1={y1} x2={x2} y2={y2} markerEnd="url(#animator-arrow)" />
                 </g>
               );
@@ -329,10 +354,12 @@ export type AnimatorEditorProps = {
   selectedEntity: SnapshotEntity | null;
   playMode: boolean;
   onOpenAsset: (path: string) => void;
+  onCloseAsset: () => void;
   onAssignAnimator: (entity: number, path: string) => void;
   onPatchAnimator: (entity: number, patch: Record<string, unknown>) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -368,15 +395,19 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [selectedState, setSelectedState] = useState<number | null>(null);
   const [selectedTransition, setSelectedTransition] = useState<number | null>(null);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, AnimatorDraft>());
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const controllerRef = useRef<AnimatorController | null>(null);
   const selectedStateRef = useRef<number | null>(null);
   const selectedTransitionRef = useRef<number | null>(null);
   const editTransaction = useRef<AnimatorEditTransaction | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   controllerRef.current = controller;
   selectedStateRef.current = selectedState;
   selectedTransitionRef.current = selectedTransition;
@@ -481,6 +512,8 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -491,13 +524,19 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && controller) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && controller && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, {
         controller: structuredClone(controller),
         savedFingerprint,
         selectedState,
         selectedTransition,
       });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath;
     editTransaction.current = null;
@@ -507,7 +546,8 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
     setSelectedState(null);
     setSelectedTransition(null);
     if (!props.assetPath) return () => { cancelled = true; };
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       replaceController(structuredClone(draft.controller));
@@ -517,7 +557,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       return () => { cancelled = true; };
     }
     setLoading(true);
-    void readProjectAssetText(props.assetPath)
+    void readProjectAssetText(props.assetPath, { replaceWriteBaseline: true })
       .then((text) => {
         if (cancelled) return;
         const parsed = parseAnimatorControllerDraft(text);
@@ -531,11 +571,57 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   const dirty = controllerFingerprint(controller) !== savedFingerprint && controller != null;
   const anyDirty = dirty || [...drafts.current.values()].some(animatorDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'animator',
+    'animator',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, animatorDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
+
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
+
+  useEffect(() => {
+    const onAssetsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        animatorDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`animator:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
+      if (
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
+      ) return;
+      if (dirty) {
+        setError(
+          'Animator Controller changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+  }, [dirty, props.assetPath]);
 
   const clips = listProjectFiles().filter((asset) => asset.kind === 'animation');
   const avatarMasks = listProjectFiles().filter((asset) => asset.kind === 'avatar-mask');
@@ -580,6 +666,12 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       drafts.current.delete(props.assetPath);
       replaceController(normalized);
       setSavedFingerprint(controllerFingerprint(normalized));
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
       return true;
@@ -610,6 +702,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             controller: normalized,
             savedFingerprint: controllerFingerprint(normalized),
           });
+          broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
           props.onLog(`Saved ${path}`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -624,9 +717,91 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Animator Controller could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !animatorDraftDirty(entry[1])) {
+      throw new Error(`No dirty Animator Controller draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      validateAnimatorController(draft.controller);
+      const text = serializeAnimatorController(draft.controller);
+      await writeProjectAssetText(draftPath, text);
+      const normalized = parseAnimatorController(text);
+      drafts.current.set(draftPath, {
+        ...draft,
+        controller: normalized,
+        savedFingerprint: controllerFingerprint(normalized),
+      });
+      await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Animator Controllers', () => (
     anyDirty && !saving ? saveAll : null
   )), [anyDirty, controller, dirty, props.assetPath, savedFingerprint, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Animator Controllers', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && animatorDraftDirty(draft)
+      ? () => saveDocument(path)
+      : null;
+  }), [controller, dirty, draftEpoch, props.assetPath, savedFingerprint, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Animator Controllers', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`animator:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !animatorDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`animator:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Animator Controllers', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`animator:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`animator:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onCloseAsset, saving]);
 
   const createNew = async () => {
     try {
@@ -713,6 +888,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
         <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`} disabled={!props.undoService.canUndo} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
         <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`} disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
+        <button type="button" disabled={loading || saving} onClick={reloadFromDisk}>Reload</button>
         <button type="button" disabled={!dirty || saving} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
         </button>
@@ -798,7 +974,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   <option value="synced">Synced</option>
                   <option value="independent">Independent</option>
                 </select>
-                <button type="button" title="Delete layer" onClick={() => update((draft) => { draft.layers.splice(layerIndex, 1); })}>×</button>
+                <button type="button" aria-label={`Delete layer ${layer.name}`} title="Delete layer" onClick={() => update((draft) => { draft.layers.splice(layerIndex, 1); })}>×</button>
               </div>
               <label className="animator-layer-mask">
                 Avatar Mask Asset
@@ -893,13 +1069,13 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                           if (transition.to === previous) transition.to = next;
                         }
                       })} />
-                      <select value={state.clip} onChange={(event) => update((draft) => { draft.layers[layerIndex].states[stateIndex].clip = event.target.value; })}>
+                      <select aria-label={`Independent state ${state.name} clip`} value={state.clip} onChange={(event) => update((draft) => { draft.layers[layerIndex].states[stateIndex].clip = event.target.value; })}>
                         {state.clip && !clips.some((clip) => clip.relPath === state.clip) && <option value={state.clip}>{state.clip} (Missing)</option>}
                         <option value="">Select Animation Clip</option>
                         {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
                       </select>
                       <label>Speed <input type="number" step="0.1" value={state.speed} onChange={(event) => update((draft) => { draft.layers[layerIndex].states[stateIndex].speed = Number(event.target.value); })} /></label>
-                      <button type="button" disabled={layer.states.length <= 1} title="Delete state" onClick={() => update((draft) => {
+                      <button type="button" aria-label={`Delete independent state ${state.name}`} disabled={layer.states.length <= 1} title="Delete state" onClick={() => update((draft) => {
                         const target = draft.layers[layerIndex];
                         const removed = target.states[stateIndex].name;
                         target.states.splice(stateIndex, 1);
@@ -928,7 +1104,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                         <label>Blend <input type="number" min="0" step="0.05" value={transition.duration} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].duration = Number(event.target.value); })} /></label>
                         <label><input type="checkbox" checked={transition.has_exit_time} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].has_exit_time = event.target.checked; })} /> Exit Time</label>
                         {transition.has_exit_time && <input aria-label="Independent transition exit time" type="number" min="0" step="0.05" value={transition.exit_time} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].exit_time = Number(event.target.value); })} />}
-                        <button type="button" onClick={() => update((draft) => { draft.layers[layerIndex].transitions.splice(transitionIndex, 1); })}>×</button>
+                        <button type="button" aria-label={`Delete independent transition ${transition.from} to ${transition.to}`} onClick={() => update((draft) => { draft.layers[layerIndex].transitions.splice(transitionIndex, 1); })}>×</button>
                       </div>
                       <div className="animator-row">
                         <button type="button" disabled={controller.parameters.length === 0} onClick={() => update((draft) => {
@@ -946,15 +1122,15 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                         const modes = parameterModes(parameter?.kind ?? 'float');
                         return (
                           <div className="animator-row condition" key={conditionIndex}>
-                            <select value={condition.parameter} onChange={(event) => update((draft) => {
+                            <select aria-label={`Independent transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} parameter`} value={condition.parameter} onChange={(event) => update((draft) => {
                               const next = draft.parameters.find((item) => item.name === event.target.value)!;
                               const target = draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex];
                               target.parameter = next.name;
                               target.mode = parameterModes(next.kind)[0];
                             })}>{controller.parameters.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}</select>
-                            <select value={condition.mode} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
-                            {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
-                            <button type="button" onClick={() => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions.splice(conditionIndex, 1); })}>×</button>
+                            <select aria-label={`Independent transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} mode`} value={condition.mode} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
+                            {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input aria-label={`Independent transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} threshold`} type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
+                            <button type="button" aria-label={`Delete condition ${conditionIndex + 1} from independent transition ${transition.from} to ${transition.to}`} onClick={() => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions.splice(conditionIndex, 1); })}>×</button>
                           </div>
                         );
                       })}
@@ -1108,7 +1284,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             const usedByBlendTree = controller.states.some((state) => state.blend_tree?.parameter === parameter.name);
             return (
             <div className="animator-row" key={`${index}-${parameter.name}`}>
-              <input value={parameter.name} onChange={(event) => update((draft) => {
+              <input aria-label={`Parameter ${index + 1} name`} value={parameter.name} onChange={(event) => update((draft) => {
                 const previous = draft.parameters[index].name;
                 const next = event.target.value;
                 draft.parameters[index].name = next;
@@ -1128,7 +1304,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   }
                 }
               })} />
-              <select value={parameter.kind} onChange={(event) => update((draft) => {
+              <select aria-label={`${parameter.name} parameter type`} value={parameter.kind} onChange={(event) => update((draft) => {
                 const next = event.target.value as AnimatorParameterKind;
                 if (usedByBlendTree && next !== 'float' && next !== 'int') return;
                 draft.parameters[index].kind = next;
@@ -1151,10 +1327,10 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
               })}>
                 <option value="bool" disabled={usedByBlendTree}>Bool</option><option value="float">Float</option><option value="int">Int</option><option value="trigger" disabled={usedByBlendTree}>Trigger</option>
               </select>
-              {parameter.kind === 'bool' && <input type="checkbox" checked={parameter.default_bool} onChange={(event) => update((draft) => { draft.parameters[index].default_bool = event.target.checked; })} />}
-              {parameter.kind === 'float' && <input type="number" step="0.1" value={parameter.default_float} onChange={(event) => update((draft) => { draft.parameters[index].default_float = Number(event.target.value); })} />}
-              {parameter.kind === 'int' && <input type="number" step="1" value={parameter.default_int} onChange={(event) => update((draft) => { draft.parameters[index].default_int = Number(event.target.value); })} />}
-              <button type="button" disabled={usedByBlendTree} title={usedByBlendTree ? 'Blend Tree parameter is in use' : 'Delete parameter'} onClick={() => update((draft) => {
+              {parameter.kind === 'bool' && <input aria-label={`${parameter.name} default value`} type="checkbox" checked={parameter.default_bool} onChange={(event) => update((draft) => { draft.parameters[index].default_bool = event.target.checked; })} />}
+              {parameter.kind === 'float' && <input aria-label={`${parameter.name} default value`} type="number" step="0.1" value={parameter.default_float} onChange={(event) => update((draft) => { draft.parameters[index].default_float = Number(event.target.value); })} />}
+              {parameter.kind === 'int' && <input aria-label={`${parameter.name} default value`} type="number" step="1" value={parameter.default_int} onChange={(event) => update((draft) => { draft.parameters[index].default_int = Number(event.target.value); })} />}
+              <button type="button" aria-label={`Delete parameter ${parameter.name}`} disabled={usedByBlendTree} title={usedByBlendTree ? 'Blend Tree parameter is in use' : 'Delete parameter'} onClick={() => update((draft) => {
                 const name = draft.parameters[index].name;
                 draft.parameters.splice(index, 1);
                 for (const transition of draft.transitions) transition.conditions = transition.conditions.filter((condition) => condition.parameter !== name);
@@ -1187,12 +1363,15 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             <div
               className={`animator-state${state.name === controller.default_state ? ' default' : ''}${selectedState === index ? ' selected' : ''}`}
               key={`${index}-${state.name}`}
+              role="group"
+              aria-label={`Animator state ${state.name}`}
+              aria-current={selectedState === index ? 'true' : undefined}
               onClick={() => {
                 setSelectedState(index);
                 setSelectedTransition(null);
               }}
             >
-              <input value={state.name} onChange={(event) => update((draft) => {
+              <input aria-label={`State ${index + 1} name`} value={state.name} onChange={(event) => update((draft) => {
                 const previous = draft.states[index].name;
                 const next = event.target.value;
                 draft.states[index].name = next;
@@ -1233,7 +1412,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 <option value="clip">Animation Clip</option>
                 <option value="blend_tree">1D Blend Tree</option>
               </select>
-              {!state.blend_tree && <select value={state.clip} onChange={(event) => update((draft) => { draft.states[index].clip = event.target.value; })}>
+              {!state.blend_tree && <select aria-label={`${state.name} clip`} value={state.clip} onChange={(event) => update((draft) => { draft.states[index].clip = event.target.value; })}>
                 {!clips.some((clip) => clip.relPath === state.clip) && <option value={state.clip}>{state.clip || 'Select Clip…'}</option>}
                 {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
               </select>}
@@ -1257,7 +1436,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   {props.playMode ? 'Play' : 'Start'}
                 </button>
               )}
-              <button type="button" disabled={controller.states.length <= 1} onClick={(event) => {
+              <button type="button" aria-label={`Delete state ${state.name}`} disabled={controller.states.length <= 1} onClick={(event) => {
                 event.stopPropagation();
                 update((draft) => {
                   const removed = draft.states[index].name;
@@ -1274,7 +1453,12 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 setSelectedTransition(null);
               }}>×</button>
               {state.blend_tree && (
-                <div className="animator-blend-tree" onClick={(event) => event.stopPropagation()}>
+                <div
+                  className="animator-blend-tree"
+                  role="group"
+                  aria-label={`Blend tree for ${state.name}`}
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <div className="animator-heading">
                     <label>Parameter
                       <select value={state.blend_tree.parameter} onChange={(event) => update((draft) => { draft.states[index].blend_tree!.parameter = event.target.value; })}>
@@ -1296,13 +1480,13 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                       <input aria-label="Blend threshold" type="number" step="0.1" value={child.threshold} onChange={(event) => update((draft) => {
                         draft.states[index].blend_tree!.children[childIndex].threshold = Number(event.target.value);
                       })} />
-                      <select value={child.clip} onChange={(event) => update((draft) => {
+                      <select aria-label={`${state.name} blend child ${childIndex + 1} clip`} value={child.clip} onChange={(event) => update((draft) => {
                         draft.states[index].blend_tree!.children[childIndex].clip = event.target.value;
                       })}>
                         {!clips.some((clip) => clip.relPath === child.clip) && <option value={child.clip}>{child.clip || 'Select Clip…'}</option>}
                         {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
                       </select>
-                      <button type="button" disabled={state.blend_tree!.children.length <= 2} onClick={() => update((draft) => {
+                      <button type="button" aria-label={`Delete blend tree child ${childIndex + 1} from ${state.name}`} disabled={state.blend_tree!.children.length <= 2} onClick={() => update((draft) => {
                         draft.states[index].blend_tree!.children.splice(childIndex, 1);
                       })}>×</button>
                     </div>
@@ -1330,13 +1514,16 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             <div
               className={`animator-transition${selectedTransition === transitionIndex ? ' selected' : ''}`}
               key={transitionIndex}
+              role="group"
+              aria-label={`Transition ${transition.from} to ${transition.to}`}
+              aria-current={selectedTransition === transitionIndex ? 'true' : undefined}
               onClick={() => {
                 setSelectedState(null);
                 setSelectedTransition(transitionIndex);
               }}
             >
               <div className="animator-row">
-                <select value={transition.from} onChange={(event) => update((draft) => {
+                <select aria-label={`Transition ${transitionIndex + 1} source`} value={transition.from} onChange={(event) => update((draft) => {
                   const target = draft.transitions[transitionIndex];
                   target.from = event.target.value;
                   if (target.to === target.from) {
@@ -1346,7 +1533,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   <option value="*">Any State</option>{controller.states.map((state) => <option key={state.name} value={state.name}>{state.name}</option>)}
                 </select>
                 <span>→</span>
-                <select value={transition.to} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].to = event.target.value; })}>
+                <select aria-label={`Transition ${transitionIndex + 1} destination`} value={transition.to} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].to = event.target.value; })}>
                   {controller.states.filter((state) => state.name !== transition.from).map((state) => <option key={state.name} value={state.name}>{state.name}</option>)}
                 </select>
                 <label>Blend <input type="number" min="0" step="0.05" value={transition.duration} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].duration = Number(event.target.value); })} /></label>
@@ -1364,7 +1551,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   });
                   setSelectedTransition(transitionIndex + 1);
                 }}>↓</button>
-                <button type="button" onClick={(event) => {
+                <button type="button" aria-label={`Delete transition ${transition.from} to ${transition.to}`} onClick={(event) => {
                   event.stopPropagation();
                   update((draft) => { draft.transitions.splice(transitionIndex, 1); });
                   setSelectedTransition((selected) => selected == null || selected === transitionIndex
@@ -1374,7 +1561,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
               </div>
               <div className="animator-row">
                 <label><input type="checkbox" checked={transition.has_exit_time} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].has_exit_time = event.target.checked; })} /> Exit Time</label>
-                {transition.has_exit_time && <input type="number" min="0" step="0.05" value={transition.exit_time} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].exit_time = Number(event.target.value); })} />}
+                {transition.has_exit_time && <input aria-label={`Transition ${transition.from} to ${transition.to} exit time`} type="number" min="0" step="0.05" value={transition.exit_time} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].exit_time = Number(event.target.value); })} />}
                 <button type="button" disabled={controller.parameters.length === 0} onClick={() => update((draft) => {
                   const parameter = draft.parameters[0];
                   if (!parameter) return;
@@ -1385,15 +1572,15 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 const parameter = controller.parameters.find((item) => item.name === condition.parameter);
                 const modes = parameterModes(parameter?.kind ?? 'float');
                 return <div className="animator-row condition" key={conditionIndex}>
-                  <select value={condition.parameter} onChange={(event) => update((draft) => {
+                  <select aria-label={`Transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} parameter`} value={condition.parameter} onChange={(event) => update((draft) => {
                     const next = draft.parameters.find((item) => item.name === event.target.value)!;
                     const target = draft.transitions[transitionIndex].conditions[conditionIndex];
                     target.parameter = next.name;
                     target.mode = parameterModes(next.kind)[0];
                   })}>{controller.parameters.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}</select>
-                  <select value={condition.mode} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
-                  {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
-                  <button type="button" onClick={() => update((draft) => { draft.transitions[transitionIndex].conditions.splice(conditionIndex, 1); })}>×</button>
+                  <select aria-label={`Transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} mode`} value={condition.mode} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
+                  {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input aria-label={`Transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} threshold`} type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
+                  <button type="button" aria-label={`Delete condition ${conditionIndex + 1} from transition ${transition.from} to ${transition.to}`} onClick={() => update((draft) => { draft.transitions[transitionIndex].conditions.splice(conditionIndex, 1); })}>×</button>
                 </div>;
               })}
             </div>
@@ -1407,11 +1594,21 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
 export function AnimatorEditor(props: AnimatorEditorProps) {
   const [controllerDirty, setControllerDirty] = useState(false);
   const [avatarMaskDirty, setAvatarMaskDirty] = useState(false);
+  const [controllerDocuments, setControllerDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [avatarMaskDocuments, setAvatarMaskDocuments] = useState<WorkspaceResourceDocument[]>([]);
   const avatarMaskOpen = props.assetPath?.toLowerCase().endsWith('.mavatar') === true;
 
   useEffect(() => {
     props.onDirtyChange(controllerDirty || avatarMaskDirty);
   }, [avatarMaskDirty, controllerDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(
+    () => mergeWorkspaceResourceDocuments(controllerDocuments, avatarMaskDocuments),
+    [avatarMaskDocuments, controllerDocuments],
+  );
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
 
   return (
     <>
@@ -1420,14 +1617,17 @@ export function AnimatorEditor(props: AnimatorEditorProps) {
           {...props}
           assetPath={avatarMaskOpen ? null : props.assetPath}
           onDirtyChange={setControllerDirty}
+          onDocumentsChange={setControllerDocuments}
         />
       </div>
       <div style={{ display: avatarMaskOpen ? 'contents' : 'none' }}>
         <AvatarMaskEditor
           assetPath={avatarMaskOpen ? props.assetPath : null}
           onOpenAsset={props.onOpenAsset}
+          onCloseAsset={props.onCloseAsset}
           onAssetsChanged={props.onAssetsChanged}
           onDirtyChange={setAvatarMaskDirty}
+          onDocumentsChange={setAvatarMaskDocuments}
           onLog={props.onLog}
           undoService={props.undoService}
           onGlobalUndo={props.onGlobalUndo}

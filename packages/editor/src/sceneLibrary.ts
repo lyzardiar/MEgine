@@ -16,6 +16,7 @@ import {
   endInternalProjectFileWrite,
   refreshProjectFiles,
 } from './projectAssets';
+import { broadcastProjectAssetsChanged } from './assetEditorEvents';
 
 export type SceneMeta = {
   name: string;
@@ -102,6 +103,14 @@ export function sceneFileName(name: string) {
   return `${name}.mscene`;
 }
 
+function broadcastSceneWrite(path: string, existed: boolean): void {
+  broadcastProjectAssetsChanged(
+    existed
+      ? { action: 'modified', sourcePath: path }
+      : { action: 'created', destinationPath: path },
+  );
+}
+
 export function normalizeSceneName(input: string): string | null {
   let n = input.trim().replace(/\.mscene$/i, '');
   n = n.replace(/[\\/:*?"<>|]/g, '').trim();
@@ -115,6 +124,33 @@ export function isDiskBackend() {
 
 export function isSceneLibraryReady() {
   return _ready;
+}
+
+export async function refreshSceneLibrary(): Promise<SceneMeta[]> {
+  if (_backend === 'desktop') {
+    const activeJson = _active == null ? null : _data.get(_active) ?? null;
+    const scenes = await listProjectScenes();
+    _index = sortIndex(scenes.map((scene) => ({
+      name: scene.name,
+      updatedAt: scene.updatedAt,
+    })));
+    _data.clear();
+    for (const scene of scenes) _data.set(scene.name, scene.json);
+    if (_active != null && activeJson != null && _data.has(_active)) {
+      // A detached resource window must not overwrite the live scene copy it
+      // receives through scene-state just to refresh the project scene index.
+      _data.set(_active, activeJson);
+    } else if (_active != null && !_data.has(_active)) {
+      _active = null;
+    }
+  } else if (_backend === 'disk') {
+    if (!await loadFromDisk()) {
+      throw new Error('scene library could not be refreshed from disk');
+    }
+  } else {
+    loadFromLocalStorage();
+  }
+  return listScenes();
 }
 
 function applyLocalIndex(list: SceneMeta[]) {
@@ -344,6 +380,9 @@ export async function setEditorPrefs(partial: EditorPrefs) {
 
 export async function writeScene(name: string, json: string) {
   const trackedPath = `Assets/Scenes/${sceneFileName(name)}`;
+  const existed = _index.some(
+    (scene) => scene.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+  );
   beginInternalProjectFileWrite(trackedPath);
   try {
     if (_backend === 'desktop') {
@@ -356,7 +395,9 @@ export async function writeScene(name: string, json: string) {
       _data.set(savedName, json);
       _active = savedName;
       await refreshProjectFiles();
-      acknowledgeProjectFileWrite(`Assets/Scenes/${sceneFileName(savedName)}`);
+      const savedPath = `Assets/Scenes/${sceneFileName(savedName)}`;
+      acknowledgeProjectFileWrite(savedPath);
+      broadcastSceneWrite(savedPath, existed);
       return;
     }
 
@@ -376,6 +417,7 @@ export async function writeScene(name: string, json: string) {
       _active = name;
       await refreshProjectFiles();
       acknowledgeProjectFileWrite(trackedPath);
+      broadcastSceneWrite(trackedPath, existed);
       return;
     }
 
@@ -389,6 +431,7 @@ export async function writeScene(name: string, json: string) {
     _data.set(name, json);
     _index = nextIndex;
     _active = name;
+    broadcastSceneWrite(trackedPath, existed);
   } finally {
     endInternalProjectFileWrite(trackedPath);
   }
@@ -441,6 +484,7 @@ export async function deleteScene(name: string, expectedRevision?: string) {
       await refreshProjectFiles();
       acknowledgeProjectFileWrite(trackedPath);
     }
+    broadcastProjectAssetsChanged({ action: 'deleted', sourcePath: trackedPath });
   } finally {
     endInternalProjectFileWrite(trackedPath);
   }
@@ -503,6 +547,11 @@ export async function renameScene(oldName: string, newNameRaw: string): Promise<
       acknowledgeProjectFileWrite(oldPath);
       acknowledgeProjectFileWrite(newPath);
     }
+    broadcastProjectAssetsChanged({
+      action: 'renamed',
+      sourcePath: oldPath,
+      destinationPath: newPath,
+    });
     return newName;
   } finally {
     endInternalProjectFileWrite(oldPath);

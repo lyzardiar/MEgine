@@ -3,6 +3,7 @@ import {
   localizePrefabEntityReferences,
   validatePrefabEntityReferences,
 } from './entityReferences.ts';
+import { normalizeEntityTag, normalizeGameLayerIndex } from './sortingLayerModel.ts';
 
 export const PREFAB_VERSION = 1;
 export const PREFAB_LINK_COMPONENT = '__MEnginePrefab';
@@ -11,6 +12,8 @@ export interface PrefabNode {
   id: string;
   name: string;
   active: boolean;
+  tag: string;
+  layer: number;
   components: Record<string, unknown>;
   children: PrefabNode[];
 }
@@ -34,6 +37,8 @@ export interface PrefabEntity {
   parent?: number | null;
   siblingIndex: number;
   active: boolean;
+  tag?: string;
+  layer?: number;
   components: Record<string, unknown>;
 }
 
@@ -76,6 +81,8 @@ function normalizeNode(value: unknown, path: string, ids: Set<string>, count: { 
     id,
     name,
     active: raw.active !== false,
+    tag: normalizeEntityTag(raw.tag),
+    layer: normalizeGameLayerIndex(raw.layer),
     components: structuredClone(components),
     children: children.map((child, index) => normalizeNode(child, `${path}/${index}`, ids, count)),
   };
@@ -91,6 +98,8 @@ function legacyNode(value: unknown, path: number[]): PrefabNode {
     id: path.length ? `node-${path.join('-')}` : 'root',
     name,
     active: true,
+    tag: normalizeEntityTag(raw.tag),
+    layer: normalizeGameLayerIndex(raw.layer),
     components: structuredClone(objectValue(raw.components ?? {}, `legacy prefab node ${name} components`)),
     children: children.map((child, index) => legacyNode(child, [...path, index])),
   };
@@ -252,6 +261,8 @@ export function capturePrefabAsset(
       id: nodeId,
       name: entity.name?.trim() || 'GameObject',
       active: entity.active !== false,
+      tag: normalizeEntityTag(entity.tag),
+      layer: normalizeGameLayerIndex(entity.layer),
       components,
       children: (childrenByParent.get(entityId) ?? []).map((child) => capture(child.entity)),
     };

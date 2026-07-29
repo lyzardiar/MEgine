@@ -1,3 +1,6 @@
+import { createEditorBroadcastChannel } from './editorInstance.ts';
+import type { ProjectAssetChange } from './projectAssets.ts';
+
 export const OPEN_ANIMATION_CLIP_EVENT = 'mengine:open-animation-clip';
 export const OPEN_TIMELINE_ASSET_EVENT = 'mengine:open-timeline-asset';
 export const OPEN_ANIMATOR_EVENT = 'mengine:open-animator';
@@ -14,26 +17,95 @@ export type ProjectAssetLifecycleDetail =
   | { action: 'modified'; sourcePath: string }
   | { action: 'created' | 'restored'; destinationPath: string };
 
+function comparableAssetPath(value: unknown): string | null {
+  return typeof value === 'string'
+    ? value.replace(/\\/g, '/').toLocaleLowerCase()
+    : null;
+}
+
+export function projectAssetsChangeTouches(
+  detail: unknown,
+  paths: readonly string[],
+): boolean {
+  if (!detail || typeof detail !== 'object') return false;
+  const targetPaths = new Set(paths.map(comparableAssetPath).filter((path) => path != null));
+  if (targetPaths.size === 0) return false;
+  const record = detail as Record<string, unknown>;
+  const changedPaths: unknown[] = [record.sourcePath, record.destinationPath];
+  if (Array.isArray(record.changes)) {
+    for (const value of record.changes) {
+      if (!value || typeof value !== 'object') continue;
+      const change = value as Record<string, unknown>;
+      changedPaths.push(change.relPath);
+      for (const endpoint of [change.previous, change.current]) {
+        if (endpoint && typeof endpoint === 'object') {
+          changedPaths.push((endpoint as Record<string, unknown>).relPath);
+        }
+      }
+    }
+  }
+  return changedPaths.some((path) => {
+    const comparable = comparableAssetPath(path);
+    return comparable != null && targetPaths.has(comparable);
+  });
+}
+
 type ProjectAssetLifecycleMessage = ProjectAssetLifecycleDetail & {
   sender: string;
   timestamp: number;
 };
 
+type ProjectAssetExternalChangeMessage = {
+  type: 'external';
+  changes: ProjectAssetChange[];
+  sender: string;
+  timestamp: number;
+};
+
+type ProjectAssetEditorMessage =
+  | ProjectAssetLifecycleMessage
+  | ProjectAssetExternalChangeMessage;
+
 const ASSET_CHANNEL = 'mengine.editor.assets.v1';
 const assetSender = crypto.randomUUID();
-const assetChannel = typeof BroadcastChannel === 'undefined'
-  ? null
-  : new BroadcastChannel(ASSET_CHANNEL);
+let assetChannel: BroadcastChannel | null = null;
 
-assetChannel?.addEventListener('message', (event: MessageEvent<ProjectAssetLifecycleMessage>) => {
-  const message = event.data;
-  if (!message || message.sender === assetSender) return;
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
-    detail: { ...message, remote: true },
-  }));
-});
+export function initializeAssetEditorEvents(): void {
+  if (assetChannel) return;
+  assetChannel = createEditorBroadcastChannel(ASSET_CHANNEL);
+  assetChannel?.addEventListener(
+    'message',
+    (event: MessageEvent<ProjectAssetEditorMessage>) => {
+      const message = event.data;
+      if (!message || message.sender === assetSender) return;
+      if ('type' in message && message.type === 'external') {
+        const detail = {
+          changes: structuredClone(message.changes),
+          remote: true,
+          timestamp: message.timestamp,
+        };
+        window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+          detail,
+        }));
+        window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
+          detail: { ...detail, source: 'external' },
+        }));
+        return;
+      }
+      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
+        detail: { ...message, remote: true },
+      }));
+    },
+  );
+}
+
+export function resetAssetEditorEventsForTests(): void {
+  assetChannel?.close();
+  assetChannel = null;
+}
 
 export function broadcastProjectAssetsChanged(detail: ProjectAssetLifecycleDetail): void {
+  initializeAssetEditorEvents();
   const message: ProjectAssetLifecycleMessage = {
     ...detail,
     sender: assetSender,
@@ -41,6 +113,30 @@ export function broadcastProjectAssetsChanged(detail: ProjectAssetLifecycleDetai
   };
   window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
     detail: { ...message, remote: false },
+  }));
+  assetChannel?.postMessage(message);
+}
+
+export function broadcastProjectAssetsExternalChanges(
+  changes: readonly ProjectAssetChange[],
+): void {
+  initializeAssetEditorEvents();
+  const message: ProjectAssetExternalChangeMessage = {
+    type: 'external',
+    changes: structuredClone([...changes]),
+    sender: assetSender,
+    timestamp: Date.now(),
+  };
+  const detail = {
+    changes: structuredClone(message.changes),
+    remote: false,
+    timestamp: message.timestamp,
+  };
+  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+    detail,
+  }));
+  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
+    detail: { ...detail, source: 'external' },
   }));
   assetChannel?.postMessage(message);
 }

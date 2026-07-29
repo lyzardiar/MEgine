@@ -57,6 +57,7 @@ function BoolField(props: {
       <input
         type="checkbox"
         className="field-bool"
+        aria-label={props.label}
         checked={props.value}
         onChange={(e) => props.onChange(e.target.checked)}
       />
@@ -81,6 +82,7 @@ export function ColorField(props: {
         <input
           type="color"
           className="color-swatch"
+          aria-label={`${props.label} color`}
           value={colorToHex(arr)}
           title={colorToHex(arr)}
           onChange={(e) => {
@@ -94,6 +96,7 @@ export function ColorField(props: {
             <input
               type="number"
               className="color-alpha"
+              aria-label={`${props.label} alpha`}
               min={0}
               max={1}
               step={0.01}
@@ -235,6 +238,7 @@ export function SpriteSlot(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div
+        aria-label={`${props.label} sprite drop target`}
         className={[
           'object-slot',
           'sprite-slot',
@@ -265,6 +269,9 @@ export function SpriteSlot(props: {
           type="button"
           className="object-slot-picker"
           title={props.baseTextureOnly ? 'Select Texture' : 'Select Sprite'}
+          aria-label={props.baseTextureOnly ? 'Select Texture' : 'Select Sprite'}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={openPicker}
         />
         {resolved && resolved !== noneValue && (
@@ -311,6 +318,7 @@ function NumberVectorField(props: {
             type="number"
             min={props.min}
             step={1}
+            aria-label={`${props.label} ${axis}`}
             value={Number(props.value[index] ?? 0)}
             onChange={(event) => {
               const next = [...props.value];
@@ -358,6 +366,9 @@ export function NamedReferenceField(props: {
           type="button"
           className="object-slot-picker"
           title={`Select ${props.referenceType}`}
+          aria-label={`Select ${props.referenceType}`}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={() => {
             setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);
@@ -441,6 +452,7 @@ export function ProjectAssetSlot(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div
+        aria-label={`${props.label} asset drop target`}
         className={`object-slot project-asset-slot${hasValue ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
         onDragEnter={(event) => {
           if (!Array.from(event.dataTransfer.types).includes('text/mengine-asset')) return;
@@ -475,6 +487,9 @@ export function ProjectAssetSlot(props: {
           type="button"
           className="object-slot-picker"
           title={`Select ${props.referenceType}`}
+          aria-label={`Select ${props.referenceType}`}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={() => {
             setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);
@@ -543,10 +558,11 @@ export function StringListField(props: {
               aria-label={`${props.label} ${index}`}
               onChange={(event) => update(index, event.target.value)}
             />
-            <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-            <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+            <button type="button" aria-label={`Move ${props.label} ${index + 1} up`} title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+            <button type="button" aria-label={`Move ${props.label} ${index + 1} down`} title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
             <button
               type="button"
+              aria-label={`Remove ${props.label} ${index + 1}`}
               title="Remove"
               onClick={() => props.onChange(items.filter((_, itemIndex) => itemIndex !== index))}
             >
@@ -597,9 +613,9 @@ export function SpriteListField(props: {
               />
             </div>
             <div className="sprite-list-actions">
-              <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-              <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
-              <button type="button" title="Remove" onClick={() => props.onChange(items.filter((_, candidate) => candidate !== index))}>×</button>
+              <button type="button" aria-label={`Move ${props.label} ${index + 1} up`} title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+              <button type="button" aria-label={`Move ${props.label} ${index + 1} down`} title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+              <button type="button" aria-label={`Remove ${props.label} ${index + 1}`} title="Remove" onClick={() => props.onChange(items.filter((_, candidate) => candidate !== index))}>×</button>
             </div>
           </div>
         ))}
@@ -642,9 +658,9 @@ export function Vector2ListField(props: {
             <span className="string-list-index">{index}</span>
             <input type="number" step="0.1" value={item[0]} aria-label={`${props.label} ${index} X`} onChange={(event) => update(index, 0, event.target.value)} />
             <input type="number" step="0.1" value={item[1]} aria-label={`${props.label} ${index} Y`} onChange={(event) => update(index, 1, event.target.value)} />
-            <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-            <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
-            <button type="button" title="Remove" onClick={() => props.onChange(items.filter((_, itemIndex) => itemIndex !== index))}>×</button>
+            <button type="button" aria-label={`Move ${props.label} ${index + 1} up`} title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+            <button type="button" aria-label={`Move ${props.label} ${index + 1} down`} title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+            <button type="button" aria-label={`Remove ${props.label} ${index + 1}`} title="Remove" onClick={() => props.onChange(items.filter((_, itemIndex) => itemIndex !== index))}>×</button>
           </div>
         ))}
         <button type="button" className="string-list-add" onClick={() => props.onChange([...items, [0, 0]])}>
@@ -746,6 +762,7 @@ export function EntityReferenceField(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div
+        aria-label={`${props.label} entity drop target`}
         className={`object-slot entity-slot${props.value != null || props.missingValue ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
         onDragEnter={(event) => {
           if (!Array.from(event.dataTransfer.types).includes('text/mengine-entity')) return;
@@ -785,6 +802,9 @@ export function EntityReferenceField(props: {
           type="button"
           className="object-slot-picker"
           title="Select GameObject"
+          aria-label="Select GameObject"
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={() => {
             setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);
@@ -947,6 +967,7 @@ export function UnityEventField(props: {
       <div className="unity-event-list">
         <div className="unity-event-call">
           <div
+            aria-label={`${props.label} entity drop target`}
             className={[
               'object-slot',
               'entity-slot',
@@ -979,6 +1000,9 @@ export function UnityEventField(props: {
               type="button"
               className="object-slot-picker"
               title="Select GameObject"
+              aria-label="Select GameObject"
+              aria-haspopup="dialog"
+              aria-expanded={pickerOpen}
               onClick={() => {
                 setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
                 setPickerOpen(true);
@@ -1020,6 +1044,7 @@ export function UnityEventField(props: {
               <div className="field-row">
                 <label>Component</label>
                 <select
+                  aria-label={`${props.label} component`}
                   value={activeComp?.type ?? ''}
                   disabled={!componentOptions.length}
                   onChange={(e) => {
@@ -1041,6 +1066,7 @@ export function UnityEventField(props: {
               <div className="field-row">
                 <label>Method</label>
                 <select
+                  aria-label={`${props.label} method`}
                   value={methods.includes(call.method) ? call.method : methods[0] ?? ''}
                   disabled={!methods.length}
                   onChange={(e) => patch({ method: e.target.value })}
@@ -1108,6 +1134,7 @@ export function ImageEditor(props: {
       <div className="field-row">
         <label>Image Type</label>
         <select
+          aria-label="Image Type"
           value={String(d.image_type ?? d.imageType ?? 'Simple')}
           onChange={(e) => props.onPatch({ image_type: e.target.value })}
         >

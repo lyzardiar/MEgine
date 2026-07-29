@@ -17,6 +17,8 @@ struct EntityRecord {
     serialized_components: HashMap<String, Value>,
     sibling_index: i32,
     active: bool,
+    tag: String,
+    layer: u8,
 }
 
 pub struct World {
@@ -67,6 +69,8 @@ impl World {
             rec.serialized_components.clear();
             rec.sibling_index = 0;
             rec.active = true;
+            rec.tag = "Untagged".into();
+            rec.layer = 0;
             Entity::new(index, rec.generation)
         } else {
             let index = self.entities.len() as u32;
@@ -78,6 +82,8 @@ impl World {
                 serialized_components: HashMap::new(),
                 sibling_index: 0,
                 active: true,
+                tag: "Untagged".into(),
+                layer: 0,
             });
             Entity::new(index, 1)
         }
@@ -248,6 +254,36 @@ impl World {
             .filter(|record| record.alive && record.generation == entity.generation)
             .map(|record| record.active)
             .unwrap_or(true)
+    }
+
+    pub fn set_entity_metadata(&mut self, entity: Entity, tag: String, layer: u8) {
+        if let Some(record) = self.entities.get_mut(entity.index as usize) {
+            if record.alive && record.generation == entity.generation {
+                let tag = tag.trim();
+                record.tag = if tag.is_empty() {
+                    "Untagged".into()
+                } else {
+                    tag.chars().take(64).collect()
+                };
+                record.layer = layer.min(31);
+            }
+        }
+    }
+
+    pub fn entity_tag(&self, entity: Entity) -> &str {
+        self.entities
+            .get(entity.index as usize)
+            .filter(|record| record.alive && record.generation == entity.generation)
+            .map(|record| record.tag.as_str())
+            .unwrap_or("Untagged")
+    }
+
+    pub fn entity_layer(&self, entity: Entity) -> u8 {
+        self.entities
+            .get(entity.index as usize)
+            .filter(|record| record.alive && record.generation == entity.generation)
+            .map(|record| record.layer)
+            .unwrap_or_default()
     }
 
     pub fn entities_with_components<'a>(

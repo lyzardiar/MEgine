@@ -37,6 +37,7 @@ function fieldEnabled(f: FieldMeta, data: Record<string, unknown>): boolean {
 
 type AxisInputProps = {
   label: 'x' | 'y' | 'z';
+  ariaLabel: string;
   value: number;
   onChange: (v: number) => void;
   disabled?: boolean;
@@ -49,6 +50,7 @@ function MiniAxis(props: AxisInputProps) {
       <input
         type="number"
         step={0.1}
+        aria-label={props.ariaLabel}
         disabled={props.disabled}
         value={Number(props.value.toFixed(3))}
         onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
@@ -175,6 +177,7 @@ export function SchemaFieldEditor(props: {
           <input
             type="checkbox"
             className="field-bool"
+            aria-label={label}
             checked={!!raw}
             disabled={!enabled}
             onChange={(e) => setKey(f, e.target.checked)}
@@ -194,6 +197,7 @@ export function SchemaFieldEditor(props: {
               <MiniAxis
                 key={ax}
                 label={ax}
+                ariaLabel={`${label} ${ax.toUpperCase()}`}
                 value={Number(arr[i]) || 0}
                 disabled={!enabled}
                 onChange={(v) => {
@@ -229,6 +233,7 @@ export function SchemaFieldEditor(props: {
           <div className={`field-row${requiredEmpty ? ' field-required' : ''}`} title={title}>
             <label>{label}</label>
             <select
+              aria-label={label}
               disabled={!enabled}
               value={String(raw ?? f.enumOptions[0].value)}
               onChange={(e) => {
@@ -255,6 +260,7 @@ export function SchemaFieldEditor(props: {
             <label>{label}</label>
             {f.multiline ? (
               <textarea
+                aria-label={label}
                 disabled={!enabled}
                 value={typeof raw === 'string' ? raw : ''}
                 onChange={(e) => setKey(f, e.target.value)}
@@ -268,6 +274,7 @@ export function SchemaFieldEditor(props: {
             ) : (
               <input
                 type="text"
+                aria-label={label}
                 disabled={!enabled}
                 value={typeof raw === 'string' ? raw : ''}
                 onChange={(e) => setKey(f, e.target.value)}
@@ -308,6 +315,7 @@ export function SchemaFieldEditor(props: {
               )}
               <input
                 type="range"
+                aria-label={`${label} slider`}
                 disabled={!enabled}
                 min={lo}
                 max={hi}
@@ -319,6 +327,7 @@ export function SchemaFieldEditor(props: {
                 <input
                   type="number"
                   className="slider-num"
+                  aria-label={`${label} value`}
                   disabled={!enabled}
                   value={Number(num.toFixed(3))}
                   onChange={(e) => setKey(f, clamp(parseFloat(e.target.value) || 0))}
@@ -338,6 +347,7 @@ export function SchemaFieldEditor(props: {
           <div className={`field-num-suffix${f.suffix ? ' has-suffix' : ''}`}>
             <input
               type="number"
+              aria-label={label}
               disabled={!enabled}
               step={f.min != null || f.max != null ? 0.1 : 1}
               value={Number(num.toFixed(3))}

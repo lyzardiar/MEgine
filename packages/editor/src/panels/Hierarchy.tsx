@@ -414,6 +414,8 @@ export function Hierarchy(props: {
       <div
         ref={hierarchyBodyRef}
         className={`dock-body hier-body${rootDrop ? ' drop-root' : ''}`}
+        role="tree"
+        aria-label="Scene hierarchy"
         tabIndex={0}
         title="拖到节点中部更改父级；拖到上下边缘调整顺序；拖到空白处移到根节点"
         onContextMenu={(e) => onContext(e, null)}
@@ -491,8 +493,26 @@ export function Hierarchy(props: {
               style={{ paddingLeft: 8 + n.depth * 14 }}
               data-entity-id={id}
               data-depth={n.depth}
+              data-agent-drag-by="true"
+              role="treeitem"
+              tabIndex={0}
+              aria-label={n.entity.name ?? `Entity ${id}`}
+              aria-level={n.depth + 1}
+              aria-expanded={n.hasChildren ? n.expanded : undefined}
               aria-selected={selected}
               onClick={(e) => onRowClick(id, e)}
+              onKeyDown={(event) => {
+                if (event.target !== event.currentTarget) return;
+                if (editing === id) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  props.store.select(id);
+                  props.onRefresh();
+                } else if (event.key === 'F2') {
+                  event.preventDefault();
+                  beginRename(id, n.entity.name ?? '');
+                }
+              }}
               onContextMenu={(e) => onContext(e, id)}
               onPointerDown={(e) => onPointerDown(e, id)}
               onPointerMove={onPointerMove}
@@ -509,6 +529,10 @@ export function Hierarchy(props: {
               <button
                 type="button"
                 className="hier-twist"
+                disabled={!n.hasChildren}
+                aria-label={n.hasChildren
+                  ? `${n.expanded ? 'Collapse' : 'Expand'} ${n.entity.name ?? `Entity ${id}`}`
+                  : `${n.entity.name ?? `Entity ${id}`} has no children`}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (n.hasChildren) {
@@ -523,7 +547,7 @@ export function Hierarchy(props: {
                 type="checkbox"
                 className="hier-active"
                 checked={n.entity.active}
-                title="Active"
+                aria-label={`${n.entity.name ?? `Entity ${id}`} active`}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
                   props.store.setActive(id, e.target.checked);
@@ -533,6 +557,7 @@ export function Hierarchy(props: {
               <span
                 className="hier-icon"
                 draggable={editing !== id}
+                aria-label={`Drag ${n.entity.name ?? `Entity ${id}`}`}
                 title="拖动节点行调整层级；拖动图标可赋值给对象引用"
                 onDragStart={(e) => onDragStart(e, id)}
                 onDragEnd={clearPointerDrag}
@@ -542,6 +567,7 @@ export function Hierarchy(props: {
               {editing === id ? (
                 <input
                   className="hier-rename"
+                  aria-label={`Rename ${n.entity.name ?? `Entity ${id}`}`}
                   autoFocus
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}

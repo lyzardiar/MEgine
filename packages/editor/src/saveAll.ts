@@ -1,4 +1,9 @@
 export const SAVE_ALL_RESOURCES_EVENT = 'mengine:save-all-resources';
+export const SAVE_RESOURCE_DOCUMENT_EVENT = 'mengine:save-resource-document';
+export const DISCARD_RESOURCE_DOCUMENT_EVENT = 'mengine:discard-resource-document';
+export const CLOSE_RESOURCE_DOCUMENT_EVENT = 'mengine:close-resource-document';
+
+export type ResourceDocumentOperation = 'save' | 'discard' | 'close';
 
 export type SaveAllTask = {
   label: string;
@@ -18,13 +23,17 @@ export type RemoteSavePeer = {
 export type RemoteSaveRequest = {
   requestId: string;
   targets: string[];
+  paths?: string[];
+  operation?: ResourceDocumentOperation;
 };
 
 type SaveAllRequest = { tasks: SaveAllTask[] };
+type SaveDocumentRequest = SaveAllRequest & { path: string };
 
 type PendingRemoteSave = {
   peers: Map<string, RemoteSavePeer>;
   results: Map<string, SaveAllResult>;
+  operation: ResourceDocumentOperation;
   resolve: (result: SaveAllResult) => void;
   timeout: ReturnType<typeof setTimeout>;
 };
@@ -72,7 +81,11 @@ export class RemoteSaveCoordinator {
     this.requestId = requestId;
   }
 
-  request(peers: readonly RemoteSavePeer[]): Promise<SaveAllResult> {
+  request(
+    peers: readonly RemoteSavePeer[],
+    paths: readonly string[] = [],
+    operation: ResourceDocumentOperation = 'save',
+  ): Promise<SaveAllResult> {
     const uniquePeers = new Map<string, RemoteSavePeer>();
     for (const peer of peers) {
       if (!peer.sender || uniquePeers.has(peer.sender)) continue;
@@ -90,6 +103,7 @@ export class RemoteSaveCoordinator {
       this.pending.set(requestId, {
         peers: uniquePeers,
         results: new Map(),
+        operation,
         resolve,
         timeout,
       });
@@ -97,6 +111,8 @@ export class RemoteSaveCoordinator {
         this.dispatch({
           requestId,
           targets: [...uniquePeers.keys()],
+          ...(paths.length > 0 ? { paths: [...paths] } : {}),
+          ...(operation !== 'save' ? { operation } : {}),
         });
       } catch (reason) {
         clearTimeout(timeout);
@@ -106,7 +122,7 @@ export class RemoteSaveCoordinator {
           saved: [],
           failures: [...uniquePeers.values()].map((peer) => ({
             label: peer.panel,
-            error: `Could not request background save: ${error}`,
+            error: `Could not request background ${operation}: ${error}`,
           })),
         });
       }
@@ -141,7 +157,9 @@ export class RemoteSaveCoordinator {
           saved: [],
           failures: [{
             label: peer.panel,
-            error: `Background editor window did not respond within ${this.timeoutMs} ms`,
+            error: `Background editor window did not respond to ${pending.operation} within ${
+              this.timeoutMs
+            } ms`,
           }],
         });
       }
@@ -161,6 +179,50 @@ export function registerSaveAllParticipant(
   };
   window.addEventListener(SAVE_ALL_RESOURCES_EVENT, listener);
   return () => window.removeEventListener(SAVE_ALL_RESOURCES_EVENT, listener);
+}
+
+export function sameSaveDocumentPath(left: string | null, right: string): boolean {
+  return left?.replace(/\\/g, '/').toLocaleLowerCase()
+    === right.replace(/\\/g, '/').toLocaleLowerCase();
+}
+
+export function registerSaveDocumentParticipant(
+  label: string,
+  task: (path: string) => (() => Promise<void>) | null,
+): () => void {
+  const listener = (event: Event) => {
+    const request = (event as CustomEvent<SaveDocumentRequest>).detail;
+    const run = task(request.path);
+    if (run) request.tasks.push({ label, run });
+  };
+  window.addEventListener(SAVE_RESOURCE_DOCUMENT_EVENT, listener);
+  return () => window.removeEventListener(SAVE_RESOURCE_DOCUMENT_EVENT, listener);
+}
+
+export function registerDiscardDocumentParticipant(
+  label: string,
+  task: (path: string) => (() => Promise<void>) | null,
+): () => void {
+  const listener = (event: Event) => {
+    const request = (event as CustomEvent<SaveDocumentRequest>).detail;
+    const run = task(request.path);
+    if (run) request.tasks.push({ label, run });
+  };
+  window.addEventListener(DISCARD_RESOURCE_DOCUMENT_EVENT, listener);
+  return () => window.removeEventListener(DISCARD_RESOURCE_DOCUMENT_EVENT, listener);
+}
+
+export function registerCloseDocumentParticipant(
+  label: string,
+  task: (path: string) => (() => Promise<void>) | null,
+): () => void {
+  const listener = (event: Event) => {
+    const request = (event as CustomEvent<SaveDocumentRequest>).detail;
+    const run = task(request.path);
+    if (run) request.tasks.push({ label, run });
+  };
+  window.addEventListener(CLOSE_RESOURCE_DOCUMENT_EVENT, listener);
+  return () => window.removeEventListener(CLOSE_RESOURCE_DOCUMENT_EVENT, listener);
 }
 
 export async function executeSaveAllTasks(tasks: readonly SaveAllTask[]): Promise<SaveAllResult> {
@@ -186,4 +248,42 @@ export async function saveAllResources(): Promise<SaveAllResult> {
     detail: request,
   }));
   return executeSaveAllTasks(request.tasks);
+}
+
+export async function saveResourceDocument(path: string): Promise<SaveAllResult> {
+  return executeResourceDocumentEvent(SAVE_RESOURCE_DOCUMENT_EVENT, path, 'save');
+}
+
+export async function discardResourceDocument(path: string): Promise<SaveAllResult> {
+  return executeResourceDocumentEvent(DISCARD_RESOURCE_DOCUMENT_EVENT, path, 'discard');
+}
+
+export async function closeResourceDocument(path: string): Promise<SaveAllResult> {
+  return executeResourceDocumentEvent(CLOSE_RESOURCE_DOCUMENT_EVENT, path, 'close');
+}
+
+async function executeResourceDocumentEvent(
+  eventName: string,
+  path: string,
+  operation: ResourceDocumentOperation,
+): Promise<SaveAllResult> {
+  const request: SaveDocumentRequest = { path, tasks: [] };
+  window.dispatchEvent(new CustomEvent<SaveDocumentRequest>(eventName, {
+    detail: request,
+  }));
+  if (request.tasks.length > 1) {
+    return {
+      saved: [],
+      failures: [{
+        label: path,
+        error: `Multiple resource editors claimed this document for ${operation}: ${
+          request.tasks.map((task) => task.label).join(', ')
+        }`,
+      }],
+    };
+  }
+  const [task] = request.tasks;
+  return task
+    ? executeSaveAllTasks([{ label: path, run: task.run }])
+    : { saved: [], failures: [] };
 }

@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getDesktopProject } from '../transport/desktopProjectSession';
 import {
   buildAssetPathsDirty,
+  buildAssetPolicyUpdate,
   parseAlwaysIncludeDraft,
 } from '../buildSettingsModel';
 import { registerSaveAllParticipant } from '../saveAll';
+import { confirmEditor } from '../editorDialog';
 import {
   buildPcPlayer,
   cancelPcBuild,
@@ -16,7 +18,6 @@ import {
   listPcBuildHistory,
   listPcBuildPatches,
   listenToPcBuildProgress,
-  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
   restorePcBuildHistory,
   runPcPlayer,
   saveProjectBuildAssetSettings,
@@ -35,6 +36,12 @@ import {
   type ProjectBuildSettings,
   type VerifyPlayerResult,
 } from '../transport/editorTransport';
+import {
+  broadcastProjectBuildArtifactsChanged,
+  broadcastProjectBuildSettingsChanged,
+  PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+} from '../buildEditorEvents';
 
 const SHADER_VARIANT_LIMIT_OPTIONS = [64, 128, 256, 512, 1024, 2048, 4096, 8192];
 const MAX_RENDERED_SHADER_VARIANTS = 512;
@@ -152,8 +159,11 @@ export function BuildSettings(props: {
   const [message, setMessage] = useState<string | null>(null);
   const [messageError, setMessageError] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [assetSettingsConflict, setAssetSettingsConflict] = useState<string | null>(null);
   const settingsRef = useRef<ProjectBuildSettings | null>(null);
   const alwaysIncludeDraftRef = useRef('');
+  const assetSettingsRevisionRef = useRef<string | null>(null);
+  const suppressSettingsChange = useRef(false);
   const buildReportRevisionRef = useRef(0);
   const historyLoadRevisionRef = useRef(0);
   const patchLoadRevisionRef = useRef(0);
@@ -290,19 +300,29 @@ export function BuildSettings(props: {
     void getProjectBuildSettings()
       .then((value) => {
         if (!cancelled) {
-          const preserveDraft = Boolean(
-            settingsRef.current
-            && buildAssetPathsDirty(
+          const current = settingsRef.current;
+          const update = current
+            ? buildAssetPolicyUpdate(
               alwaysIncludeDraftRef.current,
-              settingsRef.current.alwaysInclude,
-            ),
-          );
+              current,
+              value,
+              assetSettingsRevisionRef.current,
+            )
+            : 'reload';
           settingsRef.current = value;
           setSettings(value);
-          if (!preserveDraft) {
+          if (update === 'reload') {
             const nextDraft = value.alwaysInclude.join('\n');
             alwaysIncludeDraftRef.current = nextDraft;
             setAlwaysIncludeDraft(nextDraft);
+            assetSettingsRevisionRef.current = value.revision;
+            setAssetSettingsConflict(null);
+          } else if (update === 'advance-revision') {
+            assetSettingsRevisionRef.current = value.revision;
+          } else {
+            setAssetSettingsConflict(
+              'Build content settings changed outside this editor. Reload Paths to discard this draft before applying it.',
+            );
           }
         }
       })
@@ -317,12 +337,31 @@ export function BuildSettings(props: {
   useEffect(() => {
     const onExternalSettings = (event: Event) => {
       const next = (event as CustomEvent<ProjectBuildSettings>).detail;
-      if (!next) return;
+      if (!next || suppressSettingsChange.current) return;
+      const current = settingsRef.current;
+      const update = current
+        ? buildAssetPolicyUpdate(
+          alwaysIncludeDraftRef.current,
+          current,
+          next,
+          assetSettingsRevisionRef.current,
+        )
+        : 'reload';
       settingsRef.current = next;
       setSettings(next);
-      const nextDraft = next.alwaysInclude.join('\n');
-      alwaysIncludeDraftRef.current = nextDraft;
-      setAlwaysIncludeDraft(nextDraft);
+      if (update === 'reload') {
+        const nextDraft = next.alwaysInclude.join('\n');
+        alwaysIncludeDraftRef.current = nextDraft;
+        setAlwaysIncludeDraft(nextDraft);
+        assetSettingsRevisionRef.current = next.revision;
+        setAssetSettingsConflict(null);
+      } else if (update === 'advance-revision') {
+        assetSettingsRevisionRef.current = next.revision;
+      } else {
+        setAssetSettingsConflict(
+          'Build content settings changed outside this editor. Reload Paths to discard this draft before applying it.',
+        );
+      }
       buildReportRevisionRef.current += 1;
       setLastBuild(null);
       setLastVerification(null);
@@ -333,6 +372,23 @@ export function BuildSettings(props: {
       onExternalSettings,
     );
   }, []);
+
+  useEffect(() => {
+    const onExternalArtifacts = (event: Event) => {
+      const change = (event as CustomEvent<{
+        detail?: { source?: string };
+        remote?: boolean;
+      }>).detail;
+      if (change?.remote === false && change.detail?.source === 'build-settings') return;
+      void refreshBuildHistory(false);
+      void refreshBuildPatches(false);
+    };
+    window.addEventListener(PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT, onExternalArtifacts);
+    return () => window.removeEventListener(
+      PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+      onExternalArtifacts,
+    );
+  }, [refreshBuildHistory, refreshBuildPatches]);
 
   useEffect(() => {
     props.onDirtyChange(assetSettingsDirty);
@@ -396,6 +452,15 @@ export function BuildSettings(props: {
       const next = await saveProjectBuildSettings(scenes, expectedRevision);
       settingsRef.current = next;
       setSettings(next);
+      if (assetSettingsRevisionRef.current === expectedRevision) {
+        assetSettingsRevisionRef.current = next.revision;
+      }
+      suppressSettingsChange.current = true;
+      try {
+        broadcastProjectBuildSettingsChanged(next);
+      } finally {
+        suppressSettingsChange.current = false;
+      }
       invalidateBuildReport();
       props.onLog(`Build scenes updated: ${next.scenes.length} scene(s), entry ${sceneLabel(next.scenes[0])}`);
     } catch (reason) {
@@ -413,7 +478,7 @@ export function BuildSettings(props: {
     shaderVariantLimit: number,
   ): Promise<boolean> => {
     if (settingsSaving) return false;
-    const expectedRevision = settingsRef.current?.revision;
+    const expectedRevision = assetSettingsRevisionRef.current;
     if (!expectedRevision) {
       setSettingsError('Build settings are not loaded.');
       return false;
@@ -429,9 +494,17 @@ export function BuildSettings(props: {
       );
       settingsRef.current = next;
       setSettings(next);
+      assetSettingsRevisionRef.current = next.revision;
+      suppressSettingsChange.current = true;
+      try {
+        broadcastProjectBuildSettingsChanged(next);
+      } finally {
+        suppressSettingsChange.current = false;
+      }
       const nextDraft = next.alwaysInclude.join('\n');
       alwaysIncludeDraftRef.current = nextDraft;
       setAlwaysIncludeDraft(nextDraft);
+      setAssetSettingsConflict(null);
       invalidateBuildReport();
       props.onLog(`Build content settings updated: ${next.assetMode}, ${next.alwaysInclude.length} always-included path(s), ${next.shaderVariantLimit} shader variants`);
       return true;
@@ -455,6 +528,18 @@ export function BuildSettings(props: {
         settings.shaderVariantLimit,
       );
     }
+  };
+
+  const reloadAlwaysInclude = () => {
+    const current = settingsRef.current;
+    if (!current) return;
+    const nextDraft = current.alwaysInclude.join('\n');
+    alwaysIncludeDraftRef.current = nextDraft;
+    setAlwaysIncludeDraft(nextDraft);
+    assetSettingsRevisionRef.current = current.revision;
+    setAssetSettingsConflict(null);
+    setSettingsError(null);
+    invalidateBuildReport();
   };
 
   useEffect(() => registerSaveAllParticipant('Build Asset Settings', () => {
@@ -612,6 +697,11 @@ export function BuildSettings(props: {
     setHistoryPatch(null);
     try {
       const result = await createPcBuildHistoryPatch(previous.id, current.id);
+      broadcastProjectBuildArtifactsChanged({
+        source: 'build-settings',
+        status: 'history-patch-created',
+        result,
+      });
       setHistoryPatch(result);
       setMessageError(false);
       setMessage(`Signed historical patch created: ${byteSize(result.payloadBytes)} payload.`);
@@ -640,10 +730,14 @@ export function BuildSettings(props: {
       return;
     }
     if (!publicKeyPath) return;
-    const confirmed = window.confirm(
+    const confirmed = await confirmEditor(
       `Restore build ${selectedRestoreEntry.id} as the published ${selectedRestoreEntry.platform}-${selectedRestoreEntry.architecture}-${selectedRestoreEntry.profile} Player?\n\n`
       + `The archived artifact will be reconstructed and verified with the selected Ed25519 public key before it atomically replaces:\n${selectedRestoreEntry.outputDir}\n\n`
       + 'The previous published build is preserved automatically if validation or replacement fails.',
+      {
+        title: 'Restore Published Build',
+        confirmLabel: 'Verify and Restore',
+      },
     );
     if (!confirmed) return;
     setHistoryRestoringId(selectedRestoreEntry.id);
@@ -651,6 +745,11 @@ export function BuildSettings(props: {
     setHistoryRestore(null);
     try {
       const result = await restorePcBuildHistory(selectedRestoreEntry.id, publicKeyPath);
+      broadcastProjectBuildArtifactsChanged({
+        source: 'build-settings',
+        status: 'history-restored',
+        result,
+      });
       setHistoryRestore(result);
       setLastBuild(null);
       setLastVerification(null);
@@ -726,6 +825,11 @@ export function BuildSettings(props: {
     setMessageError(false);
     try {
       const result = await buildPcPlayer(profile, clean);
+      broadcastProjectBuildArtifactsChanged({
+        source: 'build-settings',
+        status: 'build-created',
+        result,
+      });
       setLastBuild(result);
       void refreshBuildHistory(false);
       void refreshBuildPatches(false);
@@ -927,6 +1031,14 @@ export function BuildSettings(props: {
             </button>
           </div>
         )}
+        {assetSettingsConflict && (
+          <div className="build-warning error">
+            <span>{assetSettingsConflict}</span>
+            <button type="button" disabled={settingsSaving || building} onClick={reloadAlwaysInclude}>
+              Reload Paths
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="build-section build-options">
@@ -972,6 +1084,7 @@ export function BuildSettings(props: {
               <span>{buildHistory.length}/{historyRetentionLimit} retained</span>
               <button
                 type="button"
+                aria-label="Refresh build history"
                 disabled={historyLoading || historyComparing || buildArtifactBusy}
                 onClick={() => void refreshBuildHistory()}
               >
@@ -997,6 +1110,8 @@ export function BuildSettings(props: {
               <button
                 type="button"
                 disabled={!historyRestoreEligible || buildArtifactBusy || historyComparing}
+                data-agent-interaction="blocked"
+                data-agent-alternative="restore_build_history"
                 title={historyRestoreEligible
                   ? 'Choose an independent trusted Ed25519 public key, verify the archived artifact, then atomically replace the published build.'
                   : 'Select one signed, content-archived build that is not already current.'}
@@ -1102,6 +1217,7 @@ export function BuildSettings(props: {
               <span>{buildPatches.length} patches</span>
               <button
                 type="button"
+                aria-label="Refresh patch inventory"
                 disabled={patchInventoryLoading || buildArtifactBusy}
                 onClick={() => void refreshBuildPatches()}
               >
@@ -1133,6 +1249,8 @@ export function BuildSettings(props: {
                   <button
                     type="button"
                     disabled={!patch.baseAvailable || buildArtifactBusy}
+                    data-agent-interaction="blocked"
+                    data-agent-alternative="verify_build_patch"
                     title={patch.baseAvailable
                       ? 'Choose an independent trusted Ed25519 public key and verify the complete patch chain.'
                       : 'The exact archived base is no longer available for verification.'}
@@ -1314,6 +1432,8 @@ export function BuildSettings(props: {
           <button
             type="button"
             disabled={buildArtifactBusy || launching || verifying || settingsSaving}
+            data-agent-interaction="blocked"
+            data-agent-alternative="run_pc_player"
             onClick={() => void launch(lastBuild)}
           >
             {launching ? 'Starting Player...' : 'Run Player'}
@@ -1344,6 +1464,8 @@ export function BuildSettings(props: {
         <button
           type="button"
           className="primary"
+          data-agent-interaction="blocked"
+          data-agent-alternative="start_pc_build"
           disabled={
             !desktop
             || props.sceneDirty

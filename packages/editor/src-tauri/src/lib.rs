@@ -25,6 +25,7 @@ use agent_bridge::{
 };
 
 struct AppState {
+    editor_instance_id: String,
     project_lifecycle: Mutex<()>,
     project: Mutex<Option<ProjectSession>>,
     active_build: Arc<Mutex<Option<ActiveBuild>>>,
@@ -152,6 +153,38 @@ struct ProjectBuildSettings {
     shader_variant_limit: u32,
 }
 
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ProjectScriptDiagnostic {
+    category: String,
+    code: u32,
+    message: String,
+    file: Option<String>,
+    line: Option<u32>,
+    column: Option<u32>,
+    start: Option<u64>,
+    length: Option<u64>,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ProjectScriptValidation {
+    schema_version: u32,
+    valid: bool,
+    checked: bool,
+    startup_script: Option<String>,
+    script_root: Option<String>,
+    revision: Option<String>,
+    typescript_version: String,
+    file_count: usize,
+    error_count: usize,
+    warning_count: usize,
+    diagnostic_count: usize,
+    returned_diagnostics: usize,
+    truncated: bool,
+    diagnostics: Vec<ProjectScriptDiagnostic>,
+}
+
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ProjectSortingLayer {
@@ -161,9 +194,20 @@ struct ProjectSortingLayer {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
+struct ProjectGameLayer {
+    index: u8,
+    name: String,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ProjectSortingLayers {
     version: u32,
     layers: Vec<ProjectSortingLayer>,
+    #[serde(default = "default_project_tags")]
+    tags: Vec<String>,
+    #[serde(default = "default_project_game_layers")]
+    game_layers: Vec<ProjectGameLayer>,
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -171,6 +215,17 @@ struct ProjectSortingLayers {
 struct ProjectSortingLayersSnapshot {
     settings: ProjectSortingLayers,
     revision: Option<String>,
+}
+
+fn default_project_tags() -> Vec<String> {
+    vec!["Untagged".into()]
+}
+
+fn default_project_game_layers() -> Vec<ProjectGameLayer> {
+    vec![ProjectGameLayer {
+        index: 0,
+        name: "Default".into(),
+    }]
 }
 
 impl Default for ProjectSortingLayers {
@@ -181,6 +236,8 @@ impl Default for ProjectSortingLayers {
                 id: "default".into(),
                 name: "Default".into(),
             }],
+            tags: default_project_tags(),
+            game_layers: default_project_game_layers(),
         }
     }
 }
@@ -570,6 +627,17 @@ fn command_failure(label: &str, output: &std::process::Output) -> String {
     } else {
         format!("{label} failed: {detail}")
     }
+}
+
+fn hide_child_process_window(command: &mut Command) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(not(windows))]
+    let _ = command;
 }
 
 fn build_sdk_file(root: &Path, relative: &str, label: &str) -> Result<PathBuf, String> {
@@ -2071,9 +2139,12 @@ fn source_cli_command() -> Result<Command, String> {
     } else {
         "npm"
     };
-    let cli_build = Command::new(npm)
+    let mut cli_build_command = Command::new(npm);
+    cli_build_command
         .current_dir(&engine_root)
-        .args(["--prefix", "packages/cli", "run", "build"])
+        .args(["--prefix", "packages/cli", "run", "build"]);
+    hide_child_process_window(&mut cli_build_command);
+    let cli_build = cli_build_command
         .output()
         .map_err(|error| format!("cannot start CLI build: {error}"))?;
     if !cli_build.status.success() {
@@ -2088,6 +2159,7 @@ fn source_cli_command() -> Result<Command, String> {
     }
     let mut command = Command::new("node");
     command.current_dir(engine_root).arg(cli);
+    hide_child_process_window(&mut command);
     Ok(command)
 }
 
@@ -2101,10 +2173,81 @@ fn history_patch_command(bundled_sdk: Option<PathBuf>, profile: &str) -> Result<
         command
             .current_dir(child_process_path(&sdk.root))
             .arg(child_process_path(&sdk.cli));
+        hide_child_process_window(&mut command);
         Ok(command)
     } else {
         source_cli_command()
     }
+}
+
+const MAX_PROJECT_SCRIPT_DIAGNOSTICS: usize = 1_000;
+const MAX_PROJECT_SCRIPT_DIAGNOSTIC_BYTES: usize = 16 * 1024 * 1024;
+
+fn parse_project_script_validation(stdout: &[u8]) -> Result<ProjectScriptValidation, String> {
+    if stdout.len() > MAX_PROJECT_SCRIPT_DIAGNOSTIC_BYTES {
+        return Err("project script diagnostics exceeded 16 MiB".into());
+    }
+    let result: ProjectScriptValidation = serde_json::from_slice(stdout)
+        .map_err(|error| format!("invalid project script diagnostics: {error}"))?;
+    if result.schema_version != 1 {
+        return Err(format!(
+            "unsupported project script diagnostic schema version {}",
+            result.schema_version
+        ));
+    }
+    if result.diagnostics.len() > MAX_PROJECT_SCRIPT_DIAGNOSTICS
+        || result.returned_diagnostics != result.diagnostics.len()
+        || result.diagnostic_count < result.returned_diagnostics
+        || result.truncated != (result.returned_diagnostics < result.diagnostic_count)
+        || result.error_count > result.diagnostic_count
+        || result.warning_count > result.diagnostic_count
+    {
+        return Err("project script diagnostic counts are inconsistent".into());
+    }
+    if result.valid != (result.error_count == 0)
+        || !result.checked
+            && (result.revision.is_some()
+                || result.script_root.is_some()
+                || result.file_count != 0
+                || result.diagnostic_count != 0)
+    {
+        return Err("project script diagnostic state is inconsistent".into());
+    }
+    if result.checked
+        && (result.revision.as_deref().is_none_or(|revision| {
+            revision.len() != 64 || !revision.bytes().all(|byte| byte.is_ascii_hexdigit())
+        }) || result.script_root.as_deref().is_none_or(str::is_empty))
+    {
+        return Err("project script diagnostic revision is invalid".into());
+    }
+    for diagnostic in &result.diagnostics {
+        if !matches!(
+            diagnostic.category.as_str(),
+            "error" | "warning" | "suggestion" | "message"
+        ) || diagnostic.message.is_empty()
+            || diagnostic.line == Some(0)
+            || diagnostic.column == Some(0)
+        {
+            return Err("project script diagnostic entry is invalid".into());
+        }
+    }
+    Ok(result)
+}
+
+fn run_project_script_validation(
+    project_root: &Path,
+    bundled_sdk: Option<PathBuf>,
+) -> Result<ProjectScriptValidation, String> {
+    let mut command = history_patch_command(bundled_sdk, "release")?;
+    let output = command
+        .arg("validate-scripts")
+        .arg(project_root)
+        .output()
+        .map_err(|error| format!("cannot start project script validation: {error}"))?;
+    if !output.status.success() {
+        return Err(command_failure("project script validation", &output));
+    }
+    parse_project_script_validation(&output.stdout)
 }
 
 fn parse_build_history_patch_result(
@@ -2609,6 +2752,7 @@ fn run_player_build_controlled(
             .arg("--runtime")
             .arg(child_process_path(&sdk.runtime))
             .arg("--skip-runtime-build");
+        hide_child_process_window(&mut command);
         toolchain = "bundled-sdk".to_string();
     } else {
         command = source_cli_command()?;
@@ -3595,6 +3739,11 @@ fn is_primary_pointer_down() -> bool {
     false
 }
 
+#[tauri::command]
+fn get_editor_instance_id(state: State<'_, AppState>) -> String {
+    state.editor_instance_id.clone()
+}
+
 fn activate_project<F>(
     state: &AppState,
     create_session: F,
@@ -3857,6 +4006,40 @@ fn save_project_build_asset_settings(
     project_build_settings(session)
 }
 
+#[tauri::command]
+async fn validate_project_scripts(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<ProjectScriptValidation, String> {
+    let snapshot = state
+        .project
+        .lock()
+        .as_ref()
+        .map(ProjectSession::snapshot)
+        .ok_or_else(|| no_project().message)?;
+    let project_id = snapshot.project_id;
+    let project_root = snapshot.project_root;
+    let validation_root = project_root.clone();
+    let bundled_sdk = app
+        .path()
+        .resolve("build-sdk", BaseDirectory::Resource)
+        .ok()
+        .filter(|path| path.join("sdk.json").is_file());
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        run_project_script_validation(Path::new(&validation_root), bundled_sdk)
+    })
+    .await
+    .map_err(|error| format!("project script validation task failed: {error}"))?;
+    let still_current = state.project.lock().as_ref().is_some_and(|session| {
+        let current = session.snapshot();
+        current.project_id == project_id && current.project_root == project_root
+    });
+    if !still_current {
+        return Err("project changed while script validation was running".into());
+    }
+    result
+}
+
 fn validate_surface_shader_source(source: &str) -> Result<(), String> {
     let normalized = mengine_assets::parse_surface_shader(source.as_bytes())
         .map_err(|error| error.to_string())?;
@@ -3917,7 +4100,85 @@ fn normalize_sorting_layers(value: ProjectSortingLayers) -> Result<ProjectSortin
             },
         );
     }
-    Ok(ProjectSortingLayers { version: 1, layers })
+    if layers.len() > 64 {
+        return Err("at most 64 sorting layers are supported including Default".into());
+    }
+
+    if value.tags.len() > 64 {
+        return Err("at most 64 tags are supported".into());
+    }
+    let mut tag_names = HashSet::new();
+    let mut tags = Vec::with_capacity(value.tags.len().max(1));
+    for raw_tag in value.tags {
+        let mut tag = raw_tag.trim().to_string();
+        if tag.is_empty() || tag.chars().count() > 64 {
+            return Err(format!("invalid tag name '{tag}'"));
+        }
+        let key = tag.to_lowercase();
+        if key == "untagged" {
+            tag = "Untagged".into();
+        }
+        if !tag_names.insert(key) {
+            return Err(format!("duplicate tag '{tag}'"));
+        }
+        tags.push(tag);
+    }
+    if !tag_names.contains("untagged") {
+        tags.insert(0, "Untagged".into());
+    } else if let Some(index) = tags.iter().position(|tag| tag == "Untagged") {
+        if index > 0 {
+            tags.remove(index);
+            tags.insert(0, "Untagged".into());
+        }
+    }
+    if tags.len() > 64 {
+        return Err("at most 64 tags are supported including Untagged".into());
+    }
+
+    if value.game_layers.len() > 32 {
+        return Err("at most 32 GameObject layers are supported".into());
+    }
+    let mut game_layer_indices = HashSet::new();
+    let mut game_layer_names = HashSet::new();
+    let mut game_layers = Vec::with_capacity(value.game_layers.len().max(1));
+    for layer in value.game_layers {
+        if layer.index >= 32 {
+            return Err(format!(
+                "GameObject layer index {} must be between 0 and 31",
+                layer.index
+            ));
+        }
+        let mut name = layer.name.trim().to_string();
+        if name.is_empty() || name.chars().count() > 64 {
+            return Err(format!("invalid GameObject layer name '{name}'"));
+        }
+        if layer.index == 0 {
+            name = "Default".into();
+        }
+        if !game_layer_indices.insert(layer.index) {
+            return Err(format!("duplicate GameObject layer index {}", layer.index));
+        }
+        if !game_layer_names.insert(name.to_lowercase()) {
+            return Err(format!("duplicate GameObject layer name '{name}'"));
+        }
+        game_layers.push(ProjectGameLayer {
+            index: layer.index,
+            name,
+        });
+    }
+    if !game_layer_indices.contains(&0) {
+        game_layers.push(ProjectGameLayer {
+            index: 0,
+            name: "Default".into(),
+        });
+    }
+    game_layers.sort_by_key(|layer| layer.index);
+    Ok(ProjectSortingLayers {
+        version: 1,
+        layers,
+        tags,
+        game_layers,
+    })
 }
 
 fn sorting_layers_path(
@@ -5046,6 +5307,79 @@ struct EditorWindowInfo {
     scale_factor: f64,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CloseEditorWindowResult {
+    window_label: String,
+    closed: bool,
+}
+
+fn validate_agent_editor_window_label(window_label: &str) -> Result<&str, String> {
+    let label = window_label.trim();
+    if label.is_empty() {
+        return Err("windowLabel must not be empty".to_string());
+    }
+    if label == "main" {
+        return Err(
+            "the main editor window cannot be closed by window.close; use project.close to return to the project hub"
+                .to_string(),
+        );
+    }
+    if label.starts_with("panel-") {
+        return Err(
+            "detached panel windows cannot be closed by window.close; use panel.dock to preserve the dock layout"
+                .to_string(),
+        );
+    }
+    if !label.starts_with("editor-") {
+        return Err(
+            "window.close only accepts a registered editor window label returned by window.list"
+                .to_string(),
+        );
+    }
+    Ok(label)
+}
+
+fn validate_agent_editor_window_state(visible: bool, focused: bool) -> Result<(), String> {
+    if visible || focused {
+        return Err(
+            "agent-owned editor windows must be hidden and unfocused before background close"
+                .to_string(),
+        );
+    }
+    Ok(())
+}
+
+/// Close one exact hidden, unfocused registered auxiliary editor window.
+///
+/// The main window and detached core panels deliberately use their own
+/// lifecycle commands so this generic escape hatch cannot exit the editor or
+/// leave the dock layout stale.
+#[tauri::command]
+fn close_editor_window(
+    window_label: String,
+    app: tauri::AppHandle,
+) -> Result<CloseEditorWindowResult, String> {
+    let label = validate_agent_editor_window_label(&window_label)?.to_string();
+    let window = app
+        .get_webview_window(&label)
+        .ok_or_else(|| format!("editor window \"{label}\" was not found"))?;
+    let visible = window
+        .is_visible()
+        .map_err(|error| format!("could not inspect editor window \"{label}\": {error}"))?;
+    let focused = window
+        .is_focused()
+        .map_err(|error| format!("could not inspect editor window \"{label}\": {error}"))?;
+    validate_agent_editor_window_state(visible, focused)?;
+    window
+        .destroy()
+        .map_err(|error| format!("could not close editor window \"{label}\": {error}"))?;
+    Ok(CloseEditorWindowResult {
+        window_label: label,
+        closed: true,
+    })
+}
+
 /// Enumerate every webview window the editor currently has open. This is the
 /// AI-agent "which windows are open" observation: the main window, any detached
 /// core panels (`panel-<id>`), and any floating editor windows (`editor-<hash>`).
@@ -5113,13 +5447,16 @@ fn starts_in_background() -> bool {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let bridge_hub = Arc::new(BridgeHub::new(uuid::Uuid::new_v4().to_string()));
+    let bridge_hub = Arc::new(BridgeHub::from_environment(
+        uuid::Uuid::new_v4().to_string(),
+    ));
     let bridge_hub_for_page_load = bridge_hub.clone();
     let bridge_hub_for_setup = bridge_hub.clone();
     let bridge_token_for_exit = bridge_hub.token().to_string();
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
+            editor_instance_id: uuid::Uuid::new_v4().to_string(),
             project_lifecycle: Mutex::new(()),
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
@@ -5130,6 +5467,7 @@ pub fn run() {
             create_project,
             open_project,
             close_project,
+            get_editor_instance_id,
             is_primary_pointer_down,
             list_recent_projects,
             remove_recent_project,
@@ -5140,6 +5478,7 @@ pub fn run() {
             get_project_build_settings,
             save_project_build_settings,
             save_project_build_asset_settings,
+            validate_project_scripts,
             validate_surface_shader,
             get_project_sorting_layers,
             save_project_sorting_layers,
@@ -5176,6 +5515,7 @@ pub fn run() {
             replace_scene_snapshot,
             submit_editor_request,
             list_editor_windows,
+            close_editor_window,
             agent_bridge_respond,
             agent_bridge_broadcast,
             agent_bridge_set_transport_ready,
@@ -5218,13 +5558,74 @@ pub fn run() {
 mod tests {
     use super::*;
 
+    #[test]
+    fn project_script_diagnostics_require_a_bounded_consistent_schema() {
+        let valid = serde_json::to_vec(&serde_json::json!({
+            "schemaVersion": 1,
+            "valid": false,
+            "checked": true,
+            "startupScript": "Assets/Scripts/Main.ts",
+            "scriptRoot": "Assets/Scripts",
+            "revision": "a".repeat(64),
+            "typescriptVersion": "5.8.2",
+            "fileCount": 2,
+            "errorCount": 1,
+            "warningCount": 0,
+            "diagnosticCount": 1,
+            "returnedDiagnostics": 1,
+            "truncated": false,
+            "diagnostics": [{
+                "category": "error",
+                "code": 2322,
+                "message": "Type 'string' is not assignable to type 'number'.",
+                "file": "Assets/Scripts/Main.ts",
+                "line": 2,
+                "column": 7,
+                "start": 31,
+                "length": 7
+            }]
+        }))
+        .unwrap();
+        let parsed = parse_project_script_validation(&valid).unwrap();
+        assert!(!parsed.valid);
+        assert_eq!(parsed.diagnostics[0].code, 2322);
+
+        let inconsistent = String::from_utf8(valid)
+            .unwrap()
+            .replace("\"returnedDiagnostics\":1", "\"returnedDiagnostics\":0");
+        assert!(parse_project_script_validation(inconsistent.as_bytes())
+            .unwrap_err()
+            .contains("counts are inconsistent"));
+    }
+
     fn empty_test_app_state() -> AppState {
         AppState {
+            editor_instance_id: "test-editor".to_string(),
             project_lifecycle: Mutex::new(()),
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
             next_build_id: AtomicU64::new(1),
         }
+    }
+
+    #[test]
+    fn agent_window_close_accepts_only_registered_auxiliary_windows() {
+        assert_eq!(
+            validate_agent_editor_window_label("editor-cff95ea4").unwrap(),
+            "editor-cff95ea4"
+        );
+        assert!(validate_agent_editor_window_label("").is_err());
+        assert!(validate_agent_editor_window_label("main").is_err());
+        assert!(validate_agent_editor_window_label("panel-console").is_err());
+        assert!(validate_agent_editor_window_label("plugin-unknown").is_err());
+    }
+
+    #[test]
+    fn agent_window_close_refuses_visible_or_focused_windows() {
+        assert!(validate_agent_editor_window_state(false, false).is_ok());
+        assert!(validate_agent_editor_window_state(true, false).is_err());
+        assert!(validate_agent_editor_window_state(false, true).is_err());
+        assert!(validate_agent_editor_window_state(true, true).is_err());
     }
 
     fn test_project_parent(label: &str) -> PathBuf {
@@ -5246,6 +5647,7 @@ mod tests {
         let session = ProjectSession::create(&parent, "First").unwrap();
         let existing_root = session.snapshot().project_root;
         let state = AppState {
+            editor_instance_id: "test-editor".to_string(),
             project_lifecycle: Mutex::new(()),
             project: Mutex::new(Some(session)),
             active_build: Arc::new(Mutex::new(None)),
@@ -6310,6 +6712,7 @@ mod tests {
                 id: "effects".into(),
                 name: "Effects".into(),
             }],
+            ..ProjectSortingLayers::default()
         })
         .unwrap();
         assert_eq!(settings.layers[0].id, "default");
@@ -6336,10 +6739,23 @@ mod tests {
                     name: "Other".into(),
                 },
             ],
+            ..ProjectSortingLayers::default()
         };
         assert!(normalize_sorting_layers(duplicate)
             .unwrap_err()
             .contains("duplicate sorting layer id"));
+        let metadata = normalize_sorting_layers(ProjectSortingLayers {
+            tags: vec!["Player".into()],
+            game_layers: vec![ProjectGameLayer {
+                index: 8,
+                name: "Gameplay".into(),
+            }],
+            ..ProjectSortingLayers::default()
+        })
+        .unwrap();
+        assert_eq!(metadata.tags, vec!["Untagged", "Player"]);
+        assert_eq!(metadata.game_layers[0].name, "Default");
+        assert_eq!(metadata.game_layers[1].index, 8);
         std::fs::remove_dir_all(root).unwrap();
     }
 

@@ -256,6 +256,40 @@ export interface BuildPatchStats {
   error?: string;
 }
 
+export type ProjectTypeScriptDiagnosticCategory =
+  | 'error'
+  | 'warning'
+  | 'suggestion'
+  | 'message';
+
+export interface ProjectTypeScriptDiagnostic {
+  category: ProjectTypeScriptDiagnosticCategory;
+  code: number;
+  message: string;
+  file: string | null;
+  line: number | null;
+  column: number | null;
+  start: number | null;
+  length: number | null;
+}
+
+export interface ProjectTypeScriptValidation {
+  schemaVersion: 1;
+  valid: boolean;
+  checked: boolean;
+  startupScript: string | null;
+  scriptRoot: string | null;
+  revision: string | null;
+  typescriptVersion: string;
+  fileCount: number;
+  errorCount: number;
+  warningCount: number;
+  diagnosticCount: number;
+  returnedDiagnostics: number;
+  truncated: boolean;
+  diagnostics: ProjectTypeScriptDiagnostic[];
+}
+
 export interface DirectoryPublishOperations {
   exists(path: string): boolean;
   rename(from: string, to: string): void;
@@ -2948,6 +2982,96 @@ function formatTypeScriptDiagnostics(diagnostics: readonly ts.Diagnostic[]): str
   }).trim();
 }
 
+type ProjectTypeScriptProgram = {
+  startupScript: string;
+  scriptRoot: string;
+  sourceRoot: string;
+  rootNames: string[];
+  options: ts.CompilerOptions;
+  program: ts.Program;
+};
+
+const MAX_RETURNED_TYPESCRIPT_DIAGNOSTICS = 1_000;
+
+function createProjectTypeScriptProgram(
+  projectDir: string,
+  startupScript: string | undefined,
+  outputFile: string,
+  isCancelled?: () => boolean,
+): ProjectTypeScriptProgram | null {
+  if (!startupScript || !/\.tsx?$/i.test(startupScript)) return null;
+  const portable = startupScript.replaceAll('\\', '/');
+  const segments = portable.split('/');
+  const scriptsIndex = segments.map((segment) => segment.toLowerCase()).lastIndexOf('scripts');
+  const sourceRootRelative = scriptsIndex >= 0
+    ? segments.slice(0, scriptsIndex + 1).join('/')
+    : segments.slice(0, -1).join('/');
+  const sourceRoot = resolveProjectPath(projectDir, sourceRootRelative, 'script root');
+  const rootNames = collectTypeScriptFiles(sourceRoot, [], isCancelled);
+  if (!rootNames.some((path) => resolve(path) === resolve(projectDir, startupScript))) {
+    throw new Error(`TypeScript startup script is outside its script root: ${startupScript}`);
+  }
+  const options: ts.CompilerOptions = {
+    target: ts.ScriptTarget.ES2021,
+    module: ts.ModuleKind.None,
+    moduleResolution: ts.ModuleResolutionKind.Classic,
+    rootDir: sourceRoot,
+    outFile: outputFile,
+    strict: true,
+    skipLibCheck: true,
+    noEmitOnError: true,
+    sourceMap: false,
+    declaration: false,
+    removeComments: true,
+  };
+  return {
+    startupScript: portable,
+    scriptRoot: sourceRootRelative || '.',
+    sourceRoot,
+    rootNames,
+    options,
+    program: ts.createProgram(rootNames, options),
+  };
+}
+
+function typeScriptDiagnosticCategory(
+  category: ts.DiagnosticCategory,
+): ProjectTypeScriptDiagnosticCategory {
+  switch (category) {
+    case ts.DiagnosticCategory.Error:
+      return 'error';
+    case ts.DiagnosticCategory.Warning:
+      return 'warning';
+    case ts.DiagnosticCategory.Suggestion:
+      return 'suggestion';
+    default:
+      return 'message';
+  }
+}
+
+function structuredTypeScriptDiagnostic(
+  diagnostic: ts.Diagnostic,
+  projectDir: string,
+): ProjectTypeScriptDiagnostic {
+  const source = diagnostic.file;
+  const start = source && diagnostic.start != null ? diagnostic.start : null;
+  const location = source && start != null
+    ? source.getLineAndCharacterOfPosition(start)
+    : null;
+  return {
+    category: typeScriptDiagnosticCategory(diagnostic.category),
+    code: diagnostic.code,
+    message: ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'),
+    file: source && isPathInside(projectDir, source.fileName)
+      ? portablePath(relative(projectDir, source.fileName))
+      : null,
+    line: location ? location.line + 1 : null,
+    column: location ? location.character + 1 : null,
+    start,
+    length: diagnostic.length ?? null,
+  };
+}
+
 function typeScriptProgramCacheKey(
   program: ts.Program,
   projectDir: string,
@@ -2975,6 +3099,76 @@ function typeScriptProgramCacheKey(
   return cacheKey('typescript-program-v1', digest.digest('hex'));
 }
 
+/** Runs the exact Player TypeScript checks without emitting or publishing build output. */
+export function validateProjectTypeScript(projectDir: string): ProjectTypeScriptValidation {
+  const root = resolve(projectDir);
+  const project = readGameProject(root);
+  if (
+    project.startupScript
+    && !contentRoots(root).some((contentRoot) => (
+      isPathInside(contentRoot, resolve(root, project.startupScript!))
+    ))
+  ) {
+    throw new Error(
+      `startupScript must be stored under Assets or Scripts: ${project.startupScript}`,
+    );
+  }
+  const compilation = createProjectTypeScriptProgram(
+    root,
+    project.startupScript,
+    join(root, '.mengine', 'Library', 'ScriptValidation', 'out.js'),
+  );
+  if (!compilation) {
+    return {
+      schemaVersion: 1,
+      valid: true,
+      checked: false,
+      startupScript: project.startupScript ?? null,
+      scriptRoot: null,
+      revision: null,
+      typescriptVersion: ts.version,
+      fileCount: 0,
+      errorCount: 0,
+      warningCount: 0,
+      diagnosticCount: 0,
+      returnedDiagnostics: 0,
+      truncated: false,
+      diagnostics: [],
+    };
+  }
+  const allDiagnostics = ts.getPreEmitDiagnostics(compilation.program);
+  const errorCount = allDiagnostics.filter(
+    (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
+  ).length;
+  const warningCount = allDiagnostics.filter(
+    (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Warning,
+  ).length;
+  const diagnostics = allDiagnostics
+    .slice(0, MAX_RETURNED_TYPESCRIPT_DIAGNOSTICS)
+    .map((diagnostic) => structuredTypeScriptDiagnostic(diagnostic, root));
+  return {
+    schemaVersion: 1,
+    valid: errorCount === 0,
+    checked: true,
+    startupScript: compilation.startupScript,
+    scriptRoot: compilation.scriptRoot,
+    revision: typeScriptProgramCacheKey(
+      compilation.program,
+      root,
+      compilation.startupScript,
+      compilation.options,
+    ),
+    typescriptVersion: ts.version,
+    fileCount: compilation.rootNames.length,
+    errorCount,
+    warningCount,
+    diagnosticCount: allDiagnostics.length,
+    returnedDiagnostics: diagnostics.length,
+    truncated: diagnostics.length < allDiagnostics.length,
+    diagnostics,
+  };
+}
+
 function compileProjectTypeScript(
   projectDir: string,
   stageDir: string,
@@ -2984,35 +3178,19 @@ function compileProjectTypeScript(
 ): string | undefined {
   if (!startupScript || !/\.tsx?$/i.test(startupScript)) return startupScript;
   const portable = startupScript.replaceAll('\\', '/');
-  const segments = portable.split('/');
-  const scriptsIndex = segments.map((segment) => segment.toLowerCase()).lastIndexOf('scripts');
-  const sourceRootRelative = scriptsIndex >= 0
-    ? segments.slice(0, scriptsIndex + 1).join('/')
-    : segments.slice(0, -1).join('/');
-  const sourceRoot = resolveProjectPath(projectDir, sourceRootRelative, 'script root');
-  const rootNames = collectTypeScriptFiles(sourceRoot, [], isCancelled);
-  if (!rootNames.some((path) => resolve(path) === resolve(projectDir, startupScript))) {
-    throw new Error(`TypeScript startup script is outside its script root: ${startupScript}`);
-  }
   const outputFile = join(
     stageDir,
     ...portable.replace(/\.tsx?$/i, '.js').split('/'),
   );
   mkdirSync(dirname(outputFile), { recursive: true });
-  const options: ts.CompilerOptions = {
-    target: ts.ScriptTarget.ES2021,
-    module: ts.ModuleKind.None,
-    moduleResolution: ts.ModuleResolutionKind.Classic,
-    rootDir: sourceRoot,
-    outFile: outputFile,
-    strict: true,
-    skipLibCheck: true,
-    noEmitOnError: true,
-    sourceMap: false,
-    declaration: false,
-    removeComments: true,
-  };
-  const program = ts.createProgram(rootNames, options);
+  const compilation = createProjectTypeScriptProgram(
+    projectDir,
+    startupScript,
+    outputFile,
+    isCancelled,
+  );
+  if (!compilation) return startupScript;
+  const { options, program } = compilation;
   assertBuildNotCancelled(isCancelled, 'TypeScript cache key');
   const key = typeScriptProgramCacheKey(program, projectDir, portable, options);
   const restored = cache.restore(key, outputFile, false, isCancelled);

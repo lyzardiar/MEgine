@@ -32,6 +32,18 @@ export class IdempotencyConflictError extends Error {
   }
 }
 
+export class IdempotencyCapacityError extends Error {
+  readonly pendingEntries: number;
+  readonly maxPendingEntries: number;
+
+  constructor(pendingEntries: number, maxPendingEntries: number) {
+    super(`AgentBridge already has ${pendingEntries} pending unique write requests`);
+    this.name = 'IdempotencyCapacityError';
+    this.pendingEntries = pendingEntries;
+    this.maxPendingEntries = maxPendingEntries;
+  }
+}
+
 /**
  * Keeps all in-flight operations plus the most recent completed results.
  * Failed operations are deliberately not cached so transient failures can be
@@ -42,16 +54,22 @@ export class IdempotentRequestCache<T> {
   private readonly completed = new Map<string, CompletedEntry<T>>();
   private readonly maxCompletedEntries: number;
   private readonly compactCompletedValue: (value: T) => T;
+  private readonly maxPendingEntries: number;
 
   constructor(
     maxCompletedEntries = 256,
     compactCompletedValue: (value: T) => T = (value) => value,
+    maxPendingEntries = 64,
   ) {
     if (!Number.isSafeInteger(maxCompletedEntries) || maxCompletedEntries < 1) {
       throw new Error('maxCompletedEntries must be a positive safe integer');
     }
+    if (!Number.isSafeInteger(maxPendingEntries) || maxPendingEntries < 1) {
+      throw new Error('maxPendingEntries must be a positive safe integer');
+    }
     this.maxCompletedEntries = maxCompletedEntries;
     this.compactCompletedValue = compactCompletedValue;
+    this.maxPendingEntries = maxPendingEntries;
   }
 
   async run(
@@ -80,6 +98,13 @@ export class IdempotentRequestCache<T> {
         replayed: true,
         fromCompleted: false,
       };
+    }
+
+    if (this.pending.size >= this.maxPendingEntries) {
+      throw new IdempotencyCapacityError(
+        this.pending.size,
+        this.maxPendingEntries,
+      );
     }
 
     const promise = Promise.resolve().then(operation);

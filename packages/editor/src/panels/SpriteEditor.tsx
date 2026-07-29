@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import {
   loadProjectImage,
-  readProjectAssetText,
+  readProjectAssetBytesWithRevision,
   writeProjectAssetText,
 } from '../projectAssets';
 import { refreshSprites } from '../spriteLibrary';
@@ -17,8 +17,18 @@ import {
   type SpriteImportSettings,
   type SpriteSlice,
 } from '../spriteImport';
-import { PROJECT_ASSETS_CHANGED_EVENT } from '../assetEditorEvents';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  broadcastProjectAssetsChanged,
+  projectAssetsChangeTouches,
+  PROJECT_ASSETS_CHANGED_EVENT,
+} from '../assetEditorEvents';
+import {
+  registerCloseDocumentParticipant,
+  registerDiscardDocumentParticipant,
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 
 type TextureSize = [number, number];
 
@@ -44,12 +54,14 @@ function cloneSettings(settings: SpriteImportSettings): SpriteImportSettings {
 
 export function SpriteEditor(props: {
   assetPath: string | null;
+  onCloseAsset: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const [settings, setSettings] = useState<SpriteImportSettings | null>(null);
   const [savedSettings, setSavedSettings] = useState<SpriteImportSettings | null>(null);
+  const [savedRevision, setSavedRevision] = useState<string | null>(null);
   const [textureSize, setTextureSize] = useState<TextureSize>([1, 1]);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [selected, setSelected] = useState(-1);
@@ -69,6 +81,7 @@ export function SpriteEditor(props: {
   });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const savingRef = useRef(false);
 
   const basePath = props.assetPath ? spriteTexturePath(props.assetPath) : null;
   const dirty = useMemo(() => {
@@ -83,6 +96,7 @@ export function SpriteEditor(props: {
     if (!basePath) {
       setSettings(null);
       setSavedSettings(null);
+      setSavedRevision(null);
       setImage(null);
       setError(null);
       return;
@@ -92,25 +106,33 @@ export function SpriteEditor(props: {
     setError(null);
     setSettings(null);
     setSavedSettings(null);
+    setSavedRevision(null);
     setImage(null);
     void loadProjectImage(basePath)
       .then(async (loadedImage) => {
         const size: TextureSize = [loadedImage.naturalWidth, loadedImage.naturalHeight];
         let next = createSpriteImportSettings();
-        let importText: string | null = null;
+        let importRevision: string | null = null;
         try {
-          importText = await readProjectAssetText(spriteImportPath(basePath));
+          const imported = await readProjectAssetBytesWithRevision(
+            spriteImportPath(basePath),
+          );
+          next = parseSpriteImportSettings(
+            new TextDecoder('utf-8', { fatal: true }).decode(imported.contents),
+            size,
+          );
+          importRevision = imported.revision;
         } catch (reason) {
           const message = reason instanceof Error ? reason.message : String(reason);
           if (!/(?:^|\D)404(?:\D|$)|asset not found/i.test(message)) throw reason;
           // A missing sidecar means the texture still uses compatible Single defaults.
         }
-        if (importText != null) next = parseSpriteImportSettings(importText, size);
         if (cancelled) return;
         setTextureSize(size);
         setImage(loadedImage);
         setSettings(next);
         setSavedSettings(cloneSettings(next));
+        setSavedRevision(importRevision);
         const requestedSlice = spriteSliceName(props.assetPath ?? '');
         setSelected(requestedSlice
           ? next.slices.findIndex((slice) => slice.name.toLocaleLowerCase() === requestedSlice.toLocaleLowerCase())
@@ -132,6 +154,30 @@ export function SpriteEditor(props: {
       cancelled = true;
     };
   }, [basePath, props.assetPath, reloadToken]);
+
+  useEffect(() => {
+    if (!basePath) return;
+    const texturePath = basePath.toLocaleLowerCase();
+    const importPath = spriteImportPath(basePath).toLocaleLowerCase();
+    const onAssetsChanged = (event: Event) => {
+      if (savingRef.current) return;
+      if (!projectAssetsChangeTouches(
+        (event as CustomEvent<unknown>).detail,
+        [texturePath, importPath],
+      )) return;
+      if (dirty) {
+        setError(
+          'Sprite source changed outside this editor. Reload or Revert before applying this draft.',
+        );
+        return;
+      }
+      setReloadToken((value) => value + 1);
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => {
+      window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    };
+  }, [basePath, dirty]);
 
   useEffect(() => {
     const element = previewRef.current;
@@ -207,7 +253,7 @@ export function SpriteEditor(props: {
     });
   };
 
-  const selectAtPointer = (event: PointerEvent<HTMLCanvasElement>) => {
+  const selectAtPointer = (event: MouseEvent<HTMLCanvasElement>) => {
     if (!settings) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const layout = previewLayout(rect.width, rect.height, textureSize);
@@ -223,17 +269,27 @@ export function SpriteEditor(props: {
 
   const apply = async (): Promise<boolean> => {
     if (!settings || !basePath) return false;
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
       const text = serializeSpriteImportSettings(settings, textureSize);
-      await writeProjectAssetText(spriteImportPath(basePath), text);
-      const normalized = parseSpriteImportSettings(text, textureSize);
+      const importPath = spriteImportPath(basePath);
+      await writeProjectAssetText(importPath, text, savedRevision);
+      const saved = await readProjectAssetBytesWithRevision(importPath);
+      const normalized = parseSpriteImportSettings(
+        new TextDecoder('utf-8', { fatal: true }).decode(saved.contents),
+        textureSize,
+      );
       setSettings(normalized);
       setSavedSettings(cloneSettings(normalized));
+      setSavedRevision(saved.revision);
       await refreshSprites();
       props.onAssetsChanged();
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+      broadcastProjectAssetsChanged({
+        action: 'modified',
+        sourcePath: spriteImportPath(basePath),
+      });
       props.onLog(`Applied sprite import settings: ${basePath}`);
       return true;
     } catch (reason) {
@@ -242,6 +298,7 @@ export function SpriteEditor(props: {
       props.onLog(`Sprite import failed: ${message}`, 'error');
       return false;
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
@@ -253,6 +310,23 @@ export function SpriteEditor(props: {
       }
       : null
   )), [basePath, dirty, saving, settings]);
+  useEffect(() => registerSaveDocumentParticipant('Sprite Import Settings', (path) => (
+    dirty && !saving && sameSaveDocumentPath(basePath, path)
+      ? async () => {
+        if (!await apply()) throw new Error('Sprite import settings could not be saved');
+      }
+      : null
+  )), [basePath, dirty, saving, settings]);
+  useEffect(() => registerDiscardDocumentParticipant('Sprite Import Settings', (path) => (
+    dirty && !loading && !saving && sameSaveDocumentPath(basePath, path)
+      ? async () => { setReloadToken((value) => value + 1); }
+      : null
+  )), [basePath, dirty, loading, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Sprite Import Settings', (path) => (
+    !loading && !saving && sameSaveDocumentPath(basePath, path)
+      ? async () => { props.onCloseAsset(); }
+      : null
+  )), [basePath, loading, props.onCloseAsset, saving]);
 
   if (!basePath) {
     return <div className="sprite-editor-empty">Double-click a texture in Project to edit its sprite import settings.</div>;
@@ -284,7 +358,8 @@ export function SpriteEditor(props: {
           <canvas
             ref={canvasRef}
             style={{ width: canvasSize.width, height: canvasSize.height }}
-            onPointerDown={selectAtPointer}
+            aria-label="Select sprite slice from preview"
+            onClick={selectAtPointer}
           />
         </div>
         <aside className="sprite-editor-inspector">

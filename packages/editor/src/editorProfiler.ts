@@ -1,3 +1,5 @@
+import { createEditorBroadcastChannel } from './editorInstance.ts';
+
 export const EDITOR_PROFILER_SAMPLE_INTERVAL_MS = 250;
 export const EDITOR_PROFILER_SAMPLE_LIMIT = 480;
 
@@ -205,9 +207,11 @@ function appendSample(sample: EditorProfilerSample, broadcast: boolean): void {
 }
 
 function profilerChannel(): BroadcastChannel | null {
-  if (channel || typeof BroadcastChannel === 'undefined') return channel;
-  channel = new BroadcastChannel(CHANNEL_NAME);
-  channel.addEventListener('message', (event: MessageEvent<ProfilerChannelMessage>) => {
+  if (channel) return channel;
+  const created = createEditorBroadcastChannel(CHANNEL_NAME);
+  if (!created) return null;
+  channel = created;
+  created.addEventListener('message', (event: MessageEvent<ProfilerChannelMessage>) => {
     const message = event.data;
     if (message?.type === 'clear') {
       samples.length = 0;
@@ -250,7 +254,7 @@ function profilerChannel(): BroadcastChannel | null {
       viewportPixels: normalizedFrame.viewportPixels,
     }, false);
   });
-  return channel;
+  return created;
 }
 
 export function recordViewportProfilerFrame(frame: ViewportProfilerFrame): void {

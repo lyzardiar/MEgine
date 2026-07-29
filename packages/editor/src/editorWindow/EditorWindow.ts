@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import {
+  createRegisteredEditorWindow,
   openEditorWindow,
-  registerEditorWindowType,
   registerMenuItem,
   registerMenuItemValidator,
   type MenuItemContext,
@@ -16,11 +16,15 @@ export type EditorWindowOptions = {
   height?: number;
   x?: number;
   y?: number;
+  /** Keep the native window hidden and unfocused for background Agent work. */
+  activateWindow?: boolean;
 };
 
 /**
  * Unity-like custom editor window.
  * Subclass, implement `title` + `onGUI()`, open via `YourWindow.show()` or `@MenuItem`.
+ * Register a module-load factory with `registerEditorWindowType` when the window
+ * must be detachable and discoverable from independent WebViews or Agents.
  */
 export abstract class EditorWindow {
   abstract title: string;
@@ -51,17 +55,35 @@ export abstract class EditorWindow {
         render: () => current.onGUI(),
       };
     };
-    registerEditorWindowType(id, definition);
-    void openNativeEditorWindow({ typeId: id, title: inst.title, width, height }).then((opened) => {
-      if (opened) return;
+    if (!createRegisteredEditorWindow(id)) {
       openEditorWindow({
-      id,
+        id,
+        title: inst.title,
+        x,
+        y,
+        width,
+        height,
+        render: () => inst.onGUI(),
+      });
+      return;
+    }
+    void openNativeEditorWindow({
+      typeId: id,
       title: inst.title,
-      x,
-      y,
       width,
       height,
-      render: () => inst.onGUI(),
+      activateWindow: opts.activateWindow,
+    }).then((opened) => {
+      if (opened) return;
+      const fallback = definition();
+      openEditorWindow({
+        id,
+        title: fallback.title,
+        x,
+        y,
+        width,
+        height,
+        render: fallback.render,
       });
     });
   }
@@ -75,10 +97,11 @@ export abstract class EditorWindow {
  * Example:
  * ```ts
  * class MyWin extends EditorWindow {
- *   @MenuItem('Window/My Win', false, 100)
+ *   @MenuItem('Window/My Win', { priority: 100, agentInvokable: true })
  *   static open() { MyWin.show(); }
  * }
  * ```
+ * Menu commands are unavailable to Agents unless they explicitly opt in.
  */
 export function MenuItem(
   path: string,

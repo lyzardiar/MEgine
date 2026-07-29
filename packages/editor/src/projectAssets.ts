@@ -47,6 +47,16 @@ export type ProjectAssetImportResult = {
   asset: ProjectFileAsset;
 };
 
+export type ProjectAssetReadOptions = {
+  /**
+   * Replace an existing optimistic-write baseline with the revision just read.
+   * Only a resource editor intentionally loading or reloading its authored
+   * document should do this. Incidental previews and Agent reads must preserve
+   * an already-open editor's older baseline so stale saves remain blocked.
+   */
+  replaceWriteBaseline?: boolean;
+};
+
 let projectFiles: ProjectFileAsset[] = [];
 let watchedProjectFiles: ProjectFileAsset[] = [];
 let watchBaselineInitialized = false;
@@ -293,13 +303,17 @@ export function projectAssetUrl(relativePath: string): string {
 
 export async function readProjectAssetBytesWithRevision(
   relativePath: string,
+  options: ProjectAssetReadOptions = {},
 ): Promise<{ contents: Uint8Array; revision: string }> {
   const normalized = normalizeProjectAssetPath(relativePath);
+  const key = assetKey(normalized);
   if (isDesktopEditor()) {
     const result = await invoke<{ contents: number[]; revision: string }>('read_project_asset', {
       relativePath: normalized,
     });
-    writeBaselines.set(assetKey(normalized), result.revision);
+    if (options.replaceWriteBaseline || !writeBaselines.has(key)) {
+      writeBaselines.set(key, result.revision);
+    }
     return {
       contents: Uint8Array.from(result.contents),
       revision: result.revision,
@@ -309,19 +323,37 @@ export async function readProjectAssetBytesWithRevision(
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${normalized}`);
   const revision = response.headers.get('X-MEngine-Asset-Revision');
   if (!revision) throw new Error(`asset read did not return a revision: ${normalized}`);
-  writeBaselines.set(assetKey(normalized), revision);
+  if (options.replaceWriteBaseline || !writeBaselines.has(key)) {
+    writeBaselines.set(key, revision);
+  }
   return {
     contents: new Uint8Array(await response.arrayBuffer()),
     revision,
   };
 }
 
-export async function readProjectAssetBytes(relativePath: string): Promise<Uint8Array> {
-  return (await readProjectAssetBytesWithRevision(relativePath)).contents;
+export async function readProjectAssetBytes(
+  relativePath: string,
+  options: ProjectAssetReadOptions = {},
+): Promise<Uint8Array> {
+  return (await readProjectAssetBytesWithRevision(relativePath, options)).contents;
 }
 
-export async function readProjectAssetText(relativePath: string): Promise<string> {
-  return new TextDecoder().decode(await readProjectAssetBytes(relativePath));
+export async function readProjectAssetText(
+  relativePath: string,
+  options: ProjectAssetReadOptions = {},
+): Promise<string> {
+  return new TextDecoder().decode(await readProjectAssetBytes(relativePath, options));
+}
+
+export function projectAssetHasExternalWriteConflict(relativePath: string): boolean {
+  const normalized = normalizeProjectAssetPath(relativePath);
+  const baseline = writeBaselines.get(assetKey(normalized));
+  if (baseline === undefined) return false;
+  const current = projectFiles.find(
+    (asset) => assetKey(asset.relPath) === assetKey(normalized),
+  );
+  return (current?.revision ?? null) !== baseline;
 }
 
 /** Double-click preview for imported audio without mutating the scene. */
@@ -387,7 +419,9 @@ export async function writeProjectAssetBytes(
             ? (writeBaselines.get(assetKey(normalized)) ?? null)
             : expectedRevision,
       });
-      writeBaselines.set(assetKey(normalized), result.revision);
+      if (expectedRevision === undefined) {
+        writeBaselines.set(assetKey(normalized), result.revision);
+      }
       acceptWrittenAsset(result.asset);
       return;
     }
@@ -418,7 +452,9 @@ export async function writeProjectAssetBytes(
       revision?: string;
       asset?: ProjectFileAsset | null;
     };
-    if (result.revision) writeBaselines.set(assetKey(normalized), result.revision);
+    if (expectedRevision === undefined && result.revision) {
+      writeBaselines.set(assetKey(normalized), result.revision);
+    }
     acceptWrittenAsset(result.asset);
   } finally {
     endInternalProjectFileWrite(normalized);

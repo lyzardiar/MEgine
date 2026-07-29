@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -21,6 +22,14 @@ import {
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import type { MaterialAsset } from '../materialAsset';
 import { loadResolvedMaterialAsset } from '../materialInstanceAsset';
+import {
+  inspectMultiComponentFields,
+  planMultiComponentEdit,
+} from '../multiComponentEditing';
+import {
+  focusMenuBoundary,
+  moveMenuItemFocus,
+} from '../menuKeyboardNavigation';
 import {
   isMaterialPropertyBlockTextureAsset,
   materialPropertyBlockBindingDiagnostics,
@@ -66,6 +75,8 @@ type Transform = {
   rotation: [number, number, number, number];
   scale: [number, number, number];
 };
+
+const MIXED_SELECT_VALUE = '__mengine_mixed_value__';
 
 /** Unity-style: drag label horizontally to scrub number. Shift=快, Alt=细 */
 function useScrubDrag(
@@ -133,6 +144,7 @@ function useScrubDrag(
 
 function AxisInput(props: {
   label: 'x' | 'y' | 'z' | 'w' | 'h';
+  ariaLabel?: string;
   value: number;
   onChange: (v: number) => void;
   step?: number;
@@ -144,6 +156,7 @@ function AxisInput(props: {
     <div className="axis">
       <span
         className={`${props.label} scrub-label`}
+        aria-label={`Adjust ${props.ariaLabel ?? props.label.toUpperCase()}`}
         title="拖拽调节数值 · Shift 加速 · Alt 精细"
         onPointerDown={onScrub}
       >
@@ -152,13 +165,18 @@ function AxisInput(props: {
       <input
         type="number"
         step={step}
+        aria-label={props.ariaLabel ?? props.label.toUpperCase()}
         value={props.mixed ? '' : Number(props.value.toFixed(3))}
-        placeholder={props.mixed ? '—' : undefined}
+        placeholder={props.mixed ? 'Mixed' : undefined}
         title={props.mixed ? 'Mixed values' : undefined}
         onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
       />
     </div>
   );
+}
+
+function axisSemanticLabel(scope: string, field: string, axis: string): string {
+  return `${scope} ${field} ${axis.toUpperCase()}`;
 }
 
 function CompBlock(props: {
@@ -176,6 +194,8 @@ function CompBlock(props: {
   const [open, setOpen] = useState(props.defaultOpen ?? true);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const contextMenuId = useId();
   const menuItems = [
     ...(props.contextMenuItems ?? []),
     ...(props.onRemove ? [{
@@ -190,8 +210,17 @@ function CompBlock(props: {
     const close = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus({ preventScroll: true });
+    };
     window.addEventListener('mousedown', close);
-    return () => window.removeEventListener('mousedown', close);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
   }, [menuOpen]);
 
   return (
@@ -206,23 +235,57 @@ function CompBlock(props: {
           {menuItems.length > 0 && (
             <>
               <button
+                ref={menuButtonRef}
                 type="button"
                 className="comp-menu-btn"
                 title="Context Menu"
+                aria-label={`${props.title} Context Menu`}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-controls={contextMenuId}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuOpen((o) => !o);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setMenuOpen(true);
+                  window.requestAnimationFrame(() => {
+                    focusMenuBoundary(
+                      document.getElementById(contextMenuId),
+                      event.key === 'ArrowDown' ? 'first' : 'last',
+                    );
+                  });
                 }}
               >
                 ⋮
               </button>
               {menuOpen && (
-                <div className="comp-context-menu">
+                <div
+                  id={contextMenuId}
+                  className="comp-context-menu"
+                  role="menu"
+                  aria-label={`${props.title} component context menu`}
+                  onKeyDown={(event) => {
+                    if (moveMenuItemFocus(event.currentTarget, event.target, event.key)) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    } else if (event.key === 'Escape') {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setMenuOpen(false);
+                      menuButtonRef.current?.focus({ preventScroll: true });
+                    }
+                  }}
+                >
                   {menuItems.map((item, index) => (
                     <div key={`${item.label}-${index}`}>
-                      {item.separatorBefore && <div className="comp-context-sep" />}
+                      {item.separatorBefore && <div className="comp-context-sep" role="separator" />}
                       <button
                         type="button"
+                        role="menuitem"
                         className="comp-context-item"
                         disabled={item.disabled}
                         onClick={() => {
@@ -285,6 +348,7 @@ function NumField(props: {
   step?: number;
   min?: number;
   max?: number;
+  mixed?: boolean;
   onChange: (v: number) => void;
 }) {
   const step = props.step ?? 1;
@@ -297,6 +361,7 @@ function NumField(props: {
     <div className="field-row">
       <label
         className="scrub-label"
+        aria-label={`Adjust ${props.label}`}
         title="拖拽调节数值 · Shift 加速 · Alt 精细"
         onPointerDown={onScrub}
       >
@@ -307,7 +372,10 @@ function NumField(props: {
         step={step}
         min={props.min}
         max={props.max}
-        value={Number(props.value.toFixed(3))}
+        aria-label={props.label}
+        value={props.mixed ? '' : Number(props.value.toFixed(3))}
+        placeholder={props.mixed ? 'Mixed' : undefined}
+        title={props.mixed ? 'Mixed values' : undefined}
         onChange={(e) => props.onChange(clamp(parseFloat(e.target.value) || 0))}
       />
     </div>
@@ -328,6 +396,7 @@ function Camera3DEditor(props: {
       <div className="field-row">
         <label>Projection</label>
         <select
+          aria-label="Projection"
           value={isOrtho ? 'orthographic' : 'perspective'}
           onChange={(e) => props.onChange({ ...d, projection: e.target.value })}
         >
@@ -372,6 +441,7 @@ function Camera3DEditor(props: {
       <div className="field-row">
         <label>Clear Flags</label>
         <select
+          aria-label="Clear Flags"
           value={clearFlags}
           onChange={(e) => props.onChange({ ...d, clear_flags: e.target.value })}
         >
@@ -391,6 +461,7 @@ function Camera3DEditor(props: {
         <label>Primary</label>
         <input
           type="checkbox"
+          aria-label="Camera 3D Primary"
           checked={!!d.primary}
           onChange={(e) => props.onChange({ ...d, primary: e.target.checked })}
         />
@@ -611,6 +682,7 @@ function MaterialPropertyBlockEditor(props: {
                     <AxisInput
                       key={axis}
                       label={axis}
+                      ariaLabel={axisSemanticLabel('Surface Shader', parameter.label, axis)}
                       value={value[index]}
                       step={0.01}
                       onChange={(nextValue) => {
@@ -664,7 +736,12 @@ function GenericCompEditor(props: {
   data: Record<string, unknown>;
   entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
   dynamicOptions?: Record<string, InspectorOption[]>;
-  onChange: (next: Record<string, unknown>) => void;
+  mixedFields?: ReadonlySet<string>;
+  mixedArrayIndices?: Readonly<Record<string, readonly boolean[]>>;
+  onChange: (
+    next: Record<string, unknown>,
+    editedPath?: readonly (string | number)[],
+  ) => void;
 }) {
   const isColorVector = (key: string, value: number[]) => {
     if (value.length !== 3 && value.length !== 4) return false;
@@ -690,7 +767,16 @@ function GenericCompEditor(props: {
           return null;
         }
         const label = meta?.label ?? inspectorLabel(key);
-        const setValue = (value: unknown) => props.onChange({ ...props.data, [key]: value });
+        const semanticLabel = props.componentType
+          ? `${getComponentCatalog().find((entry) => entry.type === props.componentType)?.label
+            ?? getBehaviour(props.componentType)?.label
+            ?? props.componentType} ${label}`
+          : label;
+        const setValue = (
+          value: unknown,
+          nestedPath: readonly (string | number)[] = [],
+        ) => props.onChange({ ...props.data, [key]: value }, [key, ...nestedPath]);
+        const mixed = props.mixedFields?.has(key) ?? false;
 
         if (meta?.kind === 'event') {
           return (
@@ -783,7 +869,13 @@ function GenericCompEditor(props: {
               <label title={key}>{label}</label>
               <input
                 type="checkbox"
-                checked={val}
+                checked={!mixed && val}
+                ref={(element) => {
+                  if (element) element.indeterminate = mixed;
+                }}
+                aria-label={semanticLabel}
+                aria-checked={mixed ? 'mixed' : val}
+                title={mixed ? 'Mixed values' : undefined}
                 onChange={(e) => setValue(e.target.checked)}
               />
             </div>
@@ -798,6 +890,7 @@ function GenericCompEditor(props: {
               min={meta?.min}
               max={meta?.max}
               step={meta?.step}
+              mixed={mixed}
               onChange={setValue}
             />
           );
@@ -810,9 +903,11 @@ function GenericCompEditor(props: {
               <label title={key}>{label}</label>
               {selectOptions ? (
                 <select
-                  value={val}
+                  value={mixed ? MIXED_SELECT_VALUE : val}
+                  aria-label={label}
                   onChange={(e) => setValue(e.target.value)}
                 >
+                  {mixed && <option value={MIXED_SELECT_VALUE} disabled>Mixed</option>}
                   {!selectOptions.some((option) => option.value === val) && (
                     <option value={val}>
                       {key === 'sorting_layer' && val
@@ -827,13 +922,17 @@ function GenericCompEditor(props: {
               ) : meta?.kind === 'multiline' ? (
                 <textarea
                   rows={3}
-                  value={val}
+                  value={mixed ? '' : val}
+                  placeholder={mixed ? 'Mixed values' : undefined}
+                  aria-label={label}
                   onChange={(e) => setValue(e.target.value)}
                 />
               ) : (
                 <input
                   type="text"
-                  value={val}
+                  value={mixed ? '' : val}
+                  placeholder={mixed ? 'Mixed values' : undefined}
+                  aria-label={label}
                   onChange={(e) => setValue(e.target.value)}
                 />
               )}
@@ -861,11 +960,13 @@ function GenericCompEditor(props: {
                   <AxisInput
                     key={ax}
                     label={ax}
+                    ariaLabel={`${label} ${ax.toUpperCase()}`}
                     value={arr[i]}
+                    mixed={props.mixedArrayIndices?.[key]?.[i] ?? mixed}
                     onChange={(v) => {
                       const next = [...arr];
                       next[i] = v;
-                      setValue(next);
+                      setValue(next, [i]);
                     }}
                   />
                 ))}
@@ -1017,18 +1118,47 @@ function valuesAreMixed(values: number[]): boolean {
 
 function MultiSelectionInspector(props: {
   count: number;
-  entities: Array<{ entity: number; components: Record<string, unknown> }>;
-  primary: { entity: number; components: Record<string, unknown> };
+  entities: Array<{
+    entity: number;
+    active?: boolean;
+    tag?: string;
+    layer?: number;
+    components: Record<string, unknown>;
+  }>;
+  primary: {
+    entity: number;
+    active?: boolean;
+    tag?: string;
+    layer?: number;
+    components: Record<string, unknown>;
+  };
   componentClipboard: ComponentClipboard | null;
   onCopyComponent: (next: ComponentClipboard) => void;
+  tagOptions: Array<{ value: string; label: string }>;
+  layerOptions: Array<{ value: number; label: string }>;
+  onSetActives?: (ids: number[], active: boolean) => void;
+  onSetTags?: (ids: number[], tag: string) => void;
+  onSetLayers?: (ids: number[], layer: number) => void;
+  onAddComponents?: (
+    ids: number[],
+    type: string,
+    value: Record<string, unknown>,
+  ) => void;
+  onRemoveComponents?: (ids: number[], type: string) => void;
   onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
   onSetComponents?: (
     type: string,
     updates: Array<{ entity: number; value: Record<string, unknown> }>,
   ) => void;
+  onPatchComponents?: (
+    type: string,
+    updates: Array<{ entity: number; patch: Record<string, unknown> }>,
+  ) => void;
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
 }) {
+  const [componentMenuOpen, setComponentMenuOpen] = useState(false);
+  const componentMenuRef = useRef<HTMLDivElement>(null);
   const transformEntities = props.entities.filter((entity) => entity.components.Transform != null);
   const rectEntities = props.entities.filter((entity) => entity.components.RectTransform != null);
   const allTransforms = transformEntities.length === props.entities.length;
@@ -1037,6 +1167,55 @@ function MultiSelectionInspector(props: {
   const primaryRect = props.primary.components.RectTransform
     ? readRectTransform(props.primary.components.RectTransform)
     : null;
+  const entityIds = props.entities.map((entity) => entity.entity);
+  const selectedActives = props.entities.map((entity) => entity.active !== false);
+  const selectedTags = props.entities.map((entity) => entity.tag?.trim() || 'Untagged');
+  const selectedLayers = props.entities.map((entity) => (
+    Number.isInteger(entity.layer) ? Number(entity.layer) : 0
+  ));
+  const activeMixed = selectedActives.some((value) => value !== selectedActives[0]);
+  const tagMixed = selectedTags.some((value) => value !== selectedTags[0]);
+  const layerMixed = selectedLayers.some((value) => value !== selectedLayers[0]);
+  const tagOptions = [
+    ...selectedTags
+      .filter((value, index) => (
+        selectedTags.indexOf(value) === index
+        && !props.tagOptions.some((option) => option.value === value)
+      ))
+      .map((value) => ({ value, label: `${value} (Unconfigured)` })),
+    ...props.tagOptions,
+  ];
+  const layerOptions = [
+    ...selectedLayers
+      .filter((value, index) => (
+        selectedLayers.indexOf(value) === index
+        && !props.layerOptions.some((option) => option.value === value)
+      ))
+      .map((value) => ({ value, label: `Layer ${value} (Unconfigured)` })),
+    ...props.layerOptions,
+  ];
+  const catalog = getComponentCatalog();
+  const availableComponents = catalog.filter((component) => (
+    props.entities.every((entity) => entity.components[component.type] == null)
+  ));
+  const sharedComponents = Object.keys(props.primary.components)
+    .filter((type) => (
+      type !== 'Transform'
+      && type !== 'RectTransform'
+      && !type.startsWith('__')
+      && props.entities.every((entity) => entity.components[type] != null)
+    ));
+
+  useEffect(() => {
+    if (!componentMenuOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!componentMenuRef.current?.contains(event.target as Node)) {
+        setComponentMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', close);
+    return () => window.removeEventListener('mousedown', close);
+  }, [componentMenuOpen]);
 
   const replaceTransforms = (value: Record<string, unknown>) => {
     props.onChangeTransforms?.(transformEntities.map((entity) => ({
@@ -1046,6 +1225,12 @@ function MultiSelectionInspector(props: {
   };
   const replaceRects = (value: Record<string, unknown>) => {
     props.onSetComponents?.('RectTransform', rectEntities.map((entity) => ({
+      entity: entity.entity,
+      value: structuredClone(value),
+    })));
+  };
+  const replaceSharedComponent = (type: string, value: Record<string, unknown>) => {
+    props.onSetComponents?.(type, props.entities.map((entity) => ({
       entity: entity.entity,
       value: structuredClone(value),
     })));
@@ -1098,8 +1283,56 @@ function MultiSelectionInspector(props: {
     >
       <InspectorEditScope>
         <div className="insp-header">
-          <div className="insp-name">{props.count} selected</div>
+          <div className="insp-object-row">
+            <input
+              className="insp-active"
+              type="checkbox"
+              checked={!activeMixed && selectedActives[0]}
+              ref={(element) => {
+                if (element) element.indeterminate = activeMixed;
+              }}
+              title={activeMixed ? 'Active (mixed)' : 'Active'}
+              aria-label="Active"
+              aria-checked={activeMixed ? 'mixed' : selectedActives[0]}
+              onChange={(event) => props.onSetActives?.(entityIds, event.target.checked)}
+            />
+            <div className="insp-name">{props.count} selected</div>
+          </div>
           <div className="insp-tag">Editing shared values</div>
+          <div className="insp-meta-row">
+            <label>
+              <span>Tag</span>
+              <select
+                aria-label="Tag"
+                value={tagMixed ? '' : selectedTags[0]}
+                onChange={(event) => {
+                  if (event.target.value) props.onSetTags?.(entityIds, event.target.value);
+                }}
+              >
+                {tagMixed && <option value="" disabled>— Mixed —</option>}
+                {tagOptions.map((option) => (
+                  <option value={option.value} key={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Layer</span>
+              <select
+                aria-label="Layer"
+                value={layerMixed ? '' : selectedLayers[0]}
+                onChange={(event) => {
+                  if (event.target.value !== '') {
+                    props.onSetLayers?.(entityIds, Number(event.target.value));
+                  }
+                }}
+              >
+                {layerMixed && <option value="" disabled>— Mixed —</option>}
+                {layerOptions.map((option) => (
+                  <option value={option.value} key={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
         {allRects && primaryRect && (
           <CompBlock
@@ -1119,6 +1352,7 @@ function MultiSelectionInspector(props: {
                 <AxisInput
                   key={axis}
                   label={axis === 0 ? 'x' : 'y'}
+                  ariaLabel={axisSemanticLabel('Rect Transform', 'Position', axis === 0 ? 'x' : 'y')}
                   value={primaryRect.anchored_position[axis]}
                   mixed={valuesAreMixed(rectValues.map((value) => value.anchored_position[axis]))}
                   onChange={(value) => setRectAxis('anchored_position', axis, value)}
@@ -1131,6 +1365,7 @@ function MultiSelectionInspector(props: {
                 <AxisInput
                   key={axis}
                   label={axis === 0 ? 'w' : 'h'}
+                  ariaLabel={axisSemanticLabel('Rect Transform', 'Size', axis === 0 ? 'w' : 'h')}
                   value={primaryRect.size_delta[axis]}
                   mixed={valuesAreMixed(rectValues.map((value) => value.size_delta[axis]))}
                   onChange={(value) => setRectAxis('size_delta', axis, value)}
@@ -1141,6 +1376,7 @@ function MultiSelectionInspector(props: {
               <label>Rotation</label>
               <AxisInput
                 label="z"
+                ariaLabel={axisSemanticLabel('Rect Transform', 'Rotation', 'z')}
                 value={primaryRect.local_rotation}
                 mixed={valuesAreMixed(rectValues.map((value) => value.local_rotation))}
                 step={1}
@@ -1153,6 +1389,7 @@ function MultiSelectionInspector(props: {
                 <AxisInput
                   key={axis}
                   label={axis === 0 ? 'x' : 'y'}
+                  ariaLabel={axisSemanticLabel('Rect Transform', 'Scale', axis === 0 ? 'x' : 'y')}
                   value={primaryRect.local_scale[axis]}
                   mixed={valuesAreMixed(rectValues.map((value) => value.local_scale[axis]))}
                   onChange={(value) => setRectAxis('local_scale', axis, value)}
@@ -1187,6 +1424,11 @@ function MultiSelectionInspector(props: {
                     <AxisInput
                       key={axis}
                       label={(['x', 'y', 'z'] as const)[axis]}
+                      ariaLabel={axisSemanticLabel(
+                        'Transform',
+                        field[0].toUpperCase() + field.slice(1),
+                        (['x', 'y', 'z'] as const)[axis],
+                      )}
                       value={primaryValues[axis]}
                       mixed={valuesAreMixed(allValues.map((values) => values[axis]))}
                       step={field === 'rotation' ? 1 : 0.1}
@@ -1201,6 +1443,86 @@ function MultiSelectionInspector(props: {
         {!allRects && !allTransforms && (
           <div className="empty-state">Selection has no shared Transform type</div>
         )}
+        {sharedComponents.map((type) => {
+          const value = props.primary.components[type] as Record<string, unknown>;
+          const label = catalog.find((entry) => entry.type === type)?.label
+            ?? getBehaviour(type)?.label
+            ?? type;
+          const fieldState = inspectMultiComponentFields(props.entities, type);
+          return (
+            <CompBlock
+              key={type}
+              title={`${label} (Multi)`}
+              onRemove={() => props.onRemoveComponents?.(entityIds, type)}
+              contextMenuItems={componentEditMenu(
+                type,
+                value,
+                props.componentClipboard,
+                props.onCopyComponent,
+                (next) => replaceSharedComponent(type, next),
+              )}
+            >
+              {fieldState.mixedFields.size > 0 && (
+                <div className="field-hint">
+                  Mixed: {[...fieldState.mixedFields].map(inspectorLabel).join(', ')}.
+                  Editing changes only that field on all {props.count} GameObjects.
+                </div>
+              )}
+              <GenericCompEditor
+                componentType={type}
+                data={value}
+                entities={props.entities}
+                mixedFields={fieldState.mixedFields}
+                mixedArrayIndices={fieldState.mixedArrayIndices}
+                onChange={(next, editedPath) => {
+                  const updates = planMultiComponentEdit(
+                    props.entities,
+                    type,
+                    value,
+                    next,
+                    editedPath,
+                  );
+                  if (updates.length) props.onPatchComponents?.(type, updates);
+                }}
+              />
+            </CompBlock>
+          );
+        })}
+        <div className="add-comp-wrap" ref={componentMenuRef}>
+          <button
+            type="button"
+            className="add-comp"
+            aria-label="Add Component to selection"
+            onClick={() => setComponentMenuOpen((open) => !open)}
+          >
+            Add Component
+          </button>
+          {componentMenuOpen && (
+            <div className="add-comp-menu">
+              {availableComponents.length === 0 && (
+                <div className="add-comp-empty">No shared component can be added</div>
+              )}
+              {availableComponents.map((component) => (
+                <button
+                  key={component.type}
+                  type="button"
+                  className="add-comp-item"
+                  onClick={() => {
+                    props.onAddComponents?.(
+                      entityIds,
+                      component.type,
+                      component.create(),
+                    );
+                    setComponentMenuOpen(false);
+                  }}
+                >
+                  <span className="add-comp-title">{component.label}</span>
+                  <span className="add-comp-desc">{component.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </InspectorEditScope>
     </InspectorGestureProvider>
   );
@@ -1211,9 +1533,18 @@ export function Inspector(props: {
     entity: number;
     name?: string | null;
     active?: boolean;
+    tag?: string;
+    layer?: number;
     components: Record<string, unknown>;
   } | null;
-  entities?: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  entities?: Array<{
+    entity: number;
+    name?: string | null;
+    active?: boolean;
+    tag?: string;
+    layer?: number;
+    components: Record<string, unknown>;
+  }>;
   selectedIds?: number[];
   selectionCount?: number;
   previewNotice?: string;
@@ -1226,11 +1557,28 @@ export function Inspector(props: {
     type: string,
     updates: Array<{ entity: number; value: Record<string, unknown> }>,
   ) => void;
+  onPatchComponents?: (
+    type: string,
+    updates: Array<{ entity: number; patch: Record<string, unknown> }>,
+  ) => void;
   /** Merge patch into existing component (avoids stale full-replace wiping fields). */
   onPatchComponent?: (entity: number, type: string, patch: Record<string, unknown>) => void;
   onInvokeBehaviourMethod?: (entity: number, type: string, method: string) => void;
   onRename?: (entity: number, name: string) => void;
   onSetActive?: (entity: number, active: boolean) => void;
+  tagOptions?: Array<{ value: string; label: string }>;
+  layerOptions?: Array<{ value: number; label: string }>;
+  onSetTag?: (entity: number, tag: string) => void;
+  onSetLayer?: (entity: number, layer: number) => void;
+  onSetActives?: (ids: number[], active: boolean) => void;
+  onSetTags?: (ids: number[], tag: string) => void;
+  onSetLayers?: (ids: number[], layer: number) => void;
+  onAddComponents?: (
+    ids: number[],
+    type: string,
+    value: Record<string, unknown>,
+  ) => void;
+  onRemoveComponents?: (ids: number[], type: string) => void;
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
 }) {
@@ -1270,8 +1618,16 @@ export function Inspector(props: {
           primary={props.entity}
           componentClipboard={componentClipboard}
           onCopyComponent={setComponentClipboard}
+          tagOptions={props.tagOptions ?? [{ value: 'Untagged', label: 'Untagged' }]}
+          layerOptions={props.layerOptions ?? [{ value: 0, label: 'Default (0)' }]}
+          onSetActives={props.onSetActives}
+          onSetTags={props.onSetTags}
+          onSetLayers={props.onSetLayers}
+          onAddComponents={props.onAddComponents}
+          onRemoveComponents={props.onRemoveComponents}
           onChangeTransforms={props.onChangeTransforms}
           onSetComponents={props.onSetComponents}
+          onPatchComponents={props.onPatchComponents}
           onBeginEditGesture={props.onBeginEditGesture}
           onEndEditGesture={props.onEndEditGesture}
         />
@@ -1280,6 +1636,16 @@ export function Inspector(props: {
   }
 
   const entity = props.entity;
+  const tag = entity.tag?.trim() || 'Untagged';
+  const layer = Number.isInteger(entity.layer) ? Number(entity.layer) : 0;
+  const configuredTags = props.tagOptions ?? [{ value: 'Untagged', label: 'Untagged' }];
+  const configuredLayers = props.layerOptions ?? [{ value: 0, label: 'Default (0)' }];
+  const tagOptions = configuredTags.some((option) => option.value === tag)
+    ? configuredTags
+    : [{ value: tag, label: `${tag} (Unconfigured)` }, ...configuredTags];
+  const layerOptions = configuredLayers.some((option) => option.value === layer)
+    ? configuredLayers
+    : [{ value: layer, label: `Layer ${layer} (Unconfigured)` }, ...configuredLayers];
   const hasRect = !!entity.components.RectTransform;
   const hasTransform = !!entity.components.Transform;
   const t = (entity.components.Transform ?? {
@@ -1386,14 +1752,26 @@ export function Inspector(props: {
         <div className="insp-meta-row">
           <label>
             <span>Tag</span>
-            <select value="Untagged" disabled aria-label="Tag">
-              <option>Untagged</option>
+            <select
+              value={tag}
+              aria-label="Tag"
+              onChange={(event) => props.onSetTag?.(entity.entity, event.target.value)}
+            >
+              {tagOptions.map((option) => (
+                <option value={option.value} key={option.value}>{option.label}</option>
+              ))}
             </select>
           </label>
           <label>
             <span>Layer</span>
-            <select value="Default" disabled aria-label="Layer">
-              <option>Default</option>
+            <select
+              value={layer}
+              aria-label="Layer"
+              onChange={(event) => props.onSetLayer?.(entity.entity, Number(event.target.value))}
+            >
+              {layerOptions.map((option) => (
+                <option value={option.value} key={option.value}>{option.label}</option>
+              ))}
             </select>
           </label>
         </div>
@@ -1426,21 +1804,69 @@ export function Inspector(props: {
         >
           <div className="axis-row">
             <label>Position</label>
-            <AxisInput label="x" value={t.position[0]} onChange={(v) => setPos(0, v)} />
-            <AxisInput label="y" value={t.position[1]} onChange={(v) => setPos(1, v)} />
-            <AxisInput label="z" value={t.position[2]} onChange={(v) => setPos(2, v)} />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Position', 'x')}
+              label="x"
+              value={t.position[0]}
+              onChange={(v) => setPos(0, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Position', 'y')}
+              label="y"
+              value={t.position[1]}
+              onChange={(v) => setPos(1, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Position', 'z')}
+              label="z"
+              value={t.position[2]}
+              onChange={(v) => setPos(2, v)}
+            />
           </div>
           <div className="axis-row">
             <label>Rotation</label>
-            <AxisInput label="x" value={euler[0]} step={1} onChange={(v) => setRot(0, v)} />
-            <AxisInput label="y" value={euler[1]} step={1} onChange={(v) => setRot(1, v)} />
-            <AxisInput label="z" value={euler[2]} step={1} onChange={(v) => setRot(2, v)} />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'x')}
+              label="x"
+              value={euler[0]}
+              step={1}
+              onChange={(v) => setRot(0, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'y')}
+              label="y"
+              value={euler[1]}
+              step={1}
+              onChange={(v) => setRot(1, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'z')}
+              label="z"
+              value={euler[2]}
+              step={1}
+              onChange={(v) => setRot(2, v)}
+            />
           </div>
           <div className="axis-row">
             <label>Scale</label>
-            <AxisInput label="x" value={t.scale[0]} onChange={(v) => setScale(0, v)} />
-            <AxisInput label="y" value={t.scale[1]} onChange={(v) => setScale(1, v)} />
-            <AxisInput label="z" value={t.scale[2]} onChange={(v) => setScale(2, v)} />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Scale', 'x')}
+              label="x"
+              value={t.scale[0]}
+              onChange={(v) => setScale(0, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Scale', 'y')}
+              label="y"
+              value={t.scale[1]}
+              onChange={(v) => setScale(1, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Scale', 'z')}
+              label="z"
+              value={t.scale[2]}
+              onChange={(v) => setScale(2, v)}
+            />
           </div>
         </CompBlock>
       )}

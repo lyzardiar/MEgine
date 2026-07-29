@@ -1,6 +1,15 @@
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, FocusEvent, MouseEvent } from 'react';
+import type {
+  CSSProperties,
+  FocusEvent,
+  KeyboardEvent,
+  MouseEvent,
+} from 'react';
 import type { MenuItemContext, MenuItemEntry } from '../editorWindow';
+import {
+  focusMenuBoundary,
+  moveMenuItemFocus,
+} from '../menuKeyboardNavigation';
 
 type MenuTreeNode = {
   key: string;
@@ -88,6 +97,7 @@ function MenuNode(props: {
   const enabled = hasChildren
     ? node.children.some((child) => hasEnabledAction(child, context))
     : isEnabled(node.entry, context);
+  const canExpand = hasChildren && enabled;
 
   const onClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -135,31 +145,65 @@ function MenuNode(props: {
     setExpanded(false);
   };
 
+  const openSubmenu = () => {
+    if (!canExpand) return;
+    setExpanded(true);
+    window.requestAnimationFrame(() => {
+      focusMenuBoundary(submenuRef.current, 'first');
+    });
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const menu = event.currentTarget.closest<HTMLElement>('[role="menu"]');
+    if (menu && moveMenuItemFocus(menu, event.currentTarget, event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (
+      canExpand
+      && (event.key === 'ArrowRight' || event.key === 'Enter' || event.key === ' ')
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      openSubmenu();
+    }
+  };
+
   const submenuStyle = { top: submenuTop } as CSSProperties;
 
   return (
     <div
       ref={nodeRef}
       className={`popup-menu-node${hasChildren ? ' has-children' : ''}${expanded ? ' is-open' : ''}`}
-      onPointerEnter={(event) => {
-        if (!hasChildren) return;
+      aria-label={canExpand ? `Open ${node.label} submenu` : undefined}
+      onPointerEnter={canExpand ? (event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         // Fast first placement; layout measurement below corrects for wider custom labels.
         setOpenLeft(rect.right + 224 > window.innerWidth);
         setExpanded(true);
-      }}
-      onPointerLeave={() => setExpanded(false)}
-      onFocusCapture={() => hasChildren && setExpanded(true)}
+      } : undefined}
+      onPointerLeave={canExpand ? () => setExpanded(false) : undefined}
+      onFocusCapture={() => canExpand && setExpanded(true)}
       onBlurCapture={onBlur}
     >
       <button
         type="button"
         className="popup-menu-row"
         disabled={!enabled}
+        data-agent-interaction={
+          !hasChildren && node.entry && !node.entry.agentInvokable ? 'blocked' : undefined
+        }
+        data-agent-alternative={
+          !hasChildren && node.entry && !node.entry.agentInvokable
+            ? node.entry.agentAlternative
+            : undefined
+        }
         role="menuitem"
         aria-haspopup={hasChildren ? 'menu' : undefined}
         aria-expanded={hasChildren ? expanded : undefined}
         onClick={onClick}
+        onKeyDown={onKeyDown}
       >
         <span>{node.label}</span>
         {hasChildren ? (
@@ -174,6 +218,16 @@ function MenuNode(props: {
           className={`popup-submenu${openLeft ? ' open-left' : ''}`}
           style={submenuStyle}
           role="menu"
+          aria-label={`${node.label} submenu`}
+          onKeyDown={(event) => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'Escape') return;
+            event.preventDefault();
+            event.stopPropagation();
+            setExpanded(false);
+            nodeRef.current
+              ?.querySelector<HTMLElement>(':scope > button[role="menuitem"]')
+              ?.focus({ preventScroll: true });
+          }}
         >
           <MenuNodes nodes={node.children} context={context} onSelect={props.onSelect} />
         </div>

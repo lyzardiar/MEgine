@@ -12,10 +12,23 @@ import {
   surfaceShaderDiagnostics,
   validateSurfaceShaderSource,
 } from '../surfaceShader';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerCloseDocumentParticipant,
+  registerDiscardDocumentParticipant,
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
+import {
+  dropChangedCleanDrafts,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
 import {
   broadcastProjectAssetsChanged,
   openSurfaceShaderAsset,
+  projectAssetsChangeTouches,
+  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
   isDesktopEditor,
@@ -51,8 +64,10 @@ export async function createProjectSurfaceShader(open = true): Promise<string> {
 export function SurfaceShaderEditor(props: {
   assetPath: string | null;
   onOpenAsset: (path: string) => void;
+  onCloseAsset: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -65,7 +80,8 @@ export function SurfaceShaderEditor(props: {
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [, setDraftEpoch] = useState(0);
+  const [reloadToken, setReloadToken] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { source: string; savedSource: string }>());
   const sourceRef = useRef('');
@@ -75,6 +91,9 @@ export function SurfaceShaderEditor(props: {
     token: EditorUndoToken | null;
   } | null>(null);
   const lineNumbers = useRef<HTMLDivElement | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   sourceRef.current = source;
 
   const replaceSource = (next: string) => {
@@ -84,6 +103,8 @@ export function SurfaceShaderEditor(props: {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -94,8 +115,14 @@ export function SurfaceShaderEditor(props: {
     }
     editTransaction.current = null;
     const previous = loadedPath.current;
-    if (previous && !loading) {
+    const closingPrevious = sameSaveDocumentPath(previous, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previous!);
+    }
+    if (previous && !loading && !forceReload && !closingPrevious) {
       drafts.current.set(previous, { source, savedSource });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath;
     setError(null);
@@ -105,7 +132,8 @@ export function SurfaceShaderEditor(props: {
       setLoading(false);
       return () => { cancelled = true; };
     }
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       replaceSource(draft.source);
@@ -114,7 +142,7 @@ export function SurfaceShaderEditor(props: {
       return () => { cancelled = true; };
     }
     setLoading(true);
-    void readProjectAssetText(props.assetPath)
+    void readProjectAssetText(props.assetPath, { replaceWriteBaseline: true })
       .then((text) => {
         if (cancelled) return;
         const normalized = normalizeSurfaceShaderSource(text);
@@ -126,15 +154,63 @@ export function SurfaceShaderEditor(props: {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   const dirty = source !== savedSource && props.assetPath != null;
   const anyDirty = dirty || [...drafts.current.values()].some(
     (draft) => draft.source !== draft.savedSource,
   );
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'shader',
+    'shader',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => (
+      [path, draft.source !== draft.savedSource] as const
+    )),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
   const diagnostics = useMemo(() => surfaceShaderDiagnostics(source), [source]);
   const lines = useMemo(() => Math.max(1, source.split('\n').length - 1), [source]);
+
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
+
+  useEffect(() => {
+    const onAssetsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        (draft) => draft.source !== draft.savedSource,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`surface-shader:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
+      if (
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
+      ) return;
+      if (dirty) {
+        setError(
+          'Surface Shader changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+  }, [dirty, props.assetPath]);
 
   const captureDocument = (path: string): string => {
     if (loadedPath.current === path) return sourceRef.current;
@@ -266,7 +342,12 @@ export function SurfaceShaderEditor(props: {
         setDraftEpoch((value) => value + 1);
       }
       props.onAssetsChanged();
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onLog(desktop
         ? `Saved ${path}; Player Forward WGSL validation passed.`
         : `Saved ${path}; desktop Player validation remains required before build.`);
@@ -312,9 +393,96 @@ export function SurfaceShaderEditor(props: {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Surface Shader could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || entry[1].source === entry[1].savedSource) {
+      throw new Error(`No dirty Surface Shader draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      const normalized = await validateSource(draft.source);
+      await writeProjectAssetText(draftPath, normalized);
+      drafts.current.set(draftPath, {
+        source: normalized,
+        savedSource: normalized,
+      });
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(desktop
+        ? `Saved ${draftPath}; Player Forward WGSL validation passed.`
+        : `Saved ${draftPath}; desktop Player validation remains required before build.`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Surface Shaders', () => (
     anyDirty && !saving ? saveAll : null
   )), [anyDirty, dirty, props.assetPath, savedSource, saving, source]);
+  useEffect(() => registerSaveDocumentParticipant('Surface Shaders', (path) => {
+    if (saving || validating) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && draft.source !== draft.savedSource
+      ? () => saveDocument(path)
+      : null;
+  }), [dirty, draftEpoch, props.assetPath, savedSource, saving, source, validating]);
+  useEffect(() => registerDiscardDocumentParticipant('Surface Shaders', (path) => {
+    if (loading || saving || validating) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`surface-shader:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || entry[1].source === entry[1].savedSource) return null;
+    return async () => {
+      props.undoService.clear(`surface-shader:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving, validating]);
+  useEffect(() => registerCloseDocumentParticipant('Surface Shaders', (path) => {
+    if (loading || saving || validating) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`surface-shader:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`surface-shader:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [
+    draftEpoch,
+    loading,
+    props.assetPath,
+    props.onCloseAsset,
+    saving,
+    validating,
+  ]);
 
   if (!props.assetPath) {
     return <div className="material-empty"><strong>Surface Shader</strong><span>Create or double-click a .mshader asset.</span><button type="button" onClick={() => void createNew()}>Create Shader</button></div>;
@@ -328,6 +496,7 @@ export function SurfaceShaderEditor(props: {
         <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''}`} disabled={!props.undoService.canUndo || saving || validating} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
         <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''}`} disabled={!props.undoService.canRedo || saving || validating} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
+        <button type="button" disabled={loading || saving || validating} onClick={reloadFromDisk}>Reload</button>
         <button
           type="button"
           disabled={saving || validating || diagnostics.length > 0}

@@ -2,16 +2,24 @@ export const AGENT_EVENT_TOPICS = [
   'scene.changed',
   'selection.changed',
   'mode.changed',
+  'dialog.changed',
   'log.added',
   'log.cleared',
   'panel.changed',
+  'workspace.changed',
+  'window.changed',
+  'window.types.changed',
+  'menu.changed',
   'view.changed',
   'build.progress',
+  'build.artifacts',
   'build.settings',
   'project.settings',
   'asset.changed',
   'project.changed',
 ] as const;
+
+export const MAX_AGENT_EVENT_WAITERS = 64;
 
 export type AgentEventTopic = (typeof AGENT_EVENT_TOPICS)[number];
 
@@ -32,8 +40,14 @@ export type AgentEventPage = {
   events: AgentEvent[];
 };
 
+export type AgentEventWaitPage = AgentEventPage & {
+  timedOut: boolean;
+  waitedMs: number;
+};
+
 export class AgentEventJournal {
   private readonly events: AgentEvent[] = [];
+  private readonly waiters = new Set<() => void>();
   private nextSequence = 1;
   private readonly capacity: number;
 
@@ -60,6 +74,7 @@ export class AgentEventJournal {
     if (this.events.length > this.capacity) {
       this.events.splice(0, this.events.length - this.capacity);
     }
+    for (const waiter of [...this.waiters]) waiter();
     return clone(event);
   }
 
@@ -96,6 +111,80 @@ export class AgentEventJournal {
       events: clone(page),
     };
   }
+
+  wait(
+    options: {
+      afterSequence?: number;
+      topics?: readonly AgentEventTopic[];
+      limit?: number;
+    } = {},
+    timeoutMs = 15_000,
+    signal?: AbortSignal,
+  ): Promise<AgentEventWaitPage> {
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 15_000) {
+      throw new Error('timeoutMs must be an integer from 0 to 15000');
+    }
+    if (signal?.aborted) {
+      return Promise.reject(eventWaitAbortError());
+    }
+    const startedAt = Date.now();
+    const initial = this.list(options);
+    if (initial.truncated || initial.events.length > 0 || timeoutMs === 0) {
+      return Promise.resolve({
+        ...initial,
+        timedOut: initial.events.length === 0 && !initial.truncated,
+        waitedMs: 0,
+      });
+    }
+    if (this.waiters.size >= MAX_AGENT_EVENT_WAITERS) {
+      throw new Error('Agent event wait limit reached');
+    }
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const cleanup = () => {
+        this.waiters.delete(wake);
+        if (timer !== null) clearTimeout(timer);
+        signal?.removeEventListener('abort', cancel);
+      };
+      const finish = (page: AgentEventPage, timedOut: boolean) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve({
+          ...page,
+          timedOut,
+          waitedMs: Math.max(0, Date.now() - startedAt),
+        });
+      };
+      const cancel = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(eventWaitAbortError());
+      };
+      const wake = () => {
+        const page = this.list(options);
+        if (page.truncated || page.events.length > 0) finish(page, false);
+      };
+      this.waiters.add(wake);
+      signal?.addEventListener('abort', cancel, { once: true });
+      if (signal?.aborted) {
+        cancel();
+        return;
+      }
+      timer = setTimeout(
+        () => finish(this.list(options), true),
+        timeoutMs,
+      );
+    });
+  }
+}
+
+function eventWaitAbortError(): Error {
+  const error = new Error('Agent event wait cancelled');
+  error.name = 'AbortError';
+  return error;
 }
 
 export type SceneEntityView = {
@@ -103,11 +192,14 @@ export type SceneEntityView = {
   [key: string]: unknown;
 };
 
+export type SceneStateView = Record<string, unknown>;
+
 export type SceneDelta = {
   previousRevision: number;
   revision: number;
   sceneName: string | null;
   resetRequired: boolean;
+  sceneStateChanged: boolean;
   added: number[];
   removed: number[];
   changed: number[];
@@ -117,6 +209,8 @@ export type SceneDiff = {
   fromRevision: number;
   toRevision: number;
   resetRequired: boolean;
+  sceneStateChanged: boolean;
+  sceneState: SceneStateView | null;
   added: number[];
   removed: number[];
   changed: number[];
@@ -131,6 +225,7 @@ type SceneEntityRecord = {
 export class SceneChangeTracker {
   private revisionValue = 0;
   private sceneName: string | null = null;
+  private sceneStateSignature = '';
   private entities = new Map<number, SceneEntityRecord>();
   private readonly deltas: SceneDelta[] = [];
   private readonly capacity: number;
@@ -149,21 +244,29 @@ export class SceneChangeTracker {
   reset(): void {
     this.revisionValue = 0;
     this.sceneName = null;
+    this.sceneStateSignature = '';
     this.entities.clear();
     this.deltas.splice(0);
   }
 
-  observe(sceneName: string | null, entities: readonly SceneEntityView[]): SceneDelta | null {
+  observe(
+    sceneName: string | null,
+    entities: readonly SceneEntityView[],
+    sceneState: SceneStateView = {},
+  ): SceneDelta | null {
     const current = entityRecords(entities);
+    const currentSceneStateSignature = JSON.stringify(clone(sceneState));
     if (this.revisionValue === 0) {
       this.revisionValue = 1;
       this.sceneName = sceneName;
+      this.sceneStateSignature = currentSceneStateSignature;
       this.entities = current;
       return this.pushDelta({
         previousRevision: 0,
         revision: 1,
         sceneName,
         resetRequired: true,
+        sceneStateChanged: true,
         added: [],
         removed: [],
         changed: [],
@@ -171,6 +274,10 @@ export class SceneChangeTracker {
     }
 
     const sceneChanged = sceneName !== this.sceneName;
+    const sceneStateChanged = (
+      sceneChanged
+      || currentSceneStateSignature !== this.sceneStateSignature
+    );
     const added: number[] = [];
     const removed: number[] = [];
     const changed: number[] = [];
@@ -184,24 +291,36 @@ export class SceneChangeTracker {
         if (!current.has(id)) removed.push(id);
       }
     }
-    if (!sceneChanged && !added.length && !removed.length && !changed.length) return null;
+    if (
+      !sceneChanged
+      && !sceneStateChanged
+      && !added.length
+      && !removed.length
+      && !changed.length
+    ) return null;
 
     const previousRevision = this.revisionValue;
     this.revisionValue += 1;
     this.sceneName = sceneName;
+    this.sceneStateSignature = currentSceneStateSignature;
     this.entities = current;
     return this.pushDelta({
       previousRevision,
       revision: this.revisionValue,
       sceneName,
       resetRequired: sceneChanged,
+      sceneStateChanged,
       added: added.sort(numberOrder),
       removed: removed.sort(numberOrder),
       changed: changed.sort(numberOrder),
     });
   }
 
-  diff(fromRevision: number, currentEntities: readonly SceneEntityView[]): SceneDiff {
+  diff(
+    fromRevision: number,
+    currentEntities: readonly SceneEntityView[],
+    currentSceneState: SceneStateView = {},
+  ): SceneDiff {
     if (
       !Number.isSafeInteger(fromRevision)
       || fromRevision < 0
@@ -221,6 +340,8 @@ export class SceneChangeTracker {
       return {
         ...emptySceneDiff(fromRevision, this.revisionValue),
         resetRequired: true,
+        sceneStateChanged: true,
+        sceneState: clone(currentSceneState),
         entities: clone([...currentEntities]),
       };
     }
@@ -241,11 +362,14 @@ export class SceneChangeTracker {
     const added = idsWithState(states, 'added');
     const removed = idsWithState(states, 'removed');
     const changed = idsWithState(states, 'changed');
+    const sceneStateChanged = deltas.some((delta) => delta.sceneStateChanged);
     const included = new Set([...added, ...changed]);
     return {
       fromRevision,
       toRevision: this.revisionValue,
       resetRequired: false,
+      sceneStateChanged,
+      sceneState: sceneStateChanged ? clone(currentSceneState) : null,
       added,
       removed,
       changed,
@@ -281,6 +405,8 @@ function emptySceneDiff(fromRevision: number, toRevision: number): SceneDiff {
     fromRevision,
     toRevision,
     resetRequired: false,
+    sceneStateChanged: false,
+    sceneState: null,
     added: [],
     removed: [],
     changed: [],

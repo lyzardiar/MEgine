@@ -34,6 +34,7 @@ import {
   Pause,
   Play,
   Plus,
+  RefreshCw,
   Save,
   Search,
   Spline,
@@ -166,9 +167,16 @@ import {
   snapTimelineKeySelectionDelta,
 } from '../timelineSnapping.ts';
 import {
+  broadcastProjectAssetsChanged,
   openAnimationClipAsset,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
+import {
+  dropChangedCleanDrafts,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
 import {
   listProjectFiles,
   normalizeProjectAssetPath,
@@ -176,7 +184,20 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerCloseDocumentParticipant,
+  registerDiscardDocumentParticipant,
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
+import {
+  initializeTimelineEditorPreferencesEvents,
+  readTimelineEditorPreferences,
+  TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+  updateTimelineEditorPreferences,
+  type TimelineEditorPreferencesChangeDetail,
+} from '../timelineEditorPreferences';
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
 
@@ -216,25 +237,7 @@ type TimelineCollisionNotice = {
 
 type TimelineViewMode = 'dope_sheet' | 'curves';
 
-const TIMELINE_TIME_DISPLAY_KEY = 'mengine.timeline.time_display';
-const TIMELINE_SNAPPING_KEY = 'mengine.timeline.snapping';
 const TIMELINE_SNAP_THRESHOLD_PX = 8;
-
-function loadTimelineTimeDisplayMode(): TimelineTimeDisplayMode {
-  try {
-    return localStorage.getItem(TIMELINE_TIME_DISPLAY_KEY) === 'seconds' ? 'seconds' : 'frames';
-  } catch {
-    return 'frames';
-  }
-}
-
-function loadTimelineSnapping(): boolean {
-  try {
-    return localStorage.getItem(TIMELINE_SNAPPING_KEY) !== '0';
-  } catch {
-    return true;
-  }
-}
 
 type TimelineMarquee = {
   pointerId: number;
@@ -1357,7 +1360,7 @@ export async function createProjectAnimationClip(
   const path = uniqueClipPath(safe);
   await writeProjectAssetText(path, serializeAnimationClip(createAnimationClip(safe)));
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   if (open) openAnimationClipAsset(path);
   return path;
 }
@@ -1422,6 +1425,7 @@ export function Timeline(props: {
   onClearPreview: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -1445,6 +1449,7 @@ export function Timeline(props: {
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [creatingTimeline, setCreatingTimeline] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newClipName, setNewClipName] = useState('');
@@ -1458,9 +1463,42 @@ export function Timeline(props: {
   const [activePropertyBindingKey, setActivePropertyBindingKey] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dope_sheet');
-  const [timeDisplayMode, setTimeDisplayMode] = useState<TimelineTimeDisplayMode>(loadTimelineTimeDisplayMode);
-  const [snapping, setSnapping] = useState(loadTimelineSnapping);
+  const [timeDisplayMode, setTimeDisplayMode] =
+    useState<TimelineTimeDisplayMode>(
+      () => readTimelineEditorPreferences()
+        .animationTimeline.timeDisplayMode,
+    );
+  const [snapping, setSnapping] = useState(
+    () => readTimelineEditorPreferences().animationTimeline.snapping,
+  );
   const [snapGuide, setSnapGuide] = useState<number | null>(null);
+  useEffect(() => {
+    initializeTimelineEditorPreferencesEvents();
+    const applyPreferences = (
+      preferences: TimelineEditorPreferencesChangeDetail['preferences'],
+    ) => {
+      setTimeDisplayMode(preferences.animationTimeline.timeDisplayMode);
+      setSnapping(preferences.animationTimeline.snapping);
+      if (!preferences.animationTimeline.snapping) setSnapGuide(null);
+    };
+    const onPreferencesChanged = (event: Event) => {
+      applyPreferences(
+        (event as CustomEvent<TimelineEditorPreferencesChangeDetail>)
+          .detail.preferences,
+      );
+    };
+    window.addEventListener(
+      TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+      onPreferencesChanged,
+    );
+    applyPreferences(readTimelineEditorPreferences());
+    return () => {
+      window.removeEventListener(
+        TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+        onPreferencesChanged,
+      );
+    };
+  }, []);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [maximized, setMaximized] = useState(false);
   const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
@@ -1491,7 +1529,7 @@ export function Timeline(props: {
   const recordingValues = useRef(new Map<string, string | null>());
   const loadedClipPath = useRef('');
   const drafts = useRef(new Map<string, AnimationDraft>());
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const clipRef = useRef<AnimationClip | null>(null);
   const timeRef = useRef(0);
   const selectedTrackRef = useRef<number | null>(null);
@@ -1500,6 +1538,9 @@ export function Timeline(props: {
   const selectedEventRef = useRef<number | null>(null);
   const editTransaction = useRef<AnimationEditTransaction | null>(null);
   const keyboardNudgeKey = useRef<string | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   clipRef.current = clip;
   timeRef.current = time;
   selectedTrackRef.current = selectedTrack;
@@ -1732,6 +1773,8 @@ export function Timeline(props: {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === clipPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -1742,7 +1785,12 @@ export function Timeline(props: {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedClipPath.current;
-    if (previousPath && clip) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && clip && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, {
         clip: structuredClone(clip),
         savedText,
@@ -1752,6 +1800,7 @@ export function Timeline(props: {
         selectedKeys: selectedKeys.map((ref) => ({ ...ref })),
         selectedEvent,
       });
+      setDraftEpoch((value) => value + 1);
     }
     loadedClipPath.current = clipPath;
     editTransaction.current = null;
@@ -1779,7 +1828,8 @@ export function Timeline(props: {
       props.onClearPreview();
       return () => { cancelled = true; };
     }
-    const draft = drafts.current.get(clipPath);
+    if (forceReload) drafts.current.delete(clipPath);
+    const draft = forceReload ? undefined : drafts.current.get(clipPath);
     if (draft) {
       drafts.current.delete(clipPath);
       replaceClip(structuredClone(draft.clip));
@@ -1798,7 +1848,7 @@ export function Timeline(props: {
     setSelectedKeys([]);
     setSelectedEvent(null);
     setLoading(true);
-    void readProjectAssetText(clipPath)
+    void readProjectAssetText(clipPath, { replaceWriteBaseline: true })
       .then((text) => {
         if (cancelled) return;
         const loaded = parseAnimationClip(text);
@@ -1818,7 +1868,7 @@ export function Timeline(props: {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [clipPath]);
+  }, [clipPath, reloadToken]);
 
   const serializedClip = useMemo(
     () => clip ? serializeAnimationClip(clip) : '',
@@ -1830,6 +1880,54 @@ export function Timeline(props: {
   useEffect(() => {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
+
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'animation',
+    'timeline',
+    clipPath || null,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, animationDraftDirty(draft)] as const),
+  ), [clipPath, dirty, draftEpoch]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
+
+  const reloadFromDisk = () => {
+    if (!clipPath) return;
+    props.onClearPreview();
+    forceReloadPath.current = clipPath;
+    setReloadToken((value) => value + 1);
+  };
+
+  useEffect(() => {
+    const onAssetsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        animationDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`animation:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
+      if (
+        !clipPath
+        || !projectAssetsChangeTouches(detail, [clipPath])
+      ) return;
+      if (dirty) {
+        setError(
+          'Animation Clip changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+  }, [clipPath, dirty]);
 
   useEffect(() => () => props.onClearPreview(), [props.entity?.entity]);
 
@@ -2065,6 +2163,12 @@ export function Timeline(props: {
       await refreshProjectFiles();
       drafts.current.delete(clipPath);
       setSavedText(serializeAnimationClip(normalized));
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: clipPath });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onAssetsChanged();
       return true;
     } catch (reason) {
@@ -2089,6 +2193,7 @@ export function Timeline(props: {
           const text = serializeAnimationClip(normalized);
           await writeProjectAssetText(path, text);
           drafts.current.set(path, { ...draft, clip: normalized, savedText: text });
+          broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
           props.onLog(`Saved ${path}`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -2103,9 +2208,97 @@ export function Timeline(props: {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const persistDocument = async (path: string) => {
+    if (sameSaveDocumentPath(clipPath || null, path)) {
+      if (!await persist()) throw new Error('Current Animation Clip could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !animationDraftDirty(entry[1])) {
+      throw new Error(`No dirty Animation Clip draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      const normalized = normalizeAnimationClip(draft.clip);
+      const text = serializeAnimationClip(normalized);
+      await writeProjectAssetText(draftPath, text);
+      drafts.current.set(draftPath, { ...draft, clip: normalized, savedText: text });
+      await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Animation Clips', () => (
     anyDirty && !saving ? persistAll : null
   )), [anyDirty, clip, clipPath, dirty, savedText, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Animation Clips', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(clipPath || null, path)) {
+      return () => persistDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && animationDraftDirty(draft)
+      ? () => persistDocument(path)
+      : null;
+  }), [clip, clipPath, dirty, draftEpoch, savedText, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Animation Clips', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(clipPath || null, path)) {
+      return async () => {
+        props.undoService.clear(`animation:${clipPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !animationDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`animation:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [clipPath, dirty, draftEpoch, loading, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Animation Clips', (path) => {
+    if (loading || saving) return null;
+    if (
+      props.onCloseAsset
+      && sameSaveDocumentPath(props.assetPath ?? null, path)
+      && sameSaveDocumentPath(clipPath || null, path)
+    ) {
+      return async () => {
+        props.undoService.clear(`animation:${clipPath}`);
+        closingPath.current = clipPath;
+        props.onCloseAsset?.();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`animation:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [
+    clipPath,
+    draftEpoch,
+    loading,
+    props.assetPath,
+    props.onCloseAsset,
+    saving,
+  ]);
 
   const createClip = async () => {
     if (!props.entity) return;
@@ -2143,6 +2336,7 @@ export function Timeline(props: {
       setSelectedEvent(null);
       playbackPhase.current = 0;
       setShowNewClip(false);
+      broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
       props.onAssetsChanged();
       props.onLog(`Created ${path}`);
     } catch (reason) {
@@ -2843,24 +3037,18 @@ export function Timeline(props: {
   };
 
   const toggleTimelineTimeDisplayMode = () => {
-    const next = timeDisplayMode === 'frames' ? 'seconds' : 'frames';
-    setTimeDisplayMode(next);
-    try {
-      localStorage.setItem(TIMELINE_TIME_DISPLAY_KEY, next);
-    } catch {
-      /* ignore unavailable preference storage */
-    }
+    updateTimelineEditorPreferences({
+      animationTimeline: {
+        timeDisplayMode:
+          timeDisplayMode === 'frames' ? 'seconds' : 'frames',
+      },
+    });
   };
 
   const toggleTimelineSnapping = () => {
-    const next = !snapping;
-    setSnapping(next);
-    if (!next) setSnapGuide(null);
-    try {
-      localStorage.setItem(TIMELINE_SNAPPING_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable preference storage */
-    }
+    updateTimelineEditorPreferences({
+      animationTimeline: { snapping: !snapping },
+    });
   };
 
   const stopTimelineAutoScroll = () => {
@@ -3629,6 +3817,15 @@ export function Timeline(props: {
         )}
         <button
           type="button"
+          aria-label="Reload animation clip"
+          title="Reload animation clip from disk"
+          onClick={reloadFromDisk}
+          disabled={!clipPath || loading || saving}
+        >
+          <RefreshCw size={13} aria-hidden="true" /><span>Reload</span>
+        </button>
+        <button
+          type="button"
           aria-label="Save animation clip"
           title="Save animation clip"
           onClick={() => void persist()}
@@ -3660,11 +3857,12 @@ export function Timeline(props: {
       {loading && <div className="timeline-message">Loading Animation Clip…</div>}
       {error && <div className="timeline-message error">{error}</div>}
       {clip && (
-        <div
-          className={`timeline-workspace${detailsOpen ? ' details-open' : ''}`}
-          ref={workspaceRef}
-          tabIndex={0}
-          onKeyDown={handleTimelineKeyDown}
+    <div
+      className={`timeline-workspace${detailsOpen ? ' details-open' : ''}`}
+      ref={workspaceRef}
+      tabIndex={0}
+      aria-label="Animation Timeline workspace"
+      onKeyDown={handleTimelineKeyDown}
           onKeyUp={handleTimelineKeyUp}
           onPointerDown={(event) => {
             const target = event.target as HTMLElement;
@@ -3943,10 +4141,11 @@ export function Timeline(props: {
                 aria-label="Animation dope sheet"
                 title="Ctrl + Wheel to zoom · Shift + Wheel to scroll horizontally"
               >
-                <div
-                  className="timeline-lanes"
-                  ref={dopeSheetContentRef}
-                  style={{ width: `${zoom * 100}%` }}
+              <div
+                className="timeline-lanes"
+                ref={dopeSheetContentRef}
+                aria-label="Animation Timeline lanes"
+                style={{ width: `${zoom * 100}%` }}
                   onPointerDown={beginTimelineMarquee}
                   onPointerMove={moveTimelineMarquee}
                   onPointerUp={(event) => finishTimelineMarquee(event, true)}
@@ -3985,6 +4184,7 @@ export function Timeline(props: {
                           type="button"
                           className={`timeline-event-key${selectedEvent === eventIndex ? ' selected' : ''}${timelineDrag?.kind === 'event' && timelineDrag.index === eventIndex ? ' dragging' : ''}`}
                           key={eventIndex}
+                          data-agent-drag-by="true"
                           aria-label={`Animation event at ${formatTimelineTimeTooltip(displayTime, clip.frame_rate)}`}
                           title={`${formatTimelineTimeTooltip(displayTime, clip.frame_rate)} · ${animationEvent.function}`}
                           style={{ left: `clamp(6px, ${clip.duration > 0 ? displayTime / clip.duration * 100 : 0}%, calc(100% - 6px))` }}
@@ -4028,6 +4228,7 @@ export function Timeline(props: {
                             type="button"
                             className={`timeline-key${selected ? ' selected' : ''}${dragged ? ' dragging' : ''}`}
                             key={keyIndex}
+                            data-agent-drag-by="true"
                             aria-pressed={selected}
                             aria-label={`Keyframe at ${formatTimelineTimeTooltip(displayTime, clip.frame_rate)}`}
                             title={`${formatTimelineTimeTooltip(displayTime, clip.frame_rate)} · ${valueLabel(key.value)}`}

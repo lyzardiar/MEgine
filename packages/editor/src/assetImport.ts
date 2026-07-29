@@ -5,7 +5,7 @@ import {
 } from './projectAssets.ts';
 import { listSprites, refreshSprites } from './spriteLibrary.ts';
 import { pingProjectAsset } from './pingBus.ts';
-import { PROJECT_ASSETS_CHANGED_EVENT } from './assetEditorEvents.ts';
+import { broadcastProjectAssetsChanged } from './assetEditorEvents.ts';
 import {
   ASSET_IMPORT_ACCEPT,
   ASSET_IMPORT_MAX_BYTES,
@@ -77,7 +77,9 @@ export async function importProjectAssetFiles(
 
   if (result.imported.length > 0) {
     await Promise.all([refreshProjectFiles(), refreshSprites()]);
-    window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+    for (const path of result.imported) {
+      broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
+    }
     window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'project' }));
     window.requestAnimationFrame(() => pingProjectAsset(result.imported[0]));
   }

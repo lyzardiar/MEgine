@@ -21,5 +21,7 @@ registerMenuItem(
   {
     priority: 10,
     separatorBefore: true,
+    agentInvokable: false,
+    agentAlternative: 'import_asset_file',
   },
 );

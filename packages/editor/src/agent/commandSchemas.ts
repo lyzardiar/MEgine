@@ -1,3 +1,4 @@
+import { INTENT_SCHEMA } from '@mengine/agent';
 import { TYPED_ENTITY_KINDS } from './typedEntityKinds.ts';
 
 export type AgentJsonSchema = Record<string, unknown>;
@@ -122,6 +123,22 @@ const panelKind: AgentJsonSchema = {
   description: 'Core editor panel kind',
 };
 const emptySchema = objectSchema();
+const uiInteractionContext: SchemaProperties = {
+  windowLabel: stringValue('Window label; default main'),
+  expectedSnapshotRevision: {
+    type: 'string',
+    pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+    maxLength: 64,
+    description: 'Exact snapshotRevision returned with the selector by window.ui_snapshot',
+  },
+};
+const uiModifierContext: SchemaProperties = {
+  shiftKey: booleanValue('Dispatch the interaction with Shift held'),
+  ctrlKey: booleanValue('Dispatch the interaction with Control held'),
+  altKey: booleanValue('Dispatch the interaction with Alt held'),
+  metaKey: booleanValue('Dispatch the interaction with Meta held'),
+};
+const uiInteractionRequired = ['selector', 'expectedSnapshotRevision'];
 
 export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'batch.apply': objectSchema({
@@ -133,6 +150,28 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'WorldCommands validated and applied as one undo transaction',
     },
   }, ['commands']),
+  'intent.apply': objectSchema({
+    intent: {
+      ...INTENT_SCHEMA,
+      description: 'One supported high-level intent from intents.list',
+    },
+  }, ['intent']),
+  'dialog.respond': objectSchema({
+    windowLabel: stringValue('Window label from list_windows; default main'),
+    dialogId: stringValue('Exact active dialog id from get_active_dialog'),
+    action: {
+      type: 'string',
+      enum: ['accept', 'cancel'],
+      description: 'Accept or cancel the active editor dialog',
+    },
+    value: {
+      type: 'string',
+      maxLength: 4096,
+      description: 'Prompt value when action=accept; ignored for alert/confirm dialogs',
+    },
+  }, ['dialogId', 'action']),
+  'console.clear': emptySchema,
+  'profiler.clear': emptySchema,
   'project.open': objectSchema({
     root: stringValue('Absolute existing MEngine project root'),
   }, ['root']),
@@ -171,6 +210,43 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact current settings revision, or null only when the file is missing',
     },
   }, ['layers', 'expectedRevision']),
+  'project.settings.set_tags_and_layers': objectSchema({
+    tags: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 64,
+      items: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 64,
+      },
+      description: 'Complete unique tag list including Untagged',
+    },
+    gameLayers: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 32,
+      items: objectSchema({
+        index: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 31,
+          description: 'Stable layer bit index',
+        },
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 64,
+          description: 'Unique display name',
+        },
+      }, ['index', 'name']),
+      description: 'Complete named GameObject layer list including index 0 Default',
+    },
+    expectedRevision: {
+      type: ['string', 'null'],
+      description: 'Exact current settings revision, or null only when the file is missing',
+    },
+  }, ['tags', 'gameLayers', 'expectedRevision']),
   'scene.new': objectSchema({
     name: sceneName,
     overwrite: booleanValue('Allow replacing an existing scene; default false'),
@@ -188,6 +264,23 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     name: stringValue('Name to use only when the dirty scene is unnamed'),
     overwrite: booleanValue('Allow replacing that unnamed-scene destination; default false'),
   }),
+  'workspace.save_document': objectSchema({
+    path: assetPath,
+  }, ['path']),
+  'workspace.discard_document': objectSchema({
+    path: assetPath,
+  }, ['path']),
+  'workspace.reload_document': objectSchema({
+    path: assetPath,
+  }, ['path']),
+  'workspace.close_document': objectSchema({
+    path: assetPath,
+    dirtyAction: {
+      type: 'string',
+      enum: ['reject', 'save', 'discard'],
+      description: 'Dirty document policy; default reject',
+    },
+  }, ['path']),
   'scene.load_json': objectSchema({
     json: stringValue(
       'Complete version 1 MEngine scene JSON (max 8 MiB and 20,000 entities)',
@@ -250,6 +343,51 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Current asset revision, or null only when creating a missing file',
     },
   }, ['path', 'contents', 'expectedRevision']),
+  'sprite.import_settings.set': objectSchema({
+    path: assetPath,
+    settings: objectSchema({
+      mode: {
+        type: 'string',
+        enum: ['single', 'multiple'],
+        description: 'Single texture sprite or named multiple slices',
+      },
+      pixelsPerUnit: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 100_000,
+      },
+      slices: {
+        type: 'array',
+        maxItems: 4_096,
+        items: objectSchema({
+          name: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 64,
+          },
+          rect: {
+            type: 'array',
+            minItems: 4,
+            maxItems: 4,
+            items: { type: 'integer', minimum: 0 },
+            description: 'Top-left pixel rectangle [x, y, width, height]',
+          },
+          pivot: {
+            type: 'array',
+            minItems: 2,
+            maxItems: 2,
+            items: { type: 'number', minimum: 0, maximum: 1 },
+            description: 'Normalized bottom-left pivot [x, y]',
+          },
+        }, ['name', 'rect', 'pivot']),
+      },
+    }, ['mode', 'pixelsPerUnit', 'slices']),
+    expectedRevision: {
+      type: ['string', 'null'],
+      description:
+        'Exact revision from sprite.import_settings, or null while defaults are implicit',
+    },
+  }, ['path', 'settings', 'expectedRevision']),
   'asset.rename': objectSchema({
     sourcePath: assetPath,
     destinationPath: assetPath,
@@ -320,6 +458,26 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact 64-character content hash from a successful build',
     },
   }, ['executable', 'expectedContentHash']),
+  'build.run': objectSchema({
+    executable: stringValue('Published Player executable inside the active project output'),
+    allowForegroundLaunch: {
+      type: 'boolean',
+      const: true,
+      description: 'Required explicit acknowledgement that launching the Player creates a window',
+    },
+  }, ['executable', 'allowForegroundLaunch']),
+  'build.history.create_patch': objectSchema({
+    previousId: stringValue('Older build history id from get_build_history'),
+    currentId: stringValue('Newer build history id from get_build_history'),
+  }, ['previousId', 'currentId']),
+  'build.history.restore': objectSchema({
+    historyId: stringValue('Signed archived build history id from get_build_history'),
+    publicKeyPath: stringValue('Absolute trusted Ed25519 public-key file path'),
+  }, ['historyId', 'publicKeyPath']),
+  'build.patch.verify': objectSchema({
+    patchId: stringValue('Exact patch id from get_build_patches'),
+    publicKeyPath: stringValue('Absolute trusted Ed25519 public-key file path'),
+  }, ['patchId', 'publicKeyPath']),
   'selection.set': objectSchema({
     ids: entityIds('Entity ids to select'),
     mode: {
@@ -363,6 +521,58 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     id: entityId(),
     active: booleanValue('New active state'),
   }, ['id', 'active']),
+  'entity.set_actives': objectSchema({
+    ids: {
+      ...entityIds('Entity ids to activate or deactivate together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    active: booleanValue('Shared active state'),
+  }, ['ids', 'active']),
+  'entity.set_tag': objectSchema({
+    id: entityId(),
+    tag: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 64,
+      description: 'GameObject classification tag',
+    },
+  }, ['id', 'tag']),
+  'entity.set_tags': objectSchema({
+    ids: {
+      ...entityIds('Entity ids whose tags should be changed together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    tag: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 64,
+      description: 'Shared GameObject classification tag',
+    },
+  }, ['ids', 'tag']),
+  'entity.set_layer': objectSchema({
+    id: entityId(),
+    layer: {
+      type: 'integer',
+      minimum: 0,
+      maximum: 31,
+      description: 'GameObject layer index',
+    },
+  }, ['id', 'layer']),
+  'entity.set_layers': objectSchema({
+    ids: {
+      ...entityIds('Entity ids whose GameObject layers should be changed together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    layer: {
+      type: 'integer',
+      minimum: 0,
+      maximum: 31,
+      description: 'Shared GameObject layer index',
+    },
+  }, ['ids', 'layer']),
   'entity.reparent': objectSchema({
     ids: entityIds('Entity ids to reparent'),
     parent: {
@@ -379,22 +589,63 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'component.add': objectSchema({
     entity: entityId(),
     type: componentType,
-    value: { type: 'object', description: 'Optional initial component value' },
+    value: {
+      type: 'object',
+      description: 'Optional initial component value; known components use catalog defaults when omitted',
+    },
   }, ['entity', 'type']),
+  'component.add_many': objectSchema({
+    entities: {
+      ...entityIds('Entity ids that should receive the component together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    type: componentType,
+    value: {
+      type: 'object',
+      description: 'Optional shared initial value; known components use catalog defaults when omitted',
+    },
+  }, ['entities', 'type']),
   'component.remove': objectSchema({
     entity: entityId(),
     type: componentType,
   }, ['entity', 'type']),
+  'component.remove_many': objectSchema({
+    entities: {
+      ...entityIds('Entity ids that should lose the shared component together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    type: componentType,
+  }, ['entities', 'type']),
   'component.set': objectSchema({
     entity: entityId(),
     type: componentType,
     value: { type: 'object', description: 'Complete component value' },
   }, ['entity', 'type', 'value']),
+  'component.set_many': objectSchema({
+    entities: {
+      ...entityIds('Entity ids whose shared component should be replaced together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    type: componentType,
+    value: { type: 'object', description: 'Complete shared component value' },
+  }, ['entities', 'type', 'value']),
   'component.patch': objectSchema({
     entity: entityId(),
     type: componentType,
     patch: { type: 'object', description: 'Fields to shallow-merge' },
   }, ['entity', 'type', 'patch']),
+  'component.patch_many': objectSchema({
+    entities: {
+      ...entityIds('Entity ids whose shared component should be patched together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    type: componentType,
+    patch: { type: 'object', description: 'Shared fields to shallow-merge' },
+  }, ['entities', 'type', 'patch']),
   'component.invoke': objectSchema({
     entity: entityId(),
     type: componentType,
@@ -416,6 +667,35 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     entity: entityId(),
     delta: finiteTuple(3, 'Local-position delta [x, y, z]'),
   }, ['entity', 'delta']),
+  'rect.set': objectSchema({
+    entity: entityId(),
+    anchoredPosition: finiteTuple(2, 'Anchored position [x, y]'),
+    sizeDelta: finiteTuple(2, 'Size delta [width, height]'),
+    pivot: {
+      ...finiteTuple(2, 'Normalized pivot [x, y]'),
+      items: { type: 'number', minimum: 0, maximum: 1 },
+    },
+    anchorMin: {
+      ...finiteTuple(2, 'Normalized minimum anchor [x, y]'),
+      items: { type: 'number', minimum: 0, maximum: 1 },
+    },
+    anchorMax: {
+      ...finiteTuple(2, 'Normalized maximum anchor [x, y]'),
+      items: { type: 'number', minimum: 0, maximum: 1 },
+    },
+    localRotation: numberValue('Local Z rotation in degrees'),
+    localScale: finiteTuple(2, 'Local UI scale [x, y]'),
+  }, ['entity'], {
+    anyOf: [
+      { required: ['anchoredPosition'] },
+      { required: ['sizeDelta'] },
+      { required: ['pivot'] },
+      { required: ['anchorMin'] },
+      { required: ['anchorMax'] },
+      { required: ['localRotation'] },
+      { required: ['localScale'] },
+    ],
+  }),
   'playback.play': emptySchema,
   'playback.pause': emptySchema,
   'playback.stop': emptySchema,
@@ -470,6 +750,99 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact Game View pixels, or null for Free Aspect',
     },
   }, ['resolution']),
+  'view.set_scene_preferences': objectSchema({
+    mode2D: booleanValue('Lock the Scene view to its 2D canvas plane'),
+    gridVisible: booleanValue('Show the Scene 2D pixel grid'),
+    smartGuidesEnabled: booleanValue(
+      'Snap RectTransforms to sibling and Canvas guides',
+    ),
+    pivotMode: {
+      type: 'string',
+      enum: ['pivot', 'center'],
+      description: 'Place transform handles at the pivot or selection center',
+    },
+    handleOrientation: {
+      type: 'string',
+      enum: ['local', 'global'],
+      description: 'Orient transform handles in local or global axes',
+    },
+    snap: objectSchema({
+      enabled: booleanValue('Enable persistent transform snapping'),
+      move: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 1_000_000,
+        description: 'Move snap increment',
+      },
+      rotate: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 1_000_000,
+        description: 'Rotation snap increment in degrees',
+      },
+      scale: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 1_000_000,
+        description: 'Scale snap increment',
+      },
+    }, [], {
+      anyOf: [
+        { required: ['enabled'] },
+        { required: ['move'] },
+        { required: ['rotate'] },
+        { required: ['scale'] },
+      ],
+    }),
+  }, [], {
+    anyOf: [
+      { required: ['mode2D'] },
+      { required: ['gridVisible'] },
+      { required: ['smartGuidesEnabled'] },
+      { required: ['pivotMode'] },
+      { required: ['handleOrientation'] },
+      { required: ['snap'] },
+    ],
+  }),
+  'view.set_timeline_preferences': objectSchema({
+    animationTimeline: objectSchema({
+      timeDisplayMode: {
+        type: 'string',
+        enum: ['frames', 'seconds'],
+        description: 'Display Animation Timeline time as frames or seconds',
+      },
+      snapping: booleanValue(
+        'Snap Animation Timeline keys and events to frame-aligned targets',
+      ),
+    }, [], {
+      anyOf: [
+        { required: ['timeDisplayMode'] },
+        { required: ['snapping'] },
+      ],
+    }),
+    sequencer: objectSchema({
+      snapping: booleanValue(
+        'Snap Sequencer clips and markers to editing targets',
+      ),
+      rippleMode: booleanValue(
+        'Shift the affected track suffix while moving Sequencer items',
+      ),
+      inspectorOpen: booleanValue('Show the Sequencer Inspector'),
+      loopPreview: booleanValue('Loop the Sequencer edit preview range'),
+    }, [], {
+      anyOf: [
+        { required: ['snapping'] },
+        { required: ['rippleMode'] },
+        { required: ['inspectorOpen'] },
+        { required: ['loopPreview'] },
+      ],
+    }),
+  }, [], {
+    anyOf: [
+      { required: ['animationTimeline'] },
+      { required: ['sequencer'] },
+    ],
+  }),
   'panel.focus': objectSchema({
     kind: panelKind,
   }, ['kind']),
@@ -479,25 +852,39 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'menu.invoke': objectSchema({
     path: stringValue('Exact registered menu path'),
   }, ['path']),
+  'window.close': objectSchema({
+    windowLabel: stringValue('Exact registered editor-* label returned by window.list'),
+  }, ['windowLabel']),
+  'window.open_editor': objectSchema({
+    typeId: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 256,
+      description: 'Exact registered type id returned by window.types',
+    },
+  }, ['typeId']),
   'window.ui_click': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
-  }, ['selector']),
+  }, uiInteractionRequired),
   'window.ui_double_click': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
-  }, ['selector']),
+  }, uiInteractionRequired),
   'window.ui_context_click': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
-  }, ['selector']),
+  }, uiInteractionRequired),
   'window.ui_set_value': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
     value: stringValue('New form control value'),
-  }, ['selector', 'value']),
+  }, [...uiInteractionRequired, 'value']),
   'window.ui_scroll': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact scrollable selector returned by window.ui_snapshot'),
     deltaX: {
       type: 'number',
@@ -511,7 +898,59 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       maximum: 1_000_000,
       description: 'Vertical CSS-pixel delta',
     },
-  }, ['selector', 'deltaY']),
+  }, [...uiInteractionRequired, 'deltaY']),
+  'window.ui_drag_to': objectSchema({
+    ...uiInteractionContext,
+    ...uiModifierContext,
+    selector: stringValue('Exact draggable source selector returned by window.ui_snapshot'),
+    targetSelector: stringValue('Exact drop target selector returned by window.ui_snapshot'),
+  }, [...uiInteractionRequired, 'targetSelector']),
+  'window.ui_drag_by': objectSchema({
+    ...uiInteractionContext,
+    ...uiModifierContext,
+    selector: stringValue('Exact pointer-gesture selector returned by window.ui_snapshot'),
+    deltaX: {
+      type: 'number',
+      minimum: -1_000_000,
+      maximum: 1_000_000,
+      description: 'Horizontal CSS-pixel displacement; may be zero',
+    },
+    deltaY: {
+      type: 'number',
+      minimum: -1_000_000,
+      maximum: 1_000_000,
+      description: 'Vertical CSS-pixel displacement; may be zero',
+    },
+  }, [...uiInteractionRequired, 'deltaX', 'deltaY']),
+  'window.ui_hover': objectSchema({
+    ...uiInteractionContext,
+    selector: stringValue('Exact hover-capable selector returned by window.ui_snapshot'),
+  }, uiInteractionRequired),
+  'window.ui_press_key': objectSchema({
+    ...uiInteractionContext,
+    ...uiModifierContext,
+    selector: stringValue('Exact keyboard target selector returned by window.ui_snapshot'),
+    key: {
+      type: 'string',
+      enum: [
+        'Enter',
+        'Escape',
+        'Tab',
+        'Space',
+        'ArrowUp',
+        'ArrowDown',
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+        'PageUp',
+        'PageDown',
+        'Backspace',
+        'Delete',
+      ],
+      description: 'Allow-listed semantic key with optional modifier flags',
+    },
+  }, [...uiInteractionRequired, 'key']),
 };
 
 export const COMMAND_EXECUTION_OPTIONS_SCHEMA: AgentJsonSchema = objectSchema({

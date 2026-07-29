@@ -1,6 +1,7 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { isDesktopEditor, isPrimaryPointerDown } from '../transport/editorTransport';
+import { createEditorBroadcastChannel } from '../editorInstance.ts';
 
 export const CORE_PANEL_IDS = [
   'hierarchy',
@@ -22,7 +23,7 @@ export const CORE_PANEL_IDS = [
 
 export type CorePanelId = (typeof CORE_PANEL_IDS)[number];
 
-const PANEL_TITLES: Record<CorePanelId, string> = {
+export const PANEL_TITLES: Record<CorePanelId, string> = {
   hierarchy: 'Hierarchy',
   scene: 'Scene',
   game: 'Game',
@@ -56,7 +57,7 @@ export function panelFromLocation(): CorePanelId | null {
 }
 
 export function createPanelChannel(): BroadcastChannel | null {
-  return typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(CHANNEL_NAME);
+  return createEditorBroadcastChannel(CHANNEL_NAME);
 }
 
 export function readDetachedPanels(): Set<CorePanelId> {

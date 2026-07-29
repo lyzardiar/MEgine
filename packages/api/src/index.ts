@@ -25,6 +25,8 @@ export interface WorldSnapshotView {
     parent?: number | null;
     siblingIndex?: number;
     active?: boolean;
+    tag?: string;
+    layer?: number;
     components: Record<string, unknown>;
   }>;
   frame: number;

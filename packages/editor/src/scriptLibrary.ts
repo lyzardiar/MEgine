@@ -1,13 +1,17 @@
-/** Script assets in Project → open in current IDE via Vite bridge. */
+/** Script assets in Project → active native project on desktop, Vite bridge in browser preview. */
+
+import { invoke } from '@tauri-apps/api/core';
+import {
+  desktopScriptAssets,
+  vscodeFileUri,
+  type IndexedScriptAsset,
+  type ScriptAsset,
+} from './scriptLibraryModel.ts';
+import { isDesktopEditor, type ProjectSnapshot } from './transport/editorTransport.ts';
 
 const API = '/__mengine';
 
-export type ScriptAsset = {
-  id: string;
-  name: string;
-  folder: string;
-  absPath: string;
-};
+export type { ScriptAsset } from './scriptLibraryModel.ts';
 
 let _scripts: ScriptAsset[] = [];
 let _ready = false;
@@ -18,10 +22,18 @@ export function listScripts(): ScriptAsset[] {
 
 export async function refreshScripts(): Promise<ScriptAsset[]> {
   try {
-    const res = await fetch(`${API}/scripts`);
-    if (!res.ok) throw new Error(String(res.status));
-    const body = (await res.json()) as { scripts: ScriptAsset[] };
-    _scripts = Array.isArray(body.scripts) ? body.scripts : [];
+    if (isDesktopEditor()) {
+      const [project, assets] = await Promise.all([
+        invoke<ProjectSnapshot>('get_project_snapshot'),
+        invoke<IndexedScriptAsset[]>('list_project_assets'),
+      ]);
+      _scripts = desktopScriptAssets(project.projectRoot, assets);
+    } else {
+      const res = await fetch(`${API}/scripts`);
+      if (!res.ok) throw new Error(String(res.status));
+      const body = (await res.json()) as { scripts: ScriptAsset[] };
+      _scripts = Array.isArray(body.scripts) ? body.scripts : [];
+    }
   } catch {
     _scripts = [];
   }
@@ -35,6 +47,22 @@ export function isScriptLibraryReady() {
 
 /** Open a script in Cursor / VS Code (same IDE). */
 export async function openScriptInIde(script: ScriptAsset): Promise<boolean> {
+  if (isDesktopEditor()) {
+    if (!script.id.startsWith('project/')) return false;
+    const indexed = _scripts.find((candidate) => (
+      candidate.id === script.id
+      && candidate.absPath === script.absPath
+    ));
+    const uri = indexed ? vscodeFileUri(indexed.absPath) : null;
+    if (!uri) return false;
+    const anchor = document.createElement('a');
+    anchor.href = uri;
+    anchor.rel = 'noopener';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    return true;
+  }
   try {
     const res = await fetch(`${API}/open`, {
       method: 'POST',

@@ -25,6 +25,7 @@ import {
   buildPcPackage,
   createPcPatchPackage,
   publishStagedBuild,
+  validateProjectTypeScript,
   verifyPcBuildDirectory,
   verifyPcBuildManifestSignature,
   verifyPcPatchDirectory,
@@ -2432,6 +2433,67 @@ test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript',
       readFileSync(join(paths.output, 'Assets', 'Scripts', 'Main.js'), 'utf8'),
       /value \* 3/,
     );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('validateProjectTypeScript returns revisioned structured diagnostics without emitting files', () => {
+  const paths = fixture('typescript-diagnostics');
+  try {
+    const projectJson = JSON.parse(readFileSync(join(paths.project, 'project.json'), 'utf8'));
+    projectJson.startupScript = 'Assets/Scripts/Main.ts';
+    writeFileSync(join(paths.project, 'project.json'), JSON.stringify(projectJson));
+    rmSync(join(paths.project, 'Assets', 'Scripts', 'main.js'));
+    writeFileSync(
+      join(paths.project, 'Assets', 'Scripts', 'Main.ts'),
+      'const valid: number = 1;\nconst invalid: number = "not a number";\n',
+    );
+    const first = validateProjectTypeScript(paths.project);
+    assert.equal(first.schemaVersion, 1);
+    assert.equal(first.valid, false);
+    assert.equal(first.checked, true);
+    assert.equal(first.startupScript, 'Assets/Scripts/Main.ts');
+    assert.equal(first.scriptRoot, 'Assets/Scripts');
+    assert.match(first.revision, /^[0-9a-f]{64}$/);
+    assert.equal(first.fileCount, 1);
+    assert.equal(first.errorCount, 1);
+    assert.equal(first.warningCount, 0);
+    assert.equal(first.diagnosticCount, 1);
+    assert.equal(first.returnedDiagnostics, 1);
+    assert.equal(first.truncated, false);
+    assert.deepEqual(first.diagnostics, [{
+      category: 'error',
+      code: 2322,
+      message: "Type 'string' is not assignable to type 'number'.",
+      file: 'Assets/Scripts/Main.ts',
+      line: 2,
+      column: 7,
+      start: 31,
+      length: 7,
+    }]);
+    assert.equal(
+      existsSync(join(paths.project, '.mengine', 'Library', 'ScriptValidation', 'out.js')),
+      false,
+    );
+
+    writeFileSync(
+      join(paths.project, 'Assets', 'Scripts', 'Main.ts'),
+      'const valid: number = 1;\n',
+    );
+    const fixed = validateProjectTypeScript(paths.project);
+    assert.equal(fixed.valid, true);
+    assert.equal(fixed.errorCount, 0);
+    assert.notEqual(fixed.revision, first.revision);
+    assert.deepEqual(fixed.diagnostics, []);
+
+    const cliValidation = spawnSync(process.execPath, [
+      cli,
+      'validate-scripts',
+      paths.project,
+    ], { encoding: 'utf8', windowsHide: true });
+    assert.equal(cliValidation.status, 0, cliValidation.stderr);
+    assert.equal(JSON.parse(cliValidation.stdout).revision, fixed.revision);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

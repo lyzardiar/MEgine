@@ -3,15 +3,16 @@
  * integration. It exposes a unified observation surface (`query`) over the
  * live editor store, the viewport canvas, and Tauri window commands.
  *
- * Transports (MCP / WebSocket / HTTP / CLI) are thin adapters that translate
- * their protocol into `query()` / `execute()` calls on the singleton
- * `agentBridge`. This module deliberately has no transport or React dependency
- * so it can be wired once from `App.tsx` and reused everywhere.
+ * Transports (MCP / authenticated WebSocket / CLI, plus future HTTP adapters)
+ * translate their protocol into `query()` / `execute()` calls on the singleton
+ * `agentBridge`. This module deliberately has no transport dependency and uses
+ * React-independent provider interfaces so it can be wired once from `App.tsx`.
  *
- * Phase 1 implements the read-only Observer. The write Dispatcher lands in
- * Phase 2 and will route through the same `EditorStore` methods the UI uses.
+ * The read-only Observer and revision-guarded write Dispatcher both route
+ * through the same services and `EditorStore` methods used by the visible UI.
  */
 import { invoke } from '@tauri-apps/api/core';
+import { INTENT_DEFINITIONS } from '@mengine/agent';
 import type { EditorStore } from '../store';
 import {
   isDesktopEditor,
@@ -21,16 +22,20 @@ import {
 import { normalizeSceneName, sceneFileName } from '../sceneLibrary';
 import {
   BridgeError,
+  type DockLayoutNode,
   type EditorMenuItemInfo,
+  type EditorPanelInfo,
   type EditorState,
   type EditorUiActionResult,
   type EditorUiContentPage,
+  type EditorUiModifiers,
   type EditorUiSnapshot,
   type EditorWindowInfo,
   type HierarchyNode,
   type PanelLayoutSnapshot,
   type ScreenshotResult,
   type SelectionInfo,
+  type SpriteImportSettingsInfo,
   type ViewportTab,
 } from './protocol';
 import {
@@ -57,26 +62,43 @@ import {
   type AgentResourceEditorKind,
   type AgentResourceEditorTarget,
 } from './resourceTargets';
-import { COMMAND_EXECUTION_OPTIONS_SCHEMA } from './commandSchemas';
+import {
+  COMMAND_EXECUTION_OPTIONS_SCHEMA,
+  COMMAND_PARAMS_SCHEMAS,
+} from './commandSchemas';
+import {
+  QUERY_META,
+  QUERY_PARAMS_SCHEMAS,
+  type QueryMeta,
+  type QuerySummary,
+} from './querySchemas';
+import { validateAgentJsonSchema } from './jsonSchemaValidation';
 import {
   buildAgentComponentSchema,
   listAgentComponentSchemas,
 } from './componentSchema';
 import { validateAgentSceneJson } from './sceneJsonValidation';
 import {
+  createRegisteredEditorWindow,
   findMenuItem,
   listAllMenuItems,
+  listRegisteredEditorWindowTypes,
+  subscribeEditorWindowTypes,
+  subscribeMenuItems,
   type MenuItemContext,
 } from '../editorWindow/registry';
+import { openNativeEditorWindow } from '../editorWindow/nativeEditorWindow';
 import {
   CORE_PANEL_IDS,
   detachPanelWindow,
+  PANEL_TITLES,
   requestPanelDock,
 } from '../panels/detachedPanelWindow';
 import {
   importExternalProjectAsset,
   listProjectFiles,
   isProjectTextAssetPath,
+  loadProjectImage,
   normalizeProjectAssetPath,
   readProjectAssetBytesWithRevision,
   refreshProjectFiles,
@@ -86,9 +108,31 @@ import {
 } from '../projectAssets';
 import { findProjectAssetReferences } from '../assetReferences';
 import { validateImportedAssetName } from '../assetImportModel';
-import { refreshSprites } from '../spriteLibrary';
+import { refreshSprites, type SpriteAsset } from '../spriteLibrary';
+import {
+  createSpriteImportSettings,
+  normalizeSpriteImportSettings,
+  parseSpriteImportSettings,
+  serializeSpriteImportSettings,
+  spriteImportPath,
+  spriteTexturePath,
+} from '../spriteImport';
 import { setEditorPrefs } from '../sceneLibrary';
 import type { GameResolution } from '../gameResolution';
+import {
+  initializeSceneViewPreferencesEvents,
+  readSceneViewPreferences,
+  SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+  updateSceneViewPreferences,
+  type SceneViewPreferencesPatch,
+} from '../sceneViewPreferences';
+import {
+  initializeTimelineEditorPreferencesEvents,
+  readTimelineEditorPreferences,
+  TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+  updateTimelineEditorPreferences,
+  type TimelineEditorPreferencesPatch,
+} from '../timelineEditorPreferences';
 import {
   applySelectedPrefab,
   createProjectPrefabFromSelection,
@@ -101,46 +145,85 @@ import {
   broadcastProjectAssetsChanged,
 } from '../assetEditorEvents';
 import {
+  getEditorDialogForWindow,
+  listEditorDialogs,
+  respondToEditorDialogInWindow,
+  subscribeEditorDialog,
+} from '../editorDialog';
+import {
+  clearEditorProfilerSamples,
+  readEditorProfilerSamples,
+  summarizeEditorProfilerSamples,
+  type EditorProfilerSource,
+} from '../editorProfiler';
+import {
   buildPcPlayer,
   cancelPcBuild,
+  comparePcBuildHistory,
+  createPcBuildHistoryPatch,
   getProjectBuildSettings,
   listenToPcBuildProgress,
   listPcBuildHistory,
-  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+  listPcBuildPatches,
+  restorePcBuildHistory,
+  runPcPlayer,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
+  validateProjectScripts,
+  verifyPcBuildPatch,
   verifyPcPlayer,
   type BuildPlayerProfile,
   type BuildPlayerResult,
   type BuildProgressEvent,
   type ProjectBuildSettings,
+  type ProjectScriptValidation,
+  type RunPlayerResult,
   type VerifyPlayerResult,
 } from '../transport/editorTransport';
+import {
+  broadcastProjectBuildArtifactsChanged,
+  broadcastProjectBuildSettingsChanged,
+  PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+} from '../buildEditorEvents';
 import type { AgentAssetOperations } from './assetOperations';
+import type { AssetTrashEntry } from '../assetTrash';
 import {
   AGENT_EVENT_TOPICS,
   AgentEventJournal,
+  MAX_AGENT_EVENT_WAITERS,
   SceneChangeTracker,
   type AgentEvent,
   type AgentEventPage,
   type AgentEventTopic,
+  type AgentEventWaitPage,
   type SceneDiff,
   type SceneEntityView,
 } from './eventJournal';
 import { paginateAgentItems } from './pagination';
+import { panelWindowBlockers } from './panelSafety';
 import {
   loadSortingLayersSnapshot,
   persistSortingLayersGuarded,
+  persistTagsAndLayersGuarded,
+  SORTING_LAYERS_CHANGED_EVENT,
 } from '../sortingLayers';
 import {
+  validateTagsAndLayers,
   validateSortingLayers,
+  type GameObjectLayer,
   type SortingLayer,
 } from '../sortingLayerModel';
 
 type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
   quality?: number,
+  maxSize?: number,
 ) => ScreenshotResult | null;
+
+const DEFAULT_SCREENSHOT_MAX_SIZE = 2_048;
+const MIN_SCREENSHOT_INTERVAL_MS = 250;
+const MAX_PENDING_SCREENSHOTS = 8;
 
 interface SceneMetaProviders {
   sceneName: () => string | null;
@@ -199,6 +282,28 @@ export interface AgentWorkspaceProvider {
     closedWindows: string[];
     discardedUnsavedChanges: boolean;
   }>;
+  saveDocument: (path: string) => Promise<{
+    path: string;
+    saved: boolean;
+    unchanged: boolean;
+  }>;
+  discardDocument: (path: string) => Promise<{
+    path: string;
+    discarded: boolean;
+    unchanged: boolean;
+  }>;
+  reloadDocument: (path: string) => Promise<{
+    target: AgentResourceEditorTarget;
+    discarded: boolean;
+  }>;
+  closeDocument: (
+    path: string,
+    dirtyAction?: 'reject' | 'save' | 'discard',
+  ) => Promise<{
+    path: string;
+    closed: true;
+    dirtyAction: 'none' | 'save' | 'discard';
+  }>;
   listDocuments: () => Promise<AgentWorkspaceDocument[]>;
   openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
   createAsset: (request: AgentCreateAssetRequest) => Promise<AgentCreateAssetResult>;
@@ -219,6 +324,20 @@ export type AgentWorkspaceDocument = {
   panel: string;
   path: string | null;
   dirty: boolean;
+  /** True when an authored draft's accepted disk revision is no longer current. */
+  conflicted?: boolean;
+  /** Provider-only marker: false for an open cached draft that is not selected in its panel. */
+  selected?: boolean;
+};
+
+type AgentObservedWorkspaceDocument = Omit<
+  AgentWorkspaceDocument,
+  'conflicted' | 'selected'
+> & {
+  conflicted: boolean;
+  active: boolean;
+  detached: boolean;
+  windowLabel: string;
 };
 
 export type AgentProjectSummary = {
@@ -238,6 +357,7 @@ export type AgentProjectLifecycleState = {
   project: AgentProjectSummary | null;
   recentCount: number;
   recentLimit: number;
+  recentRevision: string;
 };
 
 export interface AgentProjectLifecycleProvider {
@@ -261,12 +381,26 @@ type AgentBuildJob = {
   error: string | null;
 };
 
+type AgentBuildArtifactJob = {
+  id: string;
+  operation: 'history-patch' | 'history-restore' | 'patch-verify';
+  status: 'running' | 'succeeded' | 'failed';
+  cancellable: false;
+  input: Record<string, string>;
+  startedAt: number;
+  finishedAt: number | null;
+  result: unknown;
+  error: string | null;
+};
+
 interface EntityView {
   entity: number;
   name?: string | null;
   parent?: number | null;
   siblingIndex?: number;
   active?: boolean;
+  tag?: string;
+  layer?: number;
   components: Record<string, unknown>;
 }
 
@@ -283,22 +417,45 @@ class AgentBridge {
   private store: EditorStore | null = null;
   private sceneMeta: SceneMetaProviders | null = null;
   private captures = new Map<ViewportTab, CaptureFn>();
+  private screenshotQueue: Promise<void> = Promise.resolve();
+  private pendingScreenshotCount = 0;
+  private lastScreenshotCompletedAt = 0;
   private refreshProvider: (() => void) | null = null;
   private logProvider: ((message: string) => void) | null = null;
   private panelLayoutProvider: (() => PanelLayoutSnapshot | null) | null = null;
   private sceneProvider: (() => AgentSceneProvider | null) | null = null;
   private workspaceProvider: (() => AgentWorkspaceProvider | null) | null = null;
   private buildJob: AgentBuildJob | null = null;
+  private buildArtifactJob: AgentBuildArtifactJob | null = null;
   private stopBuildProgress: (() => void) | null = null;
   private assetOperations: AgentAssetOperations | null = null;
   private clearLogProvider: (() => void) | null = null;
   private readonly events = new AgentEventJournal();
   private readonly sceneChanges = new SceneChangeTracker();
   private observedState: ObservedEditorState | null = null;
+  private observedWorkspaceSignature: string | null = null;
+  private workspaceObservationGeneration = 0;
+  private workspaceObservationStarted = 0;
+  private workspaceObservationCommitted = 0;
   private lastPlaySceneObservationAt = 0;
   private eventSourceConnections = 0;
   private stopLogEvents: (() => void) | null = null;
+  private stopDialogEvents: (() => void) | null = null;
+  private stopMenuEvents: (() => void) | null = null;
+  private stopWindowTypeEvents: (() => void) | null = null;
+  private stopSceneViewPreferenceEvents: (() => void) | null = null;
+  private stopTimelineEditorPreferenceEvents: (() => void) | null = null;
+  private stopBuildSettingsEvents: (() => void) | null = null;
+  private stopBuildArtifactEvents: (() => void) | null = null;
+  private stopProjectSettingsEvents: (() => void) | null = null;
   private stopAssetEvents: (() => void) | null = null;
+  private windowObservationTimer: number | null = null;
+  private windowObservationGeneration = 0;
+  private windowObservationCommitted = 0;
+  private observedDialogSignature: string | null = null;
+  private observedMenuSignature: string | null = null;
+  private observedWindowSignature: string | null = null;
+  private observedWindowTypeSignature: string | null = null;
   private lastAssetEvent: { signature: string; time: number } | null = null;
   private projectLifecycleProvider:
     | (() => AgentProjectLifecycleProvider | null)
@@ -306,12 +463,18 @@ class AgentBridge {
   private observedProjectSignature: string | null = null;
   private editorBootReady = false;
   private editorBootGeneration = 0;
+  private readonly agentOwnedEditorWindows = new Set<string>();
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
     if (this.store !== store) {
       this.sceneChanges.reset();
       this.observedState = null;
+      this.observedWorkspaceSignature = null;
+      this.observedMenuSignature = null;
+      this.workspaceObservationGeneration += 1;
+      this.workspaceObservationStarted = 0;
+      this.workspaceObservationCommitted = 0;
       this.lastPlaySceneObservationAt = 0;
       this.editorBootReady = false;
     }
@@ -325,6 +488,7 @@ class AgentBridge {
     this.editorBootReady = true;
     this.editorBootGeneration += 1;
     this.observeProject();
+    this.recordMenuEvent();
   }
 
   private async waitForEditorBootAfter(generation: number): Promise<void> {
@@ -403,6 +567,94 @@ class AgentBridge {
     this.eventSourceConnections += 1;
     if (this.eventSourceConnections === 1) {
       this.stopLogEvents = logService.subscribe((change) => this.recordLogEvent(change));
+      this.stopDialogEvents = subscribeEditorDialog(() => this.recordDialogEvent());
+      this.stopMenuEvents = subscribeMenuItems(() => this.recordMenuEvent());
+      this.stopWindowTypeEvents = subscribeEditorWindowTypes(
+        () => this.recordWindowTypeEvent(),
+      );
+      this.recordDialogEvent();
+      this.recordMenuEvent();
+      this.recordWindowTypeEvent();
+      void this.observeWindowInventory().catch(() => undefined);
+      this.windowObservationTimer = window.setInterval(() => {
+        void this.observeWindowInventory().catch(() => undefined);
+      }, 1_000);
+      initializeSceneViewPreferencesEvents();
+      const onSceneViewPreferencesChanged = () => {
+        this.observe();
+      };
+      window.addEventListener(
+        SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+        onSceneViewPreferencesChanged,
+      );
+      this.stopSceneViewPreferenceEvents = () => {
+        window.removeEventListener(
+          SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+          onSceneViewPreferencesChanged,
+        );
+      };
+      initializeTimelineEditorPreferencesEvents();
+      const onTimelineEditorPreferencesChanged = () => {
+        this.observe();
+      };
+      window.addEventListener(
+        TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+        onTimelineEditorPreferencesChanged,
+      );
+      this.stopTimelineEditorPreferenceEvents = () => {
+        window.removeEventListener(
+          TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+          onTimelineEditorPreferencesChanged,
+        );
+      };
+      const onBuildSettingsChanged = (event: Event) => {
+        this.appendEvent(
+          'build.settings',
+          structuredClone((event as CustomEvent<unknown>).detail ?? {}),
+        );
+      };
+      window.addEventListener(
+        PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+        onBuildSettingsChanged,
+      );
+      this.stopBuildSettingsEvents = () => {
+        window.removeEventListener(
+          PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+          onBuildSettingsChanged,
+        );
+      };
+      const onBuildArtifactsChanged = (event: Event) => {
+        this.appendEvent(
+          'build.artifacts',
+          structuredClone((event as CustomEvent<unknown>).detail ?? {}),
+        );
+      };
+      window.addEventListener(
+        PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+        onBuildArtifactsChanged,
+      );
+      this.stopBuildArtifactEvents = () => {
+        window.removeEventListener(
+          PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+          onBuildArtifactsChanged,
+        );
+      };
+      const onProjectSettingsChanged = (event: Event) => {
+        this.appendEvent(
+          'project.settings',
+          structuredClone((event as CustomEvent<unknown>).detail ?? {}),
+        );
+      };
+      window.addEventListener(
+        SORTING_LAYERS_CHANGED_EVENT,
+        onProjectSettingsChanged,
+      );
+      this.stopProjectSettingsEvents = () => {
+        window.removeEventListener(
+          SORTING_LAYERS_CHANGED_EVENT,
+          onProjectSettingsChanged,
+        );
+      };
       const onAssetChanged = (event: Event) => {
         const detail = (event as CustomEvent<unknown>).detail ?? { action: 'changed' };
         let signature: string;
@@ -432,6 +684,26 @@ class AgentBridge {
       if (this.eventSourceConnections !== 0) return;
       this.stopLogEvents?.();
       this.stopLogEvents = null;
+      this.stopDialogEvents?.();
+      this.stopDialogEvents = null;
+      this.stopMenuEvents?.();
+      this.stopMenuEvents = null;
+      this.stopWindowTypeEvents?.();
+      this.stopWindowTypeEvents = null;
+      if (this.windowObservationTimer != null) {
+        window.clearInterval(this.windowObservationTimer);
+        this.windowObservationTimer = null;
+      }
+      this.stopSceneViewPreferenceEvents?.();
+      this.stopSceneViewPreferenceEvents = null;
+      this.stopTimelineEditorPreferenceEvents?.();
+      this.stopTimelineEditorPreferenceEvents = null;
+      this.stopBuildSettingsEvents?.();
+      this.stopBuildSettingsEvents = null;
+      this.stopBuildArtifactEvents?.();
+      this.stopBuildArtifactEvents = null;
+      this.stopProjectSettingsEvents?.();
+      this.stopProjectSettingsEvents = null;
       this.stopAssetEvents?.();
       this.stopAssetEvents = null;
       this.lastAssetEvent = null;
@@ -451,20 +723,23 @@ class AgentBridge {
 
   // ── Observer ──────────────────────────────────────────────────────────
 
-  captureViewport(
+  async captureViewport(
     tab: ViewportTab = 'scene',
     format: 'image/png' | 'image/jpeg' = 'image/png',
     quality?: number,
-  ): ScreenshotResult {
-    const fn = this.captures.get(tab);
-    if (!fn) {
-      throw new BridgeError('NOT_READY', `No viewport capture registered for "${tab}"`);
-    }
-    const result = fn(format, quality);
-    if (!result) {
-      throw new BridgeError('NOT_READY', `Viewport "${tab}" canvas is not available yet`);
-    }
-    return result;
+    maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+  ): Promise<ScreenshotResult> {
+    return this.scheduleScreenshot(() => {
+      const fn = this.captures.get(tab);
+      if (!fn) {
+        throw new BridgeError('NOT_READY', `No viewport capture registered for "${tab}"`);
+      }
+      const result = fn(format, quality, normalizeScreenshotMaxSize(maxSize));
+      if (!result) {
+        throw new BridgeError('NOT_READY', `Viewport "${tab}" canvas is not available yet`);
+      }
+      return result;
+    });
   }
 
   /**
@@ -472,11 +747,84 @@ class AgentBridge {
    * activating the window. Pass a label from `window.list` to inspect a
    * detached panel/editor window; the main window is the default.
    */
-  async captureWindow(windowLabel = 'main'): Promise<ScreenshotResult> {
+  async captureWindow(
+    windowLabel = 'main',
+    maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+  ): Promise<ScreenshotResult> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Full-window capture requires the desktop editor');
     }
-    return invoke<ScreenshotResult>('capture_editor_window', { windowLabel });
+    return this.scheduleScreenshot(() => invoke<ScreenshotResult>(
+      'capture_editor_window',
+      { windowLabel, maxSize: normalizeScreenshotMaxSize(maxSize) },
+    ));
+  }
+
+  /**
+   * Capture a CSS-pixel region from an editor webview without first encoding
+   * the complete window. Coordinates match rects from `window.ui_snapshot`.
+   */
+  async captureWindowRegion(
+    windowLabel: string,
+    region: { x: number; y: number; width: number; height: number },
+    maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+  ): Promise<ScreenshotResult> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Editor-window region capture requires the desktop editor');
+    }
+    return this.scheduleScreenshot(() => invoke<ScreenshotResult>(
+      'capture_editor_window',
+      {
+        windowLabel,
+        maxSize: normalizeScreenshotMaxSize(maxSize),
+        region,
+      },
+    ));
+  }
+
+  /**
+   * Serialize bitmap captures and leave a short cool-down after each one.
+   * Semantic snapshots remain unthrottled, so agents can inspect rapidly
+   * without repeatedly allocating multi-megabyte encoded images.
+   */
+  private async scheduleScreenshot<T>(
+    capture: () => T | Promise<T>,
+  ): Promise<T> {
+    if (this.pendingScreenshotCount >= MAX_PENDING_SCREENSHOTS) {
+      throw new BridgeError(
+        'RATE_LIMITED',
+        `Screenshot queue is full; retry after ${MIN_SCREENSHOT_INTERVAL_MS}ms`,
+        {
+          pendingScreenshots: this.pendingScreenshotCount,
+          maxPendingScreenshots: MAX_PENDING_SCREENSHOTS,
+          retryAfterMs: MIN_SCREENSHOT_INTERVAL_MS,
+        },
+      );
+    }
+    this.pendingScreenshotCount += 1;
+    const previous = this.screenshotQueue;
+    let release!: () => void;
+    this.screenshotQueue = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    try {
+      await previous;
+      const waitMs = Math.max(
+        0,
+        this.lastScreenshotCompletedAt + MIN_SCREENSHOT_INTERVAL_MS - Date.now(),
+      );
+      if (waitMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+      }
+      try {
+        return await capture();
+      } finally {
+        this.lastScreenshotCompletedAt = Date.now();
+        release();
+      }
+    } finally {
+      this.pendingScreenshotCount -= 1;
+    }
   }
 
   /** Read text, roles, values, bounds and stable selectors without OCR. */
@@ -484,6 +832,7 @@ class AgentBridge {
     windowLabel = 'main',
     maxElements = 2_000,
     offset = 0,
+    expectedSnapshotRevision?: string,
   ): Promise<EditorUiSnapshot> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI inspection requires the desktop editor');
@@ -494,20 +843,51 @@ class AgentBridge {
     const boundedOffset = Number.isFinite(offset)
       ? Math.min(1_000_000, Math.max(0, Math.trunc(offset)))
       : 0;
-    return invoke<EditorUiSnapshot>('inspect_editor_window', {
+    const expectedRevision = expectedSnapshotRevision?.trim();
+    if (
+      expectedSnapshotRevision !== undefined
+      && !/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedRevision ?? '')
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedSnapshotRevision" must be a snapshotRevision returned by window.ui_snapshot',
+      );
+    }
+    if (boundedOffset > 0 && !expectedRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedSnapshotRevision" from the first page',
+      );
+    }
+    const snapshot = await invoke<EditorUiSnapshot>('inspect_editor_window', {
       windowLabel,
       maxElements: boundedMaxElements,
       offset: boundedOffset,
     });
+    if (expectedRevision && snapshot.snapshotRevision !== expectedRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Editor window semantic content changed while paging; restart from offset 0',
+        {
+          windowLabel,
+          expectedSnapshotRevision: expectedRevision,
+          actualSnapshotRevision: snapshot.snapshotRevision,
+          restartOffset: 0,
+        },
+      );
+    }
+    return snapshot;
   }
 
-  /** Read exact, unnormalized UI text/value in bounded pages. */
+  /** Read exact, unnormalized UI text, value, or serialized options in bounded pages. */
   async readWindowContent(
     selector: string,
-    field: 'text' | 'value',
+    field: 'text' | 'value' | 'options',
+    expectedSnapshotRevision: string,
     windowLabel = 'main',
     offset = 0,
     maxChars = 10_000,
+    expectedContentRevision?: string,
   ): Promise<EditorUiContentPage> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI content reads require the desktop editor');
@@ -515,13 +895,42 @@ class AgentBridge {
     if (!selector) {
       throw new BridgeError('INVALID_ARGS', 'Window UI content reads require a selector');
     }
+    if (!/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSnapshotRevision ?? '')) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Window UI content reads require expectedSnapshotRevision from window.ui_snapshot',
+      );
+    }
     const boundedOffset = Number.isFinite(offset)
       ? Math.min(10_000_000, Math.max(0, Math.trunc(offset)))
       : 0;
     const boundedMaxChars = Number.isFinite(maxChars)
       ? Math.min(100_000, Math.max(1, Math.trunc(maxChars)))
       : 10_000;
-    const result = await invoke<EditorUiContentPage & { ok?: boolean; error?: string }>(
+    const expectedRevision = expectedContentRevision?.trim();
+    if (
+      expectedContentRevision !== undefined
+      && !/^content-v\d+-\d+-[0-9a-f]{16}$/.test(expectedRevision ?? '')
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedContentRevision" must be a contentRevision returned by window.ui_content',
+      );
+    }
+    if (boundedOffset > 0 && !expectedRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedContentRevision" from the first content page',
+      );
+    }
+    const result = await invoke<EditorUiContentPage & {
+      ok?: boolean;
+      error?: string;
+      staleSnapshot?: boolean;
+      expectedSnapshotRevision?: string;
+      actualSnapshotRevision?: string;
+      restartOffset?: number;
+    }>(
       'read_editor_ui_content',
       {
         windowLabel,
@@ -529,22 +938,68 @@ class AgentBridge {
         field,
         offset: boundedOffset,
         maxChars: boundedMaxChars,
+        expectedSnapshotRevision,
       },
     );
     if (result.ok === false) {
+      if (result.staleSnapshot) {
+        throw new BridgeError(
+          'STALE_REVISION',
+          result.error ?? 'Editor UI snapshot changed before exact content read',
+          {
+            windowLabel,
+            selector,
+            expectedSnapshotRevision: result.expectedSnapshotRevision,
+            actualSnapshotRevision: result.actualSnapshotRevision,
+            restartOffset: result.restartOffset ?? 0,
+          },
+        );
+      }
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI content read failed');
+    }
+    if (expectedRevision && result.contentRevision !== expectedRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Editor UI exact content changed while paging; restart from offset 0',
+        {
+          windowLabel,
+          selector,
+          field,
+          expectedContentRevision: expectedRevision,
+          actualContentRevision: result.contentRevision,
+          restartOffset: 0,
+        },
+      );
     }
     return result;
   }
 
-  /** Execute one allow-listed DOM action without activating the OS window. */
+  /** Execute one allow-listed DOM action only in a hidden, unfocused OS window. */
   async interactWindow(
-    action: 'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll',
+    action:
+      | 'click'
+      | 'doubleClick'
+      | 'contextClick'
+      | 'setValue'
+      | 'scroll'
+      | 'keyPress'
+      | 'dragTo'
+      | 'dragBy'
+      | 'hover',
     selector: string,
     windowLabel = 'main',
+    targetSelector?: string,
     value?: string,
     deltaX?: number,
     deltaY?: number,
+    key?: string,
+    expectedSnapshotRevision?: string,
+    modifiers: EditorUiModifiers = {
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+    },
   ): Promise<EditorUiActionResult> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI interaction requires the desktop editor');
@@ -552,15 +1007,87 @@ class AgentBridge {
     if (!selector) {
       throw new BridgeError('INVALID_ARGS', 'Window UI interaction requires a selector');
     }
+    if (!/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSnapshotRevision ?? '')) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Window UI interaction requires expectedSnapshotRevision from window.ui_snapshot',
+      );
+    }
+    const targetWindow = (await this.listWindows()).find(
+      (window) => window.label === windowLabel,
+    );
+    if (!targetWindow) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Editor window "${windowLabel}" was not found; query window.list for current labels`,
+        { windowLabel },
+      );
+    }
+    if (targetWindow.visible || targetWindow.focused) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window "${windowLabel}" must be hidden and unfocused before semantic UI interaction`,
+        {
+          windowLabel,
+          visible: targetWindow.visible,
+          focused: targetWindow.focused,
+          requiredWindowState: 'hidden-unfocused',
+        },
+      );
+    }
     const result = await invoke<EditorUiActionResult>('interact_editor_window', {
       windowLabel,
       selector,
       action,
+      targetSelector,
       value,
       deltaX,
       deltaY,
+      key,
+      ...modifiers,
+      expectedSnapshotRevision,
     });
     if (!result.ok) {
+      if (result.staleSnapshot) {
+        throw new BridgeError(
+          'STALE_REVISION',
+          result.error ?? 'Editor UI snapshot changed before interaction',
+          {
+            windowLabel,
+            expectedSnapshotRevision: result.expectedSnapshotRevision,
+            actualSnapshotRevision: result.actualSnapshotRevision,
+            restartOffset: result.restartOffset ?? 0,
+          },
+        );
+      }
+      if (result.modalBlocked) {
+        throw new BridgeError(
+          'CONFLICT',
+          result.error ?? 'Editor UI interaction is blocked by an active modal dialog',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            modalBlocked: true,
+            activeModalName: result.activeModalName ?? null,
+            agentAlternative:
+              result.agentAlternative
+              ?? 'Interact with or dismiss the active modal dialog first',
+          },
+        );
+      }
+      if (result.constraintViolation) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Editor UI value violates native control constraints',
+          {
+            windowLabel,
+            selector,
+            constraintViolation: true,
+            validityIssues: result.validityIssues ?? [],
+          },
+        );
+      }
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
     }
     return result;
@@ -576,6 +1103,8 @@ class AgentBridge {
       simulationTime: snapshot.simulationTime,
       gizmo: store.gizmo,
       sceneCamera: store.sceneCamera,
+      sceneView: readSceneViewPreferences(),
+      timelinePreferences: readTimelineEditorPreferences(),
       gameResolution: store.gameResolution,
       canUndo: store.canUndo,
       canRedo: store.canRedo,
@@ -626,12 +1155,25 @@ class AgentBridge {
 
   async getProjectSettings(): Promise<{
     sortingLayers: Awaited<ReturnType<typeof loadSortingLayersSnapshot>>;
+    settings: Awaited<ReturnType<typeof loadSortingLayersSnapshot>>['settings'];
+    revision: string | null;
   }> {
     const sortingLayers = await bridgeIo(
       'Failed to read Project Settings',
       () => loadSortingLayersSnapshot(),
     );
-    return { sortingLayers: structuredClone(sortingLayers) };
+    return {
+      sortingLayers: structuredClone(sortingLayers),
+      settings: structuredClone(sortingLayers.settings),
+      revision: sortingLayers.revision,
+    };
+  }
+
+  async getProjectScriptDiagnostics(): Promise<ProjectScriptValidation> {
+    return bridgeIo(
+      'Failed to validate project TypeScript',
+      () => validateProjectScripts(),
+    );
   }
 
   getSceneSnapshot(): unknown {
@@ -696,6 +1238,7 @@ class AgentBridge {
   }
 
   findEntities(params: Record<string, unknown>): {
+    sceneRevision: number;
     total: number;
     offset: number;
     count: number;
@@ -715,6 +1258,7 @@ class AgentBridge {
     const rawActive = params.active;
     const rawLimit = params.limit ?? 100;
     const rawOffset = params.offset ?? 0;
+    const rawExpectedSceneRevision = params.expectedSceneRevision;
     if (rawName !== undefined && (typeof rawName !== 'string' || !rawName.trim())) {
       throw new BridgeError('INVALID_ARGS', '"name" must be a non-empty string');
     }
@@ -743,10 +1287,45 @@ class AgentBridge {
     ) {
       throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
     }
+    if (
+      rawExpectedSceneRevision !== undefined
+      && (
+        typeof rawExpectedSceneRevision !== 'number'
+        || !Number.isSafeInteger(rawExpectedSceneRevision)
+        || rawExpectedSceneRevision < 0
+      )
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedSceneRevision" must be a non-negative safe integer',
+      );
+    }
+    if (rawOffset > 0 && rawExpectedSceneRevision === undefined) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedSceneRevision" from the first entity page',
+      );
+    }
+    const store = this.requireStore();
+    const sceneRevision = this.sceneChanges.revision;
+    if (
+      rawExpectedSceneRevision !== undefined
+      && rawExpectedSceneRevision !== sceneRevision
+    ) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Scene changed while paging entity matches; restart from offset 0',
+        {
+          expectedSceneRevision: rawExpectedSceneRevision,
+          currentSceneRevision: sceneRevision,
+          restartOffset: 0,
+        },
+      );
+    }
     const name = typeof rawName === 'string' ? rawName.trim().toLocaleLowerCase() : null;
     const component = typeof rawComponent === 'string' ? rawComponent.trim() : null;
     const entities = (
-      this.requireStore().snapshot().entities as unknown as EntityView[]
+      store.snapshot().entities as unknown as EntityView[]
     ).filter((entity) => (
       (name == null || (entity.name ?? '').toLocaleLowerCase().includes(name))
       && (
@@ -757,6 +1336,7 @@ class AgentBridge {
     ));
     const page = paginateAgentItems(entities, rawOffset, rawLimit);
     return {
+      sceneRevision,
       total: page.total,
       offset: page.offset,
       count: page.count,
@@ -792,35 +1372,387 @@ class AgentBridge {
     };
   }
 
-  async listWindows(): Promise<EditorWindowInfo[]> {
+  private async readWindows(): Promise<EditorWindowInfo[]> {
     if (!isDesktopEditor()) return [];
     return invoke<EditorWindowInfo[]>('list_editor_windows');
   }
 
-  async getWorkspaceDocuments(): Promise<{
-    documents: Array<AgentWorkspaceDocument & {
-      active: boolean;
-      detached: boolean;
-      windowLabel: string;
-    }>;
+  private recordWindowInventory(
+    windows: readonly EditorWindowInfo[],
+    details: Record<string, unknown> = { action: 'inventory' },
+    emitEvent = true,
+  ): void {
+    const snapshot = structuredClone(windows);
+    const openLabels = new Set(snapshot.map((window) => window.label));
+    for (const label of this.agentOwnedEditorWindows) {
+      if (!openLabels.has(label)) this.agentOwnedEditorWindows.delete(label);
+    }
+    const signature = JSON.stringify(snapshot);
+    const inventoryChanged = signature !== this.observedWindowSignature;
+    if (inventoryChanged) this.observedWindowSignature = signature;
+    const semanticAction = details.action !== undefined && details.action !== 'inventory';
+    if (emitEvent && (inventoryChanged || semanticAction)) {
+      this.appendEvent('window.changed', {
+        ...details,
+        windows: snapshot,
+      });
+    }
+  }
+
+  private async observeWindowInventory(
+    details?: Record<string, unknown>,
+    emitEvent = true,
+  ): Promise<EditorWindowInfo[]> {
+    const generation = ++this.windowObservationGeneration;
+    const windows = await this.readWindows();
+    if (generation >= this.windowObservationCommitted) {
+      this.windowObservationCommitted = generation;
+      this.recordWindowInventory(windows, details, emitEvent);
+    }
+    return windows;
+  }
+
+  async listWindows(): Promise<EditorWindowInfo[]> {
+    return this.observeWindowInventory();
+  }
+
+  private async assertPanelWindowMutationAllowed(
+    operation: string,
+    windowLabels: readonly string[],
+    windows?: readonly EditorWindowInfo[],
+  ): Promise<void> {
+    const observedWindows = windows ?? await this.listWindows();
+    const blockers = panelWindowBlockers(observedWindows, windowLabels);
+    if (blockers.length === 0) return;
+    throw new BridgeError(
+      'READONLY',
+      `${operation} would modify a visible or focused editor window`,
+      {
+        operation,
+        blockers,
+        requiredWindowState: 'hidden-unfocused',
+        agentAlternative: 'Use window.ui_snapshot or view.window_screenshot for read-only observation',
+      },
+    );
+  }
+
+  async closeRegisteredEditorWindow(windowLabel: string, emitEvent = true): Promise<{
+    windowLabel: string;
+    closed: boolean;
   }> {
+    const target = (await this.listWindows()).find(
+      (window) => window.label === windowLabel,
+    );
+    if (!target) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Editor window "${windowLabel}" was not found; query window.list for current labels`,
+      );
+    }
+    if (target.kind === 'main') {
+      throw new BridgeError(
+        'READONLY',
+        'The main editor window cannot be closed by window.close; use project.close to return to the project hub',
+        { windowLabel, agentAlternative: 'close_project' },
+      );
+    }
+    if (target.kind === 'panel') {
+      throw new BridgeError(
+        'READONLY',
+        `Detached panel "${target.panelKind ?? windowLabel}" must use panel.dock so its dock layout stays consistent`,
+        {
+          windowLabel,
+          panelKind: target.panelKind,
+          agentAlternative: 'dock_panel',
+        },
+      );
+    }
+    if (target.kind !== 'editor') {
+      throw new BridgeError(
+        'READONLY',
+        `Window "${windowLabel}" is not a registered auxiliary editor window`,
+        { windowLabel, kind: target.kind },
+      );
+    }
+    if (!this.agentOwnedEditorWindows.has(windowLabel)) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window "${windowLabel}" was not created by this Agent session and cannot be closed in the background`,
+        {
+          windowLabel,
+          visible: target.visible,
+          focused: target.focused,
+          createdByAgent: false,
+        },
+      );
+    }
+    if (target.visible || target.focused) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window "${windowLabel}" is visible or focused and cannot be closed in the background`,
+        {
+          windowLabel,
+          visible: target.visible,
+          focused: target.focused,
+          createdByAgent: true,
+        },
+      );
+    }
+    const result = await bridgeIo(
+      `Failed to close editor window "${windowLabel}"`,
+      () => invoke<{ windowLabel: string; closed: boolean }>(
+        'close_editor_window',
+        { windowLabel },
+      ),
+    );
+    if (result.closed) {
+      this.agentOwnedEditorWindows.delete(windowLabel);
+      await this.observeWindowInventory(
+        {
+          action: 'closed',
+          window: structuredClone(target),
+        },
+        emitEvent,
+      );
+    }
+    return result;
+  }
+
+  listRegisteredWindowTypes(): Array<{
+    typeId: string;
+    title: string;
+    width: number;
+    height: number;
+    requiresProject: true;
+  }> {
+    return listRegisteredEditorWindowTypes().map((entry) => ({
+      ...entry,
+      requiresProject: true,
+    }));
+  }
+
+  async openRegisteredEditorWindow(typeId: string): Promise<{
+    typeId: string;
+    title: string;
+    windowLabel: string;
+    created: boolean;
+    visible: boolean;
+    focused: boolean;
+    semanticReady: true;
+    snapshotRevision: string;
+    semanticElementCount: number;
+    backgroundSafe: true;
+  }> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError(
+        'NOT_READY',
+        'Background registered editor windows require the desktop editor',
+      );
+    }
+    if (!this.store || !this.editorBootReady) {
+      throw new BridgeError(
+        'NOT_READY',
+        'Registered editor windows require an active project; open or create a project first',
+      );
+    }
+    const normalizedTypeId = typeId.trim();
+    if (!normalizedTypeId || normalizedTypeId.length > 256) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"typeId" must contain 1 to 256 characters',
+      );
+    }
+    const definition = createRegisteredEditorWindow(normalizedTypeId);
+    if (!definition) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Unknown editor window type "${normalizedTypeId}"; query window.types for registered types`,
+      );
+    }
+    const existing = (await this.listWindows()).find(
+      (window) => window.editorType === normalizedTypeId,
+    );
+    if (existing && (existing.visible || existing.focused)) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window type "${normalizedTypeId}" is already visible or focused and cannot be reused for background Agent work`,
+        {
+          typeId: normalizedTypeId,
+          windowLabel: existing.label,
+          visible: existing.visible,
+          focused: existing.focused,
+          createdByAgent: false,
+          requiredWindowState: 'hidden-unfocused',
+        },
+      );
+    }
+    const opened = await openNativeEditorWindow({
+      typeId: normalizedTypeId,
+      title: definition.title,
+      width: definition.width,
+      height: definition.height,
+      activateWindow: false,
+    });
+    if (!opened) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Failed to open editor window type "${normalizedTypeId}"`,
+      );
+    }
+    let target: EditorWindowInfo | undefined;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      target = (await this.readWindows()).find(
+        (window) => window.editorType === normalizedTypeId,
+      );
+      if (target) break;
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    if (!target) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Editor window type "${normalizedTypeId}" opened without a discoverable native window`,
+      );
+    }
+    if (target.visible || target.focused) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window "${target.label}" is visible or focused and cannot be used for background Agent work`,
+        {
+          typeId: normalizedTypeId,
+          windowLabel: target.label,
+          visible: target.visible,
+          focused: target.focused,
+          createdByAgent: existing === undefined,
+          requiredWindowState: 'hidden-unfocused',
+        },
+      );
+    }
+    if (existing === undefined) this.agentOwnedEditorWindows.add(target.label);
+    let initialSnapshot: EditorUiSnapshot | null = null;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      try {
+        const candidate = await this.inspectWindow(target.label, 250, 0);
+        if (candidate.totalSemanticElements > 0) {
+          initialSnapshot = candidate;
+          break;
+        }
+      } catch {
+        // The native window can be discoverable before its WebView document is ready.
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    if (!initialSnapshot) {
+      if (existing === undefined) {
+        await this.closeRegisteredEditorWindow(target.label, false).catch(() => undefined);
+      }
+      throw new BridgeError(
+        'NOT_READY',
+        `Editor window type "${normalizedTypeId}" did not expose semantic UI within 5 seconds`,
+        { windowLabel: target.label },
+      );
+    }
+    const result = {
+      typeId: normalizedTypeId,
+      title: target.title,
+      windowLabel: target.label,
+      created: existing === undefined,
+      visible: target.visible,
+      focused: target.focused,
+      semanticReady: true as const,
+      snapshotRevision: initialSnapshot.snapshotRevision,
+      semanticElementCount: initialSnapshot.totalSemanticElements,
+      backgroundSafe: true as const,
+    };
+    if (existing === undefined) {
+      await this.observeWindowInventory({
+        action: 'opened',
+        window: structuredClone(target),
+        snapshotRevision: initialSnapshot.snapshotRevision,
+        semanticElementCount: initialSnapshot.totalSemanticElements,
+      });
+    }
+    return result;
+  }
+
+  async getWorkspaceDocuments(): Promise<{
+    documents: AgentObservedWorkspaceDocument[];
+  }> {
+    const generation = this.workspaceObservationGeneration;
+    const observation = this.workspaceObservationStarted + 1;
+    this.workspaceObservationStarted = observation;
     const documents = await this.requireWorkspaceProvider().listDocuments();
     const layout = this.panelLayoutProvider?.() ?? null;
     const detachedPanels = new Map(
       (layout?.detachedPanels ?? []).map((entry) => [entry.kind, entry.windowLabel]),
     );
     const activePanels = new Set(layout?.activePanels ?? []);
-    return {
+    const result = {
       documents: documents.map((document) => {
         const detachedWindow = detachedPanels.get(document.panel);
+        const {
+          conflicted = false,
+          selected = true,
+          ...visibleDocument
+        } = document;
         return {
-          ...structuredClone(document),
-          active: detachedWindow !== undefined || activePanels.has(document.panel),
+          ...structuredClone(visibleDocument),
+          conflicted,
+          active: selected && (
+            detachedWindow !== undefined || activePanels.has(document.panel)
+          ),
           detached: detachedWindow !== undefined,
           windowLabel: detachedWindow ?? 'main',
         };
       }),
     };
+    if (
+      generation === this.workspaceObservationGeneration
+      && observation >= this.workspaceObservationCommitted
+    ) {
+      this.workspaceObservationCommitted = observation;
+      const signature = JSON.stringify(result.documents);
+      if (signature !== this.observedWorkspaceSignature) {
+        this.observedWorkspaceSignature = signature;
+        this.appendEvent('workspace.changed', result);
+      }
+    }
+    return result;
+  }
+
+  /** Observe document path, dirty, active, and host-window changes without polling UI. */
+  observeWorkspace(): void {
+    if (!this.store || !this.workspaceProvider?.()) return;
+    void this.getWorkspaceDocuments().catch(() => {
+      // Workspace providers can be briefly unavailable during project/window transitions.
+    });
+  }
+
+  private async waitForWorkspaceDocument(
+    target: AgentResourceEditorTarget,
+  ): Promise<AgentObservedWorkspaceDocument> {
+    let observedPanelDocuments: AgentObservedWorkspaceDocument[] = [];
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      const workspace = await this.getWorkspaceDocuments();
+      observedPanelDocuments = workspace.documents.filter(
+        (document) => document.panel === target.panel,
+      );
+      const document = observedPanelDocuments.find(
+        (candidate) => (
+          candidate.path?.toLocaleLowerCase() === target.path.toLocaleLowerCase()
+          && candidate.active
+        ),
+      );
+      if (document) return document;
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    throw new BridgeError(
+      'IO_ERROR',
+      `Resource editor did not activate "${target.path}" in panel "${target.panel}" within 5 seconds`,
+      {
+        target: structuredClone(target),
+        observedPanelDocuments: structuredClone(observedPanelDocuments),
+      },
+    );
   }
 
   getLogs(query: LogQuery = {}): LogEntry[] {
@@ -855,6 +1787,7 @@ class AgentBridge {
       ? this.sceneChanges.observe(
         sceneName,
         snapshot.entities as unknown as SceneEntityView[],
+        { clearColor: snapshot.clearColor },
       )
       : null;
     if (shouldObserveScene && store.mode === 'play') {
@@ -870,6 +1803,9 @@ class AgentBridge {
     const panelSignature = panelLayout ? JSON.stringify(panelLayout) : null;
     const view = {
       gizmo: store.gizmo,
+      sceneCamera: store.sceneCamera,
+      sceneView: readSceneViewPreferences(),
+      timelinePreferences: readTimelineEditorPreferences(),
       gameResolution: store.gameResolution,
     };
     const current: ObservedEditorState = {
@@ -919,11 +1855,66 @@ class AgentBridge {
     if (!previous || previous.viewSignature !== current.viewSignature) {
       this.appendEvent('view.changed', view, now);
     }
+    if (
+      !previous
+      || sceneDelta
+      || previous.mode !== current.mode
+      || !sameNumberArray(previous.selectedIds, current.selectedIds)
+    ) {
+      this.recordMenuEvent(now);
+    }
     this.observedState = current;
   }
 
   getEvents(params: Record<string, unknown>): AgentEventPage {
     this.observe();
+    return this.events.list(this.eventQueryOptions(params));
+  }
+
+  async waitForEvents(
+    params: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<AgentEventWaitPage> {
+    this.observe();
+    const options = this.eventQueryOptions(params);
+    const timeoutMs = params.timeoutMs ?? 15_000;
+    if (
+      typeof timeoutMs !== 'number'
+      || !Number.isSafeInteger(timeoutMs)
+      || timeoutMs < 0
+      || timeoutMs > 15_000
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"timeoutMs" must be an integer from 0 to 15000',
+      );
+    }
+    try {
+      return await this.events.wait(options, timeoutMs, signal);
+    } catch (error) {
+      if (
+        error instanceof Error
+        && error.message === 'Agent event wait limit reached'
+      ) {
+        throw new BridgeError(
+          'RATE_LIMITED',
+          'Too many concurrent editor event waits; retry after an existing wait completes',
+          {
+            pendingEventWaits: MAX_AGENT_EVENT_WAITERS,
+            maxConcurrentEventWaits: MAX_AGENT_EVENT_WAITERS,
+            retryAfterMs: 250,
+          },
+        );
+      }
+      throw error;
+    }
+  }
+
+  private eventQueryOptions(params: Record<string, unknown>): {
+    afterSequence: number;
+    limit: number;
+    topics?: AgentEventTopic[];
+  } {
     const afterSequence = params.afterSequence ?? 0;
     const limit = params.limit ?? 100;
     const rawTopics = params.topics;
@@ -935,6 +1926,12 @@ class AgentBridge {
       throw new BridgeError(
         'INVALID_ARGS',
         '"afterSequence" must be a non-negative safe integer',
+      );
+    }
+    if (afterSequence > this.events.currentSequence) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `"afterSequence" cannot exceed the current event sequence ${this.events.currentSequence}`,
       );
     }
     if (
@@ -961,7 +1958,7 @@ class AgentBridge {
       }
       topics = [...new Set(rawTopics as AgentEventTopic[])];
     }
-    return this.events.list({ afterSequence, limit, topics });
+    return { afterSequence, limit, topics };
   }
 
   getSceneDiff(fromRevision: number): SceneDiff & {
@@ -984,6 +1981,7 @@ class AgentBridge {
       ...this.sceneChanges.diff(
         fromRevision,
         snapshot.entities as unknown as SceneEntityView[],
+        { clearColor: snapshot.clearColor },
       ),
       sceneName: this.sceneMeta?.sceneName() ?? null,
       dirty: this.sceneMeta?.dirty() ?? false,
@@ -996,6 +1994,31 @@ class AgentBridge {
     } else {
       this.appendEvent('log.cleared', {});
     }
+  }
+
+  private recordDialogEvent(): void {
+    const dialogs = listEditorDialogs();
+    const signature = JSON.stringify(dialogs);
+    if (signature === this.observedDialogSignature) return;
+    this.observedDialogSignature = signature;
+    this.appendEvent('dialog.changed', { dialogs });
+  }
+
+  private recordMenuEvent(time = Date.now()): void {
+    if (!this.store || !this.editorBootReady) return;
+    const menus = this.listMenus();
+    const signature = JSON.stringify(menus);
+    if (signature === this.observedMenuSignature) return;
+    this.observedMenuSignature = signature;
+    this.appendEvent('menu.changed', { menus }, time);
+  }
+
+  private recordWindowTypeEvent(): void {
+    const windowTypes = this.listRegisteredWindowTypes();
+    const signature = JSON.stringify(windowTypes);
+    if (signature === this.observedWindowTypeSignature) return;
+    this.observedWindowTypeSignature = signature;
+    this.appendEvent('window.types.changed', { windowTypes });
   }
 
   private appendEvent(
@@ -1024,6 +2047,12 @@ class AgentBridge {
     return COMMAND_META.map(({ paramsSchema: _paramsSchema, ...summary }) => ({ ...summary }));
   }
 
+  listIntents(): unknown {
+    return structuredClone({
+      intents: INTENT_DEFINITIONS,
+    });
+  }
+
   describeCommand(id: string): CommandMeta & { executionOptionsSchema: unknown } {
     const command = COMMAND_META.find((candidate) => candidate.id === id);
     if (!command) {
@@ -1035,12 +2064,69 @@ class AgentBridge {
     });
   }
 
+  listQueries(): QuerySummary[] {
+    return QUERY_META.map(({ paramsSchema: _paramsSchema, ...summary }) => ({ ...summary }));
+  }
+
+  describeQuery(id: string): QueryMeta {
+    const query = QUERY_META.find((candidate) => candidate.id === id);
+    if (!query) {
+      throw new BridgeError('INVALID_ARGS', `Unknown query "${id}"`);
+    }
+    return structuredClone(query);
+  }
+
   getPanelLayout(): PanelLayoutSnapshot {
     const layout = this.panelLayoutProvider?.() ?? null;
     if (!layout) {
       throw new BridgeError('NOT_READY', 'The main dock workspace is not ready');
     }
     return structuredClone(layout);
+  }
+
+  async listPanels(): Promise<{
+    panels: EditorPanelInfo[];
+    nativeLayoutConsistent: boolean;
+  }> {
+    let layout = this.getPanelLayout();
+    let windows = await this.listWindows();
+    let nativeLayoutConsistent = panelWindowsMatchLayout(layout, windows);
+    for (let attempt = 0; attempt < 20 && !nativeLayoutConsistent; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      layout = this.getPanelLayout();
+      windows = await this.listWindows();
+      nativeLayoutConsistent = panelWindowsMatchLayout(layout, windows);
+    }
+    const detached = new Map(
+      layout.detachedPanels.map((entry) => [entry.kind, entry.windowLabel]),
+    );
+    const docked = new Set(layout.dockedPanels);
+    const active = new Set(layout.activePanels);
+    const windowsByLabel = new Map(windows.map((entry) => [entry.label, entry]));
+    return {
+      panels: CORE_PANEL_IDS.map((kind) => {
+        const dockLocation = findPanelDockLocation(layout.tree, kind);
+        const detachedWindow = detached.get(kind);
+        const windowLabel = detachedWindow ?? 'main';
+        const nativeWindow = windowsByLabel.get(windowLabel);
+        const isActive = active.has(kind);
+        return {
+          kind,
+          title: PANEL_TITLES[kind],
+          active: isActive,
+          visible: isActive,
+          docked: docked.has(kind),
+          detached: detachedWindow !== undefined,
+          dockPath: dockLocation?.path ?? null,
+          tabIndex: dockLocation?.tabIndex ?? null,
+          windowLabel,
+          nativeWindowAvailable: nativeWindow !== undefined,
+          windowVisible: nativeWindow?.visible ?? null,
+          windowFocused: nativeWindow?.focused ?? null,
+        };
+      }),
+      nativeLayoutConsistent,
+    };
   }
 
   listMenus(root?: string): EditorMenuItemInfo[] {
@@ -1064,6 +2150,8 @@ class AgentBridge {
           shortcut: entry.shortcut ?? null,
           separatorBefore: entry.separatorBefore,
           enabled,
+          agentInvokable: entry.agentInvokable,
+          agentAlternative: entry.agentAlternative ?? null,
         };
       });
   }
@@ -1128,6 +2216,7 @@ class AgentBridge {
   }
 
   async listAssets(params: Record<string, unknown> = {}): Promise<{
+    indexRevision: string;
     total: number;
     offset: number;
     count: number;
@@ -1146,6 +2235,7 @@ class AgentBridge {
       : '';
     const limit = params.limit ?? 1_000;
     const offset = params.offset ?? 0;
+    const rawExpectedIndexRevision = params.expectedIndexRevision;
     if (
       typeof limit !== 'number'
       || !Number.isSafeInteger(limit)
@@ -1162,6 +2252,24 @@ class AgentBridge {
     ) {
       throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
     }
+    const expectedIndexRevision = typeof rawExpectedIndexRevision === 'string'
+      ? rawExpectedIndexRevision.trim()
+      : '';
+    if (
+      rawExpectedIndexRevision !== undefined
+      && !/^asset-index-v\d+-\d+-[0-9a-f]{16}$/.test(expectedIndexRevision)
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedIndexRevision" must be an indexRevision returned by asset.list',
+      );
+    }
+    if (offset > 0 && !expectedIndexRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedIndexRevision" from the first asset page',
+      );
+    }
     const filtered = files
       .filter((asset) => !kind || asset.kind === kind)
       .filter((asset) => !folder || (
@@ -1173,8 +2281,21 @@ class AgentBridge {
         || asset.name.toLocaleLowerCase().includes(search)
       ))
       .sort((left, right) => left.relPath.localeCompare(right.relPath));
+    const indexRevision = projectAssetIndexRevision(filtered);
+    if (expectedIndexRevision && expectedIndexRevision !== indexRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Project asset index changed while paging; restart from offset 0',
+        {
+          expectedIndexRevision,
+          currentIndexRevision: indexRevision,
+          restartOffset: 0,
+        },
+      );
+    }
     const page = paginateAgentItems(filtered, offset, limit);
     return {
+      indexRevision,
       total: page.total,
       offset: page.offset,
       count: page.count,
@@ -1182,6 +2303,306 @@ class AgentBridge {
       hasMore: page.hasMore,
       truncated: page.truncated,
       assets: structuredClone(page.items),
+    };
+  }
+
+  async listSpriteAssets(params: Record<string, unknown> = {}): Promise<{
+    spriteRevision: string;
+    total: number;
+    offset: number;
+    count: number;
+    nextOffset: number | null;
+    hasMore: boolean;
+    truncated: boolean;
+    sprites: SpriteAsset[];
+  }> {
+    const sprites = isDesktopEditor()
+      ? await bridgeIo(
+        'Failed to read the project sprite index',
+        () => invoke<SpriteAsset[]>('list_project_sprites'),
+      )
+      : await refreshSprites();
+    const search = typeof params.search === 'string'
+      ? params.search.trim().toLocaleLowerCase()
+      : '';
+    const folder = typeof params.folder === 'string' && params.folder.trim()
+      ? normalizeAssetPath(params.folder)
+      : '';
+    const limit = params.limit ?? 1_000;
+    const offset = params.offset ?? 0;
+    const rawExpectedSpriteRevision = params.expectedSpriteRevision;
+    if (
+      typeof limit !== 'number'
+      || !Number.isSafeInteger(limit)
+      || limit < 1
+      || limit > 5_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"limit" must be an integer from 1 to 5000');
+    }
+    if (
+      typeof offset !== 'number'
+      || !Number.isSafeInteger(offset)
+      || offset < 0
+      || offset > 1_000_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
+    }
+    const expectedSpriteRevision = typeof rawExpectedSpriteRevision === 'string'
+      ? rawExpectedSpriteRevision.trim()
+      : '';
+    if (
+      rawExpectedSpriteRevision !== undefined
+      && !/^sprite-index-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSpriteRevision)
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedSpriteRevision" must be a spriteRevision returned by sprite.list',
+      );
+    }
+    if (offset > 0 && !expectedSpriteRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedSpriteRevision" from the first sprite page',
+      );
+    }
+    const filtered = sprites
+      .filter((sprite) => !folder || (
+        sprite.folder === folder
+        || sprite.folder.startsWith(`${folder}/`)
+      ))
+      .filter((sprite) => !search || (
+        sprite.id.toLocaleLowerCase().includes(search)
+        || sprite.name.toLocaleLowerCase().includes(search)
+        || sprite.relPath.toLocaleLowerCase().includes(search)
+        || (sprite.sliceName ?? '').toLocaleLowerCase().includes(search)
+      ))
+      .sort((left, right) => left.id.localeCompare(right.id));
+    const spriteRevision = spriteAssetIndexRevision(filtered);
+    if (expectedSpriteRevision && expectedSpriteRevision !== spriteRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Project sprite index changed while paging; restart from offset 0',
+        {
+          expectedSpriteRevision,
+          currentSpriteRevision: spriteRevision,
+          restartOffset: 0,
+        },
+      );
+    }
+    const page = paginateAgentItems(filtered, offset, limit);
+    return {
+      spriteRevision,
+      total: page.total,
+      offset: page.offset,
+      count: page.count,
+      nextOffset: page.nextOffset,
+      hasMore: page.hasMore,
+      truncated: page.truncated,
+      sprites: structuredClone(page.items),
+    };
+  }
+
+  async getSpriteImportSettings(path: string): Promise<SpriteImportSettingsInfo> {
+    const normalized = normalizeAssetPath(spriteTexturePath(path));
+    const files = await refreshProjectFiles();
+    const texture = findAsset(files, normalized);
+    if (!texture) {
+      throw new BridgeError('IO_ERROR', `Texture asset not found: ${normalized}`);
+    }
+    if (
+      texture.metaStatus !== 'ready'
+      || resourceEditorTarget(texture)?.kind !== 'sprite'
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Asset is not a healthy Sprite Editor texture: ${texture.relPath}`,
+      );
+    }
+    const image = await bridgeIo(
+      `Failed to decode texture ${texture.relPath}`,
+      () => loadProjectImage(texture.relPath),
+    );
+    const textureSize: [number, number] = [
+      image.naturalWidth,
+      image.naturalHeight,
+    ];
+    const importPath = spriteImportPath(texture.relPath);
+    const sidecar = findAsset(files, importPath);
+    let revision: string | null = null;
+    let settings = createSpriteImportSettings();
+    if (sidecar) {
+      if (sidecar.size > 4 * 1024 * 1024) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Sprite import settings exceed 4 MiB: ${sidecar.relPath}`,
+        );
+      }
+      const read = await bridgeIo(
+        `Failed to read ${sidecar.relPath}`,
+        () => readProjectAssetBytesWithRevision(sidecar.relPath),
+      );
+      if (read.contents.byteLength > 4 * 1024 * 1024) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Sprite import settings exceed 4 MiB: ${sidecar.relPath}`,
+        );
+      }
+      try {
+        settings = parseSpriteImportSettings(
+          new TextDecoder('utf-8', { fatal: true }).decode(read.contents),
+          textureSize,
+        );
+      } catch (error) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Invalid sprite import settings ${sidecar.relPath}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+      revision = read.revision;
+    }
+    return {
+      texturePath: texture.relPath,
+      importPath,
+      textureSize,
+      revision,
+      settings: {
+        mode: settings.mode,
+        pixelsPerUnit: settings.pixels_per_unit,
+        slices: structuredClone(settings.slices),
+      },
+    };
+  }
+
+  async setSpriteImportSettings(
+    args: Record<string, unknown>,
+  ): Promise<SpriteImportSettingsInfo> {
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+    const current = await this.getSpriteImportSettings(
+      requiredString(args, 'path'),
+    );
+    const expectedRevision = requiredNullableRevision(
+      args,
+      'expectedRevision',
+    );
+    if (current.revision !== expectedRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        `Sprite import settings changed: expected ${
+          String(expectedRevision)
+        }, current ${String(current.revision)}`,
+        {
+          path: current.importPath,
+          expectedRevision,
+          currentRevision: current.revision,
+        },
+      );
+    }
+    const raw = args.settings as {
+      mode: 'single' | 'multiple';
+      pixelsPerUnit: number;
+      slices: SpriteImportSettingsInfo['settings']['slices'];
+    };
+    let normalized;
+    try {
+      normalized = normalizeSpriteImportSettings({
+        version: 1,
+        mode: raw.mode,
+        pixels_per_unit: raw.pixelsPerUnit,
+        slices: structuredClone(raw.slices),
+      }, current.textureSize);
+    } catch (error) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+    await this.writeAssetText(
+      current.importPath,
+      serializeSpriteImportSettings(normalized, current.textureSize),
+      expectedRevision,
+    );
+    await refreshSprites();
+    const result = await this.getSpriteImportSettings(current.texturePath);
+    this.logProvider?.(
+      `Agent applied sprite import settings: ${current.texturePath}`,
+    );
+    return result;
+  }
+
+  async listAssetTrash(params: Record<string, unknown> = {}): Promise<{
+    trashRevision: string;
+    total: number;
+    offset: number;
+    count: number;
+    nextOffset: number | null;
+    hasMore: boolean;
+    truncated: boolean;
+    invalidEntries: number;
+    entries: AssetTrashEntry[];
+  }> {
+    const inventory = await (await this.getAssetOperations()).listTrash();
+    const limit = params.limit ?? 100;
+    const offset = params.offset ?? 0;
+    if (
+      typeof limit !== 'number'
+      || !Number.isSafeInteger(limit)
+      || limit < 1
+      || limit > 1_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"limit" must be an integer from 1 to 1000');
+    }
+    if (
+      typeof offset !== 'number'
+      || !Number.isSafeInteger(offset)
+      || offset < 0
+      || offset > 1_000_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
+    }
+    const rawExpectedTrashRevision = params.expectedTrashRevision;
+    const expectedTrashRevision = typeof rawExpectedTrashRevision === 'string'
+      ? rawExpectedTrashRevision.trim()
+      : '';
+    if (
+      rawExpectedTrashRevision !== undefined
+      && !/^asset-trash-v\d+-\d+-[0-9a-f]{16}$/.test(expectedTrashRevision)
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedTrashRevision" must be a trashRevision returned by asset.trash_list',
+      );
+    }
+    if (offset > 0 && !expectedTrashRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedTrashRevision" from the first Trash page',
+      );
+    }
+    const trashRevision = assetTrashIndexRevision(inventory.entries);
+    if (expectedTrashRevision && expectedTrashRevision !== trashRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Project Trash changed while paging; restart from offset 0',
+        {
+          expectedTrashRevision,
+          currentTrashRevision: trashRevision,
+          restartOffset: 0,
+        },
+      );
+    }
+    const page = paginateAgentItems(inventory.entries, offset, limit);
+    return {
+      trashRevision,
+      total: page.total,
+      offset: page.offset,
+      count: page.count,
+      nextOffset: page.nextOffset,
+      hasMore: page.hasMore,
+      truncated: page.truncated,
+      invalidEntries: inventory.invalidEntries,
+      entries: structuredClone(page.items),
     };
   }
 
@@ -1633,10 +3054,7 @@ class AgentBridge {
         error instanceof Error ? error.message : String(error),
       );
     }
-    window.dispatchEvent(new CustomEvent(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, {
-      detail: result,
-    }));
-    this.appendEvent('build.settings', result);
+    broadcastProjectBuildSettingsChanged(result);
     this.logProvider?.(
       `Agent updated Build Settings: ${result.scenes.length} scene(s), entry ${result.mainScene}`,
     );
@@ -1683,10 +3101,7 @@ class AgentBridge {
         error instanceof Error ? error.message : String(error),
       );
     }
-    window.dispatchEvent(new CustomEvent(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, {
-      detail: result,
-    }));
-    this.appendEvent('build.settings', result);
+    broadcastProjectBuildSettingsChanged(result);
     this.logProvider?.(
       `Agent updated Build content policy: ${result.assetMode}, ${result.alwaysInclude.length} always-included path(s), ${result.shaderVariantLimit} shader variants`,
     );
@@ -1721,15 +3136,48 @@ class AgentBridge {
       }
       throw new BridgeError('IO_ERROR', message);
     }
-    this.appendEvent('project.settings', {
-      section: 'sortingLayers',
-      revision: saved.revision,
-      layers: saved.settings.layers,
-    });
     this.logProvider?.(
       `Agent saved ${saved.settings.layers.length} project sorting layer(s) at revision ${saved.revision}`,
     );
-    return { sortingLayers: structuredClone(saved) };
+    return {
+      projectSettings: structuredClone(saved),
+      sortingLayers: structuredClone(saved),
+    };
+  }
+
+  async setTagsAndLayers(
+    tags: string[],
+    gameLayers: GameObjectLayer[],
+    expectedRevision: string | null,
+  ): Promise<unknown> {
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed({
+      allowSceneDirty: true,
+    });
+    const current = await bridgeIo(
+      'Failed to read Project Settings',
+      () => loadSortingLayersSnapshot(),
+    );
+    if (current.revision !== expectedRevision) {
+      throw staleSortingLayerRevision(current.revision, expectedRevision);
+    }
+    let saved: Awaited<ReturnType<typeof persistTagsAndLayersGuarded>>;
+    try {
+      saved = await persistTagsAndLayersGuarded(tags, gameLayers, expectedRevision);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('sorting layers changed on disk since they were loaded')) {
+        const latest = await bridgeIo(
+          'Failed to reload Project Settings',
+          () => loadSortingLayersSnapshot(),
+        );
+        throw staleSortingLayerRevision(latest.revision, expectedRevision);
+      }
+      throw new BridgeError('IO_ERROR', message);
+    }
+    this.logProvider?.(
+      `Agent saved ${saved.settings.tags.length} tag(s) and ${saved.settings.gameLayers.length} GameObject layer(s) at revision ${saved.revision}`,
+    );
+    return { projectSettings: structuredClone(saved) };
   }
 
   async getBuildHistory(limit = 20): Promise<unknown> {
@@ -1746,6 +3194,185 @@ class AgentBridge {
       entries: history.entries.slice(0, boundedLimit),
       truncated: history.entries.length > boundedLimit,
     };
+  }
+
+  async getBuildPatches(limit = 50): Promise<unknown> {
+    const boundedLimit = Number.isFinite(limit)
+      ? Math.min(100, Math.max(1, Math.trunc(limit)))
+      : 50;
+    const inventory = await bridgeIo(
+      'Failed to read build patch inventory',
+      () => listPcBuildPatches(),
+    );
+    return {
+      ...inventory,
+      total: inventory.entries.length,
+      entries: inventory.entries.slice(0, boundedLimit),
+      truncated: inventory.entries.length > boundedLimit,
+    };
+  }
+
+  async compareBuildHistory(previousId: string, currentId: string): Promise<unknown> {
+    if (previousId === currentId) {
+      throw new BridgeError('INVALID_ARGS', 'Build history comparison requires two different ids');
+    }
+    return bridgeIo(
+      'Failed to compare build history',
+      () => comparePcBuildHistory(previousId, currentId),
+    );
+  }
+
+  async createBuildHistoryPatch(previousId: string, currentId: string): Promise<unknown> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Historical patch generation requires the desktop editor');
+    }
+    if (previousId === currentId) {
+      throw new BridgeError('INVALID_ARGS', 'Historical patch generation requires two different ids');
+    }
+    const result = await bridgeIo(
+      'Historical patch generation failed',
+      () => createPcBuildHistoryPatch(previousId, currentId),
+    );
+    this.notifyBuildArtifactsChanged('history-patch-created', result);
+    this.logProvider?.(`Agent created signed historical patch: ${result.outputDir}`);
+    return result;
+  }
+
+  async restoreBuildHistory(historyId: string, publicKeyPath: string): Promise<unknown> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Build history restore requires the desktop editor');
+    }
+    const result = await bridgeIo(
+      'Historical build restore failed',
+      () => restorePcBuildHistory(historyId, publicKeyPath),
+    );
+    this.notifyBuildArtifactsChanged('history-restored', result);
+    this.logProvider?.(`Agent restored trusted build history ${result.historyId}: ${result.outputDir}`);
+    return result;
+  }
+
+  async verifyBuildPatch(patchId: string, publicKeyPath: string): Promise<unknown> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Build patch verification requires the desktop editor');
+    }
+    const result = await bridgeIo(
+      'Build patch verification failed',
+      () => verifyPcBuildPatch(patchId, publicKeyPath),
+    );
+    this.appendEvent('build.progress', {
+      status: 'patch-verified',
+      result,
+    });
+    this.logProvider?.(`Agent verified signed build patch ${result.patchId}`);
+    return result;
+  }
+
+  getBuildArtifactStatus(): { status: 'idle' } | AgentBuildArtifactJob {
+    return this.buildArtifactJob
+      ? structuredClone(this.buildArtifactJob)
+      : { status: 'idle' };
+  }
+
+  startBuildHistoryPatch(previousId: string, currentId: string): AgentBuildArtifactJob {
+    if (previousId === currentId) {
+      throw new BridgeError('INVALID_ARGS', 'Historical patch generation requires two different ids');
+    }
+    return this.startBuildArtifactJob(
+      'history-patch',
+      { previousId, currentId },
+      () => this.createBuildHistoryPatch(previousId, currentId),
+    );
+  }
+
+  startBuildHistoryRestore(
+    historyId: string,
+    publicKeyPath: string,
+  ): AgentBuildArtifactJob {
+    return this.startBuildArtifactJob(
+      'history-restore',
+      { historyId, publicKeyPath },
+      () => this.restoreBuildHistory(historyId, publicKeyPath),
+    );
+  }
+
+  startBuildPatchVerification(
+    patchId: string,
+    publicKeyPath: string,
+  ): AgentBuildArtifactJob {
+    return this.startBuildArtifactJob(
+      'patch-verify',
+      { patchId, publicKeyPath },
+      () => this.verifyBuildPatch(patchId, publicKeyPath),
+    );
+  }
+
+  private startBuildArtifactJob(
+    operation: AgentBuildArtifactJob['operation'],
+    input: Record<string, string>,
+    run: () => Promise<unknown>,
+  ): AgentBuildArtifactJob {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Build artifact jobs require the desktop editor');
+    }
+    if (this.buildArtifactJob?.status === 'running') {
+      throw new BridgeError(
+        'CONFLICT',
+        `Build artifact job ${this.buildArtifactJob.id} is already running`,
+      );
+    }
+    if (this.buildJob?.status === 'running') {
+      throw new BridgeError('CONFLICT', `Build ${this.buildJob.id} is already running`);
+    }
+    const job: AgentBuildArtifactJob = {
+      id: crypto.randomUUID(),
+      operation,
+      status: 'running',
+      cancellable: false,
+      input: structuredClone(input),
+      startedAt: Date.now(),
+      finishedAt: null,
+      result: null,
+      error: null,
+    };
+    this.buildArtifactJob = job;
+    this.appendEvent('build.progress', {
+      jobId: job.id,
+      operation,
+      status: 'running',
+      cancellable: false,
+    }, job.startedAt);
+    void run()
+      .then((result) => {
+        if (this.buildArtifactJob?.id !== job.id) return;
+        this.buildArtifactJob.status = 'succeeded';
+        this.buildArtifactJob.result = result;
+        this.buildArtifactJob.finishedAt = Date.now();
+        this.appendEvent('build.progress', {
+          jobId: job.id,
+          operation,
+          status: 'succeeded',
+          result,
+        }, this.buildArtifactJob.finishedAt);
+      })
+      .catch((error) => {
+        if (this.buildArtifactJob?.id !== job.id) return;
+        const message = error instanceof Error ? error.message : String(error);
+        this.buildArtifactJob.status = 'failed';
+        this.buildArtifactJob.error = message;
+        this.buildArtifactJob.finishedAt = Date.now();
+        this.appendEvent('build.progress', {
+          jobId: job.id,
+          operation,
+          status: 'failed',
+          error: message,
+        }, this.buildArtifactJob.finishedAt);
+        this.logProvider?.(`Agent build artifact ${operation} failed: ${message}`);
+      });
+    return structuredClone(job);
+  }
+
+  private notifyBuildArtifactsChanged(status: string, result: unknown): void {
+    broadcastProjectBuildArtifactsChanged({ source: 'agent', status, result });
   }
 
   getBuildStatus(): { status: 'idle' } | AgentBuildJob {
@@ -1814,6 +3441,11 @@ class AgentBridge {
           status: 'succeeded',
           result,
         }, this.buildJob.finishedAt);
+        broadcastProjectBuildArtifactsChanged({
+          source: 'agent',
+          status: 'build-created',
+          result,
+        });
         this.logProvider?.(`Agent build succeeded: ${result.outputDir}`);
       })
       .catch((error) => {
@@ -1889,6 +3521,31 @@ class AgentBridge {
     return verification;
   }
 
+  async launchBuiltPlayer(executable: string): Promise<RunPlayerResult> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Published Player launch requires the desktop editor');
+    }
+    if (this.buildJob?.status === 'running') {
+      throw new BridgeError(
+        'CONFLICT',
+        `Build ${this.buildJob.id} is still running; launch it after completion`,
+      );
+    }
+    const launched = await bridgeIo(
+      'Published Player launch failed',
+      () => runPcPlayer(executable),
+    );
+    this.appendEvent('build.progress', {
+      jobId: this.buildJob?.id ?? null,
+      status: 'player-launched',
+      launched,
+    });
+    this.logProvider?.(
+      `Agent launched published Player process ${launched.processId}: ${launched.executable}`,
+    );
+    return launched;
+  }
+
   async setGameResolution(
     resolution: GameResolution | null,
   ): Promise<EditorState> {
@@ -1904,6 +3561,63 @@ class AgentBridge {
       `Agent set Game View resolution to ${
         resolution ? `${resolution.width} x ${resolution.height}` : 'Free Aspect'
       }`,
+    );
+    return this.getEditorState();
+  }
+
+  setSceneViewPreferences(
+    args: Record<string, unknown>,
+  ): EditorState {
+    this.requireStore();
+    const patch: SceneViewPreferencesPatch = {};
+    if (args.mode2D !== undefined) patch.mode2D = args.mode2D as boolean;
+    if (args.gridVisible !== undefined) {
+      patch.gridVisible = args.gridVisible as boolean;
+    }
+    if (args.smartGuidesEnabled !== undefined) {
+      patch.smartGuidesEnabled = args.smartGuidesEnabled as boolean;
+    }
+    if (args.pivotMode !== undefined) {
+      patch.pivotMode = args.pivotMode as SceneViewPreferencesPatch['pivotMode'];
+    }
+    if (args.handleOrientation !== undefined) {
+      patch.handleOrientation =
+        args.handleOrientation as SceneViewPreferencesPatch['handleOrientation'];
+    }
+    if (args.snap !== undefined) {
+      patch.snap = structuredClone(
+        args.snap as NonNullable<SceneViewPreferencesPatch['snap']>,
+      );
+    }
+    updateSceneViewPreferences(patch);
+    this.observe();
+    this.logProvider?.('Agent updated persistent Scene View preferences');
+    return this.getEditorState();
+  }
+
+  setTimelineEditorPreferences(
+    args: Record<string, unknown>,
+  ): EditorState {
+    this.requireStore();
+    const patch: TimelineEditorPreferencesPatch = {};
+    if (args.animationTimeline !== undefined) {
+      patch.animationTimeline = structuredClone(
+        args.animationTimeline as NonNullable<
+          TimelineEditorPreferencesPatch['animationTimeline']
+        >,
+      );
+    }
+    if (args.sequencer !== undefined) {
+      patch.sequencer = structuredClone(
+        args.sequencer as NonNullable<
+          TimelineEditorPreferencesPatch['sequencer']
+        >,
+      );
+    }
+    updateTimelineEditorPreferences(patch);
+    this.observe();
+    this.logProvider?.(
+      'Agent updated persistent Timeline editor preferences',
     );
     return this.getEditorState();
   }
@@ -1936,15 +3650,100 @@ class AgentBridge {
     panel: string,
     expected: boolean,
   ): Promise<PanelLayoutSnapshot> {
+    let lastLayoutDetached = false;
+    let lastNativeWindowPresent = false;
     for (let attempt = 0; attempt < 40; attempt += 1) {
       const layout = this.panelLayoutProvider?.() ?? null;
-      const detached = (layout?.detachedPanels ?? []).some((entry) => entry.kind === panel);
-      if (layout && detached === expected) return layout;
+      lastLayoutDetached = (layout?.detachedPanels ?? []).some(
+        (entry) => entry.kind === panel,
+      );
+      lastNativeWindowPresent = (await this.listWindows()).some(
+        (entry) => entry.label === `panel-${panel}`,
+      );
+      if (
+        layout
+        && lastLayoutDetached === expected
+        && lastNativeWindowPresent === expected
+      ) {
+        return layout;
+      }
       await new Promise((resolve) => window.setTimeout(resolve, 50));
     }
     throw new BridgeError(
       'IO_ERROR',
       `Panel "${panel}" did not become ${expected ? 'detached' : 'docked'} within 2 seconds`,
+      {
+        panel,
+        expectedDetached: expected,
+        layoutDetached: lastLayoutDetached,
+        nativeWindowPresent: lastNativeWindowPresent,
+      },
+    );
+  }
+
+  private async waitForPanelFocused(
+    panel: string,
+  ): Promise<{ layout: PanelLayoutSnapshot; windowLabel: string }> {
+    let lastLayout: PanelLayoutSnapshot | null = null;
+    let lastNativeWindowPresent = false;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      lastLayout = this.panelLayoutProvider?.() ?? null;
+      lastNativeWindowPresent = (await this.listWindows()).some(
+        (entry) => entry.label === `panel-${panel}`,
+      );
+      const layoutDetached = lastLayout?.detachedPanels.some(
+        (entry) => entry.kind === panel && entry.windowLabel === `panel-${panel}`,
+      ) ?? false;
+      if (lastLayout && layoutDetached && lastNativeWindowPresent) {
+        return { layout: lastLayout, windowLabel: `panel-${panel}` };
+      }
+      if (
+        lastLayout
+        && !layoutDetached
+        && !lastNativeWindowPresent
+        && lastLayout.dockedPanels.includes(panel)
+        && lastLayout.activePanels.includes(panel)
+      ) {
+        return { layout: lastLayout, windowLabel: 'main' };
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    throw new BridgeError(
+      'IO_ERROR',
+      `Panel "${panel}" did not become active within 5 seconds`,
+      {
+        panel,
+        layout: lastLayout ? structuredClone(lastLayout) : null,
+        nativeWindowPresent: lastNativeWindowPresent,
+      },
+    );
+  }
+
+  private async waitForPanelLayoutReset(): Promise<PanelLayoutSnapshot> {
+    let lastLayout: PanelLayoutSnapshot | null = null;
+    let lastNativePanelWindows: string[] = [];
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      lastLayout = this.panelLayoutProvider?.() ?? null;
+      lastNativePanelWindows = (await this.listWindows())
+        .filter((entry) => entry.kind === 'panel')
+        .map((entry) => entry.label)
+        .sort();
+      if (
+        lastLayout
+        && isDefaultPanelLayout(lastLayout)
+        && lastNativePanelWindows.length === 0
+      ) {
+        return lastLayout;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    throw new BridgeError(
+      'IO_ERROR',
+      'Panel layout did not return to the complete default state within 5 seconds',
+      {
+        layout: lastLayout ? structuredClone(lastLayout) : null,
+        nativePanelWindows: lastNativePanelWindows,
+      },
     );
   }
 
@@ -1956,6 +3755,19 @@ class AgentBridge {
     const entry = findMenuItem(normalizedPath);
     if (!entry) {
       throw new BridgeError('INVALID_ARGS', `Unknown menu item "${normalizedPath}"`);
+    }
+    if (!entry.agentInvokable) {
+      const alternative = entry.agentAlternative
+        ? ` Use the ${entry.agentAlternative} domain tool instead.`
+        : '';
+      throw new BridgeError(
+        'READONLY',
+        `Menu item "${entry.path}" is unavailable through generic Agent invocation.${alternative}`,
+        {
+          path: entry.path,
+          agentAlternative: entry.agentAlternative ?? null,
+        },
+      );
     }
     const context = this.menuContext();
     let enabled = true;
@@ -1998,7 +3810,89 @@ class AgentBridge {
     args: Record<string, unknown> = {},
     options: { screenshot?: boolean; expectedSceneRevision?: number } = {},
   ): Promise<CommandResult> {
+    const paramsSchema = COMMAND_PARAMS_SCHEMAS[commandId];
+    if (!paramsSchema) {
+      throw new BridgeError('INVALID_ARGS', `Unknown command "${commandId}"`);
+    }
+    const argumentIssues = validateAgentJsonSchema(args, paramsSchema);
+    if (argumentIssues.length > 0) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Invalid arguments for command "${commandId}"`,
+        { command: commandId, issues: argumentIssues },
+      );
+    }
     this.assertExpectedSceneRevision(options.expectedSceneRevision);
+    if (commandId === 'console.clear') {
+      return this.finishAsyncCommand(
+        { ok: true, data: this.clearLogs() },
+        options,
+        true,
+      );
+    }
+    if (commandId === 'profiler.clear') {
+      clearEditorProfilerSamples();
+      return this.finishAsyncCommand(
+        { ok: true, data: { cleared: true } },
+        options,
+        true,
+      );
+    }
+    if (commandId === 'window.close') {
+      const result = await this.closeRegisteredEditorWindow(
+        requiredString(args, 'windowLabel'),
+      );
+      return this.finishAsyncCommand(
+        { ok: true, data: result },
+        options,
+        true,
+      );
+    }
+    if (commandId === 'window.open_editor') {
+      const result = await this.openRegisteredEditorWindow(
+        requiredString(args, 'typeId'),
+      );
+      return this.finishAsyncCommand(
+        { ok: true, data: result },
+        options,
+        result.windowLabel,
+      );
+    }
+    if (commandId === 'dialog.respond') {
+      const dialogId = requiredString(args, 'dialogId');
+      const windowLabel = typeof args.windowLabel === 'string' && args.windowLabel.trim()
+        ? args.windowLabel
+        : 'main';
+      const rawAction = requiredString(args, 'action');
+      if (rawAction !== 'accept' && rawAction !== 'cancel') {
+        throw new BridgeError('INVALID_ARGS', '"action" must be "accept" or "cancel"');
+      }
+      const activeDialog = getEditorDialogForWindow(windowLabel);
+      if (!activeDialog || activeDialog.id !== dialogId) {
+        throw new BridgeError(
+          'CONFLICT',
+          'The editor dialog changed; read get_active_dialog and respond to its current id',
+          { activeDialog },
+        );
+      }
+      const result = await respondToEditorDialogInWindow(
+        windowLabel,
+        dialogId,
+        rawAction,
+        typeof args.value === 'string' ? args.value : undefined,
+      );
+      if (!result) {
+        throw new BridgeError('CONFLICT', 'The editor dialog was resolved concurrently');
+      }
+      return this.finishAsyncCommand({
+        ok: true,
+        data: {
+          ...result,
+          windowLabel,
+          nextDialog: getEditorDialogForWindow(windowLabel),
+        },
+      }, options, windowLabel);
+    }
     if (commandId === 'project.open') {
       const provider = this.requireAvailableProjectLifecycle();
       const editorBootGeneration = this.editorBootGeneration;
@@ -2088,6 +3982,18 @@ class AgentBridge {
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'project.settings.set_tags_and_layers') {
+      const tags = requiredTags(args);
+      const gameLayers = requiredGameLayers(args);
+      const validation = validateTagsAndLayers(tags, gameLayers);
+      if (validation) throw new BridgeError('INVALID_ARGS', validation);
+      const result = await this.setTagsAndLayers(
+        tags,
+        gameLayers,
+        requiredNullableRevision(args, 'expectedRevision'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'scene.new') {
       const result = await this.requireSceneProvider().create({
         name: requiredString(args, 'name'),
@@ -2117,6 +4023,60 @@ class AgentBridge {
       });
       return this.finishAsyncCommand({ ok: true, data: result }, options);
     }
+    if (commandId === 'workspace.save_document') {
+      const result = await this.requireWorkspaceProvider().saveDocument(
+        requiredString(args, 'path'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'workspace.discard_document') {
+      const result = await this.requireWorkspaceProvider().discardDocument(
+        requiredString(args, 'path'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'workspace.reload_document') {
+      const requestedPath = requiredString(args, 'path');
+      const normalized = normalizeAssetPath(requestedPath);
+      const matches = (await this.getWorkspaceDocuments()).documents.filter(
+        (document) => (
+          document.path?.replace(/\\/g, '/').toLocaleLowerCase()
+          === normalized.toLocaleLowerCase()
+        ),
+      );
+      if (matches.length === 1) {
+        await this.assertPanelWindowMutationAllowed(
+          'workspace.reload_document',
+          [matches[0].windowLabel],
+        );
+      }
+      const result = await this.requireWorkspaceProvider().reloadDocument(
+        requestedPath,
+      );
+      const document = await this.waitForWorkspaceDocument(result.target);
+      return this.finishAsyncCommand({
+        ok: true,
+        data: {
+          ...document,
+          reloaded: true,
+          discarded: result.discarded,
+        },
+      }, options, document.windowLabel);
+    }
+    if (commandId === 'workspace.close_document') {
+      const dirtyAction = optionalString(args, 'dirtyAction') ?? 'reject';
+      if (!['reject', 'save', 'discard'].includes(dirtyAction)) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          '"dirtyAction" must be "reject", "save", or "discard"',
+        );
+      }
+      const result = await this.requireWorkspaceProvider().closeDocument(
+        requiredString(args, 'path'),
+        dirtyAction as 'reject' | 'save' | 'discard',
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
     if (commandId === 'scene.load_json') {
       const store = this.requireStore();
       if (store.mode !== 'edit') {
@@ -2144,11 +4104,6 @@ class AgentBridge {
       } catch (error) {
         throw sceneLifecycleBridgeError(error);
       }
-      this.appendEvent('asset.changed', {
-        action: 'sceneRenamed',
-        sourcePath: sceneAssetPath(result.oldName),
-        destinationPath: sceneAssetPath(result.name),
-      });
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'scene.delete') {
@@ -2181,10 +4136,6 @@ class AgentBridge {
       } catch (error) {
         throw sceneLifecycleBridgeError(error);
       }
-      this.appendEvent('asset.changed', {
-        action: 'sceneDeleted',
-        sourcePath: sceneAssetPath(result.name),
-      });
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'asset.import_file') {
@@ -2362,20 +4313,17 @@ class AgentBridge {
           `Asset type "${asset.kind}" has no docked resource editor; use the matching scene, entity, or text-asset command`,
         );
       }
+      const layout = this.getPanelLayout();
+      const windowLabel = layout.detachedPanels.find(
+        (entry) => entry.kind === target.panel,
+      )?.windowLabel ?? 'main';
+      await this.assertPanelWindowMutationAllowed('asset.open', [windowLabel]);
       await this.requireWorkspaceProvider().openAsset(target);
-      await nextFrame();
-      await nextFrame();
-      const documents = await this.getWorkspaceDocuments();
-      const document = documents.documents.find(
-        (candidate) => (
-          candidate.panel === target.panel
-          && candidate.path?.toLocaleLowerCase() === target.path.toLocaleLowerCase()
-        ),
-      );
+      const document = await this.waitForWorkspaceDocument(target);
       return this.finishAsyncCommand({
         ok: true,
-        data: document ?? { ...target, active: true, detached: false, windowLabel: 'main' },
-      }, options, document?.windowLabel ?? 'main');
+        data: document,
+      }, options, document.windowLabel);
     }
     if (commandId === 'panel.detach' || commandId === 'panel.dock') {
       const kind = requiredString(args, 'kind');
@@ -2402,6 +4350,9 @@ class AgentBridge {
         (entry) => entry.kind === panel,
       );
       if (commandId === 'panel.detach') {
+        if (!detachedWindowExists) {
+          await this.assertPanelWindowMutationAllowed('panel.detach', ['main']);
+        }
         if (!detachedWindowExists && !await detachPanelWindow(panel, undefined, false)) {
           throw new BridgeError('IO_ERROR', `Failed to detach panel "${panel}"`);
         }
@@ -2417,6 +4368,10 @@ class AgentBridge {
         }, options, `panel-${panel}`);
       }
       if (detached) {
+        await this.assertPanelWindowMutationAllowed(
+          'panel.dock',
+          ['main', `panel-${panel}`],
+        );
         requestPanelDock(panel);
         await this.waitForPanelDetached(panel, false);
       }
@@ -2443,6 +4398,10 @@ class AgentBridge {
         requiredString(args, 'contents', true),
         expectedRevision,
       );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'sprite.import_settings.set') {
+      const result = await this.setSpriteImportSettings(args);
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'asset.rename') {
@@ -2541,8 +4500,47 @@ class AgentBridge {
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'build.run') {
+      if (args.allowForegroundLaunch !== true) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'build.run requires allowForegroundLaunch=true because the Player creates a window',
+        );
+      }
+      const result = await this.launchBuiltPlayer(requiredString(args, 'executable'));
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'build.history.create_patch') {
+      const result = this.startBuildHistoryPatch(
+        requiredString(args, 'previousId'),
+        requiredString(args, 'currentId'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'build.history.restore') {
+      const result = this.startBuildHistoryRestore(
+        requiredString(args, 'historyId'),
+        requiredAbsolutePath(args, 'publicKeyPath'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'build.patch.verify') {
+      const result = this.startBuildPatchVerification(
+        requiredString(args, 'patchId'),
+        requiredAbsolutePath(args, 'publicKeyPath'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'view.set_game_resolution') {
       const result = await this.setGameResolution(requiredGameResolution(args));
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'view.set_scene_preferences') {
+      const result = this.setSceneViewPreferences(args);
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'view.set_timeline_preferences') {
+      const result = this.setTimelineEditorPreferences(args);
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'menu.invoke') {
@@ -2556,6 +4554,10 @@ class AgentBridge {
       || commandId === 'window.ui_context_click'
       || commandId === 'window.ui_set_value'
       || commandId === 'window.ui_scroll'
+      || commandId === 'window.ui_drag_to'
+      || commandId === 'window.ui_drag_by'
+      || commandId === 'window.ui_hover'
+      || commandId === 'window.ui_press_key'
     ) {
       const action = commandId === 'window.ui_click'
         ? 'click'
@@ -2565,24 +4567,57 @@ class AgentBridge {
             ? 'contextClick'
             : commandId === 'window.ui_set_value'
               ? 'setValue'
-              : 'scroll';
+              : commandId === 'window.ui_scroll'
+                ? 'scroll'
+                : commandId === 'window.ui_drag_to'
+                  ? 'dragTo'
+                  : commandId === 'window.ui_drag_by'
+                    ? 'dragBy'
+                    : commandId === 'window.ui_hover'
+                      ? 'hover'
+                      : 'keyPress';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';
       const value = typeof args.value === 'string' ? args.value : undefined;
-      const deltaX = optionalBoundedUiDelta(args, 'deltaX', 0);
-      const deltaY = commandId === 'window.ui_scroll'
+      const targetSelector = commandId === 'window.ui_drag_to'
+        ? requiredString(args, 'targetSelector')
+        : undefined;
+      const deltaX = commandId === 'window.ui_drag_by'
+        ? requiredBoundedUiDelta(args, 'deltaX')
+        : optionalBoundedUiDelta(args, 'deltaX', 0);
+      const deltaY = commandId === 'window.ui_scroll' || commandId === 'window.ui_drag_by'
         ? requiredBoundedUiDelta(args, 'deltaY')
         : undefined;
+      if (commandId === 'window.ui_drag_by' && deltaX === 0 && deltaY === 0) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'window.ui_drag_by requires a non-zero deltaX or deltaY',
+        );
+      }
+      const key = commandId === 'window.ui_press_key'
+        ? requiredString(args, 'key')
+        : undefined;
+      const expectedSnapshotRevision = requiredString(args, 'expectedSnapshotRevision');
+      const modifiers: EditorUiModifiers = {
+        shiftKey: optionalBoolean(args, 'shiftKey', false),
+        ctrlKey: optionalBoolean(args, 'ctrlKey', false),
+        altKey: optionalBoolean(args, 'altKey', false),
+        metaKey: optionalBoolean(args, 'metaKey', false),
+      };
       const result: CommandResult = {
         ok: true,
         data: await this.interactWindow(
           action,
           selector,
           windowLabel,
+          targetSelector,
           value,
           deltaX,
           deltaY,
+          key,
+          expectedSnapshotRevision,
+          modifiers,
         ),
       };
       return this.finishAsyncCommand(result, options, windowLabel);
@@ -2591,18 +4626,100 @@ class AgentBridge {
     if (!handler) {
       throw new BridgeError('INVALID_ARGS', `Unknown command "${commandId}"`);
     }
+    if (commandId === 'panel.focus') {
+      const panel = requiredString(args, 'kind');
+      const layout = this.getPanelLayout();
+      const detachedWindow = layout.detachedPanels.find(
+        (entry) => entry.kind === panel,
+      )?.windowLabel;
+      const detachedWindowExists = detachedWindow
+        ? (await this.listWindows()).some((entry) => entry.label === detachedWindow)
+        : false;
+      if (detachedWindowExists || (!detachedWindow && layout.activePanels.includes(panel))) {
+        return this.finishAsyncCommand({
+          ok: true,
+          data: {
+            panel,
+            active: true,
+            detached: detachedWindow !== undefined,
+            windowLabel: detachedWindow ?? 'main',
+            backgroundSafe: true,
+            unchanged: true,
+          },
+        }, options, detachedWindow ?? 'main');
+      }
+      await this.assertPanelWindowMutationAllowed('panel.focus', ['main']);
+    }
+    if (commandId === 'panel.reset_layout') {
+      const layout = this.getPanelLayout();
+      const windows = await this.listWindows();
+      if (isDefaultPanelLayout(layout) && panelWindowsMatchLayout(layout, windows)) {
+        return this.finishAsyncCommand({
+          ok: true,
+          data: {
+            layout: structuredClone(layout),
+            backgroundSafe: true,
+            unchanged: true,
+          },
+        }, options, 'main');
+      }
+      await this.assertPanelWindowMutationAllowed(
+        'panel.reset_layout',
+        [
+          'main',
+          ...layout.detachedPanels.map((entry) => entry.windowLabel),
+          ...windows.filter((entry) => entry.kind === 'panel').map((entry) => entry.label),
+        ],
+        windows,
+      );
+    }
     const ctx: CommandContext = {
       store: this.requireStore(),
       focusPanel: (kind) => this.focusPanel(kind),
       resetPanelLayout: () => this.resetPanelLayout(),
     };
     const result = handler(ctx, args);
+    if (commandId === 'panel.focus') {
+      const panel = requiredString(args, 'kind');
+      const focused = await this.waitForPanelFocused(panel);
+      result.data = {
+        ...(result.data && typeof result.data === 'object' ? result.data : {}),
+        active: true,
+        detached: focused.windowLabel !== 'main',
+        windowLabel: focused.windowLabel,
+      };
+      return this.finishAsyncCommand(result, options, focused.windowLabel);
+    }
+    if (commandId === 'panel.reset_layout') {
+      const layout = await this.waitForPanelLayoutReset();
+      result.data = {
+        ...(result.data && typeof result.data === 'object' ? result.data : {}),
+        layout: structuredClone(layout),
+      };
+      return this.finishAsyncCommand(result, options, 'main');
+    }
     return this.finishAsyncCommand(result, options);
   }
 
   // ── Unified query entry (called by transports) ────────────────────────
 
-  async query(queryId: string, params: Record<string, unknown> = {}): Promise<unknown> {
+  async query(
+    queryId: string,
+    params: Record<string, unknown> = {},
+    options: { signal?: AbortSignal } = {},
+  ): Promise<unknown> {
+    const paramsSchema = QUERY_PARAMS_SCHEMAS[queryId];
+    if (!paramsSchema) {
+      throw new BridgeError('INVALID_ARGS', `Unknown query "${queryId}"`);
+    }
+    const parameterIssues = validateAgentJsonSchema(params, paramsSchema);
+    if (parameterIssues.length > 0) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Invalid parameters for query "${queryId}"`,
+        { query: queryId, issues: parameterIssues },
+      );
+    }
     switch (queryId) {
       case 'editor.state':
         return this.getEditorState();
@@ -2610,8 +4727,18 @@ class AgentBridge {
         return this.getProjectState();
       case 'project.recent':
         return this.getRecentProjects();
+      case 'dialog.state':
+        return getEditorDialogForWindow(
+          typeof params.windowLabel === 'string' && params.windowLabel.trim()
+            ? params.windowLabel
+            : 'main',
+        );
+      case 'dialog.list':
+        return { dialogs: listEditorDialogs() };
       case 'project.settings':
         return this.getProjectSettings();
+      case 'project.script_diagnostics':
+        return this.getProjectScriptDiagnostics();
       case 'selection.get':
         return this.getSelection();
       case 'scene.snapshot':
@@ -2640,15 +4767,38 @@ class AgentBridge {
           (params.target as ViewportTab) ?? 'scene',
           (params.format as 'image/png' | 'image/jpeg') ?? 'image/png',
           params.quality as number | undefined,
+          typeof params.maxSize === 'number'
+            ? params.maxSize
+            : DEFAULT_SCREENSHOT_MAX_SIZE,
         );
       case 'view.window_screenshot':
         return this.captureWindow(
           typeof params.windowLabel === 'string' && params.windowLabel
             ? params.windowLabel
             : 'main',
+          typeof params.maxSize === 'number'
+            ? params.maxSize
+            : DEFAULT_SCREENSHOT_MAX_SIZE,
+        );
+      case 'view.capture_region':
+        return this.captureWindowRegion(
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+          {
+            x: requiredNonNegativeInteger(params, 'x'),
+            y: requiredNonNegativeInteger(params, 'y'),
+            width: requiredPositiveInteger(params, 'width'),
+            height: requiredPositiveInteger(params, 'height'),
+          },
+          typeof params.maxSize === 'number'
+            ? params.maxSize
+            : DEFAULT_SCREENSHOT_MAX_SIZE,
         );
       case 'window.list':
         return this.listWindows();
+      case 'window.types':
+        return this.listRegisteredWindowTypes();
       case 'workspace.documents':
         return this.getWorkspaceDocuments();
       case 'window.ui_snapshot':
@@ -2658,17 +4808,26 @@ class AgentBridge {
             : 'main',
           typeof params.maxElements === 'number' ? params.maxElements : 2_000,
           typeof params.offset === 'number' ? params.offset : 0,
+          typeof params.expectedSnapshotRevision === 'string'
+            ? params.expectedSnapshotRevision
+            : undefined,
         );
       case 'window.ui_content':
         return this.readWindowContent(
           requiredString(params, 'selector'),
           requiredUiContentField(params),
+          requiredString(params, 'expectedSnapshotRevision'),
           typeof params.windowLabel === 'string' && params.windowLabel
             ? params.windowLabel
             : 'main',
           typeof params.offset === 'number' ? params.offset : 0,
           typeof params.maxChars === 'number' ? params.maxChars : 10_000,
+          typeof params.expectedContentRevision === 'string'
+            ? params.expectedContentRevision
+            : undefined,
         );
+      case 'panel.list':
+        return this.listPanels();
       case 'panel.get_layout':
         return this.getPanelLayout();
       case 'menu.list':
@@ -2679,6 +4838,10 @@ class AgentBridge {
         );
       case 'asset.list':
         return this.listAssets(params);
+      case 'sprite.list':
+        return this.listSpriteAssets(params);
+      case 'sprite.import_settings':
+        return this.getSpriteImportSettings(requiredString(params, 'path'));
       case 'asset.read_text':
         return this.readAssetText(
           requiredString(params, 'path'),
@@ -2701,14 +4864,25 @@ class AgentBridge {
           requiredString(params, 'sourcePath'),
         );
       case 'asset.trash_list':
-        return (await this.getAssetOperations()).listTrash();
+        return this.listAssetTrash(params);
       case 'build.settings':
         return this.getBuildSettings();
       case 'build.status':
         return this.getBuildStatus();
+      case 'build.artifact_status':
+        return this.getBuildArtifactStatus();
       case 'build.history':
         return this.getBuildHistory(
           typeof params.limit === 'number' ? params.limit : 20,
+        );
+      case 'build.patches':
+        return this.getBuildPatches(
+          typeof params.limit === 'number' ? params.limit : 50,
+        );
+      case 'build.history.compare':
+        return this.compareBuildHistory(
+          requiredString(params, 'previousId'),
+          requiredString(params, 'currentId'),
         );
       case 'console.get_logs':
         return this.getLogs({
@@ -2716,20 +4890,54 @@ class AgentBridge {
           since: params.since as number | undefined,
           limit: params.limit as number | undefined,
         });
-      case 'console.clear':
-        return this.clearLogs();
+      case 'profiler.get_samples': {
+        const source = params.source ?? 'game';
+        if (source !== 'scene' && source !== 'game') {
+          throw new BridgeError(
+            'INVALID_ARGS',
+            '"source" must be "scene" or "game"',
+          );
+        }
+        const limit = params.limit ?? 120;
+        if (!Number.isSafeInteger(limit) || Number(limit) < 1 || Number(limit) > 480) {
+          throw new BridgeError(
+            'INVALID_ARGS',
+            '"limit" must be an integer from 1 to 480',
+          );
+        }
+        const allSamples = readEditorProfilerSamples(source as EditorProfilerSource);
+        const samples = allSamples.slice(-Number(limit));
+        return {
+          source,
+          scope: 'editor-canvas-preview',
+          note: 'Editor Canvas preview CPU samples; not native Player GPU timing, memory, or draw-call capture.',
+          summary: summarizeEditorProfilerSamples(allSamples),
+          totalSamples: allSamples.length,
+          returnedSamples: samples.length,
+          truncated: samples.length < allSamples.length,
+          samples,
+        };
+      }
       case 'events.get':
         return this.getEvents(params);
+      case 'events.wait':
+        return this.waitForEvents(params, options.signal);
       case 'commands.list':
         return this.listCommands();
       case 'commands.describe':
         return this.describeCommand(requiredString(params, 'id'));
+      case 'intents.list':
+        return this.listIntents();
       case 'schema.components':
         return this.getComponentSchema();
       case 'schema.component':
         return this.getComponentSchema(
           typeof params.type === 'string' ? params.type : undefined,
         );
+      case 'queries.list':
+        return this.listQueries();
+      case 'queries.describe':
+        return this.describeQuery(requiredString(params, 'id'));
       default:
         throw new BridgeError('INVALID_ARGS', `Unknown query "${queryId}"`);
     }
@@ -2809,13 +5017,20 @@ class AgentBridge {
     }
     result.eventSequence = this.events.currentSequence;
     if (!options.screenshot) return result;
+    result.screenshotRequested = true;
     await nextFrame();
     try {
       result.screenshot = wholeWindow
         ? await this.captureWindow(typeof wholeWindow === 'string' ? wholeWindow : 'main')
-        : this.captureViewport('scene');
-    } catch {
-      // Screenshot is best-effort; never fail a completed command.
+        : await this.captureViewport('scene');
+      result.screenshotCaptured = true;
+    } catch (error) {
+      // The write is already complete, so preserve its outcome while making
+      // the missing visual postcondition explicit and actionable.
+      result.screenshotCaptured = false;
+      result.screenshotError = (
+        error instanceof Error ? error.message : String(error)
+      ).slice(0, 1_000);
     }
     return result;
   }
@@ -2823,7 +5038,7 @@ class AgentBridge {
   private menuContext(): MenuItemContext {
     const store = this.requireStore();
     return {
-      source: 'menu-bar',
+      source: 'agent',
       store,
       selectedIds: store.selectedIds,
       contextEntity: store.selected,
@@ -2854,6 +5069,20 @@ function requiredString(
   return allowEmpty ? value : value.trim();
 }
 
+function requiredAbsolutePath(
+  args: Record<string, unknown>,
+  key: string,
+): string {
+  const value = requiredString(args, key);
+  const windowsDrive = /^[a-zA-Z]:[\\/]/.test(value);
+  const windowsUnc = value.startsWith('\\\\');
+  const posixRoot = value.startsWith('/');
+  if (!windowsDrive && !windowsUnc && !posixRoot) {
+    throw new BridgeError('INVALID_ARGS', `"${key}" must be an absolute path`);
+  }
+  return value;
+}
+
 function requiredBoundedUiDelta(
   args: Record<string, unknown>,
   key: string,
@@ -2874,10 +5103,10 @@ function requiredBoundedUiDelta(
 
 function requiredUiContentField(
   args: Record<string, unknown>,
-): 'text' | 'value' {
+): 'text' | 'value' | 'options' {
   const value = args.field;
-  if (value !== 'text' && value !== 'value') {
-    throw new BridgeError('INVALID_ARGS', '"field" must be "text" or "value"');
+  if (value !== 'text' && value !== 'value' && value !== 'options') {
+    throw new BridgeError('INVALID_ARGS', '"field" must be "text", "value", or "options"');
   }
   return value;
 }
@@ -3057,6 +5286,20 @@ function requiredNonNegativeInteger(
   return value;
 }
 
+function requiredPositiveInteger(
+  args: Record<string, unknown>,
+  key: string,
+): number {
+  const value = requiredNonNegativeInteger(args, key);
+  if (value === 0) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be a positive safe integer`,
+    );
+  }
+  return value;
+}
+
 function requiredNullableRevision(
   args: Record<string, unknown>,
   key: string,
@@ -3141,6 +5384,45 @@ function requiredSortingLayers(args: Record<string, unknown>): SortingLayer[] {
   });
 }
 
+function requiredTags(args: Record<string, unknown>): string[] {
+  const value = args.tags;
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    throw new BridgeError('INVALID_ARGS', '"tags" must be an array of strings');
+  }
+  return value.map((entry) => (entry as string).trim());
+}
+
+function requiredGameLayers(args: Record<string, unknown>): GameObjectLayer[] {
+  const value = args.gameLayers;
+  if (!Array.isArray(value)) {
+    throw new BridgeError('INVALID_ARGS', '"gameLayers" must be an array');
+  }
+  return value.map((entry, index) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new BridgeError('INVALID_ARGS', `gameLayers[${index}] must be an object`);
+    }
+    const record = entry as Record<string, unknown>;
+    const unexpected = Object.keys(record).filter((key) => key !== 'index' && key !== 'name');
+    if (unexpected.length) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `gameLayers[${index}] has unsupported fields: ${unexpected.join(', ')}`,
+      );
+    }
+    if (
+      typeof record.index !== 'number'
+      || !Number.isInteger(record.index)
+      || typeof record.name !== 'string'
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `gameLayers[${index}] must contain integer "index" and string "name" fields`,
+      );
+    }
+    return { index: record.index, name: record.name };
+  });
+}
+
 function optionalString(
   args: Record<string, unknown>,
   key: string,
@@ -3202,6 +5484,85 @@ function normalizeAssetPath(path: string): string {
       error instanceof Error ? error.message : String(error),
     );
   }
+}
+
+function projectAssetIndexRevision(assets: readonly ProjectFileAsset[]): string {
+  let hashA = 0x811c9dc5;
+  let hashB = 0x9e3779b9;
+  let sourceOffset = 0;
+  for (const asset of assets) {
+    const source = JSON.stringify([
+      asset.relPath,
+      asset.guid,
+      asset.kind,
+      asset.revision,
+      asset.size,
+      asset.metaStatus,
+      asset.metaError,
+    ]);
+    for (let index = 0; index < source.length; index += 1) {
+      const code = source.charCodeAt(index);
+      hashA = Math.imul(hashA ^ code, 0x01000193);
+      hashB = Math.imul(hashB ^ (code + sourceOffset + index), 0x85ebca6b);
+    }
+    sourceOffset += source.length;
+  }
+  return `asset-index-v1-${assets.length}-${
+    (hashA >>> 0).toString(16).padStart(8, '0')
+  }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+function spriteAssetIndexRevision(sprites: readonly SpriteAsset[]): string {
+  let hashA = 0x811c9dc5;
+  let hashB = 0x9e3779b9;
+  let sourceOffset = 0;
+  for (const sprite of sprites) {
+    const source = JSON.stringify([
+      sprite.id,
+      sprite.name,
+      sprite.folder,
+      sprite.relPath,
+      sprite.textureId,
+      sprite.sliceName,
+      sprite.rect,
+      sprite.pivot,
+      sprite.pixelsPerUnit,
+    ]);
+    for (let index = 0; index < source.length; index += 1) {
+      const code = source.charCodeAt(index);
+      hashA = Math.imul(hashA ^ code, 0x01000193);
+      hashB = Math.imul(hashB ^ (code + sourceOffset + index), 0x85ebca6b);
+    }
+    sourceOffset += source.length;
+  }
+  return `sprite-index-v1-${sprites.length}-${
+    (hashA >>> 0).toString(16).padStart(8, '0')
+  }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+function assetTrashIndexRevision(entries: readonly AssetTrashEntry[]): string {
+  let hashA = 0x811c9dc5;
+  let hashB = 0x9e3779b9;
+  let sourceOffset = 0;
+  for (const entry of entries) {
+    const source = JSON.stringify([
+      entry.trashId,
+      entry.originalPath,
+      entry.recordRevision,
+      entry.trashedAtMs,
+      entry.size,
+      entry.hasSpriteImport,
+    ]);
+    for (let index = 0; index < source.length; index += 1) {
+      const code = source.charCodeAt(index);
+      hashA = Math.imul(hashA ^ code, 0x01000193);
+      hashB = Math.imul(hashB ^ (code + sourceOffset + index), 0x85ebca6b);
+    }
+    sourceOffset += source.length;
+  }
+  return `asset-trash-v1-${entries.length}-${
+    (hashA >>> 0).toString(16).padStart(8, '0')
+  }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 function sceneAssetPath(name: string): string {
@@ -3280,6 +5641,96 @@ function sameNumberArray(left: readonly number[], right: readonly number[]): boo
     left.length === right.length
     && left.every((value, index) => value === right[index])
   );
+}
+
+function sameStrings(actual: readonly string[], expected: readonly string[]): boolean {
+  return (
+    actual.length === expected.length
+    && actual.every((value, index) => value === expected[index])
+  );
+}
+
+function defaultTabs(
+  node: DockLayoutNode,
+  panels: readonly string[],
+  active: string,
+): boolean {
+  return node.kind === 'tabs' && sameStrings(node.panels, panels) && node.active === active;
+}
+
+function findPanelDockLocation(
+  node: DockLayoutNode,
+  panel: string,
+  path = 'root',
+): { path: string; tabIndex: number } | null {
+  if (node.kind === 'tabs') {
+    const tabIndex = node.panels.indexOf(panel);
+    return tabIndex < 0 ? null : { path, tabIndex };
+  }
+  return (
+    findPanelDockLocation(node.first, panel, `${path}.first`)
+    ?? findPanelDockLocation(node.second, panel, `${path}.second`)
+  );
+}
+
+function panelWindowsMatchLayout(
+  layout: PanelLayoutSnapshot,
+  windows: readonly EditorWindowInfo[],
+): boolean {
+  const layoutWindowLabels = layout.detachedPanels
+    .map((entry) => entry.windowLabel)
+    .sort();
+  const nativeWindowLabels = windows
+    .filter((entry) => entry.kind === 'panel')
+    .map((entry) => entry.label)
+    .sort();
+  return sameStrings(layoutWindowLabels, nativeWindowLabels);
+}
+
+function isDefaultPanelLayout(layout: PanelLayoutSnapshot): boolean {
+  const expectedDockedPanels = [...CORE_PANEL_IDS].sort();
+  const expectedActivePanels = ['hierarchy', 'inspector', 'project', 'scene'];
+  if (
+    !sameStrings(layout.dockedPanels, expectedDockedPanels)
+    || layout.detachedPanels.length !== 0
+    || !sameStrings(layout.activePanels, expectedActivePanels)
+  ) {
+    return false;
+  }
+  const root = layout.tree;
+  if (
+    root.kind !== 'split'
+    || root.direction !== 'vertical'
+    || root.ratio !== 0.68
+    || root.first.kind !== 'split'
+    || root.first.direction !== 'horizontal'
+    || root.first.ratio !== 0.22
+  ) {
+    return false;
+  }
+  const middle = root.first.second;
+  return (
+    defaultTabs(root.first.first, ['hierarchy'], 'hierarchy')
+    && middle.kind === 'split'
+    && middle.direction === 'horizontal'
+    && middle.ratio === 0.7
+    && defaultTabs(middle.first, ['scene', 'game'], 'scene')
+    && defaultTabs(
+      middle.second,
+      ['inspector', 'material', 'shader', 'build', 'projectSettings'],
+      'inspector',
+    )
+    && defaultTabs(
+      root.second,
+      ['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas'],
+      'project',
+    )
+  );
+}
+
+function normalizeScreenshotMaxSize(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_SCREENSHOT_MAX_SIZE;
+  return Math.min(4_096, Math.max(256, Math.trunc(value)));
 }
 
 /** Resolve on the next animation frame (so the viewport can redraw). */

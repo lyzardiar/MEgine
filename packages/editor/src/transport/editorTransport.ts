@@ -9,6 +9,8 @@ type HostEntitySnapshot = {
   parent?: number | null;
   sibling_index?: number;
   active?: boolean;
+  tag?: string;
+  layer?: number;
   components: Record<string, unknown>;
 };
 
@@ -274,7 +276,33 @@ export type ProjectBuildSettings = {
   shaderVariantLimit: number;
 };
 
-export const PROJECT_BUILD_SETTINGS_CHANGED_EVENT = 'mengine:project-build-settings-changed';
+export type ProjectScriptDiagnostic = {
+  category: 'error' | 'warning' | 'suggestion' | 'message';
+  code: number;
+  message: string;
+  file: string | null;
+  line: number | null;
+  column: number | null;
+  start: number | null;
+  length: number | null;
+};
+
+export type ProjectScriptValidation = {
+  schemaVersion: 1;
+  valid: boolean;
+  checked: boolean;
+  startupScript: string | null;
+  scriptRoot: string | null;
+  revision: string | null;
+  typescriptVersion: string;
+  fileCount: number;
+  errorCount: number;
+  warningCount: number;
+  diagnosticCount: number;
+  returnedDiagnostics: number;
+  truncated: boolean;
+  diagnostics: ProjectScriptDiagnostic[];
+};
 
 export type ProjectSortingLayer = {
   id: string;
@@ -284,6 +312,8 @@ export type ProjectSortingLayer = {
 export type ProjectSortingLayers = {
   version: 1;
   layers: ProjectSortingLayer[];
+  tags: string[];
+  gameLayers: Array<{ index: number; name: string }>;
 };
 
 export type ProjectSortingLayersSnapshot = {
@@ -333,6 +363,11 @@ export async function exitDesktopEditor(): Promise<void> {
   await invoke('exit_editor');
 }
 
+export async function getEditorInstanceId(): Promise<string> {
+  if (!isDesktopEditor()) return 'browser';
+  return invoke<string>('get_editor_instance_id');
+}
+
 export async function isPrimaryPointerDown(): Promise<boolean> {
   return isDesktopEditor() ? invoke<boolean>('is_primary_pointer_down') : false;
 }
@@ -347,6 +382,8 @@ export function toWorldSnapshotView(snapshot: HostWorldSnapshot): WorldSnapshotV
       parent: entity.parent,
       siblingIndex: entity.sibling_index ?? 0,
       active: entity.active ?? true,
+      tag: entity.tag ?? 'Untagged',
+      layer: entity.layer ?? 0,
       components: entity.components,
     })),
     frame: snapshot.frame,
@@ -558,6 +595,13 @@ export async function getProjectBuildSettings(): Promise<ProjectBuildSettings> {
   const response = await fetch('/__mengine/build-settings');
   if (!response.ok) throw new Error(`cannot read build settings: ${response.status}`);
   return response.json() as Promise<ProjectBuildSettings>;
+}
+
+export async function validateProjectScripts(): Promise<ProjectScriptValidation> {
+  if (!isDesktopEditor()) {
+    throw new Error('Project script validation requires the desktop editor');
+  }
+  return invoke<ProjectScriptValidation>('validate_project_scripts');
 }
 
 export async function saveProjectBuildSettings(
