@@ -34,6 +34,7 @@ import {
   Pause,
   Play,
   Plus,
+  RefreshCw,
   Save,
   Search,
   Spline,
@@ -168,6 +169,8 @@ import {
 import {
   broadcastProjectAssetsChanged,
   openAnimationClipAsset,
+  projectAssetsChangeTouches,
+  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
   listProjectFiles,
@@ -1434,6 +1437,7 @@ export function Timeline(props: {
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [creatingTimeline, setCreatingTimeline] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newClipName, setNewClipName] = useState('');
@@ -1522,6 +1526,8 @@ export function Timeline(props: {
   const selectedEventRef = useRef<number | null>(null);
   const editTransaction = useRef<AnimationEditTransaction | null>(null);
   const keyboardNudgeKey = useRef<string | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   clipRef.current = clip;
   timeRef.current = time;
   selectedTrackRef.current = selectedTrack;
@@ -1754,6 +1760,8 @@ export function Timeline(props: {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === clipPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -1764,7 +1772,7 @@ export function Timeline(props: {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedClipPath.current;
-    if (previousPath && clip) {
+    if (previousPath && clip && !forceReload) {
       drafts.current.set(previousPath, {
         clip: structuredClone(clip),
         savedText,
@@ -1801,7 +1809,8 @@ export function Timeline(props: {
       props.onClearPreview();
       return () => { cancelled = true; };
     }
-    const draft = drafts.current.get(clipPath);
+    if (forceReload) drafts.current.delete(clipPath);
+    const draft = forceReload ? undefined : drafts.current.get(clipPath);
     if (draft) {
       drafts.current.delete(clipPath);
       replaceClip(structuredClone(draft.clip));
@@ -1840,7 +1849,7 @@ export function Timeline(props: {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [clipPath]);
+  }, [clipPath, reloadToken]);
 
   const serializedClip = useMemo(
     () => clip ? serializeAnimationClip(clip) : '',
@@ -1852,6 +1861,35 @@ export function Timeline(props: {
   useEffect(() => {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
+
+  const reloadFromDisk = () => {
+    if (!clipPath) return;
+    props.onClearPreview();
+    forceReloadPath.current = clipPath;
+    setReloadToken((value) => value + 1);
+  };
+
+  useEffect(() => {
+    if (!clipPath) return;
+    const onAssetsChanged = (event: Event) => {
+      if (
+        suppressAssetChange.current
+        || !projectAssetsChangeTouches(
+          (event as CustomEvent<unknown>).detail,
+          [clipPath],
+        )
+      ) return;
+      if (dirty) {
+        setError(
+          'Animation Clip changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+  }, [clipPath, dirty]);
 
   useEffect(() => () => props.onClearPreview(), [props.entity?.entity]);
 
@@ -2087,7 +2125,12 @@ export function Timeline(props: {
       await refreshProjectFiles();
       drafts.current.delete(clipPath);
       setSavedText(serializeAnimationClip(normalized));
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: clipPath });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: clipPath });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onAssetsChanged();
       return true;
     } catch (reason) {
@@ -3646,6 +3689,15 @@ export function Timeline(props: {
             <Plus size={13} aria-hidden="true" /><span>Sequence</span>
           </button>
         )}
+        <button
+          type="button"
+          aria-label="Reload animation clip"
+          title="Reload animation clip from disk"
+          onClick={reloadFromDisk}
+          disabled={!clipPath || loading || saving}
+        >
+          <RefreshCw size={13} aria-hidden="true" /><span>Reload</span>
+        </button>
         <button
           type="button"
           aria-label="Save animation clip"

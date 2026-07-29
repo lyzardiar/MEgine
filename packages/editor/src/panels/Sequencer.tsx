@@ -34,6 +34,7 @@ import {
   Play,
   Plus,
   Redo2,
+  RefreshCw,
   Repeat2,
   Save,
   Square,
@@ -76,6 +77,7 @@ import {
 import {
   broadcastProjectAssetsChanged,
   openTimelineAsset,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import { clearAudioWaveforms } from '../audioWaveform';
@@ -306,6 +308,7 @@ export function Sequencer(props: SequencerProps) {
   const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [payloadInvalid, setPayloadInvalid] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -358,6 +361,8 @@ export function Sequencer(props: SequencerProps) {
   const panDrag = useRef<{ pointerId: number; clientX: number; scrollLeft: number } | null>(null);
   const trackDragCleanup = useRef<(() => void) | null>(null);
   const previewDuration = useRef(5);
+  const forceReloadPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   const audioPreviewController = useMemo(
     () => new TimelineAudioPreviewController(setAudioPreviewStatus),
     [],
@@ -536,15 +541,38 @@ export function Sequencer(props: SequencerProps) {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
 
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    setPlaying(false);
+    audioPreviewController.invalidate();
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
+
   useEffect(() => {
-    const clear = () => {
+    const clear = (event: Event) => {
       clearAudioWaveforms();
       audioPreviewController.invalidate();
       setPreviewAssetEpoch((value) => value + 1);
+      if (
+        suppressAssetChange.current
+        || !props.assetPath
+        || !projectAssetsChangeTouches(
+          (event as CustomEvent<unknown>).detail,
+          [props.assetPath],
+        )
+      ) return;
+      if (dirty) {
+        setError(
+          'Timeline changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
     };
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
     return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
-  }, [audioPreviewController]);
+  }, [audioPreviewController, dirty, props.assetPath]);
 
   useEffect(() => {
     audioPreviewController.activate();
@@ -671,6 +699,8 @@ export function Sequencer(props: SequencerProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const activeTransaction = inspectorEdit.current;
     if (
       activeTransaction?.historyToken
@@ -695,7 +725,7 @@ export function Sequencer(props: SequencerProps) {
     setTrackDragVisual(null);
     setGroupDragVisual(null);
     const previous = loadedPath.current;
-    if (previous && asset) {
+    if (previous && asset && !forceReload) {
       drafts.current.set(previous, {
         asset: structuredClone(asset), savedText, time,
         selection: selection ? { ...selection } : null,
@@ -720,7 +750,8 @@ export function Sequencer(props: SequencerProps) {
     setError(null);
     setPayloadInvalid(false);
     if (!props.assetPath) return () => { cancelled = true; };
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       const restoredAsset = structuredClone(draft.asset);
@@ -757,7 +788,7 @@ export function Sequencer(props: SequencerProps) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   useEffect(() => {
     if (!asset) return;
@@ -945,7 +976,12 @@ export function Sequencer(props: SequencerProps) {
       setSavedText(text);
       drafts.current.delete(props.assetPath);
       await refreshProjectFiles();
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
       return true;
@@ -3129,6 +3165,7 @@ export function Sequencer(props: SequencerProps) {
           <button type="button" className={`timeline-icon-button sequencer-inspector-toggle${inspectorOpen ? ' active' : ''}`} aria-label={inspectorOpen ? 'Hide Timeline Inspector' : 'Show Timeline Inspector'} title={inspectorOpen ? 'Hide Timeline Inspector' : 'Show Timeline Inspector'} onClick={toggleInspector}>
             {inspectorOpen ? <PanelRightClose size={13} /> : <PanelRightOpen size={13} />}
           </button>
+          <button type="button" className="timeline-icon-button" aria-label="Reload Timeline" title="Reload Timeline from disk" disabled={loading || saving} onClick={reloadFromDisk}><RefreshCw size={14} /></button>
           <button type="button" className="timeline-icon-button" aria-label="Save Timeline" title={saving ? 'Saving' : 'Save Timeline (Ctrl+S)'} disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /></button>
           <button type="button" className="timeline-icon-button" aria-label="Back to Animation Clip editor" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
         </div>
