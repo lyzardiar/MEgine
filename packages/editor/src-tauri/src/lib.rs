@@ -5295,7 +5295,9 @@ struct EditorWindowInfo {
     kind: String,
     /// For `panel-*` windows, the panel id (e.g. "hierarchy").
     panel_kind: Option<String>,
-    /// For `editor-*` windows, the registered editor window typeId from the URL query.
+    /// Canonical registered editor window typeId for `editor-*` windows.
+    type_id: Option<String>,
+    /// Backward-compatible alias retained for existing Agent clients.
     editor_type: Option<String>,
     url: String,
     visible: bool,
@@ -5413,6 +5415,7 @@ fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
                 title: window.title().unwrap_or_default(),
                 kind: kind.to_string(),
                 panel_kind,
+                type_id: editor_type.clone(),
                 editor_type,
                 url: url_str,
                 visible: window.is_visible().unwrap_or(false),

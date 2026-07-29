@@ -32,6 +32,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.ok(contentScript);
   assert.ok(interactionScript);
 
+  assert.match(native, /type_id: Option<String>/);
+  assert.match(native, /type_id: editor_type\.clone\(\)/);
+  assert.match(protocol, /typeId: string \| null/);
+  assert.match(protocol, /editorType: string \| null/);
   assert.match(rust, /Page\.captureScreenshot/);
   assert.match(rust, /validated_capture_region/);
   assert.match(rust, /page_x \+ clip\.x/);

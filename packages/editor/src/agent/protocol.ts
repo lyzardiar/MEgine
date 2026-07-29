@@ -234,7 +234,9 @@ export interface EditorWindowInfo {
   kind: 'main' | 'panel' | 'editor' | 'other';
   /** For `panel-*` windows, the panel id (e.g. "hierarchy"). */
   panelKind: string | null;
-  /** For `editor-*` windows, the registered editor window typeId. */
+  /** Canonical registered window typeId for `editor-*` windows. */
+  typeId: string | null;
+  /** Backward-compatible alias for existing Agent clients. */
   editorType: string | null;
   url: string;
   visible: boolean;

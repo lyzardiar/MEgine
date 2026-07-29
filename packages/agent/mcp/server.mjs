@@ -1411,7 +1411,7 @@ const TOOLS = [
   {
     name: 'list_windows',
     description:
-      'List every editor window currently open: the main window, detached panels (panel-*), and floating editor windows (editor-*), with title, position, size, visibility and focus.',
+      'List every editor window currently open: the main window, detached panels (panel-*), and floating editor windows (editor-*), with canonical typeId (plus the compatible editorType alias), title, position, size, visibility and focus.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
