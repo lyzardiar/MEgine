@@ -88,6 +88,7 @@ function MenuNode(props: {
   const enabled = hasChildren
     ? node.children.some((child) => hasEnabledAction(child, context))
     : isEnabled(node.entry, context);
+  const canExpand = hasChildren && enabled;
 
   const onClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -141,15 +142,15 @@ function MenuNode(props: {
     <div
       ref={nodeRef}
       className={`popup-menu-node${hasChildren ? ' has-children' : ''}${expanded ? ' is-open' : ''}`}
-      aria-label={hasChildren ? `Open ${node.label} submenu` : undefined}
-      onPointerEnter={hasChildren ? (event) => {
+      aria-label={canExpand ? `Open ${node.label} submenu` : undefined}
+      onPointerEnter={canExpand ? (event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         // Fast first placement; layout measurement below corrects for wider custom labels.
         setOpenLeft(rect.right + 224 > window.innerWidth);
         setExpanded(true);
       } : undefined}
-      onPointerLeave={hasChildren ? () => setExpanded(false) : undefined}
-      onFocusCapture={() => hasChildren && setExpanded(true)}
+      onPointerLeave={canExpand ? () => setExpanded(false) : undefined}
+      onFocusCapture={() => canExpand && setExpanded(true)}
       onBlurCapture={onBlur}
     >
       <button
