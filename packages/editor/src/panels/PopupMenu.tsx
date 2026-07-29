@@ -141,14 +141,14 @@ function MenuNode(props: {
     <div
       ref={nodeRef}
       className={`popup-menu-node${hasChildren ? ' has-children' : ''}${expanded ? ' is-open' : ''}`}
-      onPointerEnter={(event) => {
-        if (!hasChildren) return;
+      aria-label={hasChildren ? `Open ${node.label} submenu` : undefined}
+      onPointerEnter={hasChildren ? (event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         // Fast first placement; layout measurement below corrects for wider custom labels.
         setOpenLeft(rect.right + 224 > window.innerWidth);
         setExpanded(true);
-      }}
-      onPointerLeave={() => setExpanded(false)}
+      } : undefined}
+      onPointerLeave={hasChildren ? () => setExpanded(false) : undefined}
       onFocusCapture={() => hasChildren && setExpanded(true)}
       onBlurCapture={onBlur}
     >

@@ -767,6 +767,9 @@ test('panel and menu agent surfaces use live providers and background activation
     /closeAllDetachedPanelWindows\(\)[\s\S]*\.then\(\(\) => setTree\(defaultTree\(\)\)\)/,
   );
   assert.match(popup, /data-agent-interaction=/);
+  assert.match(popup, /aria-label=\{hasChildren \? `Open \$\{node\.label\} submenu` : undefined\}/);
+  assert.match(popup, /onPointerEnter=\{hasChildren \? \(event\) =>/);
+  assert.match(popup, /onPointerLeave=\{hasChildren \? \(\) => setExpanded\(false\) : undefined\}/);
   assert.match(gate, /data-agent-alternative="open_project"/);
   assert.match(gate, /data-agent-alternative="create_project"/);
   assert.equal(
