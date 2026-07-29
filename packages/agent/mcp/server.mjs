@@ -939,6 +939,44 @@ function uiModifierProperties() {
   };
 }
 
+function uiPointerOffsetProperties() {
+  return {
+    offsetX: {
+      type: 'number',
+      minimum: -1000000,
+      maximum: 1000000,
+      description:
+        'Optional horizontal CSS-pixel offset from the element left edge; defaults to center and must resolve inside current bounds',
+    },
+    offsetY: {
+      type: 'number',
+      minimum: -1000000,
+      maximum: 1000000,
+      description:
+        'Optional vertical CSS-pixel offset from the element top edge; defaults to center and must resolve inside current bounds',
+    },
+  };
+}
+
+function uiTargetPointerOffsetProperties() {
+  return {
+    targetOffsetX: {
+      type: 'number',
+      minimum: -1000000,
+      maximum: 1000000,
+      description:
+        'Optional horizontal CSS-pixel offset from the drag target left edge; defaults to center and must resolve inside current bounds',
+    },
+    targetOffsetY: {
+      type: 'number',
+      minimum: -1000000,
+      maximum: 1000000,
+      description:
+        'Optional vertical CSS-pixel offset from the drag target top edge; defaults to center and must resolve inside current bounds',
+    },
+  };
+}
+
 const TOOLS = [
   {
     name: 'get_project_state',
@@ -3107,6 +3145,7 @@ const TOOLS = [
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
@@ -3117,6 +3156,7 @@ const TOOLS = [
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
@@ -3127,6 +3167,7 @@ const TOOLS = [
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
@@ -3168,17 +3209,20 @@ const TOOLS = [
     {
       ...uiInteractionProperties('Exact draggable source selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
+      ...uiTargetPointerOffsetProperties(),
       targetSelector: { type: 'string', description: 'Exact drop target selector returned by get_window_ui' },
     },
     ['selector', 'expectedSnapshotRevision', 'targetSelector'],
   ),
   execTool(
     'drag_window_ui_by',
-    'Perform a bounded pointer drag with optional modifiers from the center of an element marked with the dragBy action by get_window_ui. The editor window must be hidden and unfocused, and the endpoint must stay inside the same WebView.',
+    'Perform a bounded pointer drag with optional modifiers from an exact element-relative CSS-pixel offset, or its center by default, on an element marked with the dragBy action by get_window_ui. The editor window must be hidden and unfocused, and the endpoint must stay inside the same WebView.',
     'window.ui_drag_by',
     {
       ...uiInteractionProperties('Exact pointer-gesture selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
       deltaX: {
         type: 'number',
         minimum: -1000000,
@@ -3200,6 +3244,7 @@ const TOOLS = [
     'window.ui_hover',
     {
       ...uiInteractionProperties('Exact hover-capable selector returned by get_window_ui'),
+      ...uiPointerOffsetProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),

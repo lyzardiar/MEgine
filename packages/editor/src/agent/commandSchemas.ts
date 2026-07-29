@@ -138,6 +138,38 @@ const uiModifierContext: SchemaProperties = {
   altKey: booleanValue('Dispatch the interaction with Alt held'),
   metaKey: booleanValue('Dispatch the interaction with Meta held'),
 };
+const uiPointerOffsetContext: SchemaProperties = {
+  offsetX: {
+    type: 'number',
+    minimum: -1_000_000,
+    maximum: 1_000_000,
+    description:
+      'Optional horizontal CSS-pixel offset from the element left edge; defaults to center and must resolve inside current bounds',
+  },
+  offsetY: {
+    type: 'number',
+    minimum: -1_000_000,
+    maximum: 1_000_000,
+    description:
+      'Optional vertical CSS-pixel offset from the element top edge; defaults to center and must resolve inside current bounds',
+  },
+};
+const uiTargetPointerOffsetContext: SchemaProperties = {
+  targetOffsetX: {
+    type: 'number',
+    minimum: -1_000_000,
+    maximum: 1_000_000,
+    description:
+      'Optional horizontal CSS-pixel offset from the drag target left edge; defaults to center and must resolve inside current bounds',
+  },
+  targetOffsetY: {
+    type: 'number',
+    minimum: -1_000_000,
+    maximum: 1_000_000,
+    description:
+      'Optional vertical CSS-pixel offset from the drag target top edge; defaults to center and must resolve inside current bounds',
+  },
+};
 const uiInteractionRequired = ['selector', 'expectedSnapshotRevision'];
 
 export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
@@ -866,16 +898,19 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'window.ui_click': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_double_click': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_context_click': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_set_value': objectSchema({
@@ -902,12 +937,15 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'window.ui_drag_to': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
+    ...uiTargetPointerOffsetContext,
     selector: stringValue('Exact draggable source selector returned by window.ui_snapshot'),
     targetSelector: stringValue('Exact drop target selector returned by window.ui_snapshot'),
   }, [...uiInteractionRequired, 'targetSelector']),
   'window.ui_drag_by': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact pointer-gesture selector returned by window.ui_snapshot'),
     deltaX: {
       type: 'number',
@@ -924,6 +962,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   }, [...uiInteractionRequired, 'deltaX', 'deltaY']),
   'window.ui_hover': objectSchema({
     ...uiInteractionContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact hover-capable selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_press_key': objectSchema({

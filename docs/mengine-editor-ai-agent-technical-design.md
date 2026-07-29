@@ -330,15 +330,15 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `layout.reset` | — | dispatch `mengine:reset-dock-layout` |
 | `window.open_editor` | `{ typeId }` | ✅ 隐藏创建后同时等待原生窗口可发现与目标 WebView 非空语义快照就绪；返回初始 `snapshotRevision` / `semanticElementCount`，不会把仍在加载的窗口误报为空；成功创建及 `window.close` 销毁均发出 `window.changed` |
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
-| `window.ui_click` | `{ windowLabel?, selector, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 对 `window.ui_snapshot` 返回的 selector 合成受限 Pointer/Mouse/Click 事件；可携带显式修饰键完成范围/追加选择，不激活顶层窗口 |
+| `window.ui_click` | `{ windowLabel?, selector, offsetX?, offsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 对 `window.ui_snapshot` 返回的 selector 合成受限 Pointer/Mouse/Click 事件；可使用元素左上角相对 CSS 像素定位画布内目标，省略坐标时兼容使用可见元素中心，并可携带显式修饰键完成范围/追加选择，不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
-| `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 支持双击、上下文菜单和虚拟化容器滚动；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
-| `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
-| `window.ui_drag_by` | `{ windowLabel?, selector, deltaX, deltaY, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素中心开始，在同一隐藏 WebView 内分步合成可带修饰键的 Pointer/Mouse 手势；终点必须留在视口内，不接受屏幕坐标且不移动系统鼠标 |
-| `window.ui_hover` | `{ windowLabel?, selector }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；在同一隐藏 WebView 内合成进入/离开事件，用于展开层级菜单且不移动系统鼠标 |
+| `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 双击和上下文菜单同样支持可选 `offsetX/offsetY` 精确点位；滚动支持虚拟化容器；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
+| `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, offsetX?, offsetY?, targetOffsetX?, targetOffsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，可分别指定源与目标元素内的 CSS 像素点，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
+| `window.ui_drag_by` | `{ windowLabel?, selector, offsetX?, offsetY?, deltaX, deltaY, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素内精确点位（默认中心）开始，在同一隐藏 WebView 内分步合成可带修饰键的 Pointer/Mouse 手势；起点必须位于当前元素与视口内、终点必须留在视口内，不接受屏幕坐标且不移动系统鼠标 |
+| `window.ui_hover` | `{ windowLabel?, selector, offsetX?, offsetY? }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；可指定元素内精确点位，在同一隐藏 WebView 内合成进入/离开事件，用于展开层级菜单且不移动系统鼠标 |
 | `window.ui_press_key` | `{ windowLabel?, selector, key, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 允许 Enter/Escape/Tab/Space、方向/翻页/首尾/删除类语义键、F1–F24 功能键，或单个非空白可打印 Unicode 字符；可打印键能逐字编辑 input/textarea/contenteditable，功能键与修饰键组合可触发编辑器快捷键。多字符文本、控制字符与调用方脚本仍被拒绝，所有事件只进入目标隐藏 WebView，不向前台应用注入输入 |
 
-所有 `window.ui_*` 写动作还必须传入 selector 所属页面的 `expectedSnapshotRevision`。Rust Host 会在事件分发前重新计算完整语义元素身份与顺序指纹；隐藏 WebView 还把 revision 绑定到 DOM mutation epoch、完整语义 selector、对应 DOM 元素身份和当时声明的动作集合，并在查询 selector 前于同一个 JS 任务内同步复核。源 selector 不属于该快照、动作未由该元素声明，或拖放目标不属于该快照时返回带原因的 `INVALID_ARGS`；DOM 已重排、元素身份已变化或检查与执行之间出现竞态时返回 `STALE_REVISION`。调用方必须重新读取快照，不能用手写的非快照 selector、把未声明动作作用到元素，或把过期 selector 作用到新元素。每个窗口最多保留最近 8 份 revision 授权记录，MutationObserver 观察到页面变化时全部失效，不会因滚动或重复查询无限保留 DOM 引用。
+所有 `window.ui_*` 写动作还必须传入 selector 所属页面的 `expectedSnapshotRevision`。Rust Host 会在事件分发前重新计算完整语义元素身份与顺序指纹；隐藏 WebView 还把 revision 绑定到 DOM mutation epoch、完整语义 selector、对应 DOM 元素身份和当时声明的动作集合，并在查询 selector 前于同一个 JS 任务内同步复核。源 selector 不属于该快照、动作未由该元素声明，或拖放目标不属于该快照时返回带原因的 `INVALID_ARGS`；DOM 已重排、元素身份已变化或检查与执行之间出现竞态时返回 `STALE_REVISION`。元素相对坐标会在执行任务内按当前 `getBoundingClientRect()` 重新换算，必须同时位于目标元素和 WebView viewport；越界返回 `invalidPointerCoordinates`，不会把截图中的旧像素点注入其他控件。调用方必须重新读取快照，不能用手写的非快照 selector、把未声明动作作用到元素，或把过期 selector 作用到新元素。每个窗口最多保留最近 8 份 revision 授权记录，MutationObserver 观察到页面变化时全部失效，不会因滚动或重复查询无限保留 DOM 引用。
 
 动作分发后，目标 WebView 会等待两次渲染机会（后台限流时由有界 timer 接管），Rust Host 再读取一次完整语义指纹。成功结果携带 `settledFrames`、`postObservationConfirmed`、`postSnapshotRevision`、`postSemanticElementCount` 与 `snapshotChanged`；因此 Agent 可以直接把返回的 post revision 用于下一次交互，而不需要任意 sleep。若动作已执行但目标窗口随即消失，结果保留成功分发并以 `postObservationConfirmed=false` 和 `postObservationError` 明确标记未能完成后置观测。
 

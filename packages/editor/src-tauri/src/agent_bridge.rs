@@ -1994,6 +1994,10 @@ pub async fn interact_editor_window(
     action: String,
     target_selector: Option<String>,
     value: Option<String>,
+    offset_x: Option<f64>,
+    offset_y: Option<f64>,
+    target_offset_x: Option<f64>,
+    target_offset_y: Option<f64>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2038,10 +2042,29 @@ pub async fn interact_editor_window(
     if value.as_ref().is_some_and(|value| value.len() > 100_000) {
         return Err("UI value exceeds the 100000-character limit".to_string());
     }
-    for (name, delta) in [("deltaX", delta_x), ("deltaY", delta_y)] {
-        if delta.is_some_and(|delta| !delta.is_finite() || delta.abs() > 1_000_000.0) {
+    for (name, coordinate) in [
+        ("offsetX", offset_x),
+        ("offsetY", offset_y),
+        ("targetOffsetX", target_offset_x),
+        ("targetOffsetY", target_offset_y),
+        ("deltaX", delta_x),
+        ("deltaY", delta_y),
+    ] {
+        if coordinate
+            .is_some_and(|coordinate| !coordinate.is_finite() || coordinate.abs() > 1_000_000.0)
+        {
             return Err(format!("{name} must be from -1000000 to 1000000"));
         }
+    }
+    let pointer_action = matches!(
+        action.as_str(),
+        "click" | "doubleClick" | "contextClick" | "dragTo" | "dragBy" | "hover"
+    );
+    if !pointer_action && (offset_x.is_some() || offset_y.is_some()) {
+        return Err("offsetX and offsetY are only valid for pointer actions".to_string());
+    }
+    if action != "dragTo" && (target_offset_x.is_some() || target_offset_y.is_some()) {
+        return Err("targetOffsetX and targetOffsetY are only valid for dragTo".to_string());
     }
     if action == "scroll" && delta_y.is_none() {
         return Err("scroll requires deltaY".to_string());
@@ -2107,6 +2130,10 @@ pub async fn interact_editor_window(
         action,
         target_selector,
         value,
+        offset_x,
+        offset_y,
+        target_offset_x,
+        target_offset_y,
         delta_x,
         delta_y,
         key,
@@ -2487,6 +2514,10 @@ async fn interact_editor_window_impl(
     action: String,
     target_selector: Option<String>,
     value: Option<String>,
+    offset_x: Option<f64>,
+    offset_y: Option<f64>,
+    target_offset_x: Option<f64>,
+    target_offset_y: Option<f64>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2502,6 +2533,10 @@ async fn interact_editor_window_impl(
         "action": action,
         "targetSelector": target_selector,
         "value": value,
+        "offsetX": offset_x,
+        "offsetY": offset_y,
+        "targetOffsetX": target_offset_x,
+        "targetOffsetY": target_offset_y,
         "deltaX": delta_x,
         "deltaY": delta_y,
         "key": key,
@@ -2681,6 +2716,10 @@ async fn interact_editor_window_impl(
     _action: String,
     _target_selector: Option<String>,
     _value: Option<String>,
+    _offset_x: Option<f64>,
+    _offset_y: Option<f64>,
+    _target_offset_x: Option<f64>,
+    _target_offset_y: Option<f64>,
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
     _key: Option<String>,
@@ -3892,6 +3931,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     action,
     targetSelector,
     value: requestedValue,
+    offsetX: requestedOffsetX,
+    offsetY: requestedOffsetY,
+    targetOffsetX: requestedTargetOffsetX,
+    targetOffsetY: requestedTargetOffsetY,
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
     key: requestedKey,
@@ -4243,7 +4286,83 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       expectedSnapshotRevision,
     };
   }
+  const coordinateFor = (
+    target,
+    requestedX,
+    requestedY,
+    targetLabel,
+  ) => {
+    const rect = target.getBoundingClientRect();
+    const offsetX = requestedX == null ? rect.width / 2 : Number(requestedX);
+    const offsetY = requestedY == null ? rect.height / 2 : Number(requestedY);
+    if (
+      !Number.isFinite(offsetX)
+      || !Number.isFinite(offsetY)
+      || offsetX < 0
+      || offsetY < 0
+      || offsetX >= rect.width
+      || offsetY >= rect.height
+    ) {
+      throw new Error(
+        `${targetLabel} offsets must resolve inside its current ${
+          rect.width.toFixed(2)
+        } by ${rect.height.toFixed(2)} CSS-pixel bounds`,
+      );
+    }
+    const clientX = rect.left + offsetX;
+    const clientY = rect.top + offsetY;
+    if (
+      clientX < 0
+      || clientY < 0
+      || clientX >= document.documentElement.clientWidth
+      || clientY >= document.documentElement.clientHeight
+    ) {
+      throw new Error(`${targetLabel} pointer coordinates must be inside the target WebView viewport`);
+    }
+    return {
+      offsetX,
+      offsetY,
+      clientX,
+      clientY,
+    };
+  };
+  const pointerActions = [
+    'click',
+    'doubleClick',
+    'contextClick',
+    'dragTo',
+    'dragBy',
+    'hover',
+  ];
+  let sourceCoordinates = null;
+  let targetCoordinates = null;
+  try {
+    if (pointerActions.includes(action)) {
+      sourceCoordinates = coordinateFor(
+        element,
+        requestedOffsetX,
+        requestedOffsetY,
+        'Element',
+      );
+    }
+    if (action === 'dragTo') {
+      targetCoordinates = coordinateFor(
+        targetElement,
+        requestedTargetOffsetX,
+        requestedTargetOffsetY,
+        'Target element',
+      );
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+      invalidPointerCoordinates: true,
+    };
+  }
   const eventCoordinates = (target = element) => {
+    if (target === element && sourceCoordinates) return sourceCoordinates;
+    if (target === targetElement && targetCoordinates) return targetCoordinates;
     const rect = target.getBoundingClientRect();
     return {
       clientX: rect.left + rect.width / 2,
@@ -4417,6 +4536,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       );
     } else if (
       !Object.values(modifiers).some(Boolean)
+      && requestedOffsetX == null
+      && requestedOffsetY == null
       && typeof element.click === 'function'
     ) element.click();
     else dispatchPointer('click', 0, 0, detail);
@@ -4480,7 +4601,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     ) {
       return { ok: false, error: 'dragBy requires finite non-zero CSS-pixel deltas' };
     }
-    const start = eventCoordinates(element);
+    const start = sourceCoordinates;
     const end = {
       clientX: start.clientX + deltaX,
       clientY: start.clientY + deltaY,
@@ -5378,6 +5499,14 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     action,
     key: action === 'keyPress' ? requestedKey : null,
     modifiers,
+    offsetX: sourceCoordinates?.offsetX ?? null,
+    offsetY: sourceCoordinates?.offsetY ?? null,
+    clientX: sourceCoordinates?.clientX ?? null,
+    clientY: sourceCoordinates?.clientY ?? null,
+    targetOffsetX: targetCoordinates?.offsetX ?? null,
+    targetOffsetY: targetCoordinates?.offsetY ?? null,
+    targetClientX: targetCoordinates?.clientX ?? null,
+    targetClientY: targetCoordinates?.clientY ?? null,
     deltaX: action === 'dragBy' ? requestedDeltaX : null,
     deltaY: action === 'dragBy' ? requestedDeltaY : null,
     selector,

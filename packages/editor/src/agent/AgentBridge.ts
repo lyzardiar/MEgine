@@ -1073,6 +1073,10 @@ class AgentBridge {
     windowLabel = 'main',
     targetSelector?: string,
     value?: string,
+    offsetX?: number,
+    offsetY?: number,
+    targetOffsetX?: number,
+    targetOffsetY?: number,
     deltaX?: number,
     deltaY?: number,
     key?: string,
@@ -1124,6 +1128,10 @@ class AgentBridge {
       action,
       targetSelector,
       value,
+      offsetX,
+      offsetY,
+      targetOffsetX,
+      targetOffsetY,
       deltaX,
       deltaY,
       key,
@@ -1185,6 +1193,22 @@ class AgentBridge {
             actionNotExposed: result.actionNotExposed ?? false,
             requiredAction: result.requiredAction ?? null,
             allowedActions: result.allowedActions ?? [],
+          },
+        );
+      }
+      if (result.invalidPointerCoordinates) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Pointer coordinates are outside the current semantic element',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            invalidPointerCoordinates: true,
+            offsetX: offsetX ?? null,
+            offsetY: offsetY ?? null,
+            targetOffsetX: targetOffsetX ?? null,
+            targetOffsetY: targetOffsetY ?? null,
           },
         );
       }
@@ -4683,6 +4707,28 @@ class AgentBridge {
       const targetSelector = commandId === 'window.ui_drag_to'
         ? requiredString(args, 'targetSelector')
         : undefined;
+      const pointerCoordinates = (
+        commandId === 'window.ui_click'
+        || commandId === 'window.ui_double_click'
+        || commandId === 'window.ui_context_click'
+        || commandId === 'window.ui_drag_to'
+        || commandId === 'window.ui_drag_by'
+        || commandId === 'window.ui_hover'
+      );
+      const offsetX = pointerCoordinates && args.offsetX !== undefined
+        ? requiredBoundedUiDelta(args, 'offsetX')
+        : undefined;
+      const offsetY = pointerCoordinates && args.offsetY !== undefined
+        ? requiredBoundedUiDelta(args, 'offsetY')
+        : undefined;
+      const targetOffsetX = commandId === 'window.ui_drag_to'
+        && args.targetOffsetX !== undefined
+        ? requiredBoundedUiDelta(args, 'targetOffsetX')
+        : undefined;
+      const targetOffsetY = commandId === 'window.ui_drag_to'
+        && args.targetOffsetY !== undefined
+        ? requiredBoundedUiDelta(args, 'targetOffsetY')
+        : undefined;
       const deltaX = commandId === 'window.ui_drag_by'
         ? requiredBoundedUiDelta(args, 'deltaX')
         : optionalBoundedUiDelta(args, 'deltaX', 0);
@@ -4713,6 +4759,10 @@ class AgentBridge {
           windowLabel,
           targetSelector,
           value,
+          offsetX,
+          offsetY,
+          targetOffsetX,
+          targetOffsetY,
           deltaX,
           deltaY,
           key,

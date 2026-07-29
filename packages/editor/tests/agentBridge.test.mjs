@@ -136,8 +136,17 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /targetElement !== guardedTarget\.element/);
   assert.match(interactionScript, /if \(!allowedActions\.includes\(action\)\)/);
   assert.match(interactionScript, /actionNotExposed: true/);
+  assert.match(interactionScript, /const coordinateFor = \(/);
+  assert.match(interactionScript, /offsetX >= rect\.width/);
+  assert.match(interactionScript, /offsetY >= rect\.height/);
+  assert.match(interactionScript, /invalidPointerCoordinates: true/);
+  assert.match(interactionScript, /requestedTargetOffsetX/);
+  assert.match(interactionScript, /targetClientX: targetCoordinates\?\.clientX \?\? null/);
   assert.match(bridge, /if \(result\.selectorNotExposed \|\| result\.actionNotExposed\)/);
+  assert.match(bridge, /if \(result\.invalidPointerCoordinates\)/);
   assert.match(protocol, /targetSelectorNotExposed\?: boolean/);
+  assert.match(protocol, /invalidPointerCoordinates\?: boolean/);
+  assert.match(protocol, /targetClientY\?: number \| null/);
   assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
