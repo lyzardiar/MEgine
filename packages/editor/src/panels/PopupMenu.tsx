@@ -1,6 +1,15 @@
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, FocusEvent, MouseEvent } from 'react';
+import type {
+  CSSProperties,
+  FocusEvent,
+  KeyboardEvent,
+  MouseEvent,
+} from 'react';
 import type { MenuItemContext, MenuItemEntry } from '../editorWindow';
+import {
+  focusMenuBoundary,
+  moveMenuItemFocus,
+} from '../menuKeyboardNavigation';
 
 type MenuTreeNode = {
   key: string;
@@ -136,6 +145,31 @@ function MenuNode(props: {
     setExpanded(false);
   };
 
+  const openSubmenu = () => {
+    if (!canExpand) return;
+    setExpanded(true);
+    window.requestAnimationFrame(() => {
+      focusMenuBoundary(submenuRef.current, 'first');
+    });
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const menu = event.currentTarget.closest<HTMLElement>('[role="menu"]');
+    if (menu && moveMenuItemFocus(menu, event.currentTarget, event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (
+      canExpand
+      && (event.key === 'ArrowRight' || event.key === 'Enter' || event.key === ' ')
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      openSubmenu();
+    }
+  };
+
   const submenuStyle = { top: submenuTop } as CSSProperties;
 
   return (
@@ -169,6 +203,7 @@ function MenuNode(props: {
         aria-haspopup={hasChildren ? 'menu' : undefined}
         aria-expanded={hasChildren ? expanded : undefined}
         onClick={onClick}
+        onKeyDown={onKeyDown}
       >
         <span>{node.label}</span>
         {hasChildren ? (
@@ -183,6 +218,16 @@ function MenuNode(props: {
           className={`popup-submenu${openLeft ? ' open-left' : ''}`}
           style={submenuStyle}
           role="menu"
+          aria-label={`${node.label} submenu`}
+          onKeyDown={(event) => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'Escape') return;
+            event.preventDefault();
+            event.stopPropagation();
+            setExpanded(false);
+            nodeRef.current
+              ?.querySelector<HTMLElement>(':scope > button[role="menuitem"]')
+              ?.focus({ preventScroll: true });
+          }}
         >
           <MenuNodes nodes={node.children} context={context} onSelect={props.onSelect} />
         </div>

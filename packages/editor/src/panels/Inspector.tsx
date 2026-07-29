@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -25,6 +26,10 @@ import {
   inspectMultiComponentFields,
   planMultiComponentEdit,
 } from '../multiComponentEditing';
+import {
+  focusMenuBoundary,
+  moveMenuItemFocus,
+} from '../menuKeyboardNavigation';
 import {
   isMaterialPropertyBlockTextureAsset,
   materialPropertyBlockBindingDiagnostics,
@@ -189,6 +194,8 @@ function CompBlock(props: {
   const [open, setOpen] = useState(props.defaultOpen ?? true);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const contextMenuId = useId();
   const menuItems = [
     ...(props.contextMenuItems ?? []),
     ...(props.onRemove ? [{
@@ -203,8 +210,17 @@ function CompBlock(props: {
     const close = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus({ preventScroll: true });
+    };
     window.addEventListener('mousedown', close);
-    return () => window.removeEventListener('mousedown', close);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
   }, [menuOpen]);
 
   return (
@@ -219,22 +235,50 @@ function CompBlock(props: {
           {menuItems.length > 0 && (
             <>
               <button
+                ref={menuButtonRef}
                 type="button"
                 className="comp-menu-btn"
                 title="Context Menu"
                 aria-label={`${props.title} Context Menu`}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-controls={contextMenuId}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuOpen((o) => !o);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setMenuOpen(true);
+                  window.requestAnimationFrame(() => {
+                    focusMenuBoundary(
+                      document.getElementById(contextMenuId),
+                      event.key === 'ArrowDown' ? 'first' : 'last',
+                    );
+                  });
                 }}
               >
                 ⋮
               </button>
               {menuOpen && (
                 <div
+                  id={contextMenuId}
                   className="comp-context-menu"
                   role="menu"
                   aria-label={`${props.title} component context menu`}
+                  onKeyDown={(event) => {
+                    if (moveMenuItemFocus(event.currentTarget, event.target, event.key)) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    } else if (event.key === 'Escape') {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setMenuOpen(false);
+                      menuButtonRef.current?.focus({ preventScroll: true });
+                    }
+                  }}
                 >
                   {menuItems.map((item, index) => (
                     <div key={`${item.label}-${index}`}>

@@ -11,6 +11,7 @@ test('core editor navigation exposes named semantic controls', () => {
   const project = panel('Project.tsx');
   const hierarchy = panel('Hierarchy.tsx');
   const menu = panel('MenuBar.tsx');
+  const popupMenu = panel('PopupMenu.tsx');
   const inspector = panel('Inspector.tsx');
   const dock = panel('DockWorkspace.tsx');
   const hierarchyMenu = panel('HierarchyContextMenu.tsx');
@@ -51,7 +52,12 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(menu, /role="menuitem"/);
   assert.match(menu, /aria-haspopup="menu"/);
   assert.match(menu, /aria-expanded=\{open === name\}/);
+  assert.match(menu, /aria-controls=\{menuId\(name\)\}/);
   assert.match(menu, /onMouseEnter=\{open && open !== name \? \(\) => setOpen\(name\) : undefined\}/);
+  assert.match(menu, /openMenuAndFocus\(name, event\.key === 'ArrowDown' \? 'first' : 'last'\)/);
+  assert.match(menu, /moveMenuItemFocus\(event\.currentTarget, event\.target, event\.key\)/);
+  assert.match(popupMenu, /openSubmenu\(\)/);
+  assert.match(popupMenu, /event\.key !== 'ArrowLeft' && event\.key !== 'Escape'/);
   assert.match(menu, /const componentItems = listMenuItems\('Component'\)/);
   assert.match(menu, /const editItems = listMenuItems\('Edit'\)/);
   assert.match(menu, /const helpItems = listMenuItems\('Help'\)/);
@@ -131,6 +137,8 @@ test('core editor navigation exposes named semantic controls', () => {
   );
   assert.match(inspector, /role="menu"\s*aria-label=\{`\$\{props\.title\} component context menu`\}/);
   assert.match(inspector, /role="menuitem"/);
+  assert.match(inspector, /aria-haspopup="menu"\s*aria-expanded=\{menuOpen\}\s*aria-controls=\{contextMenuId\}/);
+  assert.match(project, /moveMenuItemFocus\(event\.currentTarget, event\.target, event\.key\)/);
   assert.match(spriteEditor, /aria-label="Select sprite slice from preview"\s*onClick=/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
   assert.match(timeline, /aria-label="Animation Timeline lanes"/);
