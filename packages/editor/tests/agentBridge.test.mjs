@@ -182,6 +182,15 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /valueBlurHandledByReact: \['setValue', 'keyPress'\]\.includes\(action\)/);
   assert.match(interactionScript, /valueHandledByReact = dispatchValueChange\(element, nextValue\)/);
   assert.match(interactionScript, /pendingFocusTarget = next/);
+  assert.match(
+    interactionScript,
+    /candidate instanceof HTMLElement\s+\|\| candidate instanceof SVGElement/,
+  );
+  assert.match(interactionScript, /typeof candidate\.focus === 'function'/);
+  assert.match(
+    interactionScript,
+    /next instanceof HTMLElement \|\| next instanceof SVGElement/,
+  );
   assert.match(interactionScript, /let keyboardValueTarget = false/);
   assert.match(interactionScript, /if \(keyboardValueTarget\) pendingValueBlur = true/);
   assert.match(
@@ -190,7 +199,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   );
   assert.match(
     interactionScript,
-    /if \(pendingFocusTarget instanceof HTMLElement\) \{\s+dispatchReactFocusLifecycle/,
+    /pendingFocusTarget instanceof HTMLElement\s+\|\| pendingFocusTarget instanceof SVGElement/,
+  );
+  assert.match(interactionScript, /typeof pendingFocusTarget\.focus === 'function'/);
+  assert.match(
+    interactionScript,
+    /dispatchReactFocusLifecycle\(\s+pendingFocusTarget,\s+'focus'/,
   );
   assert.match(interactionScript, /requestedKey === 'Enter' \|\| requestedKey === 'Escape'/);
   assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);

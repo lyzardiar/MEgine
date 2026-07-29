@@ -5752,7 +5752,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         'button, input, select, textarea, a[href], area[href], summary, '
           + '[contenteditable], [tabindex]',
       )).filter((candidate) => (
-        candidate instanceof HTMLElement
+        (
+          candidate instanceof HTMLElement
+          || candidate instanceof SVGElement
+        )
+        && typeof candidate.focus === 'function'
         && candidate.tabIndex >= 0
         && rendered(candidate)
         && !effectivelyDisabled(candidate)
@@ -5777,7 +5781,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           ? (index - 1 + focusable.length) % focusable.length
           : (index + 1) % focusable.length;
       const next = focusable[nextIndex];
-      if (next instanceof HTMLElement) {
+      if (
+        (next instanceof HTMLElement || next instanceof SVGElement)
+        && typeof next.focus === 'function'
+      ) {
         if (keyboardValueTarget) pendingValueBlur = true;
         pendingFocusTarget = next;
       }
@@ -5860,7 +5867,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     performedSettledFrames += 1;
     valueCommitMethod = 'blur';
   }
-  if (pendingFocusTarget instanceof HTMLElement) {
+  if (
+    (
+      pendingFocusTarget instanceof HTMLElement
+      || pendingFocusTarget instanceof SVGElement
+    )
+    && typeof pendingFocusTarget.focus === 'function'
+  ) {
     dispatchReactFocusLifecycle(
       pendingFocusTarget,
       'focus',

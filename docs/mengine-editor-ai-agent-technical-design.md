@@ -336,7 +336,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, offsetX?, offsetY?, targetOffsetX?, targetOffsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，可分别指定源与目标元素内的 CSS 像素点，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
 | `window.ui_drag_by` | `{ windowLabel?, selector, offsetX?, offsetY?, button?, deltaX?/deltaY? 或 path?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素内精确点位（默认中心）开始，可选择 `left/middle/right` 按钮；简单手势使用单终点增量，曲线/绕行手势可传最多 64 个相对起点的累计位移点。所有路径点必须留在同一隐藏 WebView 视口内，事件数量有界，不接受屏幕坐标且不移动系统鼠标 |
 | `window.ui_hover` | `{ windowLabel?, selector, state?, offsetX?, offsetY? }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；`state=enter`（默认）可在元素内精确点位展开层级菜单，`state=leave` 显式释放当前合成 hover 并收起临时 UI，整个过程不移动系统鼠标 |
-| `window.ui_press_key` | `{ windowLabel?, selector, key, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 允许 Enter/Escape/Tab/Space、方向/翻页/首尾/删除类语义键、F1–F24 功能键，或单个非空白可打印 Unicode 字符；可打印键通过当前 React props 同步受控草稿，Enter/Escape 只为可编辑控件补齐失落的 blur 提交，Tab 对可编辑草稿先提交再移动语义焦点、对按钮/菜单项则仅移动焦点；功能键与修饰键组合可触发编辑器快捷键。多字符文本、控制字符与调用方脚本仍被拒绝，所有事件只进入目标隐藏 WebView，不向前台应用注入输入 |
+| `window.ui_press_key` | `{ windowLabel?, selector, key, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 允许 Enter/Escape/Tab/Space、方向/翻页/首尾/删除类语义键、F1–F24 功能键，或单个非空白可打印 Unicode 字符；可打印键通过当前 React props 同步受控草稿，Enter/Escape 只为可编辑控件补齐失落的 blur 提交，Tab 对可编辑草稿先提交再按原生 HTML/SVG 语义焦点顺序移动、对按钮/菜单项则仅移动焦点；功能键与修饰键组合可触发编辑器快捷键。多字符文本、控制字符与调用方脚本仍被拒绝，所有事件只进入目标隐藏 WebView，不向前台应用注入输入 |
 
 所有 `window.ui_*` 写动作还必须传入 selector 所属页面的 `expectedSnapshotRevision`。Rust Host 会在事件分发前重新计算完整语义元素身份与顺序指纹；隐藏 WebView 还把 revision 绑定到 DOM mutation epoch、完整语义 selector、对应 DOM 元素身份和当时声明的动作集合，并在查询 selector 前于同一个 JS 任务内同步复核。源 selector 不属于该快照、动作未由该元素声明，或拖放目标不属于该快照时返回带原因的 `INVALID_ARGS`；DOM 已重排、元素身份已变化或检查与执行之间出现竞态时返回 `STALE_REVISION`。元素相对坐标会在执行任务内按当前 `getBoundingClientRect()` 重新换算，必须同时位于目标元素和 WebView viewport；越界返回 `invalidPointerCoordinates`，不会把截图中的旧像素点注入其他控件。调用方必须重新读取快照，不能用手写的非快照 selector、把未声明动作作用到元素，或把过期 selector 作用到新元素。每个窗口最多保留最近 8 份 revision 授权记录，MutationObserver 观察到页面变化时全部失效，不会因滚动或重复查询无限保留 DOM 引用。
 
@@ -353,6 +353,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 `setValue` 在发出 React/input/change 事件前先用原生 `ValidityState` 校验 required、type、pattern、min/max/step 及长度约束；不合法的临时 DOM 值会先回滚，再以 `INVALID_ARGS` 返回具体 `validityIssues`，不会让 Agent 绕过快照中已经公开的控件约束。通过校验后优先调用元素当前 React props 的 `onInput/onChange`，无 React handler 时才回退到原生冒泡事件，避免受控输入只改 DOM 未改模型。文本型控件还必须成功取得 WebView 内语义编辑焦点，等待受控 props 与 DOM 值同步，再按捕获/冒泡顺序补齐 WebView 未派发的 React focus/blur 生命周期并等待提交渲染；结果用 `valueCommitMethod/valueCommitConfirmed` 明示采用 change 或 blur 提交以及提交边界是否实际触发，附带 React handler 与草稿同步证据供 Agent 判断。若 DOM 值已经变化但提交边界未获确认，Bridge 返回 `CONFLICT` 并要求重新读取 UI 与领域模型，不把未落模的草稿误报为成功。
 
 快照版本 23 收紧 `keyPress` 能力声明：只有原生可聚焦控件、contenteditable、显式 `tabindex`（含 `-1`）或可聚焦 SVG 才公开按键动作。仅在父容器监听冒泡键盘事件、但自身不能获得焦点的 menu/dialog 包装层不再产生无法执行的虚假动作；Agent 应把按键发送给快照中的实际焦点项，事件仍会按 DOM/React 规则冒泡到容器处理。
+
+Tab 的合成焦点顺序同时包含可见、可用且 `tabIndex >= 0` 的 HTML 与 SVG 元素，并遵循正 `tabIndex` 优先、同组 DOM 顺序的原生规则。这样 Timeline 曲线编辑器、曲线关键帧和切线手柄不会被跳过；显式 `tabIndex=-1` 仍可直接接收 Agent 按键，但不会错误进入 Tab 顺序。
 
 #### 4.2.7 资产与构建
 
