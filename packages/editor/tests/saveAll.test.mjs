@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  closeResourceDocument,
   discardResourceDocument,
   executeSaveAllTasks,
   mergeSaveAllResults,
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveDocumentParticipant,
   RemoteSaveCoordinator,
@@ -118,6 +120,35 @@ test('remote save coordinator identifies exact discard requests', async () => {
   });
 });
 
+test('remote save coordinator identifies exact close requests', async () => {
+  let dispatched = null;
+  const coordinator = new RemoteSaveCoordinator(
+    (request) => { dispatched = request; },
+    100,
+    () => 'request-close',
+  );
+  const pending = coordinator.request(
+    [{ sender: 'material-window', panel: 'material' }],
+    ['Assets/Materials/Target.mmat'],
+    'close',
+  );
+
+  assert.deepEqual(dispatched, {
+    requestId: 'request-close',
+    targets: ['material-window'],
+    paths: ['Assets/Materials/Target.mmat'],
+    operation: 'close',
+  });
+  coordinator.accept('request-close', 'material-window', {
+    saved: ['Assets/Materials/Target.mmat'],
+    failures: [],
+  });
+  assert.deepEqual(await pending, {
+    saved: ['material/Assets/Materials/Target.mmat'],
+    failures: [],
+  });
+});
+
 test('save resource document executes only the exact claimed document task', async () => {
   const previousWindow = globalThis.window;
   globalThis.window = new EventTarget();
@@ -169,6 +200,35 @@ test('discard resource document executes only the exact claimed document task', 
       { saved: ['assets\\materials\\TARGET.mmat'], failures: [] },
     );
     assert.deepEqual(discarded, ['assets\\materials\\TARGET.mmat']);
+  } finally {
+    cleanups.forEach((cleanup) => cleanup());
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
+test('close resource document executes only the exact claimed document task', async () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = new EventTarget();
+  const closed = [];
+  const cleanups = [
+    registerCloseDocumentParticipant('Materials', (path) => (
+      sameSaveDocumentPath(path, 'Assets/Materials/Target.mmat')
+        ? async () => { closed.push(path); }
+        : null
+    )),
+    registerCloseDocumentParticipant('Shaders', (path) => (
+      sameSaveDocumentPath(path, 'Assets/Shaders/Other.mshader')
+        ? async () => { closed.push(path); }
+        : null
+    )),
+  ];
+  try {
+    assert.deepEqual(
+      await closeResourceDocument('assets\\materials\\TARGET.mmat'),
+      { saved: ['assets\\materials\\TARGET.mmat'], failures: [] },
+    );
+    assert.deepEqual(closed, ['assets\\materials\\TARGET.mmat']);
   } finally {
     cleanups.forEach((cleanup) => cleanup());
     if (previousWindow === undefined) delete globalThis.window;

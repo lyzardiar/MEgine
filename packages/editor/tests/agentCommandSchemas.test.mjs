@@ -81,6 +81,14 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['path'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['workspace.close_document'].required,
+    ['path'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['workspace.close_document'].properties.dirtyAction.enum,
+    ['reject', 'save', 'discard'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['asset.create'].required,
     ['kind'],
   );

@@ -103,12 +103,14 @@ import {
   SORTING_LAYERS_CHANGED_EVENT,
 } from './sortingLayers';
 import {
+  closeResourceDocument,
   discardResourceDocument,
   mergeSaveAllResults,
   RemoteSaveCoordinator,
   saveAllResources,
   saveResourceDocument,
   type RemoteSavePeer,
+  type ResourceDocumentOperation,
   type SaveAllResult,
 } from './saveAll';
 import { buildWorldTransforms } from './worldTransform';
@@ -186,7 +188,7 @@ type WorkspaceSyncMessage =
       requestId: string;
       targets: string[];
       paths?: string[];
-      operation?: 'save' | 'discard';
+      operation?: ResourceDocumentOperation;
     }
   | {
       type: 'save-resources-result';
@@ -373,6 +375,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const saveResourcesInFlight = useRef<Promise<SaveAllResult> | null>(null);
   const saveDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
   const discardDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
+  const closeDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
   const recoveryTimer = useRef<number | null>(null);
   const lastRecoveryError = useRef<string | null>(null);
   const lastAssetPollError = useRef<string | null>(null);
@@ -468,6 +471,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     }
   };
 
+  const closeLocalResourceDocument = async (path: string): Promise<SaveAllResult> => {
+    const key = path.replace(/\\/g, '/').toLocaleLowerCase();
+    const existing = closeDocumentInFlight.current.get(key);
+    if (existing) return existing;
+    const request = closeResourceDocument(path);
+    closeDocumentInFlight.current.set(key, request);
+    try {
+      return await request;
+    } finally {
+      if (closeDocumentInFlight.current.get(key) === request) {
+        closeDocumentInFlight.current.delete(key);
+      }
+    }
+  };
+
   const waitForLocalResourcesClean = async (timeoutMs = 2_000): Promise<boolean> => {
     const deadline = Date.now() + timeoutMs;
     do {
@@ -509,6 +527,24 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     } while (Date.now() < deadline);
     return !localResourceDocumentsRef.current.some(
       (candidate) => sameAssetPath(candidate.path, path) && candidate.dirty,
+    );
+  };
+
+  const waitForLocalResourceDocumentClosed = async (
+    path: string,
+    timeoutMs = 2_000,
+  ): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      if (!localResourceDocumentsRef.current.some(
+        (candidate) => sameAssetPath(candidate.path, path),
+      )) {
+        return true;
+      }
+    } while (Date.now() < deadline);
+    return !localResourceDocumentsRef.current.some(
+      (candidate) => sameAssetPath(candidate.path, path),
     );
   };
 
@@ -1146,18 +1182,30 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (message.type === 'request-save-resources') {
         if (!message.targets.includes(syncSender.current)) return;
         void (async () => {
-          const discarding = message.operation === 'discard';
+          const operation = message.operation ?? 'save';
+          const discarding = operation === 'discard';
+          const closing = operation === 'close';
           let result: SaveAllResult;
           try {
             result = message.paths?.length
               ? mergeSaveAllResults(await Promise.all(
                   message.paths.map((path) => (
-                    discarding
+                    closing
+                      ? closeLocalResourceDocument(path)
+                      : discarding
                       ? discardLocalResourceDocument(path)
                       : saveLocalResourceDocument(path)
                   )),
                 ))
-              : await saveLocalResources();
+              : operation === 'save'
+                ? await saveLocalResources()
+                : {
+                    saved: [],
+                    failures: [{
+                      label: props.detachedPanel ?? 'Workspace resources',
+                      error: `${operation} requires at least one exact document path`,
+                    }],
+                  };
           } catch (reason) {
             result = {
               saved: [],
@@ -1174,13 +1222,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                       const document = localResourceDocumentsRef.current.find(
                         (candidate) => sameAssetPath(candidate.path, path),
                       );
-                      return discarding
+                      return closing
+                        ? !document
+                        : discarding
                         ? !document || !document.dirty
                         : Boolean(document && !document.dirty);
                     })
                   : (await Promise.all(
                       message.paths.map((path) => (
-                        discarding
+                        closing
+                          ? waitForLocalResourceDocumentClosed(path)
+                          : discarding
                           ? waitForLocalResourceDocumentDiscarded(path)
                           : waitForLocalResourceDocumentClean(path)
                       )),
@@ -1197,9 +1249,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               failures: [{
                 label: message.paths?.join(', ') ?? props.detachedPanel ?? 'Workspace resources',
                 error: message.paths?.length
-                  ? `The requested document remains dirty after its ${
-                      discarding ? 'discard' : 'save'
-                    } participant completed`
+                  ? closing
+                    ? 'The requested document remains open after its close participant completed'
+                    : `The requested document remains dirty after its ${
+                        discarding ? 'discard' : 'save'
+                      } participant completed`
                   : 'Workspace remains dirty after its Save All participants completed',
               }],
             };
@@ -1781,7 +1835,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       return { name };
     },
   };
-  const resolveWorkspaceDocumentMutationTarget = async (requestedPath: string) => {
+  const collectWorkspaceDocumentMutationTargets = async (requestedPath: string) => {
     const remotePeers = await queryRemoteWorkspacePeers();
     const localMatches = localResourceDocumentsRef.current.filter(
       (document) => sameAssetPath(document.path, requestedPath),
@@ -1791,7 +1845,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         .filter((document) => sameAssetPath(document.path, requestedPath))
         .map((document) => ({ peer, document }))
     ));
-    const matches = [
+    return [
       ...localMatches.map((document) => ({
         host: 'main',
         panel: document.panel,
@@ -1805,6 +1859,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         peer,
       })),
     ];
+  };
+  const resolveWorkspaceDocumentMutationTarget = async (requestedPath: string) => {
+    const matches = await collectWorkspaceDocumentMutationTargets(requestedPath);
     if (matches.length === 0) {
       throw new BridgeError(
         'INVALID_ARGS',
@@ -1813,7 +1870,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     }
     const dirtyMatches = matches.filter((match) => match.document.dirty);
     const canonicalPath = (dirtyMatches[0] ?? matches[0]).document.path;
-    if (dirtyMatches.length === 0) return { canonicalPath, target: null };
+    if (dirtyMatches.length === 0) return { canonicalPath, target: null, matches };
     const dirtyHosts = new Set(dirtyMatches.map((match) => match.host));
     if (dirtyHosts.size > 1 || dirtyMatches.length > 1) {
       throw new BridgeError(
@@ -1828,7 +1885,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         },
       );
     }
-    return { canonicalPath, target: dirtyMatches[0] };
+    return { canonicalPath, target: dirtyMatches[0], matches };
   };
 
   agentWorkspaceProviderRef.current = {
@@ -1954,6 +2011,112 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       postWorkspaceDirtyState();
       return { path: canonicalPath, discarded: true, unchanged: false };
+    },
+    closeDocument: async (
+      requestedPath: string,
+      dirtyAction: 'reject' | 'save' | 'discard' = 'reject',
+    ) => {
+      const initial = await resolveWorkspaceDocumentMutationTarget(requestedPath);
+      const canonicalPath = initial.canonicalPath;
+      const wasDirty = initial.target != null;
+      let appliedDirtyAction: 'none' | 'save' | 'discard' = 'none';
+      if (wasDirty) {
+        if (dirtyAction === 'reject') {
+          throw new BridgeError(
+            'CONFLICT',
+            `Document "${canonicalPath}" has unsaved changes`,
+            {
+              path: canonicalPath,
+              allowedDirtyActions: ['save', 'discard'],
+            },
+          );
+        }
+        if (dirtyAction === 'save') {
+          appliedDirtyAction = 'save';
+          await agentWorkspaceProviderRef.current!.saveDocument(canonicalPath);
+        } else {
+          appliedDirtyAction = 'discard';
+          await agentWorkspaceProviderRef.current!.discardDocument(canonicalPath);
+        }
+      }
+
+      const matches = wasDirty
+        ? await collectWorkspaceDocumentMutationTargets(canonicalPath)
+        : initial.matches;
+      if (matches.length === 0) {
+        postWorkspaceDirtyState();
+        return {
+          path: canonicalPath,
+          closed: true,
+          dirtyAction: appliedDirtyAction,
+        };
+      }
+      if (matches.length > 1) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Multiple editor windows contain "${canonicalPath}"`,
+          {
+            hosts: matches.map((match) => ({
+              panel: match.panel,
+              sender: match.host,
+              kind: match.document.kind,
+              dirty: match.document.dirty,
+            })),
+          },
+        );
+      }
+
+      const [target] = matches;
+      let result: SaveAllResult;
+      if (target.peer) {
+        const coordinator = remoteSaveCoordinator.current;
+        if (!coordinator) {
+          throw new BridgeError(
+            'NOT_READY',
+            'Workspace document channel is unavailable',
+          );
+        }
+        result = await coordinator.request(
+          [{ sender: target.peer.sender, panel: target.peer.panel }],
+          [canonicalPath],
+          'close',
+        );
+      } else {
+        result = await closeLocalResourceDocument(canonicalPath);
+        if (
+          result.failures.length === 0
+          && !await waitForLocalResourceDocumentClosed(canonicalPath)
+        ) {
+          result = {
+            ...result,
+            failures: [{
+              label: canonicalPath,
+              error: 'The requested document remains open after its close participant completed',
+            }],
+          };
+        }
+      }
+      if (result.failures.length > 0) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Could not close "${canonicalPath}": ${
+            result.failures.map((failure) => failure.error).join('; ')
+          }`,
+          { failures: structuredClone(result.failures) },
+        );
+      }
+      if (result.saved.length === 0) {
+        throw new BridgeError(
+          'NOT_READY',
+          `No resource editor accepted the close request for "${canonicalPath}"`,
+        );
+      }
+      postWorkspaceDirtyState();
+      return {
+        path: canonicalPath,
+        closed: true,
+        dirtyAction: appliedDirtyAction,
+      };
     },
     listDocuments: async () => {
       const remotePeers = await queryRemoteWorkspacePeers();
@@ -3196,6 +3359,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
               playMode={mode !== 'edit'}
               onOpenAsset={setAnimatorPath}
+              onCloseAsset={() => setAnimatorPath(null)}
               onAssignAnimator={(entity, path) => {
                 const current = store.authoredEntities()
                   .find((entry) => entry.entity === entity)
@@ -3246,6 +3410,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               assetPath={materialPath}
               selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
               onOpenAsset={setMaterialPath}
+              onCloseAsset={() => setMaterialPath(null)}
               onAssignMaterial={(entity, path) => {
                 const result = store.assignMaterial(entity, path);
                 if (!result) {
@@ -3277,6 +3442,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               key={`shader:${assetReloadEpoch.shader}`}
               assetPath={shaderPath}
               onOpenAsset={setShaderPath}
+              onCloseAsset={() => setShaderPath(null)}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setShaderDirty}
               onDocumentsChange={setShaderDocuments}
@@ -3296,6 +3462,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <SpriteEditor
               key={`sprite:${assetReloadEpoch.sprite}`}
               assetPath={spritePath}
+              onCloseAsset={() => setSpritePath(null)}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setSpriteDirty}
               onLog={log}
@@ -3305,6 +3472,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <SpriteAtlasEditor
               key={`sprite-atlas:${assetReloadEpoch.spriteAtlas}`}
               assetPath={spriteAtlasPath}
+              onCloseAsset={() => setSpriteAtlasPath(null)}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setSpriteAtlasDirty}
               onLog={log}

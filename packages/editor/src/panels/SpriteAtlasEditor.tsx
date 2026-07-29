@@ -24,6 +24,7 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -59,6 +60,7 @@ function cloneAsset(asset: SpriteAtlasAsset): SpriteAtlasAsset {
 
 export function SpriteAtlasEditor(props: {
   assetPath: string | null;
+  onCloseAsset: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
@@ -240,6 +242,11 @@ export function SpriteAtlasEditor(props: {
       ? async () => { setReloadToken((value) => value + 1); }
       : null
   )), [dirty, loading, packing, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Sprite Atlas', (path) => (
+    !loading && !saving && !packing && sameSaveDocumentPath(props.assetPath, path)
+      ? async () => { props.onCloseAsset(); }
+      : null
+  )), [loading, packing, props.assetPath, props.onCloseAsset, saving]);
 
   const pack = async () => {
     if (!asset || !props.assetPath) return;

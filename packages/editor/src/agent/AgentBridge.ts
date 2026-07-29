@@ -292,6 +292,14 @@ export interface AgentWorkspaceProvider {
     discarded: boolean;
     unchanged: boolean;
   }>;
+  closeDocument: (
+    path: string,
+    dirtyAction?: 'reject' | 'save' | 'discard',
+  ) => Promise<{
+    path: string;
+    closed: true;
+    dirtyAction: 'none' | 'save' | 'discard';
+  }>;
   listDocuments: () => Promise<AgentWorkspaceDocument[]>;
   openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
   createAsset: (request: AgentCreateAssetRequest) => Promise<AgentCreateAssetResult>;
@@ -3981,6 +3989,20 @@ class AgentBridge {
     if (commandId === 'workspace.discard_document') {
       const result = await this.requireWorkspaceProvider().discardDocument(
         requiredString(args, 'path'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'workspace.close_document') {
+      const dirtyAction = optionalString(args, 'dirtyAction') ?? 'reject';
+      if (!['reject', 'save', 'discard'].includes(dirtyAction)) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          '"dirtyAction" must be "reject", "save", or "discard"',
+        );
+      }
+      const result = await this.requireWorkspaceProvider().closeDocument(
+        requiredString(args, 'path'),
+        dirtyAction as 'reject' | 'save' | 'discard',
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options);
     }

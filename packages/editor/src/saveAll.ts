@@ -1,6 +1,9 @@
 export const SAVE_ALL_RESOURCES_EVENT = 'mengine:save-all-resources';
 export const SAVE_RESOURCE_DOCUMENT_EVENT = 'mengine:save-resource-document';
 export const DISCARD_RESOURCE_DOCUMENT_EVENT = 'mengine:discard-resource-document';
+export const CLOSE_RESOURCE_DOCUMENT_EVENT = 'mengine:close-resource-document';
+
+export type ResourceDocumentOperation = 'save' | 'discard' | 'close';
 
 export type SaveAllTask = {
   label: string;
@@ -21,7 +24,7 @@ export type RemoteSaveRequest = {
   requestId: string;
   targets: string[];
   paths?: string[];
-  operation?: 'save' | 'discard';
+  operation?: ResourceDocumentOperation;
 };
 
 type SaveAllRequest = { tasks: SaveAllTask[] };
@@ -30,7 +33,7 @@ type SaveDocumentRequest = SaveAllRequest & { path: string };
 type PendingRemoteSave = {
   peers: Map<string, RemoteSavePeer>;
   results: Map<string, SaveAllResult>;
-  operation: 'save' | 'discard';
+  operation: ResourceDocumentOperation;
   resolve: (result: SaveAllResult) => void;
   timeout: ReturnType<typeof setTimeout>;
 };
@@ -81,7 +84,7 @@ export class RemoteSaveCoordinator {
   request(
     peers: readonly RemoteSavePeer[],
     paths: readonly string[] = [],
-    operation: 'save' | 'discard' = 'save',
+    operation: ResourceDocumentOperation = 'save',
   ): Promise<SaveAllResult> {
     const uniquePeers = new Map<string, RemoteSavePeer>();
     for (const peer of peers) {
@@ -109,7 +112,7 @@ export class RemoteSaveCoordinator {
           requestId,
           targets: [...uniquePeers.keys()],
           ...(paths.length > 0 ? { paths: [...paths] } : {}),
-          ...(operation === 'discard' ? { operation } : {}),
+          ...(operation !== 'save' ? { operation } : {}),
         });
       } catch (reason) {
         clearTimeout(timeout);
@@ -209,6 +212,19 @@ export function registerDiscardDocumentParticipant(
   return () => window.removeEventListener(DISCARD_RESOURCE_DOCUMENT_EVENT, listener);
 }
 
+export function registerCloseDocumentParticipant(
+  label: string,
+  task: (path: string) => (() => Promise<void>) | null,
+): () => void {
+  const listener = (event: Event) => {
+    const request = (event as CustomEvent<SaveDocumentRequest>).detail;
+    const run = task(request.path);
+    if (run) request.tasks.push({ label, run });
+  };
+  window.addEventListener(CLOSE_RESOURCE_DOCUMENT_EVENT, listener);
+  return () => window.removeEventListener(CLOSE_RESOURCE_DOCUMENT_EVENT, listener);
+}
+
 export async function executeSaveAllTasks(tasks: readonly SaveAllTask[]): Promise<SaveAllResult> {
   const saved: string[] = [];
   const failures: SaveAllResult['failures'] = [];
@@ -242,10 +258,14 @@ export async function discardResourceDocument(path: string): Promise<SaveAllResu
   return executeResourceDocumentEvent(DISCARD_RESOURCE_DOCUMENT_EVENT, path, 'discard');
 }
 
+export async function closeResourceDocument(path: string): Promise<SaveAllResult> {
+  return executeResourceDocumentEvent(CLOSE_RESOURCE_DOCUMENT_EVENT, path, 'close');
+}
+
 async function executeResourceDocumentEvent(
   eventName: string,
   path: string,
-  operation: 'save' | 'discard',
+  operation: ResourceDocumentOperation,
 ): Promise<SaveAllResult> {
   const request: SaveDocumentRequest = { path, tasks: [] };
   window.dispatchEvent(new CustomEvent<SaveDocumentRequest>(eventName, {

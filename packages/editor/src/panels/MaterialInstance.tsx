@@ -32,6 +32,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -180,6 +181,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const drafts = useRef(new Map<string, InstanceDraft>());
   const instanceRef = useRef<MaterialInstanceAsset | null>(null);
   const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
   const suppressAssetChange = useRef(false);
   const editTransaction = useRef<{
     instance: MaterialInstanceAsset;
@@ -207,7 +209,12 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && instance && !forceReload) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && instance && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, { instance: structuredClone(instance), savedText });
       setDraftEpoch((value) => value + 1);
     }
@@ -742,6 +749,25 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       setDraftEpoch((value) => value + 1);
     };
   }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Material Instances', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`material-instance:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`material-instance:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onCloseAsset, saving]);
 
   const createNew = async () => {
     try {

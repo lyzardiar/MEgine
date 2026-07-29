@@ -23,6 +23,7 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -53,6 +54,7 @@ function cloneSettings(settings: SpriteImportSettings): SpriteImportSettings {
 
 export function SpriteEditor(props: {
   assetPath: string | null;
+  onCloseAsset: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
@@ -320,6 +322,11 @@ export function SpriteEditor(props: {
       ? async () => { setReloadToken((value) => value + 1); }
       : null
   )), [basePath, dirty, loading, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Sprite Import Settings', (path) => (
+    !loading && !saving && sameSaveDocumentPath(basePath, path)
+      ? async () => { props.onCloseAsset(); }
+      : null
+  )), [basePath, loading, props.onCloseAsset, saving]);
 
   if (!basePath) {
     return <div className="sprite-editor-empty">Double-click a texture in Project to edit its sprite import settings.</div>;

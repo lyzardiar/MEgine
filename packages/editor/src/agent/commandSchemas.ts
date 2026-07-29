@@ -270,6 +270,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'workspace.discard_document': objectSchema({
     path: assetPath,
   }, ['path']),
+  'workspace.close_document': objectSchema({
+    path: assetPath,
+    dirtyAction: {
+      type: 'string',
+      enum: ['reject', 'save', 'discard'],
+      description: 'Dirty document policy; default reject',
+    },
+  }, ['path']),
   'scene.load_json': objectSchema({
     json: stringValue(
       'Complete version 1 MEngine scene JSON (max 8 MiB and 20,000 entities)',

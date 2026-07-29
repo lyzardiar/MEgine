@@ -49,6 +49,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -372,6 +373,7 @@ export function Sequencer(props: SequencerProps) {
   const trackDragCleanup = useRef<(() => void) | null>(null);
   const previewDuration = useRef(5);
   const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
   const suppressAssetChange = useRef(false);
   const audioPreviewController = useMemo(
     () => new TimelineAudioPreviewController(setAudioPreviewStatus),
@@ -747,7 +749,12 @@ export function Sequencer(props: SequencerProps) {
     setTrackDragVisual(null);
     setGroupDragVisual(null);
     const previous = loadedPath.current;
-    if (previous && asset && !forceReload) {
+    const closingPrevious = sameSaveDocumentPath(previous, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previous!);
+    }
+    if (previous && asset && !forceReload && !closingPrevious) {
       drafts.current.set(previous, {
         asset: structuredClone(asset), savedText, time,
         selection: selection ? { ...selection } : null,
@@ -1101,6 +1108,25 @@ export function Sequencer(props: SequencerProps) {
       setDraftEpoch((value) => value + 1);
     };
   }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Timelines', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`timeline:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onClose();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`timeline:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onClose, saving]);
 
   useEffect(() => {
     if (!props.previewEnabled || !playing || !asset) return;

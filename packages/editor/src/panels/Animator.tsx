@@ -38,6 +38,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -352,6 +353,7 @@ export type AnimatorEditorProps = {
   selectedEntity: SnapshotEntity | null;
   playMode: boolean;
   onOpenAsset: (path: string) => void;
+  onCloseAsset: () => void;
   onAssignAnimator: (entity: number, path: string) => void;
   onPatchAnimator: (entity: number, patch: Record<string, unknown>) => void;
   onAssetsChanged: () => void;
@@ -403,6 +405,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const selectedTransitionRef = useRef<number | null>(null);
   const editTransaction = useRef<AnimatorEditTransaction | null>(null);
   const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
   const suppressAssetChange = useRef(false);
   controllerRef.current = controller;
   selectedStateRef.current = selectedState;
@@ -520,7 +523,12 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && controller && !forceReload) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && controller && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, {
         controller: structuredClone(controller),
         savedFingerprint,
@@ -767,6 +775,25 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       setDraftEpoch((value) => value + 1);
     };
   }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Animator Controllers', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`animator:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`animator:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onCloseAsset, saving]);
 
   const createNew = async () => {
     try {
@@ -1589,6 +1616,7 @@ export function AnimatorEditor(props: AnimatorEditorProps) {
         <AvatarMaskEditor
           assetPath={avatarMaskOpen ? props.assetPath : null}
           onOpenAsset={props.onOpenAsset}
+          onCloseAsset={props.onCloseAsset}
           onAssetsChanged={props.onAssetsChanged}
           onDirtyChange={setAvatarMaskDirty}
           onDocumentsChange={setAvatarMaskDocuments}

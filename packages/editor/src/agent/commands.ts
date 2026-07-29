@@ -1188,6 +1188,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'scene.save_all', category: 'scene', description: 'Save the scene and every open resource document', readOnly: false },
   { id: 'workspace.save_document', category: 'workspace', description: 'Save exactly one open resource document by path without saving other drafts', readOnly: false },
   { id: 'workspace.discard_document', category: 'workspace', description: 'Discard exactly one open dirty resource draft by path without changing its file or other drafts', readOnly: false },
+  { id: 'workspace.close_document', category: 'workspace', description: 'Close exactly one open resource document with an explicit dirty-document policy', readOnly: false },
   { id: 'scene.load_json', category: 'scene', description: 'Atomically replace the current authored scene world from validated JSON', readOnly: false },
   { id: 'scene.rename', category: 'scene', description: 'Rename a scene asset while preserving its identity and build references', readOnly: false },
   { id: 'scene.delete', category: 'scene', description: 'Permanently delete a scene after revalidating an exact preview token', readOnly: false },

@@ -32,6 +32,7 @@ import {
 } from '../projectAssets';
 import { pingProjectAsset } from '../pingBus';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -232,6 +233,7 @@ export type MaterialEditorProps = {
   assetPath: string | null;
   selectedEntity: SnapshotEntity | null;
   onOpenAsset: (path: string) => void;
+  onCloseAsset: () => void;
   onAssignMaterial: (entity: number, path: string) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
@@ -259,6 +261,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   const drafts = useRef(new Map<string, { material: MaterialAsset; savedText: string }>());
   const materialRef = useRef<MaterialAsset | null>(null);
   const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
   const suppressAssetChange = useRef(false);
   const editTransaction = useRef<{
     material: MaterialAsset;
@@ -286,7 +289,12 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && material && !forceReload) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && material && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, {
         material: structuredClone(material),
         savedText,
@@ -664,6 +672,25 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
       setDraftEpoch((value) => value + 1);
     };
   }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Materials', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`material:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`material:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onCloseAsset, saving]);
 
   const createNew = async () => {
     try {

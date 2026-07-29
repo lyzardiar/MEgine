@@ -2087,6 +2087,23 @@ const TOOLS = [
     ['path'],
   ),
   execTool(
+    'close_document',
+    'Close exactly one open resource document by its Assets/... path. Dirty documents are rejected unless dirtyAction explicitly saves or discards that one draft first.',
+    'workspace.close_document',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact open resource document path returned by list_open_documents',
+      },
+      dirtyAction: {
+        type: 'string',
+        enum: ['reject', 'save', 'discard'],
+        description: 'Dirty document policy (default reject)',
+      },
+    },
+    ['path'],
+  ),
+  execTool(
     'load_scene_json',
     'Strictly validate and atomically replace the current authored scene world in memory. The operation creates one undo step, does not save to disk, and preserves the current Scene-view camera and project game resolution.',
     'scene.load_json',

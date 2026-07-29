@@ -26,6 +26,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -99,6 +100,7 @@ function avatarMaskControlLabel(target: HTMLInputElement | HTMLTextAreaElement):
 export function AvatarMaskEditor(props: {
   assetPath: string | null;
   onOpenAsset: (path: string) => void;
+  onCloseAsset: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
@@ -119,6 +121,7 @@ export function AvatarMaskEditor(props: {
   const maskRef = useRef<AvatarMaskAsset | null>(null);
   const editTransaction = useRef<AvatarMaskEditTransaction | null>(null);
   const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
   const suppressAssetChange = useRef(false);
   maskRef.current = mask;
 
@@ -197,7 +200,12 @@ export function AvatarMaskEditor(props: {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && mask && !forceReload) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && mask && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, { mask: structuredClone(mask), savedFingerprint });
       setDraftEpoch((value) => value + 1);
     }
@@ -423,6 +431,25 @@ export function AvatarMaskEditor(props: {
       setDraftEpoch((value) => value + 1);
     };
   }), [dirty, draftEpoch, loading, props.assetPath, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Avatar Masks', (path) => {
+    if (loading || saving) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`avatar-mask:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`avatar-mask:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [draftEpoch, loading, props.assetPath, props.onCloseAsset, saving]);
 
   const createNew = async () => {
     try {

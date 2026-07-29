@@ -184,6 +184,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -1537,6 +1538,7 @@ export function Timeline(props: {
   const editTransaction = useRef<AnimationEditTransaction | null>(null);
   const keyboardNudgeKey = useRef<string | null>(null);
   const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
   const suppressAssetChange = useRef(false);
   clipRef.current = clip;
   timeRef.current = time;
@@ -1782,7 +1784,12 @@ export function Timeline(props: {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedClipPath.current;
-    if (previousPath && clip && !forceReload) {
+    const closingPrevious = sameSaveDocumentPath(previousPath, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previousPath!);
+    }
+    if (previousPath && clip && !forceReload && !closingPrevious) {
       drafts.current.set(previousPath, {
         clip: structuredClone(clip),
         savedText,
@@ -2254,6 +2261,36 @@ export function Timeline(props: {
       setDraftEpoch((value) => value + 1);
     };
   }), [clipPath, dirty, draftEpoch, loading, saving]);
+  useEffect(() => registerCloseDocumentParticipant('Animation Clips', (path) => {
+    if (loading || saving) return null;
+    if (
+      props.onCloseAsset
+      && sameSaveDocumentPath(props.assetPath ?? null, path)
+      && sameSaveDocumentPath(clipPath || null, path)
+    ) {
+      return async () => {
+        props.undoService.clear(`animation:${clipPath}`);
+        closingPath.current = clipPath;
+        props.onCloseAsset?.();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`animation:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [
+    clipPath,
+    draftEpoch,
+    loading,
+    props.assetPath,
+    props.onCloseAsset,
+    saving,
+  ]);
 
   const createClip = async () => {
     if (!props.entity) return;

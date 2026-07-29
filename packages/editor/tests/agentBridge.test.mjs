@@ -764,21 +764,25 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /type: 'request-save-resources'/);
   assert.match(app, /type: 'save-resources-result'/);
   assert.match(app, /paths\?: string\[\]/);
-  assert.match(app, /operation\?: 'save' \| 'discard'/);
+  assert.match(app, /operation\?: ResourceDocumentOperation/);
   assert.match(app, /saveDocument: async \(requestedPath: string\)/);
   assert.match(app, /discardDocument: async \(requestedPath: string\)/);
+  assert.match(app, /closeDocument: async \(/);
+  assert.match(app, /allowedDirtyActions: \['save', 'discard'\]/);
   assert.match(app, /coordinator\.request\([\s\S]*?\[canonicalPath\]/);
   assert.match(app, /\[canonicalPath\],[\s\S]*?'discard'/);
+  assert.match(app, /\[canonicalPath\],[\s\S]*?'close'/);
   assert.match(app, /Multiple editor windows contain dirty drafts/);
   assert.match(app, /waitForLocalResourceDocumentClean\(canonicalPath\)/);
   assert.match(app, /waitForLocalResourceDocumentDiscarded\(canonicalPath\)/);
+  assert.match(app, /waitForLocalResourceDocumentClosed\(canonicalPath\)/);
   assert.match(app, /await saveRemoteResources\(\)/);
   assert.match(app, /Workspace remains dirty after its Save All participants completed/);
   assert.match(app, /agentBridge\.observeWorkspace\(\)/);
   assert.match(bridge, /this\.appendEvent\('workspace\.changed', result\)/);
 });
 
-test('resource editors register exact document save and discard participants for current and cached drafts', () => {
+test('resource editors register exact document save, discard, and close participants', () => {
   const saveAll = fs.readFileSync(path.join(root, 'src', 'saveAll.ts'), 'utf8');
   const editors = [
     'Timeline.tsx',
@@ -794,6 +798,7 @@ test('resource editors register exact document save and discard participants for
 
   assert.match(saveAll, /SAVE_RESOURCE_DOCUMENT_EVENT/);
   assert.match(saveAll, /DISCARD_RESOURCE_DOCUMENT_EVENT/);
+  assert.match(saveAll, /CLOSE_RESOURCE_DOCUMENT_EVENT/);
   assert.match(saveAll, /request\.tasks\.length > 1/);
   for (const editor of editors) {
     const source = fs.readFileSync(path.join(root, 'src', 'panels', editor), 'utf8');
@@ -806,6 +811,11 @@ test('resource editors register exact document save and discard participants for
       source,
       /registerDiscardDocumentParticipant\(/,
       `${editor} must claim exact document discard requests`,
+    );
+    assert.match(
+      source,
+      /registerCloseDocumentParticipant\(/,
+      `${editor} must claim exact document close requests`,
     );
     assert.match(
       source,
@@ -824,6 +834,11 @@ test('resource editors register exact document save and discard participants for
       source,
       /undoService\.clear\(/,
       `${editor} must clear the discarded document undo scope`,
+    );
+    assert.match(
+      source,
+      /closingPath\.current/,
+      `${editor} must not recache a closing current document`,
     );
   }
 });

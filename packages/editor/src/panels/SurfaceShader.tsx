@@ -13,6 +13,7 @@ import {
   validateSurfaceShaderSource,
 } from '../surfaceShader';
 import {
+  registerCloseDocumentParticipant,
   registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
@@ -62,6 +63,7 @@ export async function createProjectSurfaceShader(open = true): Promise<string> {
 export function SurfaceShaderEditor(props: {
   assetPath: string | null;
   onOpenAsset: (path: string) => void;
+  onCloseAsset: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
@@ -89,6 +91,7 @@ export function SurfaceShaderEditor(props: {
   } | null>(null);
   const lineNumbers = useRef<HTMLDivElement | null>(null);
   const forceReloadPath = useRef<string | null>(null);
+  const closingPath = useRef<string | null>(null);
   const suppressAssetChange = useRef(false);
   sourceRef.current = source;
 
@@ -111,7 +114,12 @@ export function SurfaceShaderEditor(props: {
     }
     editTransaction.current = null;
     const previous = loadedPath.current;
-    if (previous && !loading && !forceReload) {
+    const closingPrevious = sameSaveDocumentPath(previous, closingPath.current ?? '');
+    if (closingPrevious) {
+      closingPath.current = null;
+      drafts.current.delete(previous!);
+    }
+    if (previous && !loading && !forceReload && !closingPrevious) {
       drafts.current.set(previous, { source, savedSource });
       setDraftEpoch((value) => value + 1);
     }
@@ -441,6 +449,32 @@ export function SurfaceShaderEditor(props: {
       setDraftEpoch((value) => value + 1);
     };
   }), [dirty, draftEpoch, loading, props.assetPath, saving, validating]);
+  useEffect(() => registerCloseDocumentParticipant('Surface Shaders', (path) => {
+    if (loading || saving || validating) return null;
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`surface-shader:${props.assetPath}`);
+        closingPath.current = props.assetPath;
+        props.onCloseAsset();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry) return null;
+    return async () => {
+      props.undoService.clear(`surface-shader:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [
+    draftEpoch,
+    loading,
+    props.assetPath,
+    props.onCloseAsset,
+    saving,
+    validating,
+  ]);
 
   if (!props.assetPath) {
     return <div className="material-empty"><strong>Surface Shader</strong><span>Create or double-click a .mshader asset.</span><button type="button" onClick={() => void createNew()}>Create Shader</button></div>;
