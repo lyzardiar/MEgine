@@ -3073,7 +3073,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 11,
+    version: 12,
     title: document.title,
     url: location.href,
     viewport,
@@ -3087,7 +3087,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v10-${candidates.length}-${
+  const snapshotRevision = `ui-v11-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3108,7 +3108,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 11,
+    version: 12,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -4117,14 +4117,27 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     if (acceptsDefault && requestedKey === 'Tab') {
       const focusable = Array.from(document.querySelectorAll(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), '
-          + 'textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+        'button, input, select, textarea, a[href], area[href], summary, '
+          + '[contenteditable], [tabindex]',
       )).filter((candidate) => (
         candidate instanceof HTMLElement
-        && getComputedStyle(candidate).display !== 'none'
-        && getComputedStyle(candidate).visibility !== 'hidden'
-        && candidate.getClientRects().length > 0
-      ));
+        && candidate.tabIndex >= 0
+        && rendered(candidate)
+        && !effectivelyDisabled(candidate)
+        && (!activeModal || activeModal.contains(candidate))
+      )).map((candidate, domIndex) => ({
+        candidate,
+        domIndex,
+        tabIndex: candidate.tabIndex,
+      })).sort((left, right) => {
+        const leftPositive = left.tabIndex > 0;
+        const rightPositive = right.tabIndex > 0;
+        if (leftPositive !== rightPositive) return leftPositive ? -1 : 1;
+        if (leftPositive && left.tabIndex !== right.tabIndex) {
+          return left.tabIndex - right.tabIndex;
+        }
+        return left.domIndex - right.domIndex;
+      }).map((entry) => entry.candidate);
       const index = focusable.indexOf(element);
       const nextIndex = index < 0
         ? (modifiers.shiftKey ? focusable.length - 1 : 0)

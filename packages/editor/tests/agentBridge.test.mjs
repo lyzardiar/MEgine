@@ -47,14 +47,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v10-/);
+  assert.match(rust, /const snapshotRevision = `ui-v11-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 11,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 12,/g)].length, 2);
   assert.match(rust, /const maxGuardedRevisions = 8/);
   assert.match(rust, /const guardedElements = new Map\(semanticElements\.map/);
   assert.match(rust, /element: candidates\[index\]\.element/);
@@ -191,6 +191,19 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /element\.scrollBy/);
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /actions\.push\('keyPress'\)/);
+  assert.match(
+    interactionScript,
+    /'button, input, select, textarea, a\[href\], area\[href\], summary, '/,
+  );
+  assert.match(interactionScript, /candidate\.tabIndex >= 0/);
+  assert.match(interactionScript, /&& rendered\(candidate\)/);
+  assert.match(interactionScript, /&& !effectivelyDisabled\(candidate\)/);
+  assert.match(
+    interactionScript,
+    /&& \(!activeModal \|\| activeModal\.contains\(candidate\)\)/,
+  );
+  assert.match(interactionScript, /const leftPositive = left\.tabIndex > 0/);
+  assert.match(interactionScript, /return left\.tabIndex - right\.tabIndex/);
   assert.match(rust, /actions\.push\('dragTo'\)/);
   assert.match(rust, /actions\.push\('dragBy'\)/);
   assert.match(rust, /"shiftKey": shift_key\.unwrap_or\(false\)/);
