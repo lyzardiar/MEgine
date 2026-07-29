@@ -507,6 +507,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /\.\.\.modifiers/);
   assert.match(rust, /modifiers\.shiftKey \? focusable\.length - 1 : 0/);
   assert.match(rust, /getAttribute\('data-agent-drag-by'\) === 'true'/);
+  assert.equal(
+    [...rust.matchAll(/explicitDragBy\s*\|\|\s*typeof (?:props|reactProps)\.onPointerMove/g)].length,
+    2,
+  );
   assert.match(rust, /typeof props\.onClick !== 'function' \|\| explicitDragBy/);
   assert.match(rust, /typeof reactProps\.onClick === 'function' && !explicitDragBy/);
   assert.match(rust, /actions\.push\('hover'\)/);

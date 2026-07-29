@@ -1156,6 +1156,7 @@ function AnimationCurveWorkspace(props: {
             <circle
               role="button"
               tabIndex={0}
+              data-agent-drag-by="true"
               aria-label={`${handle.side === 'in_tangent' ? 'In' : 'Out'} tangent handle`}
               className="timeline-curve-tangent"
               cx={handle.point.x}
@@ -1185,6 +1186,7 @@ function AnimationCurveWorkspace(props: {
               <circle
                 role="button"
                 tabIndex={0}
+                data-agent-drag-by="true"
                 aria-pressed={selected}
                 aria-label={`Curve key ${keyIndex + 1} channel ${channel + 1} at ${formatTimelineTimeTooltip(displayTime, props.frameRate)}`}
                 className={`timeline-curve-key${selected ? ' selected' : ''}`}

@@ -156,6 +156,7 @@ function AxisInput(props: {
     <div className="axis">
       <span
         className={`${props.label} scrub-label`}
+        data-agent-drag-by="true"
         aria-label={`Adjust ${props.ariaLabel ?? props.label.toUpperCase()}`}
         title="拖拽调节数值 · Shift 加速 · Alt 精细"
         onPointerDown={onScrub}
@@ -366,6 +367,7 @@ function NumField(props: {
     <div className="field-row">
       <label
         className="scrub-label"
+        data-agent-drag-by="true"
         aria-label={`Adjust ${props.label}`}
         title="拖拽调节数值 · Shift 加速 · Alt 精细"
         onPointerDown={onScrub}

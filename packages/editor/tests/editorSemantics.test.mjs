@@ -75,8 +75,10 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(inspector, /className="comp-foldout" aria-hidden/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.ariaLabel/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.label\}`\}/);
+  assert.equal(inspector.match(/data-agent-drag-by="true"/g)?.length, 2);
   assert.match(rectTransform, /aria-label=\{`Adjust \$\{props\.ariaLabel\}`\}/);
   assert.match(rectTransform, /aria-label=\{props\.ariaLabel\}/);
+  assert.equal(rectTransform.match(/data-agent-drag-by="true"/g)?.length, 1);
   assert.match(
     rectTransform,
     /aria-label="Anchor Presets"\s*aria-haspopup="dialog"\s*aria-expanded=\{presetOpen\}\s*aria-controls="rect-anchor-presets-dialog"/,
@@ -189,7 +191,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(animator, /role="group"[^>]*aria-label="Animator state graph"/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
   assert.match(timeline, /aria-label="Animation Timeline lanes"/);
-  assert.equal(timeline.match(/data-agent-drag-by="true"/g)?.length, 2);
+  assert.equal(timeline.match(/data-agent-drag-by="true"/g)?.length, 4);
   assert.match(panel('Material.tsx'), /aria-label=\{`\$\{props\.label\} texture drop target`\}/);
   assert.match(panel('SpriteAtlasEditor.tsx'), /aria-label="Sprite Atlas source drop target"/);
   assert.match(panel('SpriteAtlasEditor.tsx'), /role="img"/);
@@ -241,6 +243,7 @@ test('complex authoring rows identify their selectable semantic regions', () => 
     /aria-label="Sequencer tracks viewport"\s*data-agent-wheel="true"/,
   );
   assert.match(sequencer, /aria-label="Scrub Sequencer time ruler"/);
+  assert.equal(sequencer.match(/data-agent-drag-by="true"/g)?.length, 8);
   assert.match(sequencer, /aria-label=\{`\$\{selectedTrack\.type === 'signal'/);
   assert.match(sequencer, /Track fields`\}/);
   assert.match(sequencer, /aria-label="Signal Marker fields"/);

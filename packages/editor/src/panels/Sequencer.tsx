@@ -3545,6 +3545,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'signal' && track.markers.map((marker, markerIndex) => (
                   <button
                     type="button"
+                    data-agent-drag-by="true"
                     data-sequencer-item="true"
                     data-track={trackIndex}
                     data-marker={markerIndex}
@@ -3558,6 +3559,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'activation' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-agent-drag-by="true"
                     data-sequencer-item="true"
                     data-track={trackIndex}
                     data-marker={clipIndex}
@@ -3574,6 +3576,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'audio' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-agent-drag-by="true"
                     data-sequencer-item="true"
                     data-track={trackIndex}
                     data-marker={clipIndex}
@@ -3607,6 +3610,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'animation' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-agent-drag-by="true"
                     data-sequencer-item="true"
                     data-track={trackIndex}
                     data-marker={clipIndex}
@@ -3622,6 +3626,7 @@ export function Sequencer(props: SequencerProps) {
                     <i className="sequencer-animation-blend" style={{ width: `${clip.blend_in / clip.duration * 100}%` }} />
                     {isItemSelected(trackIndex, clipIndex) && <span
                       className="sequencer-animation-blend-handle"
+                      data-agent-drag-by="true"
                       style={{ left: `${clip.blend_in / clip.duration * 100}%` }}
                       title={`Drag Blend In handle · ${clip.blend_in.toFixed(3)}s`}
                       onPointerDown={(event) => startAnimationBlendDrag(event, trackIndex, clipIndex)}
@@ -3632,6 +3637,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'particle' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-agent-drag-by="true"
                     data-sequencer-item="true"
                     data-track={trackIndex}
                     data-marker={clipIndex}
@@ -3648,6 +3654,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'control' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-agent-drag-by="true"
                     data-sequencer-item="true"
                     data-track={trackIndex}
                     data-marker={clipIndex}
@@ -3664,6 +3671,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'camera' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-agent-drag-by="true"
                     data-sequencer-item="true"
                     data-track={trackIndex}
                     data-marker={clipIndex}

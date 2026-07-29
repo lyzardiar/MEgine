@@ -362,6 +362,8 @@ Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number
 
 交互式 SVG 元素遵循与 HTML 控件相同的焦点和激活契约。Animator transition 等 `role=button` 图形显式进入 Tab 顺序，Enter/Space 与指针选择执行同一操作，并阻止按键继续触发全局编辑器快捷键。语义快照 v25 会按 SVG geometry 的 stroke width 扩展单轴为零的水平/垂直线命中框，使这些图形可被后台观察、截图、点击和按键操作；真实零尺寸图形仍不会暴露。
 
+跨父元素或 `window` 完成 move/up 的拖动控件必须显式声明 `data-agent-drag-by=true`。该声明与 `onPointerDown` 共同构成完整的 `dragBy` 能力，不再要求 move/up 处理器也挂在起点元素上；仍然不会把未声明的普通点击控件误分类为拖动控件。Inspector/RectTransform 数值 scrub、Timeline 曲线关键帧与切线手柄、Sequencer marker/clip/Blend In 手柄均遵循此契约。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |

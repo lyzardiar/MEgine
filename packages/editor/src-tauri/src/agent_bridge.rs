@@ -3351,15 +3351,16 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         + `${element.getAttribute('title') || ''} ${element.className || ''}`,
       240,
     ).toLocaleLowerCase();
+    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     const pointerGesture = typeof props.onPointerDown === 'function' && (
-      typeof props.onPointerMove === 'function'
+      explicitDragBy
+      || typeof props.onPointerMove === 'function'
       || typeof props.onPointerUp === 'function'
       || typeof props.onPointerCancel === 'function'
       || /drag|scrub|resize|拖|调整|调节/.test(gestureHint)
     );
     const mouseGesture = typeof props.onMouseDown === 'function'
       && typeof props.onClick !== 'function';
-    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     if (
       (pointerGesture || mouseGesture)
       && (typeof props.onClick !== 'function' || explicitDragBy)
@@ -4974,15 +4975,16 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       `${element.getAttribute('aria-label') || ''} `
         + `${element.getAttribute('title') || ''} ${element.className || ''}`,
     ).toLocaleLowerCase();
+    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     const pointerGesture = typeof reactProps.onPointerDown === 'function' && (
-      typeof reactProps.onPointerMove === 'function'
+      explicitDragBy
+      || typeof reactProps.onPointerMove === 'function'
       || typeof reactProps.onPointerUp === 'function'
       || typeof reactProps.onPointerCancel === 'function'
       || /drag|scrub|resize|拖|调整|调节/.test(gestureHint)
     );
     const mouseGesture = typeof reactProps.onMouseDown === 'function'
       && typeof reactProps.onClick !== 'function';
-    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     if (
       (!pointerGesture && !mouseGesture)
       || (typeof reactProps.onClick === 'function' && !explicitDragBy)
