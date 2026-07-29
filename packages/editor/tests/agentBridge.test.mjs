@@ -51,14 +51,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v13-/);
+  assert.match(rust, /const snapshotRevision = `ui-v14-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 14,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 15,/g)].length, 2);
   assert.match(rust, /if \(tag === 'article'\) return 'article'/);
   assert.match(rust, /if \(tag === 'aside'\) return 'complementary'/);
   assert.match(
@@ -71,6 +71,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /if \(tag === 'table'\) return 'table'/);
   assert.match(rust, /return element\.getAttribute\('scope'\) === 'row' \? 'rowheader' : 'columnheader'/);
   assert.match(rust, /tag === 'section'[\s\S]*return 'region'/);
+  assert.match(rust, /if \(element instanceof HTMLDetailsElement\)/);
+  assert.match(rust, /state\.expanded = element\.open/);
+  assert.match(
+    rust,
+    /element\.localName === 'summary'[\s\S]*element\.parentElement instanceof HTMLDetailsElement/,
+  );
+  assert.match(rust, /state\.expanded = element\.parentElement\.open/);
   assert.match(rust, /const maxGuardedRevisions = 8/);
   assert.match(rust, /const guardedElements = new Map\(semanticElements\.map/);
   assert.match(rust, /element: candidates\[index\]\.element/);

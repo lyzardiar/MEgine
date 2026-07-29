@@ -2968,6 +2968,16 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       const value = element.getAttribute(`aria-${key}`);
       if (value !== null) state[key] = value;
     }
+    if (state.expanded === undefined) {
+      if (element instanceof HTMLDetailsElement) {
+        state.expanded = element.open;
+      } else if (
+        element.localName === 'summary'
+        && element.parentElement instanceof HTMLDetailsElement
+      ) {
+        state.expanded = element.parentElement.open;
+      }
+    }
     if (
       element instanceof HTMLInputElement
       && ['checkbox', 'radio'].includes(element.type)
@@ -3101,7 +3111,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 14,
+    version: 15,
     title: document.title,
     url: location.href,
     viewport,
@@ -3115,7 +3125,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v13-${candidates.length}-${
+  const snapshotRevision = `ui-v14-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3136,7 +3146,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 14,
+    version: 15,
     snapshotRevision,
     title: document.title,
     url: location.href,
