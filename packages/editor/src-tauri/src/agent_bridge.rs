@@ -2577,14 +2577,18 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       || element.matches(':disabled')
       || element.closest('[aria-disabled="true"]'),
   );
-  const semanticText = (root, excludedElement = null) => {
+  const semanticText = (
+    root,
+    excludedElement = null,
+    includeHiddenSubtree = false,
+  ) => {
     const parts = [];
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let node = walker.nextNode();
     while (node) {
       const parent = node.parentElement;
       if (
-        (!parent || !semanticallyHidden(parent))
+        (includeHiddenSubtree || !parent || !semanticallyHidden(parent))
         && !(excludedElement instanceof Element && excludedElement.contains(node))
       ) {
         parts.push(node.textContent || '');
@@ -2596,7 +2600,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const referencedText = (idRefs) => normalize(idRefs).split(/\s+/)
     .map((id) => document.getElementById(id))
     .filter(Boolean)
-    .map((node) => semanticText(node))
+    .map((node) => semanticText(node, null, semanticallyHidden(node)))
     .filter(Boolean)
     .join(' ');
   const labelledByText = (element) => {
@@ -2610,7 +2614,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const nativeLabelText = (element) => {
     if (element.labels?.length) {
       const text = Array.from(element.labels)
-        .map((label) => semanticText(label))
+        .map((label) => semanticText(label, null, semanticallyHidden(label)))
         .filter(Boolean)
         .join(' ');
       if (text) return normalize(text);
@@ -3210,7 +3214,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 19,
+    version: 20,
     title: document.title,
     url: location.href,
     viewport,
@@ -3224,7 +3228,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v18-${candidates.length}-${
+  const snapshotRevision = `ui-v19-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3245,7 +3249,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 19,
+    version: 20,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3316,14 +3320,18 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   const semanticallyHidden = (target) => Boolean(
     target instanceof Element && target.closest('[aria-hidden="true"], [inert]'),
   );
-  const semanticText = (root, excludedElement = null) => {
+  const semanticText = (
+    root,
+    excludedElement = null,
+    includeHiddenSubtree = false,
+  ) => {
     const parts = [];
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let node = walker.nextNode();
     while (node) {
       const parent = node.parentElement;
       if (
-        (!parent || !semanticallyHidden(parent))
+        (includeHiddenSubtree || !parent || !semanticallyHidden(parent))
         && !(excludedElement instanceof Element && excludedElement.contains(node))
       ) {
         parts.push(node.textContent || '');
@@ -3335,7 +3343,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   const referencedText = (idRefs) => normalizeSemantic(idRefs).split(/\s+/)
     .map((id) => document.getElementById(id))
     .filter(Boolean)
-    .map((node) => semanticText(node))
+    .map((node) => semanticText(node, null, semanticallyHidden(node)))
     .filter(Boolean)
     .join(' ');
   const labelledByText = (target) => {
@@ -3349,7 +3357,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   const nativeLabelText = (target) => {
     if (target.labels?.length) {
       const text = Array.from(target.labels)
-        .map((label) => semanticText(label))
+        .map((label) => semanticText(label, null, semanticallyHidden(label)))
         .filter(Boolean)
         .join(' ');
       if (text) return normalizeSemantic(text);
@@ -3649,13 +3657,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   const semanticallyHidden = (target) => Boolean(
     target instanceof Element && target.closest('[aria-hidden="true"], [inert]'),
   );
-  const semanticText = (root) => {
+  const semanticText = (root, includeHiddenSubtree = false) => {
     const parts = [];
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let node = walker.nextNode();
     while (node) {
       const parent = node.parentElement;
-      if (!parent || !semanticallyHidden(parent)) {
+      if (includeHiddenSubtree || !parent || !semanticallyHidden(parent)) {
         parts.push(node.textContent || '');
       }
       node = walker.nextNode();
@@ -3667,13 +3675,15 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     return normalizeName(
       ids.map((id) => {
         const labelledBy = document.getElementById(id);
-        return labelledBy ? semanticText(labelledBy) : '';
+        return labelledBy
+          ? semanticText(labelledBy, semanticallyHidden(labelledBy))
+          : '';
       }).join(' '),
     );
   };
   const nativeLabelText = (target) => normalizeName(
     Array.from(target.labels || [])
-      .map((label) => semanticText(label))
+      .map((label) => semanticText(label, semanticallyHidden(label)))
       .join(' '),
   );
   const roleForName = (target) => {
