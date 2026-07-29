@@ -13,6 +13,7 @@ import {
   serializeMaterialAsset,
   type MaterialAsset,
 } from '../materialAsset';
+import { resourceEditorDocuments } from '../workspaceDocuments';
 import {
   applyMaterialInstance,
   createMaterialInstanceAsset,
@@ -333,6 +334,17 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const dirty = Boolean(instance && serialized !== savedText);
   const anyDirty = dirty || [...drafts.current.values()].some(instanceDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'material-instance',
+    'material',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, instanceDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
 
   const reloadFromDisk = () => {
     if (!props.assetPath) return;

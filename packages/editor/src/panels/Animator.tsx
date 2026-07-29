@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FocusEvent as ReactFocusEvent,
@@ -9,6 +10,11 @@ import {
 import type { WorldSnapshotView } from '@mengine/api';
 import { Redo2, Undo2 } from 'lucide-react';
 import { createAnimationClip, serializeAnimationClip } from '../animationClip';
+import {
+  mergeWorkspaceResourceDocuments,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
 import {
   animatorParameterValues,
   animatorLayerWeightValues,
@@ -336,6 +342,7 @@ export type AnimatorEditorProps = {
   onPatchAnimator: (entity: number, patch: Record<string, unknown>) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -376,7 +383,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const [selectedTransition, setSelectedTransition] = useState<number | null>(null);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, AnimatorDraft>());
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const controllerRef = useRef<AnimatorController | null>(null);
   const selectedStateRef = useRef<number | null>(null);
   const selectedTransitionRef = useRef<number | null>(null);
@@ -506,6 +513,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
         selectedState,
         selectedTransition,
       });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath;
     editTransaction.current = null;
@@ -545,6 +553,17 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const dirty = controllerFingerprint(controller) !== savedFingerprint && controller != null;
   const anyDirty = dirty || [...drafts.current.values()].some(animatorDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'animator',
+    'animator',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, animatorDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
 
   const reloadFromDisk = () => {
     if (!props.assetPath) return;
@@ -1463,11 +1482,21 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
 export function AnimatorEditor(props: AnimatorEditorProps) {
   const [controllerDirty, setControllerDirty] = useState(false);
   const [avatarMaskDirty, setAvatarMaskDirty] = useState(false);
+  const [controllerDocuments, setControllerDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [avatarMaskDocuments, setAvatarMaskDocuments] = useState<WorkspaceResourceDocument[]>([]);
   const avatarMaskOpen = props.assetPath?.toLowerCase().endsWith('.mavatar') === true;
 
   useEffect(() => {
     props.onDirtyChange(controllerDirty || avatarMaskDirty);
   }, [avatarMaskDirty, controllerDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(
+    () => mergeWorkspaceResourceDocuments(controllerDocuments, avatarMaskDocuments),
+    [avatarMaskDocuments, controllerDocuments],
+  );
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
 
   return (
     <>
@@ -1476,6 +1505,7 @@ export function AnimatorEditor(props: AnimatorEditorProps) {
           {...props}
           assetPath={avatarMaskOpen ? null : props.assetPath}
           onDirtyChange={setControllerDirty}
+          onDocumentsChange={setControllerDocuments}
         />
       </div>
       <div style={{ display: avatarMaskOpen ? 'contents' : 'none' }}>
@@ -1484,6 +1514,7 @@ export function AnimatorEditor(props: AnimatorEditorProps) {
           onOpenAsset={props.onOpenAsset}
           onAssetsChanged={props.onAssetsChanged}
           onDirtyChange={setAvatarMaskDirty}
+          onDocumentsChange={setAvatarMaskDocuments}
           onLog={props.onLog}
           undoService={props.undoService}
           onGlobalUndo={props.onGlobalUndo}

@@ -80,6 +80,10 @@ import {
   projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
+import {
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
 import { clearAudioWaveforms } from '../audioWaveform';
 import {
   parseAnimationClip,
@@ -219,6 +223,7 @@ export type SequencerProps = {
   onClearPreview: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -341,7 +346,7 @@ export function Sequencer(props: SequencerProps) {
   const [previewControlLoadKey, setPreviewControlLoadKey] = useState('');
   const [previewWarning, setPreviewWarning] = useState<string | null>(null);
   const [previewAssetEpoch, setPreviewAssetEpoch] = useState(0);
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const loadedPath = useRef('');
   const drafts = useRef(new Map<string, Draft>());
   const assetRef = useRef<TimelineAsset | null>(null);
@@ -541,6 +546,18 @@ export function Sequencer(props: SequencerProps) {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
 
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'timeline',
+    'timeline',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, sequencerDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
+
   const reloadFromDisk = () => {
     if (!props.assetPath) return;
     setPlaying(false);
@@ -733,6 +750,7 @@ export function Sequencer(props: SequencerProps) {
         selectedTrackIds: [...selectedTrackIds],
         previewRange: { ...previewRange },
       });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath ?? '';
     setPlaying(false);

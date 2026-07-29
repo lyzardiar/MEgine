@@ -173,6 +173,10 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
+import {
   listProjectFiles,
   normalizeProjectAssetPath,
   readProjectAssetText,
@@ -1414,6 +1418,7 @@ export function Timeline(props: {
   onClearPreview: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -1517,7 +1522,7 @@ export function Timeline(props: {
   const recordingValues = useRef(new Map<string, string | null>());
   const loadedClipPath = useRef('');
   const drafts = useRef(new Map<string, AnimationDraft>());
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const clipRef = useRef<AnimationClip | null>(null);
   const timeRef = useRef(0);
   const selectedTrackRef = useRef<number | null>(null);
@@ -1782,6 +1787,7 @@ export function Timeline(props: {
         selectedKeys: selectedKeys.map((ref) => ({ ...ref })),
         selectedEvent,
       });
+      setDraftEpoch((value) => value + 1);
     }
     loadedClipPath.current = clipPath;
     editTransaction.current = null;
@@ -1861,6 +1867,18 @@ export function Timeline(props: {
   useEffect(() => {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
+
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'animation',
+    'timeline',
+    clipPath || null,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, animationDraftDirty(draft)] as const),
+  ), [clipPath, dirty, draftEpoch]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
 
   const reloadFromDisk = () => {
     if (!clipPath) return;

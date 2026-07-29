@@ -72,10 +72,6 @@ import {
   type AgentWorkspaceDocument,
   type AgentWorkspaceProvider,
 } from './agent/AgentBridge';
-import {
-  animatorDocumentKind,
-  materialDocumentKind,
-} from './agent/resourceTargets';
 import { formatConsoleLog, logService } from './agent/LogService';
 import { BridgeError, type PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
@@ -131,6 +127,11 @@ import {
   updateSceneViewPreferences,
   type SceneViewPreferencesChangeDetail,
 } from './sceneViewPreferences';
+import {
+  mergeWorkspaceResourceDocuments,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from './workspaceDocuments';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
@@ -196,6 +197,7 @@ type WorkspaceSyncMessage =
       panel: string;
       dirty: boolean;
       resourceDirty: boolean;
+      documents?: WorkspaceResourceDocument[];
     }
   | {
       type: 'scene-state';
@@ -259,6 +261,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [buildSettingsDirty, setBuildSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
+  const [animationDocuments, setAnimationDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [sequencerDocuments, setSequencerDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [animatorDocuments, setAnimatorDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [materialDocuments, setMaterialDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [shaderDocuments, setShaderDocuments] = useState<WorkspaceResourceDocument[]>([]);
   const [visiblePanels, setVisiblePanels] = useState<ReadonlySet<PanelKind>>(
     () => new Set(props.detachedPanel
       ? [props.detachedPanel]
@@ -354,6 +361,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     panel: string;
     dirty: boolean;
     resourceDirty: boolean;
+    documents: WorkspaceResourceDocument[];
   }>());
   const remoteSaveCoordinator = useRef<RemoteSaveCoordinator | null>(null);
   const saveResourcesInFlight = useRef<Promise<SaveAllResult> | null>(null);
@@ -362,6 +370,33 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const lastAssetPollError = useRef<string | null>(null);
   const recoveryReady = useRef(false);
   const recoveryCheckpointActive = useRef(false);
+  const localResourceDocuments = useMemo(() => mergeWorkspaceResourceDocuments(
+    animationDocuments,
+    sequencerDocuments,
+    animatorDocuments,
+    materialDocuments,
+    shaderDocuments,
+    resourceEditorDocuments('sprite', 'spriteEditor', spritePath, spriteDirty, []),
+    resourceEditorDocuments(
+      'sprite-atlas',
+      'spriteAtlas',
+      spriteAtlasPath,
+      spriteAtlasDirty,
+      [],
+    ),
+  ), [
+    animationDocuments,
+    animatorDocuments,
+    materialDocuments,
+    sequencerDocuments,
+    shaderDocuments,
+    spriteAtlasDirty,
+    spriteAtlasPath,
+    spriteDirty,
+    spritePath,
+  ]);
+  const localResourceDocumentsRef = useRef(localResourceDocuments);
+  localResourceDocumentsRef.current = localResourceDocuments;
 
   useEffect(() => undoService.subscribe(() => setUndoRevision(undoService.revision)), [undoService]);
   const syncTimer = useRef<number | null>(null);
@@ -461,10 +496,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       panel: props.detachedPanel ?? 'main window',
       dirty: workspaceDirtyRef.current,
       resourceDirty: resourceDirtyRef.current,
+      documents: structuredClone(localResourceDocumentsRef.current),
     } satisfies WorkspaceSyncMessage);
   };
 
-  const queryRemoteDirtyPeers = async (resourceOnly = false): Promise<RemoteSavePeer[]> => {
+  const queryRemoteWorkspacePeers = async () => {
     const channel = syncChannel.current;
     if (!channel) return [];
     channel.postMessage({
@@ -473,18 +509,31 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     } satisfies WorkspaceSyncMessage);
     await new Promise((resolve) => window.setTimeout(resolve, 120));
     const cutoff = Date.now() - 5_000;
-    const dirty: RemoteSavePeer[] = [];
+    const peers: Array<{
+      sender: string;
+      timestamp: number;
+      panel: string;
+      dirty: boolean;
+      resourceDirty: boolean;
+      documents: WorkspaceResourceDocument[];
+    }> = [];
     for (const [sender, peer] of remoteDirtyPeers.current) {
       if (peer.timestamp < cutoff) {
         remoteDirtyPeers.current.delete(sender);
-      } else if (resourceOnly ? peer.resourceDirty : peer.dirty) {
-        dirty.push({ sender, panel: peer.panel });
+      } else {
+        peers.push({ sender, ...peer });
       }
     }
-    return dirty.sort((left, right) => (
+    return peers.sort((left, right) => (
       left.panel.localeCompare(right.panel) || left.sender.localeCompare(right.sender)
     ));
   };
+
+  const queryRemoteDirtyPeers = async (resourceOnly = false): Promise<RemoteSavePeer[]> => (
+    (await queryRemoteWorkspacePeers())
+      .filter((peer) => resourceOnly ? peer.resourceDirty : peer.dirty)
+      .map((peer) => ({ sender: peer.sender, panel: peer.panel }))
+  );
 
   const queryRemoteDirtyPanels = async (): Promise<string[]> => {
     const dirty = new Set((await queryRemoteDirtyPeers()).map((peer) => peer.panel));
@@ -1083,16 +1132,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (message.type === 'dirty-state') {
         const previous = remoteDirtyPeers.current.get(message.sender);
+        const documents = mergeWorkspaceResourceDocuments(message.documents ?? []);
         const changed = (
           previous?.panel !== message.panel
           || previous?.dirty !== message.dirty
           || previous?.resourceDirty !== message.resourceDirty
+          || JSON.stringify(previous?.documents ?? []) !== JSON.stringify(documents)
         );
         remoteDirtyPeers.current.set(message.sender, {
           timestamp: message.timestamp,
           panel: message.panel,
           dirty: message.dirty,
           resourceDirty: message.resourceDirty,
+          documents,
         });
         if (remoteTimelinePreview.current?.sender === message.sender) {
           remoteTimelinePreview.current.lastSeenAt = Date.now();
@@ -1236,6 +1288,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     postWorkspaceDirtyState();
     if (!props.detachedPanel) agentBridge.observeWorkspace();
   }, [hasUnsavedChanges, props.detachedPanel]);
+
+  const localResourceDocumentSignature = JSON.stringify(localResourceDocuments);
+  useEffect(() => {
+    postWorkspaceDirtyState();
+    if (!props.detachedPanel) agentBridge.observeWorkspace();
+  }, [localResourceDocumentSignature, props.detachedPanel]);
 
   useEffect(() => {
     if (booted.current) broadcastScene(true);
@@ -1631,7 +1689,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     },
     closeProject: closeWorkspaceProject,
     listDocuments: async () => {
-      const remoteDirty = new Set(await queryRemoteDirtyPanels());
+      const remotePeers = await queryRemoteWorkspacePeers();
+      const remoteDirty = new Set(
+        remotePeers.filter((peer) => peer.dirty).map((peer) => peer.panel),
+      );
       const documents: AgentWorkspaceDocument[] = [
         {
           kind: 'scene',
@@ -1642,63 +1703,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           dirty: sceneDirtyRef.current,
         },
       ];
-      if (timelineAssetPath) {
-        documents.push({
-          kind: 'timeline',
-          panel: 'timeline',
-          path: timelineAssetPath,
-          dirty: sequencerDirty || remoteDirty.has('timeline'),
-        });
-      } else if (animationAssetPath) {
-        documents.push({
-          kind: 'animation',
-          panel: 'timeline',
-          path: animationAssetPath,
-          dirty: animationDirty || remoteDirty.has('timeline'),
-        });
-      }
-      const resources: AgentWorkspaceDocument[] = [
-        {
-          kind: animatorDocumentKind(animatorPath),
-          panel: 'animator',
-          path: animatorPath,
-          dirty: animatorDirty,
-        },
-        {
-          kind: materialDocumentKind(materialPath),
-          panel: 'material',
-          path: materialPath,
-          dirty: materialDirty,
-        },
-        {
-          kind: 'shader',
-          panel: 'shader',
-          path: shaderPath,
-          dirty: shaderDirty,
-        },
-        {
-          kind: 'sprite',
-          panel: 'spriteEditor',
-          path: spritePath,
-          dirty: spriteDirty,
-        },
-        {
-          kind: 'sprite-atlas',
-          panel: 'spriteAtlas',
-          path: spriteAtlasPath,
-          dirty: spriteAtlasDirty,
-        },
-      ];
-      documents.push(...resources
-        .filter((document) => (
-          document.path !== null
-          || document.dirty
-          || remoteDirty.has(document.panel)
-        ))
-        .map((document) => ({
-          ...document,
-          dirty: document.dirty || remoteDirty.has(document.panel),
-        })));
+      const resourceDocuments = mergeWorkspaceResourceDocuments(
+        localResourceDocumentsRef.current,
+        ...remotePeers.map((peer) => peer.documents),
+      );
+      documents.push(...resourceDocuments);
       if (buildSettingsDirty || remoteDirty.has('build')) {
         documents.push({
           kind: 'build-settings',
@@ -2851,6 +2860,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   }}
                   onAssetsChanged={bumpScenes}
                   onDirtyChange={setAnimationDirty}
+                  onDocumentsChange={setAnimationDocuments}
                   onLog={log}
                   undoService={undoService}
                   onGlobalUndo={() => {
@@ -2896,6 +2906,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   onClearPreview={clearLocalTimelinePreview}
                   onAssetsChanged={bumpScenes}
                   onDirtyChange={setSequencerDirty}
+                  onDocumentsChange={setSequencerDocuments}
                   onLog={log}
                   undoService={undoService}
                   onGlobalUndo={() => {
@@ -2948,6 +2959,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setAnimatorDirty}
+              onDocumentsChange={setAnimatorDocuments}
               onLog={log}
               undoService={undoService}
               onGlobalUndo={() => {
@@ -2979,6 +2991,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setMaterialDirty}
+              onDocumentsChange={setMaterialDocuments}
               onLog={log}
               undoService={undoService}
               onGlobalUndo={() => {
@@ -2998,6 +3011,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onOpenAsset={setShaderPath}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setShaderDirty}
+              onDocumentsChange={setShaderDocuments}
               onLog={log}
               undoService={undoService}
               onGlobalUndo={() => {

@@ -14,6 +14,10 @@ import {
 } from '../surfaceShader';
 import { registerSaveAllParticipant } from '../saveAll';
 import {
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
+import {
   broadcastProjectAssetsChanged,
   openSurfaceShaderAsset,
   projectAssetsChangeTouches,
@@ -55,6 +59,7 @@ export function SurfaceShaderEditor(props: {
   onOpenAsset: (path: string) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -68,7 +73,7 @@ export function SurfaceShaderEditor(props: {
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { source: string; savedSource: string }>());
   const sourceRef = useRef('');
@@ -103,6 +108,7 @@ export function SurfaceShaderEditor(props: {
     const previous = loadedPath.current;
     if (previous && !loading && !forceReload) {
       drafts.current.set(previous, { source, savedSource });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath;
     setError(null);
@@ -141,6 +147,19 @@ export function SurfaceShaderEditor(props: {
     (draft) => draft.source !== draft.savedSource,
   );
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'shader',
+    'shader',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => (
+      [path, draft.source !== draft.savedSource] as const
+    )),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
   const diagnostics = useMemo(() => surfaceShaderDiagnostics(source), [source]);
   const lines = useMemo(() => Math.max(1, source.split('\n').length - 1), [source]);
 

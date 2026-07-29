@@ -755,6 +755,43 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(bridge, /this\.appendEvent\('workspace\.changed', result\)/);
 });
 
+test('workspace documents include cached resource drafts with exact per-document state', () => {
+  const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
+  const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const draftEditors = [
+    'Timeline.tsx',
+    'Sequencer.tsx',
+    'Animator.tsx',
+    'AvatarMask.tsx',
+    'Material.tsx',
+    'MaterialInstance.tsx',
+    'SurfaceShader.tsx',
+  ];
+
+  assert.match(app, /documents: structuredClone\(localResourceDocumentsRef\.current\)/);
+  assert.match(
+    app,
+    /mergeWorkspaceResourceDocuments\(\s*localResourceDocumentsRef\.current,\s*\.\.\.remotePeers\.map\(\(peer\) => peer\.documents\),\s*\)/,
+  );
+  assert.match(app, /documents\.push\(\.\.\.resourceDocuments\)/);
+  assert.doesNotMatch(app, /dirty: document\.dirty \|\| remoteDirty\.has\(document\.panel\)/);
+  assert.match(bridge, /const \{ selected = true, \.\.\.visibleDocument \} = document/);
+  assert.match(
+    bridge,
+    /active: selected && \(\s*detachedWindow !== undefined \|\| activePanels\.has\(document\.panel\)\s*\)/,
+  );
+  for (const file of draftEditors) {
+    const source = fs.readFileSync(path.join(root, 'src', 'panels', file), 'utf8');
+    assert.match(source, /resourceEditorDocuments\(/, file);
+    assert.match(source, /onDocumentsChange/, file);
+    assert.match(
+      source,
+      /drafts\.current\.set\(previous(?:Path)?[\s\S]{0,600}?setDraftEpoch/,
+      file,
+    );
+  }
+});
+
 test('authored resource factories can create without opening or activating their editor', () => {
   const factories = [
     ['Material.tsx', /if \(open\) openMaterialAsset\(path\)/],

@@ -301,9 +301,11 @@ export type AgentWorkspaceDocument = {
   panel: string;
   path: string | null;
   dirty: boolean;
+  /** Provider-only marker: false for an open cached draft that is not selected in its panel. */
+  selected?: boolean;
 };
 
-type AgentObservedWorkspaceDocument = AgentWorkspaceDocument & {
+type AgentObservedWorkspaceDocument = Omit<AgentWorkspaceDocument, 'selected'> & {
   active: boolean;
   detached: boolean;
   windowLabel: string;
@@ -1623,9 +1625,12 @@ class AgentBridge {
     const result = {
       documents: documents.map((document) => {
         const detachedWindow = detachedPanels.get(document.panel);
+        const { selected = true, ...visibleDocument } = document;
         return {
-          ...structuredClone(document),
-          active: detachedWindow !== undefined || activePanels.has(document.panel),
+          ...structuredClone(visibleDocument),
+          active: selected && (
+            detachedWindow !== undefined || activePanels.has(document.panel)
+          ),
           detached: detachedWindow !== undefined,
           windowLabel: detachedWindow ?? 'main',
         };

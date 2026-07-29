@@ -17,6 +17,11 @@ import {
   type MaterialAsset,
 } from '../materialAsset';
 import {
+  mergeWorkspaceResourceDocuments,
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
+import {
   listProjectFiles,
   normalizeProjectAssetPath,
   projectAssetUrl,
@@ -224,6 +229,7 @@ export type MaterialEditorProps = {
   onAssignMaterial: (entity: number, path: string) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -242,7 +248,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   const [shaderTextures, setShaderTextures] = useState<SurfaceShaderTexture[]>([]);
   const [shaderParameterError, setShaderParameterError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { material: MaterialAsset; savedText: string }>());
   const materialRef = useRef<MaterialAsset | null>(null);
@@ -279,6 +285,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
         material: structuredClone(material),
         savedText,
       });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath;
     editTransaction.current = null;
@@ -378,6 +385,17 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   useEffect(() => {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'material',
+    'material',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, materialDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
   useEffect(() => {
     const refresh = (event: Event) => {
       void refreshProjectFiles().finally(() => {
@@ -1130,10 +1148,20 @@ export function MaterialEditor(props: MaterialEditorProps) {
   const isInstance = props.assetPath?.toLowerCase().endsWith('.minst') === true;
   const [materialDirty, setMaterialDirty] = useState(false);
   const [instanceDirty, setInstanceDirty] = useState(false);
+  const [materialDocuments, setMaterialDocuments] = useState<WorkspaceResourceDocument[]>([]);
+  const [instanceDocuments, setInstanceDocuments] = useState<WorkspaceResourceDocument[]>([]);
 
   useEffect(() => {
     props.onDirtyChange(materialDirty || instanceDirty);
   }, [instanceDirty, materialDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(
+    () => mergeWorkspaceResourceDocuments(materialDocuments, instanceDocuments),
+    [instanceDocuments, materialDocuments],
+  );
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
 
   return (
     <>
@@ -1142,6 +1170,7 @@ export function MaterialEditor(props: MaterialEditorProps) {
           {...props}
           assetPath={isInstance ? null : props.assetPath}
           onDirtyChange={setMaterialDirty}
+          onDocumentsChange={setMaterialDocuments}
         />
       </div>
       <div className="material-editor-route" hidden={!isInstance}>
@@ -1149,6 +1178,7 @@ export function MaterialEditor(props: MaterialEditorProps) {
           {...props}
           assetPath={isInstance ? props.assetPath : null}
           onDirtyChange={setInstanceDirty}
+          onDocumentsChange={setInstanceDocuments}
         />
       </div>
     </>

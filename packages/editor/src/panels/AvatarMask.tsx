@@ -1,11 +1,16 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FocusEvent as ReactFocusEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { Redo2, Undo2 } from 'lucide-react';
+import {
+  resourceEditorDocuments,
+  type WorkspaceResourceDocument,
+} from '../workspaceDocuments';
 import {
   createAvatarMask,
   parseAvatarMask,
@@ -91,6 +96,7 @@ export function AvatarMaskEditor(props: {
   onOpenAsset: (path: string) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onDocumentsChange?: (documents: WorkspaceResourceDocument[]) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
@@ -104,7 +110,7 @@ export function AvatarMaskEditor(props: {
   const [reloadToken, setReloadToken] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, AvatarMaskDraft>());
-  const [, setDraftEpoch] = useState(0);
+  const [draftEpoch, setDraftEpoch] = useState(0);
   const maskRef = useRef<AvatarMaskAsset | null>(null);
   const editTransaction = useRef<AvatarMaskEditTransaction | null>(null);
   const forceReloadPath = useRef<string | null>(null);
@@ -188,6 +194,7 @@ export function AvatarMaskEditor(props: {
     const previousPath = loadedPath.current;
     if (previousPath && mask && !forceReload) {
       drafts.current.set(previousPath, { mask: structuredClone(mask), savedFingerprint });
+      setDraftEpoch((value) => value + 1);
     }
     loadedPath.current = props.assetPath;
     editTransaction.current = null;
@@ -223,6 +230,17 @@ export function AvatarMaskEditor(props: {
   const dirty = mask != null && fingerprint(mask) !== savedFingerprint;
   const anyDirty = dirty || [...drafts.current.values()].some(avatarMaskDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+  const workspaceDocuments = useMemo(() => resourceEditorDocuments(
+    'avatar-mask',
+    'animator',
+    props.assetPath,
+    dirty,
+    [...drafts.current].map(([path, draft]) => [path, avatarMaskDraftDirty(draft)] as const),
+  ), [dirty, draftEpoch, props.assetPath]);
+  useEffect(() => {
+    props.onDocumentsChange?.(workspaceDocuments);
+  }, [props.onDocumentsChange, workspaceDocuments]);
+  useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
 
   const reloadFromDisk = () => {
     if (!props.assetPath) return;
