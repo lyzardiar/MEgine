@@ -213,7 +213,11 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact text, semantic name/description, value, or serialized select/datalist option source to read',
     },
     offset: boundedInteger(0, 10_000_000, 'Zero-based UTF-16 character cursor; default 0'),
-    maxChars: boundedInteger(1, 100_000, 'Maximum characters; default 10000'),
+    maxChars: boundedInteger(
+      1,
+      100_000,
+      'Preferred maximum UTF-16 units; a page may include one extra unit to keep a Unicode surrogate pair intact; default 10000',
+    ),
     expectedContentRevision: {
       type: 'string',
       pattern: '^content-v\\d+-\\d+-[0-9a-f]{16}$',

@@ -65,14 +65,23 @@ test('whole-window agent capture is background-safe and addressable by window la
     protocol,
     /field: 'text' \| 'name' \| 'description' \| 'value' \| 'options'/,
   );
-  assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
-  assert.match(rust, /const contentRevision = `content-v2-/);
+  assert.match(rust, /const contentRevision = `content-v3-/);
+  assert.match(contentScript, /const isHighSurrogate = \(unit\) =>/);
+  assert.match(contentScript, /const isLowSurrogate = \(unit\) =>/);
+  assert.match(contentScript, /isHighSurrogate\(content\.charCodeAt\(start - 1\)\)/);
+  assert.match(contentScript, /isLowSurrogate\(content\.charCodeAt\(start\)\)/);
+  assert.match(contentScript, /invalidContentOffset: true/);
+  assert.match(contentScript, /restartOffset: start - 1/);
+  assert.match(contentScript, /isHighSurrogate\(content\.charCodeAt\(end - 1\)\)/);
+  assert.match(contentScript, /isLowSurrogate\(content\.charCodeAt\(end\)\)/);
+  assert.match(contentScript, /end \+= 1/);
+  assert.match(contentScript, /const page = content\.slice\(start, end\)/);
   assert.match(contentScript, /const exactSemanticText = \(root\) =>/);
   assert.match(contentScript, /textNodeIsRendered\(node\.parentElement\)/);
   assert.match(contentScript, /style\.contentVisibility === 'hidden'/);
   assert.match(contentScript, /content = exactSemanticText\(element\)/);
   assert.doesNotMatch(contentScript, /element\.innerText/);
-  assert.match(contentScript, /version: 2,/);
+  assert.match(contentScript, /version: 3,/);
   assert.match(rust, /revisionHashA = Math\.imul/);
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);

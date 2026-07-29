@@ -176,7 +176,9 @@ export interface EditorUiContentPage {
   backgroundSafe: boolean;
   selector: string;
   field: 'text' | 'name' | 'description' | 'value' | 'options';
+  /** Zero-based UTF-16 cursor. A page never starts or ends inside a surrogate pair. */
   offset: number;
+  /** UTF-16 units returned; may exceed maxChars by one to keep a surrogate pair intact. */
   count: number;
   totalLength: number;
   nextOffset: number | null;

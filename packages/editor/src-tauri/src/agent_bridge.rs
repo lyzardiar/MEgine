@@ -4145,15 +4145,41 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     revisionHashA = Math.imul(revisionHashA ^ code, 0x01000193);
     revisionHashB = Math.imul(revisionHashB ^ (code + index), 0x85ebca6b);
   }
-  const contentRevision = `content-v2-${content.length}-${
+  const contentRevision = `content-v3-${content.length}-${
     (revisionHashA >>> 0).toString(16).padStart(8, '0')
   }${(revisionHashB >>> 0).toString(16).padStart(8, '0')}`;
   const start = Math.min(Number(offset), content.length);
-  const page = content.slice(start, start + Number(maxChars));
-  const nextOffset = start + page.length < content.length ? start + page.length : null;
+  const isHighSurrogate = (unit) => unit >= 0xd800 && unit <= 0xdbff;
+  const isLowSurrogate = (unit) => unit >= 0xdc00 && unit <= 0xdfff;
+  if (
+    start > 0
+    && start < content.length
+    && isHighSurrogate(content.charCodeAt(start - 1))
+    && isLowSurrogate(content.charCodeAt(start))
+  ) {
+    return {
+      ok: false,
+      error: `Content offset ${start} splits a Unicode surrogate pair; retry from ${start - 1}`,
+      invalidContentOffset: true,
+      requestedOffset: start,
+      restartOffset: start - 1,
+      contentRevision,
+    };
+  }
+  let end = Math.min(start + Number(maxChars), content.length);
+  if (
+    end > start
+    && end < content.length
+    && isHighSurrogate(content.charCodeAt(end - 1))
+    && isLowSurrogate(content.charCodeAt(end))
+  ) {
+    end += 1;
+  }
+  const page = content.slice(start, end);
+  const nextOffset = end < content.length ? end : null;
   return {
     ok: true,
-    version: 2,
+    version: 3,
     contentRevision,
     selector,
     field,

@@ -1603,7 +1603,7 @@ const TOOLS = [
   {
     name: 'read_window_ui_content',
     description:
-      'Read exact text, untruncated semantic name/description, value, or serialized select/datalist options from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
+      'Read exact text, untruncated semantic name/description, value, or serialized select/datalist options from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. UTF-16 offsets returned by nextOffset never split Unicode surrogate pairs. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
     inputSchema: {
       type: 'object',
       required: ['selector', 'expectedSnapshotRevision', 'field'],
@@ -1629,7 +1629,8 @@ const TOOLS = [
           type: 'integer',
           minimum: 1,
           maximum: 100000,
-          description: 'Maximum characters on this page (default: 10000)',
+          description:
+            'Preferred maximum UTF-16 units; a page may include one extra unit to keep a Unicode surrogate pair intact (default: 10000)',
         },
         expectedContentRevision: {
           type: 'string',

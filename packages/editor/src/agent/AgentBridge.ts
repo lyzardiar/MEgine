@@ -999,9 +999,12 @@ class AgentBridge {
       error?: string;
       staleSnapshot?: boolean;
       selectorNotExposed?: boolean;
+      invalidContentOffset?: boolean;
       expectedSnapshotRevision?: string;
       actualSnapshotRevision?: string;
+      requestedOffset?: number;
       restartOffset?: number;
+      contentRevision?: string;
     }>(
       'read_editor_ui_content',
       {
@@ -1036,6 +1039,21 @@ class AgentBridge {
             selector,
             expectedSnapshotRevision,
             selectorNotExposed: true,
+          },
+        );
+      }
+      if (result.invalidContentOffset) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Content offset splits a Unicode surrogate pair',
+          {
+            windowLabel,
+            selector,
+            field,
+            requestedOffset: result.requestedOffset ?? boundedOffset,
+            restartOffset: result.restartOffset ?? Math.max(0, boundedOffset - 1),
+            contentRevision: result.contentRevision,
+            invalidContentOffset: true,
           },
         );
       }
