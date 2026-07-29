@@ -1698,7 +1698,7 @@ pub async fn inspect_editor_window(
     inspect_editor_window_impl(app, window_label, max_elements, offset).await
 }
 
-/// Read an exact page of one element's text, value, or options without normalizing it.
+/// Read an exact page of one element's semantic or authored content.
 #[tauri::command]
 pub async fn read_editor_ui_content(
     app: AppHandle,
@@ -1714,8 +1714,11 @@ pub async fn read_editor_ui_content(
     if selector.is_empty() || selector.len() > 1_000 {
         return Err("selector must contain 1 to 1000 characters".to_string());
     }
-    if !matches!(field.as_str(), "text" | "value" | "options") {
-        return Err("field must be text, value, or options".to_string());
+    if !matches!(
+        field.as_str(),
+        "text" | "name" | "description" | "value" | "options"
+    ) {
+        return Err("field must be text, name, description, value, or options".to_string());
     }
     let offset = offset.unwrap_or(0).min(10_000_000);
     let max_chars = max_chars.unwrap_or(10_000).clamp(1, 100_000);
@@ -3236,6 +3239,109 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
       restartOffset: 0,
     };
   }
+  const normalizeSemantic = (value) => String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const semanticallyHidden = (target) => Boolean(
+    target instanceof Element && target.closest('[aria-hidden="true"], [inert]'),
+  );
+  const semanticText = (root, excludedElement = null) => {
+    const parts = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      const parent = node.parentElement;
+      if (
+        (!parent || !semanticallyHidden(parent))
+        && !(excludedElement instanceof Element && excludedElement.contains(node))
+      ) {
+        parts.push(node.textContent || '');
+      }
+      node = walker.nextNode();
+    }
+    return normalizeSemantic(parts.join(' '));
+  };
+  const referencedText = (idRefs) => normalizeSemantic(idRefs).split(/\s+/)
+    .map((id) => document.getElementById(id))
+    .filter(Boolean)
+    .map((node) => semanticText(node))
+    .filter(Boolean)
+    .join(' ');
+  const labelledText = (target) => {
+    const labelledBy = normalizeSemantic(target.getAttribute('aria-labelledby'));
+    if (labelledBy) {
+      const text = referencedText(labelledBy);
+      if (text) return normalizeSemantic(text);
+    }
+    if (target.labels?.length) {
+      const text = Array.from(target.labels)
+        .map((label) => semanticText(label))
+        .filter(Boolean)
+        .join(' ');
+      if (text) return normalizeSemantic(text);
+    }
+    return '';
+  };
+  const implicitNamingRole = (target) => {
+    const tag = target.localName;
+    if (/^h[1-6]$/.test(tag)) return 'heading';
+    if (tag === 'button' || tag === 'summary') return 'button';
+    if (tag === 'a' && target.hasAttribute('href')) return 'link';
+    if (tag === 'textarea') return 'textbox';
+    if (tag === 'select') return target.multiple ? 'listbox' : 'combobox';
+    if (tag === 'option') return 'option';
+    if (tag === 'output') return 'status';
+    if (tag === 'meter') return 'meter';
+    if (tag === 'progress') return 'progressbar';
+    if (tag !== 'input') return '';
+    const type = String(target.type || 'text').toLowerCase();
+    if (type === 'hidden') return '';
+    if (type === 'checkbox') return 'checkbox';
+    if (type === 'radio') return 'radio';
+    if (type === 'range') return 'slider';
+    if (type === 'number') return 'spinbutton';
+    if (target.list) return 'combobox';
+    if (type === 'search') return 'searchbox';
+    if (['button', 'submit', 'reset', 'image'].includes(type)) return 'button';
+    return 'textbox';
+  };
+  const nameFromContent = (role) => [
+    'button', 'link', 'heading', 'menuitem', 'option', 'tab',
+  ].includes(role);
+  const containingLabelText = (target) => {
+    const label = target.closest('label');
+    return label ? semanticText(label, target) : '';
+  };
+  const semanticName = (target) => {
+    const role = normalizeSemantic(
+      target.getAttribute('role') || implicitNamingRole(target),
+    );
+    const content = nameFromContent(role) ? semanticText(target) : '';
+    const meaningfulContent = /[\p{L}\p{N}]/u.test(content) ? content : '';
+    return normalizeSemantic(
+      target.getAttribute('aria-label')
+        || labelledText(target)
+        || target.getAttribute('alt')
+        || meaningfulContent
+        || (
+          ['status', 'meter', 'progressbar'].includes(role)
+            ? containingLabelText(target)
+            : ''
+        )
+        || target.getAttribute('placeholder')
+        || target.getAttribute('title')
+        || content,
+    );
+  };
+  const semanticDescription = (target, name) => normalizeSemantic(
+    referencedText(target.getAttribute('aria-describedby'))
+      || target.getAttribute('aria-description')
+      || (
+        normalizeSemantic(target.getAttribute('title')) !== name
+          ? target.getAttribute('title')
+          : ''
+      ),
+  );
   let content;
   if (field === 'options') {
     let kind;
@@ -3272,6 +3378,11 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
         };
       }),
     });
+  } else if (field === 'name') {
+    content = semanticName(element);
+  } else if (field === 'description') {
+    const name = semanticName(element);
+    content = semanticDescription(element, name);
   } else if (field === 'value') {
     if (element instanceof HTMLInputElement) {
       if (String(element.type).toLowerCase() === 'password') {

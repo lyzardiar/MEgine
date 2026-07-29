@@ -1525,7 +1525,7 @@ const TOOLS = [
   {
     name: 'read_window_ui_content',
     description:
-      'Read exact, unnormalized text, value, or serialized select/datalist options from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
+      'Read exact text, untruncated semantic name/description, value, or serialized select/datalist options from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
     inputSchema: {
       type: 'object',
       required: ['selector', 'expectedSnapshotRevision', 'field'],
@@ -1538,8 +1538,8 @@ const TOOLS = [
         expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
         field: {
           type: 'string',
-          enum: ['text', 'value', 'options'],
-          description: 'Exact text, value, or serialized select/datalist option source to read',
+          enum: ['text', 'name', 'description', 'value', 'options'],
+          description: 'Exact text, semantic name/description, value, or serialized select/datalist option source to read',
         },
         offset: {
           type: 'integer',

@@ -45,6 +45,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
   assert.match(rust, /Password values cannot be read/);
   assert.match(contentScript, /guardedRevision\?\.epoch !== revisionGuard\.epoch/);
+  assert.match(contentScript, /const semanticName = \(target\) =>/);
+  assert.match(contentScript, /const semanticDescription = \(target, name\) =>/);
+  assert.match(contentScript, /else if \(field === 'name'\)/);
+  assert.match(contentScript, /else if \(field === 'description'\)/);
+  assert.match(
+    protocol,
+    /field: 'text' \| 'name' \| 'description' \| 'value' \| 'options'/,
+  );
   assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
   assert.match(rust, /const contentRevision = `content-v1-/);
   assert.match(rust, /revisionHashA = Math\.imul/);
@@ -129,13 +137,13 @@ test('whole-window agent capture is background-safe and addressable by window la
     [...rust.matchAll(/\.closest\('\[aria-disabled="true"\]'\)/g)].length,
     2,
   );
-  assert.equal([...rust.matchAll(/const semanticallyHidden = \(/g)].length, 2);
+  assert.equal([...rust.matchAll(/const semanticallyHidden = \(/g)].length, 3);
   assert.equal(
     [...rust.matchAll(/\.closest\('\[aria-hidden="true"\], \[inert\]'\)/g)].length,
-    2,
+    3,
   );
-  assert.equal([...rust.matchAll(/const semanticText = \(/g)].length, 2);
-  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 2);
+  assert.equal([...rust.matchAll(/const semanticText = \(/g)].length, 3);
+  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 3);
   assert.match(rust, /const referencedText = \(idRefs\) =>/);
   assert.match(rust, /const text = referencedText\(labelledBy\)/);
   assert.match(
@@ -167,9 +175,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   );
   assert.match(rust, /const controlFor = \(element\) =>/);
   assert.match(rust, /control: controlFor\(element\)/);
-  assert.equal([...rust.matchAll(/type === 'number'\) return 'spinbutton'/g)].length, 2);
-  assert.equal([...rust.matchAll(/type === 'search'\) return 'searchbox'/g)].length, 2);
-  assert.equal([...rust.matchAll(/return 'combobox';/g)].length, 2);
+  assert.equal([...rust.matchAll(/type === 'number'\) return 'spinbutton'/g)].length, 3);
+  assert.equal([...rust.matchAll(/type === 'search'\) return 'searchbox'/g)].length, 3);
+  assert.equal([...rust.matchAll(/return 'combobox';/g)].length, 3);
   assert.equal([...rust.matchAll(/localName === 'output'\) return 'status'/g)].length, 1);
   assert.match(rust, /tag === 'output'\) return 'status'/);
   assert.match(rust, /tag === 'meter'\) return 'meter'/);
@@ -417,6 +425,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   assert.match(mcp, /name: 'get_window_ui'/);
   assert.match(mcp, /name: 'read_window_ui_content'/);
+  assert.match(mcp, /untruncated semantic name\/description/);
   assert.match(mcp, /Continue with nextOffset until null/);
   assert.match(mcp, /expectedSnapshotRevision/);
   assert.match(mcp, /name: 'list_open_documents'/);

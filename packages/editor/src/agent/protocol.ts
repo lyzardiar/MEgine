@@ -157,7 +157,7 @@ export interface EditorUiSnapshot {
   elements: EditorUiElement[];
 }
 
-/** One exact, paged text/value read from an editor UI element. */
+/** One exact, paged semantic or authored content read from an editor UI element. */
 export interface EditorUiContentPage {
   version: number;
   /** Fingerprint of the complete exact content used for this page. */
@@ -166,7 +166,7 @@ export interface EditorUiContentPage {
   captureMethod: string;
   backgroundSafe: boolean;
   selector: string;
-  field: 'text' | 'value' | 'options';
+  field: 'text' | 'name' | 'description' | 'value' | 'options';
   offset: number;
   count: number;
   totalLength: number;

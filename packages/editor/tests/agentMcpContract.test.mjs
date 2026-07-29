@@ -304,6 +304,14 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
       maxChars: 64,
     }),
   );
+  assert.doesNotThrow(
+    () => validateToolArguments(tool('read_window_ui_content'), {
+      selector: '#described-control',
+      expectedSnapshotRevision: 'ui-v15-42-0123456789abcdef',
+      field: 'description',
+      maxChars: 64,
+    }),
+  );
   assert.throws(
     () => validateToolArguments(tool('apply_batch'), {
       commands: [{ op: 'unknown', components: {} }],
