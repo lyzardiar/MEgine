@@ -59,14 +59,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v17-/);
+  assert.match(rust, /const snapshotRevision = `ui-v18-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 18,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 19,/g)].length, 2);
   assert.match(rust, /if \(tag === 'article'\) return 'article'/);
   assert.match(rust, /if \(tag === 'aside'\) return 'complementary'/);
   assert.match(
@@ -153,7 +153,21 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.equal([...rust.matchAll(/const semanticText = \(/g)].length, 3);
   assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 4);
   assert.match(rust, /const referencedText = \(idRefs\) =>/);
+  assert.equal([...rust.matchAll(/const labelledByText = \(/g)].length, 3);
+  assert.equal([...rust.matchAll(/const nativeLabelText = \(/g)].length, 3);
   assert.match(rust, /const text = referencedText\(labelledBy\)/);
+  assert.match(
+    rust,
+    /labelledByText\(element\)\s*\|\| element\.getAttribute\('aria-label'\)\s*\|\| nativeLabelText\(element\)/,
+  );
+  assert.match(
+    contentScript,
+    /labelledByText\(target\)\s*\|\| target\.getAttribute\('aria-label'\)\s*\|\| nativeLabelText\(target\)/,
+  );
+  assert.match(
+    interactionScript,
+    /return labelledByText\(target\)\s*\|\| normalizeName\(target\.getAttribute\('aria-label'\)\)\s*\|\| nativeLabelText\(target\)/,
+  );
   assert.match(
     rust,
     /referencedText\(element\.getAttribute\('aria-describedby'\)\)/,

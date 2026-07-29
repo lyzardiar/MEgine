@@ -2599,12 +2599,15 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     .map((node) => semanticText(node))
     .filter(Boolean)
     .join(' ');
-  const labelledText = (element) => {
+  const labelledByText = (element) => {
     const labelledBy = normalize(element.getAttribute('aria-labelledby'));
     if (labelledBy) {
       const text = referencedText(labelledBy);
       if (text) return normalize(text);
     }
+    return '';
+  };
+  const nativeLabelText = (element) => {
     if (element.labels?.length) {
       const text = Array.from(element.labels)
         .map((label) => semanticText(label))
@@ -2628,8 +2631,9 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     return semanticText(label, element);
   };
   const accessibleName = (element, role) => normalize(
-    element.getAttribute('aria-label')
-      || labelledText(element)
+    labelledByText(element)
+      || element.getAttribute('aria-label')
+      || nativeLabelText(element)
       || element.getAttribute('alt')
       || meaningfulContentName(element, role)
       || (
@@ -2934,8 +2938,9 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const scrollContextName = (element) => {
     let current = element;
     while (current instanceof Element) {
-      const label = normalize(current.getAttribute('aria-label'), 160)
-        || labelledText(current);
+      const label = labelledByText(current)
+        || normalize(current.getAttribute('aria-label'), 160)
+        || nativeLabelText(current);
       if (label) return `${label} scroll area`;
       current = current.parentElement;
     }
@@ -3205,7 +3210,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 18,
+    version: 19,
     title: document.title,
     url: location.href,
     viewport,
@@ -3219,7 +3224,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v17-${candidates.length}-${
+  const snapshotRevision = `ui-v18-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3240,7 +3245,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 18,
+    version: 19,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3333,12 +3338,15 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     .map((node) => semanticText(node))
     .filter(Boolean)
     .join(' ');
-  const labelledText = (target) => {
+  const labelledByText = (target) => {
     const labelledBy = normalizeSemantic(target.getAttribute('aria-labelledby'));
     if (labelledBy) {
       const text = referencedText(labelledBy);
       if (text) return normalizeSemantic(text);
     }
+    return '';
+  };
+  const nativeLabelText = (target) => {
     if (target.labels?.length) {
       const text = Array.from(target.labels)
         .map((label) => semanticText(label))
@@ -3385,8 +3393,9 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     const content = nameFromContent(role) ? semanticText(target) : '';
     const meaningfulContent = /[\p{L}\p{N}]/u.test(content) ? content : '';
     return normalizeSemantic(
-      target.getAttribute('aria-label')
-        || labelledText(target)
+      labelledByText(target)
+        || target.getAttribute('aria-label')
+        || nativeLabelText(target)
         || target.getAttribute('alt')
         || meaningfulContent
         || (
@@ -3653,21 +3662,20 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     return normalizeName(parts.join(' '));
   };
-  const labelledText = (target) => {
+  const labelledByText = (target) => {
     const ids = String(target.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
-    const referenced = normalizeName(
+    return normalizeName(
       ids.map((id) => {
         const labelledBy = document.getElementById(id);
         return labelledBy ? semanticText(labelledBy) : '';
       }).join(' '),
     );
-    if (referenced) return referenced;
-    return normalizeName(
-      Array.from(target.labels || [])
-        .map((label) => semanticText(label))
-        .join(' '),
-    );
   };
+  const nativeLabelText = (target) => normalizeName(
+    Array.from(target.labels || [])
+      .map((label) => semanticText(label))
+      .join(' '),
+  );
   const roleForName = (target) => {
     const explicit = normalizeName(target.getAttribute('role'));
     if (explicit) return explicit;
@@ -3700,8 +3708,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       ? semanticText(target)
       : '';
     const meaningfulContent = /[\p{L}\p{N}]/u.test(content) ? content : '';
-    return normalizeName(target.getAttribute('aria-label'))
-      || labelledText(target)
+    return labelledByText(target)
+      || normalizeName(target.getAttribute('aria-label'))
+      || nativeLabelText(target)
       || normalizeName(target.getAttribute('alt'))
       || meaningfulContent
       || normalizeName(target.getAttribute('placeholder'))
