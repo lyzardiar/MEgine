@@ -45,6 +45,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(hierarchy, /aria-label=\{n\.entity\.name \?\? `Entity \$\{id\}`\}/);
   assert.match(hierarchy, /aria-level=\{n\.depth \+ 1\}/);
   assert.match(hierarchy, /data-agent-drag-by="true"/);
+  assert.match(hierarchy, /data-agent-scope=\{`Entity \$\{id\}`\}/);
   assert.match(hierarchy, /if \(event\.target !== event\.currentTarget\) return/);
   assert.match(hierarchy, /event\.key === 'F2'/);
   assert.match(hierarchy, /aria-label=\{`Rename \$\{n\.entity\.name/);
@@ -100,6 +101,14 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} sprite drop target`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} asset drop target`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} entity drop target`\}/);
+  assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\}: \$\{label \|\| props\.noneLabel/);
+  assert.equal(
+    [...fieldEditors.matchAll(/aria-label=\{`Clear \$\{props\.label\}/g)].length,
+    4,
+  );
+  assert.match(fieldEditors, /aria-label=\{`Select \$\{props\.label\} GameObject`\}/);
+  assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} target: \$\{targetLabel\}`\}/);
+  assert.match(fieldEditors, /aria-label=\{`Select \$\{props\.label\} target GameObject`\}/);
   assert.match(fieldEditors, /aria-label="Image Type"/);
   assert.match(projectSettings, /aria-label=\{`Remove tag \$\{tag\}`\}/);
   assert.match(projectSettings, /aria-label=\{`Remove GameObject layer \$\{layer\.name\}`\}/);

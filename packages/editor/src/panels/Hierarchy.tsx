@@ -493,6 +493,7 @@ export function Hierarchy(props: {
               style={{ paddingLeft: 8 + n.depth * 14 }}
               data-entity-id={id}
               data-depth={n.depth}
+              data-agent-scope={`Entity ${id}`}
               data-agent-drag-by="true"
               role="treeitem"
               tabIndex={0}
