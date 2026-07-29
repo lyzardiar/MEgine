@@ -5355,6 +5355,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       && !/[\p{Cc}\p{Cs}\p{Z}]/u.test(requestedKey)
     );
     const key = requestedKey === 'Space' ? ' ' : String(requestedKey || '');
+    const selectAllShortcut = (
+      key.toLowerCase() === 'a'
+      && !modifiers.shiftKey
+      && !modifiers.altKey
+      && modifiers.ctrlKey !== modifiers.metaKey
+    );
     const code = requestedKey === 'Space'
       ? 'Space'
       : /^[A-Za-z]$/.test(key)
@@ -5403,9 +5409,6 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           element instanceof HTMLInputElement
           || element instanceof HTMLTextAreaElement
         )
-        || modifiers.ctrlKey
-        || modifiers.altKey
-        || modifiers.metaKey
       ) return false;
       let start;
       let end;
@@ -5433,6 +5436,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           nextDirection,
         );
       };
+      if (selectAllShortcut) {
+        setSelection(0, length);
+        return true;
+      }
+      if (modifiers.ctrlKey || modifiers.altKey || modifiers.metaKey) return false;
       const anchor = direction === 'backward' ? end : start;
       const focus = direction === 'backward' ? start : end;
       const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
@@ -5593,12 +5601,22 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (
         !(element instanceof HTMLElement)
         || !element.isContentEditable
-        || modifiers.ctrlKey
-        || modifiers.altKey
-        || modifiers.metaKey
       ) return false;
       const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return false;
+      if (!selection) return false;
+      if (selectAllShortcut) {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return true;
+      }
+      if (
+        modifiers.ctrlKey
+        || modifiers.altKey
+        || modifiers.metaKey
+        || selection.rangeCount === 0
+      ) return false;
       const pointInside = (node) => Boolean(
         node
         && (

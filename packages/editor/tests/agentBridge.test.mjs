@@ -458,6 +458,17 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /value\.strip_prefix\('F'\)/);
   assert.match(rust, /\(1\.\.=24\)\.contains\(&parsed\)/);
   assert.match(interactionScript, /if \(printableKey\) \{\s*replacement = key/);
+  assert.match(interactionScript, /const selectAllShortcut = \(/);
+  assert.match(interactionScript, /key\.toLowerCase\(\) === 'a'/);
+  assert.match(interactionScript, /modifiers\.ctrlKey !== modifiers\.metaKey/);
+  assert.match(
+    interactionScript,
+    /if \(selectAllShortcut\) \{\s*setSelection\(0, length\);\s*return true;/,
+  );
+  assert.match(
+    interactionScript,
+    /if \(selectAllShortcut\) \{\s*const range = document\.createRange\(\);\s*range\.selectNodeContents\(element\);\s*selection\.removeAllRanges\(\);\s*selection\.addRange\(range\);/,
+  );
   assert.match(interactionScript, /element\.maxLength >= 0 && nextValue\.length > element\.maxLength/);
   assert.match(interactionScript, /element\.setSelectionRange\(/);
   assert.match(interactionScript, /inputType = 'deleteContentBackward'/);

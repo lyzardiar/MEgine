@@ -3295,7 +3295,7 @@ const TOOLS = [
   ),
   execTool(
     'press_window_ui_key',
-    'Press an allow-listed semantic key with optional modifiers on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused. Text edits synchronize React-controlled drafts; readonly controls remain focusable but never mutate or report a value commit. Native checkbox, radio, select, number, and range defaults report a confirmed change commit only when their value actually changes. Enter/Escape blur-commit editable controls, while Tab commits an editable draft before moving through the native HTML/SVG semantic focus order and otherwise only moves focus.',
+    'Press an allow-listed semantic key with optional modifiers on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused. Text edits synchronize React-controlled drafts; Ctrl+A or Meta+A selects all text in a non-password input, textarea, or contenteditable target without clipboard access. Readonly controls remain focusable but never mutate or report a value commit. Native checkbox, radio, select, number, and range defaults report a confirmed change commit only when their value actually changes. Enter/Escape blur-commit editable controls, while Tab commits an editable draft before moving through the native HTML/SVG semantic focus order and otherwise only moves focus.',
     'window.ui_press_key',
     {
       ...uiInteractionProperties('Exact keyboard target selector returned by get_window_ui'),
