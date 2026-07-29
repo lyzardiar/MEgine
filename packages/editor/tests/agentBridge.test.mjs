@@ -59,14 +59,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v16-/);
+  assert.match(rust, /const snapshotRevision = `ui-v17-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 17,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 18,/g)].length, 2);
   assert.match(rust, /if \(tag === 'article'\) return 'article'/);
   assert.match(rust, /if \(tag === 'aside'\) return 'complementary'/);
   assert.match(
@@ -92,6 +92,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /selectionStart: element\.selectionStart/);
   assert.match(rust, /selectionEnd: element\.selectionEnd/);
   assert.match(rust, /selectionDirection: element\.selectionDirection \|\| 'none'/);
+  assert.match(rust, /element\.isContentEditable/);
+  assert.match(rust, /range\.cloneContents\(\)\.textContent/);
+  assert.match(rust, /selectionDirection: focus < anchor/);
   assert.match(rust, /if \(selection\) Object\.assign\(state, selection\)/);
   assert.match(
     rust,
@@ -148,7 +151,7 @@ test('whole-window agent capture is background-safe and addressable by window la
     3,
   );
   assert.equal([...rust.matchAll(/const semanticText = \(/g)].length, 3);
-  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 3);
+  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 4);
   assert.match(rust, /const referencedText = \(idRefs\) =>/);
   assert.match(rust, /const text = referencedText\(labelledBy\)/);
   assert.match(
@@ -236,13 +239,22 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /inputType = 'deleteContentForward'/);
   assert.match(interactionScript, /inputType = 'insertLineBreak'/);
   assert.match(interactionScript, /const handledTextDefault = acceptsDefault && applyTextControlDefault\(\)/);
+  assert.match(interactionScript, /const applyContentEditableDefault = \(\) =>/);
+  assert.match(interactionScript, /const handledContentEditableDefault = \(/);
+  assert.match(interactionScript, /const textPointAt = \(rawOffset\) =>/);
+  assert.match(interactionScript, /new InputEvent\('beforeinput'/);
+  assert.match(interactionScript, /replacementRange\.deleteContents\(\)/);
+  assert.match(interactionScript, /replacementRange\.insertNode\(inserted\)/);
   assert.match(interactionScript, /const verticalColumnKey = Symbol\.for\('mengine\.agent\.textVerticalColumn'\)/);
   assert.match(interactionScript, /'ArrowUp',\s*'ArrowDown',\s*'PageUp',\s*'PageDown'/);
   assert.match(interactionScript, /element\[verticalColumnKey\] = \{\s*column: preferredColumn,\s*position: target,\s*lineStart: targetLineStart/);
   assert.match(interactionScript, /const applyNativeDialogDefault = \(\) =>/);
   assert.match(interactionScript, /dialog\.dispatchEvent\(new Event\('cancel'/);
   assert.match(interactionScript, /if \(!cancelled && dialog\.open\) dialog\.close\(\)/);
-  assert.match(interactionScript, /const handledDialogDefault = acceptsDefault && applyNativeDialogDefault\(\)/);
+  assert.match(
+    interactionScript,
+    /const handledDialogDefault = \(\s*acceptsDefault\s*&& !handledTextDefault\s*&& !handledContentEditableDefault\s*&& applyNativeDialogDefault\(\)/,
+  );
   assert.match(interactionScript, /const applyNativeControlDefault = \(\) =>/);
   assert.match(interactionScript, /\['checkbox', 'radio'\]\.includes\(element\.type\)/);
   assert.match(interactionScript, /element instanceof HTMLSelectElement && !element\.multiple/);
@@ -268,6 +280,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /element\.scrollBy/);
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /actions\.push\('keyPress'\)/);
+  assert.match(
+    rust,
+    /element\.isContentEditable && !readOnly/,
+  );
   assert.match(
     interactionScript,
     /'button, input, select, textarea, a\[href\], area\[href\], summary, '/,

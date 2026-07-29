@@ -2863,10 +2863,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       : '';
     const writableInput = element instanceof HTMLInputElement
       && !['button', 'submit', 'reset', 'file', 'image'].includes(inputType);
+    const readOnly = Boolean(
+      element.readOnly || element.getAttribute('aria-readonly') === 'true',
+    );
     if ((writableInput && !element.readOnly)
       || (element instanceof HTMLTextAreaElement && !element.readOnly)
       || element instanceof HTMLSelectElement
-      || element.isContentEditable) {
+      || (element.isContentEditable && !readOnly)) {
       actions.push('setValue');
     }
     const style = element instanceof HTMLElement ? getComputedStyle(element) : null;
@@ -2978,26 +2981,63 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const selectionFor = (element) => {
     const password = element instanceof HTMLInputElement
       && String(element.type).toLowerCase() === 'password';
+    if (password) return null;
     if (
-      password
-      || !(
-        element instanceof HTMLInputElement
-        || element instanceof HTMLTextAreaElement
-      )
-    ) return null;
-    try {
-      if (
-        typeof element.selectionStart !== 'number'
-        || typeof element.selectionEnd !== 'number'
-      ) return null;
-      return {
-        selectionStart: element.selectionStart,
-        selectionEnd: element.selectionEnd,
-        selectionDirection: element.selectionDirection || 'none',
-      };
-    } catch {
-      return null;
+      element instanceof HTMLInputElement
+      || element instanceof HTMLTextAreaElement
+    ) {
+      try {
+        if (
+          typeof element.selectionStart !== 'number'
+          || typeof element.selectionEnd !== 'number'
+        ) return null;
+        return {
+          selectionStart: element.selectionStart,
+          selectionEnd: element.selectionEnd,
+          selectionDirection: element.selectionDirection || 'none',
+        };
+      } catch {
+        return null;
+      }
     }
+    if (!(element instanceof HTMLElement) || !element.isContentEditable) return null;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+    const pointInside = (node) => Boolean(
+      node
+      && (
+        node === element
+        || element.contains(node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement)
+      )
+    );
+    if (!pointInside(selection.anchorNode) || !pointInside(selection.focusNode)) return null;
+    const textOffset = (node, offset) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      if (
+        !(node instanceof Node)
+        || !Number.isInteger(offset)
+        || offset < 0
+      ) return null;
+      try {
+        range.setEnd(node, offset);
+        return String(range.cloneContents().textContent ?? '').length;
+      } catch {
+        return null;
+      }
+    };
+    const anchor = textOffset(selection.anchorNode, selection.anchorOffset);
+    const focus = textOffset(selection.focusNode, selection.focusOffset);
+    if (anchor === null || focus === null) return null;
+    return {
+      selectionStart: Math.min(anchor, focus),
+      selectionEnd: Math.max(anchor, focus),
+      selectionDirection: focus < anchor
+        ? 'backward'
+        : focus > anchor
+          ? 'forward'
+          : 'none',
+    };
   };
   const stateFor = (element, modalBlocked = false) => {
     const state = {
@@ -3165,7 +3205,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 17,
+    version: 18,
     title: document.title,
     url: location.href,
     viewport,
@@ -3179,7 +3219,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v16-${candidates.length}-${
+  const snapshotRevision = `ui-v17-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3200,7 +3240,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 17,
+    version: 18,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -4495,6 +4535,206 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       return true;
     };
     const handledTextDefault = acceptsDefault && applyTextControlDefault();
+    const applyContentEditableDefault = () => {
+      if (
+        !(element instanceof HTMLElement)
+        || !element.isContentEditable
+        || modifiers.ctrlKey
+        || modifiers.altKey
+        || modifiers.metaKey
+      ) return false;
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return false;
+      const pointInside = (node) => Boolean(
+        node
+        && (
+          node === element
+          || element.contains(node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement)
+        )
+      );
+      if (!pointInside(selection.anchorNode) || !pointInside(selection.focusNode)) return false;
+      const textOffset = (node, offset) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        try {
+          range.setEnd(node, offset);
+          return String(range.cloneContents().textContent ?? '').length;
+        } catch {
+          return null;
+        }
+      };
+      const anchor = textOffset(selection.anchorNode, selection.anchorOffset);
+      const focus = textOffset(selection.focusNode, selection.focusOffset);
+      if (anchor === null || focus === null) return false;
+      const text = String(element.textContent ?? '');
+      const length = text.length;
+      const textPointAt = (rawOffset) => {
+        const targetOffset = Math.max(0, Math.min(length, rawOffset));
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        let remaining = targetOffset;
+        let node = walker.nextNode();
+        let last = null;
+        while (node) {
+          last = node;
+          const nodeLength = String(node.textContent ?? '').length;
+          if (remaining <= nodeLength) return { node, offset: remaining };
+          remaining -= nodeLength;
+          node = walker.nextNode();
+        }
+        return last
+          ? { node: last, offset: String(last.textContent ?? '').length }
+          : { node: element, offset: 0 };
+      };
+      const setSelection = (nextAnchor, nextFocus) => {
+        const anchorPoint = textPointAt(nextAnchor);
+        const focusPoint = textPointAt(nextFocus);
+        const range = document.createRange();
+        range.setStart(anchorPoint.node, anchorPoint.offset);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        if (typeof selection.extend === 'function') {
+          selection.extend(focusPoint.node, focusPoint.offset);
+        } else {
+          range.setEnd(focusPoint.node, focusPoint.offset);
+        }
+      };
+      const start = Math.min(anchor, focus);
+      const end = Math.max(anchor, focus);
+      const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
+      if (requestedKey === 'ArrowLeft' || requestedKey === 'ArrowRight') {
+        delete element[verticalColumnKey];
+        const delta = requestedKey === 'ArrowLeft' ? -1 : 1;
+        if (modifiers.shiftKey) setSelection(anchor, focus + delta);
+        else {
+          const caret = start === end
+            ? Math.max(0, Math.min(length, focus + delta))
+            : requestedKey === 'ArrowLeft'
+              ? start
+              : end;
+          setSelection(caret, caret);
+        }
+        return true;
+      }
+      if (
+        ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(requestedKey)
+      ) {
+        const lineStarts = [0];
+        for (let index = 0; index < text.length; index += 1) {
+          if (text[index] === '\n') lineStarts.push(index + 1);
+        }
+        let currentLine = 0;
+        while (
+          currentLine + 1 < lineStarts.length
+          && lineStarts[currentLine + 1] <= focus
+        ) {
+          currentLine += 1;
+        }
+        const currentColumn = focus - lineStarts[currentLine];
+        const storedColumn = element[verticalColumnKey];
+        const preferredColumn = (
+          storedColumn
+          && storedColumn.position === focus
+          && storedColumn.lineStart === lineStarts[currentLine]
+          && Number.isInteger(storedColumn.column)
+          && storedColumn.column >= 0
+        )
+          ? storedColumn.column
+          : currentColumn;
+        const lineDelta = requestedKey === 'ArrowUp'
+          ? -1
+          : requestedKey === 'ArrowDown'
+            ? 1
+            : requestedKey === 'PageUp'
+              ? -10
+              : 10;
+        const targetLine = Math.max(
+          0,
+          Math.min(lineStarts.length - 1, currentLine + lineDelta),
+        );
+        const targetLineStart = lineStarts[targetLine];
+        const nextLineStart = lineStarts[targetLine + 1];
+        const targetLineEnd = nextLineStart === undefined
+          ? length
+          : Math.max(targetLineStart, nextLineStart - 1);
+        const target = Math.min(targetLineEnd, targetLineStart + preferredColumn);
+        element[verticalColumnKey] = {
+          column: preferredColumn,
+          position: target,
+          lineStart: targetLineStart,
+        };
+        if (modifiers.shiftKey) setSelection(anchor, target);
+        else setSelection(target, target);
+        return true;
+      }
+      if (requestedKey === 'Home' || requestedKey === 'End') {
+        delete element[verticalColumnKey];
+        const lineStart = text.lastIndexOf('\n', Math.max(0, focus - 1)) + 1;
+        const nextLineBreak = text.indexOf('\n', focus);
+        const lineEnd = nextLineBreak < 0 ? length : nextLineBreak;
+        const target = requestedKey === 'Home' ? lineStart : lineEnd;
+        if (modifiers.shiftKey) setSelection(anchor, target);
+        else setSelection(target, target);
+        return true;
+      }
+      let replacement = null;
+      let replacementStart = start;
+      let replacementEnd = end;
+      let inputType = 'insertText';
+      if (requestedKey === 'Space') {
+        replacement = ' ';
+      } else if (requestedKey === 'Enter') {
+        replacement = '\n';
+        inputType = 'insertLineBreak';
+      } else if (requestedKey === 'Backspace') {
+        if (start === end && start === 0) return true;
+        inputType = 'deleteContentBackward';
+        if (start === end) replacementStart = Math.max(0, start - 1);
+        replacement = '';
+      } else if (requestedKey === 'Delete') {
+        if (start === end && end === length) return true;
+        inputType = 'deleteContentForward';
+        if (start === end) replacementEnd = Math.min(length, end + 1);
+        replacement = '';
+      } else {
+        return false;
+      }
+      delete element[verticalColumnKey];
+      if (element.getAttribute('aria-readonly') === 'true') return true;
+      const beforeInput = new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        inputType,
+        data: replacement || null,
+      });
+      if (!element.dispatchEvent(beforeInput)) return true;
+      const replacementRange = document.createRange();
+      const startPoint = textPointAt(replacementStart);
+      const endPoint = textPointAt(replacementEnd);
+      replacementRange.setStart(startPoint.node, startPoint.offset);
+      replacementRange.setEnd(endPoint.node, endPoint.offset);
+      replacementRange.deleteContents();
+      if (replacement) {
+        const inserted = document.createTextNode(replacement);
+        replacementRange.insertNode(inserted);
+      }
+      const caret = replacementStart + replacement.length;
+      setSelection(caret, caret);
+      element.dispatchEvent(new InputEvent('input', {
+        bubbles: true,
+        composed: true,
+        inputType,
+        data: replacement || null,
+      }));
+      if (element.isConnected) setSelection(caret, caret);
+      return true;
+    };
+    const handledContentEditableDefault = (
+      acceptsDefault
+      && !handledTextDefault
+      && applyContentEditableDefault()
+    );
     const applyNativeDialogDefault = () => {
       if (requestedKey !== 'Escape') return false;
       const dialog = element.closest('dialog');
@@ -4505,7 +4745,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (!cancelled && dialog.open) dialog.close();
       return true;
     };
-    const handledDialogDefault = acceptsDefault && applyNativeDialogDefault();
+    const handledDialogDefault = (
+      acceptsDefault
+      && !handledTextDefault
+      && !handledContentEditableDefault
+      && applyNativeDialogDefault()
+    );
     const applyNativeControlDefault = () => {
       if (
         requestedKey === 'Space'
@@ -4614,12 +4859,14 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const handledNativeDefault = (
       acceptsDefault
       && !handledTextDefault
+      && !handledContentEditableDefault
       && !handledDialogDefault
       && applyNativeControlDefault()
     );
     if (
       acceptsDefault
       && !handledTextDefault
+      && !handledContentEditableDefault
       && !handledDialogDefault
       && !handledNativeDefault
       && (requestedKey === 'Enter' || requestedKey === 'Space')

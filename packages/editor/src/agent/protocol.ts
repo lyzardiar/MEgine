@@ -102,7 +102,8 @@ export interface EditorUiElement {
   /** Native form-control constraints and a bounded fingerprint for exact option discovery. */
   control: EditorUiControlMetadata | null;
   description: string | null;
-  state: Record<string, boolean | string>;
+  /** ARIA/native state; numeric entries include observable text selection offsets. */
+  state: Record<string, boolean | string | number>;
   /** Present when one or more UI actions require foreground-only user input. */
   agentInteraction: {
     blocked: true;
