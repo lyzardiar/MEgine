@@ -2516,7 +2516,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (['button', 'submit', 'reset', 'image'].includes(type)) return 'button';
     return 'textbox';
   };
+  const semanticallyHidden = (element) => Boolean(
+    element.closest('[aria-hidden="true"]'),
+  );
   const visible = (element) => {
+    if (semanticallyHidden(element)) return false;
     const style = getComputedStyle(element);
     if (style.display === 'none' || style.visibility === 'hidden'
       || Number(style.opacity) === 0 || element.hidden) return false;
@@ -3055,7 +3059,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 8,
+    version: 9,
     title: document.title,
     url: location.href,
     viewport,
@@ -3069,13 +3073,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v7-${candidates.length}-${
+  const snapshotRevision = `ui-v8-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 8,
+    version: 9,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3369,8 +3373,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     return normalizeName(target.innerText || target.textContent);
   };
+  const semanticallyHidden = (target) => Boolean(
+    target instanceof Element && target.closest('[aria-hidden="true"]'),
+  );
   const rendered = (target) => {
     if (!(target instanceof HTMLElement || target instanceof SVGElement)) return false;
+    if (semanticallyHidden(target)) return false;
     const style = getComputedStyle(target);
     if (
       style.display === 'none'
@@ -3424,6 +3432,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       modalBlocked: true,
       activeModalName,
       agentAlternative: 'Interact with or dismiss the active modal dialog first',
+    };
+  }
+  if (!rendered(element)) {
+    return {
+      ok: false,
+      error: `Element ${selector} is not rendered in the semantic accessibility tree`,
+    };
+  }
+  if (targetElement && !rendered(targetElement)) {
+    return {
+      ok: false,
+      error: `Target element ${targetSelector} is not rendered in the semantic accessibility tree`,
     };
   }
   const agentPolicy = agentPolicyFor(element);
