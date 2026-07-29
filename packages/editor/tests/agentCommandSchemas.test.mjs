@@ -174,6 +174,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_hover'].properties.state.enum,
+    ['enter', 'leave'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['window.ui_scroll'].required,
     ['selector', 'expectedSnapshotRevision'],
   );

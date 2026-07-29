@@ -2007,6 +2007,7 @@ pub async fn interact_editor_window(
     target_offset_y: Option<f64>,
     button: Option<String>,
     path: Option<Vec<EditorUiDragPathPoint>>,
+    hover_state: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2122,6 +2123,16 @@ pub async fn interact_editor_window(
     } else if path.is_some() {
         return Err("path is only valid for dragBy".to_string());
     }
+    if action == "hover" {
+        if hover_state
+            .as_deref()
+            .is_some_and(|state| !matches!(state, "enter" | "leave"))
+        {
+            return Err("hoverState must be enter or leave".to_string());
+        }
+    } else if hover_state.is_some() {
+        return Err("hoverState is only valid for hover".to_string());
+    }
     if action == "keyPress" {
         let key = key
             .as_deref()
@@ -2186,6 +2197,7 @@ pub async fn interact_editor_window(
         target_offset_y,
         button,
         path,
+        hover_state,
         delta_x,
         delta_y,
         key,
@@ -2572,6 +2584,7 @@ async fn interact_editor_window_impl(
     target_offset_y: Option<f64>,
     button: Option<String>,
     path: Option<Vec<EditorUiDragPathPoint>>,
+    hover_state: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2593,6 +2606,7 @@ async fn interact_editor_window_impl(
         "targetOffsetY": target_offset_y,
         "button": button,
         "path": path,
+        "hoverState": hover_state,
         "deltaX": delta_x,
         "deltaY": delta_y,
         "key": key,
@@ -2778,6 +2792,7 @@ async fn interact_editor_window_impl(
     _target_offset_y: Option<f64>,
     _button: Option<String>,
     _path: Option<Vec<EditorUiDragPathPoint>>,
+    _hover_state: Option<String>,
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
     _key: Option<String>,
@@ -3997,6 +4012,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     targetOffsetY: requestedTargetOffsetY,
     button: requestedButton,
     path: requestedPath,
+    hoverState: requestedHoverState,
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
     key: requestedKey,
@@ -4606,6 +4622,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     else dispatchPointer('click', 0, 0, detail);
   };
   let performedDragPath = null;
+  let performedHoverState = null;
+  let hoverStateChanged = null;
   if (action === 'click') {
     dispatchClick(1);
   } else if (action === 'doubleClick') {
@@ -4769,51 +4787,71 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
   } else if (action === 'hover') {
     const reactProps = reactPropsFor(element);
-    if (
-      typeof reactProps.onPointerEnter !== 'function'
-      && typeof reactProps.onPointerOver !== 'function'
-      && typeof reactProps.onMouseEnter !== 'function'
-      && typeof reactProps.onMouseOver !== 'function'
-    ) {
-      return { ok: false, error: `Element ${selector} has no semantic hover interaction` };
-    }
+    performedHoverState = requestedHoverState ?? 'enter';
     const hoverState = Symbol.for('mengine.agent.hoveredElement');
     const storedHover = window[hoverState];
     const previous = storedHover instanceof Element && storedHover.isConnected
       ? storedHover
       : null;
-    if (
-      previous
-      && previous !== element
-      && !previous.contains(element)
-    ) {
-      const previousProps = reactPropsFor(previous);
-      if (typeof previousProps.onPointerOut === 'function') {
-        previousProps.onPointerOut(reactHoverEvent(previous, 'pointerout', element));
+    const dispatchLeave = (target, relatedTarget) => {
+      const props = reactPropsFor(target);
+      if (typeof props.onPointerOut === 'function') {
+        props.onPointerOut(reactHoverEvent(target, 'pointerout', relatedTarget));
       }
-      if (typeof previousProps.onPointerLeave === 'function') {
-        previousProps.onPointerLeave(reactHoverEvent(previous, 'pointerleave', element));
+      if (typeof props.onPointerLeave === 'function') {
+        props.onPointerLeave(reactHoverEvent(target, 'pointerleave', relatedTarget));
       }
-      if (typeof previousProps.onMouseOut === 'function') {
-        previousProps.onMouseOut(reactHoverEvent(previous, 'mouseout', element));
+      if (typeof props.onMouseOut === 'function') {
+        props.onMouseOut(reactHoverEvent(target, 'mouseout', relatedTarget));
       }
-      if (typeof previousProps.onMouseLeave === 'function') {
-        previousProps.onMouseLeave(reactHoverEvent(previous, 'mouseleave', element));
+      if (typeof props.onMouseLeave === 'function') {
+        props.onMouseLeave(reactHoverEvent(target, 'mouseleave', relatedTarget));
       }
+    };
+    if (performedHoverState === 'leave') {
+      if (previous && previous !== element) {
+        return {
+          ok: false,
+          error: `Element ${selector} is not the current semantic hover target`,
+          hoverTargetMismatch: true,
+        };
+      }
+      if (previous) dispatchLeave(previous, null);
+      window[hoverState] = null;
+      hoverStateChanged = previous !== null;
+    } else {
+      if (
+        typeof reactProps.onPointerEnter !== 'function'
+        && typeof reactProps.onPointerOver !== 'function'
+        && typeof reactProps.onMouseEnter !== 'function'
+        && typeof reactProps.onMouseOver !== 'function'
+      ) {
+        return { ok: false, error: `Element ${selector} has no semantic hover interaction` };
+      }
+      if (
+        previous
+        && previous !== element
+        && !previous.contains(element)
+      ) {
+        dispatchLeave(previous, element);
+      }
+      if (previous !== element) {
+        if (typeof reactProps.onPointerOver === 'function') {
+          reactProps.onPointerOver(reactHoverEvent(element, 'pointerover', previous));
+        }
+        if (typeof reactProps.onPointerEnter === 'function') {
+          reactProps.onPointerEnter(reactHoverEvent(element, 'pointerenter', previous));
+        }
+        if (typeof reactProps.onMouseOver === 'function') {
+          reactProps.onMouseOver(reactHoverEvent(element, 'mouseover', previous));
+        }
+        if (typeof reactProps.onMouseEnter === 'function') {
+          reactProps.onMouseEnter(reactHoverEvent(element, 'mouseenter', previous));
+        }
+        window[hoverState] = element;
+      }
+      hoverStateChanged = previous !== element;
     }
-    if (typeof reactProps.onPointerOver === 'function') {
-      reactProps.onPointerOver(reactHoverEvent(element, 'pointerover', previous));
-    }
-    if (typeof reactProps.onPointerEnter === 'function') {
-      reactProps.onPointerEnter(reactHoverEvent(element, 'pointerenter', previous));
-    }
-    if (typeof reactProps.onMouseOver === 'function') {
-      reactProps.onMouseOver(reactHoverEvent(element, 'mouseover', previous));
-    }
-    if (typeof reactProps.onMouseEnter === 'function') {
-      reactProps.onMouseEnter(reactHoverEvent(element, 'mouseenter', previous));
-    }
-    window[hoverState] = element;
   } else if (action === 'setValue') {
     if (element.readOnly || element.getAttribute('aria-readonly') === 'true') {
       return { ok: false, error: `Element ${selector} is read-only` };
@@ -5613,6 +5651,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     targetClientY: targetCoordinates?.clientY ?? null,
     button: action === 'dragBy' ? requestedButton ?? 'left' : null,
     path: action === 'dragBy' ? performedDragPath : null,
+    hoverState: action === 'hover' ? performedHoverState : null,
+    hoverStateChanged: action === 'hover' ? hoverStateChanged : null,
     deltaX: action === 'dragBy'
       ? performedDragPath[performedDragPath.length - 1].deltaX
       : action === 'scroll' ? requestedDeltaX ?? 0 : null,

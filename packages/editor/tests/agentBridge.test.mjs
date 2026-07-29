@@ -152,6 +152,11 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /path\.length > 64/);
   assert.match(interactionScript, /for \(const point of path\)/);
   assert.match(interactionScript, /Every dragBy path point must stay inside the target WebView viewport/);
+  assert.match(interactionScript, /performedHoverState = requestedHoverState \?\? 'enter'/);
+  assert.match(interactionScript, /if \(performedHoverState === 'leave'\)/);
+  assert.match(interactionScript, /hoverTargetMismatch: true/);
+  assert.match(interactionScript, /window\[hoverState\] = null/);
+  assert.match(interactionScript, /hoverStateChanged: action === 'hover' \? hoverStateChanged : null/);
   assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
   assert.match(interactionScript, /const applyNativeScroll = element\.dispatchEvent\(wheelEvent\)/);
   assert.match(interactionScript, /if \(applyNativeScroll\) \{/);
@@ -170,6 +175,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(protocol, /targetClientY\?: number \| null/);
   assert.match(protocol, /button\?: 'left' \| 'middle' \| 'right' \| null/);
   assert.match(protocol, /path\?: EditorUiDragPathPoint\[\] \| null/);
+  assert.match(protocol, /hoverTargetMismatch\?: boolean/);
+  assert.match(protocol, /hoverState\?: 'enter' \| 'leave' \| null/);
+  assert.match(protocol, /hoverStateChanged\?: boolean \| null/);
   assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
@@ -404,7 +412,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /dispatchPointerAt\(element, 'mousemove'/);
   assert.match(rust, /Symbol\.for\('mengine\.agent\.hoveredElement'\)/);
   assert.match(rust, /!previous\.contains\(element\)/);
-  assert.match(rust, /previousProps\.onPointerLeave\(reactHoverEvent/);
+  assert.match(rust, /props\.onPointerLeave\(reactHoverEvent\(target/);
   assert.match(rust, /reactProps\.onPointerEnter\(reactHoverEvent/);
   assert.doesNotMatch(contentScript, /targetElement|targetSelector|action === 'dragTo'/);
   assert.match(interactionScript, /let targetElement = null/);
@@ -490,6 +498,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /scale: output_scale\.min\(1\.0\)/);
   assert.match(bridge, /window\.ui_drag_by requires a non-zero deltaX or deltaY/);
   assert.match(bridge, /window\.ui_drag_by path is mutually exclusive with deltaX and deltaY/);
+  assert.match(bridge, /Hover leave target does not match the current semantic hover target/);
   assert.match(bridge, /Window UI interaction requires expectedSnapshotRevision/);
   assert.match(bridge, /must be hidden and unfocused before semantic UI interaction/);
   assert.match(bridge, /requiredWindowState: 'hidden-unfocused'/);

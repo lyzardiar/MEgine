@@ -220,6 +220,7 @@ export interface EditorUiActionResult {
   targetSelectorNotExposed?: boolean;
   actionNotExposed?: boolean;
   invalidPointerCoordinates?: boolean;
+  hoverTargetMismatch?: boolean;
   requiredAction?: EditorUiAction;
   allowedActions?: EditorUiAction[];
   action?: EditorUiAction;
@@ -236,6 +237,8 @@ export interface EditorUiActionResult {
   targetClientY?: number | null;
   button?: 'left' | 'middle' | 'right' | null;
   path?: EditorUiDragPathPoint[] | null;
+  hoverState?: 'enter' | 'leave' | null;
+  hoverStateChanged?: boolean | null;
   deltaX?: number | null;
   deltaY?: number | null;
   tag?: string;

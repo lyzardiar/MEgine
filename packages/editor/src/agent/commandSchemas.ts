@@ -996,6 +996,11 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     ...uiInteractionContext,
     ...uiPointerOffsetContext,
     selector: stringValue('Exact hover-capable selector returned by window.ui_snapshot'),
+    state: {
+      type: 'string',
+      enum: ['enter', 'leave'],
+      description: 'Hover transition to dispatch; default enter',
+    },
   }, uiInteractionRequired),
   'window.ui_press_key': objectSchema({
     ...uiInteractionContext,

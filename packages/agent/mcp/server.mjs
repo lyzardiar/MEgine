@@ -3279,11 +3279,16 @@ const TOOLS = [
   ),
   execTool(
     'hover_window_ui',
-    'Hover an element marked with the hover action by get_window_ui only when its editor window is hidden and unfocused. Hover transitions never move the OS cursor.',
+    'Enter or leave an element marked with the hover action by get_window_ui only when its editor window is hidden and unfocused. Use state leave to clear the current synthetic hover target and collapse transient UI without moving the OS cursor.',
     'window.ui_hover',
     {
       ...uiInteractionProperties('Exact hover-capable selector returned by get_window_ui'),
       ...uiPointerOffsetProperties(),
+      state: {
+        type: 'string',
+        enum: ['enter', 'leave'],
+        description: 'Hover transition to dispatch; default enter',
+      },
     },
     ['selector', 'expectedSnapshotRevision'],
   ),

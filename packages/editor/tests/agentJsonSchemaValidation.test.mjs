@@ -92,6 +92,7 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     }],
     ['window.ui_hover', {
       selector: '#submenu',
+      state: 'leave',
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['build.run', { executable: 'Builds\\Game.exe', allowForegroundLaunch: true }],

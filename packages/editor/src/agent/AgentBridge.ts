@@ -1080,6 +1080,7 @@ class AgentBridge {
     targetOffsetY?: number,
     button?: 'left' | 'middle' | 'right',
     path?: EditorUiDragPathPoint[],
+    hoverState?: 'enter' | 'leave',
     deltaX?: number,
     deltaY?: number,
     key?: string,
@@ -1137,6 +1138,7 @@ class AgentBridge {
       targetOffsetY,
       button,
       path,
+      hoverState,
       deltaX,
       deltaY,
       key,
@@ -1214,6 +1216,18 @@ class AgentBridge {
             offsetY: offsetY ?? null,
             targetOffsetX: targetOffsetX ?? null,
             targetOffsetY: targetOffsetY ?? null,
+          },
+        );
+      }
+      if (result.hoverTargetMismatch) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Hover leave target does not match the current semantic hover target',
+          {
+            windowLabel,
+            selector,
+            hoverState: hoverState ?? null,
+            hoverTargetMismatch: true,
           },
         );
       }
@@ -4741,6 +4755,9 @@ class AgentBridge {
       const path = commandId === 'window.ui_drag_by' && args.path !== undefined
         ? requiredUiDragPath(args)
         : undefined;
+      const hoverState = commandId === 'window.ui_hover'
+        ? optionalEnum(args, 'state', ['enter', 'leave'] as const, 'enter')
+        : undefined;
       let deltaX: number | undefined;
       let deltaY: number | undefined;
       if (commandId === 'window.ui_drag_by') {
@@ -4795,6 +4812,7 @@ class AgentBridge {
           targetOffsetY,
           button,
           path,
+          hoverState,
           deltaX,
           deltaY,
           key,
