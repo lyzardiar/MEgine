@@ -232,8 +232,15 @@ function AnimatorStateGraph(props: {
                     x2={x2}
                     y2={y2}
                     role="button"
+                    tabIndex={0}
                     aria-label={`Select transition ${transition.from} to ${transition.to}`}
                     onPointerDown={() => props.onSelectTransition(index)}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter' && event.key !== ' ') return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      props.onSelectTransition(index);
+                    }}
                   />
                   <line x1={x1} y1={y1} x2={x2} y2={y2} markerEnd="url(#animator-arrow)" />
                 </g>

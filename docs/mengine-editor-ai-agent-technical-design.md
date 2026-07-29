@@ -360,6 +360,8 @@ Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number
 
 `tablist/tab` 使用 roving `tabIndex`：Tab 只进入当前选项卡，左右方向键循环切换，Home/End 跳到首尾，并同步焦点、`aria-selected` 与关联 `tabpanel`。控件处理后会阻止事件继续进入全局层级快捷键，保证 Agent 的目标按键不会误改场景选择。
 
+交互式 SVG 元素遵循与 HTML 控件相同的焦点和激活契约。Animator transition 等 `role=button` 图形显式进入 Tab 顺序，Enter/Space 与指针选择执行同一操作，并阻止按键继续触发全局编辑器快捷键。语义快照 v25 会按 SVG geometry 的 stroke width 扩展单轴为零的水平/垂直线命中框，使这些图形可被后台观察、截图、点击和按键操作；真实零尺寸图形仍不会暴露。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |

@@ -2934,12 +2934,41 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const semanticallyHidden = (element) => Boolean(
     element.closest('[aria-hidden="true"], [inert]'),
   );
+  const renderedRectFor = (element, style = getComputedStyle(element)) => {
+    const rect = element.getBoundingClientRect();
+    if (
+      typeof SVGGeometryElement === 'undefined'
+      || !(element instanceof SVGGeometryElement)
+      || (rect.width > 0 && rect.height > 0)
+      || (rect.width <= 0 && rect.height <= 0)
+    ) return rect;
+    const parsedStrokeWidth = Number.parseFloat(style.strokeWidth);
+    const thickness = (
+      Number.isFinite(parsedStrokeWidth) && parsedStrokeWidth > 0
+        ? parsedStrokeWidth
+        : 1
+    );
+    const width = Math.max(rect.width, thickness);
+    const height = Math.max(rect.height, thickness);
+    const left = rect.left - (width - rect.width) / 2;
+    const top = rect.top - (height - rect.height) / 2;
+    return {
+      x: left,
+      y: top,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+    };
+  };
   const visible = (element) => {
     if (semanticallyHidden(element)) return false;
     const style = getComputedStyle(element);
     if (style.display === 'none' || style.visibility === 'hidden'
       || Number(style.opacity) === 0 || element.hidden) return false;
-    const rect = element.getBoundingClientRect();
+    const rect = renderedRectFor(element, style);
     return rect.width > 0 && rect.height > 0;
   };
   const nativeDialogIsModal = (element) => {
@@ -3530,7 +3559,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       : null
   );
   const rectFor = (element) => {
-    const rect = element.getBoundingClientRect();
+    const rect = renderedRectFor(element);
     return {
       x: Math.round(rect.x * 100) / 100,
       y: Math.round(rect.y * 100) / 100,
@@ -3622,7 +3651,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 24,
+    version: 25,
     title: document.title,
     url: location.href,
     viewport,
@@ -3636,7 +3665,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v24-${candidates.length}-${
+  const snapshotRevision = `ui-v25-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3657,7 +3686,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 24,
+    version: 25,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3736,7 +3765,36 @@ const WINDOW_UI_ELEMENT_BOUNDS_SCRIPT: &str = r#"
     };
   }
   const style = getComputedStyle(element);
-  const rect = element.getBoundingClientRect();
+  const renderedRectFor = (target, targetStyle = getComputedStyle(target)) => {
+    const rect = target.getBoundingClientRect();
+    if (
+      typeof SVGGeometryElement === 'undefined'
+      || !(target instanceof SVGGeometryElement)
+      || (rect.width > 0 && rect.height > 0)
+      || (rect.width <= 0 && rect.height <= 0)
+    ) return rect;
+    const parsedStrokeWidth = Number.parseFloat(targetStyle.strokeWidth);
+    const thickness = (
+      Number.isFinite(parsedStrokeWidth) && parsedStrokeWidth > 0
+        ? parsedStrokeWidth
+        : 1
+    );
+    const width = Math.max(rect.width, thickness);
+    const height = Math.max(rect.height, thickness);
+    const left = rect.left - (width - rect.width) / 2;
+    const top = rect.top - (height - rect.height) / 2;
+    return {
+      x: left,
+      y: top,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+    };
+  };
+  const rect = renderedRectFor(element, style);
   if (
     style.display === 'none'
     || style.visibility === 'hidden'
@@ -4296,6 +4354,35 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     return semanticText(target);
   };
+  const renderedRectFor = (target, style = getComputedStyle(target)) => {
+    const rect = target.getBoundingClientRect();
+    if (
+      typeof SVGGeometryElement === 'undefined'
+      || !(target instanceof SVGGeometryElement)
+      || (rect.width > 0 && rect.height > 0)
+      || (rect.width <= 0 && rect.height <= 0)
+    ) return rect;
+    const parsedStrokeWidth = Number.parseFloat(style.strokeWidth);
+    const thickness = (
+      Number.isFinite(parsedStrokeWidth) && parsedStrokeWidth > 0
+        ? parsedStrokeWidth
+        : 1
+    );
+    const width = Math.max(rect.width, thickness);
+    const height = Math.max(rect.height, thickness);
+    const left = rect.left - (width - rect.width) / 2;
+    const top = rect.top - (height - rect.height) / 2;
+    return {
+      x: left,
+      y: top,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+    };
+  };
   const rendered = (target) => {
     if (!(target instanceof HTMLElement || target instanceof SVGElement)) return false;
     if (semanticallyHidden(target)) return false;
@@ -4306,7 +4393,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       || Number(style.opacity) === 0
       || target.hidden
     ) return false;
-    const rect = target.getBoundingClientRect();
+    const rect = renderedRectFor(target, style);
     return rect.width > 0 && rect.height > 0;
   };
   const effectivelyDisabled = (target) => Boolean(
@@ -4440,7 +4527,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     requestedY,
     targetLabel,
   ) => {
-    const rect = target.getBoundingClientRect();
+    const rect = renderedRectFor(target);
     const offsetX = requestedX == null ? rect.width / 2 : Number(requestedX);
     const offsetY = requestedY == null ? rect.height / 2 : Number(requestedY);
     if (
@@ -4512,7 +4599,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   const eventCoordinates = (target = element) => {
     if (target === element && sourceCoordinates) return sourceCoordinates;
     if (target === targetElement && targetCoordinates) return targetCoordinates;
-    const rect = target.getBoundingClientRect();
+    const rect = renderedRectFor(target);
     return {
       clientX: rect.left + rect.width / 2,
       clientY: rect.top + rect.height / 2,

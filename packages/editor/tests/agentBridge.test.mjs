@@ -71,14 +71,21 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v24-/);
+  assert.match(rust, /const snapshotRevision = `ui-v25-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 24,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 25,/g)].length, 2);
+  assert.equal([...rust.matchAll(/const renderedRectFor = \(/g)].length, 3);
+  assert.equal(
+    [...rust.matchAll(/target instanceof SVGGeometryElement|element instanceof SVGGeometryElement/g)].length,
+    3,
+  );
+  assert.match(rust, /const width = Math\.max\(rect\.width, thickness\)/);
+  assert.match(rust, /const height = Math\.max\(rect\.height, thickness\)/);
   assert.match(
     rust,
     /element instanceof HTMLElement\s+\|\| element instanceof SVGElement/,

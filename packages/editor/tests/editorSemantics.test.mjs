@@ -221,7 +221,11 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   );
   assert.match(
     animator,
-    /role="button"\s*aria-label=\{`Select transition \$\{transition\.from\} to \$\{transition\.to\}`\}/,
+    /role="button"\s*tabIndex=\{0\}\s*aria-label=\{`Select transition \$\{transition\.from\} to \$\{transition\.to\}`\}/,
+  );
+  assert.match(
+    animator,
+    /event\.key !== 'Enter' && event\.key !== ' '\) return;[\s\S]{0,180}?props\.onSelectTransition\(index\)/,
   );
   assert.match(animator, /aria-label=\{`Parameter \$\{index \+ 1\} name`\}/);
   assert.match(animator, /aria-label=\{`\$\{state\.name\} blend child \$\{childIndex \+ 1\} clip`\}/);
