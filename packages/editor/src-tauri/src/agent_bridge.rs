@@ -2493,6 +2493,32 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const implicitRole = (element) => {
     const tag = element.localName;
     if (/^h[1-6]$/.test(tag)) return 'heading';
+    if (tag === 'article') return 'article';
+    if (tag === 'aside') return 'complementary';
+    if (tag === 'code') return 'code';
+    if (tag === 'details' || tag === 'fieldset' || tag === 'dl') return 'group';
+    if (tag === 'dialog') return 'dialog';
+    if (tag === 'dt') return 'term';
+    if (tag === 'dd') return 'definition';
+    if (tag === 'figure') return 'figure';
+    if (tag === 'hr') return 'separator';
+    if (tag === 'li') return 'listitem';
+    if (['ol', 'ul', 'menu'].includes(tag)) return 'list';
+    if (tag === 'p') return 'paragraph';
+    if (tag === 'table') return 'table';
+    if (['thead', 'tbody', 'tfoot'].includes(tag)) return 'rowgroup';
+    if (tag === 'tr') return 'row';
+    if (tag === 'td') return 'cell';
+    if (tag === 'th') {
+      return element.getAttribute('scope') === 'row' ? 'rowheader' : 'columnheader';
+    }
+    if (
+      tag === 'section'
+      && (
+        normalize(element.getAttribute('aria-label'))
+        || normalize(element.getAttribute('aria-labelledby'))
+      )
+    ) return 'region';
     if (tag === 'button') return 'button';
     if (tag === 'summary') return 'button';
     if (tag === 'a' && element.hasAttribute('href')) return 'link';
@@ -3075,7 +3101,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 13,
+    version: 14,
     title: document.title,
     url: location.href,
     viewport,
@@ -3089,7 +3115,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v12-${candidates.length}-${
+  const snapshotRevision = `ui-v13-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3110,7 +3136,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 13,
+    version: 14,
     snapshotRevision,
     title: document.title,
     url: location.href,

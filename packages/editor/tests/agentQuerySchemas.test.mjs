@@ -76,7 +76,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     }],
     ['window.ui_content', {
       selector: '#projection',
-      expectedSnapshotRevision: 'ui-v12-100-0123456789abcdef',
+      expectedSnapshotRevision: 'ui-v13-100-0123456789abcdef',
       field: 'options',
     }],
     ['window.ui_content', {
