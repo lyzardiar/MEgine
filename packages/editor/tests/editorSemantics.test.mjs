@@ -71,6 +71,10 @@ test('core editor navigation exposes named semantic controls', () => {
     rectTransform,
     /id="rect-anchor-presets-dialog"\s*className="rect-anchor-popup"\s*role="dialog"/,
   );
+  assert.match(
+    rectTransform,
+    /window\.addEventListener\('keydown', closeWithEscape, true\)/,
+  );
   assert.match(schemaFields, /aria-label=\{`\$\{label\} slider`\}/);
   assert.match(schemaFields, /aria-label=\{`\$\{label\} value`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} color`\}/);
@@ -92,6 +96,10 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(
     viewport,
     /aria-label="Align RectTransforms"\s*aria-haspopup="dialog"\s*aria-expanded=\{alignOpen\}\s*aria-controls="scene-rect-alignment-dialog"/,
+  );
+  assert.equal(
+    [...viewport.matchAll(/window\.addEventListener\('keydown', closeWithEscape, true\)/g)].length,
+    2,
   );
 
   assert.match(dock, /role="tablist" aria-label="Dock panels"/);

@@ -135,8 +135,18 @@ export function RectTransformEditor(props: {
     const close = (event: PointerEvent) => {
       if (!presetRef.current?.contains(event.target as Node)) setPresetOpen(false);
     };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setPresetOpen(false);
+    };
     window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
+    window.addEventListener('keydown', closeWithEscape, true);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', closeWithEscape, true);
+    };
   }, [presetOpen]);
 
   return (

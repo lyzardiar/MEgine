@@ -739,8 +739,18 @@ export function Viewport(props: {
         setSnapSettingsOpen(false);
       }
     };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setSnapSettingsOpen(false);
+    };
     window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
+    window.addEventListener('keydown', closeWithEscape, true);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', closeWithEscape, true);
+    };
   }, [snapSettingsOpen]);
 
   useEffect(() => {
@@ -748,8 +758,18 @@ export function Viewport(props: {
     const close = (event: PointerEvent) => {
       if (!alignElementRef.current?.contains(event.target as Node)) setAlignOpen(false);
     };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setAlignOpen(false);
+    };
     window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
+    window.addEventListener('keydown', closeWithEscape, true);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', closeWithEscape, true);
+    };
   }, [alignOpen]);
 
   useEffect(() => {
