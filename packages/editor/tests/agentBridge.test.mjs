@@ -18,6 +18,7 @@ test('whole-window agent capture is background-safe and addressable by window la
     'utf8',
   ));
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const protocol = fs.readFileSync(path.join(root, 'src', 'agent', 'protocol.ts'), 'utf8');
   const mcp = fs.readFileSync(
     path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
     'utf8',
@@ -46,14 +47,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v6-/);
+  assert.match(rust, /const snapshotRevision = `ui-v7-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 7,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 8,/g)].length, 2);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
     'valuemin',
@@ -85,6 +86,25 @@ test('whole-window agent capture is background-safe and addressable by window la
   );
   assert.match(rust, /const controlFor = \(element\) =>/);
   assert.match(rust, /control: controlFor\(element\)/);
+  assert.equal([...rust.matchAll(/type === 'number'\) return 'spinbutton'/g)].length, 2);
+  assert.equal([...rust.matchAll(/type === 'search'\) return 'searchbox'/g)].length, 2);
+  assert.equal([...rust.matchAll(/return 'combobox';/g)].length, 2);
+  assert.equal([...rust.matchAll(/localName === 'output'\) return 'status'/g)].length, 1);
+  assert.match(rust, /tag === 'output'\) return 'status'/);
+  assert.match(rust, /tag === 'meter'\) return 'meter'/);
+  assert.match(rust, /const containingLabelText = \(element\) =>/);
+  assert.match(rust, /\['status', 'meter', 'progressbar'\]\.includes\(role\)/);
+  assert.match(rust, /element instanceof HTMLOutputElement \|\| element instanceof HTMLMeterElement/);
+  assert.match(rust, /element instanceof HTMLProgressElement/);
+  assert.match(rust, /kind: 'progress'/);
+  assert.match(rust, /kind: 'meter'/);
+  assert.match(rust, /return \{ kind: 'output' \}/);
+  assert.match(contentScript, /element instanceof HTMLOutputElement/);
+  assert.match(contentScript, /element instanceof HTMLProgressElement/);
+  assert.match(protocol, /\| 'progress'/);
+  assert.match(protocol, /\| 'meter'/);
+  assert.match(protocol, /\| 'output'/);
+  assert.match(protocol, /indeterminate\?: boolean/);
   assert.match(rust, /control\.optionsRevision = compactContentRevision\('options'/);
   assert.match(rust, /optionCount: optionPayload\.options\.length/);
   assert.match(rust, /const visibleModalDialogs = Array\.from\(/);

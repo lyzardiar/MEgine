@@ -299,7 +299,7 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
   assert.doesNotThrow(
     () => validateToolArguments(tool('read_window_ui_content'), {
       selector: '#projection',
-      expectedSnapshotRevision: 'ui-v6-42-0123456789abcdef',
+      expectedSnapshotRevision: 'ui-v7-42-0123456789abcdef',
       field: 'options',
       maxChars: 64,
     }),

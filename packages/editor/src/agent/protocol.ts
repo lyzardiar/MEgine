@@ -44,7 +44,14 @@ export interface EditorUiRect {
 }
 
 export interface EditorUiControlMetadata {
-  kind: 'input' | 'textarea' | 'select' | 'contenteditable';
+  kind:
+    | 'input'
+    | 'textarea'
+    | 'select'
+    | 'contenteditable'
+    | 'progress'
+    | 'meter'
+    | 'output';
   inputType?: string;
   required?: boolean;
   multiple?: boolean;
@@ -56,6 +63,10 @@ export interface EditorUiControlMetadata {
   maxLength?: number;
   pattern?: string;
   accept?: string;
+  low?: string;
+  high?: string;
+  optimum?: string;
+  indeterminate?: boolean;
   optionCount?: number;
   /** Changes whenever option values, labels, groups, disabled state, or selection changes. */
   optionsRevision?: string;

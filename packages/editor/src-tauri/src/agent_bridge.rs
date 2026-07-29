@@ -2498,16 +2498,22 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (tag === 'textarea') return 'textbox';
     if (tag === 'select') return element.multiple ? 'listbox' : 'combobox';
     if (tag === 'option') return 'option';
+    if (tag === 'output') return 'status';
+    if (tag === 'meter') return 'meter';
     if (tag === 'main') return 'main';
     if (tag === 'nav') return 'navigation';
     if (tag === 'form') return 'form';
     if (tag === 'progress') return 'progressbar';
     if (tag !== 'input') return '';
     const type = String(element.type || 'text').toLowerCase();
+    if (type === 'hidden') return '';
     if (type === 'checkbox') return 'checkbox';
     if (type === 'radio') return 'radio';
     if (type === 'range') return 'slider';
-    if (['button', 'submit', 'reset'].includes(type)) return 'button';
+    if (type === 'number') return 'spinbutton';
+    if (element.list) return 'combobox';
+    if (type === 'search') return 'searchbox';
+    if (['button', 'submit', 'reset', 'image'].includes(type)) return 'button';
     return 'textbox';
   };
   const visible = (element) => {
@@ -2550,11 +2556,24 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const content = normalize(element.innerText || element.textContent);
     return /[\p{L}\p{N}]/u.test(content) ? content : '';
   };
+  const containingLabelText = (element) => {
+    const label = element.closest('label');
+    if (!label) return '';
+    return normalize(Array.from(label.childNodes)
+      .filter((node) => node !== element)
+      .map((node) => node.textContent)
+      .join(' '));
+  };
   const accessibleName = (element, role) => normalize(
     element.getAttribute('aria-label')
       || labelledText(element)
       || element.getAttribute('alt')
       || meaningfulContentName(element, role)
+      || (
+        ['status', 'meter', 'progressbar'].includes(role)
+          ? containingLabelText(element)
+          : ''
+      )
       || element.getAttribute('placeholder')
       || element.getAttribute('title')
       || (nameFromContent(role) ? element.innerText || element.textContent : ''),
@@ -2634,6 +2653,12 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
       return normalize(element.value);
+    }
+    if (element instanceof HTMLOutputElement || element instanceof HTMLMeterElement) {
+      return normalize(element.value);
+    }
+    if (element instanceof HTMLProgressElement) {
+      return element.hasAttribute('value') ? normalize(element.value) : '';
     }
     if (element.isContentEditable) return normalize(element.textContent);
     return '';
@@ -2725,6 +2750,27 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         optionCount: optionPayload.options.length,
         optionsRevision: compactContentRevision('options', optionContent),
       };
+    }
+    if (element instanceof HTMLProgressElement) {
+      return {
+        kind: 'progress',
+        min: '0',
+        max: String(element.max),
+        indeterminate: !element.hasAttribute('value'),
+      };
+    }
+    if (element instanceof HTMLMeterElement) {
+      return {
+        kind: 'meter',
+        min: String(element.min),
+        max: String(element.max),
+        low: String(element.low),
+        high: String(element.high),
+        optimum: String(element.optimum),
+      };
+    }
+    if (element instanceof HTMLOutputElement) {
+      return { kind: 'output' };
     }
     if (element instanceof HTMLElement && element.isContentEditable) {
       return { kind: 'contenteditable' };
@@ -2886,6 +2932,18 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;
     }
+    if (element instanceof HTMLProgressElement) {
+      if (state.valuemin === undefined) state.valuemin = '0';
+      if (state.valuemax === undefined) state.valuemax = String(element.max);
+      if (state.valuenow === undefined && element.hasAttribute('value')) {
+        state.valuenow = String(element.value);
+      }
+    }
+    if (element instanceof HTMLMeterElement) {
+      if (state.valuemin === undefined) state.valuemin = String(element.min);
+      if (state.valuemax === undefined) state.valuemax = String(element.max);
+      if (state.valuenow === undefined) state.valuenow = String(element.value);
+    }
     return state;
   };
   const descriptionFor = (element, name) => normalize(
@@ -2997,7 +3055,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 7,
+    version: 8,
     title: document.title,
     url: location.href,
     viewport,
@@ -3011,13 +3069,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v6-${candidates.length}-${
+  const snapshotRevision = `ui-v7-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 7,
+    version: 8,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3106,8 +3164,12 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
       }
       content = String(element.value);
     } else if (element instanceof HTMLTextAreaElement
-      || element instanceof HTMLSelectElement) {
+      || element instanceof HTMLSelectElement
+      || element instanceof HTMLOutputElement
+      || element instanceof HTMLMeterElement) {
       content = String(element.value);
+    } else if (element instanceof HTMLProgressElement) {
+      content = element.hasAttribute('value') ? String(element.value) : '';
     } else if (element instanceof HTMLElement && element.isContentEditable) {
       content = String(element.textContent ?? '');
     } else {
@@ -3264,12 +3326,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     if (target.localName === 'textarea') return 'textbox';
     if (target.localName === 'select') return target.multiple ? 'listbox' : 'combobox';
     if (target.localName === 'option') return 'option';
+    if (target.localName === 'output') return 'status';
+    if (target.localName === 'meter') return 'meter';
     if (target.localName === 'input') {
       const type = String(target.type || 'text').toLowerCase();
+      if (type === 'hidden') return '';
       if (type === 'checkbox') return 'checkbox';
       if (type === 'radio') return 'radio';
       if (type === 'range') return 'slider';
-      if (['button', 'submit', 'reset'].includes(type)) return 'button';
+      if (type === 'number') return 'spinbutton';
+      if (target instanceof HTMLInputElement && target.list) return 'combobox';
+      if (type === 'search') return 'searchbox';
+      if (['button', 'submit', 'reset', 'image'].includes(type)) return 'button';
       return 'textbox';
     }
     return '';
