@@ -236,6 +236,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /inputType = 'deleteContentForward'/);
   assert.match(interactionScript, /inputType = 'insertLineBreak'/);
   assert.match(interactionScript, /const handledTextDefault = acceptsDefault && applyTextControlDefault\(\)/);
+  assert.match(interactionScript, /const verticalColumnKey = Symbol\.for\('mengine\.agent\.textVerticalColumn'\)/);
+  assert.match(interactionScript, /'ArrowUp',\s*'ArrowDown',\s*'PageUp',\s*'PageDown'/);
+  assert.match(interactionScript, /element\[verticalColumnKey\] = \{\s*column: preferredColumn,\s*position: target,\s*lineStart: targetLineStart/);
+  assert.match(interactionScript, /const applyNativeDialogDefault = \(\) =>/);
+  assert.match(interactionScript, /dialog\.dispatchEvent\(new Event\('cancel'/);
+  assert.match(interactionScript, /if \(!cancelled && dialog\.open\) dialog\.close\(\)/);
+  assert.match(interactionScript, /const handledDialogDefault = acceptsDefault && applyNativeDialogDefault\(\)/);
   assert.match(interactionScript, /const applyNativeControlDefault = \(\) =>/);
   assert.match(interactionScript, /\['checkbox', 'radio'\]\.includes\(element\.type\)/);
   assert.match(interactionScript, /element instanceof HTMLSelectElement && !element\.multiple/);

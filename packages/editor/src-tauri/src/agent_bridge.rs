@@ -4348,7 +4348,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       };
       const anchor = direction === 'backward' ? end : start;
       const focus = direction === 'backward' ? start : end;
+      const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
       if (requestedKey === 'ArrowLeft') {
+        delete element[verticalColumnKey];
         if (modifiers.shiftKey) setSelection(anchor, focus - 1);
         else {
           const caret = start === end ? Math.max(0, start - 1) : start;
@@ -4357,6 +4359,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         return true;
       }
       if (requestedKey === 'ArrowRight') {
+        delete element[verticalColumnKey];
         if (modifiers.shiftKey) setSelection(anchor, focus + 1);
         else {
           const caret = start === end ? Math.min(length, end + 1) : end;
@@ -4364,7 +4367,68 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         }
         return true;
       }
+      if (
+        element instanceof HTMLTextAreaElement
+        && [
+          'ArrowUp',
+          'ArrowDown',
+          'PageUp',
+          'PageDown',
+        ].includes(requestedKey)
+      ) {
+        const lineStarts = [0];
+        for (let index = 0; index < element.value.length; index += 1) {
+          if (element.value[index] === '\n') lineStarts.push(index + 1);
+        }
+        let currentLine = 0;
+        while (
+          currentLine + 1 < lineStarts.length
+          && lineStarts[currentLine + 1] <= focus
+        ) {
+          currentLine += 1;
+        }
+        const currentColumn = focus - lineStarts[currentLine];
+        const storedColumn = element[verticalColumnKey];
+        const preferredColumn = (
+          storedColumn
+          && storedColumn.position === focus
+          && storedColumn.lineStart === lineStarts[currentLine]
+          && Number.isInteger(storedColumn.column)
+          && storedColumn.column >= 0
+        )
+          ? storedColumn.column
+          : currentColumn;
+        const lineDelta = requestedKey === 'ArrowUp'
+          ? -1
+          : requestedKey === 'ArrowDown'
+            ? 1
+            : requestedKey === 'PageUp'
+              ? -10
+              : 10;
+        const targetLine = Math.max(
+          0,
+          Math.min(lineStarts.length - 1, currentLine + lineDelta),
+        );
+        const targetLineStart = lineStarts[targetLine];
+        const nextLineStart = lineStarts[targetLine + 1];
+        const targetLineEnd = nextLineStart === undefined
+          ? length
+          : Math.max(targetLineStart, nextLineStart - 1);
+        const target = Math.min(
+          targetLineEnd,
+          targetLineStart + preferredColumn,
+        );
+        element[verticalColumnKey] = {
+          column: preferredColumn,
+          position: target,
+          lineStart: targetLineStart,
+        };
+        if (modifiers.shiftKey) setSelection(anchor, target);
+        else setSelection(target, target);
+        return true;
+      }
       if (requestedKey === 'Home') {
+        delete element[verticalColumnKey];
         const lineStart = element instanceof HTMLTextAreaElement
           ? element.value.lastIndexOf('\n', Math.max(0, focus - 1)) + 1
           : 0;
@@ -4373,6 +4437,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         return true;
       }
       if (requestedKey === 'End') {
+        delete element[verticalColumnKey];
         const nextLineBreak = element instanceof HTMLTextAreaElement
           ? element.value.indexOf('\n', focus)
           : -1;
@@ -4408,6 +4473,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       } else {
         return false;
       }
+      delete element[verticalColumnKey];
       if (element.readOnly) return true;
       const prototype = element instanceof HTMLInputElement
         ? HTMLInputElement.prototype
@@ -4429,6 +4495,17 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       return true;
     };
     const handledTextDefault = acceptsDefault && applyTextControlDefault();
+    const applyNativeDialogDefault = () => {
+      if (requestedKey !== 'Escape') return false;
+      const dialog = element.closest('dialog');
+      if (!dialog || !nativeDialogIsModal(dialog)) return false;
+      const cancelled = !dialog.dispatchEvent(new Event('cancel', {
+        cancelable: true,
+      }));
+      if (!cancelled && dialog.open) dialog.close();
+      return true;
+    };
+    const handledDialogDefault = acceptsDefault && applyNativeDialogDefault();
     const applyNativeControlDefault = () => {
       if (
         requestedKey === 'Space'
@@ -4537,11 +4614,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const handledNativeDefault = (
       acceptsDefault
       && !handledTextDefault
+      && !handledDialogDefault
       && applyNativeControlDefault()
     );
     if (
       acceptsDefault
       && !handledTextDefault
+      && !handledDialogDefault
       && !handledNativeDefault
       && (requestedKey === 'Enter' || requestedKey === 'Space')
     ) {
