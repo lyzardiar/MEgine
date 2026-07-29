@@ -104,6 +104,7 @@ export function HierarchyContextMenu(props: {
       className="hier-ctx popup-menu"
       style={position}
       role="menu"
+      aria-label="Hierarchy context menu"
       onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => e.stopPropagation()}
     >

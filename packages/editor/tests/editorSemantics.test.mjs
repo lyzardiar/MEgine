@@ -13,6 +13,9 @@ test('core editor navigation exposes named semantic controls', () => {
   const menu = panel('MenuBar.tsx');
   const inspector = panel('Inspector.tsx');
   const dock = panel('DockWorkspace.tsx');
+  const hierarchyMenu = panel('HierarchyContextMenu.tsx');
+  const objectPicker = panel('ObjectPicker.tsx');
+  const spriteEditor = panel('SpriteEditor.tsx');
 
   assert.match(project, /role="tree" aria-label="Project folders"/);
   assert.match(project, /role="treeitem"/);
@@ -45,6 +48,10 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(dock, /aria-selected=\{active === kind\}/);
   assert.match(dock, /role="tabpanel"/);
   assert.match(dock, /aria-label=\{`\$\{PANEL_TITLES\[panel\]\} panel`\}/);
+  assert.match(dock, /aria-label=\{`Resize dock split \$\{props\.direction\}`\}/);
+  assert.match(hierarchyMenu, /role="menu"\s*aria-label="Hierarchy context menu"/);
+  assert.match(objectPicker, /aria-label=\{`Close \$\{props\.title\}`\}/);
+  assert.match(spriteEditor, /aria-label="Select sprite slice from preview"\s*onClick=/);
 });
 
 test('complex authoring rows identify their selectable semantic regions', () => {
@@ -64,6 +71,10 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   assert.match(
     animator,
     /aria-label=\{`Delete condition \$\{conditionIndex \+ 1\} from transition/,
+  );
+  assert.match(
+    animator,
+    /role="button"\s*aria-label=\{`Select transition \$\{transition\.from\} to \$\{transition\.to\}`\}/,
   );
   assert.match(sequencer, /aria-label=\{`\$\{group\.name\} group lane`\}/);
   assert.match(sequencer, /aria-label=\{`\$\{track\.name\} \$\{track\.type\} lane`\}/);
@@ -117,4 +128,5 @@ test('editor window failures stay isolated and dragging always releases global s
   assert.match(host, /window\.addEventListener\('blur', onUp\)/);
   assert.match(host, /window\.removeEventListener\('blur', onUp\)/);
   assert.match(host, /document\.body\.classList\.remove\('ew-dragging'\)/);
+  assert.match(host, /aria-label=\{`Resize \$\{win\.title\} window`\}/);
 });

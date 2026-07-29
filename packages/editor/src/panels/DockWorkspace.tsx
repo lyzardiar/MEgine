@@ -650,6 +650,7 @@ function Splitter(props: {
   return (
     <div
       className={`dock-splitter ${props.direction}`}
+      aria-label={`Resize dock split ${props.direction}`}
       onMouseDown={(e) => {
         e.preventDefault();
         dragging.current = true;

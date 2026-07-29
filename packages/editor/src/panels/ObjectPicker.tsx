@@ -84,7 +84,7 @@ export function ObjectPicker(props: {
     >
       <div className="object-picker-head">
         <span>{props.title}</span>
-        <button type="button" className="object-picker-x" onClick={props.onClose}>
+        <button type="button" className="object-picker-x" aria-label={`Close ${props.title}`} onClick={props.onClose}>
           ×
         </button>
       </div>

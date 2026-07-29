@@ -218,7 +218,16 @@ function AnimatorStateGraph(props: {
                 && (transition.from === '*' || transition.from === currentState);
               return (
                 <g key={index} className={`animator-graph-edge${props.selectedTransition === index ? ' selected' : ''}${active ? ' active' : ''}`}>
-                  <line className="hit" x1={x1} y1={y1} x2={x2} y2={y2} onPointerDown={() => props.onSelectTransition(index)} />
+                  <line
+                    className="hit"
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    role="button"
+                    aria-label={`Select transition ${transition.from} to ${transition.to}`}
+                    onPointerDown={() => props.onSelectTransition(index)}
+                  />
                   <line x1={x1} y1={y1} x2={x2} y2={y2} markerEnd="url(#animator-arrow)" />
                 </g>
               );

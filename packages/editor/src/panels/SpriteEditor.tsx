@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import {
   loadProjectImage,
   readProjectAssetBytesWithRevision,
@@ -246,7 +246,7 @@ export function SpriteEditor(props: {
     });
   };
 
-  const selectAtPointer = (event: PointerEvent<HTMLCanvasElement>) => {
+  const selectAtPointer = (event: MouseEvent<HTMLCanvasElement>) => {
     if (!settings) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const layout = previewLayout(rect.width, rect.height, textureSize);
@@ -334,7 +334,8 @@ export function SpriteEditor(props: {
           <canvas
             ref={canvasRef}
             style={{ width: canvasSize.width, height: canvasSize.height }}
-            onPointerDown={selectAtPointer}
+            aria-label="Select sprite slice from preview"
+            onClick={selectAtPointer}
           />
         </div>
         <aside className="sprite-editor-inspector">

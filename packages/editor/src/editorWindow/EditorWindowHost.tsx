@@ -144,7 +144,11 @@ function WindowFrame(props: { win: EditorWindowInstance }) {
           <EditorWindowBody render={win.render} />
         </EditorWindowErrorBoundary>
       </div>
-      <div className="editor-window-resize" onMouseDown={onResizeDown} />
+      <div
+        className="editor-window-resize"
+        aria-label={`Resize ${win.title} window`}
+        onMouseDown={onResizeDown}
+      />
     </div>
   );
 }
