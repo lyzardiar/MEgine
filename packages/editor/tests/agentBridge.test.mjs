@@ -236,6 +236,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /inputType = 'deleteContentForward'/);
   assert.match(interactionScript, /inputType = 'insertLineBreak'/);
   assert.match(interactionScript, /const handledTextDefault = acceptsDefault && applyTextControlDefault\(\)/);
+  assert.match(interactionScript, /const applyNativeControlDefault = \(\) =>/);
+  assert.match(interactionScript, /\['checkbox', 'radio'\]\.includes\(element\.type\)/);
+  assert.match(interactionScript, /element instanceof HTMLSelectElement && !element\.multiple/);
+  assert.match(interactionScript, /element\.selectedIndex = nextIndex/);
+  assert.match(interactionScript, /if \(steps > 0\) element\.stepUp\(steps\)/);
+  assert.match(interactionScript, /else element\.stepDown\(-steps\)/);
+  assert.match(interactionScript, /const handledNativeDefault = \(/);
   assert.match(bridge, /if \(result\.constraintViolation\) \{/);
   assert.match(bridge, /validityIssues: result\.validityIssues \?\? \[\]/);
   assert.match(interactionScript, /is blocked by active modal dialog/);

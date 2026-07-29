@@ -4429,9 +4429,120 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       return true;
     };
     const handledTextDefault = acceptsDefault && applyTextControlDefault();
+    const applyNativeControlDefault = () => {
+      if (
+        requestedKey === 'Space'
+        && element instanceof HTMLInputElement
+        && ['checkbox', 'radio'].includes(element.type)
+      ) {
+        dispatchClick(1);
+        return true;
+      }
+      if (modifiers.ctrlKey || modifiers.altKey || modifiers.metaKey) return false;
+      if (element instanceof HTMLSelectElement && !element.multiple) {
+        const optionIndices = Array.from(element.options)
+          .map((option, index) => ({ option, index }))
+          .filter(({ option }) => (
+            !option.disabled
+            && !(
+              option.parentElement instanceof HTMLOptGroupElement
+              && option.parentElement.disabled
+            )
+          ))
+          .map(({ index }) => index);
+        if (optionIndices.length === 0) return false;
+        const currentPosition = optionIndices.indexOf(element.selectedIndex);
+        let nextPosition;
+        if (requestedKey === 'ArrowDown') {
+          nextPosition = currentPosition < 0 ? 0 : currentPosition + 1;
+        } else if (requestedKey === 'ArrowUp') {
+          nextPosition = currentPosition < 0
+            ? optionIndices.length - 1
+            : currentPosition - 1;
+        } else if (requestedKey === 'Home') {
+          nextPosition = 0;
+        } else if (requestedKey === 'End') {
+          nextPosition = optionIndices.length - 1;
+        } else if (requestedKey === 'PageDown') {
+          nextPosition = (currentPosition < 0 ? 0 : currentPosition) + 10;
+        } else if (requestedKey === 'PageUp') {
+          nextPosition = (currentPosition < 0
+            ? optionIndices.length - 1
+            : currentPosition) - 10;
+        } else {
+          return false;
+        }
+        const boundedPosition = Math.max(
+          0,
+          Math.min(optionIndices.length - 1, nextPosition),
+        );
+        const nextIndex = optionIndices[boundedPosition];
+        if (nextIndex !== element.selectedIndex) {
+          element.selectedIndex = nextIndex;
+          element.dispatchEvent(new Event('input', { bubbles: true }));
+          element.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return true;
+      }
+      if (!(element instanceof HTMLInputElement)) return false;
+      const type = String(element.type).toLowerCase();
+      if (type !== 'number' && type !== 'range') return false;
+      let steps = 0;
+      if (
+        requestedKey === 'ArrowUp'
+        || (type === 'range' && requestedKey === 'ArrowRight')
+      ) steps = 1;
+      else if (
+        requestedKey === 'ArrowDown'
+        || (type === 'range' && requestedKey === 'ArrowLeft')
+      ) steps = -1;
+      else if (type === 'range' && requestedKey === 'PageUp') steps = 10;
+      else if (type === 'range' && requestedKey === 'PageDown') steps = -10;
+      const previousValue = element.value;
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value',
+      )?.set;
+      if (!setter) return false;
+      if (
+        type === 'range'
+        && (requestedKey === 'Home' || requestedKey === 'End')
+      ) {
+        const fallback = requestedKey === 'Home' ? 0 : 100;
+        const boundaryAttribute = requestedKey === 'Home'
+          ? element.getAttribute('min')
+          : element.getAttribute('max');
+        const boundary = boundaryAttribute === null
+          ? Number.NaN
+          : Number(boundaryAttribute);
+        setter.call(element, String(Number.isFinite(boundary) ? boundary : fallback));
+      } else if (steps !== 0) {
+        try {
+          if (steps > 0) element.stepUp(steps);
+          else element.stepDown(-steps);
+        } catch {
+          const current = Number(element.value);
+          const fallback = Number.isFinite(current) ? current : 0;
+          setter.call(element, String(fallback + steps));
+        }
+      } else {
+        return false;
+      }
+      if (element.value !== previousValue) {
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      return true;
+    };
+    const handledNativeDefault = (
+      acceptsDefault
+      && !handledTextDefault
+      && applyNativeControlDefault()
+    );
     if (
       acceptsDefault
       && !handledTextDefault
+      && !handledNativeDefault
       && (requestedKey === 'Enter' || requestedKey === 'Space')
     ) {
       const role = roleForName(element);
