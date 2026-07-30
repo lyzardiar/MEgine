@@ -90,14 +90,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v31-/);
+  assert.match(rust, /const snapshotRevision = `ui-v32-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 31,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 32,/g)].length, 2);
   assert.doesNotMatch(
     rust,
     /const actionList = \(element, role\) => \{\s+const actions = \[\];\s+const props = reactProps\(element\);\s+if \(needsScrollIntoView\(element\)\)/,
@@ -422,8 +422,26 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /return semanticText\(label, element\)/);
   assert.match(interactionScript, /\? semanticText\(target\)/);
   assert.match(interactionScript, /return semanticText\(target\)/);
-  assert.match(rust, /if \(semanticallyHidden\(element\)\) return false/);
-  assert.match(interactionScript, /if \(semanticallyHidden\(target\)\) return false/);
+  assert.equal(
+    [...rust.matchAll(/const renderedInComposedTree = \(/g)].length,
+    3,
+  );
+  assert.equal(
+    [...rust.matchAll(/style\.contentVisibility === 'hidden'|currentStyle\.contentVisibility === 'hidden'/g)].length,
+    4,
+  );
+  assert.equal(
+    [...rust.matchAll(/style\.visibility === 'collapse'|currentStyle\.visibility === 'collapse'|parentStyle\.visibility === 'collapse'/g)].length,
+    4,
+  );
+  assert.match(
+    rust,
+    /semanticallyHidden\(element\) \|\| !renderedInComposedTree\(element\)/,
+  );
+  assert.match(
+    interactionScript,
+    /semanticallyHidden\(target\) \|\| !renderedInComposedTree\(target\)/,
+  );
   assert.match(interactionScript, /if \(!rendered\(element\)\)/);
   assert.match(interactionScript, /if \(targetElement && !rendered\(targetElement\)\)/);
   assert.match(

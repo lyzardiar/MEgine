@@ -3139,12 +3139,25 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       height,
     };
   };
+  const renderedInComposedTree = (element) => {
+    let current = element;
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      if (
+        style.display === 'none'
+        || style.visibility === 'hidden'
+        || style.visibility === 'collapse'
+        || style.contentVisibility === 'hidden'
+        || Number(style.opacity) === 0
+        || current.hidden
+      ) return false;
+      current = composedParent(current);
+    }
+    return true;
+  };
   const visible = (element) => {
-    if (semanticallyHidden(element)) return false;
-    const style = getComputedStyle(element);
-    if (style.display === 'none' || style.visibility === 'hidden'
-      || Number(style.opacity) === 0 || element.hidden) return false;
-    const rect = renderedRectFor(element, style);
+    if (semanticallyHidden(element) || !renderedInComposedTree(element)) return false;
+    const rect = renderedRectFor(element);
     return rect.width > 0 && rect.height > 0;
   };
   const nativeDialogIsModal = (element) => {
@@ -3908,7 +3921,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     activeElement instanceof Element ? selectorFor(activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 31,
+    version: 32,
     title: document.title,
     url: location.href,
     viewport,
@@ -3922,7 +3935,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v31-${candidates.length}-${
+  const snapshotRevision = `ui-v32-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const interactionSignatureFor = (semanticElement) => {
@@ -3955,7 +3968,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 31,
+    version: 32,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -4082,15 +4095,24 @@ const WINDOW_UI_ELEMENT_BOUNDS_SCRIPT: &str = r#"
       height,
     };
   };
+  const renderedInComposedTree = (target) => {
+    let current = target;
+    while (current instanceof Element) {
+      const currentStyle = getComputedStyle(current);
+      if (
+        currentStyle.display === 'none'
+        || currentStyle.visibility === 'hidden'
+        || currentStyle.visibility === 'collapse'
+        || currentStyle.contentVisibility === 'hidden'
+        || Number(currentStyle.opacity) === 0
+        || current.hidden
+      ) return false;
+      current = composedParent(current);
+    }
+    return true;
+  };
   const rect = renderedRectFor(element, style);
-  if (
-    style.display === 'none'
-    || style.visibility === 'hidden'
-    || Number(style.opacity) === 0
-    || element.hidden
-    || rect.width <= 0
-    || rect.height <= 0
-  ) {
+  if (!renderedInComposedTree(element) || rect.width <= 0 || rect.height <= 0) {
     return {
       ok: false,
       error: `Selector ${selector} is not currently rendered`,
@@ -4916,17 +4938,26 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       height,
     };
   };
+  const renderedInComposedTree = (target) => {
+    let current = target;
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      if (
+        style.display === 'none'
+        || style.visibility === 'hidden'
+        || style.visibility === 'collapse'
+        || style.contentVisibility === 'hidden'
+        || Number(style.opacity) === 0
+        || current.hidden
+      ) return false;
+      current = composedParent(current);
+    }
+    return true;
+  };
   const rendered = (target) => {
     if (!(target instanceof HTMLElement || target instanceof SVGElement)) return false;
-    if (semanticallyHidden(target)) return false;
-    const style = getComputedStyle(target);
-    if (
-      style.display === 'none'
-      || style.visibility === 'hidden'
-      || Number(style.opacity) === 0
-      || target.hidden
-    ) return false;
-    const rect = renderedRectFor(target, style);
+    if (semanticallyHidden(target) || !renderedInComposedTree(target)) return false;
+    const rect = renderedRectFor(target);
     return rect.width > 0 && rect.height > 0;
   };
   const effectivelyDisabled = (target) => Boolean(
