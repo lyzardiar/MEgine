@@ -3427,7 +3427,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   previewEnabled={visiblePanels.has('timeline')}
                   onClose={() => setTimelineAssetPath(null)}
                   onAssignDirector={(entity, path) => {
-                    const current = store.authoredEntities().find((entry) => entry.entity === entity)?.components.TimelineDirector;
+                    const current = store.snapshot().entities
+                      .find((entry) => entry.entity === entity)
+                      ?.components.TimelineDirector;
                     if (current) store.patchComponent(entity, 'TimelineDirector', {
                       asset: path,
                       ...(typeof current === 'object'
@@ -3474,7 +3476,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onOpenAsset={setAnimatorPath}
               onCloseAsset={() => setAnimatorPath(null)}
               onAssignAnimator={(entity, path) => {
-                const current = store.authoredEntities()
+                const current = store.snapshot().entities
                   .find((entry) => entry.entity === entity)
                   ?.components.Animator;
                 if (current) {
