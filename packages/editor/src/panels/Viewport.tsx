@@ -1561,7 +1561,7 @@ export function Viewport(props: {
     // Transform gizmo — 3D Transform OR RectTransform (UI)
     usingRectGizmoRef.current = false;
     rectGizmoHitsRef.current = [];
-    if (!isGame && !p.playing && p.selected != null) {
+    if (!isGame && p.selected != null) {
       const sel = p.entities.find((e) => e.entity === p.selected);
       const t = sel ? (resolvedTransform(worldTransforms, sel.entity) ?? undefined) : undefined;
       const hasRect = !!sel?.components.RectTransform;
@@ -2170,6 +2170,7 @@ export function Viewport(props: {
             activeGizmoRef.current = hit.part;
             propsRef.current.onBeginGesture();
             const duplicateForDrag = ev.altKey
+              && !propsRef.current.playing
               && isRectMoveMode(propsRef.current.gizmo)
               && !pivotEditingRef.current
               && !anchorEditingRef.current
@@ -2275,7 +2276,7 @@ export function Viewport(props: {
           });
           return;
         }
-        if (scene2DRef.current && !propsRef.current.playing) {
+        if (scene2DRef.current) {
           draggingRef.current = true;
           dragRef.current = {
             type: 'marquee',
@@ -2315,7 +2316,7 @@ export function Viewport(props: {
             : ui?.button || ui?.toggle || ui?.input || ui?.dropdown || ui?.list || ui?.tabs
               ? 'pointer'
               : 'default';
-        } else if (propsRef.current.tab === 'scene' && !propsRef.current.playing) {
+        } else if (propsRef.current.tab === 'scene') {
           if (tilePaintEnabledRef.current && propsRef.current.selected != null) {
             const selected = propsRef.current.entities.find(
               (entity) => entity.entity === propsRef.current.selected,
@@ -3135,7 +3136,6 @@ export function Viewport(props: {
         ev.key === 'ArrowUp' ||
         ev.key === 'ArrowDown';
       if (isSceneCanvas && isArrow) {
-        if (propsRef.current.playing) return;
         const ids = propsRef.current.selectedIds ?? (
           propsRef.current.selected == null ? [] : [propsRef.current.selected]
         );

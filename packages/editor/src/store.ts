@@ -302,9 +302,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   const find = (id: number) => list().find((e) => e.entity === id);
 
   const translateSelectedRectRoots = (dx: number, dy: number) => {
-    if (mode !== 'edit' || !Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
     if (Math.abs(dx) < 1e-8 && Math.abs(dy) < 1e-8) return false;
-    const roots = selectedRectRoots(editEntities, selectedIds);
+    const current = list();
+    const roots = selectedRectRoots(current, selectedIds);
     if (!roots.length) return false;
     if (!gizmoDragging) pushUndo('Move UI Selection');
     for (const id of roots) {
@@ -1572,13 +1573,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     translateSelectedTransformsBy(entity: number, delta: Vec3) {
       if (!delta.every(Number.isFinite)) return;
-      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
-      const world = buildWorldTransforms(editEntities);
+      const current = list();
+      const ids = selectedTransformRoots(current, selectedIds, entity);
+      const world = buildWorldTransforms(current);
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
         if (!target || !transform) continue;
-        const parent = parentWorldTransform(editEntities, world, id);
+        const parent = parentWorldTransform(current, world, id);
         if (!parent) continue;
         const localDelta = worldDeltaToLocal(parent, delta);
         target.components.Transform = {
@@ -1599,13 +1601,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         || !Number.isFinite(degrees)
         || Math.abs(degrees) < 1e-8
       ) return;
-      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
-      const world = buildWorldTransforms(editEntities);
+      const current = list();
+      const ids = selectedTransformRoots(current, selectedIds, entity);
+      const world = buildWorldTransforms(current);
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
         const resolved = resolvedTransform(world, id);
-        const parent = parentWorldTransform(editEntities, world, id);
+        const parent = parentWorldTransform(current, world, id);
         if (!target || !transform || !resolved || !parent) continue;
         const nextWorld = rotateTransformAround(resolved, pivot, axis, degrees);
         target.components.Transform = {
@@ -1631,8 +1634,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         || !Number.isFinite(amount)
       ) return;
       const component = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
-      const world = buildWorldTransforms(editEntities);
-      const primaryParent = parentWorldTransform(editEntities, world, entity);
+      const current = list();
+      const world = buildWorldTransforms(current);
+      const primaryParent = parentWorldTransform(current, world, entity);
       if (!primaryParent) return;
       const localAmount = worldAxisScaleDeltaToLocal(primaryParent, component, amount);
       const previous = Math.max(0.01, primaryTransform.scale[component]);
@@ -1640,12 +1644,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const factor = next / previous;
       if (!Number.isFinite(factor) || Math.abs(factor - 1) < 1e-8) return;
 
-      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
+      const ids = selectedTransformRoots(current, selectedIds, entity);
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
         const resolved = resolvedTransform(world, id);
-        const parent = parentWorldTransform(editEntities, world, id);
+        const parent = parentWorldTransform(current, world, id);
         if (!target || !transform || !resolved || !parent) continue;
         const nextWorld = scaleTransformAlong(
           resolved,
@@ -1709,8 +1713,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return translateSelectedRectRoots(dx, dy);
     },
     applySelectedRectDeltas(deltas: Array<{ entity: number; dx: number; dy: number }>) {
-      if (mode !== 'edit') return false;
-      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      const current = list();
+      const roots = new Set(selectedRectRoots(current, selectedIds));
       const applicable = deltas.filter((delta) =>
         roots.has(delta.entity) &&
         Number.isFinite(delta.dx) &&
@@ -1718,7 +1722,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         (Math.abs(delta.dx) >= 1e-8 || Math.abs(delta.dy) >= 1e-8),
       );
       if (!applicable.length) return false;
-      pushUndo('Move UI Selection');
+      if (mode === 'edit') pushUndo('Move UI Selection');
       for (const delta of applicable) {
         const entity = find(delta.entity);
         if (!entity?.components.RectTransform) continue;
@@ -1748,7 +1752,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       dy: number;
       degrees: number;
     }>) {
-      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      const roots = new Set(selectedRectRoots(list(), selectedIds));
       for (const delta of deltas) {
         if (
           !roots.has(delta.entity)
@@ -1788,7 +1792,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       factorX: number;
       factorY: number;
     }>) {
-      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      const roots = new Set(selectedRectRoots(list(), selectedIds));
       for (const delta of deltas) {
         if (
           !roots.has(delta.entity)
