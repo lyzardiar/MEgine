@@ -1307,6 +1307,20 @@ class AgentBridge {
           },
         );
       }
+      if (result.pointerTargetObscured) {
+        throw new BridgeError(
+          'CONFLICT',
+          result.error ?? 'Pointer interaction target is obscured or ignores pointer input',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            pointerTargetObscured: true,
+            blockerName: result.blockerName ?? null,
+            retry: 'Scroll the element, dismiss the blocking overlay, or choose a reachable offset',
+          },
+        );
+      }
       if (result.hoverTargetMismatch) {
         throw new BridgeError(
           'INVALID_ARGS',

@@ -5087,11 +5087,86 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       expectedSnapshotRevision,
     };
   }
+  const pointerVisibleRectFor = (target) => {
+    const rect = renderedRectFor(target);
+    let left = Math.max(0, rect.left);
+    let top = Math.max(0, rect.top);
+    let right = Math.min(document.documentElement.clientWidth, rect.right);
+    let bottom = Math.min(document.documentElement.clientHeight, rect.bottom);
+    let current = composedParent(target);
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      const clipsX = style.overflowX !== 'visible';
+      const clipsY = style.overflowY !== 'visible';
+      if (clipsX || clipsY) {
+        const ancestorRect = renderedRectFor(current, style);
+        const clipLeft = current instanceof HTMLElement
+          ? ancestorRect.left + current.clientLeft
+          : ancestorRect.left;
+        const clipTop = current instanceof HTMLElement
+          ? ancestorRect.top + current.clientTop
+          : ancestorRect.top;
+        const clipRight = current instanceof HTMLElement
+          ? clipLeft + current.clientWidth
+          : ancestorRect.right;
+        const clipBottom = current instanceof HTMLElement
+          ? clipTop + current.clientHeight
+          : ancestorRect.bottom;
+        if (clipsX) {
+          left = Math.max(left, clipLeft);
+          right = Math.min(right, clipRight);
+        }
+        if (clipsY) {
+          top = Math.max(top, clipTop);
+          bottom = Math.min(bottom, clipBottom);
+        }
+      }
+      current = composedParent(current);
+    }
+    return right > left && bottom > top
+      ? { left, top, right, bottom, width: right - left, height: bottom - top }
+      : null;
+  };
+  const deepestElementFromPoint = (clientX, clientY) => {
+    let hit = document.elementFromPoint(clientX, clientY);
+    while (
+      hit instanceof Element
+      && hit.shadowRoot
+      && typeof hit.shadowRoot.elementFromPoint === 'function'
+    ) {
+      const nested = hit.shadowRoot.elementFromPoint(clientX, clientY);
+      if (!(nested instanceof Element) || nested === hit) break;
+      hit = nested;
+    }
+    return hit;
+  };
+  const pointerHitsTarget = (target, clientX, clientY) => {
+    const hit = deepestElementFromPoint(clientX, clientY);
+    return {
+      hit,
+      reachable: hit instanceof Element && composedContains(target, hit),
+    };
+  };
+  const automaticPointerCandidates = (visibleRect) => {
+    const xs = [0.5, 0.25, 0.75, 0.1, 0.9];
+    const ys = [0.5, 0.25, 0.75, 0.1, 0.9];
+    const candidates = [];
+    for (const y of ys) {
+      for (const x of xs) {
+        candidates.push({
+          clientX: visibleRect.left + visibleRect.width * x,
+          clientY: visibleRect.top + visibleRect.height * y,
+        });
+      }
+    }
+    return candidates;
+  };
   const coordinateFor = (
     target,
     requestedX,
     requestedY,
     targetLabel,
+    requireReachable = true,
   ) => {
     const rect = renderedRectFor(target);
     const offsetX = requestedX == null ? rect.width / 2 : Number(requestedX);
@@ -5110,21 +5185,51 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         } by ${rect.height.toFixed(2)} CSS-pixel bounds`,
       );
     }
-    const clientX = rect.left + offsetX;
-    const clientY = rect.top + offsetY;
-    if (
-      clientX < 0
-      || clientY < 0
-      || clientX >= document.documentElement.clientWidth
-      || clientY >= document.documentElement.clientHeight
-    ) {
-      throw new Error(`${targetLabel} pointer coordinates must be inside the target WebView viewport`);
+    const explicitCoordinates = requestedX != null || requestedY != null;
+    const visibleRect = pointerVisibleRectFor(target);
+    if (!explicitCoordinates && !visibleRect) {
+      throw new Error(`${targetLabel} has no pointer area inside the target WebView viewport and overflow clips`);
+    }
+    const candidates = explicitCoordinates
+      ? [{ clientX: rect.left + offsetX, clientY: rect.top + offsetY }]
+      : automaticPointerCandidates(visibleRect);
+    const inViewport = candidates.filter((candidate) => (
+      candidate.clientX >= 0
+      && candidate.clientY >= 0
+      && candidate.clientX < document.documentElement.clientWidth
+      && candidate.clientY < document.documentElement.clientHeight
+    ));
+    if (inViewport.length === 0) {
+      throw new Error(`${targetLabel} has no pointer coordinates inside the target WebView viewport and overflow clips`);
+    }
+    const resolved = requireReachable
+      ? inViewport.find((candidate) => (
+          pointerHitsTarget(target, candidate.clientX, candidate.clientY).reachable
+        ))
+      : inViewport[0];
+    if (!resolved) {
+      const blocker = pointerHitsTarget(
+        target,
+        inViewport[0].clientX,
+        inViewport[0].clientY,
+      ).hit;
+      const blockerName = blocker instanceof Element
+        ? interactionName(blocker) || blocker.localName
+        : null;
+      const error = new Error(
+        `${targetLabel} has no reachable pointer point${
+          blockerName ? `; blocked by "${blockerName}"` : ''
+        }`,
+      );
+      error.pointerTargetObscured = true;
+      error.blockerName = blockerName;
+      throw error;
     }
     return {
-      offsetX,
-      offsetY,
-      clientX,
-      clientY,
+      offsetX: resolved.clientX - rect.left,
+      offsetY: resolved.clientY - rect.top,
+      clientX: resolved.clientX,
+      clientY: resolved.clientY,
     };
   };
   const pointerActions = [
@@ -5145,6 +5250,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         requestedOffsetX,
         requestedOffsetY,
         'Element',
+        !(action === 'hover' && requestedHoverState === 'leave'),
       );
     }
     if (action === 'dragTo') {
@@ -5156,10 +5262,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       );
     }
   } catch (error) {
+    const pointerTargetObscured = Boolean(error?.pointerTargetObscured);
     return {
       ok: false,
       error: error instanceof Error ? error.message : String(error),
-      invalidPointerCoordinates: true,
+      invalidPointerCoordinates: !pointerTargetObscured,
+      pointerTargetObscured,
+      blockerName: pointerTargetObscured ? error?.blockerName ?? null : null,
     };
   }
   const eventCoordinates = (target = element) => {

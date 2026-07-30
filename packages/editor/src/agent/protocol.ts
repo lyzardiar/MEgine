@@ -238,6 +238,8 @@ export interface EditorUiActionResult {
   targetSelectorNotExposed?: boolean;
   actionNotExposed?: boolean;
   invalidPointerCoordinates?: boolean;
+  pointerTargetObscured?: boolean;
+  blockerName?: string | null;
   hoverTargetMismatch?: boolean;
   requiredAction?: EditorUiAction;
   allowedActions?: EditorUiAction[];

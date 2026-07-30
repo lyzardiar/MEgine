@@ -205,7 +205,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /const coordinateFor = \(/);
   assert.match(interactionScript, /offsetX >= rect\.width/);
   assert.match(interactionScript, /offsetY >= rect\.height/);
-  assert.match(interactionScript, /invalidPointerCoordinates: true/);
+  assert.match(interactionScript, /invalidPointerCoordinates: !pointerTargetObscured/);
   assert.match(interactionScript, /requestedTargetOffsetX/);
   assert.match(interactionScript, /targetClientX: targetCoordinates\?\.clientX \?\? null/);
   assert.match(interactionScript, /const buttonName = requestedButton \?\? 'left'/);
@@ -321,6 +321,19 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /if \(result\.invalidPointerCoordinates\)/);
   assert.match(protocol, /targetSelectorNotExposed\?: boolean/);
   assert.match(protocol, /invalidPointerCoordinates\?: boolean/);
+  assert.match(protocol, /pointerTargetObscured\?: boolean/);
+  assert.match(protocol, /blockerName\?: string \| null/);
+  assert.match(interactionScript, /const pointerVisibleRectFor = \(target\) =>/);
+  assert.match(interactionScript, /const deepestElementFromPoint = \(clientX, clientY\) =>/);
+  assert.match(interactionScript, /document\.elementFromPoint\(clientX, clientY\)/);
+  assert.match(interactionScript, /hit\.shadowRoot\.elementFromPoint\(clientX, clientY\)/);
+  assert.match(interactionScript, /composedContains\(target, hit\)/);
+  assert.match(interactionScript, /const automaticPointerCandidates = \(visibleRect\) =>/);
+  assert.match(interactionScript, /invalidPointerCoordinates: !pointerTargetObscured/);
+  assert.match(interactionScript, /pointerTargetObscured,/);
+  assert.match(bridge, /if \(result\.pointerTargetObscured\) \{/);
+  assert.match(bridge, /'CONFLICT'/);
+  assert.match(bridge, /choose a reachable offset/);
   assert.match(protocol, /targetClientY\?: number \| null/);
   assert.match(protocol, /button\?: 'left' \| 'middle' \| 'right' \| null/);
   assert.match(protocol, /path\?: EditorUiDragPathPoint\[\] \| null/);
