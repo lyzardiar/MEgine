@@ -1377,9 +1377,27 @@ class AgentBridge {
 
   getSceneSnapshot(): unknown {
     this.observe(true);
+    const store = this.requireStore();
     return {
-      ...this.requireStore().snapshot(),
+      ...store.snapshot(),
+      source: 'active',
+      mode: store.mode,
       revision: this.sceneChanges.revision,
+    };
+  }
+
+  getAuthoredSceneSnapshot(): unknown {
+    this.observe();
+    const store = this.requireStore();
+    const snapshot = store.snapshot();
+    return {
+      source: 'authored',
+      mode: store.mode,
+      sceneName: this.sceneMeta?.sceneName() ?? null,
+      dirty: this.sceneMeta?.dirty() ?? false,
+      entities: store.authoredEntities(),
+      clearColor: snapshot.clearColor,
+      contentFingerprint: store.sceneContentFingerprint(),
     };
   }
 
@@ -5009,6 +5027,8 @@ class AgentBridge {
         return this.getSelection();
       case 'scene.snapshot':
         return this.getSceneSnapshot();
+      case 'scene.authored_snapshot':
+        return this.getAuthoredSceneSnapshot();
       case 'scene.diff':
         return this.getSceneDiff(requiredNonNegativeInteger(params, 'fromRevision'));
       case 'scene.hierarchy':

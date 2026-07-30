@@ -44,6 +44,7 @@ test('every AgentBridge query has one strict authoritative parameter schema', ()
 test('query schemas accept documented read shapes and reject malformed or extra fields', () => {
   for (const [queryId, params] of [
     ['project.state', {}],
+    ['scene.authored_snapshot', {}],
     ['scene.diff', { fromRevision: 0 }],
     ['entity.get', { id: 0 }],
     ['entity.get', { name: 'Main Camera' }],

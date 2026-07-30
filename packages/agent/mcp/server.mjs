@@ -1202,14 +1202,21 @@ const TOOLS = [
   {
     name: 'get_scene_snapshot',
     description:
-      'Get the complete scene snapshot, its monotonic revision, and every entity/component. Large; retain revision and use get_scene_changes for incremental observation.',
+      'Get the complete active scene snapshot, its monotonic revision, and every entity/component. In Play or Pause this is the live runtime clone. Retain revision and use get_scene_changes for incremental active-scene observation.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('scene.snapshot')),
   },
   {
+    name: 'get_authored_scene_snapshot',
+    description:
+      'Get the untouched authored scene, content fingerprint, scene identity, and every authored entity/component. Use this beside get_scene_snapshot during Play or Pause to distinguish runtime changes from saved authoring state.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('scene.authored_snapshot')),
+  },
+  {
     name: 'get_scene_changes',
     description:
-      'Get entities added, removed, or changed since a scene revision. Returns current payloads for added/changed entities; resetRequired=true includes a full snapshot after scene switches or expired history.',
+      'Get active-scene entities added, removed, or changed since a scene revision. During Play or Pause these are runtime-clone changes. Returns current payloads for added/changed entities; resetRequired=true includes a full snapshot after scene switches or expired history.',
     inputSchema: {
       type: 'object',
       required: ['fromRevision'],
@@ -3618,9 +3625,15 @@ const RESOURCES = [
   ),
   bridgeResource(
     'mengine://scene/snapshot',
-    'Scene Snapshot',
-    'Complete authored scene snapshot with revision and entity component data.',
+    'Active Scene Snapshot',
+    'Complete active scene snapshot with revision and entity component data; Play and Pause expose the live runtime clone.',
     'scene.snapshot',
+  ),
+  bridgeResource(
+    'mengine://scene/authored',
+    'Authored Scene Snapshot',
+    'Untouched authored scene with content fingerprint for comparison against the active Play or Pause clone.',
+    'scene.authored_snapshot',
   ),
   bridgeResource(
     'mengine://scene/hierarchy',
@@ -3712,6 +3725,7 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://assets/trash',
     'mengine://editor/panels',
     'mengine://scene/snapshot',
+    'mengine://scene/authored',
     'mengine://scene/hierarchy',
     'mengine://scene/selection',
     'mengine://project/settings',
@@ -3727,6 +3741,7 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://editor/scenes',
     'mengine://editor/menus',
     'mengine://scene/snapshot',
+    'mengine://scene/authored',
     'mengine://scene/hierarchy',
   ]),
   'selection.changed': Object.freeze([
@@ -3737,6 +3752,8 @@ const EVENT_RESOURCE_URIS = Object.freeze({
   'mode.changed': Object.freeze([
     'mengine://editor/state',
     'mengine://editor/menus',
+    'mengine://scene/snapshot',
+    'mengine://scene/authored',
   ]),
   'dialog.changed': Object.freeze(['mengine://editor/dialogs']),
   'panel.changed': Object.freeze([
@@ -3919,7 +3936,7 @@ const AUTONOMOUS_WORKFLOW_PREAMBLE = [
   'Execute this workflow through the MEngine MCP server without activating, raising, focusing, or otherwise disturbing any editor window.',
   'Safety and discovery rules:',
   '1. Read mengine://project/state and mengine://editor/state first. Stop and report the observed state if no project is open or the editor is not ready.',
-  '2. Read mengine://scene/snapshot and mengine://schema/components before editing. Prefer domain tools; use semantic window UI only when no domain tool exists.',
+  '2. Read mengine://scene/snapshot and mengine://schema/components before editing. During Play or Pause also read mengine://scene/authored to distinguish runtime-clone state from authoring state. Prefer domain tools; use semantic window UI only when no domain tool exists.',
   '3. Before each revision-sensitive write, use the latest scene revision as expectedSceneRevision. After a successful write, use its returned revision or refresh the snapshot before the next write.',
   '4. Treat RATE_LIMITED as retryable only after retryAfterMs. Re-read state after UNKNOWN_OUTCOME. Never guess whether a timed-out write succeeded.',
   '5. Do not discard dirty work, overwrite a scene, delete content, or save changes unless the original user request explicitly authorizes that action.',
@@ -4056,7 +4073,7 @@ function renderPrompt(name, args = {}) {
 
 const SERVER_INSTRUCTIONS = [
   'MEngine MCP controls the running editor without activating or raising its native windows.',
-  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, mengine://queries, and mengine://commands before editing.',
+  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, mengine://queries, and mengine://commands before editing; during Play or Pause compare mengine://scene/authored with the active snapshot.',
   'Read tools may run concurrently. Editor writes are serialized in arrival order.',
   'The MCP adapter bounds active and in-flight requests; RATE_LIMITED includes current capacity and retryAfterMs when a caller should retry later.',
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
