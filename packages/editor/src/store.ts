@@ -1363,7 +1363,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       materialPath: string,
       meshRendererValue?: Record<string, unknown>,
     ) {
-      if (mode !== 'edit') return null;
       const e = find(entity);
       if (!e) return null;
       const result = assignMaterialToComponents(
@@ -1372,7 +1371,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         meshRendererValue,
       );
       if (!result?.changed) return result;
-      pushUndo('Assign Material');
+      if (mode === 'edit') pushUndo('Assign Material');
       e.components = result.components;
       return result;
     },

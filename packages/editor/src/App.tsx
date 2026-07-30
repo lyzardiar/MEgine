@@ -3159,7 +3159,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onSetComponent={(entity, type, value) => {
                 if (type === 'MeshRenderer') {
-                  const current = store.authoredEntities()
+                  const current = store.snapshot().entities
                     .find((entry) => entry.entity === entity)
                     ?.components.MeshRenderer as Record<string, unknown> | undefined;
                   if (current?.material !== value.material) {
