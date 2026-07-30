@@ -1306,7 +1306,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       type: string,
       value: Record<string, unknown>,
     ) {
-      if (mode !== 'edit') return 0;
       const targets = [...new Set(entities)]
         .map((entity) => find(entity))
         .filter((entity): entity is EntityRec => (
@@ -1329,7 +1328,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return this.removeComponents([entity], type) > 0;
     },
     removeComponents(entities: readonly number[], type: string) {
-      if (mode !== 'edit' || type === 'Transform') return 0;
+      if (type === 'Transform') return 0;
       const targets = [...new Set(entities)].map((entity) => find(entity));
       if (
         !targets.length
