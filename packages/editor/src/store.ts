@@ -926,7 +926,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return this.setActives([id], activeFlag) > 0;
     },
     setActives(ids: readonly number[], activeFlag: boolean) {
-      if (mode !== 'edit') return 0;
       const targets = [...new Set(ids)]
         .map((id) => find(id))
         .filter((entity): entity is EntityRec => (
@@ -942,7 +941,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return this.setTags([id], value) > 0;
     },
     setTags(ids: readonly number[], value: string) {
-      if (mode !== 'edit') return 0;
       const tag = normalizeEntityTag(value);
       const targets = [...new Set(ids)]
         .map((id) => find(id))
@@ -956,7 +954,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return this.setLayers([id], value) > 0;
     },
     setLayers(ids: readonly number[], value: number) {
-      if (mode !== 'edit') return 0;
       const layer = normalizeGameLayerIndex(value);
       const targets = [...new Set(ids)]
         .map((id) => find(id))
