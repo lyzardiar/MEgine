@@ -90,14 +90,22 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v30-/);
+  assert.match(rust, /const snapshotRevision = `ui-v31-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 30,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 31,/g)].length, 2);
+  assert.doesNotMatch(
+    rust,
+    /const actionList = \(element, role\) => \{\s+const actions = \[\];\s+const props = reactProps\(element\);\s+if \(needsScrollIntoView\(element\)\)/,
+  );
+  assert.match(
+    rust,
+    /if \(!role && !name && !text && !structural && actions\.length === 0\) continue;\s+if \(!modalBlocked && needsScrollIntoView\(element\)\) \{\s+actions\.unshift\('scrollIntoView'\)/,
+  );
   assert.match(rust, /const invalidateRevisionGuard = \(\) =>/);
   assert.match(rust, /'input',\s*'change',\s*'selectionchange',\s*'focusin',\s*'focusout',\s*'scroll'/);
   assert.match(rust, /root\.addEventListener\(eventName, invalidateRevisionGuard, true\)/);
@@ -292,7 +300,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /requestedKey === 'Enter' \|\| requestedKey === 'Escape'/);
   assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
   assert.match(rust, /const needsScrollIntoView = \(element\) =>/);
-  assert.match(rust, /actions\.push\('scrollIntoView'\)/);
+  assert.match(rust, /actions\.unshift\('scrollIntoView'\)/);
   assert.match(interactionScript, /element\.scrollIntoView\(\{/);
   assert.match(interactionScript, /block: 'nearest'/);
   assert.match(interactionScript, /inline: 'nearest'/);

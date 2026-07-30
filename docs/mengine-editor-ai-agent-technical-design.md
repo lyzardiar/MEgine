@@ -370,6 +370,8 @@ Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number
 语义快照 v28 的 revision guard 除 Document DOM Mutation 外，会发现并分别观察每个开放 ShadowRoot；运行期 `attachShadow()` 也会立即注册观察并撤销旧 revision。它还监听 Document/ShadowRoot 的 input/change、焦点、光标选区、滚动、toggle/reset，以及窗口与 VisualViewport 的 resize/scroll、hash/popstate 和 History API URL 变化。这些不会可靠产生 Document DOM Mutation、但会改变快照值、选区、活动元素、滚动状态、bounds 或 URL 的更新，现在都会立即撤销旧 revision；精确内容分页、元素截图和后台写动作不能再用旧快照跨越这类状态变化。
 
 语义快照 v29 不再只递归枚举 ShadowRoot 中的元素，而是统一按开放 ShadowRoot 与 `<slot>` 的实际组合子节点顺序遍历元素和文本。Shadow host 直接承载的可访问名称、裸文本与 `window.ui_content(field=text)` 现在能读取开放 Shadow DOM 和已分发 Light DOM 的完整可见内容；未被任何 slot 分发的 Light DOM、样式和脚本文本不会进入语义结果。合成 Tab 顺序也使用相同的组合树顺序。
+
+语义快照 v31 只在元素已经凭角色、名称、文本、结构意义或真实交互能力进入语义树之后，才附加 `scrollIntoView`。被滚动容器裁剪但有意义的控件和内容仍可在后台显露；纯布局包装层不会再仅因位于可视区域外而伪装成可操作节点，快照更紧凑，父子语义链会直接连接到最近的有效祖先。
 语义快照 v30 为完全或部分位于 WebView 视口、嵌套 overflow 裁剪区域之外的元素公开 `scrollIntoView` 动作；执行端使用 `block/inline=nearest` 在隐藏、未聚焦 WebView 内完成原生组合树滚动，并回传滚动是否改变位置及显现后的矩形。滚动事件会撤销旧快照授权，Agent 必须读取新 revision 后再调用 `view.capture_element`，从而稳定获取 Animator、Atlas 等长面板中的视口外图形内容。
 
 精确文本内容 revision v2 逐个保留可渲染文本节点的原始空白，同时排除任一 `aria-hidden=true`、`inert`、`display:none`、`content-visibility:hidden` 或透明祖先下的装饰文字。`window.ui_content(field=text)` 因而与语义快照使用同一隐藏边界，不会在分页正文中重新混入对象槽图标、拖放提示或其他 Agent 不应读取的辅助层。

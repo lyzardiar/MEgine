@@ -3534,7 +3534,6 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const actionList = (element, role) => {
     const actions = [];
     const props = reactProps(element);
-    if (needsScrollIntoView(element)) actions.push('scrollIntoView');
     if (effectivelyDisabled(element)) return actions;
     if (role === 'button' || role === 'link' || role === 'menuitem'
       || role === 'tab' || role === 'option' || role === 'checkbox'
@@ -3866,6 +3865,9 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const structural = /^h[1-6]$/.test(tag)
       || ['p', 'summary', 'legend', 'caption'].includes(tag);
     if (!role && !name && !text && !structural && actions.length === 0) continue;
+    if (!modalBlocked && needsScrollIntoView(element)) {
+      actions.unshift('scrollIntoView');
+    }
     candidates.push({ element, role, name, text, actions, modalBlocked });
   }
   const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
@@ -3906,7 +3908,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     activeElement instanceof Element ? selectorFor(activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 30,
+    version: 31,
     title: document.title,
     url: location.href,
     viewport,
@@ -3920,7 +3922,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v30-${candidates.length}-${
+  const snapshotRevision = `ui-v31-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const interactionSignatureFor = (semanticElement) => {
@@ -3953,7 +3955,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 30,
+    version: 31,
     snapshotRevision,
     title: document.title,
     url: location.href,
