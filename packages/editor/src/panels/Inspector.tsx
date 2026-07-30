@@ -225,7 +225,7 @@ function CompBlock(props: {
   }, [menuOpen]);
 
   return (
-    <div className="comp">
+    <div className="comp" data-agent-scope={props.title}>
       <div className="comp-head">
         <button
           type="button"

@@ -77,6 +77,7 @@ test('core editor navigation exposes named semantic controls', () => {
     inspector,
     /className="comp-toggle"\s*aria-expanded=\{open\}/,
   );
+  assert.match(inspector, /className="comp" data-agent-scope=\{props\.title\}/);
   assert.match(inspector, /className="comp-foldout" aria-hidden/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.ariaLabel/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.label\}`\}/);
