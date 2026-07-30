@@ -31,6 +31,7 @@ import {
   type EditorUiDragPathPoint,
   type EditorUiModifiers,
   type EditorUiSnapshot,
+  type EditorUiWaitResult,
   type EditorWindowInfo,
   type HierarchyNode,
   type PanelLayoutSnapshot,
@@ -203,6 +204,10 @@ import {
 } from './eventJournal';
 import { paginateAgentItems } from './pagination';
 import { panelWindowBlockers } from './panelSafety';
+import {
+  MAX_PENDING_WINDOW_UI_WAITS,
+  waitForWindowUiChange,
+} from './windowUiWait';
 import {
   loadSortingLayersSnapshot,
   persistSortingLayersGuarded,
@@ -420,6 +425,7 @@ class AgentBridge {
   private captures = new Map<ViewportTab, CaptureFn>();
   private screenshotQueue: Promise<void> = Promise.resolve();
   private pendingScreenshotCount = 0;
+  private pendingWindowUiWaitCount = 0;
   private lastScreenshotCompletedAt = 0;
   private refreshProvider: (() => void) | null = null;
   private logProvider: ((message: string) => void) | null = null;
@@ -947,6 +953,48 @@ class AgentBridge {
       );
     }
     return snapshot;
+  }
+
+  /**
+   * Wait for arbitrary semantic content in one native editor window to change.
+   * This complements the domain event journal, which cannot observe ordinary
+   * DOM updates inside custom windows or detached panels.
+   */
+  async waitForWindowUi(
+    expectedSnapshotRevision: string,
+    windowLabel = 'main',
+    timeoutMs = 15_000,
+    maxElements = 2_000,
+    signal?: AbortSignal,
+  ): Promise<EditorUiWaitResult> {
+    if (!/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSnapshotRevision)) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Window UI waits require expectedSnapshotRevision from window.ui_snapshot',
+      );
+    }
+    if (this.pendingWindowUiWaitCount >= MAX_PENDING_WINDOW_UI_WAITS) {
+      throw new BridgeError(
+        'RATE_LIMITED',
+        'Too many editor window UI waits are pending; retry after an existing wait completes',
+        {
+          pendingWindowUiWaits: this.pendingWindowUiWaitCount,
+          maxConcurrentWindowUiWaits: MAX_PENDING_WINDOW_UI_WAITS,
+          retryAfterMs: 250,
+        },
+      );
+    }
+    this.pendingWindowUiWaitCount += 1;
+    try {
+      return await waitForWindowUiChange({
+        expectedSnapshotRevision,
+        timeoutMs,
+        signal,
+        inspect: () => this.inspectWindow(windowLabel, maxElements, 0),
+      });
+    } finally {
+      this.pendingWindowUiWaitCount -= 1;
+    }
   }
 
   /** Read exact UI text, semantic names/descriptions, values, or options in bounded pages. */
@@ -5108,6 +5156,16 @@ class AgentBridge {
           typeof params.expectedSnapshotRevision === 'string'
             ? params.expectedSnapshotRevision
             : undefined,
+        );
+      case 'window.ui_wait':
+        return this.waitForWindowUi(
+          requiredString(params, 'expectedSnapshotRevision'),
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+          typeof params.timeoutMs === 'number' ? params.timeoutMs : 15_000,
+          typeof params.maxElements === 'number' ? params.maxElements : 2_000,
+          options.signal,
         );
       case 'window.ui_content':
         return this.readWindowContent(

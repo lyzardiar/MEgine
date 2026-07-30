@@ -199,6 +199,21 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       },
     ],
   }),
+  'window.ui_wait': objectSchema({
+    windowLabel: stringValue('Window label from window.list; default main'),
+    expectedSnapshotRevision: {
+      type: 'string',
+      pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+      maxLength: 64,
+      description: 'Exact snapshotRevision returned by window.ui_snapshot',
+    },
+    timeoutMs: boundedInteger(0, 15_000, 'Maximum wait duration; default 15000'),
+    maxElements: boundedInteger(
+      50,
+      5_000,
+      'Maximum semantic elements in the changed or timed-out snapshot; default 2000',
+    ),
+  }, ['expectedSnapshotRevision']),
   'window.ui_content': objectSchema({
     windowLabel: stringValue('Window label from window.list; default main'),
     selector: nonEmptyString('Exact selector returned by window.ui_snapshot'),
@@ -455,6 +470,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'window.types', category: 'window', description: 'List registered auxiliary editor window types', readOnly: true },
   { id: 'workspace.documents', category: 'workspace', description: 'List open scene and resource documents with dirty state', readOnly: true },
   { id: 'window.ui_snapshot', category: 'window', description: 'Read paged semantic content for any editor window', readOnly: true },
+  { id: 'window.ui_wait', category: 'window', description: 'Wait for arbitrary semantic content in any editor window to change and return the new snapshot', readOnly: true },
   { id: 'window.ui_content', category: 'window', description: 'Read exact paged text, semantic name/description, value, or select/datalist options for a semantic selector', readOnly: true },
   { id: 'panel.list', category: 'panel', description: 'List every panel with its active state, dock path, and native host window', readOnly: true },
   { id: 'panel.get_layout', category: 'panel', description: 'Read the complete dock, tab, and detached-panel layout', readOnly: true },

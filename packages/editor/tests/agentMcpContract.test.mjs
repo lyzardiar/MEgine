@@ -305,6 +305,20 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
     }),
   );
   assert.doesNotThrow(
+    () => validateToolArguments(tool('wait_for_window_ui_change'), {
+      windowLabel: 'panel-inspector',
+      expectedSnapshotRevision: 'ui-v31-42-0123456789abcdef',
+      timeoutMs: 15_000,
+      maxElements: 5_000,
+    }),
+  );
+  assert.throws(
+    () => validateToolArguments(tool('wait_for_window_ui_change'), {
+      expectedSnapshotRevision: 'not-a-snapshot-revision',
+    }),
+    /Invalid arguments/,
+  );
+  assert.doesNotThrow(
     () => validateToolArguments(tool('read_window_ui_content'), {
       selector: '#described-control',
       expectedSnapshotRevision: 'ui-v16-42-0123456789abcdef',

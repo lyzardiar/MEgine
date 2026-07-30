@@ -872,6 +872,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /did not expose semantic UI within 5 seconds/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   assert.match(mcp, /name: 'get_window_ui'/);
+  assert.match(mcp, /name: 'wait_for_window_ui_change'/);
   assert.match(mcp, /name: 'read_window_ui_content'/);
   assert.match(mcp, /untruncated semantic name\/description/);
   assert.match(mcp, /Continue with nextOffset until null/);

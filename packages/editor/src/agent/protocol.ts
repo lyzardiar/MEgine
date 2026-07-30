@@ -167,6 +167,17 @@ export interface EditorUiSnapshot {
   elements: EditorUiElement[];
 }
 
+/** Result of waiting for one semantic editor-window revision to change. */
+export interface EditorUiWaitResult extends EditorUiSnapshot {
+  /** Revision supplied by the caller as the long-poll cursor. */
+  expectedSnapshotRevision: string;
+  /** True when snapshotRevision differs from expectedSnapshotRevision. */
+  changed: boolean;
+  /** True when the bounded wait expired without observing a change. */
+  timedOut: boolean;
+  waitedMs: number;
+}
+
 /** One exact, paged semantic or authored content read from an editor UI element. */
 export interface EditorUiContentPage {
   version: number;

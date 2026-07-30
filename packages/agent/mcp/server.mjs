@@ -1659,6 +1659,42 @@ const TOOLS = [
       })),
   },
   {
+    name: 'wait_for_window_ui_change',
+    description:
+      'Wait up to 15 seconds for arbitrary semantic content in one editor window to change, including ordinary DOM updates that are not represented by editor event topics. Pass the exact snapshotRevision from get_window_ui. Returns the complete first page with changed/timedOut and waitedMs, without activating or focusing the window. At most 16 waits may be pending.',
+    inputSchema: {
+      type: 'object',
+      required: ['expectedSnapshotRevision'],
+      additionalProperties: false,
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'A label returned by list_windows (default: main)',
+        },
+        expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
+        timeoutMs: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 15000,
+          description: 'Maximum wait duration (default 15000)',
+        },
+        maxElements: {
+          type: 'integer',
+          minimum: 50,
+          maximum: 5000,
+          description: 'Maximum semantic elements in the returned snapshot (default 2000)',
+        },
+      },
+    },
+    handler: async (args) =>
+      textContent(await bridgeQuery('window.ui_wait', {
+        windowLabel: args.windowLabel || 'main',
+        expectedSnapshotRevision: args.expectedSnapshotRevision,
+        timeoutMs: typeof args.timeoutMs === 'number' ? args.timeoutMs : 15000,
+        maxElements: typeof args.maxElements === 'number' ? args.maxElements : 2000,
+      })),
+  },
+  {
     name: 'read_window_ui_content',
     description:
       'Read exact text, untruncated semantic name/description, value, or serialized select/datalist options from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. UTF-16 offsets returned by nextOffset never split Unicode surrogate pairs. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
