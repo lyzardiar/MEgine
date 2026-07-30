@@ -1383,6 +1383,8 @@ test('panel and menu agent surfaces use live providers and background activation
   const popup = fs.readFileSync(path.join(root, 'src', 'panels', 'PopupMenu.tsx'), 'utf8');
   const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
   const menu = fs.readFileSync(path.join(root, 'src', 'panels', 'MenuBar.tsx'), 'utf8');
+  const dialog = fs.readFileSync(path.join(root, 'src', 'editorDialog.ts'), 'utf8');
+  const dialogHost = fs.readFileSync(path.join(root, 'src', 'EditorDialogHost.tsx'), 'utf8');
   const build = fs.readFileSync(path.join(root, 'src', 'panels', 'BuildSettings.tsx'), 'utf8');
   const project = fs.readFileSync(path.join(root, 'src', 'panels', 'Project.tsx'), 'utf8');
   const dock = fs.readFileSync(path.join(root, 'src', 'panels', 'DockWorkspace.tsx'), 'utf8');
@@ -1469,6 +1471,21 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(
     project,
     /data-agent-alternative="import_asset_file"[\s\S]*?void completeImport\(\)/,
+  );
+  assert.match(project, /agentAcceptBlocked: true,[\s\S]*agentAlternative: 'delete_scene'/);
+  assert.match(project, /data-agent-alternative="preview_scene_delete"/);
+  assert.match(project, /data-agent-alternative="preview_asset_trash"/);
+  assert.match(project, /data-agent-alternative="trash_asset"/);
+  assert.match(dialog, /agentAcceptBlocked: options\.agentAcceptBlocked === true/);
+  assert.match(dialogHost, /dialog\.agentAcceptBlocked \? 'click doubleClick keyPress'/);
+  assert.match(dialogHost, /data-agent-alternative=\{dialog\.agentAlternative \?\? undefined\}/);
+  assert.match(
+    bridge,
+    /rawAction === 'accept' && activeDialog\.agentAcceptBlocked[\s\S]*'PERMISSION_DENIED'/,
+  );
+  assert.match(
+    bridge,
+    /if \(result\.agentBlocked\)[\s\S]*'READONLY'[\s\S]*agentAlternative: result\.agentAlternative \?\? null/,
   );
   assert.match(
     project,

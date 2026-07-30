@@ -96,7 +96,16 @@ export function EditorDialogHost() {
           {dialog.cancelLabel && (
             <button type="button" onClick={cancel}>{dialog.cancelLabel}</button>
           )}
-          <button ref={confirmButton} type="button" className="primary" onClick={accept}>
+          <button
+            ref={confirmButton}
+            type="button"
+            className="primary"
+            data-agent-blocked-actions={
+              dialog.agentAcceptBlocked ? 'click doubleClick keyPress' : undefined
+            }
+            data-agent-alternative={dialog.agentAlternative ?? undefined}
+            onClick={accept}
+          >
             {dialog.confirmLabel}
           </button>
         </div>

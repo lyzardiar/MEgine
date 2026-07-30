@@ -3193,7 +3193,7 @@ const TOOLS = [
   ),
   execTool(
     'respond_to_dialog',
-    'Accept or cancel the exact active editor dialog without activating or raising its native window. Read get_active_dialog first and pass its current dialogId; prompt values are bounded to 4096 characters.',
+    'Accept or cancel the exact active editor dialog without activating or raising its native window. Read get_active_dialog first and pass its current dialogId; prompt values are bounded to 4096 characters. Dialogs with agentAcceptBlocked=true may be cancelled, but acceptance must use their agentAlternative domain tool.',
     'dialog.respond',
     {
       windowLabel: { type: 'string', description: 'Window label (default: main)' },

@@ -1274,6 +1274,19 @@ class AgentBridge {
           },
         );
       }
+      if (result.agentBlocked) {
+        throw new BridgeError(
+          'READONLY',
+          result.error ?? 'Semantic UI action requires foreground-only user input',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            agentBlocked: true,
+            agentAlternative: result.agentAlternative ?? null,
+          },
+        );
+      }
       if (result.selectorNotExposed || result.actionNotExposed) {
         throw new BridgeError(
           'INVALID_ARGS',
@@ -4159,6 +4172,18 @@ class AgentBridge {
           'CONFLICT',
           'The editor dialog changed; read get_active_dialog and respond to its current id',
           { activeDialog },
+        );
+      }
+      if (rawAction === 'accept' && activeDialog.agentAcceptBlocked) {
+        throw new BridgeError(
+          'PERMISSION_DENIED',
+          `Agent acceptance is blocked for "${activeDialog.title}"`,
+          {
+            windowLabel,
+            dialogId,
+            agentAcceptBlocked: true,
+            agentAlternative: activeDialog.agentAlternative,
+          },
         );
       }
       const result = await respondToEditorDialogInWindow(
