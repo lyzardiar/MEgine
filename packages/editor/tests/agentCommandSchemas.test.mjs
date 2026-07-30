@@ -137,6 +137,54 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     COMMAND_PARAMS_SCHEMAS['panel.dock'].required,
     ['kind'],
   );
+  for (const command of [
+    'window.ui_click',
+    'window.ui_double_click',
+    'window.ui_context_click',
+    'window.ui_scroll',
+    'window.ui_drag_to',
+    'window.ui_drag_by',
+    'window.ui_hover',
+  ]) {
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.offsetX.minimum, -1_000_000);
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.offsetX.maximum, 1_000_000);
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.offsetY.minimum, -1_000_000);
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.offsetY.maximum, 1_000_000);
+  }
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['window.ui_drag_to'].properties.targetOffsetX.minimum,
+    -1_000_000,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['window.ui_drag_to'].properties.targetOffsetY.maximum,
+    1_000_000,
+  );
+  assert.equal(COMMAND_PARAMS_SCHEMAS['window.ui_scroll'].properties.shiftKey.type, 'boolean');
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].properties.button.enum,
+    ['left', 'middle', 'right'],
+  );
+  assert.equal(COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].properties.path.minItems, 1);
+  assert.equal(COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].properties.path.maxItems, 64);
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].anyOf,
+    [
+      { required: ['deltaX', 'deltaY'] },
+      { required: ['path'] },
+    ],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_hover'].properties.state.enum,
+    ['enter', 'leave'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_scroll'].required,
+    ['selector', 'expectedSnapshotRevision'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_scroll_into_view'].required,
+    ['selector', 'expectedSnapshotRevision'],
+  );
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['build.run'].required,
     ['executable', 'allowForegroundLaunch'],

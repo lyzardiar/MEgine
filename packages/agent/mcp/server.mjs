@@ -14,7 +14,8 @@
  *   node packages/agent/mcp/server.mjs
  *
  * Configure the editor location with MENGINE_AGENT_BRIDGE_FILE, or rely on the
- * default Tauri app-config path (<APPDATA>/com.mengine.editor/agent-bridge.json).
+ * default Tauri app-config records. The hidden background editor is preferred
+ * without replacing the foreground editor's record.
  */
 
 import fs from 'node:fs';
@@ -56,21 +57,32 @@ const DANGEROUS_AGENT_COMMAND_SET = new Set(DANGEROUS_AGENT_COMMANDS);
 
 // ── Discovery ────────────────────────────────────────────────────────────
 
-function defaultDiscoveryPath() {
+function defaultDiscoveryPaths({
+  platform = process.platform,
+  env = process.env,
+  homeDir = os.homedir(),
+} = {}) {
   const base =
-    process.platform === 'win32'
-      ? process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
-      : process.platform === 'darwin'
-        ? path.join(os.homedir(), 'Library', 'Application Support')
-        : process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-  return path.join(base, 'com.mengine.editor', 'agent-bridge.json');
+    platform === 'win32'
+      ? env.APPDATA || path.join(homeDir, 'AppData', 'Roaming')
+      : platform === 'darwin'
+        ? path.join(homeDir, 'Library', 'Application Support')
+        : env.XDG_CONFIG_HOME || path.join(homeDir, '.config');
+  const configuredDirectory = env.MENGINE_EDITOR_CONFIG_DIR;
+  const directory = typeof configuredDirectory === 'string'
+    && path.isAbsolute(configuredDirectory)
+    ? configuredDirectory
+    : path.join(base, 'com.mengine.editor');
+  return [
+    path.join(directory, 'agent-bridge-background.json'),
+    path.join(directory, 'agent-bridge.json'),
+  ];
 }
 
-function readDiscovery() {
-  const file = process.env.MENGINE_AGENT_BRIDGE_FILE || defaultDiscoveryPath();
+function readDiscoveryFile(file, readFile = (target) => fs.readFileSync(target, 'utf-8')) {
   let raw;
   try {
-    raw = fs.readFileSync(file, 'utf-8');
+    raw = readFile(file);
   } catch (error) {
     throw new BridgeConnectionError(
       `Cannot read AgentBridge discovery file at ${file}. ` +
@@ -100,10 +112,39 @@ function readDiscovery() {
     );
   }
   return {
+    file,
     port: data.port,
     token: data.token,
     pid: Number.isSafeInteger(data.pid) && data.pid > 0 ? data.pid : null,
+    runtimeIdentifier: typeof data.runtimeIdentifier === 'string'
+      ? data.runtimeIdentifier
+      : null,
+    background: data.background === true,
   };
+}
+
+function readDiscoveryCandidates({
+  explicitFile = process.env.MENGINE_AGENT_BRIDGE_FILE || null,
+  paths = defaultDiscoveryPaths(),
+  readFile,
+} = {}) {
+  const files = explicitFile ? [explicitFile] : paths;
+  const candidates = [];
+  const failures = [];
+  for (const file of files) {
+    try {
+      candidates.push(readDiscoveryFile(file, readFile));
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (candidates.length > 0) return candidates;
+  if (explicitFile && failures[0]) throw failures[0];
+  throw new BridgeConnectionError(
+    `Cannot read any AgentBridge discovery record. Tried: ${files.join(', ')}. ` +
+      'Is the MEngine editor running? Set MENGINE_AGENT_BRIDGE_FILE to override.',
+    { cause: failures[0] },
+  );
 }
 
 // ── Bridge client (WebSocket) ────────────────────────────────────────────
@@ -258,12 +299,19 @@ async function connectLatestBridge() {
   let lastError;
   for (let attempt = 0; attempt < BRIDGE_CONNECT_ATTEMPTS; attempt += 1) {
     try {
-      return await connectBridge(readDiscovery());
+      const candidates = readDiscoveryCandidates();
+      for (const discovery of candidates) {
+        try {
+          return await connectBridge(discovery);
+        } catch (error) {
+          lastError = error;
+        }
+      }
     } catch (error) {
       lastError = error;
-      if (attempt + 1 < BRIDGE_CONNECT_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, BRIDGE_CONNECT_RETRY_MS));
-      }
+    }
+    if (attempt + 1 < BRIDGE_CONNECT_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, BRIDGE_CONNECT_RETRY_MS));
     }
   }
   throw lastError;
@@ -424,7 +472,10 @@ async function rpc(
 
     let latestDiscovery = null;
     try {
-      latestDiscovery = readDiscovery();
+      const candidates = readDiscoveryCandidates();
+      latestDiscovery = candidates.find((candidate) => (
+        sameEditorProcess(firstConnection.discovery, candidate)
+      )) ?? candidates[0];
     } catch (discoveryError) {
       if (error.sent && !retryAcrossEditorRestart) {
         throw new BridgeOutcomeUnknownError(
@@ -939,6 +990,44 @@ function uiModifierProperties() {
   };
 }
 
+function uiPointerOffsetProperties() {
+  return {
+    offsetX: {
+      type: 'number',
+      minimum: -1000000,
+      maximum: 1000000,
+      description:
+        'Optional horizontal CSS-pixel offset from the element left edge; defaults to center and must resolve inside current bounds',
+    },
+    offsetY: {
+      type: 'number',
+      minimum: -1000000,
+      maximum: 1000000,
+      description:
+        'Optional vertical CSS-pixel offset from the element top edge; defaults to center and must resolve inside current bounds',
+    },
+  };
+}
+
+function uiTargetPointerOffsetProperties() {
+  return {
+    targetOffsetX: {
+      type: 'number',
+      minimum: -1000000,
+      maximum: 1000000,
+      description:
+        'Optional horizontal CSS-pixel offset from the drag target left edge; defaults to center and must resolve inside current bounds',
+    },
+    targetOffsetY: {
+      type: 'number',
+      minimum: -1000000,
+      maximum: 1000000,
+      description:
+        'Optional vertical CSS-pixel offset from the drag target top edge; defaults to center and must resolve inside current bounds',
+    },
+  };
+}
+
 const TOOLS = [
   {
     name: 'get_project_state',
@@ -1113,14 +1202,21 @@ const TOOLS = [
   {
     name: 'get_scene_snapshot',
     description:
-      'Get the complete scene snapshot, its monotonic revision, and every entity/component. Large; retain revision and use get_scene_changes for incremental observation.',
+      'Get the complete active scene snapshot, its monotonic revision, and every entity/component. In Play or Pause this is the live runtime clone. Retain revision and use get_scene_changes for incremental active-scene observation.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('scene.snapshot')),
   },
   {
+    name: 'get_authored_scene_snapshot',
+    description:
+      'Get the untouched authored scene, content fingerprint, scene identity, and every authored entity/component. Use this beside get_scene_snapshot during Play or Pause to distinguish runtime changes from saved authoring state.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('scene.authored_snapshot')),
+  },
+  {
     name: 'get_scene_changes',
     description:
-      'Get entities added, removed, or changed since a scene revision. Returns current payloads for added/changed entities; resetRequired=true includes a full snapshot after scene switches or expired history.',
+      'Get active-scene entities added, removed, or changed since a scene revision. During Play or Pause these are runtime-clone changes. Returns current payloads for added/changed entities; resetRequired=true includes a full snapshot after scene switches or expired history.',
     inputSchema: {
       type: 'object',
       required: ['fromRevision'],
@@ -1409,9 +1505,49 @@ const TOOLS = [
     })),
   },
   {
+    name: 'capture_window_element',
+    description:
+      'Capture the visible portion of one semantic UI element without activating its editor window. Pass the exact selector and snapshotRevision returned together by get_window_ui. Native code revalidates the selector identity, clips it to the viewport, and rejects stale snapshots before returning image evidence.',
+    inputSchema: {
+      type: 'object',
+      required: ['selector', 'expectedSnapshotRevision'],
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'Window label from window.list; default main',
+        },
+        selector: {
+          type: 'string',
+          minLength: 1,
+          pattern: '\\S',
+          description: 'Exact semantic selector returned by window.ui_snapshot',
+        },
+        expectedSnapshotRevision: {
+          type: 'string',
+          pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 64,
+          description: 'snapshotRevision that exposed the selector',
+        },
+        maxSize: {
+          type: 'integer',
+          minimum: 256,
+          maximum: 4096,
+          description: 'Maximum output width or height in pixels; default 2048',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => screenshotContent(await bridgeQuery('view.capture_element', {
+      windowLabel: args.windowLabel || 'main',
+      selector: args.selector,
+      expectedSnapshotRevision: args.expectedSnapshotRevision,
+      maxSize: args.maxSize || 2048,
+    })),
+  },
+  {
     name: 'list_windows',
     description:
-      'List every editor window currently open: the main window, detached panels (panel-*), and floating editor windows (editor-*), with title, position, size, visibility and focus.',
+      'List every editor window currently open: the main window, detached panels (panel-*), and floating editor windows (editor-*), with canonical typeId (plus the compatible editorType alias), title, position, size, visibility and focus.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
@@ -1523,9 +1659,45 @@ const TOOLS = [
       })),
   },
   {
+    name: 'wait_for_window_ui_change',
+    description:
+      'Wait up to 15 seconds for arbitrary semantic content in one editor window to change, including ordinary DOM updates that are not represented by editor event topics. Pass the exact snapshotRevision from get_window_ui. Returns the complete first page with changed/timedOut and waitedMs, without activating or focusing the window. At most 16 waits may be pending.',
+    inputSchema: {
+      type: 'object',
+      required: ['expectedSnapshotRevision'],
+      additionalProperties: false,
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'A label returned by list_windows (default: main)',
+        },
+        expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
+        timeoutMs: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 15000,
+          description: 'Maximum wait duration (default 15000)',
+        },
+        maxElements: {
+          type: 'integer',
+          minimum: 50,
+          maximum: 5000,
+          description: 'Maximum semantic elements in the returned snapshot (default 2000)',
+        },
+      },
+    },
+    handler: async (args) =>
+      textContent(await bridgeQuery('window.ui_wait', {
+        windowLabel: args.windowLabel || 'main',
+        expectedSnapshotRevision: args.expectedSnapshotRevision,
+        timeoutMs: typeof args.timeoutMs === 'number' ? args.timeoutMs : 15000,
+        maxElements: typeof args.maxElements === 'number' ? args.maxElements : 2000,
+      })),
+  },
+  {
     name: 'read_window_ui_content',
     description:
-      'Read exact, unnormalized text, value, or serialized select/datalist options from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
+      'Read exact text, untruncated semantic name/description, value, or serialized select/datalist options from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. UTF-16 offsets returned by nextOffset never split Unicode surrogate pairs. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
     inputSchema: {
       type: 'object',
       required: ['selector', 'expectedSnapshotRevision', 'field'],
@@ -1538,8 +1710,8 @@ const TOOLS = [
         expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
         field: {
           type: 'string',
-          enum: ['text', 'value', 'options'],
-          description: 'Exact text, value, or serialized select/datalist option source to read',
+          enum: ['text', 'name', 'description', 'value', 'options'],
+          description: 'Exact text, semantic name/description, value, or serialized select/datalist option source to read',
         },
         offset: {
           type: 'integer',
@@ -1551,7 +1723,8 @@ const TOOLS = [
           type: 'integer',
           minimum: 1,
           maximum: 100000,
-          description: 'Maximum characters on this page (default: 10000)',
+          description:
+            'Preferred maximum UTF-16 units; a page may include one extra unit to keep a Unicode surrogate pair intact (default: 10000)',
         },
         expectedContentRevision: {
           type: 'string',
@@ -3020,7 +3193,7 @@ const TOOLS = [
   ),
   execTool(
     'respond_to_dialog',
-    'Accept or cancel the exact active editor dialog without activating or raising its native window. Read get_active_dialog first and pass its current dialogId; prompt values are bounded to 4096 characters.',
+    'Accept or cancel the exact active editor dialog without activating or raising its native window. Read get_active_dialog first and pass its current dialogId; prompt values are bounded to 4096 characters. Dialogs with agentAcceptBlocked=true may be cancelled, but acceptance must use their agentAlternative domain tool.',
     'dialog.respond',
     {
       windowLabel: { type: 'string', description: 'Window label (default: main)' },
@@ -3067,6 +3240,7 @@ const TOOLS = [
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
@@ -3077,6 +3251,7 @@ const TOOLS = [
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
@@ -3087,12 +3262,13 @@ const TOOLS = [
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'set_window_ui_value',
-    'Set an input, textarea, select, or contenteditable value returned by get_window_ui only when its editor window is hidden and unfocused.',
+    'Atomically set and commit an input, textarea, select, or contenteditable value returned by get_window_ui only when its editor window is hidden and unfocused. Text-like controls receive focus, input/change, one render opportunity, and blur so onBlur-backed drafts and undo gestures finish before post-action observation.',
     'window.ui_set_value',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
@@ -3101,11 +3277,22 @@ const TOOLS = [
     ['selector', 'expectedSnapshotRevision', 'value'],
   ),
   execTool(
+    'scroll_window_ui_into_view',
+    'Reveal one semantic element marked with the scrollIntoView action by get_window_ui through its nested scroll containers without activating the editor window. Get a fresh UI snapshot after this action before capturing or interacting with the element.',
+    'window.ui_scroll_into_view',
+    {
+      ...uiInteractionProperties('Exact offscreen selector returned by get_window_ui'),
+    },
+    ['selector', 'expectedSnapshotRevision'],
+  ),
+  execTool(
     'scroll_window_ui',
-    'Scroll a container marked with the scroll action by get_window_ui only when its editor window is hidden and unfocused. This enables inspection of virtualized content without foreground input.',
+    'Dispatch a CSS-pixel wheel gesture at an exact element-relative point on a target marked with the scroll action by get_window_ui. Unhandled wheel gestures fall back to native element scrolling, enabling both canvas zoom controls and virtualized content inspection without foreground input.',
     'window.ui_scroll',
     {
       ...uiInteractionProperties('Exact scrollable selector returned by get_window_ui'),
+      ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
       deltaX: {
         type: 'number',
         minimum: -1000000,
@@ -3116,10 +3303,10 @@ const TOOLS = [
         type: 'number',
         minimum: -1000000,
         maximum: 1000000,
-        description: 'Vertical CSS-pixel delta',
+        description: 'Vertical CSS-pixel delta (default: 0)',
       },
     },
-    ['selector', 'expectedSnapshotRevision', 'deltaY'],
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'drag_window_ui',
@@ -3128,17 +3315,50 @@ const TOOLS = [
     {
       ...uiInteractionProperties('Exact draggable source selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
+      ...uiTargetPointerOffsetProperties(),
       targetSelector: { type: 'string', description: 'Exact drop target selector returned by get_window_ui' },
     },
     ['selector', 'expectedSnapshotRevision', 'targetSelector'],
   ),
   execTool(
     'drag_window_ui_by',
-    'Perform a bounded pointer drag with optional modifiers from the center of an element marked with the dragBy action by get_window_ui. The editor window must be hidden and unfocused, and the endpoint must stay inside the same WebView.',
+    'Perform a bounded pointer drag with optional modifiers from an exact element-relative CSS-pixel offset, or its center by default, on an element marked with the dragBy action by get_window_ui. Use deltaX/deltaY for a straight gesture or path for up to 64 cumulative displacement points. The editor window must be hidden and unfocused, and every path point must stay inside the same WebView.',
     'window.ui_drag_by',
     {
       ...uiInteractionProperties('Exact pointer-gesture selector returned by get_window_ui'),
       ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
+      button: {
+        type: 'string',
+        enum: ['left', 'middle', 'right'],
+        description: 'Mouse button held during the pointer gesture (default: left)',
+      },
+      path: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 64,
+        items: {
+          type: 'object',
+          properties: {
+            deltaX: {
+              type: 'number',
+              minimum: -1000000,
+              maximum: 1000000,
+              description: 'Cumulative horizontal CSS-pixel displacement from the gesture start',
+            },
+            deltaY: {
+              type: 'number',
+              minimum: -1000000,
+              maximum: 1000000,
+              description: 'Cumulative vertical CSS-pixel displacement from the gesture start',
+            },
+          },
+          required: ['deltaX', 'deltaY'],
+          additionalProperties: false,
+        },
+        description: 'Optional bounded multi-segment path; mutually exclusive with deltaX and deltaY',
+      },
       deltaX: {
         type: 'number',
         minimum: -1000000,
@@ -3152,43 +3372,88 @@ const TOOLS = [
         description: 'Vertical CSS-pixel displacement; may be zero',
       },
     },
-    ['selector', 'expectedSnapshotRevision', 'deltaX', 'deltaY'],
+    ['selector', 'expectedSnapshotRevision'],
+    (args) => args,
+    {
+      anyOf: [
+        { required: ['deltaX', 'deltaY'] },
+        { required: ['path'] },
+      ],
+    },
   ),
   execTool(
     'hover_window_ui',
-    'Hover an element marked with the hover action by get_window_ui only when its editor window is hidden and unfocused. Hover transitions never move the OS cursor.',
+    'Enter or leave an element marked with the hover action by get_window_ui only when its editor window is hidden and unfocused. Use state leave to clear the current synthetic hover target and collapse transient UI without moving the OS cursor.',
     'window.ui_hover',
     {
       ...uiInteractionProperties('Exact hover-capable selector returned by get_window_ui'),
+      ...uiPointerOffsetProperties(),
+      state: {
+        type: 'string',
+        enum: ['enter', 'leave'],
+        description: 'Hover transition to dispatch; default enter',
+      },
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'press_window_ui_key',
-    'Press an allow-listed semantic key with optional modifiers on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused.',
+    'Press an allow-listed semantic key with optional modifiers on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused. Text edits synchronize React-controlled drafts; Ctrl+A or Meta+A selects all text in a non-password input, textarea, or contenteditable target. Ctrl/Meta+C/X/V uses a window-private Agent text clipboard and never reads or changes the operating-system clipboard; use exact content reads plus set_window_ui_value for cross-window transfers. Ctrl/Meta+Z undoes and Ctrl/Meta+Y or Ctrl/Meta+Shift+Z redoes Agent keyboard edits through a bounded element-private history that never touches the editor scene/resource undo stack; set_window_ui_value establishes a new history baseline. Password fields deny private clipboard and history access. Arrow movement and backward/forward deletion preserve complete Unicode grapheme clusters such as emoji, combining marks, and joined emoji sequences. Ctrl/Meta+Left/Right moves or extends between Unicode word starts, Ctrl/Meta+Backspace/Delete removes a whole word span, and Ctrl/Meta+Home/End targets the full text bounds. Readonly controls remain focusable but never mutate or report a value commit. Native checkbox, radio, select, number, and range defaults report a confirmed change commit only when their value actually changes. Enter/Escape blur-commit editable controls, while Tab commits an editable draft before moving through the native HTML/SVG semantic focus order and otherwise only moves focus.',
     'window.ui_press_key',
     {
       ...uiInteractionProperties('Exact keyboard target selector returned by get_window_ui'),
       ...uiModifierProperties(),
       key: {
-        type: 'string',
-        enum: [
-          'Enter',
-          'Escape',
-          'Tab',
-          'Space',
-          'ArrowUp',
-          'ArrowDown',
-          'ArrowLeft',
-          'ArrowRight',
-          'Home',
-          'End',
-          'PageUp',
-          'PageDown',
-          'Backspace',
-          'Delete',
+        anyOf: [
+          {
+            type: 'string',
+            enum: [
+              'Enter',
+              'Escape',
+              'Tab',
+              'Space',
+              'ArrowUp',
+              'ArrowDown',
+              'ArrowLeft',
+              'ArrowRight',
+              'Home',
+              'End',
+              'PageUp',
+              'PageDown',
+              'Backspace',
+              'Delete',
+              'F1',
+              'F2',
+              'F3',
+              'F4',
+              'F5',
+              'F6',
+              'F7',
+              'F8',
+              'F9',
+              'F10',
+              'F11',
+              'F12',
+              'F13',
+              'F14',
+              'F15',
+              'F16',
+              'F17',
+              'F18',
+              'F19',
+              'F20',
+              'F21',
+              'F22',
+              'F23',
+              'F24',
+            ],
+          },
+          {
+            type: 'string',
+            pattern: '^[^\\p{Cc}\\p{Cs}\\p{Z}]$',
+          },
         ],
-        description: 'Allow-listed semantic key with optional modifier flags',
+        description: 'Allow-listed semantic key or one printable non-whitespace character with optional modifier flags',
       },
     },
     ['selector', 'expectedSnapshotRevision', 'key'],
@@ -3396,9 +3661,15 @@ const RESOURCES = [
   ),
   bridgeResource(
     'mengine://scene/snapshot',
-    'Scene Snapshot',
-    'Complete authored scene snapshot with revision and entity component data.',
+    'Active Scene Snapshot',
+    'Complete active scene snapshot with revision and entity component data; Play and Pause expose the live runtime clone.',
     'scene.snapshot',
+  ),
+  bridgeResource(
+    'mengine://scene/authored',
+    'Authored Scene Snapshot',
+    'Untouched authored scene with content fingerprint for comparison against the active Play or Pause clone.',
+    'scene.authored_snapshot',
   ),
   bridgeResource(
     'mengine://scene/hierarchy',
@@ -3490,6 +3761,7 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://assets/trash',
     'mengine://editor/panels',
     'mengine://scene/snapshot',
+    'mengine://scene/authored',
     'mengine://scene/hierarchy',
     'mengine://scene/selection',
     'mengine://project/settings',
@@ -3505,6 +3777,7 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://editor/scenes',
     'mengine://editor/menus',
     'mengine://scene/snapshot',
+    'mengine://scene/authored',
     'mengine://scene/hierarchy',
   ]),
   'selection.changed': Object.freeze([
@@ -3515,6 +3788,8 @@ const EVENT_RESOURCE_URIS = Object.freeze({
   'mode.changed': Object.freeze([
     'mengine://editor/state',
     'mengine://editor/menus',
+    'mengine://scene/snapshot',
+    'mengine://scene/authored',
   ]),
   'dialog.changed': Object.freeze(['mengine://editor/dialogs']),
   'panel.changed': Object.freeze([
@@ -3697,7 +3972,7 @@ const AUTONOMOUS_WORKFLOW_PREAMBLE = [
   'Execute this workflow through the MEngine MCP server without activating, raising, focusing, or otherwise disturbing any editor window.',
   'Safety and discovery rules:',
   '1. Read mengine://project/state and mengine://editor/state first. Stop and report the observed state if no project is open or the editor is not ready.',
-  '2. Read mengine://scene/snapshot and mengine://schema/components before editing. Prefer domain tools; use semantic window UI only when no domain tool exists.',
+  '2. Read mengine://scene/snapshot and mengine://schema/components before editing. During Play or Pause also read mengine://scene/authored to distinguish runtime-clone state from authoring state. Prefer domain tools; use semantic window UI only when no domain tool exists.',
   '3. Before each revision-sensitive write, use the latest scene revision as expectedSceneRevision. After a successful write, use its returned revision or refresh the snapshot before the next write.',
   '4. Treat RATE_LIMITED as retryable only after retryAfterMs. Re-read state after UNKNOWN_OUTCOME. Never guess whether a timed-out write succeeded.',
   '5. Do not discard dirty work, overwrite a scene, delete content, or save changes unless the original user request explicitly authorizes that action.',
@@ -3834,13 +4109,13 @@ function renderPrompt(name, args = {}) {
 
 const SERVER_INSTRUCTIONS = [
   'MEngine MCP controls the running editor without activating or raising its native windows.',
-  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, mengine://queries, and mengine://commands before editing.',
+  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, mengine://queries, and mengine://commands before editing; during Play or Pause compare mengine://scene/authored with the active snapshot.',
   'Read tools may run concurrently. Editor writes are serialized in arrival order.',
   'The MCP adapter bounds active and in-flight requests; RATE_LIMITED includes current capacity and retryAfterMs when a caller should retry later.',
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
   'Dangerous scene deletion, asset trash, build, Player launch, and build-artifact commands may return PERMISSION_DENIED when the editor policy is deny or token. Approved adapters forward MENGINE_AGENT_APPROVAL_TOKEN automatically; never place approval tokens in tool arguments or logs.',
-  'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector; stale revisions are rejected before dispatch. Successful UI writes settle two target-window render opportunities and return a postSnapshotRevision when post-action semantic observation succeeds.',
+  'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector. If unrelated live UI values change, the write may proceed only while the cached target element, its action-relevant semantic signature, its exposed action, and the current invalidation epoch still match; the native layer refreshes that guard and dispatches synchronously in one renderer task, transient focus, geometry, and scroll telemetry are re-read at dispatch, and changed or expired target meaning, value, state, policy, or capability is rejected as stale. Successful UI writes report preSnapshotRevision and snapshotDriftedBeforeAction, settle two target-window render opportunities, and return a postSnapshotRevision when post-action semantic observation succeeds.',
   'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
   'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',
   'MCP hosts may subscribe to any listed mengine:// resource. Editor events emit coalesced notifications/resources/updated invalidations, and a Bridge reconnect invalidates every active subscription so the host can re-read authoritative state.',
@@ -4561,8 +4836,10 @@ export {
   bridgeQuery,
   closeBridgeConnection,
   DANGEROUS_AGENT_COMMANDS,
+  defaultDiscoveryPaths,
   incomingMessageError,
   negotiateProtocolVersion,
+  readDiscoveryCandidates,
   rpcOnce,
   renderPrompt,
   SUPPORTED_PROTOCOL_VERSIONS,

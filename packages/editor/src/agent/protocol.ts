@@ -32,6 +32,14 @@ export interface ScreenshotResult {
   backgroundSafe?: boolean;
   /** CSS-pixel clip relative to the captured WebView viewport. */
   region?: EditorUiRect;
+  /** Semantic selector used for a revision-guarded element capture. */
+  selector?: string;
+  /** UI snapshot revision that authorized an element capture. */
+  snapshotRevision?: string;
+  /** Complete element bounds before clipping to the visible viewport. */
+  elementRect?: EditorUiRect;
+  /** True when only the viewport/overflow-visible intersection was captured. */
+  clipped?: boolean;
 }
 
 export type ViewportTab = 'scene' | 'game';
@@ -44,7 +52,14 @@ export interface EditorUiRect {
 }
 
 export interface EditorUiControlMetadata {
-  kind: 'input' | 'textarea' | 'select' | 'contenteditable';
+  kind:
+    | 'input'
+    | 'textarea'
+    | 'select'
+    | 'contenteditable'
+    | 'progress'
+    | 'meter'
+    | 'output';
   inputType?: string;
   required?: boolean;
   multiple?: boolean;
@@ -56,6 +71,10 @@ export interface EditorUiControlMetadata {
   maxLength?: number;
   pattern?: string;
   accept?: string;
+  low?: string;
+  high?: string;
+  optimum?: string;
+  indeterminate?: boolean;
   optionCount?: number;
   /** Changes whenever option values, labels, groups, disabled state, or selection changes. */
   optionsRevision?: string;
@@ -66,6 +85,7 @@ export type EditorUiAction =
   | 'doubleClick'
   | 'contextClick'
   | 'setValue'
+  | 'scrollIntoView'
   | 'scroll'
   | 'keyPress'
   | 'dragTo'
@@ -91,7 +111,8 @@ export interface EditorUiElement {
   /** Native form-control constraints and a bounded fingerprint for exact option discovery. */
   control: EditorUiControlMetadata | null;
   description: string | null;
-  state: Record<string, boolean | string>;
+  /** ARIA/native state; numeric entries include observable text selection offsets. */
+  state: Record<string, boolean | string | number>;
   /** Present when one or more UI actions require foreground-only user input. */
   agentInteraction: {
     blocked: true;
@@ -146,7 +167,18 @@ export interface EditorUiSnapshot {
   elements: EditorUiElement[];
 }
 
-/** One exact, paged text/value read from an editor UI element. */
+/** Result of waiting for one semantic editor-window revision to change. */
+export interface EditorUiWaitResult extends EditorUiSnapshot {
+  /** Revision supplied by the caller as the long-poll cursor. */
+  expectedSnapshotRevision: string;
+  /** True when snapshotRevision differs from expectedSnapshotRevision. */
+  changed: boolean;
+  /** True when the bounded wait expired without observing a change. */
+  timedOut: boolean;
+  waitedMs: number;
+}
+
+/** One exact, paged semantic or authored content read from an editor UI element. */
 export interface EditorUiContentPage {
   version: number;
   /** Fingerprint of the complete exact content used for this page. */
@@ -155,8 +187,10 @@ export interface EditorUiContentPage {
   captureMethod: string;
   backgroundSafe: boolean;
   selector: string;
-  field: 'text' | 'value' | 'options';
+  field: 'text' | 'name' | 'description' | 'value' | 'options';
+  /** Zero-based UTF-16 cursor. A page never starts or ends inside a surrogate pair. */
   offset: number;
+  /** UTF-16 units returned; may exceed maxChars by one to keep a surrogate pair intact. */
   count: number;
   totalLength: number;
   nextOffset: number | null;
@@ -170,12 +204,19 @@ export interface EditorUiModifiers {
   metaKey: boolean;
 }
 
+export interface EditorUiDragPathPoint {
+  deltaX: number;
+  deltaY: number;
+}
+
 export interface EditorUiActionResult {
   ok: boolean;
   error?: string;
   staleSnapshot?: boolean;
   expectedSnapshotRevision?: string;
   actualSnapshotRevision?: string;
+  preSnapshotRevision?: string;
+  snapshotDriftedBeforeAction?: boolean;
   restartOffset?: number;
   settledFrames?: number;
   elementConnected?: boolean;
@@ -191,10 +232,49 @@ export interface EditorUiActionResult {
   activeModalName?: string | null;
   constraintViolation?: boolean;
   validityIssues?: string[];
+  clipboardDenied?: boolean;
+  textHistoryDenied?: boolean;
+  selectorNotExposed?: boolean;
+  targetSelectorNotExposed?: boolean;
+  actionNotExposed?: boolean;
+  invalidPointerCoordinates?: boolean;
+  pointerTargetObscured?: boolean;
+  blockerName?: string | null;
+  hoverTargetMismatch?: boolean;
+  requiredAction?: EditorUiAction;
+  allowedActions?: EditorUiAction[];
   action?: EditorUiAction;
   selector?: string;
   targetSelector?: string | null;
   targetName?: string | null;
+  offsetX?: number | null;
+  offsetY?: number | null;
+  clientX?: number | null;
+  clientY?: number | null;
+  targetOffsetX?: number | null;
+  targetOffsetY?: number | null;
+  targetClientX?: number | null;
+  targetClientY?: number | null;
+  button?: 'left' | 'middle' | 'right' | null;
+  path?: EditorUiDragPathPoint[] | null;
+  hoverState?: 'enter' | 'leave' | null;
+  hoverStateChanged?: boolean | null;
+  scrollIntoViewChanged?: boolean | null;
+  revealedRect?: EditorUiRect | null;
+  valueCommitMethod?: 'change' | 'blur' | null;
+  valueCommitConfirmed?: boolean | null;
+  valueHandledByReact?: boolean | null;
+  valueDraftSynchronized?: boolean | null;
+  valueFocusHandledByReact?: boolean | null;
+  valueBlurHandledByReact?: boolean | null;
+  clipboardOperation?: 'copy' | 'cut' | 'paste' | null;
+  clipboardLength?: number | null;
+  clipboardScope?: 'window-private' | null;
+  textHistoryOperation?: 'undo' | 'redo' | null;
+  textHistoryApplied?: boolean | null;
+  textHistoryUndoDepth?: number | null;
+  textHistoryRedoDepth?: number | null;
+  textHistoryScope?: 'element-private' | null;
   deltaX?: number | null;
   deltaY?: number | null;
   tag?: string;
@@ -218,8 +298,12 @@ export interface EditorWindowInfo {
   kind: 'main' | 'panel' | 'editor' | 'other';
   /** For `panel-*` windows, the panel id (e.g. "hierarchy"). */
   panelKind: string | null;
-  /** For `editor-*` windows, the registered editor window typeId. */
+  /** Canonical registered window typeId for `editor-*` windows. */
+  typeId: string | null;
+  /** Backward-compatible alias for existing Agent clients. */
   editorType: string | null;
+  /** True only for a native auxiliary window created by background Agent work. */
+  agentOwned: boolean;
   url: string;
   visible: boolean;
   focused: boolean;

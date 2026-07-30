@@ -29,6 +29,7 @@ import { isDesktopEditor } from '../transport/editorTransport';
 import { dockPanelShouldMount } from '../dockPanelMounting';
 import { registerMenuItem } from '../editorWindow';
 import type { DockLayoutNode, PanelLayoutSnapshot } from '../agent/protocol';
+import { nextHorizontalTabIndex } from '../tabKeyboardNavigation';
 import './dock.css';
 
 export type PanelKind = CorePanelId;
@@ -750,6 +751,7 @@ function DockLeaf(props: {
                 role="tab"
                 aria-selected={active === kind}
                 aria-controls={panelId}
+                tabIndex={active === kind ? 0 : -1}
                 data-agent-drag-by="true"
                 className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}${dirty ? ' dirty' : ''}`}
                 title={dirty
@@ -762,6 +764,21 @@ function DockLeaf(props: {
                     return;
                   }
                   props.onActivate(node.id, kind);
+                }}
+                onKeyDown={(event) => {
+                  const nextIndex = nextHorizontalTabIndex(
+                    node.panels.length,
+                    node.panels.indexOf(kind),
+                    event.key,
+                  );
+                  if (nextIndex == null) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const nextKind = node.panels[nextIndex];
+                  props.onActivate(node.id, nextKind);
+                  document
+                    .getElementById(`dock-tab-${node.id}-${nextKind}`)
+                    ?.focus({ preventScroll: true });
                 }}
                 onPointerDown={(event) => {
                   if (event.button !== 0 || dirty) return;

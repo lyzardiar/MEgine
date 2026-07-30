@@ -321,7 +321,17 @@ export function SpriteAtlasEditor(props: {
         <div className="sprite-atlas-preview" ref={previewRef}>
           {loading && <div className="sprite-editor-loading">Loading...</div>}
           {!preview && !loading && <div className="sprite-atlas-preview-empty">Pack Atlas to generate the PNG and Sprite subresources.</div>}
-          <canvas ref={canvasRef} style={{ width: previewSize.width, height: previewSize.height }} />
+          <canvas
+            ref={canvasRef}
+            style={{ width: previewSize.width, height: previewSize.height }}
+            role="img"
+            aria-hidden={!preview}
+            aria-label={preview
+              ? `Sprite Atlas packed preview, ${preview.naturalWidth} by ${preview.naturalHeight} pixels${
+                plan ? `, ${plan.entries.length} sprite regions` : ''
+              }`
+              : 'Sprite Atlas packed preview unavailable'}
+          />
         </div>
         <aside
           className="sprite-atlas-inspector"

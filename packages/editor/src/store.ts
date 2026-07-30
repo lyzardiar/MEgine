@@ -302,9 +302,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   const find = (id: number) => list().find((e) => e.entity === id);
 
   const translateSelectedRectRoots = (dx: number, dy: number) => {
-    if (mode !== 'edit' || !Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
     if (Math.abs(dx) < 1e-8 && Math.abs(dy) < 1e-8) return false;
-    const roots = selectedRectRoots(editEntities, selectedIds);
+    const current = list();
+    const roots = selectedRectRoots(current, selectedIds);
     if (!roots.length) return false;
     if (!gizmoDragging) pushUndo('Move UI Selection');
     for (const id of roots) {
@@ -459,7 +460,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     components: Record<string, unknown>,
     parent: number | null,
     withUndo: boolean,
-  ) => {
+  ): number | null => {
+    if (mode !== 'edit') return null;
     if (withUndo) pushUndo(`Create ${name}`);
     const id = nextId++;
     const e = normalizeEntity({
@@ -493,7 +495,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     withUndo: boolean,
     atIndex?: number,
     instanceId = createPrefabId('instance'),
-  ): number => {
+  ): number | null => {
+    if (mode !== 'edit') return null;
     if (withUndo) pushUndo('Instantiate Prefab');
     const nodes = flattenPrefabNodes(prefab);
     const entitiesByNode = new Map<string, number>();
@@ -510,6 +513,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         root: entry.parentNodeId == null,
       };
       const id = spawnAt(entry.node.name, components, nodeParent, false);
+      if (id == null) return null;
       const entity = find(id)!;
       entity.active = entry.node.active;
       entity.tag = entry.node.tag;
@@ -533,7 +537,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return root;
   };
 
-  const ensureUiCanvasInternal = (withUndo: boolean): number => {
+  const ensureUiCanvasInternal = (withUndo: boolean): number | null => {
+    if (mode !== 'edit') return null;
     const existing = editEntities.find((e) => e.components.Canvas);
     if (existing) return existing.entity;
     return spawnAt('Canvas', createUiCanvasComponents(), null, withUndo);
@@ -544,7 +549,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     name: string,
     components: Record<string, unknown>,
     requestedParent?: number | null,
-  ): number => {
+  ): number | null => {
+    if (mode !== 'edit') return null;
     pushUndo(`Create ${name}`);
     let parent = requestedParent;
     if (parent === undefined) {
@@ -553,11 +559,15 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       parent = selectedEntity && (selectedEntity.components.Canvas || selectedEntity.components.RectTransform)
         ? selected
         : ensureUiCanvasInternal(false);
+      if (parent == null) return null;
     }
     return spawnAt(name, components, parent ?? null, false);
   };
 
-  const spawnSpriteAsset = (sprite: string, options: SpriteSpawnOptions = {}): number => {
+  const spawnSpriteAsset = (
+    sprite: string,
+    options: SpriteSpawnOptions = {},
+  ): number | null => {
     const spawn = createSpriteSpawnComponents(sprite, options);
     return spawnAt(spawn.name, spawn.components, spawn.parent, true);
   };
@@ -766,16 +776,25 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return gameResolution ? { ...gameResolution } : null;
     },
     get canUndo() {
-      return undoService.canUndo;
+      return undoService.canUndo && (mode === 'edit' || undoService.undoScope !== 'scene');
     },
     get canRedo() {
-      return undoService.canRedo;
+      return undoService.canRedo && (mode === 'edit' || undoService.redoScope !== 'scene');
+    },
+    get undoScope() {
+      return undoService.undoScope;
+    },
+    get redoScope() {
+      return undoService.redoScope;
+    },
+    get canPaste() {
+      return mode === 'edit' && (clipboard?.roots.length ?? 0) > 0;
     },
     get undoLabel() {
-      return undoService.undoLabel;
+      return this.canUndo ? undoService.undoLabel : null;
     },
     get redoLabel() {
-      return undoService.redoLabel;
+      return this.canRedo ? undoService.redoLabel : null;
     },
     setGameResolution(resolution: GameResolution | null) {
       gameResolution = normalizeGameResolution(resolution);
@@ -908,7 +927,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return this.setActives([id], activeFlag) > 0;
     },
     setActives(ids: readonly number[], activeFlag: boolean) {
-      if (mode !== 'edit') return 0;
       const targets = [...new Set(ids)]
         .map((id) => find(id))
         .filter((entity): entity is EntityRec => (
@@ -924,7 +942,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return this.setTags([id], value) > 0;
     },
     setTags(ids: readonly number[], value: string) {
-      if (mode !== 'edit') return 0;
       const tag = normalizeEntityTag(value);
       const targets = [...new Set(ids)]
         .map((id) => find(id))
@@ -938,7 +955,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return this.setLayers([id], value) > 0;
     },
     setLayers(ids: readonly number[], value: number) {
-      if (mode !== 'edit') return 0;
       const layer = normalizeGameLayerIndex(value);
       const targets = [...new Set(ids)]
         .map((id) => find(id))
@@ -977,10 +993,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         if (entity) entity.parent = plan.parent;
       }
       if (preservedWorld.size) {
-        const after = buildWorldTransforms(editEntities);
+        const after = buildWorldTransforms(current);
         for (const [id, worldTransform] of preservedWorld) {
           const entity = find(id);
-          const parentTransform = parentWorldTransform(editEntities, after, id);
+          const parentTransform = parentWorldTransform(current, after, id);
           if (!entity?.components.Transform || !parentTransform) continue;
           entity.components.Transform = worldTransformToLocal(parentTransform, worldTransform);
         }
@@ -1121,16 +1137,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return primarySelected();
     },
     deleteSelection() {
-      if (!selectedIds.length || mode !== 'edit') return;
+      if (!selectedIds.length || mode !== 'edit') return false;
       pushUndo('Delete GameObjects');
       const roots = selectedHierarchyRoots(editEntities, selectedIds);
       deleteIdsWithSubtree(roots);
+      return true;
     },
     deleteSelected() {
       this.deleteSelection();
     },
     copySelection() {
       const roots = selectedHierarchyRoots(editEntities, selectedIds);
+      if (!roots.length) return false;
       const payload: EntityRec[] = [];
       for (const r of roots) {
         for (const id of collectSubtreeIds(r)) {
@@ -1139,13 +1157,15 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         }
       }
       clipboard = { roots: payload, cut: false };
+      return true;
     },
     cutSelection() {
-      this.copySelection();
-      if (clipboard) clipboard.cut = true;
+      if (mode !== 'edit' || !this.copySelection() || !clipboard) return false;
+      clipboard.cut = true;
+      return true;
     },
     paste() {
-      if (!clipboard || mode !== 'edit') return;
+      if (!clipboard?.roots.length || mode !== 'edit') return false;
       const parent = primarySelected();
       const oldIds = clipboard.roots.map((e) => e.entity);
       const clipSet = new Set(oldIds);
@@ -1156,8 +1176,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           clipboard = null;
           selectedIds = roots;
           selectionAnchor = roots[roots.length - 1] ?? null;
+          return true;
         }
-        return;
+        return false;
       }
 
       pushUndo('Paste GameObjects');
@@ -1200,6 +1221,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
 
       selectedIds = actualRoots.map((r) => idMap.get(r.entity)!);
       selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
+      return true;
     },
     navigateVisible(delta: number) {
       const flat = getVisibleFlat().map((n) => n.entity.entity);
@@ -1255,9 +1277,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       mode = mode === 'play' ? 'pause' : mode === 'pause' ? 'play' : mode;
     },
     undo() {
+      if (!this.canUndo) return false;
       return undoService.undo();
     },
     redo() {
+      if (!this.canRedo) return false;
       return undoService.redo();
     },
     tick(dt: number) {
@@ -1283,7 +1307,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       type: string,
       value: Record<string, unknown>,
     ) {
-      if (mode !== 'edit') return 0;
       const targets = [...new Set(entities)]
         .map((entity) => find(entity))
         .filter((entity): entity is EntityRec => (
@@ -1306,7 +1329,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return this.removeComponents([entity], type) > 0;
     },
     removeComponents(entities: readonly number[], type: string) {
-      if (mode !== 'edit' || type === 'Transform') return 0;
+      if (type === 'Transform') return 0;
       const targets = [...new Set(entities)].map((entity) => find(entity));
       if (
         !targets.length
@@ -1341,7 +1364,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       materialPath: string,
       meshRendererValue?: Record<string, unknown>,
     ) {
-      if (mode !== 'edit') return null;
       const e = find(entity);
       if (!e) return null;
       const result = assignMaterialToComponents(
@@ -1350,7 +1372,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         meshRendererValue,
       );
       if (!result?.changed) return result;
-      pushUndo('Assign Material');
+      if (mode === 'edit') pushUndo('Assign Material');
       e.components = result.components;
       return result;
     },
@@ -1551,13 +1573,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     translateSelectedTransformsBy(entity: number, delta: Vec3) {
       if (!delta.every(Number.isFinite)) return;
-      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
-      const world = buildWorldTransforms(editEntities);
+      const current = list();
+      const ids = selectedTransformRoots(current, selectedIds, entity);
+      const world = buildWorldTransforms(current);
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
         if (!target || !transform) continue;
-        const parent = parentWorldTransform(editEntities, world, id);
+        const parent = parentWorldTransform(current, world, id);
         if (!parent) continue;
         const localDelta = worldDeltaToLocal(parent, delta);
         target.components.Transform = {
@@ -1578,13 +1601,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         || !Number.isFinite(degrees)
         || Math.abs(degrees) < 1e-8
       ) return;
-      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
-      const world = buildWorldTransforms(editEntities);
+      const current = list();
+      const ids = selectedTransformRoots(current, selectedIds, entity);
+      const world = buildWorldTransforms(current);
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
         const resolved = resolvedTransform(world, id);
-        const parent = parentWorldTransform(editEntities, world, id);
+        const parent = parentWorldTransform(current, world, id);
         if (!target || !transform || !resolved || !parent) continue;
         const nextWorld = rotateTransformAround(resolved, pivot, axis, degrees);
         target.components.Transform = {
@@ -1610,8 +1634,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         || !Number.isFinite(amount)
       ) return;
       const component = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
-      const world = buildWorldTransforms(editEntities);
-      const primaryParent = parentWorldTransform(editEntities, world, entity);
+      const current = list();
+      const world = buildWorldTransforms(current);
+      const primaryParent = parentWorldTransform(current, world, entity);
       if (!primaryParent) return;
       const localAmount = worldAxisScaleDeltaToLocal(primaryParent, component, amount);
       const previous = Math.max(0.01, primaryTransform.scale[component]);
@@ -1619,12 +1644,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const factor = next / previous;
       if (!Number.isFinite(factor) || Math.abs(factor - 1) < 1e-8) return;
 
-      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
+      const ids = selectedTransformRoots(current, selectedIds, entity);
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
         const resolved = resolvedTransform(world, id);
-        const parent = parentWorldTransform(editEntities, world, id);
+        const parent = parentWorldTransform(current, world, id);
         if (!target || !transform || !resolved || !parent) continue;
         const nextWorld = scaleTransformAlong(
           resolved,
@@ -1688,8 +1713,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return translateSelectedRectRoots(dx, dy);
     },
     applySelectedRectDeltas(deltas: Array<{ entity: number; dx: number; dy: number }>) {
-      if (mode !== 'edit') return false;
-      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      const current = list();
+      const roots = new Set(selectedRectRoots(current, selectedIds));
       const applicable = deltas.filter((delta) =>
         roots.has(delta.entity) &&
         Number.isFinite(delta.dx) &&
@@ -1697,7 +1722,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         (Math.abs(delta.dx) >= 1e-8 || Math.abs(delta.dy) >= 1e-8),
       );
       if (!applicable.length) return false;
-      pushUndo('Move UI Selection');
+      if (mode === 'edit') pushUndo('Move UI Selection');
       for (const delta of applicable) {
         const entity = find(delta.entity);
         if (!entity?.components.RectTransform) continue;
@@ -1727,7 +1752,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       dy: number;
       degrees: number;
     }>) {
-      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      const roots = new Set(selectedRectRoots(list(), selectedIds));
       for (const delta of deltas) {
         if (
           !roots.has(delta.entity)
@@ -1767,7 +1792,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       factorX: number;
       factorY: number;
     }>) {
-      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      const roots = new Set(selectedRectRoots(list(), selectedIds));
       for (const delta of deltas) {
         if (
           !roots.has(delta.entity)
@@ -2130,7 +2155,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       );
     },
     /** Ensure a Canvas exists; return its entity id. */
-    ensureUiCanvas(): number {
+    ensureUiCanvas(): number | null {
       return ensureUiCanvasInternal(true);
     },
     spawnUiCanvas() {
@@ -2330,13 +2355,19 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return serializeScene(sceneName, list());
     },
     newScene() {
+      if (mode !== 'edit') return false;
       buildDefaultScene();
+      return true;
     },
     loadSceneJson(json: string) {
+      if (mode !== 'edit') return false;
       applySceneJson(json, 'edit', true);
+      return true;
     },
     replaceSceneWorldJson(json: string) {
+      if (mode !== 'edit') return false;
       applySceneJson(json, 'edit', true, false);
+      return true;
     },
     loadRemoteSceneJson(json: string, remoteMode: EditorMode) {
       applySceneJson(json, remoteMode, false);

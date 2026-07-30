@@ -18,6 +18,7 @@ test('whole-window agent capture is background-safe and addressable by window la
     'utf8',
   ));
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const protocol = fs.readFileSync(path.join(root, 'src', 'agent', 'protocol.ts'), 'utf8');
   const mcp = fs.readFileSync(
     path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
     'utf8',
@@ -30,37 +31,476 @@ test('whole-window agent capture is background-safe and addressable by window la
   )?.[1];
   assert.ok(contentScript);
   assert.ok(interactionScript);
+  assert.equal(
+    [...rust.matchAll(/new TextDecoder\(\)\.decode\(Uint8Array\.from\(/g)].length,
+    3,
+  );
 
+  assert.match(native, /type_id: Option<String>/);
+  assert.match(native, /type_id: editor_type\.clone\(\)/);
+  assert.match(protocol, /typeId: string \| null/);
+  assert.match(protocol, /editorType: string \| null/);
   assert.match(rust, /Page\.captureScreenshot/);
   assert.match(rust, /validated_capture_region/);
+  assert.match(rust, /clipped_element_capture_region/);
+  assert.match(rust, /visible_rect: WindowCaptureRegion/);
   assert.match(rust, /page_x \+ clip\.x/);
   assert.match(rust, /Runtime\.evaluate/);
   assert.match(rust, /WINDOW_UI_SNAPSHOT_SCRIPT/);
   assert.match(rust, /state\.checked = element\.indeterminate \? 'mixed' : element\.checked/);
   assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
+  assert.match(rust, /WINDOW_UI_ELEMENT_BOUNDS_SCRIPT/);
+  assert.match(rust, /guardedRevision\.elements\?\.get\(selector\)/);
+  assert.match(rust, /const element = guardedElement\.element/);
+  assert.match(rust, /semantic content changed during element capture/);
+  assert.match(rust, /visibleRect: \{/);
+  assert.match(rust, /visibleLeft = Math\.max\(visibleLeft, clipLeft\)/);
+  assert.match(rust, /visibleBottom = Math\.min\(visibleBottom, clipBottom\)/);
+  assert.match(protocol, /snapshotRevision\?: string/);
+  assert.match(protocol, /elementRect\?: EditorUiRect/);
+  assert.match(protocol, /clipped\?: boolean/);
   assert.match(rust, /Password values cannot be read/);
-  assert.match(contentScript, /guardedEpoch !== revisionGuard\.epoch/);
-  assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
-  assert.match(rust, /const contentRevision = `content-v1-/);
+  assert.match(contentScript, /guardedRevision\?\.epoch !== revisionGuard\.epoch/);
+  assert.match(contentScript, /const semanticName = \(target\) =>/);
+  assert.match(contentScript, /const semanticDescription = \(target, name\) =>/);
+  assert.match(contentScript, /else if \(field === 'name'\)/);
+  assert.match(contentScript, /else if \(field === 'description'\)/);
+  assert.match(
+    protocol,
+    /field: 'text' \| 'name' \| 'description' \| 'value' \| 'options'/,
+  );
+  assert.match(rust, /const contentRevision = `content-v3-/);
+  assert.match(contentScript, /const isHighSurrogate = \(unit\) =>/);
+  assert.match(contentScript, /const isLowSurrogate = \(unit\) =>/);
+  assert.match(contentScript, /isHighSurrogate\(content\.charCodeAt\(start - 1\)\)/);
+  assert.match(contentScript, /isLowSurrogate\(content\.charCodeAt\(start\)\)/);
+  assert.match(contentScript, /invalidContentOffset: true/);
+  assert.match(contentScript, /restartOffset: start - 1/);
+  assert.match(contentScript, /isHighSurrogate\(content\.charCodeAt\(end - 1\)\)/);
+  assert.match(contentScript, /isLowSurrogate\(content\.charCodeAt\(end\)\)/);
+  assert.match(contentScript, /end \+= 1/);
+  assert.match(contentScript, /const page = content\.slice\(start, end\)/);
+  assert.match(contentScript, /const exactSemanticText = \(root\) =>/);
+  assert.match(contentScript, /textNodeIsRendered\(semanticParent\)/);
+  assert.match(contentScript, /style\.contentVisibility === 'hidden'/);
+  assert.match(contentScript, /content = exactSemanticText\(element\)/);
+  assert.doesNotMatch(contentScript, /element\.innerText/);
+  assert.match(contentScript, /version: 3,/);
   assert.match(rust, /revisionHashA = Math\.imul/);
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v4-/);
+  assert.match(rust, /const snapshotRevision = `ui-v32-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 5,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 32,/g)].length, 2);
+  assert.doesNotMatch(
+    rust,
+    /const actionList = \(element, role\) => \{\s+const actions = \[\];\s+const props = reactProps\(element\);\s+if \(needsScrollIntoView\(element\)\)/,
+  );
+  assert.match(
+    rust,
+    /if \(!role && !name && !text && !structural && actions\.length === 0\) continue;\s+if \(!modalBlocked && needsScrollIntoView\(element\)\) \{\s+actions\.unshift\('scrollIntoView'\)/,
+  );
+  assert.match(rust, /const invalidateRevisionGuard = \(\) =>/);
+  assert.match(rust, /'input',\s*'change',\s*'selectionchange',\s*'focusin',\s*'focusout',\s*'scroll'/);
+  assert.match(rust, /root\.addEventListener\(eventName, invalidateRevisionGuard, true\)/);
+  assert.match(rust, /root instanceof Document \|\| root instanceof ShadowRoot/);
+  assert.match(rust, /Element\.prototype\.attachShadow = function/);
+  assert.match(rust, /revisionGuard\.observeRoot\(element\.shadowRoot\)/);
+  assert.match(rust, /collectOpenComposedTree\(document\.documentElement\)/);
+  assert.match(rust, /if \(child instanceof Element\) collectOpenComposedTree\(child\)/);
+  assert.match(rust, /segments\.join\(' >>> '\)/);
+  assert.match(rust, /const deepActiveElement = \(\) =>/);
+  assert.equal([...rust.matchAll(/if \((?:element|target)\.assignedSlot\) return (?:element|target)\.assignedSlot/g)].length, 4);
+  assert.equal([...rust.matchAll(/const composedChildNodes = \(node\) =>/g)].length, 3);
+  assert.equal([...rust.matchAll(/assignedNodes\(\{ flatten: true \}\)/g)].length, 3);
+  assert.equal([...rust.matchAll(/node\.shadowRoot\.childNodes/g)].length, 3);
+  assert.match(rust, /const visit = \(node, semanticParent = null\) =>/);
+  assert.match(interactionScript, /allOpenComposedElements\(\)\.filter/);
+  assert.match(rust, /const windowInvalidationEvents = \['resize', 'scroll', 'hashchange', 'popstate'\]/);
+  assert.match(rust, /window\.visualViewport\?\.addEventListener\('scroll', invalidateRevisionGuard, true\)/);
+  assert.match(rust, /for \(const methodName of \['pushState', 'replaceState'\]\)/);
+  assert.match(rust, /if \(window\.location\.href !== previousUrl\) invalidateRevisionGuard\(\)/);
+  assert.match(rust, /value: valueFor\(element\),/);
+  assert.doesNotMatch(rust, /value: valueFor\(element\) \|\| null/);
+  assert.equal([...rust.matchAll(/const renderedRectFor = \(/g)].length, 3);
+  assert.equal(
+    [...rust.matchAll(/target instanceof SVGGeometryElement|element instanceof SVGGeometryElement/g)].length,
+    3,
+  );
+  assert.match(rust, /const width = Math\.max\(rect\.width, thickness\)/);
+  assert.match(rust, /const height = Math\.max\(rect\.height, thickness\)/);
+  assert.match(
+    rust,
+    /element instanceof HTMLElement\s+\|\| element instanceof SVGElement/,
+  );
+  assert.match(rust, /element\.hasAttribute\('tabindex'\)/);
+  assert.match(rust, /if \(keyboardTarget\) actions\.push\('keyPress'\)/);
+  assert.doesNotMatch(
+    rust,
+    /keyboardTarget\s+\|\| typeof props\.onKeyDown === 'function'/,
+  );
+  assert.match(
+    rust,
+    /const structural = \/\^h\[1-6\]\$\/\.test\(tag\)\s+\|\| \['p', 'summary', 'legend', 'caption'\]\.includes\(tag\)/,
+  );
+  assert.match(rust, /if \(tag === 'article'\) return 'article'/);
+  assert.match(rust, /if \(tag === 'aside'\) return 'complementary'/);
+  assert.match(
+    rust,
+    /if \(tag === 'details' \|\| tag === 'fieldset' \|\| tag === 'dl'\) return 'group'/,
+  );
+  assert.match(rust, /if \(tag === 'li'\) return 'listitem'/);
+  assert.match(rust, /if \(\['ol', 'ul', 'menu'\]\.includes\(tag\)\) return 'list'/);
+  assert.match(rust, /if \(tag === 'p'\) return 'paragraph'/);
+  assert.match(rust, /if \(tag === 'table'\) return 'table'/);
+  assert.match(rust, /return element\.getAttribute\('scope'\) === 'row' \? 'rowheader' : 'columnheader'/);
+  assert.match(rust, /tag === 'section'[\s\S]*return 'region'/);
+  assert.match(rust, /if \(element instanceof HTMLDetailsElement\)/);
+  assert.match(rust, /state\.expanded = element\.open/);
+  assert.equal([...rust.matchAll(/const nativeDialogIsModal = \(/g)].length, 2);
+  assert.equal(
+    [...rust.matchAll(/'dialog, \[role="dialog"\]\[aria-modal="true"\]'/g)].length,
+    2,
+  );
+  assert.match(rust, /state\.open = element\.hasAttribute\('open'\)/);
+  assert.match(rust, /if \(nativeModal \|\| state\.modal === undefined\) state\.modal = nativeModal/);
+  assert.match(rust, /const selectionFor = \(element\) =>/);
+  assert.match(rust, /selectionStart: element\.selectionStart/);
+  assert.match(rust, /selectionEnd: element\.selectionEnd/);
+  assert.match(rust, /selectionDirection: element\.selectionDirection \|\| 'none'/);
+  assert.match(rust, /element\.isContentEditable/);
+  assert.match(rust, /range\.cloneContents\(\)\.textContent/);
+  assert.match(rust, /selectionDirection: focus < anchor/);
+  assert.match(rust, /if \(selection\) Object\.assign\(state, selection\)/);
+  assert.match(
+    rust,
+    /element\.localName === 'summary'[\s\S]*element\.parentElement instanceof HTMLDetailsElement/,
+  );
+  assert.match(rust, /state\.expanded = element\.parentElement\.open/);
+  assert.match(rust, /const maxGuardedRevisions = 8/);
+  assert.match(rust, /const guardedElements = new Map\(semanticElements\.map/);
+  assert.match(rust, /element: candidates\[index\]\.element/);
+  assert.match(rust, /actions: \[\.\.\.semanticElement\.actions\]/);
+  assert.match(rust, /while \(revisionGuard\.revisions\.size > maxGuardedRevisions\)/);
+  assert.equal(
+    [...rust.matchAll(/guardedRevision\?\.epoch !== revisionGuard\.epoch/g)].length,
+    1,
+  );
+  assert.equal(
+    [...rust.matchAll(/guardedRevision\.elements\?\.get\(/g)].length,
+    4,
+  );
+  assert.match(contentScript, /const element = guardedElement\.element/);
+  assert.match(contentScript, /selectorNotExposed: true/);
+  assert.match(interactionScript, /const element = guardedElement\.element/);
+  assert.match(interactionScript, /targetElement = guardedTarget\.element/);
+  assert.match(interactionScript, /if \(!allowedActions\.includes\(action\)\)/);
+  assert.match(interactionScript, /actionNotExposed: true/);
+  assert.match(interactionScript, /const coordinateFor = \(/);
+  assert.match(interactionScript, /offsetX >= rect\.width/);
+  assert.match(interactionScript, /offsetY >= rect\.height/);
+  assert.match(interactionScript, /invalidPointerCoordinates: !pointerTargetObscured/);
+  assert.match(interactionScript, /requestedTargetOffsetX/);
+  assert.match(interactionScript, /targetClientX: targetCoordinates\?\.clientX \?\? null/);
+  assert.match(interactionScript, /const buttonName = requestedButton \?\? 'left'/);
+  assert.match(interactionScript, /const heldButtons = button === 1 \? 4 : button === 2 \? 2 : 1/);
+  assert.match(interactionScript, /'pointerdown', button, heldButtons/);
+  assert.match(interactionScript, /'pointermove', -1, heldButtons/);
+  assert.match(interactionScript, /'mousemove', 0, heldButtons/);
+  assert.match(interactionScript, /button: action === 'dragBy' \? requestedButton \?\? 'left' : null/);
+  assert.match(interactionScript, /Array\.isArray\(requestedPath\)/);
+  assert.match(interactionScript, /path\.length > 64/);
+  assert.match(interactionScript, /for \(const point of path\)/);
+  assert.match(interactionScript, /Every dragBy path point must stay inside the target WebView viewport/);
+  assert.match(interactionScript, /performedHoverState = requestedHoverState \?\? 'enter'/);
+  assert.match(interactionScript, /if \(performedHoverState === 'leave'\)/);
+  assert.match(interactionScript, /hoverTargetMismatch: true/);
+  assert.match(interactionScript, /window\[hoverState\] = null/);
+  assert.match(interactionScript, /hoverStateChanged: action === 'hover' \? hoverStateChanged : null/);
+  assert.match(interactionScript, /const beginBlurCommit = \(\) =>/);
+  assert.match(interactionScript, /const dispatchValueChange = \(target, value\) =>/);
+  assert.match(interactionScript, /reactProps\.onChange\(reactValueEvent\(target, 'change', value\)\)/);
+  assert.match(interactionScript, /const dispatchReactFocusLifecycle = \(target, type, nativeTransition\) =>/);
+  assert.match(interactionScript, /const captureName = type === 'focus' \? 'onFocusCapture' : 'onBlurCapture'/);
+  assert.match(interactionScript, /if \(pendingValueBlur\)/);
+  assert.match(interactionScript, /element\.blur\(\)/);
+  assert.match(interactionScript, /valueCommitMethod: \['setValue', 'keyPress'\]\.includes\(action\)/);
+  assert.match(interactionScript, /valueCommitConfirmed: \['setValue', 'keyPress'\]\.includes\(action\)/);
+  assert.match(interactionScript, /valueHandledByReact: \['setValue', 'keyPress'\]\.includes\(action\)/);
+  assert.match(interactionScript, /valueDraftSynchronized: \['setValue', 'keyPress'\]\.includes\(action\)/);
+  assert.match(interactionScript, /valueFocusHandledByReact: \['setValue', 'keyPress'\]\.includes\(action\)/);
+  assert.match(interactionScript, /valueBlurHandledByReact: \['setValue', 'keyPress'\]\.includes\(action\)/);
+  assert.match(interactionScript, /valueHandledByReact = dispatchValueChange\(element, nextValue\)/);
+  assert.match(interactionScript, /pendingFocusTarget = next/);
+  assert.match(
+    interactionScript,
+    /candidate instanceof HTMLElement\s+\|\| candidate instanceof SVGElement/,
+  );
+  assert.match(interactionScript, /typeof candidate\.focus === 'function'/);
+  assert.match(
+    interactionScript,
+    /next instanceof HTMLElement \|\| next instanceof SVGElement/,
+  );
+  assert.match(interactionScript, /let keyboardValueTarget = false/);
+  assert.match(interactionScript, /const keyboardReadOnly = Boolean\(/);
+  assert.match(
+    interactionScript,
+    /keyboardValueTarget = !keyboardReadOnly && \(/,
+  );
+  assert.match(
+    rust,
+    /element instanceof HTMLSelectElement && !readOnly/,
+  );
+  assert.match(
+    interactionScript,
+    /keyboardReadOnly\s+&&\s+\(\s+element instanceof HTMLInputElement\s+\|\| element instanceof HTMLSelectElement/,
+  );
+  assert.match(
+    interactionScript,
+    /const changed = element\.checked !== Boolean\(checked\) \|\| element\.indeterminate/,
+  );
+  assert.match(
+    interactionScript,
+    /action === 'setValue' \|\| \(action === 'keyPress' && changed\)/,
+  );
+  assert.match(
+    interactionScript,
+    /if \(action === 'keyPress' && changed\) \{\s+valueCommitMethod = 'change';\s+pendingValueChangeConfirmation = \(\) => \(/,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /valueHandledByReact = dispatchValueChange\(element, element\.value\);\s+valueCommitMethod = 'change';\s+(?:const expectedValue = element\.value;\s+)?pendingValueChangeConfirmation = \(\) => \(/g,
+    )].length,
+    2,
+  );
+  assert.match(
+    interactionScript,
+    /if \(typeof pendingValueChangeConfirmation === 'function'\) \{\s+valueCommitConfirmed = pendingValueChangeConfirmation\(\)/,
+  );
+  assert.match(interactionScript, /if \(keyboardValueTarget\) pendingValueBlur = true/);
+  assert.match(
+    interactionScript,
+    /keyboardValueTarget\s+&&\s+deepActiveElement\(\) !== element/,
+  );
+  assert.match(
+    interactionScript,
+    /pendingFocusTarget instanceof HTMLElement\s+\|\| pendingFocusTarget instanceof SVGElement/,
+  );
+  assert.match(interactionScript, /typeof pendingFocusTarget\.focus === 'function'/);
+  assert.match(
+    interactionScript,
+    /dispatchReactFocusLifecycle\(\s+pendingFocusTarget,\s+'focus'/,
+  );
+  assert.match(interactionScript, /requestedKey === 'Enter' \|\| requestedKey === 'Escape'/);
+  assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
+  assert.match(rust, /const needsScrollIntoView = \(element\) =>/);
+  assert.match(rust, /actions\.unshift\('scrollIntoView'\)/);
+  assert.match(interactionScript, /element\.scrollIntoView\(\{/);
+  assert.match(interactionScript, /block: 'nearest'/);
+  assert.match(interactionScript, /inline: 'nearest'/);
+  assert.match(interactionScript, /scrollIntoViewChanged:/);
+  assert.match(interactionScript, /revealedRect:/);
+  assert.match(interactionScript, /effectivelyDisabled\(element\) && action !== 'scrollIntoView'/);
+  assert.match(interactionScript, /const applyNativeScroll = element\.dispatchEvent\(wheelEvent\)/);
+  assert.match(interactionScript, /if \(applyNativeScroll\) \{/);
+  assert.match(
+    interactionScript,
+    /action === 'scroll'[\s\S]*?const deltaY = Number\(requestedDeltaY \?\? 0\)/,
+  );
+  assert.match(rust, /getAttribute\('data-agent-wheel'\) === 'true'/);
+  assert.match(rust, /typeof props\.onWheel === 'function'/);
+  assert.match(rust, /"contextClick"\s*\|\s*"scroll"\s*\|\s*"keyPress"/);
+  assert.match(bridge, /window\.ui_scroll requires a non-zero deltaX or deltaY/);
+  assert.match(bridge, /if \(result\.selectorNotExposed \|\| result\.actionNotExposed\)/);
+  assert.match(bridge, /if \(result\.invalidPointerCoordinates\)/);
+  assert.match(protocol, /targetSelectorNotExposed\?: boolean/);
+  assert.match(protocol, /invalidPointerCoordinates\?: boolean/);
+  assert.match(protocol, /pointerTargetObscured\?: boolean/);
+  assert.match(protocol, /blockerName\?: string \| null/);
+  assert.match(interactionScript, /const pointerVisibleRectFor = \(target\) =>/);
+  assert.match(interactionScript, /const deepestElementFromPoint = \(clientX, clientY\) =>/);
+  assert.match(interactionScript, /document\.elementFromPoint\(clientX, clientY\)/);
+  assert.match(interactionScript, /hit\.shadowRoot\.elementFromPoint\(clientX, clientY\)/);
+  assert.match(interactionScript, /composedContains\(target, hit\)/);
+  assert.match(interactionScript, /const automaticPointerCandidates = \(visibleRect\) =>/);
+  assert.match(interactionScript, /invalidPointerCoordinates: !pointerTargetObscured/);
+  assert.match(interactionScript, /pointerTargetObscured,/);
+  assert.match(bridge, /if \(result\.pointerTargetObscured\) \{/);
+  assert.match(bridge, /'CONFLICT'/);
+  assert.match(bridge, /choose a reachable offset/);
+  assert.match(protocol, /targetClientY\?: number \| null/);
+  assert.match(protocol, /button\?: 'left' \| 'middle' \| 'right' \| null/);
+  assert.match(protocol, /path\?: EditorUiDragPathPoint\[\] \| null/);
+  assert.match(protocol, /hoverTargetMismatch\?: boolean/);
+  assert.match(protocol, /hoverState\?: 'enter' \| 'leave' \| null/);
+  assert.match(protocol, /hoverStateChanged\?: boolean \| null/);
+  assert.match(protocol, /valueCommitMethod\?: 'change' \| 'blur' \| null/);
+  assert.match(protocol, /valueCommitConfirmed\?: boolean \| null/);
+  assert.match(protocol, /valueHandledByReact\?: boolean \| null/);
+  assert.match(protocol, /valueDraftSynchronized\?: boolean \| null/);
+  assert.match(protocol, /valueFocusHandledByReact\?: boolean \| null/);
+  assert.match(protocol, /valueBlurHandledByReact\?: boolean \| null/);
+  assert.match(protocol, /clipboardOperation\?: 'copy' \| 'cut' \| 'paste' \| null/);
+  assert.match(protocol, /clipboardLength\?: number \| null/);
+  assert.match(protocol, /clipboardScope\?: 'window-private' \| null/);
+  assert.match(protocol, /clipboardDenied\?: boolean/);
+  assert.match(protocol, /textHistoryDenied\?: boolean/);
+  assert.match(protocol, /textHistoryOperation\?: 'undo' \| 'redo' \| null/);
+  assert.match(protocol, /textHistoryApplied\?: boolean \| null/);
+  assert.match(protocol, /textHistoryUndoDepth\?: number \| null/);
+  assert.match(protocol, /textHistoryRedoDepth\?: number \| null/);
+  assert.match(protocol, /textHistoryScope\?: 'element-private' \| null/);
+  assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
+  assert.match(rust, /const ariaStateKeys = \[/);
+  for (const key of [
+    'valuemin',
+    'valuemax',
+    'valuenow',
+    'valuetext',
+    'orientation',
+    'multiselectable',
+    'autocomplete',
+    'live',
+    'keyshortcuts',
+    'activedescendant',
+  ]) {
+    assert.match(rust, new RegExp(`'${key}'`));
+  }
+  assert.match(rust, /for \(const key of ariaStateKeys\)/);
+  assert.equal([...rust.matchAll(/const effectivelyDisabled = \(/g)].length, 2);
+  assert.equal([...rust.matchAll(/\.matches\(':disabled'\)/g)].length, 2);
+  assert.equal(
+    [...rust.matchAll(/closestComposed\([^,]+, '\[aria-disabled="true"\]'\)/g)].length,
+    2,
+  );
+  assert.equal([...rust.matchAll(/const semanticallyHidden = \(/g)].length, 3);
+  assert.equal(
+    [...rust.matchAll(/closestComposed\([^,]+, '\[aria-hidden="true"\], \[inert\]'\)/g)].length,
+    4,
+  );
+  assert.equal([...rust.matchAll(/const semanticText = \(/g)].length, 3);
+  assert.equal([...rust.matchAll(/const nativeCaptionText = \(/g)].length, 3);
+  assert.equal([...rust.matchAll(/const nativeButtonValue = \(/g)].length, 3);
+  assert.equal([...rust.matchAll(/target\.localName === 'fieldset'/g)].length, 2);
+  assert.match(rust, /element\.localName === 'fieldset'/);
+  assert.equal([...rust.matchAll(/\? 'legend'/g)].length, 3);
+  assert.equal([...rust.matchAll(/\? 'figcaption'/g)].length, 3);
+  assert.equal([...rust.matchAll(/\? 'caption'/g)].length, 3);
+  assert.match(rust, /tag === 'img' && normalize\(element\.getAttribute\('alt'\)\)/);
+  assert.equal([...rust.matchAll(/includeHiddenSubtree = false/g)].length, 3);
+  assert.equal(
+    [...rust.matchAll(/includeHiddenSubtree\s*\|\| !\(semanticParent instanceof Element\)\s*\|\| !semanticallyHidden\(semanticParent\)/g)].length,
+    3,
+  );
+  assert.equal(
+    [...rust.matchAll(/semanticText\(node, null, semanticallyHidden\(node\)\)/g)].length,
+    2,
+  );
+  assert.match(
+    interactionScript,
+    /semanticText\(labelledBy, semanticallyHidden\(labelledBy\)\)/,
+  );
+  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 2);
+  assert.match(rust, /const referencedText = \(idRefs, context\) =>/);
+  assert.equal([...rust.matchAll(/const labelledByText = \(/g)].length, 3);
+  assert.equal([...rust.matchAll(/const nativeLabelText = \(/g)].length, 3);
+  assert.match(rust, /const text = referencedText\(labelledBy, (?:element|target)\)/);
+  assert.match(
+    rust,
+    /labelledByText\(element\)\s*\|\| element\.getAttribute\('aria-label'\)\s*\|\| nativeLabelText\(element\)/,
+  );
+  assert.match(
+    contentScript,
+    /labelledByText\(target\)\s*\|\| target\.getAttribute\('aria-label'\)\s*\|\| nativeLabelText\(target\)/,
+  );
+  assert.match(
+    interactionScript,
+    /return labelledByText\(target\)\s*\|\| normalizeName\(target\.getAttribute\('aria-label'\)\)\s*\|\| nativeLabelText\(target\)/,
+  );
+  assert.match(
+    rust,
+    /referencedText\(element\.getAttribute\('aria-describedby'\), element\)/,
+  );
+  assert.match(
+    rust,
+    /referencedText\(element\.getAttribute\('aria-describedby'\), element\)\s*\|\| element\.getAttribute\('aria-description'\)/,
+  );
+  assert.match(rust, /const content = semanticText\(element\)/);
+  assert.match(rust, /return semanticText\(label, element\)/);
+  assert.match(interactionScript, /\? semanticText\(target\)/);
+  assert.match(interactionScript, /return semanticText\(target\)/);
+  assert.equal(
+    [...rust.matchAll(/const renderedInComposedTree = \(/g)].length,
+    3,
+  );
+  assert.equal(
+    [...rust.matchAll(/style\.contentVisibility === 'hidden'|currentStyle\.contentVisibility === 'hidden'/g)].length,
+    4,
+  );
+  assert.equal(
+    [...rust.matchAll(/style\.visibility === 'collapse'|currentStyle\.visibility === 'collapse'|parentStyle\.visibility === 'collapse'/g)].length,
+    4,
+  );
+  assert.match(
+    rust,
+    /semanticallyHidden\(element\) \|\| !renderedInComposedTree\(element\)/,
+  );
+  assert.match(
+    interactionScript,
+    /semanticallyHidden\(target\) \|\| !renderedInComposedTree\(target\)/,
+  );
+  assert.match(interactionScript, /if \(!rendered\(element\)\)/);
+  assert.match(interactionScript, /if \(targetElement && !rendered\(targetElement\)\)/);
+  assert.match(
+    interactionScript,
+    /not rendered in the semantic accessibility tree/,
+  );
+  assert.match(rust, /if \(effectivelyDisabled\(element\)\) return actions/);
+  assert.match(rust, /disabled: effectivelyDisabled\(element\)/);
+  assert.match(
+    interactionScript,
+    /if \(effectivelyDisabled\(element\) && action !== 'scrollIntoView'\)/,
+  );
+  assert.match(
+    interactionScript,
+    /if \(targetElement && effectivelyDisabled\(targetElement\)\)/,
+  );
   assert.match(rust, /const controlFor = \(element\) =>/);
   assert.match(rust, /control: controlFor\(element\)/);
+  assert.equal([...rust.matchAll(/type === 'number'\) return 'spinbutton'/g)].length, 3);
+  assert.equal([...rust.matchAll(/type === 'search'\) return 'searchbox'/g)].length, 3);
+  assert.equal([...rust.matchAll(/return 'combobox';/g)].length, 3);
+  assert.equal([...rust.matchAll(/localName === 'output'\) return 'status'/g)].length, 1);
+  assert.match(rust, /tag === 'output'\) return 'status'/);
+  assert.match(rust, /tag === 'meter'\) return 'meter'/);
+  assert.match(rust, /const containingLabelText = \(element\) =>/);
+  assert.match(rust, /\['status', 'meter', 'progressbar'\]\.includes\(role\)/);
+  assert.match(rust, /element instanceof HTMLOutputElement \|\| element instanceof HTMLMeterElement/);
+  assert.match(rust, /element instanceof HTMLProgressElement/);
+  assert.match(rust, /kind: 'progress'/);
+  assert.match(rust, /kind: 'meter'/);
+  assert.match(rust, /return \{ kind: 'output' \}/);
+  assert.match(contentScript, /element instanceof HTMLOutputElement/);
+  assert.match(contentScript, /element instanceof HTMLProgressElement/);
+  assert.match(protocol, /\| 'progress'/);
+  assert.match(protocol, /\| 'meter'/);
+  assert.match(protocol, /\| 'output'/);
+  assert.match(protocol, /indeterminate\?: boolean/);
   assert.match(rust, /control\.optionsRevision = compactContentRevision\('options'/);
   assert.match(rust, /optionCount: optionPayload\.options\.length/);
   assert.match(rust, /const visibleModalDialogs = Array\.from\(/);
   assert.equal([...rust.matchAll(/const modalLayerFor = \(candidate\) =>/g)].length, 2);
   assert.equal([...rust.matchAll(/if \(layer >= activeModalLayer\)/g)].length, 2);
+  assert.equal(
+    [...rust.matchAll(/composedContains\(candidate, deepActiveElement\(\)\)/g)].length,
+    2,
+  );
   assert.match(rust, /state\.modalBlocked = true/);
   assert.match(rust, /const actions = modalBlocked \? \[\] : actionList\(element, role\)/);
   assert.match(rust, /state: stateFor\(element, modalBlocked\)/);
@@ -83,14 +523,170 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /'stepMismatch'/);
   assert.match(interactionScript, /target\.value\.length < target\.minLength/);
   assert.match(interactionScript, /return constraintFailure\(validityIssues\)/);
+  assert.match(interactionScript, /const applyTextControlDefault = \(\) =>/);
+  assert.match(interactionScript, /const printableKey = \(/);
+  assert.match(interactionScript, /Array\.from\(requestedKey\)\.length === 1/);
+  assert.match(
+    interactionScript,
+    /&& !\/\[\\p\{Cc\}\\p\{Cs\}\\p\{Z\}\]\/u\.test\(requestedKey\)/,
+  );
+  assert.match(interactionScript, /`Key\$\{key\.toUpperCase\(\)\}`/);
+  assert.match(interactionScript, /`Digit\$\{key\}`/);
+  assert.match(rust, /value\.strip_prefix\('F'\)/);
+  assert.match(rust, /\(1\.\.=24\)\.contains\(&parsed\)/);
+  assert.match(interactionScript, /if \(printableKey\) \{\s*replacement = key/);
+  assert.match(interactionScript, /const primaryTextShortcut = \(/);
+  assert.match(interactionScript, /!modifiers\.altKey/);
+  assert.match(interactionScript, /modifiers\.ctrlKey !== modifiers\.metaKey/);
+  assert.match(
+    interactionScript,
+    /const semanticClipboardKey = Symbol\.for\('mengine\.agent\.textClipboard'\)/,
+  );
+  assert.match(interactionScript, /const primaryClipboardShortcut = \(/);
+  assert.match(interactionScript, /\['c', 'x', 'v'\]\.includes\(key\.toLowerCase\(\)\)/);
+  assert.match(interactionScript, /Password fields cannot use the Agent private text clipboard/);
+  assert.match(
+    interactionScript,
+    /writeSemanticClipboard\(element\.value\.slice\(start, end\)\)/,
+  );
+  assert.match(interactionScript, /writeSemanticClipboard\(text\.slice\(start, end\)\)/);
+  assert.equal([...interactionScript.matchAll(/inputType = 'deleteByCut'/g)].length, 2);
+  assert.equal([...interactionScript.matchAll(/inputType = 'insertFromPaste'/g)].length, 2);
+  assert.match(
+    interactionScript,
+    /clipboardScope: semanticClipboardOperation \? 'window-private' : null/,
+  );
+  assert.doesNotMatch(
+    interactionScript,
+    /navigator\.clipboard|new ClipboardEvent|execCommand\(/,
+  );
+  assert.match(
+    interactionScript,
+    /const semanticTextHistoryKey = Symbol\.for\('mengine\.agent\.textHistory'\)/,
+  );
+  assert.match(interactionScript, /semanticTextHistoryRegistry instanceof WeakMap/);
+  assert.match(interactionScript, /const textHistoryMaxEntries = 64/);
+  assert.match(interactionScript, /const textHistoryMaxCharacters = 1000000/);
+  assert.match(interactionScript, /const requestedTextHistoryOperation = primaryTextShortcut/);
+  assert.match(interactionScript, /key\.toLowerCase\(\) === 'z'/);
+  assert.match(interactionScript, /key\.toLowerCase\(\) === 'y'/);
+  assert.match(interactionScript, /inputType: operation === 'undo' \? 'historyUndo' : 'historyRedo'/);
+  assert.match(interactionScript, /recordTextHistoryMutation\(element, captureTextHistorySnapshot\(element\)\)/);
+  assert.match(interactionScript, /clearSemanticTextHistory\(element\)/);
+  assert.match(interactionScript, /Password fields cannot use the Agent private text history/);
+  assert.match(
+    interactionScript,
+    /textHistoryScope: performedTextHistoryOperation \? 'element-private' : null/,
+  );
+  assert.match(interactionScript, /const selectAllShortcut = \(/);
+  assert.match(interactionScript, /key\.toLowerCase\(\) === 'a'/);
+  assert.match(interactionScript, /&& primaryTextShortcut/);
+  assert.match(
+    interactionScript,
+    /if \(selectAllShortcut\) \{\s*setSelection\(0, length\);\s*return true;/,
+  );
+  assert.match(
+    interactionScript,
+    /if \(selectAllShortcut\) \{\s*const range = document\.createRange\(\);\s*range\.selectNodeContents\(element\);\s*selection\.removeAllRanges\(\);\s*selection\.addRange\(range\);/,
+  );
+  assert.match(interactionScript, /const graphemeBoundaries = \(rawText\) =>/);
+  assert.match(interactionScript, /typeof Intl\.Segmenter === 'function'/);
+  assert.match(interactionScript, /granularity: 'grapheme'/);
+  assert.match(interactionScript, /for \(const codePoint of Array\.from\(text\)\)/);
+  assert.match(interactionScript, /const wordStarts = \(rawText\) =>/);
+  assert.match(interactionScript, /granularity: 'word'/);
+  assert.match(interactionScript, /segment\.isWordLike/);
+  assert.match(interactionScript, /\/\[\\p\{L\}\\p\{N\}\\p\{M\}_\]\/u/);
+  assert.match(interactionScript, /const previousWordBoundary = \(starts, rawOffset\) =>/);
+  assert.match(interactionScript, /const nextWordBoundary = \(starts, rawOffset, length\) =>/);
+  assert.match(interactionScript, /const primaryTextDefault = \(/);
+  assert.match(interactionScript, /&& !primaryTextDefault/);
+  assert.match(
+    interactionScript,
+    /\? previousWordBoundary\(starts, focus\)\s*: previousGraphemeBoundary\(boundaries, focus\)/,
+  );
+  assert.match(
+    interactionScript,
+    /\? nextWordBoundary\(starts, focus, length\)\s*: nextGraphemeBoundary\(boundaries, focus\)/,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /replacementStart = previousGraphemeBoundary\(boundaries, start\)/g,
+    )].length,
+    0,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /replacementEnd = nextGraphemeBoundary\(boundaries, end\)/g,
+    )].length,
+    0,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /replacementStart = primaryTextShortcut\s*\? previousWordBoundary\(starts, start\)\s*: previousGraphemeBoundary\(boundaries, start\)/g,
+    )].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /replacementEnd = primaryTextShortcut\s*\? nextWordBoundary\(starts, end, length\)\s*: nextGraphemeBoundary\(boundaries, end\)/g,
+    )].length,
+    2,
+  );
+  assert.doesNotMatch(interactionScript, /replacementStart = Math\.max\(0, start - 1\)/);
+  assert.doesNotMatch(interactionScript, /replacementEnd = Math\.min\(length, end \+ 1\)/);
+  assert.match(interactionScript, /element\.maxLength >= 0 && nextValue\.length > element\.maxLength/);
+  assert.match(interactionScript, /element\.setSelectionRange\(/);
+  assert.equal(
+    [...interactionScript.matchAll(/'deleteContentBackward'/g)].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(/'deleteContentForward'/g)].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(/'deleteWordBackward'/g)].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(/'deleteWordForward'/g)].length,
+    2,
+  );
+  assert.match(interactionScript, /inputType = 'insertLineBreak'/);
+  assert.match(interactionScript, /const handledTextDefault = acceptsDefault && applyTextControlDefault\(\)/);
+  assert.match(interactionScript, /const applyContentEditableDefault = \(\) =>/);
+  assert.match(interactionScript, /const handledContentEditableDefault = \(/);
+  assert.match(interactionScript, /const textPointAt = \(rawOffset\) =>/);
+  assert.match(interactionScript, /new InputEvent\('beforeinput'/);
+  assert.match(interactionScript, /replacementRange\.deleteContents\(\)/);
+  assert.match(interactionScript, /replacementRange\.insertNode\(inserted\)/);
+  assert.match(interactionScript, /const verticalColumnKey = Symbol\.for\('mengine\.agent\.textVerticalColumn'\)/);
+  assert.match(interactionScript, /'ArrowUp',\s*'ArrowDown',\s*'PageUp',\s*'PageDown'/);
+  assert.match(interactionScript, /element\[verticalColumnKey\] = \{\s*column: preferredColumn,\s*position: target,\s*lineStart: targetLineStart/);
+  assert.match(interactionScript, /const applyNativeDialogDefault = \(\) =>/);
+  assert.match(interactionScript, /dialog\.dispatchEvent\(new Event\('cancel'/);
+  assert.match(interactionScript, /if \(!cancelled && dialog\.open\) dialog\.close\(\)/);
+  assert.match(
+    interactionScript,
+    /const handledDialogDefault = \(\s*acceptsDefault\s*&& !handledTextDefault\s*&& !handledContentEditableDefault\s*&& applyNativeDialogDefault\(\)/,
+  );
+  assert.match(interactionScript, /const applyNativeControlDefault = \(\) =>/);
+  assert.match(interactionScript, /\['checkbox', 'radio'\]\.includes\(element\.type\)/);
+  assert.match(interactionScript, /element instanceof HTMLSelectElement && !element\.multiple/);
+  assert.match(interactionScript, /element\.selectedIndex = nextIndex/);
+  assert.match(interactionScript, /if \(steps > 0\) element\.stepUp\(steps\)/);
+  assert.match(interactionScript, /else element\.stepDown\(-steps\)/);
+  assert.match(interactionScript, /const handledNativeDefault = \(/);
   assert.match(bridge, /if \(result\.constraintViolation\) \{/);
   assert.match(bridge, /validityIssues: result\.validityIssues \?\? \[\]/);
+  assert.match(bridge, /if \(result\.clipboardDenied\) \{/);
+  assert.match(bridge, /clipboardDenied: true/);
   assert.match(interactionScript, /is blocked by active modal dialog/);
   assert.match(interactionScript, /modalBlocked: true/);
-  assert.match(interactionScript, /activeModal\.contains\(targetElement\)/);
+  assert.match(interactionScript, /composedContains\(activeModal, targetElement\)/);
   assert.match(bridge, /if \(result\.modalBlocked\) \{/);
   assert.match(bridge, /'Interact with or dismiss the active modal dialog first'/);
-  assert.match(rust, /if \(disabled\) return actions;/);
   assert.match(rust, /MENGINE_EDITOR_CONFIG_DIR/);
   assert.match(rust, /\| "dragTo"/);
   assert.match(rust, /key\.startsWith\('__reactProps\$'\)/);
@@ -102,31 +698,53 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /element\.scrollBy/);
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /actions\.push\('keyPress'\)/);
+  assert.match(
+    rust,
+    /element\.isContentEditable && !readOnly/,
+  );
+  assert.match(
+    interactionScript,
+    /'button, input, select, textarea, a\[href\], area\[href\], summary, '/,
+  );
+  assert.match(interactionScript, /candidate\.tabIndex >= 0/);
+  assert.match(interactionScript, /&& rendered\(candidate\)/);
+  assert.match(interactionScript, /&& !effectivelyDisabled\(candidate\)/);
+  assert.match(
+    interactionScript,
+    /&& \(!activeModal \|\| composedContains\(activeModal, candidate\)\)/,
+  );
+  assert.match(interactionScript, /const leftPositive = left\.tabIndex > 0/);
+  assert.match(interactionScript, /return left\.tabIndex - right\.tabIndex/);
   assert.match(rust, /actions\.push\('dragTo'\)/);
   assert.match(rust, /actions\.push\('dragBy'\)/);
   assert.match(rust, /"shiftKey": shift_key\.unwrap_or\(false\)/);
   assert.match(rust, /"ctrlKey": ctrl_key\.unwrap_or\(false\)/);
-  assert.match(rust, /modifier keys are only valid for click, key, or drag actions/);
+  assert.match(rust, /modifier keys are only valid for click, wheel, key, or drag actions/);
   assert.match(rust, /shiftKey: requestedShiftKey === true/);
   assert.match(rust, /\.\.\.modifiers/);
   assert.match(rust, /modifiers\.shiftKey \? focusable\.length - 1 : 0/);
   assert.match(rust, /getAttribute\('data-agent-drag-by'\) === 'true'/);
+  assert.equal(
+    [...rust.matchAll(/explicitDragBy\s*\|\|\s*typeof (?:props|reactProps)\.onPointerMove/g)].length,
+    2,
+  );
   assert.match(rust, /typeof props\.onClick !== 'function' \|\| explicitDragBy/);
   assert.match(rust, /typeof reactProps\.onClick === 'function' && !explicitDragBy/);
   assert.match(rust, /actions\.push\('hover'\)/);
   assert.match(rust, /new DataTransfer\(\)/);
   assert.match(rust, /new DragEvent\(type/);
   assert.match(rust, /dispatchDrag\(targetElement, 'drop'\)/);
-  assert.match(rust, /dragBy must end inside the target WebView viewport/);
+  assert.match(rust, /Every dragBy path point must stay inside the target WebView viewport/);
   assert.match(rust, /Object\.defineProperty\(element, name/);
   assert.match(rust, /dispatchPointerAt\(element, 'mousemove'/);
   assert.match(rust, /Symbol\.for\('mengine\.agent\.hoveredElement'\)/);
-  assert.match(rust, /!previous\.contains\(element\)/);
-  assert.match(rust, /previousProps\.onPointerLeave\(reactHoverEvent/);
+  assert.match(rust, /!composedContains\(previous, element\)/);
+  assert.match(rust, /props\.onPointerLeave\(reactHoverEvent\(target/);
   assert.match(rust, /reactProps\.onPointerEnter\(reactHoverEvent/);
   assert.doesNotMatch(contentScript, /targetElement|targetSelector|action === 'dragTo'/);
   assert.match(interactionScript, /let targetElement = null/);
-  assert.match(interactionScript, /document\.querySelector\(targetSelector\)/);
+  assert.doesNotMatch(interactionScript, /document\.querySelector\(targetSelector\)/);
+  assert.match(interactionScript, /targetElement = guardedTarget\.element/);
   assert.match(rust, /new KeyboardEvent\(type/);
   assert.match(rust, /requestedKey === 'Space' \? ' ' :/);
   assert.match(rust, /element\.focus\(\{ preventScroll: true \}\)/);
@@ -154,11 +772,19 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /sink\.close\(\)\.await/);
   assert.equal(tauriConfig.app.windows[0].visible, false);
   assert.equal(tauriConfig.app.windows[0].focus, false);
+  assert.equal(tauriConfig.identifier, 'com.mengine.editor');
+  assert.match(native, /const EDITOR_IDENTIFIER: &str = "com\.mengine\.editor"/);
   assert.match(native, /MENGINE_EDITOR_BACKGROUND/);
   assert.match(native, /MENGINE_EDITOR_CONFIG_DIR must be an absolute path/);
   assert.match(native, /fn get_editor_instance_id\(state: State<'_, AppState>\)/);
-  assert.match(native, /editor_instance_id: uuid::Uuid::new_v4\(\)\.to_string\(\)/);
-  assert.match(native, /if starts_in_background\(\)/);
+  assert.match(native, /let editor_instance_id = uuid::Uuid::new_v4\(\)\.to_string\(\)/);
+  assert.match(native, /context\.config_mut\(\)\.identifier = identifier\.clone\(\)/);
+  assert.match(native, /cleanup_background_runtime_paths\(app_handle, identifier\)/);
+  assert.match(native, /default_editor_config_dir\(\)/);
+  assert.match(rust, /"runtimeIdentifier": app\.config\(\)\.identifier/);
+  assert.match(rust, /"background": crate::starts_in_background\(\)/);
+  assert.match(rust, /agent-bridge-background\.json/);
+  assert.match(native, /let background = starts_in_background\(\)/);
   assert.match(native, /main\.hide\(\)\?/);
   assert.match(native, /main\.set_focusable\(false\)\?/);
   assert.match(native, /main\.show\(\)\?/);
@@ -207,6 +833,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /source_width,/);
   assert.match(rust, /scale: output_scale\.min\(1\.0\)/);
   assert.match(bridge, /window\.ui_drag_by requires a non-zero deltaX or deltaY/);
+  assert.match(bridge, /window\.ui_drag_by path is mutually exclusive with deltaX and deltaY/);
+  assert.match(bridge, /Hover leave target does not match the current semantic hover target/);
+  assert.match(bridge, /Semantic value edit changed the control but did not confirm its commit boundary/);
+  assert.match(bridge, /if \(result\.valueCommitConfirmed === false\)/);
+  assert.match(bridge, /if \(result\.textHistoryDenied\)/);
+  assert.match(bridge, /The Agent private text history cannot access this control/);
   assert.match(bridge, /Window UI interaction requires expectedSnapshotRevision/);
   assert.match(bridge, /must be hidden and unfocused before semantic UI interaction/);
   assert.match(bridge, /requiredWindowState: 'hidden-unfocused'/);
@@ -221,7 +853,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /semantic_ui_interaction_refuses_visible_or_focused_windows/);
   assert.match(rust, /actualSnapshotRevision/);
   assert.match(rust, /new MutationObserver/);
-  assert.match(rust, /guardedEpoch !== revisionGuard\.epoch/);
+  assert.match(rust, /guardedRevision\?\.epoch !== revisionGuard\.epoch/);
   assert.match(rust, /evaluate_webview_script_with_await\(&app, &window_label, expression, true\)/);
   assert.match(rust, /await waitForRender\(\)/);
   assert.match(rust, /postObservationConfirmed/);
@@ -253,7 +885,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /isDefaultPanelLayout\(lastLayout\)/);
   assert.match(bridge, /function isDefaultPanelLayout\(layout: PanelLayoutSnapshot\)/);
   assert.match(bridge, /nativePanelWindows: lastNativePanelWindows/);
-  assert.match(bridge, /agentOwnedEditorWindows = new Set<string>\(\)/);
+  assert.doesNotMatch(bridge, /agentOwnedEditorWindows = new Set<string>\(\)/);
   assert.match(
     bridge,
     /existing && \(existing\.visible \|\| existing\.focused\)[\s\S]*cannot be reused for background Agent work/,
@@ -262,15 +894,18 @@ test('whole-window agent capture is background-safe and addressable by window la
     bridge,
     /if \(target\.visible \|\| target\.focused\)[\s\S]*cannot be used for background Agent work/,
   );
-  assert.match(bridge, /if \(existing === undefined\) this\.agentOwnedEditorWindows\.add/);
-  assert.match(bridge, /if \(!this\.agentOwnedEditorWindows\.has\(windowLabel\)\)/);
+  assert.match(bridge, /agentOwned: existing === undefined/);
+  assert.match(bridge, /if \(!target\.agentOwned\)/);
   assert.match(bridge, /if \(target\.visible \|\| target\.focused\)/);
-  assert.match(bridge, /this\.agentOwnedEditorWindows\.delete\(windowLabel\)/);
+  assert.doesNotMatch(bridge, /agentOwnedEditorWindows\.delete\(windowLabel\)/);
   assert.match(bridge, /snapshotRevision: initialSnapshot\.snapshotRevision/);
+  assert.match(bridge, /agentOwned: target\.agentOwned/);
   assert.match(bridge, /did not expose semantic UI within 5 seconds/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   assert.match(mcp, /name: 'get_window_ui'/);
+  assert.match(mcp, /name: 'wait_for_window_ui_change'/);
   assert.match(mcp, /name: 'read_window_ui_content'/);
+  assert.match(mcp, /untruncated semantic name\/description/);
   assert.match(mcp, /Continue with nextOffset until null/);
   assert.match(mcp, /expectedSnapshotRevision/);
   assert.match(mcp, /name: 'list_open_documents'/);
@@ -288,6 +923,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'drag_window_ui_by'/);
   assert.match(mcp, /'hover_window_ui'/);
   assert.match(mcp, /'press_window_ui_key'/);
+  assert.match(mcp, /bounded element-private history/);
+  assert.match(mcp, /never touches the editor scene\/resource undo stack/);
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /'close_editor_window'/);
   assert.match(mcp, /'open_editor_window'/);
@@ -295,7 +932,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /this\.windowObservationTimer = window\.setInterval/);
   assert.match(bridge, /private recordWindowInventory/);
   assert.match(bridge, /windows: snapshot/);
-  assert.match(bridge, /if \(!openLabels\.has\(label\)\) this\.agentOwnedEditorWindows\.delete\(label\)/);
+  assert.match(bridge, /created without its native Agent ownership marker/);
   assert.match(bridge, /closeRegisteredEditorWindow\(target\.label, false\)/);
   assert.match(mcp, /name: 'get_panel_layout'/);
   assert.match(mcp, /name: 'list_panels'/);
@@ -410,6 +1047,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'set_entity_layers'/);
   assert.match(mcp, /'set_entities_active'/);
   assert.match(mcp, /name: 'capture_window_region'/);
+  assert.match(mcp, /name: 'capture_window_element'/);
   assert.match(mcp, /'add_component_to_entities'/);
   assert.match(mcp, /'remove_component_from_entities'/);
   assert.match(mcp, /'set_component_on_entities'/);
@@ -426,6 +1064,19 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'clear_profiler_samples'/);
   assert.match(mcp, /name: 'describe_command'/);
   assert.match(mcp, /bridgeExecute,\s*bridgeQuery,\s*closeBridgeConnection/);
+});
+
+test('editor shortcuts yield native keyboard behavior to form controls', () => {
+  const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
+  const typingTarget = app.match(
+    /function isTypingTarget\(el: EventTarget \| null\) \{([\s\S]*?)\n\}/,
+  )?.[1];
+
+  assert.ok(typingTarget);
+  assert.match(typingTarget, /tag === 'INPUT'/);
+  assert.match(typingTarget, /tag === 'TEXTAREA'/);
+  assert.match(typingTarget, /tag === 'SELECT'/);
+  assert.match(typingTarget, /el\.isContentEditable/);
 });
 
 test('the main AgentBridge transport is available before a project is opened', () => {
@@ -732,6 +1383,8 @@ test('panel and menu agent surfaces use live providers and background activation
   const popup = fs.readFileSync(path.join(root, 'src', 'panels', 'PopupMenu.tsx'), 'utf8');
   const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
   const menu = fs.readFileSync(path.join(root, 'src', 'panels', 'MenuBar.tsx'), 'utf8');
+  const dialog = fs.readFileSync(path.join(root, 'src', 'editorDialog.ts'), 'utf8');
+  const dialogHost = fs.readFileSync(path.join(root, 'src', 'EditorDialogHost.tsx'), 'utf8');
   const build = fs.readFileSync(path.join(root, 'src', 'panels', 'BuildSettings.tsx'), 'utf8');
   const project = fs.readFileSync(path.join(root, 'src', 'panels', 'Project.tsx'), 'utf8');
   const dock = fs.readFileSync(path.join(root, 'src', 'panels', 'DockWorkspace.tsx'), 'utf8');
@@ -818,6 +1471,21 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(
     project,
     /data-agent-alternative="import_asset_file"[\s\S]*?void completeImport\(\)/,
+  );
+  assert.match(project, /agentAcceptBlocked: true,[\s\S]*agentAlternative: 'delete_scene'/);
+  assert.match(project, /data-agent-alternative="preview_scene_delete"/);
+  assert.match(project, /data-agent-alternative="preview_asset_trash"/);
+  assert.match(project, /data-agent-alternative="trash_asset"/);
+  assert.match(dialog, /agentAcceptBlocked: options\.agentAcceptBlocked === true/);
+  assert.match(dialogHost, /dialog\.agentAcceptBlocked \? 'click doubleClick keyPress'/);
+  assert.match(dialogHost, /data-agent-alternative=\{dialog\.agentAlternative \?\? undefined\}/);
+  assert.match(
+    bridge,
+    /rawAction === 'accept' && activeDialog\.agentAcceptBlocked[\s\S]*'PERMISSION_DENIED'/,
+  );
+  assert.match(
+    bridge,
+    /if \(result\.agentBlocked\)[\s\S]*'READONLY'[\s\S]*agentAlternative: result\.agentAlternative \?\? null/,
   );
   assert.match(
     project,

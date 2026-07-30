@@ -35,6 +35,8 @@ test('editor dialogs are queued and resolved without blocking the JavaScript thr
   assert.equal(first.kind, 'confirm');
   assert.equal(first.title, 'Unsaved Changes');
   assert.equal(first.confirmLabel, 'Discard');
+  assert.equal(first.agentAcceptBlocked, false);
+  assert.equal(first.agentAlternative, null);
   assert.deepEqual(listEditorDialogs(), [{ ...first, windowLabel: 'main' }]);
   assert.equal(respondToEditorDialog('stale-id', 'accept'), null);
   assert.deepEqual(
@@ -92,6 +94,21 @@ test('prompt results and defaults are bounded for safe Agent transport', async (
   assert.equal((await prompt).length, 4096);
 });
 
+test('dangerous confirmations expose an Agent-safe accept boundary', async () => {
+  const confirmation = confirmEditor('Delete permanently?', {
+    title: 'Delete Scene',
+    confirmLabel: 'Delete Permanently',
+    agentAcceptBlocked: true,
+    agentAlternative: 'delete_scene',
+  });
+  const snapshot = getActiveEditorDialog();
+
+  assert.equal(snapshot.agentAcceptBlocked, true);
+  assert.equal(snapshot.agentAlternative, 'delete_scene');
+  respondToEditorDialog(snapshot.id, 'cancel');
+  assert.equal(await confirmation, false);
+});
+
 test('remote dialog state is listed and notifies main-window subscribers', async () => {
   initializeEditorInstance('editor-dialog-sync-test');
   const stopSync = initializeEditorDialogSync('main');
@@ -109,6 +126,8 @@ test('remote dialog state is listed and notifies main-window subscribers', async
     defaultValue: null,
     confirmLabel: 'Continue',
     cancelLabel: 'Cancel',
+    agentAcceptBlocked: false,
+    agentAlternative: null,
     createdAt: 123,
   };
 

@@ -7,6 +7,7 @@ const windowState = (label, overrides = {}) => ({
   title: label,
   kind: label === 'main' ? 'main' : 'panel',
   panelKind: label === 'main' ? null : label.slice('panel-'.length),
+  typeId: null,
   editorType: null,
   url: 'http://localhost',
   visible: false,

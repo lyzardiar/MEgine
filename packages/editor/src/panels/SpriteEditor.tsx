@@ -358,6 +358,7 @@ export function SpriteEditor(props: {
           <canvas
             ref={canvasRef}
             style={{ width: canvasSize.width, height: canvasSize.height }}
+            role="img"
             aria-label="Select sprite slice from preview"
             onClick={selectAtPointer}
           />
@@ -480,12 +481,18 @@ export function SpriteEditor(props: {
                           />
                         )))}
                       </div>
-                      <button type="button" className="wide" onClick={() => {
-                        const reference = `${basePath}#${activeSlice.name}`;
-                        void navigator.clipboard.writeText(reference)
-                          .then(() => props.onLog(`Copied sprite reference: ${reference}`))
-                          .catch((reason) => props.onLog(`Copy failed: ${String(reason)}`, 'warn'));
-                      }}>
+                      <button
+                        type="button"
+                        className="wide"
+                        data-agent-blocked-actions="click keyPress"
+                        data-agent-alternative="get_sprite_import_settings"
+                        onClick={() => {
+                          const reference = `${basePath}#${activeSlice.name}`;
+                          void navigator.clipboard.writeText(reference)
+                            .then(() => props.onLog(`Copied sprite reference: ${reference}`))
+                            .catch((reason) => props.onLog(`Copy failed: ${String(reason)}`, 'warn'));
+                        }}
+                      >
                         Copy Sprite Reference
                       </button>
                     </section>

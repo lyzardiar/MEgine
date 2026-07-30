@@ -358,7 +358,7 @@ function AnimationCurvePreview(props: {
         <strong>Curve</strong>
         <span>{minimum.toFixed(3)} to {maximum.toFixed(3)}</span>
       </header>
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="Animation curve preview">
+      <svg role="img" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="Animation curve preview">
         <line className="timeline-curve-midline" x1="0" y1={height / 2} x2={width} y2={height / 2} />
         {first.slice(0, CURVE_COLORS.length).map((_channel, channel) => (
           <polyline
@@ -1085,6 +1085,9 @@ function AnimationCurveWorkspace(props: {
       </header>
       <svg
         className={drag?.kind === 'view' ? `is-${drag.mode}` : undefined}
+        role="application"
+        data-agent-wheel="true"
+        aria-roledescription="animation curve editor"
         viewBox={`0 0 ${CURVE_VIEW_WIDTH} ${CURVE_VIEW_HEIGHT}`}
         preserveAspectRatio="none"
         aria-label="Editable animation curve"
@@ -1153,6 +1156,7 @@ function AnimationCurveWorkspace(props: {
             <circle
               role="button"
               tabIndex={0}
+              data-agent-drag-by="true"
               aria-label={`${handle.side === 'in_tangent' ? 'In' : 'Out'} tangent handle`}
               className="timeline-curve-tangent"
               cx={handle.point.x}
@@ -1182,6 +1186,7 @@ function AnimationCurveWorkspace(props: {
               <circle
                 role="button"
                 tabIndex={0}
+                data-agent-drag-by="true"
                 aria-pressed={selected}
                 aria-label={`Curve key ${keyIndex + 1} channel ${channel + 1} at ${formatTimelineTimeTooltip(displayTime, props.frameRate)}`}
                 className={`timeline-curve-key${selected ? ' selected' : ''}`}
@@ -4081,6 +4086,9 @@ export function Timeline(props: {
 
           <div
             className="timeline-grid-scroll"
+            role="region"
+            aria-label="Timeline track grid"
+            data-agent-wheel="true"
             hidden={viewMode === 'curves'}
             onWheel={(event) => {
               if (event.ctrlKey) {

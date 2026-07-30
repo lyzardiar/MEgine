@@ -24,7 +24,7 @@ function assertParity(commandId, args, valid) {
   }
 }
 
-const UI_REVISION = 'ui-v4-42-0123456789abcdef';
+const UI_REVISION = 'ui-v16-42-0123456789abcdef';
 
 test('direct AgentBridge schema validation matches MCP for valid command arguments', () => {
   for (const [commandId, args] of [
@@ -39,10 +39,34 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
       shiftKey: true,
       expectedSnapshotRevision: UI_REVISION,
     }],
+    ['window.ui_press_key', {
+      selector: '#shortcut-target',
+      key: 'A',
+      ctrlKey: true,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_press_key', {
+      selector: '#unicode-input',
+      key: '文',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_press_key', {
+      selector: '#rename-target',
+      key: 'F2',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
     ['window.ui_click', {
       selector: '#range-end',
       ctrlKey: true,
       altKey: false,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_scroll', {
+      selector: '#timeline',
+      offsetX: 24,
+      offsetY: 12,
+      deltaX: 120,
+      shiftKey: true,
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['window.ui_drag_to', {
@@ -52,12 +76,23 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     }],
     ['window.ui_drag_by', {
       selector: '#splitter',
+      button: 'right',
       deltaX: 40,
       deltaY: 0,
       expectedSnapshotRevision: UI_REVISION,
     }],
+    ['window.ui_drag_by', {
+      selector: '#canvas',
+      path: [
+        { deltaX: 10, deltaY: 0 },
+        { deltaX: 10, deltaY: 20 },
+        { deltaX: 30, deltaY: 20 },
+      ],
+      expectedSnapshotRevision: UI_REVISION,
+    }],
     ['window.ui_hover', {
       selector: '#submenu',
+      state: 'leave',
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['build.run', { executable: 'Builds\\Game.exe', allowForegroundLaunch: true }],
@@ -104,7 +139,17 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['playback.step', { deltaTime: 0 }],
     ['window.ui_press_key', {
       selector: '#dialog-input',
-      key: 'A',
+      key: 'AB',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_press_key', {
+      selector: '#dialog-input',
+      key: ' ',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_press_key', {
+      selector: '#dialog-input',
+      key: 'F25',
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['window.ui_click', {
@@ -125,6 +170,11 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['window.ui_drag_by', {
       selector: '#splitter',
       deltaX: 40,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_drag_by', {
+      selector: '#canvas',
+      path: [{ deltaX: 10 }],
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['window.ui_hover', {}],

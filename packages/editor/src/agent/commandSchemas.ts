@@ -138,6 +138,38 @@ const uiModifierContext: SchemaProperties = {
   altKey: booleanValue('Dispatch the interaction with Alt held'),
   metaKey: booleanValue('Dispatch the interaction with Meta held'),
 };
+const uiPointerOffsetContext: SchemaProperties = {
+  offsetX: {
+    type: 'number',
+    minimum: -1_000_000,
+    maximum: 1_000_000,
+    description:
+      'Optional horizontal CSS-pixel offset from the element left edge; defaults to center and must resolve inside current bounds',
+  },
+  offsetY: {
+    type: 'number',
+    minimum: -1_000_000,
+    maximum: 1_000_000,
+    description:
+      'Optional vertical CSS-pixel offset from the element top edge; defaults to center and must resolve inside current bounds',
+  },
+};
+const uiTargetPointerOffsetContext: SchemaProperties = {
+  targetOffsetX: {
+    type: 'number',
+    minimum: -1_000_000,
+    maximum: 1_000_000,
+    description:
+      'Optional horizontal CSS-pixel offset from the drag target left edge; defaults to center and must resolve inside current bounds',
+  },
+  targetOffsetY: {
+    type: 'number',
+    minimum: -1_000_000,
+    maximum: 1_000_000,
+    description:
+      'Optional vertical CSS-pixel offset from the drag target top edge; defaults to center and must resolve inside current bounds',
+  },
+};
 const uiInteractionRequired = ['selector', 'expectedSnapshotRevision'];
 
 export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
@@ -866,16 +898,19 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'window.ui_click': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_double_click': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_context_click': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_set_value': objectSchema({
@@ -883,8 +918,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
     value: stringValue('New form control value'),
   }, [...uiInteractionRequired, 'value']),
+  'window.ui_scroll_into_view': objectSchema({
+    ...uiInteractionContext,
+    selector: stringValue('Exact offscreen selector returned by window.ui_snapshot'),
+  }, uiInteractionRequired),
   'window.ui_scroll': objectSchema({
     ...uiInteractionContext,
+    ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact scrollable selector returned by window.ui_snapshot'),
     deltaX: {
       type: 'number',
@@ -896,19 +937,47 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       type: 'number',
       minimum: -1_000_000,
       maximum: 1_000_000,
-      description: 'Vertical CSS-pixel delta',
+      description: 'Vertical CSS-pixel delta; default 0',
     },
-  }, [...uiInteractionRequired, 'deltaY']),
+  }, uiInteractionRequired),
   'window.ui_drag_to': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
+    ...uiTargetPointerOffsetContext,
     selector: stringValue('Exact draggable source selector returned by window.ui_snapshot'),
     targetSelector: stringValue('Exact drop target selector returned by window.ui_snapshot'),
   }, [...uiInteractionRequired, 'targetSelector']),
   'window.ui_drag_by': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact pointer-gesture selector returned by window.ui_snapshot'),
+    button: {
+      type: 'string',
+      enum: ['left', 'middle', 'right'],
+      description: 'Mouse button held during the pointer gesture; default left',
+    },
+    path: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 64,
+      items: objectSchema({
+        deltaX: {
+          type: 'number',
+          minimum: -1_000_000,
+          maximum: 1_000_000,
+          description: 'Cumulative horizontal CSS-pixel displacement from the gesture start',
+        },
+        deltaY: {
+          type: 'number',
+          minimum: -1_000_000,
+          maximum: 1_000_000,
+          description: 'Cumulative vertical CSS-pixel displacement from the gesture start',
+        },
+      }, ['deltaX', 'deltaY']),
+      description: 'Optional bounded multi-segment path; mutually exclusive with deltaX and deltaY',
+    },
     deltaX: {
       type: 'number',
       minimum: -1_000_000,
@@ -921,34 +990,77 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       maximum: 1_000_000,
       description: 'Vertical CSS-pixel displacement; may be zero',
     },
-  }, [...uiInteractionRequired, 'deltaX', 'deltaY']),
+  }, uiInteractionRequired, {
+    anyOf: [
+      { required: ['deltaX', 'deltaY'] },
+      { required: ['path'] },
+    ],
+  }),
   'window.ui_hover': objectSchema({
     ...uiInteractionContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact hover-capable selector returned by window.ui_snapshot'),
+    state: {
+      type: 'string',
+      enum: ['enter', 'leave'],
+      description: 'Hover transition to dispatch; default enter',
+    },
   }, uiInteractionRequired),
   'window.ui_press_key': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,
     selector: stringValue('Exact keyboard target selector returned by window.ui_snapshot'),
     key: {
-      type: 'string',
-      enum: [
-        'Enter',
-        'Escape',
-        'Tab',
-        'Space',
-        'ArrowUp',
-        'ArrowDown',
-        'ArrowLeft',
-        'ArrowRight',
-        'Home',
-        'End',
-        'PageUp',
-        'PageDown',
-        'Backspace',
-        'Delete',
+      anyOf: [
+        {
+          type: 'string',
+          enum: [
+            'Enter',
+            'Escape',
+            'Tab',
+            'Space',
+            'ArrowUp',
+            'ArrowDown',
+            'ArrowLeft',
+            'ArrowRight',
+            'Home',
+            'End',
+            'PageUp',
+            'PageDown',
+            'Backspace',
+            'Delete',
+            'F1',
+            'F2',
+            'F3',
+            'F4',
+            'F5',
+            'F6',
+            'F7',
+            'F8',
+            'F9',
+            'F10',
+            'F11',
+            'F12',
+            'F13',
+            'F14',
+            'F15',
+            'F16',
+            'F17',
+            'F18',
+            'F19',
+            'F20',
+            'F21',
+            'F22',
+            'F23',
+            'F24',
+          ],
+        },
+        {
+          type: 'string',
+          pattern: '^[^\\p{Cc}\\p{Cs}\\p{Z}]$',
+        },
       ],
-      description: 'Allow-listed semantic key with optional modifier flags',
+      description: 'Allow-listed semantic key or one printable non-whitespace character with optional modifier flags',
     },
   }, [...uiInteractionRequired, 'key']),
 };

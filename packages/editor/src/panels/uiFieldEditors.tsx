@@ -259,6 +259,7 @@ export function SpriteSlot(props: {
         <button
           type="button"
           className="object-slot-name-btn"
+          aria-label={`${props.label}: ${label || props.noneLabel || 'None (Sprite)'}`}
           onClick={onPing}
           title="Ping in Project"
         >
@@ -278,6 +279,7 @@ export function SpriteSlot(props: {
           <button
             type="button"
             className="object-slot-clear"
+            aria-label={`Clear ${props.label}`}
             title="Clear"
             onClick={() => props.onChange(noneValue)}
           >
@@ -475,6 +477,7 @@ export function ProjectAssetSlot(props: {
         <button
           type="button"
           className="object-slot-name-btn"
+          aria-label={`${props.label}: ${selected?.name ?? (hasValue ? props.value : `None (${props.referenceType})`)}`}
           title="Ping in Project"
           onClick={() => {
             if (hasValue) pingProjectAsset(props.value, selected?.folder);
@@ -499,6 +502,7 @@ export function ProjectAssetSlot(props: {
           <button
             type="button"
             className="object-slot-clear"
+            aria-label={`Clear ${props.label}`}
             title="Clear"
             onClick={() => props.onChange(props.noneValue ?? '')}
           >
@@ -785,6 +789,12 @@ export function EntityReferenceField(props: {
         <button
           type="button"
           className="object-slot-name-btn"
+          aria-label={`${props.label}: ${selected?.name
+            ?? (props.value != null
+              ? `Missing (${props.value})`
+              : props.missingValue
+                ? `Missing (${props.missingValue})`
+                : 'None (GameObject)')}`}
           title="Ping in Hierarchy"
           onClick={() => {
             if (props.value != null) pingEntity(props.value);
@@ -802,7 +812,7 @@ export function EntityReferenceField(props: {
           type="button"
           className="object-slot-picker"
           title="Select GameObject"
-          aria-label="Select GameObject"
+          aria-label={`Select ${props.label} GameObject`}
           aria-haspopup="dialog"
           aria-expanded={pickerOpen}
           onClick={() => {
@@ -814,6 +824,7 @@ export function EntityReferenceField(props: {
           <button
             type="button"
             className="object-slot-clear"
+            aria-label={`Clear ${props.label}`}
             title="Clear"
             onClick={() => props.onChange(null)}
           >
@@ -988,6 +999,7 @@ export function UnityEventField(props: {
             <button
               type="button"
               className="object-slot-name-btn"
+              aria-label={`${props.label} target: ${targetLabel}`}
               title="Ping in Hierarchy"
               onClick={() => {
                 if (call.target != null) pingEntity(call.target);
@@ -1000,7 +1012,7 @@ export function UnityEventField(props: {
               type="button"
               className="object-slot-picker"
               title="Select GameObject"
-              aria-label="Select GameObject"
+              aria-label={`Select ${props.label} target GameObject`}
               aria-haspopup="dialog"
               aria-expanded={pickerOpen}
               onClick={() => {
@@ -1012,6 +1024,7 @@ export function UnityEventField(props: {
               <button
                 type="button"
                 className="object-slot-clear"
+                aria-label={`Clear ${props.label} target`}
                 title="Clear"
                 onClick={() => patch({ target: null, component: '', method: '' })}
               >

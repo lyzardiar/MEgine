@@ -44,6 +44,7 @@ test('every AgentBridge query has one strict authoritative parameter schema', ()
 test('query schemas accept documented read shapes and reject malformed or extra fields', () => {
   for (const [queryId, params] of [
     ['project.state', {}],
+    ['scene.authored_snapshot', {}],
     ['scene.diff', { fromRevision: 0 }],
     ['entity.get', { id: 0 }],
     ['entity.get', { name: 'Main Camera' }],
@@ -63,11 +64,23 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       height: 200,
       maxSize: 1_024,
     }],
+    ['view.capture_element', {
+      windowLabel: 'main',
+      selector: '#sprite-atlas-preview',
+      expectedSnapshotRevision: 'ui-v20-100-0123456789abcdef',
+      maxSize: 1_024,
+    }],
     ['window.ui_snapshot', { windowLabel: 'main', maxElements: 2_000, offset: 0 }],
     ['window.ui_snapshot', {
       maxElements: 50,
       offset: 50,
       expectedSnapshotRevision: 'ui-v1-100-0123456789abcdef',
+    }],
+    ['window.ui_wait', {
+      windowLabel: 'panel-inspector',
+      expectedSnapshotRevision: 'ui-v31-100-0123456789abcdef',
+      timeoutMs: 15_000,
+      maxElements: 5_000,
     }],
     ['window.ui_content', {
       selector: '#editor',
@@ -75,8 +88,18 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       field: 'text',
     }],
     ['window.ui_content', {
+      selector: '#labelled-control',
+      expectedSnapshotRevision: 'ui-v16-100-0123456789abcdef',
+      field: 'name',
+    }],
+    ['window.ui_content', {
+      selector: '#described-control',
+      expectedSnapshotRevision: 'ui-v16-100-0123456789abcdef',
+      field: 'description',
+    }],
+    ['window.ui_content', {
       selector: '#projection',
-      expectedSnapshotRevision: 'ui-v4-100-0123456789abcdef',
+      expectedSnapshotRevision: 'ui-v16-100-0123456789abcdef',
       field: 'options',
     }],
     ['window.ui_content', {
@@ -125,11 +148,27 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['view.window_screenshot', { maxSize: 4_097 }],
     ['view.capture_region', { x: 0, y: 0, width: 0, height: 100 }],
     ['view.capture_region', { x: -1, y: 0, width: 100, height: 100 }],
+    ['view.capture_element', {
+      selector: '#sprite-atlas-preview',
+      expectedSnapshotRevision: 'not-a-snapshot-revision',
+    }],
+    ['view.capture_element', {
+      selector: '   ',
+      expectedSnapshotRevision: 'ui-v20-100-0123456789abcdef',
+    }],
     ['window.ui_snapshot', { maxElements: 49 }],
     ['window.ui_snapshot', { maxElements: 50, offset: 50 }],
     ['window.ui_snapshot', {
       offset: 50,
       expectedSnapshotRevision: 'not-a-snapshot-revision',
+    }],
+    ['window.ui_wait', {}],
+    ['window.ui_wait', {
+      expectedSnapshotRevision: 'not-a-snapshot-revision',
+    }],
+    ['window.ui_wait', {
+      expectedSnapshotRevision: 'ui-v31-100-0123456789abcdef',
+      timeoutMs: 15_001,
     }],
     ['window.ui_content', { selector: '#editor', field: 'password' }],
     ['window.ui_content', { selector: '#editor', field: 'text' }],

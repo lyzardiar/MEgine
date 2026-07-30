@@ -39,6 +39,7 @@ Environment:
   MENGINE_AGENT_HTTP_PORT          Default listen port (0 chooses a free port)
   MENGINE_AGENT_HTTP_TOKEN         Optional bearer token (16-256 characters)
   MENGINE_AGENT_HTTP_FILE          Override HTTP discovery-file path
+  MENGINE_EDITOR_CONFIG_DIR        Discover background/foreground Bridge records here
   MENGINE_AGENT_BRIDGE_FILE        Override editor Bridge discovery-file path
   MENGINE_AGENT_APPROVAL_TOKEN     Forward an editor dangerous-operation approval
 

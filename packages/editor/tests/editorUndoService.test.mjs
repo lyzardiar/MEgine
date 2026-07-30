@@ -21,9 +21,13 @@ test('global undo service preserves names and symmetric snapshot state', () => {
     capture: state.capture, restore: state.restore,
   });
   state.value = 5;
+  assert.equal(service.undoScope, 'scene');
+  assert.equal(service.redoScope, null);
   assert.equal(service.undoLabel, 'Move Cube');
   assert.equal(service.undo(), true);
   assert.equal(state.value, 1);
+  assert.equal(service.undoScope, null);
+  assert.equal(service.redoScope, 'scene');
   assert.equal(service.redoLabel, 'Move Cube');
   assert.equal(service.redo(), true);
   assert.equal(state.value, 5);

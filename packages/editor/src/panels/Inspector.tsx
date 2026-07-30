@@ -156,6 +156,7 @@ function AxisInput(props: {
     <div className="axis">
       <span
         className={`${props.label} scrub-label`}
+        data-agent-drag-by="true"
         aria-label={`Adjust ${props.ariaLabel ?? props.label.toUpperCase()}`}
         title="拖拽调节数值 · Shift 加速 · Alt 精细"
         onPointerDown={onScrub}
@@ -224,10 +225,15 @@ function CompBlock(props: {
   }, [menuOpen]);
 
   return (
-    <div className="comp">
+    <div className="comp" data-agent-scope={props.title}>
       <div className="comp-head">
-        <button type="button" className="comp-toggle" onClick={() => setOpen(!open)}>
-          <span className="comp-foldout">{open ? '▾' : '▸'}</span>
+        <button
+          type="button"
+          className="comp-toggle"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          <span className="comp-foldout" aria-hidden>{open ? '▾' : '▸'}</span>
           <span className="comp-icon" aria-hidden>{props.title.slice(0, 1).toUpperCase()}</span>
           <span className="comp-title">{props.title}</span>
         </button>
@@ -361,6 +367,7 @@ function NumField(props: {
     <div className="field-row">
       <label
         className="scrub-label"
+        data-agent-drag-by="true"
         aria-label={`Adjust ${props.label}`}
         title="拖拽调节数值 · Shift 加速 · Alt 精细"
         onPointerDown={onScrub}

@@ -881,7 +881,15 @@ fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
             log::warn!("MENGINE_EDITOR_CONFIG_DIR must be an absolute path");
             return None;
         }
-        return Some(directory.join("agent-bridge.json"));
+        return Some(directory.join(if crate::starts_in_background() {
+            "agent-bridge-background.json"
+        } else {
+            "agent-bridge.json"
+        }));
+    }
+    if crate::starts_in_background() {
+        return crate::default_editor_config_dir()
+            .map(|directory| directory.join("agent-bridge-background.json"));
     }
     app.path()
         .app_config_dir()
@@ -891,7 +899,9 @@ fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
 
 /// Write `{ port, token, pid }` so adapters can discover and authenticate.
 /// Location: `$MENGINE_AGENT_BRIDGE_FILE` if set, then
-/// `$MENGINE_EDITOR_CONFIG_DIR/agent-bridge.json`, else the native app config dir.
+/// `$MENGINE_EDITOR_CONFIG_DIR`, else the stable native app config directory.
+/// Background records use `agent-bridge-background.json` so they never replace
+/// the foreground `agent-bridge.json`.
 fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
     let path = discovery_file_path(app);
     let Some(path) = path else {
@@ -902,6 +912,8 @@ fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
         "port": port,
         "token": token,
         "pid": std::process::id(),
+        "runtimeIdentifier": app.config().identifier,
+        "background": crate::starts_in_background(),
         "version": 1,
     })
     .to_string();
@@ -1520,6 +1532,27 @@ mod transport_tests {
     }
 
     #[test]
+    fn semantic_ui_keys_accept_single_printable_characters_only() {
+        for valid in [
+            "Enter",
+            "ArrowLeft",
+            "F1",
+            "F2",
+            "F12",
+            "F24",
+            "A",
+            "7",
+            "文",
+            "é",
+        ] {
+            assert!(valid_editor_ui_key(valid), "{valid}");
+        }
+        for invalid in ["", "F0", "F02", "F25", "f2", "AB", "👩‍💻", " ", "\n", "\0"] {
+            assert!(!valid_editor_ui_key(invalid), "{invalid:?}");
+        }
+    }
+
+    #[test]
     fn screenshot_size_is_bounded_before_native_capture() {
         assert_eq!(validated_screenshot_max_size(None).unwrap(), 2_048);
         assert_eq!(validated_screenshot_max_size(Some(256)).unwrap(), 256);
@@ -1573,6 +1606,62 @@ mod transport_tests {
         )
         .is_err());
     }
+
+    #[test]
+    fn element_capture_regions_clip_to_the_visible_viewport() {
+        let inside = WindowCaptureRegion {
+            x: 10.0,
+            y: 20.0,
+            width: 300.0,
+            height: 200.0,
+        };
+        assert_eq!(
+            clipped_element_capture_region(inside, inside, 1_280.0, 720.0).unwrap(),
+            (inside, false)
+        );
+        let partly_visible = WindowCaptureRegion {
+            x: 10.0,
+            y: 80.0,
+            width: 300.0,
+            height: 140.0,
+        };
+        assert_eq!(
+            clipped_element_capture_region(inside, partly_visible, 1_280.0, 720.0).unwrap(),
+            (partly_visible, true)
+        );
+        let partly_outside = WindowCaptureRegion {
+            x: -20.0,
+            y: 650.0,
+            width: 100.0,
+            height: 100.0,
+        };
+        assert_eq!(
+            clipped_element_capture_region(partly_outside, partly_outside, 1_280.0, 720.0,)
+                .unwrap(),
+            (
+                WindowCaptureRegion {
+                    x: 0.0,
+                    y: 650.0,
+                    width: 80.0,
+                    height: 70.0,
+                },
+                true,
+            )
+        );
+        assert!(clipped_element_capture_region(
+            WindowCaptureRegion {
+                x: 1_300.0,
+                ..inside
+            },
+            WindowCaptureRegion {
+                x: 1_300.0,
+                ..inside
+            },
+            1_280.0,
+            720.0,
+        )
+        .is_err());
+    }
 }
 
 // ── Background-safe editor-window observation ───────────────────────────────
@@ -1614,6 +1703,13 @@ pub struct WindowCaptureRegion {
     height: f64,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EditorUiDragPathPoint {
+    delta_x: f64,
+    delta_y: f64,
+}
+
 fn validated_capture_region(
     region: WindowCaptureRegion,
     viewport_width: f64,
@@ -1649,6 +1745,55 @@ fn validated_capture_region(
     Ok(region)
 }
 
+fn clipped_element_capture_region(
+    element_rect: WindowCaptureRegion,
+    visible_rect: WindowCaptureRegion,
+    viewport_width: f64,
+    viewport_height: f64,
+) -> Result<(WindowCaptureRegion, bool), String> {
+    if ![
+        element_rect.x,
+        element_rect.y,
+        element_rect.width,
+        element_rect.height,
+        visible_rect.x,
+        visible_rect.y,
+        visible_rect.width,
+        visible_rect.height,
+        viewport_width,
+        viewport_height,
+    ]
+    .iter()
+    .all(|value| value.is_finite())
+    {
+        return Err("element bounds and viewport coordinates must be finite".to_string());
+    }
+    if element_rect.width <= 0.0 || element_rect.height <= 0.0 {
+        return Err("semantic element must have positive rendered bounds".to_string());
+    }
+    if viewport_width <= 0.0 || viewport_height <= 0.0 {
+        return Err("WebView2 viewport dimensions must be positive".to_string());
+    }
+    let left = visible_rect.x.max(0.0);
+    let top = visible_rect.y.max(0.0);
+    let right = (visible_rect.x + visible_rect.width).min(viewport_width);
+    let bottom = (visible_rect.y + visible_rect.height).min(viewport_height);
+    if right <= left || bottom <= top {
+        return Err(
+            "semantic element is outside the current WebView2 viewport or overflow clip"
+                .to_string(),
+        );
+    }
+    let region = WindowCaptureRegion {
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
+    };
+    let clipped = region != element_rect;
+    Ok((region, clipped))
+}
+
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowCapture {
@@ -1667,6 +1812,15 @@ pub struct WindowCapture {
     region: Option<WindowCaptureRegion>,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ResolvedWindowElementBounds {
+    element_rect: WindowCaptureRegion,
+    visible_rect: WindowCaptureRegion,
+    viewport_width: f64,
+    viewport_height: f64,
+}
+
 /// Webview -> Rust: capture one editor webview (menus, panels and rendered
 /// content). The target defaults to the main window, but detached panel/editor
 /// windows can be addressed by label as returned by `list_editor_windows`.
@@ -1680,6 +1834,116 @@ pub async fn capture_editor_window(
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
     let max_size = validated_screenshot_max_size(max_size)?;
     capture_editor_window_impl(app, window_label, max_size, region).await
+}
+
+/// Capture the currently visible portion of one semantic element. The selector
+/// is resolved only through the guarded snapshot that exposed it, then the
+/// snapshot is checked again after capture so a caller never receives evidence
+/// silently associated with stale UI content.
+#[tauri::command]
+pub async fn capture_editor_window_element(
+    app: AppHandle,
+    window_label: Option<String>,
+    selector: String,
+    expected_snapshot_revision: String,
+    max_size: Option<u32>,
+) -> Result<serde_json::Value, String> {
+    let window_label = window_label.unwrap_or_else(|| "main".to_string());
+    let selector = selector.trim().to_string();
+    if selector.is_empty() || selector.len() > 1_000 {
+        return Err("selector must contain 1 to 1000 characters".to_string());
+    }
+    let expected_snapshot_revision = expected_snapshot_revision.trim().to_string();
+    if !valid_ui_snapshot_revision(&expected_snapshot_revision) {
+        return Err(
+            "expectedSnapshotRevision must be a snapshotRevision returned by inspect_editor_window"
+                .to_string(),
+        );
+    }
+    let max_size = validated_screenshot_max_size(max_size)?;
+    let current_snapshot =
+        inspect_editor_window_impl(app.clone(), window_label.clone(), 50, 0).await?;
+    let actual_snapshot_revision = current_snapshot
+        .get("snapshotRevision")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "editor UI snapshot did not contain a revision".to_string())?;
+    if actual_snapshot_revision != expected_snapshot_revision {
+        return Ok(serde_json::json!({
+            "ok": false,
+            "error": "Editor window semantic content changed; get a fresh UI snapshot before capturing the element",
+            "staleSnapshot": true,
+            "expectedSnapshotRevision": expected_snapshot_revision,
+            "actualSnapshotRevision": actual_snapshot_revision,
+            "restartOffset": 0,
+        }));
+    }
+    let resolved = resolve_editor_window_element_bounds_impl(
+        app.clone(),
+        window_label.clone(),
+        selector.clone(),
+        expected_snapshot_revision.clone(),
+    )
+    .await?;
+    if resolved.get("ok").and_then(serde_json::Value::as_bool) == Some(false) {
+        return Ok(resolved);
+    }
+    let bounds: ResolvedWindowElementBounds =
+        serde_json::from_value(resolved).map_err(|error| {
+            format!("WebView2 semantic element bounds had an invalid shape: {error}")
+        })?;
+    let (region, clipped) = match clipped_element_capture_region(
+        bounds.element_rect,
+        bounds.visible_rect,
+        bounds.viewport_width,
+        bounds.viewport_height,
+    ) {
+        Ok(value) => value,
+        Err(error) => {
+            return Ok(serde_json::json!({
+                "ok": false,
+                "error": error,
+                "notVisible": true,
+                "selector": selector,
+                "expectedSnapshotRevision": expected_snapshot_revision,
+            }));
+        }
+    };
+    let capture =
+        capture_editor_window_impl(app.clone(), window_label.clone(), max_size, Some(region))
+            .await?;
+    let post_snapshot = inspect_editor_window_impl(app, window_label.clone(), 50, 0).await?;
+    let post_snapshot_revision = post_snapshot
+        .get("snapshotRevision")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "editor UI snapshot did not contain a post-capture revision".to_string())?;
+    if post_snapshot_revision != expected_snapshot_revision {
+        return Ok(serde_json::json!({
+            "ok": false,
+            "error": "Editor window semantic content changed during element capture; discard the image and retry from a fresh UI snapshot",
+            "staleSnapshot": true,
+            "expectedSnapshotRevision": expected_snapshot_revision,
+            "actualSnapshotRevision": post_snapshot_revision,
+            "restartOffset": 0,
+        }));
+    }
+    let mut result = serde_json::to_value(capture)
+        .map_err(|error| format!("could not encode capture: {error}"))?;
+    let object = result
+        .as_object_mut()
+        .ok_or_else(|| "encoded element capture was not an object".to_string())?;
+    object.insert("ok".to_string(), serde_json::Value::Bool(true));
+    object.insert("selector".to_string(), serde_json::Value::String(selector));
+    object.insert(
+        "snapshotRevision".to_string(),
+        serde_json::Value::String(expected_snapshot_revision),
+    );
+    object.insert(
+        "elementRect".to_string(),
+        serde_json::to_value(bounds.element_rect)
+            .map_err(|error| format!("could not encode element bounds: {error}"))?,
+    );
+    object.insert("clipped".to_string(), serde_json::Value::Bool(clipped));
+    Ok(result)
 }
 
 /// Return a bounded semantic snapshot of one editor webview. Unlike a bitmap,
@@ -1698,7 +1962,7 @@ pub async fn inspect_editor_window(
     inspect_editor_window_impl(app, window_label, max_elements, offset).await
 }
 
-/// Read an exact page of one element's text, value, or options without normalizing it.
+/// Read an exact page of one element's semantic or authored content.
 #[tauri::command]
 pub async fn read_editor_ui_content(
     app: AppHandle,
@@ -1714,8 +1978,11 @@ pub async fn read_editor_ui_content(
     if selector.is_empty() || selector.len() > 1_000 {
         return Err("selector must contain 1 to 1000 characters".to_string());
     }
-    if !matches!(field.as_str(), "text" | "value" | "options") {
-        return Err("field must be text, value, or options".to_string());
+    if !matches!(
+        field.as_str(),
+        "text" | "name" | "description" | "value" | "options"
+    ) {
+        return Err("field must be text, name, description, value, or options".to_string());
     }
     let offset = offset.unwrap_or(0).min(10_000_000);
     let max_chars = max_chars.unwrap_or(10_000).clamp(1, 100_000);
@@ -1767,6 +2034,13 @@ pub async fn interact_editor_window(
     action: String,
     target_selector: Option<String>,
     value: Option<String>,
+    offset_x: Option<f64>,
+    offset_y: Option<f64>,
+    target_offset_x: Option<f64>,
+    target_offset_y: Option<f64>,
+    button: Option<String>,
+    path: Option<Vec<EditorUiDragPathPoint>>,
+    hover_state: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -1787,6 +2061,7 @@ pub async fn interact_editor_window(
             | "doubleClick"
             | "contextClick"
             | "setValue"
+            | "scrollIntoView"
             | "scroll"
             | "keyPress"
             | "dragTo"
@@ -1811,40 +2086,92 @@ pub async fn interact_editor_window(
     if value.as_ref().is_some_and(|value| value.len() > 100_000) {
         return Err("UI value exceeds the 100000-character limit".to_string());
     }
-    for (name, delta) in [("deltaX", delta_x), ("deltaY", delta_y)] {
-        if delta.is_some_and(|delta| !delta.is_finite() || delta.abs() > 1_000_000.0) {
+    for (name, coordinate) in [
+        ("offsetX", offset_x),
+        ("offsetY", offset_y),
+        ("targetOffsetX", target_offset_x),
+        ("targetOffsetY", target_offset_y),
+        ("deltaX", delta_x),
+        ("deltaY", delta_y),
+    ] {
+        if coordinate
+            .is_some_and(|coordinate| !coordinate.is_finite() || coordinate.abs() > 1_000_000.0)
+        {
             return Err(format!("{name} must be from -1000000 to 1000000"));
         }
     }
-    if action == "scroll" && delta_y.is_none() {
-        return Err("scroll requires deltaY".to_string());
+    let pointer_action = matches!(
+        action.as_str(),
+        "click" | "doubleClick" | "contextClick" | "scroll" | "dragTo" | "dragBy" | "hover"
+    );
+    if !pointer_action && (offset_x.is_some() || offset_y.is_some()) {
+        return Err("offsetX and offsetY are only valid for pointer actions".to_string());
     }
-    if action == "dragBy"
-        && (delta_x.is_none() || delta_y.is_none() || delta_x == Some(0.0) && delta_y == Some(0.0))
+    if action != "dragTo" && (target_offset_x.is_some() || target_offset_y.is_some()) {
+        return Err("targetOffsetX and targetOffsetY are only valid for dragTo".to_string());
+    }
+    if action == "dragBy" {
+        if button
+            .as_deref()
+            .is_some_and(|button| !matches!(button, "left" | "middle" | "right"))
+        {
+            return Err("button must be left, middle, or right".to_string());
+        }
+    } else if button.is_some() {
+        return Err("button is only valid for dragBy".to_string());
+    }
+    if action == "scroll"
+        && delta_x.unwrap_or_default() == 0.0
+        && delta_y.unwrap_or_default() == 0.0
     {
-        return Err("dragBy requires non-zero deltaX or deltaY and both fields".to_string());
+        return Err("scroll requires a non-zero deltaX or deltaY".to_string());
+    }
+    if action == "dragBy" {
+        if let Some(path) = path.as_ref() {
+            if !(1..=64).contains(&path.len()) {
+                return Err("path must contain 1 to 64 cumulative drag points".to_string());
+            }
+            if delta_x.is_some() || delta_y.is_some() {
+                return Err("path is mutually exclusive with deltaX and deltaY".to_string());
+            }
+            if path.iter().any(|point| {
+                !point.delta_x.is_finite()
+                    || !point.delta_y.is_finite()
+                    || point.delta_x.abs() > 1_000_000.0
+                    || point.delta_y.abs() > 1_000_000.0
+            }) {
+                return Err("path displacements must be from -1000000 to 1000000".to_string());
+            }
+            if !path
+                .iter()
+                .any(|point| point.delta_x != 0.0 || point.delta_y != 0.0)
+            {
+                return Err("path must contain at least one non-zero displacement".to_string());
+            }
+        } else if delta_x.is_none()
+            || delta_y.is_none()
+            || delta_x == Some(0.0) && delta_y == Some(0.0)
+        {
+            return Err("dragBy requires a path or non-zero deltaX/deltaY fields".to_string());
+        }
+    } else if path.is_some() {
+        return Err("path is only valid for dragBy".to_string());
+    }
+    if action == "hover" {
+        if hover_state
+            .as_deref()
+            .is_some_and(|state| !matches!(state, "enter" | "leave"))
+        {
+            return Err("hoverState must be enter or leave".to_string());
+        }
+    } else if hover_state.is_some() {
+        return Err("hoverState is only valid for hover".to_string());
     }
     if action == "keyPress" {
         let key = key
             .as_deref()
             .ok_or_else(|| "keyPress requires key".to_string())?;
-        if !matches!(
-            key,
-            "Enter"
-                | "Escape"
-                | "Tab"
-                | "Space"
-                | "ArrowUp"
-                | "ArrowDown"
-                | "ArrowLeft"
-                | "ArrowRight"
-                | "Home"
-                | "End"
-                | "PageUp"
-                | "PageDown"
-                | "Backspace"
-                | "Delete"
-        ) {
+        if !valid_editor_ui_key(key) {
             return Err(format!("unsupported editor UI key \"{key}\""));
         }
     } else if key.is_some() {
@@ -1857,10 +2184,12 @@ pub async fn interact_editor_window(
     if has_modifiers
         && !matches!(
             action.as_str(),
-            "click" | "doubleClick" | "contextClick" | "keyPress" | "dragTo" | "dragBy"
+            "click" | "doubleClick" | "contextClick" | "scroll" | "keyPress" | "dragTo" | "dragBy"
         )
     {
-        return Err("modifier keys are only valid for click, key, or drag actions".to_string());
+        return Err(
+            "modifier keys are only valid for click, wheel, key, or drag actions".to_string(),
+        );
     }
     let expected_snapshot_revision = expected_snapshot_revision.trim().to_string();
     if !valid_ui_snapshot_revision(&expected_snapshot_revision) {
@@ -1870,22 +2199,6 @@ pub async fn interact_editor_window(
         );
     }
     validate_background_ui_interaction_window(&app, &window_label)?;
-    let current_snapshot =
-        inspect_editor_window_impl(app.clone(), window_label.clone(), 50, 0).await?;
-    let actual_snapshot_revision = current_snapshot
-        .get("snapshotRevision")
-        .and_then(serde_json::Value::as_str)
-        .ok_or_else(|| "editor UI snapshot did not contain a revision".to_string())?;
-    if actual_snapshot_revision != expected_snapshot_revision {
-        return Ok(serde_json::json!({
-            "ok": false,
-            "error": "Editor window semantic content changed; get a fresh UI snapshot before interacting",
-            "staleSnapshot": true,
-            "expectedSnapshotRevision": expected_snapshot_revision,
-            "actualSnapshotRevision": actual_snapshot_revision,
-            "restartOffset": 0,
-        }));
-    }
     // Recheck immediately before injection so a window made visible while the
     // semantic snapshot was being validated cannot receive background input.
     validate_background_ui_interaction_window(&app, &window_label)?;
@@ -1896,6 +2209,13 @@ pub async fn interact_editor_window(
         action,
         target_selector,
         value,
+        offset_x,
+        offset_y,
+        target_offset_x,
+        target_offset_y,
+        button,
+        path,
+        hover_state,
         delta_x,
         delta_y,
         key,
@@ -1986,6 +2306,39 @@ fn valid_ui_snapshot_revision(value: &str) -> bool {
                     .all(|ch| ch.is_ascii_hexdigit() && !ch.is_ascii_uppercase())
         })
         && parts.next().is_none()
+}
+
+fn valid_editor_ui_key(value: &str) -> bool {
+    if matches!(
+        value,
+        "Enter"
+            | "Escape"
+            | "Tab"
+            | "Space"
+            | "ArrowUp"
+            | "ArrowDown"
+            | "ArrowLeft"
+            | "ArrowRight"
+            | "Home"
+            | "End"
+            | "PageUp"
+            | "PageDown"
+            | "Backspace"
+            | "Delete"
+    ) {
+        return true;
+    }
+    if let Some(number) = value.strip_prefix('F') {
+        return number
+            .parse::<u8>()
+            .map(|parsed| (1..=24).contains(&parsed) && number == parsed.to_string())
+            .unwrap_or(false);
+    }
+    let mut characters = value.chars();
+    matches!(
+        (characters.next(), characters.next()),
+        (Some(character), None) if !character.is_control() && !character.is_whitespace()
+    )
 }
 
 fn validate_background_ui_interaction_state(visible: bool, focused: bool) -> Result<(), String> {
@@ -2175,6 +2528,27 @@ async fn inspect_editor_window_impl(
 }
 
 #[cfg(windows)]
+async fn resolve_editor_window_element_bounds_impl(
+    app: AppHandle,
+    window_label: String,
+    selector: String,
+    expected_snapshot_revision: String,
+) -> Result<serde_json::Value, String> {
+    use base64::Engine as _;
+    let payload = serde_json::json!({
+        "selector": selector,
+        "expectedSnapshotRevision": expected_snapshot_revision,
+    })
+    .to_string();
+    let payload = base64::engine::general_purpose::STANDARD.encode(payload);
+    let expression = WINDOW_UI_ELEMENT_BOUNDS_SCRIPT.replace(
+        "__MENGINE_PAYLOAD_BASE64__",
+        &serde_json::to_string(&payload).map_err(|error| error.to_string())?,
+    );
+    evaluate_webview_script(&app, &window_label, expression).await
+}
+
+#[cfg(windows)]
 async fn read_editor_ui_content_impl(
     app: AppHandle,
     window_label: String,
@@ -2222,6 +2596,13 @@ async fn interact_editor_window_impl(
     action: String,
     target_selector: Option<String>,
     value: Option<String>,
+    offset_x: Option<f64>,
+    offset_y: Option<f64>,
+    target_offset_x: Option<f64>,
+    target_offset_y: Option<f64>,
+    button: Option<String>,
+    path: Option<Vec<EditorUiDragPathPoint>>,
+    hover_state: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2237,6 +2618,13 @@ async fn interact_editor_window_impl(
         "action": action,
         "targetSelector": target_selector,
         "value": value,
+        "offsetX": offset_x,
+        "offsetY": offset_y,
+        "targetOffsetX": target_offset_x,
+        "targetOffsetY": target_offset_y,
+        "button": button,
+        "path": path,
+        "hoverState": hover_state,
         "deltaX": delta_x,
         "deltaY": delta_y,
         "key": key,
@@ -2244,15 +2632,67 @@ async fn interact_editor_window_impl(
         "ctrlKey": ctrl_key.unwrap_or(false),
         "altKey": alt_key.unwrap_or(false),
         "metaKey": meta_key.unwrap_or(false),
-        "expectedSnapshotRevision": expected_snapshot_revision,
+        "expectedSnapshotRevision": expected_snapshot_revision.clone(),
     })
     .to_string();
     let payload = base64::engine::general_purpose::STANDARD.encode(payload);
-    let expression = WINDOW_UI_INTERACTION_SCRIPT.replace(
+    let interaction_expression = WINDOW_UI_INTERACTION_SCRIPT.replace(
         "__MENGINE_PAYLOAD_BASE64__",
         &serde_json::to_string(&payload).map_err(|error| error.to_string())?,
     );
-    evaluate_webview_script_with_await(&app, &window_label, expression, true).await
+    let snapshot_expression = WINDOW_UI_SNAPSHOT_SCRIPT
+        .replace("__MENGINE_MAX_ELEMENTS__", "50")
+        .replace("__MENGINE_OFFSET__", "0");
+    // Refresh the current semantic guard and synchronously dispatch the action
+    // in one renderer task. Live React updates cannot invalidate the guard in
+    // the gap between two DevTools Runtime.evaluate calls.
+    let expression = [
+        "(() => { const preActionSnapshot = (",
+        &snapshot_expression,
+        "); const pendingInteraction = (",
+        &interaction_expression,
+        "); return Promise.resolve(pendingInteraction).then((result) => ({ preActionSnapshotRevision: preActionSnapshot.snapshotRevision, result })); })()",
+    ]
+    .concat();
+    let envelope =
+        evaluate_webview_script_with_await(&app, &window_label, expression, true).await?;
+    let pre_snapshot_revision = envelope
+        .get("preActionSnapshotRevision")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| {
+            "WebView2 UI interaction did not report its pre-action snapshot revision".to_string()
+        })?
+        .to_string();
+    let mut result = envelope
+        .get("result")
+        .cloned()
+        .ok_or_else(|| "WebView2 UI interaction did not return a result".to_string())?;
+    let stale_snapshot = result
+        .get("staleSnapshot")
+        .and_then(serde_json::Value::as_bool)
+        == Some(true);
+    let object = result
+        .as_object_mut()
+        .ok_or_else(|| "WebView2 UI interaction returned a non-object value".to_string())?;
+    object.insert(
+        "preSnapshotRevision".to_string(),
+        serde_json::Value::String(pre_snapshot_revision.clone()),
+    );
+    object.insert(
+        "snapshotDriftedBeforeAction".to_string(),
+        serde_json::Value::Bool(pre_snapshot_revision != expected_snapshot_revision),
+    );
+    if stale_snapshot
+        && object
+            .get("actualSnapshotRevision")
+            .is_none_or(serde_json::Value::is_null)
+    {
+        object.insert(
+            "actualSnapshotRevision".to_string(),
+            serde_json::Value::String(pre_snapshot_revision),
+        );
+    }
+    Ok(result)
 }
 
 #[cfg(windows)]
@@ -2383,6 +2823,16 @@ async fn inspect_editor_window_impl(
 }
 
 #[cfg(not(windows))]
+async fn resolve_editor_window_element_bounds_impl(
+    _app: AppHandle,
+    _window_label: String,
+    _selector: String,
+    _expected_snapshot_revision: String,
+) -> Result<serde_json::Value, String> {
+    Err("background editor-element capture is currently only supported on Windows".to_string())
+}
+
+#[cfg(not(windows))]
 async fn read_editor_ui_content_impl(
     _app: AppHandle,
     _window_label: String,
@@ -2406,6 +2856,13 @@ async fn interact_editor_window_impl(
     _action: String,
     _target_selector: Option<String>,
     _value: Option<String>,
+    _offset_x: Option<f64>,
+    _offset_y: Option<f64>,
+    _target_offset_x: Option<f64>,
+    _target_offset_y: Option<f64>,
+    _button: Option<String>,
+    _path: Option<Vec<EditorUiDragPathPoint>>,
+    _hover_state: Option<String>,
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
     _key: Option<String>,
@@ -2429,22 +2886,88 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 (() => {
   const limit = __MENGINE_MAX_ELEMENTS__;
   const offset = __MENGINE_OFFSET__;
+  const maxGuardedRevisions = 8;
   const revisionGuardKey = Symbol.for('mengine.agent.uiRevisionGuard');
   let revisionGuard = window[revisionGuardKey];
-  if (!revisionGuard) {
-    revisionGuard = { epoch: 0, revisions: new Map() };
-    const observer = new MutationObserver(() => {
+  if (!revisionGuard || typeof revisionGuard.observeRoot !== 'function') {
+    revisionGuard?.observer?.disconnect?.();
+    const invalidateRevisionGuard = () => {
       revisionGuard.epoch += 1;
-      revisionGuard.revisions.clear();
-    });
-    observer.observe(document, {
+    };
+    const mutationOptions = {
       attributes: true,
       characterData: true,
       childList: true,
       subtree: true,
-    });
-    revisionGuard.observer = observer;
+    };
+    const observer = new MutationObserver(invalidateRevisionGuard);
+    revisionGuard = {
+      epoch: 0,
+      revisions: new Map(),
+      invalidate: invalidateRevisionGuard,
+      observer,
+      observedRoots: new WeakSet(),
+    };
+    const documentInvalidationEvents = [
+      'input',
+      'change',
+      'selectionchange',
+      'focusin',
+      'focusout',
+      'scroll',
+      'toggle',
+      'reset',
+    ];
+    revisionGuard.observeRoot = (root) => {
+      if (
+        !(root instanceof Document || root instanceof ShadowRoot)
+        || revisionGuard.observedRoots.has(root)
+      ) return;
+      revisionGuard.observedRoots.add(root);
+      observer.observe(root, mutationOptions);
+      for (const eventName of documentInvalidationEvents) {
+        root.addEventListener(eventName, invalidateRevisionGuard, true);
+      }
+    };
+    revisionGuard.observeRoot(document);
+    const windowInvalidationEvents = ['resize', 'scroll', 'hashchange', 'popstate'];
+    for (const eventName of windowInvalidationEvents) {
+      window.addEventListener(eventName, invalidateRevisionGuard, true);
+    }
+    window.visualViewport?.addEventListener('resize', invalidateRevisionGuard, true);
+    window.visualViewport?.addEventListener('scroll', invalidateRevisionGuard, true);
+    const originalHistoryMethods = {};
+    for (const methodName of ['pushState', 'replaceState']) {
+      const originalMethod = window.history[methodName];
+      originalHistoryMethods[methodName] = originalMethod;
+      window.history[methodName] = function (...args) {
+        const previousUrl = window.location.href;
+        const result = originalMethod.apply(this, args);
+        if (window.location.href !== previousUrl) invalidateRevisionGuard();
+        return result;
+      };
+    }
+    revisionGuard.documentInvalidationEvents = documentInvalidationEvents;
+    revisionGuard.windowInvalidationEvents = windowInvalidationEvents;
+    revisionGuard.originalHistoryMethods = originalHistoryMethods;
     window[revisionGuardKey] = revisionGuard;
+  }
+  const attachShadowGuardKey = Symbol.for('mengine.agent.attachShadowGuard');
+  if (!Element.prototype[attachShadowGuardKey]) {
+    const originalAttachShadow = Element.prototype.attachShadow;
+    Object.defineProperty(Element.prototype, attachShadowGuardKey, {
+      value: originalAttachShadow,
+      configurable: false,
+      enumerable: false,
+      writable: false,
+    });
+    Element.prototype.attachShadow = function (...args) {
+      const root = originalAttachShadow.apply(this, args);
+      const currentGuard = window[revisionGuardKey];
+      currentGuard?.observeRoot?.(root);
+      currentGuard?.invalidate?.();
+      return root;
+    };
   }
   const normalize = (value, max = 400) => String(value ?? '')
     .replace(/\s+/g, ' ')
@@ -2455,6 +2978,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     'doubleClick',
     'contextClick',
     'setValue',
+    'scrollIntoView',
     'scroll',
     'keyPress',
     'dragTo',
@@ -2479,7 +3003,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
           blockedActions.add(blockedAction);
         }
       }
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return blockedActions.size > 0
       ? {
@@ -2492,67 +3016,280 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const implicitRole = (element) => {
     const tag = element.localName;
     if (/^h[1-6]$/.test(tag)) return 'heading';
+    if (tag === 'article') return 'article';
+    if (tag === 'aside') return 'complementary';
+    if (tag === 'code') return 'code';
+    if (tag === 'details' || tag === 'fieldset' || tag === 'dl') return 'group';
+    if (tag === 'dialog') return 'dialog';
+    if (tag === 'dt') return 'term';
+    if (tag === 'dd') return 'definition';
+    if (tag === 'figure') return 'figure';
+    if (tag === 'img' && normalize(element.getAttribute('alt'))) return 'img';
+    if (tag === 'hr') return 'separator';
+    if (tag === 'li') return 'listitem';
+    if (['ol', 'ul', 'menu'].includes(tag)) return 'list';
+    if (tag === 'p') return 'paragraph';
+    if (tag === 'table') return 'table';
+    if (['thead', 'tbody', 'tfoot'].includes(tag)) return 'rowgroup';
+    if (tag === 'tr') return 'row';
+    if (tag === 'td') return 'cell';
+    if (tag === 'th') {
+      return element.getAttribute('scope') === 'row' ? 'rowheader' : 'columnheader';
+    }
+    if (
+      tag === 'section'
+      && (
+        normalize(element.getAttribute('aria-label'))
+        || normalize(element.getAttribute('aria-labelledby'))
+      )
+    ) return 'region';
     if (tag === 'button') return 'button';
     if (tag === 'summary') return 'button';
     if (tag === 'a' && element.hasAttribute('href')) return 'link';
     if (tag === 'textarea') return 'textbox';
     if (tag === 'select') return element.multiple ? 'listbox' : 'combobox';
     if (tag === 'option') return 'option';
+    if (tag === 'output') return 'status';
+    if (tag === 'meter') return 'meter';
     if (tag === 'main') return 'main';
     if (tag === 'nav') return 'navigation';
     if (tag === 'form') return 'form';
     if (tag === 'progress') return 'progressbar';
     if (tag !== 'input') return '';
     const type = String(element.type || 'text').toLowerCase();
+    if (type === 'hidden') return '';
     if (type === 'checkbox') return 'checkbox';
     if (type === 'radio') return 'radio';
     if (type === 'range') return 'slider';
-    if (['button', 'submit', 'reset'].includes(type)) return 'button';
+    if (type === 'number') return 'spinbutton';
+    if (element.list) return 'combobox';
+    if (type === 'search') return 'searchbox';
+    if (['button', 'submit', 'reset', 'image'].includes(type)) return 'button';
     return 'textbox';
   };
-  const visible = (element) => {
-    const style = getComputedStyle(element);
-    if (style.display === 'none' || style.visibility === 'hidden'
-      || Number(style.opacity) === 0 || element.hidden) return false;
+  const composedParent = (element) => {
+    if (!(element instanceof Element)) return null;
+    if (element.assignedSlot) return element.assignedSlot;
+    if (element.parentElement) return element.parentElement;
+    const root = element.getRootNode();
+    return root instanceof ShadowRoot ? root.host : null;
+  };
+  const closestComposed = (element, selector) => {
+    let current = element;
+    while (current instanceof Element) {
+      if (current.matches(selector)) return current;
+      current = composedParent(current);
+    }
+    return null;
+  };
+  const composedContains = (container, candidate) => {
+    let current = candidate instanceof Element
+      ? candidate
+      : candidate?.parentElement;
+    while (current instanceof Element) {
+      if (current === container) return true;
+      current = composedParent(current);
+    }
+    return false;
+  };
+  const deepActiveElement = () => {
+    let active = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    return active;
+  };
+  const composedChildNodes = (node) => {
+    if (node instanceof HTMLSlotElement) {
+      const assigned = node.assignedNodes({ flatten: true });
+      if (assigned.length > 0) return assigned;
+    }
+    if (node instanceof Element && node.shadowRoot) {
+      return Array.from(node.shadowRoot.childNodes);
+    }
+    return Array.from(node.childNodes || []);
+  };
+  const semanticallyHidden = (element) => Boolean(
+    closestComposed(element, '[aria-hidden="true"], [inert]'),
+  );
+  const renderedRectFor = (element, style = getComputedStyle(element)) => {
     const rect = element.getBoundingClientRect();
+    if (
+      typeof SVGGeometryElement === 'undefined'
+      || !(element instanceof SVGGeometryElement)
+      || (rect.width > 0 && rect.height > 0)
+      || (rect.width <= 0 && rect.height <= 0)
+    ) return rect;
+    const parsedStrokeWidth = Number.parseFloat(style.strokeWidth);
+    const thickness = (
+      Number.isFinite(parsedStrokeWidth) && parsedStrokeWidth > 0
+        ? parsedStrokeWidth
+        : 1
+    );
+    const width = Math.max(rect.width, thickness);
+    const height = Math.max(rect.height, thickness);
+    const left = rect.left - (width - rect.width) / 2;
+    const top = rect.top - (height - rect.height) / 2;
+    return {
+      x: left,
+      y: top,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+    };
+  };
+  const renderedInComposedTree = (element) => {
+    let current = element;
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      if (
+        style.display === 'none'
+        || style.visibility === 'hidden'
+        || style.visibility === 'collapse'
+        || style.contentVisibility === 'hidden'
+        || Number(style.opacity) === 0
+        || current.hidden
+      ) return false;
+      current = composedParent(current);
+    }
+    return true;
+  };
+  const visible = (element) => {
+    if (semanticallyHidden(element) || !renderedInComposedTree(element)) return false;
+    const rect = renderedRectFor(element);
     return rect.width > 0 && rect.height > 0;
   };
-  const labelledText = (element) => {
+  const nativeDialogIsModal = (element) => {
+    if (element.localName !== 'dialog' || !element.hasAttribute('open')) return false;
+    try {
+      return element.matches(':modal');
+    } catch {
+      return false;
+    }
+  };
+  const isActiveModalDialog = (element) => (
+    nativeDialogIsModal(element)
+      || (
+        normalize(element.getAttribute('role'), 80) === 'dialog'
+        && element.getAttribute('aria-modal') === 'true'
+      )
+  );
+  const effectivelyDisabled = (element) => Boolean(
+    element.disabled === true
+      || element.matches(':disabled')
+      || closestComposed(element, '[aria-disabled="true"]'),
+  );
+  const semanticText = (
+    root,
+    excludedElement = null,
+    includeHiddenSubtree = false,
+  ) => {
+    const parts = [];
+    const visit = (node, semanticParent = null) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (
+          includeHiddenSubtree
+          || !(semanticParent instanceof Element)
+          || !semanticallyHidden(semanticParent)
+        ) {
+          parts.push(node.textContent || '');
+        }
+        return;
+      }
+      if (node instanceof Element) {
+        if (excludedElement instanceof Element && node === excludedElement) return;
+        if (
+          ['script', 'style', 'template', 'noscript'].includes(node.localName)
+          || (!includeHiddenSubtree && semanticallyHidden(node))
+        ) return;
+      }
+      const nextParent = node instanceof Element ? node : semanticParent;
+      for (const child of composedChildNodes(node)) {
+        visit(child, nextParent);
+      }
+    };
+    visit(root);
+    return normalize(parts.join(' '));
+  };
+  const referencedText = (idRefs, context) => {
+    const root = context instanceof Element ? context.getRootNode() : document;
+    return normalize(idRefs).split(/\s+/)
+    .map((id) => root.getElementById?.(id) || null)
+    .filter(Boolean)
+    .map((node) => semanticText(node, null, semanticallyHidden(node)))
+    .filter(Boolean)
+    .join(' ');
+  };
+  const labelledByText = (element) => {
     const labelledBy = normalize(element.getAttribute('aria-labelledby'));
     if (labelledBy) {
-      const text = labelledBy.split(/\s+/)
-        .map((id) => document.getElementById(id))
-        .filter(Boolean)
-        .map((node) => normalize(node.innerText || node.textContent))
-        .filter(Boolean)
-        .join(' ');
+      const text = referencedText(labelledBy, element);
       if (text) return normalize(text);
     }
+    return '';
+  };
+  const nativeLabelText = (element) => {
     if (element.labels?.length) {
       const text = Array.from(element.labels)
-        .map((label) => normalize(label.innerText || label.textContent))
+        .map((label) => semanticText(label, null, semanticallyHidden(label)))
         .filter(Boolean)
         .join(' ');
       if (text) return normalize(text);
     }
     return '';
   };
+  const nativeCaptionText = (element) => {
+    const captionTag = element.localName === 'fieldset'
+      ? 'legend'
+      : element.localName === 'figure'
+        ? 'figcaption'
+        : element.localName === 'table'
+          ? 'caption'
+          : '';
+    if (!captionTag) return '';
+    const caption = Array.from(element.children)
+      .find((child) => child.localName === captionTag);
+    return caption
+      ? semanticText(caption, null, semanticallyHidden(caption))
+      : '';
+  };
+  const nativeButtonValue = (element) => {
+    if (!(element instanceof HTMLInputElement)) return '';
+    const type = String(element.type || 'text').toLowerCase();
+    return ['button', 'submit', 'reset'].includes(type)
+      ? normalize(element.value)
+      : '';
+  };
   const nameFromContent = (role) => [
     'button', 'link', 'heading', 'menuitem', 'option', 'tab',
   ].includes(role);
   const meaningfulContentName = (element, role) => {
     if (!nameFromContent(role)) return '';
-    const content = normalize(element.innerText || element.textContent);
+    const content = semanticText(element);
     return /[\p{L}\p{N}]/u.test(content) ? content : '';
   };
+  const containingLabelText = (element) => {
+    const label = closestComposed(element, 'label');
+    if (!label) return '';
+    return semanticText(label, element);
+  };
   const accessibleName = (element, role) => normalize(
-    element.getAttribute('aria-label')
-      || labelledText(element)
+    labelledByText(element)
+      || element.getAttribute('aria-label')
+      || nativeLabelText(element)
       || element.getAttribute('alt')
+      || nativeCaptionText(element)
+      || nativeButtonValue(element)
       || meaningfulContentName(element, role)
+      || (
+        ['status', 'meter', 'progressbar'].includes(role)
+          ? containingLabelText(element)
+          : ''
+      )
       || element.getAttribute('placeholder')
       || element.getAttribute('title')
-      || (nameFromContent(role) ? element.innerText || element.textContent : ''),
+      || (nameFromContent(role) ? semanticText(element) : ''),
   );
   const semanticScopeFor = (element) => {
     let current = element;
@@ -2569,7 +3306,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         const label = explicit || accessibleName(current, role);
         if (label) return label;
       }
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return '';
   };
@@ -2585,27 +3322,28 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   };
   const ownText = (element, role) => {
     if (nameFromContent(role) || element.children.length === 0) {
-      return normalize(element.innerText || element.textContent);
+      return semanticText(element);
     }
     return normalize(Array.from(element.childNodes)
       .filter((node) => node.nodeType === Node.TEXT_NODE)
       .map((node) => node.textContent)
       .join(' '));
   };
-  const selectorFor = (element) => {
+  const selectorWithinRoot = (element, root) => {
     const escape = (value) => CSS.escape(String(value));
     if (element.id) {
       const selector = `#${escape(element.id)}`;
-      if (document.querySelectorAll(selector).length === 1) return selector;
+      if (root.querySelectorAll(selector).length === 1) return selector;
     }
     const parts = [];
     let current = element;
-    while (current && current !== document.documentElement) {
+    const boundary = root instanceof Document ? document.documentElement : null;
+    while (current && current !== boundary) {
       let part = current.localName;
       const parent = current.parentElement;
       if (current.id) {
         const selector = `#${escape(current.id)}`;
-        if (document.querySelectorAll(selector).length === 1) {
+        if (root.querySelectorAll(selector).length === 1) {
           parts.unshift(selector);
           break;
         }
@@ -2622,6 +3360,17 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return parts.join(' > ');
   };
+  const selectorFor = (element) => {
+    const segments = [];
+    let current = element;
+    while (current instanceof Element) {
+      const root = current.getRootNode();
+      if (!(root instanceof Document || root instanceof ShadowRoot)) break;
+      segments.unshift(selectorWithinRoot(current, root));
+      current = root instanceof ShadowRoot ? root.host : null;
+    }
+    return segments.join(' >>> ');
+  };
   const valueFor = (element) => {
     if (element instanceof HTMLInputElement) {
       if (String(element.type).toLowerCase() === 'password') return '<redacted>';
@@ -2630,8 +3379,14 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
       return normalize(element.value);
     }
+    if (element instanceof HTMLOutputElement || element instanceof HTMLMeterElement) {
+      return normalize(element.value);
+    }
+    if (element instanceof HTMLProgressElement) {
+      return element.hasAttribute('value') ? normalize(element.value) : '';
+    }
     if (element.isContentEditable) return normalize(element.textContent);
-    return '';
+    return null;
   };
   const optionPayloadFor = (element) => {
     let kind;
@@ -2721,6 +3476,27 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         optionsRevision: compactContentRevision('options', optionContent),
       };
     }
+    if (element instanceof HTMLProgressElement) {
+      return {
+        kind: 'progress',
+        min: '0',
+        max: String(element.max),
+        indeterminate: !element.hasAttribute('value'),
+      };
+    }
+    if (element instanceof HTMLMeterElement) {
+      return {
+        kind: 'meter',
+        min: String(element.min),
+        max: String(element.max),
+        low: String(element.low),
+        high: String(element.high),
+        optimum: String(element.optimum),
+      };
+    }
+    if (element instanceof HTMLOutputElement) {
+      return { kind: 'output' };
+    }
     if (element instanceof HTMLElement && element.isContentEditable) {
       return { kind: 'contenteditable' };
     }
@@ -2732,13 +3508,46 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return {};
   };
+  const needsScrollIntoView = (element) => {
+    const rect = renderedRectFor(element);
+    if (
+      rect.left < 0
+      || rect.top < 0
+      || rect.right > document.documentElement.clientWidth
+      || rect.bottom > document.documentElement.clientHeight
+    ) return true;
+    let current = composedParent(element);
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      const clipsX = style.overflowX !== 'visible';
+      const clipsY = style.overflowY !== 'visible';
+      if (clipsX || clipsY) {
+        const ancestorRect = renderedRectFor(current, style);
+        const clipLeft = current instanceof HTMLElement
+          ? ancestorRect.left + current.clientLeft
+          : ancestorRect.left;
+        const clipTop = current instanceof HTMLElement
+          ? ancestorRect.top + current.clientTop
+          : ancestorRect.top;
+        const clipRight = current instanceof HTMLElement
+          ? clipLeft + current.clientWidth
+          : ancestorRect.right;
+        const clipBottom = current instanceof HTMLElement
+          ? clipTop + current.clientHeight
+          : ancestorRect.bottom;
+        if (
+          (clipsX && (rect.left < clipLeft || rect.right > clipRight))
+          || (clipsY && (rect.top < clipTop || rect.bottom > clipBottom))
+        ) return true;
+      }
+      current = composedParent(current);
+    }
+    return false;
+  };
   const actionList = (element, role) => {
     const actions = [];
     const props = reactProps(element);
-    const disabled = Boolean(
-      element.disabled || element.getAttribute('aria-disabled') === 'true',
-    );
-    if (disabled) return actions;
+    if (effectivelyDisabled(element)) return actions;
     if (role === 'button' || role === 'link' || role === 'menuitem'
       || role === 'tab' || role === 'option' || role === 'checkbox'
       || role === 'radio' || role === 'switch'
@@ -2752,10 +3561,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       : '';
     const writableInput = element instanceof HTMLInputElement
       && !['button', 'submit', 'reset', 'file', 'image'].includes(inputType);
-    if ((writableInput && !element.readOnly)
-      || (element instanceof HTMLTextAreaElement && !element.readOnly)
-      || element instanceof HTMLSelectElement
-      || element.isContentEditable) {
+    const readOnly = Boolean(
+      element.readOnly || element.getAttribute('aria-readonly') === 'true',
+    );
+    if ((writableInput && !readOnly)
+      || (element instanceof HTMLTextAreaElement && !readOnly)
+      || (element instanceof HTMLSelectElement && !readOnly)
+      || (element.isContentEditable && !readOnly)) {
       actions.push('setValue');
     }
     const style = element instanceof HTMLElement ? getComputedStyle(element) : null;
@@ -2766,24 +3578,23 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const scrollsHorizontally = style
       && scrollableOverflow(style.overflowX)
       && element.scrollWidth > element.clientWidth + 1;
-    if (scrollsVertically || scrollsHorizontally) {
+    const wheelGesture = element.getAttribute('data-agent-wheel') === 'true'
+      && typeof props.onWheel === 'function';
+    if (scrollsVertically || scrollsHorizontally || wheelGesture) {
       actions.push('scroll');
     }
-    const keyboardTarget = element instanceof HTMLElement && (
+    const keyboardTarget = (
+      element instanceof HTMLElement
+      || element instanceof SVGElement
+    ) && (
       element.tabIndex >= 0
+      || element.hasAttribute('tabindex')
       || writableInput
       || element instanceof HTMLTextAreaElement
       || element instanceof HTMLSelectElement
       || element.isContentEditable
     );
-    if (
-      keyboardTarget
-      || typeof props.onKeyDown === 'function'
-      || typeof props.onKeyUp === 'function'
-      || typeof props.onKeyPress === 'function'
-    ) {
-      actions.push('keyPress');
-    }
+    if (keyboardTarget) actions.push('keyPress');
     if (element.draggable || typeof props.onDragStart === 'function') {
       actions.push('dragTo');
     }
@@ -2792,15 +3603,16 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         + `${element.getAttribute('title') || ''} ${element.className || ''}`,
       240,
     ).toLocaleLowerCase();
+    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     const pointerGesture = typeof props.onPointerDown === 'function' && (
-      typeof props.onPointerMove === 'function'
+      explicitDragBy
+      || typeof props.onPointerMove === 'function'
       || typeof props.onPointerUp === 'function'
       || typeof props.onPointerCancel === 'function'
       || /drag|scrub|resize|拖|调整|调节/.test(gestureHint)
     );
     const mouseGesture = typeof props.onMouseDown === 'function'
       && typeof props.onClick !== 'function';
-    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     if (
       (pointerGesture || mouseGesture)
       && (typeof props.onClick !== 'function' || explicitDragBy)
@@ -2820,32 +3632,137 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const scrollContextName = (element) => {
     let current = element;
     while (current instanceof Element) {
-      const label = normalize(current.getAttribute('aria-label'), 160)
-        || labelledText(current);
+      const label = labelledByText(current)
+        || normalize(current.getAttribute('aria-label'), 160)
+        || nativeLabelText(current);
       if (label) return `${label} scroll area`;
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return 'Scrollable content';
   };
+  const ariaStateKeys = [
+    'checked',
+    'selected',
+    'expanded',
+    'pressed',
+    'current',
+    'level',
+    'haspopup',
+    'modal',
+    'valuemin',
+    'valuemax',
+    'valuenow',
+    'valuetext',
+    'orientation',
+    'multiselectable',
+    'required',
+    'invalid',
+    'busy',
+    'autocomplete',
+    'live',
+    'atomic',
+    'relevant',
+    'sort',
+    'keyshortcuts',
+    'roledescription',
+    'setsize',
+    'posinset',
+    'colcount',
+    'rowcount',
+    'colindex',
+    'rowindex',
+    'controls',
+    'activedescendant',
+    'describedby',
+    'details',
+    'errormessage',
+  ];
+  const selectionFor = (element) => {
+    const password = element instanceof HTMLInputElement
+      && String(element.type).toLowerCase() === 'password';
+    if (password) return null;
+    if (
+      element instanceof HTMLInputElement
+      || element instanceof HTMLTextAreaElement
+    ) {
+      try {
+        if (
+          typeof element.selectionStart !== 'number'
+          || typeof element.selectionEnd !== 'number'
+        ) return null;
+        return {
+          selectionStart: element.selectionStart,
+          selectionEnd: element.selectionEnd,
+          selectionDirection: element.selectionDirection || 'none',
+        };
+      } catch {
+        return null;
+      }
+    }
+    if (!(element instanceof HTMLElement) || !element.isContentEditable) return null;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+    const pointInside = (node) => Boolean(
+      node
+      && (
+        node === element
+        || element.contains(node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement)
+      )
+    );
+    if (!pointInside(selection.anchorNode) || !pointInside(selection.focusNode)) return null;
+    const textOffset = (node, offset) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      if (
+        !(node instanceof Node)
+        || !Number.isInteger(offset)
+        || offset < 0
+      ) return null;
+      try {
+        range.setEnd(node, offset);
+        return String(range.cloneContents().textContent ?? '').length;
+      } catch {
+        return null;
+      }
+    };
+    const anchor = textOffset(selection.anchorNode, selection.anchorOffset);
+    const focus = textOffset(selection.focusNode, selection.focusOffset);
+    if (anchor === null || focus === null) return null;
+    return {
+      selectionStart: Math.min(anchor, focus),
+      selectionEnd: Math.max(anchor, focus),
+      selectionDirection: focus < anchor
+        ? 'backward'
+        : focus > anchor
+          ? 'forward'
+          : 'none',
+    };
+  };
   const stateFor = (element, modalBlocked = false) => {
     const state = {
-      disabled: Boolean(element.disabled || element.getAttribute('aria-disabled') === 'true'),
+      disabled: effectivelyDisabled(element),
       readOnly: Boolean(element.readOnly || element.getAttribute('aria-readonly') === 'true'),
-      focused: document.activeElement === element,
+      focused: deepActiveElement() === element,
     };
     if (modalBlocked) state.modalBlocked = true;
-    for (const key of [
-      'checked',
-      'selected',
-      'expanded',
-      'pressed',
-      'current',
-      'level',
-      'haspopup',
-      'modal',
-    ]) {
+    for (const key of ariaStateKeys) {
       const value = element.getAttribute(`aria-${key}`);
       if (value !== null) state[key] = value;
+    }
+    if (state.expanded === undefined) {
+      if (element instanceof HTMLDetailsElement) {
+        state.expanded = element.open;
+      } else if (
+        element.localName === 'summary'
+        && element.parentElement instanceof HTMLDetailsElement
+      ) {
+        state.expanded = element.parentElement.open;
+      }
+    }
+    if (element.localName === 'dialog') {
+      state.open = element.hasAttribute('open');
+      const nativeModal = nativeDialogIsModal(element);
+      if (nativeModal || state.modal === undefined) state.modal = nativeModal;
     }
     if (
       element instanceof HTMLInputElement
@@ -2856,10 +3773,25 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;
     }
+    if (element instanceof HTMLProgressElement) {
+      if (state.valuemin === undefined) state.valuemin = '0';
+      if (state.valuemax === undefined) state.valuemax = String(element.max);
+      if (state.valuenow === undefined && element.hasAttribute('value')) {
+        state.valuenow = String(element.value);
+      }
+    }
+    if (element instanceof HTMLMeterElement) {
+      if (state.valuemin === undefined) state.valuemin = String(element.min);
+      if (state.valuemax === undefined) state.valuemax = String(element.max);
+      if (state.valuenow === undefined) state.valuenow = String(element.value);
+    }
+    const selection = selectionFor(element);
+    if (selection) Object.assign(state, selection);
     return state;
   };
   const descriptionFor = (element, name) => normalize(
-    element.getAttribute('aria-description')
+    referencedText(element.getAttribute('aria-describedby'), element)
+      || element.getAttribute('aria-description')
       || (
         normalize(element.getAttribute('title')) !== name
           ? element.getAttribute('title')
@@ -2880,7 +3812,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       : null
   );
   const rectFor = (element) => {
-    const rect = element.getBoundingClientRect();
+    const rect = renderedRectFor(element);
     return {
       x: Math.round(rect.x * 100) / 100,
       y: Math.round(rect.y * 100) / 100,
@@ -2888,12 +3820,26 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       height: Math.round(rect.height * 100) / 100,
     };
   };
-  const all = [document.documentElement, ...document.querySelectorAll('*')];
+  const all = [];
+  const collectedElements = new Set();
+  const collectOpenComposedTree = (element) => {
+    if (!(element instanceof Element) || collectedElements.has(element)) return;
+    collectedElements.add(element);
+    all.push(element);
+    if (element.shadowRoot) revisionGuard.observeRoot(element.shadowRoot);
+    for (const child of composedChildNodes(element)) {
+      if (child instanceof Element) collectOpenComposedTree(child);
+    }
+  };
+  collectOpenComposedTree(document.documentElement);
   const visibleModalDialogs = Array.from(
-    document.querySelectorAll('[role="dialog"][aria-modal="true"]'),
+    all.filter((candidate) => candidate.matches?.(
+      'dialog, [role="dialog"][aria-modal="true"]',
+    )),
   ).filter((candidate) => (
     (candidate instanceof HTMLElement || candidate instanceof SVGElement)
     && visible(candidate)
+    && isActiveModalDialog(candidate)
   ));
   const modalLayerFor = (candidate) => {
     let layer = 0;
@@ -2901,12 +3847,16 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     while (current instanceof Element) {
       const zIndex = Number.parseInt(getComputedStyle(current).zIndex, 10);
       if (Number.isFinite(zIndex)) layer = Math.max(layer, zIndex);
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return layer;
   };
-  let activeModal = null;
-  let activeModalLayer = Number.NEGATIVE_INFINITY;
+  let activeModal = visibleModalDialogs.find((candidate) => (
+    composedContains(candidate, deepActiveElement())
+  )) || null;
+  let activeModalLayer = activeModal
+    ? Number.POSITIVE_INFINITY
+    : Number.NEGATIVE_INFINITY;
   for (const candidate of visibleModalDialogs) {
     const layer = modalLayerFor(candidate);
     if (layer >= activeModalLayer) {
@@ -2922,20 +3872,23 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const directName = accessibleName(element, role);
     const text = ownText(element, role);
     const tag = element.localName;
-    const modalBlocked = Boolean(activeModal && !activeModal.contains(element));
+    const modalBlocked = Boolean(activeModal && !composedContains(activeModal, element));
     const actions = modalBlocked ? [] : actionList(element, role);
     const name = directName || (actions.includes('scroll') ? scrollContextName(element) : '');
     const structural = /^h[1-6]$/.test(tag)
-      || ['p', 'label', 'summary', 'legend', 'caption'].includes(tag);
+      || ['p', 'summary', 'legend', 'caption'].includes(tag);
     if (!role && !name && !text && !structural && actions.length === 0) continue;
+    if (!modalBlocked && needsScrollIntoView(element)) {
+      actions.unshift('scrollIntoView');
+    }
     candidates.push({ element, role, name, text, actions, modalBlocked });
   }
   const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
   const semanticElementFor = (entry) => {
     const { element, role, name, text, actions, modalBlocked } = entry;
     const scope = semanticScopeFor(element);
-    let parent = element.parentElement;
-    while (parent && !ids.has(parent)) parent = parent.parentElement;
+    let parent = composedParent(element);
+    while (parent && !ids.has(parent)) parent = composedParent(parent);
     return {
       id: ids.get(element),
       parentId: parent ? ids.get(parent) || null : null,
@@ -2946,7 +3899,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       scope: scope || null,
       qualifiedName: qualifiedNameFor(scope, name) || null,
       text: text && text !== name ? text : null,
-      value: valueFor(element) || null,
+      value: valueFor(element),
       control: controlFor(element),
       description: descriptionFor(element, name),
       state: stateFor(element, modalBlocked),
@@ -2964,10 +3917,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     scrollX: window.scrollX,
     scrollY: window.scrollY,
   };
+  const activeElement = deepActiveElement();
   const activeElementSelector =
-    document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
+    activeElement instanceof Element ? selectorFor(activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 5,
+    version: 32,
     title: document.title,
     url: location.href,
     viewport,
@@ -2981,13 +3935,40 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v4-${candidates.length}-${
+  const snapshotRevision = `ui-v32-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
-  revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
+  const interactionSignatureFor = (semanticElement) => {
+    const state = { ...semanticElement.state };
+    delete state.focused;
+    return JSON.stringify({
+      ...semanticElement,
+      state,
+      rect: undefined,
+      scroll: undefined,
+    });
+  };
+  const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
+    semanticElement.selector,
+    {
+      element: candidates[index].element,
+      actions: [...semanticElement.actions],
+      signature: interactionSignatureFor(semanticElement),
+    },
+  ]));
+  revisionGuard.revisions.delete(snapshotRevision);
+  revisionGuard.revisions.set(snapshotRevision, {
+    epoch: revisionGuard.epoch,
+    elements: guardedElements,
+  });
+  revisionGuard.latestRevision = snapshotRevision;
+  while (revisionGuard.revisions.size > maxGuardedRevisions) {
+    const oldestRevision = revisionGuard.revisions.keys().next().value;
+    revisionGuard.revisions.delete(oldestRevision);
+  }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 5,
+    version: 32,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3010,13 +3991,200 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 
 /// Exact, paged element content read. Password values remain inaccessible.
 #[cfg(windows)]
+const WINDOW_UI_ELEMENT_BOUNDS_SCRIPT: &str = r#"
+(() => {
+  const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(
+    atob(__MENGINE_PAYLOAD_BASE64__),
+    (character) => character.charCodeAt(0),
+  )));
+  const { selector, expectedSnapshotRevision } = payload;
+  const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
+  const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
+  if (!guardedRevision || guardedRevision.epoch !== revisionGuard?.epoch) {
+    return {
+      ok: false,
+      error: 'Editor window semantic snapshot expired before element capture',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
+  const guardedElement = guardedRevision.elements?.get(selector);
+  if (!guardedElement) {
+    return {
+      ok: false,
+      error: `Selector ${selector} was not exposed by the expected semantic UI snapshot`,
+      selectorNotExposed: true,
+      expectedSnapshotRevision,
+    };
+  }
+  const element = guardedElement.element;
+  if (
+    !(element instanceof Element)
+    || !element.isConnected
+    || element.ownerDocument !== document
+  ) {
+    return {
+      ok: false,
+      error: 'Editor window semantic element changed before capture',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
+  if (!(element instanceof HTMLElement || element instanceof SVGElement)) {
+    return {
+      ok: false,
+      error: `Selector ${selector} no longer resolves to a renderable semantic element`,
+      notVisible: true,
+      expectedSnapshotRevision,
+    };
+  }
+  const composedParent = (target) => {
+    if (!(target instanceof Element)) return null;
+    if (target.assignedSlot) return target.assignedSlot;
+    if (target.parentElement) return target.parentElement;
+    const root = target.getRootNode();
+    return root instanceof ShadowRoot ? root.host : null;
+  };
+  const closestComposed = (target, cssSelector) => {
+    let current = target;
+    while (current instanceof Element) {
+      if (current.matches(cssSelector)) return current;
+      current = composedParent(current);
+    }
+    return null;
+  };
+  if (closestComposed(element, '[aria-hidden="true"], [inert]')) {
+    return {
+      ok: false,
+      error: `Selector ${selector} is hidden from the semantic accessibility tree`,
+      notVisible: true,
+      expectedSnapshotRevision,
+    };
+  }
+  const style = getComputedStyle(element);
+  const renderedRectFor = (target, targetStyle = getComputedStyle(target)) => {
+    const rect = target.getBoundingClientRect();
+    if (
+      typeof SVGGeometryElement === 'undefined'
+      || !(target instanceof SVGGeometryElement)
+      || (rect.width > 0 && rect.height > 0)
+      || (rect.width <= 0 && rect.height <= 0)
+    ) return rect;
+    const parsedStrokeWidth = Number.parseFloat(targetStyle.strokeWidth);
+    const thickness = (
+      Number.isFinite(parsedStrokeWidth) && parsedStrokeWidth > 0
+        ? parsedStrokeWidth
+        : 1
+    );
+    const width = Math.max(rect.width, thickness);
+    const height = Math.max(rect.height, thickness);
+    const left = rect.left - (width - rect.width) / 2;
+    const top = rect.top - (height - rect.height) / 2;
+    return {
+      x: left,
+      y: top,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+    };
+  };
+  const renderedInComposedTree = (target) => {
+    let current = target;
+    while (current instanceof Element) {
+      const currentStyle = getComputedStyle(current);
+      if (
+        currentStyle.display === 'none'
+        || currentStyle.visibility === 'hidden'
+        || currentStyle.visibility === 'collapse'
+        || currentStyle.contentVisibility === 'hidden'
+        || Number(currentStyle.opacity) === 0
+        || current.hidden
+      ) return false;
+      current = composedParent(current);
+    }
+    return true;
+  };
+  const rect = renderedRectFor(element, style);
+  if (!renderedInComposedTree(element) || rect.width <= 0 || rect.height <= 0) {
+    return {
+      ok: false,
+      error: `Selector ${selector} is not currently rendered`,
+      notVisible: true,
+      expectedSnapshotRevision,
+    };
+  }
+  let visibleLeft = Math.max(0, rect.left);
+  let visibleTop = Math.max(0, rect.top);
+  let visibleRight = Math.min(document.documentElement.clientWidth, rect.right);
+  let visibleBottom = Math.min(document.documentElement.clientHeight, rect.bottom);
+  let current = composedParent(element);
+  while (current instanceof Element) {
+    const ancestorStyle = getComputedStyle(current);
+    const clipsX = ancestorStyle.overflowX !== 'visible';
+    const clipsY = ancestorStyle.overflowY !== 'visible';
+    if (clipsX || clipsY) {
+      const ancestorRect = renderedRectFor(current, ancestorStyle);
+      const clipLeft = current instanceof HTMLElement
+        ? ancestorRect.left + current.clientLeft
+        : ancestorRect.left;
+      const clipTop = current instanceof HTMLElement
+        ? ancestorRect.top + current.clientTop
+        : ancestorRect.top;
+      const clipRight = current instanceof HTMLElement
+        ? clipLeft + current.clientWidth
+        : ancestorRect.right;
+      const clipBottom = current instanceof HTMLElement
+        ? clipTop + current.clientHeight
+        : ancestorRect.bottom;
+      if (clipsX) {
+        visibleLeft = Math.max(visibleLeft, clipLeft);
+        visibleRight = Math.min(visibleRight, clipRight);
+      }
+      if (clipsY) {
+        visibleTop = Math.max(visibleTop, clipTop);
+        visibleBottom = Math.min(visibleBottom, clipBottom);
+      }
+    }
+    current = composedParent(current);
+  }
+  return {
+    ok: true,
+    elementRect: {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    },
+    visibleRect: {
+      x: visibleLeft,
+      y: visibleTop,
+      width: Math.max(0, visibleRight - visibleLeft),
+      height: Math.max(0, visibleBottom - visibleTop),
+    },
+    viewportWidth: document.documentElement.clientWidth,
+    viewportHeight: document.documentElement.clientHeight,
+  };
+})()
+"#;
+
+#[cfg(windows)]
 const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
 (() => {
-  const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
+  const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(
+    atob(__MENGINE_PAYLOAD_BASE64__),
+    (character) => character.charCodeAt(0),
+  )));
   const { selector, field, offset, maxChars, expectedSnapshotRevision } = payload;
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
-  const guardedEpoch = revisionGuard?.revisions?.get(expectedSnapshotRevision);
-  if (!revisionGuard || guardedEpoch !== revisionGuard.epoch) {
+  const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
+  if (!revisionGuard || guardedRevision?.epoch !== revisionGuard.epoch) {
     return {
       ok: false,
       error: 'Editor window semantic content changed; get a fresh UI snapshot before reading exact content',
@@ -3026,13 +4194,242 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
       restartOffset: 0,
     };
   }
-  let element;
-  try {
-    element = document.querySelector(selector);
-  } catch (error) {
-    return { ok: false, error: `Invalid selector: ${String(error)}` };
+  const guardedElement = guardedRevision.elements?.get(selector);
+  if (!guardedElement) {
+    return {
+      ok: false,
+      error: `Selector ${selector} is not exposed by the expected semantic UI snapshot`,
+      selectorNotExposed: true,
+      expectedSnapshotRevision,
+    };
   }
-  if (!element) return { ok: false, error: `No element matches ${selector}` };
+  const element = guardedElement.element;
+  if (
+    !(element instanceof Element)
+    || !element.isConnected
+    || element.ownerDocument !== document
+  ) {
+    return {
+      ok: false,
+      error: 'Editor window semantic selector changed; get a fresh UI snapshot before reading exact content',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
+  const normalizeSemantic = (value) => String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const composedParent = (target) => {
+    if (!(target instanceof Element)) return null;
+    if (target.assignedSlot) return target.assignedSlot;
+    if (target.parentElement) return target.parentElement;
+    const root = target.getRootNode();
+    return root instanceof ShadowRoot ? root.host : null;
+  };
+  const closestComposed = (target, cssSelector) => {
+    let current = target;
+    while (current instanceof Element) {
+      if (current.matches(cssSelector)) return current;
+      current = composedParent(current);
+    }
+    return null;
+  };
+  const composedChildNodes = (node) => {
+    if (node instanceof HTMLSlotElement) {
+      const assigned = node.assignedNodes({ flatten: true });
+      if (assigned.length > 0) return assigned;
+    }
+    if (node instanceof Element && node.shadowRoot) {
+      return Array.from(node.shadowRoot.childNodes);
+    }
+    return Array.from(node.childNodes || []);
+  };
+  const semanticallyHidden = (target) => Boolean(
+    target instanceof Element
+      && closestComposed(target, '[aria-hidden="true"], [inert]'),
+  );
+  const semanticText = (
+    root,
+    excludedElement = null,
+    includeHiddenSubtree = false,
+  ) => {
+    const parts = [];
+    const visit = (node, semanticParent = null) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (
+          includeHiddenSubtree
+          || !(semanticParent instanceof Element)
+          || !semanticallyHidden(semanticParent)
+        ) {
+          parts.push(node.textContent || '');
+        }
+        return;
+      }
+      if (node instanceof Element) {
+        if (excludedElement instanceof Element && node === excludedElement) return;
+        if (
+          ['script', 'style', 'template', 'noscript'].includes(node.localName)
+          || (!includeHiddenSubtree && semanticallyHidden(node))
+        ) return;
+      }
+      const nextParent = node instanceof Element ? node : semanticParent;
+      for (const child of composedChildNodes(node)) {
+        visit(child, nextParent);
+      }
+    };
+    visit(root);
+    return normalizeSemantic(parts.join(' '));
+  };
+  const referencedText = (idRefs, context) => {
+    const root = context instanceof Element ? context.getRootNode() : document;
+    return normalizeSemantic(idRefs).split(/\s+/)
+    .map((id) => root.getElementById?.(id) || null)
+    .filter(Boolean)
+    .map((node) => semanticText(node, null, semanticallyHidden(node)))
+    .filter(Boolean)
+    .join(' ');
+  };
+  const labelledByText = (target) => {
+    const labelledBy = normalizeSemantic(target.getAttribute('aria-labelledby'));
+    if (labelledBy) {
+      const text = referencedText(labelledBy, target);
+      if (text) return normalizeSemantic(text);
+    }
+    return '';
+  };
+  const nativeLabelText = (target) => {
+    if (target.labels?.length) {
+      const text = Array.from(target.labels)
+        .map((label) => semanticText(label, null, semanticallyHidden(label)))
+        .filter(Boolean)
+        .join(' ');
+      if (text) return normalizeSemantic(text);
+    }
+    return '';
+  };
+  const nativeCaptionText = (target) => {
+    const captionTag = target.localName === 'fieldset'
+      ? 'legend'
+      : target.localName === 'figure'
+        ? 'figcaption'
+        : target.localName === 'table'
+          ? 'caption'
+          : '';
+    if (!captionTag) return '';
+    const caption = Array.from(target.children)
+      .find((child) => child.localName === captionTag);
+    return caption
+      ? semanticText(caption, null, semanticallyHidden(caption))
+      : '';
+  };
+  const nativeButtonValue = (target) => {
+    if (!(target instanceof HTMLInputElement)) return '';
+    const type = String(target.type || 'text').toLowerCase();
+    return ['button', 'submit', 'reset'].includes(type)
+      ? normalizeSemantic(target.value)
+      : '';
+  };
+  const implicitNamingRole = (target) => {
+    const tag = target.localName;
+    if (/^h[1-6]$/.test(tag)) return 'heading';
+    if (tag === 'button' || tag === 'summary') return 'button';
+    if (tag === 'a' && target.hasAttribute('href')) return 'link';
+    if (tag === 'textarea') return 'textbox';
+    if (tag === 'select') return target.multiple ? 'listbox' : 'combobox';
+    if (tag === 'option') return 'option';
+    if (tag === 'output') return 'status';
+    if (tag === 'meter') return 'meter';
+    if (tag === 'progress') return 'progressbar';
+    if (tag !== 'input') return '';
+    const type = String(target.type || 'text').toLowerCase();
+    if (type === 'hidden') return '';
+    if (type === 'checkbox') return 'checkbox';
+    if (type === 'radio') return 'radio';
+    if (type === 'range') return 'slider';
+    if (type === 'number') return 'spinbutton';
+    if (target.list) return 'combobox';
+    if (type === 'search') return 'searchbox';
+    if (['button', 'submit', 'reset', 'image'].includes(type)) return 'button';
+    return 'textbox';
+  };
+  const nameFromContent = (role) => [
+    'button', 'link', 'heading', 'menuitem', 'option', 'tab',
+  ].includes(role);
+  const containingLabelText = (target) => {
+    const label = closestComposed(target, 'label');
+    return label ? semanticText(label, target) : '';
+  };
+  const semanticName = (target) => {
+    const role = normalizeSemantic(
+      target.getAttribute('role') || implicitNamingRole(target),
+    );
+    const content = nameFromContent(role) ? semanticText(target) : '';
+    const meaningfulContent = /[\p{L}\p{N}]/u.test(content) ? content : '';
+    return normalizeSemantic(
+      labelledByText(target)
+        || target.getAttribute('aria-label')
+        || nativeLabelText(target)
+        || target.getAttribute('alt')
+        || nativeCaptionText(target)
+        || nativeButtonValue(target)
+        || meaningfulContent
+        || (
+          ['status', 'meter', 'progressbar'].includes(role)
+            ? containingLabelText(target)
+            : ''
+        )
+        || target.getAttribute('placeholder')
+        || target.getAttribute('title')
+        || content,
+    );
+  };
+  const semanticDescription = (target, name) => normalizeSemantic(
+    referencedText(target.getAttribute('aria-describedby'), target)
+      || target.getAttribute('aria-description')
+      || (
+        normalizeSemantic(target.getAttribute('title')) !== name
+          ? target.getAttribute('title')
+          : ''
+      ),
+  );
+  const textNodeIsRendered = (parent) => {
+    if (!(parent instanceof Element) || semanticallyHidden(parent)) return false;
+    const parentStyle = getComputedStyle(parent);
+    if (parentStyle.visibility === 'hidden' || parentStyle.visibility === 'collapse') {
+      return false;
+    }
+    let current = parent;
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      if (
+        style.display === 'none'
+        || style.contentVisibility === 'hidden'
+        || Number(style.opacity) === 0
+        || current.hidden
+      ) return false;
+      current = composedParent(current);
+    }
+    return true;
+  };
+  const exactSemanticText = (root) => {
+    const parts = [];
+    const visit = (node, semanticParent = null) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (textNodeIsRendered(semanticParent)) {
+          parts.push(node.textContent || '');
+        }
+        return;
+      }
+      const nextParent = node instanceof Element ? node : semanticParent;
+      for (const child of composedChildNodes(node)) {
+        visit(child, nextParent);
+      }
+    };
+    visit(root);
+    return parts.join('');
+  };
   let content;
   if (field === 'options') {
     let kind;
@@ -3069,6 +4466,11 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
         };
       }),
     });
+  } else if (field === 'name') {
+    content = semanticName(element);
+  } else if (field === 'description') {
+    const name = semanticName(element);
+    content = semanticDescription(element, name);
   } else if (field === 'value') {
     if (element instanceof HTMLInputElement) {
       if (String(element.type).toLowerCase() === 'password') {
@@ -3076,15 +4478,19 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
       }
       content = String(element.value);
     } else if (element instanceof HTMLTextAreaElement
-      || element instanceof HTMLSelectElement) {
+      || element instanceof HTMLSelectElement
+      || element instanceof HTMLOutputElement
+      || element instanceof HTMLMeterElement) {
       content = String(element.value);
+    } else if (element instanceof HTMLProgressElement) {
+      content = element.hasAttribute('value') ? String(element.value) : '';
     } else if (element instanceof HTMLElement && element.isContentEditable) {
       content = String(element.textContent ?? '');
     } else {
       return { ok: false, error: `Element ${selector} has no readable value` };
     }
   } else {
-    content = String(element.innerText ?? element.textContent ?? '');
+    content = exactSemanticText(element);
   }
   const revisionSource = JSON.stringify([selector, field, content]);
   let revisionHashA = 0x811c9dc5;
@@ -3094,15 +4500,41 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     revisionHashA = Math.imul(revisionHashA ^ code, 0x01000193);
     revisionHashB = Math.imul(revisionHashB ^ (code + index), 0x85ebca6b);
   }
-  const contentRevision = `content-v1-${content.length}-${
+  const contentRevision = `content-v3-${content.length}-${
     (revisionHashA >>> 0).toString(16).padStart(8, '0')
   }${(revisionHashB >>> 0).toString(16).padStart(8, '0')}`;
   const start = Math.min(Number(offset), content.length);
-  const page = content.slice(start, start + Number(maxChars));
-  const nextOffset = start + page.length < content.length ? start + page.length : null;
+  const isHighSurrogate = (unit) => unit >= 0xd800 && unit <= 0xdbff;
+  const isLowSurrogate = (unit) => unit >= 0xdc00 && unit <= 0xdfff;
+  if (
+    start > 0
+    && start < content.length
+    && isHighSurrogate(content.charCodeAt(start - 1))
+    && isLowSurrogate(content.charCodeAt(start))
+  ) {
+    return {
+      ok: false,
+      error: `Content offset ${start} splits a Unicode surrogate pair; retry from ${start - 1}`,
+      invalidContentOffset: true,
+      requestedOffset: start,
+      restartOffset: start - 1,
+      contentRevision,
+    };
+  }
+  let end = Math.min(start + Number(maxChars), content.length);
+  if (
+    end > start
+    && end < content.length
+    && isHighSurrogate(content.charCodeAt(end - 1))
+    && isLowSurrogate(content.charCodeAt(end))
+  ) {
+    end += 1;
+  }
+  const page = content.slice(start, end);
+  const nextOffset = end < content.length ? end : null;
   return {
     ok: true,
-    version: 1,
+    version: 3,
     contentRevision,
     selector,
     field,
@@ -3120,12 +4552,22 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
 #[cfg(windows)]
 const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
 (async () => {
-  const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
+  const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(
+    atob(__MENGINE_PAYLOAD_BASE64__),
+    (character) => character.charCodeAt(0),
+  )));
   const {
     selector,
     action,
     targetSelector,
     value: requestedValue,
+    offsetX: requestedOffsetX,
+    offsetY: requestedOffsetY,
+    targetOffsetX: requestedTargetOffsetX,
+    targetOffsetY: requestedTargetOffsetY,
+    button: requestedButton,
+    path: requestedPath,
+    hoverState: requestedHoverState,
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
     key: requestedKey,
@@ -3141,9 +4583,63 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     altKey: requestedAltKey === true,
     metaKey: requestedMetaKey === true,
   };
+  const composedParent = (target) => {
+    if (!(target instanceof Element)) return null;
+    if (target.assignedSlot) return target.assignedSlot;
+    if (target.parentElement) return target.parentElement;
+    const root = target.getRootNode();
+    return root instanceof ShadowRoot ? root.host : null;
+  };
+  const closestComposed = (target, cssSelector) => {
+    let current = target;
+    while (current instanceof Element) {
+      if (current.matches(cssSelector)) return current;
+      current = composedParent(current);
+    }
+    return null;
+  };
+  const composedContains = (container, candidate) => {
+    let current = candidate instanceof Element
+      ? candidate
+      : candidate?.parentElement;
+    while (current instanceof Element) {
+      if (current === container) return true;
+      current = composedParent(current);
+    }
+    return false;
+  };
+  const deepActiveElement = () => {
+    let active = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    return active;
+  };
+  const composedChildNodes = (node) => {
+    if (node instanceof HTMLSlotElement) {
+      const assigned = node.assignedNodes({ flatten: true });
+      if (assigned.length > 0) return assigned;
+    }
+    if (node instanceof Element && node.shadowRoot) {
+      return Array.from(node.shadowRoot.childNodes);
+    }
+    return Array.from(node.childNodes || []);
+  };
+  const allOpenComposedElements = () => {
+    const elements = [];
+    const collected = new Set();
+    const collect = (candidate) => {
+      if (!(candidate instanceof Element) || collected.has(candidate)) return;
+      collected.add(candidate);
+      elements.push(candidate);
+      for (const child of composedChildNodes(candidate)) {
+        if (child instanceof Element) collect(child);
+      }
+    };
+    collect(document.documentElement);
+    return elements;
+  };
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
-  const guardedEpoch = revisionGuard?.revisions?.get(expectedSnapshotRevision);
-  if (!revisionGuard || guardedEpoch !== revisionGuard.epoch) {
+  const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
+  if (!revisionGuard || !guardedRevision) {
     return {
       ok: false,
       error: 'Editor window semantic content changed; get a fresh UI snapshot before interacting',
@@ -3153,11 +4649,71 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       restartOffset: 0,
     };
   }
+  const guardedElement = guardedRevision.elements?.get(selector);
+  if (!guardedElement) {
+    return {
+      ok: false,
+      error: `Selector ${selector} is not exposed by the expected semantic UI snapshot`,
+      selectorNotExposed: true,
+      expectedSnapshotRevision,
+    };
+  }
+  const currentSnapshotRevision = revisionGuard.latestRevision;
+  const currentRevision = revisionGuard.revisions?.get(currentSnapshotRevision);
+  const currentGuardedElement = currentRevision?.elements?.get(selector);
+  if (
+    currentRevision?.epoch !== revisionGuard.epoch
+    || !currentGuardedElement
+    || currentGuardedElement.element !== guardedElement.element
+    || currentGuardedElement.signature !== guardedElement.signature
+  ) {
+    return {
+      ok: false,
+      error: 'Editor window semantic target changed; get a fresh UI snapshot before interacting',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: currentSnapshotRevision || null,
+      restartOffset: 0,
+    };
+  }
+  const guardedTarget = action === 'dragTo'
+    ? guardedRevision.elements?.get(targetSelector)
+    : null;
+  if (action === 'dragTo' && !guardedTarget) {
+    return {
+      ok: false,
+      error: `Target selector ${targetSelector} is not exposed by the expected semantic UI snapshot`,
+      selectorNotExposed: true,
+      targetSelectorNotExposed: true,
+      expectedSnapshotRevision,
+    };
+  }
+  const currentGuardedTarget = action === 'dragTo'
+    ? currentRevision?.elements?.get(targetSelector)
+    : null;
+  if (
+    action === 'dragTo'
+    && (
+      !currentGuardedTarget
+      || currentGuardedTarget.element !== guardedTarget.element
+      || currentGuardedTarget.signature !== guardedTarget.signature
+    )
+  ) {
+    return {
+      ok: false,
+      error: 'Editor window semantic drag target changed; get a fresh UI snapshot before interacting',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: currentSnapshotRevision || null,
+      restartOffset: 0,
+    };
+  }
   const agentActionNames = [
     'click',
     'doubleClick',
     'contextClick',
     'setValue',
+    'scrollIntoView',
     'scroll',
     'keyPress',
     'dragTo',
@@ -3184,7 +4740,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           blockedActions.add(blockedAction);
         }
       }
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return blockedActions.size > 0
       ? {
@@ -3193,36 +4749,109 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         }
       : null;
   };
-  let element;
-  try {
-    element = document.querySelector(selector);
-  } catch (error) {
-    return { ok: false, error: `Invalid selector: ${String(error)}` };
+  const element = guardedElement.element;
+  if (
+    !(element instanceof Element)
+    || !element.isConnected
+    || element.ownerDocument !== document
+  ) {
+    return {
+      ok: false,
+      error: 'Editor window semantic selector changed; get a fresh UI snapshot before interacting',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
   }
-  if (!element) return { ok: false, error: `No element matches ${selector}` };
   let targetElement = null;
   if (action === 'dragTo') {
-    try {
-      targetElement = document.querySelector(targetSelector);
-    } catch (error) {
-      return { ok: false, error: `Invalid target selector: ${String(error)}` };
-    }
-    if (!targetElement) {
-      return { ok: false, error: `No element matches target ${targetSelector}` };
+    targetElement = guardedTarget.element;
+    if (
+      !(targetElement instanceof Element)
+      || !targetElement.isConnected
+      || targetElement.ownerDocument !== document
+    ) {
+      return {
+        ok: false,
+        error: 'Editor window semantic target selector changed; get a fresh UI snapshot before interacting',
+        staleSnapshot: true,
+        expectedSnapshotRevision,
+        actualSnapshotRevision: null,
+        restartOffset: 0,
+      };
     }
   }
   const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, 160);
-  const labelledText = (target) => {
+  const semanticallyHidden = (target) => Boolean(
+    target instanceof Element
+      && closestComposed(target, '[aria-hidden="true"], [inert]'),
+  );
+  const semanticText = (root, includeHiddenSubtree = false) => {
+    const parts = [];
+    const visit = (node, semanticParent = null) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (
+          includeHiddenSubtree
+          || !(semanticParent instanceof Element)
+          || !semanticallyHidden(semanticParent)
+        ) {
+          parts.push(node.textContent || '');
+        }
+        return;
+      }
+      if (node instanceof Element) {
+        if (
+          ['script', 'style', 'template', 'noscript'].includes(node.localName)
+          || (!includeHiddenSubtree && semanticallyHidden(node))
+        ) return;
+      }
+      const nextParent = node instanceof Element ? node : semanticParent;
+      for (const child of composedChildNodes(node)) {
+        visit(child, nextParent);
+      }
+    };
+    visit(root);
+    return normalizeName(parts.join(' '));
+  };
+  const labelledByText = (target) => {
     const ids = String(target.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
-    const referenced = normalizeName(
-      ids.map((id) => document.getElementById(id)?.textContent || '').join(' '),
-    );
-    if (referenced) return referenced;
+    const root = target.getRootNode();
     return normalizeName(
-      Array.from(target.labels || [])
-        .map((label) => label.innerText || label.textContent || '')
-        .join(' '),
+      ids.map((id) => {
+        const labelledBy = root.getElementById?.(id) || null;
+        return labelledBy
+          ? semanticText(labelledBy, semanticallyHidden(labelledBy))
+          : '';
+      }).join(' '),
     );
+  };
+  const nativeLabelText = (target) => normalizeName(
+    Array.from(target.labels || [])
+      .map((label) => semanticText(label, semanticallyHidden(label)))
+      .join(' '),
+  );
+  const nativeCaptionText = (target) => {
+    const captionTag = target.localName === 'fieldset'
+      ? 'legend'
+      : target.localName === 'figure'
+        ? 'figcaption'
+        : target.localName === 'table'
+          ? 'caption'
+          : '';
+    if (!captionTag) return '';
+    const caption = Array.from(target.children)
+      .find((child) => child.localName === captionTag);
+    return caption
+      ? semanticText(caption, semanticallyHidden(caption))
+      : '';
+  };
+  const nativeButtonValue = (target) => {
+    if (!(target instanceof HTMLInputElement)) return '';
+    const type = String(target.type || 'text').toLowerCase();
+    return ['button', 'submit', 'reset'].includes(type)
+      ? normalizeName(target.value)
+      : '';
   };
   const roleForName = (target) => {
     const explicit = normalizeName(target.getAttribute('role'));
@@ -3234,12 +4863,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     if (target.localName === 'textarea') return 'textbox';
     if (target.localName === 'select') return target.multiple ? 'listbox' : 'combobox';
     if (target.localName === 'option') return 'option';
+    if (target.localName === 'output') return 'status';
+    if (target.localName === 'meter') return 'meter';
     if (target.localName === 'input') {
       const type = String(target.type || 'text').toLowerCase();
+      if (type === 'hidden') return '';
       if (type === 'checkbox') return 'checkbox';
       if (type === 'radio') return 'radio';
       if (type === 'range') return 'slider';
-      if (['button', 'submit', 'reset'].includes(type)) return 'button';
+      if (type === 'number') return 'spinbutton';
+      if (target instanceof HTMLInputElement && target.list) return 'combobox';
+      if (type === 'search') return 'searchbox';
+      if (['button', 'submit', 'reset', 'image'].includes(type)) return 'button';
       return 'textbox';
     }
     return '';
@@ -3247,12 +4882,15 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   const directName = (target) => {
     const role = roleForName(target);
     const content = ['button', 'link', 'heading', 'menuitem', 'option', 'tab'].includes(role)
-      ? normalizeName(target.innerText || target.textContent)
+      ? semanticText(target)
       : '';
     const meaningfulContent = /[\p{L}\p{N}]/u.test(content) ? content : '';
-    return normalizeName(target.getAttribute('aria-label'))
-      || labelledText(target)
+    return labelledByText(target)
+      || normalizeName(target.getAttribute('aria-label'))
+      || nativeLabelText(target)
       || normalizeName(target.getAttribute('alt'))
+      || nativeCaptionText(target)
+      || nativeButtonValue(target)
       || meaningfulContent
       || normalizeName(target.getAttribute('placeholder'))
       || normalizeName(target.getAttribute('title'))
@@ -3262,42 +4900,107 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const direct = directName(target);
     if (direct) return direct;
     if (includeScrollContext) {
-      let current = target.parentElement;
+      let current = composedParent(target);
       while (current instanceof Element) {
         const context = directName(current);
         if (context) return `${context} scroll area`;
-        current = current.parentElement;
+        current = composedParent(current);
       }
     }
-    return normalizeName(target.innerText || target.textContent);
+    return semanticText(target);
+  };
+  const renderedRectFor = (target, style = getComputedStyle(target)) => {
+    const rect = target.getBoundingClientRect();
+    if (
+      typeof SVGGeometryElement === 'undefined'
+      || !(target instanceof SVGGeometryElement)
+      || (rect.width > 0 && rect.height > 0)
+      || (rect.width <= 0 && rect.height <= 0)
+    ) return rect;
+    const parsedStrokeWidth = Number.parseFloat(style.strokeWidth);
+    const thickness = (
+      Number.isFinite(parsedStrokeWidth) && parsedStrokeWidth > 0
+        ? parsedStrokeWidth
+        : 1
+    );
+    const width = Math.max(rect.width, thickness);
+    const height = Math.max(rect.height, thickness);
+    const left = rect.left - (width - rect.width) / 2;
+    const top = rect.top - (height - rect.height) / 2;
+    return {
+      x: left,
+      y: top,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+    };
+  };
+  const renderedInComposedTree = (target) => {
+    let current = target;
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      if (
+        style.display === 'none'
+        || style.visibility === 'hidden'
+        || style.visibility === 'collapse'
+        || style.contentVisibility === 'hidden'
+        || Number(style.opacity) === 0
+        || current.hidden
+      ) return false;
+      current = composedParent(current);
+    }
+    return true;
   };
   const rendered = (target) => {
     if (!(target instanceof HTMLElement || target instanceof SVGElement)) return false;
-    const style = getComputedStyle(target);
-    if (
-      style.display === 'none'
-      || style.visibility === 'hidden'
-      || Number(style.opacity) === 0
-      || target.hidden
-    ) return false;
-    const rect = target.getBoundingClientRect();
+    if (semanticallyHidden(target) || !renderedInComposedTree(target)) return false;
+    const rect = renderedRectFor(target);
     return rect.width > 0 && rect.height > 0;
   };
+  const effectivelyDisabled = (target) => Boolean(
+    target.disabled === true
+      || target.matches(':disabled')
+      || closestComposed(target, '[aria-disabled="true"]'),
+  );
+  const nativeDialogIsModal = (target) => {
+    if (target.localName !== 'dialog' || !target.hasAttribute('open')) return false;
+    try {
+      return target.matches(':modal');
+    } catch {
+      return false;
+    }
+  };
+  const isActiveModalDialog = (target) => (
+    nativeDialogIsModal(target)
+      || (
+        normalizeName(target.getAttribute('role')) === 'dialog'
+        && target.getAttribute('aria-modal') === 'true'
+      )
+  );
   const visibleModalDialogs = Array.from(
-    document.querySelectorAll('[role="dialog"][aria-modal="true"]'),
-  ).filter(rendered);
+    allOpenComposedElements().filter((candidate) => candidate.matches(
+      'dialog, [role="dialog"][aria-modal="true"]',
+    )),
+  ).filter((candidate) => rendered(candidate) && isActiveModalDialog(candidate));
   const modalLayerFor = (candidate) => {
     let layer = 0;
     let current = candidate;
     while (current instanceof Element) {
       const zIndex = Number.parseInt(getComputedStyle(current).zIndex, 10);
       if (Number.isFinite(zIndex)) layer = Math.max(layer, zIndex);
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return layer;
   };
-  let activeModal = null;
-  let activeModalLayer = Number.NEGATIVE_INFINITY;
+  let activeModal = visibleModalDialogs.find((candidate) => (
+    composedContains(candidate, deepActiveElement())
+  )) || null;
+  let activeModalLayer = activeModal
+    ? Number.POSITIVE_INFINITY
+    : Number.NEGATIVE_INFINITY;
   for (const candidate of visibleModalDialogs) {
     const layer = modalLayerFor(candidate);
     if (layer >= activeModalLayer) {
@@ -3308,12 +5011,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   if (
     activeModal
     && (
-      !activeModal.contains(element)
-      || (targetElement && !activeModal.contains(targetElement))
+      !composedContains(activeModal, element)
+      || (targetElement && !composedContains(activeModal, targetElement))
     )
   ) {
-    const blockedTarget = !activeModal.contains(element) ? 'Element' : 'Target element';
-    const blockedSelector = !activeModal.contains(element) ? selector : targetSelector;
+    const blockedTarget = !composedContains(activeModal, element) ? 'Element' : 'Target element';
+    const blockedSelector = !composedContains(activeModal, element) ? selector : targetSelector;
     const activeModalName = interactionName(activeModal) || 'Modal dialog';
     return {
       ok: false,
@@ -3321,6 +5024,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       modalBlocked: true,
       activeModalName,
       agentAlternative: 'Interact with or dismiss the active modal dialog first',
+    };
+  }
+  if (!rendered(element)) {
+    return {
+      ok: false,
+      error: `Element ${selector} is not rendered in the semantic accessibility tree`,
+    };
+  }
+  if (targetElement && !rendered(targetElement)) {
+    return {
+      ok: false,
+      error: `Target element ${targetSelector} is not rendered in the semantic accessibility tree`,
     };
   }
   const agentPolicy = agentPolicyFor(element);
@@ -3353,19 +5068,213 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       agentAlternative: alternative,
     };
   }
-  const disabled = Boolean(
-    element.disabled || element.getAttribute('aria-disabled') === 'true',
-  );
-  if (disabled) {
+  if (effectivelyDisabled(element) && action !== 'scrollIntoView') {
     return { ok: false, error: `Element ${selector} is disabled` };
   }
-  if (targetElement && Boolean(
-    targetElement.disabled || targetElement.getAttribute('aria-disabled') === 'true',
-  )) {
+  if (targetElement && effectivelyDisabled(targetElement)) {
     return { ok: false, error: `Target element ${targetSelector} is disabled` };
   }
+  const allowedActions = Array.isArray(guardedElement.actions)
+    ? guardedElement.actions
+    : [];
+  if (!allowedActions.includes(action)) {
+    return {
+      ok: false,
+      error: `Element ${selector} does not expose the ${action} semantic action`,
+      actionNotExposed: true,
+      requiredAction: action,
+      allowedActions,
+      expectedSnapshotRevision,
+    };
+  }
+  const pointerVisibleRectFor = (target) => {
+    const rect = renderedRectFor(target);
+    let left = Math.max(0, rect.left);
+    let top = Math.max(0, rect.top);
+    let right = Math.min(document.documentElement.clientWidth, rect.right);
+    let bottom = Math.min(document.documentElement.clientHeight, rect.bottom);
+    let current = composedParent(target);
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      const clipsX = style.overflowX !== 'visible';
+      const clipsY = style.overflowY !== 'visible';
+      if (clipsX || clipsY) {
+        const ancestorRect = renderedRectFor(current, style);
+        const clipLeft = current instanceof HTMLElement
+          ? ancestorRect.left + current.clientLeft
+          : ancestorRect.left;
+        const clipTop = current instanceof HTMLElement
+          ? ancestorRect.top + current.clientTop
+          : ancestorRect.top;
+        const clipRight = current instanceof HTMLElement
+          ? clipLeft + current.clientWidth
+          : ancestorRect.right;
+        const clipBottom = current instanceof HTMLElement
+          ? clipTop + current.clientHeight
+          : ancestorRect.bottom;
+        if (clipsX) {
+          left = Math.max(left, clipLeft);
+          right = Math.min(right, clipRight);
+        }
+        if (clipsY) {
+          top = Math.max(top, clipTop);
+          bottom = Math.min(bottom, clipBottom);
+        }
+      }
+      current = composedParent(current);
+    }
+    return right > left && bottom > top
+      ? { left, top, right, bottom, width: right - left, height: bottom - top }
+      : null;
+  };
+  const deepestElementFromPoint = (clientX, clientY) => {
+    let hit = document.elementFromPoint(clientX, clientY);
+    while (
+      hit instanceof Element
+      && hit.shadowRoot
+      && typeof hit.shadowRoot.elementFromPoint === 'function'
+    ) {
+      const nested = hit.shadowRoot.elementFromPoint(clientX, clientY);
+      if (!(nested instanceof Element) || nested === hit) break;
+      hit = nested;
+    }
+    return hit;
+  };
+  const pointerHitsTarget = (target, clientX, clientY) => {
+    const hit = deepestElementFromPoint(clientX, clientY);
+    return {
+      hit,
+      reachable: hit instanceof Element && composedContains(target, hit),
+    };
+  };
+  const automaticPointerCandidates = (visibleRect) => {
+    const xs = [0.5, 0.25, 0.75, 0.1, 0.9];
+    const ys = [0.5, 0.25, 0.75, 0.1, 0.9];
+    const candidates = [];
+    for (const y of ys) {
+      for (const x of xs) {
+        candidates.push({
+          clientX: visibleRect.left + visibleRect.width * x,
+          clientY: visibleRect.top + visibleRect.height * y,
+        });
+      }
+    }
+    return candidates;
+  };
+  const coordinateFor = (
+    target,
+    requestedX,
+    requestedY,
+    targetLabel,
+    requireReachable = true,
+  ) => {
+    const rect = renderedRectFor(target);
+    const offsetX = requestedX == null ? rect.width / 2 : Number(requestedX);
+    const offsetY = requestedY == null ? rect.height / 2 : Number(requestedY);
+    if (
+      !Number.isFinite(offsetX)
+      || !Number.isFinite(offsetY)
+      || offsetX < 0
+      || offsetY < 0
+      || offsetX >= rect.width
+      || offsetY >= rect.height
+    ) {
+      throw new Error(
+        `${targetLabel} offsets must resolve inside its current ${
+          rect.width.toFixed(2)
+        } by ${rect.height.toFixed(2)} CSS-pixel bounds`,
+      );
+    }
+    const explicitCoordinates = requestedX != null || requestedY != null;
+    const visibleRect = pointerVisibleRectFor(target);
+    if (!explicitCoordinates && !visibleRect) {
+      throw new Error(`${targetLabel} has no pointer area inside the target WebView viewport and overflow clips`);
+    }
+    const candidates = explicitCoordinates
+      ? [{ clientX: rect.left + offsetX, clientY: rect.top + offsetY }]
+      : automaticPointerCandidates(visibleRect);
+    const inViewport = candidates.filter((candidate) => (
+      candidate.clientX >= 0
+      && candidate.clientY >= 0
+      && candidate.clientX < document.documentElement.clientWidth
+      && candidate.clientY < document.documentElement.clientHeight
+    ));
+    if (inViewport.length === 0) {
+      throw new Error(`${targetLabel} has no pointer coordinates inside the target WebView viewport and overflow clips`);
+    }
+    const resolved = requireReachable
+      ? inViewport.find((candidate) => (
+          pointerHitsTarget(target, candidate.clientX, candidate.clientY).reachable
+        ))
+      : inViewport[0];
+    if (!resolved) {
+      const blocker = pointerHitsTarget(
+        target,
+        inViewport[0].clientX,
+        inViewport[0].clientY,
+      ).hit;
+      const blockerName = blocker instanceof Element
+        ? interactionName(blocker) || blocker.localName
+        : null;
+      const error = new Error(
+        `${targetLabel} has no reachable pointer point${
+          blockerName ? `; blocked by "${blockerName}"` : ''
+        }`,
+      );
+      error.pointerTargetObscured = true;
+      error.blockerName = blockerName;
+      throw error;
+    }
+    return {
+      offsetX: resolved.clientX - rect.left,
+      offsetY: resolved.clientY - rect.top,
+      clientX: resolved.clientX,
+      clientY: resolved.clientY,
+    };
+  };
+  const pointerActions = [
+    'click',
+    'doubleClick',
+    'contextClick',
+    'scroll',
+    'dragTo',
+    'dragBy',
+    'hover',
+  ];
+  let sourceCoordinates = null;
+  let targetCoordinates = null;
+  try {
+    if (pointerActions.includes(action)) {
+      sourceCoordinates = coordinateFor(
+        element,
+        requestedOffsetX,
+        requestedOffsetY,
+        'Element',
+        !(action === 'hover' && requestedHoverState === 'leave'),
+      );
+    }
+    if (action === 'dragTo') {
+      targetCoordinates = coordinateFor(
+        targetElement,
+        requestedTargetOffsetX,
+        requestedTargetOffsetY,
+        'Target element',
+      );
+    }
+  } catch (error) {
+    const pointerTargetObscured = Boolean(error?.pointerTargetObscured);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+      invalidPointerCoordinates: !pointerTargetObscured,
+      pointerTargetObscured,
+      blockerName: pointerTargetObscured ? error?.blockerName ?? null : null,
+    };
+  }
   const eventCoordinates = (target = element) => {
-    const rect = target.getBoundingClientRect();
+    if (target === element && sourceCoordinates) return sourceCoordinates;
+    if (target === targetElement && targetCoordinates) return targetCoordinates;
+    const rect = renderedRectFor(target);
     return {
       clientX: rect.left + rect.width / 2,
       clientY: rect.top + rect.height / 2,
@@ -3430,6 +5339,93 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     return {};
   };
+  const reactValueEvent = (target, type, data = null) => ({
+    type,
+    target,
+    currentTarget: target,
+    nativeEvent: null,
+    bubbles: true,
+    cancelable: true,
+    defaultPrevented: false,
+    data,
+    inputType: type === 'input' ? 'insertText' : null,
+    propagationStopped: false,
+    ...modifiers,
+    preventDefault() { this.defaultPrevented = true; },
+    stopPropagation() { this.propagationStopped = true; },
+    isDefaultPrevented() { return this.defaultPrevented; },
+    isPropagationStopped() { return this.propagationStopped; },
+    persist() {},
+  });
+  const dispatchValueChange = (target, value) => {
+    const reactProps = reactPropsFor(target);
+    let handledByReact = false;
+    if (typeof reactProps.onInput === 'function') {
+      reactProps.onInput(reactValueEvent(target, 'input', value));
+      handledByReact = true;
+    }
+    if (typeof reactProps.onChange === 'function') {
+      reactProps.onChange(reactValueEvent(target, 'change', value));
+      handledByReact = true;
+    }
+    if (!handledByReact) {
+      target.dispatchEvent(new InputEvent('input', {
+        bubbles: true,
+        composed: true,
+        inputType: 'insertText',
+        data: value,
+      }));
+      target.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    }
+    return handledByReact;
+  };
+  const dispatchReactFocusLifecycle = (target, type, nativeTransition) => {
+    const captureName = type === 'focus' ? 'onFocusCapture' : 'onBlurCapture';
+    const bubbleName = type === 'focus' ? 'onFocus' : 'onBlur';
+    const path = [];
+    for (let current = target; current instanceof Element; current = composedParent(current)) {
+      path.push({ target: current, props: reactPropsFor(current) });
+    }
+    const handlers = [];
+    for (const entry of path) {
+      for (const name of [captureName, bubbleName]) {
+        if (typeof entry.props[name] === 'function') {
+          handlers.push({ ...entry, name, handler: entry.props[name] });
+        }
+      }
+    }
+    let nativeHandlerCount = 0;
+    for (const entry of handlers) {
+      entry.props[entry.name] = (...args) => {
+        nativeHandlerCount += 1;
+        return entry.handler(...args);
+      };
+    }
+    try {
+      nativeTransition();
+    } finally {
+      for (const entry of handlers) entry.props[entry.name] = entry.handler;
+    }
+    if (nativeHandlerCount > 0 || handlers.length === 0) {
+      return { handledByReact: nativeHandlerCount > 0, nativeHandlerCount };
+    }
+    const event = reactValueEvent(target, type);
+    for (const entry of [...path].reverse()) {
+      const handler = entry.props[captureName];
+      if (typeof handler !== 'function') continue;
+      event.currentTarget = entry.target;
+      handler(event);
+      if (event.isPropagationStopped()) return { handledByReact: true, nativeHandlerCount: 0 };
+    }
+    for (const entry of path) {
+      const handler = entry.props[bubbleName];
+      if (typeof handler !== 'function') continue;
+      event.currentTarget = entry.target;
+      handler(event);
+      if (event.isPropagationStopped()) break;
+    }
+    return { handledByReact: true, nativeHandlerCount: 0 };
+  };
   const nativeValidityIssues = (target) => {
     if (
       !(target instanceof HTMLInputElement)
@@ -3488,36 +5484,33 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       'checked',
     )?.set;
     if (!setter) return false;
+    const changed = element.checked !== Boolean(checked) || element.indeterminate;
     setter.call(element, Boolean(checked));
     element.indeterminate = false;
     const reactProps = reactPropsFor(element);
-    const syntheticEvent = (type) => ({
-      type,
-      target: element,
-      currentTarget: element,
-      nativeEvent: null,
-      bubbles: true,
-      cancelable: true,
-      defaultPrevented: false,
-      ...modifiers,
-      preventDefault() { this.defaultPrevented = true; },
-      stopPropagation() {},
-      isDefaultPrevented() { return this.defaultPrevented; },
-      isPropagationStopped() { return false; },
-      persist() {},
-    });
     let handledByReact = false;
     if (includeClick && typeof reactProps.onClick === 'function') {
-      reactProps.onClick(syntheticEvent('click'));
+      reactProps.onClick(reactValueEvent(element, 'click'));
       handledByReact = true;
     }
     if (typeof reactProps.onChange === 'function') {
-      reactProps.onChange(syntheticEvent('change'));
+      reactProps.onChange(reactValueEvent(element, 'change'));
       handledByReact = true;
     }
     if (!handledByReact) {
       element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
       element.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    }
+    if (action === 'setValue' || (action === 'keyPress' && changed)) {
+      valueHandledByReact = handledByReact;
+    }
+    if (action === 'keyPress' && changed) {
+      valueCommitMethod = 'change';
+      pendingValueChangeConfirmation = () => (
+        element.isConnected
+        && element.checked === Boolean(checked)
+        && !element.indeterminate
+      );
     }
     return true;
   };
@@ -3538,9 +5531,51 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       );
     } else if (
       !Object.values(modifiers).some(Boolean)
+      && requestedOffsetX == null
+      && requestedOffsetY == null
       && typeof element.click === 'function'
     ) element.click();
     else dispatchPointer('click', 0, 0, detail);
+  };
+  let performedDragPath = null;
+  let performedHoverState = null;
+  let hoverStateChanged = null;
+  let scrollIntoViewChanged = null;
+  let revealedRect = null;
+  let pendingValueBlur = false;
+  let valueCommitMethod = null;
+  let valueCommitConfirmed = null;
+  let pendingValueChangeConfirmation = null;
+  let valueHandledByReact = null;
+  let valueDraftSynchronized = null;
+  let valueFocusHandledByReact = null;
+  let valueBlurHandledByReact = null;
+  let performedSettledFrames = 0;
+  let pendingFocusTarget = null;
+  let keyboardValueTarget = false;
+  let semanticClipboardOperation = null;
+  let semanticClipboardLength = null;
+  let performedTextHistoryOperation = null;
+  let textHistoryApplied = null;
+  let textHistoryUndoDepth = null;
+  let textHistoryRedoDepth = null;
+  const semanticTextHistoryKey = Symbol.for('mengine.agent.textHistory');
+  const semanticTextHistoryInputTypes = ['text', 'search', 'email', 'url', 'tel'];
+  const isSemanticTextHistoryTarget = (target) => (
+    (
+      target instanceof HTMLInputElement
+      && semanticTextHistoryInputTypes.includes(String(target.type).toLowerCase())
+    )
+    || target instanceof HTMLTextAreaElement
+    || (target instanceof HTMLElement && target.isContentEditable)
+  );
+  let semanticTextHistoryRegistry = window[semanticTextHistoryKey];
+  if (!(semanticTextHistoryRegistry instanceof WeakMap)) {
+    semanticTextHistoryRegistry = new WeakMap();
+    window[semanticTextHistoryKey] = semanticTextHistoryRegistry;
+  }
+  const clearSemanticTextHistory = (target) => {
+    if (isSemanticTextHistoryTarget(target)) semanticTextHistoryRegistry.delete(target);
   };
   if (action === 'click') {
     dispatchClick(1);
@@ -3592,45 +5627,64 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     dispatchPointerAt(targetElement, 'pointerup', 0, 0, 1);
     dispatchPointerAt(targetElement, 'mouseup', 0, 0, 1);
   } else if (action === 'dragBy') {
-    const deltaX = Number(requestedDeltaX);
-    const deltaY = Number(requestedDeltaY);
+    const path = Array.isArray(requestedPath)
+      ? requestedPath.map((point) => ({
+          deltaX: Number(point?.deltaX),
+          deltaY: Number(point?.deltaY),
+        }))
+      : [{
+          deltaX: Number(requestedDeltaX),
+          deltaY: Number(requestedDeltaY),
+        }];
+    const buttonName = requestedButton ?? 'left';
+    const button = buttonName === 'middle' ? 1 : buttonName === 'right' ? 2 : 0;
+    const heldButtons = button === 1 ? 4 : button === 2 ? 2 : 1;
     if (
-      !Number.isFinite(deltaX)
-      || !Number.isFinite(deltaY)
-      || (deltaX === 0 && deltaY === 0)
+      path.length < 1
+      || path.length > 64
+      || path.some((point) => (
+        !Number.isFinite(point.deltaX)
+        || !Number.isFinite(point.deltaY)
+        || Math.abs(point.deltaX) > 1000000
+        || Math.abs(point.deltaY) > 1000000
+      ))
+      || !path.some((point) => point.deltaX !== 0 || point.deltaY !== 0)
     ) {
-      return { ok: false, error: 'dragBy requires finite non-zero CSS-pixel deltas' };
+      return { ok: false, error: 'dragBy requires 1 to 64 finite path points with a non-zero displacement' };
     }
-    const start = eventCoordinates(element);
-    const end = {
-      clientX: start.clientX + deltaX,
-      clientY: start.clientY + deltaY,
-    };
-    if (
-      end.clientX < 0
-      || end.clientY < 0
-      || end.clientX >= document.documentElement.clientWidth
-      || end.clientY >= document.documentElement.clientHeight
-    ) {
+    const start = sourceCoordinates;
+    const resolvedPath = path.map((point) => ({
+      clientX: start.clientX + point.deltaX,
+      clientY: start.clientY + point.deltaY,
+    }));
+    if (resolvedPath.some((point) => (
+      point.clientX < 0
+      || point.clientY < 0
+      || point.clientX >= document.documentElement.clientWidth
+      || point.clientY >= document.documentElement.clientHeight
+    ))) {
       return {
         ok: false,
-        error: 'dragBy must end inside the target WebView viewport',
+        error: 'Every dragBy path point must stay inside the target WebView viewport',
       };
     }
+    performedDragPath = path;
+    const end = resolvedPath[resolvedPath.length - 1];
     const reactProps = reactPropsFor(element);
     const gestureHint = String(
       `${element.getAttribute('aria-label') || ''} `
         + `${element.getAttribute('title') || ''} ${element.className || ''}`,
     ).toLocaleLowerCase();
+    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     const pointerGesture = typeof reactProps.onPointerDown === 'function' && (
-      typeof reactProps.onPointerMove === 'function'
+      explicitDragBy
+      || typeof reactProps.onPointerMove === 'function'
       || typeof reactProps.onPointerUp === 'function'
       || typeof reactProps.onPointerCancel === 'function'
       || /drag|scrub|resize|拖|调整|调节/.test(gestureHint)
     );
     const mouseGesture = typeof reactProps.onMouseDown === 'function'
       && typeof reactProps.onClick !== 'function';
-    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     if (
       (!pointerGesture && !mouseGesture)
       || (typeof reactProps.onClick === 'function' && !explicitDragBy)
@@ -3657,21 +5711,27 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           value: implementation,
         });
       });
-      dispatchPointerAt(element, 'pointerdown', 0, 1, 1, start);
-      dispatchPointerAt(element, 'mousedown', 0, 1, 1, start);
-      const distance = Math.hypot(deltaX, deltaY);
-      const steps = Math.max(2, Math.min(16, Math.ceil(distance / 20)));
-      for (let step = 1; step <= steps; step += 1) {
-        const progress = step / steps;
-        const coordinates = {
-          clientX: start.clientX + deltaX * progress,
-          clientY: start.clientY + deltaY * progress,
-        };
-        dispatchPointerAt(element, 'pointermove', 0, 1, 1, coordinates);
-        dispatchPointerAt(element, 'mousemove', 0, 1, 1, coordinates);
+      dispatchPointerAt(element, 'pointerdown', button, heldButtons, 1, start);
+      dispatchPointerAt(element, 'mousedown', button, heldButtons, 1, start);
+      let previous = { deltaX: 0, deltaY: 0 };
+      for (const point of path) {
+        const segmentX = point.deltaX - previous.deltaX;
+        const segmentY = point.deltaY - previous.deltaY;
+        const distance = Math.hypot(segmentX, segmentY);
+        const steps = Math.max(2, Math.min(8, Math.ceil(distance / 20)));
+        for (let step = 1; step <= steps; step += 1) {
+          const progress = step / steps;
+          const coordinates = {
+            clientX: start.clientX + previous.deltaX + segmentX * progress,
+            clientY: start.clientY + previous.deltaY + segmentY * progress,
+          };
+          dispatchPointerAt(element, 'pointermove', -1, heldButtons, 1, coordinates);
+          dispatchPointerAt(element, 'mousemove', 0, heldButtons, 1, coordinates);
+        }
+        previous = point;
       }
-      dispatchPointerAt(element, 'pointerup', 0, 0, 1, end);
-      dispatchPointerAt(element, 'mouseup', 0, 0, 1, end);
+      dispatchPointerAt(element, 'pointerup', button, 0, 1, end);
+      dispatchPointerAt(element, 'mouseup', button, 0, 1, end);
     } finally {
       captureMethods.forEach(([name], index) => {
         const descriptor = captureDescriptors[index];
@@ -3681,56 +5741,88 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
   } else if (action === 'hover') {
     const reactProps = reactPropsFor(element);
-    if (
-      typeof reactProps.onPointerEnter !== 'function'
-      && typeof reactProps.onPointerOver !== 'function'
-      && typeof reactProps.onMouseEnter !== 'function'
-      && typeof reactProps.onMouseOver !== 'function'
-    ) {
-      return { ok: false, error: `Element ${selector} has no semantic hover interaction` };
-    }
+    performedHoverState = requestedHoverState ?? 'enter';
     const hoverState = Symbol.for('mengine.agent.hoveredElement');
     const storedHover = window[hoverState];
     const previous = storedHover instanceof Element && storedHover.isConnected
       ? storedHover
       : null;
-    if (
-      previous
-      && previous !== element
-      && !previous.contains(element)
-    ) {
-      const previousProps = reactPropsFor(previous);
-      if (typeof previousProps.onPointerOut === 'function') {
-        previousProps.onPointerOut(reactHoverEvent(previous, 'pointerout', element));
+    const dispatchLeave = (target, relatedTarget) => {
+      const props = reactPropsFor(target);
+      if (typeof props.onPointerOut === 'function') {
+        props.onPointerOut(reactHoverEvent(target, 'pointerout', relatedTarget));
       }
-      if (typeof previousProps.onPointerLeave === 'function') {
-        previousProps.onPointerLeave(reactHoverEvent(previous, 'pointerleave', element));
+      if (typeof props.onPointerLeave === 'function') {
+        props.onPointerLeave(reactHoverEvent(target, 'pointerleave', relatedTarget));
       }
-      if (typeof previousProps.onMouseOut === 'function') {
-        previousProps.onMouseOut(reactHoverEvent(previous, 'mouseout', element));
+      if (typeof props.onMouseOut === 'function') {
+        props.onMouseOut(reactHoverEvent(target, 'mouseout', relatedTarget));
       }
-      if (typeof previousProps.onMouseLeave === 'function') {
-        previousProps.onMouseLeave(reactHoverEvent(previous, 'mouseleave', element));
+      if (typeof props.onMouseLeave === 'function') {
+        props.onMouseLeave(reactHoverEvent(target, 'mouseleave', relatedTarget));
       }
+    };
+    if (performedHoverState === 'leave') {
+      if (previous && previous !== element) {
+        return {
+          ok: false,
+          error: `Element ${selector} is not the current semantic hover target`,
+          hoverTargetMismatch: true,
+        };
+      }
+      if (previous) dispatchLeave(previous, null);
+      window[hoverState] = null;
+      hoverStateChanged = previous !== null;
+    } else {
+      if (
+        typeof reactProps.onPointerEnter !== 'function'
+        && typeof reactProps.onPointerOver !== 'function'
+        && typeof reactProps.onMouseEnter !== 'function'
+        && typeof reactProps.onMouseOver !== 'function'
+      ) {
+        return { ok: false, error: `Element ${selector} has no semantic hover interaction` };
+      }
+      if (
+        previous
+        && previous !== element
+        && !composedContains(previous, element)
+      ) {
+        dispatchLeave(previous, element);
+      }
+      if (previous !== element) {
+        if (typeof reactProps.onPointerOver === 'function') {
+          reactProps.onPointerOver(reactHoverEvent(element, 'pointerover', previous));
+        }
+        if (typeof reactProps.onPointerEnter === 'function') {
+          reactProps.onPointerEnter(reactHoverEvent(element, 'pointerenter', previous));
+        }
+        if (typeof reactProps.onMouseOver === 'function') {
+          reactProps.onMouseOver(reactHoverEvent(element, 'mouseover', previous));
+        }
+        if (typeof reactProps.onMouseEnter === 'function') {
+          reactProps.onMouseEnter(reactHoverEvent(element, 'mouseenter', previous));
+        }
+        window[hoverState] = element;
+      }
+      hoverStateChanged = previous !== element;
     }
-    if (typeof reactProps.onPointerOver === 'function') {
-      reactProps.onPointerOver(reactHoverEvent(element, 'pointerover', previous));
-    }
-    if (typeof reactProps.onPointerEnter === 'function') {
-      reactProps.onPointerEnter(reactHoverEvent(element, 'pointerenter', previous));
-    }
-    if (typeof reactProps.onMouseOver === 'function') {
-      reactProps.onMouseOver(reactHoverEvent(element, 'mouseover', previous));
-    }
-    if (typeof reactProps.onMouseEnter === 'function') {
-      reactProps.onMouseEnter(reactHoverEvent(element, 'mouseenter', previous));
-    }
-    window[hoverState] = element;
   } else if (action === 'setValue') {
     if (element.readOnly || element.getAttribute('aria-readonly') === 'true') {
       return { ok: false, error: `Element ${selector} is read-only` };
     }
     const value = requestedValue == null ? '' : String(requestedValue);
+    const beginBlurCommit = () => {
+      if (typeof element.focus !== 'function') return false;
+      const focusLifecycle = dispatchReactFocusLifecycle(
+        element,
+        'focus',
+        () => element.focus({ preventScroll: true }),
+      );
+      valueFocusHandledByReact = focusLifecycle.handledByReact;
+      if (deepActiveElement() !== element) return false;
+      pendingValueBlur = true;
+      return true;
+    };
     if (
       element instanceof HTMLInputElement
       && ['checkbox', 'radio'].includes(element.type)
@@ -3757,6 +5849,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (!setCheckableInput(checked)) {
         return { ok: false, error: `Element ${selector} has no checked setter` };
       }
+      valueCommitMethod = 'change';
+      valueCommitConfirmed = true;
     } else {
       let prototype;
       if (element instanceof HTMLInputElement) prototype = HTMLInputElement.prototype;
@@ -3817,28 +5911,473 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           };
         }
         const validityIssues = nativeValidityIssues(element);
+        setter.call(element, previousValue);
         if (validityIssues.length > 0) {
-          setter.call(element, previousValue);
           return constraintFailure(validityIssues);
         }
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-        element.dispatchEvent(new Event('change', { bubbles: true }));
+        if (!beginBlurCommit()) {
+          return { ok: false, error: `Element ${selector} could not receive edit focus` };
+        }
+        clearSemanticTextHistory(element);
+        setter.call(element, valueToApply);
+        valueHandledByReact = dispatchValueChange(element, valueToApply);
       } else if (element.isContentEditable) {
+        if (!beginBlurCommit()) {
+          return { ok: false, error: `Element ${selector} could not receive edit focus` };
+        }
+        clearSemanticTextHistory(element);
         element.textContent = value;
-        element.dispatchEvent(new InputEvent('input', {
-          bubbles: true,
-          inputType: 'insertText',
-          data: value,
-        }));
+        valueHandledByReact = dispatchValueChange(element, value);
       } else {
         return { ok: false, error: `Element ${selector} does not accept a value` };
       }
     }
   } else if (action === 'keyPress') {
+    const keyboardInputType = element instanceof HTMLInputElement
+      ? String(element.type || 'text').toLowerCase()
+      : '';
+    const keyboardReadOnly = Boolean(
+      element.readOnly || element.getAttribute('aria-readonly') === 'true',
+    );
+    keyboardValueTarget = !keyboardReadOnly && (
+      (
+        element instanceof HTMLInputElement
+        && ![
+          'button',
+          'submit',
+          'reset',
+          'file',
+          'image',
+          'checkbox',
+          'radio',
+        ].includes(keyboardInputType)
+      )
+        || element instanceof HTMLTextAreaElement
+        || element instanceof HTMLSelectElement
+        || (element instanceof HTMLElement && element.isContentEditable)
+      );
+    const printableKey = (
+      typeof requestedKey === 'string'
+      && Array.from(requestedKey).length === 1
+      && !/[\p{Cc}\p{Cs}\p{Z}]/u.test(requestedKey)
+    );
     const key = requestedKey === 'Space' ? ' ' : String(requestedKey || '');
-    const code = requestedKey === 'Space' ? 'Space' : String(requestedKey || '');
+    const primaryTextShortcut = (
+      !modifiers.altKey
+      && modifiers.ctrlKey !== modifiers.metaKey
+    );
+    const semanticClipboardKey = Symbol.for('mengine.agent.textClipboard');
+    const readSemanticClipboard = () => (
+      typeof window[semanticClipboardKey] === 'string'
+        ? window[semanticClipboardKey]
+        : ''
+    );
+    const writeSemanticClipboard = (text) => {
+      window[semanticClipboardKey] = String(text);
+      return window[semanticClipboardKey].length;
+    };
+    const primaryClipboardShortcut = (
+      primaryTextShortcut
+      && !modifiers.shiftKey
+      && ['c', 'x', 'v'].includes(key.toLowerCase())
+    );
+    const clipboardCommand = primaryClipboardShortcut
+      ? key.toLowerCase()
+      : null;
+    const selectAllShortcut = (
+      key.toLowerCase() === 'a'
+      && !modifiers.shiftKey
+      && primaryTextShortcut
+    );
+    const requestedTextHistoryOperation = primaryTextShortcut && (
+      (
+        key.toLowerCase() === 'z'
+        && !modifiers.shiftKey
+        && 'undo'
+      )
+      || (
+        (
+          (key.toLowerCase() === 'y' && !modifiers.shiftKey)
+          || (key.toLowerCase() === 'z' && modifiers.shiftKey)
+        )
+        && 'redo'
+      )
+    ) || null;
+    const textHistoryMaxEntries = 64;
+    const textHistoryMaxCharacters = 1000000;
+    const textHistoryStateFor = (target) => {
+      let state = semanticTextHistoryRegistry.get(target);
+      if (!state) {
+        state = { undo: [], redo: [] };
+        semanticTextHistoryRegistry.set(target, state);
+      }
+      return state;
+    };
+    const textHistorySnapshotCost = (snapshot) => (
+      snapshot?.kind === 'contenteditable'
+        ? String(snapshot.html ?? '').length
+        : String(snapshot?.value ?? '').length
+    );
+    const textHistoryStackCost = (stack) => stack.reduce(
+      (total, snapshot) => total + textHistorySnapshotCost(snapshot),
+      0,
+    );
+    const sameTextHistorySnapshot = (left, right) => (
+      left?.kind === right?.kind
+      && (
+        left?.kind === 'contenteditable'
+          ? (
+              left.html === right.html
+              && left.anchor === right.anchor
+              && left.focus === right.focus
+            )
+          : (
+              left?.value === right?.value
+              && left?.start === right?.start
+              && left?.end === right?.end
+              && left?.direction === right?.direction
+            )
+      )
+    );
+    const pushTextHistorySnapshot = (stack, snapshot) => {
+      if (!snapshot || textHistorySnapshotCost(snapshot) > textHistoryMaxCharacters) {
+        return false;
+      }
+      if (sameTextHistorySnapshot(stack[stack.length - 1], snapshot)) return true;
+      stack.push(snapshot);
+      while (
+        stack.length > textHistoryMaxEntries
+        || textHistoryStackCost(stack) > textHistoryMaxCharacters
+      ) stack.shift();
+      return stack.includes(snapshot);
+    };
+    const contentEditableTextOffset = (target, node, offset) => {
+      if (
+        !node
+        || !(
+          node === target
+          || target.contains(node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement)
+        )
+      ) return null;
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      try {
+        range.setEnd(node, offset);
+        return String(range.cloneContents().textContent ?? '').length;
+      } catch {
+        return null;
+      }
+    };
+    const contentEditableTextPoint = (target, rawOffset) => {
+      const textLength = String(target.textContent ?? '').length;
+      let remaining = Math.max(0, Math.min(textLength, Number(rawOffset)));
+      const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      let last = null;
+      while (node) {
+        last = node;
+        const nodeLength = String(node.textContent ?? '').length;
+        if (remaining <= nodeLength) return { node, offset: remaining };
+        remaining -= nodeLength;
+        node = walker.nextNode();
+      }
+      return last
+        ? { node: last, offset: String(last.textContent ?? '').length }
+        : { node: target, offset: 0 };
+    };
+    const restoreContentEditableSelection = (target, anchor, focus) => {
+      const selection = window.getSelection();
+      if (!selection) return false;
+      const anchorPoint = contentEditableTextPoint(target, anchor);
+      const focusPoint = contentEditableTextPoint(target, focus);
+      const range = document.createRange();
+      range.setStart(anchorPoint.node, anchorPoint.offset);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      if (typeof selection.extend === 'function') {
+        selection.extend(focusPoint.node, focusPoint.offset);
+      } else {
+        range.setEnd(focusPoint.node, focusPoint.offset);
+      }
+      return true;
+    };
+    const captureTextHistorySnapshot = (target) => {
+      if (
+        target instanceof HTMLInputElement
+        || target instanceof HTMLTextAreaElement
+      ) {
+        if (
+          target instanceof HTMLInputElement
+          && String(target.type).toLowerCase() === 'password'
+        ) return null;
+        let start;
+        let end;
+        let direction;
+        try {
+          start = target.selectionStart;
+          end = target.selectionEnd;
+          direction = target.selectionDirection || 'none';
+        } catch {
+          return null;
+        }
+        if (typeof start !== 'number' || typeof end !== 'number') return null;
+        return {
+          kind: 'value',
+          value: String(target.value),
+          start,
+          end,
+          direction,
+        };
+      }
+      if (!(target instanceof HTMLElement) || !target.isContentEditable) return null;
+      const selection = window.getSelection();
+      const textLength = String(target.textContent ?? '').length;
+      const anchor = selection
+        ? contentEditableTextOffset(target, selection.anchorNode, selection.anchorOffset)
+        : null;
+      const focus = selection
+        ? contentEditableTextOffset(target, selection.focusNode, selection.focusOffset)
+        : null;
+      return {
+        kind: 'contenteditable',
+        html: target.innerHTML,
+        anchor: anchor ?? textLength,
+        focus: focus ?? textLength,
+      };
+    };
+    const restoreTextHistorySnapshot = (target, snapshot) => {
+      if (
+        snapshot?.kind === 'value'
+        && (
+          target instanceof HTMLInputElement
+          || target instanceof HTMLTextAreaElement
+        )
+      ) {
+        const prototype = target instanceof HTMLInputElement
+          ? HTMLInputElement.prototype
+          : HTMLTextAreaElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+        if (!setter) return false;
+        setter.call(target, snapshot.value);
+        try {
+          target.setSelectionRange(
+            snapshot.start,
+            snapshot.end,
+            snapshot.direction,
+          );
+        } catch {
+          return false;
+        }
+        valueHandledByReact = dispatchValueChange(target, snapshot.value);
+        if (target.isConnected) {
+          target.setSelectionRange(
+            snapshot.start,
+            snapshot.end,
+            snapshot.direction,
+          );
+        }
+        valueCommitMethod = 'change';
+        pendingValueChangeConfirmation = () => (
+          target.isConnected && String(target.value) === snapshot.value
+        );
+        return true;
+      }
+      if (
+        snapshot?.kind === 'contenteditable'
+        && target instanceof HTMLElement
+        && target.isContentEditable
+      ) {
+        target.innerHTML = snapshot.html;
+        restoreContentEditableSelection(target, snapshot.anchor, snapshot.focus);
+        valueHandledByReact = dispatchValueChange(
+          target,
+          String(target.textContent ?? ''),
+        );
+        if (target.isConnected) {
+          restoreContentEditableSelection(target, snapshot.anchor, snapshot.focus);
+        }
+        valueCommitMethod = 'change';
+        pendingValueChangeConfirmation = () => (
+          target.isConnected && target.innerHTML === snapshot.html
+        );
+        return true;
+      }
+      return false;
+    };
+    const recordTextHistoryMutation = (target, snapshot) => {
+      const state = textHistoryStateFor(target);
+      state.redo.length = 0;
+      pushTextHistorySnapshot(state.undo, snapshot);
+    };
+    const applyTextHistoryOperation = (target, operation) => {
+      performedTextHistoryOperation = operation;
+      const state = textHistoryStateFor(target);
+      const source = operation === 'undo' ? state.undo : state.redo;
+      const destination = operation === 'undo' ? state.redo : state.undo;
+      textHistoryApplied = false;
+      textHistoryUndoDepth = state.undo.length;
+      textHistoryRedoDepth = state.redo.length;
+      if (keyboardReadOnly || source.length === 0) return true;
+      const current = captureTextHistorySnapshot(target);
+      const snapshot = source[source.length - 1];
+      if (
+        !current
+        || !snapshot
+        || textHistorySnapshotCost(current) > textHistoryMaxCharacters
+      ) return true;
+      const beforeInput = new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        inputType: operation === 'undo' ? 'historyUndo' : 'historyRedo',
+        data: null,
+      });
+      if (!target.dispatchEvent(beforeInput)) return true;
+      if (!restoreTextHistorySnapshot(target, snapshot)) return true;
+      source.pop();
+      pushTextHistorySnapshot(destination, current);
+      delete target[Symbol.for('mengine.agent.textVerticalColumn')];
+      textHistoryApplied = true;
+      textHistoryUndoDepth = state.undo.length;
+      textHistoryRedoDepth = state.redo.length;
+      return true;
+    };
+    const graphemeBoundaries = (rawText) => {
+      const text = String(rawText ?? '');
+      const boundaries = [0];
+      if (typeof Intl.Segmenter === 'function') {
+        const segments = new Intl.Segmenter(undefined, {
+          granularity: 'grapheme',
+        }).segment(text);
+        for (const segment of segments) {
+          const end = segment.index + segment.segment.length;
+          if (end > boundaries[boundaries.length - 1]) boundaries.push(end);
+        }
+      } else {
+        let offset = 0;
+        for (const codePoint of Array.from(text)) {
+          offset += codePoint.length;
+          boundaries.push(offset);
+        }
+      }
+      if (boundaries[boundaries.length - 1] !== text.length) {
+        boundaries.push(text.length);
+      }
+      return boundaries;
+    };
+    const previousGraphemeBoundary = (boundaries, rawOffset) => {
+      const offset = Number(rawOffset);
+      for (let index = boundaries.length - 1; index >= 0; index -= 1) {
+        if (boundaries[index] < offset) return boundaries[index];
+      }
+      return 0;
+    };
+    const nextGraphemeBoundary = (boundaries, rawOffset) => {
+      const offset = Number(rawOffset);
+      for (const boundary of boundaries) {
+        if (boundary > offset) return boundary;
+      }
+      return boundaries[boundaries.length - 1] ?? 0;
+    };
+    const floorGraphemeBoundary = (boundaries, rawOffset) => {
+      const offset = Number(rawOffset);
+      for (let index = boundaries.length - 1; index >= 0; index -= 1) {
+        if (boundaries[index] <= offset) return boundaries[index];
+      }
+      return 0;
+    };
+    const wordStarts = (rawText) => {
+      const text = String(rawText ?? '');
+      const starts = [];
+      if (typeof Intl.Segmenter === 'function') {
+        const segments = new Intl.Segmenter(undefined, {
+          granularity: 'word',
+        }).segment(text);
+        for (const segment of segments) {
+          if (segment.isWordLike) starts.push(segment.index);
+        }
+      } else {
+        let offset = 0;
+        let insideWord = false;
+        for (const codePoint of Array.from(text)) {
+          const wordLike = /[\p{L}\p{N}\p{M}_]/u.test(codePoint);
+          if (wordLike && !insideWord) starts.push(offset);
+          insideWord = wordLike;
+          offset += codePoint.length;
+        }
+      }
+      return starts;
+    };
+    const previousWordBoundary = (starts, rawOffset) => {
+      const offset = Number(rawOffset);
+      for (let index = starts.length - 1; index >= 0; index -= 1) {
+        if (starts[index] < offset) return starts[index];
+      }
+      return 0;
+    };
+    const nextWordBoundary = (starts, rawOffset, length) => {
+      const offset = Number(rawOffset);
+      for (const start of starts) {
+        if (start > offset) return start;
+      }
+      return length;
+    };
+    const primaryTextDefault = (
+      primaryTextShortcut
+      && (
+        requestedTextHistoryOperation !== null
+        ||
+        primaryClipboardShortcut
+        || [
+          'ArrowLeft',
+          'ArrowRight',
+          'Home',
+          'End',
+          'Backspace',
+          'Delete',
+        ].includes(requestedKey)
+      )
+    );
+    if (
+      primaryClipboardShortcut
+      && element instanceof HTMLInputElement
+      && String(element.type).toLowerCase() === 'password'
+    ) {
+      return {
+        ok: false,
+        error: 'Password fields cannot use the Agent private text clipboard',
+        clipboardDenied: true,
+      };
+    }
+    if (
+      requestedTextHistoryOperation
+      && element instanceof HTMLInputElement
+      && String(element.type).toLowerCase() === 'password'
+    ) {
+      return {
+        ok: false,
+        error: 'Password fields cannot use the Agent private text history',
+        textHistoryDenied: true,
+      };
+    }
+    const code = requestedKey === 'Space'
+      ? 'Space'
+      : /^[A-Za-z]$/.test(key)
+        ? `Key${key.toUpperCase()}`
+        : /^[0-9]$/.test(key)
+          ? `Digit${key}`
+          : key;
     if (typeof element.focus === 'function') {
-      element.focus({ preventScroll: true });
+      const focusLifecycle = dispatchReactFocusLifecycle(
+        element,
+        'focus',
+        () => element.focus({ preventScroll: true }),
+      );
+      valueFocusHandledByReact = focusLifecycle.handledByReact;
+      if (deepActiveElement() !== element) {
+        return { ok: false, error: `Element ${selector} could not receive keyboard focus` };
+      }
     }
     const dispatchKeyboard = (type) => element.dispatchEvent(new KeyboardEvent(type, {
       key,
@@ -3849,10 +6388,719 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       ...modifiers,
     }));
     const acceptsDefault = dispatchKeyboard('keydown');
-    if (requestedKey === 'Enter' || requestedKey === 'Space') {
+    if (
+      requestedKey === 'Enter'
+      || requestedKey === 'Space'
+      || (
+        printableKey
+        && !modifiers.ctrlKey
+        && !modifiers.altKey
+        && !modifiers.metaKey
+      )
+    ) {
       dispatchKeyboard('keypress');
     }
-    if (acceptsDefault && (requestedKey === 'Enter' || requestedKey === 'Space')) {
+    const applyTextControlDefault = () => {
+      const password = element instanceof HTMLInputElement
+        && String(element.type).toLowerCase() === 'password';
+      if (
+        password
+        || !(
+          element instanceof HTMLInputElement
+          || element instanceof HTMLTextAreaElement
+        )
+      ) return false;
+      let start;
+      let end;
+      let direction;
+      try {
+        start = element.selectionStart;
+        end = element.selectionEnd;
+        direction = element.selectionDirection || 'none';
+      } catch {
+        return false;
+      }
+      if (typeof start !== 'number' || typeof end !== 'number') return false;
+      if (requestedTextHistoryOperation) {
+        return applyTextHistoryOperation(element, requestedTextHistoryOperation);
+      }
+      const length = element.value.length;
+      const boundaries = graphemeBoundaries(element.value);
+      const starts = wordStarts(element.value);
+      const setSelection = (anchor, focus) => {
+        const boundedAnchor = Math.max(0, Math.min(length, anchor));
+        const boundedFocus = Math.max(0, Math.min(length, focus));
+        const nextDirection = boundedFocus < boundedAnchor
+          ? 'backward'
+          : boundedFocus > boundedAnchor
+            ? 'forward'
+            : 'none';
+        element.setSelectionRange(
+          Math.min(boundedAnchor, boundedFocus),
+          Math.max(boundedAnchor, boundedFocus),
+          nextDirection,
+        );
+      };
+      if (selectAllShortcut) {
+        setSelection(0, length);
+        return true;
+      }
+      if (
+        (modifiers.ctrlKey || modifiers.altKey || modifiers.metaKey)
+        && !primaryTextDefault
+      ) return false;
+      const anchor = direction === 'backward' ? end : start;
+      const focus = direction === 'backward' ? start : end;
+      const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
+      if (clipboardCommand === 'c') {
+        if (start !== end) {
+          writeSemanticClipboard(element.value.slice(start, end));
+        }
+        semanticClipboardOperation = 'copy';
+        semanticClipboardLength = readSemanticClipboard().length;
+        return true;
+      }
+      if (clipboardCommand === 'x') {
+        if (!keyboardReadOnly && start !== end) {
+          writeSemanticClipboard(element.value.slice(start, end));
+        }
+        semanticClipboardOperation = 'cut';
+        semanticClipboardLength = readSemanticClipboard().length;
+        if (keyboardReadOnly || start === end) return true;
+      }
+      if (clipboardCommand === 'v') {
+        semanticClipboardOperation = 'paste';
+        semanticClipboardLength = readSemanticClipboard().length;
+        if (keyboardReadOnly) return true;
+      }
+      if (requestedKey === 'ArrowLeft') {
+        delete element[verticalColumnKey];
+        if (modifiers.shiftKey) {
+          setSelection(
+            anchor,
+            primaryTextShortcut
+              ? previousWordBoundary(starts, focus)
+              : previousGraphemeBoundary(boundaries, focus),
+          );
+        } else {
+          const caret = start === end
+            ? primaryTextShortcut
+              ? previousWordBoundary(starts, start)
+              : previousGraphemeBoundary(boundaries, start)
+            : start;
+          setSelection(caret, caret);
+        }
+        return true;
+      }
+      if (requestedKey === 'ArrowRight') {
+        delete element[verticalColumnKey];
+        if (modifiers.shiftKey) {
+          setSelection(
+            anchor,
+            primaryTextShortcut
+              ? nextWordBoundary(starts, focus, length)
+              : nextGraphemeBoundary(boundaries, focus),
+          );
+        } else {
+          const caret = start === end
+            ? primaryTextShortcut
+              ? nextWordBoundary(starts, end, length)
+              : nextGraphemeBoundary(boundaries, end)
+            : end;
+          setSelection(caret, caret);
+        }
+        return true;
+      }
+      if (
+        element instanceof HTMLTextAreaElement
+        && [
+          'ArrowUp',
+          'ArrowDown',
+          'PageUp',
+          'PageDown',
+        ].includes(requestedKey)
+      ) {
+        const lineStarts = [0];
+        for (let index = 0; index < element.value.length; index += 1) {
+          if (element.value[index] === '\n') lineStarts.push(index + 1);
+        }
+        let currentLine = 0;
+        while (
+          currentLine + 1 < lineStarts.length
+          && lineStarts[currentLine + 1] <= focus
+        ) {
+          currentLine += 1;
+        }
+        const currentColumn = focus - lineStarts[currentLine];
+        const storedColumn = element[verticalColumnKey];
+        const preferredColumn = (
+          storedColumn
+          && storedColumn.position === focus
+          && storedColumn.lineStart === lineStarts[currentLine]
+          && Number.isInteger(storedColumn.column)
+          && storedColumn.column >= 0
+        )
+          ? storedColumn.column
+          : currentColumn;
+        const lineDelta = requestedKey === 'ArrowUp'
+          ? -1
+          : requestedKey === 'ArrowDown'
+            ? 1
+            : requestedKey === 'PageUp'
+              ? -10
+              : 10;
+        const targetLine = Math.max(
+          0,
+          Math.min(lineStarts.length - 1, currentLine + lineDelta),
+        );
+        const targetLineStart = lineStarts[targetLine];
+        const nextLineStart = lineStarts[targetLine + 1];
+        const targetLineEnd = nextLineStart === undefined
+          ? length
+          : Math.max(targetLineStart, nextLineStart - 1);
+        const target = floorGraphemeBoundary(
+          boundaries,
+          Math.min(targetLineEnd, targetLineStart + preferredColumn),
+        );
+        element[verticalColumnKey] = {
+          column: preferredColumn,
+          position: target,
+          lineStart: targetLineStart,
+        };
+        if (modifiers.shiftKey) setSelection(anchor, target);
+        else setSelection(target, target);
+        return true;
+      }
+      if (requestedKey === 'Home') {
+        delete element[verticalColumnKey];
+        const lineStart = primaryTextShortcut
+          ? 0
+          : element instanceof HTMLTextAreaElement
+            ? element.value.lastIndexOf('\n', Math.max(0, focus - 1)) + 1
+            : 0;
+        if (modifiers.shiftKey) setSelection(anchor, lineStart);
+        else setSelection(lineStart, lineStart);
+        return true;
+      }
+      if (requestedKey === 'End') {
+        delete element[verticalColumnKey];
+        const nextLineBreak = !primaryTextShortcut && element instanceof HTMLTextAreaElement
+          ? element.value.indexOf('\n', focus)
+          : -1;
+        const lineEnd = nextLineBreak < 0 ? length : nextLineBreak;
+        if (modifiers.shiftKey) setSelection(anchor, lineEnd);
+        else setSelection(lineEnd, lineEnd);
+        return true;
+      }
+      let replacement = null;
+      let replacementStart = start;
+      let replacementEnd = end;
+      let inputType = 'insertText';
+      if (clipboardCommand === 'x') {
+        replacement = '';
+        inputType = 'deleteByCut';
+      } else if (clipboardCommand === 'v') {
+        replacement = readSemanticClipboard();
+        inputType = 'insertFromPaste';
+      } else if (printableKey) {
+        replacement = key;
+      } else if (requestedKey === 'Space') {
+        replacement = ' ';
+      } else if (
+        requestedKey === 'Enter'
+        && element instanceof HTMLTextAreaElement
+      ) {
+        replacement = '\n';
+        inputType = 'insertLineBreak';
+      } else if (requestedKey === 'Backspace') {
+        if (keyboardReadOnly) return true;
+        if (start === end && start === 0) return true;
+        inputType = primaryTextShortcut
+          ? 'deleteWordBackward'
+          : 'deleteContentBackward';
+        if (start === end) {
+          replacementStart = primaryTextShortcut
+            ? previousWordBoundary(starts, start)
+            : previousGraphemeBoundary(boundaries, start);
+        }
+        replacement = '';
+      } else if (requestedKey === 'Delete') {
+        if (keyboardReadOnly) return true;
+        if (start === end && end === length) return true;
+        inputType = primaryTextShortcut
+          ? 'deleteWordForward'
+          : 'deleteContentForward';
+        if (start === end) {
+          replacementEnd = primaryTextShortcut
+            ? nextWordBoundary(starts, end, length)
+            : nextGraphemeBoundary(boundaries, end);
+        }
+        replacement = '';
+      } else {
+        return false;
+      }
+      delete element[verticalColumnKey];
+      if (keyboardReadOnly) return true;
+      const prototype = element instanceof HTMLInputElement
+        ? HTMLInputElement.prototype
+        : HTMLTextAreaElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+      if (!setter) return false;
+      const nextValue = `${element.value.slice(0, replacementStart)}${
+        replacement
+      }${element.value.slice(replacementEnd)}`;
+      if (element.maxLength >= 0 && nextValue.length > element.maxLength) return true;
+      const beforeInput = new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        inputType,
+        data: replacement || null,
+      });
+      if (!element.dispatchEvent(beforeInput)) return true;
+      const caret = replacementStart + replacement.length;
+      if (nextValue !== element.value || start !== caret || end !== caret) {
+        recordTextHistoryMutation(element, captureTextHistorySnapshot(element));
+      }
+      setter.call(element, nextValue);
+      element.setSelectionRange(caret, caret, 'none');
+      valueHandledByReact = dispatchValueChange(element, nextValue);
+      if (element.isConnected) element.setSelectionRange(caret, caret, 'none');
+      return true;
+    };
+    const handledTextDefault = acceptsDefault && applyTextControlDefault();
+    const applyContentEditableDefault = () => {
+      if (
+        !(element instanceof HTMLElement)
+        || !element.isContentEditable
+      ) return false;
+      const selection = window.getSelection();
+      if (!selection) return false;
+      if (requestedTextHistoryOperation) {
+        return applyTextHistoryOperation(element, requestedTextHistoryOperation);
+      }
+      if (selectAllShortcut) {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return true;
+      }
+      if (
+        (
+          (modifiers.ctrlKey || modifiers.altKey || modifiers.metaKey)
+          && !primaryTextDefault
+        )
+        || selection.rangeCount === 0
+      ) return false;
+      const pointInside = (node) => Boolean(
+        node
+        && (
+          node === element
+          || element.contains(node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement)
+        )
+      );
+      if (!pointInside(selection.anchorNode) || !pointInside(selection.focusNode)) return false;
+      const textOffset = (node, offset) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        try {
+          range.setEnd(node, offset);
+          return String(range.cloneContents().textContent ?? '').length;
+        } catch {
+          return null;
+        }
+      };
+      const anchor = textOffset(selection.anchorNode, selection.anchorOffset);
+      const focus = textOffset(selection.focusNode, selection.focusOffset);
+      if (anchor === null || focus === null) return false;
+      const text = String(element.textContent ?? '');
+      const length = text.length;
+      const boundaries = graphemeBoundaries(text);
+      const starts = wordStarts(text);
+      const textPointAt = (rawOffset) => {
+        const targetOffset = Math.max(0, Math.min(length, rawOffset));
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        let remaining = targetOffset;
+        let node = walker.nextNode();
+        let last = null;
+        while (node) {
+          last = node;
+          const nodeLength = String(node.textContent ?? '').length;
+          if (remaining <= nodeLength) return { node, offset: remaining };
+          remaining -= nodeLength;
+          node = walker.nextNode();
+        }
+        return last
+          ? { node: last, offset: String(last.textContent ?? '').length }
+          : { node: element, offset: 0 };
+      };
+      const setSelection = (nextAnchor, nextFocus) => {
+        const anchorPoint = textPointAt(nextAnchor);
+        const focusPoint = textPointAt(nextFocus);
+        const range = document.createRange();
+        range.setStart(anchorPoint.node, anchorPoint.offset);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        if (typeof selection.extend === 'function') {
+          selection.extend(focusPoint.node, focusPoint.offset);
+        } else {
+          range.setEnd(focusPoint.node, focusPoint.offset);
+        }
+      };
+      const start = Math.min(anchor, focus);
+      const end = Math.max(anchor, focus);
+      const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
+      if (clipboardCommand === 'c') {
+        if (start !== end) {
+          writeSemanticClipboard(text.slice(start, end));
+        }
+        semanticClipboardOperation = 'copy';
+        semanticClipboardLength = readSemanticClipboard().length;
+        return true;
+      }
+      if (clipboardCommand === 'x') {
+        if (!keyboardReadOnly && start !== end) {
+          writeSemanticClipboard(text.slice(start, end));
+        }
+        semanticClipboardOperation = 'cut';
+        semanticClipboardLength = readSemanticClipboard().length;
+        if (keyboardReadOnly || start === end) return true;
+      }
+      if (clipboardCommand === 'v') {
+        semanticClipboardOperation = 'paste';
+        semanticClipboardLength = readSemanticClipboard().length;
+        if (keyboardReadOnly) return true;
+      }
+      if (requestedKey === 'ArrowLeft' || requestedKey === 'ArrowRight') {
+        delete element[verticalColumnKey];
+        const nextFocus = requestedKey === 'ArrowLeft'
+          ? primaryTextShortcut
+            ? previousWordBoundary(starts, focus)
+            : previousGraphemeBoundary(boundaries, focus)
+          : primaryTextShortcut
+            ? nextWordBoundary(starts, focus, length)
+            : nextGraphemeBoundary(boundaries, focus);
+        if (modifiers.shiftKey) setSelection(anchor, nextFocus);
+        else {
+          const caret = start === end
+            ? nextFocus
+            : requestedKey === 'ArrowLeft'
+              ? start
+              : end;
+          setSelection(caret, caret);
+        }
+        return true;
+      }
+      if (
+        ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(requestedKey)
+      ) {
+        const lineStarts = [0];
+        for (let index = 0; index < text.length; index += 1) {
+          if (text[index] === '\n') lineStarts.push(index + 1);
+        }
+        let currentLine = 0;
+        while (
+          currentLine + 1 < lineStarts.length
+          && lineStarts[currentLine + 1] <= focus
+        ) {
+          currentLine += 1;
+        }
+        const currentColumn = focus - lineStarts[currentLine];
+        const storedColumn = element[verticalColumnKey];
+        const preferredColumn = (
+          storedColumn
+          && storedColumn.position === focus
+          && storedColumn.lineStart === lineStarts[currentLine]
+          && Number.isInteger(storedColumn.column)
+          && storedColumn.column >= 0
+        )
+          ? storedColumn.column
+          : currentColumn;
+        const lineDelta = requestedKey === 'ArrowUp'
+          ? -1
+          : requestedKey === 'ArrowDown'
+            ? 1
+            : requestedKey === 'PageUp'
+              ? -10
+              : 10;
+        const targetLine = Math.max(
+          0,
+          Math.min(lineStarts.length - 1, currentLine + lineDelta),
+        );
+        const targetLineStart = lineStarts[targetLine];
+        const nextLineStart = lineStarts[targetLine + 1];
+        const targetLineEnd = nextLineStart === undefined
+          ? length
+          : Math.max(targetLineStart, nextLineStart - 1);
+        const target = floorGraphemeBoundary(
+          boundaries,
+          Math.min(targetLineEnd, targetLineStart + preferredColumn),
+        );
+        element[verticalColumnKey] = {
+          column: preferredColumn,
+          position: target,
+          lineStart: targetLineStart,
+        };
+        if (modifiers.shiftKey) setSelection(anchor, target);
+        else setSelection(target, target);
+        return true;
+      }
+      if (requestedKey === 'Home' || requestedKey === 'End') {
+        delete element[verticalColumnKey];
+        const lineStart = text.lastIndexOf('\n', Math.max(0, focus - 1)) + 1;
+        const nextLineBreak = text.indexOf('\n', focus);
+        const lineEnd = nextLineBreak < 0 ? length : nextLineBreak;
+        const target = requestedKey === 'Home'
+          ? primaryTextShortcut
+            ? 0
+            : lineStart
+          : primaryTextShortcut
+            ? length
+            : lineEnd;
+        if (modifiers.shiftKey) setSelection(anchor, target);
+        else setSelection(target, target);
+        return true;
+      }
+      let replacement = null;
+      let replacementStart = start;
+      let replacementEnd = end;
+      let inputType = 'insertText';
+      if (clipboardCommand === 'x') {
+        replacement = '';
+        inputType = 'deleteByCut';
+      } else if (clipboardCommand === 'v') {
+        replacement = readSemanticClipboard();
+        inputType = 'insertFromPaste';
+      } else if (printableKey) {
+        replacement = key;
+      } else if (requestedKey === 'Space') {
+        replacement = ' ';
+      } else if (requestedKey === 'Enter') {
+        replacement = '\n';
+        inputType = 'insertLineBreak';
+      } else if (requestedKey === 'Backspace') {
+        if (start === end && start === 0) return true;
+        inputType = primaryTextShortcut
+          ? 'deleteWordBackward'
+          : 'deleteContentBackward';
+        if (start === end) {
+          replacementStart = primaryTextShortcut
+            ? previousWordBoundary(starts, start)
+            : previousGraphemeBoundary(boundaries, start);
+        }
+        replacement = '';
+      } else if (requestedKey === 'Delete') {
+        if (start === end && end === length) return true;
+        inputType = primaryTextShortcut
+          ? 'deleteWordForward'
+          : 'deleteContentForward';
+        if (start === end) {
+          replacementEnd = primaryTextShortcut
+            ? nextWordBoundary(starts, end, length)
+            : nextGraphemeBoundary(boundaries, end);
+        }
+        replacement = '';
+      } else {
+        return false;
+      }
+      delete element[verticalColumnKey];
+      if (keyboardReadOnly) return true;
+      const beforeInput = new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        inputType,
+        data: replacement || null,
+      });
+      if (!element.dispatchEvent(beforeInput)) return true;
+      const caret = replacementStart + replacement.length;
+      if (text !== `${text.slice(0, replacementStart)}${replacement}${text.slice(replacementEnd)}`
+        || start !== caret || end !== caret) {
+        recordTextHistoryMutation(element, captureTextHistorySnapshot(element));
+      }
+      const replacementRange = document.createRange();
+      const startPoint = textPointAt(replacementStart);
+      const endPoint = textPointAt(replacementEnd);
+      replacementRange.setStart(startPoint.node, startPoint.offset);
+      replacementRange.setEnd(endPoint.node, endPoint.offset);
+      replacementRange.deleteContents();
+      if (replacement) {
+        const inserted = document.createTextNode(replacement);
+        replacementRange.insertNode(inserted);
+      }
+      setSelection(caret, caret);
+      valueHandledByReact = dispatchValueChange(element, String(element.textContent ?? ''));
+      if (element.isConnected) setSelection(caret, caret);
+      return true;
+    };
+    const handledContentEditableDefault = (
+      acceptsDefault
+      && !handledTextDefault
+      && applyContentEditableDefault()
+    );
+    const applyNativeDialogDefault = () => {
+      if (requestedKey !== 'Escape') return false;
+      const dialog = closestComposed(element, 'dialog');
+      if (!dialog || !nativeDialogIsModal(dialog)) return false;
+      const cancelled = !dialog.dispatchEvent(new Event('cancel', {
+        cancelable: true,
+      }));
+      if (!cancelled && dialog.open) dialog.close();
+      return true;
+    };
+    const handledDialogDefault = (
+      acceptsDefault
+      && !handledTextDefault
+      && !handledContentEditableDefault
+      && applyNativeDialogDefault()
+    );
+    const applyNativeControlDefault = () => {
+      if (
+        keyboardReadOnly
+        && (
+          element instanceof HTMLInputElement
+          || element instanceof HTMLSelectElement
+        )
+        && [
+          'Space',
+          'ArrowLeft',
+          'ArrowRight',
+          'ArrowUp',
+          'ArrowDown',
+          'PageUp',
+          'PageDown',
+          'Home',
+          'End',
+        ].includes(requestedKey)
+      ) return true;
+      if (
+        requestedKey === 'Space'
+        && element instanceof HTMLInputElement
+        && ['checkbox', 'radio'].includes(element.type)
+      ) {
+        dispatchClick(1);
+        return true;
+      }
+      if (modifiers.ctrlKey || modifiers.altKey || modifiers.metaKey) return false;
+      if (element instanceof HTMLSelectElement && !element.multiple) {
+        const optionIndices = Array.from(element.options)
+          .map((option, index) => ({ option, index }))
+          .filter(({ option }) => (
+            !option.disabled
+            && !(
+              option.parentElement instanceof HTMLOptGroupElement
+              && option.parentElement.disabled
+            )
+          ))
+          .map(({ index }) => index);
+        if (optionIndices.length === 0) return false;
+        const currentPosition = optionIndices.indexOf(element.selectedIndex);
+        let nextPosition;
+        if (requestedKey === 'ArrowDown') {
+          nextPosition = currentPosition < 0 ? 0 : currentPosition + 1;
+        } else if (requestedKey === 'ArrowUp') {
+          nextPosition = currentPosition < 0
+            ? optionIndices.length - 1
+            : currentPosition - 1;
+        } else if (requestedKey === 'Home') {
+          nextPosition = 0;
+        } else if (requestedKey === 'End') {
+          nextPosition = optionIndices.length - 1;
+        } else if (requestedKey === 'PageDown') {
+          nextPosition = (currentPosition < 0 ? 0 : currentPosition) + 10;
+        } else if (requestedKey === 'PageUp') {
+          nextPosition = (currentPosition < 0
+            ? optionIndices.length - 1
+            : currentPosition) - 10;
+        } else {
+          return false;
+        }
+        const boundedPosition = Math.max(
+          0,
+          Math.min(optionIndices.length - 1, nextPosition),
+        );
+        const nextIndex = optionIndices[boundedPosition];
+        if (nextIndex !== element.selectedIndex) {
+          element.selectedIndex = nextIndex;
+          valueHandledByReact = dispatchValueChange(element, element.value);
+          valueCommitMethod = 'change';
+          pendingValueChangeConfirmation = () => (
+            element.isConnected && element.selectedIndex === nextIndex
+          );
+        }
+        return true;
+      }
+      if (!(element instanceof HTMLInputElement)) return false;
+      const type = String(element.type).toLowerCase();
+      if (type !== 'number' && type !== 'range') return false;
+      let steps = 0;
+      if (
+        requestedKey === 'ArrowUp'
+        || (type === 'range' && requestedKey === 'ArrowRight')
+      ) steps = 1;
+      else if (
+        requestedKey === 'ArrowDown'
+        || (type === 'range' && requestedKey === 'ArrowLeft')
+      ) steps = -1;
+      else if (type === 'range' && requestedKey === 'PageUp') steps = 10;
+      else if (type === 'range' && requestedKey === 'PageDown') steps = -10;
+      const previousValue = element.value;
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value',
+      )?.set;
+      if (!setter) return false;
+      if (
+        type === 'range'
+        && (requestedKey === 'Home' || requestedKey === 'End')
+      ) {
+        const fallback = requestedKey === 'Home' ? 0 : 100;
+        const boundaryAttribute = requestedKey === 'Home'
+          ? element.getAttribute('min')
+          : element.getAttribute('max');
+        const boundary = boundaryAttribute === null
+          ? Number.NaN
+          : Number(boundaryAttribute);
+        setter.call(element, String(Number.isFinite(boundary) ? boundary : fallback));
+      } else if (steps !== 0) {
+        try {
+          if (steps > 0) element.stepUp(steps);
+          else element.stepDown(-steps);
+        } catch {
+          const current = Number(element.value);
+          const fallback = Number.isFinite(current) ? current : 0;
+          setter.call(element, String(fallback + steps));
+        }
+      } else {
+        return false;
+      }
+      if (element.value !== previousValue) {
+        valueHandledByReact = dispatchValueChange(element, element.value);
+        valueCommitMethod = 'change';
+        const expectedValue = element.value;
+        pendingValueChangeConfirmation = () => (
+          element.isConnected && element.value === expectedValue
+        );
+      }
+      return true;
+    };
+    const handledNativeDefault = (
+      acceptsDefault
+      && !handledTextDefault
+      && !handledContentEditableDefault
+      && !handledDialogDefault
+      && applyNativeControlDefault()
+    );
+    if (
+      acceptsDefault
+      && !handledTextDefault
+      && !handledContentEditableDefault
+      && !handledDialogDefault
+      && !handledNativeDefault
+      && (requestedKey === 'Enter' || requestedKey === 'Space')
+    ) {
       const role = roleForName(element);
       const activates = (
         element instanceof HTMLButtonElement
@@ -3869,26 +7117,44 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         requestedKey === 'Enter'
         && (
           element instanceof HTMLInputElement
-          || element instanceof HTMLTextAreaElement
           || element instanceof HTMLSelectElement
         )
       ) {
-        const form = element.form || element.closest('form');
+        const form = element.form || closestComposed(element, 'form');
         if (form instanceof HTMLFormElement && typeof form.requestSubmit === 'function') {
           form.requestSubmit();
         }
       }
     }
     if (acceptsDefault && requestedKey === 'Tab') {
-      const focusable = Array.from(document.querySelectorAll(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), '
-          + 'textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
-      )).filter((candidate) => (
-        candidate instanceof HTMLElement
-        && getComputedStyle(candidate).display !== 'none'
-        && getComputedStyle(candidate).visibility !== 'hidden'
-        && candidate.getClientRects().length > 0
-      ));
+      const focusable = allOpenComposedElements().filter((candidate) => (
+        candidate.matches(
+          'button, input, select, textarea, a[href], area[href], summary, '
+            + '[contenteditable], [tabindex]',
+        )
+        &&
+        (
+          candidate instanceof HTMLElement
+          || candidate instanceof SVGElement
+        )
+        && typeof candidate.focus === 'function'
+        && candidate.tabIndex >= 0
+        && rendered(candidate)
+        && !effectivelyDisabled(candidate)
+        && (!activeModal || composedContains(activeModal, candidate))
+      )).map((candidate, domIndex) => ({
+        candidate,
+        domIndex,
+        tabIndex: candidate.tabIndex,
+      })).sort((left, right) => {
+        const leftPositive = left.tabIndex > 0;
+        const rightPositive = right.tabIndex > 0;
+        if (leftPositive !== rightPositive) return leftPositive ? -1 : 1;
+        if (leftPositive && left.tabIndex !== right.tabIndex) {
+          return left.tabIndex - right.tabIndex;
+        }
+        return left.domIndex - right.domIndex;
+      }).map((entry) => entry.candidate);
       const index = focusable.indexOf(element);
       const nextIndex = index < 0
         ? (modifiers.shiftKey ? focusable.length - 1 : 0)
@@ -3896,19 +7162,73 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           ? (index - 1 + focusable.length) % focusable.length
           : (index + 1) % focusable.length;
       const next = focusable[nextIndex];
-      if (next instanceof HTMLElement) next.focus({ preventScroll: true });
+      if (
+        (next instanceof HTMLElement || next instanceof SVGElement)
+        && typeof next.focus === 'function'
+      ) {
+        if (keyboardValueTarget) pendingValueBlur = true;
+        pendingFocusTarget = next;
+      }
     }
     dispatchKeyboard('keyup');
+    if (
+      keyboardValueTarget
+      &&
+      deepActiveElement() !== element
+      && (requestedKey === 'Enter' || requestedKey === 'Escape')
+    ) {
+      pendingValueBlur = true;
+    }
+  } else if (action === 'scrollIntoView') {
+    const before = renderedRectFor(element);
+    element.scrollIntoView({
+      behavior: 'instant',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+    const after = renderedRectFor(element);
+    scrollIntoViewChanged = (
+      before.left !== after.left
+      || before.top !== after.top
+      || before.right !== after.right
+      || before.bottom !== after.bottom
+    );
+    revealedRect = {
+      x: after.x,
+      y: after.y,
+      left: after.left,
+      top: after.top,
+      right: after.right,
+      bottom: after.bottom,
+      width: after.width,
+      height: after.height,
+    };
   } else if (action === 'scroll') {
     if (!(element instanceof HTMLElement) || typeof element.scrollBy !== 'function') {
       return { ok: false, error: `Element ${selector} is not scrollable` };
     }
     const deltaX = Number(requestedDeltaX ?? 0);
-    const deltaY = Number(requestedDeltaY);
+    const deltaY = Number(requestedDeltaY ?? 0);
     if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) {
       return { ok: false, error: 'Scroll deltas must be finite numbers' };
     }
-    element.scrollBy({ left: deltaX, top: deltaY, behavior: 'instant' });
+    const coordinates = sourceCoordinates;
+    const wheelEvent = new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      view: window,
+      clientX: coordinates.clientX,
+      clientY: coordinates.clientY,
+      deltaX,
+      deltaY,
+      deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+      ...modifiers,
+    });
+    const applyNativeScroll = element.dispatchEvent(wheelEvent);
+    if (applyNativeScroll) {
+      element.scrollBy({ left: deltaX, top: deltaY, behavior: 'instant' });
+    }
   }
   const waitForRender = () => new Promise((resolve) => {
     let settled = false;
@@ -3921,17 +7241,102 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const timer = setTimeout(finish, 50);
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(finish);
   });
+  if (pendingValueBlur) {
+    for (let frame = 0; frame < 4; frame += 1) {
+      await waitForRender();
+      performedSettledFrames += 1;
+      const currentReactProps = reactPropsFor(element);
+      if (!('value' in currentReactProps) || String(currentReactProps.value) === String(element.value)) {
+        valueDraftSynchronized = true;
+        break;
+      }
+      valueDraftSynchronized = false;
+    }
+    if (element.isConnected) {
+      const blurLifecycle = dispatchReactFocusLifecycle(
+        element,
+        'blur',
+        () => {
+          if (deepActiveElement() === element) element.blur();
+        },
+      );
+      valueBlurHandledByReact = blurLifecycle.handledByReact;
+      valueCommitConfirmed = (
+        valueDraftSynchronized !== false
+        && deepActiveElement() !== element
+      );
+    } else {
+      valueCommitConfirmed = false;
+    }
+    await waitForRender();
+    performedSettledFrames += 1;
+    valueCommitMethod = 'blur';
+  }
+  if (
+    (
+      pendingFocusTarget instanceof HTMLElement
+      || pendingFocusTarget instanceof SVGElement
+    )
+    && typeof pendingFocusTarget.focus === 'function'
+  ) {
+    dispatchReactFocusLifecycle(
+      pendingFocusTarget,
+      'focus',
+      () => pendingFocusTarget.focus({ preventScroll: true }),
+    );
+  }
   await waitForRender();
+  performedSettledFrames += 1;
   await waitForRender();
+  performedSettledFrames += 1;
+  if (typeof pendingValueChangeConfirmation === 'function') {
+    valueCommitConfirmed = pendingValueChangeConfirmation();
+  }
   return {
     ok: true,
-    settledFrames: 2,
+    settledFrames: performedSettledFrames,
     elementConnected: element.isConnected,
     action,
     key: action === 'keyPress' ? requestedKey : null,
     modifiers,
-    deltaX: action === 'dragBy' ? requestedDeltaX : null,
-    deltaY: action === 'dragBy' ? requestedDeltaY : null,
+    offsetX: sourceCoordinates?.offsetX ?? null,
+    offsetY: sourceCoordinates?.offsetY ?? null,
+    clientX: sourceCoordinates?.clientX ?? null,
+    clientY: sourceCoordinates?.clientY ?? null,
+    targetOffsetX: targetCoordinates?.offsetX ?? null,
+    targetOffsetY: targetCoordinates?.offsetY ?? null,
+    targetClientX: targetCoordinates?.clientX ?? null,
+    targetClientY: targetCoordinates?.clientY ?? null,
+    button: action === 'dragBy' ? requestedButton ?? 'left' : null,
+    path: action === 'dragBy' ? performedDragPath : null,
+    hoverState: action === 'hover' ? performedHoverState : null,
+    hoverStateChanged: action === 'hover' ? hoverStateChanged : null,
+    scrollIntoViewChanged: action === 'scrollIntoView' ? scrollIntoViewChanged : null,
+    revealedRect: action === 'scrollIntoView' ? revealedRect : null,
+    valueCommitMethod: ['setValue', 'keyPress'].includes(action) ? valueCommitMethod : null,
+    valueCommitConfirmed: ['setValue', 'keyPress'].includes(action) ? valueCommitConfirmed : null,
+    valueHandledByReact: ['setValue', 'keyPress'].includes(action) ? valueHandledByReact : null,
+    valueDraftSynchronized: ['setValue', 'keyPress'].includes(action) ? valueDraftSynchronized : null,
+    valueFocusHandledByReact: ['setValue', 'keyPress'].includes(action)
+      ? valueFocusHandledByReact
+      : null,
+    valueBlurHandledByReact: ['setValue', 'keyPress'].includes(action)
+      ? valueBlurHandledByReact
+      : null,
+    clipboardOperation: action === 'keyPress' ? semanticClipboardOperation : null,
+    clipboardLength: action === 'keyPress' ? semanticClipboardLength : null,
+    clipboardScope: semanticClipboardOperation ? 'window-private' : null,
+    textHistoryOperation: action === 'keyPress' ? performedTextHistoryOperation : null,
+    textHistoryApplied: action === 'keyPress' ? textHistoryApplied : null,
+    textHistoryUndoDepth: action === 'keyPress' ? textHistoryUndoDepth : null,
+    textHistoryRedoDepth: action === 'keyPress' ? textHistoryRedoDepth : null,
+    textHistoryScope: performedTextHistoryOperation ? 'element-private' : null,
+    deltaX: action === 'dragBy'
+      ? performedDragPath[performedDragPath.length - 1].deltaX
+      : action === 'scroll' ? requestedDeltaX ?? 0 : null,
+    deltaY: action === 'dragBy'
+      ? performedDragPath[performedDragPath.length - 1].deltaY
+      : action === 'scroll' ? requestedDeltaY ?? 0 : null,
     selector,
     targetSelector: action === 'dragTo' ? targetSelector : null,
     targetName: targetElement ? interactionName(targetElement) : null,
@@ -3940,7 +7345,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     name: interactionName(element, action === 'scroll'),
     value: element instanceof HTMLInputElement && element.type === 'password'
       ? '<redacted>'
-      : ('value' in element ? String(element.value) : null),
+      : ('value' in element
+          ? String(element.value)
+          : element.isContentEditable ? element.textContent ?? '' : null),
     checked: element instanceof HTMLInputElement
       && ['checkbox', 'radio'].includes(element.type)
       ? element.checked

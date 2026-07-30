@@ -71,6 +71,7 @@ function Axis(props: {
     <div className="axis">
       <span
         className={`scrub-label ${cls}`}
+        data-agent-drag-by="true"
         aria-label={`Adjust ${props.ariaLabel}`}
         onPointerDown={onScrub}
       >

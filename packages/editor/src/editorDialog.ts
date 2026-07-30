@@ -11,6 +11,10 @@ export type EditorDialogSnapshot = {
   defaultValue: string | null;
   confirmLabel: string;
   cancelLabel: string | null;
+  /** Agent UI and dialog APIs may cancel, but must not accept this dialog. */
+  agentAcceptBlocked: boolean;
+  /** Background-safe domain tool that owns the guarded accept operation. */
+  agentAlternative: string | null;
   createdAt: number;
 };
 
@@ -18,6 +22,8 @@ export type EditorDialogOptions = {
   title?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  agentAcceptBlocked?: boolean;
+  agentAlternative?: string;
 };
 
 export type EditorDialogResolution = {
@@ -100,6 +106,9 @@ function requestDialog<T>(
     cancelLabel: kind === 'alert'
       ? null
       : (options.cancelLabel?.trim() || 'Cancel'),
+    agentAcceptBlocked: options.agentAcceptBlocked === true,
+    agentAlternative:
+      options.agentAlternative?.trim().slice(0, 160) || null,
     createdAt: Date.now(),
   });
   return new Promise<T>((resolve, reject) => {

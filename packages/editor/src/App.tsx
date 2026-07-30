@@ -156,7 +156,7 @@ const ProjectSettings = lazy(async () => ({ default: (await import('./panels/Pro
 function isTypingTarget(el: EventTarget | null) {
   if (!(el instanceof HTMLElement)) return false;
   const tag = el.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
 }
 
 function allowsEditorHistoryShortcut(el: EventTarget | null) {
@@ -1147,6 +1147,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       size,
       pivot: resolveSpritePivot(path),
     });
+    if (id == null) throw new Error('Sprites can only be created in Edit mode');
     if (options.position == null) store.frameSelected();
     log(`Created SpriteRenderer ${path} (entity ${id})`);
     refresh();
@@ -1558,7 +1559,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     }
   };
 
+  const ensureEditModeForFileAction = (action: string): boolean => {
+    if (store.mode === 'edit') return true;
+    log(`Stop Play Mode before ${action}.`, 'warn');
+    return false;
+  };
+
   const saveSceneForBuild = async () => {
+    if (!ensureEditModeForFileAction('saving a scene for a build')) return false;
     const current = sceneNameRef.current;
     if (!current) {
       log('Build requires a named scene.', 'warn');
@@ -1568,6 +1576,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const saveScene = async () => {
+    if (!ensureEditModeForFileAction('saving a scene')) return;
     const current = sceneNameRef.current;
     if (current) {
       await persistScene(current);
@@ -1583,6 +1592,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const saveEverything = async (unnamedScene?: string): Promise<boolean> => {
+    if (!ensureEditModeForFileAction('saving the workspace')) return false;
     const hadDirtyScene = sceneDirtyRef.current;
     let sceneSaved = true;
     if (hadDirtyScene) {
@@ -1611,6 +1621,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const saveSceneAs = async () => {
+    if (!ensureEditModeForFileAction('saving a scene')) return;
     const name = await askSceneName('另存为 — 请输入新名称', sceneNameRef.current ?? 'Untitled');
     if (!name) return;
     if (sceneExists(name) && name !== sceneNameRef.current) {
@@ -1623,6 +1634,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const newScene = async () => {
+    if (!ensureEditModeForFileAction('creating a scene')) return;
     const name = await askSceneName('新建场景 — 请输入名称', 'NewScene');
     if (!name) return;
     if (sceneExists(name) && !await confirmEditor(`场景「${name}」已存在，要覆盖吗？`, {
@@ -2367,6 +2379,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         }
         case 'model': {
           const entity = store.spawnModel(target.path);
+          if (entity == null) throw new Error('Models can only be created in Edit mode');
           log(`Instantiated model ${target.path} from AgentBridge (entity ${entity})`);
           refresh();
           return entity;
@@ -2417,6 +2430,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const requestProjectClose = async (): Promise<void> => {
+    if (!ensureEditModeForFileAction('closing the project')) return;
     try {
       const dirtyPanels = await queryProjectDirtyPanels();
       if (
@@ -2471,6 +2485,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, []);
 
   const openSceneDialog = async () => {
+    if (!ensureEditModeForFileAction('opening a scene')) return;
     const scenes = listScenes();
     if (!scenes.length) {
       log('还没有已保存的场景。先 File → New Scene 并命名。', 'warn');
@@ -2652,28 +2667,28 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (ctrl && e.key.toLowerCase() === 'd') {
         e.preventDefault();
-        store.duplicateSelection();
-        log('Duplicate');
-        refresh();
+        if (store.duplicateSelection() != null) {
+          log('Duplicate');
+          refresh();
+        }
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'c') {
         e.preventDefault();
-        store.copySelection();
-        log('Copy');
+        if (store.copySelection()) log('Copy');
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'x') {
         e.preventDefault();
-        store.cutSelection();
-        log('Cut');
+        if (store.cutSelection()) log('Cut');
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'v') {
         e.preventDefault();
-        store.paste();
-        log('Paste');
-        refresh();
+        if (store.paste()) {
+          log('Paste');
+          refresh();
+        }
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'a') {
@@ -2684,9 +2699,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
-        store.deleteSelection();
-        log('Delete');
-        refresh();
+        if (store.deleteSelection()) {
+          log('Delete');
+          refresh();
+        }
         return;
       }
       if (e.key === 'F2') {
@@ -2771,9 +2787,29 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           store.redo();
           refresh();
         }}
+        onCut={() => {
+          if (store.cutSelection()) log('Cut');
+        }}
+        onCopy={() => {
+          if (store.copySelection()) log('Copy');
+        }}
+        onPaste={() => {
+          if (!store.paste()) return;
+          log('Paste');
+          refresh();
+        }}
         onDuplicate={() => {
-          store.duplicateSelection();
+          if (store.duplicateSelection() == null) return;
           log('Duplicate');
+          refresh();
+        }}
+        onDelete={() => {
+          if (!store.deleteSelection()) return;
+          log('Delete');
+          refresh();
+        }}
+        onSelectAll={() => {
+          store.selectAllVisible();
           refresh();
         }}
         store={store}
@@ -2798,17 +2834,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           updateSceneViewPreferences({ handleOrientation: next });
         }}
         onPlay={() => {
+          if (store.mode !== 'edit') return;
           store.play();
           setViewTab('game');
           log('Entered Play Mode → Game');
           refresh();
         }}
         onPause={() => {
+          if (store.mode === 'edit') return;
           store.pause();
           log(store.mode === 'pause' ? 'Paused' : 'Resumed');
           refresh();
         }}
         onStop={() => {
+          if (store.mode === 'edit') return;
           store.stop();
           setViewTab('scene');
           log('Exited Play Mode → Scene');
@@ -3120,7 +3159,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onSetComponent={(entity, type, value) => {
                 if (type === 'MeshRenderer') {
-                  const current = store.authoredEntities()
+                  const current = store.snapshot().entities
                     .find((entry) => entry.entity === entity)
                     ?.components.MeshRenderer as Record<string, unknown> | undefined;
                   if (current?.material !== value.material) {
@@ -3388,7 +3427,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   previewEnabled={visiblePanels.has('timeline')}
                   onClose={() => setTimelineAssetPath(null)}
                   onAssignDirector={(entity, path) => {
-                    const current = store.authoredEntities().find((entry) => entry.entity === entity)?.components.TimelineDirector;
+                    const current = store.snapshot().entities
+                      .find((entry) => entry.entity === entity)
+                      ?.components.TimelineDirector;
                     if (current) store.patchComponent(entity, 'TimelineDirector', {
                       asset: path,
                       ...(typeof current === 'object'
@@ -3435,7 +3476,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onOpenAsset={setAnimatorPath}
               onCloseAsset={() => setAnimatorPath(null)}
               onAssignAnimator={(entity, path) => {
-                const current = store.authoredEntities()
+                const current = store.snapshot().entities
                   .find((entry) => entry.entity === entity)
                   ?.components.Animator;
                 if (current) {

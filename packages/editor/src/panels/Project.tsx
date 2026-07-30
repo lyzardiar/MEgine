@@ -452,6 +452,8 @@ export function Project(props: {
       {
         title: 'Delete Scene',
         confirmLabel: 'Delete Permanently',
+        agentAcceptBlocked: true,
+        agentAlternative: 'delete_scene',
       },
     )) {
       return;
@@ -1270,6 +1272,8 @@ export function Project(props: {
                   type="button"
                   role="menuitem"
                   disabled={ctx.asset.sceneName === props.activeScene}
+                  data-agent-blocked-actions="click doubleClick keyPress"
+                  data-agent-alternative="preview_scene_delete"
                   title={ctx.asset.sceneName === props.activeScene
                     ? 'Open another scene before deleting the active scene'
                     : 'Delete scene permanently'}
@@ -1288,6 +1292,8 @@ export function Project(props: {
                 <button
                   type="button"
                   role="menuitem"
+                  data-agent-blocked-actions="click doubleClick keyPress"
+                  data-agent-alternative="preview_asset_trash"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1818,6 +1824,8 @@ export function Project(props: {
                 <button
                   type="button"
                   className="primary danger"
+                  data-agent-blocked-actions="click doubleClick keyPress"
+                  data-agent-alternative="trash_asset"
                   disabled={
                     assetTrash.applying
                     || assetTrash.plan.referenceReport.references.length > 0

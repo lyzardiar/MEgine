@@ -205,7 +205,7 @@ function AnimatorStateGraph(props: {
       </div>
       <div className="animator-graph-viewport" ref={viewport}>
         <div className="animator-graph-canvas" style={{ width: graphWidth, height: graphHeight }}>
-          <svg width={graphWidth} height={graphHeight} aria-label="Animator state graph">
+          <svg role="group" width={graphWidth} height={graphHeight} aria-label="Animator state graph">
             <defs>
               <marker id="animator-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
@@ -232,8 +232,15 @@ function AnimatorStateGraph(props: {
                     x2={x2}
                     y2={y2}
                     role="button"
+                    tabIndex={0}
                     aria-label={`Select transition ${transition.from} to ${transition.to}`}
                     onPointerDown={() => props.onSelectTransition(index)}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter' && event.key !== ' ') return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      props.onSelectTransition(index);
+                    }}
                   />
                   <line x1={x1} y1={y1} x2={x2} y2={y2} markerEnd="url(#animator-arrow)" />
                 </g>

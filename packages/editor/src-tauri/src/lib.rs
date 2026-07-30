@@ -20,9 +20,12 @@ use tauri::{path::BaseDirectory, Emitter, Manager, State};
 mod agent_bridge;
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
-    capture_editor_window, cleanup_bridge_discovery, inspect_editor_window, interact_editor_window,
-    read_editor_ui_content, spawn_bridge_server, BridgeHub,
+    capture_editor_window, capture_editor_window_element, cleanup_bridge_discovery,
+    inspect_editor_window, interact_editor_window, read_editor_ui_content, spawn_bridge_server,
+    BridgeHub,
 };
+
+pub(crate) const EDITOR_IDENTIFIER: &str = "com.mengine.editor";
 
 struct AppState {
     editor_instance_id: String,
@@ -5295,8 +5298,12 @@ struct EditorWindowInfo {
     kind: String,
     /// For `panel-*` windows, the panel id (e.g. "hierarchy").
     panel_kind: Option<String>,
-    /// For `editor-*` windows, the registered editor window typeId from the URL query.
+    /// Canonical registered editor window typeId for `editor-*` windows.
+    type_id: Option<String>,
+    /// Backward-compatible alias retained for existing Agent clients.
     editor_type: Option<String>,
+    /// Native identity marker persisted in the WebView URL across reloads.
+    agent_owned: bool,
     url: String,
     visible: bool,
     focused: bool,
@@ -5350,6 +5357,11 @@ fn validate_agent_editor_window_state(visible: bool, focused: bool) -> Result<()
     Ok(())
 }
 
+fn agent_editor_window_url_is_owned(url: &tauri::Url) -> bool {
+    url.query_pairs()
+        .any(|(key, value)| key == "agentOwned" && value == "true")
+}
+
 /// Close one exact hidden, unfocused registered auxiliary editor window.
 ///
 /// The main window and detached core panels deliberately use their own
@@ -5364,6 +5376,14 @@ fn close_editor_window(
     let window = app
         .get_webview_window(&label)
         .ok_or_else(|| format!("editor window \"{label}\" was not found"))?;
+    let url = window
+        .url()
+        .map_err(|error| format!("could not inspect editor window \"{label}\" URL: {error}"))?;
+    if !agent_editor_window_url_is_owned(&url) {
+        return Err(format!(
+            "editor window \"{label}\" is not owned by background Agent work"
+        ));
+    }
     let visible = window
         .is_visible()
         .map_err(|error| format!("could not inspect editor window \"{label}\": {error}"))?;
@@ -5406,6 +5426,7 @@ fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
                     .find(|(key, _)| key == "editorWindow")
                     .map(|(_, value)| value.to_string())
             });
+            let agent_owned = url.as_ref().is_some_and(agent_editor_window_url_is_owned);
             let position = window.outer_position().ok();
             let size = window.outer_size().ok();
             EditorWindowInfo {
@@ -5413,7 +5434,9 @@ fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
                 title: window.title().unwrap_or_default(),
                 kind: kind.to_string(),
                 panel_kind,
+                type_id: editor_type.clone(),
                 editor_type,
+                agent_owned,
                 url: url_str,
                 visible: window.is_visible().unwrap_or(false),
                 focused: window.is_focused().unwrap_or(false),
@@ -5445,8 +5468,77 @@ fn starts_in_background() -> bool {
         })
 }
 
+fn background_runtime_identifier(editor_instance_id: &str) -> String {
+    format!(
+        "{EDITOR_IDENTIFIER}.agent-{}",
+        editor_instance_id.replace('-', "")
+    )
+}
+
+pub(crate) fn default_editor_config_dir() -> Option<PathBuf> {
+    dirs::config_dir().map(|directory| directory.join(EDITOR_IDENTIFIER))
+}
+
+fn background_runtime_path_is_owned(path: &Path, identifier: &str) -> bool {
+    identifier.starts_with(&format!("{EDITOR_IDENTIFIER}.agent-"))
+        && path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name == identifier)
+}
+
+fn cleanup_background_runtime_paths(app: &tauri::AppHandle, identifier: &str) {
+    let candidates = [app.path().app_local_data_dir(), app.path().app_config_dir()];
+    for path in candidates.into_iter().flatten() {
+        if !background_runtime_path_is_owned(&path, identifier) {
+            log::warn!(
+                "Refusing to remove unowned background editor directory: {}",
+                path.display()
+            );
+            continue;
+        }
+        match std::fs::symlink_metadata(&path) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
+                log::warn!(
+                    "Refusing to remove symlinked background editor directory: {}",
+                    path.display()
+                );
+            }
+            Ok(metadata) if metadata.is_dir() => {
+                if let Err(error) = std::fs::remove_dir_all(&path) {
+                    log::warn!(
+                        "Could not remove background editor directory {}: {error}",
+                        path.display()
+                    );
+                }
+            }
+            Ok(_) => {
+                log::warn!(
+                    "Refusing to remove non-directory background editor path: {}",
+                    path.display()
+                );
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => {
+                log::warn!(
+                    "Could not inspect background editor directory {}: {error}",
+                    path.display()
+                );
+            }
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let background = starts_in_background();
+    let editor_instance_id = uuid::Uuid::new_v4().to_string();
+    let background_identifier =
+        background.then(|| background_runtime_identifier(&editor_instance_id));
+    let mut context = tauri::generate_context!();
+    if let Some(identifier) = &background_identifier {
+        context.config_mut().identifier = identifier.clone();
+    }
     let bridge_hub = Arc::new(BridgeHub::from_environment(
         uuid::Uuid::new_v4().to_string(),
     ));
@@ -5456,7 +5548,7 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
-            editor_instance_id: uuid::Uuid::new_v4().to_string(),
+            editor_instance_id,
             project_lifecycle: Mutex::new(()),
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
@@ -5520,6 +5612,7 @@ pub fn run() {
             agent_bridge_broadcast,
             agent_bridge_set_transport_ready,
             capture_editor_window,
+            capture_editor_window_element,
             inspect_editor_window,
             read_editor_ui_content,
             interact_editor_window,
@@ -5535,7 +5628,7 @@ pub fn run() {
         .setup(move |app| {
             spawn_bridge_server(app.handle().clone(), bridge_hub_for_setup.clone());
             if let Some(main) = app.get_webview_window("main") {
-                if starts_in_background() {
+                if background {
                     main.hide()?;
                     main.set_focusable(false)?;
                 } else {
@@ -5545,11 +5638,14 @@ pub fn run() {
             }
             Ok(())
         })
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while building MEngine Editor");
     app.run(move |app_handle, event| {
         if matches!(event, tauri::RunEvent::Exit) {
             cleanup_bridge_discovery(app_handle, &bridge_token_for_exit);
+            if let Some(identifier) = &background_identifier {
+                cleanup_background_runtime_paths(app_handle, identifier);
+            }
         }
     });
 }
@@ -5626,6 +5722,43 @@ mod tests {
         assert!(validate_agent_editor_window_state(true, false).is_err());
         assert!(validate_agent_editor_window_state(false, true).is_err());
         assert!(validate_agent_editor_window_state(true, true).is_err());
+    }
+
+    #[test]
+    fn agent_window_close_requires_persisted_native_ownership() {
+        let owned = tauri::Url::parse(
+            "http://tauri.localhost/?editorWindow=EditorWindow.Test&agentOwned=true",
+        )
+        .unwrap();
+        let foreground =
+            tauri::Url::parse("http://tauri.localhost/?editorWindow=EditorWindow.Test").unwrap();
+        let false_marker = tauri::Url::parse(
+            "http://tauri.localhost/?editorWindow=EditorWindow.Test&agentOwned=false",
+        )
+        .unwrap();
+        assert!(agent_editor_window_url_is_owned(&owned));
+        assert!(!agent_editor_window_url_is_owned(&foreground));
+        assert!(!agent_editor_window_url_is_owned(&false_marker));
+    }
+
+    #[test]
+    fn background_runtime_identifier_isolates_webview_persistence() {
+        let first = background_runtime_identifier("12345678-1234-1234-1234-123456789abc");
+        let second = background_runtime_identifier("abcdefab-cdef-cdef-cdef-abcdefabcdef");
+        assert_eq!(
+            first,
+            "com.mengine.editor.agent-12345678123412341234123456789abc"
+        );
+        assert_ne!(first, second);
+        assert_ne!(first, EDITOR_IDENTIFIER);
+        assert!(background_runtime_path_is_owned(
+            Path::new("root").join(&first).as_path(),
+            &first
+        ));
+        assert!(!background_runtime_path_is_owned(
+            Path::new("root").join(EDITOR_IDENTIFIER).as_path(),
+            &first
+        ));
     }
 
     fn test_project_parent(label: &str) -> PathBuf {

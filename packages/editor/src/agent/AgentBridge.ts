@@ -28,8 +28,10 @@ import {
   type EditorState,
   type EditorUiActionResult,
   type EditorUiContentPage,
+  type EditorUiDragPathPoint,
   type EditorUiModifiers,
   type EditorUiSnapshot,
+  type EditorUiWaitResult,
   type EditorWindowInfo,
   type HierarchyNode,
   type PanelLayoutSnapshot,
@@ -202,6 +204,10 @@ import {
 } from './eventJournal';
 import { paginateAgentItems } from './pagination';
 import { panelWindowBlockers } from './panelSafety';
+import {
+  MAX_PENDING_WINDOW_UI_WAITS,
+  waitForWindowUiChange,
+} from './windowUiWait';
 import {
   loadSortingLayersSnapshot,
   persistSortingLayersGuarded,
@@ -419,6 +425,7 @@ class AgentBridge {
   private captures = new Map<ViewportTab, CaptureFn>();
   private screenshotQueue: Promise<void> = Promise.resolve();
   private pendingScreenshotCount = 0;
+  private pendingWindowUiWaitCount = 0;
   private lastScreenshotCompletedAt = 0;
   private refreshProvider: (() => void) | null = null;
   private logProvider: ((message: string) => void) | null = null;
@@ -463,7 +470,6 @@ class AgentBridge {
   private observedProjectSignature: string | null = null;
   private editorBootReady = false;
   private editorBootGeneration = 0;
-  private readonly agentOwnedEditorWindows = new Set<string>();
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
@@ -783,6 +789,76 @@ class AgentBridge {
   }
 
   /**
+   * Resolve and capture one semantic selector against the exact snapshot that
+   * exposed it. Native code clips oversized/partly visible elements to the
+   * viewport and every composed overflow clip before returning visual evidence.
+   */
+  async captureWindowElement(
+    windowLabel: string,
+    selector: string,
+    expectedSnapshotRevision: string,
+    maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+  ): Promise<ScreenshotResult> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Editor-window element capture requires the desktop editor');
+    }
+    if (!selector) {
+      throw new BridgeError('INVALID_ARGS', 'Editor-window element capture requires a selector');
+    }
+    if (!/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSnapshotRevision ?? '')) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Editor-window element capture requires expectedSnapshotRevision from window.ui_snapshot',
+      );
+    }
+    const result = await this.scheduleScreenshot(() => invoke<ScreenshotResult & {
+      ok?: boolean;
+      error?: string;
+      staleSnapshot?: boolean;
+      selectorNotExposed?: boolean;
+      notVisible?: boolean;
+      expectedSnapshotRevision?: string;
+      actualSnapshotRevision?: string | null;
+      restartOffset?: number;
+    }>(
+      'capture_editor_window_element',
+      {
+        windowLabel,
+        selector,
+        expectedSnapshotRevision,
+        maxSize: normalizeScreenshotMaxSize(maxSize),
+      },
+    ));
+    if (result.ok === false) {
+      if (result.staleSnapshot) {
+        throw new BridgeError(
+          'STALE_REVISION',
+          result.error ?? 'Editor UI snapshot changed during element capture',
+          {
+            windowLabel,
+            selector,
+            expectedSnapshotRevision: result.expectedSnapshotRevision,
+            actualSnapshotRevision: result.actualSnapshotRevision,
+            restartOffset: result.restartOffset ?? 0,
+          },
+        );
+      }
+      throw new BridgeError(
+        'INVALID_ARGS',
+        result.error ?? 'Editor UI element could not be captured',
+        {
+          windowLabel,
+          selector,
+          expectedSnapshotRevision,
+          selectorNotExposed: Boolean(result.selectorNotExposed),
+          notVisible: Boolean(result.notVisible),
+        },
+      );
+    }
+    return result;
+  }
+
+  /**
    * Serialize bitmap captures and leave a short cool-down after each one.
    * Semantic snapshots remain unthrottled, so agents can inspect rapidly
    * without repeatedly allocating multi-megabyte encoded images.
@@ -879,10 +955,52 @@ class AgentBridge {
     return snapshot;
   }
 
-  /** Read exact, unnormalized UI text, value, or serialized options in bounded pages. */
+  /**
+   * Wait for arbitrary semantic content in one native editor window to change.
+   * This complements the domain event journal, which cannot observe ordinary
+   * DOM updates inside custom windows or detached panels.
+   */
+  async waitForWindowUi(
+    expectedSnapshotRevision: string,
+    windowLabel = 'main',
+    timeoutMs = 15_000,
+    maxElements = 2_000,
+    signal?: AbortSignal,
+  ): Promise<EditorUiWaitResult> {
+    if (!/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSnapshotRevision)) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Window UI waits require expectedSnapshotRevision from window.ui_snapshot',
+      );
+    }
+    if (this.pendingWindowUiWaitCount >= MAX_PENDING_WINDOW_UI_WAITS) {
+      throw new BridgeError(
+        'RATE_LIMITED',
+        'Too many editor window UI waits are pending; retry after an existing wait completes',
+        {
+          pendingWindowUiWaits: this.pendingWindowUiWaitCount,
+          maxConcurrentWindowUiWaits: MAX_PENDING_WINDOW_UI_WAITS,
+          retryAfterMs: 250,
+        },
+      );
+    }
+    this.pendingWindowUiWaitCount += 1;
+    try {
+      return await waitForWindowUiChange({
+        expectedSnapshotRevision,
+        timeoutMs,
+        signal,
+        inspect: () => this.inspectWindow(windowLabel, maxElements, 0),
+      });
+    } finally {
+      this.pendingWindowUiWaitCount -= 1;
+    }
+  }
+
+  /** Read exact UI text, semantic names/descriptions, values, or options in bounded pages. */
   async readWindowContent(
     selector: string,
-    field: 'text' | 'value' | 'options',
+    field: 'text' | 'name' | 'description' | 'value' | 'options',
     expectedSnapshotRevision: string,
     windowLabel = 'main',
     offset = 0,
@@ -927,9 +1045,13 @@ class AgentBridge {
       ok?: boolean;
       error?: string;
       staleSnapshot?: boolean;
+      selectorNotExposed?: boolean;
+      invalidContentOffset?: boolean;
       expectedSnapshotRevision?: string;
       actualSnapshotRevision?: string;
+      requestedOffset?: number;
       restartOffset?: number;
+      contentRevision?: string;
     }>(
       'read_editor_ui_content',
       {
@@ -952,6 +1074,33 @@ class AgentBridge {
             expectedSnapshotRevision: result.expectedSnapshotRevision,
             actualSnapshotRevision: result.actualSnapshotRevision,
             restartOffset: result.restartOffset ?? 0,
+          },
+        );
+      }
+      if (result.selectorNotExposed) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Selector is not exposed by the expected semantic UI snapshot',
+          {
+            windowLabel,
+            selector,
+            expectedSnapshotRevision,
+            selectorNotExposed: true,
+          },
+        );
+      }
+      if (result.invalidContentOffset) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Content offset splits a Unicode surrogate pair',
+          {
+            windowLabel,
+            selector,
+            field,
+            requestedOffset: result.requestedOffset ?? boundedOffset,
+            restartOffset: result.restartOffset ?? Math.max(0, boundedOffset - 1),
+            contentRevision: result.contentRevision,
+            invalidContentOffset: true,
           },
         );
       }
@@ -981,6 +1130,7 @@ class AgentBridge {
       | 'doubleClick'
       | 'contextClick'
       | 'setValue'
+      | 'scrollIntoView'
       | 'scroll'
       | 'keyPress'
       | 'dragTo'
@@ -990,6 +1140,13 @@ class AgentBridge {
     windowLabel = 'main',
     targetSelector?: string,
     value?: string,
+    offsetX?: number,
+    offsetY?: number,
+    targetOffsetX?: number,
+    targetOffsetY?: number,
+    button?: 'left' | 'middle' | 'right',
+    path?: EditorUiDragPathPoint[],
+    hoverState?: 'enter' | 'leave',
     deltaX?: number,
     deltaY?: number,
     key?: string,
@@ -1041,6 +1198,13 @@ class AgentBridge {
       action,
       targetSelector,
       value,
+      offsetX,
+      offsetY,
+      targetOffsetX,
+      targetOffsetY,
+      button,
+      path,
+      hoverState,
       deltaX,
       deltaY,
       key,
@@ -1088,7 +1252,117 @@ class AgentBridge {
           },
         );
       }
+      if (result.clipboardDenied) {
+        throw new BridgeError(
+          'READONLY',
+          result.error ?? 'The Agent private text clipboard cannot access this control',
+          {
+            windowLabel,
+            selector,
+            clipboardDenied: true,
+          },
+        );
+      }
+      if (result.textHistoryDenied) {
+        throw new BridgeError(
+          'READONLY',
+          result.error ?? 'The Agent private text history cannot access this control',
+          {
+            windowLabel,
+            selector,
+            textHistoryDenied: true,
+          },
+        );
+      }
+      if (result.agentBlocked) {
+        throw new BridgeError(
+          'READONLY',
+          result.error ?? 'Semantic UI action requires foreground-only user input',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            agentBlocked: true,
+            agentAlternative: result.agentAlternative ?? null,
+          },
+        );
+      }
+      if (result.selectorNotExposed || result.actionNotExposed) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Semantic UI selector or action is not exposed by the expected snapshot',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            expectedSnapshotRevision,
+            selectorNotExposed: result.selectorNotExposed ?? false,
+            targetSelectorNotExposed: result.targetSelectorNotExposed ?? false,
+            actionNotExposed: result.actionNotExposed ?? false,
+            requiredAction: result.requiredAction ?? null,
+            allowedActions: result.allowedActions ?? [],
+          },
+        );
+      }
+      if (result.invalidPointerCoordinates) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Pointer coordinates are outside the current semantic element',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            invalidPointerCoordinates: true,
+            offsetX: offsetX ?? null,
+            offsetY: offsetY ?? null,
+            targetOffsetX: targetOffsetX ?? null,
+            targetOffsetY: targetOffsetY ?? null,
+          },
+        );
+      }
+      if (result.pointerTargetObscured) {
+        throw new BridgeError(
+          'CONFLICT',
+          result.error ?? 'Pointer interaction target is obscured or ignores pointer input',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            pointerTargetObscured: true,
+            blockerName: result.blockerName ?? null,
+            retry: 'Scroll the element, dismiss the blocking overlay, or choose a reachable offset',
+          },
+        );
+      }
+      if (result.hoverTargetMismatch) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Hover leave target does not match the current semantic hover target',
+          {
+            windowLabel,
+            selector,
+            hoverState: hoverState ?? null,
+            hoverTargetMismatch: true,
+          },
+        );
+      }
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
+    }
+    if (result.valueCommitConfirmed === false) {
+      throw new BridgeError(
+        'CONFLICT',
+        'Semantic value edit changed the control but did not confirm its commit boundary; re-read the UI and domain model before retrying',
+        {
+          action,
+          windowLabel,
+          selector,
+          valueCommitMethod: result.valueCommitMethod ?? null,
+          valueHandledByReact: result.valueHandledByReact ?? null,
+          valueDraftSynchronized: result.valueDraftSynchronized ?? null,
+          valueFocusHandledByReact: result.valueFocusHandledByReact ?? null,
+          valueBlurHandledByReact: result.valueBlurHandledByReact ?? null,
+        },
+      );
     }
     return result;
   }
@@ -1178,9 +1452,27 @@ class AgentBridge {
 
   getSceneSnapshot(): unknown {
     this.observe(true);
+    const store = this.requireStore();
     return {
-      ...this.requireStore().snapshot(),
+      ...store.snapshot(),
+      source: 'active',
+      mode: store.mode,
       revision: this.sceneChanges.revision,
+    };
+  }
+
+  getAuthoredSceneSnapshot(): unknown {
+    this.observe();
+    const store = this.requireStore();
+    const snapshot = store.snapshot();
+    return {
+      source: 'authored',
+      mode: store.mode,
+      sceneName: this.sceneMeta?.sceneName() ?? null,
+      dirty: this.sceneMeta?.dirty() ?? false,
+      entities: store.authoredEntities(),
+      clearColor: snapshot.clearColor,
+      contentFingerprint: store.sceneContentFingerprint(),
     };
   }
 
@@ -1383,10 +1675,6 @@ class AgentBridge {
     emitEvent = true,
   ): void {
     const snapshot = structuredClone(windows);
-    const openLabels = new Set(snapshot.map((window) => window.label));
-    for (const label of this.agentOwnedEditorWindows) {
-      if (!openLabels.has(label)) this.agentOwnedEditorWindows.delete(label);
-    }
     const signature = JSON.stringify(snapshot);
     const inventoryChanged = signature !== this.observedWindowSignature;
     if (inventoryChanged) this.observedWindowSignature = signature;
@@ -1474,7 +1762,7 @@ class AgentBridge {
         { windowLabel, kind: target.kind },
       );
     }
-    if (!this.agentOwnedEditorWindows.has(windowLabel)) {
+    if (!target.agentOwned) {
       throw new BridgeError(
         'READONLY',
         `Editor window "${windowLabel}" was not created by this Agent session and cannot be closed in the background`,
@@ -1482,7 +1770,7 @@ class AgentBridge {
           windowLabel,
           visible: target.visible,
           focused: target.focused,
-          createdByAgent: false,
+          createdByAgent: target.agentOwned,
         },
       );
     }
@@ -1494,7 +1782,7 @@ class AgentBridge {
           windowLabel,
           visible: target.visible,
           focused: target.focused,
-          createdByAgent: true,
+          createdByAgent: target.agentOwned,
         },
       );
     }
@@ -1506,7 +1794,6 @@ class AgentBridge {
       ),
     );
     if (result.closed) {
-      this.agentOwnedEditorWindows.delete(windowLabel);
       await this.observeWindowInventory(
         {
           action: 'closed',
@@ -1538,6 +1825,7 @@ class AgentBridge {
     created: boolean;
     visible: boolean;
     focused: boolean;
+    agentOwned: boolean;
     semanticReady: true;
     snapshotRevision: string;
     semanticElementCount: number;
@@ -1592,6 +1880,7 @@ class AgentBridge {
       width: definition.width,
       height: definition.height,
       activateWindow: false,
+      agentOwned: existing === undefined,
     });
     if (!opened) {
       throw new BridgeError(
@@ -1627,7 +1916,16 @@ class AgentBridge {
         },
       );
     }
-    if (existing === undefined) this.agentOwnedEditorWindows.add(target.label);
+    if (existing === undefined && !target.agentOwned) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Editor window "${target.label}" was created without its native Agent ownership marker`,
+        {
+          typeId: normalizedTypeId,
+          windowLabel: target.label,
+        },
+      );
+    }
     let initialSnapshot: EditorUiSnapshot | null = null;
     for (let attempt = 0; attempt < 100; attempt += 1) {
       try {
@@ -1658,6 +1956,7 @@ class AgentBridge {
       created: existing === undefined,
       visible: target.visible,
       focused: target.focused,
+      agentOwned: target.agentOwned,
       semanticReady: true as const,
       snapshotRevision: initialSnapshot.snapshotRevision,
       semanticElementCount: initialSnapshot.totalSemanticElements,
@@ -3875,6 +4174,18 @@ class AgentBridge {
           { activeDialog },
         );
       }
+      if (rawAction === 'accept' && activeDialog.agentAcceptBlocked) {
+        throw new BridgeError(
+          'PERMISSION_DENIED',
+          `Agent acceptance is blocked for "${activeDialog.title}"`,
+          {
+            windowLabel,
+            dialogId,
+            agentAcceptBlocked: true,
+            agentAlternative: activeDialog.agentAlternative,
+          },
+        );
+      }
       const result = await respondToEditorDialogInWindow(
         windowLabel,
         dialogId,
@@ -4553,6 +4864,7 @@ class AgentBridge {
       || commandId === 'window.ui_double_click'
       || commandId === 'window.ui_context_click'
       || commandId === 'window.ui_set_value'
+      || commandId === 'window.ui_scroll_into_view'
       || commandId === 'window.ui_scroll'
       || commandId === 'window.ui_drag_to'
       || commandId === 'window.ui_drag_by'
@@ -4567,15 +4879,17 @@ class AgentBridge {
             ? 'contextClick'
             : commandId === 'window.ui_set_value'
               ? 'setValue'
-              : commandId === 'window.ui_scroll'
-                ? 'scroll'
-                : commandId === 'window.ui_drag_to'
-                  ? 'dragTo'
-                  : commandId === 'window.ui_drag_by'
-                    ? 'dragBy'
-                    : commandId === 'window.ui_hover'
-                      ? 'hover'
-                      : 'keyPress';
+              : commandId === 'window.ui_scroll_into_view'
+                ? 'scrollIntoView'
+                : commandId === 'window.ui_scroll'
+                  ? 'scroll'
+                  : commandId === 'window.ui_drag_to'
+                    ? 'dragTo'
+                    : commandId === 'window.ui_drag_by'
+                      ? 'dragBy'
+                      : commandId === 'window.ui_hover'
+                        ? 'hover'
+                        : 'keyPress';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';
@@ -4583,16 +4897,66 @@ class AgentBridge {
       const targetSelector = commandId === 'window.ui_drag_to'
         ? requiredString(args, 'targetSelector')
         : undefined;
-      const deltaX = commandId === 'window.ui_drag_by'
-        ? requiredBoundedUiDelta(args, 'deltaX')
-        : optionalBoundedUiDelta(args, 'deltaX', 0);
-      const deltaY = commandId === 'window.ui_scroll' || commandId === 'window.ui_drag_by'
-        ? requiredBoundedUiDelta(args, 'deltaY')
+      const pointerCoordinates = (
+        commandId === 'window.ui_click'
+        || commandId === 'window.ui_double_click'
+        || commandId === 'window.ui_context_click'
+        || commandId === 'window.ui_scroll'
+        || commandId === 'window.ui_drag_to'
+        || commandId === 'window.ui_drag_by'
+        || commandId === 'window.ui_hover'
+      );
+      const offsetX = pointerCoordinates && args.offsetX !== undefined
+        ? requiredBoundedUiDelta(args, 'offsetX')
         : undefined;
-      if (commandId === 'window.ui_drag_by' && deltaX === 0 && deltaY === 0) {
+      const offsetY = pointerCoordinates && args.offsetY !== undefined
+        ? requiredBoundedUiDelta(args, 'offsetY')
+        : undefined;
+      const targetOffsetX = commandId === 'window.ui_drag_to'
+        && args.targetOffsetX !== undefined
+        ? requiredBoundedUiDelta(args, 'targetOffsetX')
+        : undefined;
+      const targetOffsetY = commandId === 'window.ui_drag_to'
+        && args.targetOffsetY !== undefined
+        ? requiredBoundedUiDelta(args, 'targetOffsetY')
+        : undefined;
+      const button = commandId === 'window.ui_drag_by'
+        ? optionalEnum(args, 'button', ['left', 'middle', 'right'] as const, 'left')
+        : undefined;
+      const path = commandId === 'window.ui_drag_by' && args.path !== undefined
+        ? requiredUiDragPath(args)
+        : undefined;
+      const hoverState = commandId === 'window.ui_hover'
+        ? optionalEnum(args, 'state', ['enter', 'leave'] as const, 'enter')
+        : undefined;
+      let deltaX: number | undefined;
+      let deltaY: number | undefined;
+      if (commandId === 'window.ui_drag_by') {
+        if (path) {
+          if (args.deltaX !== undefined || args.deltaY !== undefined) {
+            throw new BridgeError(
+              'INVALID_ARGS',
+              'window.ui_drag_by path is mutually exclusive with deltaX and deltaY',
+            );
+          }
+        } else {
+          deltaX = requiredBoundedUiDelta(args, 'deltaX');
+          deltaY = requiredBoundedUiDelta(args, 'deltaY');
+          if (deltaX === 0 && deltaY === 0) {
+            throw new BridgeError(
+              'INVALID_ARGS',
+              'window.ui_drag_by requires a non-zero deltaX or deltaY',
+            );
+          }
+        }
+      } else if (commandId === 'window.ui_scroll') {
+        deltaX = optionalBoundedUiDelta(args, 'deltaX', 0);
+        deltaY = optionalBoundedUiDelta(args, 'deltaY', 0);
+      }
+      if (commandId === 'window.ui_scroll' && deltaX === 0 && deltaY === 0) {
         throw new BridgeError(
           'INVALID_ARGS',
-          'window.ui_drag_by requires a non-zero deltaX or deltaY',
+          'window.ui_scroll requires a non-zero deltaX or deltaY',
         );
       }
       const key = commandId === 'window.ui_press_key'
@@ -4613,6 +4977,13 @@ class AgentBridge {
           windowLabel,
           targetSelector,
           value,
+          offsetX,
+          offsetY,
+          targetOffsetX,
+          targetOffsetY,
+          button,
+          path,
+          hoverState,
           deltaX,
           deltaY,
           key,
@@ -4743,6 +5114,8 @@ class AgentBridge {
         return this.getSelection();
       case 'scene.snapshot':
         return this.getSceneSnapshot();
+      case 'scene.authored_snapshot':
+        return this.getAuthoredSceneSnapshot();
       case 'scene.diff':
         return this.getSceneDiff(requiredNonNegativeInteger(params, 'fromRevision'));
       case 'scene.hierarchy':
@@ -4795,6 +5168,17 @@ class AgentBridge {
             ? params.maxSize
             : DEFAULT_SCREENSHOT_MAX_SIZE,
         );
+      case 'view.capture_element':
+        return this.captureWindowElement(
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+          requiredString(params, 'selector'),
+          requiredString(params, 'expectedSnapshotRevision'),
+          typeof params.maxSize === 'number'
+            ? params.maxSize
+            : DEFAULT_SCREENSHOT_MAX_SIZE,
+        );
       case 'window.list':
         return this.listWindows();
       case 'window.types':
@@ -4811,6 +5195,16 @@ class AgentBridge {
           typeof params.expectedSnapshotRevision === 'string'
             ? params.expectedSnapshotRevision
             : undefined,
+        );
+      case 'window.ui_wait':
+        return this.waitForWindowUi(
+          requiredString(params, 'expectedSnapshotRevision'),
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+          typeof params.timeoutMs === 'number' ? params.timeoutMs : 15_000,
+          typeof params.maxElements === 'number' ? params.maxElements : 2_000,
+          options.signal,
         );
       case 'window.ui_content':
         return this.readWindowContent(
@@ -5101,12 +5495,49 @@ function requiredBoundedUiDelta(
   return value;
 }
 
+function requiredUiDragPath(
+  args: Record<string, unknown>,
+): EditorUiDragPathPoint[] {
+  const value = args.path;
+  if (!Array.isArray(value) || value.length < 1 || value.length > 64) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      '"path" must contain 1 to 64 cumulative drag points',
+    );
+  }
+  const path = value.map((point, index) => {
+    if (!point || typeof point !== 'object' || Array.isArray(point)) {
+      throw new BridgeError('INVALID_ARGS', `"path[${index}]" must be an object`);
+    }
+    const record = point as Record<string, unknown>;
+    const deltaX = requiredBoundedUiDelta(record, 'deltaX');
+    const deltaY = requiredBoundedUiDelta(record, 'deltaY');
+    return { deltaX, deltaY };
+  });
+  if (!path.some((point) => point.deltaX !== 0 || point.deltaY !== 0)) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      '"path" must contain at least one non-zero displacement',
+    );
+  }
+  return path;
+}
+
 function requiredUiContentField(
   args: Record<string, unknown>,
-): 'text' | 'value' | 'options' {
+): 'text' | 'name' | 'description' | 'value' | 'options' {
   const value = args.field;
-  if (value !== 'text' && value !== 'value' && value !== 'options') {
-    throw new BridgeError('INVALID_ARGS', '"field" must be "text", "value", or "options"');
+  if (
+    value !== 'text'
+    && value !== 'name'
+    && value !== 'description'
+    && value !== 'value'
+    && value !== 'options'
+  ) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      '"field" must be "text", "name", "description", "value", or "options"',
+    );
   }
   return value;
 }

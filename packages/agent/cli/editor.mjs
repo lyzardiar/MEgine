@@ -28,6 +28,10 @@ Options:
   --compact                       Emit compact JSON instead of pretty JSON
   -h, --help                      Show this help
 
+Environment:
+  MENGINE_EDITOR_CONFIG_DIR       Discover background/foreground records in this directory
+  MENGINE_AGENT_BRIDGE_FILE       Override discovery with one exact record
+
 Examples:
   mengine-agent query window.list
   mengine-agent query window.ui_snapshot --args "{\\"windowLabel\\":\\"main\\"}"
