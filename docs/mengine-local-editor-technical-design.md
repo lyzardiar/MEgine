@@ -1853,3 +1853,11 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - 自动 Director 的 Signal 使用父 Clip 的真实穿越区间映射到同一全局 traversal 坐标，与显式子 Timeline 一样支持正播、反播、循环边界、进入点和八层深度/循环依赖保护。信号的 `entity` 保持为真正受控 Director，脚本可区分父事件与组件事件。非 Prefab Scene Preview 会从 Source/Control Children 发现 Director 与粒子，递归合成 Activation、Animation、Audio、Particle 和 Camera，并把 Clip 种子传给 Viewport 的确定性粒子模拟；Sequencer 会加载场景中 Director 引用的 Timeline 资源，所有新开关和 Seed 都具备 Agent 可读写的语义标签。Prefab 的瞬态编辑态实例仍不伪造，只在 Play 模式使用同一套自动控制生命周期。
 
 本批补齐了 ControlPlayableAsset 中与当前 MEngine 组件体系对应的 Activation、Playable Director、Particle System、Control Children、Particle Random Seed 和 Post Playback 闭环。尚未宣称完整等价：MEngine 目前没有可对应 Unity `ITimeControl` 的脚本生命周期契约；瞬态 Prefab Edit Preview、Timeline 录制模式、轨道模板和子轨道就地编辑也仍需继续实现。
+
+## 159. 2026-08-01 嵌套 Canvas Pixel Perfect 覆盖
+
+- `Canvas` 新增 Unity 同语义的 `override_pixel_perfect`，序列化、Rust/TypeScript 生成类型、组件目录和 Inspector 共用同一个默认值 `false`。旧场景因此继续继承最外层 Canvas；新建 Canvas 也不会在嵌套后无意改变父级的像素对齐。Inspector 只在 Screen Space Overlay/Camera 中显示 Pixel Perfect 与覆盖开关，World Space 不把屏幕像素吸附伪装成世界空间能力。
+- Editor Canvas 预览和 Runtime 现在都从最外层 Canvas 沿层级计算有效 Pixel Perfect：普通嵌套 Canvas 继承父值，只有显式启用 Override Pixel Perfect 才能为自己的完整子树开启或关闭。像素吸附从“渲染根整批后处理”下沉到每个 UI 实体，因此同一根 Canvas 内可以同时存在吸附和非吸附子树；Runtime 对绘制 Primitive 与命中区域使用同一取整范围，避免画面位置与点击区域漂移。嵌套 Canvas 即使同时启用 Override Sorting，也会先继承根设置，再应用自己的像素覆盖。
+- 回归覆盖父级关闭时嵌套 Canvas 只有显式覆盖才生效、父级开启时嵌套 Canvas 可显式关闭，以及 Runtime 渲染矩形/交互矩形同步取整。World Space 编辑器预览会清除这两个屏幕空间标志，与 Runtime 和 Unity 的适用范围一致。
+
+这批修复的是嵌套 Canvas 的像素继承契约，不代表 Canvas 已全部与 Unity 等价。仍需继续审计 Target Display、多显示器、Additional Shader Channels、Normalized Sorting Grid、Graphic Raycaster/Event Camera、嵌套 Canvas 独立批次与真实原生 wgpu 编辑器视口；其中只对当前单显示器和现有 RHI 能准确实现的能力落地，不用无效 Inspector 字段冒充支持。

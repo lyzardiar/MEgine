@@ -23,6 +23,7 @@ const UNITY_CANVAS_DEFAULTS = {
   render_mode: 'ScreenSpaceOverlay',
   render_camera: '',
   pixel_perfect: false,
+  override_pixel_perfect: false,
   override_sorting: false,
   sorting_layer: 'default',
   sorting_order: 0,
@@ -43,6 +44,10 @@ test('Canvas catalog exposes all render modes and camera-aware defaults', () => 
   assert.deepEqual(getBuiltinInspectorField('Canvas', 'plane_distance')?.visibleWhen, {
     field: 'render_mode',
     equals: 'ScreenSpaceCamera',
+  });
+  assert.deepEqual(getBuiltinInspectorField('Canvas', 'override_pixel_perfect')?.visibleWhen, {
+    field: 'render_mode',
+    equals: ['ScreenSpaceOverlay', 'ScreenSpaceCamera'],
   });
   assert.equal(getBuiltinInspectorField('Canvas', 'override_sorting')?.visibleWhen, undefined);
 });

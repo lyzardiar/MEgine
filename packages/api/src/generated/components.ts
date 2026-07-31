@@ -380,6 +380,7 @@ export interface Canvas {
   renderMode: string;
   renderCamera: string;
   pixelPerfect: boolean;
+  overridePixelPerfect: boolean;
   overrideSorting: boolean;
   sortingLayer: string;
   sortingOrder: number;

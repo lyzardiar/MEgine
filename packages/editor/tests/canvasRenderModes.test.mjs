@@ -56,6 +56,88 @@ test('screen Canvas RectTransform is solved once at its render root', () => {
   assert.equal(items.find((item) => item.entity === 2).rect.x, 415);
 });
 
+test('nested Canvas pixel-perfect settings inherit until explicitly overridden', () => {
+  const stretch = rect({
+    anchor_min: [0, 0],
+    anchor_max: [1, 1],
+    size_delta: [0, 0],
+  });
+  const fractional = rect({ anchored_position: [0.25, 0.75], size_delta: [100.4, 50.6] });
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: stretch,
+        Canvas: { render_mode: 'ScreenSpaceOverlay', pixel_perfect: false },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: stretch,
+        Canvas: { pixel_perfect: true, override_pixel_perfect: false },
+      },
+    },
+    { entity: 3, parent: 2, components: { RectTransform: fractional, Image: {} } },
+    {
+      entity: 4,
+      parent: 1,
+      components: {
+        RectTransform: stretch,
+        Canvas: { pixel_perfect: true, override_pixel_perfect: true },
+      },
+    },
+    { entity: 5, parent: 4, components: { RectTransform: fractional, Image: {} } },
+  ];
+
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const inherited = items.find((item) => item.entity === 3).rect;
+  const overridden = items.find((item) => item.entity === 5).rect;
+  assert.ok(Object.values(inherited).some((value) => value % 1 !== 0));
+  assert.ok(Object.values(overridden).every((value) => value % 1 === 0));
+});
+
+test('nested Canvas can disable inherited pixel-perfect snapping', () => {
+  const stretch = rect({
+    anchor_min: [0, 0],
+    anchor_max: [1, 1],
+    size_delta: [0, 0],
+  });
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: stretch,
+        Canvas: { render_mode: 'ScreenSpaceOverlay', pixel_perfect: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: stretch,
+        Canvas: { pixel_perfect: false, override_pixel_perfect: true },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ anchored_position: [0.25, 0.75], size_delta: [100.4, 50.6] }),
+        Image: {},
+      },
+    },
+  ];
+
+  const item = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((candidate) => candidate.entity === 3);
+  assert.ok(Object.values(item.rect).some((value) => value % 1 !== 0));
+});
+
 test('World Space override-sorting Canvas subtrees are projected exactly once', () => {
   const entities = [
     {

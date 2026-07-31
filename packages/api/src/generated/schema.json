@@ -460,6 +460,9 @@
   },
   "Canvas": {
     "properties": {
+      "override_pixel_perfect": {
+        "type": "boolean"
+      },
       "override_sorting": {
         "type": "boolean"
       },
@@ -486,6 +489,7 @@
       "render_mode",
       "render_camera",
       "pixel_perfect",
+      "override_pixel_perfect",
       "override_sorting",
       "sorting_layer",
       "sorting_order",

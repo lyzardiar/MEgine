@@ -497,6 +497,34 @@ function canvasSortingOrder(entities: UiEnt[], entity: UiEnt): number {
   return number(canvas.sorting_order ?? canvas.sortingOrder, 0);
 }
 
+function canvasPixelPerfect(entities: UiEnt[], entity: UiEnt): boolean {
+  const chain: UiEnt[] = [];
+  let current: UiEnt | undefined = entity;
+  const guard = new Set<number>();
+  while (current && !guard.has(current.entity)) {
+    guard.add(current.entity);
+    if (current.components.Canvas != null) chain.push(current);
+    const parentId: number | null = current.parent ?? null;
+    current = parentId == null
+      ? undefined
+      : entities.find((candidate) => candidate.entity === parentId);
+  }
+  let pixelPerfect = false;
+  chain.reverse().forEach((canvasEntity, index) => {
+    const canvas = canvasEntity.components.Canvas as {
+      pixel_perfect?: boolean;
+      pixelPerfect?: boolean;
+      override_pixel_perfect?: boolean;
+      overridePixelPerfect?: boolean;
+    };
+    const overrides = (canvas.override_pixel_perfect ?? canvas.overridePixelPerfect) === true;
+    if (index === 0 || overrides) {
+      pixelPerfect = (canvas.pixel_perfect ?? canvas.pixelPerfect) === true;
+    }
+  });
+  return pixelPerfect;
+}
+
 function canvasSortKey(entities: UiEnt[], entity: UiEnt): [number, number, number] {
   const inherited = outermostCanvas(entities, entity);
   const authored = entity.components.Canvas as {
@@ -540,7 +568,6 @@ export function layoutUiOverlay(
   let depthBase = 0;
 
   for (const canvas of canvases) {
-    const canvasStart = out.length;
     const inheritedCanvas = outermostCanvas(entities, canvas);
     const mode =
       (inheritedCanvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
@@ -577,7 +604,12 @@ export function layoutUiOverlay(
       depth: number,
       isCanvasRoot: boolean,
       forcedRect?: Rect,
-      inherited = { opacity: 1, interactable: true, blocksRaycasts: true },
+      inherited = {
+        opacity: 1,
+        interactable: true,
+        blocksRaycasts: true,
+        pixelPerfect: false,
+      },
       inheritedClip?: Rect,
     ) => {
       if (!isCanvasRoot) {
@@ -634,15 +666,27 @@ export function layoutUiOverlay(
       const scroll = ent.components.ScrollView as Record<string, unknown> | undefined;
       const tabs = ent.components.TabView as Record<string, unknown> | undefined;
       const group = ent.components.CanvasGroup as Record<string, unknown> | undefined;
+      const canvasSettings = ent.components.Canvas as {
+        pixel_perfect?: boolean;
+        pixelPerfect?: boolean;
+        override_pixel_perfect?: boolean;
+        overridePixelPerfect?: boolean;
+      } | undefined;
       const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;
       const rotation = rt?.local_rotation ?? 0;
       const pivot: [number, number] = rt ? ([...rt.pivot] as [number, number]) : [0.5, 0.5];
+      const overridesPixelPerfect = (
+        canvasSettings?.override_pixel_perfect ?? canvasSettings?.overridePixelPerfect
+      ) === true;
       const state = {
         opacity: inherited.opacity * Math.max(0, Math.min(1, number(group?.alpha, 1))),
         interactable: inherited.interactable && group?.interactable !== false,
         blocksRaycasts: inherited.blocksRaycasts && group?.blocks_raycasts !== false && group?.blocksRaycasts !== false,
+        pixelPerfect: overridesPixelPerfect
+          ? (canvasSettings?.pixel_perfect ?? canvasSettings?.pixelPerfect) === true
+          : inherited.pixelPerfect,
       };
       const clip = inheritedClip;
       let childClip = inheritedClip;
@@ -651,11 +695,14 @@ export function layoutUiOverlay(
         childClip = childClip ? intersectRect(childClip, maskRect) : maskRect;
       }
       if (scroll || list) childClip = childClip ? intersectRect(childClip, rect) : rect;
+      const renderedRect = state.pixelPerfect
+        ? { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.w), h: Math.round(rect.h) }
+        : rect;
 
       if (isCanvas) {
         out.push({
           entity: ent.entity,
-          rect,
+          rect: renderedRect,
           depth: depthBase + depth,
           role: 'canvas',
           rotation: 0,
@@ -667,7 +714,7 @@ export function layoutUiOverlay(
       } else if (img || rawImage || btn || text || toggle || slider || scrollbar || panel || progress || input || dropdown || list || scroll || tabs) {
         out.push({
           entity: ent.entity,
-          rect,
+          rect: renderedRect,
           depth: depthBase + depth,
           role: 'graphic',
           rotation,
@@ -926,7 +973,7 @@ export function layoutUiOverlay(
       } else if (selectedIds.has(ent.entity) && hasRt) {
         out.push({
           entity: ent.entity,
-          rect,
+          rect: renderedRect,
           depth: depthBase + depth,
           role: 'graphic',
           rotation,
@@ -986,18 +1033,12 @@ export function layoutUiOverlay(
     const canvasRt = canvas.components.RectTransform
       ? solveRectTransform(canvasParent, scaleRt(canvas.components.RectTransform))
       : canvasParent;
-    walk(canvas, canvasRt, 0, true, undefined, undefined, root);
-    const canvasData = canvas.components.Canvas as { pixel_perfect?: boolean; pixelPerfect?: boolean };
-    if (canvasData.pixel_perfect === true || canvasData.pixelPerfect === true) {
-      for (const item of out.slice(canvasStart)) {
-        item.rect = {
-          x: Math.round(item.rect.x),
-          y: Math.round(item.rect.y),
-          w: Math.round(item.rect.w),
-          h: Math.round(item.rect.h),
-        };
-      }
-    }
+    walk(canvas, canvasRt, 0, true, undefined, {
+      opacity: 1,
+      interactable: true,
+      blocksRaycasts: true,
+      pixelPerfect: canvasPixelPerfect(entities, canvas),
+    }, root);
     depthBase += 1000;
   }
 
@@ -1089,6 +1130,8 @@ function worldCanvasLayoutContext(
           Canvas: {
             ...(entity.components.Canvas as Record<string, unknown>),
             render_mode: 'ScreenSpaceOverlay',
+            pixel_perfect: false,
+            override_pixel_perfect: false,
           },
           ...(entity.entity === inheritedCanvas.entity ? { CanvasScaler: {
             ui_scale_mode: 'ConstantPixelSize',

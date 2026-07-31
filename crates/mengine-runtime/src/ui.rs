@@ -406,6 +406,8 @@ struct UiInheritedState {
     alpha: f32,
     interactable: bool,
     blocks_raycasts: bool,
+    pixel_perfect: bool,
+    screen_space: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -423,6 +425,8 @@ impl Default for UiInheritedState {
             alpha: 1.0,
             interactable: true,
             blocks_raycasts: true,
+            pixel_perfect: false,
+            screen_space: true,
         }
     }
 }
@@ -543,6 +547,11 @@ fn collect_ui_frame_internal(
         };
         let primitive_start = primitives.len();
         let control_start = controls.len();
+        let inherited_state = UiInheritedState {
+            pixel_perfect: !world_space && canvas_pixel_perfect(world, canvas_entity),
+            screen_space: !world_space,
+            ..UiInheritedState::default()
+        };
         for child in children_of(world, canvas_entity) {
             walk(
                 world,
@@ -555,15 +564,9 @@ fn collect_ui_frame_internal(
                     clip,
                     forced_rect: None,
                 },
-                UiInheritedState::default(),
+                inherited_state,
                 &mut primitives,
                 &mut controls,
-            );
-        }
-        if canvas.pixel_perfect && !world_space {
-            snap_canvas_output_to_pixels(
-                &mut primitives[primitive_start..],
-                &mut controls[control_start..],
             );
         }
         let mut world_sort_depth = None;
@@ -694,6 +697,34 @@ fn canvas_sort_key(
             .unwrap_or_default(),
         order,
     )
+}
+
+fn canvas_pixel_perfect(world: &World, entity: Entity) -> bool {
+    let mut chain = Vec::new();
+    let mut current = Some(entity);
+    let mut guard = 0usize;
+    while let Some(candidate) = current {
+        if world.get_component::<Canvas>(candidate).is_some() {
+            chain.push(candidate);
+        }
+        guard += 1;
+        if guard > 4096 {
+            break;
+        }
+        current = world
+            .get_component::<Parent>(candidate)
+            .map(|parent| parent.entity);
+    }
+    let mut pixel_perfect = false;
+    for (index, canvas_entity) in chain.into_iter().rev().enumerate() {
+        let Some(canvas) = world.get_component::<Canvas>(canvas_entity) else {
+            continue;
+        };
+        if index == 0 || canvas.override_pixel_perfect {
+            pixel_perfect = canvas.pixel_perfect;
+        }
+    }
+    pixel_perfect
 }
 
 fn screen_canvas_rect(
@@ -1134,6 +1165,13 @@ fn walk(
     let rotation = -rect_transform.local_rotation.to_radians();
     let pivot = rect_transform.pivot;
     let mut state = inherited;
+    if state.screen_space {
+        if let Some(canvas) = world.get_component::<Canvas>(entity) {
+            if canvas.override_pixel_perfect {
+                state.pixel_perfect = canvas.pixel_perfect;
+            }
+        }
+    }
     if let Some(group) = world.get_component::<CanvasGroup>(entity) {
         state.alpha *= group.alpha.clamp(0.0, 1.0);
         state.interactable &= group.interactable;
@@ -1153,6 +1191,7 @@ fn walk(
     let image = world.get_component::<Image>(entity);
     let raw_image = world.get_component::<RawImage>(entity);
     let graphic_start = primitives.len();
+    let control_start = controls.len();
 
     if let Some(image) = image {
         if image.image_type.eq_ignore_ascii_case("sliced") {
@@ -1907,6 +1946,12 @@ fn walk(
         scale,
         state.alpha,
     );
+    if state.pixel_perfect {
+        snap_canvas_output_to_pixels(
+            &mut primitives[graphic_start..],
+            &mut controls[control_start..],
+        );
+    }
 
     let mut children = children_of(world, entity);
     if let Some(tab_view) = world.get_component::<TabView>(entity) {
@@ -3090,6 +3135,109 @@ mod tests {
         assert_eq!(primitive.rect[1], control.rect.y);
         assert_eq!(primitive.rect[2], control.rect.width);
         assert_eq!(primitive.rect[3], control.rect.height);
+    }
+
+    #[test]
+    fn nested_canvas_pixel_perfect_requires_override_and_keeps_hit_rects_aligned() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+
+        let inherited_canvas = world.spawn_empty();
+        world.insert_component(
+            inherited_canvas,
+            Canvas {
+                pixel_perfect: true,
+                override_pixel_perfect: false,
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(inherited_canvas, RectTransform::default());
+        world.set_parent(inherited_canvas, Some(canvas));
+        let inherited_image = world.spawn_empty();
+        world.insert_component(
+            inherited_image,
+            RectTransform {
+                anchored_position: [0.25, 0.75],
+                size_delta: [100.4, 50.6],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            inherited_image,
+            Image {
+                color: [0.25, 1.0, 1.0, 1.0],
+                ..Image::default()
+            },
+        );
+        world.set_parent(inherited_image, Some(inherited_canvas));
+
+        let overridden_canvas = world.spawn_empty();
+        world.insert_component(
+            overridden_canvas,
+            Canvas {
+                pixel_perfect: true,
+                override_pixel_perfect: true,
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(overridden_canvas, RectTransform::default());
+        world.set_parent(overridden_canvas, Some(canvas));
+        let overridden_image = world.spawn_empty();
+        world.insert_component(
+            overridden_image,
+            RectTransform {
+                anchored_position: [0.25, 0.75],
+                size_delta: [100.4, 50.6],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            overridden_image,
+            Image {
+                color: [0.75, 1.0, 1.0, 1.0],
+                ..Image::default()
+            },
+        );
+        world.set_parent(overridden_image, Some(overridden_canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let inherited_primitive = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.color[0] == 0.25)
+            .unwrap();
+        let overridden_primitive = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.color[0] == 0.75)
+            .unwrap();
+        let inherited_control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == inherited_image)
+            .unwrap();
+        let overridden_control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == overridden_image)
+            .unwrap();
+
+        assert!(inherited_primitive
+            .rect
+            .iter()
+            .any(|value| value.fract() != 0.0));
+        assert!(overridden_primitive
+            .rect
+            .iter()
+            .all(|value| value.fract() == 0.0));
+        assert_eq!(overridden_primitive.rect[0], overridden_control.rect.x);
+        assert_eq!(overridden_primitive.rect[1], overridden_control.rect.y);
+        assert_eq!(overridden_primitive.rect[2], overridden_control.rect.width);
+        assert_eq!(overridden_primitive.rect[3], overridden_control.rect.height);
+        assert!(inherited_control.rect.x.fract() != 0.0);
     }
 
     #[test]

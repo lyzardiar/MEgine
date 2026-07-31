@@ -405,6 +405,9 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     pixel_perfect: {
       visibleWhen: { field: 'render_mode', equals: ['ScreenSpaceOverlay', 'ScreenSpaceCamera'] },
     },
+    override_pixel_perfect: {
+      visibleWhen: { field: 'render_mode', equals: ['ScreenSpaceOverlay', 'ScreenSpaceCamera'] },
+    },
     plane_distance: {
       min: 0.01,
       step: 1,

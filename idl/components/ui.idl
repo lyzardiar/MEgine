@@ -6,6 +6,8 @@ component Canvas {
   /// Stable entity id of the Camera2D/Camera3D used by camera/world modes; empty uses the active camera.
   render_camera: string = ""
   pixel_perfect: bool   = false
+  /// Nested canvases inherit the root setting unless this is enabled.
+  override_pixel_perfect: bool = false
   override_sorting: bool = false
   sorting_layer: string = "default"
   sorting_order:  int    = 0
