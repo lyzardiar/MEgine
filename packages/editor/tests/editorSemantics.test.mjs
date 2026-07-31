@@ -280,6 +280,10 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   assert.match(sequencer, /<label>Post Playback<select value=\{selectedTrack\.post_playback\}/);
   assert.match(sequencer, /<label>Prefab Asset \(optional\) <input list="sequencer-prefab-assets"/);
   assert.match(sequencer, /> Control Activation<\/label>/);
+  assert.match(sequencer, /> Control Playable Directors<\/label>/);
+  assert.match(sequencer, /> Control Particle Systems<\/label>/);
+  assert.match(sequencer, /> Control Children<\/label>/);
+  assert.match(sequencer, /Particle Random Seed/);
   assert.match(sequencer, /Change Control Post Playback/);
   assert.match(sequencer, /Default Source \/ Parent \(legacy fallback\)/);
   assert.match(sequencer, /selectedControlClip\.prefab \? 'Parent Object' : 'Source Game Object'/);

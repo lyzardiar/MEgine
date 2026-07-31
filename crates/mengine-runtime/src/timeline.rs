@@ -315,12 +315,20 @@ struct ParticleOverride {
     clip_in: f32,
 }
 
+#[derive(Clone)]
+struct DirectorOverride {
+    target: Entity,
+    original: TimelineDirector,
+}
+
 #[derive(Default)]
 struct AppliedTimelineOverrides {
     activation: HashSet<(Entity, String)>,
     audio: HashSet<(Entity, String)>,
     animation: HashSet<(Entity, String)>,
     particle: HashSet<(Entity, String)>,
+    director: HashSet<(Entity, String)>,
+    director_targets: HashSet<Entity>,
     camera: HashSet<(Entity, String)>,
     control_prefabs_known: HashSet<(Entity, String)>,
     control_prefabs_active: HashSet<(Entity, String)>,
@@ -352,6 +360,7 @@ pub struct TimelineRuntime {
     audio_overrides: HashMap<(Entity, String), AudioOverride>,
     animation_overrides: HashMap<(Entity, String), AnimationOverride>,
     particle_overrides: HashMap<(Entity, String), ParticleOverride>,
+    director_overrides: HashMap<(Entity, String), DirectorOverride>,
     camera_overrides: HashMap<(Entity, String), RuntimeCameraOverride>,
     control_prefabs: HashMap<(Entity, String), ControlPrefabInstance>,
     animation_blends: HashMap<(Entity, String), RuntimeAnimationBlend>,
@@ -381,7 +390,7 @@ impl TimelineRuntime {
             .collect();
         self.initialized
             .retain(|entity| all_entities.contains(entity) && world.is_alive(*entity));
-        let entities: Vec<_> = all_entities
+        let mut entities: Vec<_> = all_entities
             .iter()
             .copied()
             .filter(|entity| world.entity_active(*entity))
@@ -392,6 +401,7 @@ impl TimelineRuntime {
                     .map(|director| (entity, director))
             })
             .collect();
+        self.order_directors_for_control(world, &mut entities, delta_seconds);
         let active_entities: HashSet<_> = entities.iter().map(|(entity, _)| *entity).collect();
         let mut post_playback_owners: HashSet<_> =
             self.active.difference(&active_entities).copied().collect();
@@ -401,8 +411,18 @@ impl TimelineRuntime {
             .retain(|entity| active_entities.contains(entity) && world.is_alive(*entity));
 
         let mut failures = Vec::new();
+        let previously_controlled_directors: HashSet<_> = self
+            .director_overrides
+            .values()
+            .map(|state| state.target)
+            .collect();
         let mut applied = AppliedTimelineOverrides::default();
         for (entity, mut director) in entities {
+            if applied.director_targets.contains(&entity)
+                || previously_controlled_directors.contains(&entity)
+            {
+                continue;
+            }
             if self.initialized.insert(entity) && !director.play_on_awake {
                 director.playing = false;
                 if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
@@ -465,6 +485,8 @@ impl TimelineRuntime {
                         &mut applied.audio,
                         &mut applied.animation,
                         &mut applied.particle,
+                        &mut applied.director,
+                        &mut applied.director_targets,
                         &mut applied.camera,
                         &mut applied.control_prefabs_known,
                         &mut applied.control_prefabs_active,
@@ -739,6 +761,7 @@ impl TimelineRuntime {
         self.restore_unused_audio_overrides(world, &applied.audio);
         self.restore_unused_animation_overrides(world, &applied.animation);
         self.restore_unused_particle_overrides(world, &applied.particle);
+        self.restore_unused_director_overrides(world, &applied.director);
         self.restore_unused_camera_overrides(&applied.camera);
         self.restore_unused_control_prefabs(
             world,
@@ -760,6 +783,117 @@ impl TimelineRuntime {
         self.reported_control_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         failures
+    }
+
+    fn order_directors_for_control(
+        &mut self,
+        world: &World,
+        entities: &mut Vec<(Entity, TimelineDirector)>,
+        delta_seconds: f32,
+    ) {
+        let available: HashSet<_> = entities.iter().map(|(entity, _)| *entity).collect();
+        let mut edges: HashMap<Entity, HashSet<Entity>> = HashMap::new();
+        for (controller, director) in entities.iter() {
+            let asset_key = director.asset.trim();
+            if asset_key.is_empty() || !director.playing && director.time <= 0.0 {
+                continue;
+            }
+            let Ok(bindings) = parse_timeline_binding_table(&director.bindings_json) else {
+                continue;
+            };
+            let Ok(asset) = self.load(asset_key) else {
+                continue;
+            };
+            let start = director.time.clamp(0.0, asset.duration);
+            let time = if director.playing {
+                let raw = start + delta_seconds * director.speed;
+                if director.wrap_mode.eq_ignore_ascii_case("loop") {
+                    raw.rem_euclid(asset.duration)
+                } else {
+                    raw.clamp(0.0, asset.duration)
+                }
+            } else {
+                start
+            };
+            let has_solo = asset.has_solo_tracks();
+            for track in &asset.tracks {
+                let TimelineTrack::Control { target, clips, .. } = track else {
+                    continue;
+                };
+                if asset.track_is_muted_with_solo(track, has_solo) {
+                    continue;
+                }
+                let Some(clip) = clips
+                    .iter()
+                    .find(|clip| time >= clip.start && time < clip.start + clip.duration)
+                else {
+                    continue;
+                };
+                if !clip.update_director || !clip.prefab.is_empty() {
+                    continue;
+                }
+                let source = control_clip_source(clip, target);
+                let Ok(root) = resolve_timeline_target(world, *controller, source, &bindings)
+                else {
+                    continue;
+                };
+                for controlled in control_component_targets(world, root, clip.search_hierarchy) {
+                    if controlled != *controller
+                        && available.contains(&controlled)
+                        && world
+                            .get_component::<TimelineDirector>(controlled)
+                            .is_some()
+                    {
+                        edges.entry(*controller).or_default().insert(controlled);
+                    }
+                }
+            }
+        }
+        let mut indegree: HashMap<Entity, usize> =
+            available.iter().map(|entity| (*entity, 0)).collect();
+        for targets in edges.values() {
+            for target in targets {
+                *indegree.entry(*target).or_default() += 1;
+            }
+        }
+        let sort_key = |entity: Entity| (entity_hierarchy_depth(world, entity), entity.to_u64());
+        let mut ready: Vec<_> = indegree
+            .iter()
+            .filter_map(|(entity, degree)| (*degree == 0).then_some(*entity))
+            .collect();
+        ready.sort_by_key(|entity| sort_key(*entity));
+        let mut ordered = Vec::with_capacity(entities.len());
+        let mut ordered_set = HashSet::with_capacity(entities.len());
+        while let Some(entity) = ready.first().copied() {
+            ready.remove(0);
+            ordered.push(entity);
+            ordered_set.insert(entity);
+            if let Some(targets) = edges.get(&entity) {
+                for target in targets {
+                    let degree = indegree
+                        .get_mut(target)
+                        .expect("control edge target must be a live Director");
+                    *degree = degree.saturating_sub(1);
+                    if *degree == 0 {
+                        ready.push(*target);
+                    }
+                }
+                ready.sort_by_key(|candidate| sort_key(*candidate));
+            }
+        }
+        let mut cyclic: Vec<_> = available
+            .iter()
+            .filter(|entity| !ordered_set.contains(entity))
+            .copied()
+            .collect();
+        cyclic.sort_by_key(|entity| sort_key(*entity));
+        ordered.extend(cyclic);
+        let mut by_entity: HashMap<_, _> = entities.drain(..).collect();
+        entities.extend(
+            ordered
+                .into_iter()
+                .filter_map(|entity| by_entity.remove(&entity).map(|director| (entity, director))),
+        );
     }
 
     /// Re-enters a director on its next playing update so time-zero signals fire once.
@@ -1030,6 +1164,42 @@ impl TimelineRuntime {
                     }
                 }
             }
+            if clip.update_particle {
+                self.apply_control_particles(
+                    world,
+                    owner,
+                    &clip_scope,
+                    clip,
+                    nested_root,
+                    start,
+                    time,
+                    speed,
+                    just_started,
+                    applied,
+                    asset_key,
+                    name,
+                    failures,
+                );
+            }
+            if clip.update_director {
+                self.apply_control_directors(
+                    world,
+                    owner,
+                    &clip_scope,
+                    clip,
+                    nested_root,
+                    start,
+                    time,
+                    speed,
+                    just_started,
+                    depth,
+                    stack,
+                    applied,
+                    asset_key,
+                    name,
+                    failures,
+                );
+            }
             if clip.timeline.is_empty() {
                 self.reported_control_failures.remove(&report_key);
                 continue;
@@ -1153,6 +1323,253 @@ impl TimelineRuntime {
     }
 
     #[allow(clippy::too_many_arguments)]
+    fn apply_control_particles(
+        &mut self,
+        world: &mut World,
+        owner: Entity,
+        clip_scope: &str,
+        clip: &TimelineControlClip,
+        root: Entity,
+        start: f32,
+        time: f32,
+        speed: f32,
+        just_started: bool,
+        applied: &mut AppliedTimelineOverrides,
+        asset_key: &str,
+        track_name: &str,
+        failures: &mut Vec<TimelineLoadFailure>,
+    ) {
+        for target in control_component_targets(world, root, clip.search_hierarchy) {
+            let two = world.get_component::<ParticleEmitter2D>(target).cloned();
+            let three = world.get_component::<ParticleEmitter3D>(target).cloned();
+            let authored = match (two, three) {
+                (Some(value), None) => AuthoredParticleEmitter::Two(value),
+                (None, Some(value)) => AuthoredParticleEmitter::Three(value),
+                (None, None) => continue,
+                (Some(_), Some(_)) => {
+                    let report_key = (owner, format!("{clip_scope}particle:{}", target.to_u64()));
+                    if self.reported_particle_failures.insert(report_key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: owner,
+                            asset: asset_key.to_owned(),
+                            error: format!(
+                                "control track '{track_name}' found both ParticleEmitter2D and ParticleEmitter3D on entity {}; use one emitter type per object",
+                                target.to_u64()
+                            ),
+                        });
+                    }
+                    continue;
+                }
+            };
+            let key = (owner, format!("{clip_scope}particle:{}", target.to_u64()));
+            self.reported_particle_failures.remove(&key);
+            if self
+                .particle_overrides
+                .get(&key)
+                .is_some_and(|previous| previous.target != target)
+            {
+                self.restore_particle_override(world, &key);
+            }
+            self.particle_overrides
+                .entry(key.clone())
+                .or_insert(ParticleOverride {
+                    target,
+                    original: authored,
+                    last_timeline_time: start,
+                    clip_start: clip.start,
+                    clip_in: clip.clip_in,
+                });
+            let previous = self
+                .particle_overrides
+                .get(&key)
+                .expect("control particle override inserted above");
+            let local_time = control_raw_time(clip, time).max(0.0);
+            let combined_speed = speed * clip.speed;
+            let can_increment = (combined_speed - 1.0).abs() <= 0.0001;
+            let discontinuity = just_started
+                || !can_increment
+                || time - start > MAX_INCREMENTAL_DELTA
+                || (start - previous.last_timeline_time).abs() > 0.001
+                || time < start
+                || previous.clip_start != clip.start
+                || previous.clip_in != clip.clip_in;
+            if let Some(emitter) = world.get_component_mut::<ParticleEmitter2D>(target) {
+                emitter.playing = can_increment;
+                emitter.seed = clip.particle_random_seed;
+            }
+            if let Some(emitter) = world.get_component_mut::<ParticleEmitter3D>(target) {
+                emitter.playing = can_increment;
+                emitter.seed = clip.particle_random_seed;
+            }
+            if discontinuity {
+                self.pending_particle_commands
+                    .push(RuntimeParticleCommand::Seek {
+                        entity: target,
+                        time: local_time,
+                    });
+            }
+            if let Some(state) = self.particle_overrides.get_mut(&key) {
+                state.last_timeline_time = time;
+                state.clip_start = clip.start;
+                state.clip_in = clip.clip_in;
+            }
+            applied.particle.insert(key);
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn apply_control_directors(
+        &mut self,
+        world: &mut World,
+        owner: Entity,
+        clip_scope: &str,
+        clip: &TimelineControlClip,
+        root: Entity,
+        start: f32,
+        time: f32,
+        speed: f32,
+        just_started: bool,
+        depth: usize,
+        stack: &[String],
+        applied: &mut AppliedTimelineOverrides,
+        asset_key: &str,
+        track_name: &str,
+        failures: &mut Vec<TimelineLoadFailure>,
+    ) {
+        for target in control_component_targets(world, root, clip.search_hierarchy) {
+            let Some(director) = world.get_component::<TimelineDirector>(target).cloned() else {
+                continue;
+            };
+            let report_key = (owner, format!("{clip_scope}director:{}", target.to_u64()));
+            if target == owner || applied.director_targets.contains(&target) {
+                if self.reported_control_failures.insert(report_key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: owner,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "control track '{track_name}' cannot control Director entity {} more than once or control its own owner",
+                            target.to_u64()
+                        ),
+                    });
+                }
+                continue;
+            }
+            let child_key = director.asset.trim().replace('\\', "/");
+            if child_key.is_empty() {
+                self.reported_control_failures.remove(&report_key);
+                continue;
+            }
+            let normalized_child_key = child_key.to_ascii_lowercase();
+            if depth >= MAX_CONTROL_TIMELINE_DEPTH || stack.contains(&normalized_child_key) {
+                if self.reported_control_failures.insert(report_key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: owner,
+                        asset: asset_key.to_owned(),
+                        error: if depth >= MAX_CONTROL_TIMELINE_DEPTH {
+                            format!("control track '{track_name}' automatic Director exceeds the {MAX_CONTROL_TIMELINE_DEPTH}-level nesting limit")
+                        } else {
+                            format!("control track '{track_name}' automatic Director introduces a Timeline dependency cycle through '{child_key}'")
+                        },
+                    });
+                }
+                continue;
+            }
+            let child_bindings = match parse_timeline_binding_table(&director.bindings_json) {
+                Ok(value) => value,
+                Err(error) => {
+                    if self.reported_control_failures.insert(report_key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: owner,
+                            asset: asset_key.to_owned(),
+                            error: format!("control track '{track_name}' automatic Director entity {} has invalid bindings_json: {error}", target.to_u64()),
+                        });
+                    }
+                    continue;
+                }
+            };
+            let child = match self.load(&child_key) {
+                Ok(value) => value,
+                Err(error) => {
+                    if self.reported_control_failures.insert(report_key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: owner,
+                            asset: asset_key.to_owned(),
+                            error: format!("control track '{track_name}' failed to load automatic Director asset '{child_key}': {error}"),
+                        });
+                    }
+                    continue;
+                }
+            };
+            if !control_source_window_is_valid(clip, child.duration) {
+                if self.reported_control_failures.insert(report_key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: owner,
+                        asset: asset_key.to_owned(),
+                        error: format!("control track '{track_name}' source window is outside automatic Director asset '{child_key}' duration {:.3}s", child.duration),
+                    });
+                }
+                continue;
+            }
+            self.reported_control_failures.remove(&report_key);
+            self.director_overrides
+                .entry(report_key.clone())
+                .or_insert_with(|| DirectorOverride {
+                    target,
+                    original: director,
+                });
+            self.active.remove(&target);
+            self.evaluated_directors.remove(&target);
+
+            let parent_end = clip.start + clip.duration;
+            let was_active = start >= clip.start && start < parent_end;
+            let child_parent_start = if was_active {
+                start
+            } else {
+                start.clamp(clip.start, parent_end)
+            };
+            let child_start = control_sample_time(clip, child.duration, child_parent_start);
+            let child_time = control_sample_time(clip, child.duration, time);
+            let raw_start = control_raw_time(clip, child_parent_start);
+            let raw_time = control_raw_time(clip, time);
+            let loop_wrapped = clip.extrapolation == "loop"
+                && control_loop_crossed(raw_start, raw_time, child.duration);
+            let child_just_started = just_started || !was_active || loop_wrapped;
+            let source_is_held =
+                clip.extrapolation == "hold" && (raw_time <= 0.0 || raw_time >= child.duration);
+            let child_speed = if source_is_held {
+                0.0
+            } else {
+                speed * clip.speed
+            };
+            if let Some(live) = world.get_component_mut::<TimelineDirector>(target) {
+                live.playing = false;
+                live.time = child_time;
+            }
+            applied.director.insert(report_key);
+            applied.director_targets.insert(target);
+            let mut child_stack = stack.to_vec();
+            child_stack.push(normalized_child_key);
+            self.apply_timeline_layers(
+                world,
+                owner,
+                target,
+                &format!("{clip_scope}director:{}/", target.to_u64()),
+                &child_key,
+                &child,
+                &child_bindings,
+                child_start,
+                child_time,
+                child_speed,
+                child_just_started,
+                depth + 1,
+                &child_stack,
+                applied,
+                failures,
+            );
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
     fn collect_timeline_signals_segment(
         &mut self,
         world: &mut World,
@@ -1226,7 +1643,7 @@ impl TimelineRuntime {
                 if !crosses_clip || (parent_to - parent_from).abs() <= f32::EPSILON && !entered {
                     continue;
                 }
-                if clip.timeline.is_empty() {
+                if clip.timeline.is_empty() && !clip.update_director {
                     continue;
                 }
                 let clip_source = control_clip_source(clip, target);
@@ -1272,6 +1689,31 @@ impl TimelineRuntime {
                         }
                     }
                 };
+                if clip.update_director {
+                    self.collect_control_director_signals(
+                        world,
+                        owner,
+                        nested_root,
+                        &format!("{key_prefix}{id}:{clip_index}/"),
+                        clip,
+                        parent_from,
+                        parent_to,
+                        entered,
+                        from,
+                        to,
+                        traversal_start,
+                        traversal_duration,
+                        depth,
+                        stack,
+                        output,
+                        asset_key,
+                        name,
+                        failures,
+                    );
+                }
+                if clip.timeline.is_empty() {
+                    continue;
+                }
                 let child_key = clip.timeline.trim().replace('\\', "/");
                 let normalized_child_key = child_key.to_ascii_lowercase();
                 if depth >= MAX_CONTROL_TIMELINE_DEPTH {
@@ -1394,6 +1836,133 @@ impl TimelineRuntime {
                         failures,
                     );
                 }
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn collect_control_director_signals(
+        &mut self,
+        world: &mut World,
+        owner: Entity,
+        root: Entity,
+        clip_scope: &str,
+        clip: &TimelineControlClip,
+        parent_from: f32,
+        parent_to: f32,
+        entered: bool,
+        segment_from: f32,
+        segment_to: f32,
+        traversal_start: f32,
+        traversal_duration: f32,
+        depth: usize,
+        stack: &[String],
+        output: &mut Vec<OrderedTimelineSignal>,
+        asset_key: &str,
+        track_name: &str,
+        failures: &mut Vec<TimelineLoadFailure>,
+    ) {
+        let segment_delta = segment_to - segment_from;
+        let start_progress = if segment_delta.abs() <= f32::EPSILON {
+            0.0
+        } else {
+            ((parent_from - segment_from) / segment_delta).clamp(0.0, 1.0)
+        };
+        let end_progress = if segment_delta.abs() <= f32::EPSILON {
+            start_progress
+        } else {
+            ((parent_to - segment_from) / segment_delta).clamp(0.0, 1.0)
+        };
+        let child_traversal_start = traversal_start + traversal_duration * start_progress;
+        let child_traversal_duration = traversal_duration * (end_progress - start_progress).abs();
+        for target in control_component_targets(world, root, clip.search_hierarchy) {
+            if target == owner {
+                continue;
+            }
+            let Some(director) = world.get_component::<TimelineDirector>(target).cloned() else {
+                continue;
+            };
+            let child_key = director.asset.trim().replace('\\', "/");
+            if child_key.is_empty() {
+                continue;
+            }
+            let normalized_child_key = child_key.to_ascii_lowercase();
+            let report_key = (owner, format!("{clip_scope}director:{}", target.to_u64()));
+            if depth >= MAX_CONTROL_TIMELINE_DEPTH || stack.contains(&normalized_child_key) {
+                if self.reported_control_failures.insert(report_key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: owner,
+                        asset: asset_key.to_owned(),
+                        error: if depth >= MAX_CONTROL_TIMELINE_DEPTH {
+                            format!("control track '{track_name}' automatic Director signals exceed the {MAX_CONTROL_TIMELINE_DEPTH}-level nesting limit")
+                        } else {
+                            format!("control track '{track_name}' automatic Director signals introduce a Timeline dependency cycle through '{child_key}'")
+                        },
+                    });
+                }
+                continue;
+            }
+            let child_bindings = match parse_timeline_binding_table(&director.bindings_json) {
+                Ok(value) => value,
+                Err(error) => {
+                    if self.reported_control_failures.insert(report_key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: owner,
+                            asset: asset_key.to_owned(),
+                            error: format!("control track '{track_name}' automatic Director entity {} has invalid bindings_json: {error}", target.to_u64()),
+                        });
+                    }
+                    continue;
+                }
+            };
+            let child = match self.load(&child_key) {
+                Ok(value) => value,
+                Err(error) => {
+                    if self.reported_control_failures.insert(report_key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: owner,
+                            asset: asset_key.to_owned(),
+                            error: format!("control track '{track_name}' failed to load automatic Director asset '{child_key}': {error}"),
+                        });
+                    }
+                    continue;
+                }
+            };
+            if !control_source_window_is_valid(clip, child.duration) {
+                continue;
+            }
+            let mut child_stack = stack.to_vec();
+            child_stack.push(normalized_child_key);
+            for segment in control_signal_segments(
+                clip,
+                child.duration,
+                parent_from,
+                parent_to,
+                entered,
+                child_traversal_start,
+                child_traversal_duration,
+            ) {
+                if self.pending_signals.len() + output.len() >= MAX_SIGNALS_PER_UPDATE {
+                    return;
+                }
+                self.collect_timeline_signals_segment(
+                    world,
+                    target,
+                    target,
+                    &format!("{clip_scope}director:{}/", target.to_u64()),
+                    &child_key,
+                    &child,
+                    &child_bindings,
+                    segment.from,
+                    segment.to,
+                    segment.include_start,
+                    segment.traversal_start,
+                    segment.traversal_duration,
+                    depth + 1,
+                    &child_stack,
+                    output,
+                    failures,
+                );
             }
         }
     }
@@ -2036,6 +2605,8 @@ impl TimelineRuntime {
         audio: &mut HashSet<(Entity, String)>,
         animation: &mut HashSet<(Entity, String)>,
         particle: &mut HashSet<(Entity, String)>,
+        director_overrides: &mut HashSet<(Entity, String)>,
+        director_targets: &mut HashSet<Entity>,
         camera: &mut HashSet<(Entity, String)>,
         control_prefabs_known: &mut HashSet<(Entity, String)>,
         control_prefabs_active: &mut HashSet<(Entity, String)>,
@@ -2072,6 +2643,16 @@ impl TimelineRuntime {
                 emitter.playing = false;
             }
             particle.insert(key.clone());
+        }
+        for (key, state) in &self.director_overrides {
+            if key.0 != director || !world.is_alive(state.target) {
+                continue;
+            }
+            if let Some(controlled) = world.get_component_mut::<TimelineDirector>(state.target) {
+                controlled.playing = false;
+            }
+            director_overrides.insert(key.clone());
+            director_targets.insert(state.target);
         }
         camera.extend(
             self.camera_overrides
@@ -2299,6 +2880,33 @@ impl TimelineRuntime {
         }
     }
 
+    fn restore_unused_director_overrides(
+        &mut self,
+        world: &mut World,
+        applied: &HashSet<(Entity, String)>,
+    ) {
+        let stale: Vec<_> = self
+            .director_overrides
+            .keys()
+            .filter(|key| !applied.contains(*key))
+            .cloned()
+            .collect();
+        for key in stale {
+            self.restore_director_override(world, &key);
+        }
+    }
+
+    fn restore_director_override(&mut self, world: &mut World, key: &(Entity, String)) {
+        let Some(previous) = self.director_overrides.remove(key) else {
+            return;
+        };
+        if world.is_alive(previous.target) {
+            world.insert_component(previous.target, previous.original);
+            self.active.remove(&previous.target);
+            self.evaluated_directors.remove(&previous.target);
+        }
+    }
+
     fn restore_unused_camera_overrides(&mut self, applied: &HashSet<(Entity, String)>) {
         self.camera_overrides.retain(|key, _| applied.contains(key));
     }
@@ -2329,6 +2937,51 @@ fn destroy_control_prefab_instance(world: &mut World, instance: ControlPrefabIns
     for entity in instance.entities.into_iter().rev() {
         world.despawn(entity);
     }
+}
+
+fn entity_hierarchy_depth(world: &World, entity: Entity) -> usize {
+    let mut depth = 0usize;
+    let mut current = entity;
+    let mut visited = HashSet::new();
+    while visited.insert(current) {
+        let Some(parent) = world
+            .get_component::<Parent>(current)
+            .map(|value| value.entity)
+        else {
+            break;
+        };
+        depth = depth.saturating_add(1);
+        current = parent;
+    }
+    depth
+}
+
+fn control_component_targets(world: &World, root: Entity, search_hierarchy: bool) -> Vec<Entity> {
+    let mut result = vec![root];
+    if !search_hierarchy {
+        return result;
+    }
+    let mut visited = HashSet::from([root]);
+    let mut cursor = 0usize;
+    while cursor < result.len() {
+        let parent = result[cursor];
+        let mut children: Vec<_> = world
+            .iter_entities()
+            .filter(|entity| {
+                world
+                    .get_component::<Parent>(*entity)
+                    .is_some_and(|value| value.entity == parent)
+            })
+            .collect();
+        children.sort_by_key(|entity| (world.sibling_index(*entity), entity.to_u64()));
+        result.extend(
+            children
+                .into_iter()
+                .filter(|entity| visited.insert(*entity)),
+        );
+        cursor += 1;
+    }
+    result
 }
 
 fn has_exactly_one_camera(world: &World, entity: Entity) -> bool {
@@ -3935,6 +4588,129 @@ mod tests {
         assert!(
             world.entity_active(source_a) && !world.entity_active(source_b),
             "each source applies its own post-playback state on stop"
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn control_children_drive_directors_particles_signals_and_restore_authored_state() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-timeline-control-components-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let timelines = root.join("Assets/Timelines");
+        fs::create_dir_all(&timelines).unwrap();
+        fs::write(
+            timelines.join("Child.mtimeline"),
+            r#"{"version":1,"duration":1,"tracks":[{"type":"signal","id":"events","name":"Events","markers":[{"time":0.5,"name":"Half"}]},{"type":"activation","id":"panel","name":"Panel","target":"Panel","clips":[{"start":0,"duration":1,"active":false}]}]}"#,
+        )
+        .unwrap();
+        fs::write(
+            timelines.join("Master.mtimeline"),
+            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"source","name":"Source","target":"Source","clips":[{"start":0,"duration":1,"update_director":true,"update_particle":true,"search_hierarchy":true,"particle_random_seed":77}]}]}"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let master = world.spawn_empty();
+        let source = world.spawn_empty();
+        world.set_component_value(source, "Name", serde_json::json!({ "value": "Source" }));
+        world.set_parent(source, Some(master));
+        let child_director = world.spawn_empty();
+        world.set_component_value(
+            child_director,
+            "Name",
+            serde_json::json!({ "value": "ChildDirector" }),
+        );
+        world.set_parent(child_director, Some(source));
+        let authored_director = TimelineDirector {
+            asset: "Assets/Timelines/Child.mtimeline".into(),
+            playing: true,
+            time: 0.25,
+            ..TimelineDirector::default()
+        };
+        world.insert_component(child_director, authored_director.clone());
+        let panel = world.spawn_empty();
+        world.set_component_value(panel, "Name", serde_json::json!({ "value": "Panel" }));
+        world.set_parent(panel, Some(child_director));
+        let particles = world.spawn_empty();
+        world.set_component_value(
+            particles,
+            "Name",
+            serde_json::json!({ "value": "Particles" }),
+        );
+        world.set_parent(particles, Some(source));
+        let authored_particles = ParticleEmitter2D {
+            playing: false,
+            seed: 9,
+            ..ParticleEmitter2D::default()
+        };
+        world.insert_component(particles, authored_particles.clone());
+        world.insert_component(
+            master,
+            TimelineDirector {
+                asset: "Assets/Timelines/Master.mtimeline".into(),
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        let controlled = world
+            .get_component::<TimelineDirector>(child_director)
+            .unwrap();
+        assert!(!controlled.playing);
+        assert!((controlled.time - 0.0).abs() < 0.0001);
+        let controlled_particles = world.get_component::<ParticleEmitter2D>(particles).unwrap();
+        assert!(controlled_particles.playing);
+        assert_eq!(controlled_particles.seed, 77);
+        assert!(!world.entity_active(panel));
+        assert_eq!(
+            runtime.take_particle_commands(),
+            vec![RuntimeParticleCommand::Seek {
+                entity: particles,
+                time: 0.0,
+            }]
+        );
+
+        assert!(runtime.update(&mut world, 0.6).is_empty());
+        assert_eq!(
+            runtime.take_signals(),
+            vec![RuntimeTimelineSignal {
+                entity: child_director,
+                track: "Events".into(),
+                signal: "Half".into(),
+                time: 0.5,
+                payload: None,
+            }]
+        );
+        assert_eq!(
+            runtime.take_particle_commands(),
+            vec![RuntimeParticleCommand::Seek {
+                entity: particles,
+                time: 0.6,
+            }]
+        );
+
+        {
+            let live = world.get_component_mut::<TimelineDirector>(master).unwrap();
+            live.playing = false;
+            live.time = 0.0;
+        }
+        runtime.reset_director(master);
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        let restored_director = world
+            .get_component::<TimelineDirector>(child_director)
+            .unwrap();
+        assert_eq!(restored_director.playing, authored_director.playing);
+        assert_eq!(restored_director.time, authored_director.time);
+        let restored_particles = world.get_component::<ParticleEmitter2D>(particles).unwrap();
+        assert_eq!(restored_particles.playing, authored_particles.playing);
+        assert_eq!(restored_particles.seed, authored_particles.seed);
+        assert!(world.entity_active(panel));
+        assert_eq!(
+            runtime.take_particle_commands(),
+            vec![RuntimeParticleCommand::Reset { entity: particles }]
         );
         let _ = fs::remove_dir_all(root);
     }

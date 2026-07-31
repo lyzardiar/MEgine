@@ -1074,6 +1074,9 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
           binding_overrides: { Actor: 'Characters/Hero' },
         }, {
           start: 2, duration: 0.5, source: 'Sequences/Alternate', prefab: 'Assets/Prefabs/Timeline.prefab',
+        }, {
+          start: 2.5, duration: 0.5, source: 'Sequences/Components', update_director: true,
+          update_particle: true, search_hierarchy: true, particle_random_seed: 77,
         }],
       }, {
         type: 'camera', id: 'shots', name: 'Shots',
@@ -1198,6 +1201,13 @@ test('buildPcPackage rejects Control Track cycles and out-of-range child windows
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: join(paths.root, 'invalid-control-source-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /control clip is invalid/);
+    writeControl('A', 'B', 0, 'none', { update_particle: true, particle_random_seed: 0 });
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'invalid-control-seed-output'),
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /control clip is invalid/);

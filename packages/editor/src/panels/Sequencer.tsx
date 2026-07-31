@@ -235,12 +235,17 @@ function timelinePreviewEntitySignature(entity: SnapshotEntity): string {
   const audio = source && typeof source === 'object'
     ? source as { mute?: unknown; pan?: unknown }
     : null;
+  const directorValue = entity.components.TimelineDirector;
+  const director = directorValue && typeof directorValue === 'object'
+    ? directorValue as { asset?: unknown; bindings_json?: unknown }
+    : null;
   return `${entity.entity}\0${entity.parent ?? ''}\0${entity.name ?? ''}`
     + `\0${entity.active === false ? '0' : '1'}`
     + `\0${entity.components.AnimationPlayer ? 'P' : ''}${entity.components.Animator ? 'A' : ''}`
     + `${entity.components.Camera2D ? '2' : ''}${entity.components.Camera3D ? '3' : ''}`
     + `${entity.components.ParticleEmitter2D ? 'E2' : ''}${entity.components.ParticleEmitter3D ? 'E3' : ''}`
-    + `${audio ? `U${audio.mute ? '1' : '0'}:${Number(audio.pan) || 0}` : ''}`;
+    + `${audio ? `U${audio.mute ? '1' : '0'}:${Number(audio.pan) || 0}` : ''}`
+    + `${director ? `D${String(director.asset ?? '')}:${String(director.bindings_json ?? '')}` : ''}`;
 }
 
 export type SequencerProps = {
@@ -516,8 +521,14 @@ export function Sequencer(props: SequencerProps) {
         if (path) paths.set(path.toLowerCase(), path);
       }
     }
+    for (const entity of props.entities) {
+      const value = entity.components.TimelineDirector;
+      if (!value || typeof value !== 'object') continue;
+      const path = String((value as { asset?: unknown }).asset ?? '').trim().replaceAll('\\', '/');
+      if (path) paths.set(path.toLowerCase(), path);
+    }
     return [...paths.values()];
-  }, [asset]);
+  }, [asset, props.entities]);
   const previewControlPathKey = previewControlPaths.join('\n');
   const previewControlRequestKey = `${previewAssetEpoch}\0${props.assetPath ?? ''}\0${previewControlPathKey}`;
   const previewControlResourcesReady = previewControlLoadKey === previewControlRequestKey;
@@ -1673,6 +1684,10 @@ export function Sequencer(props: SequencerProps) {
           timeline: defaultTimeline,
           prefab: '',
           control_activation: true,
+          update_director: true,
+          update_particle: true,
+          search_hierarchy: false,
+          particle_random_seed: 1,
           post_playback: 'revert',
           clip_in: 0,
           speed: 1,
@@ -4597,7 +4612,11 @@ export function Sequencer(props: SequencerProps) {
                 if (track.type === 'control') track.clips[selection!.marker!].timeline = event.target.value.replaceAll('\\', '/');
               })} /></label>
               <datalist id="sequencer-timeline-assets">{timelineAssets.map((entry) => <option value={entry.relPath} key={entry.relPath} />)}</datalist>
-              {!selectedControlClip.prefab && !selectedControlClip.timeline && <p className="sequencer-field-help error">Choose a Prefab, a nested Timeline, or both.</p>}
+              {!selectedControlClip.prefab && !selectedControlClip.timeline
+                && !selectedControlClip.control_activation
+                && !selectedControlClip.update_director
+                && !selectedControlClip.update_particle
+                && <p className="sequencer-field-help error">Enable Activation, Playable Directors, Particle Systems, or choose a Prefab / nested Timeline.</p>}
               {!selectedControlClip.prefab && <label className="sequencer-check"><input type="checkbox" checked={selectedControlClip.control_activation} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'control') track.clips[selection!.marker!].control_activation = event.target.checked;
@@ -4610,6 +4629,26 @@ export function Sequencer(props: SequencerProps) {
                 <option value="inactive">Inactive</option>
                 <option value="revert">Revert</option>
               </select></label>}
+              <fieldset className="sequencer-control-bindings">
+                <legend>Controlled Components</legend>
+                <label className="sequencer-check"><input type="checkbox" checked={selectedControlClip.update_director} onChange={(event) => update((draft) => {
+                  const track = draft.tracks[selection!.track];
+                  if (track.type === 'control') track.clips[selection!.marker!].update_director = event.target.checked;
+                }, 'Change Control Playable Directors')} /> Control Playable Directors</label>
+                <label className="sequencer-check"><input type="checkbox" checked={selectedControlClip.update_particle} onChange={(event) => update((draft) => {
+                  const track = draft.tracks[selection!.track];
+                  if (track.type === 'control') track.clips[selection!.marker!].update_particle = event.target.checked;
+                }, 'Change Control Particle Systems')} /> Control Particle Systems</label>
+                <label className="sequencer-check"><input type="checkbox" checked={selectedControlClip.search_hierarchy} onChange={(event) => update((draft) => {
+                  const track = draft.tracks[selection!.track];
+                  if (track.type === 'control') track.clips[selection!.marker!].search_hierarchy = event.target.checked;
+                }, 'Change Control Children')} /> Control Children</label>
+                {selectedControlClip.update_particle && <label>Particle Random Seed <input type="number" min={1} max={2_147_483_647} step={1} value={selectedControlClip.particle_random_seed} onChange={(event) => update((draft) => {
+                  const track = draft.tracks[selection!.track];
+                  if (track.type === 'control') track.clips[selection!.marker!].particle_random_seed = Math.max(1, Math.min(2_147_483_647, Math.trunc(Number(event.target.value) || 1)));
+                }, 'Change Control Particle Seed')} /></label>}
+                <p className="sequencer-field-help">Control Children searches the complete Source hierarchy. Without it, only components on the Source object are driven.</p>
+              </fieldset>
               <label>Clip In <input type="number" min={0} step={1 / asset.frame_rate} value={selectedControlClip.clip_in} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'control') track.clips[selection!.marker!].clip_in = Math.max(0, Number(event.target.value) || 0);

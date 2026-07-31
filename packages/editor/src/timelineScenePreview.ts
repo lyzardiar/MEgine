@@ -65,6 +65,7 @@ export type TimelineParticlePreview = {
   clipIn: number;
   time: number;
   dimension: 2 | 3;
+  seed?: number;
 };
 
 export type TimelineScenePreviewBuild = {
@@ -82,6 +83,7 @@ type TimelineSceneEntityIndex = {
   stateKey: string | null;
   byId: ReadonlyMap<number, TimelineScenePreviewEntity>;
   childByParentAndName: ReadonlyMap<string, number>;
+  childrenByParent: ReadonlyMap<number, readonly number[]>;
 };
 
 export type TimelineScenePreviewCache = {
@@ -185,20 +187,45 @@ function sceneEntityIndex(
   runtime.metrics.entityIndexCacheMisses += 1;
   const byId = new Map<number, TimelineScenePreviewEntity>();
   const childByParentAndName = new Map<string, number>();
+  const childrenByParent = new Map<number, number[]>();
   for (const entity of entities) {
     byId.set(entity.entity, entity);
     const parent = entity.parent ?? null;
     const key = `${parent}\0${entity.name ?? ''}`;
     if (!childByParentAndName.has(key)) childByParentAndName.set(key, entity.entity);
+    if (parent != null) {
+      const children = childrenByParent.get(parent) ?? [];
+      children.push(entity.entity);
+      childrenByParent.set(parent, children);
+    }
   }
   const index = {
     source: entities,
     stateKey: runtime.entityStateKey,
     byId,
     childByParentAndName,
+    childrenByParent,
   };
   runtime.cache.entityIndex = index;
   return index;
+}
+
+function controlPreviewTargets(
+  index: TimelineSceneEntityIndex,
+  root: number,
+  searchHierarchy: boolean,
+): number[] {
+  const result = [root];
+  if (!searchHierarchy) return result;
+  const visited = new Set(result);
+  for (let cursor = 0; cursor < result.length; cursor += 1) {
+    for (const child of index.childrenByParent.get(result[cursor]) ?? []) {
+      if (visited.has(child)) continue;
+      visited.add(child);
+      result.push(child);
+    }
+  }
+  return result;
 }
 
 function parsedBindingTable(
@@ -333,6 +360,85 @@ export function buildTimelineScenePreview(
       if (clip.prefab) {
         diagnostics.push(`Control track '${track.name}' Prefab '${clip.prefab}' is instantiated in Play mode; static scene preview does not create transient entities.`);
         continue;
+      }
+      const controlledEntities = controlPreviewTargets(entityIndex, target, clip.search_hierarchy);
+      if (clip.update_particle) {
+        for (const controlled of controlledEntities) {
+          const candidate = entityIndex.byId.get(controlled);
+          const has2D = Boolean(candidate?.components.ParticleEmitter2D);
+          const has3D = Boolean(candidate?.components.ParticleEmitter3D);
+          if (!has2D && !has3D) continue;
+          if (has2D && has3D) {
+            diagnostics.push(`Control track '${track.name}' found both 2D and 3D emitters on '${candidate?.name ?? controlled}'; use one emitter type per object.`);
+            continue;
+          }
+          preview.particles.push({
+            key: `${evaluation.prefix}${track.id}:${clipIndex}/particle:${controlled}`,
+            label: `${track.name} · ${candidate?.name ?? controlled}`,
+            target: controlled,
+            targetPath: candidate?.name ?? String(controlled),
+            clipStart: clip.start,
+            clipIn: clip.clip_in,
+            time: Math.max(0, clip.clip_in + (sampleTime - clip.start) * clip.speed),
+            dimension: has2D ? 2 : 3,
+            seed: clip.particle_random_seed,
+          });
+        }
+      }
+      if (clip.update_director) {
+        for (const controlled of controlledEntities) {
+          const candidate = entityIndex.byId.get(controlled);
+          const directorValue = candidate?.components.TimelineDirector;
+          if (!directorValue || typeof directorValue !== 'object') continue;
+          const controlledDirector = directorValue as { asset?: unknown; bindings_json?: unknown };
+          const path = String(controlledDirector.asset ?? '').trim().replaceAll('\\', '/');
+          if (!path) continue;
+          const key = clipKey(path);
+          const child = controlAssets.get(key);
+          if (!child) {
+            diagnostics.push(`Control track '${track.name}' automatic Director Timeline '${path}' is not loaded.`);
+            continue;
+          }
+          if (!timelineControlSourceWindowIsValid(clip, child.duration, F32_EPSILON)) {
+            diagnostics.push(`Control track '${track.name}' source window is outside automatic Director Timeline '${path}' duration ${child.duration.toFixed(3)}s.`);
+            continue;
+          }
+          if (evaluation.depth >= MAX_CONTROL_TIMELINE_DEPTH) {
+            diagnostics.push(`Control track '${track.name}' automatic Director exceeds the ${MAX_CONTROL_TIMELINE_DEPTH}-level nesting limit.`);
+            continue;
+          }
+          if (evaluation.stack.includes(key)) {
+            diagnostics.push(`Control track '${track.name}' automatic Director introduces a Timeline dependency cycle through '${path}'.`);
+            continue;
+          }
+          const nested = buildTimelineScenePreview(
+            child,
+            entities,
+            controlled,
+            controlledDirector.bindings_json ?? '{}',
+            timelineControlSampleTime(clip, child.duration, sampleTime),
+            animationClips,
+            controlAssets,
+            path,
+            runtime,
+            {
+              depth: evaluation.depth + 1,
+              stack: [...evaluation.stack, key],
+              prefix: `${evaluation.prefix}${track.id}:${clipIndex}/director:${controlled}/`,
+              deferHierarchyFilter: true,
+            },
+          );
+          preview.activations.push(...nested.preview.activations);
+          for (const layer of nested.preview.animations) {
+            const previous = preview.animations.findIndex((entry) => entry.root === layer.root);
+            if (previous >= 0) preview.animations[previous] = layer;
+            else preview.animations.push(layer);
+          }
+          if (nested.preview.camera) preview.camera = nested.preview.camera;
+          preview.particles.push(...nested.preview.particles);
+          audio.push(...nested.audio);
+          diagnostics.push(...nested.diagnostics.map((message) => `${track.name} > ${candidate?.name ?? controlled} > ${message}`));
+        }
       }
       if (!clip.timeline) continue;
       const key = clipKey(clip.timeline);

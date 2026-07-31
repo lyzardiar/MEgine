@@ -1775,6 +1775,10 @@ function scanBuildAssetDependencies(
               ? target
               : strictStringValue(clip, 'source', `Timeline control track ${name}`)).trim().replaceAll('\\', '/');
             const controlActivation = clip.control_activation == null ? false : clip.control_activation;
+            const updateDirector = clip.update_director == null ? false : clip.update_director;
+            const updateParticle = clip.update_particle == null ? false : clip.update_particle;
+            const searchHierarchy = clip.search_hierarchy == null ? false : clip.search_hierarchy;
+            const particleRandomSeed = clip.particle_random_seed == null ? 1 : clip.particle_random_seed;
             const postPlayback = clip.post_playback == null
               ? 'revert'
               : strictStringValue(clip, 'post_playback', `Timeline control track ${name}`).trim().toLowerCase();
@@ -1803,7 +1807,8 @@ function scanBuildAssetDependencies(
             if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
               || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
               || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
-              || !timelinePath && !prefabPath
+              || (!timelinePath && !prefabPath && controlActivation !== true
+                && updateDirector !== true && updateParticle !== true)
               || Boolean(timelinePath) && (!timelinePath.toLowerCase().startsWith('assets/')
                 || timelinePath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
                 || !/\.mtimeline$/i.test(timelinePath))
@@ -1813,6 +1818,12 @@ function scanBuildAssetDependencies(
               || !sourceTarget || sourceTarget.startsWith('/')
               || sourceTarget.split('/').some((segment) => !segment || segment === '.' || segment === '..')
               || typeof controlActivation !== 'boolean'
+              || typeof updateDirector !== 'boolean'
+              || typeof updateParticle !== 'boolean'
+              || typeof searchHierarchy !== 'boolean'
+              || typeof particleRandomSeed !== 'number'
+              || !Number.isInteger(particleRandomSeed)
+              || particleRandomSeed < 1 || particleRandomSeed > 2_147_483_647
               || postPlayback !== 'active' && postPlayback !== 'inactive' && postPlayback !== 'revert'
               || !timelinePath && bindingOverrides.length > 0
               || typeof clipIn !== 'number' || !Number.isFinite(clipIn) || clipIn < 0

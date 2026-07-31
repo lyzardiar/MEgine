@@ -677,3 +677,56 @@ test('Control source activation previews active clips and inactive gaps without 
   );
   assert.deepEqual(second.preview.activations, [{ entity: 2, active: false }, { entity: 8, active: true }]);
 });
+
+test('Control Children previews automatic Directors and seeded particle systems', () => {
+  const controlEntities = [...entities, {
+    entity: 9, name: 'Source', parent: 1, active: true, components: {},
+  }, {
+    entity: 10, name: 'ChildDirector', parent: 9, active: true,
+    components: { TimelineDirector: { asset: 'Assets/Child.mtimeline', bindings_json: '{}' } },
+  }, {
+    entity: 11, name: 'Panel', parent: 10, active: true, components: {},
+  }, {
+    entity: 12, name: 'Particles', parent: 9, active: true,
+    components: { ParticleEmitter2D: { seed: 9 } },
+  }];
+  const child = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 1,
+    tracks: [{
+      type: 'activation', id: 'panel', name: 'Panel', target: 'Panel',
+      clips: [{ start: 0, duration: 1, active: false }],
+    }],
+  }));
+  const parent = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'control', id: 'source', name: 'Source', target: 'Source', clips: [{
+        start: 0, duration: 1, update_director: true, update_particle: true,
+        search_hierarchy: true, particle_random_seed: 77,
+      }],
+    }],
+  }));
+  const build = buildTimelineScenePreview(
+    parent,
+    controlEntities,
+    1,
+    '{}',
+    0.5,
+    new Map(),
+    new Map([['assets/child.mtimeline', child]]),
+    'Assets/Parent.mtimeline',
+  );
+  assert.deepEqual(build.diagnostics, []);
+  assert.deepEqual(build.preview.activations, [{ entity: 11, active: false }]);
+  assert.deepEqual(build.preview.particles, [{
+    key: 'source:0/particle:12',
+    label: 'Source · Particles',
+    target: 12,
+    targetPath: 'Particles',
+    clipStart: 0,
+    clipIn: 0,
+    time: 0.5,
+    dimension: 2,
+    seed: 77,
+  }]);
+});

@@ -85,6 +85,10 @@ export type TimelineControlClip = {
   timeline: string;
   prefab: string;
   control_activation: boolean;
+  update_director: boolean;
+  update_particle: boolean;
+  search_hierarchy: boolean;
+  particle_random_seed: number;
   post_playback: TimelineControlPostPlaybackState;
   clip_in: number;
   speed: number;
@@ -547,6 +551,10 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
             timeline: timelineAssetPath(clip.timeline),
             prefab: prefabAssetPath(clip.prefab),
             control_activation: Boolean(clip.control_activation),
+            update_director: Boolean(clip.update_director),
+            update_particle: Boolean(clip.update_particle),
+            search_hierarchy: Boolean(clip.search_hierarchy),
+            particle_random_seed: Math.max(1, Math.min(2_147_483_647, Math.trunc(finite(clip.particle_random_seed, 1)))),
             post_playback: timelineControlPostPlaybackState(clip.post_playback),
             clip_in: Math.max(0, finite(clip.clip_in, 0)),
             speed: Math.max(-4, Math.min(4, finite(clip.speed, 1))),
@@ -698,12 +706,14 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
         const prefab = prefabAssetPath(clip.prefab);
         const source = timelineControlSource(clip, track.target);
         if (!targetIsPortable(source)
-          || (!timeline && !prefab)
+          || (!timeline && !prefab && !clip.control_activation && !clip.update_director && !clip.update_particle)
           || Boolean(timeline) && !timelineAssetIsPortable(timeline)
           || Boolean(prefab) && !prefabAssetIsPortable(prefab)
           || !timeline && Object.keys(clip.binding_overrides).length > 0
           || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
           || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4
+          || !Number.isInteger(clip.particle_random_seed)
+          || clip.particle_random_seed < 1 || clip.particle_random_seed > 2_147_483_647
           || !['none', 'hold', 'loop'].includes(clip.extrapolation)
           || !controlBindingOverridesAreValid(clip.binding_overrides)) {
           throw new Error(`Control track ${track.name} contains invalid clip settings`);
@@ -924,9 +934,19 @@ export function parseTimelineAsset(text: string): TimelineAsset {
           || clip.source != null && typeof clip.source !== 'string'
           || !targetIsPortable(controlSource)
           || clip.control_activation != null && typeof clip.control_activation !== 'boolean'
+          || clip.update_director != null && typeof clip.update_director !== 'boolean'
+          || clip.update_particle != null && typeof clip.update_particle !== 'boolean'
+          || clip.search_hierarchy != null && typeof clip.search_hierarchy !== 'boolean'
+          || clip.particle_random_seed != null && (typeof clip.particle_random_seed !== 'number'
+            || !Number.isInteger(clip.particle_random_seed)
+            || clip.particle_random_seed < 1
+            || clip.particle_random_seed > 2_147_483_647)
           || clip.post_playback != null && (typeof clip.post_playback !== 'string'
             || !['active', 'inactive', 'revert'].includes(clip.post_playback.trim().toLowerCase()))
-          || !timelineAssetPath(clip.timeline) && !prefabAssetPath(clip.prefab)
+          || (!timelineAssetPath(clip.timeline) && !prefabAssetPath(clip.prefab)
+            && clip.control_activation !== true
+            && clip.update_director !== true
+            && clip.update_particle !== true)
           || Boolean(timelineAssetPath(clip.timeline)) && !timelineAssetIsPortable(timelineAssetPath(clip.timeline))
           || Boolean(prefabAssetPath(clip.prefab)) && !prefabAssetIsPortable(prefabAssetPath(clip.prefab))
           || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)

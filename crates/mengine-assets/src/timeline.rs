@@ -47,6 +47,10 @@ fn default_one() -> f32 {
     1.0
 }
 
+fn default_particle_random_seed() -> i32 {
+    1
+}
+
 fn default_blend_curve() -> String {
     "ease_in_out".to_owned()
 }
@@ -257,6 +261,14 @@ pub struct TimelineControlClip {
     pub prefab: String,
     #[serde(default, skip_serializing_if = "is_false")]
     pub control_activation: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub update_director: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub update_particle: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub search_hierarchy: bool,
+    #[serde(default = "default_particle_random_seed")]
+    pub particle_random_seed: i32,
     #[serde(default = "default_post_playback_state")]
     pub post_playback: String,
     #[serde(default)]
@@ -941,9 +953,14 @@ impl TimelineAsset {
                                 ))
                             })?
                         };
-                        if clip.timeline.is_empty() && clip.prefab.is_empty() {
+                        if clip.timeline.is_empty()
+                            && clip.prefab.is_empty()
+                            && !clip.control_activation
+                            && !clip.update_director
+                            && !clip.update_particle
+                        {
                             return Err(AssetError::Invalid(format!(
-                                "Timeline control track '{id}' clip requires a nested Timeline or Prefab"
+                                "Timeline control track '{id}' clip must control activation, a Director, particles, a nested Timeline, or a Prefab"
                             )));
                         }
                         if clip.timeline.is_empty() && !clip.binding_overrides.is_empty() {
@@ -994,6 +1011,7 @@ impl TimelineAsset {
                             || clip.clip_in < 0.0
                             || !clip.speed.is_finite()
                             || !(-4.0..=4.0).contains(&clip.speed)
+                            || clip.particle_random_seed < 1
                             || !matches!(clip.extrapolation.as_str(), "none" | "hold" | "loop")
                         {
                             return Err(AssetError::Invalid(format!(
@@ -1598,6 +1616,19 @@ mod tests {
         };
         assert_eq!(clips[0].source, "Sequences/Explicit");
 
+        let component_only = parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"components","name":"Components","target":"Source","clips":[{"start":0,"duration":1,"update_director":true,"update_particle":true,"search_hierarchy":true,"particle_random_seed":77}]}]}"#,
+        )
+        .unwrap();
+        let TimelineTrack::Control { clips, .. } = &component_only.tracks[0] else {
+            panic!("expected control track");
+        };
+        assert!(clips[0].timeline.is_empty());
+        assert!(clips[0].update_director);
+        assert!(clips[0].update_particle);
+        assert!(clips[0].search_hierarchy);
+        assert_eq!(clips[0].particle_random_seed, 77);
+
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Scenes/Nested.mscene"}]}]}"#,
         )
@@ -1628,6 +1659,10 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","control_activation":true,"post_playback":"leave_as_is"}]}]}"#,
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"seed","name":"Seed","target":"Source","clips":[{"start":0,"duration":1,"update_particle":true,"particle_random_seed":0}]}]}"#,
         )
         .is_err());
     }

@@ -337,12 +337,14 @@ test('timeline control tracks normalize nested assets and reject invalid windows
     {
       start: 0, duration: 2, source: 'Sequences/Dialogue', timeline: 'Assets/Timelines/Intro.mtimeline', prefab: '', clip_in: 0, speed: 1,
       control_activation: true, post_playback: 'active',
+      update_director: false, update_particle: false, search_hierarchy: false, particle_random_seed: 1,
       extrapolation: 'none',
       binding_overrides: { 'Actor/Body': 'Cast/Lead' },
     },
     {
       start: 3, duration: 2, source: 'Sequences/Outro', timeline: 'Assets/Timelines/Outro.mtimeline', prefab: '', clip_in: 1, speed: -0.5,
       control_activation: false, post_playback: 'revert', extrapolation: 'loop', binding_overrides: {},
+      update_director: false, update_particle: false, search_hierarchy: false, particle_random_seed: 1,
     },
   ]);
   assert.deepEqual(timelineBindingTargets(asset), ['Cast/Lead', 'Sequences/Dialogue', 'Sequences/Outro']);
@@ -364,11 +366,31 @@ test('timeline control tracks normalize nested assets and reject invalid windows
   assert.deepEqual(prefabOnly.tracks[0].clips[0], {
     start: 0, duration: 1, source: 'Sequences', timeline: '', prefab: 'Assets/Prefabs/Enemy.prefab',
     control_activation: false, post_playback: 'revert', clip_in: 0, speed: 1, extrapolation: 'none', binding_overrides: {},
+    update_director: false, update_particle: false, search_hierarchy: false, particle_random_seed: 1,
+  });
+  const componentOnly = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{ type: 'control', id: 'components', name: 'Components', target: 'Source', clips: [{
+      start: 0, duration: 1, update_director: true, update_particle: true,
+      search_hierarchy: true, particle_random_seed: 77,
+    }] }],
+  }));
+  assert.deepEqual(componentOnly.tracks[0].clips[0], {
+    start: 0, duration: 1, source: 'Source', timeline: '', prefab: '',
+    control_activation: false, update_director: true, update_particle: true,
+    search_hierarchy: true, particle_random_seed: 77, post_playback: 'revert',
+    clip_in: 0, speed: 1, extrapolation: 'none', binding_overrides: {},
   });
   assert.throws(() => parseTimelineAsset(JSON.stringify({
     version: 1, duration: 2,
     tracks: [{ type: 'control', id: 'spawn', name: 'Spawn', target: 'Sequences', clips: [{
       start: 0, duration: 1, prefab: '../Enemy.prefab',
+    }] }],
+  })), /invalid/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{ type: 'control', id: 'seed', name: 'Seed', target: 'Source', clips: [{
+      start: 0, duration: 1, update_particle: true, particle_random_seed: 0,
     }] }],
   })), /invalid/);
   assert.throws(() => parseTimelineAsset(JSON.stringify({

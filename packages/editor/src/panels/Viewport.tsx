@@ -958,9 +958,12 @@ export function Viewport(props: {
       const emitterPosition = transform.position as Vec3;
       const dimension = emitter2D ? 2 : 3;
       const timelineParticle = timelineParticleByEntity.get(entity.entity);
+      const simulatedEmitter = timelineParticle?.seed
+        ? { ...emitter, seed: timelineParticle.seed }
+        : emitter;
       const previousTimeline = particleTimelineStateRef.current.get(entity.entity);
       if (timelineParticle) {
-        const componentSignature = JSON.stringify([dimension, emitter]);
+        const componentSignature = JSON.stringify([dimension, simulatedEmitter]);
         const delta = timelineParticle.time - (previousTimeline?.time ?? timelineParticle.time);
         const discontinuity = !previousTimeline
           || previousTimeline.key !== timelineParticle.key
@@ -973,17 +976,17 @@ export function Viewport(props: {
         if (discontinuity) {
           if (!seekParticleEmitter(
             dimension,
-            emitter,
+            simulatedEmitter,
             state,
             timelineParticle.time,
             emitterPosition,
           )) {
-            resetParticleEmitterState(state, Number(emitter.seed) || 1);
+            resetParticleEmitterState(state, Number(simulatedEmitter.seed) || 1);
           }
         } else if (delta > 1e-6) {
           stepParticleEmitter(
             dimension,
-            { ...emitter, playing: true },
+            { ...simulatedEmitter, playing: true },
             state,
             delta,
             emitterPosition,

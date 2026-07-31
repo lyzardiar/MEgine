@@ -1844,4 +1844,12 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 回归覆盖旧字段迁移、空 Track 默认值、显式 Source、非法越界路径、跨 Track 冲突、Binding Target、两个 Source 的编辑态预览和完整 Runtime 生命周期，以及 CLI 发布审计。最终 Editor 655/655、CLI 59/59、Assets 52/52、Runtime Library 118/118、Runtime Player 23/23，Rust Workspace/All Targets 测试与检查、格式检查、定向严格 Clippy、TypeScript/Vite 生产构建和 Tauri Debug 构建全部通过；最大 JavaScript 块仍为 399.22kB。真实桌面验证以隔离配置和 `MENGINE_EDITOR_BACKGROUND=1` 启动新构建：Agent 从隐藏窗口的 257 个语义元素中读取 `Source Game Object=Sources/PanelA`，写为 `Sources/PanelA-Edited` 并精确保存；磁盘仍分别保留 Track 默认值 `Legacy/Default` 和第二个 Clip 的 `Sources/PanelB`。最终全窗口快照返回 `backgroundSafe=true`、`inventoryStable=true`、`complete=true`，原生窗口始终 `visible=false`、`focused=false`；验证进程、工程、配置和本批专属 WebView 数据随后全部清理。
 
-本批完成了 Unity 风格的 Clip 级 Source/Parent 归属，但仍不是完整 ControlPlayableAsset。后续继续补自动发现并驱动嵌套 Playable Director、Particle System、ITimeControl、Control Children，以及瞬态 Prefab 编辑态预览、录制模式、轨道模板和子轨道就地编辑。
+本批完成了 Unity 风格的 Clip 级 Source/Parent 归属，但仍不是完整 ControlPlayableAsset。下一批先补自动发现并驱动嵌套 Playable Director、Particle System 与 Control Children；ITimeControl、瞬态 Prefab 编辑态预览、录制模式、轨道模板和子轨道就地编辑继续保留为后续缺口。
+
+## 158. 2026-08-01 Control Children 与自动组件控制
+
+- `TimelineControlClip` 新增 `update_director`、`update_particle`、`search_hierarchy` 与 `particle_random_seed`。新建 Clip 按 Unity 的常用创作路径默认控制 Playable Director 和 Particle System，旧资源缺少字段时保持关闭，避免升级后意外接管原有场景组件。`Control Children` 关闭时只检查 Source 对象本身，开启后按稳定层级顺序扫描完整子树。Clip 现在也允许不填写 Prefab 或显式子 Timeline，只要至少启用 Activation、Director 或 Particle 中的一项，因此纯激活和纯组件控制不再需要伪造空 Timeline 资源。Editor、Rust 资产层和 CLI 最终包审计共同校验布尔字段及 `1..2147483647` 的粒子种子。
+- Runtime 为自动粒子控制复用 Timeline 粒子的确定性 Seek/Reset 通道：进入、跳帧、反播或非 1 倍速时按 Clip 本地时间重建，普通连续 1 倍速允许增量推进；控制期间写入 Clip 随机种子，退出后恢复作者的完整 2D/3D Emitter 组件和原始种子。自动 Director 在进入时保存完整组件、停止其独立时钟、把 Clip 的 Clip In、Speed、Hold/Loop 外推映射到子资产，并递归求值全部轨道。退出、Stop、Mute、资源切换或作用域消失时恢复原始 `playing/time` 与绑定配置；父子 Director 先建立控制依赖顺序，再跳过已接管对象的独立更新，避免同一帧双重推进。
+- 自动 Director 的 Signal 使用父 Clip 的真实穿越区间映射到同一全局 traversal 坐标，与显式子 Timeline 一样支持正播、反播、循环边界、进入点和八层深度/循环依赖保护。信号的 `entity` 保持为真正受控 Director，脚本可区分父事件与组件事件。非 Prefab Scene Preview 会从 Source/Control Children 发现 Director 与粒子，递归合成 Activation、Animation、Audio、Particle 和 Camera，并把 Clip 种子传给 Viewport 的确定性粒子模拟；Sequencer 会加载场景中 Director 引用的 Timeline 资源，所有新开关和 Seed 都具备 Agent 可读写的语义标签。Prefab 的瞬态编辑态实例仍不伪造，只在 Play 模式使用同一套自动控制生命周期。
+
+本批补齐了 ControlPlayableAsset 中与当前 MEngine 组件体系对应的 Activation、Playable Director、Particle System、Control Children、Particle Random Seed 和 Post Playback 闭环。尚未宣称完整等价：MEngine 目前没有可对应 Unity `ITimeControl` 的脚本生命周期契约；瞬态 Prefab Edit Preview、Timeline 录制模式、轨道模板和子轨道就地编辑也仍需继续实现。
