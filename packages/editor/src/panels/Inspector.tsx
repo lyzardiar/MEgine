@@ -904,6 +904,24 @@ function GenericCompEditor(props: {
               />
             );
           }
+          if (meta?.kind === 'display') {
+            const display = Math.max(0, Math.min(7, Math.trunc(val)));
+            return (
+              <div className="field-row" key={key}>
+                <label title={key}>{label}</label>
+                <select
+                  value={mixed ? MIXED_SELECT_VALUE : String(display)}
+                  aria-label={label}
+                  onChange={(event) => setValue(Number(event.target.value))}
+                >
+                  {mixed && <option value={MIXED_SELECT_VALUE} disabled>Mixed</option>}
+                  {Array.from({ length: 8 }, (_unused, index) => (
+                    <option key={index} value={index}>Display {index + 1}</option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
           return (
             <NumField
               key={key}

@@ -122,7 +122,7 @@ import {
   spriteTexturePath,
 } from '../spriteImport';
 import { setEditorPrefs } from '../sceneLibrary';
-import type { GameResolution } from '../gameResolution';
+import { normalizeGameDisplay, type GameResolution } from '../gameResolution';
 import {
   initializeSceneViewPreferencesEvents,
   readSceneViewPreferences,
@@ -1403,6 +1403,7 @@ class AgentBridge {
       sceneView: readSceneViewPreferences(),
       timelinePreferences: readTimelineEditorPreferences(),
       gameResolution: store.gameResolution,
+      gameDisplay: store.gameDisplay,
       canUndo: store.canUndo,
       canRedo: store.canRedo,
       undoLabel: store.undoLabel,
@@ -2126,6 +2127,7 @@ class AgentBridge {
       sceneView: readSceneViewPreferences(),
       timelinePreferences: readTimelineEditorPreferences(),
       gameResolution: store.gameResolution,
+      gameDisplay: store.gameDisplay,
     };
     const current: ObservedEditorState = {
       mode: store.mode,
@@ -3884,6 +3886,20 @@ class AgentBridge {
     return this.getEditorState();
   }
 
+  async setGameDisplay(display: number): Promise<EditorState> {
+    const normalized = normalizeGameDisplay(display);
+    const store = this.requireStore();
+    await bridgeIo(
+      'Failed to persist Game View display',
+      () => setEditorPrefs({ gameDisplay: normalized }),
+    );
+    store.setGameDisplay(normalized);
+    this.refreshProvider?.();
+    this.observe();
+    this.logProvider?.(`Agent selected Game View Display ${normalized + 1}`);
+    return this.getEditorState();
+  }
+
   setSceneViewPreferences(
     args: Record<string, unknown>,
   ): EditorState {
@@ -4865,6 +4881,10 @@ class AgentBridge {
     }
     if (commandId === 'view.set_game_resolution') {
       const result = await this.setGameResolution(requiredGameResolution(args));
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'view.set_game_display') {
+      const result = await this.setGameDisplay(requiredNonNegativeInteger(args, 'display'));
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'view.set_scene_preferences') {

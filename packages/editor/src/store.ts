@@ -116,6 +116,7 @@ import './behaviours';
 import {
   gameResolutionAspect,
   legacyGameResolution,
+  normalizeGameDisplay,
   normalizeGameResolution,
   type GameResolution,
 } from './gameResolution';
@@ -181,6 +182,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let clearColor: [number, number, number, number] = [0.22, 0.24, 0.28, 1];
   let frame = 0;
   let gameResolution: GameResolution | null = { width: 1920, height: 1080 };
+  let gameDisplay = 0;
   let sceneCamera: SceneCamera = {
     yaw: 35,
     pitch: 25,
@@ -217,6 +219,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         near: 0.3,
         far: 50,
         primary: true,
+        target_display: 0,
         projection: 'perspective',
         orthographic_size: 5,
         aspect: 16 / 9,
@@ -247,6 +250,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     selectionAnchor = editEntities[2].entity;
     clearColor = [0.22, 0.24, 0.28, 1];
     gameResolution = { width: 1920, height: 1080 };
+    gameDisplay = 0;
     sceneCamera = {
       yaw: 35,
       pitch: 25,
@@ -698,6 +702,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       },
       sceneCamera,
       gameResolution,
+      gameDisplay,
     },
     null,
     2,
@@ -719,6 +724,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       entities?: EntityRec[];
       sceneCamera?: SceneCamera;
       gameResolution?: unknown;
+      gameDisplay?: unknown;
       gameAspect?: unknown;
       gameOrientation?: unknown;
     };
@@ -741,6 +747,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
         ? normalizeGameResolution(data.gameResolution)
         : legacyGameResolution(data.gameAspect, data.gameOrientation);
+      gameDisplay = normalizeGameDisplay(data.gameDisplay);
     }
     expanded = new Set(editEntities.map((e) => e.entity));
     selectedIds = restoreSceneSelection(
@@ -788,6 +795,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     get gameResolution() {
       return gameResolution ? { ...gameResolution } : null;
     },
+    get gameDisplay() {
+      return gameDisplay;
+    },
     get canUndo() {
       return undoService.canUndo && (mode === 'edit' || undoService.undoScope !== 'scene');
     },
@@ -811,6 +821,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     setGameResolution(resolution: GameResolution | null) {
       gameResolution = normalizeGameResolution(resolution);
+    },
+    setGameDisplay(display: number) {
+      gameDisplay = normalizeGameDisplay(display);
     },
     setGizmo(m: GizmoMode) {
       gizmo = m;
@@ -2043,6 +2056,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
             near: 0.3,
             far: 50,
             primary: false,
+            target_display: 0,
             projection: 'perspective',
             orthographic_size: 5,
             aspect: 16 / 9,
@@ -2063,6 +2077,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           Camera2D: {
             size: 5,
             primary: true,
+            target_display: 0,
             clear_flags: 'solid_color',
             background_color: [0.1, 0.1, 0.14, 1],
           },

@@ -21,6 +21,13 @@ export const GAME_RESOLUTION_PRESETS: ReadonlyArray<{
 ];
 
 const MAX_GAME_RESOLUTION = 16_384;
+export const MAX_GAME_DISPLAY = 7;
+
+/** Clamp arbitrary persisted/editor input to Unity's zero-based Display 1..8 range. */
+export function normalizeGameDisplay(value: unknown): number {
+  const parsed = Math.trunc(Number(value));
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(MAX_GAME_DISPLAY, parsed)) : 0;
+}
 
 function dimension(value: unknown): number | null {
   const parsed = Math.trunc(Number(value));

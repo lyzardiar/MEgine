@@ -22,6 +22,7 @@ import { rectComponentSceneScale } from '../rectSceneScale';
 import { buildWorldTransforms } from '../worldTransform';
 import { getSortingLayerRank } from '../sortingLayers';
 import { gameCameraForEntity } from '../gameCamera';
+import { normalizeGameDisplay } from '../gameResolution';
 import {
   isVerticalRange,
   normalizedRangePosition,
@@ -623,6 +624,7 @@ export function layoutUiOverlay(
   selectedIds: Set<number>,
   logicalSize?: { w: number; h: number },
   eventCamera?: Camera,
+  targetDisplay: number | null = 0,
 ): UiDrawItem[] {
   const canvases = entities
     .filter((e) => e.components.Canvas
@@ -646,6 +648,28 @@ export function layoutUiOverlay(
       ?? (inheritedCanvas.components.Canvas as { renderMode?: string })?.renderMode
       ?? 'ScreenSpaceOverlay';
     if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
+    if (targetDisplay != null) {
+      const display = normalizeGameDisplay(targetDisplay);
+      const canvasSettings = inheritedCanvas.components.Canvas as Record<string, unknown>;
+      if (mode === 'ScreenSpaceOverlay') {
+        if (normalizeGameDisplay(
+          canvasSettings.target_display ?? canvasSettings.targetDisplay,
+        ) !== display) continue;
+      } else {
+        if (!eventCamera) continue;
+        const rawCamera = canvasSettings.render_camera ?? canvasSettings.renderCamera;
+        if (rawCamera != null && String(rawCamera).trim() !== '') {
+          worldTransforms ??= buildWorldTransforms(entities);
+        }
+        const resolvedCamera = canvasEventCamera(
+          entities,
+          worldTransforms,
+          canvasSettings,
+          eventCamera,
+        ) as Camera & { targetDisplay?: number };
+        if (normalizeGameDisplay(resolvedCamera.targetDisplay) !== display) continue;
+      }
+    }
 
     const scaler = inheritedCanvas.components.CanvasScaler;
     const scale = canvasDisplayScaleFactor(
@@ -1344,6 +1368,8 @@ function worldCanvasLayoutContext(
     { x: 0, y: 0, w: width, h: height },
     selectedIds,
     { w: width, h: height },
+    undefined,
+    null,
   ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === canvas.entity);
   const worldTransform = transforms.get(inheritedCanvas.entity)?.transform ?? {
     position: [0, 0, 0] as Vec3,
@@ -1411,7 +1437,7 @@ export function layoutUiScene3D(
       ?? 'ScreenSpaceOverlay';
     if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
 
-    const laid = layoutUiOverlay(entities, pixelRoot, selectedIds).filter((it) =>
+    const laid = layoutUiOverlay(entities, pixelRoot, selectedIds, undefined, cam, null).filter((it) =>
       inCanvasTree(entities, it.entity, canvas.entity),
     );
 

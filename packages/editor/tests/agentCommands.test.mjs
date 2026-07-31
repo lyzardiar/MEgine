@@ -396,6 +396,7 @@ test('component add uses catalog defaults unless a custom value is explicit', ()
     {
       size: 5,
       primary: false,
+      target_display: 0,
       clear_flags: 'solid_color',
       background_color: [0.1, 0.1, 0.14, 1],
     },

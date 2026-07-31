@@ -25,6 +25,7 @@ export type SceneMeta = {
 
 export type EditorPrefs = {
   gameResolution?: GameResolution | null;
+  gameDisplay?: number;
   /** Legacy migration fields. */
   gameAspect?: string;
   gameOrientation?: string;

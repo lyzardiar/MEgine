@@ -402,11 +402,15 @@
       },
       "size": {
         "type": "number"
+      },
+      "target_display": {
+        "type": "number"
       }
     },
     "required": [
       "size",
       "primary",
+      "target_display",
       "clear_flags",
       "background_color"
     ],
@@ -443,6 +447,9 @@
       },
       "projection": {
         "type": "string"
+      },
+      "target_display": {
+        "type": "number"
       }
     },
     "required": [
@@ -450,6 +457,7 @@
       "near",
       "far",
       "primary",
+      "target_display",
       "projection",
       "orthographic_size",
       "aspect",
@@ -486,6 +494,9 @@
       },
       "sorting_order": {
         "type": "number"
+      },
+      "target_display": {
+        "type": "number"
       }
     },
     "required": [
@@ -497,6 +508,7 @@
       "override_sorting",
       "sorting_layer",
       "sorting_order",
+      "target_display",
       "plane_distance"
     ],
     "type": "object"

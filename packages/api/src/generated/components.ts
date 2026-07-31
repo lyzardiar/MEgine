@@ -21,6 +21,7 @@ export interface Camera3D {
   near: number;
   far: number;
   primary: boolean;
+  targetDisplay: number;
   projection: string;
   orthographicSize: number;
   aspect: number;
@@ -78,6 +79,7 @@ export interface Light2D {
 export interface Camera2D {
   size: number;
   primary: boolean;
+  targetDisplay: number;
   clearFlags: string;
   backgroundColor: [number, number, number, number];
 }
@@ -385,6 +387,7 @@ export interface Canvas {
   overrideSorting: boolean;
   sortingLayer: string;
   sortingOrder: number;
+  targetDisplay: number;
   planeDistance: number;
 }
 

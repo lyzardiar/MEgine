@@ -1259,6 +1259,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'view.frame_selected', category: 'view', description: 'Frame the selected object in the scene view', readOnly: false },
   { id: 'view.set_camera', category: 'view', description: 'Set the background-safe Scene view orbit camera', readOnly: false },
   { id: 'view.set_game_resolution', category: 'view', description: 'Persist an exact Game View resolution or Free Aspect', readOnly: false },
+  { id: 'view.set_game_display', category: 'view', description: 'Select the zero-based Game View output display', readOnly: false },
   { id: 'view.set_scene_preferences', category: 'view', description: 'Persist Scene 2D, grid, smart-guide, and snapping preferences across editor windows', readOnly: false },
   { id: 'view.set_timeline_preferences', category: 'view', description: 'Persist Animation Timeline and Sequencer editing preferences across editor windows', readOnly: false },
   { id: 'panel.focus', category: 'panel', description: 'Activate a panel only when its host mutation cannot disturb a foreground window', readOnly: false },

@@ -33,6 +33,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       near: 0.3,
       far: 50,
       primary: false,
+      target_display: 0,
       projection: 'perspective',
       orthographic_size: 5,
       aspect: 16 / 9,
@@ -99,6 +100,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     create: () => ({
       size: 5,
       primary: false,
+      target_display: 0,
       clear_flags: 'solid_color',
       background_color: [0.1, 0.1, 0.14, 1],
     }),
@@ -255,6 +257,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       override_sorting: false,
       sorting_layer: 'default',
       sorting_order: 0,
+      target_display: 0,
       plane_distance: 100,
     }),
   },
@@ -697,6 +700,7 @@ export function createUiCanvasComponents(): Record<string, unknown> {
       override_sorting: false,
       sorting_layer: 'default',
       sorting_order: 0,
+      target_display: 0,
       plane_distance: 100,
     },
     CanvasScaler: {

@@ -3216,6 +3216,20 @@ const TOOLS = [
     ['resolution'],
   ),
   execTool(
+    'set_game_display',
+    'Select Display 1 through Display 8 in the Game View without raising or focusing the editor window. Use this before a background Game screenshot to inspect cameras and Overlay Canvases routed to a secondary display.',
+    'view.set_game_display',
+    {
+      display: {
+        type: 'integer',
+        minimum: 0,
+        maximum: 7,
+        description: 'Zero-based display index: 0 is Display 1 and 7 is Display 8',
+      },
+    },
+    ['display'],
+  ),
+  execTool(
     'set_scene_view_preferences',
     'Persist Scene View editing preferences without raising or focusing the editor. Omitted fields retain their current values and changes propagate to every window in the current editor instance.',
     'view.set_scene_preferences',
@@ -3742,6 +3756,7 @@ const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
   'view.frame_selected',
   'view.set_camera',
   'view.set_game_resolution',
+  'view.set_game_display',
   'view.set_scene_preferences',
   'view.set_timeline_preferences',
   'sprite.import_settings.set',

@@ -782,6 +782,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact Game View pixels, or null for Free Aspect',
     },
   }, ['resolution']),
+  'view.set_game_display': objectSchema({
+    display: {
+      type: 'integer',
+      minimum: 0,
+      maximum: 7,
+      description: 'Zero-based output display index (0 is Display 1)',
+    },
+  }, ['display']),
   'view.set_scene_preferences': objectSchema({
     mode2D: booleanValue('Lock the Scene view to its 2D canvas plane'),
     gridVisible: booleanValue('Show the Scene 2D pixel grid'),

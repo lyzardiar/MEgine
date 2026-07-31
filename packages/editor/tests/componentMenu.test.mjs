@@ -58,6 +58,7 @@ test('Component menu exposes catalog entries and adds their real defaults', () =
     {
       size: 5,
       primary: false,
+      target_display: 0,
       clear_flags: 'solid_color',
       background_color: [0.1, 0.1, 0.14, 1],
     },

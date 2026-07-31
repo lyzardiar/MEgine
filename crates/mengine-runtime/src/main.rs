@@ -39,8 +39,8 @@ use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::timeline::{RuntimeCameraOverride, RuntimeParticleCommand, TimelineRuntime};
 use mengine_runtime::ui::{
-    append_ui_focus_ring, collect_ui_frame_with_hierarchy_and_camera, next_ui_focus,
-    set_toggle_value, UiControlKind, UiControlRegion,
+    append_ui_focus_ring, collect_ui_frame_for_display, next_ui_focus, set_toggle_value,
+    UiControlKind, UiControlRegion,
 };
 use mengine_runtime::ui_raycast::{raycast_blocking_colliders, viewport_world_ray};
 use mengine_scene::load_scene;
@@ -1723,7 +1723,12 @@ function onTick(dt, frame) {
                         self.timelines.camera_override(),
                     );
                     let camera = active_camera.frame;
-                    let objects = collect_objects(&self.world, &hierarchy, &mut self.materials);
+                    let has_authored_camera = active_camera.entity.is_some();
+                    let objects = if has_authored_camera {
+                        collect_objects(&self.world, &hierarchy, &mut self.materials)
+                    } else {
+                        Vec::new()
+                    };
                     for failure in self.meshes.sync(r, &objects) {
                         log::warn!(
                             "Mesh '{}' could not be loaded from {}: {}",
@@ -1744,21 +1749,26 @@ function onTick(dt, frame) {
                         .as_ref()
                         .map(|window| window.inner_size())
                         .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
-                    let mut ui = collect_ui_frame_with_hierarchy_and_camera(
+                    let mut ui = collect_ui_frame_for_display(
                         &self.world,
                         &hierarchy,
                         window_size.width,
                         window_size.height,
-                        camera,
+                        has_authored_camera.then_some(camera),
                         &self.sorting_layers,
+                        0,
                     );
                     append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
-                    let mut world_primitives = collect_world_primitives_with_hierarchy(
-                        &self.world,
-                        &hierarchy,
-                        camera,
-                        [window_size.width, window_size.height],
-                    );
+                    let mut world_primitives = if has_authored_camera {
+                        collect_world_primitives_with_hierarchy(
+                            &self.world,
+                            &hierarchy,
+                            camera,
+                            [window_size.width, window_size.height],
+                        )
+                    } else {
+                        Vec::new()
+                    };
                     let particle_primitives =
                         self.particles.update_and_collect_world_with_hierarchy(
                             &self.world,
@@ -1767,7 +1777,9 @@ function onTick(dt, frame) {
                             [window_size.width, window_size.height],
                             dt,
                         );
-                    world_primitives.extend(particle_primitives);
+                    if has_authored_camera {
+                        world_primitives.extend(particle_primitives);
+                    }
                     apply_2d_lighting(&self.world, &hierarchy, &mut world_primitives);
                     // World Space Canvas uses Unity-style Sorting Layer/Order alongside other 2D
                     // renderers, but joins after lighting because standard UI is unlit.
@@ -1886,6 +1898,7 @@ struct ActiveFrameCamera {
     frame: FrameCamera,
     clear_flags: CameraClearFlags,
     background_color: [f32; 4],
+    entity: Option<Entity>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -1902,6 +1915,7 @@ struct CameraDefinition {
     projection: CameraProjection,
     clear_flags: CameraClearFlags,
     background_color: [f32; 4],
+    target_display: i32,
 }
 
 impl CameraDefinition {
@@ -1925,6 +1939,7 @@ impl CameraDefinition {
             },
             clear_flags: self.clear_flags,
             background_color: self.background_color,
+            entity: self.entity,
         }
     }
 }
@@ -1935,18 +1950,22 @@ fn find_camera(
     viewport_aspect: f32,
     timeline: Option<RuntimeCameraOverride>,
 ) -> ActiveFrameCamera {
+    const TARGET_DISPLAY: i32 = 0;
     if let Some(timeline) = timeline {
-        if let Some(target) = camera_definition(world, hierarchy, timeline.target) {
+        if let Some(target) = camera_definition(world, hierarchy, timeline.target)
+            .filter(|camera| camera.target_display == TARGET_DISPLAY)
+        {
             let source = timeline
                 .source
                 .and_then(|entity| camera_definition(world, hierarchy, entity))
-                .or_else(|| primary_camera_definition(world, hierarchy))
+                .filter(|camera| camera.target_display == TARGET_DISPLAY)
+                .or_else(|| primary_camera_definition(world, hierarchy, TARGET_DISPLAY))
                 .unwrap_or_else(default_camera_definition);
             return blend_camera_definitions(source, target, timeline.weight)
                 .active(viewport_aspect);
         }
     }
-    primary_camera_definition(world, hierarchy)
+    primary_camera_definition(world, hierarchy, TARGET_DISPLAY)
         .unwrap_or_else(default_camera_definition)
         .active(viewport_aspect)
 }
@@ -1954,11 +1973,14 @@ fn find_camera(
 fn primary_camera_definition(
     world: &World,
     hierarchy: &TransformHierarchy,
+    target_display: i32,
 ) -> Option<CameraDefinition> {
     for entity in world.iter_entities() {
         if world
             .get_component::<Camera2D>(entity)
-            .is_some_and(|camera| camera.primary)
+            .is_some_and(|camera| {
+                camera.primary && camera.target_display.clamp(0, 7) == target_display
+            })
         {
             if let Some(camera) = camera_definition(world, hierarchy, entity) {
                 return Some(camera);
@@ -1968,7 +1990,9 @@ fn primary_camera_definition(
     for entity in world.iter_entities() {
         if world
             .get_component::<Camera3D>(entity)
-            .is_some_and(|camera| camera.primary)
+            .is_some_and(|camera| {
+                camera.primary && camera.target_display.clamp(0, 7) == target_display
+            })
         {
             if let Some(camera) = camera_definition(world, hierarchy, entity) {
                 return Some(camera);
@@ -1998,6 +2022,7 @@ fn camera_definition(
             },
             clear_flags: parse_camera_clear_flags(&camera.clear_flags),
             background_color: camera.background_color,
+            target_display: camera.target_display.clamp(0, 7),
         });
     }
     let camera = world.get_component::<Camera3D>(entity)?;
@@ -2023,6 +2048,7 @@ fn camera_definition(
         projection,
         clear_flags: parse_camera_clear_flags(&camera.clear_flags),
         background_color: camera.background_color,
+        target_display: camera.target_display.clamp(0, 7),
     })
 }
 
@@ -2038,6 +2064,7 @@ fn default_camera_definition() -> CameraDefinition {
         },
         clear_flags: CameraClearFlags::Scene,
         background_color: [0.1, 0.1, 0.14, 1.0],
+        target_display: 0,
     }
 }
 
@@ -2102,6 +2129,7 @@ fn blend_camera_definitions(
             target.clear_flags
         },
         background_color,
+        target_display: target.target_display,
     }
 }
 
@@ -3025,6 +3053,30 @@ mod tests {
     }
 
     #[test]
+    fn player_selects_only_primary_cameras_routed_to_display_one() {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Secondary 2D".into()),
+            components: json!({
+                "Transform": { "position": [8, 0, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
+                "Camera2D": { "size": 4, "primary": true, "target_display": 1 }
+            }),
+        });
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Display 1 Camera".into()),
+            components: json!({
+                "Transform": { "position": [3, 0, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
+                "Camera3D": { "primary": true, "target_display": 0 }
+            }),
+        });
+        world.commit();
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let active = find_camera(&world, &hierarchy, 1.0, None);
+        assert_eq!(active.frame.position, Vec3::new(3.0, 0.0, 10.0));
+    }
+
+    #[test]
     fn timeline_camera_override_blends_compatible_camera_pose_and_projection() {
         let mut world = World::new();
         let director = world.spawn_empty();
@@ -3104,6 +3156,7 @@ mod tests {
             frame,
             clear_flags: CameraClearFlags::SolidColor,
             background_color: [f32::NAN, 2.0, -3.0, 5.0],
+            entity: None,
         };
         let clear = resolve_camera_background(&solid, scene_clear, &mut lighting);
         assert_eq!(clear, Vec4::new(0.1, 1.0, 0.0, 1.0));

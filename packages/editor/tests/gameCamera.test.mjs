@@ -35,6 +35,53 @@ test('primary 2D camera resolves to an orthographic Game camera', () => {
   assert.deepEqual(camera?.target, [2, 3, 9]);
   assert.equal(camera?.clearFlags, 'scene');
   assert.deepEqual(camera?.backgroundColor, [0.1, 0.1, 0.14, 1]);
+  assert.equal(camera?.targetDisplay, 0);
+});
+
+test('Game View selects only primary cameras assigned to its target display', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        Transform: transform([1, 0, 10]),
+        Camera2D: { size: 4, primary: true, target_display: 1 },
+      },
+    },
+    {
+      entity: 2,
+      components: {
+        Transform: transform([2, 0, 10]),
+        Camera3D: { primary: true, target_display: 0, projection: 'perspective' },
+      },
+    },
+  ];
+
+  assert.equal(primaryGameCamera(entities, undefined, 0)?.entity, 2);
+  assert.equal(primaryGameCamera(entities, undefined, 1)?.entity, 1);
+  assert.equal(primaryGameCamera(entities, undefined, 7), null);
+});
+
+test('Timeline shots on another display do not replace the selected display camera', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        Transform: transform(),
+        Camera3D: { primary: true, target_display: 0 },
+      },
+    },
+    {
+      entity: 2,
+      components: {
+        Transform: transform([5, 0, 10]),
+        Camera3D: { primary: false, target_display: 1 },
+      },
+    },
+  ];
+  assert.equal(
+    timelineGameCamera(entities, { source: null, target: 2, weight: 1 }, undefined, 0)?.entity,
+    1,
+  );
 });
 
 test('Game camera resolves authored clear flags and clamps display background color', () => {

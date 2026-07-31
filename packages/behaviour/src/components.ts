@@ -31,6 +31,7 @@ export class Camera3D {
   near!: number;
   far!: number;
   primary!: boolean;
+  target_display!: number;
   projection?: 'perspective' | 'orthographic' | string;
   orthographic_size?: number;
   aspect?: number;
@@ -44,6 +45,7 @@ export class Camera2D {
   static readonly typeName = 'Camera2D' as const;
   size!: number;
   primary!: boolean;
+  target_display!: number;
   clear_flags?: 'scene' | 'skybox' | 'solid_color' | string;
   background_color?: Color4;
 }
@@ -101,6 +103,7 @@ export class Canvas {
   override_sorting!: boolean;
   sorting_layer!: string;
   sorting_order!: number;
+  target_display!: number;
   plane_distance!: number;
 }
 

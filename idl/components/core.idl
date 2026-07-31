@@ -19,6 +19,8 @@ component Camera3D {
   near:              float  = 0.1
   far:               float  = 1000
   primary:           bool   = true
+  /// Zero-based output display index (Display 1 through Display 8).
+  target_display:    int    = 0
   /// "perspective" | "orthographic"
   projection:        string = "perspective"
   orthographic_size: float  = 5
@@ -85,6 +87,8 @@ component Light2D {
 component Camera2D {
   size:             float  = 5
   primary:          bool   = true
+  /// Zero-based output display index (Display 1 through Display 8).
+  target_display:   int    = 0
   /// "scene" | "skybox" | "solid_color". Scene keeps old serialized behavior.
   clear_flags:      string = "scene"
   background_color: float4 = [0.1, 0.1, 0.14, 1]

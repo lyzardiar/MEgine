@@ -1919,3 +1919,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `GraphicRaycaster.ignore_reversed_graphics` 对齐 Unity 默认值 `true`，同步进入 IDL、生成 API、Behaviour、组件默认值、Inspector 与 Agent 组件 schema。旧 v2 场景缺失该字段时，Editor 默认视图与 Rust `serde(default)` 都按启用处理。
 - `GraphicRaycaster.blocking_objects` / `blocking_mask` 对齐 Unity 的 `None / 2D / 3D / All` 与 32 位 LayerMask：Overlay Canvas 不执行物理遮挡；Screen Space Camera 与 World Space Canvas 在每个指针位置生成事件相机射线，先比较 Graphic 所在平面距离，再查询前方 Box/Sphere Collider3D 与 Box/Circle Collider2D。Runtime 点击/滚轮和 Editor Game View 共享同一契约，包含触发器，并支持透视、正交及 Canvas 指定相机；Agent 组件 schema 可直接读取和修改两个字段。
 - World Space Canvas 的命中现在使用实际投影四边形的绕序判断正反面。反向 Canvas 继续绘制，但默认不产生 Editor Game/Runtime 控件命中；显式关闭 Ignore Reversed Graphics 后恢复命中。Screen Space 不制造无意义的反面差异，嵌套 Canvas 则继承各自 Raycaster 配置。
+
+## 170. 2026-08-01 Canvas 与 Camera Target Display
+
+- `Camera2D`、`Camera3D` 与 `Canvas` 新增零基 `target_display`，范围与 Unity 一致为 Display 1–8。Screen Space Overlay Canvas 使用自身 Target Display；Screen Space Camera Canvas 跟随指定 Event Camera 的 Target Display；World Space Canvas 仍属于当前相机看到的世界几何，不错误套用 Overlay 字段。IDL、Rust/TypeScript 生成类型、Behaviour、组件目录和 Inspector 使用同一默认值 `0`，Inspector 以 Display 1–8 下拉框编辑，且只在 Overlay Canvas 上显示该字段。
+- Game View 工具栏新增持久化 Display 选择器。每个 Display 只选择分配到该输出的 Primary Camera、Overlay Canvas 和 Camera Canvas；Timeline Camera Shot 不能从另一 Display 抢占当前预览。若该 Display 没有 Camera，编辑器不再用隐藏的回退相机错误绘制世界或 World Space Canvas，而是保留该 Display 的 Overlay UI 并明确显示 `No cameras rendering`。
+- Agent 状态公开 `gameDisplay`，新增 `set_game_display` / `view.set_game_display`，因此后台 Agent 可以无焦点切换 Display 后获取语义快照或 Game 截图。当前 Player 只有一个原生输出表面，所以严格渲染 Display 1 并排除路由到 Display 2–8 的 Camera/Canvas；编辑器可逐一预览全部八个逻辑输出，但本批不伪装已经创建了八个 OS 显示窗口。

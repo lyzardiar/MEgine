@@ -14,6 +14,7 @@ import {
 import { transformBasis } from './editorGizmos.ts';
 import { buildWorldTransforms, resolvedTransform } from './worldTransform.ts';
 import type { TimelineCameraPreview } from './timelineScenePreview.ts';
+import { normalizeGameDisplay } from './gameResolution.ts';
 
 export type GameCameraKind = '2d' | '3d';
 export type CameraClearFlags = 'scene' | 'skybox' | 'solid_color';
@@ -26,6 +27,7 @@ export type ResolvedGameCamera = Camera & {
   far: number;
   clearFlags: CameraClearFlags;
   backgroundColor: [number, number, number, number];
+  targetDisplay: number;
 };
 
 type CameraEntity = {
@@ -51,6 +53,7 @@ function transformCamera(
   far: number,
   clearFlags: unknown,
   backgroundColor: unknown,
+  targetDisplay: unknown,
 ): ResolvedGameCamera {
   const eye = transform.position as Vec3;
   const rotation = quatNormalize(transform.rotation as Quat);
@@ -69,6 +72,7 @@ function transformCamera(
     far,
     clearFlags: normalizeCameraClearFlags(clearFlags),
     backgroundColor: normalizeCameraBackgroundColor(backgroundColor),
+    targetDisplay: normalizeGameDisplay(targetDisplay),
   };
 }
 
@@ -95,6 +99,7 @@ function cameraForEntity(
       1000,
       camera2D.clear_flags,
       camera2D.background_color,
+      camera2D.target_display,
     );
   }
   const projection = camera3D!.projection?.toLowerCase() === 'orthographic'
@@ -113,6 +118,7 @@ function cameraForEntity(
     far,
     camera3D!.clear_flags,
     camera3D!.background_color,
+    camera3D!.target_display,
   );
 }
 
@@ -129,12 +135,18 @@ function primaryGameCameraFromWorld(
   entities: readonly CameraEntity[],
   world: ReturnType<typeof buildWorldTransforms>,
   isActive?: (id: number) => boolean,
+  targetDisplay = 0,
 ): ResolvedGameCamera | null {
+  const display = normalizeGameDisplay(targetDisplay);
   for (const kind of ['Camera2D', 'Camera3D'] as const) {
     for (const entity of entities) {
       if (!world.get(entity.entity)?.active || (isActive && !isActive(entity.entity))) continue;
-      const camera = entity.components[kind] as { primary?: boolean } | undefined;
+      const camera = entity.components[kind] as {
+        primary?: boolean;
+        target_display?: number;
+      } | undefined;
       if (!camera?.primary) continue;
+      if (normalizeGameDisplay(camera.target_display) !== display) continue;
       const resolved = cameraForEntity(entities, world, entity.entity);
       if (resolved) return resolved;
     }
@@ -161,6 +173,7 @@ function defaultTimelineCamera(): ResolvedGameCamera {
     far: 100,
     clearFlags: 'scene',
     backgroundColor: [0.1, 0.1, 0.14, 1],
+    targetDisplay: 0,
   };
 }
 
@@ -193,6 +206,7 @@ function blendGameCameras(
     backgroundColor: source.backgroundColor.map((value, index) => (
       value + (target.backgroundColor[index] - value) * weight
     )) as [number, number, number, number],
+    targetDisplay: target.targetDisplay,
   };
 }
 
@@ -221,9 +235,10 @@ export function normalizeCameraBackgroundColor(
 export function primaryGameCamera(
   entities: readonly CameraEntity[],
   isActive?: (id: number) => boolean,
+  targetDisplay = 0,
 ): ResolvedGameCamera | null {
   const world = buildWorldTransforms(entities);
-  return primaryGameCameraFromWorld(entities, world, isActive);
+  return primaryGameCameraFromWorld(entities, world, isActive, targetDisplay);
 }
 
 /** Resolve a virtual Timeline shot without mutating authored Camera components. */
@@ -231,15 +246,17 @@ export function timelineGameCamera(
   entities: readonly CameraEntity[],
   preview: TimelineCameraPreview | null | undefined,
   isActive?: (id: number) => boolean,
+  targetDisplay = 0,
 ): ResolvedGameCamera | null {
   const world = buildWorldTransforms(entities);
-  const primary = primaryGameCameraFromWorld(entities, world, isActive);
+  const display = normalizeGameDisplay(targetDisplay);
+  const primary = primaryGameCameraFromWorld(entities, world, isActive, display);
   if (!preview) return primary;
   const target = cameraForEntity(entities, world, preview.target);
-  if (!target) return primary;
+  if (!target || target.targetDisplay !== display) return primary;
   const source = preview.source == null
     ? primary ?? defaultTimelineCamera()
     : cameraForEntity(entities, world, preview.source);
-  if (!source) return primary;
+  if (!source || source.targetDisplay !== display) return primary;
   return blendGameCameras(source, target, preview.weight);
 }

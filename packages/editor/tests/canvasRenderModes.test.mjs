@@ -56,6 +56,60 @@ test('screen Canvas RectTransform is solved once at its render root', () => {
   assert.equal(items.find((item) => item.entity === 2).rect.x, 415);
 });
 
+test('Game View filters Overlay and Camera canvases by their effective target display', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect(),
+        Canvas: { render_mode: 'ScreenSpaceOverlay', target_display: 0 },
+      },
+    },
+    { entity: 2, parent: 1, components: { RectTransform: rect(), Image: {} } },
+    {
+      entity: 3,
+      components: {
+        RectTransform: rect(),
+        Canvas: { render_mode: 'ScreenSpaceOverlay', target_display: 1 },
+      },
+    },
+    { entity: 4, parent: 3, components: { RectTransform: rect(), Image: {} } },
+    {
+      entity: 5,
+      components: {
+        Transform: { position: [0, 0, 10], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+        Camera3D: { primary: true, target_display: 1 },
+      },
+    },
+    {
+      entity: 6,
+      components: {
+        RectTransform: rect(),
+        Canvas: { render_mode: 'ScreenSpaceCamera', render_camera: '5' },
+      },
+    },
+    { entity: 7, parent: 6, components: { RectTransform: rect(), Image: {} } },
+  ];
+  const display0 = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+    undefined,
+    { ...camera, targetDisplay: 0 },
+    0,
+  );
+  const display1 = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+    undefined,
+    { ...camera, targetDisplay: 1 },
+    1,
+  );
+  assert.deepEqual(new Set(display0.map((item) => item.entity)), new Set([1, 2]));
+  assert.deepEqual(new Set(display1.map((item) => item.entity)), new Set([3, 4, 6, 7]));
+});
+
 test('nested Canvas pixel-perfect settings inherit until explicitly overridden', () => {
   const stretch = rect({
     anchor_min: [0, 0],

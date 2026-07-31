@@ -98,6 +98,7 @@ pub struct Camera3D {
     pub near: f32,
     pub far: f32,
     pub primary: bool,
+    pub target_display: i32,
     pub projection: String,
     pub orthographic_size: f32,
     pub aspect: f32,
@@ -112,6 +113,7 @@ impl Default for Camera3D {
             near: 0.1,
             far: 1000.0,
             primary: true,
+            target_display: 0,
             projection: "perspective".into(),
             orthographic_size: 5.0,
             aspect: 1.777778,
@@ -340,6 +342,7 @@ impl Component for Light2D {
 pub struct Camera2D {
     pub size: f32,
     pub primary: bool,
+    pub target_display: i32,
     pub clear_flags: String,
     pub background_color: [f32; 4],
 }
@@ -349,6 +352,7 @@ impl Default for Camera2D {
         Self {
             size: 5.0,
             primary: true,
+            target_display: 0,
             clear_flags: "scene".into(),
             background_color: [0.1, 0.1, 0.14, 1.0],
         }
@@ -1496,6 +1500,7 @@ pub struct Canvas {
     pub override_sorting: bool,
     pub sorting_layer: String,
     pub sorting_order: i32,
+    pub target_display: i32,
     pub plane_distance: f32,
 }
 
@@ -1510,6 +1515,7 @@ impl Default for Canvas {
             override_sorting: false,
             sorting_layer: "default".into(),
             sorting_order: 0,
+            target_display: 0,
             plane_distance: 100.0,
         }
     }

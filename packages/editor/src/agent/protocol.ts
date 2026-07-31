@@ -434,6 +434,8 @@ export interface EditorState {
     width: number;
     height: number;
   } | null;
+  /** Zero-based Game View output display index (Display 1 through Display 8). */
+  gameDisplay: number;
   canUndo: boolean;
   canRedo: boolean;
   undoLabel: string | null;

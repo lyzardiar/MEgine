@@ -497,7 +497,7 @@ pub fn collect_ui_frame_with_hierarchy(
     width: u32,
     height: u32,
 ) -> RuntimeUiFrame {
-    collect_ui_frame_internal(world, hierarchy, width, height, None, None)
+    collect_ui_frame_internal(world, hierarchy, width, height, None, None, 0)
 }
 
 pub fn collect_ui_frame_with_hierarchy_and_camera(
@@ -515,6 +515,27 @@ pub fn collect_ui_frame_with_hierarchy_and_camera(
         height,
         Some(active_camera),
         Some(sorting_layers),
+        0,
+    )
+}
+
+pub fn collect_ui_frame_for_display(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    width: u32,
+    height: u32,
+    active_camera: Option<FrameCamera>,
+    sorting_layers: &SortingLayers,
+    target_display: i32,
+) -> RuntimeUiFrame {
+    collect_ui_frame_internal(
+        world,
+        hierarchy,
+        width,
+        height,
+        active_camera,
+        Some(sorting_layers),
+        normalize_target_display(target_display),
     )
 }
 
@@ -525,6 +546,7 @@ fn collect_ui_frame_internal(
     height: u32,
     active_camera: Option<FrameCamera>,
     sorting_layers: Option<&SortingLayers>,
+    target_display: i32,
 ) -> RuntimeUiFrame {
     let root = UiRect {
         x: 0.0,
@@ -565,6 +587,17 @@ fn collect_ui_frame_internal(
             && canvas.render_mode != "WorldSpace"
         {
             continue;
+        }
+        if canvas.render_mode == "ScreenSpaceOverlay" {
+            if normalize_target_display(canvas.target_display) != target_display {
+                continue;
+            }
+        } else if canvas.render_mode == "ScreenSpaceCamera" {
+            if let Some(camera_display) = explicit_canvas_camera_display(world, &canvas) {
+                if camera_display != target_display {
+                    continue;
+                }
+            }
         }
         let world_space = canvas.render_mode == "WorldSpace";
         let scaler = world.get_component::<CanvasScaler>(inherited_canvas_entity);
@@ -652,6 +685,9 @@ fn collect_ui_frame_internal(
                     control.raycast_plane = Some(plane);
                     control.raycast_camera = Some(camera);
                 }
+            } else {
+                primitives.truncate(primitive_start);
+                controls.truncate(control_start);
             }
         } else if world_space {
             if let Some(camera) = active_camera.map(|fallback| {
@@ -710,6 +746,21 @@ fn canvas_render_rank(mode: &str) -> u8 {
         "WorldSpace" => 0,
         "ScreenSpaceCamera" => 1,
         _ => 2,
+    }
+}
+
+fn normalize_target_display(display: i32) -> i32 {
+    display.clamp(0, 7)
+}
+
+fn explicit_canvas_camera_display(world: &World, canvas: &Canvas) -> Option<i32> {
+    let entity = parse_entity_reference(&canvas.render_camera)?;
+    let camera_2d = world.get_component::<Camera2D>(entity);
+    let camera_3d = world.get_component::<Camera3D>(entity);
+    match (camera_2d, camera_3d) {
+        (Some(camera), None) => Some(normalize_target_display(camera.target_display)),
+        (None, Some(camera)) => Some(normalize_target_display(camera.target_display)),
+        _ => None,
     }
 }
 
@@ -3157,6 +3208,92 @@ mod tests {
         assert!(frame.controls.iter().any(|control| {
             control.entity == image && matches!(control.kind, UiControlKind::Blocker)
         }));
+    }
+
+    #[test]
+    fn canvas_target_display_filters_overlay_and_uses_screen_camera_display() {
+        let mut world = World::new();
+        let overlay = world.spawn_empty();
+        world.insert_component(
+            overlay,
+            Canvas {
+                target_display: 1,
+                ..Canvas::default()
+            },
+        );
+        let overlay_image = world.spawn_empty();
+        world.insert_component(overlay_image, RectTransform::default());
+        world.insert_component(overlay_image, Image::default());
+        world.set_parent(overlay_image, Some(overlay));
+
+        let camera = world.spawn_empty();
+        world.insert_component(camera, mengine_core::generated::Transform::default());
+        world.insert_component(
+            camera,
+            Camera3D {
+                target_display: 1,
+                ..Camera3D::default()
+            },
+        );
+        let camera_canvas = world.spawn_empty();
+        world.insert_component(
+            camera_canvas,
+            Canvas {
+                render_mode: "ScreenSpaceCamera".into(),
+                render_camera: camera.to_u64().to_string(),
+                ..Canvas::default()
+            },
+        );
+        let camera_image = world.spawn_empty();
+        world.insert_component(camera_image, RectTransform::default());
+        world.insert_component(camera_image, Image::default());
+        world.set_parent(camera_image, Some(camera_canvas));
+
+        let active = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: orthographic(5.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        };
+        let hierarchy = TransformHierarchy::build(&world);
+        let filtered = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            active,
+            &SortingLayers::default(),
+        );
+        assert!(filtered.plan.primitives.is_empty());
+
+        world
+            .get_component_mut::<Camera3D>(camera)
+            .unwrap()
+            .target_display = 0;
+        world
+            .get_component_mut::<Canvas>(overlay)
+            .unwrap()
+            .target_display = 0;
+        let hierarchy = TransformHierarchy::build(&world);
+        let visible = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            active,
+            &SortingLayers::default(),
+        );
+        assert_eq!(visible.plan.primitives.len(), 2);
+
+        let no_camera = collect_ui_frame_for_display(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            None,
+            &SortingLayers::default(),
+            0,
+        );
+        assert_eq!(no_camera.plan.primitives.len(), 1);
     }
 
     #[test]

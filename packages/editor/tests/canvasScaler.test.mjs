@@ -38,6 +38,7 @@ const UNITY_CANVAS_DEFAULTS = {
   override_sorting: false,
   sorting_layer: 'default',
   sorting_order: 0,
+  target_display: 0,
   plane_distance: 100,
 };
 
@@ -61,6 +62,11 @@ test('Canvas catalog exposes all render modes and camera-aware defaults', () => 
     equals: ['ScreenSpaceOverlay', 'ScreenSpaceCamera'],
   });
   assert.equal(getBuiltinInspectorField('Canvas', 'override_sorting')?.visibleWhen, undefined);
+  assert.equal(getBuiltinInspectorField('Canvas', 'target_display')?.kind, 'display');
+  assert.deepEqual(getBuiltinInspectorField('Canvas', 'target_display')?.visibleWhen, {
+    field: 'render_mode',
+    equals: 'ScreenSpaceOverlay',
+  });
 });
 
 test('CanvasScaler catalog and new Canvas use Unity defaults', () => {

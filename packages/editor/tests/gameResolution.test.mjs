@@ -5,6 +5,7 @@ import {
   gameResolutionKey,
   gameResolutionOrientation,
   legacyGameResolution,
+  normalizeGameDisplay,
   normalizeGameResolution,
 } from '../src/gameResolution.ts';
 
@@ -14,6 +15,13 @@ test('Game orientation is derived only from the configured resolution', () => {
   assert.equal(gameResolutionOrientation({ width: 1080, height: 1080 }), 'square');
   assert.equal(gameResolutionOrientation(null), 'free');
   assert.equal(gameResolutionAspect({ width: 720, height: 1280 }), 720 / 1280);
+});
+
+test('Game display selections normalize to Unity Display 1 through Display 8', () => {
+  assert.equal(normalizeGameDisplay(undefined), 0);
+  assert.equal(normalizeGameDisplay(3.9), 3);
+  assert.equal(normalizeGameDisplay(-1), 0);
+  assert.equal(normalizeGameDisplay(99), 7);
 });
 
 test('Game resolutions normalize persisted and editable forms safely', () => {

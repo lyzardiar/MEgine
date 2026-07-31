@@ -29,6 +29,7 @@ export type InspectorFieldMeta = {
     | 'sprite-list'
     | 'vector2-list'
     | 'layer-mask'
+    | 'display'
     | 'multiline';
   options?: InspectorOption[];
   assetKinds?: Array<
@@ -100,6 +101,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
   },
   Camera3D: {
+    target_display: { label: 'Target Display', kind: 'display' },
     projection: { kind: 'enum', options: options('perspective', 'orthographic') },
     fov_y_degrees: {
       label: 'Field of View',
@@ -128,6 +130,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
   },
   Camera2D: {
+    target_display: { label: 'Target Display', kind: 'display' },
     size: { label: 'Orthographic Size', min: 0.001, step: 0.1 },
     clear_flags: {
       label: 'Clear Flags',
@@ -431,6 +434,11 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       min: 0.01,
       step: 1,
       visibleWhen: { field: 'render_mode', equals: 'ScreenSpaceCamera' },
+    },
+    target_display: {
+      label: 'Target Display',
+      kind: 'display',
+      visibleWhen: { field: 'render_mode', equals: 'ScreenSpaceOverlay' },
     },
     override_sorting: {},
   },

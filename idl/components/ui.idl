@@ -12,6 +12,8 @@ component Canvas {
   override_sorting: bool = false
   sorting_layer: string = "default"
   sorting_order:  int    = 0
+  /// Overlay output display index. Camera mode follows the assigned camera display.
+  target_display: int    = 0
   plane_distance: float  = 100
 }
 

@@ -9,6 +9,7 @@ import {
 import { createEditorUndoService } from './editorUndoService';
 import {
   legacyGameResolution,
+  normalizeGameDisplay,
   normalizeGameResolution,
   type GameResolution,
 } from './gameResolution';
@@ -248,6 +249,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     );
   const [viewTab, setViewTab] = useState<'scene' | 'game'>('scene');
   const [gameResolution, setGameResolution] = useState(store.gameResolution);
+  const [gameDisplay, setGameDisplay] = useState(store.gameDisplay);
   const [hierFilter, setHierFilter] = useState('');
   const [pendingRenameId, setPendingRenameId] = useState<number | null>(null);
   const [treeTick, setTreeTick] = useState(0);
@@ -763,6 +765,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setSelected(store.selected);
     setSelectedIds(store.selectedIds);
     setGameResolution(store.gameResolution);
+    setGameDisplay(store.gameDisplay);
     setTreeTick((t) => t + 1);
     updateSceneDirty();
     if (!props.detachedPanel) agentBridge.observe();
@@ -1389,6 +1392,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         setSelected(store.selected);
         setSelectedIds(store.selectedIds);
         setGameResolution(store.gameResolution);
+        setGameDisplay(store.gameDisplay);
         if (Array.isArray(message.logs)) {
           logService.syncConsoleLines(
             message.logs,
@@ -2499,6 +2503,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   const applyEditorPrefs = (prefs: {
     gameResolution?: GameResolution | null;
+    gameDisplay?: number;
     gameAspect?: string;
     gameOrientation?: string;
   }) => {
@@ -2506,11 +2511,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       ? normalizeGameResolution(prefs.gameResolution)
       : legacyGameResolution(prefs.gameAspect, prefs.gameOrientation);
     store.setGameResolution(resolution);
+    store.setGameDisplay(normalizeGameDisplay(prefs.gameDisplay));
   };
 
   const persistGameViewPrefs = () => {
     void setEditorPrefs({
       gameResolution: store.gameResolution,
+      gameDisplay: store.gameDisplay,
     });
   };
 
@@ -2908,6 +2915,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               playing={mode !== 'edit'}
               sceneCamera={store.sceneCamera}
               gameResolution={gameResolution}
+              gameDisplay={gameDisplay}
               timelineCameraPreview={store.timelineCameraPreview()}
               timelineParticlePreviews={store.timelineParticlePreviews()}
               activeInHierarchy={(id) => snapshotWorldTransforms.get(id)?.active === true}
@@ -3061,6 +3069,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onGameResolution={(resolution) => {
                 store.setGameResolution(resolution);
                 setGameResolution(store.gameResolution);
+                persistGameViewPrefs();
+                refresh();
+              }}
+              onGameDisplay={(display) => {
+                store.setGameDisplay(display);
+                setGameDisplay(store.gameDisplay);
                 persistGameViewPrefs();
                 refresh();
               }}

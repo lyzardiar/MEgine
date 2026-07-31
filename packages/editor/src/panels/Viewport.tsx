@@ -414,6 +414,7 @@ export function Viewport(props: {
   playing: boolean;
   sceneCamera: SceneCamera;
   gameResolution: GameResolution | null;
+  gameDisplay: number;
   timelineCameraPreview?: TimelineCameraPreview | null;
   timelineParticlePreviews?: readonly TimelineParticlePreview[];
   onPick: (id: number, modifiers: { toggle: boolean; additive: boolean }) => void;
@@ -475,6 +476,7 @@ export function Viewport(props: {
     options: RectResizeOptions,
   ) => RectResizePlan | null | void;
   onGameResolution: (resolution: GameResolution | null) => void;
+  onGameDisplay: (display: number) => void;
   onFrame: () => void;
   onInstantiateSprite: (path: string, position: Vec3) => void;
   onLog?: (message: string, level?: 'info' | 'warn' | 'error') => void;
@@ -799,7 +801,7 @@ export function Viewport(props: {
   // Force paint when props change
   useEffect(() => {
     setTick((t) => t + 1);
-  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.timelineCameraPreview, props.timelineParticlePreviews, props.simulationTime, props.playing, props.activeInHierarchy]);
+  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.gameDisplay, props.timelineCameraPreview, props.timelineParticlePreviews, props.simulationTime, props.playing, props.activeInHierarchy]);
 
   const paint = () => {
     const paintStartedAt = performance.now();
@@ -864,7 +866,7 @@ export function Viewport(props: {
     }
 
     const gameCamera = isGame
-      ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy)
+      ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay)
       : null;
     const cam: Camera = isGame
       ? gameCamera ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 }
@@ -1043,7 +1045,7 @@ export function Viewport(props: {
         });
     }
 
-    const drawn = p.entities
+    const drawn = (isGame && !gameCamera ? [] : p.entities
       .flatMap((e, hierarchyOrder) => {
         if (!isActive(e.entity)) return null;
         const t = resolvedTransform(worldTransforms, e.entity) ?? undefined;
@@ -1125,7 +1127,7 @@ export function Viewport(props: {
         }
         return entries;
       })
-      .filter(Boolean) as Array<{
+      .filter(Boolean)) as Array<{
       e: Ent;
       t: TransformData;
       pr: { x: number; y: number; depth: number } | null;
@@ -1665,8 +1667,8 @@ export function Viewport(props: {
           ? { w: p.gameResolution.width, h: p.gameResolution.height }
           : { w: uiRoot.w, h: uiRoot.h };
         const uiItems = [
-          ...layoutUiWorldSpace(p.entities, cam, vp, selSet),
-          ...layoutUiOverlay(p.entities, uiRoot, selSet, logicalUiSize, cam),
+          ...(gameCamera ? layoutUiWorldSpace(p.entities, cam, vp, selSet) : []),
+          ...layoutUiOverlay(p.entities, uiRoot, selSet, logicalUiSize, gameCamera ?? undefined, p.gameDisplay),
         ];
         uiItemsRef.current = uiItems;
 
@@ -1704,6 +1706,17 @@ export function Viewport(props: {
         ) {
           uiStatsRef.current = stats;
           setUiStats(stats);
+        }
+        if (!gameCamera) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+          ctx.fillRect(vp.x + vp.w / 2 - 92, vp.y + vp.h / 2 - 16, 184, 32);
+          ctx.fillStyle = '#d7d7d7';
+          ctx.font = '12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('No cameras rendering', vp.x + vp.w / 2, vp.y + vp.h / 2);
+          ctx.restore();
         }
       } else {
         // 与 Game 同一 letterbox 尺寸，竖屏时 Scene Canvas 也是竖图
@@ -1820,7 +1833,7 @@ export function Viewport(props: {
         ? `${p.gameResolution.width} × ${p.gameResolution.height}`
         : 'Free Aspect';
       const label = `${resolutionLabel}${orientationLabel}  ${vp.w | 0}×${vp.h | 0}`;
-      ctx.fillText(`Display ${label}`, vp.x + 14, vp.y + 22);
+      ctx.fillText(`Display ${p.gameDisplay + 1} · ${label}`, vp.x + 14, vp.y + 22);
     }
 
     ctx.restore();
@@ -3514,6 +3527,18 @@ export function Viewport(props: {
       )}
       {props.tab === 'game' && (
         <div className="game-toolbar">
+          <label>
+            Display
+            <select
+              aria-label="Game target display"
+              value={props.gameDisplay}
+              onChange={(event) => props.onGameDisplay(Number(event.target.value))}
+            >
+              {Array.from({ length: 8 }, (_unused, index) => (
+                <option key={index} value={index}>Display {index + 1}</option>
+              ))}
+            </select>
+          </label>
           <label>
             Resolution
             <select
