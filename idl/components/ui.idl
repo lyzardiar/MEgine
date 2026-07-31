@@ -110,7 +110,7 @@ component Text {
   alignment:       string = "Center"
   /// "Top" | "Middle" | "Bottom"
   vertical_align:  string = "Middle"
-  raycast_target:  bool   = false
+  raycast_target:  bool   = true
 }
 
 component Toggle {

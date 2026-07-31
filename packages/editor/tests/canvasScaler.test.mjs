@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   createComponentDefaults,
   createUiCanvasComponents,
+  createUiTextComponents,
 } from '../src/componentCatalog.ts';
 import { getBuiltinInspectorField } from '../src/inspectorMetadata.ts';
 
@@ -64,6 +65,11 @@ test('CanvasGroup exposes Unity parent-group override defaults', () => {
     blocks_raycasts: true,
     ignore_parent_groups: false,
   });
+});
+
+test('Text Graphic defaults to a Unity raycast target', () => {
+  assert.equal(createComponentDefaults('Text').raycast_target, true);
+  assert.equal(createUiTextComponents().Text.raycast_target, true);
 });
 
 test('CanvasScaler Inspector exposes all Unity scale and match modes', () => {

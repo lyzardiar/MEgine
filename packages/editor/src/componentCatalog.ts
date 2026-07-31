@@ -506,7 +506,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       outline_width: 0,
       alignment: 'Center',
       vertical_align: 'Middle',
-      raycast_target: false,
+      raycast_target: true,
     }),
   },
   {
@@ -836,7 +836,7 @@ export function createUiTextComponents(text = 'Text') {
       outline_width: 0,
       alignment: 'Center',
       vertical_align: 'Middle',
-      raycast_target: false,
+      raycast_target: true,
     },
   };
 }

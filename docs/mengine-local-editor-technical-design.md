@@ -1873,3 +1873,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Runtime 补齐 `Text.raycast_target`：显式启用的 Text 与 Image、Raw Image、Panel 一样生成真实 Graphic 阻挡区域，并继续服从 CanvasGroup 的 Blocks Raycasts 和 Ignore Parent Groups。Editor 与 Player 不再对同一 Text 得出不同的点击穿透结果。
 - 同一 UI 实体可同时拥有可操作控件与一个或多个被动 Graphic。Runtime 在每个实体完成收集后稳定地把 Blocker/ScrollView 放在本实体可操作控件之前，因此反向命中时 Button、Toggle、Slider 等事件目标位于自身 Graphic 之上；该排序不跨实体，不改变 Canvas、层级或 sibling 的视觉前后关系。
 - 回归覆盖纯 Text 阻挡，以及 Button + Text + Panel 组合对象在重叠命中时仍由 Button 接收事件。
+
+## 162. 2026-08-01 Text Graphic 默认射线契约
+
+- Unity uGUI 的 `Graphic` 序列化字段 `m_RaycastTarget` 默认启用，Text 继承同一默认值。MEngine 将 Text 的 IDL、Rust/TypeScript 生成默认、组件目录和 `UI/Text` 新建对象路径统一为 `raycast_target=true`，与已经一致的 Image/Raw Image 保持同一 Graphic 契约。
+- 旧场景中显式保存的 `false` 继续保持穿透；缺少该字段的旧数据与新建 Text 使用 Unity 默认值。Runtime 回归直接构造 `Text::default()`，同时覆盖纯 Text 阻挡与 Button + Text + Panel 同实体操作目标优先级，防止默认值与实际命中逻辑再次分离。

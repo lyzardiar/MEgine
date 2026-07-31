@@ -1880,7 +1880,7 @@ impl Default for Text {
             outline_width: 0.0,
             alignment: "Center".into(),
             vertical_align: "Middle".into(),
-            raycast_target: false,
+            raycast_target: true,
         }
     }
 }

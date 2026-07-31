@@ -3000,7 +3000,18 @@ mod tests {
     }
 
     #[test]
-    fn text_raycast_targets_block_and_same_entity_actions_stay_on_top() {
+    fn text_raycast_targets_default_to_blocking_and_same_entity_actions_stay_on_top() {
+        assert!(Text::default().raycast_target);
+        let legacy_text: Text = serde_json::from_value(serde_json::json!({ "text": "Legacy" }))
+            .expect("Text with a missing raycast_target should use the generated default");
+        assert!(legacy_text.raycast_target);
+        let opted_out: Text = serde_json::from_value(serde_json::json!({
+            "text": "Click through",
+            "raycast_target": false
+        }))
+        .expect("Text should preserve an explicit raycast opt-out");
+        assert!(!opted_out.raycast_target);
+
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
@@ -3013,13 +3024,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        world.insert_component(
-            text_only,
-            Text {
-                raycast_target: true,
-                ..Default::default()
-            },
-        );
+        world.insert_component(text_only, Text::default());
         world.set_parent(text_only, Some(canvas));
 
         let composite_button = world.spawn_empty();
@@ -3031,13 +3036,7 @@ mod tests {
             },
         );
         world.insert_component(composite_button, Button::default());
-        world.insert_component(
-            composite_button,
-            Text {
-                raycast_target: true,
-                ..Default::default()
-            },
-        );
+        world.insert_component(composite_button, Text::default());
         world.insert_component(
             composite_button,
             Panel {
