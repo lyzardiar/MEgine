@@ -219,6 +219,8 @@ component LayoutGroup {
 component RectMask2D {
   enabled: bool   = true
   padding: float4 = [0, 0, 0, 0]
+  /// Inner edge fade distances in Canvas pixels: horizontal, vertical.
+  softness: float2 = [0, 0]
 }
 
 /// Unity-style alpha/stencil mask driven by a Graphic on the same entity.

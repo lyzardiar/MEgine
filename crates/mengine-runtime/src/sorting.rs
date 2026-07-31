@@ -187,6 +187,7 @@ mod tests {
                 clip_corners: None,
                 uv: [0.0, 0.0, 1.0, 1.0],
                 vertex_positions: None,
+                soft_clips: [None; 8],
                 key: UiBatchKey {
                     material: name.into(),
                     texture: "white".into(),

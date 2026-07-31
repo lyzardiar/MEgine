@@ -1873,11 +1873,18 @@
           "type": "number"
         },
         "type": "array"
+      },
+      "softness": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
       }
     },
     "required": [
       "enabled",
-      "padding"
+      "padding",
+      "softness"
     ],
     "type": "object"
   },

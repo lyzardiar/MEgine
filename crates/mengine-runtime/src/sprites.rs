@@ -273,6 +273,7 @@ fn project_line(
                     clip_corners: None,
                     uv: [0.0, 0.0, 1.0, 1.0],
                     vertex_positions: None,
+                    soft_clips: [None; 8],
                     key: UiBatchKey {
                         material: "line2d/default".into(),
                         texture: "white".into(),
@@ -377,6 +378,7 @@ fn project_sprite(
                 if sprite.flip_y { -1.0 } else { 1.0 },
             ],
             vertex_positions: None,
+            soft_clips: [None; 8],
             key: UiBatchKey {
                 material: "sprite/default".into(),
                 texture: if sprite.sprite.is_empty() {

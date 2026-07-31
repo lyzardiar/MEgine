@@ -556,6 +556,7 @@ export interface LayoutGroup {
 export interface RectMask2D {
   enabled: boolean;
   padding: [number, number, number, number];
+  softness: [number, number];
 }
 
 export interface Mask {

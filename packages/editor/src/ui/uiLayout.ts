@@ -76,6 +76,11 @@ export type UiMaskRegion = {
   screenCorners?: Array<{ x: number; y: number }>;
 };
 
+export type UiSoftClip = {
+  rect: Rect;
+  softness: [number, number];
+};
+
 export type UiDrawItem = {
   entity: number;
   rect: Rect;
@@ -96,6 +101,8 @@ export type UiDrawItem = {
   raycastPlane?: UiRaycastPlane;
   raycastCamera?: Camera;
   clip?: Rect;
+  /** Nested RectMask2D soft clips, ordered outermost to innermost. */
+  softClips?: UiSoftClip[];
   /** Enabled Unity Mask on this Graphic. Its alpha becomes the child stencil shape. */
   mask?: { showGraphic: boolean };
   /** Ancestor Mask Graphic entity ids, ordered outermost to innermost. */
@@ -765,6 +772,7 @@ export function layoutUiOverlay(
         pixelPerfect: false,
         visualMasks: [] as number[],
         maskRegions: [] as UiMaskRegion[],
+        softClips: [] as UiSoftClip[],
       },
       inheritedClip?: Rect,
     ) => {
@@ -878,12 +886,25 @@ export function layoutUiOverlay(
           : inherited.pixelPerfect,
         visualMasks: inherited.visualMasks,
         maskRegions: inherited.maskRegions,
+        softClips: inherited.softClips,
       };
       const clip = inheritedClip;
       let childClip = inheritedClip;
+      let ownSoftClip: UiSoftClip | undefined;
       if (rectMask && rectMask.enabled !== false) {
-        const maskRect = insetRect(rect, rectMask.padding, scale);
+        const inset = insetRect(rect, rectMask.padding, scale);
+        const maskRect = state.pixelPerfect
+          ? { x: Math.round(inset.x), y: Math.round(inset.y), w: Math.round(inset.w), h: Math.round(inset.h) }
+          : inset;
         childClip = childClip ? intersectRect(childClip, maskRect) : maskRect;
+        const softness = number2(rectMask.softness, [0, 0]);
+        ownSoftClip = {
+          rect: maskRect,
+          softness: [
+            Math.max(0, softness[0]) * scale,
+            Math.max(0, softness[1]) * scale,
+          ],
+        };
       }
       if (scroll || list) childClip = childClip ? intersectRect(childClip, rect) : rect;
       const renderedRect = state.pixelPerfect
@@ -904,6 +925,7 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
+          softClips: state.softClips,
           maskStack: state.visualMasks,
           maskRegions: state.maskRegions,
           selected: selectedIds.has(ent.entity),
@@ -923,6 +945,7 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
+          softClips: state.softClips,
           mask: stencilMask?.enabled !== false && stencilMask != null
             ? {
                 showGraphic:
@@ -1208,13 +1231,16 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
+          softClips: state.softClips,
           maskStack: state.visualMasks,
           maskRegions: state.maskRegions,
           selected: true,
         });
       }
 
-      let childState = state;
+      let childState = ownSoftClip && state.softClips.length < 8
+        ? { ...state, softClips: [...state.softClips, ownSoftClip] }
+        : state;
       if (stencilMask && stencilMask.enabled !== false) {
         const nextMaskRegions = state.maskRegions.length < 8
           ? [...state.maskRegions, { rect: renderedRect, rotation, pivot }]
@@ -1292,6 +1318,7 @@ export function layoutUiOverlay(
       pixelPerfect: canvasPixelPerfect(entities, canvas),
       visualMasks: [] as number[],
       maskRegions: [] as UiMaskRegion[],
+      softClips: [] as UiSoftClip[],
     }, root);
     if (mode === 'ScreenSpaceCamera' && eventCamera) {
       const canvasSettings = inheritedCanvas.components.Canvas as Record<string, unknown>;
@@ -1628,6 +1655,17 @@ export function layoutUiScene3D(
           screenCorners: exact,
         }];
       });
+      const softClips = it.softClips?.flatMap((softClip) => {
+        const projected = projectPixelRect(softClip.rect);
+        if (!projected) return [];
+        return [{
+          rect: projected,
+          softness: [
+            softClip.softness[0] * projected.w / Math.max(0.0001, softClip.rect.w),
+            softClip.softness[1] * projected.h / Math.max(0.0001, softClip.rect.h),
+          ] as [number, number],
+        }];
+      });
       out.push({
         ...sceneItem,
         rect: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
@@ -1639,6 +1677,7 @@ export function layoutUiScene3D(
           ? projectPixelRect(it.anchorParentRect)
           : undefined,
         maskRegions,
+        softClips,
       });
     }
     depthBase += 1000;
@@ -2073,22 +2112,74 @@ export function drawUiItems(
     context.globalCompositeOperation = 'source-over';
     return context;
   };
+  const softGradient = (
+    context: CanvasRenderingContext2D,
+    rect: Rect,
+    softness: number,
+    horizontal: boolean,
+  ) => {
+    const extent = Math.max(0.0001, horizontal ? rect.w : rect.h);
+    const gradient = horizontal
+      ? context.createLinearGradient(rect.x, rect.y, rect.x + rect.w, rect.y)
+      : context.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h);
+    const edge = Math.min(0.5, Math.max(0, softness) / extent);
+    const centerAlpha = Math.min(1, extent / Math.max(0.0001, softness * 2));
+    gradient.addColorStop(0, 'rgba(255,255,255,0)');
+    if (edge < 0.5) {
+      gradient.addColorStop(edge, 'rgba(255,255,255,1)');
+      gradient.addColorStop(1 - edge, 'rgba(255,255,255,1)');
+    } else {
+      gradient.addColorStop(0.5, `rgba(255,255,255,${centerAlpha})`);
+    }
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    return gradient;
+  };
+  const paintSoftMask = (context: CanvasRenderingContext2D, softClip: UiSoftClip) => {
+    const [softX, softY] = softClip.softness;
+    context.save();
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = 'source-over';
+    context.fillStyle = softX > 0
+      ? softGradient(context, softClip.rect, softX, true)
+      : 'rgba(255,255,255,1)';
+    context.fillRect(softClip.rect.x, softClip.rect.y, softClip.rect.w, softClip.rect.h);
+    if (softY > 0) {
+      context.globalCompositeOperation = 'destination-in';
+      context.fillStyle = softGradient(context, softClip.rect, softY, false);
+      context.fillRect(softClip.rect.x, softClip.rect.y, softClip.rect.w, softClip.rect.h);
+    }
+    context.restore();
+  };
   const drawMaskedItem = (item: UiDrawItem): boolean => {
     if (item.mask?.showGraphic === false && !item.selected && opts?.focusId !== item.entity) {
       return true;
     }
-    if (!item.maskStack?.length) return false;
-    const masks = item.maskStack.map((entity) => itemsByEntity.get(entity));
+    const softMasks = item.softClips?.filter(
+      (softClip) => softClip.softness[0] > 0 || softClip.softness[1] > 0,
+    ) ?? [];
+    if (!item.maskStack?.length && softMasks.length === 0) return false;
+    const masks = (item.maskStack ?? []).map((entity) => itemsByEntity.get(entity));
     if (masks.some((mask) => !mask)) return true;
     const content = layer('content');
     if (!content) return false;
     drawUiItems(
       content,
-      [{ ...item, maskStack: [] }],
+      [{ ...item, maskStack: [], softClips: [] }],
       hoverId,
       pressId,
       opts,
     );
+    for (const softMask of softMasks) {
+      const maskContext = layer('mask');
+      if (!maskContext || !maskLayer) return true;
+      paintSoftMask(maskContext, softMask);
+      content.save();
+      content.setTransform(1, 0, 0, 1, 0, 0);
+      content.globalAlpha = 1;
+      content.globalCompositeOperation = 'destination-in';
+      content.drawImage(maskLayer, 0, 0);
+      content.restore();
+    }
     for (const mask of masks as UiDrawItem[]) {
       const maskContext = layer('mask');
       if (!maskContext || !maskLayer) return true;

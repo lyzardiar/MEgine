@@ -3,6 +3,8 @@ import test from 'node:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
+import { createComponentDefaults } from '../src/componentCatalog.ts';
+import { getBuiltinInspectorField } from '../src/inspectorMetadata.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const server = await createServer({
@@ -11,7 +13,7 @@ const server = await createServer({
   logLevel: 'silent',
   server: { middlewareMode: true },
 });
-const { drawUiItems } = await server.ssrLoadModule('/src/ui/uiLayout.ts');
+const { drawUiItems, layoutUiOverlay } = await server.ssrLoadModule('/src/ui/uiLayout.ts');
 test.after(() => server.close());
 
 class FakeDocument {
@@ -97,6 +99,12 @@ class FakeContext {
   fillText(...args) { this.operations.push(['fillText', ...args]); }
   strokeText(...args) { this.operations.push(['strokeText', ...args]); }
   measureText(value) { return { width: String(value).length * 8 }; }
+  createLinearGradient(...args) {
+    this.operations.push(['createLinearGradient', ...args]);
+    return {
+      addColorStop: (...stop) => this.operations.push(['colorStop', ...stop]),
+    };
+  }
 }
 
 const base = {
@@ -176,5 +184,50 @@ test('Canvas preview multiplies nested real Graphic alpha without showing hidden
   assert.ok(
     layerOperations.some(([operation]) => operation === 'lineTo'),
     'Filled Mask geometry is traced rather than replaced by a rectangular scissor',
+  );
+});
+
+test('RectMask2D Softness defaults, propagates as a nested stack, and multiplies both axes', () => {
+  assert.deepEqual(createComponentDefaults('RectMask2D'), {
+    enabled: true,
+    padding: [0, 0, 0, 0],
+    softness: [0, 0],
+  });
+  assert.equal(getBuiltinInspectorField('RectMask2D', 'softness')?.min, 0);
+
+  const entities = [
+    { entity: 1, parent: null, components: { Canvas: {}, RectTransform: {} } },
+    { entity: 2, parent: 1, components: {
+      RectTransform: { size_delta: [80, 80] },
+      RectMask2D: { softness: [4, 6] },
+    } },
+    { entity: 3, parent: 2, components: {
+      RectTransform: { size_delta: [60, 60] },
+      RectMask2D: { softness: [8, 10] },
+    } },
+    { entity: 4, parent: 3, components: {
+      RectTransform: { size_delta: [50, 50] },
+      Panel: {},
+    } },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  const child = items.find((item) => item.entity === 4);
+  assert.deepEqual(child.softClips.map((clip) => clip.softness), [[4, 6], [8, 10]]);
+
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  drawUiItems(canvas.context, [child], null, null);
+  const layerOperations = document.canvases.flatMap((layer) => layer.context.operations);
+  assert.equal(
+    layerOperations.filter(([operation]) => operation === 'createLinearGradient').length,
+    4,
+    'each nested soft mask creates independent horizontal and vertical ramps',
+  );
+  assert.equal(
+    layerOperations.filter((operation) => (
+      operation[0] === 'composite' && operation[1] === 'destination-in'
+    )).length,
+    4,
+    'nested soft masks multiply their two-dimensional alpha instead of replacing one another',
   );
 });

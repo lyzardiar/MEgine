@@ -705,6 +705,9 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   Mask: {
     show_mask_graphic: { label: 'Show Mask Graphic' },
   },
+  RectMask2D: {
+    softness: { label: 'Softness', min: 0, step: 1 },
+  },
   ProgressBar: {
     direction: { kind: 'enum', options: direction },
     font_size: { min: 1, step: 1 },

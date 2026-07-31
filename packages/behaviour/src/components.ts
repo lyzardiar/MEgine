@@ -272,6 +272,13 @@ export class Mask {
   show_mask_graphic!: boolean;
 }
 
+export class RectMask2D {
+  static readonly typeName = 'RectMask2D' as const;
+  enabled!: boolean;
+  padding!: Color4;
+  softness!: [number, number];
+}
+
 /** UI Button component (not the @Button decorator). */
 export class UIButton {
   static readonly typeName = 'Button' as const;
@@ -320,6 +327,7 @@ export type BuiltinComponents = {
   RectTransform: RectTransform;
   AspectRatioFitter: AspectRatioFitter;
   ContentSizeFitter: ContentSizeFitter;
+  RectMask2D: RectMask2D;
   Mask: Mask;
   Image: Image;
   RawImage: RawImage;

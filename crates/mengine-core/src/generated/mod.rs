@@ -2235,6 +2235,7 @@ impl Component for LayoutGroup {
 pub struct RectMask2D {
     pub enabled: bool,
     pub padding: [f32; 4],
+    pub softness: [f32; 2],
 }
 
 impl Default for RectMask2D {
@@ -2242,6 +2243,7 @@ impl Default for RectMask2D {
         Self {
             enabled: true,
             padding: [0.0, 0.0, 0.0, 0.0],
+            softness: [0.0, 0.0],
         }
     }
 }

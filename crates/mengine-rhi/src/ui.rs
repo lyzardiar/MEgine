@@ -62,6 +62,14 @@ pub struct UiClipRect {
     pub height: u32,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct UiSoftClip {
+    /// Top-left pixel rect: x, y, width, height.
+    pub rect: [f32; 4],
+    /// Horizontal and vertical inner fade distances in pixels.
+    pub softness: [f32; 2],
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct UiBatchKey {
     pub material: String,
@@ -104,6 +112,8 @@ pub struct UiPrimitive {
     /// order is top-left, top-right, bottom-right, bottom-left. Custom polygons
     /// let Unity-style Filled Images retain their generated mesh and UV mapping.
     pub vertex_positions: Option<[[f32; 2]; 4]>,
+    /// Nested RectMask2D soft clips, ordered outermost to innermost.
+    pub soft_clips: [Option<UiSoftClip>; 8],
     pub key: UiBatchKey,
 }
 
@@ -118,6 +128,7 @@ impl UiPrimitive {
             clip_corners: None,
             uv: [0.0, 0.0, 1.0, 1.0],
             vertex_positions: None,
+            soft_clips: [None; 8],
             key: UiBatchKey::default(),
         }
     }
@@ -244,6 +255,33 @@ struct UiUniform {
     _padding: [f32; 2],
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+struct UiSoftClipGpu {
+    rect: [f32; 4],
+    softness: [f32; 4],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+struct UiSoftClipInstance {
+    clips: [UiSoftClipGpu; 8],
+}
+
+impl From<&UiPrimitive> for UiSoftClipInstance {
+    fn from(value: &UiPrimitive) -> Self {
+        Self {
+            clips: std::array::from_fn(|index| match value.soft_clips[index] {
+                Some(clip) => UiSoftClipGpu {
+                    rect: clip.rect,
+                    softness: [clip.softness[0], clip.softness[1], 1.0, 0.0],
+                },
+                None => UiSoftClipGpu::zeroed(),
+            }),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum UiStencilPipeline {
     Disabled,
@@ -263,8 +301,10 @@ pub(crate) struct UiRenderer {
     pipelines: HashMap<UiPipelineKey, wgpu::RenderPipeline>,
     vertex_buffer: wgpu::Buffer,
     instance_buffer: wgpu::Buffer,
+    soft_clip_buffer: wgpu::Buffer,
     instance_capacity: usize,
     uniform_buffer: wgpu::Buffer,
+    bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
     texture_bind_group_layout: wgpu::BindGroupLayout,
     sampler: wgpu::Sampler,
@@ -314,6 +354,7 @@ impl UiRenderer {
         });
         let instance_capacity = 256;
         let instance_buffer = create_instance_buffer(device, instance_capacity);
+        let soft_clip_buffer = create_soft_clip_buffer(device, instance_capacity);
         let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("ui_frame_uniform"),
             contents: bytemuck::bytes_of(&UiUniform {
@@ -324,25 +365,35 @@ impl UiRenderer {
         });
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("ui_frame_bgl"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
                 },
-                count: None,
-            }],
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+            ],
         });
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("ui_frame_bg"),
-            layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
-        });
+        let bind_group = create_frame_bind_group(
+            device,
+            &bind_group_layout,
+            &uniform_buffer,
+            &soft_clip_buffer,
+        );
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("ui_texture_bgl"),
@@ -427,8 +478,10 @@ impl UiRenderer {
             pipelines,
             vertex_buffer,
             instance_buffer,
+            soft_clip_buffer,
             instance_capacity,
             uniform_buffer,
+            bind_group_layout,
             bind_group,
             texture_bind_group_layout,
             sampler,
@@ -475,10 +528,23 @@ impl UiRenderer {
         if plan.primitives.len() > self.instance_capacity {
             self.instance_capacity = plan.primitives.len().next_power_of_two();
             self.instance_buffer = create_instance_buffer(device, self.instance_capacity);
+            self.soft_clip_buffer = create_soft_clip_buffer(device, self.instance_capacity);
+            self.bind_group = create_frame_bind_group(
+                device,
+                &self.bind_group_layout,
+                &self.uniform_buffer,
+                &self.soft_clip_buffer,
+            );
         }
         if !plan.primitives.is_empty() {
             let instances: Vec<UiInstance> = plan.primitives.iter().map(UiInstance::from).collect();
             queue.write_buffer(&self.instance_buffer, 0, bytemuck::cast_slice(&instances));
+            let soft_clips: Vec<UiSoftClipInstance> = plan
+                .primitives
+                .iter()
+                .map(UiSoftClipInstance::from)
+                .collect();
+            queue.write_buffer(&self.soft_clip_buffer, 0, bytemuck::cast_slice(&soft_clips));
         }
         self.write_uniform(queue);
         self.stats = UiFrameStats {
@@ -778,16 +844,56 @@ fn create_instance_buffer(device: &wgpu::Device, capacity: usize) -> wgpu::Buffe
     })
 }
 
+fn create_soft_clip_buffer(device: &wgpu::Device, capacity: usize) -> wgpu::Buffer {
+    device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("ui_soft_clips"),
+        size: (capacity.max(1) * std::mem::size_of::<UiSoftClipInstance>()) as u64,
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    })
+}
+
+fn create_frame_bind_group(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    uniform_buffer: &wgpu::Buffer,
+    soft_clip_buffer: &wgpu::Buffer,
+) -> wgpu::BindGroup {
+    device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("ui_frame_bg"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: uniform_buffer.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: soft_clip_buffer.as_entire_binding(),
+            },
+        ],
+    })
+}
+
 const UI_WGSL: &str = r#"
 struct UiFrame {
     viewport: vec2<f32>,
     padding: vec2<f32>,
 };
 @group(0) @binding(0) var<uniform> frame: UiFrame;
+struct UiSoftClip {
+    rect: vec4<f32>,
+    softness: vec4<f32>,
+};
+struct UiSoftClipInstance {
+    clips: array<UiSoftClip, 8>,
+};
+@group(0) @binding(1) var<storage, read> soft_clip_instances: array<UiSoftClipInstance>;
 @group(1) @binding(0) var ui_texture: texture_2d<f32>;
 @group(1) @binding(1) var ui_sampler: sampler;
 
 struct VsIn {
+    @builtin(instance_index) instance_index: u32,
     @location(0) position: vec2<f32>,
     @location(1) rect: vec4<f32>,
     @location(2) color: vec4<f32>,
@@ -807,6 +913,7 @@ struct VsOut {
     @location(0) color: vec4<f32>,
     @location(1) uv: vec2<f32>,
     @location(2) alpha_clip: f32,
+    @location(3) @interpolate(flat) instance_index: u32,
 };
 
 @vertex
@@ -840,15 +947,33 @@ fn vs_main(input: VsIn) -> VsOut {
     output.color = input.color;
     output.uv = input.uv_rect.xy + vertex_position * input.uv_rect.zw;
     output.alpha_clip = input.projection.z;
+    output.instance_index = input.instance_index;
     return output;
 }
 
 @fragment
 fn fs_main(input: VsOut) -> @location(0) vec4<f32> {
-    let color = textureSample(ui_texture, ui_sampler, input.uv) * input.color;
+    var color = textureSample(ui_texture, ui_sampler, input.uv) * input.color;
     if input.alpha_clip > 0.5 && color.a <= 0.001 {
         discard;
     }
+    var clip_alpha = 1.0;
+    for (var index = 0u; index < 8u; index = index + 1u) {
+        let clip = soft_clip_instances[input.instance_index].clips[index];
+        if clip.softness.z > 0.5 {
+            let distance = min(
+                input.clip.xy - clip.rect.xy,
+                clip.rect.xy + clip.rect.zw - input.clip.xy,
+            );
+            if distance.x <= 0.0 || distance.y <= 0.0 {
+                discard;
+            }
+            let horizontal = select(1.0, clamp(distance.x / max(clip.softness.x, 0.000001), 0.0, 1.0), clip.softness.x > 0.0);
+            let vertical = select(1.0, clamp(distance.y / max(clip.softness.y, 0.000001), 0.0, 1.0), clip.softness.y > 0.0);
+            clip_alpha = clip_alpha * horizontal * vertical;
+        }
+    }
+    color.a = color.a * clip_alpha;
     return color;
 }
 "#;
@@ -949,6 +1074,25 @@ mod tests {
         assert_eq!(UiInstance::from(&visible).projection[2], 0.0);
         assert_eq!(UiInstance::from(&push).projection[2], 1.0);
         assert_eq!(UiInstance::from(&pop).projection[2], 1.0);
+    }
+
+    #[test]
+    fn nested_soft_clips_reach_the_per_instance_gpu_buffer() {
+        let mut value = primitive("white", None);
+        value.soft_clips[0] = Some(UiSoftClip {
+            rect: [10.0, 20.0, 100.0, 80.0],
+            softness: [4.0, 6.0],
+        });
+        value.soft_clips[1] = Some(UiSoftClip {
+            rect: [30.0, 40.0, 50.0, 30.0],
+            softness: [8.0, 10.0],
+        });
+        let gpu = UiSoftClipInstance::from(&value);
+        assert_eq!(gpu.clips[0].rect, [10.0, 20.0, 100.0, 80.0]);
+        assert_eq!(gpu.clips[0].softness, [4.0, 6.0, 1.0, 0.0]);
+        assert_eq!(gpu.clips[1].rect, [30.0, 40.0, 50.0, 30.0]);
+        assert_eq!(gpu.clips[1].softness, [8.0, 10.0, 1.0, 0.0]);
+        assert_eq!(gpu.clips[2].softness[2], 0.0);
     }
 
     #[test]

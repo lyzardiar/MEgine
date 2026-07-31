@@ -19,7 +19,7 @@ pub use renderer::{
 };
 pub use ui::{
     UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect, UiFrameStats, UiPrimitive,
-    UiStencilMode, UiTextureError,
+    UiSoftClip, UiStencilMode, UiTextureError,
 };
 
 use thiserror::Error;

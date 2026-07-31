@@ -1956,3 +1956,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Button.transition=ColorTint` 不再是只有名字的近似效果。IDL、Rust/TypeScript 生成 API、Behaviour、组件目录、Inspector 与 Agent 组件 schema 新增 Unity ColorBlock 的 Normal、Highlighted、Pressed、Selected、Disabled 五组颜色，以及 Color Multiplier 和 Fade Duration；旧场景通过生成类型默认值自动获得 Unity 默认 ColorBlock。
 - Editor Canvas 预览与 Runtime 都按 Disabled、Pressed、Highlighted、Selected、Normal 的优先级解析状态。Pressed 仅在鼠标仍位于按下目标内时成立，键盘焦点使用 Selected；鼠标离开窗口、窗口失焦或释放按键会清理按下状态，避免卡死在 Pressed。颜色乘到 Button 同实体的 Image/RawImage 或缺省背景 Graphic，不错误染色标签文字。
 - 两端的颜色过渡都从状态切换瞬间的已采样颜色继续插值，连续快速切换不会跳回上一个端点；Fade Duration 为零时立即切换。Runtime 缓存按实体回收，Editor 缓存按 Canvas 隔离并清理离场按钮，因此持续预览和后台 Agent 截图不会无界增长状态。无窗口回归覆盖 ColorBlock 默认值、状态优先级、中途打断、颜色乘法以及 Runtime 目标 Graphic 的半程渐变。
+
+## 176. 2026-08-01 RectMask2D Softness
+
+- `RectMask2D` 新增与 Unity 对齐的二维 `Softness`，默认 `[0, 0]`，IDL、Rust/TypeScript 生成 API、Behaviour、组件目录、Inspector 与 Agent schema 使用同一契约。Padding 之后的裁剪矩形同时作为硬边界与软边缘基准；Pixel Perfect Canvas 会先把该矩形对齐到整数像素，非法或负 Softness 会被安全归零。
+- Editor Canvas 预览继承最多 8 层祖先 RectMask2D，并用横向、纵向 CanvasGradient 依次执行 `destination-in`，所以嵌套软边缘按 Alpha 相乘，同时保持遮罩只影响子节点。Runtime 将相同的八层栈放入逐实例只读 GPU 缓冲区，由 Fragment Shader 使用屏幕像素坐标计算边缘衰减；零 Softness 保持原有硬裁剪，不占用顶点属性或破坏 Filled、Tiled、Stencil 批次。
+- World Space Canvas 会把每个软裁剪矩形投影到屏幕并按投影宽高缩放两轴 Softness，保持透视下的像素渐变语义。GraphicRaycaster 仍按 Unity 的 RectMask2D 硬矩形过滤命中，不把半透明软边缘误当作可穿透区。无窗口回归覆盖默认值、Inspector、嵌套传播、Editor 双轴合成、Runtime 根遮罩、World Space 投影、GPU 数据布局与 WGSL 管线创建。

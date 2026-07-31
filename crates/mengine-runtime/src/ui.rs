@@ -11,7 +11,7 @@ use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_rhi::{
     look_at, orthographic, perspective, FrameCamera, UiBatchKey, UiBatchPlan, UiBlendMode,
-    UiClipRect, UiPrimitive, UiStencilMode,
+    UiClipRect, UiPrimitive, UiSoftClip, UiStencilMode,
 };
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -654,6 +654,7 @@ struct UiInheritedState {
     screen_space: bool,
     stencil_depth: u8,
     mask_regions: [Option<UiMaskRegion>; 8],
+    soft_clips: [Option<UiSoftClip>; 8],
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -679,6 +680,7 @@ impl Default for UiInheritedState {
             screen_space: true,
             stencil_depth: 0,
             mask_regions: [None; 8],
+            soft_clips: [None; 8],
         }
     }
 }
@@ -1277,6 +1279,24 @@ fn project_world_canvas_output(
             if let Some(clip) = primitive.key.clip {
                 primitive.key.clip = Some(projection.project_clip(clip)?);
             }
+            for soft_clip in primitive.soft_clips.iter_mut().flatten() {
+                let source = UiRect {
+                    x: soft_clip.rect[0],
+                    y: soft_clip.rect[1],
+                    width: soft_clip.rect[2],
+                    height: soft_clip.rect[3],
+                };
+                let (_, projected) =
+                    projection.project_corners(rotated_pixel_corners(source, 0.0, [0.5, 0.5]))?;
+                let bounds = screen_bounds(projected);
+                let scale_x = bounds.width / source.width.max(0.0001);
+                let scale_y = bounds.height / source.height.max(0.0001);
+                soft_clip.rect = [bounds.x, bounds.y, bounds.width, bounds.height];
+                soft_clip.softness = [
+                    soft_clip.softness[0] * scale_x,
+                    soft_clip.softness[1] * scale_y,
+                ];
+            }
             Some(primitive)
         })
         .collect::<Vec<_>>();
@@ -1629,7 +1649,23 @@ fn walk(
     let mut child_clip = clip;
     if let Some(mask) = world.get_component::<RectMask2D>(entity) {
         if mask.enabled {
-            child_clip = intersect_clip(child_clip, inset_rect(rect, mask.padding, scale));
+            let mut mask_rect = inset_rect(rect, mask.padding, scale);
+            if state.pixel_perfect {
+                mask_rect.x = mask_rect.x.round();
+                mask_rect.y = mask_rect.y.round();
+                mask_rect.width = mask_rect.width.round();
+                mask_rect.height = mask_rect.height.round();
+            }
+            child_clip = intersect_clip(child_clip, mask_rect);
+            if let Some(slot) = state.soft_clips.iter_mut().find(|slot| slot.is_none()) {
+                *slot = Some(UiSoftClip {
+                    rect: [mask_rect.x, mask_rect.y, mask_rect.width, mask_rect.height],
+                    softness: [
+                        finite_non_negative(mask.softness[0]) * scale,
+                        finite_non_negative(mask.softness[1]) * scale,
+                    ],
+                });
+            }
         }
     }
     if world.get_component::<ScrollView>(entity).is_some()
@@ -2484,6 +2520,10 @@ fn walk(
         );
     }
 
+    for primitive in &mut primitives[graphic_start..] {
+        primitive.soft_clips = inherited.soft_clips;
+    }
+
     let mask = world
         .get_component::<Mask>(entity)
         .filter(|mask| mask.enabled);
@@ -3155,6 +3195,14 @@ fn finite_positive(value: f32, fallback: f32) -> f32 {
     }
 }
 
+fn finite_non_negative(value: f32) -> f32 {
+    if value.is_finite() {
+        value.max(0.0)
+    } else {
+        0.0
+    }
+}
+
 fn primitive(
     rect: UiRect,
     color: [f32; 4],
@@ -3173,6 +3221,7 @@ fn primitive(
         clip_corners: None,
         uv: [0.0, 0.0, 1.0, 1.0],
         vertex_positions: None,
+        soft_clips: [None; 8],
         key: UiBatchKey {
             material: material.into(),
             texture: texture.into(),
@@ -4674,6 +4723,7 @@ mod tests {
             canvas,
             RectMask2D {
                 padding: [10.0, 20.0, 30.0, 40.0],
+                softness: [12.0, 16.0],
                 ..RectMask2D::default()
             },
         );
@@ -4708,6 +4758,26 @@ mod tests {
         assert_eq!(control.clip.height, 540);
         assert!(!control.contains(5.0, 300.0));
         assert!(control.contains(400.0, 300.0));
+        let button = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.key.material == "ui/button")
+            .expect("child button primitive");
+        assert_eq!(
+            button.soft_clips[0],
+            Some(UiSoftClip {
+                rect: [10.0, 20.0, 760.0, 540.0],
+                softness: [12.0, 16.0],
+            })
+        );
+        let root_image = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.key.material == "ui/image")
+            .unwrap();
+        assert!(root_image.soft_clips.iter().all(Option::is_none));
     }
 
     #[test]
@@ -4928,6 +4998,13 @@ mod tests {
         );
         world.insert_component(
             canvas,
+            RectMask2D {
+                softness: [10.0, 20.0],
+                ..RectMask2D::default()
+            },
+        );
+        world.insert_component(
+            canvas,
             mengine_core::generated::Transform {
                 position: [1.0, 0.0, 0.0],
                 ..Default::default()
@@ -4963,6 +5040,11 @@ mod tests {
         let primitive = &frame.world_primitives[0].primitive;
         assert!(primitive.key.depth_test);
         assert!(primitive.clip_corners.is_some());
+        let soft_clip = primitive.soft_clips[0].expect("projected RectMask2D softness");
+        assert!(soft_clip.rect[2] > 0.0);
+        assert!(soft_clip.rect[3] > 0.0);
+        assert!(soft_clip.softness[0] > 0.0);
+        assert!(soft_clip.softness[1] > 0.0);
         assert!(
             primitive.rect[0] + primitive.rect[2] * 0.5 > 400.0,
             "translated Canvas center should project right of center"

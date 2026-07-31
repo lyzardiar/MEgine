@@ -609,7 +609,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'RectMask2D',
     label: 'Rect Mask 2D',
     description: 'Rectangular clipping for child graphics and controls',
-    create: () => ({ enabled: true, padding: [0, 0, 0, 0] }),
+    create: () => ({ enabled: true, padding: [0, 0, 0, 0], softness: [0, 0] }),
   },
   {
     type: 'Mask',
@@ -1075,7 +1075,7 @@ export function createUiScrollViewComponents() {
       show_scrollbar: true,
       on_value_changed: callback(),
     },
-    RectMask2D: { enabled: true, padding: [0, 0, 0, 0] },
+    RectMask2D: { enabled: true, padding: [0, 0, 0, 0], softness: [0, 0] },
   };
 }
 
