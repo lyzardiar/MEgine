@@ -1747,3 +1747,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 回归验证覆盖 Editor 623/623、CLI 58/58、Assets 52/52、Runtime Library 112/112、Runtime Player 23/23，以及 Rust Workspace/All Targets 测试与检查、格式检查、定向严格 Clippy、前端生产构建和 Tauri Debug 构建。真实桌面验证在独立配置与临时工程中启动 `MENGINE_EDITOR_BACKGROUND=1`：Agent 后台打开父 Timeline、选择 Control Clip、读取值为 Hold 的 `Source Extrapolation`，再以语义写入切换到 Loop、保存并从磁盘读回 `"extrapolation": "loop"`；整个过程原生主窗口始终 `visible=false`、`focused=false`，验证工程和配置随后已清理。
 
 本批仍不代表 Timeline 已达到 Unity 的全部能力。下一阶段继续审计内联层级轨道树、Prefab Control、录制模式、轨道模板、长时间轴虚拟化、嵌套求值缓存与 Timeline Profiler 依赖视图。
+
+## 148. 2026-07-31 Sub-Timeline 内联层级轨道树
+
+- Control Track 现在提供独立的层级展开按钮，不修改 `.mtimeline` 资产，也不复制子轨道到父资产。展开后按每个 Control Clip 显示子 Timeline 摘要和一层只读子轨道；摘要可直接打开真实子资源继续编辑，父 Timeline 的草稿、选择与 Undo 仍保持独立。工具栏筛选同时匹配子资源路径、外推模式、轨道名称、类型和目标，适合大型嵌套序列以及 Agent 语义检索。
+- 内联项不是把子时间简单缩放到父 Clip 宽度。共享映射模型按 `clip_in + parentElapsed × speed` 切分父时间，覆盖 None、Hold、Loop、正播、倒播和周期边界；Signal 显示每次真实经过的父时间，普通 Clip 与每个子周期求交后分别绘制。非法 None 源窗口与 Runtime 一样不产生伪预览；病态高频 Loop 最多展示前 256 个实际周期，并明确标记截断，不把最后一段错误拉伸到父 Clip 末尾。
+- 层级行暴露稳定的可访问名称、父时间、源项目数、映射项目数、目标和资源路径；Agent 可在隐藏窗口中发现展开按钮、筛选框、子轨道、每个映射 Signal/Clip 以及 Open 操作。视觉上沿用 180px Sticky Track Header 和父时间网格，Signal、Activation、Audio、Animation、Particle、Control、Camera 使用对应轨道颜色，层级线和只读样式与可编辑父轨道明确区分。
+
+验证覆盖新增 4 项时间映射回归、编辑器全量 627/627、TypeScript、生产前端构建和 Tauri Debug 构建。真实桌面验证使用独立配置与临时工程启动 `MENGINE_EDITOR_BACKGROUND=1`：Agent 打开 Parent Timeline 并展开 Control Track，语义快照读取到 2 条子轨道、5 个循环 Signal 和 3 个 Activation 映射；筛选 `activation` 后只保留 Child Visibility，Open 随后把活动文档切换到 Child Timeline。WebView2 完整窗口截图确认层级与父时间网格布局正常；所有步骤中窗口均保持 `visible=false`、`focused=false`，截图标记为 `backgroundSafe=true`。
+
+当前实现刻意保持一层内联，只读展示任意子轨道，并通过 Open 进入下一层编辑；它尚未提供递归多层同时展开、子轨道就地编辑、长时间轴虚拟化、Prefab Control、录制、轨道模板、嵌套求值缓存和 Timeline Profiler 依赖视图。后续递归展开必须加入资源循环检测、深度/节点预算和跨层选择身份，不能仅递归渲染现有 JSX。

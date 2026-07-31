@@ -252,6 +252,11 @@ test('complex authoring rows identify their selectable semantic regions', () => 
     /aria-label="Sequencer tracks viewport"\s*data-agent-wheel="true"/,
   );
   assert.match(sequencer, /aria-label="Scrub Sequencer time ruler"/);
+  assert.match(sequencer, /aria-label="Filter Sub-Timeline hierarchy"/);
+  assert.match(sequencer, /aria-label=\{`\$\{expandedControlTrackIds\.includes\(track\.id\) \? 'Collapse' : 'Expand'\} \$\{track\.name\} Sub-Timeline hierarchy`\}/);
+  assert.match(sequencer, /data-agent-sub-timeline=\{normalizedPath\}/);
+  assert.match(sequencer, /data-agent-sub-timeline-track=\{childTrack\.id\}/);
+  assert.match(sequencer, /aria-label=\{`\$\{childTrack\.name\} mapped into parent time`\}/);
   assert.equal(sequencer.match(/data-agent-drag-by="true"/g)?.length, 8);
   assert.match(sequencer, /aria-label=\{`\$\{selectedTrack\.type === 'signal'/);
   assert.match(sequencer, /Track fields`\}/);

@@ -4896,7 +4896,8 @@ body.insp-scrubbing * {
 
 .sequencer-ruler-row,
 .sequencer-group-row,
-.sequencer-track-row {
+.sequencer-track-row,
+.sequencer-control-tree-row {
   display: grid;
   width: calc(180px + var(--sequencer-lane-width, 360px));
   min-width: 540px;
@@ -4927,6 +4928,25 @@ body.insp-scrubbing * {
 .sequencer-track-row.effectively-muted .sequencer-lane > button { opacity: 0.48; }
 .sequencer-track-row.effectively-solo:not(.effectively-muted) .sequencer-lane { box-shadow: inset 0 1px #88752e; }
 .sequencer-track-row.grouped .sequencer-track-select { padding-left: 25px; }
+.sequencer-control-tree-row {
+  position: relative;
+  height: 30px;
+  border-top: 1px solid #18242a;
+  color: #adbec7;
+  background: #20272b;
+}
+.sequencer-control-tree-row.child { height: 28px; border-top-color: #172126; background: #1e2427; }
+.sequencer-control-tree-row.summary.unavailable { color: #d79b91; background: #302526; }
+.sequencer-control-tree-empty {
+  width: calc(180px + var(--sequencer-lane-width, 360px));
+  min-width: 540px;
+  height: 25px;
+  padding: 5px 10px 5px 47px;
+  border-top: 1px solid #172126;
+  color: #788891;
+  background: #1d2326;
+  font: italic 10px var(--u-font);
+}
 
 .sequencer-panel.track-dragging,
 .sequencer-panel.track-dragging * { cursor: grabbing !important; user-select: none; }
@@ -5084,6 +5104,22 @@ body.insp-scrubbing * {
 .sequencer-track-drag-handle:hover:not(:disabled),
 .sequencer-track-drag-handle:focus-visible { color: #d8edf7; background: #3e4e59; }
 .sequencer-track-drag-handle:disabled { color: #4a4f53; cursor: not-allowed; }
+.sequencer-control-tree-toggle {
+  width: 18px;
+  height: 24px;
+  flex: 0 0 18px;
+  display: grid;
+  place-items: center;
+  margin: 0 -2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #82c7d2;
+}
+.sequencer-control-tree-toggle:hover:not(:disabled),
+.sequencer-control-tree-toggle:focus-visible { background: #34484e; color: #d8fbff; }
+.sequencer-control-tree-toggle:disabled { color: #4c5b60; }
 .sequencer-track-select:hover { background: #343b42; }
 .sequencer-track-select > span:not(.sequencer-track-icon) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sequencer-track-select small { margin-left: auto; color: #b79a70; font-size: 9px; text-transform: uppercase; }
@@ -5121,6 +5157,131 @@ body.insp-scrubbing * {
 .sequencer-track-icon.particle { background: #7a5b2e; color: #fff0c8; }
 .sequencer-track-icon.control { background: #356b70; color: #d7fbff; }
 .sequencer-track-icon.camera { background: #2e617a; color: #d9f4ff; }
+
+.sequencer-control-tree-header {
+  position: sticky;
+  z-index: 7;
+  left: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px 0 22px;
+  border-right: 1px solid #111;
+  background: #263238;
+  font-size: 10px;
+}
+.sequencer-control-tree-header.child { padding-left: 32px; background: #232b2f; }
+.sequencer-control-tree-branch { flex: 0 0 auto; color: #56717c; font: 10px var(--u-mono); }
+.sequencer-control-tree-name {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sequencer-control-tree-header small {
+  flex: 0 0 auto;
+  color: #75aab5;
+  font: 8px var(--u-mono);
+}
+.sequencer-control-tree-header button {
+  height: 20px;
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border: 1px solid #3c555e;
+  border-radius: 2px;
+  background: #2f434b;
+  color: #bde2ea;
+  font-size: 9px;
+}
+.sequencer-control-tree-header .sequencer-track-icon {
+  width: 15px;
+  height: 15px;
+  flex-basis: 15px;
+  font-size: 8px;
+}
+.sequencer-control-tree-lane {
+  position: relative;
+  width: var(--sequencer-lane-width, 360px);
+  min-width: var(--sequencer-lane-width, 360px);
+  overflow: hidden;
+  background-color: #20272a;
+  background-image: repeating-linear-gradient(90deg, transparent 0 49px, #ffffff04 49px 50px);
+}
+.sequencer-control-tree-row.child .sequencer-control-tree-lane { background-color: #1f2426; }
+.sequencer-inline-source,
+.sequencer-inline-item {
+  position: absolute;
+  z-index: 2;
+  top: 4px;
+  height: 20px;
+  min-width: 1px;
+  overflow: hidden;
+  padding: 2px 5px;
+  border: 1px solid #315d66;
+  border-radius: 2px;
+  color: #c5edf2;
+  background: #294d54;
+  font: 9px/14px var(--u-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sequencer-inline-source.loop { background: repeating-linear-gradient(135deg, #294d54 0 8px, #315b62 8px 16px); }
+.sequencer-inline-source.hold { background: linear-gradient(90deg, #294d54, #4b5140); }
+.sequencer-inline-source.none { background: #33434a; }
+.sequencer-inline-item { top: 3px; height: 21px; pointer-events: none; }
+.sequencer-inline-item.activation { border-color: #39715c; color: #d9fff0; background: #315b4c; }
+.sequencer-inline-item.audio { border-color: #42698a; color: #d7edff; background: #344f69; }
+.sequencer-inline-item.animation { border-color: #76598d; color: #f0ddff; background: #5b466d; }
+.sequencer-inline-item.particle { border-color: #8a6a35; color: #fff0c8; background: #674d28; }
+.sequencer-inline-item.control { border-color: #3f7980; color: #d7fbff; background: #315e63; }
+.sequencer-inline-item.camera { border-color: #397695; color: #d9f4ff; background: #2d5a70; }
+.sequencer-inline-marker {
+  position: absolute;
+  z-index: 4;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: #f0b95f;
+  box-shadow: 0 0 0 1px #241b0d;
+  transform: translateX(-1px);
+}
+.sequencer-inline-warning {
+  position: absolute;
+  z-index: 5;
+  top: 6px;
+  right: 6px;
+  padding: 2px 4px;
+  color: #ffd6a0;
+  background: #513b26e8;
+  font: 8px var(--u-mono);
+}
+.sequencer-inline-warning.error { color: #ffd0cb; background: #682f2de8; }
+.sequencer-tree-search {
+  height: 24px;
+  width: 145px;
+  flex: 0 1 145px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 5px;
+  border: 1px solid #1d1d1d;
+  background: #252525;
+  color: #78909a;
+}
+.sequencer-tree-search:focus-within { border-color: #4b8196; color: #a9dce8; }
+.sequencer-tree-search input {
+  min-width: 0;
+  width: 100%;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #d0d6da;
+  font-size: 10px;
+}
 
 .sequencer-selection-count {
   flex: 0 0 auto;

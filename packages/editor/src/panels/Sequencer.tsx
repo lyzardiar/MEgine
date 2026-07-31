@@ -79,8 +79,13 @@ import {
   type TimelineAnimationClip,
   type TimelineAudioClip,
   type TimelineControlClip,
+  type TimelineControlTrack,
   type TimelineTrackGroup,
 } from '../timelineAsset';
+import {
+  timelineControlSourceMap,
+  timelineInlineTrackItems,
+} from '../timelineControlTree';
 import {
   broadcastProjectAssetsChanged,
   openTimelineAsset,
@@ -352,6 +357,8 @@ export function Sequencer(props: SequencerProps) {
   const [previewControlAssets, setPreviewControlAssets] = useState<ReadonlyMap<string, TimelineAsset>>(new Map());
   const [previewControlFailures, setPreviewControlFailures] = useState<string[]>([]);
   const [previewControlLoadKey, setPreviewControlLoadKey] = useState('');
+  const [expandedControlTrackIds, setExpandedControlTrackIds] = useState<string[]>([]);
+  const [controlTreeFilter, setControlTreeFilter] = useState('');
   const [previewWarning, setPreviewWarning] = useState<string | null>(null);
   const [previewAssetEpoch, setPreviewAssetEpoch] = useState(0);
   const [draftEpoch, setDraftEpoch] = useState(0);
@@ -729,6 +736,11 @@ export function Sequencer(props: SequencerProps) {
   ]);
 
   useEffect(() => () => props.onClearPreview(), [props.assetPath]);
+
+  useEffect(() => {
+    setExpandedControlTrackIds([]);
+    setControlTreeFilter('');
+  }, [props.assetPath]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3128,6 +3140,105 @@ export function Sequencer(props: SequencerProps) {
       </div>
     </div>;
   };
+  const renderControlTreeRows = (track: TimelineControlTrack) => {
+    const filter = controlTreeFilter.trim().toLowerCase();
+    return track.clips.map((clip, clipIndex) => {
+      const normalizedPath = clip.timeline.trim().replaceAll('\\', '/');
+      const child = loadedPreviewControlAssets.get(normalizedPath.toLowerCase()) ?? null;
+      const sourceMap = child ? timelineControlSourceMap(clip, child.duration) : null;
+      const sourceWindowValid = child ? timelineControlSourceWindowIsValid(clip, child.duration) : true;
+      const matchingTracks = child?.tracks.filter((childTrack) => {
+        if (!filter) return true;
+        const target = 'target' in childTrack ? childTrack.target : '';
+        return `${childTrack.name} ${childTrack.type} ${target}`.toLowerCase().includes(filter);
+      }) ?? [];
+      const clipMatches = !filter || `${normalizedPath} ${clip.extrapolation}`.toLowerCase().includes(filter);
+      if (filter && !clipMatches && matchingTracks.length === 0) return null;
+      const loadState = child
+        ? `${child.tracks.length} tracks, ${child.duration.toFixed(3)} seconds`
+        : previewControlResourcesReady
+          ? 'asset unavailable'
+          : 'loading asset';
+      return <Fragment key={`${track.id}:${clipIndex}:${normalizedPath}`}>
+        <div
+          className={`sequencer-control-tree-row summary${child ? '' : ' unavailable'}`}
+          role="group"
+          aria-label={`Sub-Timeline ${normalizedPath || 'missing path'}, ${loadState}, ${clip.extrapolation} extrapolation${sourceWindowValid ? '' : ', invalid source window'}`}
+          data-agent-sub-timeline={normalizedPath}
+        >
+          <div className="sequencer-control-tree-header">
+            <span className="sequencer-control-tree-branch" aria-hidden="true">└</span>
+            <FolderTree size={12} aria-hidden="true" />
+            <span className="sequencer-control-tree-name" title={normalizedPath}>{normalizedPath.split('/').at(-1) || 'Missing Timeline'}</span>
+            <small>{clip.extrapolation.toUpperCase()}</small>
+            <button
+              type="button"
+              aria-label={`Open child Timeline ${normalizedPath}`}
+              title={`Open ${normalizedPath}`}
+              disabled={!normalizedPath}
+              onClick={() => openTimelineAsset(normalizedPath)}
+            >Open</button>
+          </div>
+          <div className="sequencer-control-tree-lane">
+            {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
+            <span
+              className={`sequencer-inline-source ${clip.extrapolation}`}
+              style={{
+                left: `${clip.start / asset.duration * 100}%`,
+                width: `${clip.duration / asset.duration * 100}%`,
+              }}
+              title={`${normalizedPath} · source ${clip.clip_in.toFixed(3)}s @ ${clip.speed.toFixed(2)}x · ${clip.extrapolation}`}
+            >{child ? loadState : loadState.toUpperCase()}</span>
+            {sourceMap?.truncated && <span className="sequencer-inline-warning">First 256 source cycles shown</span>}
+            {!sourceWindowValid && <span className="sequencer-inline-warning error">Invalid source window</span>}
+            <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
+          </div>
+        </div>
+        {child && sourceMap && matchingTracks.map((childTrack) => {
+          const target = 'target' in childTrack ? childTrack.target : '';
+          const count = childTrack.type === 'signal' ? childTrack.markers.length : childTrack.clips.length;
+          const items = timelineInlineTrackItems(childTrack, sourceMap);
+          return <div
+            className="sequencer-control-tree-row child"
+            role="group"
+            aria-label={`${childTrack.name}, ${childTrack.type} child track${target ? `, target ${target}` : ''}, ${count} source items, ${items.length} mapped items`}
+            data-agent-sub-timeline-track={childTrack.id}
+            key={`${track.id}:${clipIndex}:${childTrack.id}`}
+          >
+            <div className="sequencer-control-tree-header child">
+              <span className="sequencer-control-tree-branch" aria-hidden="true">└─</span>
+              <span className={`sequencer-track-icon ${childTrack.type}`}>{childTrack.type === 'signal' ? 'S' : childTrack.type === 'activation' ? 'A' : childTrack.type === 'audio' ? '♪' : childTrack.type === 'animation' ? 'M' : childTrack.type === 'particle' ? 'P' : childTrack.type === 'control' ? 'T' : 'C'}</span>
+              <span className="sequencer-control-tree-name" title={target || childTrack.name}>{childTrack.name}</span>
+              <small>{count}</small>
+            </div>
+            <div className="sequencer-control-tree-lane" aria-label={`${childTrack.name} mapped into parent time`}>
+              {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
+              {items.map((item) => item.marker
+                ? <i
+                  className={`sequencer-inline-marker ${childTrack.type}`}
+                  style={{ left: `${item.start / asset.duration * 100}%` }}
+                  title={`${item.label} @ ${item.start.toFixed(3)}s parent time`}
+                  aria-label={`${item.label} at ${item.start.toFixed(3)} seconds parent time`}
+                  key={item.key}
+                />
+                : <span
+                  className={`sequencer-inline-item ${childTrack.type}`}
+                  style={{
+                    left: `${item.start / asset.duration * 100}%`,
+                    width: `${Math.max(item.duration / asset.duration * 100, 0.15)}%`,
+                  }}
+                  title={`${item.label} · ${item.start.toFixed(3)}s + ${item.duration.toFixed(3)}s parent time`}
+                  aria-label={`${item.label}, starts ${item.start.toFixed(3)} seconds, duration ${item.duration.toFixed(3)} seconds in parent Timeline`}
+                  key={item.key}
+                >{item.label}</span>)}
+              <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
+            </div>
+          </div>;
+        })}
+        {child && filter && matchingTracks.length === 0 && clipMatches && <div className="sequencer-control-tree-empty">No child tracks match “{controlTreeFilter.trim()}”.</div>}
+      </Fragment>;
+    });
+  };
 
   return (
     <div
@@ -3325,6 +3436,16 @@ export function Sequencer(props: SequencerProps) {
             <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= SEQUENCER_MAX_ZOOM} onClick={() => changeZoom(zoom * 1.5)}><Plus size={13} /></button>
             <span>{zoom.toFixed(zoom < 10 ? 1 : 0)}x</span>
           </div>
+          {asset.tracks.some((track) => track.type === 'control') && <label className="sequencer-tree-search" title="Filter expanded Sub-Timeline tracks by name, type, target, path, or extrapolation">
+            <FolderTree size={12} aria-hidden="true" />
+            <input
+              type="search"
+              aria-label="Filter Sub-Timeline hierarchy"
+              placeholder="Filter hierarchy"
+              value={controlTreeFilter}
+              onChange={(event) => setControlTreeFilter(event.target.value)}
+            />
+          </label>}
           <details className="sequencer-add-track">
             <summary><Plus size={14} /> Track</summary>
             <div>
@@ -3500,6 +3621,17 @@ export function Sequencer(props: SequencerProps) {
                   disabled={effectivelyLocked}
                   onPointerDown={(event) => startTrackDrag(event, trackIndex)}
                 ><GripVertical size={12} /></button>
+                {track.type === 'control' && <button
+                  type="button"
+                  className="sequencer-control-tree-toggle"
+                  aria-expanded={expandedControlTrackIds.includes(track.id)}
+                  aria-label={`${expandedControlTrackIds.includes(track.id) ? 'Collapse' : 'Expand'} ${track.name} Sub-Timeline hierarchy`}
+                  title={`${expandedControlTrackIds.includes(track.id) ? 'Collapse' : 'Expand'} nested Sub-Timeline tracks`}
+                  disabled={track.clips.length === 0}
+                  onClick={() => setExpandedControlTrackIds((current) => current.includes(track.id)
+                    ? current.filter((trackId) => trackId !== track.id)
+                    : [...current, track.id])}
+                >{expandedControlTrackIds.includes(track.id) ? <ChevronDown size={13} /> : <ChevronRight size={13} />}</button>}
                 <button
                   type="button"
                   className="sequencer-track-select"
@@ -3688,6 +3820,7 @@ export function Sequencer(props: SequencerProps) {
                 <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
               </div>
               </div>}
+              {!group?.collapsed && track.type === 'control' && expandedControlTrackIds.includes(track.id) && renderControlTreeRows(track)}
             </Fragment>;
           })}
           {asset.groups.filter((group) => !firstTrackByGroupId.has(group.id)).map(renderGroupRow)}
