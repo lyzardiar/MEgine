@@ -748,6 +748,7 @@ function GenericCompEditor(props: {
   entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
   contextComponents?: Record<string, unknown>;
   dynamicOptions?: Record<string, InspectorOption[]>;
+  layerOptions?: Array<{ value: number; label: string }>;
   mixedFields?: ReadonlySet<string>;
   mixedArrayIndices?: Readonly<Record<string, readonly boolean[]>>;
   onChange: (
@@ -891,6 +892,18 @@ function GenericCompEditor(props: {
           );
         }
         if (typeof val === 'number') {
+          if (meta?.kind === 'layer-mask') {
+            return (
+              <LayerMaskField
+                key={key}
+                label={label}
+                value={mixed ? 0 : val}
+                mixed={mixed}
+                options={props.layerOptions ?? [{ value: 0, label: 'Default (0)' }]}
+                onChange={setValue}
+              />
+            );
+          }
           return (
             <NumField
               key={key}
@@ -988,6 +1001,55 @@ function GenericCompEditor(props: {
         );
       })}
     </>
+  );
+}
+
+function LayerMaskField(props: {
+  label: string;
+  value: number;
+  mixed: boolean;
+  options: Array<{ value: number; label: string }>;
+  onChange: (value: number) => void;
+}) {
+  const mask = Math.trunc(props.value) | 0;
+  const valid = props.options.filter((option) => option.value >= 0 && option.value < 32);
+  const selected = valid.filter((option) => (mask & (1 << option.value)) !== 0);
+  const summary = props.mixed
+    ? 'Mixed values'
+    : mask === -1
+      ? 'Everything'
+      : mask === 0
+        ? 'Nothing'
+        : selected.length <= 2
+          ? selected.map((option) => option.label).join(', ')
+          : `${selected.length} Layers`;
+  return (
+    <div className="field-row layer-mask-field">
+      <label>{props.label}</label>
+      <details>
+        <summary aria-label={props.label}>{summary}</summary>
+        <div className="layer-mask-menu">
+          <div>
+            <button type="button" onClick={() => props.onChange(0)}>Nothing</button>
+            <button type="button" onClick={() => props.onChange(-1)}>Everything</button>
+          </div>
+          {valid.map((option) => {
+            const bit = 1 << option.value;
+            return (
+              <label key={option.value}>
+                <input
+                  type="checkbox"
+                  checked={(mask & bit) !== 0}
+                  aria-label={`${props.label} ${option.label}`}
+                  onChange={() => props.onChange((mask ^ bit) | 0)}
+                />
+                {option.label}
+              </label>
+            );
+          })}
+        </div>
+      </details>
+    </div>
   );
 }
 
@@ -1505,6 +1567,7 @@ function MultiSelectionInspector(props: {
                 data={value}
                 entities={props.entities}
                 contextComponents={props.primary.components}
+                layerOptions={props.layerOptions}
                 mixedFields={fieldState.mixedFields}
                 mixedArrayIndices={fieldState.mixedArrayIndices}
                 onChange={(next, editedPath) => {
@@ -2005,6 +2068,7 @@ export function Inspector(props: {
                 data={data}
                 entities={props.entities ?? [entity]}
                 contextComponents={entity.components}
+                layerOptions={configuredLayers}
                 onChange={(next) => props.onSetComponent(entity.entity, k, next)}
               />
             )}

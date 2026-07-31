@@ -116,6 +116,15 @@ function cameraForEntity(
   );
 }
 
+/** Resolve one authored Camera reference without requiring it to be primary. */
+export function gameCameraForEntity(
+  entities: readonly CameraEntity[],
+  id: number,
+  world = buildWorldTransforms(entities),
+): ResolvedGameCamera | null {
+  return cameraForEntity(entities, world, id);
+}
+
 function primaryGameCameraFromWorld(
   entities: readonly CameraEntity[],
   world: ReturnType<typeof buildWorldTransforms>,

@@ -67,10 +67,28 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
   assert.deepEqual(createComponentDefaults('CanvasScaler'), UNITY_DEFAULTS);
   assert.deepEqual(createUiCanvasComponents().CanvasScaler, UNITY_DEFAULTS);
   assert.deepEqual(componentRequirements('CanvasScaler'), ['Canvas']);
-  const raycasterDefaults = { enabled: true, ignore_reversed_graphics: true };
+  const raycasterDefaults = {
+    enabled: true,
+    ignore_reversed_graphics: true,
+    blocking_objects: 'None',
+    blocking_mask: -1,
+  };
   assert.deepEqual(createComponentDefaults('GraphicRaycaster'), raycasterDefaults);
   assert.deepEqual(createUiCanvasComponents().GraphicRaycaster, raycasterDefaults);
   assert.deepEqual(componentRequirements('GraphicRaycaster'), ['Canvas']);
+  assert.deepEqual(
+    getBuiltinInspectorField('GraphicRaycaster', 'blocking_objects')?.options,
+    [
+      { value: 'None', label: 'None' },
+      { value: 'TwoD', label: '2D' },
+      { value: 'ThreeD', label: '3D' },
+      { value: 'All', label: 'All' },
+    ],
+  );
+  assert.equal(
+    getBuiltinInspectorField('GraphicRaycaster', 'blocking_mask')?.kind,
+    'layer-mask',
+  );
 });
 
 test('CanvasGroup exposes Unity parent-group override defaults', () => {
@@ -149,6 +167,8 @@ test('adding CanvasScaler resolves the complete Canvas dependency chain in one u
       [
         { name: 'enabled', type: 'boolean', default: true },
         { name: 'ignore_reversed_graphics', type: 'boolean', default: true },
+        { name: 'blocking_objects', type: 'string', default: 'None' },
+        { name: 'blocking_mask', type: 'number', default: -1 },
       ],
     );
     const store = createEditorStore();

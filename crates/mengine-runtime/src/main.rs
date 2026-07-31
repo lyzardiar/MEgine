@@ -42,6 +42,7 @@ use mengine_runtime::ui::{
     append_ui_focus_ring, collect_ui_frame_with_hierarchy_and_camera, next_ui_focus,
     set_toggle_value, UiControlKind, UiControlRegion,
 };
+use mengine_runtime::ui_raycast::{raycast_blocking_colliders, viewport_world_ray};
 use mengine_scene::load_scene;
 use mengine_script::{
     ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal,
@@ -952,11 +953,16 @@ impl App {
     }
 
     fn press_ui(&mut self) {
+        let hierarchy = TransformHierarchy::build(&self.world);
+        let viewport = self.ui_viewport_size();
         let Some(control) = self
             .ui_controls
             .iter()
             .rev()
-            .find(|control| control.contains(self.cursor[0], self.cursor[1]))
+            .find(|control| {
+                control.contains(self.cursor[0], self.cursor[1])
+                    && !self.ui_control_is_physically_blocked(control, &hierarchy, viewport)
+            })
             .cloned()
         else {
             return;
@@ -1211,6 +1217,8 @@ impl App {
     }
 
     fn scroll_ui(&mut self, delta_x: f32, delta_y: f32) -> bool {
+        let hierarchy = TransformHierarchy::build(&self.world);
+        let viewport = self.ui_viewport_size();
         let Some(control) = self
             .ui_controls
             .iter()
@@ -1220,6 +1228,7 @@ impl App {
                     control.kind,
                     UiControlKind::ScrollView | UiControlKind::ListItem { .. }
                 ) && control.contains(self.cursor[0], self.cursor[1])
+                    && !self.ui_control_is_physically_blocked(control, &hierarchy, viewport)
             })
             .cloned()
         else {
@@ -1246,6 +1255,44 @@ impl App {
             return true;
         }
         false
+    }
+
+    fn ui_viewport_size(&self) -> [u32; 2] {
+        let size = self
+            .window
+            .as_ref()
+            .map(|window| window.inner_size())
+            .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
+        [size.width.max(1), size.height.max(1)]
+    }
+
+    fn ui_control_is_physically_blocked(
+        &self,
+        control: &UiControlRegion,
+        hierarchy: &TransformHierarchy,
+        viewport: [u32; 2],
+    ) -> bool {
+        let (Some(camera), Some(plane)) = (control.raycast_camera, control.raycast_plane) else {
+            return false;
+        };
+        if control.blocking_objects == mengine_runtime::ui_raycast::BlockingObjects::None {
+            return false;
+        }
+        let Some(ray) = viewport_world_ray(camera, viewport, self.cursor) else {
+            return false;
+        };
+        let Some(graphic_distance) = plane.distance(ray) else {
+            return false;
+        };
+        raycast_blocking_colliders(
+            &self.world,
+            hierarchy,
+            ray,
+            graphic_distance,
+            control.blocking_objects,
+            control.blocking_mask,
+        )
+        .is_some()
     }
 }
 

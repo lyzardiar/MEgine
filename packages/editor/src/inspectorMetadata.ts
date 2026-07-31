@@ -28,6 +28,7 @@ export type InspectorFieldMeta = {
     | 'string-list'
     | 'sprite-list'
     | 'vector2-list'
+    | 'layer-mask'
     | 'multiline';
   options?: InspectorOption[];
   assetKinds?: Array<
@@ -510,6 +511,17 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   GraphicRaycaster: {
     enabled: { label: 'Enabled' },
     ignore_reversed_graphics: { label: 'Ignore Reversed Graphics' },
+    blocking_objects: {
+      label: 'Blocking Objects',
+      kind: 'enum',
+      options: [
+        { value: 'None', label: 'None' },
+        { value: 'TwoD', label: '2D' },
+        { value: 'ThreeD', label: '3D' },
+        { value: 'All', label: 'All' },
+      ],
+    },
+    blocking_mask: { label: 'Blocking Mask', kind: 'layer-mask', step: 1 },
   },
   AspectRatioFitter: {
     aspect_mode: {

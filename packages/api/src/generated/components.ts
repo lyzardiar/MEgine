@@ -391,6 +391,8 @@ export interface Canvas {
 export interface GraphicRaycaster {
   enabled: boolean;
   ignoreReversedGraphics: boolean;
+  blockingObjects: string;
+  blockingMask: number;
 }
 
 export interface CanvasScaler {

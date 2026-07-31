@@ -792,6 +792,12 @@
   },
   "GraphicRaycaster": {
     "properties": {
+      "blocking_mask": {
+        "type": "number"
+      },
+      "blocking_objects": {
+        "type": "string"
+      },
       "enabled": {
         "type": "boolean"
       },
@@ -801,7 +807,9 @@
     },
     "required": [
       "enabled",
-      "ignore_reversed_graphics"
+      "ignore_reversed_graphics",
+      "blocking_objects",
+      "blocking_mask"
     ],
     "type": "object"
   },

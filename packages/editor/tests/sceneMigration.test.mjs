@@ -16,7 +16,12 @@ const scene = (version, components) => ({
 test('scene v1 migration preserves legacy Canvas input through an explicit GraphicRaycaster', () => {
   const document = migrateSceneDocument(scene(1, { Canvas: {} }));
   assert.equal(document.version, CURRENT_SCENE_VERSION);
-  assert.deepEqual(document.world.entities[0].components.GraphicRaycaster, { enabled: true });
+  assert.deepEqual(document.world.entities[0].components.GraphicRaycaster, {
+    enabled: true,
+    ignore_reversed_graphics: true,
+    blocking_objects: 'None',
+    blocking_mask: -1,
+  });
 });
 
 test('scene v2 preserves intentional GraphicRaycaster removal and disablement', () => {

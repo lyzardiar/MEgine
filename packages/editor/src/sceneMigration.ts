@@ -34,7 +34,12 @@ export function migrateSceneDocument(document: unknown): JsonRecord {
     const entity = record(candidate);
     const components = record(entity?.components);
     if (!components || components.Canvas == null || components.GraphicRaycaster != null) continue;
-    components.GraphicRaycaster = { enabled: true };
+    components.GraphicRaycaster = {
+      enabled: true,
+      ignore_reversed_graphics: true,
+      blocking_objects: 'None',
+      blocking_mask: -1,
+    };
   }
   scene.version = CURRENT_SCENE_VERSION;
   return scene;

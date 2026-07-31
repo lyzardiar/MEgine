@@ -281,7 +281,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     label: 'Graphic Raycaster',
     description: 'Controls whether the attached Canvas participates in UI hit testing',
     requires: ['Canvas'],
-    create: () => ({ enabled: true, ignore_reversed_graphics: true }),
+    create: () => ({
+      enabled: true,
+      ignore_reversed_graphics: true,
+      blocking_objects: 'None',
+      blocking_mask: -1,
+    }),
   },
   {
     type: 'RectTransform',
@@ -709,6 +714,8 @@ export function createUiCanvasComponents(): Record<string, unknown> {
     GraphicRaycaster: {
       enabled: true,
       ignore_reversed_graphics: true,
+      blocking_objects: 'None',
+      blocking_mask: -1,
     },
   };
 }

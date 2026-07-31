@@ -1,4 +1,5 @@
 use crate::sorting::{SortingLayers, WorldPrimitive, WorldPrimitiveKind};
+use crate::ui_raycast::{ray_plane, BlockingObjects, WorldRay};
 use glam::{Mat4, Quat, Vec3};
 use mengine_core::generated::{
     AspectRatioFitter, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
@@ -66,8 +67,28 @@ pub struct UiControlRegion {
     pub corners: Option<[[f32; 2]; 4]>,
     /// Unity GraphicRaycaster back-face filtering for projected World Space quads.
     pub ignore_reversed_graphics: bool,
+    /// Physics dimensions checked before this graphic for Camera/World Space canvases.
+    pub blocking_objects: BlockingObjects,
+    /// Signed Unity-style LayerMask used by the blocking query.
+    pub blocking_mask: i32,
+    /// World-space plane containing this graphic. Overlay canvases intentionally have no plane.
+    pub raycast_plane: Option<UiRaycastPlane>,
+    /// Event camera that rendered this Canvas. This can differ from the active scene camera.
+    pub raycast_camera: Option<FrameCamera>,
     pub kind: UiControlKind,
     pub callback: Value,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct UiRaycastPlane {
+    pub point: Vec3,
+    pub normal: Vec3,
+}
+
+impl UiRaycastPlane {
+    pub fn distance(self, ray: WorldRay) -> Option<f32> {
+        ray_plane(ray, self.point, self.normal)
+    }
 }
 
 impl UiControlRegion {
@@ -410,6 +431,8 @@ struct UiInheritedState {
     blocks_raycasts: bool,
     raycaster_enabled: bool,
     ignore_reversed_graphics: bool,
+    blocking_objects: BlockingObjects,
+    blocking_mask: i32,
     pixel_perfect: bool,
     screen_space: bool,
 }
@@ -431,6 +454,8 @@ impl Default for UiInheritedState {
             blocks_raycasts: true,
             raycaster_enabled: false,
             ignore_reversed_graphics: true,
+            blocking_objects: BlockingObjects::None,
+            blocking_mask: -1,
             pixel_perfect: false,
             screen_space: true,
         }
@@ -608,6 +633,24 @@ fn collect_ui_frame_internal(
                 for primitive in &mut primitives[primitive_start..] {
                     primitive.depth = depth;
                     primitive.key.depth_test = true;
+                }
+                let forward = camera
+                    .view
+                    .inverse()
+                    .transform_vector3(-Vec3::Z)
+                    .normalize_or_zero();
+                let distance = if canvas.plane_distance.is_finite() {
+                    canvas.plane_distance.max(0.01)
+                } else {
+                    100.0
+                };
+                let plane = UiRaycastPlane {
+                    point: camera.position + forward * distance,
+                    normal: forward,
+                };
+                for control in &mut controls[control_start..] {
+                    control.raycast_plane = Some(plane);
+                    control.raycast_camera = Some(camera);
                 }
             }
         } else if world_space {
@@ -883,6 +926,10 @@ fn project_world_canvas_output(
         camera,
         viewport,
     };
+    let plane = UiRaycastPlane {
+        point: world_matrix.transform_point3(Vec3::ZERO),
+        normal: world_matrix.transform_vector3(Vec3::Z).normalize_or_zero(),
+    };
     let sort_depth = projection.project_depth([
         canvas_rect.x + canvas_rect.width * rect_transform.pivot[0],
         canvas_rect.y + canvas_rect.height * rect_transform.pivot[1],
@@ -935,6 +982,8 @@ fn project_world_canvas_output(
             control.pivot = [0.5, 0.5];
             control.corners = Some(screen_corners);
             control.clip = projection.project_clip(control.clip)?;
+            control.raycast_plane = Some(plane);
+            control.raycast_camera = Some(camera);
             Some(control)
         })
         .collect::<Vec<_>>();
@@ -1239,6 +1288,10 @@ fn walk(
         state.ignore_reversed_graphics = raycaster
             .map(|value| value.ignore_reversed_graphics)
             .unwrap_or(true);
+        state.blocking_objects = raycaster
+            .map(|value| BlockingObjects::parse(&value.blocking_objects))
+            .unwrap_or(BlockingObjects::None);
+        state.blocking_mask = raycaster.map_or(-1, |value| value.blocking_mask);
     }
     if state.screen_space {
         if let Some(canvas) = world.get_component::<Canvas>(entity) {
@@ -1384,6 +1437,10 @@ fn walk(
                 pivot,
                 corners: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
+                blocking_objects: state.blocking_objects,
+                blocking_mask: state.blocking_mask,
+                raycast_plane: None,
+                raycast_camera: None,
                 kind: UiControlKind::Button,
                 callback: button.on_click.clone(),
             });
@@ -1469,6 +1526,10 @@ fn walk(
                 pivot,
                 corners: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
+                blocking_objects: state.blocking_objects,
+                blocking_mask: state.blocking_mask,
+                raycast_plane: None,
+                raycast_camera: None,
                 kind: UiControlKind::Toggle {
                     is_on: toggle.is_on,
                 },
@@ -1552,6 +1613,10 @@ fn walk(
                 pivot,
                 corners: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
+                blocking_objects: state.blocking_objects,
+                blocking_mask: state.blocking_mask,
+                raycast_plane: None,
+                raycast_camera: None,
                 kind: UiControlKind::Slider {
                     min: slider.min_value,
                     max: slider.max_value,
@@ -1620,6 +1685,10 @@ fn walk(
                 pivot,
                 corners: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
+                blocking_objects: state.blocking_objects,
+                blocking_mask: state.blocking_mask,
+                raycast_plane: None,
+                raycast_camera: None,
                 kind: UiControlKind::Scrollbar {
                     value: scrollbar.value,
                     size: scrollbar.size,
@@ -2050,6 +2119,10 @@ fn walk(
             &mut controls[control_start..],
         );
     }
+    for control in &mut controls[control_start..] {
+        control.blocking_objects = state.blocking_objects;
+        control.blocking_mask = state.blocking_mask;
+    }
     controls[control_start..].sort_by_key(|control| {
         if matches!(
             &control.kind,
@@ -2298,6 +2371,10 @@ fn control_region(
         pivot,
         corners: None,
         ignore_reversed_graphics,
+        blocking_objects: BlockingObjects::None,
+        blocking_mask: -1,
+        raycast_plane: None,
+        raycast_camera: None,
         kind,
         callback,
     }
@@ -3430,6 +3507,14 @@ mod tests {
                 ..Canvas::default()
             },
         );
+        world.insert_component(
+            canvas,
+            GraphicRaycaster {
+                blocking_objects: "All".into(),
+                blocking_mask: 1 << 3,
+                ..GraphicRaycaster::default()
+            },
+        );
         let image = world.spawn_empty();
         world.insert_component(image, RectTransform::default());
         world.insert_component(image, Image::default());
@@ -3455,6 +3540,16 @@ mod tests {
             primitive.key.depth_test && (primitive.depth - expected).abs() < 0.000001
         }));
         assert!(expected > 0.0 && expected < 1.0);
+        let control = frame.controls.first().expect("Image hit region");
+        assert_eq!(control.blocking_objects, BlockingObjects::All);
+        assert_eq!(control.blocking_mask, 1 << 3);
+        assert_eq!(
+            control.raycast_camera.expect("event camera").position,
+            camera.position
+        );
+        let ray = crate::ui_raycast::viewport_world_ray(camera, [800, 600], [400.0, 300.0])
+            .expect("center ray");
+        assert!((control.raycast_plane.unwrap().distance(ray).unwrap() - 9.9).abs() < 0.001);
     }
 
     #[test]
@@ -3658,6 +3753,11 @@ mod tests {
             "translated Canvas center should project right of center"
         );
         let control = frame.controls.first().expect("Image hit region");
+        assert_eq!(
+            control.raycast_camera.expect("event camera").position,
+            camera.position
+        );
+        assert!(control.raycast_plane.is_some());
         let center = [
             control
                 .corners
@@ -3683,6 +3783,8 @@ mod tests {
         let legacy: GraphicRaycaster =
             serde_json::from_value(serde_json::json!({ "enabled": true })).unwrap();
         assert!(legacy.ignore_reversed_graphics);
+        assert_eq!(legacy.blocking_objects, "None");
+        assert_eq!(legacy.blocking_mask, -1);
 
         let mut world = World::new();
         let canvas = world.spawn_empty();
@@ -3927,6 +4029,7 @@ mod tests {
                 ..Canvas::default()
             },
         );
+        world.insert_component(canvas, GraphicRaycaster::default());
         let image = world.spawn_empty();
         world.insert_component(image, RectTransform::default());
         world.insert_component(image, Image::default());
@@ -3960,6 +4063,14 @@ mod tests {
             screen_space_camera_depth(assigned, 20.0),
             screen_space_camera_depth(active, 20.0),
         );
+        let control = frame.controls.first().expect("Image hit region");
+        assert_eq!(
+            control
+                .raycast_camera
+                .expect("assigned event camera")
+                .position,
+            assigned.position
+        );
     }
 
     #[test]
@@ -3982,6 +4093,10 @@ mod tests {
             pivot: [0.5, 0.5],
             corners: Some([[10.0, 20.0], [130.0, 10.0], [110.0, 70.0], [20.0, 60.0]]),
             ignore_reversed_graphics: true,
+            blocking_objects: BlockingObjects::None,
+            blocking_mask: -1,
+            raycast_plane: None,
+            raycast_camera: None,
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -4147,6 +4262,10 @@ mod tests {
             pivot: [0.5, 0.5],
             corners: None,
             ignore_reversed_graphics: true,
+            blocking_objects: BlockingObjects::None,
+            blocking_mask: -1,
+            raycast_plane: None,
+            raycast_camera: None,
             kind,
             callback: Value::Null,
         };
@@ -4345,6 +4464,10 @@ mod tests {
             pivot: [0.5, 0.5],
             corners: None,
             ignore_reversed_graphics: true,
+            blocking_objects: BlockingObjects::None,
+            blocking_mask: -1,
+            raycast_plane: None,
+            raycast_camera: None,
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -4378,6 +4501,10 @@ mod tests {
             pivot: [0.5, 0.5],
             corners: None,
             ignore_reversed_graphics: true,
+            blocking_objects: BlockingObjects::None,
+            blocking_mask: -1,
+            raycast_plane: None,
+            raycast_camera: None,
             kind: UiControlKind::Scrollbar {
                 value: 0.0,
                 size: 0.2,

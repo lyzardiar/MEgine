@@ -1666,7 +1666,7 @@ export function Viewport(props: {
           : { w: uiRoot.w, h: uiRoot.h };
         const uiItems = [
           ...layoutUiWorldSpace(p.entities, cam, vp, selSet),
-          ...layoutUiOverlay(p.entities, uiRoot, selSet, logicalUiSize),
+          ...layoutUiOverlay(p.entities, uiRoot, selSet, logicalUiSize, cam),
         ];
         uiItemsRef.current = uiItems;
 
@@ -1961,7 +1961,10 @@ export function Viewport(props: {
     // Game 视图：只做运行时交互（如 Button），不可点选编辑物体
     if (propsRef.current.tab === 'game') {
       if (ev.button === 0) {
-        const ui = hitTestUi(uiItemsRef.current, x, y);
+        const ui = hitTestUi(uiItemsRef.current, x, y, {
+          entities: propsRef.current.entities,
+          viewport: lastVpRef.current,
+        });
         if (ui?.slider?.interactable || ui?.scrollbar?.interactable) {
           focusedUiRef.current = ui.entity;
           focusedInputRef.current = null;
@@ -2330,7 +2333,10 @@ export function Viewport(props: {
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
         if (propsRef.current.tab === 'game') {
-          const ui = hitTestUi(uiItemsRef.current, x, y);
+          const ui = hitTestUi(uiItemsRef.current, x, y, {
+            entities: propsRef.current.entities,
+            viewport: lastVpRef.current,
+          });
           uiHoverRef.current = ui?.entity ?? null;
           canvas.style.cursor = ui?.slider
             ? 'ew-resize'
@@ -2840,7 +2846,10 @@ export function Viewport(props: {
         const rect = canvasRef.current.getBoundingClientRect();
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
-        const ui = hitTestUi(uiItemsRef.current, x, y);
+        const ui = hitTestUi(uiItemsRef.current, x, y, {
+          entities: propsRef.current.entities,
+          viewport: lastVpRef.current,
+        });
         if (ui && ui.entity === press) {
           if (ui.button?.interactable) {
             propsRef.current.onUiClick?.(ui.entity, ui.button.onClick);
@@ -2915,7 +2924,10 @@ export function Viewport(props: {
   const onWheel = (ev: React.WheelEvent) => {
     if (propsRef.current.tab === 'game') {
       const { x, y } = localPos(ev);
-      const ui = hitTestUi(uiItemsRef.current, x, y);
+      const ui = hitTestUi(uiItemsRef.current, x, y, {
+        entities: propsRef.current.entities,
+        viewport: lastVpRef.current,
+      });
       if (ui?.list) {
         ev.preventDefault();
         const entity = propsRef.current.entities.find((candidate) => candidate.entity === ui.entity);

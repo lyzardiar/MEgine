@@ -19,6 +19,10 @@ component Canvas {
 component GraphicRaycaster {
   enabled:                  bool = true
   ignore_reversed_graphics: bool = true
+  /// "None" | "TwoD" | "ThreeD" | "All"
+  blocking_objects:         string = "None"
+  /// Unity-style signed 32-bit LayerMask. -1 includes every layer.
+  blocking_mask:            int = -1
 }
 
 component CanvasScaler {

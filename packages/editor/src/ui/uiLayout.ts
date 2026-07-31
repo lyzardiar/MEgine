@@ -17,10 +17,11 @@ import { applyAspectRatio } from './aspectRatioFitter';
 import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
 import { graphicEffectFilter, type UiGraphicEffect } from './graphicEffect';
 import { resolveSpriteId } from '../spriteLibrary';
-import { add, project, quatRotateVec, type Camera, type Quat, type Vec3 } from '../math3d';
+import { add, cross, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
 import { buildWorldTransforms } from '../worldTransform';
 import { getSortingLayerRank } from '../sortingLayers';
+import { gameCameraForEntity } from '../gameCamera';
 import {
   isVerticalRange,
   normalizedRangePosition,
@@ -28,6 +29,12 @@ import {
   scrollbarValueFromPosition,
   type UiRangeDirection,
 } from './uiRange';
+import {
+  parseUiBlockingObjects,
+  uiGraphicPhysicallyBlocked,
+  type UiBlockingObjects,
+  type UiRaycastPlane,
+} from './uiPhysicsRaycast';
 
 /** World pixels-per-unit for Scene view Overlay canvas plane. */
 export const UI_SCENE_PPU = 100;
@@ -53,6 +60,13 @@ export type UiDrawItem = {
   blocksRaycasts?: boolean;
   /** Unity GraphicRaycaster back-face filtering for projected World Space quads. */
   ignoreReversedGraphics?: boolean;
+  /** Unity GraphicRaycaster physics dimensions checked in front of this graphic. */
+  blockingObjects?: UiBlockingObjects;
+  /** Signed 32-bit LayerMask used by physics blocking. */
+  blockingMask?: number;
+  /** Plane and Camera used to compare graphic distance with collider hits. */
+  raycastPlane?: UiRaycastPlane;
+  raycastCamera?: Camera;
   clip?: Rect;
   image?: {
     color: [number, number, number, number];
@@ -221,6 +235,20 @@ function color4(raw: unknown, fallback: [number, number, number, number]): [numb
 function number(raw: unknown, fallback: number): number {
   const value = Number(raw);
   return Number.isFinite(value) ? value : fallback;
+}
+
+function canvasEventCamera(
+  entities: readonly UiEnt[],
+  transforms: ReturnType<typeof buildWorldTransforms> | null,
+  canvas: Record<string, unknown>,
+  fallback: Camera,
+): Camera {
+  const raw = canvas.render_camera ?? canvas.renderCamera;
+  if (raw == null || String(raw).trim() === '') return fallback;
+  const entity = Number(raw);
+  if (!Number.isSafeInteger(entity) || entity < 0) return fallback;
+  return gameCameraForEntity(entities, entity, transforms ?? buildWorldTransforms(entities))
+    ?? fallback;
 }
 
 function enumValue<T extends string>(raw: unknown, values: readonly T[], fallback: T): T {
@@ -594,6 +622,7 @@ export function layoutUiOverlay(
   viewRect: Rect,
   selectedIds: Set<number>,
   logicalSize?: { w: number; h: number },
+  eventCamera?: Camera,
 ): UiDrawItem[] {
   const canvases = entities
     .filter((e) => e.components.Canvas
@@ -606,9 +635,11 @@ export function layoutUiOverlay(
     });
 
   const out: UiDrawItem[] = [];
+  let worldTransforms: ReturnType<typeof buildWorldTransforms> | null = null;
   let depthBase = 0;
 
   for (const canvas of canvases) {
+    const canvasOutputStart = out.length;
     const inheritedCanvas = outermostCanvas(entities, canvas);
     const mode =
       (inheritedCanvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
@@ -651,6 +682,8 @@ export function layoutUiOverlay(
         blocksRaycasts: true,
         raycasterEnabled: false,
         ignoreReversedGraphics: true,
+        blockingObjects: 'None' as UiBlockingObjects,
+        blockingMask: -1,
         pixelPerfect: false,
       },
       inheritedClip?: Rect,
@@ -721,6 +754,10 @@ export function layoutUiOverlay(
         enabled?: boolean;
         ignore_reversed_graphics?: boolean;
         ignoreReversedGraphics?: boolean;
+        blocking_objects?: string;
+        blockingObjects?: string;
+        blocking_mask?: number;
+        blockingMask?: number;
       } | undefined;
       const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
@@ -749,6 +786,12 @@ export function layoutUiOverlay(
           ? raycaster?.ignore_reversed_graphics !== false
             && raycaster?.ignoreReversedGraphics !== false
           : inherited.ignoreReversedGraphics,
+        blockingObjects: canvasSettings
+          ? parseUiBlockingObjects(raycaster?.blocking_objects ?? raycaster?.blockingObjects)
+          : inherited.blockingObjects,
+        blockingMask: canvasSettings
+          ? number(raycaster?.blocking_mask ?? raycaster?.blockingMask, -1)
+          : inherited.blockingMask,
         pixelPerfect: overridesPixelPerfect
           ? (canvasSettings?.pixel_perfect ?? canvasSettings?.pixelPerfect) === true
           : inherited.pixelPerfect,
@@ -775,6 +818,8 @@ export function layoutUiOverlay(
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
           ignoreReversedGraphics: state.ignoreReversedGraphics,
+          blockingObjects: state.blockingObjects,
+          blockingMask: state.blockingMask,
           clip,
           selected: selectedIds.has(ent.entity),
         });
@@ -790,6 +835,8 @@ export function layoutUiOverlay(
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
           ignoreReversedGraphics: state.ignoreReversedGraphics,
+          blockingObjects: state.blockingObjects,
+          blockingMask: state.blockingMask,
           clip,
           image: img
             ? {
@@ -1051,6 +1098,8 @@ export function layoutUiOverlay(
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
           ignoreReversedGraphics: state.ignoreReversedGraphics,
+          blockingObjects: state.blockingObjects,
+          blockingMask: state.blockingMask,
           clip,
           selected: true,
         });
@@ -1110,8 +1159,35 @@ export function layoutUiOverlay(
       blocksRaycasts: true,
       raycasterEnabled: false,
       ignoreReversedGraphics: true,
+      blockingObjects: 'None',
+      blockingMask: -1,
       pixelPerfect: canvasPixelPerfect(entities, canvas),
     }, root);
+    if (mode === 'ScreenSpaceCamera' && eventCamera) {
+      const canvasSettings = inheritedCanvas.components.Canvas as Record<string, unknown>;
+      if (String(canvasSettings.render_camera ?? canvasSettings.renderCamera ?? '').trim()) {
+        worldTransforms ??= buildWorldTransforms(entities);
+      }
+      const canvasCamera = canvasEventCamera(
+        entities,
+        worldTransforms,
+        canvasSettings,
+        eventCamera,
+      );
+      const forward = norm(sub(canvasCamera.target, canvasCamera.eye));
+      const distance = Math.max(0.01, number(
+        canvasSettings.plane_distance ?? canvasSettings.planeDistance,
+        100,
+      ));
+      const plane = {
+        point: add(canvasCamera.eye, scaleVec3(forward, distance)),
+        normal: forward,
+      } satisfies UiRaycastPlane;
+      for (const item of out.slice(canvasOutputStart)) {
+        item.raycastPlane = plane;
+        item.raycastCamera = canvasCamera;
+      }
+    }
     depthBase += 1000;
   }
 
@@ -1158,6 +1234,21 @@ export function layoutUiWorldSpace(
 
   for (const canvas of canvases) {
     const context = worldCanvasLayoutContext(entities, canvas, selectedIds, transforms);
+    const inheritedCanvas = outermostCanvas(entities, canvas);
+    const raycastCamera = canvasEventCamera(
+      entities,
+      transforms,
+      inheritedCanvas.components.Canvas as Record<string, unknown>,
+      cam,
+    );
+    const planeOrigin = context.pixelToWorld(0, 0);
+    const plane = {
+      point: planeOrigin,
+      normal: norm(cross(
+        sub(context.pixelToWorld(1, 0), planeOrigin),
+        sub(context.pixelToWorld(0, 1), planeOrigin),
+      )),
+    } satisfies UiRaycastPlane;
 
     for (const item of context.items) {
       const corners = pixelCorners(item.rect, item.rotation, item.pivot)
@@ -1182,6 +1273,8 @@ export function layoutUiWorldSpace(
         pivotScreen: { x: topLeft.x, y: topLeft.y },
         screenCorners,
         blocksRaycasts: reversed ? false : item.blocksRaycasts,
+        raycastPlane: plane,
+        raycastCamera,
         depth,
         clip: undefined,
         anchorParentRect: undefined,
@@ -1492,7 +1585,13 @@ function pointInUiItem(px: number, py: number, it: UiDrawItem): boolean {
   return u >= -w * pxN && u <= w * (1 - pxN) && v >= -h * pyN && v <= h * (1 - pyN);
 }
 
-export function hitTestUi(items: UiDrawItem[], x: number, y: number): UiDrawItem | null {
+export function hitTestUi(
+  items: UiDrawItem[],
+  x: number,
+  y: number,
+  physics?: { entities: readonly UiEnt[]; viewport: Rect },
+): UiDrawItem | null {
+  let physicsTransforms: ReturnType<typeof buildWorldTransforms> | undefined;
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.role === 'canvas') continue;
@@ -1506,6 +1605,17 @@ export function hitTestUi(items: UiDrawItem[], x: number, y: number): UiDrawItem
         h: it.rect.h * it.dropdown.options.length,
       });
     if (!pointInUiItem(x, y, it) && !dropdownPopup) continue;
+    if (physics && it.blockingObjects && it.blockingObjects !== 'None') {
+      physicsTransforms ??= buildWorldTransforms(physics.entities);
+      if (uiGraphicPhysicallyBlocked(
+        it,
+        x,
+        y,
+        physics.entities,
+        physics.viewport,
+        physicsTransforms,
+      )) continue;
+    }
     if (it.button?.interactable) return it;
     if (it.toggle?.interactable) return it;
     if (it.slider?.interactable) return it;

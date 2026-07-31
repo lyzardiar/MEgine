@@ -76,6 +76,37 @@ export type Camera = {
   far?: number;
 };
 
+export type WorldRay = { origin: Vec3; dir: Vec3 };
+
+/** Unproject a viewport pixel into the Camera ray used by editor/runtime pointer queries. */
+export function screenPointRay(
+  sx: number,
+  sy: number,
+  cam: Camera,
+  viewport: { x: number; y: number; w: number; h: number },
+): WorldRay {
+  const { forward, right, up } = lookBasis(cam.eye, cam.target, cam.up);
+  const width = Math.max(1, viewport.w);
+  const height = Math.max(1, viewport.h);
+  const aspect = width / height;
+  const ndcX = ((sx - viewport.x) / width) * 2 - 1;
+  const ndcY = 1 - ((sy - viewport.y) / height) * 2;
+  const near = Math.max(0.000001, cam.near ?? 0.08);
+  if (cam.projection === 'orthographic') {
+    const halfHeight = Math.max(0.001, cam.orthographicSize ?? 5);
+    const origin = add(
+      add(add(cam.eye, scale(forward, near)), scale(right, ndcX * halfHeight * aspect)),
+      scale(up, ndcY * halfHeight),
+    );
+    return { origin, dir: forward };
+  }
+  const tanHalf = Math.tan(((cam.fovYDeg * Math.PI) / 180) * 0.5);
+  const dir = norm(
+    add(add(forward, scale(right, ndcX * tanHalf * aspect)), scale(up, ndcY * tanHalf)),
+  );
+  return { origin: add(cam.eye, scale(dir, near)), dir };
+}
+
 export function project(
   world: Vec3,
   cam: Camera,

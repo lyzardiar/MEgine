@@ -1535,6 +1535,8 @@ impl Component for Canvas {
 pub struct GraphicRaycaster {
     pub enabled: bool,
     pub ignore_reversed_graphics: bool,
+    pub blocking_objects: String,
+    pub blocking_mask: i32,
 }
 
 impl Default for GraphicRaycaster {
@@ -1542,6 +1544,8 @@ impl Default for GraphicRaycaster {
         Self {
             enabled: true,
             ignore_reversed_graphics: true,
+            blocking_objects: "None".into(),
+            blocking_mask: -1,
         }
     }
 }

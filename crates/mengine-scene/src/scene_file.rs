@@ -120,7 +120,12 @@ fn migrate_legacy_canvas_raycasters(snapshot: &mut WorldSnapshot) {
         {
             entity.components.insert(
                 "GraphicRaycaster".into(),
-                serde_json::json!({ "enabled": true }),
+                serde_json::json!({
+                    "enabled": true,
+                    "ignore_reversed_graphics": true,
+                    "blocking_objects": "None",
+                    "blocking_mask": -1
+                }),
             );
         }
     }
@@ -257,6 +262,12 @@ mod tests {
                 world.get_component::<GraphicRaycaster>(canvas).is_some(),
                 expects_raycaster
             );
+            if expects_raycaster {
+                let raycaster = world.get_component::<GraphicRaycaster>(canvas).unwrap();
+                assert!(raycaster.ignore_reversed_graphics);
+                assert_eq!(raycaster.blocking_objects, "None");
+                assert_eq!(raycaster.blocking_mask, -1);
+            }
             std::fs::remove_dir_all(dir).unwrap();
         }
     }

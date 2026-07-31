@@ -3,7 +3,7 @@
  */
 
 import type { Camera, Quat, Vec3 } from './math3d';
-import { add, cross, dot, lookBasis, norm, project, scale, sub } from './math3d';
+import { add, cross, dot, lookBasis, norm, project, scale, screenPointRay, sub } from './math3d';
 import { transformBasis } from './editorGizmos';
 import type { GizmoMode } from './editorTool';
 
@@ -603,15 +603,7 @@ export function screenRay(
   cam: Camera,
   vp: Vp,
 ): { origin: Vec3; dir: Vec3 } {
-  const { forward, right, up } = lookBasis(cam.eye, cam.target);
-  const aspect = vp.w / Math.max(1, vp.h);
-  const tanHalf = Math.tan(((cam.fovYDeg * Math.PI) / 180) * 0.5);
-  const ndcX = ((sx - vp.x) / Math.max(1, vp.w)) * 2 - 1;
-  const ndcY = 1 - ((sy - vp.y) / Math.max(1, vp.h)) * 2;
-  const dir = norm(
-    add(add(forward, scale(right, ndcX * tanHalf * aspect)), scale(up, ndcY * tanHalf)),
-  );
-  return { origin: [...cam.eye] as Vec3, dir };
+  return screenPointRay(sx, sy, cam, vp);
 }
 
 function intersectRayPlane(
