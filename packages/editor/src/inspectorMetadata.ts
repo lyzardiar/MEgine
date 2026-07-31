@@ -8,7 +8,12 @@
 
 export type InspectorOption = { value: string; label: string };
 
-export type InspectorVisibilityCondition = { field: string; equals: unknown };
+export type InspectorVisibilityCondition = {
+  /** Omit for another field on this component; set for a sibling component field. */
+  component?: string;
+  field: string;
+  equals: unknown;
+};
 
 export type InspectorFieldMeta = {
   label?: string;
@@ -60,6 +65,18 @@ const sprite: InspectorFieldMeta = {
   kind: 'sprite',
   allowNone: true,
   noneValue: 'white',
+};
+
+const screenSpaceCanvas: InspectorVisibilityCondition = {
+  component: 'Canvas',
+  field: 'render_mode',
+  equals: ['ScreenSpaceOverlay', 'ScreenSpaceCamera'],
+};
+
+const worldSpaceCanvas: InspectorVisibilityCondition = {
+  component: 'Canvas',
+  field: 'render_mode',
+  equals: 'WorldSpace',
 };
 
 export const BUILTIN_INSPECTOR_FIELDS: Readonly<
@@ -423,19 +440,29 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
         { value: 'ScaleWithScreenSize', label: 'Scale With Screen Size' },
         { value: 'ConstantPhysicalSize', label: 'Constant Physical Size' },
       ],
+      visibleWhen: screenSpaceCanvas,
     },
     scale_factor: {
       min: 0.01,
       step: 0.1,
-      visibleWhen: { field: 'ui_scale_mode', equals: 'ConstantPixelSize' },
+      visibleWhen: [
+        screenSpaceCanvas,
+        { field: 'ui_scale_mode', equals: 'ConstantPixelSize' },
+      ],
     },
     reference_resolution: {
-      visibleWhen: { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
+      visibleWhen: [
+        screenSpaceCanvas,
+        { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
+      ],
     },
     screen_match_mode: {
       kind: 'enum',
       options: options('MatchWidthOrHeight', 'Expand', 'Shrink'),
-      visibleWhen: { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
+      visibleWhen: [
+        screenSpaceCanvas,
+        { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
+      ],
     },
     match_width_or_height: {
       label: 'Match',
@@ -443,6 +470,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       max: 1,
       step: 0.01,
       visibleWhen: [
+        screenSpaceCanvas,
         { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
         { field: 'screen_match_mode', equals: 'MatchWidthOrHeight' },
       ],
@@ -450,20 +478,33 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     physical_unit: {
       kind: 'enum',
       options: options('Centimeters', 'Millimeters', 'Inches', 'Points', 'Picas'),
-      visibleWhen: { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+      visibleWhen: [
+        screenSpaceCanvas,
+        { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+      ],
     },
     fallback_screen_dpi: {
       min: 1,
       step: 1,
-      visibleWhen: { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+      visibleWhen: [
+        screenSpaceCanvas,
+        { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+      ],
     },
     default_sprite_dpi: {
       min: 1,
       step: 1,
-      visibleWhen: { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+      visibleWhen: [
+        screenSpaceCanvas,
+        { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+      ],
     },
     reference_pixels_per_unit: { min: 0.01, step: 1 },
-    dynamic_pixels_per_unit: { min: 0.01, step: 0.1 },
+    dynamic_pixels_per_unit: {
+      min: 0.01,
+      step: 0.1,
+      visibleWhen: worldSpaceCanvas,
+    },
   },
   AspectRatioFitter: {
     aspect_mode: {
@@ -637,4 +678,25 @@ export function getBuiltinInspectorField(
   field: string,
 ): InspectorFieldMeta | undefined {
   return componentType ? BUILTIN_INSPECTOR_FIELDS[componentType]?.[field] : undefined;
+}
+
+export function isInspectorFieldVisible(
+  metadata: InspectorFieldMeta | undefined,
+  componentData: Readonly<Record<string, unknown>>,
+  siblingComponents: Readonly<Record<string, unknown>> = {},
+): boolean {
+  if (metadata?.hidden) return false;
+  const conditions = metadata?.visibleWhen
+    ? (Array.isArray(metadata.visibleWhen) ? metadata.visibleWhen : [metadata.visibleWhen])
+    : [];
+  return conditions.every((condition) => {
+    const source = condition.component == null
+      ? componentData
+      : siblingComponents[condition.component];
+    const record = source != null && typeof source === 'object' && !Array.isArray(source)
+      ? source as Readonly<Record<string, unknown>>
+      : {};
+    const accepted = Array.isArray(condition.equals) ? condition.equals : [condition.equals];
+    return accepted.includes(record[condition.field]);
+  });
 }

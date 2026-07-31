@@ -1884,3 +1884,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Runtime 过去从 Canvas 的第一个子节点才开始累积 CanvasGroup，导致直接挂在根 Canvas 或 `override_sorting` 嵌套 Canvas 上的 Alpha、Interactable、Blocks Raycasts 全部失效；Editor 预览则会应用，形成编辑态与 Player 分歧。现在每个 Canvas render root 在遍历子树前先应用自身 CanvasGroup，普通后代继续复用同一状态合并函数。
 - `override_sorting` Canvas 仍作为独立 render root 从默认组状态开始，因此不会继承边界外的 CanvasGroup；但它自身的 CanvasGroup 会立即成为新子树的根状态。这与 Unity Graphic 射线遍历在 override-sorting Canvas 处停止向上查找过滤器的边界一致，也同步覆盖渲染 Alpha、控件交互和 Graphic 阻挡。
 - Editor/Runtime 回归使用外层禁用射线且 Alpha 0.25、内层独立排序 Canvas Alpha 0.5 的同一结构，证明外层 Graphic 被阻挡、内层 Graphic 可命中，并分别得到正确透明度。
+
+## 164. 2026-08-01 CanvasScaler 模式化 Inspector 与依赖闭包
+
+- CanvasScaler 现在显式依赖 Canvas；Editor 添加组件时递归解析完整依赖闭包，因此在普通 GameObject 上添加 CanvasScaler 会在同一 Undo 事务中补齐 Canvas、RectTransform 和 Transform。依赖循环会被访问集合截断，移除 Canvas/RectTransform 仍由现有 blocker 契约拒绝。
+- Inspector 条件元数据新增可选 sibling component 来源，Agent 组件 schema 会原样暴露该条件。CanvasScaler 在 Screen Space Overlay/Camera 只展示 UI Scale Mode 及其当前分支设置，在 World Space 隐藏不会执行的屏幕缩放选项，只展示通用 Reference Pixels Per Unit 与 World Space 专属 Dynamic Pixels Per Unit。
+- 当前固定 bitmap 字形后端尚不能通过提高 Dynamic Pixels Per Unit 生成更高分辨率字形；Inspector 保留 Unity 同名世界空间字段，但技术边界继续如实记录，不用改变几何尺寸冒充像素密度实现。后续接入动态字体图集时，应让该值只影响字形栅格密度和缓存键，不改变 RectTransform 布局或世界尺寸。

@@ -1,11 +1,20 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'vite';
 import {
+  componentRequirements,
   createComponentDefaults,
   createUiCanvasComponents,
   createUiTextComponents,
 } from '../src/componentCatalog.ts';
-import { getBuiltinInspectorField } from '../src/inspectorMetadata.ts';
+import {
+  getBuiltinInspectorField,
+  isInspectorFieldVisible,
+} from '../src/inspectorMetadata.ts';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const UNITY_DEFAULTS = {
   ui_scale_mode: 'ConstantPixelSize',
@@ -56,6 +65,7 @@ test('Canvas catalog exposes all render modes and camera-aware defaults', () => 
 test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
   assert.deepEqual(createComponentDefaults('CanvasScaler'), UNITY_DEFAULTS);
   assert.deepEqual(createUiCanvasComponents().CanvasScaler, UNITY_DEFAULTS);
+  assert.deepEqual(componentRequirements('CanvasScaler'), ['Canvas']);
 });
 
 test('CanvasGroup exposes Unity parent-group override defaults', () => {
@@ -89,7 +99,69 @@ test('CanvasScaler Inspector exposes all Unity scale and match modes', () => {
 
 test('CanvasScaler Match is visible only for Scale With Screen Size match mode', () => {
   assert.deepEqual(getBuiltinInspectorField('CanvasScaler', 'match_width_or_height')?.visibleWhen, [
+    {
+      component: 'Canvas',
+      field: 'render_mode',
+      equals: ['ScreenSpaceOverlay', 'ScreenSpaceCamera'],
+    },
     { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
     { field: 'screen_match_mode', equals: 'MatchWidthOrHeight' },
   ]);
+});
+
+test('CanvasScaler Inspector exposes only settings used by the current Canvas mode', () => {
+  const scaler = { ...UNITY_DEFAULTS, ui_scale_mode: 'ScaleWithScreenSize' };
+  const visible = (field, renderMode) => isInspectorFieldVisible(
+    getBuiltinInspectorField('CanvasScaler', field),
+    scaler,
+    { Canvas: { render_mode: renderMode } },
+  );
+  assert.equal(visible('ui_scale_mode', 'ScreenSpaceOverlay'), true);
+  assert.equal(visible('reference_resolution', 'ScreenSpaceCamera'), true);
+  assert.equal(visible('dynamic_pixels_per_unit', 'ScreenSpaceOverlay'), false);
+  assert.equal(visible('ui_scale_mode', 'WorldSpace'), false);
+  assert.equal(visible('reference_resolution', 'WorldSpace'), false);
+  assert.equal(visible('dynamic_pixels_per_unit', 'WorldSpace'), true);
+  assert.equal(visible('reference_pixels_per_unit', 'WorldSpace'), true);
+});
+
+test('adding CanvasScaler resolves the complete Canvas dependency chain in one undo step', async () => {
+  const server = await createServer({
+    root,
+    server: { middlewareMode: true },
+    appType: 'custom',
+    logLevel: 'silent',
+  });
+  try {
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const store = createEditorStore();
+    const entity = store.createGameObject('Scaler Host', {
+      Transform: {
+        position: [0, 0, 0],
+        rotation: [0, 0, 0, 1],
+        scale: [1, 1, 1],
+      },
+    });
+    assert.notEqual(entity, null);
+    assert.equal(
+      store.addComponent(entity, 'CanvasScaler', createComponentDefaults('CanvasScaler')),
+      true,
+    );
+    const authored = store.authoredEntities().find((candidate) => candidate.entity === entity);
+    assert.ok(authored.components.Transform);
+    assert.ok(authored.components.RectTransform);
+    assert.ok(authored.components.Canvas);
+    assert.ok(authored.components.CanvasScaler);
+    assert.equal(store.removeComponent(entity, 'Canvas'), false);
+    assert.equal(store.removeComponent(entity, 'RectTransform'), false);
+    assert.equal(store.undoLabel, 'Add CanvasScaler');
+    assert.equal(store.undo(), true);
+    const restored = store.authoredEntities().find((candidate) => candidate.entity === entity);
+    assert.ok(restored.components.Transform);
+    assert.equal(restored.components.RectTransform, undefined);
+    assert.equal(restored.components.Canvas, undefined);
+    assert.equal(restored.components.CanvasScaler, undefined);
+  } finally {
+    await server.close();
+  }
 });

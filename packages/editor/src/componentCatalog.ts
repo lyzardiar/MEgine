@@ -261,6 +261,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'CanvasScaler',
     label: 'Canvas Scaler',
     description: 'UI 分辨率缩放',
+    requires: ['Canvas'],
     create: () => ({
       ui_scale_mode: 'ConstantPixelSize',
       reference_pixels_per_unit: 100,

@@ -14,7 +14,11 @@ import {
   pasteComponentValue,
   type ComponentClipboard,
 } from '../componentClipboard';
-import { getBuiltinInspectorField, type InspectorOption } from '../inspectorMetadata';
+import {
+  getBuiltinInspectorField,
+  isInspectorFieldVisible,
+  type InspectorOption,
+} from '../inspectorMetadata';
 import {
   normalizeCameraBackgroundColor,
   normalizeCameraClearFlags,
@@ -742,6 +746,7 @@ function GenericCompEditor(props: {
   componentType?: string;
   data: Record<string, unknown>;
   entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  contextComponents?: Record<string, unknown>;
   dynamicOptions?: Record<string, InspectorOption[]>;
   mixedFields?: ReadonlySet<string>;
   mixedArrayIndices?: Readonly<Record<string, readonly boolean[]>>;
@@ -769,16 +774,7 @@ function GenericCompEditor(props: {
     <>
       {entries.map(([key, val]) => {
         const meta = getBuiltinInspectorField(props.componentType, key);
-        if (meta?.hidden) return null;
-        const visibilityConditions = meta?.visibleWhen
-          ? (Array.isArray(meta.visibleWhen) ? meta.visibleWhen : [meta.visibleWhen])
-          : [];
-        if (visibilityConditions.some((condition) => {
-          const accepted = Array.isArray(condition.equals)
-            ? condition.equals
-            : [condition.equals];
-          return !accepted.includes(viewData[condition.field]);
-        })) return null;
+        if (!isInspectorFieldVisible(meta, viewData, props.contextComponents)) return null;
         const label = meta?.label ?? inspectorLabel(key);
         const semanticLabel = props.componentType
           ? `${getComponentCatalog().find((entry) => entry.type === props.componentType)?.label
@@ -1508,6 +1504,7 @@ function MultiSelectionInspector(props: {
                 componentType={type}
                 data={value}
                 entities={props.entities}
+                contextComponents={props.primary.components}
                 mixedFields={fieldState.mixedFields}
                 mixedArrayIndices={fieldState.mixedArrayIndices}
                 onChange={(next, editedPath) => {
@@ -2007,6 +2004,7 @@ export function Inspector(props: {
                 componentType={k}
                 data={data}
                 entities={props.entities ?? [entity]}
+                contextComponents={entity.components}
                 onChange={(next) => props.onSetComponent(entity.entity, k, next)}
               />
             )}

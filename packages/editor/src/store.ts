@@ -1314,7 +1314,19 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         ));
       if (!targets.length) return 0;
       pushUndo(targets.length > 1 ? `Add ${type} to GameObjects` : `Add ${type}`);
-      const requirements = componentRequirements(type);
+      const requirements: string[] = [];
+      const visited = new Set<string>([type]);
+      const collectRequirements = (requiredType: string) => {
+        if (visited.has(requiredType)) return;
+        visited.add(requiredType);
+        for (const nested of componentRequirements(requiredType)) {
+          collectRequirements(nested);
+        }
+        requirements.push(requiredType);
+      };
+      for (const requiredType of componentRequirements(type)) {
+        collectRequirements(requiredType);
+      }
       for (const entity of targets) {
         entity.components[type] = structuredClone(value);
         for (const dep of requirements) {
