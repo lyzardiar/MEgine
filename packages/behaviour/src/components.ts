@@ -277,6 +277,16 @@ export class UIButton {
   static readonly typeName = 'Button' as const;
   interactable!: boolean;
   transition!: string;
+  normal_color!: Color4;
+  highlighted_color!: Color4;
+  pressed_color!: Color4;
+  selected_color!: Color4;
+  disabled_color!: Color4;
+  color_multiplier!: number;
+  fade_duration!: number;
+  label!: string;
+  text_color!: Color4;
+  font_size!: number;
   /** UnityEvent persistent call, or legacy method name string. */
   on_click!:
     | string

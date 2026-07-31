@@ -118,6 +118,14 @@ component Button {
   interactable:    bool   = true
   /// "None" | "ColorTint"
   transition:      string = "ColorTint"
+  /// Unity ColorBlock values multiplied into the target Graphic for each Selectable state.
+  normal_color:      float4 = [1, 1, 1, 1]
+  highlighted_color: float4 = [0.9607843, 0.9607843, 0.9607843, 1]
+  pressed_color:     float4 = [0.7843137, 0.7843137, 0.7843137, 1]
+  selected_color:    float4 = [0.9607843, 0.9607843, 0.9607843, 1]
+  disabled_color:    float4 = [0.5215686, 0.5215686, 0.5215686, 0.5019608]
+  color_multiplier: float   = 1
+  fade_duration:    float   = 0.1
   label:           string = "Button"
   text_color:      float4 = [1, 1, 1, 1]
   font_size:       float  = 16

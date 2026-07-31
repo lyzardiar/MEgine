@@ -28,6 +28,14 @@ import {
 import { applyAspectRatio } from './aspectRatioFitter';
 import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
 import { graphicEffectFilter, type UiGraphicEffect } from './graphicEffect';
+import {
+  advanceButtonTint,
+  buttonVisualState,
+  multiplyButtonTint,
+  readButtonColorBlock,
+  type ButtonColorBlock,
+  type ButtonTintTween,
+} from './buttonColorTint';
 import { resolveSpriteId } from '../spriteLibrary';
 import { add, cross, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
@@ -113,6 +121,7 @@ export type UiDrawItem = {
   button?: {
     interactable: boolean;
     transition: string;
+    colorBlock: ButtonColorBlock;
     label: string;
     textColor: [number, number, number, number];
     fontSize: number;
@@ -956,6 +965,7 @@ export function layoutUiOverlay(
             ? {
                 interactable: btn.interactable !== false && state.interactable,
                 transition: String(btn.transition ?? 'ColorTint'),
+                colorBlock: readButtonColorBlock(btn),
                 label: String(btn.label ?? 'Button'),
                 textColor: color4(btn.text_color ?? btn.textColor, [1, 1, 1, 1]),
                 fontSize: number(btn.font_size ?? btn.fontSize, 16) * scale,
@@ -2019,6 +2029,8 @@ function hideMaskGraphic(item: UiDrawItem): UiDrawItem {
   };
 }
 
+const buttonTintStates = new WeakMap<HTMLCanvasElement, Map<number, ButtonTintTween>>();
+
 export function drawUiItems(
   ctx: CanvasRenderingContext2D,
   items: UiDrawItem[],
@@ -2029,6 +2041,18 @@ export function drawUiItems(
   const showLabel = !!opts?.sceneLabel;
   const batches = buildUiBatches(items);
   const itemsByEntity = new Map(items.map((item) => [item.entity, item]));
+  let buttonTints = buttonTintStates.get(ctx.canvas);
+  if (!buttonTints) {
+    buttonTints = new Map();
+    buttonTintStates.set(ctx.canvas, buttonTints);
+  }
+  const liveButtons = new Set(items.filter((item) => item.button).map((item) => item.entity));
+  if (buttonTints.size > liveButtons.size + 32) {
+    for (const entity of buttonTints.keys()) {
+      if (!liveButtons.has(entity)) buttonTints.delete(entity);
+    }
+  }
+  const now = (globalThis.performance?.now() ?? Date.now()) / 1000;
   let contentLayer: HTMLCanvasElement | null = null;
   let maskLayer: HTMLCanvasElement | null = null;
   const layer = (kind: 'content' | 'mask') => {
@@ -2213,17 +2237,21 @@ export function drawUiItems(
       continue;
     }
 
-    if (it.button && it.button.transition === 'ColorTint') {
-      if (pressId === it.entity) {
-        r *= 0.75;
-        g *= 0.75;
-        b *= 0.75;
-      } else if (hoverId === it.entity) {
-        r = Math.min(1, r * 1.15);
-        g = Math.min(1, g * 1.15);
-        b = Math.min(1, b * 1.15);
-      }
-      if (!it.button.interactable) a *= 0.45;
+    if (it.button && it.button.transition.toLowerCase() === 'colortint') {
+      const state = buttonVisualState(
+        it.button.interactable,
+        hoverId === it.entity,
+        pressId === it.entity,
+        opts?.focusId === it.entity,
+      );
+      const tween = advanceButtonTint(
+        buttonTints.get(it.entity),
+        state,
+        it.button.colorBlock,
+        now,
+      );
+      buttonTints.set(it.entity, tween);
+      [r, g, b, a] = multiplyButtonTint([r, g, b, a], tween.current);
     }
 
     withRot(() => {

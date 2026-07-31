@@ -39,8 +39,9 @@ use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::timeline::{RuntimeCameraOverride, RuntimeParticleCommand, TimelineRuntime};
 use mengine_runtime::ui::{
-    append_ui_focus_ring, collect_ui_frame_for_display, next_ui_focus, set_toggle_value,
-    UiControlKind, UiControlRegion,
+    append_ui_focus_ring, collect_ui_frame_for_display_with_interaction, next_ui_focus,
+    set_toggle_value, update_ui_button_tints, UiButtonTintTween, UiControlKind, UiControlRegion,
+    UiInteractionState,
 };
 use mengine_runtime::ui_raycast::{raycast_blocking_colliders, viewport_world_ray};
 use mengine_scene::load_scene;
@@ -102,10 +103,13 @@ struct App {
     cube: Option<mengine_core::Entity>,
     angle: f32,
     cursor: [f32; 2],
+    cursor_inside: bool,
     ui_controls: Vec<UiControlRegion>,
     active_slider: Option<Entity>,
+    active_ui_press: Option<Entity>,
     focused_input: Option<Entity>,
     focused_ui: Option<Entity>,
+    ui_button_tints: HashMap<Entity, UiButtonTintTween>,
     modifiers: ModifiersState,
     last_ui_draw_calls: u32,
     last_material_pipeline_stats: Option<MaterialPipelineStats>,
@@ -163,10 +167,13 @@ impl App {
             cube: None,
             angle: 0.0,
             cursor: [0.0, 0.0],
+            cursor_inside: false,
             ui_controls: Vec::new(),
             active_slider: None,
+            active_ui_press: None,
             focused_input: None,
             focused_ui: None,
+            ui_button_tints: HashMap::new(),
             modifiers: ModifiersState::empty(),
             last_ui_draw_calls: u32::MAX,
             last_material_pipeline_stats: None,
@@ -941,6 +948,7 @@ impl App {
             .find(|control| control.entity == entity)
             .cloned()
         else {
+            self.active_slider = None;
             return;
         };
         if let Some(value) = region.range_value_at(self.cursor[0], self.cursor[1]) {
@@ -965,8 +973,14 @@ impl App {
             })
             .cloned()
         else {
+            self.active_ui_press = None;
             return;
         };
+        self.active_ui_press = (!matches!(
+            control.kind,
+            UiControlKind::Blocker | UiControlKind::ScrollView
+        ))
+        .then_some(control.entity);
         if !matches!(
             control.kind,
             UiControlKind::Blocker | UiControlKind::ScrollView
@@ -1266,6 +1280,28 @@ impl App {
         [size.width.max(1), size.height.max(1)]
     }
 
+    fn ui_interaction_state(
+        &self,
+        hierarchy: &TransformHierarchy,
+        viewport: [u32; 2],
+    ) -> UiInteractionState {
+        let hovered = self
+            .cursor_inside
+            .then(|| {
+                self.ui_controls.iter().rev().find(|control| {
+                    control.contains(self.cursor[0], self.cursor[1])
+                        && !self.ui_control_is_physically_blocked(control, hierarchy, viewport)
+                })
+            })
+            .flatten()
+            .map(|control| control.entity);
+        UiInteractionState {
+            hovered,
+            pressed: self.active_ui_press,
+            selected: self.focused_ui,
+        }
+    }
+
     fn ui_control_is_physically_blocked(
         &self,
         control: &UiControlRegion,
@@ -1491,7 +1527,15 @@ function onTick(dt, frame) {
             WindowEvent::Ime(Ime::Commit(text)) => self.edit_focused_input(&text),
             WindowEvent::CursorMoved { position, .. } => {
                 self.cursor = [position.x as f32, position.y as f32];
+                self.cursor_inside = true;
                 self.update_active_slider();
+            }
+            WindowEvent::CursorEntered { .. } => self.cursor_inside = true,
+            WindowEvent::CursorLeft { .. } => self.cursor_inside = false,
+            WindowEvent::Focused(false) => {
+                self.cursor_inside = false;
+                self.active_slider = None;
+                self.active_ui_press = None;
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 let (delta_x, delta_y) = match delta {
@@ -1511,7 +1555,10 @@ function onTick(dt, frame) {
                 button: MouseButton::Left,
                 state: ElementState::Released,
                 ..
-            } => self.active_slider = None,
+            } => {
+                self.active_slider = None;
+                self.active_ui_press = None;
+            }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
                 let dt = (now - self.last).as_secs_f32();
@@ -1713,8 +1760,10 @@ function onTick(dt, frame) {
                     self.apply_runtime_request(request);
                 }
 
+                let hierarchy = TransformHierarchy::build(&self.world);
+                let interaction = self.ui_interaction_state(&hierarchy, self.ui_viewport_size());
+                update_ui_button_tints(&self.world, interaction, dt, &mut self.ui_button_tints);
                 if let Some(r) = self.renderer.as_mut() {
-                    let hierarchy = TransformHierarchy::build(&self.world);
                     let aspect = r.aspect();
                     let active_camera = find_camera(
                         &self.world,
@@ -1749,7 +1798,7 @@ function onTick(dt, frame) {
                         .as_ref()
                         .map(|window| window.inner_size())
                         .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
-                    let mut ui = collect_ui_frame_for_display(
+                    let mut ui = collect_ui_frame_for_display_with_interaction(
                         &self.world,
                         &hierarchy,
                         window_size.width,
@@ -1757,6 +1806,8 @@ function onTick(dt, frame) {
                         has_authored_camera.then_some(camera),
                         &self.sorting_layers,
                         0,
+                        interaction,
+                        &self.ui_button_tints,
                     );
                     append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
                     let mut world_primitives = if has_authored_camera {

@@ -354,8 +354,26 @@
   },
   "Button": {
     "properties": {
+      "color_multiplier": {
+        "type": "number"
+      },
+      "disabled_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "fade_duration": {
+        "type": "number"
+      },
       "font_size": {
         "type": "number"
+      },
+      "highlighted_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
       },
       "interactable": {
         "type": "boolean"
@@ -363,8 +381,26 @@
       "label": {
         "type": "string"
       },
+      "normal_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "on_click": {
         "type": "object"
+      },
+      "pressed_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "selected_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
       },
       "text_color": {
         "items": {
@@ -379,6 +415,13 @@
     "required": [
       "interactable",
       "transition",
+      "normal_color",
+      "highlighted_color",
+      "pressed_color",
+      "selected_color",
+      "disabled_color",
+      "color_multiplier",
+      "fade_duration",
       "label",
       "text_color",
       "font_size",

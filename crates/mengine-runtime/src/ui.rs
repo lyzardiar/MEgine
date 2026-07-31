@@ -14,6 +14,7 @@ use mengine_rhi::{
     UiClipRect, UiPrimitive, UiStencilMode,
 };
 use serde_json::Value;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct UiRect {
@@ -21,6 +22,175 @@ pub struct UiRect {
     pub y: f32,
     pub width: f32,
     pub height: f32,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum UiButtonVisualState {
+    #[default]
+    Normal,
+    Highlighted,
+    Pressed,
+    Selected,
+    Disabled,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct UiInteractionState {
+    pub hovered: Option<Entity>,
+    pub pressed: Option<Entity>,
+    pub selected: Option<Entity>,
+}
+
+impl UiInteractionState {
+    fn button_state(self, entity: Entity, interactable: bool) -> UiButtonVisualState {
+        if !interactable {
+            UiButtonVisualState::Disabled
+        } else if self.pressed == Some(entity) && self.hovered == Some(entity) {
+            UiButtonVisualState::Pressed
+        } else if self.hovered == Some(entity) {
+            UiButtonVisualState::Highlighted
+        } else if self.selected == Some(entity) {
+            UiButtonVisualState::Selected
+        } else {
+            UiButtonVisualState::Normal
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct UiButtonTintTween {
+    pub state: UiButtonVisualState,
+    pub start: [f32; 4],
+    pub current: [f32; 4],
+    pub target: [f32; 4],
+    pub elapsed: f32,
+    pub duration: f32,
+}
+
+fn sanitize_button_color(color: [f32; 4]) -> [f32; 4] {
+    color.map(|channel| {
+        if channel.is_finite() {
+            channel.max(0.0)
+        } else {
+            0.0
+        }
+    })
+}
+
+pub fn button_target_tint(button: &Button, state: UiButtonVisualState) -> [f32; 4] {
+    let color = match state {
+        UiButtonVisualState::Normal => button.normal_color,
+        UiButtonVisualState::Highlighted => button.highlighted_color,
+        UiButtonVisualState::Pressed => button.pressed_color,
+        UiButtonVisualState::Selected => button.selected_color,
+        UiButtonVisualState::Disabled => button.disabled_color,
+    };
+    let multiplier = if button.color_multiplier.is_finite() {
+        button.color_multiplier.max(0.0)
+    } else {
+        1.0
+    };
+    sanitize_button_color(color).map(|channel| channel * multiplier)
+}
+
+fn button_effective_interactable(world: &World, entity: Entity) -> bool {
+    let mut chain = Vec::new();
+    let mut visited = HashSet::new();
+    let mut cursor = Some(entity);
+    while let Some(current) = cursor {
+        if !visited.insert(current) {
+            break;
+        }
+        chain.push(current);
+        cursor = world
+            .get_component::<Parent>(current)
+            .map(|parent| parent.entity);
+    }
+    let mut interactable = true;
+    for current in chain.into_iter().rev() {
+        if let Some(group) = world.get_component::<CanvasGroup>(current) {
+            if group.ignore_parent_groups {
+                interactable = true;
+            }
+            interactable &= group.interactable;
+        }
+    }
+    interactable
+}
+
+fn sample_button_tween(tween: UiButtonTintTween) -> [f32; 4] {
+    let progress = if tween.duration <= 0.0 {
+        1.0
+    } else {
+        (tween.elapsed / tween.duration).clamp(0.0, 1.0)
+    };
+    std::array::from_fn(|index| {
+        tween.start[index] + (tween.target[index] - tween.start[index]) * progress
+    })
+}
+
+pub fn update_ui_button_tints(
+    world: &World,
+    interaction: UiInteractionState,
+    delta_time: f32,
+    cache: &mut HashMap<Entity, UiButtonTintTween>,
+) {
+    cache.retain(|entity, _| world.get_component::<Button>(*entity).is_some());
+    let delta_time = if delta_time.is_finite() {
+        delta_time.max(0.0)
+    } else {
+        0.0
+    };
+    for entity in world.iter_entities() {
+        let Some(button) = world.get_component::<Button>(entity) else {
+            continue;
+        };
+        if !button.transition.eq_ignore_ascii_case("ColorTint") {
+            cache.remove(&entity);
+            continue;
+        }
+        let state = interaction.button_state(
+            entity,
+            button.interactable && button_effective_interactable(world, entity),
+        );
+        let target = button_target_tint(button, state);
+        let duration = if button.fade_duration.is_finite() {
+            button.fade_duration.max(0.0)
+        } else {
+            0.1
+        };
+        match cache.get_mut(&entity) {
+            None => {
+                cache.insert(
+                    entity,
+                    UiButtonTintTween {
+                        state,
+                        start: target,
+                        current: target,
+                        target,
+                        elapsed: duration,
+                        duration,
+                    },
+                );
+            }
+            Some(tween) => {
+                let sampled = sample_button_tween(*tween);
+                if tween.state != state || tween.target != target {
+                    *tween = UiButtonTintTween {
+                        state,
+                        start: sampled,
+                        current: if duration <= 0.0 { target } else { sampled },
+                        target,
+                        elapsed: 0.0,
+                        duration,
+                    };
+                } else {
+                    tween.elapsed += delta_time;
+                    tween.current = sample_button_tween(*tween);
+                }
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -548,7 +718,17 @@ pub fn collect_ui_frame_with_hierarchy(
     width: u32,
     height: u32,
 ) -> RuntimeUiFrame {
-    collect_ui_frame_internal(world, hierarchy, width, height, None, None, 0)
+    collect_ui_frame_internal(
+        world,
+        hierarchy,
+        width,
+        height,
+        None,
+        None,
+        0,
+        UiInteractionState::default(),
+        None,
+    )
 }
 
 pub fn collect_ui_frame_with_hierarchy_and_camera(
@@ -567,6 +747,8 @@ pub fn collect_ui_frame_with_hierarchy_and_camera(
         Some(active_camera),
         Some(sorting_layers),
         0,
+        UiInteractionState::default(),
+        None,
     )
 }
 
@@ -587,6 +769,32 @@ pub fn collect_ui_frame_for_display(
         active_camera,
         Some(sorting_layers),
         normalize_target_display(target_display),
+        UiInteractionState::default(),
+        None,
+    )
+}
+
+pub fn collect_ui_frame_for_display_with_interaction(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    width: u32,
+    height: u32,
+    active_camera: Option<FrameCamera>,
+    sorting_layers: &SortingLayers,
+    target_display: i32,
+    interaction: UiInteractionState,
+    button_tints: &HashMap<Entity, UiButtonTintTween>,
+) -> RuntimeUiFrame {
+    collect_ui_frame_internal(
+        world,
+        hierarchy,
+        width,
+        height,
+        active_camera,
+        Some(sorting_layers),
+        normalize_target_display(target_display),
+        interaction,
+        Some(button_tints),
     )
 }
 
@@ -598,6 +806,8 @@ fn collect_ui_frame_internal(
     active_camera: Option<FrameCamera>,
     sorting_layers: Option<&SortingLayers>,
     target_display: i32,
+    interaction: UiInteractionState,
+    button_tints: Option<&HashMap<Entity, UiButtonTintTween>>,
 ) -> RuntimeUiFrame {
     let root = UiRect {
         x: 0.0,
@@ -703,6 +913,8 @@ fn collect_ui_frame_internal(
                 screen_space: !world_space,
                 ..UiInheritedState::default()
             },
+            interaction,
+            button_tints,
             &mut primitives,
             &mut controls,
         );
@@ -1338,6 +1550,8 @@ fn walk(
     canvas_root: Entity,
     layout_state: UiWalkLayout,
     inherited: UiInheritedState,
+    interaction: UiInteractionState,
+    button_tints: Option<&HashMap<Entity, UiButtonTintTween>>,
     primitives: &mut Vec<UiPrimitive>,
     controls: &mut Vec<UiControlRegion>,
 ) {
@@ -1541,26 +1755,28 @@ fn walk(
     }
 
     if let Some(button) = world.get_component::<Button>(entity) {
-        if image.is_none() {
+        if image.is_none() && raw_image.is_none() {
             primitives.push(primitive(
                 rect,
-                [
-                    0.25,
-                    0.45,
-                    0.85,
-                    state.alpha
-                        * if button.interactable && state.interactable {
-                            1.0
-                        } else {
-                            0.45
-                        },
-                ],
+                [0.25, 0.45, 0.85, state.alpha],
                 pivot,
                 rotation,
                 "ui/button",
                 "white",
                 clip,
             ));
+        }
+        let target_end = primitives.len();
+        if button.transition.eq_ignore_ascii_case("ColorTint") {
+            let visual_state =
+                interaction.button_state(entity, button.interactable && state.interactable);
+            let tint = button_tints
+                .and_then(|cache| cache.get(&entity))
+                .map(|tween| tween.current)
+                .unwrap_or_else(|| button_target_tint(button, visual_state));
+            for primitive in &mut primitives[graphic_start..target_end] {
+                primitive.color = multiply_color(primitive.color, tint);
+            }
         }
         push_text(
             primitives,
@@ -2397,6 +2613,8 @@ fn walk(
                 forced_rect: forced,
             },
             state,
+            interaction,
+            button_tints,
             primitives,
             controls,
         );
@@ -3786,6 +4004,10 @@ fn multiply_alpha(mut color: [f32; 4], factor: f32) -> [f32; 4] {
     color
 }
 
+fn multiply_color(color: [f32; 4], tint: [f32; 4]) -> [f32; 4] {
+    std::array::from_fn(|index| color[index] * tint[index])
+}
+
 fn glyph_rows(character: char) -> [u8; 7] {
     match character.to_ascii_uppercase() {
         'A' => [
@@ -3945,6 +4167,90 @@ mod tests {
         assert!((canvas_scale_factor(&scaler, 1.0, 1.0) - 120.0 / 25.4).abs() < 1e-6);
         scaler.physical_unit = "Picas".into();
         assert_eq!(canvas_scale_factor(&scaler, 1.0, 1.0), 20.0);
+    }
+
+    #[test]
+    fn button_color_block_cross_fades_runtime_target_graphic_states() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        let entity = world.spawn_empty();
+        world.insert_component(entity, RectTransform::default());
+        world.insert_component(
+            entity,
+            Image {
+                color: [0.4, 0.8, 1.0, 0.5],
+                ..Image::default()
+            },
+        );
+        world.insert_component(
+            entity,
+            Button {
+                normal_color: [1.0; 4],
+                highlighted_color: [0.5, 0.5, 0.5, 1.0],
+                pressed_color: [0.25, 0.25, 0.25, 1.0],
+                fade_duration: 0.1,
+                ..Button::default()
+            },
+        );
+        world.set_parent(entity, Some(canvas));
+
+        let mut cache = HashMap::new();
+        update_ui_button_tints(&world, UiInteractionState::default(), 0.0, &mut cache);
+        let hovered = UiInteractionState {
+            hovered: Some(entity),
+            ..UiInteractionState::default()
+        };
+        update_ui_button_tints(&world, hovered, 0.0, &mut cache);
+        update_ui_button_tints(&world, hovered, 0.05, &mut cache);
+        assert_eq!(cache[&entity].current, [0.75, 0.75, 0.75, 1.0]);
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let frame = collect_ui_frame_for_display_with_interaction(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            None,
+            &SortingLayers::default(),
+            0,
+            hovered,
+            &cache,
+        );
+        let graphic = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.key.material == "ui/image")
+            .unwrap();
+        assert_eq!(graphic.color, [0.3, 0.6, 0.75, 0.5]);
+
+        let pressed = UiInteractionState {
+            hovered: Some(entity),
+            pressed: Some(entity),
+            selected: Some(entity),
+        };
+        assert_eq!(
+            pressed.button_state(entity, true),
+            UiButtonVisualState::Pressed
+        );
+        assert_eq!(
+            pressed.button_state(entity, false),
+            UiButtonVisualState::Disabled
+        );
+
+        world.insert_component(
+            canvas,
+            CanvasGroup {
+                interactable: false,
+                ..CanvasGroup::default()
+            },
+        );
+        update_ui_button_tints(&world, hovered, 0.0, &mut cache);
+        update_ui_button_tints(&world, hovered, 0.1, &mut cache);
+        assert_eq!(cache[&entity].state, UiButtonVisualState::Disabled);
+        assert_eq!(cache[&entity].current, Button::default().disabled_color);
     }
 
     #[test]
@@ -5964,7 +6270,7 @@ mod tests {
             .iter()
             .find(|primitive| primitive.rect[0] > 350.0)
             .unwrap();
-        assert!((inherited.color[3] - 0.1125).abs() < 0.0001);
+        assert!((inherited.color[3] - Button::default().disabled_color[3] * 0.25).abs() < 0.0001);
         assert!((independent.color[3] - 0.5).abs() < 0.0001);
     }
 

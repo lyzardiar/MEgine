@@ -468,6 +468,13 @@ export interface Outline {
 export interface Button {
   interactable: boolean;
   transition: string;
+  normalColor: [number, number, number, number];
+  highlightedColor: [number, number, number, number];
+  pressedColor: [number, number, number, number];
+  selectedColor: [number, number, number, number];
+  disabledColor: [number, number, number, number];
+  colorMultiplier: number;
+  fadeDuration: number;
   label: string;
   textColor: [number, number, number, number];
   fontSize: number;

@@ -1950,3 +1950,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - 原生 RHI 的主深度附件升级为 `Depth24PlusStencil8`。Runtime 按 UI 深度优先顺序先绘制可选的 Mask Graphic，再用同一纹理、颜色、Filled/Sliced/Tiled 网格和透明度写入 Stencil；子树执行 Equal 测试，离开子树后用对应网格恢复父深度。重叠 quad 通过“仅匹配当前深度后增减”保持幂等，透明纹理像素在 Fragment 阶段丢弃，不把 Mask 退化为矩形 scissor。World Space Canvas 继续保留透视四角与深度测试。
 - Editor Canvas 预览保存祖先 Mask Graphic 栈，并在可复用离屏层中用 `destination-in` 逐层相乘真实图形 Alpha；因此透明 Sprite、Filled、九宫格、平铺、旋转和嵌套 Mask 与 Runtime 使用同一可见形状。`Show Mask Graphic=false` 只隐藏自身显示，不影响其对子树的遮罩。视口截图直接捕获合成结果，后台 Agent 无需激活窗口即可观察正确画面。
 - Unity `Mask.IsRaycastLocationValid` 使用 RectTransform 矩形而不是 Sprite Alpha。Editor 与 Runtime 因此分别继承最多 8 个旋转矩形/投影四边形作为射线过滤器，并与 RectMask2D、CanvasGroup、GraphicRaycaster 物理遮挡共同生效；Screen Space、Camera 和 World Space 命中均有无界面回归。
+
+## 175. 2026-08-01 Button ColorBlock 与 Selectable 状态
+
+- `Button.transition=ColorTint` 不再是只有名字的近似效果。IDL、Rust/TypeScript 生成 API、Behaviour、组件目录、Inspector 与 Agent 组件 schema 新增 Unity ColorBlock 的 Normal、Highlighted、Pressed、Selected、Disabled 五组颜色，以及 Color Multiplier 和 Fade Duration；旧场景通过生成类型默认值自动获得 Unity 默认 ColorBlock。
+- Editor Canvas 预览与 Runtime 都按 Disabled、Pressed、Highlighted、Selected、Normal 的优先级解析状态。Pressed 仅在鼠标仍位于按下目标内时成立，键盘焦点使用 Selected；鼠标离开窗口、窗口失焦或释放按键会清理按下状态，避免卡死在 Pressed。颜色乘到 Button 同实体的 Image/RawImage 或缺省背景 Graphic，不错误染色标签文字。
+- 两端的颜色过渡都从状态切换瞬间的已采样颜色继续插值，连续快速切换不会跳回上一个端点；Fade Duration 为零时立即切换。Runtime 缓存按实体回收，Editor 缓存按 Canvas 隔离并清理离场按钮，因此持续预览和后台 Agent 截图不会无界增长状态。无窗口回归覆盖 ColorBlock 默认值、状态优先级、中途打断、颜色乘法以及 Runtime 目标 Graphic 的半程渐变。
