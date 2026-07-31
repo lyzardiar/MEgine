@@ -505,6 +505,9 @@
       "blocks_raycasts": {
         "type": "boolean"
       },
+      "ignore_parent_groups": {
+        "type": "boolean"
+      },
       "interactable": {
         "type": "boolean"
       }
@@ -512,7 +515,8 @@
     "required": [
       "alpha",
       "interactable",
-      "blocks_raycasts"
+      "blocks_raycasts",
+      "ignore_parent_groups"
     ],
     "type": "object"
   },

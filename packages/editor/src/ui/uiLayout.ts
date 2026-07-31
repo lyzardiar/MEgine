@@ -49,6 +49,8 @@ export type UiDrawItem = {
   rotation: number;
   pivot: [number, number];
   opacity: number;
+  /** Pointer raycasts are rejected when a CanvasGroup disables them. */
+  blocksRaycasts?: boolean;
   clip?: Rect;
   image?: {
     color: [number, number, number, number];
@@ -680,10 +682,18 @@ export function layoutUiOverlay(
       const overridesPixelPerfect = (
         canvasSettings?.override_pixel_perfect ?? canvasSettings?.overridePixelPerfect
       ) === true;
+      const ignoresParentGroups = (
+        group?.ignore_parent_groups ?? group?.ignoreParentGroups
+      ) === true;
+      const groupBase = ignoresParentGroups
+        ? { opacity: 1, interactable: true, blocksRaycasts: true }
+        : inherited;
       const state = {
-        opacity: inherited.opacity * Math.max(0, Math.min(1, number(group?.alpha, 1))),
-        interactable: inherited.interactable && group?.interactable !== false,
-        blocksRaycasts: inherited.blocksRaycasts && group?.blocks_raycasts !== false && group?.blocksRaycasts !== false,
+        opacity: groupBase.opacity * Math.max(0, Math.min(1, number(group?.alpha, 1))),
+        interactable: groupBase.interactable && group?.interactable !== false,
+        blocksRaycasts: groupBase.blocksRaycasts
+          && group?.blocks_raycasts !== false
+          && group?.blocksRaycasts !== false,
         pixelPerfect: overridesPixelPerfect
           ? (canvasSettings?.pixel_perfect ?? canvasSettings?.pixelPerfect) === true
           : inherited.pixelPerfect,
@@ -708,6 +718,7 @@ export function layoutUiOverlay(
           rotation: 0,
           pivot: [0.5, 0.5],
           opacity: state.opacity,
+          blocksRaycasts: state.blocksRaycasts,
           clip,
           selected: selectedIds.has(ent.entity),
         });
@@ -721,6 +732,7 @@ export function layoutUiOverlay(
           pivot,
           anchorParentRect,
           opacity: state.opacity,
+          blocksRaycasts: state.blocksRaycasts,
           clip,
           image: img
             ? {
@@ -980,6 +992,7 @@ export function layoutUiOverlay(
           pivot,
           anchorParentRect,
           opacity: state.opacity,
+          blocksRaycasts: state.blocksRaycasts,
           clip,
           selected: true,
         });
@@ -1405,6 +1418,7 @@ export function hitTestUi(items: UiDrawItem[], x: number, y: number): UiDrawItem
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.role === 'canvas') continue;
+    if (it.blocksRaycasts === false) continue;
     if (it.clip && !pointInRect(x, y, it.clip)) continue;
     const dropdownPopup = it.dropdown?.expanded
       && pointInRect(x, y, {

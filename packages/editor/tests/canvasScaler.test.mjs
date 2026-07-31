@@ -57,6 +57,15 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
   assert.deepEqual(createUiCanvasComponents().CanvasScaler, UNITY_DEFAULTS);
 });
 
+test('CanvasGroup exposes Unity parent-group override defaults', () => {
+  assert.deepEqual(createComponentDefaults('CanvasGroup'), {
+    alpha: 1,
+    interactable: true,
+    blocks_raycasts: true,
+    ignore_parent_groups: false,
+  });
+});
+
 test('CanvasScaler Inspector exposes all Unity scale and match modes', () => {
   assert.deepEqual(
     getBuiltinInspectorField('CanvasScaler', 'ui_scale_mode')?.options?.map(({ value }) => value),

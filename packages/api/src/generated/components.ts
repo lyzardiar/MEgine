@@ -517,6 +517,7 @@ export interface CanvasGroup {
   alpha: number;
   interactable: boolean;
   blocksRaycasts: boolean;
+  ignoreParentGroups: boolean;
 }
 
 export interface LayoutGroup {

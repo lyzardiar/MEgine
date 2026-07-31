@@ -11,7 +11,7 @@ const server = await createServer({
   logLevel: 'silent',
   server: { middlewareMode: true },
 });
-const { layoutUiOverlay, layoutUiWorldSpace, uiEntityWorldPivot } = await server.ssrLoadModule(
+const { hitTestUi, layoutUiOverlay, layoutUiWorldSpace, uiEntityWorldPivot } = await server.ssrLoadModule(
   '/src/ui/uiLayout.ts',
 );
 test.after(() => server.close());
@@ -136,6 +136,75 @@ test('nested Canvas can disable inherited pixel-perfect snapping', () => {
     new Set(),
   ).find((candidate) => candidate.entity === 3);
   assert.ok(Object.values(item.rect).some((value) => value % 1 !== 0));
+});
+
+test('CanvasGroup ignore parent groups resets inherited alpha, interaction, and raycasts', () => {
+  const stretch = rect({
+    anchor_min: [0, 0],
+    anchor_max: [1, 1],
+    size_delta: [0, 0],
+  });
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: stretch,
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: stretch,
+        CanvasGroup: { alpha: 0.25, interactable: false, blocks_raycasts: false },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ anchored_position: [-100, 0] }),
+        Button: {},
+      },
+    },
+    {
+      entity: 4,
+      parent: 2,
+      components: {
+        RectTransform: stretch,
+        CanvasGroup: {
+          alpha: 0.5,
+          interactable: true,
+          blocks_raycasts: true,
+          ignore_parent_groups: true,
+        },
+      },
+    },
+    {
+      entity: 5,
+      parent: 4,
+      components: {
+        RectTransform: rect({ anchored_position: [100, 0] }),
+        Button: {},
+      },
+    },
+  ];
+
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const inherited = items.find((item) => item.entity === 3);
+  const independent = items.find((item) => item.entity === 5);
+  assert.equal(inherited.opacity, 0.25);
+  assert.equal(inherited.button.interactable, false);
+  assert.equal(inherited.blocksRaycasts, false);
+  assert.equal(independent.opacity, 0.5);
+  assert.equal(independent.button.interactable, true);
+  assert.equal(independent.blocksRaycasts, true);
+  assert.equal(hitTestUi(items, inherited.rect.x + 1, inherited.rect.y + 1), null);
+  assert.equal(
+    hitTestUi(items, independent.rect.x + 1, independent.rect.y + 1)?.entity,
+    independent.entity,
+  );
 });
 
 test('World Space override-sorting Canvas subtrees are projected exactly once', () => {

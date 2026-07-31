@@ -1173,6 +1173,11 @@ fn walk(
         }
     }
     if let Some(group) = world.get_component::<CanvasGroup>(entity) {
+        if group.ignore_parent_groups {
+            state.alpha = 1.0;
+            state.interactable = true;
+            state.blocks_raycasts = true;
+        }
         state.alpha *= group.alpha.clamp(0.0, 1.0);
         state.interactable &= group.interactable;
         state.blocks_raycasts &= group.blocks_raycasts;
@@ -4064,6 +4069,88 @@ mod tests {
             .iter()
             .filter(|primitive| primitive.key.material == "ui/input")
             .all(|primitive| primitive.color[3] <= 0.5));
+    }
+
+    #[test]
+    fn canvas_group_can_ignore_parent_alpha_interaction_and_raycasts() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+
+        let parent_group = world.spawn_empty();
+        world.insert_component(parent_group, RectTransform::default());
+        world.insert_component(
+            parent_group,
+            CanvasGroup {
+                alpha: 0.25,
+                interactable: false,
+                blocks_raycasts: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(parent_group, Some(canvas));
+
+        let inherited_button = world.spawn_empty();
+        world.insert_component(
+            inherited_button,
+            RectTransform {
+                anchored_position: [-100.0, 0.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(inherited_button, Button::default());
+        world.set_parent(inherited_button, Some(parent_group));
+
+        let independent_group = world.spawn_empty();
+        world.insert_component(independent_group, RectTransform::default());
+        world.insert_component(
+            independent_group,
+            CanvasGroup {
+                alpha: 0.5,
+                ignore_parent_groups: true,
+                ..Default::default()
+            },
+        );
+        world.set_parent(independent_group, Some(parent_group));
+
+        let independent_button = world.spawn_empty();
+        world.insert_component(
+            independent_button,
+            RectTransform {
+                anchored_position: [100.0, 0.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(independent_button, Button::default());
+        world.set_parent(independent_button, Some(independent_group));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert!(!frame
+            .controls
+            .iter()
+            .any(|control| control.entity == inherited_button));
+        assert!(frame
+            .controls
+            .iter()
+            .any(|control| control.entity == independent_button));
+
+        let button_primitives: Vec<_> = frame
+            .plan
+            .primitives
+            .iter()
+            .filter(|primitive| primitive.key.material == "ui/button")
+            .collect();
+        assert_eq!(button_primitives.len(), 2);
+        let inherited = button_primitives
+            .iter()
+            .find(|primitive| primitive.rect[0] < 350.0)
+            .unwrap();
+        let independent = button_primitives
+            .iter()
+            .find(|primitive| primitive.rect[0] > 350.0)
+            .unwrap();
+        assert!((inherited.color[3] - 0.1125).abs() < 0.0001);
+        assert!((independent.color[3] - 0.5).abs() < 0.0001);
     }
 
     #[test]

@@ -562,7 +562,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'CanvasGroup',
     label: 'Canvas Group',
     description: 'Inherited opacity, interaction and raycast state',
-    create: () => ({ alpha: 1, interactable: true, blocks_raycasts: true }),
+    create: () => ({
+      alpha: 1,
+      interactable: true,
+      blocks_raycasts: true,
+      ignore_parent_groups: false,
+    }),
   },
   {
     type: 'LayoutGroup',

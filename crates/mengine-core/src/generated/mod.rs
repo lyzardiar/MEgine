@@ -2093,6 +2093,7 @@ pub struct CanvasGroup {
     pub alpha: f32,
     pub interactable: bool,
     pub blocks_raycasts: bool,
+    pub ignore_parent_groups: bool,
 }
 
 impl Default for CanvasGroup {
@@ -2101,6 +2102,7 @@ impl Default for CanvasGroup {
             alpha: 1.0,
             interactable: true,
             blocks_raycasts: true,
+            ignore_parent_groups: false,
         }
     }
 }

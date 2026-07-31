@@ -168,6 +168,8 @@ component CanvasGroup {
   alpha:           float = 1
   interactable:    bool  = true
   blocks_raycasts: bool  = true
+  /// Ignore CanvasGroup state inherited from ancestors and start a new group boundary.
+  ignore_parent_groups: bool = false
 }
 
 /// Automatic child arrangement: "Horizontal" | "Vertical" | "Grid".

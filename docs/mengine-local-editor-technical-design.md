@@ -1861,3 +1861,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - 回归覆盖父级关闭时嵌套 Canvas 只有显式覆盖才生效、父级开启时嵌套 Canvas 可显式关闭，以及 Runtime 渲染矩形/交互矩形同步取整。World Space 编辑器预览会清除这两个屏幕空间标志，与 Runtime 和 Unity 的适用范围一致。
 
 这批修复的是嵌套 Canvas 的像素继承契约，不代表 Canvas 已全部与 Unity 等价。仍需继续审计 Target Display、多显示器、Additional Shader Channels、Normalized Sorting Grid、Graphic Raycaster/Event Camera、嵌套 Canvas 独立批次与真实原生 wgpu 编辑器视口；其中只对当前单显示器和现有 RHI 能准确实现的能力落地，不用无效 Inspector 字段冒充支持。
+
+## 160. 2026-08-01 CanvasGroup 父组覆盖与射线边界
+
+- `CanvasGroup` 补齐 Unity `Ignore Parent Groups`，默认值为 `false`。默认路径继续累乘祖先 Alpha，并继承 Interactable 与 Blocks Raycasts；启用后从当前组重新计算这三个状态，使该组和完整子树不再受更上层 CanvasGroup 影响。旧场景保持原行为，Editor 预览和 Runtime 共用相同边界语义。
+- Editor 指针命中新增统一的 CanvasGroup 射线状态，不再只对 Panel 应用 `Blocks Raycasts`。Image、Raw Image、Text 与全部 Selectable 都会在祖先组禁用射线时让事件穿透；`Ignore Parent Groups` 子组可以恢复自己的射线和交互边界，同时不改变 Pixel Perfect 等独立 Canvas 状态。
+- 回归覆盖父组透明度、交互和射线三项继承，以及子组显式忽略后渲染 Alpha、控件命中区域和 Editor 点击命中的同步恢复。
