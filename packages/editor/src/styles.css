@@ -5142,6 +5142,17 @@ body.insp-scrubbing * {
 .sequencer-track-state.inherited { color: #d7c477; box-shadow: inset 0 0 0 1px #766828; }
 .sequencer-track-lock { flex: 0 0 auto; margin-left: auto; color: #d0a95f; }
 .sequencer-track-select small + .sequencer-track-lock { margin-left: 0; }
+.sequencer-density-badge {
+  max-width: 42px;
+  flex: 0 1 42px;
+  overflow: hidden;
+  padding: 2px 3px;
+  color: #d8c895;
+  background: #4b4329;
+  font: 8px var(--u-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .sequencer-track-icon {
   width: 18px;
   height: 18px;

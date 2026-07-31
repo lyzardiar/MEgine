@@ -89,6 +89,14 @@ import {
   timelineInlineTrackItems,
 } from '../timelineControlTree';
 import {
+  sequencerPointInTimeWindow,
+  sequencerSampleItems,
+  sequencerSpanIntersectsTimeWindow,
+  sequencerTimeWindow,
+  sequencerWindowedPoints,
+  sequencerWindowedSpans,
+} from '../sequencerTimeWindow';
+import {
   broadcastProjectAssetsChanged,
   openTimelineAsset,
   projectAssetsChangeTouches,
@@ -170,6 +178,7 @@ import {
 } from '../sequencerEditing';
 
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
+const SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW = 2_048;
 const EMPTY_PREVIEW_ANIMATION_CLIPS: ReadonlyMap<string, AnimationClip> = new Map();
 const EMPTY_PREVIEW_CONTROL_ASSETS: ReadonlyMap<string, TimelineAsset> = new Map();
 const EMPTY_PREVIEW_CLIP_FAILURES: readonly string[] = [];
@@ -349,6 +358,7 @@ export function Sequencer(props: SequencerProps) {
   const [panning, setPanning] = useState(false);
   const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const [tracksWidth, setTracksWidth] = useState(720);
+  const [tracksScrollLeft, setTracksScrollLeft] = useState(0);
   const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
   const [marquee, setMarquee] = useState<SequencerMarquee | null>(null);
   const [trackDragVisual, setTrackDragVisual] = useState<SequencerTrackDragVisual | null>(null);
@@ -379,6 +389,7 @@ export function Sequencer(props: SequencerProps) {
   const frame = useRef<number | null>(null);
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
+  const tracksScrollFrame = useRef<number | null>(null);
   const rulerScrubPointer = useRef<number | null>(null);
   const previewRangeDrag = useRef<{ pointerId: number; edge: SequencerPreviewRangeEdge } | null>(null);
   const panDrag = useRef<{ pointerId: number; clientX: number; scrollLeft: number } | null>(null);
@@ -744,7 +755,13 @@ export function Sequencer(props: SequencerProps) {
     setExpandedControlTrackIds([]);
     setExpandedControlNodeKeys([]);
     setControlTreeFilter('');
+    setTracksScrollLeft(0);
+    if (tracksViewport.current) tracksViewport.current.scrollLeft = 0;
   }, [props.assetPath]);
+
+  useEffect(() => () => {
+    if (tracksScrollFrame.current != null) cancelAnimationFrame(tracksScrollFrame.current);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -2766,6 +2783,21 @@ export function Sequencer(props: SequencerProps) {
   ];
   const laneViewportWidth = Math.max(360, tracksWidth - 180);
   const laneWidth = Math.max(360, Math.round(laneViewportWidth * zoom));
+  const visibleLaneWidth = Math.max(1, tracksWidth - 180);
+  const timeWindow = sequencerTimeWindow(
+    asset.duration,
+    laneWidth,
+    tracksScrollLeft,
+    visibleLaneWidth,
+  );
+  const scheduleTracksScrollSync = () => {
+    if (tracksScrollFrame.current != null) return;
+    tracksScrollFrame.current = requestAnimationFrame(() => {
+      tracksScrollFrame.current = null;
+      const next = tracksViewport.current?.scrollLeft ?? 0;
+      setTracksScrollLeft((current) => Math.abs(current - next) < 0.5 ? current : next);
+    });
+  };
   const ticks = sequencerTicks(asset.duration, laneWidth);
   const previewRangeStartMaximum = resizeSequencerPreviewRange(
     previewRange,
@@ -3219,6 +3251,13 @@ export function Sequencer(props: SequencerProps) {
         parentStart: clip.start,
         parentEnd: clip.start + clip.duration,
       }] : []);
+      const renderedSummarySegments = summarySegments.filter((segment) => (
+        sequencerSpanIntersectsTimeWindow(
+          segment.parentStart,
+          segment.parentEnd - segment.parentStart,
+          timeWindow,
+        )
+      ));
       if (!pushRow(<div
         className={`sequencer-control-tree-row summary${child ? '' : ' unavailable'}${cyclic ? ' cyclic' : ''}`}
         role="group"
@@ -3244,7 +3283,7 @@ export function Sequencer(props: SequencerProps) {
         </div>
         <div className="sequencer-control-tree-lane">
           {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
-          {summarySegments.map((segment, segmentIndex) => <span
+          {renderedSummarySegments.map((segment, segmentIndex) => <span
             className={`sequencer-inline-source ${clip.extrapolation}`}
             style={{
               left: `${segment.parentStart / asset.duration * 100}%`,
@@ -3265,7 +3304,10 @@ export function Sequencer(props: SequencerProps) {
         const target = 'target' in childTrack ? childTrack.target : '';
         const count = childTrack.type === 'signal' ? childTrack.markers.length : childTrack.clips.length;
         const items = timelineInlineTrackItems(childTrack, sourceMap);
-        const renderedItems = items.slice(0, maxItemsPerRow);
+        const viewportItems = items.filter((item) => item.marker
+          ? sequencerPointInTimeWindow(item.start, timeWindow)
+          : sequencerSpanIntersectsTimeWindow(item.start, item.duration, timeWindow));
+        const renderedItems = sequencerSampleItems(viewportItems, maxItemsPerRow).items;
         const childNodeKey = `${nodePath}/track:${childTrack.id}`;
         const descendantMatches = childTrack.type === 'control'
           && controlTrackHasDescendantMatch(childTrack, nextStack, depth);
@@ -3277,7 +3319,7 @@ export function Sequencer(props: SequencerProps) {
         if (!pushRow(<div
           className="sequencer-control-tree-row child"
           role="group"
-          aria-label={`${childTrack.name}, ${childTrack.type} child track at depth ${depth}${target ? `, target ${target}` : ''}, ${count} source items, ${items.length} mapped items${items.length > maxItemsPerRow ? `, first ${maxItemsPerRow} shown` : ''}${childTrack.type === 'control' && depth >= maxDepth ? ', maximum hierarchy depth reached' : ''}`}
+          aria-label={`${childTrack.name}, ${childTrack.type} child track at depth ${depth}${target ? `, target ${target}` : ''}, ${count} source items, ${items.length} mapped items, ${viewportItems.length} in render window${viewportItems.length > maxItemsPerRow ? `, ${maxItemsPerRow} sampled across the render window` : ''}${childTrack.type === 'control' && depth >= maxDepth ? ', maximum hierarchy depth reached' : ''}`}
           data-agent-sub-timeline-track={childTrack.id}
           data-agent-sub-timeline-depth={depth}
           style={{ '--sequencer-control-tree-depth': depth } as CSSProperties}
@@ -3320,7 +3362,7 @@ export function Sequencer(props: SequencerProps) {
                 aria-label={`${item.label}, starts ${item.start.toFixed(3)} seconds, duration ${item.duration.toFixed(3)} seconds in parent Timeline`}
                 key={item.key}
               >{item.label}</span>)}
-            {items.length > maxItemsPerRow && <span className="sequencer-inline-warning">First {maxItemsPerRow} of {items.length} items shown</span>}
+            {viewportItems.length > maxItemsPerRow && <span className="sequencer-inline-warning">Sampled {maxItemsPerRow} of {viewportItems.length} viewport items</span>}
             <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
           </div>
         </div>)) break;
@@ -3614,6 +3656,9 @@ export function Sequencer(props: SequencerProps) {
           ref={tracksViewport}
           role="region"
           aria-label="Sequencer tracks viewport"
+          aria-description={`Visible ${timeWindow.visibleStart.toFixed(3)} to ${timeWindow.visibleEnd.toFixed(3)} seconds; rendering ${timeWindow.renderStart.toFixed(3)} to ${timeWindow.renderEnd.toFixed(3)} seconds with overscan.`}
+          data-agent-time-window-start={timeWindow.visibleStart.toFixed(6)}
+          data-agent-time-window-end={timeWindow.visibleEnd.toFixed(6)}
           data-agent-wheel="true"
           title="Drag empty lanes to marquee-select. Shift adds; Ctrl/Cmd toggles. Middle-drag pans horizontally."
           style={{ '--sequencer-lane-width': `${laneWidth}px` } as CSSProperties}
@@ -3628,6 +3673,7 @@ export function Sequencer(props: SequencerProps) {
               event.currentTarget.scrollLeft += sequencerShiftWheelDelta(event.deltaX, event.deltaY);
             }
           }}
+          onScroll={scheduleTracksScrollSync}
           onPointerDownCapture={beginTrackPan}
           onPointerMoveCapture={moveTrackPan}
           onPointerUpCapture={finishTrackPan}
@@ -3738,11 +3784,27 @@ export function Sequencer(props: SequencerProps) {
                 : effectivelyMuted
                   ? 'Solo Filter'
                   : null;
+            const authoredItemCount = track.type === 'signal' ? track.markers.length : track.clips.length;
+            const renderWindowItemCount = track.type === 'signal'
+              ? track.markers.reduce((count, marker) => (
+                count + (sequencerPointInTimeWindow(marker.time, timeWindow) ? 1 : 0)
+              ), 0)
+              : track.clips.reduce((count, clip) => (
+                count + (sequencerSpanIntersectsTimeWindow(clip.start, clip.duration, timeWindow) ? 1 : 0)
+              ), 0);
+            const renderedItemCount = Math.min(
+              renderWindowItemCount,
+              SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW,
+            );
+            const itemSamplingActive = renderWindowItemCount > renderedItemCount;
             return <Fragment key={track.id}>
               {group && firstTrackByGroupId.get(group.id) === trackIndex && renderGroupRow(group)}
               {!group?.collapsed && <div
                 className={`sequencer-track-row${group ? ' grouped' : ''}${selection?.track === trackIndex ? ' selected' : ''}${headerSelected ? ' header-selected' : ''}${selectedItems.some((item) => item.track === trackIndex) ? ' contains-selection' : ''}${effectivelyLocked ? ' locked' : ''}${effectivelySolo ? ' effectively-solo' : ''}${effectivelyMuted ? ' effectively-muted' : ''}${dragSource ? ' drag-source' : ''}${groupDragMember ? ' group-drag-member' : ''}${dropTarget ? ` drop-${dropTarget.edge}${trackDragVisual?.valid ? '' : ' invalid'}` : ''}${groupDropEdge ? ` drop-${groupDropEdge}${groupDragVisual?.valid ? '' : ' invalid'}` : ''}`}
                 data-sequencer-track-id={track.id}
+                data-agent-authored-items={authoredItemCount}
+                data-agent-render-window-items={renderWindowItemCount}
+                data-agent-rendered-items={renderedItemCount}
               >
               <div className="sequencer-track-header">
                 <button
@@ -3776,6 +3838,12 @@ export function Sequencer(props: SequencerProps) {
                   {effectiveMuteLabel && <small>{effectiveMuteLabel}</small>}
                   {effectivelyLocked && <Lock className="sequencer-track-lock" size={11} aria-label={track.locked ? 'Locked' : 'Group locked'} />}
                 </button>
+                {itemSamplingActive && <span
+                  className="sequencer-density-badge"
+                  role="status"
+                  aria-label={`${track.name} is rendering ${renderedItemCount} sampled items from ${renderWindowItemCount} items in the current time window; zoom in to inspect every item`}
+                  title={`Dense track: sampled ${renderedItemCount} / ${renderWindowItemCount} viewport items. Zoom in to inspect every item.`}
+                >{renderedItemCount}/{renderWindowItemCount}</span>}
                 <button
                   type="button"
                   className={`sequencer-track-state${track.solo ? ' active solo' : ''}${!track.solo && group?.solo ? ' inherited' : ''}`}
@@ -3794,7 +3862,7 @@ export function Sequencer(props: SequencerProps) {
               <div
                 className="sequencer-lane"
                 role="group"
-                aria-label={`${track.name} ${track.type} lane`}
+                aria-label={`${track.name} ${track.type} lane, ${authoredItemCount} authored items, ${renderWindowItemCount} in render window, ${renderedItemCount} rendered${itemSamplingActive ? ', density sampled' : ''}`}
                 onDoubleClick={(event) => {
                   if (event.target !== event.currentTarget) return;
                   const bounds = event.currentTarget.getBoundingClientRect();
@@ -3805,7 +3873,10 @@ export function Sequencer(props: SequencerProps) {
                 onPointerDown={(event) => startMarquee(event, trackIndex)}
               >
                 {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
-                {track.type === 'signal' && track.markers.map((marker, markerIndex) => (
+                {track.type === 'signal' && sequencerSampleItems(
+                  sequencerWindowedPoints(track.markers, (marker) => marker.time, timeWindow),
+                  SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW,
+                ).items.map(({ item: marker, sourceIndex: markerIndex }) => (
                   <button
                     type="button"
                     data-agent-drag-by="true"
@@ -3819,7 +3890,10 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, markerIndex)}
                   />
                 ))}
-                {track.type === 'activation' && track.clips.map((clip, clipIndex) => (
+                {track.type === 'activation' && sequencerSampleItems(
+                  sequencerWindowedSpans(track.clips, (clip) => clip, timeWindow),
+                  SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW,
+                ).items.map(({ item: clip, sourceIndex: clipIndex }) => (
                   <button
                     type="button"
                     data-agent-drag-by="true"
@@ -3836,7 +3910,10 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   >{clip.active ? 'ACTIVE' : 'INACTIVE'}</button>
                 ))}
-                {track.type === 'audio' && track.clips.map((clip, clipIndex) => (
+                {track.type === 'audio' && sequencerSampleItems(
+                  sequencerWindowedSpans(track.clips, (clip) => clip, timeWindow),
+                  SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW,
+                ).items.map(({ item: clip, sourceIndex: clipIndex }) => (
                   <button
                     type="button"
                     data-agent-drag-by="true"
@@ -3870,7 +3947,10 @@ export function Sequencer(props: SequencerProps) {
                     <span className="sequencer-clip-label">♪ {clip.clip.split('/').at(-1)}</span>
                   </button>
                 ))}
-                {track.type === 'animation' && track.clips.map((clip, clipIndex) => (
+                {track.type === 'animation' && sequencerSampleItems(
+                  sequencerWindowedSpans(track.clips, (clip) => clip, timeWindow),
+                  SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW,
+                ).items.map(({ item: clip, sourceIndex: clipIndex }) => (
                   <button
                     type="button"
                     data-agent-drag-by="true"
@@ -3897,7 +3977,10 @@ export function Sequencer(props: SequencerProps) {
                     <span className="sequencer-clip-label">M {clip.clip.split('/').at(-1)}</span>
                   </button>
                 ))}
-                {track.type === 'particle' && track.clips.map((clip, clipIndex) => (
+                {track.type === 'particle' && sequencerSampleItems(
+                  sequencerWindowedSpans(track.clips, (clip) => clip, timeWindow),
+                  SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW,
+                ).items.map(({ item: clip, sourceIndex: clipIndex }) => (
                   <button
                     type="button"
                     data-agent-drag-by="true"
@@ -3914,7 +3997,10 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   >P PARTICLES</button>
                 ))}
-                {track.type === 'control' && track.clips.map((clip, clipIndex) => (
+                {track.type === 'control' && sequencerSampleItems(
+                  sequencerWindowedSpans(track.clips, (clip) => clip, timeWindow),
+                  SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW,
+                ).items.map(({ item: clip, sourceIndex: clipIndex }) => (
                   <button
                     type="button"
                     data-agent-drag-by="true"
@@ -3931,7 +4017,10 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   ><span className="sequencer-clip-label">T {clip.timeline.split('/').at(-1)}</span></button>
                 ))}
-                {track.type === 'camera' && track.clips.map((clip, clipIndex) => (
+                {track.type === 'camera' && sequencerSampleItems(
+                  sequencerWindowedSpans(track.clips, (clip) => clip, timeWindow),
+                  SEQUENCER_MAX_RENDERED_ITEMS_PER_ROW,
+                ).items.map(({ item: clip, sourceIndex: clipIndex }) => (
                   <button
                     type="button"
                     data-agent-drag-by="true"

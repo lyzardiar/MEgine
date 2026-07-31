@@ -245,12 +245,16 @@ test('complex authoring rows identify their selectable semantic regions', () => 
     /aria-label=\{`Transition \$\{transition\.from\} to \$\{transition\.to\} condition \$\{conditionIndex \+ 1\} threshold`\}/,
   );
   assert.match(sequencer, /aria-label=\{`\$\{group\.name\} group lane`\}/);
-  assert.match(sequencer, /aria-label=\{`\$\{track\.name\} \$\{track\.type\} lane`\}/);
+  assert.match(sequencer, /aria-label=\{`\$\{track\.name\} \$\{track\.type\} lane, /);
   assert.match(sequencer, /aria-label="Sequencer workspace"/);
-  assert.match(
-    sequencer,
-    /aria-label="Sequencer tracks viewport"\s*data-agent-wheel="true"/,
-  );
+  assert.match(sequencer, /aria-label="Sequencer tracks viewport"/);
+  assert.match(sequencer, /aria-description=\{`Visible \$\{timeWindow\.visibleStart\.toFixed\(3\)\}/);
+  assert.match(sequencer, /data-agent-time-window-start=\{timeWindow\.visibleStart\.toFixed\(6\)\}/);
+  assert.match(sequencer, /data-agent-time-window-end=\{timeWindow\.visibleEnd\.toFixed\(6\)\}/);
+  assert.match(sequencer, /data-agent-wheel="true"/);
+  assert.match(sequencer, /data-agent-render-window-items=\{renderWindowItemCount\}/);
+  assert.match(sequencer, /data-agent-rendered-items=\{renderedItemCount\}/);
+  assert.match(sequencer, /sequencerSampleItems\(/);
   assert.match(sequencer, /aria-label="Scrub Sequencer time ruler"/);
   assert.match(sequencer, /aria-label="Filter Sub-Timeline hierarchy"/);
   assert.match(sequencer, /aria-label=\{`\$\{expandedControlTrackIds\.includes\(track\.id\) \? 'Collapse' : 'Expand'\} \$\{track\.name\} Sub-Timeline hierarchy`\}/);

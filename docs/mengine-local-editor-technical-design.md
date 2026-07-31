@@ -1767,3 +1767,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 验证覆盖新增 4 项跨层映射回归，编辑器全量 631/631、TypeScript/Vite 生产构建和 Tauri Debug 应用构建均通过；主入口仍有既有的 836.37kB 大于 500kB 分包预算警告。真实桌面验证在隔离配置和临时工程中以 `MENGINE_EDITOR_BACKGROUND=1` 打开三层 Timeline：父层两次循环 Child，Grandchild 的两个 Signal 被合成为根时间 0.750、1.250、2.750、3.250 秒，Activation 也生成两段；回指 Parent 的第二个子片段被标记为循环依赖并停止递归。先手动折叠嵌套层，再筛选 `Grand Pulses`，语义快照仍自动展开祖先且只保留命中轨道。WebView2 离屏截图确认递归缩进和根时间网格布局正常，截图 `backgroundSafe=true`，原生窗口全过程保持 `visible=false`、`focused=false`；验证进程、工程、配置和截图随后全部清理。
 
 这一批完成的是递归只读依赖浏览和根时间可视化，不代表 Timeline 已完备。后续仍需审计子轨道就地编辑、长时间轴真实虚拟化、Prefab Control、录制模式、轨道模板、嵌套求值缓存和 Timeline Profiler 依赖视图，并继续按整编辑器基础与扩展能力逐项补齐。
+
+## 150. 2026-07-31 Sequencer 长时间轴横向视口虚拟化
+
+- Sequencer 现在把轨道布局宽度、真实可见宽度和渲染 overscan 分开计算。水平滚动与 1–32× 缩放统一换算为 `visibleStart/visibleEnd`，渲染窗口在两侧各增加半屏时间并限制在 Timeline 边界；Marker 按时间点过滤，Clip 按区间相交过滤，跨过视口边缘的长 Clip 不会被误删。窗口变化按单个 `requestAnimationFrame` 合并状态更新，拖拽平移、Shift+Wheel、Agent wheel、播放头自动揭示和程序化 Frame Selection 都复用原生 `scrollLeft`，不会在每个滚轮事件同步重渲染。
+- 所有根轨道和递归 Sub-Timeline 轨道都只创建渲染窗口内的项目 DOM，并保留每个项目在原资产中的 source index，因此滚到后段再选择、拖拽或检查时不会把过滤数组索引误当成资产索引。Agent 可访问区域公开精确的可见/overscan 时间说明，轨道行公开 authored、render-window 与实际 rendered 计数；在隐藏窗口滚动后，语义快照只返回新窗口中的后段 Marker，而资产全文仍可通过 Agent 文本读取完整取得。
+- 仅做视口过滤仍不能约束“5000 个 Marker 全部挤在全景内”的密集轨道，因此每行增加 2048 项 LOD 上限。超过上限时不是截取前 2048 项，而是从当前渲染窗口按序均匀采样并保留首尾；轨道头显示采样计数，语义状态明确要求放大以检查每一项。放大到窗口项目数低于上限后自动恢复全部项目。递归子轨道使用同一采样规则，避免过去“全局前 2048 项”导致滚到尾部反而没有任何可见内容。
+
+回归验证新增 6 项时间窗口、边界相交、原索引和密集采样测试，编辑器全量 637/637、TypeScript/Vite 生产构建和 Tauri Debug 应用构建均通过；既有主入口 836.37kB 大于 500kB 的分包预算警告不变。真实桌面压力验证在隔离临时工程中创建根/子轨道各 5000 个 Signal：全景时根轨道语义只包含 2048 个均匀样本但同时保留 `Root-0000` 与 `Root-4999`，完整窗口快照为 2288 个元素且未截断；切到 32× 后根轨道降为 235 项，滚到末尾只出现 95.28–99.98 秒附近的 236 个根 Marker。展开子 Timeline 后也只渲染相同末段的 236 个子 Marker，语义仍报告 5000 source / 5000 mapped / 236 render-window。点击 `Root-4900` 后 Inspector 精确显示名称和 98 秒，证明原索引未漂移。WebView2 截图 `backgroundSafe=true`，窗口全过程 `visible=false`、`focused=false`，探针进程、工程、配置和截图均已清理。
+
+本批完成的是横向项目虚拟化与密集 LOD，还不是完整的超大 Timeline 性能终点。大量轨道行和展开层级仍需要纵向虚拟化；时间映射与预览仍会在资产变化时重新计算完整列表，后续还需嵌套求值缓存、Profiler 依赖/热点视图、子轨道就地编辑、Prefab Control、轨道模板和 Sequencer 录制工作流。
