@@ -62,6 +62,10 @@ pub struct UiPrimitive {
     pub clip_corners: Option<[[f32; 4]; 4]>,
     /// Normalized UV rect: u, v, width, height.
     pub uv: [f32; 4],
+    /// Optional normalized positions for the four quad vertex slots. The default
+    /// order is top-left, top-right, bottom-right, bottom-left. Custom polygons
+    /// let Unity-style Filled Images retain their generated mesh and UV mapping.
+    pub vertex_positions: Option<[[f32; 2]; 4]>,
     pub key: UiBatchKey,
 }
 
@@ -75,6 +79,7 @@ impl UiPrimitive {
             depth: 0.0,
             clip_corners: None,
             uv: [0.0, 0.0, 1.0, 1.0],
+            vertex_positions: None,
             key: UiBatchKey::default(),
         }
     }
@@ -143,10 +148,15 @@ struct UiInstance {
     uv: [f32; 4],
     projection: [f32; 4],
     corners: [[f32; 4]; 4],
+    vertex_positions: [[f32; 4]; 2],
 }
 
 impl From<&UiPrimitive> for UiInstance {
     fn from(value: &UiPrimitive) -> Self {
+        let vertices =
+            value
+                .vertex_positions
+                .unwrap_or([[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
         Self {
             rect: value.rect,
             color: value.color,
@@ -167,6 +177,20 @@ impl From<&UiPrimitive> for UiInstance {
                 0.0,
             ],
             corners: value.clip_corners.unwrap_or([[0.0; 4]; 4]),
+            vertex_positions: [
+                [
+                    vertices[0][0],
+                    vertices[1][0],
+                    vertices[2][0],
+                    vertices[3][0],
+                ],
+                [
+                    vertices[0][1],
+                    vertices[1][1],
+                    vertices[2][1],
+                    vertices[3][1],
+                ],
+            ],
         }
     }
 }
@@ -333,7 +357,7 @@ impl UiRenderer {
                         attributes: &wgpu::vertex_attr_array![
                             1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
                             5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
-                            9 => Float32x4
+                            9 => Float32x4, 10 => Float32x4, 11 => Float32x4
                         ],
                     },
                 ],
@@ -384,7 +408,7 @@ impl UiRenderer {
                         attributes: &wgpu::vertex_attr_array![
                             1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
                             5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
-                            9 => Float32x4
+                            9 => Float32x4, 10 => Float32x4, 11 => Float32x4
                         ],
                     },
                 ],
@@ -616,7 +640,7 @@ fn create_ui_depth_pipeline(
                     attributes: &wgpu::vertex_attr_array![
                         1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
                         5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
-                        9 => Float32x4
+                        9 => Float32x4, 10 => Float32x4, 11 => Float32x4
                     ],
                 },
             ],
@@ -754,6 +778,8 @@ struct VsIn {
     @location(7) corner_top_right: vec4<f32>,
     @location(8) corner_bottom_right: vec4<f32>,
     @location(9) corner_bottom_left: vec4<f32>,
+    @location(10) vertex_x: vec4<f32>,
+    @location(11) vertex_y: vec4<f32>,
 };
 
 struct VsOut {
@@ -764,8 +790,19 @@ struct VsOut {
 
 @vertex
 fn vs_main(input: VsIn) -> VsOut {
+    let vertex_top = mix(
+        vec2<f32>(input.vertex_x.x, input.vertex_y.x),
+        vec2<f32>(input.vertex_x.y, input.vertex_y.y),
+        input.position.x,
+    );
+    let vertex_bottom = mix(
+        vec2<f32>(input.vertex_x.w, input.vertex_y.w),
+        vec2<f32>(input.vertex_x.z, input.vertex_y.z),
+        input.position.x,
+    );
+    let vertex_position = mix(vertex_top, vertex_bottom, input.position.y);
     let pivot = input.transform.yz;
-    let local = (input.position - pivot) * input.rect.zw;
+    let local = (vertex_position - pivot) * input.rect.zw;
     let c = cos(input.transform.x);
     let s = sin(input.transform.x);
     let rotated = vec2<f32>(local.x * c - local.y * s, local.x * s + local.y * c);
@@ -773,14 +810,14 @@ fn vs_main(input: VsIn) -> VsOut {
     let ndc = vec2<f32>(pixel.x / frame.viewport.x * 2.0 - 1.0, 1.0 - pixel.y / frame.viewport.y * 2.0);
     var output: VsOut;
     if input.projection.y > 0.5 {
-        let top = mix(input.corner_top_left, input.corner_top_right, input.position.x);
-        let bottom = mix(input.corner_bottom_left, input.corner_bottom_right, input.position.x);
-        output.clip = mix(top, bottom, input.position.y);
+        let top = mix(input.corner_top_left, input.corner_top_right, vertex_position.x);
+        let bottom = mix(input.corner_bottom_left, input.corner_bottom_right, vertex_position.x);
+        output.clip = mix(top, bottom, vertex_position.y);
     } else {
         output.clip = vec4<f32>(ndc, input.projection.x, 1.0);
     }
     output.color = input.color;
-    output.uv = input.uv_rect.xy + input.position * input.uv_rect.zw;
+    output.uv = input.uv_rect.xy + vertex_position * input.uv_rect.zw;
     return output;
 }
 
@@ -829,6 +866,21 @@ mod tests {
         ]);
         assert_eq!(plan.batches.len(), 2);
         assert_eq!((plan.batches[1].start, plan.batches[1].end), (1, 3));
+    }
+
+    #[test]
+    fn custom_vertex_positions_flow_into_instances() {
+        let vertices = [[0.0, 1.0], [0.0, 0.0], [0.75, 0.0], [0.75, 1.0]];
+        let mut primitive = UiPrimitive::solid([0.0, 0.0, 10.0, 10.0], [1.0; 4]);
+        primitive.vertex_positions = Some(vertices);
+        let instance = UiInstance::from(&primitive);
+        assert_eq!(instance.vertex_positions[0], [0.0, 0.0, 0.75, 0.75]);
+        assert_eq!(instance.vertex_positions[1], [1.0, 0.0, 0.0, 1.0]);
+    }
+
+    #[test]
+    fn ui_shader_with_custom_quad_attributes_parses() {
+        naga::front::wgsl::parse_str(UI_WGSL).expect("UI WGSL should remain valid");
     }
 
     #[test]

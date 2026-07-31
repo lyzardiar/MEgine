@@ -556,19 +556,45 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   Image: {
     sprite,
-    image_type: { kind: 'enum', options: options('Simple', 'Sliced', 'Tiled') },
+    image_type: { kind: 'enum', options: options('Simple', 'Sliced', 'Tiled', 'Filled') },
     preserve_aspect: {
       label: 'Preserve Aspect',
-      visibleWhen: { field: 'image_type', equals: 'Simple' },
+      visibleWhen: { field: 'image_type', equals: ['Simple', 'Filled'] },
     },
     fill_center: {
       label: 'Fill Center',
       visibleWhen: { field: 'image_type', equals: ['Sliced', 'Tiled'] },
     },
     border: { visibleWhen: { field: 'image_type', equals: ['Sliced', 'Tiled'] } },
+    fill_method: {
+      label: 'Fill Method',
+      kind: 'enum',
+      options: options('Horizontal', 'Vertical', 'Radial90', 'Radial180', 'Radial360'),
+      visibleWhen: { field: 'image_type', equals: 'Filled' },
+    },
+    fill_amount: {
+      label: 'Fill Amount',
+      min: 0,
+      max: 1,
+      step: 0.01,
+      visibleWhen: { field: 'image_type', equals: 'Filled' },
+    },
+    fill_clockwise: {
+      label: 'Clockwise',
+      visibleWhen: [
+        { field: 'image_type', equals: 'Filled' },
+        { field: 'fill_method', equals: ['Radial90', 'Radial180', 'Radial360'] },
+      ],
+    },
+    fill_origin: {
+      label: 'Fill Origin',
+      min: 0,
+      max: 3,
+      visibleWhen: { field: 'image_type', equals: 'Filled' },
+    },
     source_size: {
       label: 'Source Size',
-      visibleWhen: { field: 'image_type', equals: ['Simple', 'Sliced', 'Tiled'] },
+      visibleWhen: { field: 'image_type', equals: ['Simple', 'Sliced', 'Tiled', 'Filled'] },
     },
   },
   RawImage: {

@@ -98,13 +98,17 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
   );
 });
 
-test('Image exposes Unity Preserve Aspect and Sliced/Tiled Fill Center defaults', () => {
+test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', () => {
   const imageDefaults = {
     sprite: 'white',
     color: [1, 1, 1, 1],
     image_type: 'Simple',
     preserve_aspect: false,
     fill_center: true,
+    fill_method: 'Radial360',
+    fill_amount: 1,
+    fill_clockwise: true,
+    fill_origin: 0,
     border: [0, 0, 0, 0],
     source_size: [100, 100],
     raycast_target: true,
@@ -113,7 +117,7 @@ test('Image exposes Unity Preserve Aspect and Sliced/Tiled Fill Center defaults'
   assert.deepEqual(createUiImageComponents().Image, imageDefaults);
   assert.deepEqual(getBuiltinInspectorField('Image', 'preserve_aspect')?.visibleWhen, {
     field: 'image_type',
-    equals: 'Simple',
+    equals: ['Simple', 'Filled'],
   });
   assert.deepEqual(getBuiltinInspectorField('Image', 'fill_center')?.visibleWhen, {
     field: 'image_type',
@@ -121,7 +125,13 @@ test('Image exposes Unity Preserve Aspect and Sliced/Tiled Fill Center defaults'
   });
   assert.deepEqual(
     getBuiltinInspectorField('Image', 'image_type')?.options?.map(({ value }) => value),
-    ['Simple', 'Sliced', 'Tiled'],
+    ['Simple', 'Sliced', 'Tiled', 'Filled'],
+  );
+  assert.equal(getBuiltinInspectorField('Image', 'fill_amount')?.min, 0);
+  assert.equal(getBuiltinInspectorField('Image', 'fill_amount')?.max, 1);
+  assert.deepEqual(
+    getBuiltinInspectorField('Image', 'fill_method')?.options?.map(({ value }) => value),
+    ['Horizontal', 'Vertical', 'Radial90', 'Radial180', 'Radial360'],
   );
 });
 

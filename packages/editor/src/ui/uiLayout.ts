@@ -20,6 +20,11 @@ import {
 import { planNineSlice, type SpriteBorder } from './nineSlice';
 import { fitImageAspectRect } from './imageGeometry';
 import { planTiledImage } from './tiledImage';
+import {
+  planFilledImage,
+  traceFilledImagePath,
+  type ImageFillMethod,
+} from './imageFill';
 import { applyAspectRatio } from './aspectRatioFitter';
 import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
 import { graphicEffectFilter, type UiGraphicEffect } from './graphicEffect';
@@ -79,9 +84,13 @@ export type UiDrawItem = {
   image?: {
     color: [number, number, number, number];
     sprite: string;
-    imageType: 'Simple' | 'Sliced' | 'Tiled';
+    imageType: 'Simple' | 'Sliced' | 'Tiled' | 'Filled';
     preserveAspect: boolean;
     fillCenter: boolean;
+    fillMethod: ImageFillMethod;
+    fillAmount: number;
+    fillClockwise: boolean;
+    fillOrigin: number;
     spritePixelScale: number;
     border: SpriteBorder;
     displayBorder: SpriteBorder;
@@ -878,12 +887,20 @@ export function layoutUiOverlay(
                 sprite: resolveSpriteId(String(img.sprite ?? 'white')),
                 imageType: enumValue(
                   img.image_type ?? img.imageType,
-                  ['Simple', 'Sliced', 'Tiled'] as const,
+                  ['Simple', 'Sliced', 'Tiled', 'Filled'] as const,
                   'Simple',
                 ),
                 preserveAspect:
                   img.preserve_aspect === true || img.preserveAspect === true,
                 fillCenter: img.fill_center !== false && img.fillCenter !== false,
+                fillMethod: enumValue(
+                  img.fill_method ?? img.fillMethod,
+                  ['Horizontal', 'Vertical', 'Radial90', 'Radial180', 'Radial360'] as const,
+                  'Radial360',
+                ),
+                fillAmount: number(img.fill_amount ?? img.fillAmount, 1),
+                fillClockwise: img.fill_clockwise !== false && img.fillClockwise !== false,
+                fillOrigin: Math.trunc(number(img.fill_origin ?? img.fillOrigin, 0)),
                 spritePixelScale,
                 border: number4(img.border, [0, 0, 0, 0]),
                 displayBorder: number4(img.border, [0, 0, 0, 0]).map(
@@ -2143,10 +2160,23 @@ export function drawUiItems(
       if (it.image || it.rawImage || it.button) {
         const sprite = it.image?.sprite ?? it.rawImage?.texture ?? 'white';
         const tint: [number, number, number, number] = [r, g, b, a];
-        const imageRect = it.image?.imageType === 'Simple' && it.image.preserveAspect
+        const imageRect = (it.image?.imageType === 'Simple' || it.image?.imageType === 'Filled') && it.image.preserveAspect
           ? fitImageAspectRect({ x, y, w, h }, it.image.sourceSize)
           : { x, y, w, h };
         const { x: imageX, y: imageY, w: imageW, h: imageH } = imageRect;
+        const fillQuads = it.image?.imageType === 'Filled'
+          ? planFilledImage(
+              it.image.fillMethod,
+              it.image.fillAmount,
+              it.image.fillClockwise,
+              it.image.fillOrigin,
+            )
+          : null;
+        if (fillQuads) {
+          ctx.save();
+          traceFilledImagePath(ctx, imageX, imageY, imageW, imageH, fillQuads);
+          ctx.clip();
+        }
         const drawn =
           sprite !== 'white' && (it.rawImage
             ? drawSpriteUvInRect(ctx, sprite, x, y, w, h, tint, it.rawImage.uvRect)
@@ -2212,6 +2242,7 @@ export function drawUiItems(
             ctx.fillRect(imageX, imageY, imageW, imageH);
           }
         }
+        if (fillQuads) ctx.restore();
       }
 
       if (it.button) {

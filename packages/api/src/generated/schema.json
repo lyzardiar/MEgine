@@ -864,8 +864,20 @@
         },
         "type": "array"
       },
+      "fill_amount": {
+        "type": "number"
+      },
       "fill_center": {
         "type": "boolean"
+      },
+      "fill_clockwise": {
+        "type": "boolean"
+      },
+      "fill_method": {
+        "type": "string"
+      },
+      "fill_origin": {
+        "type": "number"
       },
       "image_type": {
         "type": "string"
@@ -892,6 +904,10 @@
       "image_type",
       "preserve_aspect",
       "fill_center",
+      "fill_method",
+      "fill_amount",
+      "fill_clockwise",
+      "fill_origin",
       "border",
       "source_size",
       "raycast_target"

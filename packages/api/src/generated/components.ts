@@ -437,6 +437,10 @@ export interface Image {
   imageType: string;
   preserveAspect: boolean;
   fillCenter: boolean;
+  fillMethod: string;
+  fillAmount: number;
+  fillClockwise: boolean;
+  fillOrigin: number;
   border: [number, number, number, number];
   sourceSize: [number, number];
   raycastTarget: boolean;

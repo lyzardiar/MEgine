@@ -90,6 +90,44 @@ test('Tiled Image authoring data reaches the Canvas draw plan', () => {
   assert.equal(item?.image?.spritePixelScale, 1);
 });
 
+test('Filled Image authoring data reaches the Canvas draw plan', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect(),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect(),
+        Image: {
+          image_type: 'Filled',
+          preserve_aspect: true,
+          fill_method: 'Radial180',
+          fill_amount: 0.35,
+          fill_clockwise: false,
+          fill_origin: 3,
+        },
+      },
+    },
+  ];
+  const item = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((candidate) => candidate.entity === 2);
+  assert.equal(item?.image?.imageType, 'Filled');
+  assert.equal(item?.image?.preserveAspect, true);
+  assert.equal(item?.image?.fillMethod, 'Radial180');
+  assert.equal(item?.image?.fillAmount, 0.35);
+  assert.equal(item?.image?.fillClockwise, false);
+  assert.equal(item?.image?.fillOrigin, 3);
+});
+
 test('Game View filters Overlay and Camera canvases by their effective target display', () => {
   const entities = [
     {

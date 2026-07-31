@@ -31,7 +31,18 @@ const IMAGE_TYPES = [
   { value: 'Simple', label: 'Simple' },
   { value: 'Sliced', label: 'Sliced' },
   { value: 'Tiled', label: 'Tiled' },
+  { value: 'Filled', label: 'Filled' },
 ] as const;
+
+const IMAGE_FILL_METHODS = ['Horizontal', 'Vertical', 'Radial90', 'Radial180', 'Radial360'] as const;
+
+const IMAGE_FILL_ORIGINS = {
+  Horizontal: ['Left', 'Right'],
+  Vertical: ['Bottom', 'Top'],
+  Radial90: ['Bottom Left', 'Top Left', 'Top Right', 'Bottom Right'],
+  Radial180: ['Bottom', 'Left', 'Top', 'Right'],
+  Radial360: ['Bottom', 'Right', 'Top', 'Left'],
+} as const;
 
 function colorToHex(c: number[]): string {
   const r = Math.round(Math.min(1, Math.max(0, c[0] ?? 0)) * 255);
@@ -1116,6 +1127,13 @@ export function ImageEditor(props: {
 }) {
   const d = props.data;
   const [nativeBusy, setNativeBusy] = useState(false);
+  const imageType = String(d.image_type ?? d.imageType ?? 'Simple');
+  const requestedFillMethod = String(d.fill_method ?? d.fillMethod ?? 'Radial360');
+  const fillMethod = IMAGE_FILL_METHODS.find((method) => method === requestedFillMethod) ?? 'Radial360';
+  const fillOrigins: readonly string[] = IMAGE_FILL_ORIGINS[fillMethod];
+  const rawFillAmount = Number(d.fill_amount ?? d.fillAmount ?? 1);
+  const fillAmount = Number.isFinite(rawFillAmount) ? Math.max(0, Math.min(1, rawFillAmount)) : 1;
+  const fillOrigin = Math.max(0, Math.min(fillOrigins.length - 1, Math.trunc(Number(d.fill_origin ?? d.fillOrigin) || 0)));
 
   const setNativeSize = () => {
     const sprite = String(d.sprite ?? 'white');
@@ -1151,7 +1169,7 @@ export function ImageEditor(props: {
         <label>Image Type</label>
         <select
           aria-label="Image Type"
-          value={String(d.image_type ?? d.imageType ?? 'Simple')}
+          value={imageType}
           onChange={(e) => props.onPatch({ image_type: e.target.value })}
         >
           {IMAGE_TYPES.map((o) => (
@@ -1161,14 +1179,14 @@ export function ImageEditor(props: {
           ))}
         </select>
       </div>
-      {String(d.image_type ?? d.imageType ?? 'Simple') === 'Simple' && (
+      {['Simple', 'Filled'].includes(imageType) && (
         <BoolField
           label="Preserve Aspect"
           value={d.preserve_aspect === true || d.preserveAspect === true}
           onChange={(preserve_aspect) => props.onPatch({ preserve_aspect })}
         />
       )}
-      {['Sliced', 'Tiled'].includes(String(d.image_type ?? d.imageType ?? 'Simple')) && (
+      {['Sliced', 'Tiled'].includes(imageType) && (
         <>
           <BoolField
             label="Fill Center"
@@ -1183,6 +1201,68 @@ export function ImageEditor(props: {
             onChange={(border) => props.onPatch({ border })}
           />
           <div className="field-hint">Border order: Left, Bottom, Right, Top (pixels)</div>
+        </>
+      )}
+      {imageType === 'Filled' && (
+        <>
+          <div className="field-row">
+            <label>Fill Method</label>
+            <select
+              aria-label="Fill Method"
+              value={fillMethod}
+              onChange={(event) => props.onPatch({ fill_method: event.target.value, fill_origin: 0 })}
+            >
+              {IMAGE_FILL_METHODS.map((method) => (
+                <option key={method} value={method}>{method}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field-row">
+            <label>Fill Amount</label>
+            <div className="color-field">
+              <input
+                type="range"
+                aria-label="Fill Amount slider"
+                min={0}
+                max={1}
+                step={0.01}
+                value={fillAmount}
+                onChange={(event) => props.onPatch({ fill_amount: Number(event.target.value) })}
+              />
+              <input
+                type="number"
+                className="color-alpha"
+                aria-label="Fill Amount"
+                min={0}
+                max={1}
+                step={0.01}
+                value={Number(fillAmount.toFixed(3))}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  props.onPatch({ fill_amount: Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0 });
+                }}
+              />
+            </div>
+          </div>
+          {fillMethod.startsWith('Radial') && (
+            <BoolField
+              label="Clockwise"
+              value={d.fill_clockwise !== false && d.fillClockwise !== false}
+              onChange={(fill_clockwise) => props.onPatch({ fill_clockwise })}
+            />
+          )}
+          <div className="field-row">
+            <label>Fill Origin</label>
+            <select
+              aria-label="Fill Origin"
+              value={fillOrigin}
+              onChange={(event) => props.onPatch({ fill_origin: Number(event.target.value) })}
+            >
+              {fillOrigins.map((label, index) => (
+                <option key={label} value={index}>{label}</option>
+              ))}
+            </select>
+          </div>
         </>
       )}
       <NumberVectorField

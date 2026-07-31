@@ -147,6 +147,10 @@ export class Image {
   image_type!: string;
   preserve_aspect!: boolean;
   fill_center!: boolean;
+  fill_method!: string;
+  fill_amount!: number;
+  fill_clockwise!: boolean;
+  fill_origin!: number;
   border!: Color4;
   source_size!: [number, number];
   raycast_target!: boolean;

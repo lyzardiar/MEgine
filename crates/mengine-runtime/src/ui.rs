@@ -1384,6 +1384,22 @@ fn walk(
                 image.fill_center,
                 clip,
             );
+        } else if image.image_type.eq_ignore_ascii_case("filled") {
+            push_filled_image(
+                primitives,
+                rect,
+                multiply_alpha(image.color, state.alpha),
+                pivot,
+                rotation,
+                &image.sprite,
+                image.source_size,
+                image.preserve_aspect,
+                &image.fill_method,
+                image.fill_amount,
+                image.fill_clockwise,
+                image.fill_origin,
+                clip,
+            );
         } else if image.image_type.eq_ignore_ascii_case("sliced") {
             push_sliced_image(
                 primitives,
@@ -2807,6 +2823,7 @@ fn primitive(
         depth: 0.0,
         clip_corners: None,
         uv: [0.0, 0.0, 1.0, 1.0],
+        vertex_positions: None,
         key: UiBatchKey {
             material: material.into(),
             texture: texture.into(),
@@ -2880,6 +2897,273 @@ fn image_geometry(
             (global_pivot[1] - fitted.y) / fitted.height,
         ],
     )
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ImageFillMethod {
+    Horizontal,
+    Vertical,
+    Radial90,
+    Radial180,
+    Radial360,
+}
+
+impl ImageFillMethod {
+    fn parse(value: &str) -> Self {
+        if value.eq_ignore_ascii_case("horizontal") {
+            Self::Horizontal
+        } else if value.eq_ignore_ascii_case("vertical") {
+            Self::Vertical
+        } else if value.eq_ignore_ascii_case("radial90") {
+            Self::Radial90
+        } else if value.eq_ignore_ascii_case("radial180") {
+            Self::Radial180
+        } else {
+            Self::Radial360
+        }
+    }
+
+    fn normalized_origin(self, origin: i32) -> usize {
+        let maximum = if matches!(self, Self::Horizontal | Self::Vertical) {
+            1
+        } else {
+            3
+        };
+        if (0..=maximum).contains(&origin) {
+            origin as usize
+        } else {
+            0
+        }
+    }
+}
+
+type ImageFillQuad = [[f32; 2]; 4];
+
+fn unity_image_quad(x0: f32, y0: f32, x1: f32, y1: f32) -> ImageFillQuad {
+    [[x0, y0], [x0, y1], [x1, y1], [x1, y0]]
+}
+
+fn top_left_image_quad(mut quad: ImageFillQuad) -> ImageFillQuad {
+    for point in &mut quad {
+        point[1] = 1.0 - point[1];
+    }
+    quad
+}
+
+fn point_lerp(quad: &ImageFillQuad, from: usize, to: usize, axis: usize, value: f32) -> f32 {
+    quad[from][axis] + (quad[to][axis] - quad[from][axis]) * value
+}
+
+/// Port of Unity uGUI Image.RadialCut for one quadrant.
+fn radial_image_cut(
+    quad: &mut ImageFillQuad,
+    raw_fill: f32,
+    mut invert: bool,
+    corner: usize,
+) -> bool {
+    let fill = if raw_fill.is_finite() {
+        raw_fill.clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+    if fill < 0.001 {
+        return false;
+    }
+    if corner & 1 == 1 {
+        invert = !invert;
+    }
+    if !invert && fill > 0.999 {
+        return true;
+    }
+
+    let mut angle = if invert { 1.0 - fill } else { fill };
+    angle *= std::f32::consts::FRAC_PI_2;
+    let mut cos = angle.cos();
+    let mut sin = angle.sin();
+    let i0 = corner;
+    let i1 = (corner + 1) % 4;
+    let i2 = (corner + 2) % 4;
+    let i3 = (corner + 3) % 4;
+
+    if corner & 1 == 1 {
+        if sin > cos {
+            cos /= sin;
+            sin = 1.0;
+            if invert {
+                quad[i1][0] = point_lerp(quad, i0, i2, 0, cos);
+                quad[i2][0] = quad[i1][0];
+            }
+        } else if cos > sin {
+            sin /= cos;
+            cos = 1.0;
+            if !invert {
+                quad[i2][1] = point_lerp(quad, i0, i2, 1, sin);
+                quad[i3][1] = quad[i2][1];
+            }
+        } else {
+            cos = 1.0;
+            sin = 1.0;
+        }
+        if !invert {
+            quad[i3][0] = point_lerp(quad, i0, i2, 0, cos);
+        } else {
+            quad[i1][1] = point_lerp(quad, i0, i2, 1, sin);
+        }
+    } else {
+        if cos > sin {
+            sin /= cos;
+            cos = 1.0;
+            if !invert {
+                quad[i1][1] = point_lerp(quad, i0, i2, 1, sin);
+                quad[i2][1] = quad[i1][1];
+            }
+        } else if sin > cos {
+            cos /= sin;
+            sin = 1.0;
+            if invert {
+                quad[i2][0] = point_lerp(quad, i0, i2, 0, cos);
+                quad[i3][0] = quad[i2][0];
+            }
+        } else {
+            cos = 1.0;
+            sin = 1.0;
+        }
+        if invert {
+            quad[i3][1] = point_lerp(quad, i0, i2, 1, sin);
+        } else {
+            quad[i1][0] = point_lerp(quad, i0, i2, 0, cos);
+        }
+    }
+    true
+}
+
+fn filled_image_quads(
+    method: &str,
+    raw_amount: f32,
+    clockwise: bool,
+    raw_origin: i32,
+) -> Vec<ImageFillQuad> {
+    let method = ImageFillMethod::parse(method);
+    let amount = if raw_amount.is_finite() {
+        raw_amount.clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+    if amount < 0.001 {
+        return Vec::new();
+    }
+    let origin = method.normalized_origin(raw_origin);
+    if method == ImageFillMethod::Horizontal {
+        let quad = if origin == 1 {
+            unity_image_quad(1.0 - amount, 0.0, 1.0, 1.0)
+        } else {
+            unity_image_quad(0.0, 0.0, amount, 1.0)
+        };
+        return vec![top_left_image_quad(quad)];
+    }
+    if method == ImageFillMethod::Vertical {
+        let quad = if origin == 1 {
+            unity_image_quad(0.0, 1.0 - amount, 1.0, 1.0)
+        } else {
+            unity_image_quad(0.0, 0.0, 1.0, amount)
+        };
+        return vec![top_left_image_quad(quad)];
+    }
+    if amount >= 1.0 {
+        return vec![top_left_image_quad(unity_image_quad(0.0, 0.0, 1.0, 1.0))];
+    }
+    if method == ImageFillMethod::Radial90 {
+        let mut quad = unity_image_quad(0.0, 0.0, 1.0, 1.0);
+        return if radial_image_cut(&mut quad, amount, clockwise, origin) {
+            vec![top_left_image_quad(quad)]
+        } else {
+            Vec::new()
+        };
+    }
+
+    let mut output = Vec::with_capacity(if method == ImageFillMethod::Radial180 {
+        2
+    } else {
+        4
+    });
+    if method == ImageFillMethod::Radial180 {
+        for side in 0..2 {
+            let even = usize::from(origin > 1);
+            let (fx0, fx1, fy0, fy1) = if origin == 0 || origin == 2 {
+                if side == even {
+                    (0.0, 0.5, 0.0, 1.0)
+                } else {
+                    (0.5, 1.0, 0.0, 1.0)
+                }
+            } else if side == even {
+                (0.0, 1.0, 0.5, 1.0)
+            } else {
+                (0.0, 1.0, 0.0, 0.5)
+            };
+            let mut quad = unity_image_quad(fx0, fy0, fx1, fy1);
+            let value = if clockwise {
+                amount * 2.0 - side as f32
+            } else {
+                amount * 2.0 - (1 - side) as f32
+            };
+            if radial_image_cut(&mut quad, value, clockwise, (side + origin + 3) % 4) {
+                output.push(top_left_image_quad(quad));
+            }
+        }
+        return output;
+    }
+
+    for corner in 0..4 {
+        let (fx0, fx1) = if corner < 2 { (0.0, 0.5) } else { (0.5, 1.0) };
+        let (fy0, fy1) = if corner == 0 || corner == 3 {
+            (0.0, 0.5)
+        } else {
+            (0.5, 1.0)
+        };
+        let mut quad = unity_image_quad(fx0, fy0, fx1, fy1);
+        let phase = (corner + origin) % 4;
+        let value = if clockwise {
+            amount * 4.0 - phase as f32
+        } else {
+            amount * 4.0 - (3 - phase) as f32
+        };
+        if radial_image_cut(&mut quad, value, clockwise, (corner + 2) % 4) {
+            output.push(top_left_image_quad(quad));
+        }
+    }
+    output
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_filled_image(
+    primitives: &mut Vec<UiPrimitive>,
+    rect: UiRect,
+    color: [f32; 4],
+    pivot: [f32; 2],
+    rotation: f32,
+    texture: &str,
+    source_size: [f32; 2],
+    preserve_aspect: bool,
+    fill_method: &str,
+    fill_amount: f32,
+    fill_clockwise: bool,
+    fill_origin: i32,
+    clip: UiClipRect,
+) {
+    let (image_rect, image_pivot) = image_geometry(rect, pivot, source_size, preserve_aspect);
+    for quad in filled_image_quads(fill_method, fill_amount, fill_clockwise, fill_origin) {
+        let mut output = primitive(
+            image_rect,
+            color,
+            image_pivot,
+            rotation,
+            "ui/image",
+            texture,
+            clip,
+        );
+        output.vertex_positions = Some(quad);
+        primitives.push(output);
+    }
 }
 
 fn split_axis(total: f32, start: f32, end: f32) -> [f32; 4] {
@@ -4900,6 +5184,87 @@ mod tests {
         );
         assert!((fitted.x + pivot[0] * fitted.width - 10.0).abs() < 0.0001);
         assert!((fitted.y + pivot[1] * fitted.height - 20.0).abs() < 0.0001);
+    }
+
+    #[test]
+    fn filled_image_linear_and_radial_meshes_match_unity_origins() {
+        assert_eq!(
+            filled_image_quads("Horizontal", 0.25, true, 0),
+            vec![[[0.0, 1.0], [0.0, 0.0], [0.25, 0.0], [0.25, 1.0]]]
+        );
+        assert_eq!(
+            filled_image_quads("Vertical", 0.25, true, 1),
+            vec![[[0.0, 0.25], [0.0, 0.0], [1.0, 0.0], [1.0, 0.25]]]
+        );
+        assert_eq!(
+            filled_image_quads("Radial180", 0.5, true, 0),
+            vec![[[0.0, 1.0], [0.0, 0.0], [0.5, 0.0], [0.5, 1.0]]]
+        );
+        assert_eq!(
+            filled_image_quads("Radial360", 0.25, true, 0),
+            vec![[[0.0, 1.0], [0.0, 0.5], [0.5, 0.5], [0.5, 1.0]]]
+        );
+        assert!(filled_image_quads("Radial90", 0.0, true, 0).is_empty());
+    }
+
+    #[test]
+    fn filled_image_mesh_preserves_aspect_rotation_and_full_raycast_rect() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        let image = world.spawn_empty();
+        world.insert_component(
+            image,
+            RectTransform {
+                pivot: [0.0, 0.0],
+                size_delta: [200.0, 100.0],
+                local_rotation: 30.0,
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            image,
+            Image {
+                image_type: "Filled".into(),
+                preserve_aspect: true,
+                source_size: [100.0, 100.0],
+                fill_method: "Radial360".into(),
+                fill_amount: 0.25,
+                ..Image::default()
+            },
+        );
+        world.set_parent(image, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let primitives: Vec<_> = frame
+            .plan
+            .primitives
+            .iter()
+            .filter(|primitive| primitive.key.material == "ui/image")
+            .collect();
+        assert_eq!(primitives.len(), 1);
+        assert_eq!(primitives[0].rect, [450.0, 300.0, 100.0, 100.0]);
+        assert_eq!(primitives[0].pivot, [-0.5, 0.0]);
+        assert_eq!(
+            primitives[0].vertex_positions,
+            Some([[0.0, 1.0], [0.0, 0.5], [0.5, 0.5], [0.5, 1.0]])
+        );
+        assert!((primitives[0].rotation_radians + 30.0_f32.to_radians()).abs() < 0.0001);
+        let control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == image)
+            .unwrap();
+        assert_eq!(
+            [
+                control.rect.x,
+                control.rect.y,
+                control.rect.width,
+                control.rect.height
+            ],
+            [400.0, 300.0, 200.0, 100.0]
+        );
     }
 
     #[test]

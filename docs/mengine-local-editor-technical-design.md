@@ -1937,3 +1937,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Image Type` 新增 Unity `Tiled`。Editor Canvas 与原生 Runtime 都按 Sprite Border 把角保持为 Sliced、沿长度重复四条边、在中央二维平铺；最后一个不完整 tile 会同步裁剪目标矩形与 Sprite UV，不拉伸或越出 RectTransform。`Fill Center` 同时对 Sliced/Tiled 生效；有 Border 时可保留边框并挖空中心，无 Border 时遵循 Unity 兼容行为继续显示完整平铺图。
 - 平铺尺寸使用 CanvasScaler 派生的 Sprite Pixel Scale，因此 Constant Pixel、Scale With Screen Size 与 Constant Physical Size 下，边框尺寸和 tile 密度由同一比例决定。每个 tile 都把 Pivot 重映射回作者 RectTransform 的全局 Pivot，旋转后的角、边和中心不会各自绕局部中心散开；GraphicRaycaster 仍保持单一完整 RectTransform 命中区域，不因生成多个渲染 quad 重复触发。
 - 与 Unity 相同，每张 Tiled Image 最多生成 16,250 个 quad。若极大目标区域和极小 Sprite 会超限，Editor/Runtime 都用确定性二分放大 tile，直到完整覆盖且不超预算；不会截掉尾部，也不会让异常资产无界分配内存。回归覆盖角/边/中心、末端局部 UV、Fill Center、无 Border、旋转 Pivot、单一 Raycast 与百万像素区域预算。剩余 Unity Image 缺口收敛为 Filled、Alpha Hit Test、Mask/Stencil 与更高级 Sprite 网格。
+
+## 173. 2026-08-01 Image Type Filled
+
+- `Image Type` 补齐 Unity `Filled`，序列化字段与 Unity 默认一致：Fill Method 为 Radial 360、Fill Amount 为 1、Clockwise 开启、Origin 为 0。Inspector 根据 Horizontal、Vertical、Radial 90/180/360 动态显示对应 Origin 名称，切换 Method 会像 Unity 一样重置 Origin；Preserve Aspect 同时适用于 Simple 与 Filled。生成 API、Behaviour、组件目录与 Agent 组件 schema 共享同一数据契约。
+- Editor Canvas 与 Runtime 逐行复刻 uGUI `GenerateFilledSprite` / `RadialCut`：线性模式裁剪几何与 UV，径向模式生成最多四个归一化四边形，五种方法、所有 Origin 和顺/逆时针不使用近似扇形。RHI 实例新增可选的四顶点位置，仍复用原始 RectTransform 的 Pivot、旋转、World Space 透视四角与 Sprite UV，因此 Screen Space、Camera 和 World Space Canvas 走同一网格语义。
+- Fill Amount 会钳制到 0–1，小于 Unity 的 0.001 阈值时不生成网格；Preserve Aspect 只改变可见网格，不缩小 GraphicRaycaster 的完整 RectTransform 命中区域。TypeScript 纯几何、Canvas 数据传递、IDL 默认、Rust 网格/Pivot/Raycast、WGSL 解析与生产构建均有无界面回归。剩余 Image/Graphic 高级缺口主要是 Alpha Hit Test、Mask/Stencil、Sprite Atlas 紧密网格及材质/Additional Shader Channels。

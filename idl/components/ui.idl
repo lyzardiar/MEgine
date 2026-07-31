@@ -71,12 +71,20 @@ component ContentSizeFitter {
 component Image {
   sprite:          string = "white"
   color:           float4 = [1, 1, 1, 1]
-  /// "Simple" | "Sliced" | "Tiled" (Unity Image.type)
+  /// "Simple" | "Sliced" | "Tiled" | "Filled" (Unity Image.type)
   image_type:      string = "Simple"
-  /// Preserve the Sprite aspect ratio inside the RectTransform for Simple images.
+  /// Preserve the Sprite aspect ratio inside the RectTransform for Simple/Filled images.
   preserve_aspect: bool   = false
   /// Render the center region of a bordered Sliced image.
   fill_center:     bool   = true
+  /// "Horizontal" | "Vertical" | "Radial90" | "Radial180" | "Radial360"
+  fill_method:     string = "Radial360"
+  /// Visible fraction for Filled images, clamped to 0..1.
+  fill_amount:     float  = 1
+  /// Fill direction for radial methods.
+  fill_clockwise:  bool   = true
+  /// Method-specific Unity origin enum value.
+  fill_origin:     int    = 0
   /// Sprite border in pixels: left, bottom, right, top.
   border:          float4 = [0, 0, 0, 0]
   /// Imported source texture size used to normalize sliced UVs.
