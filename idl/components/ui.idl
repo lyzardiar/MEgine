@@ -8,11 +8,19 @@ component Canvas {
 }
 
 component CanvasScaler {
-  /// "ConstantPixelSize" | "ScaleWithScreenSize"
-  ui_scale_mode:           string  = "ScaleWithScreenSize"
-  reference_resolution:    float2  = [1920, 1080]
-  match_width_or_height:   float   = 0.5
-  scale_factor:            float   = 1
+  /// "ConstantPixelSize" | "ScaleWithScreenSize" | "ConstantPhysicalSize"
+  ui_scale_mode:             string  = "ConstantPixelSize"
+  reference_pixels_per_unit: float   = 100
+  scale_factor:              float   = 1
+  reference_resolution:      float2  = [800, 600]
+  /// "MatchWidthOrHeight" | "Expand" | "Shrink"
+  screen_match_mode:         string  = "MatchWidthOrHeight"
+  match_width_or_height:     float   = 0
+  /// "Centimeters" | "Millimeters" | "Inches" | "Points" | "Picas"
+  physical_unit:             string  = "Points"
+  fallback_screen_dpi:       float   = 96
+  default_sprite_dpi:        float   = 96
+  dynamic_pixels_per_unit:   float   = 1
 }
 
 component RectTransform {

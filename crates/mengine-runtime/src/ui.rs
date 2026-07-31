@@ -348,6 +348,7 @@ struct UiInheritedState {
 struct UiWalkLayout {
     parent_rect: UiRect,
     scale: f32,
+    sprite_pixel_scale: f32,
     clip: UiClipRect,
     forced_rect: Option<UiRect>,
 }
@@ -401,10 +402,13 @@ pub fn collect_ui_frame_with_hierarchy(
         if canvas.render_mode != "ScreenSpaceOverlay" && canvas.render_mode != "ScreenSpaceCamera" {
             continue;
         }
-        let scale = world
-            .get_component::<CanvasScaler>(canvas_entity)
-            .map(|scaler| canvas_scale_factor(scaler, root.width, root.height))
+        let scaler = world.get_component::<CanvasScaler>(canvas_entity);
+        let scale = scaler
+            .map(|value| canvas_scale_factor(value, root.width, root.height))
             .unwrap_or(1.0);
+        let sprite_pixel_scale = scaler
+            .map(|value| canvas_sprite_pixel_scale(value, scale))
+            .unwrap_or(scale);
         let canvas_rect = world
             .get_component::<RectTransform>(canvas_entity)
             .map(|rect| solve_rect(root, rect, scale))
@@ -422,6 +426,7 @@ pub fn collect_ui_frame_with_hierarchy(
                 UiWalkLayout {
                     parent_rect: canvas_rect,
                     scale,
+                    sprite_pixel_scale,
                     clip,
                     forced_rect: None,
                 },
@@ -456,6 +461,7 @@ fn walk(
     let UiWalkLayout {
         parent_rect,
         scale,
+        sprite_pixel_scale,
         clip,
         forced_rect,
     } = layout_state;
@@ -515,7 +521,7 @@ fn walk(
                 &image.sprite,
                 image.border,
                 image.source_size,
-                scale,
+                sprite_pixel_scale,
                 clip,
             );
         } else {
@@ -1298,6 +1304,7 @@ fn walk(
             UiWalkLayout {
                 parent_rect: child_parent,
                 scale,
+                sprite_pixel_scale,
                 clip: child_clip,
                 forced_rect: forced,
             },
@@ -1767,15 +1774,70 @@ fn apply_aspect_ratio(
 }
 
 fn canvas_scale_factor(scaler: &CanvasScaler, width: f32, height: f32) -> f32 {
-    if scaler.ui_scale_mode == "ConstantPixelSize" {
-        return scaler.scale_factor.max(0.0001);
+    canvas_scale_factor_with_dpi(scaler, width, height, 0.0)
+}
+
+fn canvas_scale_factor_with_dpi(
+    scaler: &CanvasScaler,
+    width: f32,
+    height: f32,
+    screen_dpi: f32,
+) -> f32 {
+    match scaler.ui_scale_mode.as_str() {
+        "ConstantPixelSize" => return finite_positive(scaler.scale_factor, 1.0).max(0.01),
+        "ConstantPhysicalSize" => {
+            let fallback_dpi = finite_positive(scaler.fallback_screen_dpi, 96.0);
+            let dpi = finite_positive(screen_dpi, fallback_dpi);
+            let target_dpi = physical_target_dpi(&scaler.physical_unit);
+            return dpi / target_dpi;
+        }
+        _ => {}
     }
-    let reference_width = scaler.reference_resolution[0].max(1.0);
-    let reference_height = scaler.reference_resolution[1].max(1.0);
+    let reference_width = finite_positive(scaler.reference_resolution[0], 800.0);
+    let reference_height = finite_positive(scaler.reference_resolution[1], 600.0);
+    let width_ratio = finite_positive(width, 1.0) / reference_width;
+    let height_ratio = finite_positive(height, 1.0) / reference_height;
+    match scaler.screen_match_mode.as_str() {
+        "Expand" => return width_ratio.min(height_ratio),
+        "Shrink" => return width_ratio.max(height_ratio),
+        _ => {}
+    }
     let match_factor = scaler.match_width_or_height.clamp(0.0, 1.0);
-    let log_width = (width / reference_width).ln();
-    let log_height = (height / reference_height).ln();
+    let match_factor = if match_factor.is_finite() {
+        match_factor
+    } else {
+        0.0
+    };
+    let log_width = width_ratio.ln();
+    let log_height = height_ratio.ln();
     (log_width * (1.0 - match_factor) + log_height * match_factor).exp()
+}
+
+fn canvas_sprite_pixel_scale(scaler: &CanvasScaler, layout_scale: f32) -> f32 {
+    if scaler.ui_scale_mode != "ConstantPhysicalSize" {
+        return layout_scale;
+    }
+    let target_dpi = physical_target_dpi(&scaler.physical_unit);
+    let sprite_dpi = finite_positive(scaler.default_sprite_dpi, 96.0);
+    layout_scale * target_dpi / sprite_dpi
+}
+
+fn physical_target_dpi(unit: &str) -> f32 {
+    match unit {
+        "Centimeters" => 2.54,
+        "Millimeters" => 25.4,
+        "Inches" => 1.0,
+        "Picas" => 6.0,
+        _ => 72.0,
+    }
+}
+
+fn finite_positive(value: f32, fallback: f32) -> f32 {
+    if value.is_finite() && value > 0.0 {
+        value
+    } else {
+        fallback
+    }
 }
 
 fn primitive(
@@ -2139,6 +2201,43 @@ fn glyph_rows(character: char) -> [u8; 7] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn canvas_scaler_matches_unity_screen_modes() {
+        let mut scaler = CanvasScaler {
+            ui_scale_mode: "ScaleWithScreenSize".into(),
+            reference_resolution: [800.0, 600.0],
+            ..CanvasScaler::default()
+        };
+        scaler.screen_match_mode = "MatchWidthOrHeight".into();
+        scaler.match_width_or_height = 0.0;
+        assert_eq!(canvas_scale_factor(&scaler, 1600.0, 600.0), 2.0);
+        scaler.match_width_or_height = 1.0;
+        assert_eq!(canvas_scale_factor(&scaler, 1600.0, 600.0), 1.0);
+        scaler.match_width_or_height = 0.5;
+        assert!((canvas_scale_factor(&scaler, 1600.0, 600.0) - 2.0_f32.sqrt()).abs() < 1e-6);
+        scaler.screen_match_mode = "Expand".into();
+        assert_eq!(canvas_scale_factor(&scaler, 1600.0, 600.0), 1.0);
+        scaler.screen_match_mode = "Shrink".into();
+        assert_eq!(canvas_scale_factor(&scaler, 1600.0, 600.0), 2.0);
+    }
+
+    #[test]
+    fn canvas_scaler_matches_unity_physical_units_and_fallback_dpi() {
+        let mut scaler = CanvasScaler {
+            ui_scale_mode: "ConstantPhysicalSize".into(),
+            fallback_screen_dpi: 120.0,
+            ..CanvasScaler::default()
+        };
+        scaler.physical_unit = "Points".into();
+        assert!((canvas_scale_factor(&scaler, 1.0, 1.0) - 120.0 / 72.0).abs() < 1e-6);
+        assert_eq!(canvas_scale_factor_with_dpi(&scaler, 1.0, 1.0, 144.0), 2.0);
+        assert!((canvas_sprite_pixel_scale(&scaler, 120.0 / 72.0) - 1.25).abs() < 1e-6);
+        scaler.physical_unit = "Millimeters".into();
+        assert!((canvas_scale_factor(&scaler, 1.0, 1.0) - 120.0 / 25.4).abs() < 1e-6);
+        scaler.physical_unit = "Picas".into();
+        assert_eq!(canvas_scale_factor(&scaler, 1.0, 1.0), 20.0);
+    }
 
     #[test]
     fn raw_image_preserves_uv_texture_tint_and_raycast_blocking() {

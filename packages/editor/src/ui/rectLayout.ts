@@ -86,33 +86,110 @@ export function solveRectTransform(parent: Rect, raw: unknown): Rect {
 export type CanvasScalerData = {
   ui_scale_mode?: string;
   uiScaleMode?: string;
-  reference_resolution?: Vec2;
-  referenceResolution?: Vec2;
-  match_width_or_height?: number;
-  matchWidthOrHeight?: number;
+  reference_pixels_per_unit?: number;
+  referencePixelsPerUnit?: number;
   scale_factor?: number;
   scaleFactor?: number;
+  reference_resolution?: Vec2;
+  referenceResolution?: Vec2;
+  screen_match_mode?: string;
+  screenMatchMode?: string;
+  match_width_or_height?: number;
+  matchWidthOrHeight?: number;
+  physical_unit?: string;
+  physicalUnit?: string;
+  fallback_screen_dpi?: number;
+  fallbackScreenDpi?: number;
+  default_sprite_dpi?: number;
+  defaultSpriteDpi?: number;
+  dynamic_pixels_per_unit?: number;
+  dynamicPixelsPerUnit?: number;
 };
+
+function positiveFinite(value: unknown, fallback: number): number {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
+function physicalTargetDpi(unit: string): number {
+  return {
+    Centimeters: 2.54,
+    Millimeters: 25.4,
+    Inches: 1,
+    Points: 72,
+    Picas: 6,
+  }[unit] ?? 72;
+}
 
 export function canvasReferenceSize(scaler: unknown): { w: number; h: number } {
   const s = (scaler ?? {}) as CanvasScalerData;
-  const ref = v2(s.reference_resolution ?? s.referenceResolution, [1920, 1080]);
-  return { w: Math.max(1, ref[0]), h: Math.max(1, ref[1]) };
+  const ref = v2(s.reference_resolution ?? s.referenceResolution, [800, 600]);
+  return {
+    w: positiveFinite(ref[0], 800),
+    h: positiveFinite(ref[1], 600),
+  };
 }
 
-/** Scale factor for ScaleWithScreenSize (Unity CanvasScaler). */
-export function canvasScaleFactor(scaler: unknown, viewW: number, viewH: number): number {
+/** Unity-compatible screen-space CanvasScaler factor. Pass 0 when screen DPI is unknown. */
+export function canvasScaleFactor(
+  scaler: unknown,
+  viewW: number,
+  viewH: number,
+  screenDpi = 0,
+): number {
   const s = (scaler ?? {}) as CanvasScalerData;
-  const mode = s.ui_scale_mode ?? s.uiScaleMode ?? 'ScaleWithScreenSize';
+  const mode = s.ui_scale_mode ?? s.uiScaleMode ?? 'ConstantPixelSize';
   if (mode === 'ConstantPixelSize') {
-    return Number(s.scale_factor ?? s.scaleFactor ?? 1) || 1;
+    return Math.max(0.01, positiveFinite(s.scale_factor ?? s.scaleFactor, 1));
   }
-  const ref = v2(s.reference_resolution ?? s.referenceResolution, [1920, 1080]);
-  const match = Number(s.match_width_or_height ?? s.matchWidthOrHeight ?? 0.5);
-  const logW = Math.log(viewW / Math.max(1, ref[0]));
-  const logH = Math.log(viewH / Math.max(1, ref[1]));
+  if (mode === 'ConstantPhysicalSize') {
+    const fallbackDpi = positiveFinite(s.fallback_screen_dpi ?? s.fallbackScreenDpi, 96);
+    const dpi = positiveFinite(screenDpi, fallbackDpi);
+    const unit = s.physical_unit ?? s.physicalUnit ?? 'Points';
+    return dpi / physicalTargetDpi(unit);
+  }
+  const ref = canvasReferenceSize(s);
+  const widthRatio = positiveFinite(viewW, 1) / ref.w;
+  const heightRatio = positiveFinite(viewH, 1) / ref.h;
+  const matchMode = s.screen_match_mode ?? s.screenMatchMode ?? 'MatchWidthOrHeight';
+  if (matchMode === 'Expand') return Math.min(widthRatio, heightRatio);
+  if (matchMode === 'Shrink') return Math.max(widthRatio, heightRatio);
+  const rawMatch = Number(s.match_width_or_height ?? s.matchWidthOrHeight ?? 0);
+  const match = Number.isFinite(rawMatch) ? Math.min(1, Math.max(0, rawMatch)) : 0;
+  const logW = Math.log(widthRatio);
+  const logH = Math.log(heightRatio);
   const logWeighted = logW * (1 - match) + logH * match;
   return Math.exp(logWeighted);
+}
+
+/**
+ * CanvasScaler factor as displayed by a fitted Game view. Unity first lays UI out
+ * at the selected output resolution, then the Game view scales that output to fit.
+ */
+export function canvasDisplayScaleFactor(
+  scaler: unknown,
+  viewW: number,
+  viewH: number,
+  logicalW = viewW,
+  logicalH = viewH,
+  screenDpi = 0,
+): number {
+  const safeViewW = positiveFinite(viewW, 1);
+  const safeViewH = positiveFinite(viewH, 1);
+  const safeLogicalW = positiveFinite(logicalW, safeViewW);
+  const safeLogicalH = positiveFinite(logicalH, safeViewH);
+  const previewScale = Math.min(safeViewW / safeLogicalW, safeViewH / safeLogicalH);
+  return canvasScaleFactor(scaler, safeLogicalW, safeLogicalH, screenDpi) * previewScale;
+}
+
+/** Pixel density used by sliced sprites after Unity updates Canvas.referencePixelsPerUnit. */
+export function canvasSpritePixelScale(scaler: unknown, layoutScale: number): number {
+  const s = (scaler ?? {}) as CanvasScalerData;
+  const mode = s.ui_scale_mode ?? s.uiScaleMode ?? 'ConstantPixelSize';
+  if (mode !== 'ConstantPhysicalSize') return layoutScale;
+  const unit = s.physical_unit ?? s.physicalUnit ?? 'Points';
+  const spriteDpi = positiveFinite(s.default_sprite_dpi ?? s.defaultSpriteDpi, 96);
+  return layoutScale * physicalTargetDpi(unit) / spriteDpi;
 }
 
 export function pointInRect(px: number, py: number, r: Rect): boolean {

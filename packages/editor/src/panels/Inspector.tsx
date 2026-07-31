@@ -770,9 +770,12 @@ function GenericCompEditor(props: {
       {entries.map(([key, val]) => {
         const meta = getBuiltinInspectorField(props.componentType, key);
         if (meta?.hidden) return null;
-        if (meta?.visibleWhen && viewData[meta.visibleWhen.field] !== meta.visibleWhen.equals) {
-          return null;
-        }
+        const visibilityConditions = meta?.visibleWhen
+          ? (Array.isArray(meta.visibleWhen) ? meta.visibleWhen : [meta.visibleWhen])
+          : [];
+        if (visibilityConditions.some((condition) => (
+          viewData[condition.field] !== condition.equals
+        ))) return null;
         const label = meta?.label ?? inspectorLabel(key);
         const semanticLabel = props.componentType
           ? `${getComponentCatalog().find((entry) => entry.type === props.componentType)?.label

@@ -1,8 +1,10 @@
 /** Build screen-space / Scene-world rects for UI trees (Canvas Overlay). */
 
 import {
+  canvasDisplayScaleFactor,
   canvasReferenceSize,
   canvasScaleFactor,
+  canvasSpritePixelScale,
   pointInRect,
   readRectTransform,
   solveRectTransform,
@@ -427,6 +429,7 @@ export function layoutUiOverlay(
   entities: UiEnt[],
   viewRect: Rect,
   selectedIds: Set<number>,
+  logicalSize?: { w: number; h: number },
 ): UiDrawItem[] {
   const canvases = entities
     .filter((e) => e.components.Canvas && e.active !== false)
@@ -455,7 +458,14 @@ export function layoutUiOverlay(
     if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
 
     const scaler = canvas.components.CanvasScaler;
-    const scale = canvasScaleFactor(scaler, viewRect.w, viewRect.h);
+    const scale = canvasDisplayScaleFactor(
+      scaler,
+      viewRect.w,
+      viewRect.h,
+      logicalSize?.w,
+      logicalSize?.h,
+    );
+    const spritePixelScale = canvasSpritePixelScale(scaler, scale);
     const root: Rect = { x: viewRect.x, y: viewRect.y, w: viewRect.w, h: viewRect.h };
 
     const scaleRt = (raw: unknown) => {
@@ -575,7 +585,7 @@ export function layoutUiOverlay(
                 ),
                 border: number4(img.border, [0, 0, 0, 0]),
                 displayBorder: number4(img.border, [0, 0, 0, 0]).map(
-                  (value) => Math.max(0, value) * scale,
+                  (value) => Math.max(0, value) * spritePixelScale,
                 ) as SpriteBorder,
                 sourceSize: number2(img.source_size ?? img.sourceSize, [100, 100]),
                 raycastTarget: img.raycast_target !== false && img.raycastTarget !== false,

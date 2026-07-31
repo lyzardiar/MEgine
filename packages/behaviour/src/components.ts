@@ -101,9 +101,15 @@ export class Canvas {
 export class CanvasScaler {
   static readonly typeName = 'CanvasScaler' as const;
   ui_scale_mode!: string;
-  reference_resolution!: [number, number];
-  match_width_or_height!: number;
+  reference_pixels_per_unit!: number;
   scale_factor!: number;
+  reference_resolution!: [number, number];
+  screen_match_mode!: string;
+  match_width_or_height!: number;
+  physical_unit!: string;
+  fallback_screen_dpi!: number;
+  default_sprite_dpi!: number;
+  dynamic_pixels_per_unit!: number;
 }
 
 export class RectTransform {

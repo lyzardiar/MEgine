@@ -95,7 +95,7 @@ import {
   UI_SCENE_PPU,
   type UiDrawItem,
 } from '../ui/uiLayout';
-import { canvasScaleFactor, readRectTransform } from '../ui/rectLayout';
+import { canvasDisplayScaleFactor, readRectTransform } from '../ui/rectLayout';
 import {
   collectParticleDrawItems,
   createParticleEmitterState,
@@ -1652,7 +1652,10 @@ export function Viewport(props: {
     {
       if (isGame) {
         const uiRoot = vp;
-        const uiItems = layoutUiOverlay(p.entities, uiRoot, selSet);
+        const logicalUiSize = p.gameResolution
+          ? { w: p.gameResolution.width, h: p.gameResolution.height }
+          : { w: uiRoot.w, h: uiRoot.h };
+        const uiItems = layoutUiOverlay(p.entities, uiRoot, selSet, logicalUiSize);
         uiItemsRef.current = uiItems;
 
         let layoutScale = 1;
@@ -1660,10 +1663,12 @@ export function Viewport(props: {
           let walk: Ent | undefined = p.entities.find((e) => e.entity === p.selected);
           while (walk) {
             if (walk.components.Canvas) {
-              layoutScale = canvasScaleFactor(
+              layoutScale = canvasDisplayScaleFactor(
                 walk.components.CanvasScaler,
                 uiRoot.w,
                 uiRoot.h,
+                logicalUiSize.w,
+                logicalUiSize.h,
               );
               break;
             }

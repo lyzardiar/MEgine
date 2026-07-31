@@ -498,7 +498,22 @@
   },
   "CanvasScaler": {
     "properties": {
+      "default_sprite_dpi": {
+        "type": "number"
+      },
+      "dynamic_pixels_per_unit": {
+        "type": "number"
+      },
+      "fallback_screen_dpi": {
+        "type": "number"
+      },
       "match_width_or_height": {
+        "type": "number"
+      },
+      "physical_unit": {
+        "type": "string"
+      },
+      "reference_pixels_per_unit": {
         "type": "number"
       },
       "reference_resolution": {
@@ -510,15 +525,24 @@
       "scale_factor": {
         "type": "number"
       },
+      "screen_match_mode": {
+        "type": "string"
+      },
       "ui_scale_mode": {
         "type": "string"
       }
     },
     "required": [
       "ui_scale_mode",
+      "reference_pixels_per_unit",
+      "scale_factor",
       "reference_resolution",
+      "screen_match_mode",
       "match_width_or_height",
-      "scale_factor"
+      "physical_unit",
+      "fallback_screen_dpi",
+      "default_sprite_dpi",
+      "dynamic_pixels_per_unit"
     ],
     "type": "object"
   },

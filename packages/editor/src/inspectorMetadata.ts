@@ -8,6 +8,8 @@
 
 export type InspectorOption = { value: string; label: string };
 
+export type InspectorVisibilityCondition = { field: string; equals: unknown };
+
 export type InspectorFieldMeta = {
   label?: string;
   hidden?: boolean;
@@ -43,7 +45,7 @@ export type InspectorFieldMeta = {
   min?: number;
   max?: number;
   step?: number;
-  visibleWhen?: { field: string; equals: unknown };
+  visibleWhen?: InspectorVisibilityCondition | InspectorVisibilityCondition[];
 };
 
 const options = (...values: string[]): InspectorOption[] =>
@@ -401,10 +403,49 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       options: [
         { value: 'ConstantPixelSize', label: 'Constant Pixel Size' },
         { value: 'ScaleWithScreenSize', label: 'Scale With Screen Size' },
+        { value: 'ConstantPhysicalSize', label: 'Constant Physical Size' },
       ],
     },
-    match_width_or_height: { label: 'Match', min: 0, max: 1, step: 0.01 },
-    scale_factor: { min: 0.0001, step: 0.1 },
+    scale_factor: {
+      min: 0.01,
+      step: 0.1,
+      visibleWhen: { field: 'ui_scale_mode', equals: 'ConstantPixelSize' },
+    },
+    reference_resolution: {
+      visibleWhen: { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
+    },
+    screen_match_mode: {
+      kind: 'enum',
+      options: options('MatchWidthOrHeight', 'Expand', 'Shrink'),
+      visibleWhen: { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
+    },
+    match_width_or_height: {
+      label: 'Match',
+      min: 0,
+      max: 1,
+      step: 0.01,
+      visibleWhen: [
+        { field: 'ui_scale_mode', equals: 'ScaleWithScreenSize' },
+        { field: 'screen_match_mode', equals: 'MatchWidthOrHeight' },
+      ],
+    },
+    physical_unit: {
+      kind: 'enum',
+      options: options('Centimeters', 'Millimeters', 'Inches', 'Points', 'Picas'),
+      visibleWhen: { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+    },
+    fallback_screen_dpi: {
+      min: 1,
+      step: 1,
+      visibleWhen: { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+    },
+    default_sprite_dpi: {
+      min: 1,
+      step: 1,
+      visibleWhen: { field: 'ui_scale_mode', equals: 'ConstantPhysicalSize' },
+    },
+    reference_pixels_per_unit: { min: 0.01, step: 1 },
+    dynamic_pixels_per_unit: { min: 0.01, step: 0.1 },
   },
   AspectRatioFitter: {
     aspect_mode: {

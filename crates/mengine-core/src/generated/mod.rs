@@ -1522,18 +1522,30 @@ impl Component for Canvas {
 #[serde(default)]
 pub struct CanvasScaler {
     pub ui_scale_mode: String,
-    pub reference_resolution: [f32; 2],
-    pub match_width_or_height: f32,
+    pub reference_pixels_per_unit: f32,
     pub scale_factor: f32,
+    pub reference_resolution: [f32; 2],
+    pub screen_match_mode: String,
+    pub match_width_or_height: f32,
+    pub physical_unit: String,
+    pub fallback_screen_dpi: f32,
+    pub default_sprite_dpi: f32,
+    pub dynamic_pixels_per_unit: f32,
 }
 
 impl Default for CanvasScaler {
     fn default() -> Self {
         Self {
-            ui_scale_mode: "ScaleWithScreenSize".into(),
-            reference_resolution: [1920.0, 1080.0],
-            match_width_or_height: 0.5,
+            ui_scale_mode: "ConstantPixelSize".into(),
+            reference_pixels_per_unit: 100.0,
             scale_factor: 1.0,
+            reference_resolution: [800.0, 600.0],
+            screen_match_mode: "MatchWidthOrHeight".into(),
+            match_width_or_height: 0.0,
+            physical_unit: "Points".into(),
+            fallback_screen_dpi: 96.0,
+            default_sprite_dpi: 96.0,
+            dynamic_pixels_per_unit: 1.0,
         }
     }
 }

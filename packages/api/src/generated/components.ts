@@ -384,9 +384,15 @@ export interface Canvas {
 
 export interface CanvasScaler {
   uiScaleMode: string;
-  referenceResolution: [number, number];
-  matchWidthOrHeight: number;
+  referencePixelsPerUnit: number;
   scaleFactor: number;
+  referenceResolution: [number, number];
+  screenMatchMode: string;
+  matchWidthOrHeight: number;
+  physicalUnit: string;
+  fallbackScreenDpi: number;
+  defaultSpriteDpi: number;
+  dynamicPixelsPerUnit: number;
 }
 
 export interface RectTransform {
