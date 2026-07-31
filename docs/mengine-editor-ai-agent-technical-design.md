@@ -118,10 +118,10 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 - 主 WebView 每次开始导航时由 Rust 页加载钩子原子重置就绪状态；旧页面的延迟清理只能释放自己的 session，不能误停用新页面。启动队列上限为 256，超限请求会收到保留原 JSON-RPC id 的 `NOT_READY` 错误，而不是静默丢失；运行期在途请求超限则返回含客户端/进程容量和重试提示的 `RATE_LIMITED`。每个连接的出站通道同时受 64 条消息和 128 MiB 字节预算约束，无法继续读取的慢客户端会被断开，不会让广播或截图响应无限占用内存。
 - 仅绑定 localhost，不暴露到网络。
 
-**MCP Adapter（Node sidecar）** —— MCP 协议适配器：
+**MCP Adapter（独立 Node 进程）** —— MCP 协议适配器：
 
 - 独立 Node 进程，实现 MCP（stdio），把 `tools/list`、`tools/call`、`resources/*` 翻译为 AgentBridge 消息，经 WS 发给编辑器。
-- 作为 Tauri sidecar 随编辑器启动，或独立运行（读发现文件连接）。
+- 安装版把专用 Node 运行时、MCP/CLI/HTTP 适配器和启动脚本一起放进 `build-sdk/`；MCP 客户端按需启动 stdio 进程，适配器通过发现文件连接编辑器。
 - 这样 MCP 协议处理与编辑器解耦，且天然支持任何 MCP 客户端。
 
 ### 3.3 统一消息协议（JSON-RPC 风格）
@@ -439,18 +439,18 @@ Inspector 的每个组件块同时声明组件标题为 `data-agent-scope`。同
 
 ### 5.1 部署形态
 
-- **进程**：独立 sidecar（`packages/agent` 下新增 `mcp/`），实现 MCP stdio。
+- **进程**：独立 Node 进程（`packages/agent/mcp/`），实现 MCP stdio。
 - **连接**：读发现文件 `<project>/.mengine/agent-bridge.json` 拿到 WS 端口与 token，连上 Bridge Transport。
-- **启动**：作为 Tauri sidecar 随编辑器拉起，或用户手动运行 `npx mengine-mcp`（供 Claude Desktop / Cursor 配置）。
+- **启动**：MCP 客户端按配置启动安装版 `build-sdk/node(.exe)` 与 `agent/mcp/server.mjs`；编辑器的 **Help → AI Agent Setup** 会读取 Tauri 校验后的安装绝对路径并生成可复制配置。CLI/HTTP 另提供同目录启动脚本。
 
 **实现选型说明**：因为 AgentBridge 已经通过本地 WebSocket 暴露，MCP 适配器的实现语言与编辑器解耦——它只是一个「MCP(stdio) ↔ WS」的协议翻译器。两种选择：
 
 | 方案 | 优点 | 代价 |
 | --- | --- | --- |
-| Node sidecar（推荐先行） | TS 的 MCP SDK 成熟、开发快；编辑器本已为构建打包 Node CLI（`build-sdk/`）；MCP 客户端（Claude/Cursor）都跑在有 Node 的开发机上 | 依赖 Node 运行时 |
+| Node 适配器（当前实现） | TS 的 MCP SDK 成熟、开发快；安装版 `build-sdk/` 已内置私有 Node、三类适配器及启动脚本，不依赖用户全局安装 Node | 编辑器安装体积包含 Node 运行时 |
 | Rust sidecar（后续可选） | 零额外依赖，契合「运行时不要求 Node」的发布目标 | Rust MCP SDK 相对不成熟，开发成本高 |
 
-建议 Phase 1 用 Node sidecar 快速打通，待协议稳定后再评估是否用 Rust 重写以满足无 Node 发布。注意「运行时不要求 Node」主要针对**游戏 Player**，编辑器作为开发工具运行在开发机上，Node 普遍可用。
+当前使用打包 Node 适配器；待协议稳定后仍可评估 Rust 重写。注意「运行时不要求 Node」主要针对**游戏 Player**，已发布游戏不会携带编辑器 Build SDK。
 
 ### 5.2 Tools（由 `commands.list` 自动生成）
 
@@ -511,12 +511,12 @@ MCP 初始化声明 `prompts` 能力，并实现 `prompts/list` / `prompts/get`�
 
 ```jsonc
 // claude_desktop_config.json / cursor mcp.json
+// 具体绝对路径由 Help → AI Agent Setup 生成，下面仅示意安装布局。
 {
   "mcpServers": {
     "mengine": {
-      "command": "npx",
-      "args": ["-y", "mengine-mcp"],
-      "env": { "MENGINE_PROJECT": "G:/work/github/MEgine/packages/editor/project" }
+      "command": "C:\\Program Files\\MEngine\\resources\\build-sdk\\node.exe",
+      "args": ["C:\\Program Files\\MEngine\\resources\\build-sdk\\agent\\mcp\\server.mjs"]
     }
   }
 }
@@ -579,6 +579,7 @@ Rust Bridge Host 会在请求占用槽位或进入 WebView **之前**统一拦�
 | 结构化日志 | `src/App.tsx` `logs[]` → 新增 `src/agent/LogService.ts` | level/time/source/message，替换字符串数组 |
 | Bridge 传输 | `src-tauri/src/lib.rs` | 引入 `tokio-tungstenite` 本地 WS 服务器 + 消息路由 + 发现文件 |
 | MCP 适配 | `packages/agent/mcp/` | MCP stdio server，WS 客户端连 Bridge |
+| 适配器交付 | `scripts/prepare-editor-build-sdk.mjs`、`Help/AI Agent Setup` | ✅ 安装版内置私有 Node、MCP/CLI/HTTP 适配器和跨平台启动脚本；Tauri 校验普通文件与安全相对路径后向 UI 返回绝对命令 |
 | 单次 CLI | `packages/agent/cli/editor.mjs` | ✅ 复用 MCP Bridge 客户端的 query / execute JSON 命令 |
 | 本地 HTTP | `packages/agent/http/server.mjs` | ✅ loopback + Bearer 鉴权的 query / execute REST 适配器；请求边界、并发和断开取消均有界 |
 | 意图层扩展 | `packages/agent/src/index.ts` | ✅ 3 个严格、自描述的安全 intent，已接 Dispatcher |
@@ -647,7 +648,7 @@ Rust Bridge Host 会在请求占用槽位或进入 WebView **之前**统一拦�
 | 命名漂移：camelCase vs snake_case | AgentBridge 对外统一 camelCase，边界处集中转换，避免泄漏到协议 |
 | Play Mode 双事实源 | 观察/写操作明确区分 edit/play 世界，Play 下写操作按现有 store 规则处理 |
 | 截图与渲染时机 | Canvas2D 在 RAF 帧内捕获；整窗使用 WebView2 渲染面，不激活窗口、不读取前台像素 |
-| MCP 进程与编辑器生命周期 | sidecar 随编辑器启停；连接断开自动重连；发现文件过期清理 |
+| MCP 进程与编辑器生命周期 | MCP 客户端持有 stdio 进程生命周期；连接断开自动重连；编辑器退出时发现记录失效，适配器不会常驻编辑器后台 |
 
 ## 9. 附录
 

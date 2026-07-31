@@ -28,6 +28,10 @@ function DocumentationBody() {
 
       <section aria-labelledby="documentation-agent">
         <h2 id="documentation-agent">AI Agent workflow</h2>
+        <p>
+          Open <strong>Help → AI Agent Setup</strong> to copy an MCP client configuration
+          that uses the adapters packaged with this editor.
+        </p>
         <ol>
           <li>
             Read <code>mengine://project/state</code> and <code>mengine://editor/state</code>.

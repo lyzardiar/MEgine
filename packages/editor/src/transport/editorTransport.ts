@@ -368,6 +368,43 @@ export async function getEditorInstanceId(): Promise<string> {
   return invoke<string>('get_editor_instance_id');
 }
 
+export type AgentAdapterCommand = {
+  command: string;
+  args: string[];
+};
+
+export type AgentAdapterInfo = {
+  schemaVersion: 1;
+  source: 'bundled' | 'workspace';
+  mcp: AgentAdapterCommand;
+  cli: AgentAdapterCommand;
+  http: AgentAdapterCommand;
+  mcpLauncher: string | null;
+  cliLauncher: string | null;
+  httpLauncher: string | null;
+};
+
+/**
+ * Return stable commands for the Agent adapters shipped with the desktop editor.
+ * Browser development keeps a workspace-relative fallback so this help surface
+ * remains useful without pretending those paths are installed artifacts.
+ */
+export async function getAgentAdapterInfo(): Promise<AgentAdapterInfo> {
+  if (!isDesktopEditor()) {
+    return {
+      schemaVersion: 1,
+      source: 'workspace',
+      mcp: { command: 'node', args: ['packages/agent/mcp/server.mjs'] },
+      cli: { command: 'node', args: ['packages/agent/cli/editor.mjs'] },
+      http: { command: 'node', args: ['packages/agent/http/server.mjs'] },
+      mcpLauncher: null,
+      cliLauncher: null,
+      httpLauncher: null,
+    };
+  }
+  return invoke<AgentAdapterInfo>('get_agent_adapter_info');
+}
+
 export async function isPrimaryPointerDown(): Promise<boolean> {
   return isDesktopEditor() ? invoke<boolean>('is_primary_pointer_down') : false;
 }

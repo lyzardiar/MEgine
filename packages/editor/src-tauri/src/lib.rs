@@ -553,6 +553,24 @@ struct BuildSdkRuntimes {
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct BuildSdkAgentLaunchers {
+    mcp: String,
+    cli: String,
+    http: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildSdkAgent {
+    version: String,
+    mcp: String,
+    cli: String,
+    http: String,
+    launchers: BuildSdkAgentLaunchers,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct BuildSdkManifest {
     schema_version: u32,
     platform: String,
@@ -561,6 +579,7 @@ struct BuildSdkManifest {
     node: String,
     cli: String,
     runtimes: BuildSdkRuntimes,
+    agent: Option<BuildSdkAgent>,
 }
 
 #[derive(Debug)]
@@ -569,6 +588,26 @@ struct BuildSdk {
     node: PathBuf,
     cli: PathBuf,
     runtime: PathBuf,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AgentAdapterCommand {
+    command: String,
+    args: Vec<String>,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AgentAdapterInfo {
+    schema_version: u32,
+    source: String,
+    mcp: AgentAdapterCommand,
+    cli: AgentAdapterCommand,
+    http: AgentAdapterCommand,
+    mcp_launcher: Option<String>,
+    cli_launcher: Option<String>,
+    http_launcher: Option<String>,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -685,6 +724,15 @@ fn child_process_path(path: &Path) -> PathBuf {
     path.to_path_buf()
 }
 
+fn read_build_sdk_manifest(root: &Path) -> Result<BuildSdkManifest, String> {
+    let manifest_path = build_sdk_file(root, "sdk.json", "manifest")?;
+    serde_json::from_slice(
+        &std::fs::read(&manifest_path)
+            .map_err(|error| format!("cannot read Build SDK manifest: {error}"))?,
+    )
+    .map_err(|error| format!("invalid Build SDK manifest: {error}"))
+}
+
 fn load_build_sdk(root: &Path, profile: &str) -> Result<BuildSdk, String> {
     let canonical_root = root
         .canonicalize()
@@ -692,12 +740,7 @@ fn load_build_sdk(root: &Path, profile: &str) -> Result<BuildSdk, String> {
     if !canonical_root.is_dir() {
         return Err("Build SDK path must be a directory".into());
     }
-    let manifest_path = build_sdk_file(&canonical_root, "sdk.json", "manifest")?;
-    let manifest: BuildSdkManifest = serde_json::from_slice(
-        &std::fs::read(&manifest_path)
-            .map_err(|error| format!("cannot read Build SDK manifest: {error}"))?,
-    )
-    .map_err(|error| format!("invalid Build SDK manifest: {error}"))?;
+    let manifest = read_build_sdk_manifest(&canonical_root)?;
     if manifest.schema_version != 1 {
         return Err(format!(
             "unsupported Build SDK schema version {}",
@@ -730,6 +773,100 @@ fn load_build_sdk(root: &Path, profile: &str) -> Result<BuildSdk, String> {
         cli: build_sdk_file(&canonical_root, &manifest.cli, "CLI")?,
         runtime: build_sdk_file(&canonical_root, runtime, "player runtime")?,
         root: canonical_root,
+    })
+}
+
+fn adapter_command(node: &Path, script: &Path) -> AgentAdapterCommand {
+    AgentAdapterCommand {
+        command: child_process_path(node).to_string_lossy().into_owned(),
+        args: vec![child_process_path(script).to_string_lossy().into_owned()],
+    }
+}
+
+fn load_bundled_agent_adapters(root: &Path) -> Result<AgentAdapterInfo, String> {
+    let sdk = load_build_sdk(root, "debug")?;
+    let manifest = read_build_sdk_manifest(&sdk.root)?;
+    let agent = manifest.agent.ok_or_else(|| {
+        "Build SDK does not contain the packaged Agent adapters; reinstall the editor".to_string()
+    })?;
+    if agent.version != env!("CARGO_PKG_VERSION") {
+        return Err(format!(
+            "Agent adapter version mismatch: expected {}, found {}",
+            env!("CARGO_PKG_VERSION"),
+            agent.version
+        ));
+    }
+    let mcp = build_sdk_file(&sdk.root, &agent.mcp, "Agent MCP adapter")?;
+    let cli = build_sdk_file(&sdk.root, &agent.cli, "Agent CLI adapter")?;
+    let http = build_sdk_file(&sdk.root, &agent.http, "Agent HTTP adapter")?;
+    let mcp_launcher = build_sdk_file(&sdk.root, &agent.launchers.mcp, "Agent MCP launcher")?;
+    let cli_launcher = build_sdk_file(&sdk.root, &agent.launchers.cli, "Agent CLI launcher")?;
+    let http_launcher = build_sdk_file(&sdk.root, &agent.launchers.http, "Agent HTTP launcher")?;
+    Ok(AgentAdapterInfo {
+        schema_version: 1,
+        source: "bundled".into(),
+        mcp: adapter_command(&sdk.node, &mcp),
+        cli: adapter_command(&sdk.node, &cli),
+        http: adapter_command(&sdk.node, &http),
+        mcp_launcher: Some(
+            child_process_path(&mcp_launcher)
+                .to_string_lossy()
+                .into_owned(),
+        ),
+        cli_launcher: Some(
+            child_process_path(&cli_launcher)
+                .to_string_lossy()
+                .into_owned(),
+        ),
+        http_launcher: Some(
+            child_process_path(&http_launcher)
+                .to_string_lossy()
+                .into_owned(),
+        ),
+    })
+}
+
+fn load_workspace_agent_adapters(root: &Path) -> Result<AgentAdapterInfo, String> {
+    let canonical_root = root
+        .canonicalize()
+        .map_err(|error| format!("MEngine workspace: {error}"))?;
+    let agent_root = canonical_root.join("packages/agent");
+    let mcp = build_sdk_file(
+        &canonical_root,
+        "packages/agent/mcp/server.mjs",
+        "Agent MCP adapter",
+    )?;
+    let cli = build_sdk_file(
+        &canonical_root,
+        "packages/agent/cli/editor.mjs",
+        "Agent CLI adapter",
+    )?;
+    let http = build_sdk_file(
+        &canonical_root,
+        "packages/agent/http/server.mjs",
+        "Agent HTTP adapter",
+    )?;
+    if !agent_root.join("package.json").is_file() {
+        return Err("MEngine workspace does not contain packages/agent/package.json".into());
+    }
+    Ok(AgentAdapterInfo {
+        schema_version: 1,
+        source: "workspace".into(),
+        mcp: AgentAdapterCommand {
+            command: "node".into(),
+            args: vec![child_process_path(&mcp).to_string_lossy().into_owned()],
+        },
+        cli: AgentAdapterCommand {
+            command: "node".into(),
+            args: vec![child_process_path(&cli).to_string_lossy().into_owned()],
+        },
+        http: AgentAdapterCommand {
+            command: "node".into(),
+            args: vec![child_process_path(&http).to_string_lossy().into_owned()],
+        },
+        mcp_launcher: None,
+        cli_launcher: None,
+        http_launcher: None,
     })
 }
 
@@ -3747,6 +3884,19 @@ fn get_editor_instance_id(state: State<'_, AppState>) -> String {
     state.editor_instance_id.clone()
 }
 
+#[tauri::command]
+fn get_agent_adapter_info(app: tauri::AppHandle) -> Result<AgentAdapterInfo, String> {
+    if let Ok(root) = app.path().resolve("build-sdk", BaseDirectory::Resource) {
+        if root.join("sdk.json").is_file() {
+            return load_bundled_agent_adapters(&root);
+        }
+    }
+    let workspace = find_engine_root(Path::new(env!("CARGO_MANIFEST_DIR"))).ok_or_else(|| {
+        "MEngine Agent adapters were not found; reinstall the editor Build SDK".to_string()
+    })?;
+    load_workspace_agent_adapters(&workspace)
+}
+
 fn activate_project<F>(
     state: &AppState,
     create_session: F,
@@ -5560,6 +5710,7 @@ pub fn run() {
             open_project,
             close_project,
             get_editor_instance_id,
+            get_agent_adapter_info,
             is_primary_pointer_down,
             list_recent_projects,
             remove_recent_project,
@@ -6726,18 +6877,28 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(root.join("cli/dist")).unwrap();
+        std::fs::create_dir_all(root.join("agent/mcp")).unwrap();
+        std::fs::create_dir_all(root.join("agent/cli")).unwrap();
+        std::fs::create_dir_all(root.join("agent/http")).unwrap();
         std::fs::create_dir_all(root.join("runtimes/debug")).unwrap();
         std::fs::create_dir_all(root.join("runtimes/release")).unwrap();
         std::fs::write(root.join("node-test"), "node").unwrap();
         std::fs::write(root.join("cli/dist/cli.js"), "cli").unwrap();
+        std::fs::write(root.join("agent/mcp/server.mjs"), "mcp").unwrap();
+        std::fs::write(root.join("agent/cli/editor.mjs"), "agent-cli").unwrap();
+        std::fs::write(root.join("agent/http/server.mjs"), "http").unwrap();
+        std::fs::write(root.join("mengine-mcp-test"), "mcp-launcher").unwrap();
+        std::fs::write(root.join("mengine-agent-test"), "cli-launcher").unwrap();
+        std::fs::write(root.join("mengine-agent-http-test"), "http-launcher").unwrap();
         std::fs::write(root.join("runtimes/debug/player"), "debug").unwrap();
         std::fs::write(root.join("runtimes/release/player"), "release").unwrap();
         std::fs::write(
             root.join("sdk.json"),
             format!(
-                r#"{{"schemaVersion":1,"platform":"{}","architecture":"{}","cliVersion":"{}","node":"node-test","cli":"cli/dist/cli.js","runtimes":{{"debug":"runtimes/debug/player","release":"runtimes/release/player"}}}}"#,
+                r#"{{"schemaVersion":1,"platform":"{}","architecture":"{}","cliVersion":"{}","node":"node-test","cli":"cli/dist/cli.js","runtimes":{{"debug":"runtimes/debug/player","release":"runtimes/release/player"}},"agent":{{"version":"{}","mcp":"agent/mcp/server.mjs","cli":"agent/cli/editor.mjs","http":"agent/http/server.mjs","launchers":{{"mcp":"mengine-mcp-test","cli":"mengine-agent-test","http":"mengine-agent-http-test"}}}}}}"#,
                 node_platform_name(),
                 node_arch_name(),
+                env!("CARGO_PKG_VERSION"),
                 env!("CARGO_PKG_VERSION")
             ),
         )
@@ -6750,6 +6911,30 @@ mod tests {
             .starts_with(r"\\?\"));
         let release = load_build_sdk(&root, "release").unwrap();
         assert!(release.runtime.ends_with("runtimes/release/player"));
+        let agent = load_bundled_agent_adapters(&root).unwrap();
+        assert_eq!(agent.source, "bundled");
+        assert!(Path::new(&agent.mcp.args[0]).ends_with("agent/mcp/server.mjs"));
+        assert!(Path::new(&agent.cli.args[0]).ends_with("agent/cli/editor.mjs"));
+        assert!(Path::new(&agent.http.args[0]).ends_with("agent/http/server.mjs"));
+        assert!(agent
+            .mcp_launcher
+            .as_deref()
+            .is_some_and(|path| Path::new(path).ends_with("mengine-mcp-test")));
+
+        std::fs::write(
+            root.join("sdk.json"),
+            format!(
+                r#"{{"schemaVersion":1,"platform":"{}","architecture":"{}","cliVersion":"{}","node":"node-test","cli":"cli/dist/cli.js","runtimes":{{"debug":"runtimes/debug/player","release":"runtimes/release/player"}},"agent":{{"version":"{}","mcp":"../outside.mjs","cli":"agent/cli/editor.mjs","http":"agent/http/server.mjs","launchers":{{"mcp":"mengine-mcp-test","cli":"mengine-agent-test","http":"mengine-agent-http-test"}}}}}}"#,
+                node_platform_name(),
+                node_arch_name(),
+                env!("CARGO_PKG_VERSION"),
+                env!("CARGO_PKG_VERSION")
+            ),
+        )
+        .unwrap();
+        assert!(load_bundled_agent_adapters(&root)
+            .unwrap_err()
+            .contains("unsafe Agent MCP adapter path"));
 
         std::fs::write(
             root.join("sdk.json"),

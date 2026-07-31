@@ -1,0 +1,140 @@
+.agent-setup {
+  box-sizing: border-box;
+  height: 100%;
+  overflow: auto;
+  padding: 20px 24px 32px;
+  color: var(--u-text, #d8dbe2);
+  background: var(--u-panel, #1c1f26);
+  line-height: 1.45;
+}
+
+.agent-setup header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.agent-setup h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.agent-setup h2 {
+  margin: 24px 0 6px;
+  font-size: 15px;
+}
+
+.agent-setup p,
+.agent-setup dl {
+  margin: 8px 0;
+}
+
+.agent-setup-source {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid #42648a;
+  border-radius: 999px;
+  color: #b9d7ff;
+  background: #18283a;
+  font-size: 12px;
+}
+
+.agent-setup-code {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 190px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid #343a46;
+  border-radius: 4px;
+  color: #d7e8ff;
+  background: #11141a;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.agent-setup-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+  margin-top: 8px;
+}
+
+.agent-setup-actions button {
+  padding: 6px 12px;
+  border: 1px solid #4c78aa;
+  border-radius: 4px;
+  color: #eef6ff;
+  background: #27527f;
+  cursor: pointer;
+}
+
+.agent-setup-actions button:hover {
+  background: #316596;
+}
+
+.agent-setup-actions span {
+  color: var(--u-muted, #a5abb7);
+  font-size: 12px;
+}
+
+.agent-setup-command,
+.agent-setup-launchers {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
+  gap: 6px 12px;
+}
+
+.agent-setup-command + .agent-setup-command {
+  margin-top: 8px;
+}
+
+.agent-setup dt {
+  color: var(--u-text-bright, #f2f4f8);
+  font-weight: 600;
+}
+
+.agent-setup dd {
+  min-width: 0;
+  margin: 0;
+}
+
+.agent-setup code {
+  color: #b9d7ff;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.agent-setup-error {
+  display: grid;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 12px;
+  border: 1px solid #a94a4a;
+  border-radius: 4px;
+  color: #ffd5d5;
+  background: #3b2024;
+}
+
+.agent-setup-note {
+  margin-top: 20px !important;
+  padding: 10px 12px;
+  border-left: 3px solid #607d9e;
+  color: var(--u-muted, #a5abb7);
+  background: #171c24;
+}
+
+@media (max-width: 650px) {
+  .agent-setup header,
+  .agent-setup-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .agent-setup-command,
+  .agent-setup-launchers {
+    grid-template-columns: 1fr;
+  }
+}

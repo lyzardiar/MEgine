@@ -268,6 +268,10 @@ test('complex authoring rows identify their selectable semantic regions', () => 
 });
 
 test('top-level help is implemented by a background-safe readable editor window', () => {
+  const agentSetup = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'windows', 'AgentSetupWindow.tsx'),
+    'utf8',
+  );
   const documentation = fs.readFileSync(
     path.join(root, 'src', 'editorWindow', 'windows', 'DocumentationWindow.tsx'),
     'utf8',
@@ -277,12 +281,17 @@ test('top-level help is implemented by a background-safe readable editor window'
     'utf8',
   );
 
+  assert.match(registry, /import '\.\/windows\/AgentSetupWindow'/);
   assert.match(registry, /import '\.\/windows\/DocumentationWindow'/);
   assert.match(registry, /import '\.\/componentMenuItems'/);
   assert.match(documentation, /registerMenuItem\('Help\/MEngine Documentation'/);
   assert.match(documentation, /context\.source !== 'agent'/);
   assert.match(documentation, /mengine:\/\/project\/state/);
   assert.match(documentation, /mengine:\/\/commands/);
+  assert.match(agentSetup, /registerMenuItem\('Help\/AI Agent Setup'/);
+  assert.match(agentSetup, /data-agent-interaction="blocked"/);
+  assert.match(agentSetup, /role="alert"/);
+  assert.match(agentSetup, /role="status"/);
 });
 
 test('editor window failures stay isolated and dragging always releases global state', () => {
