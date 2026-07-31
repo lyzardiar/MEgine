@@ -377,6 +377,7 @@ export interface SpineSkeleton {
 }
 
 export interface Canvas {
+  enabled: boolean;
   renderMode: string;
   renderCamera: string;
   pixelPerfect: boolean;

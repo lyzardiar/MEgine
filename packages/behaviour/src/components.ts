@@ -93,6 +93,7 @@ export class SpriteRenderer {
 
 export class Canvas {
   static readonly typeName = 'Canvas' as const;
+  enabled!: boolean;
   render_mode!: string;
   render_camera!: string;
   pixel_perfect!: boolean;

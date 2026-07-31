@@ -30,6 +30,7 @@ const UNITY_DEFAULTS = {
 };
 
 const UNITY_CANVAS_DEFAULTS = {
+  enabled: true,
   render_mode: 'ScreenSpaceOverlay',
   render_camera: '',
   pixel_perfect: false,

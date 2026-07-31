@@ -405,6 +405,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     ambience_volume: { min: 0, max: 1, step: 0.01 },
   },
   Canvas: {
+    enabled: { label: 'Enabled' },
     render_mode: {
       kind: 'enum',
       options: [

@@ -261,6 +261,64 @@ test('GraphicRaycaster removal or disablement preserves rendering while disablin
   }
 });
 
+test('disabled Canvas and inactive ancestors suppress override-sorting subtrees', () => {
+  const disabledCanvas = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { enabled: false, render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect(),
+        Canvas: { enabled: true, override_sorting: true, sorting_order: 5 },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: { RectTransform: rect(), Image: { raycast_target: true } },
+    },
+  ];
+  const inactiveNonCanvasAncestor = [
+    { entity: 10, active: false, components: {} },
+    {
+      entity: 11,
+      parent: 10,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { enabled: true, render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 12,
+      parent: 11,
+      components: {
+        RectTransform: rect(),
+        Canvas: { enabled: true, override_sorting: true, sorting_order: 5 },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 13,
+      parent: 12,
+      components: { RectTransform: rect(), Image: { raycast_target: true } },
+    },
+  ];
+
+  for (const entities of [disabledCanvas, inactiveNonCanvasAncestor]) {
+    const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+    assert.deepEqual(items, []);
+  }
+});
+
 test('World Space override-sorting Canvas subtrees are projected exactly once', () => {
   const entities = [
     {

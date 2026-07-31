@@ -247,6 +247,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     description: 'Unity-style screen overlay, camera-plane, or world-space UI canvas',
     requires: ['RectTransform', 'Transform'],
     create: () => ({
+      enabled: true,
       render_mode: 'ScreenSpaceOverlay',
       render_camera: '',
       pixel_perfect: false,
@@ -683,6 +684,7 @@ export function createUiCanvasComponents(): Record<string, unknown> {
     },
     RectTransform: stretchRectTransform(),
     Canvas: {
+      enabled: true,
       render_mode: 'ScreenSpaceOverlay',
       render_camera: '',
       pixel_perfect: false,

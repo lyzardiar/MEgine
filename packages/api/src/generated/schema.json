@@ -460,6 +460,9 @@
   },
   "Canvas": {
     "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
       "override_pixel_perfect": {
         "type": "boolean"
       },
@@ -486,6 +489,7 @@
       }
     },
     "required": [
+      "enabled",
       "render_mode",
       "render_camera",
       "pixel_perfect",

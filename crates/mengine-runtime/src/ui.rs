@@ -508,6 +508,7 @@ fn collect_ui_frame_internal(
         .filter(|entity| {
             hierarchy.is_active(*entity)
                 && world.get_component::<Canvas>(*entity).is_some()
+                && canvas_chain_enabled(world, *entity)
                 && is_canvas_render_root(world, *entity)
         })
         .collect();
@@ -670,6 +671,27 @@ fn is_canvas_render_root(world: &World, entity: Entity) -> bool {
         || world
             .get_component::<Canvas>(entity)
             .is_some_and(|canvas| canvas.override_sorting)
+}
+
+fn canvas_chain_enabled(world: &World, entity: Entity) -> bool {
+    let mut current = Some(entity);
+    let mut guard = 0usize;
+    while let Some(candidate) = current {
+        if world
+            .get_component::<Canvas>(candidate)
+            .is_some_and(|canvas| !canvas.enabled)
+        {
+            return false;
+        }
+        guard += 1;
+        if guard > 4096 {
+            return false;
+        }
+        current = world
+            .get_component::<Parent>(candidate)
+            .map(|value| value.entity);
+    }
+    true
 }
 
 fn outermost_canvas(world: &World, entity: Entity) -> Entity {
@@ -1143,6 +1165,12 @@ fn walk(
     controls: &mut Vec<UiControlRegion>,
 ) {
     if !world.entity_active(entity) {
+        return;
+    }
+    if world
+        .get_component::<Canvas>(entity)
+        .is_some_and(|canvas| !canvas.enabled)
+    {
         return;
     }
     if entity != canvas_root
@@ -4585,6 +4613,40 @@ mod tests {
         world.insert_component(button, RectTransform::default());
         world.insert_component(button, Button::default());
         world.set_parent(button, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 1920, 1080);
+        assert!(frame.plan.primitives.is_empty());
+        assert!(frame.controls.is_empty());
+    }
+
+    #[test]
+    fn disabled_canvas_suppresses_override_sorting_descendants() {
+        let legacy: Canvas = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert!(legacy.enabled);
+
+        let mut world = World::new();
+        let root = world.spawn_empty();
+        world.insert_component(
+            root,
+            Canvas {
+                enabled: false,
+                ..Canvas::default()
+            },
+        );
+        let nested = world.spawn_empty();
+        world.insert_component(
+            nested,
+            Canvas {
+                override_sorting: true,
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(nested, GraphicRaycaster::default());
+        world.set_parent(nested, Some(root));
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(nested));
 
         let frame = collect_ui_frame(&world, 1920, 1080);
         assert!(frame.plan.primitives.is_empty());

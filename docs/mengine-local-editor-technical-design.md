@@ -1908,3 +1908,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Canvas 的绘制与事件收集现在明确分离：新建 UI Canvas 默认携带 `GraphicRaycaster`，删除组件或关闭 `enabled` 只会停止该 Canvas 子树的 Graphic/Selectable 命中，图像、文字、布局和裁剪继续正常渲染。普通嵌套 Canvas 使用自己的 Raycaster 状态，`override_sorting` Canvas 仍保持独立事件边界；Editor Game 预览与 Rust Player 使用同一组件存在性和启用规则。
 - 场景格式升级为 v2，用版本边界区分“旧场景隐式拥有射线能力”和“新场景主动移除组件”。Rust 加载器与 Editor JSON 加载路径都接受 v1/v2：v1 中每个 Canvas 会在内存中补入启用的 `GraphicRaycaster`，首次保存写为 v2；v2 不补组件，因此删除/禁用可以稳定跨保存、重开与 Agent 导入。未知的新版本继续被拒绝，避免错误降级。
 - IDL、Rust/TypeScript 生成类型、Behaviour API、组件目录、Inspector、Add Component 分类和 Agent 场景校验同步加入该组件。回归覆盖 v1 自动迁移、v2 保留删除/禁用、渲染不受影响、Editor/Runtime 命中关闭以及嵌套 Canvas/CanvasGroup 的既有事件语义。
+
+## 168. 2026-08-01 Canvas Behaviour 启用边界
+
+- `Canvas` 现在具备 Unity `Behaviour.enabled` 对应的序列化开关，默认值为 `true`；旧场景缺失字段时由生成类型默认启用。关闭 Canvas 会同时停止其 UI 子树的绘制和输入收集，而不是要求停用整个 GameObject。
+- Editor 与 Runtime 都沿父链检查实体 Active 与 Canvas Enabled。`override_sorting` 嵌套 Canvas 虽然是独立渲染批次，也不能越过已停用/禁用的祖先重新出现；普通嵌套 Canvas 则在统一遍历入口直接截断。回归同时覆盖组件禁用和祖先实体停用两种边界。

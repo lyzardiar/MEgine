@@ -1488,6 +1488,7 @@ impl Component for SpineSkeleton {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Canvas {
+    pub enabled: bool,
     pub render_mode: String,
     pub render_camera: String,
     pub pixel_perfect: bool,
@@ -1501,6 +1502,7 @@ pub struct Canvas {
 impl Default for Canvas {
     fn default() -> Self {
         Self {
+            enabled: true,
             render_mode: "ScreenSpaceOverlay".into(),
             render_camera: "".into(),
             pixel_perfect: false,

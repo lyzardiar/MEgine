@@ -448,6 +448,41 @@ function isCanvasLayoutRoot(entities: UiEnt[], entity: UiEnt): boolean {
     || canvas.overrideSorting === true;
 }
 
+function isActiveInHierarchy(entities: UiEnt[], entity: UiEnt): boolean {
+  let current: UiEnt | undefined = entity;
+  const guard = new Set<number>();
+  while (current) {
+    if (guard.has(current.entity)) return false;
+    guard.add(current.entity);
+    if (current.active === false) return false;
+    const parentId: number | null = current.parent ?? null;
+    if (parentId == null) return true;
+    current = entities.find((candidate) => candidate.entity === parentId);
+    if (!current) return false;
+  }
+  return false;
+}
+
+function canvasChainEnabled(entities: UiEnt[], entity: UiEnt): boolean {
+  let current: UiEnt | undefined = entity;
+  const guard = new Set<number>();
+  while (current) {
+    if (guard.has(current.entity)) return false;
+    guard.add(current.entity);
+    const canvas = current.components.Canvas as { enabled?: boolean } | undefined;
+    if (canvas?.enabled === false) return false;
+    const parentId: number | null = current.parent ?? null;
+    if (parentId == null) return true;
+    current = entities.find((candidate) => candidate.entity === parentId);
+    if (!current) return false;
+  }
+  return false;
+}
+
+function canvasRenderRootEnabled(entities: UiEnt[], entity: UiEnt): boolean {
+  return isActiveInHierarchy(entities, entity) && canvasChainEnabled(entities, entity);
+}
+
 function canvasLayoutRootForEntity(entities: UiEnt[], entityId: number): UiEnt | undefined {
   let current = entities.find((entity) => entity.entity === entityId);
   let outermost: UiEnt | undefined;
@@ -559,7 +594,9 @@ export function layoutUiOverlay(
   logicalSize?: { w: number; h: number },
 ): UiDrawItem[] {
   const canvases = entities
-    .filter((e) => e.components.Canvas && e.active !== false && isCanvasLayoutRoot(entities, e))
+    .filter((e) => e.components.Canvas
+      && canvasRenderRootEnabled(entities, e)
+      && isCanvasLayoutRoot(entities, e))
     .sort((a, b) => {
       const left = canvasSortKey(entities, a);
       const right = canvasSortKey(entities, b);
@@ -615,6 +652,8 @@ export function layoutUiOverlay(
       },
       inheritedClip?: Rect,
     ) => {
+      const ownCanvas = ent.components.Canvas as { enabled?: boolean } | undefined;
+      if (ownCanvas?.enabled === false) return;
       if (!isCanvasRoot) {
         const nestedCanvas = ent.components.Canvas as
           | { override_sorting?: boolean; overrideSorting?: boolean }
@@ -1075,7 +1114,9 @@ export function layoutUiWorldSpace(
   const transforms = buildWorldTransforms(entities);
   const canvases = entities
     .filter((entity) => {
-      if (!entity.components.Canvas || entity.active === false || !isCanvasLayoutRoot(entities, entity)) {
+      if (!entity.components.Canvas
+        || !canvasRenderRootEnabled(entities, entity)
+        || !isCanvasLayoutRoot(entities, entity)) {
         return false;
       }
       const inherited = outermostCanvas(entities, entity);
@@ -1226,7 +1267,9 @@ export function layoutUiScene3D(
   canvasSize: { w: number; h: number },
 ): { items: UiDrawItem[]; layoutScale: number } {
   const canvases = entities.filter(
-    (e) => e.components.Canvas && e.active !== false && isCanvasLayoutRoot(entities, e),
+    (e) => e.components.Canvas
+      && canvasRenderRootEnabled(entities, e)
+      && isCanvasLayoutRoot(entities, e),
   );
   if (!canvases.length) return { items: [], layoutScale: 1 };
 

@@ -1,6 +1,7 @@
 /// Unity-like uGUI components. SpriteRenderer stays world-space (core.idl).
 
 component Canvas {
+  enabled:       bool   = true
   /// "ScreenSpaceOverlay" | "ScreenSpaceCamera" | "WorldSpace"
   render_mode:   string = "ScreenSpaceOverlay"
   /// Stable entity id of the Camera2D/Camera3D used by camera/world modes; empty uses the active camera.
