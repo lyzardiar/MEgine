@@ -509,6 +509,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   GraphicRaycaster: {
     enabled: { label: 'Enabled' },
+    ignore_reversed_graphics: { label: 'Ignore Reversed Graphics' },
   },
   AspectRatioFitter: {
     aspect_mode: {

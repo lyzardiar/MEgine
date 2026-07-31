@@ -1534,11 +1534,15 @@ impl Component for Canvas {
 #[serde(default)]
 pub struct GraphicRaycaster {
     pub enabled: bool,
+    pub ignore_reversed_graphics: bool,
 }
 
 impl Default for GraphicRaycaster {
     fn default() -> Self {
-        Self { enabled: true }
+        Self {
+            enabled: true,
+            ignore_reversed_graphics: true,
+        }
     }
 }
 

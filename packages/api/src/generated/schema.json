@@ -794,10 +794,14 @@
     "properties": {
       "enabled": {
         "type": "boolean"
+      },
+      "ignore_reversed_graphics": {
+        "type": "boolean"
       }
     },
     "required": [
-      "enabled"
+      "enabled",
+      "ignore_reversed_graphics"
     ],
     "type": "object"
   },

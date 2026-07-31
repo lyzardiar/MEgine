@@ -17,7 +17,8 @@ component Canvas {
 
 /// Unity-style Canvas raycaster. Removing or disabling it keeps rendering active but disables UI hits.
 component GraphicRaycaster {
-  enabled: bool = true
+  enabled:                  bool = true
+  ignore_reversed_graphics: bool = true
 }
 
 component CanvasScaler {

@@ -67,8 +67,9 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
   assert.deepEqual(createComponentDefaults('CanvasScaler'), UNITY_DEFAULTS);
   assert.deepEqual(createUiCanvasComponents().CanvasScaler, UNITY_DEFAULTS);
   assert.deepEqual(componentRequirements('CanvasScaler'), ['Canvas']);
-  assert.deepEqual(createComponentDefaults('GraphicRaycaster'), { enabled: true });
-  assert.deepEqual(createUiCanvasComponents().GraphicRaycaster, { enabled: true });
+  const raycasterDefaults = { enabled: true, ignore_reversed_graphics: true };
+  assert.deepEqual(createComponentDefaults('GraphicRaycaster'), raycasterDefaults);
+  assert.deepEqual(createUiCanvasComponents().GraphicRaycaster, raycasterDefaults);
   assert.deepEqual(componentRequirements('GraphicRaycaster'), ['Canvas']);
 });
 
@@ -138,6 +139,18 @@ test('adding CanvasScaler resolves the complete Canvas dependency chain in one u
   });
   try {
     const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const { buildAgentComponentSchema } = await server.ssrLoadModule('/src/agent/componentSchema.ts');
+    assert.deepEqual(
+      buildAgentComponentSchema('GraphicRaycaster')?.fields.map(({ name, type, default: value }) => ({
+        name,
+        type,
+        default: value,
+      })),
+      [
+        { name: 'enabled', type: 'boolean', default: true },
+        { name: 'ignore_reversed_graphics', type: 'boolean', default: true },
+      ],
+    );
     const store = createEditorStore();
     const entity = store.createGameObject('Scaler Host', {
       Transform: {

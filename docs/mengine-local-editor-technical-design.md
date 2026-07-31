@@ -1913,3 +1913,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - `Canvas` 现在具备 Unity `Behaviour.enabled` 对应的序列化开关，默认值为 `true`；旧场景缺失字段时由生成类型默认启用。关闭 Canvas 会同时停止其 UI 子树的绘制和输入收集，而不是要求停用整个 GameObject。
 - Editor 与 Runtime 都沿父链检查实体 Active 与 Canvas Enabled。`override_sorting` 嵌套 Canvas 虽然是独立渲染批次，也不能越过已停用/禁用的祖先重新出现；普通嵌套 Canvas 则在统一遍历入口直接截断。回归同时覆盖组件禁用和祖先实体停用两种边界。
+
+## 169. 2026-08-01 GraphicRaycaster 反向图形过滤
+
+- `GraphicRaycaster.ignore_reversed_graphics` 对齐 Unity 默认值 `true`，同步进入 IDL、生成 API、Behaviour、组件默认值、Inspector 与 Agent 组件 schema。旧 v2 场景缺失该字段时，Editor 默认视图与 Rust `serde(default)` 都按启用处理。
+- World Space Canvas 的命中现在使用实际投影四边形的绕序判断正反面。反向 Canvas 继续绘制，但默认不产生 Editor Game/Runtime 控件命中；显式关闭 Ignore Reversed Graphics 后恢复命中。Screen Space 不制造无意义的反面差异，嵌套 Canvas 则继承各自 Raycaster 配置。
+- Unity 的 `blockingObjects`/`blockingMask` 还依赖摄像机射线与 Physics2D/Physics3D 最近命中距离；在统一物理查询 API 接入 UI 前不暴露假开关。

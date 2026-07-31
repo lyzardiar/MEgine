@@ -107,6 +107,7 @@ export class Canvas {
 export class GraphicRaycaster {
   static readonly typeName = 'GraphicRaycaster' as const;
   enabled!: boolean;
+  ignore_reversed_graphics!: boolean;
 }
 
 export class CanvasScaler {

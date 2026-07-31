@@ -51,6 +51,8 @@ export type UiDrawItem = {
   opacity: number;
   /** Pointer raycasts are rejected when a CanvasGroup disables them. */
   blocksRaycasts?: boolean;
+  /** Unity GraphicRaycaster back-face filtering for projected World Space quads. */
+  ignoreReversedGraphics?: boolean;
   clip?: Rect;
   image?: {
     color: [number, number, number, number];
@@ -648,6 +650,7 @@ export function layoutUiOverlay(
         interactable: true,
         blocksRaycasts: true,
         raycasterEnabled: false,
+        ignoreReversedGraphics: true,
         pixelPerfect: false,
       },
       inheritedClip?: Rect,
@@ -714,7 +717,11 @@ export function layoutUiOverlay(
         override_pixel_perfect?: boolean;
         overridePixelPerfect?: boolean;
       } | undefined;
-      const raycaster = ent.components.GraphicRaycaster as { enabled?: boolean } | undefined;
+      const raycaster = ent.components.GraphicRaycaster as {
+        enabled?: boolean;
+        ignore_reversed_graphics?: boolean;
+        ignoreReversedGraphics?: boolean;
+      } | undefined;
       const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;
@@ -738,6 +745,10 @@ export function layoutUiOverlay(
         raycasterEnabled: canvasSettings
           ? raycaster?.enabled !== false && raycaster != null
           : inherited.raycasterEnabled,
+        ignoreReversedGraphics: canvasSettings
+          ? raycaster?.ignore_reversed_graphics !== false
+            && raycaster?.ignoreReversedGraphics !== false
+          : inherited.ignoreReversedGraphics,
         pixelPerfect: overridesPixelPerfect
           ? (canvasSettings?.pixel_perfect ?? canvasSettings?.pixelPerfect) === true
           : inherited.pixelPerfect,
@@ -763,6 +774,7 @@ export function layoutUiOverlay(
           pivot: [0.5, 0.5],
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
+          ignoreReversedGraphics: state.ignoreReversedGraphics,
           clip,
           selected: selectedIds.has(ent.entity),
         });
@@ -777,6 +789,7 @@ export function layoutUiOverlay(
           anchorParentRect,
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
+          ignoreReversedGraphics: state.ignoreReversedGraphics,
           clip,
           image: img
             ? {
@@ -1037,6 +1050,7 @@ export function layoutUiOverlay(
           anchorParentRect,
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
+          ignoreReversedGraphics: state.ignoreReversedGraphics,
           clip,
           selected: true,
         });
@@ -1095,6 +1109,7 @@ export function layoutUiOverlay(
       interactable: true,
       blocksRaycasts: true,
       raycasterEnabled: false,
+      ignoreReversedGraphics: true,
       pixelPerfect: canvasPixelPerfect(entities, canvas),
     }, root);
     depthBase += 1000;
@@ -1102,6 +1117,17 @@ export function layoutUiOverlay(
 
   out.sort((a, b) => a.depth - b.depth);
   return out;
+}
+
+function isReversedScreenQuad(corners: Array<{ x: number; y: number }>): boolean {
+  if (corners.length !== 4) return false;
+  let twiceArea = 0;
+  for (let index = 0; index < corners.length; index++) {
+    const current = corners[index];
+    const next = corners[(index + 1) % corners.length];
+    twiceArea += current.x * next.y - current.y * next.x;
+  }
+  return twiceArea > 0.0001;
 }
 
 /** Project World Space Canvas trees through the active authoring/Game camera. */
@@ -1138,6 +1164,8 @@ export function layoutUiWorldSpace(
         .map(([x, y]) => project(context.pixelToWorld(x, y), cam, viewport));
       if (corners.some((point) => !point)) continue;
       const projected = corners as Array<{ x: number; y: number; depth: number }>;
+      const screenCorners = projected.map(({ x, y }) => ({ x, y }));
+      const reversed = item.ignoreReversedGraphics === true && isReversedScreenQuad(screenCorners);
       const topLeft = projected[0];
       const topRight = projected[1];
       const bottomLeft = projected[3];
@@ -1152,7 +1180,8 @@ export function layoutUiWorldSpace(
         rotation: (-angle * 180) / Math.PI,
         pivot: [0, 0],
         pivotScreen: { x: topLeft.x, y: topLeft.y },
-        screenCorners: projected.map(({ x, y }) => ({ x, y })),
+        screenCorners,
+        blocksRaycasts: reversed ? false : item.blocksRaycasts,
         depth,
         clip: undefined,
         anchorParentRect: undefined,

@@ -361,6 +361,54 @@ test('World Space override-sorting Canvas subtrees are projected exactly once', 
   assert.equal(items.filter((item) => item.entity === 4).length, 1);
 });
 
+test('World Space GraphicRaycaster ignores reversed graphics unless opted out', () => {
+  const makeEntities = (ignoreReversedGraphics) => [
+    {
+      entity: 1,
+      components: {
+        Transform: { position: [0, 0, 0], rotation: [0, 1, 0, 0], scale: [1, 1, 1] },
+        RectTransform: rect({ size_delta: [200, 100] }),
+        Canvas: { render_mode: 'WorldSpace' },
+        CanvasScaler: { reference_pixels_per_unit: 100, reference_resolution: [200, 100] },
+        GraphicRaycaster: {
+          enabled: true,
+          ...(ignoreReversedGraphics === false ? { ignore_reversed_graphics: false } : {}),
+        },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: { RectTransform: rect({ size_delta: [200, 100] }), Image: { raycast_target: true } },
+    },
+  ];
+
+  const filtered = layoutUiWorldSpace(
+    makeEntities(true),
+    camera,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  );
+  const reversed = filtered.find((item) => item.entity === 2);
+  assert.ok(reversed);
+  assert.equal(reversed.blocksRaycasts, false);
+
+  const allowed = layoutUiWorldSpace(
+    makeEntities(false),
+    camera,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  );
+  const image = allowed.find((item) => item.entity === 2);
+  assert.ok(image);
+  assert.equal(image.blocksRaycasts, true);
+  const center = image.screenCorners.reduce(
+    (sum, point) => ({ x: sum.x + point.x / 4, y: sum.y + point.y / 4 }),
+    { x: 0, y: 0 },
+  );
+  assert.equal(hitTestUi(allowed, center.x, center.y)?.entity, 2);
+});
+
 test('Canvas root groups apply while override-sorting Canvas starts a new group boundary', () => {
   const entities = [
     {

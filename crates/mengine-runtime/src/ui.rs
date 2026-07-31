@@ -64,6 +64,8 @@ pub struct UiControlRegion {
     pub pivot: [f32; 2],
     /// Projected screen quad for perspective World Space Canvas hit testing.
     pub corners: Option<[[f32; 2]; 4]>,
+    /// Unity GraphicRaycaster back-face filtering for projected World Space quads.
+    pub ignore_reversed_graphics: bool,
     pub kind: UiControlKind,
     pub callback: Value,
 }
@@ -407,6 +409,7 @@ struct UiInheritedState {
     interactable: bool,
     blocks_raycasts: bool,
     raycaster_enabled: bool,
+    ignore_reversed_graphics: bool,
     pixel_perfect: bool,
     screen_space: bool,
 }
@@ -427,6 +430,7 @@ impl Default for UiInheritedState {
             interactable: true,
             blocks_raycasts: true,
             raycaster_enabled: false,
+            ignore_reversed_graphics: true,
             pixel_perfect: false,
             screen_space: true,
         }
@@ -923,6 +927,9 @@ fn project_world_canvas_output(
             let pixel_corners =
                 rotated_pixel_corners(control.rect, control.rotation_radians, control.pivot);
             let (_, screen_corners) = projection.project_corners(pixel_corners)?;
+            if control.ignore_reversed_graphics && is_reversed_screen_quad(screen_corners) {
+                return None;
+            }
             control.rect = screen_bounds(screen_corners);
             control.rotation_radians = 0.0;
             control.pivot = [0.5, 0.5];
@@ -933,6 +940,16 @@ fn project_world_canvas_output(
         .collect::<Vec<_>>();
     controls.extend(projected_controls);
     sort_depth
+}
+
+fn is_reversed_screen_quad(corners: [[f32; 2]; 4]) -> bool {
+    let mut twice_area = 0.0;
+    for index in 0..4 {
+        let current = corners[index];
+        let next = corners[(index + 1) % 4];
+        twice_area += current[0] * next[1] - current[1] * next[0];
+    }
+    twice_area < -0.0001
 }
 
 struct WorldCanvasProjection<'a> {
@@ -1217,9 +1234,11 @@ fn walk(
     let pivot = rect_transform.pivot;
     let mut state = inherited;
     if world.get_component::<Canvas>(entity).is_some() {
-        state.raycaster_enabled = world
-            .get_component::<GraphicRaycaster>(entity)
-            .is_some_and(|raycaster| raycaster.enabled);
+        let raycaster = world.get_component::<GraphicRaycaster>(entity);
+        state.raycaster_enabled = raycaster.is_some_and(|value| value.enabled);
+        state.ignore_reversed_graphics = raycaster
+            .map(|value| value.ignore_reversed_graphics)
+            .unwrap_or(true);
     }
     if state.screen_space {
         if let Some(canvas) = world.get_component::<Canvas>(entity) {
@@ -1278,6 +1297,7 @@ fn walk(
                 rotation,
                 pivot,
                 clip,
+                state.ignore_reversed_graphics,
                 UiControlKind::Blocker,
                 Value::Null,
             ));
@@ -1303,6 +1323,7 @@ fn walk(
                 rotation,
                 pivot,
                 clip,
+                state.ignore_reversed_graphics,
                 UiControlKind::Blocker,
                 Value::Null,
             ));
@@ -1316,6 +1337,7 @@ fn walk(
             rotation,
             pivot,
             clip,
+            state.ignore_reversed_graphics,
             UiControlKind::Blocker,
             Value::Null,
         ));
@@ -1361,6 +1383,7 @@ fn walk(
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                ignore_reversed_graphics: state.ignore_reversed_graphics,
                 kind: UiControlKind::Button,
                 callback: button.on_click.clone(),
             });
@@ -1445,6 +1468,7 @@ fn walk(
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                ignore_reversed_graphics: state.ignore_reversed_graphics,
                 kind: UiControlKind::Toggle {
                     is_on: toggle.is_on,
                 },
@@ -1527,6 +1551,7 @@ fn walk(
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                ignore_reversed_graphics: state.ignore_reversed_graphics,
                 kind: UiControlKind::Slider {
                     min: slider.min_value,
                     max: slider.max_value,
@@ -1594,6 +1619,7 @@ fn walk(
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                ignore_reversed_graphics: state.ignore_reversed_graphics,
                 kind: UiControlKind::Scrollbar {
                     value: scrollbar.value,
                     size: scrollbar.size,
@@ -1631,6 +1657,7 @@ fn walk(
                 rotation,
                 pivot,
                 clip,
+                state.ignore_reversed_graphics,
                 UiControlKind::Blocker,
                 Value::Null,
             ));
@@ -1714,6 +1741,7 @@ fn walk(
                 rotation,
                 pivot,
                 clip,
+                state.ignore_reversed_graphics,
                 UiControlKind::InputField,
                 input.on_value_changed.clone(),
             ));
@@ -1768,6 +1796,7 @@ fn walk(
                 rotation,
                 pivot,
                 clip,
+                state.ignore_reversed_graphics,
                 UiControlKind::Dropdown { option_index: None },
                 dropdown.on_value_changed.clone(),
             ));
@@ -1811,6 +1840,7 @@ fn walk(
                         rotation,
                         pivot,
                         clip,
+                        state.ignore_reversed_graphics,
                         UiControlKind::Dropdown {
                             option_index: Some(index as i32),
                         },
@@ -1881,6 +1911,7 @@ fn walk(
                     rotation,
                     pivot,
                     child_clip,
+                    state.ignore_reversed_graphics,
                     UiControlKind::ListItem {
                         index: index as i32,
                     },
@@ -1907,6 +1938,7 @@ fn walk(
                 rotation,
                 pivot,
                 clip,
+                state.ignore_reversed_graphics,
                 UiControlKind::ScrollView,
                 scroll.on_value_changed.clone(),
             ));
@@ -1994,6 +2026,7 @@ fn walk(
                     rotation,
                     pivot,
                     clip,
+                    state.ignore_reversed_graphics,
                     UiControlKind::Tab {
                         index: index as i32,
                     },
@@ -2253,6 +2286,7 @@ fn control_region(
     rotation_radians: f32,
     pivot: [f32; 2],
     clip: UiClipRect,
+    ignore_reversed_graphics: bool,
     kind: UiControlKind,
     callback: Value,
 ) -> UiControlRegion {
@@ -2263,6 +2297,7 @@ fn control_region(
         rotation_radians,
         pivot,
         corners: None,
+        ignore_reversed_graphics,
         kind,
         callback,
     }
@@ -3049,7 +3084,13 @@ mod tests {
 
     #[test]
     fn graphic_raycaster_presence_and_enabled_state_gate_hits_without_hiding_graphics() {
-        for raycaster in [None, Some(GraphicRaycaster { enabled: false })] {
+        for raycaster in [
+            None,
+            Some(GraphicRaycaster {
+                enabled: false,
+                ..GraphicRaycaster::default()
+            }),
+        ] {
             let mut world = World::new();
             let canvas = world.spawn_empty();
             world.insert_component(canvas, Canvas::default());
@@ -3638,6 +3679,69 @@ mod tests {
     }
 
     #[test]
+    fn world_space_graphic_raycaster_filters_reversed_graphics_unless_opted_out() {
+        let legacy: GraphicRaycaster =
+            serde_json::from_value(serde_json::json!({ "enabled": true })).unwrap();
+        assert!(legacy.ignore_reversed_graphics);
+
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                render_mode: "WorldSpace".into(),
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(canvas, RectTransform::default());
+        world.insert_component(
+            canvas,
+            mengine_core::generated::Transform {
+                rotation: [0.0, 1.0, 0.0, 0.0],
+                ..Default::default()
+            },
+        );
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(canvas));
+        let camera = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: perspective(60.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        };
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let filtered = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            camera,
+            &SortingLayers::default(),
+        );
+        assert_eq!(filtered.world_primitives.len(), 1);
+        assert!(filtered.controls.is_empty());
+
+        world
+            .get_component_mut::<GraphicRaycaster>(canvas)
+            .unwrap()
+            .ignore_reversed_graphics = false;
+        let hierarchy = TransformHierarchy::build(&world);
+        let allowed = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            camera,
+            &SortingLayers::default(),
+        );
+        assert_eq!(allowed.world_primitives.len(), 1);
+        assert_eq!(allowed.controls.len(), 1);
+    }
+
+    #[test]
     fn world_space_canvas_joins_the_2d_sorting_queue() {
         use crate::sorting::sort_world_primitives;
 
@@ -3877,6 +3981,7 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: Some([[10.0, 20.0], [130.0, 10.0], [110.0, 70.0], [20.0, 60.0]]),
+            ignore_reversed_graphics: true,
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -4041,6 +4146,7 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            ignore_reversed_graphics: true,
             kind,
             callback: Value::Null,
         };
@@ -4238,6 +4344,7 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            ignore_reversed_graphics: true,
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -4270,6 +4377,7 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            ignore_reversed_graphics: true,
             kind: UiControlKind::Scrollbar {
                 value: 0.0,
                 size: 0.2,

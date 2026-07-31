@@ -390,6 +390,7 @@ export interface Canvas {
 
 export interface GraphicRaycaster {
   enabled: boolean;
+  ignoreReversedGraphics: boolean;
 }
 
 export interface CanvasScaler {
