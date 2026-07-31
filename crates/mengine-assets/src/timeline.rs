@@ -253,6 +253,10 @@ pub struct TimelineControlClip {
     pub timeline: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub prefab: String,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub control_activation: bool,
+    #[serde(default = "default_post_playback_state")]
+    pub post_playback: String,
     #[serde(default)]
     pub clip_in: f32,
     #[serde(default = "default_one")]
@@ -918,6 +922,15 @@ impl TimelineAsset {
                                 "Timeline control track '{id}' cannot override child bindings without a nested Timeline"
                             )));
                         }
+                        clip.post_playback = clip.post_playback.trim().to_ascii_lowercase();
+                        if !matches!(
+                            clip.post_playback.as_str(),
+                            "active" | "inactive" | "revert"
+                        ) {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline control track '{id}' contains an invalid post-playback state"
+                            )));
+                        }
                         if clip.binding_overrides.len() > MAX_TIMELINE_CONTROL_BINDING_OVERRIDES {
                             return Err(AssetError::Invalid(format!(
                                 "Timeline control track '{id}' exceeds {MAX_TIMELINE_CONTROL_BINDING_OVERRIDES} binding overrides"
@@ -1487,6 +1500,7 @@ mod tests {
                 "target":"Sequences\\Dialogue","clips":[
                   {"start":3,"duration":2,"timeline":"assets\\Timelines\\Outro.mtimeline","clip_in":1,"speed":-0.5,"extrapolation":" LOOP "},
                   {"start":0,"duration":2,"timeline":"Assets/Timelines/Intro.mtimeline",
+                    "control_activation":true,"post_playback":" ACTIVE ",
                     "binding_overrides":{"Actor\\Body":"Cast\\Lead"}}
                 ]}]
             }"#,
@@ -1505,10 +1519,14 @@ mod tests {
         assert_eq!(target, "Sequences/Dialogue");
         assert_eq!(clips[0].timeline, "Assets/Timelines/Intro.mtimeline");
         assert_eq!(clips[0].speed, 1.0);
+        assert!(clips[0].control_activation);
+        assert_eq!(clips[0].post_playback, "active");
         assert_eq!(clips[0].extrapolation, "none");
         assert_eq!(clips[0].binding_overrides["Actor/Body"], "Cast/Lead");
         assert_eq!(clips[1].timeline, "Assets/Timelines/Outro.mtimeline");
         assert_eq!(clips[1].speed, -0.5);
+        assert!(!clips[1].control_activation);
+        assert_eq!(clips[1].post_playback, "revert");
         assert_eq!(clips[1].extrapolation, "loop");
         assert_eq!(
             asset.required_binding_targets(),
@@ -1547,6 +1565,10 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","extrapolation":"ping_pong"}]}]}"#,
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","control_activation":true,"post_playback":"leave_as_is"}]}]}"#,
         )
         .is_err());
     }

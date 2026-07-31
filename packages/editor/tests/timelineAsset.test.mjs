@@ -326,6 +326,7 @@ test('timeline control tracks normalize nested assets and reject invalid windows
         { start: 3, duration: 2, timeline: 'assets\\Timelines\\Outro.mtimeline', clip_in: 1, speed: -0.5, extrapolation: ' LOOP ' },
         {
           start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline',
+          control_activation: true, post_playback: ' ACTIVE ',
           binding_overrides: { 'Actor\\Body': 'Cast\\Lead' },
         },
       ],
@@ -335,12 +336,13 @@ test('timeline control tracks normalize nested assets and reject invalid windows
   assert.deepEqual(asset.tracks[0].clips, [
     {
       start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline', prefab: '', clip_in: 0, speed: 1,
+      control_activation: true, post_playback: 'active',
       extrapolation: 'none',
       binding_overrides: { 'Actor/Body': 'Cast/Lead' },
     },
     {
       start: 3, duration: 2, timeline: 'Assets/Timelines/Outro.mtimeline', prefab: '', clip_in: 1, speed: -0.5,
-      extrapolation: 'loop', binding_overrides: {},
+      control_activation: false, post_playback: 'revert', extrapolation: 'loop', binding_overrides: {},
     },
   ]);
   assert.deepEqual(timelineBindingTargets(asset), ['Cast/Lead', 'Sequences/Dialogue']);
@@ -361,7 +363,7 @@ test('timeline control tracks normalize nested assets and reject invalid windows
   }));
   assert.deepEqual(prefabOnly.tracks[0].clips[0], {
     start: 0, duration: 1, timeline: '', prefab: 'Assets/Prefabs/Enemy.prefab',
-    clip_in: 0, speed: 1, extrapolation: 'none', binding_overrides: {},
+    control_activation: false, post_playback: 'revert', clip_in: 0, speed: 1, extrapolation: 'none', binding_overrides: {},
   });
   assert.throws(() => parseTimelineAsset(JSON.stringify({
     version: 1, duration: 2,
@@ -399,6 +401,13 @@ test('timeline control tracks normalize nested assets and reject invalid windows
     version: 1, duration: 2,
     tracks: [{ type: 'control', id: 'nested', name: 'Nested', target: 'Sequences', clips: [{
       start: 0, duration: 1, timeline: 'Assets/Timelines/Child.mtimeline', extrapolation: 'ping_pong',
+    }] }],
+  })), /invalid/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{ type: 'control', id: 'nested', name: 'Nested', target: 'Sequences', clips: [{
+      start: 0, duration: 1, timeline: 'Assets/Timelines/Child.mtimeline', control_activation: true,
+      post_playback: 'leave_as_is',
     }] }],
   })), /invalid/);
 });

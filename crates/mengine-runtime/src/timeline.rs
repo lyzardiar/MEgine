@@ -902,6 +902,43 @@ impl TimelineRuntime {
                 .enumerate()
                 .find(|(_, clip)| time >= clip.start && time < clip.start + clip.duration);
             let control_scope = format!("{key_prefix}{id}:");
+            let source_activation_clip = clips
+                .iter()
+                .filter(|clip| clip.control_activation && clip.prefab.is_empty())
+                .rev()
+                .find(|clip| time >= clip.start)
+                .or_else(|| {
+                    clips
+                        .iter()
+                        .find(|clip| clip.control_activation && clip.prefab.is_empty())
+                });
+            if let Some(source_clip) = source_activation_clip {
+                let source = match resolve_timeline_target(world, root, target, bindings) {
+                    Ok(entity) => entity,
+                    Err(error) => {
+                        if self.reported_control_failures.insert(report_key) {
+                            failures.push(TimelineLoadFailure {
+                                entity: owner,
+                                asset: asset_key.to_owned(),
+                                error: format!("control track '{name}' source '{target}' {error}"),
+                            });
+                        }
+                        continue;
+                    }
+                };
+                let source_key = (owner, format!("{key_prefix}{id}#source-activation"));
+                let source_active = active_clip
+                    .as_ref()
+                    .is_some_and(|(_, clip)| clip.control_activation && clip.prefab.is_empty());
+                self.apply_activation_override(
+                    world,
+                    &source_key,
+                    source,
+                    &source_clip.post_playback,
+                    source_active,
+                );
+                applied.activation.insert(source_key);
+            }
             for (clip_index, clip) in clips.iter().enumerate() {
                 if !clip.prefab.is_empty() {
                     applied
@@ -1370,28 +1407,53 @@ impl TimelineRuntime {
                 }
             };
             self.reported_activation_failures.remove(&key);
-            if let Some(previous) = self.activation_overrides.get(&key).cloned() {
-                if previous.target != target_entity {
-                    self.restore_activation_override(world, &key, false);
-                }
-            }
-            let state = self
+            if self
                 .activation_overrides
-                .entry(key.clone())
-                .or_insert_with(|| ActivationOverride {
-                    target: target_entity,
-                    original_active: world.entity_active(target_entity),
-                    post_playback: post_playback.clone(),
-                });
-            state.post_playback.clone_from(post_playback);
+                .get(&key)
+                .is_some_and(|previous| previous.target != target_entity)
+            {
+                self.restore_activation_override(world, &key, false);
+            }
+            let original_active = self.activation_overrides.get(&key).map_or_else(
+                || world.entity_active(target_entity),
+                |state| state.original_active,
+            );
             let active = clips
                 .iter()
                 .find(|clip| time >= clip.start && time < clip.start + clip.duration)
-                .map_or(state.original_active, |clip| clip.active);
-            world.set_editor_state(target_entity, world.sibling_index(target_entity), active);
+                .map_or(original_active, |clip| clip.active);
+            self.apply_activation_override(world, &key, target_entity, post_playback, active);
             applied.insert(key);
         }
         (applied, failures)
+    }
+
+    fn apply_activation_override(
+        &mut self,
+        world: &mut World,
+        key: &(Entity, String),
+        target: Entity,
+        post_playback: &str,
+        active: bool,
+    ) {
+        if self
+            .activation_overrides
+            .get(key)
+            .is_some_and(|previous| previous.target != target)
+        {
+            self.restore_activation_override(world, key, false);
+        }
+        let state = self
+            .activation_overrides
+            .entry(key.clone())
+            .or_insert_with(|| ActivationOverride {
+                target,
+                original_active: world.entity_active(target),
+                post_playback: post_playback.to_owned(),
+            });
+        state.post_playback.clear();
+        state.post_playback.push_str(post_playback);
+        world.set_editor_state(target, world.sibling_index(target), active);
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -3736,6 +3798,93 @@ mod tests {
         assert_eq!(failures.len(), 1);
         assert!(failures[0].error.contains("Missing"));
         assert!(runtime.update(&mut world, 0.0).is_empty());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn control_source_activation_spans_gaps_pauses_and_applies_post_playback_on_stop() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-timeline-control-source-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let timelines = root.join("Assets/Timelines");
+        fs::create_dir_all(&timelines).unwrap();
+        fs::write(
+            timelines.join("Child.mtimeline"),
+            r#"{"version":1,"duration":1,"tracks":[]}"#,
+        )
+        .unwrap();
+        fs::write(
+            timelines.join("Master.mtimeline"),
+            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"source","name":"Source","target":"Source","clips":[{"start":0.5,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","control_activation":true,"post_playback":"active"}]}]}"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let source = world.spawn_empty();
+        world.set_component_value(source, "Name", serde_json::json!({ "value": "Source" }));
+        world.set_parent(source, Some(director));
+        world.set_editor_state(source, world.sibling_index(source), false);
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: "Assets/Timelines/Master.mtimeline".into(),
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            !world.entity_active(source),
+            "source is inactive before the clip"
+        );
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .time = 0.75;
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            world.entity_active(source),
+            "source is active inside the clip"
+        );
+
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            world.entity_active(source),
+            "pause retains the sampled state"
+        );
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = true;
+            live.time = 1.75;
+        }
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            !world.entity_active(source),
+            "source is inactive after the clip"
+        );
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = false;
+            live.time = 0.0;
+        }
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            world.entity_active(source),
+            "Active post playback is applied on stop"
+        );
         let _ = fs::remove_dir_all(root);
     }
 

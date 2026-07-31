@@ -1775,6 +1775,10 @@ function scanBuildAssetDependencies(
             const prefabPath = (clip.prefab == null
               ? ''
               : strictStringValue(clip, 'prefab', `Timeline control track ${name}`)).replaceAll('\\', '/');
+            const controlActivation = clip.control_activation == null ? false : clip.control_activation;
+            const postPlayback = clip.post_playback == null
+              ? 'revert'
+              : strictStringValue(clip, 'post_playback', `Timeline control track ${name}`).trim().toLowerCase();
             const clipIn = clip.clip_in == null ? 0 : clip.clip_in;
             const speed = clip.speed == null ? 1 : clip.speed;
             const extrapolation = clip.extrapolation == null
@@ -1807,6 +1811,8 @@ function scanBuildAssetDependencies(
               || Boolean(prefabPath) && (!prefabPath.toLowerCase().startsWith('assets/')
                 || prefabPath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
                 || !/\.prefab$/i.test(prefabPath))
+              || typeof controlActivation !== 'boolean'
+              || postPlayback !== 'active' && postPlayback !== 'inactive' && postPlayback !== 'revert'
               || !timelinePath && bindingOverrides.length > 0
               || typeof clipIn !== 'number' || !Number.isFinite(clipIn) || clipIn < 0
               || typeof speed !== 'number' || !Number.isFinite(speed) || speed < -4 || speed > 4

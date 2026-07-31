@@ -301,14 +301,24 @@ export function buildTimelineScenePreview(
     if (track.type === 'control') {
       const clipIndex = track.clips.findIndex((candidate) => sampleTime >= candidate.start
         && sampleTime < candidate.start + candidate.duration);
+      const controlsSourceActivation = track.clips.some((candidate) => (
+        candidate.control_activation && !candidate.prefab
+      ));
+      if (clipIndex < 0 && !controlsSourceActivation) continue;
+      const target = resolveTrackTarget(track.target);
+      if (target == null) {
+        diagnostics.push(`Control track '${track.name}' source '${track.target}' is not resolved.`);
+        continue;
+      }
+      if (controlsSourceActivation) {
+        const sourceActive = clipIndex >= 0
+          && track.clips[clipIndex].control_activation
+          && !track.clips[clipIndex].prefab;
+        preview.activations.push({ entity: target, active: sourceActive });
+      }
       if (clipIndex < 0) continue;
       runtime.metrics.activeItems += 1;
       const clip = track.clips[clipIndex];
-      const target = resolveTrackTarget(track.target);
-      if (target == null) {
-        diagnostics.push(`Control track '${track.name}' target '${track.target}' is not resolved.`);
-        continue;
-      }
       if (clip.prefab) {
         diagnostics.push(`Control track '${track.name}' Prefab '${clip.prefab}' is instantiated in Play mode; static scene preview does not create transient entities.`);
         continue;

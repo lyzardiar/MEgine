@@ -1070,6 +1070,7 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
         clips: [{
           start: 0.5, duration: 1, prefab: 'Assets/Prefabs/Timeline.prefab',
           timeline: 'Assets/Timelines/Nested.mtimeline', clip_in: 0.25, speed: 1.5,
+          control_activation: true, post_playback: 'active',
           binding_overrides: { Actor: 'Characters/Hero' },
         }, {
           start: 2, duration: 0.5, prefab: 'Assets/Prefabs/Timeline.prefab',
@@ -1130,7 +1131,7 @@ test('buildPcPackage rejects Control Track cycles and out-of-range child windows
         TimelineDirector: { asset: 'Assets/Timelines/A.mtimeline' },
       } }] },
     }));
-    const writeControl = (name, target, clipIn = 0, extrapolation) => writeFileSync(
+    const writeControl = (name, target, clipIn = 0, extrapolation, clipPatch = {}) => writeFileSync(
       join(paths.project, 'Assets', 'Timelines', `${name}.mtimeline`),
       JSON.stringify({
         version: 1,
@@ -1140,6 +1141,7 @@ test('buildPcPackage rejects Control Track cycles and out-of-range child windows
           clips: [{
             start: 0, duration: 1, timeline: `Assets/Timelines/${target}.mtimeline`, clip_in: clipIn,
             ...(extrapolation ? { extrapolation } : {}),
+            ...clipPatch,
           }],
         }],
       }),
@@ -1185,6 +1187,13 @@ test('buildPcPackage rejects Control Track cycles and out-of-range child windows
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /control clip is invalid/);
+    writeControl('A', 'B', 0, 'none', { control_activation: true, post_playback: 42 });
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'invalid-control-post-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /post_playback/);
 
     writeFileSync(join(paths.project, 'Assets', 'Timelines', 'B.mtimeline'), JSON.stringify({
       version: 1, duration: 2,

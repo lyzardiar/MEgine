@@ -632,3 +632,33 @@ test('reuses the scene target index across equivalent cloned editor snapshots', 
   buildTimelineScenePreview(asset, clonedEntities, 1, '{}', 0.75, clips, new Map(), '', changed);
   assert.equal(changed.metrics.entityIndexCacheMisses, 1);
 });
+
+test('Control source activation previews active clips and inactive gaps without mutating the scene', () => {
+  const child = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 1, tracks: [],
+  }));
+  const parent = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'control', id: 'source', name: 'Source', target: 'Panel',
+      clips: [{
+        start: 0.5, duration: 1, timeline: 'Assets/Child.mtimeline',
+        control_activation: true, post_playback: 'inactive',
+      }],
+    }],
+  }));
+  const timelines = new Map([['assets/child.mtimeline', child]]);
+
+  const gap = buildTimelineScenePreview(
+    parent, entities, 1, '{}', 0.25, new Map(), timelines, 'Assets/Parent.mtimeline',
+  );
+  assert.deepEqual(gap.diagnostics, []);
+  assert.deepEqual(gap.preview.activations, [{ entity: 2, active: false }]);
+  assert.equal(applyTimelineScenePreview(entities, gap.preview).find((entity) => entity.entity === 2).active, false);
+  assert.equal(entities.find((entity) => entity.entity === 2).active, true);
+
+  const active = buildTimelineScenePreview(
+    parent, entities, 1, '{}', 0.75, new Map(), timelines, 'Assets/Parent.mtimeline',
+  );
+  assert.deepEqual(active.preview.activations, [{ entity: 2, active: true }]);
+});

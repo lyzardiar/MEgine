@@ -83,6 +83,8 @@ export type TimelineControlClip = {
   duration: number;
   timeline: string;
   prefab: string;
+  control_activation: boolean;
+  post_playback: TimelineControlPostPlaybackState;
   clip_in: number;
   speed: number;
   extrapolation: TimelineControlExtrapolation;
@@ -90,10 +92,16 @@ export type TimelineControlClip = {
 };
 
 export type TimelineControlExtrapolation = 'none' | 'hold' | 'loop';
+export type TimelineControlPostPlaybackState = 'active' | 'inactive' | 'revert';
 
 export function timelineControlExtrapolation(value: unknown): TimelineControlExtrapolation {
   const normalized = String(value ?? 'none').trim().toLowerCase();
   return normalized === 'hold' || normalized === 'loop' ? normalized : 'none';
+}
+
+export function timelineControlPostPlaybackState(value: unknown): TimelineControlPostPlaybackState {
+  const normalized = String(value ?? 'revert').trim().toLowerCase();
+  return normalized === 'active' || normalized === 'inactive' ? normalized : 'revert';
 }
 
 export function timelineControlSourceWindowIsValid(
@@ -525,6 +533,8 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
             duration: clipDuration,
             timeline: timelineAssetPath(clip.timeline),
             prefab: prefabAssetPath(clip.prefab),
+            control_activation: Boolean(clip.control_activation),
+            post_playback: timelineControlPostPlaybackState(clip.post_playback),
             clip_in: Math.max(0, finite(clip.clip_in, 0)),
             speed: Math.max(-4, Math.min(4, finite(clip.speed, 1))),
             extrapolation: timelineControlExtrapolation(clip.extrapolation),
@@ -879,6 +889,9 @@ export function parseTimelineAsset(text: string): TimelineAsset {
             || clip.clip_in + clip.duration > TIMELINE_MAX_PARTICLE_TIME)
         || track.type === 'control' && (clip.timeline != null && typeof clip.timeline !== 'string'
           || clip.prefab != null && typeof clip.prefab !== 'string'
+          || clip.control_activation != null && typeof clip.control_activation !== 'boolean'
+          || clip.post_playback != null && (typeof clip.post_playback !== 'string'
+            || !['active', 'inactive', 'revert'].includes(clip.post_playback.trim().toLowerCase()))
           || !timelineAssetPath(clip.timeline) && !prefabAssetPath(clip.prefab)
           || Boolean(timelineAssetPath(clip.timeline)) && !timelineAssetIsPortable(timelineAssetPath(clip.timeline))
           || Boolean(prefabAssetPath(clip.prefab)) && !prefabAssetIsPortable(prefabAssetPath(clip.prefab))

@@ -1825,3 +1825,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - 静态 Scene Preview 不伪造运行时临时实体。编辑态遇到 Prefab Control 会明确报告实例在 Play 模式创建，不会错误地把子 Timeline 绑定到作者场景根节点；因此本批完成的是 Player 生命周期而不是瞬态 Prefab 的完整编辑态预览。后续仍需补瞬态 Edit Preview、Source GameObject 激活、嵌套 Director/Particle/ITimeControl 自动控制、录制模式、轨道模板和子轨道就地编辑。
 
 回归覆盖纯 Prefab、Prefab 加子 Timeline、路径与绑定校验、依赖闭包、实例复用、Seek、停止销毁和嵌套 Audio 目标解析。最终 Editor 654/654、CLI 59/59、Assets 52/52、Runtime Library 117/117、Runtime Player 23/23，Rust Workspace/All Targets 测试与检查、格式检查、定向严格 Clippy、TypeScript/Vite 生产构建和 Tauri Debug 构建全部通过；严格 Clippy 仅豁免四项批次外既有告警，最大 JavaScript 块为 399.22kB。真实桌面验证在隔离配置和临时工程中以 `MENGINE_EDITOR_BACKGROUND=1` 打开纯 Prefab Control：Agent 从隐藏窗口读取 240 个完整语义元素，将 Prefab 字段切换到另一个资源并保存，磁盘 JSON 精确同步；完整快照同时返回 `backgroundSafe=true`、`inventoryStable=true`、`complete=true`，原生窗口全过程 `visible=false`、`focused=false`。验证工程、配置、本地数据和进程随后全部清理。
+
+## 156. 2026-08-01 Control Source 激活与 Post Playback
+
+- 非 Prefab Control Clip 新增显式 `control_activation` 与 `post_playback`。新建 Clip 默认启用 Control Activation，Post Playback 默认 Revert；旧资产缺少开关时按关闭处理，以保留此前不接管场景对象激活状态的行为，首次保存后会写出明确值。Post Playback 只接受 Active、Inactive、Revert 三态，与 Activation Track 独有的 Leave As Is 分开校验。Editor、Rust 资产层和 CLI 最终打包审计共享类型与白名单，错误布尔值或未知终态无法进入 Player。
+- Control Track 的 Target 现在在 Inspector 中明确标为 `Source / Prefab Parent`。没有 Prefab 时，它是受 Control Activation 管理的场景对象：Director 生命周期开始后，Clip 外空隙为非激活、Clip 内为激活；Pause 保留当前采样，显式 Stop、正反向自然结束和 Director 失活才应用 Post Playback。Mute、资源热改、绑定失效或目标改变走普通 Revert，不把配置变化误当播放完成。激活快照复用既有稳定 binding、作者初始状态和 sibling 保持逻辑；嵌套 Control 仍受 `track-id:clip-index/` 生命周期作用域约束，父 Clip 结束时会完成子 Source 的终态。
+- Prefab Clip 继续把同一 Target 解释为 Parent，不会激活或停用作者父对象；Prefab 实例自身仍由上一批生命周期在 Clip 内激活、空隙停用、Director 结束销毁。编辑态 Scene Preview 可在克隆快照中准确显示非 Prefab Source 的 Clip 内/空隙激活结果，不修改作者场景；静态预览仍不伪造 Prefab 临时实体。Sequencer 仅在非 Prefab Clip 显示 Control Activation 和三态 Post Playback，Agent 可在隐藏窗口完整读取并语义写入。
+
+回归验证覆盖旧资产默认、新资产规范化、非法终态、编辑态空隙/片段预览、Runtime 空隙、Pause、Stop 终态和 CLI 最终包审计。最终 Editor 655/655、CLI 59/59、Assets 52/52、Runtime Library 118/118、Runtime Player 23/23，Rust Workspace/All Targets 测试与检查、格式检查、定向严格 Clippy、TypeScript/Vite 生产构建和 Tauri Debug 应用构建全部通过；最大 JavaScript 块为 399.22kB。真实桌面验证在隔离工程中由 Agent 打开 Control Clip，248 元素的片段态语义快照读取到已勾选的 Control Activation、三态 Post Playback 和新的 Source/Parent 命名，将 `inactive` 改为 `active` 后精确保存并从资产回读；最终 228 元素的全窗口快照返回 `backgroundSafe=true`、`inventoryStable=true`、`complete=true`，原生窗口始终 `visible=false`、`focused=false`。进程、工程、配置和专属本地数据随后全部清理。
+
+当前 MEngine 一个 Control Track 仍共享一个 Source/Parent binding，而 Unity 的 ControlPlayableAsset 可由每个 Clip 持有独立 Source Game Object；自动搜索并驱动嵌套 Playable Director、Particle System、ITimeControl 以及 Control Children 也尚未完成。下一阶段继续把 Source 下沉到 Clip 级稳定绑定，并补齐这些高级控制器，不能把本批的激活闭环称为完整 ControlPlayableAsset。
