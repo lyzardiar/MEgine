@@ -1962,3 +1962,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `RectMask2D` 新增与 Unity 对齐的二维 `Softness`，默认 `[0, 0]`，IDL、Rust/TypeScript 生成 API、Behaviour、组件目录、Inspector 与 Agent schema 使用同一契约。Padding 之后的裁剪矩形同时作为硬边界与软边缘基准；Pixel Perfect Canvas 会先把该矩形对齐到整数像素，非法或负 Softness 会被安全归零。
 - Editor Canvas 预览继承最多 8 层祖先 RectMask2D，并用横向、纵向 CanvasGradient 依次执行 `destination-in`，所以嵌套软边缘按 Alpha 相乘，同时保持遮罩只影响子节点。Runtime 将相同的八层栈放入逐实例只读 GPU 缓冲区，由 Fragment Shader 使用屏幕像素坐标计算边缘衰减；零 Softness 保持原有硬裁剪，不占用顶点属性或破坏 Filled、Tiled、Stencil 批次。
 - World Space Canvas 会把每个软裁剪矩形投影到屏幕并按投影宽高缩放两轴 Softness，保持透视下的像素渐变语义。GraphicRaycaster 仍按 Unity 的 RectMask2D 硬矩形过滤命中，不把半透明软边缘误当作可穿透区。无窗口回归覆盖默认值、Inspector、嵌套传播、Editor 双轴合成、Runtime 根遮罩、World Space 投影、GPU 数据布局与 WGSL 管线创建。
+
+## 177. 2026-08-01 Button SpriteState 与 SpriteSwap
+
+- `Button.transition` 新增 Unity `SpriteSwap`，并补齐 Highlighted、Pressed、Selected、Disabled 四个 SpriteState 引用；Normal 状态恢复同实体 Image 的 authored Sprite，任一未分配状态也安全回退 authored Sprite。IDL、生成 API、Behaviour、组件目录、Inspector 与 Agent schema 使用同一默认空引用契约，Inspector 只在 Sprite Swap 分支显示四个 Sprite 选择器。
+- Editor Canvas 与 Runtime 复用 ColorTint 已对齐的 Disabled、Pressed、Highlighted、Selected、Normal 状态优先级。Editor 在每次后台绘制时选择有效 Sprite，Runtime 在构建当帧 Image primitive 时替换纹理引用；SpriteSwap 不污染 ColorTint tween 缓存，也不错误作用到 RawImage、标签文字或无 Image 的 Button。
+- Packaged Player 的严格资产校验现在同时扫描 UI Image、RawImage 与四个 Button SpriteState，拒绝越界路径、损坏纹理和缺失 Sprite slice，避免编辑器预览正常但发布包遗漏交互态图片。无窗口回归覆盖默认值、Inspector 条件、空状态回退、状态优先级、Runtime 目标 Image 纹理与发布资产路径边界。

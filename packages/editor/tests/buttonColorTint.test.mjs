@@ -15,6 +15,10 @@ import {
   multiplyButtonTint,
   readButtonColorBlock,
 } from '../src/ui/buttonColorTint.ts';
+import {
+  buttonTargetSprite,
+  readButtonSpriteState,
+} from '../src/ui/buttonSpriteSwap.ts';
 
 const UNITY_COLOR_BLOCK = {
   normal_color: [1, 1, 1, 1],
@@ -26,11 +30,19 @@ const UNITY_COLOR_BLOCK = {
   fade_duration: 0.1,
 };
 
+const UNITY_SPRITE_STATE = {
+  highlighted_sprite: '',
+  pressed_sprite: '',
+  selected_sprite: '',
+  disabled_sprite: '',
+};
+
 test('Button catalog and Inspector expose the Unity ColorBlock contract', () => {
   assert.deepEqual(createComponentDefaults('Button'), {
     interactable: true,
     transition: 'ColorTint',
     ...UNITY_COLOR_BLOCK,
+    ...UNITY_SPRITE_STATE,
     label: 'Button',
     text_color: [1, 1, 1, 1],
     font_size: 16,
@@ -45,6 +57,14 @@ test('Button catalog and Inspector expose the Unity ColorBlock contract', () => 
   assert.equal(isInspectorFieldVisible(
     getBuiltinInspectorField('Button', 'pressed_color'),
     { transition: 'None' },
+  ), false);
+  assert.equal(isInspectorFieldVisible(
+    getBuiltinInspectorField('Button', 'pressed_sprite'),
+    { transition: 'SpriteSwap' },
+  ), true);
+  assert.equal(isInspectorFieldVisible(
+    getBuiltinInspectorField('Button', 'pressed_sprite'),
+    { transition: 'ColorTint' },
   ), false);
 });
 
@@ -73,4 +93,21 @@ test('Button ColorTint cross-fades from the sampled current color without jumpin
   const interrupted = advanceButtonTint(halfway, 'Highlighted', block, 1.05);
   assert.deepEqual(interrupted.start.map((value) => Number(value.toFixed(3))), [0.75, 0.75, 0.75, 1]);
   assert.deepEqual(multiplyButtonTint([0.25, 0.5, 1, 0.8], [2, 1, 0.5, 0.5]), [0.5, 0.5, 0.5, 0.4]);
+});
+
+test('Button SpriteSwap restores the authored Image sprite for missing and Normal states', () => {
+  const sprites = readButtonSpriteState({
+    highlighted_sprite: ' Assets/UI/highlighted.png ',
+    pressed_sprite: 'Assets/UI/pressed.png',
+    selected_sprite: 'Assets/UI/selected.png',
+  });
+  assert.deepEqual(sprites, {
+    highlighted: 'Assets/UI/highlighted.png',
+    pressed: 'Assets/UI/pressed.png',
+    selected: 'Assets/UI/selected.png',
+    disabled: '',
+  });
+  assert.equal(buttonTargetSprite('Assets/UI/normal.png', 'Normal', sprites), 'Assets/UI/normal.png');
+  assert.equal(buttonTargetSprite('Assets/UI/normal.png', 'Pressed', sprites), 'Assets/UI/pressed.png');
+  assert.equal(buttonTargetSprite('Assets/UI/normal.png', 'Disabled', sprites), 'Assets/UI/normal.png');
 });

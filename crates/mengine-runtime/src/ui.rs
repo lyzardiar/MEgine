@@ -93,6 +93,18 @@ pub fn button_target_tint(button: &Button, state: UiButtonVisualState) -> [f32; 
     sanitize_button_color(color).map(|channel| channel * multiplier)
 }
 
+pub fn button_target_sprite(button: &Button, state: UiButtonVisualState) -> Option<&str> {
+    let sprite = match state {
+        UiButtonVisualState::Normal => return None,
+        UiButtonVisualState::Highlighted => &button.highlighted_sprite,
+        UiButtonVisualState::Pressed => &button.pressed_sprite,
+        UiButtonVisualState::Selected => &button.selected_sprite,
+        UiButtonVisualState::Disabled => &button.disabled_sprite,
+    }
+    .trim();
+    (!sprite.is_empty()).then_some(sprite)
+}
+
 fn button_effective_interactable(world: &World, entity: Entity) -> bool {
     let mut chain = Vec::new();
     let mut visited = HashSet::new();
@@ -1812,6 +1824,16 @@ fn walk(
                 .unwrap_or_else(|| button_target_tint(button, visual_state));
             for primitive in &mut primitives[graphic_start..target_end] {
                 primitive.color = multiply_color(primitive.color, tint);
+            }
+        } else if button.transition.eq_ignore_ascii_case("SpriteSwap") {
+            let visual_state =
+                interaction.button_state(entity, button.interactable && state.interactable);
+            if let Some(sprite) = button_target_sprite(button, visual_state) {
+                for primitive in &mut primitives[graphic_start..target_end] {
+                    if primitive.key.material == "ui/image" {
+                        primitive.key.texture = sprite.to_owned();
+                    }
+                }
             }
         }
         push_text(
@@ -4300,6 +4322,105 @@ mod tests {
         update_ui_button_tints(&world, hovered, 0.1, &mut cache);
         assert_eq!(cache[&entity].state, UiButtonVisualState::Disabled);
         assert_eq!(cache[&entity].current, Button::default().disabled_color);
+    }
+
+    #[test]
+    fn button_sprite_swap_uses_selectable_state_on_the_target_image() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        let entity = world.spawn_empty();
+        world.insert_component(entity, RectTransform::default());
+        world.insert_component(
+            entity,
+            Image {
+                sprite: "Assets/UI/normal.png".into(),
+                ..Image::default()
+            },
+        );
+        world.insert_component(
+            entity,
+            Button {
+                transition: "SpriteSwap".into(),
+                highlighted_sprite: "Assets/UI/highlighted.png".into(),
+                pressed_sprite: "Assets/UI/pressed.png".into(),
+                selected_sprite: "Assets/UI/selected.png".into(),
+                disabled_sprite: "Assets/UI/disabled.png".into(),
+                ..Button::default()
+            },
+        );
+        world.set_parent(entity, Some(canvas));
+        let hierarchy = TransformHierarchy::build(&world);
+        fn texture_for(
+            world: &World,
+            hierarchy: &TransformHierarchy,
+            interaction: UiInteractionState,
+        ) -> String {
+            collect_ui_frame_for_display_with_interaction(
+                world,
+                hierarchy,
+                800,
+                600,
+                None,
+                &SortingLayers::default(),
+                0,
+                interaction,
+                &HashMap::new(),
+            )
+            .plan
+            .primitives
+            .into_iter()
+            .find(|primitive| primitive.key.material == "ui/image")
+            .unwrap()
+            .key
+            .texture
+        }
+
+        assert_eq!(
+            texture_for(&world, &hierarchy, UiInteractionState::default()),
+            "Assets/UI/normal.png"
+        );
+        assert_eq!(
+            texture_for(
+                &world,
+                &hierarchy,
+                UiInteractionState {
+                    hovered: Some(entity),
+                    pressed: Some(entity),
+                    selected: Some(entity),
+                }
+            ),
+            "Assets/UI/pressed.png"
+        );
+        assert_eq!(
+            texture_for(
+                &world,
+                &hierarchy,
+                UiInteractionState {
+                    selected: Some(entity),
+                    ..UiInteractionState::default()
+                }
+            ),
+            "Assets/UI/selected.png"
+        );
+        world
+            .get_component_mut::<Button>(entity)
+            .unwrap()
+            .interactable = false;
+        assert_eq!(
+            texture_for(&world, &hierarchy, UiInteractionState::default()),
+            "Assets/UI/disabled.png"
+        );
+        world
+            .get_component_mut::<Button>(entity)
+            .unwrap()
+            .disabled_sprite
+            .clear();
+        assert_eq!(
+            texture_for(&world, &hierarchy, UiInteractionState::default()),
+            "Assets/UI/normal.png"
+        );
     }
 
     #[test]

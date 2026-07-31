@@ -5,10 +5,11 @@ use clap::Parser;
 use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
-    AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, DirectionalLight,
-    Dropdown, EnvironmentLight, InputField, ListView, MaterialPropertyBlock, MeshRenderer,
-    ParticleEmitter2D, ParticleEmitter3D, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider,
-    SpotLight, SpriteRenderer, TabView, Tilemap, TimelineDirector, Toggle, Transform,
+    AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Button, Camera2D, Camera3D,
+    DirectionalLight, Dropdown, EnvironmentLight, Image, InputField, ListView,
+    MaterialPropertyBlock, MeshRenderer, ParticleEmitter2D, ParticleEmitter3D, PbrMaterial,
+    PointLight, RawImage, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer, TabView,
+    Tilemap, TimelineDirector, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
@@ -2695,6 +2696,27 @@ fn validate_world_assets(
         if let Some(renderer) = world.get_component::<SpriteRenderer>(entity) {
             validate_texture_asset(&renderer.sprite, "sprite", project_root, validated)?;
         }
+        if let Some(image) = world.get_component::<Image>(entity) {
+            validate_texture_asset(&image.sprite, "UI Image sprite", project_root, validated)?;
+        }
+        if let Some(image) = world.get_component::<RawImage>(entity) {
+            validate_texture_asset(
+                &image.texture,
+                "UI RawImage texture",
+                project_root,
+                validated,
+            )?;
+        }
+        if let Some(button) = world.get_component::<Button>(entity) {
+            for sprite in [
+                &button.highlighted_sprite,
+                &button.pressed_sprite,
+                &button.selected_sprite,
+                &button.disabled_sprite,
+            ] {
+                validate_texture_asset(sprite, "UI Button SpriteState", project_root, validated)?;
+            }
+        }
         if let Some(renderer) = world.get_component::<AnimatedSprite2D>(entity) {
             for frame in &renderer.frames {
                 validate_texture_asset(frame, "animated sprite frame", project_root, validated)?;
@@ -3820,6 +3842,40 @@ mod tests {
             validate_world_assets(&world, Path::new("C:/Games/Packaged"), &mut HashSet::new())
                 .expect_err("tile sprites must not traverse outside packaged content");
         assert!(error.to_string().contains("unsafe tile sprite path"));
+    }
+
+    #[test]
+    fn packaged_asset_validation_scans_ui_images_and_button_sprite_states() {
+        for (component, expected) in [
+            (
+                json!({ "Image": { "sprite": "../outside.png" } }),
+                "unsafe UI Image sprite path",
+            ),
+            (
+                json!({ "RawImage": { "texture": "../outside.png" } }),
+                "unsafe UI RawImage texture path",
+            ),
+            (
+                json!({
+                    "Button": {
+                        "transition": "SpriteSwap",
+                        "pressed_sprite": "../outside.png"
+                    }
+                }),
+                "unsafe UI Button SpriteState path",
+            ),
+        ] {
+            let mut world = World::new();
+            world.commands.push(WorldCommand::Spawn {
+                name: Some("Unsafe UI sprite".into()),
+                components: component,
+            });
+            world.commit();
+            let error =
+                validate_world_assets(&world, Path::new("C:/Games/Packaged"), &mut HashSet::new())
+                    .expect_err("UI sprite references must not traverse outside packaged content");
+            assert!(error.to_string().contains(expected), "{error}");
+        }
     }
 
     #[test]

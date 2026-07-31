@@ -116,7 +116,7 @@ component Outline {
 
 component Button {
   interactable:    bool   = true
-  /// "None" | "ColorTint"
+  /// "None" | "ColorTint" | "SpriteSwap"
   transition:      string = "ColorTint"
   /// Unity ColorBlock values multiplied into the target Graphic for each Selectable state.
   normal_color:      float4 = [1, 1, 1, 1]
@@ -126,6 +126,11 @@ component Button {
   disabled_color:    float4 = [0.5215686, 0.5215686, 0.5215686, 0.5019608]
   color_multiplier: float   = 1
   fade_duration:    float   = 0.1
+  /// Unity SpriteState overrides. Empty entries keep the Image's authored Sprite.
+  highlighted_sprite: string = ""
+  pressed_sprite:     string = ""
+  selected_sprite:    string = ""
+  disabled_sprite:    string = ""
   label:           string = "Button"
   text_color:      float4 = [1, 1, 1, 1]
   font_size:       float  = 16

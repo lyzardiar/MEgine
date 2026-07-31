@@ -363,6 +363,9 @@
         },
         "type": "array"
       },
+      "disabled_sprite": {
+        "type": "string"
+      },
       "fade_duration": {
         "type": "number"
       },
@@ -374,6 +377,9 @@
           "type": "number"
         },
         "type": "array"
+      },
+      "highlighted_sprite": {
+        "type": "string"
       },
       "interactable": {
         "type": "boolean"
@@ -396,11 +402,17 @@
         },
         "type": "array"
       },
+      "pressed_sprite": {
+        "type": "string"
+      },
       "selected_color": {
         "items": {
           "type": "number"
         },
         "type": "array"
+      },
+      "selected_sprite": {
+        "type": "string"
       },
       "text_color": {
         "items": {
@@ -422,6 +434,10 @@
       "disabled_color",
       "color_multiplier",
       "fade_duration",
+      "highlighted_sprite",
+      "pressed_sprite",
+      "selected_sprite",
+      "disabled_sprite",
       "label",
       "text_color",
       "font_size",

@@ -36,6 +36,11 @@ import {
   type ButtonColorBlock,
   type ButtonTintTween,
 } from './buttonColorTint';
+import {
+  buttonTargetSprite,
+  readButtonSpriteState,
+  type ButtonSpriteState,
+} from './buttonSpriteSwap';
 import { resolveSpriteId } from '../spriteLibrary';
 import { add, cross, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
@@ -129,6 +134,7 @@ export type UiDrawItem = {
     interactable: boolean;
     transition: string;
     colorBlock: ButtonColorBlock;
+    spriteState: ButtonSpriteState;
     label: string;
     textColor: [number, number, number, number];
     fontSize: number;
@@ -989,6 +995,7 @@ export function layoutUiOverlay(
                 interactable: btn.interactable !== false && state.interactable,
                 transition: String(btn.transition ?? 'ColorTint'),
                 colorBlock: readButtonColorBlock(btn),
+                spriteState: readButtonSpriteState(btn),
                 label: String(btn.label ?? 'Button'),
                 textColor: color4(btn.text_color ?? btn.textColor, [1, 1, 1, 1]),
                 fontSize: number(btn.font_size ?? btn.fontSize, 16) * scale,
@@ -2328,16 +2335,18 @@ export function drawUiItems(
       continue;
     }
 
-    if (it.button && it.button.transition.toLowerCase() === 'colortint') {
-      const state = buttonVisualState(
-        it.button.interactable,
-        hoverId === it.entity,
-        pressId === it.entity,
-        opts?.focusId === it.entity,
-      );
+    const selectableState = it.button
+      ? buttonVisualState(
+          it.button.interactable,
+          hoverId === it.entity,
+          pressId === it.entity,
+          opts?.focusId === it.entity,
+        )
+      : null;
+    if (it.button && selectableState && it.button.transition.toLowerCase() === 'colortint') {
       const tween = advanceButtonTint(
         buttonTints.get(it.entity),
-        state,
+        selectableState,
         it.button.colorBlock,
         now,
       );
@@ -2483,7 +2492,13 @@ export function drawUiItems(
       }
 
       if (it.image || it.rawImage || it.button) {
-        const sprite = it.image?.sprite ?? it.rawImage?.texture ?? 'white';
+        const authoredSprite = it.image?.sprite ?? it.rawImage?.texture ?? 'white';
+        const sprite = it.image
+          && it.button
+          && selectableState
+          && it.button.transition.toLowerCase() === 'spriteswap'
+          ? buttonTargetSprite(authoredSprite, selectableState, it.button.spriteState)
+          : authoredSprite;
         const tint: [number, number, number, number] = [r, g, b, a];
         const imageRect = (it.image?.imageType === 'Simple' || it.image?.imageType === 'Filled') && it.image.preserveAspect
           ? fitImageAspectRect({ x, y, w, h }, it.image.sourceSize)

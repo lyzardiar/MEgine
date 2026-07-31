@@ -475,6 +475,10 @@ export interface Button {
   disabledColor: [number, number, number, number];
   colorMultiplier: number;
   fadeDuration: number;
+  highlightedSprite: string;
+  pressedSprite: string;
+  selectedSprite: string;
+  disabledSprite: string;
   label: string;
   textColor: [number, number, number, number];
   fontSize: number;

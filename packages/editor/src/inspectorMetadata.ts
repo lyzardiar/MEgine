@@ -617,6 +617,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       options: [
         { value: 'None', label: 'None' },
         { value: 'ColorTint', label: 'Color Tint' },
+        { value: 'SpriteSwap', label: 'Sprite Swap' },
       ],
     },
     normal_color: { label: 'Normal Color', visibleWhen: { field: 'transition', equals: 'ColorTint' } },
@@ -626,6 +627,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     disabled_color: { label: 'Disabled Color', visibleWhen: { field: 'transition', equals: 'ColorTint' } },
     color_multiplier: { label: 'Color Multiplier', min: 0, visibleWhen: { field: 'transition', equals: 'ColorTint' } },
     fade_duration: { label: 'Fade Duration', min: 0, step: 0.01, visibleWhen: { field: 'transition', equals: 'ColorTint' } },
+    highlighted_sprite: { ...sprite, label: 'Highlighted Sprite', noneValue: '', visibleWhen: { field: 'transition', equals: 'SpriteSwap' } },
+    pressed_sprite: { ...sprite, label: 'Pressed Sprite', noneValue: '', visibleWhen: { field: 'transition', equals: 'SpriteSwap' } },
+    selected_sprite: { ...sprite, label: 'Selected Sprite', noneValue: '', visibleWhen: { field: 'transition', equals: 'SpriteSwap' } },
+    disabled_sprite: { ...sprite, label: 'Disabled Sprite', noneValue: '', visibleWhen: { field: 'transition', equals: 'SpriteSwap' } },
     font_size: { min: 1, step: 1 },
     on_click: event,
   },

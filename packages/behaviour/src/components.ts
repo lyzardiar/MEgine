@@ -291,6 +291,10 @@ export class UIButton {
   disabled_color!: Color4;
   color_multiplier!: number;
   fade_duration!: number;
+  highlighted_sprite!: string;
+  pressed_sprite!: string;
+  selected_sprite!: string;
+  disabled_sprite!: string;
   label!: string;
   text_color!: Color4;
   font_size!: number;
