@@ -19,6 +19,7 @@ export function planNineSlice(
   destinationSize: [number, number],
   sourceBorder: SpriteBorder,
   destinationBorder: SpriteBorder = sourceBorder,
+  fillCenter = true,
 ): NineSliceRegion[] {
   const [sourceWidth, sourceHeight] = sourceSize.map((value) => Math.max(0, Number(value) || 0)) as [number, number];
   const [destinationWidth, destinationHeight] = destinationSize.map((value) => Math.max(0, Number(value) || 0)) as [number, number];
@@ -28,9 +29,11 @@ export function planNineSlice(
   const sy = split(sourceHeight, sourceBorder[3], sourceBorder[1]);
   const dx = split(destinationWidth, destinationBorder[0], destinationBorder[2]);
   const dy = split(destinationHeight, destinationBorder[3], destinationBorder[1]);
+  const hasBorder = sourceBorder.some((value) => Number.isFinite(Number(value)) && Number(value) > 0);
   const regions: NineSliceRegion[] = [];
   for (let row = 0; row < 3; row++) {
     for (let column = 0; column < 3; column++) {
+      if (!fillCenter && hasBorder && row === 1 && column === 1) continue;
       const sourceW = sx[column + 1] - sx[column];
       const sourceH = sy[row + 1] - sy[row];
       const destinationW = dx[column + 1] - dx[column];

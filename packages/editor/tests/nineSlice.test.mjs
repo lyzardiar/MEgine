@@ -29,3 +29,17 @@ test('proportionally clamps borders when destination is smaller than their sum',
 test('invalid or empty source sizes do not emit degenerate regions', () => {
   assert.deepEqual(planNineSlice([0, 100], [100, 100], [10, 10, 10, 10]), []);
 });
+
+test('Fill Center removes only the center of a bordered sliced image', () => {
+  const hollow = planNineSlice([100, 80], [240, 160], [10, 20, 30, 15], undefined, false);
+  assert.equal(hollow.length, 8);
+  assert.ok(!hollow.some((region) => (
+    region.source.x === 10
+    && region.source.y === 15
+    && region.source.w === 60
+    && region.source.h === 45
+  )));
+
+  const borderless = planNineSlice([100, 80], [240, 160], [0, 0, 0, 0], undefined, false);
+  assert.equal(borderless.length, 1);
+});

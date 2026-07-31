@@ -1925,3 +1925,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Camera2D`、`Camera3D` 与 `Canvas` 新增零基 `target_display`，范围与 Unity 一致为 Display 1–8。Screen Space Overlay Canvas 使用自身 Target Display；Screen Space Camera Canvas 跟随指定 Event Camera 的 Target Display；World Space Canvas 仍属于当前相机看到的世界几何，不错误套用 Overlay 字段。IDL、Rust/TypeScript 生成类型、Behaviour、组件目录和 Inspector 使用同一默认值 `0`，Inspector 以 Display 1–8 下拉框编辑，且只在 Overlay Canvas 上显示该字段。
 - Game View 工具栏新增持久化 Display 选择器。每个 Display 只选择分配到该输出的 Primary Camera、Overlay Canvas 和 Camera Canvas；Timeline Camera Shot 不能从另一 Display 抢占当前预览。若该 Display 没有 Camera，编辑器不再用隐藏的回退相机错误绘制世界或 World Space Canvas，而是保留该 Display 的 Overlay UI 并明确显示 `No cameras rendering`。
 - Agent 状态公开 `gameDisplay`，新增 `set_game_display` / `view.set_game_display`，因此后台 Agent 可以无焦点切换 Display 后获取语义快照或 Game 截图。当前 Player 只有一个原生输出表面，所以严格渲染 Display 1 并排除路由到 Display 2–8 的 Camera/Canvas；编辑器可逐一预览全部八个逻辑输出，但本批不伪装已经创建了八个 OS 显示窗口。
+
+## 171. 2026-08-01 Image Preserve Aspect 与 Sliced Fill Center
+
+- `Image` 新增 Unity 对应的 `preserve_aspect` 与 `fill_center`，默认值分别为 `false` 与 `true`。IDL、生成 API、Behaviour、组件目录和两套 Inspector 编辑器使用同一契约；旧场景缺失字段时继续保持原有拉伸与完整九宫格外观。Preserve Aspect 仅在当前已支持的 Simple 模式显示，Fill Center 仅在 Sliced 模式显示，Source Size 则同时服务比例计算和边框 UV。
+- Editor Canvas 与原生 Runtime 使用相同的居中 contain 几何：Preserve Aspect 只收缩可见图像网格，不缩小 RectTransform，也不改变 GraphicRaycaster 的完整矩形命中区域；非中心 Pivot 和旋转仍绕作者 RectTransform 的原始 Pivot。Sliced 关闭 Fill Center 时只跳过真正有 Sprite Border 的中心区域，无边框图像仍完整显示，避免把普通白图意外变成空白。
+- 纯几何、九宫格、默认值、Inspector、Runtime 网格/Pivot 与 Raycast 回归覆盖了宽图、竖图、非法尺寸、八边框区域及无边框兼容路径。该批仍不伪装完整 Unity Image：Tiled、Filled、Alpha Hit Test、Mask/Stencil 和 Sprite Atlas 的高级网格能力继续作为后续独立闭环。

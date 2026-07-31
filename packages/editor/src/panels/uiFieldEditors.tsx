@@ -1160,8 +1160,20 @@ export function ImageEditor(props: {
           ))}
         </select>
       </div>
+      {String(d.image_type ?? d.imageType ?? 'Simple') === 'Simple' && (
+        <BoolField
+          label="Preserve Aspect"
+          value={d.preserve_aspect === true || d.preserveAspect === true}
+          onChange={(preserve_aspect) => props.onPatch({ preserve_aspect })}
+        />
+      )}
       {String(d.image_type ?? d.imageType ?? 'Simple') === 'Sliced' && (
         <>
+          <BoolField
+            label="Fill Center"
+            value={d.fill_center !== false && d.fillCenter !== false}
+            onChange={(fill_center) => props.onPatch({ fill_center })}
+          />
           <NumberVectorField
             label="Border"
             axes={['L', 'B', 'R', 'T']}
@@ -1169,16 +1181,16 @@ export function ImageEditor(props: {
             min={0}
             onChange={(border) => props.onPatch({ border })}
           />
-          <NumberVectorField
-            label="Source Size"
-            axes={['W', 'H']}
-            value={(d.source_size as number[]) ?? (d.sourceSize as number[]) ?? [100, 100]}
-            min={1}
-            onChange={(source_size) => props.onPatch({ source_size })}
-          />
           <div className="field-hint">Border order: Left, Bottom, Right, Top (pixels)</div>
         </>
       )}
+      <NumberVectorField
+        label="Source Size"
+        axes={['W', 'H']}
+        value={(d.source_size as number[]) ?? (d.sourceSize as number[]) ?? [100, 100]}
+        min={1}
+        onChange={(source_size) => props.onPatch({ source_size })}
+      />
       <BoolField
         label="Raycast Target"
         value={d.raycast_target !== false && d.raycastTarget !== false}

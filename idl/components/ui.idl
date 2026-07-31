@@ -73,6 +73,10 @@ component Image {
   color:           float4 = [1, 1, 1, 1]
   /// "Simple" | "Sliced" (Unity Image.type)
   image_type:      string = "Simple"
+  /// Preserve the Sprite aspect ratio inside the RectTransform for Simple images.
+  preserve_aspect: bool   = false
+  /// Render the center region of a bordered Sliced image.
+  fill_center:     bool   = true
   /// Sprite border in pixels: left, bottom, right, top.
   border:          float4 = [0, 0, 0, 0]
   /// Imported source texture size used to normalize sliced UVs.

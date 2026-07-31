@@ -7,6 +7,7 @@ import {
   componentRequirements,
   createComponentDefaults,
   createUiCanvasComponents,
+  createUiImageComponents,
   createUiTextComponents,
 } from '../src/componentCatalog.ts';
 import {
@@ -95,6 +96,29 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
     getBuiltinInspectorField('GraphicRaycaster', 'blocking_mask')?.kind,
     'layer-mask',
   );
+});
+
+test('Image exposes Unity Preserve Aspect and Sliced Fill Center defaults', () => {
+  const imageDefaults = {
+    sprite: 'white',
+    color: [1, 1, 1, 1],
+    image_type: 'Simple',
+    preserve_aspect: false,
+    fill_center: true,
+    border: [0, 0, 0, 0],
+    source_size: [100, 100],
+    raycast_target: true,
+  };
+  assert.deepEqual(createComponentDefaults('Image'), imageDefaults);
+  assert.deepEqual(createUiImageComponents().Image, imageDefaults);
+  assert.deepEqual(getBuiltinInspectorField('Image', 'preserve_aspect')?.visibleWhen, {
+    field: 'image_type',
+    equals: 'Simple',
+  });
+  assert.deepEqual(getBuiltinInspectorField('Image', 'fill_center')?.visibleWhen, {
+    field: 'image_type',
+    equals: 'Sliced',
+  });
 });
 
 test('CanvasGroup exposes Unity parent-group override defaults', () => {

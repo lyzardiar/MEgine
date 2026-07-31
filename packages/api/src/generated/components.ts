@@ -435,6 +435,8 @@ export interface Image {
   sprite: string;
   color: [number, number, number, number];
   imageType: string;
+  preserveAspect: boolean;
+  fillCenter: boolean;
   border: [number, number, number, number];
   sourceSize: [number, number];
   raycastTarget: boolean;

@@ -12,7 +12,8 @@ import {
 } from './rectLayout';
 import { rectLocalAxes, rectPivot } from '../rectGizmo';
 import { drawSpriteInRect, drawSpriteSlicedInRect, drawSpriteUvInRect } from '../spriteDraw';
-import type { SpriteBorder } from './nineSlice';
+import { planNineSlice, type SpriteBorder } from './nineSlice';
+import { fitImageAspectRect } from './imageGeometry';
 import { applyAspectRatio } from './aspectRatioFitter';
 import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
 import { graphicEffectFilter, type UiGraphicEffect } from './graphicEffect';
@@ -73,6 +74,8 @@ export type UiDrawItem = {
     color: [number, number, number, number];
     sprite: string;
     imageType: 'Simple' | 'Sliced';
+    preserveAspect: boolean;
+    fillCenter: boolean;
     border: SpriteBorder;
     displayBorder: SpriteBorder;
     sourceSize: [number, number];
@@ -871,6 +874,9 @@ export function layoutUiOverlay(
                   ['Simple', 'Sliced'] as const,
                   'Simple',
                 ),
+                preserveAspect:
+                  img.preserve_aspect === true || img.preserveAspect === true,
+                fillCenter: img.fill_center !== false && img.fillCenter !== false,
                 border: number4(img.border, [0, 0, 0, 0]),
                 displayBorder: number4(img.border, [0, 0, 0, 0]).map(
                   (value) => Math.max(0, value) * spritePixelScale,
@@ -2129,6 +2135,10 @@ export function drawUiItems(
       if (it.image || it.rawImage || it.button) {
         const sprite = it.image?.sprite ?? it.rawImage?.texture ?? 'white';
         const tint: [number, number, number, number] = [r, g, b, a];
+        const imageRect = it.image?.imageType === 'Simple' && it.image.preserveAspect
+          ? fitImageAspectRect({ x, y, w, h }, it.image.sourceSize)
+          : { x, y, w, h };
+        const { x: imageX, y: imageY, w: imageW, h: imageH } = imageRect;
         const drawn =
           sprite !== 'white' && (it.rawImage
             ? drawSpriteUvInRect(ctx, sprite, x, y, w, h, tint, it.rawImage.uvRect)
@@ -2136,20 +2146,39 @@ export function drawUiItems(
             ? drawSpriteSlicedInRect(
                 ctx,
                 sprite,
-                x,
-                y,
-                w,
-                h,
+                imageX,
+                imageY,
+                imageW,
+                imageH,
                 tint,
                 it.image.border,
                 it.image.displayBorder,
                 it.image.sourceSize,
+                it.image.fillCenter,
               )
-            : drawSpriteInRect(ctx, sprite, x, y, w, h, tint));
+            : drawSpriteInRect(ctx, sprite, imageX, imageY, imageW, imageH, tint));
 
         if (!drawn) {
           ctx.fillStyle = `rgba(${(r * 255) | 0},${(g * 255) | 0},${(b * 255) | 0},${a})`;
-          ctx.fillRect(x, y, w, h);
+          if (it.image?.imageType === 'Sliced' && !it.image.fillCenter) {
+            const regions = planNineSlice(
+              it.image.sourceSize,
+              [imageW, imageH],
+              it.image.border,
+              it.image.displayBorder,
+              false,
+            );
+            for (const region of regions) {
+              ctx.fillRect(
+                imageX + region.destination.x,
+                imageY + region.destination.y,
+                region.destination.w,
+                region.destination.h,
+              );
+            }
+          } else {
+            ctx.fillRect(imageX, imageY, imageW, imageH);
+          }
         }
       }
 

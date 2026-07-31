@@ -864,8 +864,14 @@
         },
         "type": "array"
       },
+      "fill_center": {
+        "type": "boolean"
+      },
       "image_type": {
         "type": "string"
+      },
+      "preserve_aspect": {
+        "type": "boolean"
       },
       "raycast_target": {
         "type": "boolean"
@@ -884,6 +890,8 @@
       "sprite",
       "color",
       "image_type",
+      "preserve_aspect",
+      "fill_center",
       "border",
       "source_size",
       "raycast_target"

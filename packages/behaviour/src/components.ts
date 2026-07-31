@@ -145,6 +145,8 @@ export class Image {
   sprite!: string;
   color!: Color4;
   image_type!: string;
+  preserve_aspect!: boolean;
+  fill_center!: boolean;
   border!: Color4;
   source_size!: [number, number];
   raycast_target!: boolean;

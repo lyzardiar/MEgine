@@ -1381,13 +1381,16 @@ fn walk(
                 image.border,
                 image.source_size,
                 sprite_pixel_scale,
+                image.fill_center,
                 clip,
             );
         } else {
+            let (image_rect, image_pivot) =
+                image_geometry(rect, pivot, image.source_size, image.preserve_aspect);
             primitives.push(primitive(
-                rect,
+                image_rect,
                 multiply_alpha(image.color, state.alpha),
-                pivot,
+                image_pivot,
                 rotation,
                 "ui/image",
                 &image.sprite,
@@ -2800,6 +2803,71 @@ fn primitive(
     }
 }
 
+fn image_geometry(
+    rect: UiRect,
+    pivot: [f32; 2],
+    source_size: [f32; 2],
+    preserve_aspect: bool,
+) -> (UiRect, [f32; 2]) {
+    if !preserve_aspect
+        || !rect.width.is_finite()
+        || !rect.height.is_finite()
+        || rect.width <= 0.0
+        || rect.height <= 0.0
+        || !source_size[0].is_finite()
+        || !source_size[1].is_finite()
+        || source_size[0] <= 0.0
+        || source_size[1] <= 0.0
+    {
+        return (rect, pivot);
+    }
+
+    let source_aspect = source_size[0] / source_size[1];
+    let rect_aspect = rect.width / rect.height;
+    if !source_aspect.is_finite()
+        || !rect_aspect.is_finite()
+        || source_aspect <= 0.0
+        || rect_aspect <= 0.0
+    {
+        return (rect, pivot);
+    }
+    let fitted = if source_aspect > rect_aspect {
+        let height = rect.width / source_aspect;
+        UiRect {
+            x: rect.x,
+            y: rect.y + (rect.height - height) * 0.5,
+            width: rect.width,
+            height,
+        }
+    } else {
+        let width = rect.height * source_aspect;
+        UiRect {
+            x: rect.x + (rect.width - width) * 0.5,
+            y: rect.y,
+            width,
+            height: rect.height,
+        }
+    };
+    if !fitted.width.is_finite()
+        || !fitted.height.is_finite()
+        || fitted.width <= 0.0
+        || fitted.height <= 0.0
+    {
+        return (rect, pivot);
+    }
+    let global_pivot = [
+        rect.x + pivot[0] * rect.width,
+        rect.y + pivot[1] * rect.height,
+    ];
+    (
+        fitted,
+        [
+            (global_pivot[0] - fitted.x) / fitted.width,
+            (global_pivot[1] - fitted.y) / fitted.height,
+        ],
+    )
+}
+
 fn split_axis(total: f32, start: f32, end: f32) -> [f32; 4] {
     let total = total.max(0.0);
     let start = start.max(0.0);
@@ -2824,6 +2892,7 @@ fn push_sliced_image(
     border: [f32; 4],
     source_size: [f32; 2],
     scale: f32,
+    fill_center: bool,
     clip: UiClipRect,
 ) {
     if rect.width <= 0.0 || rect.height <= 0.0 {
@@ -2847,9 +2916,13 @@ fn push_sliced_image(
         rect.x + pivot[0] * rect.width,
         rect.y + pivot[1] * rect.height,
     ];
+    let has_border = border.iter().any(|value| value.is_finite() && *value > 0.0);
 
     for row in 0..3 {
         for column in 0..3 {
+            if !fill_center && has_border && row == 1 && column == 1 {
+                continue;
+            }
             let source_w = source_x[column + 1] - source_x[column];
             let source_h = source_y[row + 1] - source_y[row];
             let width = destination_x[column + 1] - destination_x[column];
@@ -4508,6 +4581,7 @@ mod tests {
             [10.0, 20.0, 30.0, 15.0],
             [100.0, 80.0],
             1.0,
+            true,
             UiClipRect {
                 x: 0,
                 y: 0,
@@ -4526,6 +4600,118 @@ mod tests {
             assert!((pivot_x - 110.0).abs() < 0.0001);
             assert!((pivot_y - 70.0).abs() < 0.0001);
         }
+    }
+
+    #[test]
+    fn image_preserve_aspect_keeps_the_rect_transform_rotation_pivot() {
+        let rect = UiRect {
+            x: 10.0,
+            y: 20.0,
+            width: 100.0,
+            height: 100.0,
+        };
+        let (fitted, pivot) = image_geometry(rect, [0.0, 0.0], [200.0, 100.0], true);
+        assert_eq!(
+            [fitted.x, fitted.y, fitted.width, fitted.height],
+            [10.0, 45.0, 100.0, 50.0]
+        );
+        assert!((fitted.x + pivot[0] * fitted.width - 10.0).abs() < 0.0001);
+        assert!((fitted.y + pivot[1] * fitted.height - 20.0).abs() < 0.0001);
+    }
+
+    #[test]
+    fn preserved_image_mesh_does_not_shrink_its_graphic_raycast_rect() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        let image = world.spawn_empty();
+        world.insert_component(
+            image,
+            RectTransform {
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            image,
+            Image {
+                preserve_aspect: true,
+                source_size: [100.0, 100.0],
+                ..Image::default()
+            },
+        );
+        world.set_parent(image, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let primitive = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.key.material == "ui/image")
+            .unwrap();
+        assert_eq!(primitive.rect, [350.0, 250.0, 100.0, 100.0]);
+        let control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == image)
+            .unwrap();
+        assert_eq!(
+            [
+                control.rect.x,
+                control.rect.y,
+                control.rect.width,
+                control.rect.height,
+            ],
+            [300.0, 250.0, 200.0, 100.0]
+        );
+    }
+
+    #[test]
+    fn sliced_image_fill_center_removes_only_a_bordered_center() {
+        let clip = UiClipRect {
+            x: 0,
+            y: 0,
+            width: 1000,
+            height: 1000,
+        };
+        let rect = UiRect {
+            x: 0.0,
+            y: 0.0,
+            width: 200.0,
+            height: 100.0,
+        };
+        let mut hollow = Vec::new();
+        push_sliced_image(
+            &mut hollow,
+            rect,
+            [1.0; 4],
+            [0.5, 0.5],
+            0.0,
+            "panel.png",
+            [10.0, 20.0, 30.0, 15.0],
+            [100.0, 80.0],
+            1.0,
+            false,
+            clip,
+        );
+        assert_eq!(hollow.len(), 8);
+
+        let mut borderless = Vec::new();
+        push_sliced_image(
+            &mut borderless,
+            rect,
+            [1.0; 4],
+            [0.5, 0.5],
+            0.0,
+            "panel.png",
+            [0.0; 4],
+            [100.0, 80.0],
+            1.0,
+            false,
+            clip,
+        );
+        assert_eq!(borderless.len(), 1);
     }
 
     #[test]

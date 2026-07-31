@@ -135,6 +135,7 @@ export function drawSpriteSlicedInRect(
   sourceBorder: SpriteBorder,
   destinationBorder: SpriteBorder = sourceBorder,
   sourceSize?: [number, number],
+  fillCenter = true,
 ): boolean {
   const img = getSpriteImage(sprite);
   if (!img || !img.complete || img.naturalWidth < 1 || img.naturalHeight < 1) return false;
@@ -148,6 +149,7 @@ export function drawSpriteSlicedInRect(
     [w, h],
     sourceBorder,
     destinationBorder,
+    fillCenter,
   );
   if (!regions.length) return false;
   for (const region of regions) {
