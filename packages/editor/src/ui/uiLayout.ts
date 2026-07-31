@@ -11,9 +11,15 @@ import {
   type Rect,
 } from './rectLayout';
 import { rectLocalAxes, rectPivot } from '../rectGizmo';
-import { drawSpriteInRect, drawSpriteSlicedInRect, drawSpriteUvInRect } from '../spriteDraw';
+import {
+  drawSpriteInRect,
+  drawSpriteSlicedInRect,
+  drawSpriteTiledInRect,
+  drawSpriteUvInRect,
+} from '../spriteDraw';
 import { planNineSlice, type SpriteBorder } from './nineSlice';
 import { fitImageAspectRect } from './imageGeometry';
+import { planTiledImage } from './tiledImage';
 import { applyAspectRatio } from './aspectRatioFitter';
 import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
 import { graphicEffectFilter, type UiGraphicEffect } from './graphicEffect';
@@ -73,9 +79,10 @@ export type UiDrawItem = {
   image?: {
     color: [number, number, number, number];
     sprite: string;
-    imageType: 'Simple' | 'Sliced';
+    imageType: 'Simple' | 'Sliced' | 'Tiled';
     preserveAspect: boolean;
     fillCenter: boolean;
+    spritePixelScale: number;
     border: SpriteBorder;
     displayBorder: SpriteBorder;
     sourceSize: [number, number];
@@ -871,12 +878,13 @@ export function layoutUiOverlay(
                 sprite: resolveSpriteId(String(img.sprite ?? 'white')),
                 imageType: enumValue(
                   img.image_type ?? img.imageType,
-                  ['Simple', 'Sliced'] as const,
+                  ['Simple', 'Sliced', 'Tiled'] as const,
                   'Simple',
                 ),
                 preserveAspect:
                   img.preserve_aspect === true || img.preserveAspect === true,
                 fillCenter: img.fill_center !== false && img.fillCenter !== false,
+                spritePixelScale,
                 border: number4(img.border, [0, 0, 0, 0]),
                 displayBorder: number4(img.border, [0, 0, 0, 0]).map(
                   (value) => Math.max(0, value) * spritePixelScale,
@@ -2142,6 +2150,21 @@ export function drawUiItems(
         const drawn =
           sprite !== 'white' && (it.rawImage
             ? drawSpriteUvInRect(ctx, sprite, x, y, w, h, tint, it.rawImage.uvRect)
+            : it.image?.imageType === 'Tiled'
+            ? drawSpriteTiledInRect(
+                ctx,
+                sprite,
+                imageX,
+                imageY,
+                imageW,
+                imageH,
+                tint,
+                it.image.border,
+                it.image.displayBorder,
+                it.image.sourceSize,
+                it.image.spritePixelScale,
+                it.image.fillCenter,
+              )
             : it.image?.imageType === 'Sliced'
             ? drawSpriteSlicedInRect(
                 ctx,
@@ -2160,14 +2183,23 @@ export function drawUiItems(
 
         if (!drawn) {
           ctx.fillStyle = `rgba(${(r * 255) | 0},${(g * 255) | 0},${(b * 255) | 0},${a})`;
-          if (it.image?.imageType === 'Sliced' && !it.image.fillCenter) {
-            const regions = planNineSlice(
-              it.image.sourceSize,
-              [imageW, imageH],
-              it.image.border,
-              it.image.displayBorder,
-              false,
-            );
+          if (it.image?.imageType === 'Tiled' || (it.image?.imageType === 'Sliced' && !it.image.fillCenter)) {
+            const regions = it.image.imageType === 'Tiled'
+              ? planTiledImage(
+                  it.image.sourceSize,
+                  [imageW, imageH],
+                  it.image.border,
+                  it.image.displayBorder,
+                  it.image.spritePixelScale,
+                  it.image.fillCenter,
+                )
+              : planNineSlice(
+                  it.image.sourceSize,
+                  [imageW, imageH],
+                  it.image.border,
+                  it.image.displayBorder,
+                  false,
+                );
             for (const region of regions) {
               ctx.fillRect(
                 imageX + region.destination.x,

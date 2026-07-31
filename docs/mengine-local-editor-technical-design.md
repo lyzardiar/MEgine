@@ -1931,3 +1931,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Image` 新增 Unity 对应的 `preserve_aspect` 与 `fill_center`，默认值分别为 `false` 与 `true`。IDL、生成 API、Behaviour、组件目录和两套 Inspector 编辑器使用同一契约；旧场景缺失字段时继续保持原有拉伸与完整九宫格外观。Preserve Aspect 仅在当前已支持的 Simple 模式显示，Fill Center 仅在 Sliced 模式显示，Source Size 则同时服务比例计算和边框 UV。
 - Editor Canvas 与原生 Runtime 使用相同的居中 contain 几何：Preserve Aspect 只收缩可见图像网格，不缩小 RectTransform，也不改变 GraphicRaycaster 的完整矩形命中区域；非中心 Pivot 和旋转仍绕作者 RectTransform 的原始 Pivot。Sliced 关闭 Fill Center 时只跳过真正有 Sprite Border 的中心区域，无边框图像仍完整显示，避免把普通白图意外变成空白。
 - 纯几何、九宫格、默认值、Inspector、Runtime 网格/Pivot 与 Raycast 回归覆盖了宽图、竖图、非法尺寸、八边框区域及无边框兼容路径。该批仍不伪装完整 Unity Image：Tiled、Filled、Alpha Hit Test、Mask/Stencil 和 Sprite Atlas 的高级网格能力继续作为后续独立闭环。
+
+## 172. 2026-08-01 Image Type Tiled
+
+- `Image Type` 新增 Unity `Tiled`。Editor Canvas 与原生 Runtime 都按 Sprite Border 把角保持为 Sliced、沿长度重复四条边、在中央二维平铺；最后一个不完整 tile 会同步裁剪目标矩形与 Sprite UV，不拉伸或越出 RectTransform。`Fill Center` 同时对 Sliced/Tiled 生效；有 Border 时可保留边框并挖空中心，无 Border 时遵循 Unity 兼容行为继续显示完整平铺图。
+- 平铺尺寸使用 CanvasScaler 派生的 Sprite Pixel Scale，因此 Constant Pixel、Scale With Screen Size 与 Constant Physical Size 下，边框尺寸和 tile 密度由同一比例决定。每个 tile 都把 Pivot 重映射回作者 RectTransform 的全局 Pivot，旋转后的角、边和中心不会各自绕局部中心散开；GraphicRaycaster 仍保持单一完整 RectTransform 命中区域，不因生成多个渲染 quad 重复触发。
+- 与 Unity 相同，每张 Tiled Image 最多生成 16,250 个 quad。若极大目标区域和极小 Sprite 会超限，Editor/Runtime 都用确定性二分放大 tile，直到完整覆盖且不超预算；不会截掉尾部，也不会让异常资产无界分配内存。回归覆盖角/边/中心、末端局部 UV、Fill Center、无 Border、旋转 Pivot、单一 Raycast 与百万像素区域预算。剩余 Unity Image 缺口收敛为 Filled、Alpha Hit Test、Mask/Stencil 与更高级 Sprite 网格。

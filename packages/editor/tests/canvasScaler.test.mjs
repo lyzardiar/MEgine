@@ -98,7 +98,7 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
   );
 });
 
-test('Image exposes Unity Preserve Aspect and Sliced Fill Center defaults', () => {
+test('Image exposes Unity Preserve Aspect and Sliced/Tiled Fill Center defaults', () => {
   const imageDefaults = {
     sprite: 'white',
     color: [1, 1, 1, 1],
@@ -117,8 +117,12 @@ test('Image exposes Unity Preserve Aspect and Sliced Fill Center defaults', () =
   });
   assert.deepEqual(getBuiltinInspectorField('Image', 'fill_center')?.visibleWhen, {
     field: 'image_type',
-    equals: 'Sliced',
+    equals: ['Sliced', 'Tiled'],
   });
+  assert.deepEqual(
+    getBuiltinInspectorField('Image', 'image_type')?.options?.map(({ value }) => value),
+    ['Simple', 'Sliced', 'Tiled'],
+  );
 });
 
 test('CanvasGroup exposes Unity parent-group override defaults', () => {

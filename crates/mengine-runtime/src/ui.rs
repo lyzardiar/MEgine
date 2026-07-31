@@ -1370,7 +1370,21 @@ fn walk(
     let control_start = controls.len();
 
     if let Some(image) = image {
-        if image.image_type.eq_ignore_ascii_case("sliced") {
+        if image.image_type.eq_ignore_ascii_case("tiled") {
+            push_tiled_image(
+                primitives,
+                rect,
+                multiply_alpha(image.color, state.alpha),
+                pivot,
+                rotation,
+                &image.sprite,
+                image.border,
+                image.source_size,
+                sprite_pixel_scale,
+                image.fill_center,
+                clip,
+            );
+        } else if image.image_type.eq_ignore_ascii_case("sliced") {
             push_sliced_image(
                 primitives,
                 rect,
@@ -2879,6 +2893,275 @@ fn split_axis(total: f32, start: f32, end: f32) -> [f32; 4] {
         1.0
     };
     [0.0, start * scale, total - end * scale, total]
+}
+
+const MAX_TILED_IMAGE_QUADS: usize = 16_250;
+
+#[derive(Clone, Copy, Debug)]
+struct TiledImageRegion {
+    source: [f32; 4],
+    destination: [f32; 4],
+}
+
+fn plan_tiled_image(
+    source_size: [f32; 2],
+    destination_size: [f32; 2],
+    source_border: [f32; 4],
+    destination_border: [f32; 4],
+    pixel_scale: f32,
+    fill_center: bool,
+) -> Vec<TiledImageRegion> {
+    let source_width = source_size[0];
+    let source_height = source_size[1];
+    let destination_width = destination_size[0];
+    let destination_height = destination_size[1];
+    if !source_width.is_finite()
+        || !source_height.is_finite()
+        || !destination_width.is_finite()
+        || !destination_height.is_finite()
+        || source_width <= 0.0
+        || source_height <= 0.0
+        || destination_width <= 0.0
+        || destination_height <= 0.0
+    {
+        return Vec::new();
+    }
+
+    let sx = split_axis(source_width, source_border[0], source_border[2]);
+    let sy = split_axis(source_height, source_border[3], source_border[1]);
+    let dx = split_axis(
+        destination_width,
+        destination_border[0],
+        destination_border[2],
+    );
+    let dy = split_axis(
+        destination_height,
+        destination_border[3],
+        destination_border[1],
+    );
+    let source_center_width = sx[2] - sx[1];
+    let source_center_height = sy[2] - sy[1];
+    let destination_center_width = dx[2] - dx[1];
+    let destination_center_height = dy[2] - dy[1];
+    let base_scale = if pixel_scale.is_finite() && pixel_scale > 0.0 {
+        pixel_scale
+    } else {
+        1.0
+    };
+    let has_border = source_border
+        .iter()
+        .any(|value| value.is_finite() && *value > 0.0);
+    let render_center = fill_center || !has_border;
+    let left_valid = sx[1] > sx[0] && dx[1] > dx[0];
+    let right_valid = sx[3] > sx[2] && dx[3] > dx[2];
+    let top_valid = sy[1] > sy[0] && dy[1] > dy[0];
+    let bottom_valid = sy[3] > sy[2] && dy[3] > dy[2];
+
+    let counts = |scale: f32| {
+        let tile_width = source_center_width * base_scale * scale;
+        let tile_height = source_center_height * base_scale * scale;
+        let cap = MAX_TILED_IMAGE_QUADS + 1;
+        let columns =
+            if destination_center_width > 0.0 && tile_width.is_finite() && tile_width > 0.0 {
+                ((destination_center_width / tile_width).ceil() as usize).min(cap)
+            } else {
+                0
+            };
+        let rows =
+            if destination_center_height > 0.0 && tile_height.is_finite() && tile_height > 0.0 {
+                ((destination_center_height / tile_height).ceil() as usize).min(cap)
+            } else {
+                0
+            };
+        let corners = usize::from(left_valid && top_valid)
+            + usize::from(right_valid && top_valid)
+            + usize::from(left_valid && bottom_valid)
+            + usize::from(right_valid && bottom_valid);
+        let horizontal_edges =
+            columns.saturating_mul(usize::from(top_valid) + usize::from(bottom_valid));
+        let vertical_edges =
+            rows.saturating_mul(usize::from(left_valid) + usize::from(right_valid));
+        let center = if render_center {
+            columns.saturating_mul(rows)
+        } else {
+            0
+        };
+        (
+            columns,
+            rows,
+            tile_width,
+            tile_height,
+            corners
+                .saturating_add(horizontal_edges)
+                .saturating_add(vertical_edges)
+                .saturating_add(center)
+                .min(cap),
+        )
+    };
+
+    let mut tile_scale = 1.0;
+    if counts(tile_scale).4 > MAX_TILED_IMAGE_QUADS {
+        let mut low = 1.0;
+        let mut high = 2.0;
+        while counts(high).4 > MAX_TILED_IMAGE_QUADS {
+            high *= 2.0;
+        }
+        for _ in 0..40 {
+            let middle = (low + high) * 0.5;
+            if counts(middle).4 > MAX_TILED_IMAGE_QUADS {
+                low = middle;
+            } else {
+                high = middle;
+            }
+        }
+        tile_scale = high;
+    }
+    let (columns, rows, tile_width, tile_height, _) = counts(tile_scale);
+    let mut regions = Vec::with_capacity(MAX_TILED_IMAGE_QUADS.min(counts(tile_scale).4));
+    let mut add = |source: [f32; 4], destination: [f32; 4]| {
+        if source[2].is_finite()
+            && source[3].is_finite()
+            && destination[2].is_finite()
+            && destination[3].is_finite()
+            && source[2] > 0.0
+            && source[3] > 0.0
+            && destination[2] > 0.0
+            && destination[3] > 0.0
+        {
+            regions.push(TiledImageRegion {
+                source,
+                destination,
+            });
+        }
+    };
+
+    add(
+        [sx[0], sy[0], sx[1] - sx[0], sy[1] - sy[0]],
+        [dx[0], dy[0], dx[1] - dx[0], dy[1] - dy[0]],
+    );
+    add(
+        [sx[2], sy[0], sx[3] - sx[2], sy[1] - sy[0]],
+        [dx[2], dy[0], dx[3] - dx[2], dy[1] - dy[0]],
+    );
+    add(
+        [sx[0], sy[2], sx[1] - sx[0], sy[3] - sy[2]],
+        [dx[0], dy[2], dx[1] - dx[0], dy[3] - dy[2]],
+    );
+    add(
+        [sx[2], sy[2], sx[3] - sx[2], sy[3] - sy[2]],
+        [dx[2], dy[2], dx[3] - dx[2], dy[3] - dy[2]],
+    );
+
+    for column in 0..columns {
+        let destination_x = dx[1] + column as f32 * tile_width;
+        let width = tile_width.min(dx[2] - destination_x);
+        let source_tile_width = source_center_width * width / tile_width;
+        add(
+            [sx[1], sy[0], source_tile_width, sy[1] - sy[0]],
+            [destination_x, dy[0], width, dy[1] - dy[0]],
+        );
+        add(
+            [sx[1], sy[2], source_tile_width, sy[3] - sy[2]],
+            [destination_x, dy[2], width, dy[3] - dy[2]],
+        );
+    }
+    for row in 0..rows {
+        let destination_y = dy[1] + row as f32 * tile_height;
+        let height = tile_height.min(dy[2] - destination_y);
+        let source_tile_height = source_center_height * height / tile_height;
+        add(
+            [sx[0], sy[1], sx[1] - sx[0], source_tile_height],
+            [dx[0], destination_y, dx[1] - dx[0], height],
+        );
+        add(
+            [sx[2], sy[1], sx[3] - sx[2], source_tile_height],
+            [dx[2], destination_y, dx[3] - dx[2], height],
+        );
+    }
+    if render_center {
+        for row in 0..rows {
+            let destination_y = dy[1] + row as f32 * tile_height;
+            let height = tile_height.min(dy[2] - destination_y);
+            let source_tile_height = source_center_height * height / tile_height;
+            for column in 0..columns {
+                let destination_x = dx[1] + column as f32 * tile_width;
+                let width = tile_width.min(dx[2] - destination_x);
+                add(
+                    [
+                        sx[1],
+                        sy[1],
+                        source_center_width * width / tile_width,
+                        source_tile_height,
+                    ],
+                    [destination_x, destination_y, width, height],
+                );
+            }
+        }
+    }
+    regions
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_tiled_image(
+    primitives: &mut Vec<UiPrimitive>,
+    rect: UiRect,
+    color: [f32; 4],
+    pivot: [f32; 2],
+    rotation_radians: f32,
+    texture: &str,
+    border: [f32; 4],
+    source_size: [f32; 2],
+    scale: f32,
+    fill_center: bool,
+    clip: UiClipRect,
+) {
+    let destination_border = [
+        border[0] * scale.max(0.0),
+        border[1] * scale.max(0.0),
+        border[2] * scale.max(0.0),
+        border[3] * scale.max(0.0),
+    ];
+    let regions = plan_tiled_image(
+        source_size,
+        [rect.width, rect.height],
+        border,
+        destination_border,
+        scale,
+        fill_center,
+    );
+    let source_width = source_size[0].max(1.0);
+    let source_height = source_size[1].max(1.0);
+    let global_pivot = [
+        rect.x + pivot[0] * rect.width,
+        rect.y + pivot[1] * rect.height,
+    ];
+    for region in regions {
+        let tile = UiRect {
+            x: rect.x + region.destination[0],
+            y: rect.y + region.destination[1],
+            width: region.destination[2],
+            height: region.destination[3],
+        };
+        let mut output = primitive(
+            tile,
+            color,
+            [
+                (global_pivot[0] - tile.x) / tile.width,
+                (global_pivot[1] - tile.y) / tile.height,
+            ],
+            rotation_radians,
+            "ui/image-tiled",
+            texture,
+            clip,
+        );
+        output.uv = [
+            region.source[0] / source_width,
+            region.source[1] / source_height,
+            region.source[2] / source_width,
+            region.source[3] / source_height,
+        ];
+        primitives.push(output);
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -4712,6 +4995,85 @@ mod tests {
             clip,
         );
         assert_eq!(borderless.len(), 1);
+    }
+
+    #[test]
+    fn tiled_image_repeats_edges_and_center_with_partial_uvs() {
+        let regions = plan_tiled_image([40.0, 30.0], [75.0, 55.0], [5.0; 4], [5.0; 4], 1.0, true);
+        assert_eq!(regions.len(), 25);
+        assert_eq!(regions[0].source, [0.0, 0.0, 5.0, 5.0]);
+        assert_eq!(regions[0].destination, [0.0, 0.0, 5.0, 5.0]);
+        assert!(regions.iter().any(|region| {
+            region.destination == [65.0, 45.0, 5.0, 5.0] && region.source == [5.0, 5.0, 5.0, 5.0]
+        }));
+    }
+
+    #[test]
+    fn tiled_image_enlarges_tiles_to_stay_inside_unity_quad_budget() {
+        let regions = plan_tiled_image(
+            [1.0, 1.0],
+            [1_000_000.0, 1_000_000.0],
+            [0.0; 4],
+            [0.0; 4],
+            1.0,
+            true,
+        );
+        assert!(!regions.is_empty());
+        assert!(regions.len() <= MAX_TILED_IMAGE_QUADS);
+        let area: f64 = regions
+            .iter()
+            .map(|region| region.destination[2] as f64 * region.destination[3] as f64)
+            .sum();
+        assert!((area - 1_000_000_000_000.0).abs() < 100_000.0);
+    }
+
+    #[test]
+    fn tiled_image_fill_center_and_rotation_pivot_flow_through_canvas_collection() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        let image_entity = world.spawn_empty();
+        world.insert_component(
+            image_entity,
+            RectTransform {
+                pivot: [0.0, 0.0],
+                size_delta: [75.0, 55.0],
+                local_rotation: 30.0,
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            image_entity,
+            Image {
+                image_type: "Tiled".into(),
+                fill_center: false,
+                border: [5.0; 4],
+                source_size: [40.0, 30.0],
+                ..Image::default()
+            },
+        );
+        world.set_parent(image_entity, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let primitives: Vec<_> = frame
+            .plan
+            .primitives
+            .iter()
+            .filter(|primitive| primitive.key.material == "ui/image-tiled")
+            .collect();
+        assert_eq!(primitives.len(), 16);
+        for primitive in primitives {
+            assert!(
+                (primitive.rect[0] + primitive.pivot[0] * primitive.rect[2] - 400.0).abs() < 0.0001
+            );
+            assert!(
+                (primitive.rect[1] + primitive.pivot[1] * primitive.rect[3] - 300.0).abs() < 0.0001
+            );
+            assert!((primitive.rotation_radians + 30.0_f32.to_radians()).abs() < 0.0001);
+        }
+        assert_eq!(frame.controls.len(), 1);
+        assert_eq!(frame.controls[0].entity, image_entity);
     }
 
     #[test]

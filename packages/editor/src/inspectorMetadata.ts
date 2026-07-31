@@ -556,19 +556,19 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   Image: {
     sprite,
-    image_type: { kind: 'enum', options: options('Simple', 'Sliced') },
+    image_type: { kind: 'enum', options: options('Simple', 'Sliced', 'Tiled') },
     preserve_aspect: {
       label: 'Preserve Aspect',
       visibleWhen: { field: 'image_type', equals: 'Simple' },
     },
     fill_center: {
       label: 'Fill Center',
-      visibleWhen: { field: 'image_type', equals: 'Sliced' },
+      visibleWhen: { field: 'image_type', equals: ['Sliced', 'Tiled'] },
     },
-    border: { visibleWhen: { field: 'image_type', equals: 'Sliced' } },
+    border: { visibleWhen: { field: 'image_type', equals: ['Sliced', 'Tiled'] } },
     source_size: {
       label: 'Source Size',
-      visibleWhen: { field: 'image_type', equals: ['Simple', 'Sliced'] },
+      visibleWhen: { field: 'image_type', equals: ['Simple', 'Sliced', 'Tiled'] },
     },
   },
   RawImage: {

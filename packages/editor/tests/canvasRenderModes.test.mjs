@@ -56,6 +56,40 @@ test('screen Canvas RectTransform is solved once at its render root', () => {
   assert.equal(items.find((item) => item.entity === 2).rect.x, 415);
 });
 
+test('Tiled Image authoring data reaches the Canvas draw plan', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect(),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect(),
+        Image: {
+          sprite: 'white',
+          image_type: 'Tiled',
+          fill_center: false,
+          border: [5, 5, 5, 5],
+          source_size: [40, 30],
+        },
+      },
+    },
+  ];
+  const item = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((candidate) => candidate.entity === 2);
+  assert.equal(item?.image?.imageType, 'Tiled');
+  assert.equal(item?.image?.fillCenter, false);
+  assert.equal(item?.image?.spritePixelScale, 1);
+});
+
 test('Game View filters Overlay and Camera canvases by their effective target display', () => {
   const entities = [
     {

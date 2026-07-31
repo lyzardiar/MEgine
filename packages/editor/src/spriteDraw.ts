@@ -9,6 +9,7 @@ import {
 import { readProjectAssetBytes } from './projectAssets';
 import { isDesktopEditor } from './transport/editorTransport';
 import { planNineSlice, type SpriteBorder } from './ui/nineSlice';
+import { planTiledImage } from './ui/tiledImage';
 
 const _cache = new Map<string, HTMLImageElement>();
 
@@ -149,6 +150,53 @@ export function drawSpriteSlicedInRect(
     [w, h],
     sourceBorder,
     destinationBorder,
+    fillCenter,
+  );
+  if (!regions.length) return false;
+  for (const region of regions) {
+    drawSpriteRegion(
+      ctx,
+      img,
+      [
+        sourceRect[0] + region.source.x * sourceRect[2] / logicalSource[0],
+        sourceRect[1] + region.source.y * sourceRect[3] / logicalSource[1],
+        region.source.w * sourceRect[2] / logicalSource[0],
+        region.source.h * sourceRect[3] / logicalSource[1],
+      ],
+      [x + region.destination.x, y + region.destination.y, region.destination.w, region.destination.h],
+      color,
+    );
+  }
+  return true;
+}
+
+export function drawSpriteTiledInRect(
+  ctx: CanvasRenderingContext2D,
+  sprite: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: [number, number, number, number],
+  sourceBorder: SpriteBorder,
+  destinationBorder: SpriteBorder,
+  sourceSize: [number, number],
+  pixelScale: number,
+  fillCenter = true,
+): boolean {
+  const img = getSpriteImage(sprite);
+  if (!img || !img.complete || img.naturalWidth < 1 || img.naturalHeight < 1) return false;
+  const sourceRect = getSpriteSourceRect(sprite, img);
+  const logicalSource: [number, number] = [
+    Math.max(1, Number(sourceSize[0]) || sourceRect[2]),
+    Math.max(1, Number(sourceSize[1]) || sourceRect[3]),
+  ];
+  const regions = planTiledImage(
+    logicalSource,
+    [w, h],
+    sourceBorder,
+    destinationBorder,
+    pixelScale,
     fillCenter,
   );
   if (!regions.length) return false;

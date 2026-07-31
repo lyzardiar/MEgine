@@ -30,6 +30,7 @@ export type UnityPersistentCall = {
 const IMAGE_TYPES = [
   { value: 'Simple', label: 'Simple' },
   { value: 'Sliced', label: 'Sliced' },
+  { value: 'Tiled', label: 'Tiled' },
 ] as const;
 
 function colorToHex(c: number[]): string {
@@ -1167,7 +1168,7 @@ export function ImageEditor(props: {
           onChange={(preserve_aspect) => props.onPatch({ preserve_aspect })}
         />
       )}
-      {String(d.image_type ?? d.imageType ?? 'Simple') === 'Sliced' && (
+      {['Sliced', 'Tiled'].includes(String(d.image_type ?? d.imageType ?? 'Simple')) && (
         <>
           <BoolField
             label="Fill Center"

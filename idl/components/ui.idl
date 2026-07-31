@@ -71,7 +71,7 @@ component ContentSizeFitter {
 component Image {
   sprite:          string = "white"
   color:           float4 = [1, 1, 1, 1]
-  /// "Simple" | "Sliced" (Unity Image.type)
+  /// "Simple" | "Sliced" | "Tiled" (Unity Image.type)
   image_type:      string = "Simple"
   /// Preserve the Sprite aspect ratio inside the RectTransform for Simple images.
   preserve_aspect: bool   = false
