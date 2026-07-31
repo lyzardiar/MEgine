@@ -309,6 +309,11 @@ export function buildTimelineScenePreview(
         diagnostics.push(`Control track '${track.name}' target '${track.target}' is not resolved.`);
         continue;
       }
+      if (clip.prefab) {
+        diagnostics.push(`Control track '${track.name}' Prefab '${clip.prefab}' is instantiated in Play mode; static scene preview does not create transient entities.`);
+        continue;
+      }
+      if (!clip.timeline) continue;
       const key = clipKey(clip.timeline);
       const child = controlAssets.get(key);
       if (!child) {

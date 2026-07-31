@@ -1817,3 +1817,11 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - 回归覆盖四态、手动 Stop 与 Pause 分界、正反生命周期、首帧跨终点、嵌套 Control Clip 结束、热恢复和 sibling 顺序保持。最终 Editor 654/654、CLI 59/59、Rust workspace/all-targets 测试与检查、格式检查、定向严格 Clippy、TypeScript/Vite 生产构建和 Tauri Debug 构建全部通过；最大 JavaScript 块仍为 399.22kB，低于 500,000 字节硬门禁。真实桌面验证在独立配置和临时工程中以 `MENGINE_EDITOR_BACKGROUND=1` 打开 Activation Track：Agent 从 `Revert` 的四项下拉框写入 `Leave As Is`，保存后语义值与磁盘 JSON 均为 `leave_as_is`；原生主窗口验证前后始终 `visible=false`、`focused=false`，全部探针进程随后终止。
 
 本批完成的是 Activation Track 的停止语义，还不是完整的 Unity ControlPlayableAsset。后续继续补 Prefab 动态实例、源 GameObject 激活、嵌套 Director/Particle/ITimeControl 控制、录制模式、轨道模板和子轨道就地编辑，并保持 Editor、Runtime、CLI、构建审计与后台 Agent 语义同步推进。
+
+## 155. 2026-08-01 Control Track Prefab 动态实例生命周期
+
+- `TimelineControlClip` 现在允许配置 `prefab`、`timeline` 或两者同时存在，但至少必须提供一个有效源。Prefab 路径统一规范化为工程内可移植的 `Assets/*.prefab`，Editor、Rust 资产层与 CLI 最终包审计使用相同约束；纯 Prefab Clip 可独立工作，Prefab 与 Timeline 同时存在时，子 Timeline 的绑定从实例化根节点开始解析。只有 Prefab、没有子 Timeline 时禁止填写 Binding Override，避免保存运行时不可能消费的配置。Sequencer Inspector 将旧的 Sub-Timeline Clip 名称统一为 Control Clip，提供可检索的 Prefab/Timeline 可选字段、Prefab 资产列表以及纯 Prefab 的 `P` 摘要标签。
+- Runtime 以 `(Director, Control Scope)` 保存实例，Control Scope 继续使用稳定的 `track-id:clip-index/`。实例首次进入片段时挂到目标实体下，片段空隙和 Seek 期间保留同一实体但设为非激活，重新进入时复用；Prefab 路径或父目标改变时销毁后重建。显式 Stop、Director/资产移除、Track Mute 或作用域消失会按子实体逆序销毁全部临时实体；Pause 只保留当前状态。大步长首帧或 Signal 遍历跨入片段时会先保证 Prefab 已实例化，再求值以该实例为根的子 Timeline，避免嵌套 Audio 等轨道在错误层级解析目标。
+- 静态 Scene Preview 不伪造运行时临时实体。编辑态遇到 Prefab Control 会明确报告实例在 Play 模式创建，不会错误地把子 Timeline 绑定到作者场景根节点；因此本批完成的是 Player 生命周期而不是瞬态 Prefab 的完整编辑态预览。后续仍需补瞬态 Edit Preview、Source GameObject 激活、嵌套 Director/Particle/ITimeControl 自动控制、录制模式、轨道模板和子轨道就地编辑。
+
+回归覆盖纯 Prefab、Prefab 加子 Timeline、路径与绑定校验、依赖闭包、实例复用、Seek、停止销毁和嵌套 Audio 目标解析。最终 Editor 654/654、CLI 59/59、Assets 52/52、Runtime Library 117/117、Runtime Player 23/23，Rust Workspace/All Targets 测试与检查、格式检查、定向严格 Clippy、TypeScript/Vite 生产构建和 Tauri Debug 构建全部通过；严格 Clippy 仅豁免四项批次外既有告警，最大 JavaScript 块为 399.22kB。真实桌面验证在隔离配置和临时工程中以 `MENGINE_EDITOR_BACKGROUND=1` 打开纯 Prefab Control：Agent 从隐藏窗口读取 240 个完整语义元素，将 Prefab 字段切换到另一个资源并保存，磁盘 JSON 精确同步；完整快照同时返回 `backgroundSafe=true`、`inventoryStable=true`、`complete=true`，原生窗口全过程 `visible=false`、`focused=false`。验证工程、配置、本地数据和进程随后全部清理。

@@ -278,6 +278,7 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   assert.match(sequencer, /aria-label=\{`\$\{selectedTrack\.type === 'signal'/);
   assert.match(sequencer, /Track fields`\}/);
   assert.match(sequencer, /<label>Post Playback<select value=\{selectedTrack\.post_playback\}/);
+  assert.match(sequencer, /<label>Prefab Asset \(optional\) <input list="sequencer-prefab-assets"/);
   assert.match(sequencer, /<option value="leave_as_is">Leave As Is<\/option>/);
   assert.match(sequencer, /aria-label="Signal Marker fields"/);
   assert.match(sequencer, /aria-label=\{`\$\{selectedActivationClip \? 'Activation Clip'/);

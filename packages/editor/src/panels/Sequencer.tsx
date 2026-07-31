@@ -1669,6 +1669,7 @@ export function Sequencer(props: SequencerProps) {
         target.clips.push({
           ...placement,
           timeline: defaultTimeline,
+          prefab: '',
           clip_in: 0,
           speed: 1,
           extrapolation: 'none',
@@ -2898,6 +2899,7 @@ export function Sequencer(props: SequencerProps) {
   const timelineAssets = listProjectFiles().filter((entry) => (
     entry.kind === 'timeline' && entry.relPath.toLowerCase() !== props.assetPath?.toLowerCase()
   ));
+  const prefabAssets = listProjectFiles().filter((entry) => entry.kind === 'prefab');
   const selectedControlAsset = selectedControlClip
     ? loadedPreviewControlAssets.get(selectedControlClip.timeline.trim().replaceAll('\\', '/').toLowerCase()) ?? null
     : null;
@@ -3346,7 +3348,7 @@ export function Sequencer(props: SequencerProps) {
       for (const nestedClip of candidate.clips) {
         const nestedPath = nestedClip.timeline.trim().replaceAll('\\', '/');
         const nestedKey = nestedPath.toLowerCase();
-        if (`${nestedPath} ${nestedClip.extrapolation}`.toLowerCase().includes(filter)) return true;
+        if (`${nestedPath} ${nestedClip.prefab} ${nestedClip.extrapolation}`.toLowerCase().includes(filter)) return true;
         if (!nestedKey || stack.includes(nestedKey)) continue;
         const nestedAsset = loadedPreviewControlAssets.get(nestedKey);
         if (!nestedAsset) continue;
@@ -3379,9 +3381,11 @@ export function Sequencer(props: SequencerProps) {
             && controlTrackHasDescendantMatch(childTrack, nextStack, depth);
       }) ?? [] : [];
       const clipMatches = !filter
-        || `${normalizedPath} ${clip.extrapolation}`.toLowerCase().includes(filter);
+        || `${normalizedPath} ${clip.prefab} ${clip.extrapolation}`.toLowerCase().includes(filter);
       if (filter && !clipMatches && matchingTracks.length === 0) return;
-      const loadState = child
+      const loadState = !normalizedPath && clip.prefab
+        ? 'Prefab-only control'
+        : child
         ? `${child.tracks.length} tracks, ${child.duration.toFixed(3)} seconds`
         : previewControlResourcesReady
           ? 'asset unavailable'
@@ -3400,7 +3404,7 @@ export function Sequencer(props: SequencerProps) {
       if (!pushRow(<div
         className={`sequencer-control-tree-row summary${child ? '' : ' unavailable'}${cyclic ? ' cyclic' : ''}`}
         role="group"
-        aria-label={`Sub-Timeline depth ${depth}, ${normalizedPath || 'missing path'}, ${loadState}, ${clip.extrapolation} extrapolation${sourceWindowValid ? '' : ', invalid source window'}${cyclic ? ', cyclic dependency' : ''}`}
+        aria-label={`Control clip depth ${depth}, ${normalizedPath || clip.prefab || 'missing asset'}, ${loadState}, ${clip.extrapolation} extrapolation${sourceWindowValid ? '' : ', invalid source window'}${cyclic ? ', cyclic dependency' : ''}`}
         data-agent-sub-timeline={normalizedPath}
         data-agent-sub-timeline-depth={depth}
         data-agent-sub-timeline-map-segments={sourceMap?.segments.length ?? 0}
@@ -3410,7 +3414,7 @@ export function Sequencer(props: SequencerProps) {
         <div className="sequencer-control-tree-header">
           <span className="sequencer-control-tree-branch" aria-hidden="true">└</span>
           <FolderTree size={12} aria-hidden="true" />
-          <span className="sequencer-control-tree-name" title={normalizedPath}>{normalizedPath.split('/').at(-1) || 'Missing Timeline'}</span>
+          <span className="sequencer-control-tree-name" title={normalizedPath || clip.prefab}>{normalizedPath.split('/').at(-1) || clip.prefab.split('/').at(-1) || 'Missing Asset'}</span>
           <small>{clip.extrapolation.toUpperCase()}</small>
           <button
             type="button"
@@ -4218,10 +4222,10 @@ export function Sequencer(props: SequencerProps) {
                       left: `${clip.start / asset.duration * 100}%`,
                       width: `${clip.duration / asset.duration * 100}%`,
                     }}
-                    title={`${clip.timeline} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · source ${clip.clip_in.toFixed(3)}s @ ${clip.speed.toFixed(2)}x · ${clip.extrapolation}`}
-                    key={`${clip.start}-${clip.timeline}-${clipIndex}`}
+                    title={`${clip.prefab ? `Prefab ${clip.prefab}` : ''}${clip.prefab && clip.timeline ? ' · ' : ''}${clip.timeline ? `Timeline ${clip.timeline}` : ''} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · source ${clip.clip_in.toFixed(3)}s @ ${clip.speed.toFixed(2)}x · ${clip.extrapolation}`}
+                    key={`${clip.start}-${clip.prefab}-${clip.timeline}-${clipIndex}`}
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
-                  ><span className="sequencer-clip-label">T {clip.timeline.split('/').at(-1)}</span></button>
+                  ><span className="sequencer-clip-label">{clip.prefab ? 'P' : 'T'} {(clip.prefab || clip.timeline).split('/').at(-1)}</span></button>
                 ))}
                 {track.type === 'camera' && sequencerSampleItems(
                   sequencerWindowedSpans(track.clips, (clip) => clip, timeWindow),
@@ -4272,7 +4276,7 @@ export function Sequencer(props: SequencerProps) {
         </div>
 
         {inspectorOpen && <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
-          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedControlClip ? 'Sub-Timeline Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : selectedTrack.type === 'control' ? 'Control' : 'Camera'} Track` : selectedGroup ? 'Track Group' : 'Timeline Asset'}</h3>
+          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedControlClip ? 'Control Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : selectedTrack.type === 'control' ? 'Control' : 'Camera'} Track` : selectedGroup ? 'Track Group' : 'Timeline Asset'}</h3>
           {selectedItems.length > 1 && <p className="sequencer-multi-selection-notice">{selectedItems.length} items selected. Inspector edits and edge trims apply to the primary item; drag, clipboard, duplicate, Delete and Ripple Delete apply to the full selection.</p>}
           {selectedItems.length === 0 && selectedTrackIds.length > 1 && <p className="sequencer-multi-selection-notice">{selectedTrackIds.length} track headers selected. Inspector fields edit the primary track; drag, Alt+Arrow, Group creation and Delete apply to the full selection.</p>}
           {!selectedTrack && !selectedGroup && <>
@@ -4425,7 +4429,7 @@ export function Sequencer(props: SequencerProps) {
           </fieldset>}
           {selectedClip && <fieldset
             className="sequencer-inspector-fields"
-            aria-label={`${selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedControlClip ? 'Sub-Timeline Clip' : 'Camera Shot'} fields`}
+            aria-label={`${selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedControlClip ? 'Control Clip' : 'Camera Shot'} fields`}
             disabled={selectedTrackLocked}
           >
             {selectedTrackLocked && <p className="sequencer-lock-notice"><Lock size={12} /> Unlock the track or its group to edit this clip.</p>}
@@ -4564,11 +4568,17 @@ export function Sequencer(props: SequencerProps) {
               <p className="sequencer-field-help">Particle state is rebuilt deterministically from this local simulation time when entering or seeking the clip.</p>
             </>}
             {selectedControlClip && <>
-              <label>Timeline Asset <input list="sequencer-timeline-assets" value={selectedControlClip.timeline} onChange={(event) => update((draft) => {
+              <label>Prefab Asset (optional) <input list="sequencer-prefab-assets" value={selectedControlClip.prefab} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'control') track.clips[selection!.marker!].prefab = event.target.value.replaceAll('\\', '/');
+              })} /></label>
+              <datalist id="sequencer-prefab-assets">{prefabAssets.map((entry) => <option value={entry.relPath} key={entry.relPath} />)}</datalist>
+              <label>Timeline Asset (optional) <input list="sequencer-timeline-assets" value={selectedControlClip.timeline} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'control') track.clips[selection!.marker!].timeline = event.target.value.replaceAll('\\', '/');
               })} /></label>
               <datalist id="sequencer-timeline-assets">{timelineAssets.map((entry) => <option value={entry.relPath} key={entry.relPath} />)}</datalist>
+              {!selectedControlClip.prefab && !selectedControlClip.timeline && <p className="sequencer-field-help error">Choose a Prefab, a nested Timeline, or both.</p>}
               <label>Clip In <input type="number" min={0} step={1 / asset.frame_rate} value={selectedControlClip.clip_in} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'control') track.clips[selection!.marker!].clip_in = Math.max(0, Number(event.target.value) || 0);
@@ -4585,7 +4595,7 @@ export function Sequencer(props: SequencerProps) {
                 <option value="hold">Hold</option>
                 <option value="loop">Loop</option>
               </select></label>
-              {previewControlResourcesReady && !selectedControlAsset && <p className="sequencer-field-help error">This Sub-Timeline could not be loaded. Choose an existing project .mtimeline asset.</p>}
+              {Boolean(selectedControlClip.timeline) && previewControlResourcesReady && !selectedControlAsset && <p className="sequencer-field-help error">This Sub-Timeline could not be loaded. Choose an existing project .mtimeline asset.</p>}
               {selectedControlWindowInvalid && <p className="sequencer-field-help error">{selectedControlClip.clip_in > selectedControlAsset!.duration + 0.0001
                 ? `Clip In ${selectedControlClip.clip_in.toFixed(3)}s is outside the child duration ${selectedControlAsset!.duration.toFixed(3)}s.`
                 : `Source window ${selectedControlClip.clip_in.toFixed(3)}s → ${selectedControlSourceEnd.toFixed(3)}s is outside the child duration ${selectedControlAsset!.duration.toFixed(3)}s. Choose Hold or Loop to extend it.`}</p>}
@@ -4680,7 +4690,7 @@ export function Sequencer(props: SequencerProps) {
                 })}
                 {selectedControlBindingRows.length === 0 && <p className="sequencer-field-help">This child Timeline has no bindable targets.</p>}
               </fieldset>}
-              <p className="sequencer-field-help">The nested Timeline is evaluated relative to this Control Track target. None requires the complete source window to fit; Hold freezes the first or last child frame; Loop wraps child time and Signals at every cycle boundary.</p>
+              <p className="sequencer-field-help">A Prefab is instantiated under the Control Track target for the director lifetime and activated only while this clip is sampled. When both assets are set, the nested Timeline is evaluated relative to the Prefab root. None requires the complete source window to fit; Hold freezes the first or last child frame; Loop wraps child time and Signals at every cycle boundary.</p>
             </>}
             {selectedCameraClip && <>
               <label>Camera (binding key / child path)<input value={selectedCameraClip.target} placeholder="Cameras/Main Camera" onChange={(event) => {

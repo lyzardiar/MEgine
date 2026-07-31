@@ -1068,8 +1068,11 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       }, {
         type: 'control', id: 'nested', name: 'Nested', target: 'Sequences/Nested',
         clips: [{
-          start: 0.5, duration: 1, timeline: 'Assets/Timelines/Nested.mtimeline', clip_in: 0.25, speed: 1.5,
+          start: 0.5, duration: 1, prefab: 'Assets/Prefabs/Timeline.prefab',
+          timeline: 'Assets/Timelines/Nested.mtimeline', clip_in: 0.25, speed: 1.5,
           binding_overrides: { Actor: 'Characters/Hero' },
+        }, {
+          start: 2, duration: 0.5, prefab: 'Assets/Prefabs/Timeline.prefab',
         }],
       }, {
         type: 'camera', id: 'shots', name: 'Shots',
@@ -1095,6 +1098,12 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
     writeFileSync(join(paths.project, 'Assets', 'Audio', 'intro.ogg'), 'audio');
     mkdirSync(join(paths.project, 'Assets', 'Animations'), { recursive: true });
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Hero.manim'), '{}');
+    mkdirSync(join(paths.project, 'Assets', 'Prefabs'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Prefabs', 'Timeline.prefab'), JSON.stringify({
+      version: 2,
+      name: 'Timeline',
+      root: { id: 'root', name: 'Timeline', components: {}, children: [] },
+    }));
     const manifest = buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
@@ -1105,7 +1114,8 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
     assert.equal(existsSync(join(paths.output, 'Assets', 'Timelines', 'Nested.mtimeline')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Audio', 'intro.ogg')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Animations', 'Hero.manim')), true);
-    assert.equal(manifest.assetValidation.validatedFiles, 7);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Prefabs', 'Timeline.prefab')), true);
+    assert.equal(manifest.assetValidation.validatedFiles, 8);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

@@ -1769,7 +1769,12 @@ function scanBuildAssetDependencies(
           const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
             const clip = jsonObject(clipValue);
             if (!clip) throw new Error(`invalid Timeline asset ${source}: control clip must be an object`);
-            const timelinePath = strictStringValue(clip, 'timeline', `Timeline control track ${name}`).replaceAll('\\', '/');
+            const timelinePath = (clip.timeline == null
+              ? ''
+              : strictStringValue(clip, 'timeline', `Timeline control track ${name}`)).replaceAll('\\', '/');
+            const prefabPath = (clip.prefab == null
+              ? ''
+              : strictStringValue(clip, 'prefab', `Timeline control track ${name}`)).replaceAll('\\', '/');
             const clipIn = clip.clip_in == null ? 0 : clip.clip_in;
             const speed = clip.speed == null ? 1 : clip.speed;
             const extrapolation = clip.extrapolation == null
@@ -1795,24 +1800,32 @@ function scanBuildAssetDependencies(
             if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
               || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
               || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
-              || !timelinePath.toLowerCase().startsWith('assets/')
-              || timelinePath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
-              || !/\.mtimeline$/i.test(timelinePath)
+              || !timelinePath && !prefabPath
+              || Boolean(timelinePath) && (!timelinePath.toLowerCase().startsWith('assets/')
+                || timelinePath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+                || !/\.mtimeline$/i.test(timelinePath))
+              || Boolean(prefabPath) && (!prefabPath.toLowerCase().startsWith('assets/')
+                || prefabPath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+                || !/\.prefab$/i.test(prefabPath))
+              || !timelinePath && bindingOverrides.length > 0
               || typeof clipIn !== 'number' || !Number.isFinite(clipIn) || clipIn < 0
               || typeof speed !== 'number' || !Number.isFinite(speed) || speed < -4 || speed > 4
               || extrapolation !== 'none' && extrapolation !== 'hold' && extrapolation !== 'loop') {
               throw new Error(`invalid Timeline asset ${source}: control clip is invalid or outside duration`);
             }
-            enqueue(timelinePath, source, `Timeline control track ${name} nested asset`);
-            controlEdges.push({
-              timeline: timelinePath.toLowerCase(),
-              track: name,
-              clipIn,
-              duration: clip.duration,
-              speed,
-              extrapolation,
-              bindingOverrides,
-            });
+            if (prefabPath) enqueue(prefabPath, source, `Timeline control track ${name} Prefab`);
+            if (timelinePath) {
+              enqueue(timelinePath, source, `Timeline control track ${name} nested asset`);
+              controlEdges.push({
+                timeline: timelinePath.toLowerCase(),
+                track: name,
+                clipIn,
+                duration: clip.duration,
+                speed,
+                extrapolation,
+                bindingOverrides,
+              });
+            }
             return clip as { start: number; duration: number };
           }).sort((left, right) => left.start - right.start);
           for (let index = 1; index < clips.length; index += 1) {

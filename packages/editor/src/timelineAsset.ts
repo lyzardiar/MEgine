@@ -82,6 +82,7 @@ export type TimelineControlClip = {
   start: number;
   duration: number;
   timeline: string;
+  prefab: string;
   clip_in: number;
   speed: number;
   extrapolation: TimelineControlExtrapolation;
@@ -273,6 +274,16 @@ export function timelineAssetIsPortable(path: string): boolean {
   return path.toLowerCase().startsWith('assets/')
     && targetIsPortable(path)
     && /\.mtimeline$/i.test(path);
+}
+
+export function prefabAssetPath(value: unknown): string {
+  return audioAssetPath(value);
+}
+
+export function prefabAssetIsPortable(path: string): boolean {
+  return path.toLowerCase().startsWith('assets/')
+    && targetIsPortable(path)
+    && /\.prefab$/i.test(path);
 }
 
 function normalizeControlBindingOverrides(value: unknown): Record<string, string> {
@@ -513,6 +524,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
             start,
             duration: clipDuration,
             timeline: timelineAssetPath(clip.timeline),
+            prefab: prefabAssetPath(clip.prefab),
             clip_in: Math.max(0, finite(clip.clip_in, 0)),
             speed: Math.max(-4, Math.min(4, finite(clip.speed, 1))),
             extrapolation: timelineControlExtrapolation(clip.extrapolation),
@@ -656,7 +668,12 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
     }
     if (track.type === 'control') {
       for (const clip of track.clips) {
-        if (!timelineAssetIsPortable(timelineAssetPath(clip.timeline))
+        const timeline = timelineAssetPath(clip.timeline);
+        const prefab = prefabAssetPath(clip.prefab);
+        if ((!timeline && !prefab)
+          || Boolean(timeline) && !timelineAssetIsPortable(timeline)
+          || Boolean(prefab) && !prefabAssetIsPortable(prefab)
+          || !timeline && Object.keys(clip.binding_overrides).length > 0
           || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
           || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4
           || !['none', 'hold', 'loop'].includes(clip.extrapolation)
@@ -860,12 +877,17 @@ export function parseTimelineAsset(text: string): TimelineAsset {
         || track.type === 'particle' && clip.clip_in != null
           && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
             || clip.clip_in + clip.duration > TIMELINE_MAX_PARTICLE_TIME)
-        || track.type === 'control' && (typeof clip.timeline !== 'string' || !timelineAssetIsPortable(timelineAssetPath(clip.timeline))
+        || track.type === 'control' && (clip.timeline != null && typeof clip.timeline !== 'string'
+          || clip.prefab != null && typeof clip.prefab !== 'string'
+          || !timelineAssetPath(clip.timeline) && !prefabAssetPath(clip.prefab)
+          || Boolean(timelineAssetPath(clip.timeline)) && !timelineAssetIsPortable(timelineAssetPath(clip.timeline))
+          || Boolean(prefabAssetPath(clip.prefab)) && !prefabAssetIsPortable(prefabAssetPath(clip.prefab))
           || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
           || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4)
           || clip.extrapolation != null && (typeof clip.extrapolation !== 'string'
             || !['none', 'hold', 'loop'].includes(clip.extrapolation.trim().toLowerCase()))
-          || clip.binding_overrides != null && !controlBindingOverridesAreValid(clip.binding_overrides))
+          || clip.binding_overrides != null && !controlBindingOverridesAreValid(clip.binding_overrides)
+          || !timelineAssetPath(clip.timeline) && clip.binding_overrides != null && Object.keys(object(clip.binding_overrides)).length > 0)
         || clip.start < 0 || clip.duration <= 0
         || clip.start + clip.duration > parsedDuration) {
         throw new Error(`${label} track ${track.id} contains an invalid or out-of-range clip`);

@@ -97,6 +97,7 @@ export function timelineDependencyProfile(
           break;
         }
         const childPath = normalizePath(clip.timeline);
+        if (!childPath) continue;
         const childKey = pathKey(childPath);
         const child = childKey ? assets.get(childKey) : null;
         const status: TimelineDependencyEdgeStatus = !child

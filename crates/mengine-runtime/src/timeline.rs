@@ -1,5 +1,6 @@
 use crate::animation::RuntimeAnimationBlend;
 use crate::particles::MAX_INCREMENTAL_DELTA;
+use crate::prefabs::instantiate_project_prefab;
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
     load_timeline_asset, parse_timeline_binding_table, TimelineAsset, TimelineAudioClip,
@@ -313,6 +314,15 @@ struct AppliedTimelineOverrides {
     animation: HashSet<(Entity, String)>,
     particle: HashSet<(Entity, String)>,
     camera: HashSet<(Entity, String)>,
+    control_prefabs_known: HashSet<(Entity, String)>,
+    control_prefabs_active: HashSet<(Entity, String)>,
+}
+
+struct ControlPrefabInstance {
+    source: String,
+    parent: Entity,
+    root: Entity,
+    entities: Vec<Entity>,
 }
 
 #[derive(Default)]
@@ -335,6 +345,7 @@ pub struct TimelineRuntime {
     animation_overrides: HashMap<(Entity, String), AnimationOverride>,
     particle_overrides: HashMap<(Entity, String), ParticleOverride>,
     camera_overrides: HashMap<(Entity, String), RuntimeCameraOverride>,
+    control_prefabs: HashMap<(Entity, String), ControlPrefabInstance>,
     animation_blends: HashMap<(Entity, String), RuntimeAnimationBlend>,
     pending_signals: Vec<RuntimeTimelineSignal>,
     pending_particle_commands: Vec<RuntimeParticleCommand>,
@@ -447,6 +458,8 @@ impl TimelineRuntime {
                         &mut applied.animation,
                         &mut applied.particle,
                         &mut applied.camera,
+                        &mut applied.control_prefabs_known,
+                        &mut applied.control_prefabs_active,
                     );
                     continue;
                 }
@@ -719,6 +732,11 @@ impl TimelineRuntime {
         self.restore_unused_animation_overrides(world, &applied.animation);
         self.restore_unused_particle_overrides(world, &applied.particle);
         self.restore_unused_camera_overrides(&applied.camera);
+        self.restore_unused_control_prefabs(
+            world,
+            &applied.control_prefabs_known,
+            &applied.control_prefabs_active,
+        );
         self.reported_activation_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         self.reported_binding_failures
@@ -884,6 +902,13 @@ impl TimelineRuntime {
                 .enumerate()
                 .find(|(_, clip)| time >= clip.start && time < clip.start + clip.duration);
             let control_scope = format!("{key_prefix}{id}:");
+            for (clip_index, clip) in clips.iter().enumerate() {
+                if !clip.prefab.is_empty() {
+                    applied
+                        .control_prefabs_known
+                        .insert((owner, format!("{control_scope}{clip_index}/")));
+                }
+            }
             let active_scope = active_clip
                 .as_ref()
                 .map(|(clip_index, _)| format!("{control_scope}{clip_index}/"));
@@ -897,7 +922,7 @@ impl TimelineRuntime {
                 self.reported_control_failures.remove(&report_key);
                 continue;
             };
-            let nested_root = match resolve_timeline_target(world, root, target, bindings) {
+            let control_parent = match resolve_timeline_target(world, root, target, bindings) {
                 Ok(entity) => entity,
                 Err(error) => {
                     if self.reported_control_failures.insert(report_key) {
@@ -910,6 +935,35 @@ impl TimelineRuntime {
                     continue;
                 }
             };
+            let clip_scope = format!("{control_scope}{clip_index}/");
+            let mut nested_root = control_parent;
+            if !clip.prefab.is_empty() {
+                let prefab_key = (owner, clip_scope.clone());
+                match self.activate_control_prefab(world, &prefab_key, &clip.prefab, control_parent)
+                {
+                    Ok(root) => {
+                        nested_root = root;
+                        applied.control_prefabs_active.insert(prefab_key);
+                    }
+                    Err(error) => {
+                        if self.reported_control_failures.insert(report_key) {
+                            failures.push(TimelineLoadFailure {
+                                entity: owner,
+                                asset: asset_key.to_owned(),
+                                error: format!(
+                                    "control track '{name}' failed to instantiate Prefab '{}': {error}",
+                                    clip.prefab
+                                ),
+                            });
+                        }
+                        continue;
+                    }
+                }
+            }
+            if clip.timeline.is_empty() {
+                self.reported_control_failures.remove(&report_key);
+                continue;
+            }
             let child_key = clip.timeline.trim().replace('\\', "/");
             let normalized_child_key = child_key.to_ascii_lowercase();
             if depth >= MAX_CONTROL_TIMELINE_DEPTH {
@@ -1012,7 +1066,7 @@ impl TimelineRuntime {
                 world,
                 owner,
                 nested_root,
-                &format!("{key_prefix}{id}:{clip_index}/"),
+                &clip_scope,
                 &child_key,
                 &child,
                 &child_bindings,
@@ -1031,7 +1085,7 @@ impl TimelineRuntime {
     #[allow(clippy::too_many_arguments)]
     fn collect_timeline_signals_segment(
         &mut self,
-        world: &World,
+        world: &mut World,
         owner: Entity,
         root: Entity,
         key_prefix: &str,
@@ -1102,7 +1156,10 @@ impl TimelineRuntime {
                 if !crosses_clip || (parent_to - parent_from).abs() <= f32::EPSILON && !entered {
                     continue;
                 }
-                let nested_root = match resolve_timeline_target(world, root, target, bindings) {
+                if clip.timeline.is_empty() {
+                    continue;
+                }
+                let control_parent = match resolve_timeline_target(world, root, target, bindings) {
                     Ok(entity) => entity,
                     Err(error) => {
                         if self.reported_control_failures.insert(report_key.clone()) {
@@ -1113,6 +1170,32 @@ impl TimelineRuntime {
                             });
                         }
                         continue;
+                    }
+                };
+                let prefab_key = (owner, format!("{key_prefix}{id}:{clip_index}/"));
+                let nested_root = if clip.prefab.is_empty() {
+                    control_parent
+                } else {
+                    match self.activate_control_prefab(
+                        world,
+                        &prefab_key,
+                        &clip.prefab,
+                        control_parent,
+                    ) {
+                        Ok(root) => root,
+                        Err(error) => {
+                            if self.reported_control_failures.insert(report_key.clone()) {
+                                failures.push(TimelineLoadFailure {
+                                    entity: owner,
+                                    asset: asset_key.to_owned(),
+                                    error: format!(
+                                        "control track '{name}' failed to instantiate Prefab '{}': {error}",
+                                        clip.prefab
+                                    ),
+                                });
+                            }
+                            continue;
+                        }
                     }
                 };
                 let child_key = clip.timeline.trim().replace('\\', "/");
@@ -1855,6 +1938,8 @@ impl TimelineRuntime {
         animation: &mut HashSet<(Entity, String)>,
         particle: &mut HashSet<(Entity, String)>,
         camera: &mut HashSet<(Entity, String)>,
+        control_prefabs_known: &mut HashSet<(Entity, String)>,
+        control_prefabs_active: &mut HashSet<(Entity, String)>,
     ) {
         activation.extend(
             self.activation_overrides
@@ -1895,6 +1980,87 @@ impl TimelineRuntime {
                 .filter(|(owner, _)| *owner == director)
                 .cloned(),
         );
+        for (key, instance) in &self.control_prefabs {
+            if key.0 != director || !world.is_alive(instance.root) {
+                continue;
+            }
+            control_prefabs_known.insert(key.clone());
+            if world.entity_active(instance.root) {
+                control_prefabs_active.insert(key.clone());
+            }
+        }
+    }
+
+    fn activate_control_prefab(
+        &mut self,
+        world: &mut World,
+        key: &(Entity, String),
+        source: &str,
+        parent: Entity,
+    ) -> Result<Entity, String> {
+        let normalized_source = source.trim().replace('\\', "/");
+        let reusable = self.control_prefabs.get(key).is_some_and(|instance| {
+            instance.source.eq_ignore_ascii_case(&normalized_source)
+                && instance.parent == parent
+                && world.is_alive(instance.root)
+        });
+        if !reusable {
+            if let Some(previous) = self.control_prefabs.remove(key) {
+                destroy_control_prefab_instance(world, previous);
+            }
+            let instance = instantiate_project_prefab(
+                self.project_root.as_deref(),
+                &normalized_source,
+                Some(parent.to_u64()),
+                world,
+            )
+            .map_err(|error| error.to_string())?;
+            let root = Entity::from_u64(instance.root);
+            self.control_prefabs.insert(
+                key.clone(),
+                ControlPrefabInstance {
+                    source: normalized_source,
+                    parent,
+                    root,
+                    entities: instance
+                        .entities
+                        .into_iter()
+                        .map(Entity::from_u64)
+                        .collect(),
+                },
+            );
+        }
+        let root = self.control_prefabs[key].root;
+        world.set_editor_state(root, world.sibling_index(root), true);
+        Ok(root)
+    }
+
+    fn restore_unused_control_prefabs(
+        &mut self,
+        world: &mut World,
+        known: &HashSet<(Entity, String)>,
+        active: &HashSet<(Entity, String)>,
+    ) {
+        let removed = self
+            .control_prefabs
+            .keys()
+            .filter(|key| !known.contains(*key))
+            .cloned()
+            .collect::<Vec<_>>();
+        for key in removed {
+            if let Some(instance) = self.control_prefabs.remove(&key) {
+                destroy_control_prefab_instance(world, instance);
+            }
+        }
+        for (key, instance) in &self.control_prefabs {
+            if world.is_alive(instance.root) {
+                world.set_editor_state(
+                    instance.root,
+                    world.sibling_index(instance.root),
+                    active.contains(key),
+                );
+            }
+        }
     }
 
     fn restore_unused_activation_overrides(
@@ -2060,6 +2226,12 @@ impl TimelineRuntime {
     }
 }
 
+fn destroy_control_prefab_instance(world: &mut World, instance: ControlPrefabInstance) {
+    for entity in instance.entities.into_iter().rev() {
+        world.despawn(entity);
+    }
+}
+
 fn has_exactly_one_camera(world: &World, entity: Entity) -> bool {
     world.get_component::<Camera2D>(entity).is_some()
         ^ world.get_component::<Camera3D>(entity).is_some()
@@ -2214,6 +2386,7 @@ mod tests {
     use super::*;
     use crate::animation::AnimationRuntime;
     use mengine_core::generated::{ParticleEmitter2D, Transform};
+    use mengine_scene::{save_prefab, Prefab, PrefabNode, PREFAB_VERSION};
     use std::fs;
 
     fn project_asset() -> (PathBuf, String) {
@@ -3563,6 +3736,113 @@ mod tests {
         assert_eq!(failures.len(), 1);
         assert!(failures[0].error.contains("Missing"));
         assert!(runtime.update(&mut world, 0.0).is_empty());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn control_prefab_is_reused_while_seeking_and_destroyed_when_director_stops() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-timeline-control-prefab-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let timelines = root.join("Assets/Timelines");
+        let prefab_path = root.join("Assets/Prefabs/Enemy.prefab");
+        fs::create_dir_all(&timelines).unwrap();
+        save_prefab(
+            &prefab_path,
+            &Prefab {
+                version: PREFAB_VERSION,
+                name: "Enemy".into(),
+                root: PrefabNode {
+                    id: "root".into(),
+                    name: "Enemy".into(),
+                    active: true,
+                    components: serde_json::json!({}),
+                    children: vec![PrefabNode {
+                        id: "sound".into(),
+                        name: "Sound".into(),
+                        active: true,
+                        components: serde_json::json!({
+                            "AudioSource": serde_json::to_value(AudioSource::default()).unwrap()
+                        }),
+                        children: Vec::new(),
+                    }],
+                },
+            },
+        )
+        .unwrap();
+        fs::write(
+            timelines.join("Child.mtimeline"),
+            r#"{"version":1,"duration":1,"tracks":[{"type":"audio","id":"sound","name":"Sound","target":"Sound","clips":[{"start":0,"duration":1,"clip":"Assets/Audio/spawn.ogg"}]}]}"#,
+        )
+        .unwrap();
+        fs::write(
+            timelines.join("Parent.mtimeline"),
+            r#"{"version":1,"duration":3,"tracks":[{"type":"control","id":"spawn","name":"Spawn","target":"Container","clips":[{"start":0.5,"duration":1,"prefab":"Assets/Prefabs/Enemy.prefab","timeline":"Assets/Timelines/Child.mtimeline"}]}]}"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let container = world.spawn_empty();
+        world.set_component_value(
+            container,
+            "Name",
+            serde_json::json!({ "value": "Container" }),
+        );
+        world.set_parent(container, Some(director));
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: "Assets/Timelines/Parent.mtimeline".into(),
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.25).is_empty());
+        assert!(world
+            .iter_entities()
+            .all(|entity| world.entity_name(entity) != Some("Enemy")));
+        assert!(runtime.update(&mut world, 0.5).is_empty());
+        let enemy = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Enemy"))
+            .expect("active Control clip should instantiate its Prefab");
+        assert_eq!(
+            world.get_component::<Parent>(enemy).unwrap().entity,
+            container
+        );
+        assert!(world.entity_active(enemy));
+        let sound = resolve_descendant_target(&world, enemy, "Sound").unwrap();
+        assert_eq!(
+            world.get_component::<AudioSource>(sound).unwrap().clip,
+            "Assets/Audio/spawn.ogg"
+        );
+
+        assert!(runtime.update(&mut world, 0.75).is_empty());
+        assert!(world.is_alive(enemy));
+        assert!(!world.entity_active(enemy));
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = false;
+            live.time = 0.75;
+        }
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(world.is_alive(enemy));
+        assert!(world.entity_active(enemy));
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.time = 0.0;
+        }
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(!world.is_alive(enemy));
+        assert!(!world.is_alive(sound));
         let _ = fs::remove_dir_all(root);
     }
 

@@ -249,7 +249,10 @@ pub struct TimelineCameraClip {
 pub struct TimelineControlClip {
     pub start: f32,
     pub duration: f32,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub timeline: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub prefab: String,
     #[serde(default)]
     pub clip_in: f32,
     #[serde(default = "default_one")]
@@ -887,11 +890,34 @@ impl TimelineAsset {
                         )));
                     }
                     for clip in clips.iter_mut() {
-                        clip.timeline = normalize_timeline_asset_path(&clip.timeline).ok_or_else(|| {
-                            AssetError::Invalid(format!(
-                                "Timeline control track '{id}' contains an invalid nested Timeline path"
-                            ))
-                        })?;
+                        clip.timeline = if clip.timeline.trim().is_empty() {
+                            String::new()
+                        } else {
+                            normalize_timeline_asset_path(&clip.timeline).ok_or_else(|| {
+                                AssetError::Invalid(format!(
+                                    "Timeline control track '{id}' contains an invalid nested Timeline path"
+                                ))
+                            })?
+                        };
+                        clip.prefab = if clip.prefab.trim().is_empty() {
+                            String::new()
+                        } else {
+                            normalize_prefab_asset_path(&clip.prefab).ok_or_else(|| {
+                                AssetError::Invalid(format!(
+                                    "Timeline control track '{id}' contains an invalid Prefab path"
+                                ))
+                            })?
+                        };
+                        if clip.timeline.is_empty() && clip.prefab.is_empty() {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline control track '{id}' clip requires a nested Timeline or Prefab"
+                            )));
+                        }
+                        if clip.timeline.is_empty() && !clip.binding_overrides.is_empty() {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline control track '{id}' cannot override child bindings without a nested Timeline"
+                            )));
+                        }
                         if clip.binding_overrides.len() > MAX_TIMELINE_CONTROL_BINDING_OVERRIDES {
                             return Err(AssetError::Invalid(format!(
                                 "Timeline control track '{id}' exceeds {MAX_TIMELINE_CONTROL_BINDING_OVERRIDES} binding overrides"
@@ -1069,6 +1095,21 @@ pub fn normalize_timeline_asset_path(raw: &str) -> Option<String> {
             .iter()
             .any(|segment| segment.is_empty() || matches!(*segment, "." | ".."))
         || !normalized.to_ascii_lowercase().ends_with(".mtimeline")
+    {
+        return None;
+    }
+    Some(format!("Assets/{}", segments[1..].join("/")))
+}
+
+pub fn normalize_prefab_asset_path(raw: &str) -> Option<String> {
+    let normalized = raw.trim().replace('\\', "/");
+    let segments: Vec<_> = normalized.split('/').collect();
+    if segments.len() < 2
+        || !segments[0].eq_ignore_ascii_case("Assets")
+        || segments
+            .iter()
+            .any(|segment| segment.is_empty() || matches!(*segment, "." | ".."))
+        || !normalized.to_ascii_lowercase().ends_with(".prefab")
     {
         return None;
     }
@@ -1474,8 +1515,26 @@ mod tests {
             BTreeSet::from(["Cast/Lead".to_owned(), "Sequences/Dialogue".to_owned()])
         );
 
+        let prefab_only = parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"spawn","name":"Spawn","target":"Sequences","clips":[{"start":0,"duration":1,"prefab":"assets\\Prefabs\\Enemy.prefab"}]}]}"#,
+        )
+        .unwrap();
+        let TimelineTrack::Control { clips, .. } = &prefab_only.tracks[0] else {
+            panic!("expected control track");
+        };
+        assert!(clips[0].timeline.is_empty());
+        assert_eq!(clips[0].prefab, "Assets/Prefabs/Enemy.prefab");
+
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Scenes/Nested.mscene"}]}]}"#,
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"spawn","name":"Spawn","target":"Sequences","clips":[{"start":0,"duration":1,"prefab":"../Enemy.prefab"}]}]}"#,
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"empty","name":"Empty","target":"Sequences","clips":[{"start":0,"duration":1}]}]}"#,
         )
         .is_err());
         assert!(parse_timeline_asset(
