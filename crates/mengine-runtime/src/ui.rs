@@ -565,31 +565,25 @@ fn collect_ui_frame_internal(
         };
         let primitive_start = primitives.len();
         let control_start = controls.len();
-        let inherited_state = apply_canvas_group(
+        walk(
+            world,
+            canvas_entity,
+            canvas_entity,
+            UiWalkLayout {
+                parent_rect: canvas_rect,
+                scale,
+                sprite_pixel_scale,
+                clip,
+                forced_rect: Some(canvas_rect),
+            },
             UiInheritedState {
                 pixel_perfect: !world_space && canvas_pixel_perfect(world, canvas_entity),
                 screen_space: !world_space,
                 ..UiInheritedState::default()
             },
-            world.get_component::<CanvasGroup>(canvas_entity),
+            &mut primitives,
+            &mut controls,
         );
-        for child in children_of(world, canvas_entity) {
-            walk(
-                world,
-                child,
-                canvas_entity,
-                UiWalkLayout {
-                    parent_rect: canvas_rect,
-                    scale,
-                    sprite_pixel_scale,
-                    clip,
-                    forced_rect: None,
-                },
-                inherited_state,
-                &mut primitives,
-                &mut controls,
-            );
-        }
         let mut world_sort_depth = None;
         if canvas.render_mode == "ScreenSpaceCamera" {
             let camera = active_camera.map(|fallback| {
@@ -3260,6 +3254,61 @@ mod tests {
             .unwrap();
         assert!((blocked.color[3] - 0.25).abs() < 0.0001);
         assert!((independent.color[3] - 0.5).abs() < 0.0001);
+    }
+
+    #[test]
+    fn canvas_root_graphics_render_and_rect_mask_clips_children() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(
+            canvas,
+            RectTransform {
+                anchor_min: [0.0, 0.0],
+                anchor_max: [1.0, 1.0],
+                size_delta: [0.0, 0.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(canvas, Image::default());
+        world.insert_component(
+            canvas,
+            RectMask2D {
+                padding: [10.0, 20.0, 30.0, 40.0],
+                ..RectMask2D::default()
+            },
+        );
+
+        let child = world.spawn_empty();
+        world.insert_component(
+            child,
+            RectTransform {
+                anchor_min: [0.0, 0.0],
+                anchor_max: [1.0, 1.0],
+                size_delta: [0.0, 0.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(child, Button::default());
+        world.set_parent(child, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert!(frame
+            .plan
+            .primitives
+            .iter()
+            .any(|primitive| primitive.key.material == "ui/image"));
+        let control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == child)
+            .expect("child button control");
+        assert_eq!(control.clip.x, 10);
+        assert_eq!(control.clip.y, 20);
+        assert_eq!(control.clip.width, 760);
+        assert_eq!(control.clip.height, 540);
+        assert!(!control.contains(5.0, 300.0));
+        assert!(control.contains(400.0, 300.0));
     }
 
     #[test]

@@ -1890,3 +1890,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - CanvasScaler 现在显式依赖 Canvas；Editor 添加组件时递归解析完整依赖闭包，因此在普通 GameObject 上添加 CanvasScaler 会在同一 Undo 事务中补齐 Canvas、RectTransform 和 Transform。依赖循环会被访问集合截断，移除 Canvas/RectTransform 仍由现有 blocker 契约拒绝。
 - Inspector 条件元数据新增可选 sibling component 来源，Agent 组件 schema 会原样暴露该条件。CanvasScaler 在 Screen Space Overlay/Camera 只展示 UI Scale Mode 及其当前分支设置，在 World Space 隐藏不会执行的屏幕缩放选项，只展示通用 Reference Pixels Per Unit 与 World Space 专属 Dynamic Pixels Per Unit。
 - 当前固定 bitmap 字形后端尚不能通过提高 Dynamic Pixels Per Unit 生成更高分辨率字形；Inspector 保留 Unity 同名世界空间字段，但技术边界继续如实记录，不用改变几何尺寸冒充像素密度实现。后续接入动态字体图集时，应让该值只影响字形栅格密度和缓存键，不改变 RectTransform 布局或世界尺寸。
+
+## 165. 2026-08-01 Canvas 根节点统一 UI 遍历
+
+- Rust Runtime 过去把 Canvas 仅当作遍历入口，直接从第一个子节点开始收集 UI；Editor 预览却会遍历 Canvas 节点本身。这会跳过根 Canvas 上合法共存的 Graphic、Selectable、LayoutGroup、ScrollView 和 RectMask2D，并让根 RectMask2D 无法裁剪任何子元素。
+- 每个 Canvas render root 现在都以已经求解的 Canvas 矩形作为强制根矩形进入同一 `walk` 路径；CanvasGroup、Pixel Perfect、裁剪、布局、Graphic、控件和子节点继承不再拥有各自的根节点特例。`override_sorting` Canvas 仍是独立遍历边界，普通嵌套 Canvas 仍只收集一次。
+- Runtime 回归同时验证根 Canvas Image 会生成绘制 Primitive，以及带四边 Padding 的根 RectMask2D 会约束子 Button 的绘制/命中裁剪范围；遮罩只约束子元素，根 Graphic 自身仍使用进入 Canvas 的外层裁剪，保持 Unity 的父遮罩语义。
