@@ -1855,34 +1855,42 @@ function scanBuildAssetDependencies(
           continue;
         }
         if (track.type === 'activation') {
-        const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
-        if (!target || target.startsWith('/')
-          || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
-          throw new Error(`invalid Timeline asset ${source}: activation target must be a descendant path without '.' or '..'`);
-        }
-        if (activationTargets.has(target)) {
-          throw new Error(`invalid Timeline asset ${source}: activation target ${target} is controlled more than once`);
-        }
-        activationTargets.add(target);
-        requiredBindingTargets.add(target);
-        if (track.clips != null && !Array.isArray(track.clips)) {
-          throw new Error(`invalid Timeline asset ${source}: activation clips must be an array`);
-        }
-        const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
-          const clip = jsonObject(clipValue);
-          if (!clip || typeof clip.start !== 'number' || !Number.isFinite(clip.start)
-            || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
-            || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
-            || typeof clip.active !== 'boolean') {
-            throw new Error(`invalid Timeline asset ${source}: activation clip is invalid or outside duration`);
+          const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
+          const postPlayback = track.post_playback == null
+            ? 'revert'
+            : strictStringValue(track, 'post_playback', `Timeline activation track ${name}`)
+              .trim()
+              .toLowerCase();
+          if (!target || target.startsWith('/')
+            || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
+            throw new Error(`invalid Timeline asset ${source}: activation target must be a descendant path without '.' or '..'`);
           }
-          return clip as { start: number; duration: number };
-        }).sort((left, right) => left.start - right.start);
-        for (let index = 1; index < clips.length; index += 1) {
-          if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
-            throw new Error(`invalid Timeline asset ${source}: activation clips overlap`);
+          if (!['active', 'inactive', 'revert', 'leave_as_is'].includes(postPlayback)) {
+            throw new Error(`invalid Timeline asset ${source}: activation post_playback state is invalid`);
           }
-        }
+          if (activationTargets.has(target)) {
+            throw new Error(`invalid Timeline asset ${source}: activation target ${target} is controlled more than once`);
+          }
+          activationTargets.add(target);
+          requiredBindingTargets.add(target);
+          if (track.clips != null && !Array.isArray(track.clips)) {
+            throw new Error(`invalid Timeline asset ${source}: activation clips must be an array`);
+          }
+          const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
+            const clip = jsonObject(clipValue);
+            if (!clip || typeof clip.start !== 'number' || !Number.isFinite(clip.start)
+              || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
+              || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
+              || typeof clip.active !== 'boolean') {
+              throw new Error(`invalid Timeline asset ${source}: activation clip is invalid or outside duration`);
+            }
+            return clip as { start: number; duration: number };
+          }).sort((left, right) => left.start - right.start);
+          for (let index = 1; index < clips.length; index += 1) {
+            if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
+              throw new Error(`invalid Timeline asset ${source}: activation clips overlap`);
+            }
+          }
           continue;
         }
         if (track.type === 'audio') {

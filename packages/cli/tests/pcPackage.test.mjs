@@ -1361,6 +1361,34 @@ test('buildPcPackage rejects overlapping Timeline activation clips without publi
   }
 });
 
+test('buildPcPackage rejects unknown Timeline activation post-playback state', () => {
+  const paths = fixture('invalid-timeline-activation-post-playback');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Broken.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'activation', id: 'visibility', name: 'Visibility', target: 'Canvas/Dialog',
+        post_playback: 'destroy',
+        clips: [{ start: 0, duration: 1, active: true }],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /activation post_playback state is invalid/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage rejects invalid Timeline particle clips without publishing output', () => {
   const paths = fixture('invalid-timeline-particle');
   try {

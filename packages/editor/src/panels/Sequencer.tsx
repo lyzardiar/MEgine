@@ -1373,6 +1373,7 @@ export function Sequencer(props: SequencerProps) {
     while (used.has(id)) id = `activation-${++index}`;
     update((draft) => draft.tracks.push({
       type: 'activation', id, name: `Activation Track ${index}`, solo: false, muted: false, locked: false, target: 'Child', clips: [],
+      post_playback: 'revert',
     }));
     applySelection({ track: asset.tracks.length, marker: null });
   };
@@ -4373,6 +4374,15 @@ export function Sequencer(props: SequencerProps) {
                 });
               }} /></label>}
               {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && renderBindingEditor(selectedTrack.target)}
+              {selectedTrack.type === 'activation' && <label>Post Playback<select value={selectedTrack.post_playback} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'activation') track.post_playback = event.target.value as typeof track.post_playback;
+              }, 'Change Activation Post Playback')}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="revert">Revert</option>
+                <option value="leave_as_is">Leave As Is</option>
+              </select></label>}
               <div className="sequencer-track-order">
                 <button type="button" title="Move selected track headers up (Alt+ArrowUp)" disabled={selectedTrackSelectionLocked || selectedTrackSelectionAtTop} onClick={() => moveSelectedTrack(-1)}><ArrowUp size={13} /> Move Up</button>
                 <button type="button" title="Move selected track headers down (Alt+ArrowDown)" disabled={selectedTrackSelectionLocked || selectedTrackSelectionAtBottom} onClick={() => moveSelectedTrack(1)}><ArrowDown size={13} /> Move Down</button>

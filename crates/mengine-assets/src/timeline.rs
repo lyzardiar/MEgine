@@ -59,6 +59,10 @@ fn default_control_extrapolation() -> String {
     "none".to_owned()
 }
 
+fn default_post_playback_state() -> String {
+    "revert".to_owned()
+}
+
 fn is_false(value: &bool) -> bool {
     !*value
 }
@@ -281,6 +285,8 @@ pub enum TimelineTrack {
         #[serde(default)]
         locked: bool,
         target: String,
+        #[serde(default = "default_post_playback_state")]
+        post_playback: String,
         #[serde(default)]
         clips: Vec<TimelineActivationClip>,
     },
@@ -555,6 +561,7 @@ impl TimelineAsset {
                     id,
                     name,
                     target,
+                    post_playback,
                     clips,
                     ..
                 } => {
@@ -578,6 +585,15 @@ impl TimelineAsset {
                     if !activation_targets.insert(target.clone()) {
                         return Err(AssetError::Invalid(format!(
                             "Timeline activation target '{target}' is controlled by more than one track"
+                        )));
+                    }
+                    *post_playback = post_playback.trim().to_ascii_lowercase();
+                    if !matches!(
+                        post_playback.as_str(),
+                        "active" | "inactive" | "revert" | "leave_as_is"
+                    ) {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline activation track '{id}' contains an invalid post-playback state"
                         )));
                     }
                     for clip in clips.iter() {
@@ -1225,6 +1241,7 @@ mod tests {
         let TimelineTrack::Activation {
             name,
             target,
+            post_playback,
             clips,
             ..
         } = &asset.tracks[0]
@@ -1233,7 +1250,17 @@ mod tests {
         };
         assert_eq!(name, "Visibility");
         assert_eq!(target, "Canvas/Dialog");
+        assert_eq!(post_playback, "revert");
         assert_eq!(clips[0].start, 0.0);
+
+        let leave_as_is = parse_timeline_asset(
+            br#"{"version":1,"duration":1,"tracks":[{"type":"activation","id":"a","name":"A","target":"Child","post_playback":" LEAVE_AS_IS "}]}"#,
+        )
+        .unwrap();
+        let TimelineTrack::Activation { post_playback, .. } = &leave_as_is.tracks[0] else {
+            panic!("expected activation track");
+        };
+        assert_eq!(post_playback, "leave_as_is");
 
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"activation","id":"a","name":"A","target":"Child","clips":[{"start":0,"duration":1.5,"active":true},{"start":1,"duration":1,"active":false}]}]}"#
@@ -1241,6 +1268,10 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"activation","id":"a","name":"A","target":"../Sibling"}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"activation","id":"a","name":"A","target":"Child","post_playback":"destroy"}]}"#
         )
         .is_err());
     }

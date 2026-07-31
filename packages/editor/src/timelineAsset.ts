@@ -10,6 +10,15 @@ export type TimelineActivationClip = {
   active: boolean;
 };
 
+export type TimelinePostPlaybackState = 'active' | 'inactive' | 'revert' | 'leave_as_is';
+
+export function timelinePostPlaybackState(value: unknown): TimelinePostPlaybackState {
+  const normalized = String(value ?? 'revert').trim().toLowerCase();
+  return normalized === 'active' || normalized === 'inactive' || normalized === 'leave_as_is'
+    ? normalized
+    : 'revert';
+}
+
 export type TimelineAudioFadeCurve = 'linear' | 'ease_in_out';
 
 export type TimelineAudioClip = {
@@ -135,6 +144,7 @@ export type TimelineActivationTrack = {
   muted: boolean;
   locked: boolean;
   target: string;
+  post_playback: TimelinePostPlaybackState;
   clips: TimelineActivationClip[];
 };
 
@@ -392,6 +402,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         muted: Boolean(track.muted),
         locked: Boolean(track.locked),
         target: activationTarget(track.target),
+        post_playback: timelinePostPlaybackState(track.post_playback),
         clips,
       });
     } else if (type === 'audio') {
@@ -620,6 +631,10 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
         }
       }
     }
+    if (track.type === 'activation'
+      && !['active', 'inactive', 'revert', 'leave_as_is'].includes(track.post_playback)) {
+      throw new Error(`Activation track ${track.name} contains an invalid post-playback state`);
+    }
     if (track.type === 'animation') {
       for (const clip of track.clips) {
         if (!animationAssetIsPortable(audioAssetPath(clip.clip))
@@ -804,6 +819,11 @@ export function parseTimelineAsset(text: string): TimelineAsset {
     }
     const label = track.type === 'activation' ? 'Activation' : track.type === 'audio' ? 'Audio' : track.type === 'animation' ? 'Animation' : track.type === 'particle' ? 'Particle' : 'Control';
     if (typeof track.target !== 'string' || !targetIsPortable(activationTarget(track.target))) throw new Error(`${label} track ${track.id} requires a descendant target path without '.' or '..'`);
+    if (track.type === 'activation' && track.post_playback != null
+      && (typeof track.post_playback !== 'string'
+        || !['active', 'inactive', 'revert', 'leave_as_is'].includes(track.post_playback.trim().toLowerCase()))) {
+      throw new Error(`Activation track ${track.id} contains an invalid post-playback state`);
+    }
     const target = activationTarget(track.target);
     const targets = track.type === 'activation'
       ? activationTargets

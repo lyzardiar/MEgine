@@ -267,11 +267,11 @@ struct CachedTimeline {
     result: Result<Arc<TimelineAsset>, String>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct ActivationOverride {
     target: Entity,
     original_active: bool,
-    sibling_index: i32,
+    post_playback: String,
 }
 
 #[derive(Clone)]
@@ -374,6 +374,8 @@ impl TimelineRuntime {
             })
             .collect();
         let active_entities: HashSet<_> = entities.iter().map(|(entity, _)| *entity).collect();
+        let mut post_playback_owners: HashSet<_> =
+            self.active.difference(&active_entities).copied().collect();
         self.evaluated_directors
             .retain(|entity, _| active_entities.contains(entity) && world.is_alive(*entity));
         self.active
@@ -390,7 +392,9 @@ impl TimelineRuntime {
             }
             let asset_key = director.asset.trim();
             if asset_key.is_empty() {
-                self.active.remove(&entity);
+                if self.active.remove(&entity) {
+                    post_playback_owners.insert(entity);
+                }
                 self.evaluated_directors.remove(&entity);
                 continue;
             }
@@ -419,7 +423,9 @@ impl TimelineRuntime {
             };
             if !director.playing {
                 if director.time <= 0.0 {
-                    self.active.remove(&entity);
+                    if self.active.remove(&entity) {
+                        post_playback_owners.insert(entity);
+                    }
                     self.evaluated_directors.remove(&entity);
                     continue;
                 }
@@ -666,12 +672,41 @@ impl TimelineRuntime {
                     &mut applied,
                     &mut failures,
                 );
+            } else {
+                // A short Timeline can cross its terminal boundary on the first update. Sample
+                // the last representable in-range time before tearing overrides down so
+                // Activation Post Playback is still defined (including Leave As Is), without
+                // treating the exclusive duration endpoint as an authored gap.
+                let terminal_time = if director.speed < 0.0 {
+                    0.0
+                } else {
+                    f32::from_bits(asset.duration.to_bits().saturating_sub(1))
+                };
+                let mut terminal_applied = AppliedTimelineOverrides::default();
+                self.apply_timeline_layers(
+                    world,
+                    entity,
+                    entity,
+                    "",
+                    asset_key,
+                    &asset,
+                    &bindings,
+                    terminal_time,
+                    terminal_time,
+                    director.speed,
+                    false,
+                    0,
+                    &[asset_key.trim().replace('\\', "/").to_ascii_lowercase()],
+                    &mut terminal_applied,
+                    &mut failures,
+                );
             }
             if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
                 live.time = next;
                 if finished {
                     live.playing = false;
                     self.active.remove(&entity);
+                    post_playback_owners.insert(entity);
                 }
             }
             self.evaluated_directors.insert(
@@ -679,7 +714,7 @@ impl TimelineRuntime {
                 (asset_key.to_owned(), director.bindings_json.clone(), next),
             );
         }
-        self.restore_unused_activation_overrides(world, &applied.activation);
+        self.restore_unused_activation_overrides(world, &applied.activation, &post_playback_owners);
         self.restore_unused_audio_overrides(world, &applied.audio);
         self.restore_unused_animation_overrides(world, &applied.animation);
         self.restore_unused_particle_overrides(world, &applied.particle);
@@ -844,11 +879,21 @@ impl TimelineRuntime {
                 self.reported_control_failures.remove(&report_key);
                 continue;
             }
-            let Some((clip_index, clip)) = clips
+            let active_clip = clips
                 .iter()
                 .enumerate()
-                .find(|(_, clip)| time >= clip.start && time < clip.start + clip.duration)
-            else {
+                .find(|(_, clip)| time >= clip.start && time < clip.start + clip.duration);
+            let control_scope = format!("{key_prefix}{id}:");
+            let active_scope = active_clip
+                .as_ref()
+                .map(|(clip_index, _)| format!("{control_scope}{clip_index}/"));
+            self.finish_inactive_control_activation_overrides(
+                world,
+                owner,
+                &control_scope,
+                active_scope.as_deref(),
+            );
+            let Some((clip_index, clip)) = active_clip else {
                 self.reported_control_failures.remove(&report_key);
                 continue;
             };
@@ -1216,6 +1261,7 @@ impl TimelineRuntime {
                 id,
                 name,
                 target,
+                post_playback,
                 clips,
                 ..
             } = track
@@ -1227,13 +1273,6 @@ impl TimelineRuntime {
                 self.reported_activation_failures.remove(&key);
                 continue;
             }
-            let Some(clip) = clips
-                .iter()
-                .find(|clip| time >= clip.start && time < clip.start + clip.duration)
-            else {
-                self.reported_activation_failures.remove(&key);
-                continue;
-            };
             let target_entity = match resolve_timeline_target(world, root, target, bindings) {
                 Ok(entity) => entity,
                 Err(error) => {
@@ -1248,23 +1287,25 @@ impl TimelineRuntime {
                 }
             };
             self.reported_activation_failures.remove(&key);
-            if let Some(previous) = self.activation_overrides.get(&key).copied() {
+            if let Some(previous) = self.activation_overrides.get(&key).cloned() {
                 if previous.target != target_entity {
-                    self.restore_activation_override(world, &key);
+                    self.restore_activation_override(world, &key, false);
                 }
             }
-            self.activation_overrides
+            let state = self
+                .activation_overrides
                 .entry(key.clone())
                 .or_insert_with(|| ActivationOverride {
                     target: target_entity,
                     original_active: world.entity_active(target_entity),
-                    sibling_index: world.sibling_index(target_entity),
+                    post_playback: post_playback.clone(),
                 });
-            world.set_editor_state(
-                target_entity,
-                world.sibling_index(target_entity),
-                clip.active,
-            );
+            state.post_playback.clone_from(post_playback);
+            let active = clips
+                .iter()
+                .find(|clip| time >= clip.start && time < clip.start + clip.duration)
+                .map_or(state.original_active, |clip| clip.active);
+            world.set_editor_state(target_entity, world.sibling_index(target_entity), active);
             applied.insert(key);
         }
         (applied, failures)
@@ -1860,6 +1901,7 @@ impl TimelineRuntime {
         &mut self,
         world: &mut World,
         applied: &HashSet<(Entity, String)>,
+        post_playback_owners: &HashSet<Entity>,
     ) {
         let stale: Vec<_> = self
             .activation_overrides
@@ -1868,20 +1910,60 @@ impl TimelineRuntime {
             .cloned()
             .collect();
         for key in stale {
-            self.restore_activation_override(world, &key);
+            self.restore_activation_override(world, &key, post_playback_owners.contains(&key.0));
         }
     }
 
-    fn restore_activation_override(&mut self, world: &mut World, key: &(Entity, String)) {
+    fn restore_activation_override(
+        &mut self,
+        world: &mut World,
+        key: &(Entity, String),
+        apply_post_playback: bool,
+    ) {
         let Some(previous) = self.activation_overrides.remove(key) else {
             return;
         };
-        if world.is_alive(previous.target) {
+        if !world.is_alive(previous.target) {
+            return;
+        }
+        let active = if apply_post_playback {
+            match previous.post_playback.as_str() {
+                "active" => Some(true),
+                "inactive" => Some(false),
+                "leave_as_is" => None,
+                _ => Some(previous.original_active),
+            }
+        } else {
+            Some(previous.original_active)
+        };
+        if let Some(active) = active {
             world.set_editor_state(
                 previous.target,
-                previous.sibling_index,
-                previous.original_active,
+                world.sibling_index(previous.target),
+                active,
             );
+        }
+    }
+
+    fn finish_inactive_control_activation_overrides(
+        &mut self,
+        world: &mut World,
+        owner: Entity,
+        control_scope: &str,
+        active_scope: Option<&str>,
+    ) {
+        let finished: Vec<_> = self
+            .activation_overrides
+            .keys()
+            .filter(|(candidate_owner, key)| {
+                *candidate_owner == owner
+                    && key.starts_with(control_scope)
+                    && active_scope.is_none_or(|active| !key.starts_with(active))
+            })
+            .cloned()
+            .collect();
+        for key in finished {
+            self.restore_activation_override(world, &key, true);
         }
     }
 
@@ -2156,6 +2238,24 @@ mod tests {
             path,
             format!(
                 r#"{{"version":1,"duration":2,"tracks":[{{"type":"activation","id":"visibility","name":"Visibility","target":"{target}","clips":[{{"start":0,"duration":0.5,"active":false}},{{"start":1,"duration":0.5,"active":false}}]}}]}}"#
+            ),
+        )
+        .unwrap();
+        (root, relative)
+    }
+
+    fn activation_post_playback_project_asset(state: &str, clip_active: bool) -> (PathBuf, String) {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-timeline-activation-post-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let relative = "Assets/Timelines/activation-post.mtimeline".to_owned();
+        let path = root.join(&relative);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(
+            path,
+            format!(
+                r#"{{"version":1,"duration":1,"tracks":[{{"type":"activation","id":"visibility","name":"Visibility","target":"Panel","post_playback":"{state}","clips":[{{"start":0,"duration":1,"active":{clip_active}}}]}}]}}"#
             ),
         )
         .unwrap();
@@ -2586,6 +2686,207 @@ mod tests {
             .playing = false;
         runtime.update(&mut world, f32::NAN);
         assert!(world.entity_active(panel));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn activation_post_playback_matches_unity_states_and_preserves_sibling_order() {
+        for (state, original, clip_active, expected) in [
+            ("active", false, false, true),
+            ("inactive", true, true, false),
+            ("revert", true, false, true),
+            ("leave_as_is", true, false, false),
+        ] {
+            let (root, relative) = activation_post_playback_project_asset(state, clip_active);
+            let mut world = World::new();
+            let director = world.spawn_empty();
+            let panel = world.spawn_empty();
+            let sibling = world.spawn_empty();
+            world.set_component_value(panel, "Name", serde_json::json!({ "value": "Panel" }));
+            world.set_parent(panel, Some(director));
+            world.set_parent(sibling, Some(director));
+            world.set_editor_state(panel, 0, original);
+            world.insert_component(
+                director,
+                TimelineDirector {
+                    asset: relative,
+                    ..TimelineDirector::default()
+                },
+            );
+            let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+            assert!(runtime.update(&mut world, 0.0).is_empty());
+            assert_eq!(
+                world.entity_active(panel),
+                clip_active,
+                "state {state} during clip"
+            );
+            world.set_editor_state(panel, 7, clip_active);
+            assert!(runtime.update(&mut world, 2.0).is_empty());
+            assert_eq!(
+                world.entity_active(panel),
+                expected,
+                "state {state} after stop"
+            );
+            assert_eq!(world.sibling_index(panel), 7, "state {state} sibling order");
+            let _ = fs::remove_dir_all(root);
+        }
+    }
+
+    #[test]
+    fn activation_post_playback_runs_on_manual_stop_but_not_pause() {
+        let (root, relative) = activation_post_playback_project_asset("active", false);
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let panel = world.spawn_empty();
+        world.set_component_value(panel, "Name", serde_json::json!({ "value": "Panel" }));
+        world.set_parent(panel, Some(director));
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        runtime.update(&mut world, 0.25);
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = false;
+        }
+        runtime.update(&mut world, 0.0);
+        assert!(
+            !world.entity_active(panel),
+            "pause retains the sampled clip state"
+        );
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.time = 0.0;
+        }
+        runtime.update(&mut world, 0.0);
+        assert!(
+            world.entity_active(panel),
+            "Stop applies the active post-playback state"
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn activation_post_playback_survives_first_update_reaching_either_end() {
+        let (root, relative) = activation_post_playback_project_asset("leave_as_is", true);
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let panel = world.spawn_empty();
+        world.set_component_value(panel, "Name", serde_json::json!({ "value": "Panel" }));
+        world.set_parent(panel, Some(director));
+        world.set_editor_state(panel, 0, false);
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 2.0).is_empty());
+        assert!(
+            world.entity_active(panel),
+            "Leave As Is retains the last in-range activation sample"
+        );
+        assert!(
+            !world
+                .get_component::<TimelineDirector>(director)
+                .unwrap()
+                .playing
+        );
+        let _ = fs::remove_dir_all(root);
+
+        let (root, relative) = activation_post_playback_project_asset("leave_as_is", true);
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let panel = world.spawn_empty();
+        world.set_component_value(panel, "Name", serde_json::json!({ "value": "Panel" }));
+        world.set_parent(panel, Some(director));
+        world.set_editor_state(panel, 0, false);
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                speed: -1.0,
+                time: 1.0,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 2.0).is_empty());
+        assert!(
+            world.entity_active(panel),
+            "reverse Leave As Is retains the zero-time activation sample"
+        );
+        assert!(
+            !world
+                .get_component::<TimelineDirector>(director)
+                .unwrap()
+                .playing
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn nested_activation_post_playback_runs_when_its_control_clip_ends() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-timeline-nested-activation-post-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let parent_relative = "Assets/Timelines/parent.mtimeline".to_owned();
+        let child_relative = "Assets/Timelines/child.mtimeline";
+        fs::create_dir_all(root.join("Assets/Timelines")).unwrap();
+        fs::write(
+            root.join(&parent_relative),
+            format!(
+                r#"{{"version":1,"duration":1,"tracks":[{{"type":"control","id":"nested","name":"Nested","target":"Sequence","clips":[{{"start":0,"duration":0.5,"timeline":"{child_relative}"}}]}}]}}"#
+            ),
+        )
+        .unwrap();
+        fs::write(
+            root.join(child_relative),
+            r#"{"version":1,"duration":1,"tracks":[{"type":"activation","id":"visibility","name":"Visibility","target":"Panel","post_playback":"active","clips":[{"start":0,"duration":1,"active":false}]}]}"#,
+        )
+        .unwrap();
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let sequence = world.spawn_empty();
+        let panel = world.spawn_empty();
+        world.set_component_value(sequence, "Name", serde_json::json!({ "value": "Sequence" }));
+        world.set_component_value(panel, "Name", serde_json::json!({ "value": "Panel" }));
+        world.set_parent(sequence, Some(director));
+        world.set_parent(panel, Some(sequence));
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: parent_relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(!world.entity_active(panel));
+        assert!(runtime.update(&mut world, 0.75).is_empty());
+        assert!(world.entity_active(panel));
+        assert!(
+            world
+                .get_component::<TimelineDirector>(director)
+                .unwrap()
+                .playing
+        );
         let _ = fs::remove_dir_all(root);
     }
 

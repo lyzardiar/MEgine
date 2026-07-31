@@ -1808,3 +1808,12 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 定向回归覆盖等价克隆快照复用、状态签名失效、最短依赖深度、缺失/循环/深度/节点/边预算、Profiler 规范化与 Agent/MCP Schema。最终编辑器测试 654/654、TypeScript/Vite 生产构建和 Tauri Debug 应用构建全部通过，最大 JavaScript 块为 399.22kB，继续低于 500,000 字节硬门禁。真实桌面验证在隔离工程中创建 3 层、604 轨道/项目的 Timeline 图：第二次求值实体索引 3 次命中/0 未命中、Binding Track 3/0、Binding Table 1/0；主 Profiler 在 Timeline 失活后仍显示最后一次 604 轨道求值及 100% 索引命中，并明确列出缺失依赖与回指循环。清空后由隐藏的分离 Timeline 窗口重新发布，主窗口 Agent 立即读到完整图；两扇原生窗口始终 `visible=false`、`focused=false`，`window.ui_snapshot_all` 对 2/2 窗口返回完整 364 个语义元素、0 失败且 `backgroundSafe=true`。验证进程、工程、专属配置和截图随后全部清理。
 
 本批完成的是编辑器预览的可观测性和重复求值降本，不是 Unity Timeline 的全部功能，也没有伪造 Player Profiler。后续继续审计 Prefab Control、录制模式、轨道模板与子轨道就地编辑；若要达到运行时性能诊断闭环，还需定义 Player/GPU Marker 采集协议并由真实构建端提供数据。
+
+## 154. 2026-08-01 Activation Track Post Playback 与嵌套停止生命周期
+
+- Activation Track 资产新增 `post_playback`，完整支持 Unity 风格的 `active`、`inactive`、`revert`、`leave_as_is` 四态；旧资产缺省为 `revert`，保持此前停止后恢复作者状态的兼容行为。Editor 解析、Rust 资产加载和 PC 最终打包审计使用同一白名单并规范化大小写与首尾空白，未知状态会在编辑或发布前明确拒绝。Sequencer Track Inspector 提供四项下拉框并继承 Track/Group 锁定状态，Agent 的隐藏窗口语义快照可读取标签、当前值与完整选项。
+- Runtime 在 Activation Track 首次参与求值时保存目标的作者激活状态，轨道空隙显示作者状态但继续持有本次播放的生命周期快照。Pause 保留当前采样而不执行终态；显式 Stop、正向或反向自然结束、Director 失活/移除和清空资产才应用 Post Playback。普通热编辑、Mute、绑定失败、资源加载失败和目标切换仍恢复作者状态，避免把配置错误误判成一次正常停止。恢复激活状态使用目标当时的 sibling index，不再把 Timeline 启动前的旧顺序写回层级。
+- Control Track 以 `track-id:clip-index/` 作为嵌套生命周期作用域；当前 Control Clip 结束或切换时，立即完成该作用域内所有子 Activation Track 的 Post Playback，而不等待根 Director 停止。若同一 Clip 的子资源或绑定在热更新后失败，则走普通恢复，不错误触发终态。首个 Runtime update 直接跨越 Timeline 终点时，会在正向末端的前一可表示 `f32` 采样点（反向为零点）建立最后一次有效状态，再执行终态，因此极短 Timeline 和卡顿帧也不会漏掉 `Leave As Is` 或其他策略。
+- 回归覆盖四态、手动 Stop 与 Pause 分界、正反生命周期、首帧跨终点、嵌套 Control Clip 结束、热恢复和 sibling 顺序保持。最终 Editor 654/654、CLI 59/59、Rust workspace/all-targets 测试与检查、格式检查、定向严格 Clippy、TypeScript/Vite 生产构建和 Tauri Debug 构建全部通过；最大 JavaScript 块仍为 399.22kB，低于 500,000 字节硬门禁。真实桌面验证在独立配置和临时工程中以 `MENGINE_EDITOR_BACKGROUND=1` 打开 Activation Track：Agent 从 `Revert` 的四项下拉框写入 `Leave As Is`，保存后语义值与磁盘 JSON 均为 `leave_as_is`；原生主窗口验证前后始终 `visible=false`、`focused=false`，全部探针进程随后终止。
+
+本批完成的是 Activation Track 的停止语义，还不是完整的 Unity ControlPlayableAsset。后续继续补 Prefab 动态实例、源 GameObject 激活、嵌套 Director/Particle/ITimeControl 控制、录制模式、轨道模板和子轨道就地编辑，并保持 Editor、Runtime、CLI、构建审计与后台 Agent 语义同步推进。
