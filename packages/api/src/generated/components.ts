@@ -378,6 +378,10 @@ export interface SpineSkeleton {
 
 export interface Canvas {
   renderMode: string;
+  renderCamera: string;
+  pixelPerfect: boolean;
+  overrideSorting: boolean;
+  sortingLayer: string;
   sortingOrder: number;
   planeDistance: number;
 }

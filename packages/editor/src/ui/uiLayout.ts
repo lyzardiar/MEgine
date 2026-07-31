@@ -17,8 +17,10 @@ import { applyAspectRatio } from './aspectRatioFitter';
 import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
 import { graphicEffectFilter, type UiGraphicEffect } from './graphicEffect';
 import { resolveSpriteId } from '../spriteLibrary';
-import { project, type Camera, type Vec3 } from '../math3d';
+import { add, project, quatRotateVec, type Camera, type Quat, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
+import { buildWorldTransforms } from '../worldTransform';
+import { getSortingLayerRank } from '../sortingLayers';
 import {
   isVerticalRange,
   normalizedRangePosition,
@@ -198,6 +200,8 @@ export type UiDrawItem = {
   unrotatedSize?: { w: number; h: number };
   /** Parent layout rectangle used to visualize/edit anchors. */
   anchorParentRect?: Rect;
+  /** Exact projected quad for World Space Canvas selection and pointer interaction. */
+  screenCorners?: Array<{ x: number; y: number }>;
 };
 
 function color4(raw: unknown, fallback: [number, number, number, number]): [number, number, number, number] {
@@ -422,6 +426,99 @@ function inCanvasTree(entities: UiEnt[], entityId: number, canvasId: number): bo
   return false;
 }
 
+function hasCanvasAncestor(entities: UiEnt[], entity: UiEnt): boolean {
+  let current = entity.parent ?? null;
+  const guard = new Set<number>();
+  while (current != null && !guard.has(current)) {
+    guard.add(current);
+    const parent = entities.find((candidate) => candidate.entity === current);
+    if (!parent) break;
+    if (parent.components.Canvas != null) return true;
+    current = parent.parent ?? null;
+  }
+  return false;
+}
+
+function isCanvasLayoutRoot(entities: UiEnt[], entity: UiEnt): boolean {
+  const canvas = entity.components.Canvas as { override_sorting?: boolean; overrideSorting?: boolean };
+  return !hasCanvasAncestor(entities, entity)
+    || canvas.override_sorting === true
+    || canvas.overrideSorting === true;
+}
+
+function canvasLayoutRootForEntity(entities: UiEnt[], entityId: number): UiEnt | undefined {
+  let current = entities.find((entity) => entity.entity === entityId);
+  let outermost: UiEnt | undefined;
+  const guard = new Set<number>();
+  while (current && !guard.has(current.entity)) {
+    guard.add(current.entity);
+    const canvas = current.components.Canvas as
+      | { override_sorting?: boolean; overrideSorting?: boolean }
+      | undefined;
+    if (canvas) {
+      outermost = current;
+      if (canvas.override_sorting === true || canvas.overrideSorting === true) {
+        return current;
+      }
+    }
+    const parent = current.parent ?? null;
+    current = parent == null
+      ? undefined
+      : entities.find((entity) => entity.entity === parent);
+  }
+  return outermost;
+}
+
+function outermostCanvas(entities: UiEnt[], entity: UiEnt): UiEnt {
+  let result = entity;
+  let current = entity.parent ?? null;
+  const guard = new Set<number>();
+  while (current != null && !guard.has(current)) {
+    guard.add(current);
+    const parent = entities.find((candidate) => candidate.entity === current);
+    if (!parent) break;
+    if (parent.components.Canvas != null) result = parent;
+    current = parent.parent ?? null;
+  }
+  return result;
+}
+
+function canvasSortingOrder(entities: UiEnt[], entity: UiEnt): number {
+  const authored = entity.components.Canvas as {
+    override_sorting?: boolean;
+    overrideSorting?: boolean;
+    sorting_order?: number;
+    sortingOrder?: number;
+  };
+  const source = authored.override_sorting === true || authored.overrideSorting === true
+    ? entity
+    : outermostCanvas(entities, entity);
+  const canvas = source.components.Canvas as { sorting_order?: number; sortingOrder?: number };
+  return number(canvas.sorting_order ?? canvas.sortingOrder, 0);
+}
+
+function canvasSortKey(entities: UiEnt[], entity: UiEnt): [number, number, number] {
+  const inherited = outermostCanvas(entities, entity);
+  const authored = entity.components.Canvas as {
+    override_sorting?: boolean;
+    overrideSorting?: boolean;
+    sorting_layer?: string;
+    sortingLayer?: string;
+  };
+  const source = authored.override_sorting === true || authored.overrideSorting === true
+    ? entity
+    : inherited;
+  const modeData = inherited.components.Canvas as { render_mode?: string; renderMode?: string };
+  const mode = modeData.render_mode ?? modeData.renderMode ?? 'ScreenSpaceOverlay';
+  const modeRank = mode === 'WorldSpace' ? 0 : mode === 'ScreenSpaceCamera' ? 1 : 2;
+  const sourceData = source.components.Canvas as { sorting_layer?: string; sortingLayer?: string };
+  return [
+    modeRank,
+    getSortingLayerRank(sourceData.sorting_layer ?? sourceData.sortingLayer ?? 'default'),
+    canvasSortingOrder(entities, entity),
+  ];
+}
+
 /**
  * Layout Overlay canvases into viewRect (Game letterbox / pixel root).
  */
@@ -432,32 +529,26 @@ export function layoutUiOverlay(
   logicalSize?: { w: number; h: number },
 ): UiDrawItem[] {
   const canvases = entities
-    .filter((e) => e.components.Canvas && e.active !== false)
+    .filter((e) => e.components.Canvas && e.active !== false && isCanvasLayoutRoot(entities, e))
     .sort((a, b) => {
-      const ao = Number(
-        (a.components.Canvas as { sorting_order?: number; sortingOrder?: number })?.sorting_order
-          ?? (a.components.Canvas as { sortingOrder?: number })?.sortingOrder
-          ?? 0,
-      );
-      const bo = Number(
-        (b.components.Canvas as { sorting_order?: number; sortingOrder?: number })?.sorting_order
-          ?? (b.components.Canvas as { sortingOrder?: number })?.sortingOrder
-          ?? 0,
-      );
-      return ao - bo;
+      const left = canvasSortKey(entities, a);
+      const right = canvasSortKey(entities, b);
+      return left[0] - right[0] || left[1] - right[1] || left[2] - right[2];
     });
 
   const out: UiDrawItem[] = [];
   let depthBase = 0;
 
   for (const canvas of canvases) {
+    const canvasStart = out.length;
+    const inheritedCanvas = outermostCanvas(entities, canvas);
     const mode =
-      (canvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
-      ?? (canvas.components.Canvas as { renderMode?: string })?.renderMode
+      (inheritedCanvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
+      ?? (inheritedCanvas.components.Canvas as { renderMode?: string })?.renderMode
       ?? 'ScreenSpaceOverlay';
     if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
 
-    const scaler = canvas.components.CanvasScaler;
+    const scaler = inheritedCanvas.components.CanvasScaler;
     const scale = canvasDisplayScaleFactor(
       scaler,
       viewRect.w,
@@ -489,11 +580,21 @@ export function layoutUiOverlay(
       inherited = { opacity: 1, interactable: true, blocksRaycasts: true },
       inheritedClip?: Rect,
     ) => {
+      if (!isCanvasRoot) {
+        const nestedCanvas = ent.components.Canvas as
+          | { override_sorting?: boolean; overrideSorting?: boolean }
+          | undefined;
+        if (nestedCanvas?.override_sorting === true || nestedCanvas?.overrideSorting === true) {
+          return;
+        }
+      }
       const hasRt = !!ent.components.RectTransform;
       const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
-      let rect = forcedRect ?? (hasRt
-        ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform))
-        : parentRect);
+      let rect = forcedRect ?? (isCanvasRoot
+        ? parentRect
+        : hasRt
+          ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform))
+          : parentRect);
       const layout = ent.components.LayoutGroup as Record<string, unknown> | undefined;
       const contentFitter = ent.components.ContentSizeFitter as Record<string, unknown> | undefined;
       if (contentFitter && layout && rt) {
@@ -861,15 +962,194 @@ export function layoutUiOverlay(
       });
     };
 
+    let canvasParent = root;
+    if (canvas.entity !== inheritedCanvas.entity) {
+      const chain: UiEnt[] = [];
+      let current = canvas.parent ?? null;
+      const guard = new Set<number>();
+      while (current != null && current !== inheritedCanvas.entity && !guard.has(current)) {
+        guard.add(current);
+        const ancestor = entities.find((candidate) => candidate.entity === current);
+        if (!ancestor) break;
+        chain.push(ancestor);
+        current = ancestor.parent ?? null;
+      }
+      if (inheritedCanvas.components.RectTransform) {
+        canvasParent = solveRectTransform(root, scaleRt(inheritedCanvas.components.RectTransform));
+      }
+      for (const ancestor of chain.reverse()) {
+        if (ancestor.components.RectTransform) {
+          canvasParent = solveRectTransform(canvasParent, scaleRt(ancestor.components.RectTransform));
+        }
+      }
+    }
     const canvasRt = canvas.components.RectTransform
-      ? solveRectTransform(root, scaleRt(canvas.components.RectTransform))
-      : root;
+      ? solveRectTransform(canvasParent, scaleRt(canvas.components.RectTransform))
+      : canvasParent;
     walk(canvas, canvasRt, 0, true, undefined, undefined, root);
+    const canvasData = canvas.components.Canvas as { pixel_perfect?: boolean; pixelPerfect?: boolean };
+    if (canvasData.pixel_perfect === true || canvasData.pixelPerfect === true) {
+      for (const item of out.slice(canvasStart)) {
+        item.rect = {
+          x: Math.round(item.rect.x),
+          y: Math.round(item.rect.y),
+          w: Math.round(item.rect.w),
+          h: Math.round(item.rect.h),
+        };
+      }
+    }
     depthBase += 1000;
   }
 
   out.sort((a, b) => a.depth - b.depth);
   return out;
+}
+
+/** Project World Space Canvas trees through the active authoring/Game camera. */
+export function layoutUiWorldSpace(
+  entities: UiEnt[],
+  cam: Camera,
+  viewport: Rect,
+  selectedIds: Set<number>,
+): UiDrawItem[] {
+  const transforms = buildWorldTransforms(entities);
+  const canvases = entities
+    .filter((entity) => {
+      if (!entity.components.Canvas || entity.active === false || !isCanvasLayoutRoot(entities, entity)) {
+        return false;
+      }
+      const inherited = outermostCanvas(entities, entity);
+      const canvas = inherited.components.Canvas as { render_mode?: string; renderMode?: string };
+      return (canvas.render_mode ?? canvas.renderMode) === 'WorldSpace';
+    })
+    .sort((left, right) => {
+      const leftKey = canvasSortKey(entities, left);
+      const rightKey = canvasSortKey(entities, right);
+      return leftKey[1] - rightKey[1] || leftKey[2] - rightKey[2];
+    });
+  const output: UiDrawItem[] = [];
+
+  for (const canvas of canvases) {
+    const context = worldCanvasLayoutContext(entities, canvas, selectedIds, transforms);
+
+    for (const item of context.items) {
+      const corners = pixelCorners(item.rect, item.rotation, item.pivot)
+        .map(([x, y]) => project(context.pixelToWorld(x, y), cam, viewport));
+      if (corners.some((point) => !point)) continue;
+      const projected = corners as Array<{ x: number; y: number; depth: number }>;
+      const topLeft = projected[0];
+      const topRight = projected[1];
+      const bottomLeft = projected[3];
+      const drawWidth = Math.hypot(topRight.x - topLeft.x, topRight.y - topLeft.y);
+      const drawHeight = Math.hypot(bottomLeft.x - topLeft.x, bottomLeft.y - topLeft.y);
+      if (drawWidth <= 0.0001 || drawHeight <= 0.0001) continue;
+      const angle = Math.atan2(topRight.y - topLeft.y, topRight.x - topLeft.x);
+      const depth = projected.reduce((sum, point) => sum + point.depth, 0) / projected.length;
+      output.push({
+        ...scaleSceneVisuals(item, drawWidth / Math.max(0.0001, item.rect.w)),
+        rect: { x: topLeft.x, y: topLeft.y, w: drawWidth, h: drawHeight },
+        rotation: (-angle * 180) / Math.PI,
+        pivot: [0, 0],
+        pivotScreen: { x: topLeft.x, y: topLeft.y },
+        screenCorners: projected.map(({ x, y }) => ({ x, y })),
+        depth,
+        clip: undefined,
+        anchorParentRect: undefined,
+        unrotatedSize: { w: drawWidth, h: drawHeight },
+      });
+    }
+  }
+  return output;
+}
+
+function worldCanvasLayoutContext(
+  entities: UiEnt[],
+  canvas: UiEnt,
+  selectedIds: Set<number>,
+  transforms = buildWorldTransforms(entities),
+): { items: UiDrawItem[]; pixelToWorld: (px: number, py: number) => Vec3 } {
+  const inheritedCanvas = outermostCanvas(entities, canvas);
+  const rectTransform = readRectTransform(inheritedCanvas.components.RectTransform);
+  const scaler = inheritedCanvas.components.CanvasScaler as Record<string, unknown> | undefined;
+  const reference = canvasReferenceSize(scaler);
+  const width = Math.abs(rectTransform.size_delta[0]) > 1e-4
+    ? Math.abs(rectTransform.size_delta[0])
+    : reference.w;
+  const height = Math.abs(rectTransform.size_delta[1]) > 1e-4
+    ? Math.abs(rectTransform.size_delta[1])
+    : reference.h;
+  const layoutEntities = entities.map((entity) => {
+    const isCanvasAncestor = entity.components.Canvas != null
+      && inCanvasTree(entities, canvas.entity, entity.entity);
+    return isCanvasAncestor
+      ? {
+        ...entity,
+        components: {
+          ...entity.components,
+          Canvas: {
+            ...(entity.components.Canvas as Record<string, unknown>),
+            render_mode: 'ScreenSpaceOverlay',
+          },
+          ...(entity.entity === inheritedCanvas.entity ? { CanvasScaler: {
+            ui_scale_mode: 'ConstantPixelSize',
+            scale_factor: 1,
+            reference_pixels_per_unit: number(scaler?.reference_pixels_per_unit, 100),
+            reference_resolution: [width, height],
+            screen_match_mode: 'MatchWidthOrHeight',
+            match_width_or_height: 0,
+            physical_unit: 'Points',
+            fallback_screen_dpi: 96,
+            default_sprite_dpi: 96,
+            dynamic_pixels_per_unit: 1,
+          }, RectTransform: {
+            ...(entity.components.RectTransform as Record<string, unknown> | undefined),
+            anchor_min: [0, 0],
+            anchor_max: [1, 1],
+            anchored_position: [0, 0],
+            size_delta: [0, 0],
+            local_rotation: 0,
+            local_scale: [1, 1],
+          } } : {}),
+        },
+      }
+      : entity;
+  });
+  const items = layoutUiOverlay(
+    layoutEntities,
+    { x: 0, y: 0, w: width, h: height },
+    selectedIds,
+    { w: width, h: height },
+  ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === canvas.entity);
+  const worldTransform = transforms.get(inheritedCanvas.entity)?.transform ?? {
+    position: [0, 0, 0] as Vec3,
+    rotation: [0, 0, 0, 1] as Quat,
+    scale: [1, 1, 1] as Vec3,
+  };
+  const ppu = Math.max(0.0001, number(scaler?.reference_pixels_per_unit, 100));
+  const canvasAngle = (rectTransform.local_rotation * Math.PI) / 180;
+  const canvasCos = Math.cos(canvasAngle);
+  const canvasSin = Math.sin(canvasAngle);
+  const pixelToWorld = (px: number, py: number): Vec3 => {
+    const localX = (px - width * rectTransform.pivot[0]) / ppu;
+    const localY = (height * rectTransform.pivot[1] - py) / ppu;
+    const scaledX = localX * rectTransform.local_scale[0];
+    const scaledY = localY * rectTransform.local_scale[1];
+    const local: Vec3 = [
+      scaledX * canvasCos - scaledY * canvasSin + rectTransform.anchored_position[0] / ppu,
+      scaledX * canvasSin + scaledY * canvasCos + rectTransform.anchored_position[1] / ppu,
+      0,
+    ];
+    const scaled: Vec3 = [
+      local[0] * worldTransform.scale[0],
+      local[1] * worldTransform.scale[1],
+      local[2] * worldTransform.scale[2],
+    ];
+    return add(
+      worldTransform.position as Vec3,
+      quatRotateVec(worldTransform.rotation as Quat, scaled),
+    );
+  };
+  return { items, pixelToWorld };
 }
 
 /**
@@ -883,7 +1163,9 @@ export function layoutUiScene3D(
   selectedIds: Set<number>,
   canvasSize: { w: number; h: number },
 ): { items: UiDrawItem[]; layoutScale: number } {
-  const canvases = entities.filter((e) => e.components.Canvas && e.active !== false);
+  const canvases = entities.filter(
+    (e) => e.components.Canvas && e.active !== false && isCanvasLayoutRoot(entities, e),
+  );
   if (!canvases.length) return { items: [], layoutScale: 1 };
 
   const cw = Math.max(1, canvasSize.w);
@@ -895,9 +1177,10 @@ export function layoutUiScene3D(
   let depthBase = 0;
 
   for (const canvas of canvases) {
+    const inheritedCanvas = outermostCanvas(entities, canvas);
     const mode =
-      (canvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
-      ?? (canvas.components.Canvas as { renderMode?: string })?.renderMode
+      (inheritedCanvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
+      ?? (inheritedCanvas.components.Canvas as { renderMode?: string })?.renderMode
       ?? 'ScreenSpaceOverlay';
     if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
 
@@ -916,7 +1199,7 @@ export function layoutUiScene3D(
     }
     const componentSceneScale = rectComponentSceneScale(
       sceneScale,
-      canvasScaleFactor(canvas.components.CanvasScaler, cw, ch),
+      canvasScaleFactor(inheritedCanvas.components.CanvasScaler, cw, ch),
     );
     if (depthBase === 0 || laid.some((item) => selectedIds.has(item.entity))) {
       layoutScale = componentSceneScale;
@@ -1003,6 +1286,28 @@ export function uiEntityWorldPivot(
   entityId: number,
   canvasSize?: { w: number; h: number },
 ): { position: Vec3; size: number } | null {
+  const renderRoot = canvasLayoutRootForEntity(entities, entityId);
+  if (renderRoot) {
+    const inherited = outermostCanvas(entities, renderRoot);
+    const canvas = inherited.components.Canvas as { render_mode?: string; renderMode?: string };
+    if ((canvas.render_mode ?? canvas.renderMode) === 'WorldSpace') {
+      const context = worldCanvasLayoutContext(entities, renderRoot, new Set([entityId]));
+      const item = context.items.find((candidate) => candidate.entity === entityId);
+      if (!item) return null;
+      const pivot = rectPivot(item.rect, item.pivot);
+      const corners = pixelCorners(item.rect, item.rotation, item.pivot)
+        .map(([x, y]) => context.pixelToWorld(x, y));
+      const edgeLength = (left: Vec3, right: Vec3) => Math.hypot(
+        right[0] - left[0],
+        right[1] - left[1],
+        right[2] - left[2],
+      );
+      return {
+        position: context.pixelToWorld(pivot.x, pivot.y),
+        size: Math.max(0.5, edgeLength(corners[0], corners[1]), edgeLength(corners[0], corners[3])),
+      };
+    }
+  }
   const canvases = entities.filter((e) => e.components.Canvas && e.active !== false);
   for (const canvas of canvases) {
     const size =
@@ -1027,6 +1332,18 @@ export function uiEntityWorldPivot(
 }
 
 function pointInUiItem(px: number, py: number, it: UiDrawItem): boolean {
+  if (it.screenCorners?.length === 4) {
+    let sign = 0;
+    for (let index = 0; index < 4; index++) {
+      const a = it.screenCorners[index];
+      const b = it.screenCorners[(index + 1) % 4];
+      const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+      if (Math.abs(cross) < 1e-4) continue;
+      if (sign === 0) sign = Math.sign(cross);
+      else if (Math.sign(cross) !== sign) return false;
+    }
+    return true;
+  }
   if (it.role === 'canvas' || Math.abs(it.rotation) < 1e-4) {
     return pointInRect(px, py, it.rect);
   }
@@ -1114,18 +1431,48 @@ export function buildUiBatches(items: UiDrawItem[]): UiBatch[] {
   return batches;
 }
 
+function screenQuadUv(
+  corners: Array<{ x: number; y: number }>,
+  point: { x: number; y: number },
+): { u: number; v: number } | null {
+  if (corners.length !== 4) return null;
+  const triangles = [
+    { indices: [0, 1, 2], uv: [[0, 0], [1, 0], [1, 1]] },
+    { indices: [0, 2, 3], uv: [[0, 0], [1, 1], [0, 1]] },
+  ];
+  for (const triangle of triangles) {
+    const [a, b, c] = triangle.indices.map((index) => corners[index]);
+    const denominator = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+    if (Math.abs(denominator) <= 1e-6) continue;
+    const wa = ((b.y - c.y) * (point.x - c.x) + (c.x - b.x) * (point.y - c.y))
+      / denominator;
+    const wb = ((c.y - a.y) * (point.x - c.x) + (a.x - c.x) * (point.y - c.y))
+      / denominator;
+    const wc = 1 - wa - wb;
+    if (wa < -1e-4 || wb < -1e-4 || wc < -1e-4) continue;
+    return {
+      u: wa * triangle.uv[0][0] + wb * triangle.uv[1][0] + wc * triangle.uv[2][0],
+      v: wa * triangle.uv[0][1] + wb * triangle.uv[1][1] + wc * triangle.uv[2][1],
+    };
+  }
+  return null;
+}
+
 export function sliderValueAtPoint(it: UiDrawItem, x: number, y: number): number | null {
   const slider = it.slider;
   if (!slider || !slider.interactable) return null;
   const pivot = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
-  let t = normalizedRangePosition(
-    { x, y },
-    pivot,
-    { w: it.rect.w, h: it.rect.h },
-    it.pivot,
-    it.rotation,
-    slider.direction,
-  );
+  const projected = it.screenCorners ? screenQuadUv(it.screenCorners, { x, y }) : null;
+  let t = projected
+    ? (isVerticalRange(slider.direction) ? projected.v : projected.u)
+    : normalizedRangePosition(
+        { x, y },
+        pivot,
+        { w: it.rect.w, h: it.rect.h },
+        it.pivot,
+        it.rotation,
+        slider.direction,
+      );
   if (slider.direction === 'RightToLeft' || slider.direction === 'BottomToTop') t = 1 - t;
   t = Math.max(0, Math.min(1, t));
   const low = Math.min(slider.min, slider.max);
@@ -1139,14 +1486,17 @@ export function scrollbarValueAtPoint(it: UiDrawItem, x: number, y: number): num
   const scrollbar = it.scrollbar;
   if (!scrollbar || !scrollbar.interactable) return null;
   const pivot = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
-  const normalized = normalizedRangePosition(
-    { x, y },
-    pivot,
-    { w: it.rect.w, h: it.rect.h },
-    it.pivot,
-    it.rotation,
-    scrollbar.direction,
-  );
+  const projected = it.screenCorners ? screenQuadUv(it.screenCorners, { x, y }) : null;
+  const normalized = projected
+    ? (isVerticalRange(scrollbar.direction) ? projected.v : projected.u)
+    : normalizedRangePosition(
+        { x, y },
+        pivot,
+        { w: it.rect.w, h: it.rect.h },
+        it.pivot,
+        it.rotation,
+        scrollbar.direction,
+      );
   return scrollbarValueFromPosition(
     normalized,
     scrollbar.size,
@@ -1220,7 +1570,7 @@ export function hitTestUiSelect(items: UiDrawItem[], x: number, y: number): UiDr
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.role !== 'canvas') continue;
-    if (pointInRect(x, y, it.rect)) return it;
+    if (pointInUiItem(x, y, it)) return it;
   }
   return null;
 }
@@ -1274,21 +1624,34 @@ export function drawUiItems(
     ctx.save();
     ctx.globalAlpha *= Math.max(0, Math.min(1, it.opacity));
     if (it.role === 'canvas') {
+      const strokeCanvas = () => {
+        if (it.screenCorners?.length === 4) {
+          ctx.beginPath();
+          ctx.moveTo(it.screenCorners[0].x, it.screenCorners[0].y);
+          for (let index = 1; index < 4; index++) {
+            ctx.lineTo(it.screenCorners[index].x, it.screenCorners[index].y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        } else {
+          ctx.strokeRect(x, y, w, h);
+        }
+      };
       if (showLabel) {
         ctx.setLineDash([]);
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.92)';
         ctx.lineWidth = it.selected ? 5 : 4;
-        ctx.strokeRect(x, y, w, h);
+        strokeCanvas();
         ctx.strokeStyle = it.selected ? '#77d2ff' : '#4db6ea';
         ctx.lineWidth = it.selected ? 2.5 : 1.5;
-        ctx.strokeRect(x, y, w, h);
+        strokeCanvas();
       } else {
         ctx.setLineDash([]);
         ctx.strokeStyle = it.selected
           ? 'rgba(100, 200, 255, 0.95)'
           : 'rgba(140, 160, 200, 0.55)';
         ctx.lineWidth = it.selected ? 2 : 1.25;
-        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        strokeCanvas();
       }
       ctx.setLineDash([]);
       if (showLabel) {

@@ -39,8 +39,8 @@ use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::timeline::{RuntimeCameraOverride, RuntimeParticleCommand, TimelineRuntime};
 use mengine_runtime::ui::{
-    append_ui_focus_ring, collect_ui_frame_with_hierarchy, next_ui_focus, set_toggle_value,
-    UiControlKind, UiControlRegion,
+    append_ui_focus_ring, collect_ui_frame_with_hierarchy_and_camera, next_ui_focus,
+    set_toggle_value, UiControlKind, UiControlRegion,
 };
 use mengine_scene::load_scene;
 use mengine_script::{
@@ -1697,11 +1697,13 @@ function onTick(dt, frame) {
                         .as_ref()
                         .map(|window| window.inner_size())
                         .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
-                    let mut ui = collect_ui_frame_with_hierarchy(
+                    let mut ui = collect_ui_frame_with_hierarchy_and_camera(
                         &self.world,
                         &hierarchy,
                         window_size.width,
                         window_size.height,
+                        camera,
+                        &self.sorting_layers,
                     );
                     append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
                     let mut world_primitives = collect_world_primitives_with_hierarchy(
@@ -1720,6 +1722,9 @@ function onTick(dt, frame) {
                         );
                     world_primitives.extend(particle_primitives);
                     apply_2d_lighting(&self.world, &hierarchy, &mut world_primitives);
+                    // World Space Canvas uses Unity-style Sorting Layer/Order alongside other 2D
+                    // renderers, but joins after lighting because standard UI is unlit.
+                    world_primitives.append(&mut ui.world_primitives);
                     if !world_primitives.is_empty() {
                         sort_world_primitives(&mut world_primitives, &self.sorting_layers);
                         let mut primitives = world_primitives

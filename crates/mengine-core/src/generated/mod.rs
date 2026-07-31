@@ -1489,6 +1489,10 @@ impl Component for SpineSkeleton {
 #[serde(default)]
 pub struct Canvas {
     pub render_mode: String,
+    pub render_camera: String,
+    pub pixel_perfect: bool,
+    pub override_sorting: bool,
+    pub sorting_layer: String,
     pub sorting_order: i32,
     pub plane_distance: f32,
 }
@@ -1497,6 +1501,10 @@ impl Default for Canvas {
     fn default() -> Self {
         Self {
             render_mode: "ScreenSpaceOverlay".into(),
+            render_camera: "".into(),
+            pixel_perfect: false,
+            override_sorting: false,
+            sorting_layer: "default".into(),
             sorting_order: 0,
             plane_distance: 100.0,
         }

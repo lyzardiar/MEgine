@@ -94,6 +94,10 @@ export class SpriteRenderer {
 export class Canvas {
   static readonly typeName = 'Canvas' as const;
   render_mode!: string;
+  render_camera!: string;
+  pixel_perfect!: boolean;
+  override_sorting!: boolean;
+  sorting_layer!: string;
   sorting_order!: number;
   plane_distance!: number;
 }

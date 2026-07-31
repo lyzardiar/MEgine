@@ -356,6 +356,7 @@ export function NamedReferenceField(props: {
         <button
           type="button"
           className="object-slot-name-btn"
+          aria-label={`${props.label}: ${selected?.label ?? (props.value || `None (${props.referenceType})`)}`}
           onClick={() => {
             setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);
@@ -381,6 +382,7 @@ export function NamedReferenceField(props: {
             type="button"
             className="object-slot-clear"
             title="Clear"
+            aria-label={`Clear ${props.label}`}
             onClick={() => props.onChange('')}
           >
             ×

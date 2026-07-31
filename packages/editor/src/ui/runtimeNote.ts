@@ -8,8 +8,8 @@ export const UI_RUNTIME_HOST = 'editor-game-viewport' as const;
 
 export function describeUiRuntimePath(): string {
   return (
-    'Canvas ScreenSpaceOverlay is previewed in Editor Game view and rendered by the native ' +
-    'wgpu runtime. Image, Text, Button, Toggle and Slider share scene data; adjacent compatible ' +
-    'primitives are submitted as instanced GPU batches.'
+    'Canvas Overlay, Camera and World Space modes are previewed in Editor Game view and rendered ' +
+    'by the native wgpu runtime. Camera/world quads use scene depth; Image, Text, Button, Toggle ' +
+    'and Slider share scene data and adjacent compatible primitives use instanced GPU batches.'
   );
 }

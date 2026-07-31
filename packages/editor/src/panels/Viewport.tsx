@@ -89,6 +89,7 @@ import {
   hitTestUiSelect,
   layoutUiOverlay,
   layoutUiScene3D,
+  layoutUiWorldSpace,
   scrollbarValueAtPoint,
   sliderValueAtPoint,
   uiPointAction,
@@ -1565,8 +1566,13 @@ export function Viewport(props: {
       const sel = p.entities.find((e) => e.entity === p.selected);
       const t = sel ? (resolvedTransform(worldTransforms, sel.entity) ?? undefined) : undefined;
       const hasRect = !!sel?.components.RectTransform;
+      const canvasMode = sel?.components.Canvas as
+        | { render_mode?: string; renderMode?: string }
+        | undefined;
+      const isWorldCanvas = (canvasMode?.render_mode ?? canvasMode?.renderMode) === 'WorldSpace';
+      const useRectGizmo = hasRect && (!isWorldCanvas || p.gizmo === 'rect');
       // UI 优先用 2D Rect 轴；纯 3D 才用世界坐标轴
-      if (hasRect) {
+      if (useRectGizmo) {
         usingRectGizmoRef.current = true;
         gizmoHitsRef.current = [];
       } else if (t) {
@@ -1655,7 +1661,10 @@ export function Viewport(props: {
         const logicalUiSize = p.gameResolution
           ? { w: p.gameResolution.width, h: p.gameResolution.height }
           : { w: uiRoot.w, h: uiRoot.h };
-        const uiItems = layoutUiOverlay(p.entities, uiRoot, selSet, logicalUiSize);
+        const uiItems = [
+          ...layoutUiWorldSpace(p.entities, cam, vp, selSet),
+          ...layoutUiOverlay(p.entities, uiRoot, selSet, logicalUiSize),
+        ];
         uiItemsRef.current = uiItems;
 
         let layoutScale = 1;
@@ -1696,13 +1705,17 @@ export function Viewport(props: {
       } else {
         // 与 Game 同一 letterbox 尺寸，竖屏时 Scene Canvas 也是竖图
         const gameBox = letterbox(pw, ph, p.gameResolution);
-        const { items: uiItems, layoutScale } = layoutUiScene3D(
+        const { items: screenUiItems, layoutScale } = layoutUiScene3D(
           p.entities,
           cam,
           vp,
           selSet,
           { w: gameBox.w, h: gameBox.h },
         );
+        const uiItems = [
+          ...layoutUiWorldSpace(p.entities, cam, vp, selSet),
+          ...screenUiItems,
+        ];
         uiItemsRef.current = uiItems;
         uiLayoutScaleRef.current = layoutScale || 1;
 

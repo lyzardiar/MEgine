@@ -244,9 +244,14 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
   {
     type: 'Canvas',
     label: 'Canvas',
-    description: 'UI 画布（Screen Space Overlay）',
+    description: 'Unity-style screen overlay, camera-plane, or world-space UI canvas',
+    requires: ['RectTransform', 'Transform'],
     create: () => ({
       render_mode: 'ScreenSpaceOverlay',
+      render_camera: '',
+      pixel_perfect: false,
+      override_sorting: false,
+      sorting_layer: 'default',
       sorting_order: 0,
       plane_distance: 100,
     }),
@@ -657,9 +662,18 @@ export function componentRemovalBlockers(
 
 export function createUiCanvasComponents(): Record<string, unknown> {
   return {
+    Transform: {
+      position: [0, 0, 0],
+      rotation: [0, 0, 0, 1],
+      scale: [1, 1, 1],
+    },
     RectTransform: stretchRectTransform(),
     Canvas: {
       render_mode: 'ScreenSpaceOverlay',
+      render_camera: '',
+      pixel_perfect: false,
+      override_sorting: false,
+      sorting_layer: 'default',
       sorting_order: 0,
       plane_distance: 100,
     },

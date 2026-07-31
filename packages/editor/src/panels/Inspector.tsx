@@ -773,9 +773,12 @@ function GenericCompEditor(props: {
         const visibilityConditions = meta?.visibleWhen
           ? (Array.isArray(meta.visibleWhen) ? meta.visibleWhen : [meta.visibleWhen])
           : [];
-        if (visibilityConditions.some((condition) => (
-          viewData[condition.field] !== condition.equals
-        ))) return null;
+        if (visibilityConditions.some((condition) => {
+          const accepted = Array.isArray(condition.equals)
+            ? condition.equals
+            : [condition.equals];
+          return !accepted.includes(viewData[condition.field]);
+        })) return null;
         const label = meta?.label ?? inspectorLabel(key);
         const semanticLabel = props.componentType
           ? `${getComponentCatalog().find((entry) => entry.type === props.componentType)?.label
@@ -867,7 +870,7 @@ function GenericCompEditor(props: {
               label={label}
               value={typeof val === 'string' ? val : ''}
               referenceType={meta.referenceType ?? 'Object'}
-              options={meta.options ?? []}
+              options={props.dynamicOptions?.[key] ?? meta.options ?? []}
               allowNone={meta.allowNone}
               onChange={setValue}
             />
@@ -1119,6 +1122,29 @@ function SpineSkeletonEditor(props: {
         <div className="field-hint field-error">Could not read Spine animations or skins.</div>
       )}
     </>
+  );
+}
+
+function CanvasEditor(props: {
+  data: Record<string, unknown>;
+  entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  onChange: (next: Record<string, unknown>) => void;
+}) {
+  const cameras = props.entities
+    .filter((entity) => entity.components.Camera2D != null || entity.components.Camera3D != null)
+    .map((entity) => ({
+      value: String(entity.entity),
+      label: entity.name?.trim() || `Camera ${entity.entity}`,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label));
+  return (
+    <GenericCompEditor
+      componentType="Canvas"
+      data={props.data}
+      entities={props.entities}
+      dynamicOptions={{ render_camera: cameras }}
+      onChange={props.onChange}
+    />
   );
 }
 
@@ -1921,6 +1947,12 @@ export function Inspector(props: {
                 onInvokeMethod={(method) =>
                   props.onInvokeBehaviourMethod?.(entity.entity, k, method)
                 }
+              />
+            ) : k === 'Canvas' ? (
+              <CanvasEditor
+                data={data}
+                entities={props.entities ?? [entity]}
+                onChange={(next) => props.onSetComponent(entity.entity, 'Canvas', next)}
               />
             ) : k === 'Camera3D' ? (
               <Camera3DEditor

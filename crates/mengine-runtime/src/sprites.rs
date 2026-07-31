@@ -269,12 +269,15 @@ fn project_line(
                     color: line.color,
                     pivot: [0.5, 0.5],
                     rotation_radians: dy.atan2(dx),
+                    depth: 0.0,
+                    clip_corners: None,
                     uv: [0.0, 0.0, 1.0, 1.0],
                     key: UiBatchKey {
                         material: "line2d/default".into(),
                         texture: "white".into(),
                         clip: None,
                         blend: UiBlendMode::Alpha,
+                        depth_test: false,
                     },
                 },
             })
@@ -363,6 +366,8 @@ fn project_sprite(
             color: sprite.color,
             pivot: screen_pivot,
             rotation_radians: (right[1] - center[1]).atan2(right[0] - center[0]),
+            depth: 0.0,
+            clip_corners: None,
             uv: [
                 if sprite.flip_x { 1.0 } else { 0.0 },
                 if sprite.flip_y { 1.0 } else { 0.0 },
@@ -378,6 +383,7 @@ fn project_sprite(
                 },
                 clip: None,
                 blend: UiBlendMode::Alpha,
+                depth_test: false,
             },
         },
     })

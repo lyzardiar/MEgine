@@ -1,11 +1,17 @@
+use crate::sorting::{SortingLayers, WorldPrimitive, WorldPrimitiveKind};
+use glam::{Mat4, Quat, Vec3};
 use mengine_core::generated::{
-    AspectRatioFitter, Button, Canvas, CanvasGroup, CanvasScaler, ContentSizeFitter, Dropdown,
-    Image, InputField, LayoutGroup, ListView, Outline, Panel, ProgressBar, RawImage, RectMask2D,
-    RectTransform, ScrollView, Scrollbar, Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
+    AspectRatioFitter, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
+    ContentSizeFitter, Dropdown, Image, InputField, LayoutGroup, ListView, Outline, Panel,
+    ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar, Shadow, Slider,
+    TabView, Text, Toggle, ToggleGroup,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, TransformHierarchy, World};
-use mengine_rhi::{UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect, UiPrimitive};
+use mengine_rhi::{
+    look_at, orthographic, perspective, FrameCamera, UiBatchKey, UiBatchPlan, UiBlendMode,
+    UiClipRect, UiPrimitive,
+};
 use serde_json::Value;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -56,6 +62,8 @@ pub struct UiControlRegion {
     pub clip: UiClipRect,
     pub rotation_radians: f32,
     pub pivot: [f32; 2],
+    /// Projected screen quad for perspective World Space Canvas hit testing.
+    pub corners: Option<[[f32; 2]; 4]>,
     pub kind: UiControlKind,
     pub callback: Value,
 }
@@ -68,6 +76,23 @@ impl UiControlRegion {
             || y > (self.clip.y + self.clip.height) as f32
         {
             return false;
+        }
+        if let Some(corners) = self.corners {
+            let mut sign = 0.0_f32;
+            for index in 0..4 {
+                let a = corners[index];
+                let b = corners[(index + 1) % 4];
+                let cross = (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]);
+                if cross.abs() <= 0.0001 {
+                    continue;
+                }
+                if sign == 0.0 {
+                    sign = cross.signum();
+                } else if cross.signum() != sign {
+                    return false;
+                }
+            }
+            return true;
         }
         let pivot_x = self.rect.x + self.rect.width * self.pivot[0];
         let pivot_y = self.rect.y + self.rect.height * self.pivot[1];
@@ -107,18 +132,26 @@ impl UiControlRegion {
             ),
             _ => return None,
         };
-        let pivot_x = self.rect.x + self.rect.width * self.pivot[0];
-        let pivot_y = self.rect.y + self.rect.height * self.pivot[1];
-        let dx = x - pivot_x;
-        let dy = y - pivot_y;
-        let c = self.rotation_radians.cos();
-        let s = self.rotation_radians.sin();
-        let local_x = dx * c + dy * s + self.rect.width * self.pivot[0];
-        let local_y = -dx * s + dy * c + self.rect.height * self.pivot[1];
-        let mut t = if direction == "LeftToRight" || direction == "RightToLeft" {
-            local_x / self.rect.width.max(1.0)
+        let [u, v] = if let Some(corners) = self.corners {
+            quad_uv(corners, [x, y])?
         } else {
-            local_y / self.rect.height.max(1.0)
+            let pivot_x = self.rect.x + self.rect.width * self.pivot[0];
+            let pivot_y = self.rect.y + self.rect.height * self.pivot[1];
+            let dx = x - pivot_x;
+            let dy = y - pivot_y;
+            let c = self.rotation_radians.cos();
+            let s = self.rotation_radians.sin();
+            let local_x = dx * c + dy * s + self.rect.width * self.pivot[0];
+            let local_y = -dx * s + dy * c + self.rect.height * self.pivot[1];
+            [
+                local_x / self.rect.width.max(1.0),
+                local_y / self.rect.height.max(1.0),
+            ]
+        };
+        let mut t = if direction == "LeftToRight" || direction == "RightToLeft" {
+            u
+        } else {
+            v
         };
         if handle_size > 0.0 {
             t = (t - handle_size * 0.5) / (1.0 - handle_size).max(0.0001);
@@ -138,6 +171,34 @@ impl UiControlRegion {
         }
         Some(value)
     }
+}
+
+fn quad_uv(corners: [[f32; 2]; 4], point: [f32; 2]) -> Option<[f32; 2]> {
+    let triangles = [
+        ([0_usize, 1, 2], [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0]]),
+        ([0_usize, 2, 3], [[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]]),
+    ];
+    for (indices, uv) in triangles {
+        let a = corners[indices[0]];
+        let b = corners[indices[1]];
+        let c = corners[indices[2]];
+        let denominator = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
+        if denominator.abs() <= 0.000001 {
+            continue;
+        }
+        let wa =
+            ((b[1] - c[1]) * (point[0] - c[0]) + (c[0] - b[0]) * (point[1] - c[1])) / denominator;
+        let wb =
+            ((c[1] - a[1]) * (point[0] - c[0]) + (a[0] - c[0]) * (point[1] - c[1])) / denominator;
+        let wc = 1.0 - wa - wb;
+        if wa >= -0.0001 && wb >= -0.0001 && wc >= -0.0001 {
+            return Some([
+                wa * uv[0][0] + wb * uv[1][0] + wc * uv[2][0],
+                wa * uv[0][1] + wb * uv[1][1] + wc * uv[2][1],
+            ]);
+        }
+    }
+    None
 }
 
 pub fn next_ui_focus(
@@ -334,6 +395,9 @@ pub fn set_toggle_value(world: &mut World, target: Entity, requested_on: bool) -
 #[derive(Clone, Debug, Default)]
 pub struct RuntimeUiFrame {
     pub plan: UiBatchPlan,
+    /// World Space Canvas output participates in the same Sorting Layer/Order queue as 2D
+    /// renderers. It remains separate until after 2D lighting so ordinary UI shaders are not lit.
+    pub world_primitives: Vec<WorldPrimitive>,
     pub controls: Vec<UiControlRegion>,
 }
 
@@ -374,6 +438,35 @@ pub fn collect_ui_frame_with_hierarchy(
     width: u32,
     height: u32,
 ) -> RuntimeUiFrame {
+    collect_ui_frame_internal(world, hierarchy, width, height, None, None)
+}
+
+pub fn collect_ui_frame_with_hierarchy_and_camera(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    width: u32,
+    height: u32,
+    active_camera: FrameCamera,
+    sorting_layers: &SortingLayers,
+) -> RuntimeUiFrame {
+    collect_ui_frame_internal(
+        world,
+        hierarchy,
+        width,
+        height,
+        Some(active_camera),
+        Some(sorting_layers),
+    )
+}
+
+fn collect_ui_frame_internal(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    width: u32,
+    height: u32,
+    active_camera: Option<FrameCamera>,
+    sorting_layers: Option<&SortingLayers>,
+) -> RuntimeUiFrame {
     let root = UiRect {
         x: 0.0,
         y: 0.0,
@@ -383,46 +476,78 @@ pub fn collect_ui_frame_with_hierarchy(
     let mut canvases: Vec<Entity> = world
         .iter_entities()
         .filter(|entity| {
-            hierarchy.is_active(*entity) && world.get_component::<Canvas>(*entity).is_some()
+            hierarchy.is_active(*entity)
+                && world.get_component::<Canvas>(*entity).is_some()
+                && is_canvas_render_root(world, *entity)
         })
         .collect();
-    canvases.sort_by_key(|entity| {
-        world
-            .get_component::<Canvas>(*entity)
-            .map(|canvas| canvas.sorting_order)
-            .unwrap_or_default()
-    });
+    canvases.sort_by_key(|entity| canvas_sort_key(world, *entity, sorting_layers));
 
     let mut primitives = Vec::new();
+    let mut world_primitives = Vec::new();
     let mut controls = Vec::new();
     for canvas_entity in canvases {
-        let Some(canvas) = world.get_component::<Canvas>(canvas_entity) else {
+        let Some(authored_canvas) = world.get_component::<Canvas>(canvas_entity) else {
             continue;
         };
-        if canvas.render_mode != "ScreenSpaceOverlay" && canvas.render_mode != "ScreenSpaceCamera" {
+        let inherited_canvas_entity = outermost_canvas(world, canvas_entity);
+        let mut canvas = world
+            .get_component::<Canvas>(inherited_canvas_entity)
+            .cloned()
+            .unwrap_or_else(|| authored_canvas.clone());
+        if authored_canvas.override_sorting {
+            canvas.override_sorting = true;
+            canvas.sorting_layer = authored_canvas.sorting_layer.clone();
+            canvas.sorting_order = authored_canvas.sorting_order;
+        }
+        if canvas.render_mode != "ScreenSpaceOverlay"
+            && canvas.render_mode != "ScreenSpaceCamera"
+            && canvas.render_mode != "WorldSpace"
+        {
             continue;
         }
-        let scaler = world.get_component::<CanvasScaler>(canvas_entity);
-        let scale = scaler
-            .map(|value| canvas_scale_factor(value, root.width, root.height))
-            .unwrap_or(1.0);
+        let world_space = canvas.render_mode == "WorldSpace";
+        let scaler = world.get_component::<CanvasScaler>(inherited_canvas_entity);
+        let scale = if world_space {
+            1.0
+        } else {
+            scaler
+                .map(|value| canvas_scale_factor(value, root.width, root.height))
+                .unwrap_or(1.0)
+        };
         let sprite_pixel_scale = scaler
             .map(|value| canvas_sprite_pixel_scale(value, scale))
             .unwrap_or(scale);
-        let canvas_rect = world
-            .get_component::<RectTransform>(canvas_entity)
-            .map(|rect| solve_rect(root, rect, scale))
-            .unwrap_or(root);
-        let clip = UiClipRect {
-            x: root.x.max(0.0) as u32,
-            y: root.y.max(0.0) as u32,
-            width: root.width.max(1.0) as u32,
-            height: root.height.max(1.0) as u32,
+        let canvas_rect_transform = world
+            .get_component::<RectTransform>(inherited_canvas_entity)
+            .cloned()
+            .unwrap_or_default();
+        let world_canvas_root_rect = world_canvas_rect(&canvas_rect_transform, scaler);
+        let canvas_rect = if world_space {
+            canvas_rect_in_root(
+                world,
+                canvas_entity,
+                inherited_canvas_entity,
+                world_canvas_root_rect,
+                1.0,
+            )
+        } else {
+            screen_canvas_rect(world, canvas_entity, inherited_canvas_entity, root, scale)
         };
+        let clip_root = if world_space { canvas_rect } else { root };
+        let clip = UiClipRect {
+            x: clip_root.x.max(0.0) as u32,
+            y: clip_root.y.max(0.0) as u32,
+            width: clip_root.width.max(1.0) as u32,
+            height: clip_root.height.max(1.0) as u32,
+        };
+        let primitive_start = primitives.len();
+        let control_start = controls.len();
         for child in children_of(world, canvas_entity) {
             walk(
                 world,
                 child,
+                canvas_entity,
                 UiWalkLayout {
                     parent_rect: canvas_rect,
                     scale,
@@ -435,23 +560,542 @@ pub fn collect_ui_frame_with_hierarchy(
                 &mut controls,
             );
         }
+        if canvas.pixel_perfect && !world_space {
+            snap_canvas_output_to_pixels(
+                &mut primitives[primitive_start..],
+                &mut controls[control_start..],
+            );
+        }
+        let mut world_sort_depth = None;
+        if canvas.render_mode == "ScreenSpaceCamera" {
+            let camera = active_camera.map(|fallback| {
+                resolve_canvas_camera(world, hierarchy, &canvas, root.width / root.height.max(1.0))
+                    .unwrap_or(fallback)
+            });
+            if let Some(camera) = camera {
+                let depth = screen_space_camera_depth(camera, canvas.plane_distance);
+                for primitive in &mut primitives[primitive_start..] {
+                    primitive.depth = depth;
+                    primitive.key.depth_test = true;
+                }
+            }
+        } else if world_space {
+            if let Some(camera) = active_camera.map(|fallback| {
+                resolve_canvas_camera(world, hierarchy, &canvas, root.width / root.height.max(1.0))
+                    .unwrap_or(fallback)
+            }) {
+                world_sort_depth = project_world_canvas_output(
+                    world,
+                    hierarchy,
+                    inherited_canvas_entity,
+                    &canvas_rect_transform,
+                    world_canvas_root_rect,
+                    scaler,
+                    camera,
+                    [width.max(1), height.max(1)],
+                    &mut primitives,
+                    primitive_start,
+                    &mut controls,
+                    control_start,
+                );
+            } else {
+                primitives.truncate(primitive_start);
+                controls.truncate(control_start);
+            }
+        }
+        if world_space {
+            let sort_depth = world_sort_depth.or_else(|| {
+                primitives[primitive_start..]
+                    .first()
+                    .map(|primitive| primitive.depth)
+            });
+            if let Some(sort_depth) = sort_depth {
+                world_primitives.extend(primitives.drain(primitive_start..).map(|primitive| {
+                    WorldPrimitive {
+                        kind: WorldPrimitiveKind::TwoD,
+                        sorting_layer: canvas.sorting_layer.clone(),
+                        sorting_order: canvas.sorting_order,
+                        depth: sort_depth,
+                        world_position: None,
+                        primitive,
+                    }
+                }));
+            }
+        }
     }
 
     RuntimeUiFrame {
         plan: UiBatchPlan::build(primitives),
+        world_primitives,
         controls,
+    }
+}
+
+fn canvas_render_rank(mode: &str) -> u8 {
+    match mode {
+        "WorldSpace" => 0,
+        "ScreenSpaceCamera" => 1,
+        _ => 2,
+    }
+}
+
+fn is_canvas_render_root(world: &World, entity: Entity) -> bool {
+    !has_canvas_ancestor(world, entity)
+        || world
+            .get_component::<Canvas>(entity)
+            .is_some_and(|canvas| canvas.override_sorting)
+}
+
+fn outermost_canvas(world: &World, entity: Entity) -> Entity {
+    let mut result = entity;
+    let mut current = world
+        .get_component::<Parent>(entity)
+        .map(|value| value.entity);
+    let mut guard = 0usize;
+    while let Some(parent) = current {
+        if world.get_component::<Canvas>(parent).is_some() {
+            result = parent;
+        }
+        guard += 1;
+        if guard > 4096 {
+            break;
+        }
+        current = world
+            .get_component::<Parent>(parent)
+            .map(|value| value.entity);
+    }
+    result
+}
+
+fn canvas_sort_key(
+    world: &World,
+    entity: Entity,
+    sorting_layers: Option<&SortingLayers>,
+) -> (u8, usize, i32) {
+    let authored = world.get_component::<Canvas>(entity);
+    let inherited = world.get_component::<Canvas>(outermost_canvas(world, entity));
+    let mode = inherited
+        .or(authored)
+        .map(|canvas| canvas.render_mode.as_str())
+        .unwrap_or("ScreenSpaceOverlay");
+    let source = authored
+        .filter(|canvas| canvas.override_sorting)
+        .or(inherited);
+    let layer = source
+        .map(|canvas| canvas.sorting_layer.as_str())
+        .unwrap_or("default");
+    let order = source
+        .map(|canvas| canvas.sorting_order)
+        .unwrap_or_default();
+    (
+        canvas_render_rank(mode),
+        sorting_layers
+            .map(|layers| layers.rank(layer))
+            .unwrap_or_default(),
+        order,
+    )
+}
+
+fn screen_canvas_rect(
+    world: &World,
+    entity: Entity,
+    root_canvas: Entity,
+    screen: UiRect,
+    scale: f32,
+) -> UiRect {
+    let root_transform = world
+        .get_component::<RectTransform>(root_canvas)
+        .cloned()
+        .unwrap_or_default();
+    let rect = solve_rect(screen, &root_transform, scale);
+    canvas_rect_in_root(world, entity, root_canvas, rect, scale)
+}
+
+fn canvas_rect_in_root(
+    world: &World,
+    entity: Entity,
+    root_canvas: Entity,
+    root_rect: UiRect,
+    scale: f32,
+) -> UiRect {
+    let mut rect = root_rect;
+    if entity == root_canvas {
+        return rect;
+    }
+    let mut chain = Vec::new();
+    let mut current = world
+        .get_component::<Parent>(entity)
+        .map(|value| value.entity);
+    let mut guard = 0usize;
+    while let Some(parent) = current {
+        if parent == root_canvas {
+            break;
+        }
+        chain.push(parent);
+        guard += 1;
+        if guard > 4096 {
+            return rect;
+        }
+        current = world
+            .get_component::<Parent>(parent)
+            .map(|value| value.entity);
+    }
+    for ancestor in chain.into_iter().rev() {
+        if let Some(transform) = world.get_component::<RectTransform>(ancestor) {
+            rect = solve_rect(rect, transform, scale);
+        }
+    }
+    world
+        .get_component::<RectTransform>(entity)
+        .map(|transform| solve_rect(rect, transform, scale))
+        .unwrap_or(rect)
+}
+
+fn world_canvas_rect(rect: &RectTransform, scaler: Option<&CanvasScaler>) -> UiRect {
+    let reference = scaler
+        .map(|value| value.reference_resolution)
+        .unwrap_or([800.0, 600.0]);
+    let dimension = |value: f32, fallback: f32| {
+        if value.is_finite() && value.abs() > 0.0001 {
+            value.abs()
+        } else if fallback.is_finite() && fallback > 0.0 {
+            fallback
+        } else {
+            100.0
+        }
+    };
+    UiRect {
+        x: 0.0,
+        y: 0.0,
+        width: dimension(rect.size_delta[0], reference[0]),
+        height: dimension(rect.size_delta[1], reference[1]),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn project_world_canvas_output(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    canvas_entity: Entity,
+    rect_transform: &RectTransform,
+    canvas_rect: UiRect,
+    scaler: Option<&CanvasScaler>,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+    primitives: &mut Vec<UiPrimitive>,
+    primitive_start: usize,
+    controls: &mut Vec<UiControlRegion>,
+    control_start: usize,
+) -> Option<f32> {
+    let world_matrix = hierarchy
+        .get(canvas_entity)
+        .or_else(|| hierarchy.parent_world(world, canvas_entity))
+        .map(|value| value.matrix)
+        .unwrap_or(Mat4::IDENTITY);
+    let pixels_per_unit = scaler
+        .map(|value| finite_positive(value.reference_pixels_per_unit, 100.0))
+        .unwrap_or(100.0);
+    let projection = WorldCanvasProjection {
+        world_matrix,
+        rect_transform,
+        canvas_rect,
+        pixels_per_unit,
+        camera,
+        viewport,
+    };
+    let sort_depth = projection.project_depth([
+        canvas_rect.x + canvas_rect.width * rect_transform.pivot[0],
+        canvas_rect.y + canvas_rect.height * rect_transform.pivot[1],
+    ]);
+
+    let projected_primitives = primitives
+        .drain(primitive_start..)
+        .filter_map(|mut primitive| {
+            let pixel_corners = rotated_pixel_corners(
+                UiRect {
+                    x: primitive.rect[0],
+                    y: primitive.rect[1],
+                    width: primitive.rect[2],
+                    height: primitive.rect[3],
+                },
+                primitive.rotation_radians,
+                primitive.pivot,
+            );
+            let (clip_corners, screen_corners) = projection.project_corners(pixel_corners)?;
+            let bounds = screen_bounds(screen_corners);
+            primitive.rect = [bounds.x, bounds.y, bounds.width, bounds.height];
+            primitive.pivot = [0.5, 0.5];
+            primitive.rotation_radians = 0.0;
+            primitive.depth = clip_corners
+                .iter()
+                .map(|corner| corner[2] / corner[3])
+                .sum::<f32>()
+                * 0.25;
+            primitive.clip_corners = Some(clip_corners);
+            primitive.key.depth_test = true;
+            if let Some(clip) = primitive.key.clip {
+                primitive.key.clip = Some(projection.project_clip(clip)?);
+            }
+            Some(primitive)
+        })
+        .collect::<Vec<_>>();
+    primitives.extend(projected_primitives);
+
+    let projected_controls = controls
+        .drain(control_start..)
+        .filter_map(|mut control| {
+            let pixel_corners =
+                rotated_pixel_corners(control.rect, control.rotation_radians, control.pivot);
+            let (_, screen_corners) = projection.project_corners(pixel_corners)?;
+            control.rect = screen_bounds(screen_corners);
+            control.rotation_radians = 0.0;
+            control.pivot = [0.5, 0.5];
+            control.corners = Some(screen_corners);
+            control.clip = projection.project_clip(control.clip)?;
+            Some(control)
+        })
+        .collect::<Vec<_>>();
+    controls.extend(projected_controls);
+    sort_depth
+}
+
+struct WorldCanvasProjection<'a> {
+    world_matrix: Mat4,
+    rect_transform: &'a RectTransform,
+    canvas_rect: UiRect,
+    pixels_per_unit: f32,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+}
+
+impl WorldCanvasProjection<'_> {
+    fn project_depth(&self, pixel: [f32; 2]) -> Option<f32> {
+        let world = self.pixel_to_world(pixel);
+        let value = self.camera.proj * self.camera.view * world.extend(1.0);
+        if !value.is_finite() || value.w <= 0.0001 || value.z < 0.0 || value.z > value.w {
+            return None;
+        }
+        Some(value.z / value.w)
+    }
+
+    fn project_corners(&self, pixels: [[f32; 2]; 4]) -> Option<([[f32; 4]; 4], [[f32; 2]; 4])> {
+        let mut clip = [[0.0; 4]; 4];
+        let mut screen = [[0.0; 2]; 4];
+        for index in 0..4 {
+            let world = self.pixel_to_world(pixels[index]);
+            let value = self.camera.proj * self.camera.view * world.extend(1.0);
+            if !value.is_finite() || value.w <= 0.0001 || value.z < 0.0 || value.z > value.w {
+                return None;
+            }
+            clip[index] = value.to_array();
+            let ndc = value.truncate() / value.w;
+            screen[index] = [
+                (ndc.x * 0.5 + 0.5) * self.viewport[0] as f32,
+                (0.5 - ndc.y * 0.5) * self.viewport[1] as f32,
+            ];
+        }
+        Some((clip, screen))
+    }
+
+    fn project_clip(&self, clip: UiClipRect) -> Option<UiClipRect> {
+        let x = clip.x as f32;
+        let y = clip.y as f32;
+        let width = clip.width as f32;
+        let height = clip.height as f32;
+        let (_, screen) = self.project_corners([
+            [x, y],
+            [x + width, y],
+            [x + width, y + height],
+            [x, y + height],
+        ])?;
+        let bounds = screen_bounds(screen);
+        let left = bounds.x.floor().clamp(0.0, self.viewport[0] as f32) as u32;
+        let top = bounds.y.floor().clamp(0.0, self.viewport[1] as f32) as u32;
+        let right = (bounds.x + bounds.width)
+            .ceil()
+            .clamp(left as f32, self.viewport[0] as f32) as u32;
+        let bottom = (bounds.y + bounds.height)
+            .ceil()
+            .clamp(top as f32, self.viewport[1] as f32) as u32;
+        (right > left && bottom > top).then_some(UiClipRect {
+            x: left,
+            y: top,
+            width: right - left,
+            height: bottom - top,
+        })
+    }
+
+    fn pixel_to_world(&self, pixel: [f32; 2]) -> Vec3 {
+        let pivot = self.rect_transform.pivot;
+        let x = (pixel[0] - self.canvas_rect.x - self.canvas_rect.width * pivot[0])
+            / self.pixels_per_unit;
+        let y = (self.canvas_rect.y + self.canvas_rect.height * pivot[1] - pixel[1])
+            / self.pixels_per_unit;
+        let local_scale = self.rect_transform.local_scale;
+        let local_rotation = Quat::from_rotation_z(self.rect_transform.local_rotation.to_radians());
+        let local = local_rotation * Vec3::new(x * local_scale[0], y * local_scale[1], 0.0)
+            + Vec3::new(
+                self.rect_transform.anchored_position[0] / self.pixels_per_unit,
+                self.rect_transform.anchored_position[1] / self.pixels_per_unit,
+                0.0,
+            );
+        self.world_matrix.transform_point3(local)
+    }
+}
+
+fn rotated_pixel_corners(rect: UiRect, rotation_radians: f32, pivot: [f32; 2]) -> [[f32; 2]; 4] {
+    let center = [
+        rect.x + rect.width * pivot[0],
+        rect.y + rect.height * pivot[1],
+    ];
+    let c = rotation_radians.cos();
+    let s = rotation_radians.sin();
+    let transform = |x: f32, y: f32| {
+        let dx = x - center[0];
+        let dy = y - center[1];
+        [center[0] + dx * c - dy * s, center[1] + dx * s + dy * c]
+    };
+    [
+        transform(rect.x, rect.y),
+        transform(rect.x + rect.width, rect.y),
+        transform(rect.x + rect.width, rect.y + rect.height),
+        transform(rect.x, rect.y + rect.height),
+    ]
+}
+
+fn screen_bounds(corners: [[f32; 2]; 4]) -> UiRect {
+    let mut left = f32::INFINITY;
+    let mut top = f32::INFINITY;
+    let mut right = f32::NEG_INFINITY;
+    let mut bottom = f32::NEG_INFINITY;
+    for point in corners {
+        left = left.min(point[0]);
+        top = top.min(point[1]);
+        right = right.max(point[0]);
+        bottom = bottom.max(point[1]);
+    }
+    UiRect {
+        x: left,
+        y: top,
+        width: (right - left).max(0.0),
+        height: (bottom - top).max(0.0),
+    }
+}
+
+fn has_canvas_ancestor(world: &World, entity: Entity) -> bool {
+    let mut current = world
+        .get_component::<Parent>(entity)
+        .map(|parent| parent.entity);
+    let mut guard = 0usize;
+    while let Some(parent) = current {
+        if world.get_component::<Canvas>(parent).is_some() {
+            return true;
+        }
+        guard += 1;
+        if guard > 4096 {
+            break;
+        }
+        current = world
+            .get_component::<Parent>(parent)
+            .map(|value| value.entity);
+    }
+    false
+}
+
+fn snap_canvas_output_to_pixels(primitives: &mut [UiPrimitive], controls: &mut [UiControlRegion]) {
+    for primitive in primitives {
+        primitive.rect = primitive.rect.map(f32::round);
+    }
+    for control in controls {
+        control.rect.x = control.rect.x.round();
+        control.rect.y = control.rect.y.round();
+        control.rect.width = control.rect.width.round();
+        control.rect.height = control.rect.height.round();
+    }
+}
+
+fn parse_entity_reference(value: &str) -> Option<Entity> {
+    let value = value.trim();
+    if value.is_empty() {
+        return None;
+    }
+    if let Some((index, generation)) = value.split_once(':') {
+        return Some(Entity::new(index.parse().ok()?, generation.parse().ok()?));
+    }
+    Some(Entity::from_u64(value.parse().ok()?))
+}
+
+fn resolve_canvas_camera(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    canvas: &Canvas,
+    aspect: f32,
+) -> Option<FrameCamera> {
+    let entity = parse_entity_reference(&canvas.render_camera)?;
+    let transform = hierarchy.get(entity)?.to_transform();
+    let position = Vec3::from(transform.position);
+    let rotation = safe_camera_rotation(transform.rotation);
+    let view = look_at(position, position + rotation * -Vec3::Z, rotation * Vec3::Y);
+    let aspect = aspect.max(0.001);
+    let proj = if let Some(camera) = world.get_component::<Camera2D>(entity) {
+        orthographic(camera.size.max(0.001), aspect, 0.01, 1000.0)
+    } else {
+        let camera = world.get_component::<Camera3D>(entity)?;
+        let near = camera.near.max(0.001);
+        let far = camera.far.max(near + 0.001);
+        if camera.projection.eq_ignore_ascii_case("orthographic") {
+            orthographic(camera.orthographic_size.max(0.001), aspect, near, far)
+        } else {
+            perspective(camera.fov_y_degrees.clamp(1.0, 179.0), aspect, near, far)
+        }
+    };
+    Some(FrameCamera {
+        view,
+        proj,
+        position,
+    })
+}
+
+fn safe_camera_rotation(value: [f32; 4]) -> Quat {
+    let rotation = Quat::from_xyzw(value[0], value[1], value[2], value[3]);
+    if rotation.is_finite() && rotation.length_squared() > 0.000001 {
+        rotation.normalize()
+    } else {
+        Quat::IDENTITY
+    }
+}
+
+fn screen_space_camera_depth(camera: FrameCamera, distance: f32) -> f32 {
+    let distance = if distance.is_finite() {
+        distance.max(0.01)
+    } else {
+        100.0
+    };
+    let clip = camera.proj * Vec3::new(0.0, 0.0, -distance).extend(1.0);
+    if clip.w.abs() > 0.000001 && clip.z.is_finite() {
+        (clip.z / clip.w).clamp(0.0, 1.0)
+    } else {
+        0.0
     }
 }
 
 fn walk(
     world: &World,
     entity: Entity,
+    canvas_root: Entity,
     layout_state: UiWalkLayout,
     inherited: UiInheritedState,
     primitives: &mut Vec<UiPrimitive>,
     controls: &mut Vec<UiControlRegion>,
 ) {
     if !world.entity_active(entity) {
+        return;
+    }
+    if entity != canvas_root
+        && world
+            .get_component::<Canvas>(entity)
+            .is_some_and(|canvas| canvas.override_sorting)
+    {
         return;
     }
     let rect_transform = world
@@ -612,6 +1256,7 @@ fn walk(
                 clip,
                 rotation_radians: rotation,
                 pivot,
+                corners: None,
                 kind: UiControlKind::Button,
                 callback: button.on_click.clone(),
             });
@@ -695,6 +1340,7 @@ fn walk(
                 clip,
                 rotation_radians: rotation,
                 pivot,
+                corners: None,
                 kind: UiControlKind::Toggle {
                     is_on: toggle.is_on,
                 },
@@ -776,6 +1422,7 @@ fn walk(
                 clip,
                 rotation_radians: rotation,
                 pivot,
+                corners: None,
                 kind: UiControlKind::Slider {
                     min: slider.min_value,
                     max: slider.max_value,
@@ -842,6 +1489,7 @@ fn walk(
                 clip,
                 rotation_radians: rotation,
                 pivot,
+                corners: None,
                 kind: UiControlKind::Scrollbar {
                     value: scrollbar.value,
                     size: scrollbar.size,
@@ -1301,6 +1949,7 @@ fn walk(
         walk(
             world,
             child,
+            canvas_root,
             UiWalkLayout {
                 parent_rect: child_parent,
                 scale,
@@ -1493,6 +2142,7 @@ fn control_region(
         clip,
         rotation_radians,
         pivot,
+        corners: None,
         kind,
         callback,
     }
@@ -1854,12 +2504,15 @@ fn primitive(
         color,
         pivot,
         rotation_radians,
+        depth: 0.0,
+        clip_corners: None,
         uv: [0.0, 0.0, 1.0, 1.0],
         key: UiBatchKey {
             material: material.into(),
             texture: texture.into(),
             clip: Some(clip),
             blend: UiBlendMode::Alpha,
+            depth_test: false,
         },
     }
 }
@@ -2274,6 +2927,504 @@ mod tests {
     }
 
     #[test]
+    fn nested_canvas_subtrees_are_collected_once() {
+        let mut world = World::new();
+        let root = world.spawn_empty();
+        world.insert_component(root, Canvas::default());
+        let nested = world.spawn_empty();
+        world.insert_component(nested, Canvas::default());
+        world.insert_component(nested, RectTransform::default());
+        world.set_parent(nested, Some(root));
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(nested));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert_eq!(
+            frame
+                .plan
+                .primitives
+                .iter()
+                .filter(|primitive| primitive.key.material == "ui/image")
+                .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn override_sorting_canvas_is_a_separate_inherited_render_root() {
+        let mut world = World::new();
+        let root = world.spawn_empty();
+        world.insert_component(
+            root,
+            Canvas {
+                render_mode: "ScreenSpaceCamera".into(),
+                plane_distance: 5.0,
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(
+            root,
+            RectTransform {
+                anchor_min: [0.0, 0.0],
+                anchor_max: [1.0, 1.0],
+                size_delta: [0.0, 0.0],
+                ..RectTransform::default()
+            },
+        );
+        let nested = world.spawn_empty();
+        world.insert_component(
+            nested,
+            Canvas {
+                override_sorting: true,
+                sorting_order: 10,
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(
+            nested,
+            RectTransform {
+                anchored_position: [100.0, 0.0],
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.set_parent(nested, Some(root));
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(nested));
+        let hierarchy = TransformHierarchy::build(&world);
+        let camera = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: perspective(60.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        };
+
+        let frame = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            camera,
+            &SortingLayers::default(),
+        );
+        assert_eq!(frame.plan.primitives.len(), 1);
+        assert!(frame.world_primitives.is_empty());
+        let primitive = &frame.plan.primitives[0];
+        assert!(
+            primitive.key.depth_test,
+            "nested Canvas inherits root render mode"
+        );
+        assert!(primitive.rect[0] + primitive.rect[2] * 0.5 > 400.0);
+    }
+
+    #[test]
+    fn screen_space_camera_uses_plane_depth_and_scene_depth_testing() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                render_mode: "ScreenSpaceCamera".into(),
+                plane_distance: 10.0,
+                ..Canvas::default()
+            },
+        );
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(canvas));
+        let hierarchy = TransformHierarchy::build(&world);
+        let camera = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 20.0), Vec3::ZERO, Vec3::Y),
+            proj: perspective(60.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 20.0),
+        };
+
+        let frame = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            camera,
+            &SortingLayers::default(),
+        );
+        assert!(!frame.plan.primitives.is_empty());
+        let expected = screen_space_camera_depth(camera, 10.0);
+        assert!(frame.plan.primitives.iter().all(|primitive| {
+            primitive.key.depth_test && (primitive.depth - expected).abs() < 0.000001
+        }));
+        assert!(expected > 0.0 && expected < 1.0);
+    }
+
+    #[test]
+    fn pixel_perfect_canvas_rounds_render_and_hit_rects_together() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                pixel_perfect: true,
+                ..Canvas::default()
+            },
+        );
+        let image = world.spawn_empty();
+        world.insert_component(
+            image,
+            RectTransform {
+                anchored_position: [0.25, 0.75],
+                size_delta: [100.4, 50.6],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let primitive = frame.plan.primitives.first().unwrap();
+        let control = frame.controls.first().unwrap();
+        assert!(primitive.rect.iter().all(|value| value.fract() == 0.0));
+        assert_eq!(primitive.rect[0], control.rect.x);
+        assert_eq!(primitive.rect[1], control.rect.y);
+        assert_eq!(primitive.rect[2], control.rect.width);
+        assert_eq!(primitive.rect[3], control.rect.height);
+    }
+
+    #[test]
+    fn world_space_canvas_projects_perspective_quads_and_hit_regions() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                render_mode: "WorldSpace".into(),
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(
+            canvas,
+            RectTransform {
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            canvas,
+            mengine_core::generated::Transform {
+                position: [1.0, 0.0, 0.0],
+                ..Default::default()
+            },
+        );
+        let image = world.spawn_empty();
+        world.insert_component(
+            image,
+            RectTransform {
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(canvas));
+        let hierarchy = TransformHierarchy::build(&world);
+        let camera = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: perspective(60.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        };
+
+        let frame = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            camera,
+            &SortingLayers::default(),
+        );
+        assert!(frame.plan.primitives.is_empty());
+        assert_eq!(frame.world_primitives.len(), 1);
+        let primitive = &frame.world_primitives[0].primitive;
+        assert!(primitive.key.depth_test);
+        assert!(primitive.clip_corners.is_some());
+        assert!(
+            primitive.rect[0] + primitive.rect[2] * 0.5 > 400.0,
+            "translated Canvas center should project right of center"
+        );
+        let control = frame.controls.first().expect("Image hit region");
+        let center = [
+            control
+                .corners
+                .unwrap()
+                .iter()
+                .map(|point| point[0])
+                .sum::<f32>()
+                * 0.25,
+            control
+                .corners
+                .unwrap()
+                .iter()
+                .map(|point| point[1])
+                .sum::<f32>()
+                * 0.25,
+        ];
+        assert!(control.contains(center[0], center[1]));
+        assert!(!control.contains(0.0, 0.0));
+    }
+
+    #[test]
+    fn world_space_canvas_joins_the_2d_sorting_queue() {
+        use crate::sorting::sort_world_primitives;
+
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                render_mode: "WorldSpace".into(),
+                sorting_layer: "default".into(),
+                sorting_order: 5,
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(
+            canvas,
+            RectTransform {
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(canvas, mengine_core::generated::Transform::default());
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(canvas));
+        let hierarchy = TransformHierarchy::build(&world);
+        let camera = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: perspective(60.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        };
+
+        let frame = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            camera,
+            &SortingLayers::default(),
+        );
+        assert!(frame.plan.primitives.is_empty());
+        assert_eq!(frame.world_primitives.len(), 1);
+        assert_eq!(frame.world_primitives[0].kind, WorldPrimitiveKind::TwoD);
+        assert_eq!(frame.world_primitives[0].sorting_layer, "default");
+        assert_eq!(frame.world_primitives[0].sorting_order, 5);
+        assert_eq!(frame.world_primitives[0].world_position, None);
+
+        let make_sprite = |material: &str, sorting_order: i32| {
+            let mut primitive = UiPrimitive::solid([0.0, 0.0, 1.0, 1.0], [1.0; 4]);
+            primitive.key.material = material.into();
+            WorldPrimitive {
+                kind: WorldPrimitiveKind::TwoD,
+                sorting_layer: "default".into(),
+                sorting_order,
+                depth: 0.5,
+                world_position: Some([0.0, 0.0]),
+                primitive,
+            }
+        };
+        let mut queued = frame.world_primitives;
+        queued[0].primitive.key.material = "world-canvas".into();
+        queued.push(make_sprite("before-canvas", 4));
+        queued.push(make_sprite("after-canvas", 6));
+        sort_world_primitives(&mut queued, &SortingLayers::default());
+        assert_eq!(
+            queued
+                .iter()
+                .map(|value| value.primitive.key.material.as_str())
+                .collect::<Vec<_>>(),
+            ["before-canvas", "world-canvas", "after-canvas"]
+        );
+    }
+
+    #[test]
+    fn world_space_override_canvas_keeps_outer_rect_transform_ancestry() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                render_mode: "WorldSpace".into(),
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(
+            canvas,
+            RectTransform {
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(canvas, mengine_core::generated::Transform::default());
+        world.insert_component(
+            canvas,
+            CanvasScaler {
+                reference_pixels_per_unit: 100.0,
+                reference_resolution: [200.0, 100.0],
+                ..CanvasScaler::default()
+            },
+        );
+        let holder = world.spawn_empty();
+        world.insert_component(
+            holder,
+            RectTransform {
+                anchored_position: [30.0, 0.0],
+                size_delta: [100.0, 50.0],
+                ..RectTransform::default()
+            },
+        );
+        world.set_parent(holder, Some(canvas));
+        let nested = world.spawn_empty();
+        world.insert_component(
+            nested,
+            Canvas {
+                override_sorting: true,
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(
+            nested,
+            RectTransform {
+                anchored_position: [50.0, 0.0],
+                size_delta: [100.0, 50.0],
+                ..RectTransform::default()
+            },
+        );
+        world.set_parent(nested, Some(holder));
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(nested));
+        let hierarchy = TransformHierarchy::build(&world);
+        let camera = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: perspective(60.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        };
+
+        let frame = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            camera,
+            &SortingLayers::default(),
+        );
+        assert!(frame.plan.primitives.is_empty());
+        assert_eq!(frame.world_primitives.len(), 1);
+        let primitive = &frame.world_primitives[0].primitive;
+        assert!(
+            primitive.rect[0] + primitive.rect[2] * 0.5 > 435.0,
+            "nested render root must retain its intermediate RectTransform offset"
+        );
+    }
+
+    #[test]
+    fn canvas_render_camera_reference_overrides_active_camera_projection() {
+        let mut world = World::new();
+        let render_camera = world.spawn_empty();
+        world.insert_component(
+            render_camera,
+            mengine_core::generated::Transform {
+                position: [0.0, 0.0, 20.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            render_camera,
+            Camera3D {
+                near: 0.5,
+                far: 200.0,
+                ..Camera3D::default()
+            },
+        );
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                render_mode: "ScreenSpaceCamera".into(),
+                render_camera: render_camera.to_u64().to_string(),
+                plane_distance: 20.0,
+                ..Canvas::default()
+            },
+        );
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(image, Image::default());
+        world.set_parent(image, Some(canvas));
+        let hierarchy = TransformHierarchy::build(&world);
+        let active = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 5.0), Vec3::ZERO, Vec3::Y),
+            proj: perspective(45.0, 4.0 / 3.0, 0.1, 10.0),
+            position: Vec3::new(0.0, 0.0, 5.0),
+        };
+        let assigned = resolve_canvas_camera(
+            &world,
+            &hierarchy,
+            world.get_component::<Canvas>(canvas).unwrap(),
+            4.0 / 3.0,
+        )
+        .unwrap();
+
+        let frame = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            active,
+            &SortingLayers::default(),
+        );
+        assert!(frame.plan.primitives.iter().all(|primitive| {
+            (primitive.depth - screen_space_camera_depth(assigned, 20.0)).abs() < 0.000001
+        }));
+        assert_ne!(
+            screen_space_camera_depth(assigned, 20.0),
+            screen_space_camera_depth(active, 20.0),
+        );
+    }
+
+    #[test]
+    fn projected_range_controls_map_quad_coordinates() {
+        let control = UiControlRegion {
+            entity: Entity::new(1, 1),
+            rect: UiRect {
+                x: 10.0,
+                y: 10.0,
+                width: 120.0,
+                height: 60.0,
+            },
+            clip: UiClipRect {
+                x: 0,
+                y: 0,
+                width: 200,
+                height: 200,
+            },
+            rotation_radians: 0.0,
+            pivot: [0.5, 0.5],
+            corners: Some([[10.0, 20.0], [130.0, 10.0], [110.0, 70.0], [20.0, 60.0]]),
+            kind: UiControlKind::Slider {
+                min: 0.0,
+                max: 10.0,
+                value: 0.0,
+                whole_numbers: false,
+                direction: "LeftToRight".into(),
+            },
+            callback: Value::Null,
+        };
+        assert!((control.range_value_at(60.0, 45.0).unwrap() - 5.0).abs() < 0.001);
+    }
+
+    #[test]
     fn aspect_ratio_modes_match_editor_layout_semantics() {
         let parent = UiRect {
             x: 0.0,
@@ -2424,6 +3575,7 @@ mod tests {
             clip,
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
+            corners: None,
             kind,
             callback: Value::Null,
         };
@@ -2619,6 +3771,7 @@ mod tests {
             },
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
+            corners: None,
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -2650,6 +3803,7 @@ mod tests {
             },
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
+            corners: None,
             kind: UiControlKind::Scrollbar {
                 value: 0.0,
                 size: 0.2,

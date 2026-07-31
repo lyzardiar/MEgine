@@ -19,6 +19,34 @@ const UNITY_DEFAULTS = {
   dynamic_pixels_per_unit: 1,
 };
 
+const UNITY_CANVAS_DEFAULTS = {
+  render_mode: 'ScreenSpaceOverlay',
+  render_camera: '',
+  pixel_perfect: false,
+  override_sorting: false,
+  sorting_layer: 'default',
+  sorting_order: 0,
+  plane_distance: 100,
+};
+
+test('Canvas catalog exposes all render modes and camera-aware defaults', () => {
+  assert.deepEqual(createComponentDefaults('Canvas'), UNITY_CANVAS_DEFAULTS);
+  assert.deepEqual(createUiCanvasComponents().Canvas, UNITY_CANVAS_DEFAULTS);
+  assert.deepEqual(
+    getBuiltinInspectorField('Canvas', 'render_mode')?.options?.map(({ value }) => value),
+    ['ScreenSpaceOverlay', 'ScreenSpaceCamera', 'WorldSpace'],
+  );
+  assert.deepEqual(getBuiltinInspectorField('Canvas', 'render_camera')?.visibleWhen, {
+    field: 'render_mode',
+    equals: ['ScreenSpaceCamera', 'WorldSpace'],
+  });
+  assert.deepEqual(getBuiltinInspectorField('Canvas', 'plane_distance')?.visibleWhen, {
+    field: 'render_mode',
+    equals: 'ScreenSpaceCamera',
+  });
+  assert.equal(getBuiltinInspectorField('Canvas', 'override_sorting')?.visibleWhen, undefined);
+});
+
 test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
   assert.deepEqual(createComponentDefaults('CanvasScaler'), UNITY_DEFAULTS);
   assert.deepEqual(createUiCanvasComponents().CanvasScaler, UNITY_DEFAULTS);

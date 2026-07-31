@@ -150,6 +150,8 @@ mod tests {
                 color,
                 pivot: [0.5; 2],
                 rotation_radians: 0.0,
+                depth: 0.0,
+                clip_corners: None,
                 uv: [0.0, 0.0, 1.0, 1.0],
                 key: UiBatchKey::default(),
             },

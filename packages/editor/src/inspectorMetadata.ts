@@ -393,9 +393,24 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       options: [
         { value: 'ScreenSpaceOverlay', label: 'Screen Space - Overlay' },
         { value: 'ScreenSpaceCamera', label: 'Screen Space - Camera' },
+        { value: 'WorldSpace', label: 'World Space' },
       ],
     },
-    plane_distance: { min: 0, step: 1 },
+    render_camera: {
+      kind: 'named-reference',
+      referenceType: 'Camera',
+      allowNone: true,
+      visibleWhen: { field: 'render_mode', equals: ['ScreenSpaceCamera', 'WorldSpace'] },
+    },
+    pixel_perfect: {
+      visibleWhen: { field: 'render_mode', equals: ['ScreenSpaceOverlay', 'ScreenSpaceCamera'] },
+    },
+    plane_distance: {
+      min: 0.01,
+      step: 1,
+      visibleWhen: { field: 'render_mode', equals: 'ScreenSpaceCamera' },
+    },
+    override_sorting: {},
   },
   CanvasScaler: {
     ui_scale_mode: {

@@ -460,10 +460,22 @@
   },
   "Canvas": {
     "properties": {
+      "override_sorting": {
+        "type": "boolean"
+      },
+      "pixel_perfect": {
+        "type": "boolean"
+      },
       "plane_distance": {
         "type": "number"
       },
+      "render_camera": {
+        "type": "string"
+      },
       "render_mode": {
+        "type": "string"
+      },
+      "sorting_layer": {
         "type": "string"
       },
       "sorting_order": {
@@ -472,6 +484,10 @@
     },
     "required": [
       "render_mode",
+      "render_camera",
+      "pixel_perfect",
+      "override_sorting",
+      "sorting_layer",
       "sorting_order",
       "plane_distance"
     ],

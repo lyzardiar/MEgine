@@ -110,9 +110,10 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} asset drop target`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} entity drop target`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\}: \$\{label \|\| props\.noneLabel/);
+  assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\}: \$\{selected\?\.label/);
   assert.equal(
     [...fieldEditors.matchAll(/aria-label=\{`Clear \$\{props\.label\}/g)].length,
-    4,
+    5,
   );
   assert.match(fieldEditors, /aria-label=\{`Select \$\{props\.label\} GameObject`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} target: \$\{targetLabel\}`\}/);

@@ -32,6 +32,8 @@ pub struct UiBatchKey {
     pub texture: String,
     pub clip: Option<UiClipRect>,
     pub blend: UiBlendMode,
+    /// Test the primitive against the scene depth buffer without writing depth.
+    pub depth_test: bool,
 }
 
 impl Default for UiBatchKey {
@@ -41,6 +43,7 @@ impl Default for UiBatchKey {
             texture: "white".into(),
             clip: None,
             blend: UiBlendMode::Alpha,
+            depth_test: false,
         }
     }
 }
@@ -52,6 +55,11 @@ pub struct UiPrimitive {
     pub color: [f32; 4],
     pub pivot: [f32; 2],
     pub rotation_radians: f32,
+    /// WebGPU clip-space depth in the 0..1 range for screen-aligned primitives.
+    pub depth: f32,
+    /// Optional clip-space corners ordered top-left, top-right, bottom-right, bottom-left.
+    /// Supplying corners preserves perspective for World Space Canvas quads.
+    pub clip_corners: Option<[[f32; 4]; 4]>,
     /// Normalized UV rect: u, v, width, height.
     pub uv: [f32; 4],
     pub key: UiBatchKey,
@@ -64,6 +72,8 @@ impl UiPrimitive {
             color,
             pivot: [0.5, 0.5],
             rotation_radians: 0.0,
+            depth: 0.0,
+            clip_corners: None,
             uv: [0.0, 0.0, 1.0, 1.0],
             key: UiBatchKey::default(),
         }
@@ -131,6 +141,8 @@ struct UiInstance {
     color: [f32; 4],
     transform: [f32; 4],
     uv: [f32; 4],
+    projection: [f32; 4],
+    corners: [[f32; 4]; 4],
 }
 
 impl From<&UiPrimitive> for UiInstance {
@@ -140,6 +152,21 @@ impl From<&UiPrimitive> for UiInstance {
             color: value.color,
             transform: [value.rotation_radians, value.pivot[0], value.pivot[1], 0.0],
             uv: value.uv,
+            projection: [
+                if value.depth.is_finite() {
+                    value.depth.clamp(0.0, 1.0)
+                } else {
+                    0.0
+                },
+                if value.clip_corners.is_some() {
+                    1.0
+                } else {
+                    0.0
+                },
+                0.0,
+                0.0,
+            ],
+            corners: value.clip_corners.unwrap_or([[0.0; 4]; 4]),
         }
     }
 }
@@ -154,6 +181,8 @@ struct UiUniform {
 pub(crate) struct UiRenderer {
     alpha_pipeline: wgpu::RenderPipeline,
     additive_pipeline: wgpu::RenderPipeline,
+    alpha_depth_pipeline: wgpu::RenderPipeline,
+    additive_depth_pipeline: wgpu::RenderPipeline,
     vertex_buffer: wgpu::Buffer,
     instance_buffer: wgpu::Buffer,
     instance_capacity: usize,
@@ -301,7 +330,11 @@ impl UiRenderer {
                     wgpu::VertexBufferLayout {
                         array_stride: std::mem::size_of::<UiInstance>() as u64,
                         step_mode: wgpu::VertexStepMode::Instance,
-                        attributes: &wgpu::vertex_attr_array![1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4],
+                        attributes: &wgpu::vertex_attr_array![
+                            1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
+                            5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
+                            9 => Float32x4
+                        ],
                     },
                 ],
                 compilation_options: Default::default(),
@@ -348,7 +381,11 @@ impl UiRenderer {
                     wgpu::VertexBufferLayout {
                         array_stride: std::mem::size_of::<UiInstance>() as u64,
                         step_mode: wgpu::VertexStepMode::Instance,
-                        attributes: &wgpu::vertex_attr_array![1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4],
+                        attributes: &wgpu::vertex_attr_array![
+                            1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
+                            5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
+                            9 => Float32x4
+                        ],
                     },
                 ],
                 compilation_options: Default::default(),
@@ -391,9 +428,28 @@ impl UiRenderer {
             cache: None,
         });
 
+        let alpha_depth_pipeline = create_ui_depth_pipeline(
+            device,
+            &pipeline_layout,
+            &shader,
+            format,
+            "ui_instanced_depth_pipeline",
+            wgpu::BlendState::ALPHA_BLENDING,
+        );
+        let additive_depth_pipeline = create_ui_depth_pipeline(
+            device,
+            &pipeline_layout,
+            &shader,
+            format,
+            "ui_instanced_additive_depth_pipeline",
+            additive_blend_state(),
+        );
+
         Self {
             alpha_pipeline,
             additive_pipeline,
+            alpha_depth_pipeline,
+            additive_depth_pipeline,
             vertex_buffer,
             instance_buffer,
             instance_capacity,
@@ -487,9 +543,11 @@ impl UiRenderer {
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
         for batch in &plan.batches {
-            pass.set_pipeline(match batch.key.blend {
-                UiBlendMode::Alpha => &self.alpha_pipeline,
-                UiBlendMode::Additive => &self.additive_pipeline,
+            pass.set_pipeline(match (batch.key.blend, batch.key.depth_test) {
+                (UiBlendMode::Alpha, false) => &self.alpha_pipeline,
+                (UiBlendMode::Additive, false) => &self.additive_pipeline,
+                (UiBlendMode::Alpha, true) => &self.alpha_depth_pipeline,
+                (UiBlendMode::Additive, true) => &self.additive_depth_pipeline,
             });
             let texture = self
                 .textures
@@ -515,6 +573,81 @@ impl UiRenderer {
     pub fn stats(&self) -> UiFrameStats {
         self.stats
     }
+}
+
+fn additive_blend_state() -> wgpu::BlendState {
+    wgpu::BlendState {
+        color: wgpu::BlendComponent {
+            src_factor: wgpu::BlendFactor::SrcAlpha,
+            dst_factor: wgpu::BlendFactor::One,
+            operation: wgpu::BlendOperation::Add,
+        },
+        alpha: wgpu::BlendComponent {
+            src_factor: wgpu::BlendFactor::One,
+            dst_factor: wgpu::BlendFactor::One,
+            operation: wgpu::BlendOperation::Add,
+        },
+    }
+}
+
+fn create_ui_depth_pipeline(
+    device: &wgpu::Device,
+    layout: &wgpu::PipelineLayout,
+    shader: &wgpu::ShaderModule,
+    format: wgpu::TextureFormat,
+    label: &str,
+    blend: wgpu::BlendState,
+) -> wgpu::RenderPipeline {
+    device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some(label),
+        layout: Some(layout),
+        vertex: wgpu::VertexState {
+            module: shader,
+            entry_point: Some("vs_main"),
+            buffers: &[
+                wgpu::VertexBufferLayout {
+                    array_stride: std::mem::size_of::<UiVertex>() as u64,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                    attributes: &wgpu::vertex_attr_array![0 => Float32x2],
+                },
+                wgpu::VertexBufferLayout {
+                    array_stride: std::mem::size_of::<UiInstance>() as u64,
+                    step_mode: wgpu::VertexStepMode::Instance,
+                    attributes: &wgpu::vertex_attr_array![
+                        1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
+                        5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
+                        9 => Float32x4
+                    ],
+                },
+            ],
+            compilation_options: Default::default(),
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: shader,
+            entry_point: Some("fs_main"),
+            targets: &[Some(wgpu::ColorTargetState {
+                format,
+                blend: Some(blend),
+                write_mask: wgpu::ColorWrites::ALL,
+            })],
+            compilation_options: Default::default(),
+        }),
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::TriangleList,
+            cull_mode: None,
+            ..Default::default()
+        },
+        depth_stencil: Some(wgpu::DepthStencilState {
+            format: wgpu::TextureFormat::Depth32Float,
+            depth_write_enabled: false,
+            depth_compare: wgpu::CompareFunction::LessEqual,
+            stencil: Default::default(),
+            bias: Default::default(),
+        }),
+        multisample: wgpu::MultisampleState::default(),
+        multiview: None,
+        cache: None,
+    })
 }
 
 fn validate_texture_rgba8(width: u32, height: u32, rgba8: &[u8]) -> Result<(), UiTextureError> {
@@ -616,6 +749,11 @@ struct VsIn {
     @location(2) color: vec4<f32>,
     @location(3) transform: vec4<f32>,
     @location(4) uv_rect: vec4<f32>,
+    @location(5) projection: vec4<f32>,
+    @location(6) corner_top_left: vec4<f32>,
+    @location(7) corner_top_right: vec4<f32>,
+    @location(8) corner_bottom_right: vec4<f32>,
+    @location(9) corner_bottom_left: vec4<f32>,
 };
 
 struct VsOut {
@@ -634,7 +772,13 @@ fn vs_main(input: VsIn) -> VsOut {
     let pixel = input.rect.xy + pivot * input.rect.zw + rotated;
     let ndc = vec2<f32>(pixel.x / frame.viewport.x * 2.0 - 1.0, 1.0 - pixel.y / frame.viewport.y * 2.0);
     var output: VsOut;
-    output.clip = vec4<f32>(ndc, 0.0, 1.0);
+    if input.projection.y > 0.5 {
+        let top = mix(input.corner_top_left, input.corner_top_right, input.position.x);
+        let bottom = mix(input.corner_bottom_left, input.corner_bottom_right, input.position.x);
+        output.clip = mix(top, bottom, input.position.y);
+    } else {
+        output.clip = vec4<f32>(ndc, input.projection.x, 1.0);
+    }
     output.color = input.color;
     output.uv = input.uv_rect.xy + input.position * input.uv_rect.zw;
     return output;
@@ -685,6 +829,26 @@ mod tests {
         ]);
         assert_eq!(plan.batches.len(), 2);
         assert_eq!((plan.batches[1].start, plan.batches[1].end), (1, 3));
+    }
+
+    #[test]
+    fn depth_state_changes_split_batches_and_reaches_instances() {
+        let overlay = primitive("atlas", None);
+        let mut camera = primitive("atlas", None);
+        camera.key.depth_test = true;
+        camera.depth = 0.75;
+        camera.clip_corners = Some([
+            [-1.0, 1.0, 0.75, 1.0],
+            [1.0, 1.0, 0.75, 1.0],
+            [1.0, -1.0, 0.75, 1.0],
+            [-1.0, -1.0, 0.75, 1.0],
+        ]);
+        let plan = UiBatchPlan::build(vec![overlay, camera.clone()]);
+        assert_eq!(plan.batches.len(), 2);
+        let instance = UiInstance::from(&camera);
+        assert_eq!(instance.projection[0], 0.75);
+        assert_eq!(instance.projection[1], 1.0);
+        assert_eq!(instance.corners[2], [1.0, -1.0, 0.75, 1.0]);
     }
 
     #[test]

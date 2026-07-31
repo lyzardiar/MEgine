@@ -23,7 +23,7 @@ pub fn emit_rust(defs: &[Def]) -> String {
     out.push_str("    match name {\n");
     for def in defs.iter().filter(|d| matches!(d.kind, DefKind::Component)) {
         out.push_str(&format!(
-            "        \"{0}\" => serde_json::from_value::<{0}>(value).map(|component| Some(Box::new(component) as ComponentBox)),\n",
+            "        \"{0}\" => serde_json::from_value::<{0}>(value)\n            .map(|component| Some(Box::new(component) as ComponentBox)),\n",
             def.name
         ));
     }
@@ -59,32 +59,46 @@ fn emit_rust_component(def: &Def) -> String {
     if !def.fields.is_empty() {
         out.push_str("#[serde(default)]\n");
     }
-    out.push_str(&format!("pub struct {} {{\n", def.name));
-    for f in &def.fields {
-        let rust_ty = map_rust_type(&f.ty, f.optional);
-        out.push_str(&format!("    pub {}: {},\n", f.name, rust_ty));
+    if def.fields.is_empty() {
+        out.push_str(&format!("pub struct {} {{}}\n", def.name));
+    } else {
+        out.push_str(&format!("pub struct {} {{\n", def.name));
+        for f in &def.fields {
+            let rust_ty = map_rust_type(&f.ty, f.optional);
+            out.push_str(&format!("    pub {}: {},\n", f.name, rust_ty));
+        }
+        out.push_str("}\n");
     }
-    out.push_str("}\n\n");
+    out.push('\n');
 
     if !def.fields.is_empty() && !derives_default {
         out.push_str(&format!("impl Default for {} {{\n", def.name));
-        out.push_str("    fn default() -> Self {\n        Self {\n");
-        for f in &def.fields {
-            let d = default_expr(&f.ty, f.default.as_deref(), f.optional);
-            out.push_str(&format!("            {}: {},\n", f.name, d));
+        if def.fields.len() == 1 {
+            let field = &def.fields[0];
+            let default = default_expr(&field.ty, field.default.as_deref(), field.optional);
+            out.push_str(&format!(
+                "    fn default() -> Self {{\n        Self {{ {}: {} }}\n    }}\n}}\n\n",
+                field.name, default
+            ));
+        } else {
+            out.push_str("    fn default() -> Self {\n        Self {\n");
+            for f in &def.fields {
+                let d = default_expr(&f.ty, f.default.as_deref(), f.optional);
+                out.push_str(&format!("            {}: {},\n", f.name, d));
+            }
+            out.push_str("        }\n    }\n}\n\n");
         }
-        out.push_str("        }\n    }\n}\n\n");
     }
 
     out.push_str(&format!("impl Component for {} {{\n", def.name));
     out.push_str(&format!(
-        "    fn type_name() -> &'static str {{ \"{}\" }}\n",
+        "    fn type_name() -> &'static str {{\n        \"{}\"\n    }}\n",
         def.name
     ));
-    out.push_str("    fn as_any(&self) -> &dyn std::any::Any { self }\n");
-    out.push_str("    fn as_any_mut(&mut self) -> &mut dyn std::any::Any { self }\n");
+    out.push_str("    fn as_any(&self) -> &dyn std::any::Any {\n        self\n    }\n");
+    out.push_str("    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {\n        self\n    }\n");
     out.push_str(
-        "    fn to_value(&self) -> serde_json::Value { serde_json::to_value(self).unwrap_or(serde_json::Value::Null) }\n",
+        "    fn to_value(&self) -> serde_json::Value {\n        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)\n    }\n",
     );
     out.push_str("}\n");
     out
@@ -403,6 +417,18 @@ mod tests {
         assert!(rust.contains("pub fn component_from_value("));
         assert!(rust.contains("serde_json::from_value::<First>(value)"));
         assert!(rust.contains("serde_json::from_value::<Second>(value)"));
+        assert!(
+            rust.contains("serde_json::from_value::<First>(value)\n            .map(|component|")
+        );
         assert!(rust.contains("Some(Box::new(component) as ComponentBox)"));
+    }
+
+    #[test]
+    fn emits_rust_components_in_the_repository_format() {
+        let defs = parse_idl("component Example { enabled: bool = true }").unwrap();
+        let rust = emit_rust(&defs);
+        assert!(rust.contains("fn type_name() -> &'static str {\n        \"Example\"\n    }"));
+        assert!(rust.contains("fn as_any(&self) -> &dyn std::any::Any {\n        self\n    }"));
+        assert!(!rust.contains("fn as_any(&self) -> &dyn std::any::Any { self }"));
     }
 }
