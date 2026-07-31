@@ -4,8 +4,10 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
+  allWindowScreenshotContent,
   BridgeOutcomeUnknownError,
   bridgeExecuteParams,
+  captureAllWindowScreenshots,
   DANGEROUS_AGENT_COMMANDS,
   PROMPTS,
   RESOURCES,
@@ -546,6 +548,120 @@ test('MCP screenshot tool exposes bounded background capture controls', () => {
   assert.equal(screenshot.inputSchema.properties.maxSize.minimum, 256);
   assert.equal(screenshot.inputSchema.properties.maxSize.maximum, 4_096);
   assert.match(screenshot.description, /serialized and rate-limited/);
+
+  const allWindows = TOOLS.find((tool) => tool.name === 'take_all_window_screenshots');
+  assert.ok(allWindows);
+  assert.equal(allWindows.inputSchema.additionalProperties, false);
+  assert.equal(allWindows.inputSchema.properties.maxSize.minimum, 256);
+  assert.equal(allWindows.inputSchema.properties.maxSize.maximum, 2_048);
+  assert.match(allWindows.description, /never shown, activated, or focused/i);
+});
+
+test('all-window screenshots capture serially with coherent complete inventory evidence', async () => {
+  const inventory = [
+    { label: 'main', visible: false, focused: false },
+    { label: 'panel-project', visible: false, focused: false },
+  ];
+  let active = 0;
+  let maximumActive = 0;
+  const result = await captureAllWindowScreenshots({
+    maxSize: 768,
+    listWindows: async () => structuredClone(inventory),
+    captureWindow: async (windowLabel, maxSize) => {
+      active += 1;
+      maximumActive = Math.max(maximumActive, active);
+      await Promise.resolve();
+      active -= 1;
+      return {
+        dataUrl: 'data:image/png;base64,aGVsbG8=',
+        width: maxSize,
+        height: 480,
+        sourceWidth: 1_440,
+        sourceHeight: 900,
+        scale: maxSize / 1_440,
+        capturedAt: 100,
+        mime: 'image/png',
+        windowLabel,
+        captureMethod: 'webview2-devtools',
+        backgroundSafe: true,
+      };
+    },
+    now: () => 123,
+  });
+
+  assert.equal(maximumActive, 1);
+  assert.equal(result.capturedAt, 123);
+  assert.equal(result.requestedMaxSize, 768);
+  assert.equal(result.inventoryStable, true);
+  assert.equal(result.complete, true);
+  assert.equal(result.initialWindowCount, 2);
+  assert.equal(result.finalWindowCount, 2);
+  assert.equal(result.capturedWindowCount, 2);
+  assert.equal(result.failedWindowCount, 0);
+  assert.equal(result.totalBase64Chars, 16);
+});
+
+test('all-window screenshots preserve failures and native inventory drift', async () => {
+  let inventoryRead = 0;
+  const result = await captureAllWindowScreenshots({
+    listWindows: async () => {
+      inventoryRead += 1;
+      return inventoryRead === 1
+        ? [{ label: 'main' }, { label: 'panel-console' }]
+        : [{ label: 'main' }, { label: 'editor-new' }];
+    },
+    captureWindow: async (windowLabel) => {
+      if (windowLabel === 'panel-console') {
+        throw Object.assign(new Error('window closed'), { code: 'NOT_READY' });
+      }
+      return {
+        dataUrl: 'data:image/png;base64,aGVsbG8=',
+        windowLabel,
+        mime: 'image/png',
+        backgroundSafe: true,
+      };
+    },
+  });
+
+  assert.equal(result.inventoryStable, false);
+  assert.equal(result.complete, false);
+  assert.equal(result.capturedWindowCount, 1);
+  assert.equal(result.failedWindowCount, 1);
+  assert.deepEqual(result.windows[1].error, {
+    code: 'NOT_READY',
+    message: 'window closed',
+  });
+});
+
+test('all-window screenshot content separates ordered image blocks from metadata', () => {
+  const result = {
+    version: 1,
+    backgroundSafe: true,
+    complete: true,
+    windows: ['main', 'panel-project'].map((windowLabel) => ({
+      window: { label: windowLabel },
+      screenshot: {
+        dataUrl: `data:image/png;base64,${windowLabel === 'main' ? 'bWFpbg==' : 'cHJvamVjdA=='}`,
+        width: 320,
+        height: 200,
+        mime: 'image/png',
+        windowLabel,
+        backgroundSafe: true,
+      },
+      error: null,
+    })),
+  };
+  const content = allWindowScreenshotContent(result);
+  const metadata = JSON.parse(content[0].text);
+
+  assert.equal(content.length, 3);
+  assert.equal(metadata.windows[0].screenshot.imageIndex, 0);
+  assert.equal(metadata.windows[1].screenshot.imageIndex, 1);
+  assert.equal('dataUrl' in metadata.windows[0].screenshot, false);
+  assert.deepEqual(content.slice(1), [
+    { type: 'image', data: 'bWFpbg==', mimeType: 'image/png' },
+    { type: 'image', data: 'cHJvamVjdA==', mimeType: 'image/png' },
+  ]);
 });
 
 test('MCP screenshot content keeps evidence metadata out of the base64 image payload', () => {

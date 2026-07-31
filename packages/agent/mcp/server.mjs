@@ -43,6 +43,8 @@ const MAX_MCP_SESSION_REQUEST_IDS = 65_536;
 const MAX_MCP_INPUT_LINE_BYTES = 64 * 1024 * 1024;
 const MAX_MCP_OUTBOUND_QUEUED_BYTES = 192 * 1024 * 1024;
 const MCP_OUTPUT_PAUSE_BYTES = 64 * 1024 * 1024;
+const MAX_ALL_WINDOW_SCREENSHOTS = 32;
+const MAX_ALL_WINDOW_SCREENSHOT_BASE64_CHARS = 32 * 1024 * 1024;
 const MCP_RATE_LIMIT_RETRY_AFTER_MS = 250;
 const MCP_SESSION_ID = crypto.randomUUID();
 const DANGEROUS_AGENT_COMMANDS = Object.freeze([
@@ -599,6 +601,161 @@ function screenshotContent(screenshot, envelope) {
     });
   }
   return content;
+}
+
+function nativeWindowInventorySignature(windows) {
+  return JSON.stringify(
+    [...windows]
+      .sort((left, right) => String(left?.label).localeCompare(String(right?.label)))
+      .map((window) => stableJson(window)),
+  );
+}
+
+function boundedScreenshotError(error) {
+  const value = error && typeof error === 'object' ? error : null;
+  const code = typeof value?.code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/u.test(value.code)
+    ? value.code
+    : 'INTERNAL';
+  const message = typeof value?.message === 'string' && value.message
+    ? value.message
+    : String(error);
+  return { code, message: message.slice(0, 1_000) };
+}
+
+function screenshotBase64(screenshot) {
+  if (!screenshot || typeof screenshot !== 'object' || typeof screenshot.dataUrl !== 'string') {
+    return '';
+  }
+  const separator = screenshot.dataUrl.indexOf(',');
+  if (separator < 0 || !/^data:image\/[a-z0-9.+-]+;base64$/iu.test(screenshot.dataUrl.slice(0, separator))) {
+    return '';
+  }
+  return screenshot.dataUrl.slice(separator + 1);
+}
+
+/**
+ * Capture each native WebView serially so the editor screenshot limiter and
+ * WebView2 DevTools sessions stay bounded. The second inventory read proves
+ * whether the returned visual set still covers the complete native workspace.
+ */
+async function captureAllWindowScreenshots({
+  listWindows,
+  captureWindow,
+  maxSize = 1_024,
+  now = Date.now,
+}) {
+  const initialWindows = await listWindows();
+  if (!Array.isArray(initialWindows)) {
+    throw new BridgeRpcError('INTERNAL', 'window.list returned a malformed native window inventory');
+  }
+  if (initialWindows.length > MAX_ALL_WINDOW_SCREENSHOTS) {
+    throw new BridgeRpcError(
+      'RATE_LIMITED',
+      `All-window visual capture supports at most ${MAX_ALL_WINDOW_SCREENSHOTS} native windows per request`,
+      { windowCount: initialWindows.length, maxWindows: MAX_ALL_WINDOW_SCREENSHOTS },
+    );
+  }
+
+  const windows = [];
+  let totalBase64Chars = 0;
+  let outputLimitReached = false;
+  for (const window of initialWindows) {
+    const label = typeof window?.label === 'string' ? window.label : '';
+    try {
+      if (!label) {
+        throw Object.assign(new Error('Native window inventory contains an empty label'), {
+          code: 'INTERNAL',
+        });
+      }
+      if (outputLimitReached) {
+        throw Object.assign(
+          new Error('All-window screenshot output limit reached; retry with a smaller maxSize'),
+          { code: 'OUTPUT_LIMIT' },
+        );
+      }
+      const screenshot = await captureWindow(label, maxSize);
+      if (screenshot?.windowLabel !== label) {
+        throw Object.assign(
+          new Error(`Screenshot label ${String(screenshot?.windowLabel)} did not match requested window ${label}`),
+          { code: 'INTERNAL' },
+        );
+      }
+      if (screenshot?.backgroundSafe !== true) {
+        throw Object.assign(
+          new Error(`Screenshot for window ${label} was not marked background-safe`),
+          { code: 'INTERNAL' },
+        );
+      }
+      const base64 = screenshotBase64(screenshot);
+      if (!base64) {
+        throw Object.assign(new Error(`Screenshot for window ${label} did not contain a PNG/JPEG image`), {
+          code: 'INTERNAL',
+        });
+      }
+      if (totalBase64Chars + base64.length > MAX_ALL_WINDOW_SCREENSHOT_BASE64_CHARS) {
+        outputLimitReached = true;
+        throw Object.assign(
+          new Error('All-window screenshot output limit reached; retry with a smaller maxSize'),
+          { code: 'OUTPUT_LIMIT' },
+        );
+      }
+      totalBase64Chars += base64.length;
+      windows.push({ window, screenshot, error: null });
+    } catch (error) {
+      windows.push({ window, screenshot: null, error: boundedScreenshotError(error) });
+    }
+  }
+
+  const finalWindows = await listWindows();
+  if (!Array.isArray(finalWindows)) {
+    throw new BridgeRpcError('INTERNAL', 'window.list returned a malformed final native window inventory');
+  }
+  const inventoryStable = nativeWindowInventorySignature(initialWindows)
+    === nativeWindowInventorySignature(finalWindows);
+  const capturedWindowCount = windows.filter((entry) => entry.screenshot).length;
+  const failedWindowCount = windows.length - capturedWindowCount;
+  return {
+    version: 1,
+    capturedAt: now(),
+    backgroundSafe: true,
+    inventoryStable,
+    complete: inventoryStable && failedWindowCount === 0,
+    requestedMaxSize: maxSize,
+    initialWindowCount: initialWindows.length,
+    finalWindowCount: finalWindows.length,
+    capturedWindowCount,
+    failedWindowCount,
+    totalBase64Chars,
+    windows,
+  };
+}
+
+function allWindowScreenshotContent(result) {
+  const images = [];
+  const metadata = {
+    ...result,
+    windows: result.windows.map((entry) => {
+      if (!entry.screenshot) return entry;
+      const { dataUrl, ...screenshot } = entry.screenshot;
+      const base64 = screenshotBase64(entry.screenshot);
+      const imageIndex = images.length;
+      if (base64) {
+        images.push({
+          type: 'image',
+          data: base64,
+          mimeType: entry.screenshot.mime || 'image/png',
+        });
+      }
+      return {
+        ...entry,
+        screenshot: {
+          ...screenshot,
+          imageIndex,
+        },
+      };
+    }),
+  };
+  return [...textContent(metadata), ...images];
 }
 
 function schemaTypeMatches(value, expected) {
@@ -1469,6 +1626,31 @@ const TOOLS = [
           : await bridgeQuery('view.screenshot', { target, maxSize });
       return screenshotContent(shot);
     },
+  },
+  {
+    name: 'take_all_window_screenshots',
+    description:
+      'Capture every native editor window off-screen in one serialized, bounded visual read. Returns one image per successfully captured window plus inventoryStable, completeness, per-window metadata, and structured errors. Windows are never shown, activated, or focused; retry with a smaller maxSize if the aggregate output limit is reached.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxSize: {
+          type: 'integer',
+          minimum: 256,
+          maximum: 2048,
+          description: 'Maximum output width or height for each window image (default: 1024)',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => allWindowScreenshotContent(await captureAllWindowScreenshots({
+      maxSize: args.maxSize || 1_024,
+      listWindows: () => bridgeQuery('window.list'),
+      captureWindow: (windowLabel, maxSize) => bridgeQuery('view.window_screenshot', {
+        windowLabel,
+        maxSize,
+      }),
+    })),
   },
   {
     name: 'capture_window_region',
@@ -4145,7 +4327,7 @@ const SERVER_INSTRUCTIONS = [
   'Dangerous scene deletion, asset trash, build, Player launch, and build-artifact commands may return PERMISSION_DENIED when the editor policy is deny or token. Approved adapters forward MENGINE_AGENT_APPROVAL_TOKEN automatically; never place approval tokens in tool arguments or logs.',
   'Prefer domain tools over semantic window UI actions. Start broad observation with get_all_window_ui; complete any per-window continuation through get_window_ui using that window snapshot revision. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector. If unrelated live UI values change, the write may proceed only while the cached target element, its action-relevant semantic signature, its exposed action, and the current invalidation epoch still match; the native layer refreshes that guard and dispatches synchronously in one renderer task, transient focus, geometry, and scroll telemetry are re-read at dispatch, and changed or expired target meaning, value, state, policy, or capability is rejected as stale. Successful UI writes report preSnapshotRevision and snapshotDriftedBeforeAction, settle two target-window render opportunities, and return a postSnapshotRevision when post-action semantic observation succeeds.',
   'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
-  'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',
+  'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. Use take_all_window_screenshots when visual evidence from the complete native workspace is materially useful; it captures serially and reports inventory drift, per-window failures, and aggregate output limits without showing or focusing windows. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',
   'MCP hosts may subscribe to any listed mengine:// resource. Editor events emit coalesced notifications/resources/updated invalidations, and a Bridge reconnect invalidates every active subscription so the host can re-read authoritative state.',
 ].join('\n');
 
@@ -4851,6 +5033,7 @@ if (launchedAsMain) {
 }
 
 export {
+  allWindowScreenshotContent,
   BridgeOutcomeUnknownError,
   EVENT_RESOURCE_URIS,
   RESOURCES,
@@ -4863,6 +5046,7 @@ export {
   bridgeExecute,
   bridgeQuery,
   closeBridgeConnection,
+  captureAllWindowScreenshots,
   DANGEROUS_AGENT_COMMANDS,
   defaultDiscoveryPaths,
   incomingMessageError,
