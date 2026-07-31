@@ -66,6 +66,7 @@ export {
   Line2D,
   Canvas,
   CanvasScaler,
+  GraphicRaycaster,
   RectTransform,
   Image,
   UIButton,

@@ -1902,3 +1902,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Canvas.render_camera` 是直接实体引用，不是普通字符串。此前 Inspector 虽能选择 Camera2D/Camera3D，但复制、Prefab 本地化和 Rust 场景重建只识别 UI Persistent Call 与脚本元数据引用；场景重新分配 Entity 后，旧数字可能静默指向无关对象，导致 Screen Space Camera/World Space Canvas 投影错误。
 - TypeScript 与 Rust 现在各自维护显式的直接实体引用注册表，并让 Canvas Event Camera 参与多选复制重映射、Prefab 节点 token 本地化/解析、Prefab 悬空引用校验和场景加载时的旧到新 Entity 映射。Prefab 外部场景相机与场景中已删除相机都会清为空引用，由 Runtime 按既有契约回退到活动相机，绝不让复用的 Entity slot 产生错误绑定。
 - 直接字符串引用与可保存缺失 token 的 Persistent Call 分开处理：Prefab 资产阶段可以持有稳定节点 token，实例化为 Canvas 前必须解析回十进制 Entity 字符串；缺失 token 不会流入生成的强类型 Canvas 组件。回归覆盖 Editor 内部复制、Prefab 稳定节点/旧裸 ID，以及 Rust 场景重建后的有效相机与已删除相机。
+
+## 167. 2026-08-01 GraphicRaycaster 与场景 v2 迁移
+
+- Canvas 的绘制与事件收集现在明确分离：新建 UI Canvas 默认携带 `GraphicRaycaster`，删除组件或关闭 `enabled` 只会停止该 Canvas 子树的 Graphic/Selectable 命中，图像、文字、布局和裁剪继续正常渲染。普通嵌套 Canvas 使用自己的 Raycaster 状态，`override_sorting` Canvas 仍保持独立事件边界；Editor Game 预览与 Rust Player 使用同一组件存在性和启用规则。
+- 场景格式升级为 v2，用版本边界区分“旧场景隐式拥有射线能力”和“新场景主动移除组件”。Rust 加载器与 Editor JSON 加载路径都接受 v1/v2：v1 中每个 Canvas 会在内存中补入启用的 `GraphicRaycaster`，首次保存写为 v2；v2 不补组件，因此删除/禁用可以稳定跨保存、重开与 Agent 导入。未知的新版本继续被拒绝，避免错误降级。
+- IDL、Rust/TypeScript 生成类型、Behaviour API、组件目录、Inspector、Add Component 分类和 Agent 场景校验同步加入该组件。回归覆盖 v1 自动迁移、v2 保留删除/禁用、渲染不受影响、Editor/Runtime 命中关闭以及嵌套 Canvas/CanvasGroup 的既有事件语义。

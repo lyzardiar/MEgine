@@ -506,6 +506,9 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       visibleWhen: worldSpaceCanvas,
     },
   },
+  GraphicRaycaster: {
+    enabled: { label: 'Enabled' },
+  },
   AspectRatioFitter: {
     aspect_mode: {
       kind: 'enum',

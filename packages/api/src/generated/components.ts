@@ -387,6 +387,10 @@ export interface Canvas {
   planeDistance: number;
 }
 
+export interface GraphicRaycaster {
+  enabled: boolean;
+}
+
 export interface CanvasScaler {
   uiScaleMode: string;
   referencePixelsPerUnit: number;
@@ -650,6 +654,7 @@ export type ComponentName =
   | 'ParticleEmitter3D'
   | 'SpineSkeleton'
   | 'Canvas'
+  | 'GraphicRaycaster'
   | 'CanvasScaler'
   | 'RectTransform'
   | 'AspectRatioFitter'
@@ -713,6 +718,7 @@ export const COMPONENT_NAMES = [
   'ParticleEmitter3D',
   'SpineSkeleton',
   'Canvas',
+  'GraphicRaycaster',
   'CanvasScaler',
   'RectTransform',
   'AspectRatioFitter',

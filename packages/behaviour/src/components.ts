@@ -96,10 +96,16 @@ export class Canvas {
   render_mode!: string;
   render_camera!: string;
   pixel_perfect!: boolean;
+  override_pixel_perfect!: boolean;
   override_sorting!: boolean;
   sorting_layer!: string;
   sorting_order!: number;
   plane_distance!: number;
+}
+
+export class GraphicRaycaster {
+  static readonly typeName = 'GraphicRaycaster' as const;
+  enabled!: boolean;
 }
 
 export class CanvasScaler {
@@ -281,6 +287,7 @@ export type BuiltinComponents = {
   AudioMixer: AudioMixer;
   Canvas: Canvas;
   CanvasScaler: CanvasScaler;
+  GraphicRaycaster: GraphicRaycaster;
   RectTransform: RectTransform;
   AspectRatioFitter: AspectRatioFitter;
   ContentSizeFitter: ContentSizeFitter;

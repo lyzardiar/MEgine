@@ -610,6 +610,7 @@ export function layoutUiOverlay(
         opacity: 1,
         interactable: true,
         blocksRaycasts: true,
+        raycasterEnabled: false,
         pixelPerfect: false,
       },
       inheritedClip?: Rect,
@@ -674,6 +675,7 @@ export function layoutUiOverlay(
         override_pixel_perfect?: boolean;
         overridePixelPerfect?: boolean;
       } | undefined;
+      const raycaster = ent.components.GraphicRaycaster as { enabled?: boolean } | undefined;
       const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;
@@ -694,6 +696,9 @@ export function layoutUiOverlay(
         blocksRaycasts: groupBase.blocksRaycasts
           && group?.blocks_raycasts !== false
           && group?.blocksRaycasts !== false,
+        raycasterEnabled: canvasSettings
+          ? raycaster?.enabled !== false && raycaster != null
+          : inherited.raycasterEnabled,
         pixelPerfect: overridesPixelPerfect
           ? (canvasSettings?.pixel_perfect ?? canvasSettings?.pixelPerfect) === true
           : inherited.pixelPerfect,
@@ -718,7 +723,7 @@ export function layoutUiOverlay(
           rotation: 0,
           pivot: [0.5, 0.5],
           opacity: state.opacity,
-          blocksRaycasts: state.blocksRaycasts,
+          blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
           clip,
           selected: selectedIds.has(ent.entity),
         });
@@ -732,7 +737,7 @@ export function layoutUiOverlay(
           pivot,
           anchorParentRect,
           opacity: state.opacity,
-          blocksRaycasts: state.blocksRaycasts,
+          blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
           clip,
           image: img
             ? {
@@ -992,7 +997,7 @@ export function layoutUiOverlay(
           pivot,
           anchorParentRect,
           opacity: state.opacity,
-          blocksRaycasts: state.blocksRaycasts,
+          blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
           clip,
           selected: true,
         });
@@ -1050,6 +1055,7 @@ export function layoutUiOverlay(
       opacity: 1,
       interactable: true,
       blocksRaycasts: true,
+      raycasterEnabled: false,
       pixelPerfect: canvasPixelPerfect(entities, canvas),
     }, root);
     depthBase += 1000;

@@ -786,6 +786,17 @@
     ],
     "type": "object"
   },
+  "GraphicRaycaster": {
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "enabled"
+    ],
+    "type": "object"
+  },
   "Grid": {
     "properties": {
       "cell_gap": {

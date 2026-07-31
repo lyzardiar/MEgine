@@ -150,6 +150,7 @@ test('CanvasGroup ignore parent groups resets inherited alpha, interaction, and 
       components: {
         RectTransform: stretch,
         Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
       },
     },
     {
@@ -218,6 +219,7 @@ test('Text raycast targets participate in editor Graphic hit testing', () => {
           size_delta: [0, 0],
         }),
         Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
       },
     },
     {
@@ -232,6 +234,31 @@ test('Text raycast targets participate in editor Graphic hit testing', () => {
   const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
   const text = items.find((item) => item.entity === 2);
   assert.equal(hitTestUi(items, text.rect.x + 1, text.rect.y + 1)?.entity, text.entity);
+});
+
+test('GraphicRaycaster removal or disablement preserves rendering while disabling hits', () => {
+  const makeEntities = (raycaster) => [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        ...(raycaster == null ? {} : { GraphicRaycaster: raycaster }),
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: { RectTransform: rect(), Image: { raycast_target: true } },
+    },
+  ];
+  for (const raycaster of [null, { enabled: false }]) {
+    const items = layoutUiOverlay(makeEntities(raycaster), { x: 0, y: 0, w: 800, h: 600 }, new Set());
+    const image = items.find((item) => item.entity === 2);
+    assert.ok(image);
+    assert.equal(image.blocksRaycasts, false);
+    assert.equal(hitTestUi(items, image.rect.x + 1, image.rect.y + 1), null);
+  }
 });
 
 test('World Space override-sorting Canvas subtrees are projected exactly once', () => {
@@ -283,6 +310,7 @@ test('Canvas root groups apply while override-sorting Canvas starts a new group 
       components: {
         RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
         Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
         CanvasGroup: { alpha: 0.25, interactable: false, blocks_raycasts: false },
       },
     },
@@ -300,6 +328,7 @@ test('Canvas root groups apply while override-sorting Canvas starts a new group 
       components: {
         RectTransform: rect({ anchored_position: [150, 0] }),
         Canvas: { override_sorting: true, sorting_order: 1 },
+        GraphicRaycaster: { enabled: true },
         CanvasGroup: { alpha: 0.5, interactable: true, blocks_raycasts: true },
       },
     },

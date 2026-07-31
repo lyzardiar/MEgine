@@ -26,6 +26,7 @@ const COMPONENT_GROUPS: Record<string, string> = {
   SpineSkeleton: 'Rendering',
   Canvas: 'UI/Layout',
   CanvasScaler: 'UI/Layout',
+  GraphicRaycaster: 'UI/Event',
   RectTransform: 'UI/Layout',
   AspectRatioFitter: 'UI/Layout',
   ContentSizeFitter: 'UI/Layout',

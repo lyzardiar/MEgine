@@ -2,9 +2,9 @@ use crate::sorting::{SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use glam::{Mat4, Quat, Vec3};
 use mengine_core::generated::{
     AspectRatioFitter, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
-    ContentSizeFitter, Dropdown, Image, InputField, LayoutGroup, ListView, Outline, Panel,
-    ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar, Shadow, Slider,
-    TabView, Text, Toggle, ToggleGroup,
+    ContentSizeFitter, Dropdown, GraphicRaycaster, Image, InputField, LayoutGroup, ListView,
+    Outline, Panel, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar,
+    Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, TransformHierarchy, World};
@@ -406,6 +406,7 @@ struct UiInheritedState {
     alpha: f32,
     interactable: bool,
     blocks_raycasts: bool,
+    raycaster_enabled: bool,
     pixel_perfect: bool,
     screen_space: bool,
 }
@@ -425,9 +426,16 @@ impl Default for UiInheritedState {
             alpha: 1.0,
             interactable: true,
             blocks_raycasts: true,
+            raycaster_enabled: false,
             pixel_perfect: false,
             screen_space: true,
         }
+    }
+}
+
+impl UiInheritedState {
+    fn accepts_raycasts(self) -> bool {
+        self.blocks_raycasts && self.raycaster_enabled
     }
 }
 
@@ -1180,6 +1188,11 @@ fn walk(
     let rotation = -rect_transform.local_rotation.to_radians();
     let pivot = rect_transform.pivot;
     let mut state = inherited;
+    if world.get_component::<Canvas>(entity).is_some() {
+        state.raycaster_enabled = world
+            .get_component::<GraphicRaycaster>(entity)
+            .is_some_and(|raycaster| raycaster.enabled);
+    }
     if state.screen_space {
         if let Some(canvas) = world.get_component::<Canvas>(entity) {
             if canvas.override_pixel_perfect {
@@ -1230,7 +1243,7 @@ fn walk(
                 clip,
             ));
         }
-        if image.raycast_target && state.blocks_raycasts {
+        if image.raycast_target && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -1255,7 +1268,7 @@ fn walk(
         );
         output.uv = raw_image.uv_rect;
         primitives.push(output);
-        if raw_image.raycast_target && state.blocks_raycasts {
+        if raw_image.raycast_target && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -1268,7 +1281,7 @@ fn walk(
         }
     }
 
-    if text.is_some_and(|value| value.raycast_target) && state.blocks_raycasts {
+    if text.is_some_and(|value| value.raycast_target) && state.accepts_raycasts() {
         controls.push(control_region(
             entity,
             rect,
@@ -1312,7 +1325,7 @@ fn walk(
             "Middle",
             clip,
         );
-        if button.interactable && state.interactable && state.blocks_raycasts {
+        if button.interactable && state.interactable && state.accepts_raycasts() {
             controls.push(UiControlRegion {
                 entity,
                 rect,
@@ -1396,7 +1409,7 @@ fn walk(
             "Middle",
             clip,
         );
-        if toggle.interactable && state.interactable && state.blocks_raycasts {
+        if toggle.interactable && state.interactable && state.accepts_raycasts() {
             controls.push(UiControlRegion {
                 entity,
                 rect,
@@ -1478,7 +1491,7 @@ fn walk(
             "white",
             clip,
         ));
-        if slider.interactable && state.interactable && state.blocks_raycasts {
+        if slider.interactable && state.interactable && state.accepts_raycasts() {
             controls.push(UiControlRegion {
                 entity,
                 rect,
@@ -1545,7 +1558,7 @@ fn walk(
             "white",
             clip,
         ));
-        if scrollbar.interactable && state.interactable && state.blocks_raycasts {
+        if scrollbar.interactable && state.interactable && state.accepts_raycasts() {
             controls.push(UiControlRegion {
                 entity,
                 rect,
@@ -1583,7 +1596,7 @@ fn walk(
                 clip,
             );
         }
-        if panel.raycast_target && state.blocks_raycasts {
+        if panel.raycast_target && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -1666,7 +1679,7 @@ fn walk(
             "Middle",
             clip,
         );
-        if enabled && state.blocks_raycasts {
+        if enabled && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -1720,7 +1733,7 @@ fn walk(
             "Middle",
             clip,
         );
-        if enabled && state.blocks_raycasts {
+        if enabled && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -1763,7 +1776,7 @@ fn walk(
                     "Middle",
                     clip,
                 );
-                if enabled && state.blocks_raycasts {
+                if enabled && state.accepts_raycasts() {
                     controls.push(control_region(
                         entity,
                         option_rect,
@@ -1833,7 +1846,7 @@ fn walk(
                 "Middle",
                 child_clip,
             );
-            if enabled && state.blocks_raycasts {
+            if enabled && state.accepts_raycasts() {
                 controls.push(control_region(
                     entity,
                     intersect_rect(row, rect),
@@ -1859,7 +1872,7 @@ fn walk(
             "white",
             clip,
         ));
-        if state.interactable && state.blocks_raycasts {
+        if state.interactable && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -1946,7 +1959,7 @@ fn walk(
                 "Middle",
                 clip,
             );
-            if tab_view.interactable && state.interactable && state.blocks_raycasts {
+            if tab_view.interactable && state.interactable && state.accepts_raycasts() {
                 controls.push(control_region(
                     entity,
                     tab_rect,
@@ -2976,6 +2989,7 @@ mod tests {
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
         world.insert_component(canvas, CanvasScaler::default());
         let image = world.spawn_empty();
         world.insert_component(image, RectTransform::default());
@@ -3006,6 +3020,26 @@ mod tests {
     }
 
     #[test]
+    fn graphic_raycaster_presence_and_enabled_state_gate_hits_without_hiding_graphics() {
+        for raycaster in [None, Some(GraphicRaycaster { enabled: false })] {
+            let mut world = World::new();
+            let canvas = world.spawn_empty();
+            world.insert_component(canvas, Canvas::default());
+            if let Some(raycaster) = raycaster {
+                world.insert_component(canvas, raycaster);
+            }
+            let image = world.spawn_empty();
+            world.insert_component(image, RectTransform::default());
+            world.insert_component(image, Image::default());
+            world.set_parent(image, Some(canvas));
+
+            let frame = collect_ui_frame(&world, 800, 600);
+            assert_eq!(frame.plan.primitives.len(), 1);
+            assert!(frame.controls.is_empty());
+        }
+    }
+
+    #[test]
     fn text_raycast_targets_default_to_blocking_and_same_entity_actions_stay_on_top() {
         assert!(Text::default().raycast_target);
         let legacy_text: Text = serde_json::from_value(serde_json::json!({ "text": "Legacy" }))
@@ -3021,6 +3055,7 @@ mod tests {
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
 
         let text_only = world.spawn_empty();
         world.insert_component(
@@ -3177,6 +3212,7 @@ mod tests {
         let mut world = World::new();
         let root = world.spawn_empty();
         world.insert_component(root, Canvas::default());
+        world.insert_component(root, GraphicRaycaster::default());
         world.insert_component(
             root,
             CanvasGroup {
@@ -3207,6 +3243,7 @@ mod tests {
                 ..Canvas::default()
             },
         );
+        world.insert_component(nested, GraphicRaycaster::default());
         world.insert_component(
             nested,
             RectTransform {
@@ -3261,6 +3298,7 @@ mod tests {
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
         world.insert_component(
             canvas,
             RectTransform {
@@ -3361,6 +3399,7 @@ mod tests {
                 ..Canvas::default()
             },
         );
+        world.insert_component(canvas, GraphicRaycaster::default());
         let image = world.spawn_empty();
         world.insert_component(
             image,
@@ -3388,6 +3427,7 @@ mod tests {
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
 
         let inherited_canvas = world.spawn_empty();
         world.insert_component(
@@ -3398,6 +3438,7 @@ mod tests {
                 ..Canvas::default()
             },
         );
+        world.insert_component(inherited_canvas, GraphicRaycaster::default());
         world.insert_component(inherited_canvas, RectTransform::default());
         world.set_parent(inherited_canvas, Some(canvas));
         let inherited_image = world.spawn_empty();
@@ -3427,6 +3468,7 @@ mod tests {
                 ..Canvas::default()
             },
         );
+        world.insert_component(overridden_canvas, GraphicRaycaster::default());
         world.insert_component(overridden_canvas, RectTransform::default());
         world.set_parent(overridden_canvas, Some(canvas));
         let overridden_image = world.spawn_empty();
@@ -3497,6 +3539,7 @@ mod tests {
                 ..Canvas::default()
             },
         );
+        world.insert_component(canvas, GraphicRaycaster::default());
         world.insert_component(
             canvas,
             RectTransform {
@@ -4100,6 +4143,7 @@ mod tests {
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
         world.insert_component(canvas, CanvasScaler::default());
         world.insert_component(
             canvas,
@@ -4257,6 +4301,7 @@ mod tests {
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
         world.insert_component(canvas, CanvasScaler::default());
         world.insert_component(
             canvas,
@@ -4317,6 +4362,7 @@ mod tests {
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
 
         let parent_group = world.spawn_empty();
         world.insert_component(parent_group, RectTransform::default());
@@ -4399,6 +4445,7 @@ mod tests {
         let mut world = World::new();
         let canvas = world.spawn_empty();
         world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
         world.insert_component(canvas, CanvasScaler::default());
         world.insert_component(
             canvas,

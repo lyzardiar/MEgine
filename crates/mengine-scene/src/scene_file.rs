@@ -12,7 +12,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-pub const SCENE_VERSION: u32 = 1;
+pub const SCENE_VERSION: u32 = 2;
+const LEGACY_SCENE_VERSION: u32 = 1;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SceneFile {
@@ -100,12 +101,29 @@ fn sync_parent(_parent: &Path) -> std::io::Result<()> {
 
 pub fn load_scene(path: &Path, world: &mut World) -> Result<SceneFile, SceneError> {
     let text = std::fs::read_to_string(path)?;
-    let file: SceneFile = serde_json::from_str(&text)?;
-    if file.version != SCENE_VERSION {
+    let mut file: SceneFile = serde_json::from_str(&text)?;
+    if file.version != LEGACY_SCENE_VERSION && file.version != SCENE_VERSION {
         return Err(SceneError::Version(file.version));
+    }
+    if file.version == LEGACY_SCENE_VERSION {
+        migrate_legacy_canvas_raycasters(&mut file.world);
+        file.version = SCENE_VERSION;
     }
     apply_snapshot(world, &file.world);
     Ok(file)
+}
+
+fn migrate_legacy_canvas_raycasters(snapshot: &mut WorldSnapshot) {
+    for entity in &mut snapshot.entities {
+        if entity.components.contains_key("Canvas")
+            && !entity.components.contains_key("GraphicRaycaster")
+        {
+            entity.components.insert(
+                "GraphicRaycaster".into(),
+                serde_json::json!({ "enabled": true }),
+            );
+        }
+    }
 }
 
 pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
@@ -198,7 +216,7 @@ mod tests {
     use super::*;
     use mengine_core::command::WorldCommand;
     use mengine_core::generated::{
-        Button, Canvas, ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton,
+        Button, Canvas, GraphicRaycaster, ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton,
     };
     use mengine_core::snapshot::EntitySnapshot;
     use serde_json::json;
@@ -208,6 +226,49 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join(name);
         (dir, path)
+    }
+
+    #[test]
+    fn legacy_scenes_gain_explicit_canvas_raycasters_but_current_scenes_preserve_removal() {
+        for (version, expects_raycaster) in [(LEGACY_SCENE_VERSION, true), (SCENE_VERSION, false)] {
+            let (dir, path) = temp_scene(&format!("canvas-v{version}.mscene"));
+            std::fs::write(
+                &path,
+                serde_json::to_vec(&json!({
+                    "version": version,
+                    "name": "Canvas",
+                    "world": {
+                        "entities": [{
+                            "entity": 10,
+                            "name": "Canvas",
+                            "components": { "Canvas": {} }
+                        }]
+                    }
+                }))
+                .unwrap(),
+            )
+            .unwrap();
+
+            let mut world = World::new();
+            let loaded = load_scene(&path, &mut world).unwrap();
+            assert_eq!(loaded.version, SCENE_VERSION);
+            let canvas = world.iter_entities().next().unwrap();
+            assert_eq!(
+                world.get_component::<GraphicRaycaster>(canvas).is_some(),
+                expects_raycaster
+            );
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+    }
+
+    #[test]
+    fn saved_scenes_use_the_current_version() {
+        let (dir, path) = temp_scene("current.mscene");
+        save_scene(&path, "Current", &World::new()).unwrap();
+        let value: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(value["version"], SCENE_VERSION);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

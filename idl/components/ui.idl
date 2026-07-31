@@ -14,6 +14,11 @@ component Canvas {
   plane_distance: float  = 100
 }
 
+/// Unity-style Canvas raycaster. Removing or disabling it keeps rendering active but disables UI hits.
+component GraphicRaycaster {
+  enabled: bool = true
+}
+
 component CanvasScaler {
   /// "ConstantPixelSize" | "ScaleWithScreenSize" | "ConstantPhysicalSize"
   ui_scale_mode:             string  = "ConstantPixelSize"

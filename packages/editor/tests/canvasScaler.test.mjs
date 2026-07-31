@@ -66,6 +66,9 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
   assert.deepEqual(createComponentDefaults('CanvasScaler'), UNITY_DEFAULTS);
   assert.deepEqual(createUiCanvasComponents().CanvasScaler, UNITY_DEFAULTS);
   assert.deepEqual(componentRequirements('CanvasScaler'), ['Canvas']);
+  assert.deepEqual(createComponentDefaults('GraphicRaycaster'), { enabled: true });
+  assert.deepEqual(createUiCanvasComponents().GraphicRaycaster, { enabled: true });
+  assert.deepEqual(componentRequirements('GraphicRaycaster'), ['Canvas']);
 });
 
 test('CanvasGroup exposes Unity parent-group override defaults', () => {

@@ -276,6 +276,13 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'GraphicRaycaster',
+    label: 'Graphic Raycaster',
+    description: 'Controls whether the attached Canvas participates in UI hit testing',
+    requires: ['Canvas'],
+    create: () => ({ enabled: true }),
+  },
+  {
     type: 'RectTransform',
     label: 'Rect Transform',
     description: 'UI 矩形布局',
@@ -696,6 +703,9 @@ export function createUiCanvasComponents(): Record<string, unknown> {
       fallback_screen_dpi: 96,
       default_sprite_dpi: 96,
       dynamic_pixels_per_unit: 1,
+    },
+    GraphicRaycaster: {
+      enabled: true,
     },
   };
 }

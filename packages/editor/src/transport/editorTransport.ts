@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
+import { CURRENT_SCENE_VERSION } from '../sceneMigration.ts';
 
 type HostEntitySnapshot = {
   entity: number;
@@ -436,7 +437,7 @@ export function projectSnapshotAsSceneJson(snapshot: ProjectSnapshot): string {
   const world = toWorldSnapshotView(snapshot.world);
   return JSON.stringify(
     {
-      version: 1,
+      version: CURRENT_SCENE_VERSION,
       name: sceneName,
       world: {
         entities: world.entities,

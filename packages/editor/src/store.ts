@@ -36,6 +36,7 @@ import {
   createUiTextComponents,
   createUiToggleComponents,
 } from './componentCatalog';
+import { CURRENT_SCENE_VERSION, migrateSceneDocument } from './sceneMigration';
 import { readRectTransform } from './ui/rectLayout';
 import { applyAnchorsKeepingRect, applyPivotKeepingVisualRect } from './ui/rectTransformModel';
 import {
@@ -677,7 +678,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
 
   const serializeScene = (sceneName: string, source: EntityRec[]) => JSON.stringify(
     {
-      version: 1,
+      version: CURRENT_SCENE_VERSION,
       name: sceneName,
       world: {
         entities: structuredClone(source).map((e) => ({
@@ -708,7 +709,19 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     recordUndo: boolean,
     applyScenePreferences = true,
   ) => {
-    const data = JSON.parse(json);
+    const data = migrateSceneDocument(JSON.parse(json)) as {
+      world?: {
+        entities?: EntityRec[];
+        clearColor?: [number, number, number, number];
+        selectedIds?: unknown;
+        selected?: unknown;
+      };
+      entities?: EntityRec[];
+      sceneCamera?: SceneCamera;
+      gameResolution?: unknown;
+      gameAspect?: unknown;
+      gameOrientation?: unknown;
+    };
     if (recordUndo) pushUndo('Load Scene');
     else undoService.clear('scene');
     behaviourRunner.unmount();
