@@ -38,7 +38,9 @@ export async function waitForWindowUiChange<T extends EditorUiSnapshot>({
         expectedSnapshotRevision,
         changed,
         timedOut: !changed,
-        waitedMs: Math.max(0, now - startedAt),
+        // A zero timeout means "observe once without waiting". Keep that
+        // contract deterministic even when the inspection crosses a clock tick.
+        waitedMs: timeoutMs === 0 ? 0 : Math.max(0, now - startedAt),
       };
     }
     await abortableDelay(

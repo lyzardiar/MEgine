@@ -29,7 +29,10 @@ test('window UI wait returns the coherent final snapshot on timeout', async () =
   const result = await waitForWindowUiChange({
     expectedSnapshotRevision: revision,
     timeoutMs: 0,
-    inspect: async () => snapshot(revision),
+    inspect: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return snapshot(revision);
+    },
   });
 
   assert.equal(result.changed, false);
