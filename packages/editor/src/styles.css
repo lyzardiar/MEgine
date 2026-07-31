@@ -81,6 +81,15 @@ html, body, #root {
   user-select: none;
 }
 
+.editor-app-loading {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #91a6b0;
+  background: #191919;
+  font: 11px var(--u-mono);
+}
+
 .project-hub {
   height: 100%;
   display: grid;

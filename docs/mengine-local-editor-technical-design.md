@@ -1777,3 +1777,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 回归验证新增 6 项时间窗口、边界相交、原索引和密集采样测试，编辑器全量 637/637、TypeScript/Vite 生产构建和 Tauri Debug 应用构建均通过；既有主入口 836.37kB 大于 500kB 的分包预算警告不变。真实桌面压力验证在隔离临时工程中创建根/子轨道各 5000 个 Signal：全景时根轨道语义只包含 2048 个均匀样本但同时保留 `Root-0000` 与 `Root-4999`，完整窗口快照为 2288 个元素且未截断；切到 32× 后根轨道降为 235 项，滚到末尾只出现 95.28–99.98 秒附近的 236 个根 Marker。展开子 Timeline 后也只渲染相同末段的 236 个子 Marker，语义仍报告 5000 source / 5000 mapped / 236 render-window。点击 `Root-4900` 后 Inspector 精确显示名称和 98 秒，证明原索引未漂移。WebView2 截图 `backgroundSafe=true`，窗口全过程 `visible=false`、`focused=false`，探针进程、工程、配置和截图均已清理。
 
 本批完成的是横向项目虚拟化与密集 LOD，还不是完整的超大 Timeline 性能终点。大量轨道行和展开层级仍需要纵向虚拟化；时间映射与预览仍会在资产变化时重新计算完整列表，后续还需嵌套求值缓存、Profiler 依赖/热点视图、子轨道就地编辑、Prefab Control、轨道模板和 Sequencer 录制工作流。
+
+## 151. 2026-07-31 编辑器入口分包与 500kB 硬门禁
+
+- 构建模块报告确认旧 836.37kB 主入口主要由 `AgentBridge`、`App`、`Viewport`、`Inspector` 和 Store/布局代码静态合并而成，不是单个第三方库。新的加载边界保留 Agent transport 在 `createRoot` 前初始化，因此欢迎页和无工程状态仍可完整查询/执行 Agent 命令；完整 `App` 改为只在 `DesktopProjectGate` 真正渲染工程工作区时动态导入，欢迎页 HTML 不再 preload App。加载期间使用有语义的 `Loading project editor…` 状态，不会出现空白且 Agent 无法判断进度的窗口。
+- Scene View、Hierarchy、Inspector 和 Console 改为复用 DockWorkspace 已有的逐面板 Suspense 边界；默认可见面板在工程打开时并行加载，未访问面板直到首次激活才拉取，激活后继续由 Dock 的 visited 集合保留状态。资源编辑器原有的 Timeline、Sequencer、Animator、Material、Shader、Sprite、Build Settings、Profiler 和 Project Settings 延迟加载不变，Assets/Create 命令继续通过轻入口动态导入，不会因为面板拆分丢菜单功能。
+- 生产输出从单一 `index 836.37kB` 调整为入口 394.90kB、App 200.20kB、Viewport 94.28kB、Inspector 45.18kB、Hierarchy 12.96kB、Console 1.73kB；欢迎页只 preload React 193.70kB 与 Tauri 19.86kB，不 preload App/Viewport/Inspector。Vite 新增 500,000 字节 JavaScript chunk 硬门禁，任何块超限都会在写出构建结果前以文件名和实际大小失败，而不是继续把黄色警告当作成功。门禁排序、边界值和非法预算有独立回归，入口源码测试同时固定“Agent 先挂载、App 后延迟”和四个基础 Dock 的动态导入边界。
+
+最终编辑器测试 640/640、TypeScript/Vite 生产构建和 Tauri Debug 应用构建全部通过，构建不再出现大块预算警告。真实隐藏桌面验证在隔离配置中启动且不打开工程：Agent 约 124ms 取得完整 11 元素欢迎页快照并发现 `AI Agent Setup`，证明 App 延迟不影响无工程 Agent；后台 `project.create` 约 678ms 返回，随后语义快照已包含 Scene、Hierarchy、Project 等核心工作区且没有残留 Loading 状态。再执行 `panel.focus(kind=console)` 后 Console chunk 成功加载，tab、toolbar、Clear、Search 与 log 区域全部可读；原生窗口全过程 `visible=false`、`focused=false`，临时进程、工程与配置随后清理。
+
+本批降低的是欢迎页和项目工作区的解析/缓存耦合，不代表总启动成本已经最优。Agent 核心必须在欢迎页可用，因此 394.90kB 入口仍包含完整命令、查询和 Schema；后续应继续把纯数据 Schema 生成物与执行器分层缓存，并以真实 WebView 性能标记记录 bridge-ready、project-ready、first-scene-frame 和 panel-ready，而不是只凭构建字节推断启动体验。

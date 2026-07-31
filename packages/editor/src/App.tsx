@@ -33,9 +33,6 @@ import {
 } from './sceneLibrary';
 import { MenuBar } from './panels/MenuBar';
 import { ToolBar } from './panels/ToolBar';
-import { Hierarchy } from './panels/Hierarchy';
-import { Inspector } from './panels/Inspector';
-import { Console } from './panels/Console';
 import {
   broadcastProjectAssetsExternalChanges,
   OPEN_ANIMATION_CLIP_EVENT,
@@ -62,7 +59,6 @@ import {
   refreshProjectFiles,
   type ProjectAssetChange,
 } from './projectAssets';
-import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import {
   agentBridge,
@@ -144,6 +140,10 @@ import './editorWindow'; // MenuItem side-effects
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
 const Project = lazy(async () => ({ default: (await import('./panels/Project')).Project }));
 const Sequencer = lazy(async () => ({ default: (await import('./panels/Sequencer')).Sequencer }));
+const Hierarchy = lazy(async () => ({ default: (await import('./panels/Hierarchy')).Hierarchy }));
+const Inspector = lazy(async () => ({ default: (await import('./panels/Inspector')).Inspector }));
+const Console = lazy(async () => ({ default: (await import('./panels/Console')).Console }));
+const Viewport = lazy(async () => ({ default: (await import('./panels/Viewport')).Viewport }));
 const AnimatorEditor = lazy(async () => ({ default: (await import('./panels/Animator')).AnimatorEditor }));
 const MaterialEditor = lazy(async () => ({ default: (await import('./panels/Material')).MaterialEditor }));
 const SurfaceShaderEditor = lazy(async () => ({ default: (await import('./panels/SurfaceShader')).SurfaceShaderEditor }));

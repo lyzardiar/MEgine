@@ -1,6 +1,5 @@
-import { Fragment, StrictMode } from 'react';
+import { Fragment, lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
 import { attachBridgeTransport } from './agent/transport';
 import { DesktopProjectGate } from './DesktopProjectGate';
 import { panelFromLocation } from './panels/detachedPanelWindow';
@@ -13,6 +12,8 @@ import { initializeEditorInstance } from './editorInstance';
 import { getEditorInstanceId } from './transport/editorTransport';
 import './editorWindow';
 import './styles.css';
+
+const App = lazy(async () => ({ default: (await import('./App')).App }));
 
 async function bootstrap(): Promise<void> {
   try {
@@ -47,7 +48,9 @@ async function bootstrap(): Promise<void> {
         >
           {detachedEditorWindow
             ? <RegisteredEditorWindowHost typeId={detachedEditorWindow} />
-            : <App detachedPanel={detachedPanel} />}
+            : <Suspense fallback={<div className="editor-app-loading" role="status">Loading project editor…</div>}>
+                <App detachedPanel={detachedPanel} />
+              </Suspense>}
         </DesktopProjectGate>
         <EditorDialogHost />
       </Fragment>
