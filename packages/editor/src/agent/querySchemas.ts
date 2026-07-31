@@ -199,6 +199,13 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       },
     ],
   }),
+  'window.ui_snapshot_all': objectSchema({
+    maxElementsPerWindow: boundedInteger(
+      50,
+      5_000,
+      'Maximum semantic elements returned for each native editor window; default 2000',
+    ),
+  }),
   'window.ui_wait': objectSchema({
     windowLabel: stringValue('Window label from window.list; default main'),
     expectedSnapshotRevision: {
@@ -470,6 +477,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'window.types', category: 'window', description: 'List registered auxiliary editor window types', readOnly: true },
   { id: 'workspace.documents', category: 'workspace', description: 'List open scene and resource documents with dirty state', readOnly: true },
   { id: 'window.ui_snapshot', category: 'window', description: 'Read paged semantic content for any editor window', readOnly: true },
+  { id: 'window.ui_snapshot_all', category: 'window', description: 'Read the first semantic page of every native editor window with inventory-coherence evidence', readOnly: true },
   { id: 'window.ui_wait', category: 'window', description: 'Wait for arbitrary semantic content in any editor window to change and return the new snapshot', readOnly: true },
   { id: 'window.ui_content', category: 'window', description: 'Read exact paged text, semantic name/description, value, or select/datalist options for a semantic selector', readOnly: true },
   { id: 'panel.list', category: 'panel', description: 'List every panel with its active state, dock path, and native host window', readOnly: true },

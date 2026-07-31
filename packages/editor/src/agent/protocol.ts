@@ -314,6 +314,37 @@ export interface EditorWindowInfo {
   scaleFactor: number;
 }
 
+/** One native window and its independently revisioned semantic UI page. */
+export interface EditorWindowUiSnapshotEntry {
+  window: EditorWindowInfo;
+  snapshot: EditorUiSnapshot | null;
+  error: {
+    code: string;
+    message: string;
+  } | null;
+}
+
+/**
+ * Background-safe aggregate of every native editor window observed at the
+ * start of collection. Each window keeps its own revision and continuation
+ * cursor so a large surface can be completed without pretending to be atomic.
+ */
+export interface EditorUiWorkspaceSnapshot {
+  version: number;
+  capturedAt: number;
+  backgroundSafe: true;
+  inventoryStable: boolean;
+  complete: boolean;
+  initialWindowCount: number;
+  finalWindowCount: number;
+  capturedWindowCount: number;
+  failedWindowCount: number;
+  totalSemanticElements: number;
+  returnedSemanticElements: number;
+  hasMore: boolean;
+  windows: EditorWindowUiSnapshotEntry[];
+}
+
 export type DockLayoutNode =
   | {
       kind: 'tabs';

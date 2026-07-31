@@ -76,6 +76,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       offset: 50,
       expectedSnapshotRevision: 'ui-v1-100-0123456789abcdef',
     }],
+    ['window.ui_snapshot_all', { maxElementsPerWindow: 5_000 }],
     ['window.ui_wait', {
       windowLabel: 'panel-inspector',
       expectedSnapshotRevision: 'ui-v31-100-0123456789abcdef',
@@ -162,6 +163,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       offset: 50,
       expectedSnapshotRevision: 'not-a-snapshot-revision',
     }],
+    ['window.ui_snapshot_all', { maxElementsPerWindow: 49 }],
     ['window.ui_wait', {}],
     ['window.ui_wait', {
       expectedSnapshotRevision: 'not-a-snapshot-revision',

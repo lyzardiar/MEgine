@@ -1604,6 +1604,28 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('panel.get_layout')),
   },
   {
+    name: 'get_all_window_ui',
+    description:
+      'Get the first background-safe semantic UI page for every native editor window in one bounded read. The result reports inventoryStable, per-window errors and continuation cursors, and complete=false whenever the window inventory changed, a window failed, or any window needs another page.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        maxElementsPerWindow: {
+          type: 'integer',
+          minimum: 50,
+          maximum: 5000,
+          description: 'Maximum semantic elements returned per window (default: 2000)',
+        },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('window.ui_snapshot_all', {
+      maxElementsPerWindow: typeof args.maxElementsPerWindow === 'number'
+        ? args.maxElementsPerWindow
+        : 2000,
+    })),
+  },
+  {
     name: 'get_window_ui',
     description:
       'Get one page of a background-safe semantic editor-window snapshot: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Continue with nextOffset until null and pass the first page snapshotRevision as expectedSnapshotRevision on every continuation; stale pages fail instead of skipping or duplicating changed content.',
@@ -3612,6 +3634,12 @@ const RESOURCES = [
     'window.list',
   ),
   bridgeResource(
+    'mengine://editor/windows/ui',
+    'All Editor Window UI',
+    'First semantic page for every native editor window with completeness and inventory-coherence evidence.',
+    'window.ui_snapshot_all',
+  ),
+  bridgeResource(
     'mengine://editor/window/types',
     'Editor Window Type Catalog',
     'Registered auxiliary editor window types available for background-safe creation.',
@@ -4115,7 +4143,7 @@ const SERVER_INSTRUCTIONS = [
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
   'Dangerous scene deletion, asset trash, build, Player launch, and build-artifact commands may return PERMISSION_DENIED when the editor policy is deny or token. Approved adapters forward MENGINE_AGENT_APPROVAL_TOKEN automatically; never place approval tokens in tool arguments or logs.',
-  'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector. If unrelated live UI values change, the write may proceed only while the cached target element, its action-relevant semantic signature, its exposed action, and the current invalidation epoch still match; the native layer refreshes that guard and dispatches synchronously in one renderer task, transient focus, geometry, and scroll telemetry are re-read at dispatch, and changed or expired target meaning, value, state, policy, or capability is rejected as stale. Successful UI writes report preSnapshotRevision and snapshotDriftedBeforeAction, settle two target-window render opportunities, and return a postSnapshotRevision when post-action semantic observation succeeds.',
+  'Prefer domain tools over semantic window UI actions. Start broad observation with get_all_window_ui; complete any per-window continuation through get_window_ui using that window snapshot revision. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector. If unrelated live UI values change, the write may proceed only while the cached target element, its action-relevant semantic signature, its exposed action, and the current invalidation epoch still match; the native layer refreshes that guard and dispatches synchronously in one renderer task, transient focus, geometry, and scroll telemetry are re-read at dispatch, and changed or expired target meaning, value, state, policy, or capability is rejected as stale. Successful UI writes report preSnapshotRevision and snapshotDriftedBeforeAction, settle two target-window render opportunities, and return a postSnapshotRevision when post-action semantic observation succeeds.',
   'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
   'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',
   'MCP hosts may subscribe to any listed mengine:// resource. Editor events emit coalesced notifications/resources/updated invalidations, and a Bridge reconnect invalidates every active subscription so the host can re-read authoritative state.',

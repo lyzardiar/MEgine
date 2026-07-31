@@ -31,6 +31,7 @@ import {
   type EditorUiDragPathPoint,
   type EditorUiModifiers,
   type EditorUiSnapshot,
+  type EditorUiWorkspaceSnapshot,
   type EditorUiWaitResult,
   type EditorWindowInfo,
   type HierarchyNode,
@@ -74,6 +75,7 @@ import {
   type QueryMeta,
   type QuerySummary,
 } from './querySchemas';
+import { collectAllWindowUiSnapshots } from './windowUiSnapshot';
 import { validateAgentJsonSchema } from './jsonSchemaValidation';
 import {
   buildAgentComponentSchema,
@@ -953,6 +955,23 @@ class AgentBridge {
       );
     }
     return snapshot;
+  }
+
+  /** Read the first semantic page of every native editor window without focus changes. */
+  async inspectAllWindows(maxElementsPerWindow = 2_000): Promise<EditorUiWorkspaceSnapshot> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'All-window UI inspection requires the desktop editor');
+    }
+    const boundedMaxElements = Number.isFinite(maxElementsPerWindow)
+      ? Math.min(5_000, Math.max(50, Math.trunc(maxElementsPerWindow)))
+      : 2_000;
+    return collectAllWindowUiSnapshots({
+      maxElementsPerWindow: boundedMaxElements,
+      readWindows: () => this.readWindows(),
+      inspectWindow: (windowLabel, maxElements) => (
+        this.inspectWindow(windowLabel, maxElements, 0)
+      ),
+    });
   }
 
   /**
@@ -5195,6 +5214,12 @@ class AgentBridge {
           typeof params.expectedSnapshotRevision === 'string'
             ? params.expectedSnapshotRevision
             : undefined,
+        );
+      case 'window.ui_snapshot_all':
+        return this.inspectAllWindows(
+          typeof params.maxElementsPerWindow === 'number'
+            ? params.maxElementsPerWindow
+            : 2_000,
         );
       case 'window.ui_wait':
         return this.waitForWindowUi(
