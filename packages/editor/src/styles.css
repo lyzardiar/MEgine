@@ -4944,13 +4944,13 @@ body.insp-scrubbing * {
   color: #adbec7;
   background: #20272b;
 }
-.sequencer-control-tree-row.child { height: 28px; border-top-color: #172126; background: #1e2427; }
+.sequencer-control-tree-row.child { height: 30px; border-top-color: #172126; background: #1e2427; }
 .sequencer-control-tree-row.summary.unavailable { color: #d79b91; background: #302526; }
 .sequencer-control-tree-row.summary.cyclic { color: #e0a29a; background: #352526; }
 .sequencer-control-tree-empty {
   width: calc(180px + var(--sequencer-lane-width, 360px));
   min-width: 540px;
-  height: 25px;
+  height: 30px;
   padding: 5px 10px 5px calc(33px + var(--sequencer-control-tree-depth, 1) * 14px);
   border-top: 1px solid #172126;
   color: #788891;
@@ -4958,6 +4958,12 @@ body.insp-scrubbing * {
   font: italic 10px var(--u-font);
 }
 .sequencer-control-tree-empty.warning { color: #dfbd83; background: #302b22; }
+.sequencer-vertical-spacer {
+  width: calc(180px + var(--sequencer-lane-width, 360px));
+  min-width: 540px;
+  contain: strict;
+  pointer-events: none;
+}
 
 .sequencer-panel.track-dragging,
 .sequencer-panel.track-dragging * { cursor: grabbing !important; user-select: none; }

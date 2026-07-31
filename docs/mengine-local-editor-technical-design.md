@@ -1787,3 +1787,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 最终编辑器测试 640/640、TypeScript/Vite 生产构建和 Tauri Debug 应用构建全部通过，构建不再出现大块预算警告。真实隐藏桌面验证在隔离配置中启动且不打开工程：Agent 约 124ms 取得完整 11 元素欢迎页快照并发现 `AI Agent Setup`，证明 App 延迟不影响无工程 Agent；后台 `project.create` 约 678ms 返回，随后语义快照已包含 Scene、Hierarchy、Project 等核心工作区且没有残留 Loading 状态。再执行 `panel.focus(kind=console)` 后 Console chunk 成功加载，tab、toolbar、Clear、Search 与 log 区域全部可读；原生窗口全过程 `visible=false`、`focused=false`，临时进程、工程与配置随后清理。
 
 本批降低的是欢迎页和项目工作区的解析/缓存耦合，不代表总启动成本已经最优。Agent 核心必须在欢迎页可用，因此 394.90kB 入口仍包含完整命令、查询和 Schema；后续应继续把纯数据 Schema 生成物与执行器分层缓存，并以真实 WebView 性能标记记录 bridge-ready、project-ready、first-scene-frame 和 panel-ready，而不是只凭构建字节推断启动体验。
+
+## 152. 2026-08-01 Sequencer 纵向轨道树虚拟化
+
+- Sequencer 轨道区现在同时维护水平时间窗口与纵向块窗口。纵向块按真实视觉顺序组合 Group Header、42px 根轨道和展开后的 30px Sub-Timeline 行；折叠组成员使用零高度但继续保留权威资产索引，空组仍作为独立 30px 块参与排序。窗口计算扣除 32px 标尺并在上下各预取 0.75 屏，只挂载相交块，前后用等高、等宽占位保持原生 `scrollHeight`、横向滚动宽度和拖放坐标不变。
+- `scrollTop` 与 `scrollLeft` 共用一次 `requestAnimationFrame` 合并更新，ResizeObserver 同时跟踪轨道区宽高。滚轮、Agent 语义滚动和拖动边缘自动滚动都会触发同一窗口更新；滚到新区域后重新挂载的 Track Header、Marker/Clip 与 Inspector 仍使用原资产 track/item index，因此尾部选择、锁定、组归属、Undo 和拖放不会因虚拟切片漂移。递归 Sub-Timeline 行先受既有深度/行/项目预算约束，再按根轨道块整体进入纵向窗口，不会破坏循环诊断或根时间映射。
+- Agent 可访问的轨道视口新增纵向可见像素、总 authored tracks、实际 rendered tracks 与块起止索引，并在无障碍说明中同时报告横向时间和纵向挂载范围。语义快照因此只包含当前窗口及预取范围内的轨道内容；完整 `.mtimeline` 资产仍可通过有界的 `asset.read_text` 读取，避免为了“全部内容”重新把数千个不可见轨道塞回 DOM。
+
+回归新增 3 项纵向窗口测试，覆盖固定高度压力列表、Group/子行可变高度、零高折叠块和非法几何；语义契约同时固定 Agent 元数据与占位结构。编辑器全量 643/643、TypeScript/Vite 生产构建和 Tauri Debug 应用构建通过，最大 JavaScript 块继续低于 500,000 字节门禁。真实隐藏桌面压力验证在隔离配置中创建 3000 条 Signal Track 和 100 个 Group（每十组一组折叠）：204px 高轨道视口首屏只挂载 `Track-0030..0035` 六条轨道，完整语义快照 286 元素、DOM 1345 元素且未截断；Agent 滚到 `scrollTop=116227.34` 后只挂载尾部 `Track-2992..2999` 八条轨道，DOM 仍为 1345。点击 `Track-2999` 后 Inspector 精确显示 `Signal Track / Track-2999`，证明原索引未漂移。WebView2 离屏截图为 1440×900、`backgroundSafe=true`，原生主窗口始终 `visible=false`、`focused=false`。
+
+本批补齐了大量根轨道和展开层级的 DOM 纵向预算，但 Timeline 求值、依赖加载和预览构建仍会在资产变化时遍历完整数据。后续继续审计嵌套求值缓存与 Timeline Profiler 依赖/热点视图，并补 Prefab Control、录制模式、轨道模板和子轨道就地编辑；不能把视图虚拟化等同于完整 Timeline 性能终点。

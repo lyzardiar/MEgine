@@ -251,6 +251,11 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   assert.match(sequencer, /aria-description=\{`Visible \$\{timeWindow\.visibleStart\.toFixed\(3\)\}/);
   assert.match(sequencer, /data-agent-time-window-start=\{timeWindow\.visibleStart\.toFixed\(6\)\}/);
   assert.match(sequencer, /data-agent-time-window-end=\{timeWindow\.visibleEnd\.toFixed\(6\)\}/);
+  assert.match(sequencer, /data-agent-vertical-window-start=\{verticalWindow\.visibleStart\.toFixed\(0\)\}/);
+  assert.match(sequencer, /data-agent-authored-tracks=\{asset\.tracks\.length\}/);
+  assert.match(sequencer, /data-agent-rendered-tracks=\{renderedVerticalTrackCount\}/);
+  assert.match(sequencer, /sequencerVerticalWindow\(/);
+  assert.match(sequencer, /className="sequencer-vertical-spacer"/);
   assert.match(sequencer, /data-agent-wheel="true"/);
   assert.match(sequencer, /data-agent-render-window-items=\{renderWindowItemCount\}/);
   assert.match(sequencer, /data-agent-rendered-items=\{renderedItemCount\}/);

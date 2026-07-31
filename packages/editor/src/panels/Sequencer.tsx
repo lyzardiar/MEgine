@@ -96,6 +96,7 @@ import {
   sequencerWindowedPoints,
   sequencerWindowedSpans,
 } from '../sequencerTimeWindow';
+import { sequencerVerticalWindow } from '../sequencerVerticalWindow';
 import {
   broadcastProjectAssetsChanged,
   openTimelineAsset,
@@ -358,7 +359,9 @@ export function Sequencer(props: SequencerProps) {
   const [panning, setPanning] = useState(false);
   const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const [tracksWidth, setTracksWidth] = useState(720);
+  const [tracksHeight, setTracksHeight] = useState(520);
   const [tracksScrollLeft, setTracksScrollLeft] = useState(0);
+  const [tracksScrollTop, setTracksScrollTop] = useState(0);
   const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
   const [marquee, setMarquee] = useState<SequencerMarquee | null>(null);
   const [trackDragVisual, setTrackDragVisual] = useState<SequencerTrackDragVisual | null>(null);
@@ -756,7 +759,11 @@ export function Sequencer(props: SequencerProps) {
     setExpandedControlNodeKeys([]);
     setControlTreeFilter('');
     setTracksScrollLeft(0);
-    if (tracksViewport.current) tracksViewport.current.scrollLeft = 0;
+    setTracksScrollTop(0);
+    if (tracksViewport.current) {
+      tracksViewport.current.scrollLeft = 0;
+      tracksViewport.current.scrollTop = 0;
+    }
   }, [props.assetPath]);
 
   useEffect(() => () => {
@@ -1200,9 +1207,12 @@ export function Sequencer(props: SequencerProps) {
   useEffect(() => {
     const viewport = tracksViewport.current;
     if (!viewport) return;
-    const updateWidth = () => setTracksWidth(Math.max(540, viewport.clientWidth));
-    updateWidth();
-    const observer = new ResizeObserver(updateWidth);
+    const updateSize = () => {
+      setTracksWidth(Math.max(540, viewport.clientWidth));
+      setTracksHeight(Math.max(1, viewport.clientHeight));
+    };
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
     observer.observe(viewport);
     return () => observer.disconnect();
   }, [asset != null]);
@@ -2794,8 +2804,11 @@ export function Sequencer(props: SequencerProps) {
     if (tracksScrollFrame.current != null) return;
     tracksScrollFrame.current = requestAnimationFrame(() => {
       tracksScrollFrame.current = null;
-      const next = tracksViewport.current?.scrollLeft ?? 0;
-      setTracksScrollLeft((current) => Math.abs(current - next) < 0.5 ? current : next);
+      const viewport = tracksViewport.current;
+      const nextLeft = viewport?.scrollLeft ?? 0;
+      const nextTop = viewport?.scrollTop ?? 0;
+      setTracksScrollLeft((current) => Math.abs(current - nextLeft) < 0.5 ? current : nextLeft);
+      setTracksScrollTop((current) => Math.abs(current - nextTop) < 0.5 ? current : nextTop);
     });
   };
   const ticks = sequencerTicks(asset.duration, laneWidth);
@@ -3414,6 +3427,61 @@ export function Sequencer(props: SequencerProps) {
     return rows;
   };
 
+  const controlTreeRowsByTrackId = new Map<string, ReactNode[]>();
+  for (const track of asset.tracks) {
+    const group = groupByTrackId.get(track.id) ?? null;
+    if (
+      !group?.collapsed
+      && track.type === 'control'
+      && expandedControlTrackIds.includes(track.id)
+    ) {
+      controlTreeRowsByTrackId.set(track.id, renderControlTreeRows(track));
+    }
+  }
+  const verticalBlocks: Array<{
+    key: string;
+    height: number;
+    trackIndex: number | null;
+    groupId: string | null;
+    trackVisible: boolean;
+  }> = asset.tracks.map((track, trackIndex) => {
+    const group = groupByTrackId.get(track.id) ?? null;
+    const includesGroupHeader = Boolean(group && firstTrackByGroupId.get(group.id) === trackIndex);
+    const trackVisible = !group?.collapsed;
+    const childRows = controlTreeRowsByTrackId.get(track.id)?.length ?? 0;
+    return {
+      key: `track:${track.id}`,
+      height: (includesGroupHeader ? 30 : 0) + (trackVisible ? 42 + childRows * 30 : 0),
+      trackIndex,
+      groupId: group?.id ?? null,
+      trackVisible,
+    };
+  });
+  for (const group of asset.groups) {
+    if (!firstTrackByGroupId.has(group.id)) {
+      verticalBlocks.push({
+        key: `empty-group:${group.id}`,
+        height: 30,
+        trackIndex: null,
+        groupId: group.id,
+        trackVisible: false,
+      });
+    }
+  }
+  const verticalWindow = sequencerVerticalWindow(
+    verticalBlocks.map((block) => block.height),
+    tracksScrollTop,
+    tracksHeight,
+  );
+  const renderedVerticalBlocks = verticalBlocks.slice(
+    verticalWindow.firstBlock,
+    verticalWindow.lastBlockExclusive,
+  );
+  const renderedVerticalBlockKeys = new Set(renderedVerticalBlocks.map((block) => block.key));
+  const renderedVerticalTrackCount = renderedVerticalBlocks.filter((block) => (
+    block.trackIndex != null && block.trackVisible
+  )).length;
+
   return (
     <div
       className={`timeline-panel sequencer-panel${trackDragVisual || groupDragVisual ? ' track-dragging' : ''}`}
@@ -3656,9 +3724,15 @@ export function Sequencer(props: SequencerProps) {
           ref={tracksViewport}
           role="region"
           aria-label="Sequencer tracks viewport"
-          aria-description={`Visible ${timeWindow.visibleStart.toFixed(3)} to ${timeWindow.visibleEnd.toFixed(3)} seconds; rendering ${timeWindow.renderStart.toFixed(3)} to ${timeWindow.renderEnd.toFixed(3)} seconds with overscan.`}
+          aria-description={`Visible ${timeWindow.visibleStart.toFixed(3)} to ${timeWindow.visibleEnd.toFixed(3)} seconds and vertical pixels ${verticalWindow.visibleStart.toFixed(0)} to ${verticalWindow.visibleEnd.toFixed(0)}; rendering ${timeWindow.renderStart.toFixed(3)} to ${timeWindow.renderEnd.toFixed(3)} seconds and ${renderedVerticalTrackCount} of ${asset.tracks.length} authored tracks with overscan.`}
           data-agent-time-window-start={timeWindow.visibleStart.toFixed(6)}
           data-agent-time-window-end={timeWindow.visibleEnd.toFixed(6)}
+          data-agent-vertical-window-start={verticalWindow.visibleStart.toFixed(0)}
+          data-agent-vertical-window-end={verticalWindow.visibleEnd.toFixed(0)}
+          data-agent-authored-tracks={asset.tracks.length}
+          data-agent-rendered-tracks={renderedVerticalTrackCount}
+          data-agent-rendered-block-start={verticalWindow.firstBlock}
+          data-agent-rendered-block-end={verticalWindow.lastBlockExclusive}
           data-agent-wheel="true"
           title="Drag empty lanes to marquee-select. Shift adds; Ctrl/Cmd toggles. Middle-drag pans horizontally."
           style={{ '--sequencer-lane-width': `${laneWidth}px` } as CSSProperties}
@@ -3754,7 +3828,13 @@ export function Sequencer(props: SequencerProps) {
               <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
             </div>
           </div>
+          {verticalWindow.paddingTop > 0 && <div
+            className="sequencer-vertical-spacer"
+            style={{ height: `${verticalWindow.paddingTop}px` }}
+            aria-hidden="true"
+          />}
           {asset.tracks.map((track, trackIndex) => {
+            if (!renderedVerticalBlockKeys.has(`track:${track.id}`)) return null;
             const group = groupByTrackId.get(track.id) ?? null;
             const effectivelyLocked = timelineTrackIsLocked(asset, track);
             const effectivelyMuted = timelineTrackIsMuted(asset, track, hasSolo);
@@ -4041,10 +4121,18 @@ export function Sequencer(props: SequencerProps) {
                 <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
               </div>
               </div>}
-              {!group?.collapsed && track.type === 'control' && expandedControlTrackIds.includes(track.id) && renderControlTreeRows(track)}
+              {!group?.collapsed && controlTreeRowsByTrackId.get(track.id)}
             </Fragment>;
           })}
-          {asset.groups.filter((group) => !firstTrackByGroupId.has(group.id)).map(renderGroupRow)}
+          {asset.groups.filter((group) => (
+            !firstTrackByGroupId.has(group.id)
+            && renderedVerticalBlockKeys.has(`empty-group:${group.id}`)
+          )).map(renderGroupRow)}
+          {verticalWindow.paddingBottom > 0 && <div
+            className="sequencer-vertical-spacer"
+            style={{ height: `${verticalWindow.paddingBottom}px` }}
+            aria-hidden="true"
+          />}
           {(trackDragVisual || groupDragVisual) && <div
             className={`sequencer-track-root-drop${trackDragVisual?.target?.kind === 'root' || groupDragVisual?.target?.kind === 'root' ? ' active' : ''}${groupDragVisual && !groupDragVisual.valid ? ' invalid' : ''}`}
             data-sequencer-track-root-drop="true"
