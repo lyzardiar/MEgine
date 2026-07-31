@@ -81,6 +81,7 @@ export type TimelineCameraClip = {
 export type TimelineControlClip = {
   start: number;
   duration: number;
+  source: string;
   timeline: string;
   prefab: string;
   control_activation: boolean;
@@ -102,6 +103,13 @@ export function timelineControlExtrapolation(value: unknown): TimelineControlExt
 export function timelineControlPostPlaybackState(value: unknown): TimelineControlPostPlaybackState {
   const normalized = String(value ?? 'revert').trim().toLowerCase();
   return normalized === 'active' || normalized === 'inactive' ? normalized : 'revert';
+}
+
+export function timelineControlSource(
+  clip: Pick<TimelineControlClip, 'source'>,
+  legacyTrackTarget: string,
+): string {
+  return activationTarget(clip.source) || activationTarget(legacyTrackTarget);
 }
 
 export function timelineControlSourceWindowIsValid(
@@ -334,11 +342,14 @@ export function timelineBindingTargets(asset: Pick<TimelineAsset, 'tracks'>): st
       for (const clip of track.clips) targets.add(activationTarget(clip.target));
       continue;
     }
-    targets.add(activationTarget(track.target));
     if (track.type === 'control') {
+      if (track.clips.length === 0) targets.add(activationTarget(track.target));
       for (const clip of track.clips) {
+        targets.add(timelineControlSource(clip, track.target));
         for (const parent of Object.values(clip.binding_overrides ?? {})) targets.add(activationTarget(parent));
       }
+    } else {
+      targets.add(activationTarget(track.target));
     }
   }
   return [...targets].filter(targetIsPortable).sort((left, right) => left.localeCompare(right));
@@ -523,6 +534,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         .sort((left, right) => left.start - right.start);
       tracks.push({ type, id, name, solo: Boolean(track.solo), muted: Boolean(track.muted), locked: Boolean(track.locked), clips });
     } else {
+      const legacySource = activationTarget(track.target);
       const clips = (Array.isArray(track.clips) ? track.clips : [])
         .map((clipValue) => {
           const clip = object(clipValue);
@@ -531,6 +543,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
           return {
             start,
             duration: clipDuration,
+            source: activationTarget(clip.source) || legacySource,
             timeline: timelineAssetPath(clip.timeline),
             prefab: prefabAssetPath(clip.prefab),
             control_activation: Boolean(clip.control_activation),
@@ -628,18 +641,20 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
       }
     } else {
     const target = activationTarget(track.target);
-    if (!targetIsPortable(target)) throw new Error(`${trackLabel(track.type)} track ${track.name} requires a descendant target path without '.' or '..'`);
-    const targets = track.type === 'activation'
-      ? activationTargets
-      : track.type === 'audio'
-        ? audioTargets
-        : track.type === 'animation'
-          ? animationTargets
-          : track.type === 'particle'
-            ? particleTargets
-            : controlTargets;
-    if (targets.has(target)) throw new Error(`${trackLabel(track.type)} target ${target} is controlled by more than one track`);
-    targets.add(target);
+    if (track.type === 'control') {
+      if (target && !targetIsPortable(target)) throw new Error(`Control track ${track.name} has an invalid legacy default source`);
+    } else {
+      if (!targetIsPortable(target)) throw new Error(`${trackLabel(track.type)} track ${track.name} requires a descendant target path without '.' or '..'`);
+      const targets = track.type === 'activation'
+        ? activationTargets
+        : track.type === 'audio'
+          ? audioTargets
+          : track.type === 'animation'
+            ? animationTargets
+            : particleTargets;
+      if (targets.has(target)) throw new Error(`${trackLabel(track.type)} target ${target} is controlled by more than one track`);
+      targets.add(target);
+    }
     if (track.type === 'audio') {
       for (const clip of track.clips) {
         if (!audioAssetIsPortable(audioAssetPath(clip.clip))
@@ -677,10 +692,13 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
       }
     }
     if (track.type === 'control') {
+      const sources = new Set<string>();
       for (const clip of track.clips) {
         const timeline = timelineAssetPath(clip.timeline);
         const prefab = prefabAssetPath(clip.prefab);
-        if ((!timeline && !prefab)
+        const source = timelineControlSource(clip, track.target);
+        if (!targetIsPortable(source)
+          || (!timeline && !prefab)
           || Boolean(timeline) && !timelineAssetIsPortable(timeline)
           || Boolean(prefab) && !prefabAssetIsPortable(prefab)
           || !timeline && Object.keys(clip.binding_overrides).length > 0
@@ -690,6 +708,11 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
           || !controlBindingOverridesAreValid(clip.binding_overrides)) {
           throw new Error(`Control track ${track.name} contains invalid clip settings`);
         }
+        sources.add(source);
+      }
+      for (const source of sources) {
+        if (controlTargets.has(source)) throw new Error(`Control source ${source} is controlled by more than one track`);
+        controlTargets.add(source);
       }
     }
     }
@@ -845,27 +868,36 @@ export function parseTimelineAsset(text: string): TimelineAsset {
       continue;
     }
     const label = track.type === 'activation' ? 'Activation' : track.type === 'audio' ? 'Audio' : track.type === 'animation' ? 'Animation' : track.type === 'particle' ? 'Particle' : 'Control';
-    if (typeof track.target !== 'string' || !targetIsPortable(activationTarget(track.target))) throw new Error(`${label} track ${track.id} requires a descendant target path without '.' or '..'`);
+    if (typeof track.target !== 'string'
+      || (track.type === 'control'
+        ? Boolean(activationTarget(track.target)) && !targetIsPortable(activationTarget(track.target))
+        : !targetIsPortable(activationTarget(track.target)))) {
+      throw new Error(`${label} track ${track.id} requires a descendant target path without '.' or '..'`);
+    }
     if (track.type === 'activation' && track.post_playback != null
       && (typeof track.post_playback !== 'string'
         || !['active', 'inactive', 'revert', 'leave_as_is'].includes(track.post_playback.trim().toLowerCase()))) {
       throw new Error(`Activation track ${track.id} contains an invalid post-playback state`);
     }
     const target = activationTarget(track.target);
-    const targets = track.type === 'activation'
-      ? activationTargets
-      : track.type === 'audio'
-        ? audioTargets
-        : track.type === 'animation'
-          ? animationTargets
-          : track.type === 'particle'
-            ? particleTargets
-            : controlTargets;
-    if (targets.has(target)) throw new Error(`${label} target ${target} is controlled by more than one track`);
-    targets.add(target);
+    if (track.type !== 'control') {
+      const targets = track.type === 'activation'
+        ? activationTargets
+        : track.type === 'audio'
+          ? audioTargets
+          : track.type === 'animation'
+            ? animationTargets
+            : particleTargets;
+      if (targets.has(target)) throw new Error(`${label} target ${target} is controlled by more than one track`);
+      targets.add(target);
+    }
     if (track.clips != null && !Array.isArray(track.clips)) throw new Error(`${label} track ${track.id} clips must be an array`);
+    const controlSourcesForTrack = new Set<string>();
     const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
       const clip = object(clipValue);
+      const controlSource = track.type === 'control'
+        ? activationTarget(clip.source) || target
+        : '';
       if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
         || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
         || track.type === 'activation' && typeof clip.active !== 'boolean'
@@ -889,6 +921,8 @@ export function parseTimelineAsset(text: string): TimelineAsset {
             || clip.clip_in + clip.duration > TIMELINE_MAX_PARTICLE_TIME)
         || track.type === 'control' && (clip.timeline != null && typeof clip.timeline !== 'string'
           || clip.prefab != null && typeof clip.prefab !== 'string'
+          || clip.source != null && typeof clip.source !== 'string'
+          || !targetIsPortable(controlSource)
           || clip.control_activation != null && typeof clip.control_activation !== 'boolean'
           || clip.post_playback != null && (typeof clip.post_playback !== 'string'
             || !['active', 'inactive', 'revert'].includes(clip.post_playback.trim().toLowerCase()))
@@ -905,6 +939,7 @@ export function parseTimelineAsset(text: string): TimelineAsset {
         || clip.start + clip.duration > parsedDuration) {
         throw new Error(`${label} track ${track.id} contains an invalid or out-of-range clip`);
       }
+      if (track.type === 'control') controlSourcesForTrack.add(controlSource);
       return {
         start: clip.start,
         duration: clip.duration,
@@ -917,6 +952,12 @@ export function parseTimelineAsset(text: string): TimelineAsset {
     if (track.type !== 'animation'
       && clips.some((clip, index) => index > 0 && clips[index - 1].start + clips[index - 1].duration > clip.start)) {
       throw new Error(`${label} track ${track.id} contains overlapping clips`);
+    }
+    if (track.type === 'control') {
+      for (const source of controlSourcesForTrack) {
+        if (controlTargets.has(source)) throw new Error(`Control source ${source} is controlled by more than one track`);
+        controlTargets.add(source);
+      }
     }
   }
   if (parsed.groups != null && !Array.isArray(parsed.groups)) throw new Error('Timeline groups must be an array');

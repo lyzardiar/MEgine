@@ -634,15 +634,25 @@ test('reuses the scene target index across equivalent cloned editor snapshots', 
 });
 
 test('Control source activation previews active clips and inactive gaps without mutating the scene', () => {
+  const controlEntities = [...entities, {
+    entity: 8,
+    name: 'PanelB',
+    parent: 1,
+    active: true,
+    components: {},
+  }];
   const child = parseTimelineAsset(JSON.stringify({
     version: 1, duration: 1, tracks: [],
   }));
   const parent = parseTimelineAsset(JSON.stringify({
-    version: 1, duration: 2,
+    version: 1, duration: 3,
     tracks: [{
-      type: 'control', id: 'source', name: 'Source', target: 'Panel',
+      type: 'control', id: 'source', name: 'Source', target: 'LegacyMissing',
       clips: [{
-        start: 0.5, duration: 1, timeline: 'Assets/Child.mtimeline',
+        start: 0.5, duration: 1, source: 'Panel', timeline: 'Assets/Child.mtimeline',
+        control_activation: true, post_playback: 'active',
+      }, {
+        start: 1.5, duration: 1, source: 'PanelB', timeline: 'Assets/Child.mtimeline',
         control_activation: true, post_playback: 'inactive',
       }],
     }],
@@ -650,15 +660,20 @@ test('Control source activation previews active clips and inactive gaps without 
   const timelines = new Map([['assets/child.mtimeline', child]]);
 
   const gap = buildTimelineScenePreview(
-    parent, entities, 1, '{}', 0.25, new Map(), timelines, 'Assets/Parent.mtimeline',
+    parent, controlEntities, 1, '{}', 0.25, new Map(), timelines, 'Assets/Parent.mtimeline',
   );
   assert.deepEqual(gap.diagnostics, []);
-  assert.deepEqual(gap.preview.activations, [{ entity: 2, active: false }]);
-  assert.equal(applyTimelineScenePreview(entities, gap.preview).find((entity) => entity.entity === 2).active, false);
-  assert.equal(entities.find((entity) => entity.entity === 2).active, true);
+  assert.deepEqual(gap.preview.activations, [{ entity: 2, active: false }, { entity: 8, active: false }]);
+  assert.equal(applyTimelineScenePreview(controlEntities, gap.preview).find((entity) => entity.entity === 2).active, false);
+  assert.equal(controlEntities.find((entity) => entity.entity === 2).active, true);
 
   const active = buildTimelineScenePreview(
-    parent, entities, 1, '{}', 0.75, new Map(), timelines, 'Assets/Parent.mtimeline',
+    parent, controlEntities, 1, '{}', 0.75, new Map(), timelines, 'Assets/Parent.mtimeline',
   );
-  assert.deepEqual(active.preview.activations, [{ entity: 2, active: true }]);
+  assert.deepEqual(active.preview.activations, [{ entity: 2, active: true }, { entity: 8, active: false }]);
+
+  const second = buildTimelineScenePreview(
+    parent, controlEntities, 1, '{}', 1.75, new Map(), timelines, 'Assets/Parent.mtimeline',
+  );
+  assert.deepEqual(second.preview.activations, [{ entity: 2, active: false }, { entity: 8, active: true }]);
 });

@@ -250,6 +250,8 @@ pub struct TimelineControlClip {
     pub start: f32,
     pub duration: f32,
     #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub source: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub timeline: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub prefab: String,
@@ -462,14 +464,19 @@ impl TimelineAsset {
                 target: candidate, ..
             } => candidate == target,
             TimelineTrack::Control {
-                target: candidate,
+                target: track_target,
                 clips,
                 ..
             } => {
-                candidate == target
-                    || clips
-                        .iter()
-                        .any(|clip| clip.binding_overrides.values().any(|value| value == target))
+                (clips.is_empty() && track_target == target)
+                    || clips.iter().any(|clip| {
+                        (if clip.source.is_empty() {
+                            track_target
+                        } else {
+                            &clip.source
+                        }) == target
+                            || clip.binding_overrides.values().any(|value| value == target)
+                    })
             }
         })
     }
@@ -489,8 +496,15 @@ impl TimelineAsset {
                     targets.insert(target.clone());
                 }
                 TimelineTrack::Control { target, clips, .. } => {
-                    targets.insert(target.clone());
+                    if clips.is_empty() && !target.is_empty() {
+                        targets.insert(target.clone());
+                    }
                     for clip in clips {
+                        targets.insert(if clip.source.is_empty() {
+                            target.clone()
+                        } else {
+                            clip.source.clone()
+                        });
                         targets.extend(clip.binding_overrides.values().cloned());
                     }
                 }
@@ -883,17 +897,32 @@ impl TimelineAsset {
                             "Timeline track '{id}' must have a name"
                         )));
                     }
-                    *target = normalize_timeline_target(target).ok_or_else(|| {
-                        AssetError::Invalid(format!(
-                            "Timeline control track '{id}' must target a descendant root without '.' or '..'"
-                        ))
-                    })?;
-                    if !control_targets.insert(target.clone()) {
-                        return Err(AssetError::Invalid(format!(
-                            "Timeline control target '{target}' is controlled by more than one track"
-                        )));
-                    }
+                    *target = if target.trim().is_empty() {
+                        String::new()
+                    } else {
+                        normalize_timeline_target(target).ok_or_else(|| {
+                            AssetError::Invalid(format!(
+                                "Timeline control track '{id}' has an invalid legacy default source"
+                            ))
+                        })?
+                    };
+                    let mut track_sources = HashSet::new();
                     for clip in clips.iter_mut() {
+                        clip.source = if clip.source.trim().is_empty() {
+                            target.clone()
+                        } else {
+                            normalize_timeline_target(&clip.source).ok_or_else(|| {
+                                AssetError::Invalid(format!(
+                                    "Timeline control track '{id}' contains an invalid Clip source"
+                                ))
+                            })?
+                        };
+                        if clip.source.is_empty() {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline control track '{id}' clip requires a Source Game Object or Prefab Parent"
+                            )));
+                        }
+                        track_sources.insert(clip.source.clone());
                         clip.timeline = if clip.timeline.trim().is_empty() {
                             String::new()
                         } else {
@@ -980,6 +1009,13 @@ impl TimelineAsset {
                         return Err(AssetError::Invalid(format!(
                             "Timeline control track '{id}' contains overlapping clips"
                         )));
+                    }
+                    for source in track_sources {
+                        if !control_targets.insert(source.clone()) {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline control source '{source}' is controlled by more than one track"
+                            )));
+                        }
                     }
                 }
             }
@@ -1498,7 +1534,7 @@ mod tests {
               "version":1,"duration":6,
               "tracks":[{"type":"control","id":"dialogue","name":" Dialogue ",
                 "target":"Sequences\\Dialogue","clips":[
-                  {"start":3,"duration":2,"timeline":"assets\\Timelines\\Outro.mtimeline","clip_in":1,"speed":-0.5,"extrapolation":" LOOP "},
+                  {"start":3,"duration":2,"source":"Sequences\\Outro","timeline":"assets\\Timelines\\Outro.mtimeline","clip_in":1,"speed":-0.5,"extrapolation":" LOOP "},
                   {"start":0,"duration":2,"timeline":"Assets/Timelines/Intro.mtimeline",
                     "control_activation":true,"post_playback":" ACTIVE ",
                     "binding_overrides":{"Actor\\Body":"Cast\\Lead"}}
@@ -1518,20 +1554,29 @@ mod tests {
         assert_eq!(name, "Dialogue");
         assert_eq!(target, "Sequences/Dialogue");
         assert_eq!(clips[0].timeline, "Assets/Timelines/Intro.mtimeline");
+        assert_eq!(clips[0].source, "Sequences/Dialogue");
         assert_eq!(clips[0].speed, 1.0);
         assert!(clips[0].control_activation);
         assert_eq!(clips[0].post_playback, "active");
         assert_eq!(clips[0].extrapolation, "none");
         assert_eq!(clips[0].binding_overrides["Actor/Body"], "Cast/Lead");
         assert_eq!(clips[1].timeline, "Assets/Timelines/Outro.mtimeline");
+        assert_eq!(clips[1].source, "Sequences/Outro");
         assert_eq!(clips[1].speed, -0.5);
         assert!(!clips[1].control_activation);
         assert_eq!(clips[1].post_playback, "revert");
         assert_eq!(clips[1].extrapolation, "loop");
         assert_eq!(
             asset.required_binding_targets(),
-            BTreeSet::from(["Cast/Lead".to_owned(), "Sequences/Dialogue".to_owned()])
+            BTreeSet::from([
+                "Cast/Lead".to_owned(),
+                "Sequences/Dialogue".to_owned(),
+                "Sequences/Outro".to_owned()
+            ])
         );
+        assert!(asset.requires_binding_target("Sequences/Dialogue"));
+        assert!(asset.requires_binding_target("Sequences/Outro"));
+        assert!(asset.requires_binding_target("Cast/Lead"));
 
         let prefab_only = parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"spawn","name":"Spawn","target":"Sequences","clips":[{"start":0,"duration":1,"prefab":"assets\\Prefabs\\Enemy.prefab"}]}]}"#,
@@ -1542,6 +1587,16 @@ mod tests {
         };
         assert!(clips[0].timeline.is_empty());
         assert_eq!(clips[0].prefab, "Assets/Prefabs/Enemy.prefab");
+        assert_eq!(clips[0].source, "Sequences");
+
+        let explicit_source = parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"explicit","name":"Explicit","target":"","clips":[{"start":0,"duration":1,"source":"Sequences/Explicit","timeline":"Assets/Timelines/Child.mtimeline"}]}]}"#,
+        )
+        .unwrap();
+        let TimelineTrack::Control { clips, .. } = &explicit_source.tracks[0] else {
+            panic!("expected control track");
+        };
+        assert_eq!(clips[0].source, "Sequences/Explicit");
 
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Scenes/Nested.mscene"}]}]}"#,
@@ -1552,11 +1607,15 @@ mod tests {
         )
         .is_err());
         assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"unsafe-source","name":"Unsafe Source","target":"","clips":[{"start":0,"duration":1,"source":"../Outside","timeline":"Assets/Timelines/Child.mtimeline"}]}]}"#,
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"empty","name":"Empty","target":"Sequences","clips":[{"start":0,"duration":1}]}]}"#,
         )
         .is_err());
         assert!(parse_timeline_asset(
-            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"a","name":"A","target":"Sequences","clips":[]},{"type":"control","id":"b","name":"B","target":"Sequences","clips":[]}]}"#,
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"a","name":"A","target":"","clips":[{"start":0,"duration":1,"source":"Sequences","timeline":"Assets/Timelines/A.mtimeline"}]},{"type":"control","id":"b","name":"B","target":"","clips":[{"start":0,"duration":1,"source":"Sequences","timeline":"Assets/Timelines/B.mtimeline"}]}]}"#,
         )
         .is_err());
         assert!(parse_timeline_asset(

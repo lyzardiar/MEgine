@@ -91,6 +91,14 @@ fn control_source_window_is_valid(clip: &TimelineControlClip, child_duration: f3
     source_end >= -f32::EPSILON && source_end <= child_duration + f32::EPSILON
 }
 
+fn control_clip_source<'a>(clip: &'a TimelineControlClip, legacy_track_target: &'a str) -> &'a str {
+    if clip.source.is_empty() {
+        legacy_track_target
+    } else {
+        &clip.source
+    }
+}
+
 fn control_loop_crossed(raw_from: f32, raw_to: f32, duration: f32) -> bool {
     (raw_from / duration).floor() != (raw_to / duration).floor()
 }
@@ -902,34 +910,58 @@ impl TimelineRuntime {
                 .enumerate()
                 .find(|(_, clip)| time >= clip.start && time < clip.start + clip.duration);
             let control_scope = format!("{key_prefix}{id}:");
-            let source_activation_clip = clips
+            let mut source_targets = Vec::new();
+            for clip in clips
                 .iter()
                 .filter(|clip| clip.control_activation && clip.prefab.is_empty())
-                .rev()
-                .find(|clip| time >= clip.start)
-                .or_else(|| {
-                    clips
-                        .iter()
-                        .find(|clip| clip.control_activation && clip.prefab.is_empty())
-                });
-            if let Some(source_clip) = source_activation_clip {
-                let source = match resolve_timeline_target(world, root, target, bindings) {
+            {
+                let source = control_clip_source(clip, target);
+                if !source_targets.contains(&source) {
+                    source_targets.push(source);
+                }
+            }
+            for source_target in source_targets {
+                let source_clip = clips
+                    .iter()
+                    .filter(|clip| {
+                        clip.control_activation
+                            && clip.prefab.is_empty()
+                            && control_clip_source(clip, target) == source_target
+                    })
+                    .rev()
+                    .find(|clip| time >= clip.start)
+                    .or_else(|| {
+                        clips.iter().find(|clip| {
+                            clip.control_activation
+                                && clip.prefab.is_empty()
+                                && control_clip_source(clip, target) == source_target
+                        })
+                    })
+                    .expect("source target was collected from one control clip");
+                let source = match resolve_timeline_target(world, root, source_target, bindings) {
                     Ok(entity) => entity,
                     Err(error) => {
-                        if self.reported_control_failures.insert(report_key) {
+                        if self.reported_control_failures.insert(report_key.clone()) {
                             failures.push(TimelineLoadFailure {
                                 entity: owner,
                                 asset: asset_key.to_owned(),
-                                error: format!("control track '{name}' source '{target}' {error}"),
+                                error: format!(
+                                    "control track '{name}' source '{source_target}' {error}"
+                                ),
                             });
                         }
                         continue;
                     }
                 };
-                let source_key = (owner, format!("{key_prefix}{id}#source-activation"));
-                let source_active = active_clip
-                    .as_ref()
-                    .is_some_and(|(_, clip)| clip.control_activation && clip.prefab.is_empty());
+                let source_key = (
+                    owner,
+                    format!("{key_prefix}{id}#source-activation:{source_target}"),
+                );
+                let source_active = active_clip.as_ref().is_some_and(|(_, clip)| {
+                    clip.control_activation
+                        && clip.prefab.is_empty()
+                        && control_clip_source(clip, target) == source_target
+                });
                 self.apply_activation_override(
                     world,
                     &source_key,
@@ -959,14 +991,15 @@ impl TimelineRuntime {
                 self.reported_control_failures.remove(&report_key);
                 continue;
             };
-            let control_parent = match resolve_timeline_target(world, root, target, bindings) {
+            let clip_source = control_clip_source(clip, target);
+            let control_parent = match resolve_timeline_target(world, root, clip_source, bindings) {
                 Ok(entity) => entity,
                 Err(error) => {
                     if self.reported_control_failures.insert(report_key) {
                         failures.push(TimelineLoadFailure {
                             entity: owner,
                             asset: asset_key.to_owned(),
-                            error: format!("control track '{name}' target '{target}' {error}"),
+                            error: format!("control track '{name}' source '{clip_source}' {error}"),
                         });
                     }
                     continue;
@@ -1196,19 +1229,23 @@ impl TimelineRuntime {
                 if clip.timeline.is_empty() {
                     continue;
                 }
-                let control_parent = match resolve_timeline_target(world, root, target, bindings) {
-                    Ok(entity) => entity,
-                    Err(error) => {
-                        if self.reported_control_failures.insert(report_key.clone()) {
-                            failures.push(TimelineLoadFailure {
-                                entity: owner,
-                                asset: asset_key.to_owned(),
-                                error: format!("control track '{name}' target '{target}' {error}"),
-                            });
+                let clip_source = control_clip_source(clip, target);
+                let control_parent =
+                    match resolve_timeline_target(world, root, clip_source, bindings) {
+                        Ok(entity) => entity,
+                        Err(error) => {
+                            if self.reported_control_failures.insert(report_key.clone()) {
+                                failures.push(TimelineLoadFailure {
+                                    entity: owner,
+                                    asset: asset_key.to_owned(),
+                                    error: format!(
+                                        "control track '{name}' source '{clip_source}' {error}"
+                                    ),
+                                });
+                            }
+                            continue;
                         }
-                        continue;
-                    }
-                };
+                    };
                 let prefab_key = (owner, format!("{key_prefix}{id}:{clip_index}/"));
                 let nested_root = if clip.prefab.is_empty() {
                     control_parent
@@ -3816,16 +3853,20 @@ mod tests {
         .unwrap();
         fs::write(
             timelines.join("Master.mtimeline"),
-            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"source","name":"Source","target":"Source","clips":[{"start":0.5,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","control_activation":true,"post_playback":"active"}]}]}"#,
+            r#"{"version":1,"duration":3,"tracks":[{"type":"control","id":"source","name":"Source","target":"LegacyMissing","clips":[{"start":0.5,"duration":1,"source":"SourceA","timeline":"Assets/Timelines/Child.mtimeline","control_activation":true,"post_playback":"active"},{"start":1.5,"duration":1,"source":"SourceB","timeline":"Assets/Timelines/Child.mtimeline","control_activation":true,"post_playback":"inactive"}]}]}"#,
         )
         .unwrap();
 
         let mut world = World::new();
         let director = world.spawn_empty();
-        let source = world.spawn_empty();
-        world.set_component_value(source, "Name", serde_json::json!({ "value": "Source" }));
-        world.set_parent(source, Some(director));
-        world.set_editor_state(source, world.sibling_index(source), false);
+        let source_a = world.spawn_empty();
+        world.set_component_value(source_a, "Name", serde_json::json!({ "value": "SourceA" }));
+        world.set_parent(source_a, Some(director));
+        world.set_editor_state(source_a, world.sibling_index(source_a), false);
+        let source_b = world.spawn_empty();
+        world.set_component_value(source_b, "Name", serde_json::json!({ "value": "SourceB" }));
+        world.set_parent(source_b, Some(director));
+        world.set_editor_state(source_b, world.sibling_index(source_b), true);
         world.insert_component(
             director,
             TimelineDirector {
@@ -3837,8 +3878,8 @@ mod tests {
 
         assert!(runtime.update(&mut world, 0.0).is_empty());
         assert!(
-            !world.entity_active(source),
-            "source is inactive before the clip"
+            !world.entity_active(source_a) && !world.entity_active(source_b),
+            "both independent sources are inactive before their clips"
         );
         world
             .get_component_mut::<TimelineDirector>(director)
@@ -3846,8 +3887,8 @@ mod tests {
             .time = 0.75;
         assert!(runtime.update(&mut world, 0.0).is_empty());
         assert!(
-            world.entity_active(source),
-            "source is active inside the clip"
+            world.entity_active(source_a) && !world.entity_active(source_b),
+            "only SourceA is active inside its clip"
         );
 
         world
@@ -3856,8 +3897,8 @@ mod tests {
             .playing = false;
         assert!(runtime.update(&mut world, 0.0).is_empty());
         assert!(
-            world.entity_active(source),
-            "pause retains the sampled state"
+            world.entity_active(source_a) && !world.entity_active(source_b),
+            "pause retains both sampled source states"
         );
 
         {
@@ -3869,8 +3910,18 @@ mod tests {
         }
         assert!(runtime.update(&mut world, 0.0).is_empty());
         assert!(
-            !world.entity_active(source),
-            "source is inactive after the clip"
+            !world.entity_active(source_a) && world.entity_active(source_b),
+            "only SourceB is active inside its clip"
+        );
+
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .time = 2.75;
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            !world.entity_active(source_a) && !world.entity_active(source_b),
+            "both sources are inactive after their clips"
         );
 
         {
@@ -3882,8 +3933,8 @@ mod tests {
         }
         assert!(runtime.update(&mut world, 0.0).is_empty());
         assert!(
-            world.entity_active(source),
-            "Active post playback is applied on stop"
+            world.entity_active(source_a) && !world.entity_active(source_b),
+            "each source applies its own post-playback state on stop"
         );
         let _ = fs::remove_dir_all(root);
     }

@@ -11,6 +11,7 @@ import {
 import {
   timelineBindingTargets,
   timelineControlSampleTime,
+  timelineControlSource,
   timelineControlSourceWindowIsValid,
   timelineHasSolo,
   timelineTrackIsMuted,
@@ -301,24 +302,34 @@ export function buildTimelineScenePreview(
     if (track.type === 'control') {
       const clipIndex = track.clips.findIndex((candidate) => sampleTime >= candidate.start
         && sampleTime < candidate.start + candidate.duration);
-      const controlsSourceActivation = track.clips.some((candidate) => (
-        candidate.control_activation && !candidate.prefab
-      ));
-      if (clipIndex < 0 && !controlsSourceActivation) continue;
-      const target = resolveTrackTarget(track.target);
-      if (target == null) {
-        diagnostics.push(`Control track '${track.name}' source '${track.target}' is not resolved.`);
-        continue;
-      }
-      if (controlsSourceActivation) {
+      const activationSources = new Set(track.clips
+        .filter((candidate) => candidate.control_activation && !candidate.prefab)
+        .map((candidate) => timelineControlSource(candidate, track.target)));
+      const resolvedSources = new Map<string, number | null>();
+      for (const source of activationSources) {
+        const target = resolveTrackTarget(source);
+        resolvedSources.set(source, target);
+        if (target == null) {
+          diagnostics.push(`Control track '${track.name}' source '${source}' is not resolved.`);
+          continue;
+        }
         const sourceActive = clipIndex >= 0
           && track.clips[clipIndex].control_activation
-          && !track.clips[clipIndex].prefab;
+          && !track.clips[clipIndex].prefab
+          && timelineControlSource(track.clips[clipIndex], track.target) === source;
         preview.activations.push({ entity: target, active: sourceActive });
       }
       if (clipIndex < 0) continue;
       runtime.metrics.activeItems += 1;
       const clip = track.clips[clipIndex];
+      const source = timelineControlSource(clip, track.target);
+      const target = resolvedSources.has(source)
+        ? resolvedSources.get(source) ?? null
+        : resolveTrackTarget(source);
+      if (target == null) {
+        diagnostics.push(`Control track '${track.name}' source '${source}' is not resolved.`);
+        continue;
+      }
       if (clip.prefab) {
         diagnostics.push(`Control track '${track.name}' Prefab '${clip.prefab}' is instantiated in Play mode; static scene preview does not create transient entities.`);
         continue;

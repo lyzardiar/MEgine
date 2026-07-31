@@ -281,7 +281,9 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   assert.match(sequencer, /<label>Prefab Asset \(optional\) <input list="sequencer-prefab-assets"/);
   assert.match(sequencer, /> Control Activation<\/label>/);
   assert.match(sequencer, /Change Control Post Playback/);
-  assert.match(sequencer, /Source \/ Prefab Parent \(binding key \/ child path\)/);
+  assert.match(sequencer, /Default Source \/ Parent \(legacy fallback\)/);
+  assert.match(sequencer, /selectedControlClip\.prefab \? 'Parent Object' : 'Source Game Object'/);
+  assert.match(sequencer, /renderBindingEditor\(selectedControlSource\)/);
   assert.match(sequencer, /<option value="leave_as_is">Leave As Is<\/option>/);
   assert.match(sequencer, /aria-label="Signal Marker fields"/);
   assert.match(sequencer, /aria-label=\{`\$\{selectedActivationClip \? 'Activation Clip'/);

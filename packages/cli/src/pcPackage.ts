@@ -1754,18 +1754,14 @@ function scanBuildAssetDependencies(
         }
         if (track.type === 'control') {
           const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
-          if (!target || target.startsWith('/')
-            || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
-            throw new Error(`invalid Timeline asset ${source}: control target must be a descendant path without '.' or '..'`);
+          if (target && (target.startsWith('/')
+            || target.split('/').some((segment) => !segment || segment === '.' || segment === '..'))) {
+            throw new Error(`invalid Timeline asset ${source}: control legacy default source must be a descendant path without '.' or '..'`);
           }
-          requiredBindingTargets.add(target);
-          if (controlTargets.has(target)) {
-            throw new Error(`invalid Timeline asset ${source}: control target ${target} is controlled more than once`);
-          }
-          controlTargets.add(target);
           if (track.clips != null && !Array.isArray(track.clips)) {
             throw new Error(`invalid Timeline asset ${source}: control clips must be an array`);
           }
+          const trackSources = new Set<string>();
           const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
             const clip = jsonObject(clipValue);
             if (!clip) throw new Error(`invalid Timeline asset ${source}: control clip must be an object`);
@@ -1775,6 +1771,9 @@ function scanBuildAssetDependencies(
             const prefabPath = (clip.prefab == null
               ? ''
               : strictStringValue(clip, 'prefab', `Timeline control track ${name}`)).replaceAll('\\', '/');
+            const sourceTarget = (clip.source == null
+              ? target
+              : strictStringValue(clip, 'source', `Timeline control track ${name}`)).trim().replaceAll('\\', '/');
             const controlActivation = clip.control_activation == null ? false : clip.control_activation;
             const postPlayback = clip.post_playback == null
               ? 'revert'
@@ -1811,6 +1810,8 @@ function scanBuildAssetDependencies(
               || Boolean(prefabPath) && (!prefabPath.toLowerCase().startsWith('assets/')
                 || prefabPath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
                 || !/\.prefab$/i.test(prefabPath))
+              || !sourceTarget || sourceTarget.startsWith('/')
+              || sourceTarget.split('/').some((segment) => !segment || segment === '.' || segment === '..')
               || typeof controlActivation !== 'boolean'
               || postPlayback !== 'active' && postPlayback !== 'inactive' && postPlayback !== 'revert'
               || !timelinePath && bindingOverrides.length > 0
@@ -1819,6 +1820,8 @@ function scanBuildAssetDependencies(
               || extrapolation !== 'none' && extrapolation !== 'hold' && extrapolation !== 'loop') {
               throw new Error(`invalid Timeline asset ${source}: control clip is invalid or outside duration`);
             }
+            trackSources.add(sourceTarget);
+            requiredBindingTargets.add(sourceTarget);
             if (prefabPath) enqueue(prefabPath, source, `Timeline control track ${name} Prefab`);
             if (timelinePath) {
               enqueue(timelinePath, source, `Timeline control track ${name} nested asset`);
@@ -1838,6 +1841,12 @@ function scanBuildAssetDependencies(
             if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
               throw new Error(`invalid Timeline asset ${source}: control clips overlap`);
             }
+          }
+          for (const sourceTarget of trackSources) {
+            if (controlTargets.has(sourceTarget)) {
+              throw new Error(`invalid Timeline asset ${source}: control source ${sourceTarget} is controlled more than once`);
+            }
+            controlTargets.add(sourceTarget);
           }
           continue;
         }
