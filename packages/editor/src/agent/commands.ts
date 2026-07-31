@@ -1181,7 +1181,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'intent.apply', category: 'intent', description: 'Validate, expand, and atomically apply one supported high-level intent', readOnly: false },
   { id: 'dialog.respond', category: 'dialog', description: 'Accept or cancel the exact active non-blocking editor dialog', readOnly: false },
   { id: 'console.clear', category: 'console', description: 'Clear structured logs and the visible Console panel as one background-safe write', readOnly: false },
-  { id: 'profiler.clear', category: 'profiler', description: 'Clear Scene and Game editor-profiler samples across all editor windows', readOnly: false },
+  { id: 'profiler.clear', category: 'profiler', description: 'Clear Scene, Game, and Timeline editor-profiler data across all editor windows', readOnly: false },
   { id: 'project.open', category: 'project', description: 'Open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.create', category: 'project', description: 'Create and open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.close', category: 'project', description: 'Close the active project and return to the project hub', readOnly: false },

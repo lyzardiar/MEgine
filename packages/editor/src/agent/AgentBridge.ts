@@ -161,6 +161,10 @@ import {
   type EditorProfilerSource,
 } from '../editorProfiler';
 import {
+  clearTimelineProfilerSnapshots,
+  readTimelineProfilerSnapshots,
+} from '../timelineProfiler';
+import {
   buildPcPlayer,
   cancelPcBuild,
   comparePcBuildHistory,
@@ -4147,6 +4151,7 @@ class AgentBridge {
     }
     if (commandId === 'profiler.clear') {
       clearEditorProfilerSamples();
+      clearTimelineProfilerSnapshots();
       return this.finishAsyncCommand(
         { ok: true, data: { cleared: true } },
         options,
@@ -5332,6 +5337,28 @@ class AgentBridge {
           returnedSamples: samples.length,
           truncated: samples.length < allSamples.length,
           samples,
+        };
+      }
+      case 'profiler.get_timeline': {
+        const assetPath = typeof params.assetPath === 'string' ? params.assetPath : undefined;
+        const limit = params.limit ?? 32;
+        if (!Number.isSafeInteger(limit) || Number(limit) < 1 || Number(limit) > 32) {
+          throw new BridgeError(
+            'INVALID_ARGS',
+            '"limit" must be an integer from 1 to 32',
+          );
+        }
+        const allProfiles = readTimelineProfilerSnapshots(assetPath);
+        const profiles = allProfiles.slice(-Number(limit));
+        return {
+          scope: 'timeline-editor-preview',
+          note: 'Timeline Editor dependency and CPU evaluation telemetry; not native Player execution timing.',
+          assetPath: assetPath ?? null,
+          totalProfiles: allProfiles.length,
+          returnedProfiles: profiles.length,
+          truncated: profiles.length < allProfiles.length,
+          latest: profiles.at(-1) ?? null,
+          profiles,
         };
       }
       case 'events.get':

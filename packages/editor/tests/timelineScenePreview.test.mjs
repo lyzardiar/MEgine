@@ -6,6 +6,8 @@ import { parseTimelineAsset } from '../src/timelineAsset.ts';
 import {
   applyTimelineScenePreview,
   buildTimelineScenePreview,
+  createTimelineScenePreviewCache,
+  createTimelineScenePreviewRuntime,
 } from '../src/timelineScenePreview.ts';
 
 const entities = [
@@ -561,4 +563,72 @@ test('evaluates nested Control Tracks relative to their target with timing and c
     'Assets/Timelines/Parent.mtimeline',
   );
   assert.match(cyclic.diagnostics.join(' '), /dependency cycle/);
+});
+
+test('reuses scene, binding table, and child binding target indexes across preview samples', () => {
+  const child = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Child',
+    frame_rate: 60,
+    duration: 1,
+    groups: [],
+    tracks: [{
+      type: 'signal', id: 'signal', name: 'Signal', solo: false, muted: false, locked: false,
+      markers: [{ name: 'Pulse', time: 0.5 }],
+    }],
+  }));
+  const parent = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Parent',
+    frame_rate: 60,
+    duration: 1,
+    groups: [],
+    tracks: [{
+      type: 'control', id: 'child', name: 'Child', target: 'Panel',
+      solo: false, muted: false, locked: false,
+      clips: [{
+        start: 0, duration: 1, timeline: 'Assets/Child.mtimeline', clip_in: 0, speed: 1,
+        extrapolation: 'none', binding_overrides: {},
+      }],
+    }],
+  }));
+  const cache = createTimelineScenePreviewCache();
+  const first = createTimelineScenePreviewRuntime(cache);
+  buildTimelineScenePreview(
+    parent, entities, 1, '{}', 0.25, new Map(),
+    new Map([['assets/child.mtimeline', child]]), 'Assets/Parent.mtimeline', first,
+  );
+  assert.equal(first.metrics.assetsEvaluated, 2);
+  assert.equal(first.metrics.entityIndexCacheMisses, 1);
+  assert.equal(first.metrics.entityIndexCacheHits, 1);
+  assert.equal(first.metrics.bindingTableCacheMisses, 1);
+  assert.equal(first.metrics.bindingTargetCacheMisses, 1);
+
+  const second = createTimelineScenePreviewRuntime(cache);
+  buildTimelineScenePreview(
+    parent, entities, 1, '{}', 0.75, new Map(),
+    new Map([['assets/child.mtimeline', child]]), 'Assets/Parent.mtimeline', second,
+  );
+  assert.equal(second.metrics.entityIndexCacheMisses, 0);
+  assert.equal(second.metrics.entityIndexCacheHits, 2);
+  assert.equal(second.metrics.bindingTableCacheHits, 1);
+  assert.equal(second.metrics.bindingTargetCacheHits, 1);
+  assert.equal(second.metrics.maximumDepth, 1);
+});
+
+test('reuses the scene target index across equivalent cloned editor snapshots', () => {
+  const cache = createTimelineScenePreviewCache();
+  const first = createTimelineScenePreviewRuntime(cache, 'scene-state-v1');
+  buildTimelineScenePreview(asset, entities, 1, '{}', 0.25, clips, new Map(), '', first);
+  assert.equal(first.metrics.entityIndexCacheMisses, 1);
+
+  const clonedEntities = structuredClone(entities);
+  const second = createTimelineScenePreviewRuntime(cache, 'scene-state-v1');
+  buildTimelineScenePreview(asset, clonedEntities, 1, '{}', 0.5, clips, new Map(), '', second);
+  assert.equal(second.metrics.entityIndexCacheMisses, 0);
+  assert.equal(second.metrics.entityIndexCacheHits, 1);
+
+  const changed = createTimelineScenePreviewRuntime(cache, 'scene-state-v2');
+  buildTimelineScenePreview(asset, clonedEntities, 1, '{}', 0.75, clips, new Map(), '', changed);
+  assert.equal(changed.metrics.entityIndexCacheMisses, 1);
 });

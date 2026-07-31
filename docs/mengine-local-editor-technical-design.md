@@ -1797,3 +1797,14 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 回归新增 3 项纵向窗口测试，覆盖固定高度压力列表、Group/子行可变高度、零高折叠块和非法几何；语义契约同时固定 Agent 元数据与占位结构。编辑器全量 643/643、TypeScript/Vite 生产构建和 Tauri Debug 应用构建通过，最大 JavaScript 块继续低于 500,000 字节门禁。真实隐藏桌面压力验证在隔离配置中创建 3000 条 Signal Track 和 100 个 Group（每十组一组折叠）：204px 高轨道视口首屏只挂载 `Track-0030..0035` 六条轨道，完整语义快照 286 元素、DOM 1345 元素且未截断；Agent 滚到 `scrollTop=116227.34` 后只挂载尾部 `Track-2992..2999` 八条轨道，DOM 仍为 1345。点击 `Track-2999` 后 Inspector 精确显示 `Signal Track / Track-2999`，证明原索引未漂移。WebView2 离屏截图为 1440×900、`backgroundSafe=true`，原生主窗口始终 `visible=false`、`focused=false`。
 
 本批补齐了大量根轨道和展开层级的 DOM 纵向预算，但 Timeline 求值、依赖加载和预览构建仍会在资产变化时遍历完整数据。后续继续审计嵌套求值缓存与 Timeline Profiler 依赖/热点视图，并补 Prefab Control、录制模式、轨道模板和子轨道就地编辑；不能把视图虚拟化等同于完整 Timeline 性能终点。
+
+## 153. 2026-08-01 Timeline 求值缓存、依赖图与 Agent Profiler
+
+- Scene Preview 的递归求值不再为每次采样和每层子 Timeline 重复线性扫描全部实体、Binding Track 与 Binding Table。共享运行时按求值相关的实体状态签名缓存 `byId/children` 索引，使等价但重新克隆的编辑器快照仍可命中；层级、激活状态或相关组件变化会改变签名并重建索引。每个 Timeline 资产的 Binding Track 目标集合由 WeakMap 缓存，JSON Binding Table 使用最多 32 项的有界缓存，递归层共享同一运行时并记录命中/未命中、求值资产、轨道、活动项、目标解析和最大深度。
+- 新的依赖剖面以最短深度 BFS 收集已加载 Timeline 图，再用确定性 DFS 标记真正的回边循环。节点汇总资源路径、时长、轨道和项目数，边区分 loaded、missing、cycle 与 depth-limit；默认最多 256 个资产、深度 8、边数为资产预算的八倍，达到任一预算都会明确报告截断，不会因为异常工程把 Profiler 或 Agent 查询拖入无界遍历。热点按节点规模显示，缺失、循环和深度边界作为独立诊断保留。
+- Profiler 增加 Timeline 数据源，与 Scene/Game 采样分开显示 Evaluation、Dependencies、Evaluated Tracks、Index Cache 命中率、依赖热点与问题。Timeline 窗口按 250ms 首尾节流发布快照，跨分离窗口同步；面板失活后保留最后一次真实求值及采样时间，但明确标记预览不再活动。耗时是 WebView 中编辑器预览的 CPU 墙钟值，不宣称等价于最终 Player、GPU 或平台原生 Profiler。
+- Agent 增加有界查询 `profiler.get_timeline`，MCP 暴露 `get_timeline_profile`，可按资源路径取最近 1–32 份结构化剖面；`profiler.clear` 同时清空 Scene/Game 与 Timeline。跨窗口快照经过版本、字符串长度、节点、边和诊断上限规范化，同一原生编辑器实例内可共享，但不会跨实例串扰。
+
+定向回归覆盖等价克隆快照复用、状态签名失效、最短依赖深度、缺失/循环/深度/节点/边预算、Profiler 规范化与 Agent/MCP Schema。最终编辑器测试 654/654、TypeScript/Vite 生产构建和 Tauri Debug 应用构建全部通过，最大 JavaScript 块为 399.22kB，继续低于 500,000 字节硬门禁。真实桌面验证在隔离工程中创建 3 层、604 轨道/项目的 Timeline 图：第二次求值实体索引 3 次命中/0 未命中、Binding Track 3/0、Binding Table 1/0；主 Profiler 在 Timeline 失活后仍显示最后一次 604 轨道求值及 100% 索引命中，并明确列出缺失依赖与回指循环。清空后由隐藏的分离 Timeline 窗口重新发布，主窗口 Agent 立即读到完整图；两扇原生窗口始终 `visible=false`、`focused=false`，`window.ui_snapshot_all` 对 2/2 窗口返回完整 364 个语义元素、0 失败且 `backgroundSafe=true`。验证进程、工程、专属配置和截图随后全部清理。
+
+本批完成的是编辑器预览的可观测性和重复求值降本，不是 Unity Timeline 的全部功能，也没有伪造 Player Profiler。后续继续审计 Prefab Control、录制模式、轨道模板与子轨道就地编辑；若要达到运行时性能诊断闭环，还需定义 Player/GPU Marker 采集协议并由真实构建端提供数据。

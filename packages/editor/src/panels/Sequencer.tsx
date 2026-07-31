@@ -120,8 +120,15 @@ import {
 } from '../timelineBindings';
 import {
   buildTimelineScenePreview,
+  createTimelineScenePreviewCache,
+  createTimelineScenePreviewRuntime,
   type TimelineScenePreview,
 } from '../timelineScenePreview';
+import { timelineDependencyProfile } from '../timelineDependencyProfile';
+import {
+  recordTimelineProfilerSnapshot,
+  type TimelineProfilerSnapshot,
+} from '../timelineProfiler';
 import {
   initializeTimelineEditorPreferencesEvents,
   readTimelineEditorPreferences,
@@ -401,6 +408,18 @@ export function Sequencer(props: SequencerProps) {
   const forceReloadPath = useRef<string | null>(null);
   const closingPath = useRef<string | null>(null);
   const suppressAssetChange = useRef(false);
+  const previewEvaluationCache = useRef(createTimelineScenePreviewCache());
+  const lastTimelineProfilePublishedAt = useRef(Number.NEGATIVE_INFINITY);
+  const pendingTimelineProfile = useRef<TimelineProfilerSnapshot | null>(null);
+  const timelineProfileTimer = useRef<number | null>(null);
+  const lastTimelineEvaluation = useRef<{
+    asset: TimelineAsset;
+    dependency: TimelineProfilerSnapshot['dependency'];
+    capturedAt: number;
+    sampleTime: number;
+    evaluationMs: number;
+    evaluation: TimelineProfilerSnapshot['evaluation'];
+  } | null>(null);
   const audioPreviewController = useMemo(
     () => new TimelineAudioPreviewController(setAudioPreviewStatus),
     [],
@@ -509,6 +528,15 @@ export function Sequencer(props: SequencerProps) {
   const loadedPreviewControlFailures = previewControlResourcesReady
     ? previewControlFailures
     : EMPTY_PREVIEW_CLIP_FAILURES;
+  const previewDependencyProfile = useMemo(() => (
+    asset
+      ? timelineDependencyProfile(
+        asset,
+        props.assetPath ?? '',
+        loadedPreviewControlAssets,
+      )
+      : null
+  ), [asset, loadedPreviewControlAssets, props.assetPath]);
   const previewAnimationPaths = useMemo(() => {
     if (!asset) return [];
     const paths = new Map<string, string>();
@@ -539,7 +567,12 @@ export function Sequencer(props: SequencerProps) {
     .join('\n');
   const previewBuild = useMemo(() => {
     if (!asset || props.playMode || !props.previewEnabled || !directorEntity) return null;
-    return buildTimelineScenePreview(
+    const runtime = createTimelineScenePreviewRuntime(
+      previewEvaluationCache.current,
+      previewHierarchyKey,
+    );
+    const startedAt = performance.now();
+    const build = buildTimelineScenePreview(
       asset,
       props.entities,
       directorEntity.entity,
@@ -548,7 +581,15 @@ export function Sequencer(props: SequencerProps) {
       loadedPreviewAnimationClips,
       loadedPreviewControlAssets,
       props.assetPath ?? '',
+      runtime,
     );
+    return {
+      ...build,
+      profile: {
+        evaluationMs: Math.max(0, performance.now() - startedAt),
+        metrics: runtime.metrics,
+      },
+    };
   }, [
     asset,
     director?.bindings_json,
@@ -563,6 +604,90 @@ export function Sequencer(props: SequencerProps) {
   const previewClipFailuresKey = loadedPreviewClipFailures.join('\n');
   const previewControlFailuresKey = loadedPreviewControlFailures.join('\n');
   const audioPreviewDiagnosticsKey = audioPreviewStatus.diagnostics.join('\n');
+
+  useEffect(() => {
+    if (!asset || !previewDependencyProfile || !props.assetPath) return;
+    if (previewBuild) {
+      lastTimelineEvaluation.current = {
+        asset,
+        dependency: previewDependencyProfile,
+        capturedAt: Date.now(),
+        sampleTime: displayTime,
+        evaluationMs: previewBuild.profile.evaluationMs,
+        evaluation: previewBuild.profile.metrics,
+      };
+    }
+    const retainedEvaluation = lastTimelineEvaluation.current?.asset === asset
+      && lastTimelineEvaluation.current.dependency === previewDependencyProfile
+      ? lastTimelineEvaluation.current
+      : null;
+    pendingTimelineProfile.current = {
+      version: 1,
+      capturedAt: Date.now(),
+      assetPath: props.assetPath,
+      assetName: asset.name,
+      sampleTime: retainedEvaluation?.sampleTime ?? displayTime,
+      previewEvaluated: retainedEvaluation != null,
+      previewActive: previewBuild != null,
+      evaluationCapturedAt: retainedEvaluation?.capturedAt ?? 0,
+      evaluationMs: retainedEvaluation?.evaluationMs ?? 0,
+      diagnostics: [
+        ...loadedPreviewControlFailures,
+        ...loadedPreviewClipFailures,
+        ...(previewBuild?.diagnostics ?? []),
+      ],
+      dependency: previewDependencyProfile,
+      evaluation: retainedEvaluation?.evaluation ?? {
+        assetsEvaluated: 0,
+        tracksEvaluated: 0,
+        activeItems: 0,
+        targetResolutions: 0,
+        unresolvedTargets: 0,
+        maximumDepth: 0,
+        entityIndexCacheHits: 0,
+        entityIndexCacheMisses: 0,
+        bindingTargetCacheHits: 0,
+        bindingTargetCacheMisses: 0,
+        bindingTableCacheHits: 0,
+        bindingTableCacheMisses: 0,
+      },
+    };
+    const publish = () => {
+      timelineProfileTimer.current = null;
+      const snapshot = pendingTimelineProfile.current;
+      pendingTimelineProfile.current = null;
+      if (!snapshot) return;
+      lastTimelineProfilePublishedAt.current = performance.now();
+      recordTimelineProfilerSnapshot(snapshot);
+    };
+    const remaining = 250 - (performance.now() - lastTimelineProfilePublishedAt.current);
+    if (remaining <= 0) {
+      if (timelineProfileTimer.current != null) {
+        window.clearTimeout(timelineProfileTimer.current);
+      }
+      publish();
+    } else if (timelineProfileTimer.current == null) {
+      timelineProfileTimer.current = window.setTimeout(publish, remaining);
+    }
+  }, [
+    asset,
+    displayTime,
+    loadedPreviewClipFailures,
+    loadedPreviewControlFailures,
+    previewBuild,
+    previewDependencyProfile,
+    props.assetPath,
+  ]);
+
+  useEffect(() => () => {
+    if (timelineProfileTimer.current != null) {
+      window.clearTimeout(timelineProfileTimer.current);
+      timelineProfileTimer.current = null;
+    }
+    const pending = pendingTimelineProfile.current;
+    pendingTimelineProfile.current = null;
+    if (pending) recordTimelineProfilerSnapshot(pending);
+  }, []);
 
   useEffect(() => {
     const selectedEntityId = props.selectedEntity?.entity ?? null;

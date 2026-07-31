@@ -8,12 +8,18 @@ import {
   type EditorProfilerSample,
   type EditorProfilerSource,
 } from '../editorProfiler';
+import {
+  clearTimelineProfilerSnapshots,
+  readTimelineProfilerSnapshots,
+  subscribeTimelineProfiler,
+} from '../timelineProfiler';
 import { nextHorizontalTabIndex } from '../tabKeyboardNavigation';
 
 const GRAPH_SAMPLES = 120;
 const FRAME_BUDGET_MS = 1000 / 60;
 const COUNT_FORMATTER = new Intl.NumberFormat();
-const PROFILER_SOURCES = ['scene', 'game'] as const;
+const PROFILER_SOURCES = ['scene', 'game', 'timeline'] as const;
+type ProfilerSource = EditorProfilerSource | 'timeline';
 
 function formatMs(value: number): string {
   return Number.isFinite(value) ? `${value.toFixed(value >= 10 ? 1 : 2)} ms` : '—';
@@ -82,10 +88,11 @@ function Metric(props: { label: string; value: string; hint?: string; warning?: 
 
 export function Profiler() {
   const panelRef = useRef<HTMLDivElement>(null);
-  const [source, setSource] = useState<EditorProfilerSource>('game');
+  const [source, setSource] = useState<ProfilerSource>('game');
   const [frozen, setFrozen] = useState(false);
   const [visible, setVisible] = useState(true);
   const [samples, setSamples] = useState(() => readEditorProfilerSamples('game'));
+  const [timelineSnapshots, setTimelineSnapshots] = useState(readTimelineProfilerSnapshots);
 
   useEffect(() => {
     const element = panelRef.current;
@@ -105,7 +112,8 @@ export function Profiler() {
     const publish = () => {
       refreshTimer = null;
       lastPublishedAt = performance.now();
-      setSamples(readEditorProfilerSamples(source));
+      if (source === 'timeline') setTimelineSnapshots(readTimelineProfilerSnapshots());
+      else setSamples(readEditorProfilerSamples(source));
     };
     const schedule = () => {
       const delay = editorProfilerUiRefreshDelay(
@@ -124,7 +132,9 @@ export function Profiler() {
       }
     };
     publish();
-    const unsubscribe = subscribeEditorProfiler(schedule);
+    const unsubscribe = source === 'timeline'
+      ? subscribeTimelineProfiler(schedule)
+      : subscribeEditorProfiler(schedule);
     return () => {
       unsubscribe();
       if (refreshTimer != null) window.clearTimeout(refreshTimer);
@@ -133,6 +143,25 @@ export function Profiler() {
 
   const summary = useMemo(() => summarizeEditorProfilerSamples(samples), [samples]);
   const latest = summary.latest;
+  const latestTimeline = timelineSnapshots.at(-1) ?? null;
+  const timelineHotspots = useMemo(() => (
+    latestTimeline?.dependency.nodes
+      .slice()
+      .sort((left, right) => right.items - left.items || right.tracks - left.tracks || left.path.localeCompare(right.path))
+      .slice(0, 12) ?? []
+  ), [latestTimeline]);
+  const timelineIssues = latestTimeline?.dependency.edges.filter((edge) => edge.status !== 'loaded') ?? [];
+  const timelineCacheHits = latestTimeline
+    ? latestTimeline.evaluation.entityIndexCacheHits
+      + latestTimeline.evaluation.bindingTargetCacheHits
+      + latestTimeline.evaluation.bindingTableCacheHits
+    : 0;
+  const timelineCacheMisses = latestTimeline
+    ? latestTimeline.evaluation.entityIndexCacheMisses
+      + latestTimeline.evaluation.bindingTargetCacheMisses
+      + latestTimeline.evaluation.bindingTableCacheMisses
+    : 0;
+  const timelineCacheTotal = timelineCacheHits + timelineCacheMisses;
   const fps = latest && latest.frameMs > 0 ? 1000 / latest.frameMs : 0;
   const itemsPerBatch = latest && latest.uiBatches > 0
     ? latest.uiPrimitives / latest.uiBatches
@@ -168,7 +197,7 @@ export function Profiler() {
                   ?.focus({ preventScroll: true });
               }}
               key={value}
-            >{value === 'scene' ? 'Scene' : 'Game'}</button>
+            >{value === 'scene' ? 'Scene' : value === 'game' ? 'Game' : 'Timeline'}</button>
           ))}
         </div>
         <span className={`profiler-record-state${frozen ? ' frozen' : ''}`}>
@@ -179,11 +208,97 @@ export function Profiler() {
         </button>
         <button type="button" onClick={() => {
           clearEditorProfilerSamples();
+          clearTimelineProfilerSnapshots();
           setSamples([]);
+          setTimelineSnapshots([]);
         }}>Clear</button>
       </div>
 
-      {!latest ? (
+      {source === 'timeline' ? (!latestTimeline ? (
+        <div
+          id="profiler-source-panel"
+          className="profiler-empty"
+          role="tabpanel"
+          aria-labelledby="profiler-source-tab-timeline"
+        >
+          <strong>No Timeline profile</strong>
+          <span>Open a Timeline asset to inspect its dependency graph and preview evaluation cost.</span>
+        </div>
+      ) : (
+        <div
+          id="profiler-source-panel"
+          className="profiler-scroll profiler-timeline"
+          role="tabpanel"
+          aria-labelledby="profiler-source-tab-timeline"
+        >
+          <header className="profiler-timeline-header">
+            <strong>{latestTimeline.assetName}</strong>
+            <span title={latestTimeline.assetPath}>{latestTimeline.assetPath}</span>
+          </header>
+          <div className="profiler-metrics profiler-metrics-primary" aria-label="Timeline evaluation metrics">
+            <Metric
+              label="Evaluation"
+              value={latestTimeline.previewEvaluated
+                ? formatMs(latestTimeline.evaluationMs)
+                : 'Not sampled'}
+              hint={latestTimeline.previewEvaluated
+                ? `${latestTimeline.previewActive ? 'at' : 'last at'} ${latestTimeline.sampleTime.toFixed(3)} s`
+                : 'Enable edit-mode preview and bind a Timeline Director'}
+              warning={latestTimeline.previewEvaluated && latestTimeline.evaluationMs > 4}
+            />
+            <Metric
+              label="Dependencies"
+              value={formatCount(latestTimeline.dependency.nodes.length)}
+              hint={`${formatCount(latestTimeline.dependency.edges.length)} Control edges`}
+              warning={timelineIssues.length > 0}
+            />
+            <Metric
+              label="Evaluated Tracks"
+              value={latestTimeline.previewEvaluated
+                ? formatCount(latestTimeline.evaluation.tracksEvaluated)
+                : '—'}
+              hint={latestTimeline.previewEvaluated
+                ? `${formatCount(latestTimeline.evaluation.activeItems)} active items`
+                : 'No preview evaluation'}
+            />
+            <Metric
+              label="Index Cache"
+              value={latestTimeline.previewEvaluated && timelineCacheTotal
+                ? `${(timelineCacheHits / timelineCacheTotal * 100).toFixed(0)}%`
+                : '—'}
+              hint={latestTimeline.previewEvaluated
+                ? `${formatCount(timelineCacheHits)} hits · ${formatCount(timelineCacheMisses)} misses`
+                : 'No preview evaluation'}
+            />
+          </div>
+
+          <section className="profiler-timeline-section" aria-label="Timeline dependency hotspots">
+            <h3>Dependency Hotspots</h3>
+            <table>
+              <thead><tr><th>Timeline</th><th>Depth</th><th>Tracks</th><th>Items</th></tr></thead>
+              <tbody>{timelineHotspots.map((node) => <tr key={node.path}>
+                <td title={node.path}>{node.name || node.path}</td>
+                <td>{node.depth}</td>
+                <td>{formatCount(node.tracks)}</td>
+                <td>{formatCount(node.items)}</td>
+              </tr>)}</tbody>
+            </table>
+          </section>
+
+          <section className="profiler-timeline-section" aria-label="Timeline dependency issues">
+            <h3>Dependency Issues <span>{timelineIssues.length}</span></h3>
+            {timelineIssues.length ? <ul>{timelineIssues.slice(0, 32).map((edge) => <li key={`${edge.parentPath}:${edge.trackId}:${edge.clipIndex}`}>
+              <strong>{edge.status}</strong>
+              <span>{edge.trackName} → {edge.childPath}</span>
+            </li>)}</ul> : <p>No missing, cyclic, or depth-limited dependencies.</p>}
+          </section>
+
+          <div className="profiler-scope-note">
+            Timeline Editor preview dependency and CPU evaluation telemetry. Last evaluation is retained while
+            the Timeline panel is inactive; this is not native Player execution timing.
+          </div>
+        </div>
+      )) : !latest ? (
         <div
           id="profiler-source-panel"
           className="profiler-empty"

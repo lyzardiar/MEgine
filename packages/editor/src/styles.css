@@ -6356,6 +6356,74 @@ body.insp-scrubbing * {
   line-height: 1.45;
 }
 
+.profiler-timeline-header {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #3b3b3b;
+}
+.profiler-timeline-header strong { color: var(--u-text-bright); font-size: 12px; }
+.profiler-timeline-header span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--u-muted);
+  font: 9px var(--u-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profiler-timeline-section {
+  margin-top: 5px;
+  border: 1px solid #3b3b3b;
+  background: #202020;
+}
+.profiler-timeline-section h3 {
+  display: flex;
+  min-height: 25px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 7px;
+  border-bottom: 1px solid #343434;
+  color: var(--u-text-bright);
+  font-size: 10px;
+  font-weight: 500;
+}
+.profiler-timeline-section h3 span { color: var(--u-muted); font: 9px var(--u-mono); }
+.profiler-timeline-section table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.profiler-timeline-section th,
+.profiler-timeline-section td {
+  height: 23px;
+  padding: 2px 7px;
+  border-bottom: 1px solid #2f2f2f;
+  text-align: right;
+}
+.profiler-timeline-section th { color: var(--u-muted); font-size: 9px; font-weight: 500; }
+.profiler-timeline-section th:first-child,
+.profiler-timeline-section td:first-child {
+  max-width: 360px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profiler-timeline-section ul { margin: 0; padding: 0; list-style: none; }
+.profiler-timeline-section li {
+  display: grid;
+  min-height: 24px;
+  align-items: center;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 6px;
+  padding: 2px 7px;
+  border-bottom: 1px solid #2f2f2f;
+  font-size: 10px;
+}
+.profiler-timeline-section li strong { color: #ef9a72; font: 9px var(--u-mono); text-transform: uppercase; }
+.profiler-timeline-section li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profiler-timeline-section p { margin: 0; padding: 8px; color: var(--u-muted); font-size: 10px; }
+
 @media (max-width: 760px) {
   .profiler-metrics-primary,
   .profiler-metrics-secondary,

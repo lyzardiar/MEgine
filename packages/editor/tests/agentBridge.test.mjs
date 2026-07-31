@@ -1061,6 +1061,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'step'/);
   assert.match(mcp, /'clear_console_logs'/);
   assert.match(mcp, /name: 'get_profiler_samples'/);
+  assert.match(mcp, /name: 'get_timeline_profile'/);
   assert.match(mcp, /'clear_profiler_samples'/);
   assert.match(mcp, /name: 'describe_command'/);
   assert.match(mcp, /bridgeExecute,\s*bridgeQuery,\s*closeBridgeConnection/);
@@ -1083,6 +1084,7 @@ test('the main AgentBridge transport is available before a project is opened', (
   const main = fs.readFileSync(path.join(root, 'src', 'main.tsx'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
   const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
+  assert.match(main, /initializeTimelineProfiler\(\)/);
   const transport = fs.readFileSync(path.join(root, 'src', 'agent', 'transport.ts'), 'utf8');
   const idempotency = fs.readFileSync(
     path.join(root, 'src', 'agent', 'idempotency.ts'),

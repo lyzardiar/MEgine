@@ -9,6 +9,7 @@ import { EditorDialogHost } from './EditorDialogHost';
 import { initializeAssetEditorEvents } from './assetEditorEvents';
 import { initializeBuildEditorEvents } from './buildEditorEvents';
 import { initializeEditorInstance } from './editorInstance';
+import { initializeTimelineProfiler } from './timelineProfiler';
 import { getEditorInstanceId } from './transport/editorTransport';
 import './editorWindow';
 import './styles.css';
@@ -26,6 +27,7 @@ async function bootstrap(): Promise<void> {
   }
   initializeAssetEditorEvents();
   initializeBuildEditorEvents();
+  initializeTimelineProfiler();
 
   const detachedPanel = panelFromLocation();
   const detachedEditorWindow = editorWindowTypeFromLocation();

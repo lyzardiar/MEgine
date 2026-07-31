@@ -76,6 +76,74 @@ export type TimelineScenePreviewEntity = AnimationPreviewEntity & {
   active?: boolean;
 };
 
+type TimelineSceneEntityIndex = {
+  source: readonly TimelineScenePreviewEntity[];
+  stateKey: string | null;
+  byId: ReadonlyMap<number, TimelineScenePreviewEntity>;
+  childByParentAndName: ReadonlyMap<string, number>;
+};
+
+export type TimelineScenePreviewCache = {
+  entityIndex: TimelineSceneEntityIndex | null;
+  bindingTargets: WeakMap<TimelineAsset, readonly string[]>;
+  bindingTables: Map<string, TimelineBindingTable>;
+};
+
+export type TimelineScenePreviewMetrics = {
+  assetsEvaluated: number;
+  tracksEvaluated: number;
+  activeItems: number;
+  targetResolutions: number;
+  unresolvedTargets: number;
+  maximumDepth: number;
+  entityIndexCacheHits: number;
+  entityIndexCacheMisses: number;
+  bindingTargetCacheHits: number;
+  bindingTargetCacheMisses: number;
+  bindingTableCacheHits: number;
+  bindingTableCacheMisses: number;
+};
+
+export type TimelineScenePreviewRuntime = {
+  cache: TimelineScenePreviewCache;
+  entityStateKey: string | null;
+  metrics: TimelineScenePreviewMetrics;
+  evaluatedAssets: WeakSet<TimelineAsset>;
+};
+
+export function createTimelineScenePreviewCache(): TimelineScenePreviewCache {
+  return {
+    entityIndex: null,
+    bindingTargets: new WeakMap(),
+    bindingTables: new Map(),
+  };
+}
+
+export function createTimelineScenePreviewRuntime(
+  cache = createTimelineScenePreviewCache(),
+  entityStateKey: string | null = null,
+): TimelineScenePreviewRuntime {
+  return {
+    cache,
+    entityStateKey,
+    metrics: {
+      assetsEvaluated: 0,
+      tracksEvaluated: 0,
+      activeItems: 0,
+      targetResolutions: 0,
+      unresolvedTargets: 0,
+      maximumDepth: 0,
+      entityIndexCacheHits: 0,
+      entityIndexCacheMisses: 0,
+      bindingTargetCacheHits: 0,
+      bindingTargetCacheMisses: 0,
+      bindingTableCacheHits: 0,
+      bindingTableCacheMisses: 0,
+    },
+    evaluatedAssets: new WeakSet(),
+  };
+}
+
 type TimelineScenePreviewContext = {
   depth: number;
   stack: readonly string[];
@@ -87,19 +155,84 @@ const MAX_CONTROL_TIMELINE_DEPTH = 8;
 const EMPTY_TIMELINE_ASSETS: ReadonlyMap<string, TimelineAsset> = new Map();
 
 function resolveDescendant(
-  entities: readonly TimelineScenePreviewEntity[],
+  index: TimelineSceneEntityIndex,
   root: number,
   target: string,
 ): number | null {
   let current = root;
   for (const segment of target.trim().replaceAll('\\', '/').split('/')) {
     if (!segment || segment === '.' || segment === '..') return null;
-    const child = entities.find((candidate) => (candidate.parent ?? null) === current
-      && candidate.name === segment);
-    if (!child) return null;
-    current = child.entity;
+    const child = index.childByParentAndName.get(`${current}\0${segment}`);
+    if (child == null) return null;
+    current = child;
   }
   return current;
+}
+
+function sceneEntityIndex(
+  entities: readonly TimelineScenePreviewEntity[],
+  runtime: TimelineScenePreviewRuntime,
+): TimelineSceneEntityIndex {
+  const cached = runtime.cache.entityIndex;
+  if (cached && (
+    cached.source === entities
+    || (runtime.entityStateKey != null && cached.stateKey === runtime.entityStateKey)
+  )) {
+    runtime.metrics.entityIndexCacheHits += 1;
+    return cached;
+  }
+  runtime.metrics.entityIndexCacheMisses += 1;
+  const byId = new Map<number, TimelineScenePreviewEntity>();
+  const childByParentAndName = new Map<string, number>();
+  for (const entity of entities) {
+    byId.set(entity.entity, entity);
+    const parent = entity.parent ?? null;
+    const key = `${parent}\0${entity.name ?? ''}`;
+    if (!childByParentAndName.has(key)) childByParentAndName.set(key, entity.entity);
+  }
+  const index = {
+    source: entities,
+    stateKey: runtime.entityStateKey,
+    byId,
+    childByParentAndName,
+  };
+  runtime.cache.entityIndex = index;
+  return index;
+}
+
+function parsedBindingTable(
+  bindingsJson: unknown,
+  runtime: TimelineScenePreviewRuntime,
+): TimelineBindingTable {
+  if (typeof bindingsJson !== 'string') return parseTimelineBindingTable(bindingsJson);
+  const cached = runtime.cache.bindingTables.get(bindingsJson);
+  if (cached) {
+    runtime.metrics.bindingTableCacheHits += 1;
+    return cached;
+  }
+  runtime.metrics.bindingTableCacheMisses += 1;
+  const parsed = parseTimelineBindingTable(bindingsJson);
+  runtime.cache.bindingTables.set(bindingsJson, parsed);
+  if (runtime.cache.bindingTables.size > 32) {
+    const oldest = runtime.cache.bindingTables.keys().next().value;
+    if (typeof oldest === 'string') runtime.cache.bindingTables.delete(oldest);
+  }
+  return parsed;
+}
+
+function cachedBindingTargets(
+  asset: TimelineAsset,
+  runtime: TimelineScenePreviewRuntime,
+): readonly string[] {
+  const cached = runtime.cache.bindingTargets.get(asset);
+  if (cached) {
+    runtime.metrics.bindingTargetCacheHits += 1;
+    return cached;
+  }
+  runtime.metrics.bindingTargetCacheMisses += 1;
+  const targets = timelineBindingTargets(asset);
+  runtime.cache.bindingTargets.set(asset, targets);
+  return targets;
 }
 
 function clipKey(path: string): string {
@@ -115,6 +248,7 @@ export function buildTimelineScenePreview(
   animationClips: ReadonlyMap<string, AnimationClip>,
   controlAssets: ReadonlyMap<string, TimelineAsset> = EMPTY_TIMELINE_ASSETS,
   assetPath = '',
+  runtime = createTimelineScenePreviewRuntime(),
   context?: TimelineScenePreviewContext,
 ): TimelineScenePreviewBuild {
   const preview: TimelineScenePreview = {
@@ -125,9 +259,15 @@ export function buildTimelineScenePreview(
   };
   let audio: TimelineAudioPreviewItem[] = [];
   const diagnostics: string[] = [];
+  if (!runtime.evaluatedAssets.has(asset)) {
+    runtime.evaluatedAssets.add(asset);
+    runtime.metrics.assetsEvaluated += 1;
+  }
+  runtime.metrics.maximumDepth = Math.max(runtime.metrics.maximumDepth, context?.depth ?? 0);
+  const entityIndex = sceneEntityIndex(entities, runtime);
   let bindings: TimelineBindingTable;
   try {
-    bindings = parseTimelineBindingTable(bindingsJson);
+    bindings = parsedBindingTable(bindingsJson, runtime);
   } catch (reason) {
     diagnostics.push(`Timeline bindings are invalid: ${reason instanceof Error ? reason.message : String(reason)}`);
     return { preview, audio, diagnostics };
@@ -141,20 +281,28 @@ export function buildTimelineScenePreview(
     deferHierarchyFilter: false,
   };
   const resolveTrackTarget = (target: string): number | null => {
+    runtime.metrics.targetResolutions += 1;
     const binding = bindings.bindings[target];
     if (binding) {
-      if (binding.missing) return null;
-      return entities.find((candidate) => String(candidate.entity) === binding.entity)?.entity ?? null;
+      const resolved = binding.missing
+        ? null
+        : entityIndex.byId.get(Number(binding.entity))?.entity ?? null;
+      if (resolved == null) runtime.metrics.unresolvedTargets += 1;
+      return resolved;
     }
-    return resolveDescendant(entities, director, target);
+    const resolved = resolveDescendant(entityIndex, director, target);
+    if (resolved == null) runtime.metrics.unresolvedTargets += 1;
+    return resolved;
   };
 
   for (const track of asset.tracks) {
+    runtime.metrics.tracksEvaluated += 1;
     if (timelineTrackIsMuted(asset, track, hasSolo)) continue;
     if (track.type === 'control') {
       const clipIndex = track.clips.findIndex((candidate) => sampleTime >= candidate.start
         && sampleTime < candidate.start + candidate.duration);
       if (clipIndex < 0) continue;
+      runtime.metrics.activeItems += 1;
       const clip = track.clips[clipIndex];
       const target = resolveTrackTarget(track.target);
       if (target == null) {
@@ -167,7 +315,7 @@ export function buildTimelineScenePreview(
         diagnostics.push(`Control track '${track.name}' Timeline '${clip.timeline}' is not loaded.`);
         continue;
       }
-      const childTargets = new Set(timelineBindingTargets(child));
+      const childTargets = new Set(cachedBindingTargets(child, runtime));
       const bindingOverrides = clip.binding_overrides ?? {};
       const unknownOverride = Object.keys(bindingOverrides)
         .find((childTarget) => !childTargets.has(childTarget));
@@ -194,9 +342,9 @@ export function buildTimelineScenePreview(
           childBindings.bindings[childTarget] = { ...stable };
           continue;
         }
-        const entity = resolveDescendant(entities, director, parentTarget);
+        const entity = resolveDescendant(entityIndex, director, parentTarget);
         if (entity != null) {
-          const candidate = entities.find((item) => item.entity === entity);
+          const candidate = entityIndex.byId.get(entity);
           childBindings.bindings[childTarget] = {
             entity: String(entity),
             name: candidate?.name ?? '',
@@ -219,6 +367,7 @@ export function buildTimelineScenePreview(
         animationClips,
         controlAssets,
         clip.timeline,
+        runtime,
         {
           depth: evaluation.depth + 1,
           stack: [...evaluation.stack, key],
@@ -242,6 +391,7 @@ export function buildTimelineScenePreview(
       const clip = track.clips.find((candidate) => sampleTime >= candidate.start
         && sampleTime < candidate.start + candidate.duration);
       if (!clip) continue;
+      runtime.metrics.activeItems += 1;
       const target = resolveTrackTarget(track.target);
       if (target == null) {
         diagnostics.push(`Activation track '${track.name}' target '${track.target}' is not resolved.`);
@@ -254,11 +404,12 @@ export function buildTimelineScenePreview(
       const entry = track.clips.findIndex((candidate) => sampleTime >= candidate.start
         && sampleTime < candidate.start + candidate.duration);
       if (entry < 0) continue;
+      runtime.metrics.activeItems += 1;
       const clip = track.clips[entry];
       const target = resolveTrackTarget(clip.target);
       const targetEntity = target == null
         ? null
-        : entities.find((candidate) => candidate.entity === target);
+        : entityIndex.byId.get(target);
       const targetCameraCount = Number(Boolean(targetEntity?.components.Camera2D))
         + Number(Boolean(targetEntity?.components.Camera3D));
       if (target == null) {
@@ -282,7 +433,7 @@ export function buildTimelineScenePreview(
           source = resolveTrackTarget(previous.target);
           const sourceEntity = source == null
             ? null
-            : entities.find((candidate) => candidate.entity === source);
+            : entityIndex.byId.get(source);
           const sourceCameraCount = Number(Boolean(sourceEntity?.components.Camera2D))
             + Number(Boolean(sourceEntity?.components.Camera3D));
           if (source == null) {
@@ -302,12 +453,13 @@ export function buildTimelineScenePreview(
       const clip = track.clips.find((candidate) => sampleTime >= candidate.start
         && sampleTime < candidate.start + candidate.duration);
       if (!clip) continue;
+      runtime.metrics.activeItems += 1;
       const target = resolveTrackTarget(track.target);
       if (target == null) {
         diagnostics.push(`Audio track '${track.name}' target '${track.target}' is not resolved.`);
         continue;
       }
-      const targetEntity = entities.find((candidate) => candidate.entity === target);
+      const targetEntity = entityIndex.byId.get(target);
       const source = targetEntity?.components.AudioSource;
       if (!source || typeof source !== 'object') {
         diagnostics.push(`Audio track '${track.name}' target '${track.target}' does not have an AudioSource component.`);
@@ -341,12 +493,13 @@ export function buildTimelineScenePreview(
       const clip = track.clips.find((candidate) => sampleTime >= candidate.start
         && sampleTime < candidate.start + candidate.duration);
       if (!clip) continue;
+      runtime.metrics.activeItems += 1;
       const target = resolveTrackTarget(track.target);
       if (target == null) {
         diagnostics.push(`Particle track '${track.name}' target '${track.target}' is not resolved.`);
         continue;
       }
-      const targetEntity = entities.find((candidate) => candidate.entity === target);
+      const targetEntity = entityIndex.byId.get(target);
       const has2D = Boolean(targetEntity?.components.ParticleEmitter2D);
       const has3D = Boolean(targetEntity?.components.ParticleEmitter3D);
       if (!has2D && !has3D) {
@@ -379,13 +532,14 @@ export function buildTimelineScenePreview(
       }
     }
     if (clipIndex < 0) continue;
+    runtime.metrics.activeItems += 1;
     const timelineClip = track.clips[clipIndex];
     const target = resolveTrackTarget(track.target);
     if (target == null) {
       diagnostics.push(`Animation track '${track.name}' target '${track.target}' is not resolved.`);
       continue;
     }
-    const targetEntity = entities.find((candidate) => candidate.entity === target);
+    const targetEntity = entityIndex.byId.get(target);
     if (!targetEntity?.components.AnimationPlayer) {
       diagnostics.push(`Animation track '${track.name}' target '${track.target}' does not have an AnimationPlayer component.`);
       continue;
@@ -440,7 +594,7 @@ export function buildTimelineScenePreview(
     else preview.animations.push(layer);
   }
   if (!evaluation.deferHierarchyFilter && (audio.length || preview.particles.length)) {
-    const byId = new Map(entities.map((entity) => [entity.entity, entity]));
+    const byId = entityIndex.byId;
     const activation = new Map(preview.activations.map((entry) => [entry.entity, entry.active]));
     const activeInHierarchy = (target: number) => {
       let current: number | null = target;

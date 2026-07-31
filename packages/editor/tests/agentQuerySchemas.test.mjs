@@ -128,6 +128,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     }],
     ['events.get', { topics: [...AGENT_EVENT_TOPICS], limit: 1_000 }],
     ['events.wait', { afterSequence: 0, topics: ['scene.changed'], timeoutMs: 15_000 }],
+    ['profiler.get_timeline', { assetPath: 'Assets/Timelines/Main.mtimeline', limit: 32 }],
     ['queries.describe', { id: 'scene.snapshot' }],
   ]) {
     assert.deepEqual(
@@ -190,6 +191,8 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['asset.trash_list', { expectedTrashRevision: 'not-a-trash-revision' }],
     ['events.get', { topics: ['unknown'] }],
     ['events.wait', { timeoutMs: 15_001 }],
+    ['profiler.get_timeline', { assetPath: '   ' }],
+    ['profiler.get_timeline', { limit: 33 }],
     ['asset.read_text', { path: 'Assets/a.txt', maxBytes: 8_388_609 }],
     ['queries.describe', { id: ' ' }],
   ]) {

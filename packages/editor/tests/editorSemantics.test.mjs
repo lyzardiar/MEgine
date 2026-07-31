@@ -197,6 +197,10 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(profiler, /tabIndex=\{source === value \? 0 : -1\}/);
   assert.match(profiler, /role="tabpanel"/);
   assert.match(profiler, /nextHorizontalTabIndex\(/);
+  assert.match(profiler, /subscribeTimelineProfiler/);
+  assert.match(profiler, /aria-label="Timeline evaluation metrics"/);
+  assert.match(profiler, /aria-label="Timeline dependency hotspots"/);
+  assert.match(profiler, /aria-label="Timeline dependency issues"/);
   assert.match(animator, /role="group"[^>]*aria-label="Animator state graph"/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
   assert.match(timeline, /aria-label="Animation Timeline lanes"/);

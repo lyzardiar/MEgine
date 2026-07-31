@@ -2019,9 +2019,28 @@ const TOOLS = [
     },
     handler: async (args) => textContent(await bridgeQuery('profiler.get_samples', args)),
   },
+  {
+    name: 'get_timeline_profile',
+    description:
+      'Read background-safe Timeline Editor dependency graphs, asset hotspots, missing/cyclic/depth-limited edges, preview evaluation cost, and reusable-index cache telemetry. This is Editor preview telemetry, not native Player timing.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        assetPath: nonEmptyStringSchema('Optional exact Assets/*.mtimeline path'),
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 32,
+          description: 'Recent Timeline document profiles to return; defaults to 32',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => textContent(await bridgeQuery('profiler.get_timeline', args)),
+  },
   execTool(
     'clear_profiler_samples',
-    'Clear Scene and Game editor-profiler samples across every editor window as an idempotent background-safe write.',
+    'Clear Scene, Game, and Timeline editor-profiler data across every editor window as an idempotent background-safe write.',
     'profiler.clear',
     {},
     [],
