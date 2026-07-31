@@ -55,6 +55,10 @@ fn default_audio_fade_curve() -> String {
     "linear".to_owned()
 }
 
+fn default_control_extrapolation() -> String {
+    "none".to_owned()
+}
+
 fn is_false(value: &bool) -> bool {
     !*value
 }
@@ -246,6 +250,8 @@ pub struct TimelineControlClip {
     pub clip_in: f32,
     #[serde(default = "default_one")]
     pub speed: f32,
+    #[serde(default = "default_control_extrapolation")]
+    pub extrapolation: String,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub binding_overrides: BTreeMap<String, String>,
 }
@@ -894,6 +900,7 @@ impl TimelineAsset {
                             }
                         }
                         clip.binding_overrides = binding_overrides;
+                        clip.extrapolation = clip.extrapolation.trim().to_ascii_lowercase();
                         if !clip.start.is_finite()
                             || !clip.duration.is_finite()
                             || clip.start < 0.0
@@ -903,6 +910,7 @@ impl TimelineAsset {
                             || clip.clip_in < 0.0
                             || !clip.speed.is_finite()
                             || !(-4.0..=4.0).contains(&clip.speed)
+                            || !matches!(clip.extrapolation.as_str(), "none" | "hold" | "loop")
                         {
                             return Err(AssetError::Invalid(format!(
                                 "Timeline control track '{id}' contains an invalid or out-of-range clip"
@@ -1405,7 +1413,7 @@ mod tests {
               "version":1,"duration":6,
               "tracks":[{"type":"control","id":"dialogue","name":" Dialogue ",
                 "target":"Sequences\\Dialogue","clips":[
-                  {"start":3,"duration":2,"timeline":"assets\\Timelines\\Outro.mtimeline","clip_in":1,"speed":-0.5},
+                  {"start":3,"duration":2,"timeline":"assets\\Timelines\\Outro.mtimeline","clip_in":1,"speed":-0.5,"extrapolation":" LOOP "},
                   {"start":0,"duration":2,"timeline":"Assets/Timelines/Intro.mtimeline",
                     "binding_overrides":{"Actor\\Body":"Cast\\Lead"}}
                 ]}]
@@ -1425,9 +1433,11 @@ mod tests {
         assert_eq!(target, "Sequences/Dialogue");
         assert_eq!(clips[0].timeline, "Assets/Timelines/Intro.mtimeline");
         assert_eq!(clips[0].speed, 1.0);
+        assert_eq!(clips[0].extrapolation, "none");
         assert_eq!(clips[0].binding_overrides["Actor/Body"], "Cast/Lead");
         assert_eq!(clips[1].timeline, "Assets/Timelines/Outro.mtimeline");
         assert_eq!(clips[1].speed, -0.5);
+        assert_eq!(clips[1].extrapolation, "loop");
         assert_eq!(
             asset.required_binding_targets(),
             BTreeSet::from(["Cast/Lead".to_owned(), "Sequences/Dialogue".to_owned()])
@@ -1443,6 +1453,10 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","binding_overrides":{"Actor\\Body":"Cast/Lead","Actor/Body":"Cast/Backup"}}]}]}"#,
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","extrapolation":"ping_pong"}]}]}"#,
         )
         .is_err());
     }

@@ -59,6 +59,41 @@ fn outgoing_animation_sample_time(clip: &mengine_assets::TimelineAnimationClip) 
     (clip.clip_in + (clip.duration - epsilon).max(0.0) * clip.speed).max(0.0)
 }
 
+fn timeline_end_sample(duration: f32) -> f32 {
+    let epsilon = (duration.abs() * f32::EPSILON)
+        .max(f32::EPSILON)
+        .min(duration);
+    (duration - epsilon).max(0.0)
+}
+
+fn control_raw_time(clip: &TimelineControlClip, parent_time: f32) -> f32 {
+    clip.clip_in + (parent_time - clip.start) * clip.speed
+}
+
+fn control_sample_time(clip: &TimelineControlClip, child_duration: f32, parent_time: f32) -> f32 {
+    let raw = control_raw_time(clip, parent_time);
+    match clip.extrapolation.as_str() {
+        "loop" => raw.rem_euclid(child_duration),
+        "hold" if raw >= child_duration => timeline_end_sample(child_duration),
+        _ => raw.clamp(0.0, child_duration),
+    }
+}
+
+fn control_source_window_is_valid(clip: &TimelineControlClip, child_duration: f32) -> bool {
+    if clip.clip_in < -f32::EPSILON || clip.clip_in > child_duration + f32::EPSILON {
+        return false;
+    }
+    if clip.extrapolation != "none" {
+        return true;
+    }
+    let source_end = clip.clip_in + clip.duration * clip.speed;
+    source_end >= -f32::EPSILON && source_end <= child_duration + f32::EPSILON
+}
+
+fn control_loop_crossed(raw_from: f32, raw_to: f32, duration: f32) -> bool {
+    (raw_from / duration).floor() != (raw_to / duration).floor()
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TimelineLoadFailure {
     pub entity: Entity,
@@ -80,6 +115,136 @@ struct OrderedTimelineSignal {
     traversal: f32,
     sequence: usize,
     signal: RuntimeTimelineSignal,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct ControlSignalSegment {
+    from: f32,
+    to: f32,
+    include_start: bool,
+    traversal_start: f32,
+    traversal_duration: f32,
+}
+
+fn control_signal_segments(
+    clip: &TimelineControlClip,
+    child_duration: f32,
+    parent_from: f32,
+    parent_to: f32,
+    entered: bool,
+    traversal_start: f32,
+    traversal_duration: f32,
+) -> Vec<ControlSignalSegment> {
+    let raw_from = control_raw_time(clip, parent_from);
+    let raw_to = control_raw_time(clip, parent_to);
+    let raw_delta = raw_to - raw_from;
+    if clip.extrapolation == "none" {
+        return vec![ControlSignalSegment {
+            from: raw_from,
+            to: raw_to,
+            include_start: entered,
+            traversal_start,
+            traversal_duration,
+        }];
+    }
+    if clip.extrapolation == "hold" {
+        let mut segments = Vec::with_capacity(2);
+        if entered {
+            segments.push(ControlSignalSegment {
+                from: raw_from.clamp(0.0, child_duration),
+                to: raw_from.clamp(0.0, child_duration),
+                include_start: true,
+                traversal_start,
+                traversal_duration: 0.0,
+            });
+        }
+        if raw_delta.abs() <= f32::EPSILON {
+            return segments;
+        }
+        let zero_progress = (0.0 - raw_from) / raw_delta;
+        let end_progress = (child_duration - raw_from) / raw_delta;
+        let active_start = zero_progress.min(end_progress).clamp(0.0, 1.0);
+        let active_end = zero_progress.max(end_progress).clamp(0.0, 1.0);
+        if active_end - active_start > f32::EPSILON {
+            segments.push(ControlSignalSegment {
+                from: (raw_from + raw_delta * active_start).clamp(0.0, child_duration),
+                to: (raw_from + raw_delta * active_end).clamp(0.0, child_duration),
+                include_start: false,
+                traversal_start: traversal_start + traversal_duration * active_start,
+                traversal_duration: traversal_duration * (active_end - active_start),
+            });
+        }
+        return segments;
+    }
+
+    let mut segments = Vec::with_capacity(8);
+    let mut cursor = raw_from.rem_euclid(child_duration);
+    if entered {
+        segments.push(ControlSignalSegment {
+            from: cursor,
+            to: cursor,
+            include_start: true,
+            traversal_start,
+            traversal_duration: 0.0,
+        });
+    }
+    if raw_delta.abs() <= f32::EPSILON {
+        return segments;
+    }
+    let total = raw_delta.abs();
+    let mut remaining = raw_delta;
+    let mut consumed = 0.0;
+    let mut include_start = false;
+    let mut segment_count = 0usize;
+    while remaining.abs() > f32::EPSILON && segment_count < MAX_SIGNALS_PER_UPDATE {
+        if remaining > 0.0 && cursor >= child_duration - f32::EPSILON {
+            cursor = 0.0;
+            include_start = true;
+        } else if remaining < 0.0 && cursor <= f32::EPSILON {
+            cursor = child_duration;
+            include_start = true;
+        }
+        let step = if remaining > 0.0 {
+            remaining.min(child_duration - cursor)
+        } else {
+            remaining.max(-cursor)
+        };
+        if step.abs() <= f32::EPSILON {
+            break;
+        }
+        let end = cursor + step;
+        segments.push(ControlSignalSegment {
+            from: cursor,
+            to: end,
+            include_start,
+            traversal_start: traversal_start + traversal_duration * (consumed / total),
+            traversal_duration: traversal_duration * (step.abs() / total),
+        });
+        consumed += step.abs();
+        remaining -= step;
+        cursor = end;
+        include_start = false;
+        segment_count += 1;
+    }
+    if remaining.abs() <= f32::EPSILON && segments.len() < MAX_SIGNALS_PER_UPDATE {
+        let wrapped_boundary = if raw_delta > 0.0 && cursor >= child_duration - f32::EPSILON {
+            Some(0.0)
+        } else if raw_delta < 0.0 && cursor <= f32::EPSILON {
+            Some(child_duration)
+        } else {
+            None
+        };
+        if let Some(boundary) = wrapped_boundary {
+            segments.push(ControlSignalSegment {
+                from: boundary,
+                to: boundary,
+                include_start: true,
+                traversal_start: traversal_start + traversal_duration,
+                traversal_duration: 0.0,
+            });
+        }
+    }
+    segments
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -743,7 +908,6 @@ impl TimelineRuntime {
                     continue;
                 }
             };
-            let source_end = clip.clip_in + clip.duration * clip.speed;
             if let Some(unknown) = clip
                 .binding_overrides
                 .keys()
@@ -761,11 +925,7 @@ impl TimelineRuntime {
                 }
                 continue;
             }
-            if clip.clip_in < -f32::EPSILON
-                || clip.clip_in > child.duration + f32::EPSILON
-                || source_end < -f32::EPSILON
-                || source_end > child.duration + f32::EPSILON
-            {
+            if !control_source_window_is_valid(clip, child.duration) {
                 if self.reported_control_failures.insert(report_key) {
                     failures.push(TimelineLoadFailure {
                         entity: owner,
@@ -781,15 +941,25 @@ impl TimelineRuntime {
             self.reported_control_failures.remove(&report_key);
             let parent_end = clip.start + clip.duration;
             let was_active = start >= clip.start && start < parent_end;
-            let child_time =
-                (clip.clip_in + (time - clip.start) * clip.speed).clamp(0.0, child.duration);
-            let child_start = if was_active {
-                (clip.clip_in + (start - clip.start) * clip.speed).clamp(0.0, child.duration)
+            let child_time = control_sample_time(clip, child.duration, time);
+            let child_parent_start = if was_active {
+                start
             } else {
-                let entry = start.clamp(clip.start, parent_end);
-                (clip.clip_in + (entry - clip.start) * clip.speed).clamp(0.0, child.duration)
+                start.clamp(clip.start, parent_end)
             };
-            let child_just_started = just_started || !was_active;
+            let child_start = control_sample_time(clip, child.duration, child_parent_start);
+            let raw_start = control_raw_time(clip, child_parent_start);
+            let raw_time = control_raw_time(clip, time);
+            let loop_wrapped = clip.extrapolation == "loop"
+                && control_loop_crossed(raw_start, raw_time, child.duration);
+            let child_just_started = just_started || !was_active || loop_wrapped;
+            let source_is_held =
+                clip.extrapolation == "hold" && (raw_time <= 0.0 || raw_time >= child.duration);
+            let child_speed = if source_is_held {
+                0.0
+            } else {
+                speed * clip.speed
+            };
             let child_bindings = control_binding_table(world, root, bindings, clip);
             let mut child_stack = stack.to_vec();
             child_stack.push(normalized_child_key);
@@ -803,7 +973,7 @@ impl TimelineRuntime {
                 &child_bindings,
                 child_start,
                 child_time,
-                speed * clip.speed,
+                child_speed,
                 child_just_started,
                 depth + 1,
                 &child_stack,
@@ -943,7 +1113,6 @@ impl TimelineRuntime {
                         continue;
                     }
                 };
-                let source_end = clip.clip_in + clip.duration * clip.speed;
                 if let Some(unknown) = clip
                     .binding_overrides
                     .keys()
@@ -961,11 +1130,7 @@ impl TimelineRuntime {
                     }
                     continue;
                 }
-                if clip.clip_in < -f32::EPSILON
-                    || clip.clip_in > child.duration + f32::EPSILON
-                    || source_end < -f32::EPSILON
-                    || source_end > child.duration + f32::EPSILON
-                {
+                if !control_source_window_is_valid(clip, child.duration) {
                     if self.reported_control_failures.insert(report_key.clone()) {
                         failures.push(TimelineLoadFailure {
                             entity: owner,
@@ -979,10 +1144,6 @@ impl TimelineRuntime {
                     continue;
                 }
                 self.reported_control_failures.remove(&report_key);
-                let child_from = (clip.clip_in + (parent_from - clip.start) * clip.speed)
-                    .clamp(0.0, child.duration);
-                let child_to = (clip.clip_in + (parent_to - clip.start) * clip.speed)
-                    .clamp(0.0, child.duration);
                 let segment_delta = to - from;
                 let start_progress = if segment_delta.abs() <= f32::EPSILON {
                     0.0
@@ -1000,24 +1161,37 @@ impl TimelineRuntime {
                 let child_bindings = control_binding_table(world, root, bindings, clip);
                 let mut child_stack = stack.to_vec();
                 child_stack.push(normalized_child_key);
-                self.collect_timeline_signals_segment(
-                    world,
-                    owner,
-                    nested_root,
-                    &format!("{key_prefix}{id}:{clip_index}/"),
-                    &child_key,
-                    &child,
-                    &child_bindings,
-                    child_from,
-                    child_to,
+                for segment in control_signal_segments(
+                    clip,
+                    child.duration,
+                    parent_from,
+                    parent_to,
                     entered,
                     child_traversal_start,
                     child_traversal_duration,
-                    depth + 1,
-                    &child_stack,
-                    output,
-                    failures,
-                );
+                ) {
+                    if self.pending_signals.len() + output.len() >= MAX_SIGNALS_PER_UPDATE {
+                        return;
+                    }
+                    self.collect_timeline_signals_segment(
+                        world,
+                        owner,
+                        nested_root,
+                        &format!("{key_prefix}{id}:{clip_index}/"),
+                        &child_key,
+                        &child,
+                        &child_bindings,
+                        segment.from,
+                        segment.to,
+                        segment.include_start,
+                        segment.traversal_start,
+                        segment.traversal_duration,
+                        depth + 1,
+                        &child_stack,
+                        output,
+                        failures,
+                    );
+                }
             }
         }
     }
@@ -3244,6 +3418,115 @@ mod tests {
         assert_eq!(failures.len(), 1);
         assert!(failures[0].error.contains("dependency cycle"));
         assert!(cyclic_runtime.update(&mut world, 0.0).is_empty());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn control_clip_hold_and_loop_extrapolation_sample_and_order_signals() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-timeline-control-extrapolation-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let timelines = root.join("Assets/Timelines");
+        fs::create_dir_all(&timelines).unwrap();
+        fs::write(
+            timelines.join("Child.mtimeline"),
+            r#"{"version":1,"duration":1,"tracks":[{"type":"signal","id":"events","name":"Events","markers":[{"time":0,"name":"Start"},{"time":0.25,"name":"Quarter"},{"time":1,"name":"End"}]},{"type":"audio","id":"sound","name":"Sound","target":"Sound","clips":[{"start":0,"duration":1,"clip":"Assets/Audio/nested.ogg"}]}]}"#,
+        )
+        .unwrap();
+        let parent_source = |extrapolation: &str| {
+            format!(
+                r#"{{"version":1,"duration":4,"tracks":[{{"type":"control","id":"nested","name":"Nested","target":"Sequence","clips":[{{"start":0,"duration":4,"timeline":"Assets/Timelines/Child.mtimeline","extrapolation":"{extrapolation}"}}]}}]}}"#
+            )
+        };
+        fs::write(timelines.join("Parent.mtimeline"), parent_source("loop")).unwrap();
+
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let sequence = world.spawn_empty();
+        world.set_component_value(sequence, "Name", serde_json::json!({ "value": "Sequence" }));
+        world.set_parent(sequence, Some(director));
+        let sound = world.spawn_empty();
+        world.set_component_value(sound, "Name", serde_json::json!({ "value": "Sound" }));
+        world.set_parent(sound, Some(sequence));
+        world.insert_component(sound, AudioSource::default());
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: "Assets/Timelines/Parent.mtimeline".into(),
+                ..TimelineDirector::default()
+            },
+        );
+
+        let mut loop_runtime = TimelineRuntime::new(Some(root.clone()));
+        assert!(loop_runtime.update(&mut world, 2.25).is_empty());
+        assert_eq!(
+            loop_runtime
+                .take_signals()
+                .into_iter()
+                .map(|signal| signal.signal)
+                .collect::<Vec<_>>(),
+            ["Start", "Quarter", "End", "Start", "Quarter", "End", "Start", "Quarter"]
+        );
+        let source = world.get_component::<AudioSource>(sound).unwrap();
+        assert!((source.time - 0.25).abs() < 0.0001);
+        assert!(source.playing);
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.time = 2.25;
+            live.speed = -1.0;
+            live.playing = true;
+        }
+        loop_runtime.reset_director(director);
+        assert!(loop_runtime.update(&mut world, 1.25).is_empty());
+        assert_eq!(
+            loop_runtime
+                .take_signals()
+                .into_iter()
+                .map(|signal| signal.signal)
+                .collect::<Vec<_>>(),
+            ["Quarter", "Start", "End", "Quarter", "Start", "End"]
+        );
+
+        fs::write(timelines.join("Parent.mtimeline"), parent_source("hold")).unwrap();
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.time = 0.0;
+            live.speed = 1.0;
+            live.playing = true;
+        }
+        let mut hold_runtime = TimelineRuntime::new(Some(root.clone()));
+        assert!(hold_runtime.update(&mut world, 2.25).is_empty());
+        assert_eq!(
+            hold_runtime
+                .take_signals()
+                .into_iter()
+                .map(|signal| signal.signal)
+                .collect::<Vec<_>>(),
+            ["Start", "Quarter", "End"]
+        );
+        let source = world.get_component::<AudioSource>(sound).unwrap();
+        assert!(source.time > 0.999);
+        assert!(!source.playing);
+        assert!(hold_runtime.update(&mut world, 0.5).is_empty());
+        assert!(hold_runtime.take_signals().is_empty());
+
+        fs::write(timelines.join("Parent.mtimeline"), parent_source("none")).unwrap();
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.time = 0.0;
+            live.playing = true;
+        }
+        let mut strict_runtime = TimelineRuntime::new(Some(root.clone()));
+        let failures = strict_runtime.update(&mut world, 0.25);
+        assert_eq!(failures.len(), 1);
+        assert!(failures[0].error.contains("source window is outside"));
         let _ = fs::remove_dir_all(root);
     }
 }

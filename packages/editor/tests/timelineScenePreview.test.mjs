@@ -490,11 +490,62 @@ test('evaluates nested Control Tracks relative to their target with timing and c
   );
   assert.deepEqual(hidden.audio, []);
 
+  const extrapolated = structuredClone(parent);
+  extrapolated.tracks[0].clips[0].duration = 2;
+  extrapolated.tracks[0].clips[0].speed = 2;
+  extrapolated.tracks[0].clips[0].extrapolation = 'hold';
+  const held = buildTimelineScenePreview(
+    extrapolated,
+    nestedEntities,
+    1,
+    '{"version":1,"bindings":{"Cast/Lead":{"entity":"7","name":"Hero"}}}',
+    1,
+    clips,
+    timelines,
+    'Assets/Timelines/Parent.mtimeline',
+  );
+  assert.deepEqual(held.diagnostics, []);
+  assert.ok(held.audio[0].sourceTime > 1.999);
+  assert.equal(applyTimelineScenePreview(nestedEntities, held.preview)
+    .find((entity) => entity.entity === 7).components.Transform.position[0], 10);
+
+  extrapolated.tracks[0].clips[0].extrapolation = 'loop';
+  const looped = buildTimelineScenePreview(
+    extrapolated,
+    nestedEntities,
+    1,
+    '{"version":1,"bindings":{"Cast/Lead":{"entity":"7","name":"Hero"}}}',
+    1,
+    clips,
+    timelines,
+    'Assets/Timelines/Parent.mtimeline',
+  );
+  assert.deepEqual(looped.diagnostics, []);
+  assert.equal(looped.audio[0].sourceTime, 0.5);
+  assert.equal(applyTimelineScenePreview(nestedEntities, looped.preview)
+    .find((entity) => entity.entity === 7).components.Transform.position[0], 5);
+
+  extrapolated.tracks[0].clips[0].extrapolation = 'none';
+  const strictWindow = buildTimelineScenePreview(
+    extrapolated,
+    nestedEntities,
+    1,
+    '{"version":1,"bindings":{"Cast/Lead":{"entity":"7","name":"Hero"}}}',
+    1,
+    clips,
+    timelines,
+    'Assets/Timelines/Parent.mtimeline',
+  );
+  assert.match(strictWindow.diagnostics.join(' '), /source window is outside/);
+
   const cyclicChild = structuredClone(child);
   cyclicChild.tracks = [{
     type: 'control', id: 'back', name: 'Back To Parent', target: 'NestedActor',
     solo: false, muted: false, locked: false,
-    clips: [{ start: 0, duration: 1, timeline: 'Assets/Timelines/Parent.mtimeline', clip_in: 0, speed: 1 }],
+    clips: [{
+      start: 0, duration: 1, timeline: 'Assets/Timelines/Parent.mtimeline', clip_in: 0, speed: 1,
+      extrapolation: 'none', binding_overrides: {},
+    }],
   }];
   const cyclic = buildTimelineScenePreview(
     parent,

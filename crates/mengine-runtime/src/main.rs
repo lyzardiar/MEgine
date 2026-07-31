@@ -2757,8 +2757,9 @@ fn validate_timeline_asset(
                     let source_end = clip.clip_in + clip.duration * clip.speed;
                     if clip.clip_in < -f32::EPSILON
                         || clip.clip_in > child.duration + f32::EPSILON
-                        || source_end < -f32::EPSILON
-                        || source_end > child.duration + f32::EPSILON
+                        || clip.extrapolation == "none"
+                            && (source_end < -f32::EPSILON
+                                || source_end > child.duration + f32::EPSILON)
                     {
                         bail!(
                             "Timeline Control Track '{}' source window is outside '{}' duration {:.3}s",
@@ -3585,6 +3586,22 @@ mod tests {
         let error = validate_world_assets(&world, &root, &mut HashSet::new())
             .expect_err("an animation in-point beyond clip duration must fail validation");
         assert!(error.to_string().contains("Timeline animation clip"));
+
+        std::fs::write(
+            &timeline_path,
+            source.replace(r#""speed":1.5"#, r#""speed":4"#),
+        )
+        .unwrap();
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("Control Track None extrapolation must reject an oversized source window");
+        assert!(error.to_string().contains("source window is outside"));
+        std::fs::write(
+            &timeline_path,
+            source.replace(r#""speed":1.5"#, r#""speed":4,"extrapolation":"hold""#),
+        )
+        .unwrap();
+        validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect("Control Track Hold extrapolation may extend past the child duration");
 
         std::fs::write(
             &timeline_path,

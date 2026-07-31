@@ -1736,3 +1736,14 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省没有停在单元测试：重新构建真实 Tauri 调试程序后，以 Windows 物理窗口坐标点击标题栏 X，修复中间态等待 8 秒仍未退出。继续追查确认项目入口缺少关闭处理，且 capability 只允许 `close`、不允许协调器使用的 `destroy`；两处补齐并重新打包后，DPI 感知的真实标题栏 X 与 File → Exit 鼠标点击均使主进程以退出码 0 结束。最终编辑器测试 378/378、Rust Workspace/All Targets 检查、TypeScript/Vite 生产构建与 Tauri Debug 应用构建全部通过；主入口当前为 524.53kB，仍有既有 500kB 分包预算警告。
 
 本节只修复关闭生命周期，不宣称编辑器整体完备。按当前暂停要求，Control Clip 子源外推、Timeline 层级轨道树和后续 Unity2D 对齐工作保留为下一次继续时的起点。
+
+## 147. 2026-07-31 Control Clip 子源外推闭环
+
+- Control Clip 增加跨层一致的 `extrapolation` 契约，取值为 `none`、`hold` 或 `loop`，旧资产默认 `none`。Assets 与 Sequencer 统一规范化并拒绝未知值；Inspector 提供 Source Extrapolation 选择和模式说明。`clip_in` 在所有模式下都必须位于子 Timeline 内，`none` 继续要求完整源窗口不越界，`hold` 与 `loop` 才允许父片段长于子源。
+- Scene Preview 与 Runtime 使用同一时间映射：`hold` 在源头之前保持 0，在源尾之后保持最后一个可求值采样点；`loop` 使用正余数回绕，正播和倒播一致。Hold 停驻时嵌套音频与粒子不继续自由推进；Loop 跨圈会作为求值不连续点重新定位嵌套状态，避免画面、音频和粒子各自落在不同周期。
+- 嵌套 Signal 不把一整段 Loop 当成一次首尾采样。Runtime 按每个子周期拆分父播放路程，在统一全局路程坐标内递归收集并稳定排序；精确周期边界保留正播 `End → Start`、倒播 `Start → End`，每次更新继续受 4096 个事件/分段上限约束。Hold 只在实际经过源区间时投递 Marker，停驻边界不会逐帧重复触发。
+- CLI staging 校验与最终 Player 包校验均理解外推模式：未知模式无法构建；`none` 越界继续被拒绝；合法 Hold/Loop 可作为传递依赖进入发布包，最终 Runtime 不会因编辑器与构建端规则分叉而拒绝同一资产。
+
+回归验证覆盖 Editor 623/623、CLI 58/58、Assets 52/52、Runtime Library 112/112、Runtime Player 23/23，以及 Rust Workspace/All Targets 测试与检查、格式检查、定向严格 Clippy、前端生产构建和 Tauri Debug 构建。真实桌面验证在独立配置与临时工程中启动 `MENGINE_EDITOR_BACKGROUND=1`：Agent 后台打开父 Timeline、选择 Control Clip、读取值为 Hold 的 `Source Extrapolation`，再以语义写入切换到 Loop、保存并从磁盘读回 `"extrapolation": "loop"`；整个过程原生主窗口始终 `visible=false`、`focused=false`，验证工程和配置随后已清理。
+
+本批仍不代表 Timeline 已达到 Unity 的全部能力。下一阶段继续审计内联层级轨道树、Prefab Control、录制模式、轨道模板、长时间轴虚拟化、嵌套求值缓存与 Timeline Profiler 依赖视图。

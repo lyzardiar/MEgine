@@ -1120,14 +1120,17 @@ test('buildPcPackage rejects Control Track cycles and out-of-range child windows
         TimelineDirector: { asset: 'Assets/Timelines/A.mtimeline' },
       } }] },
     }));
-    const writeControl = (name, target, clipIn = 0) => writeFileSync(
+    const writeControl = (name, target, clipIn = 0, extrapolation) => writeFileSync(
       join(paths.project, 'Assets', 'Timelines', `${name}.mtimeline`),
       JSON.stringify({
         version: 1,
         duration: 2,
         tracks: [{
           type: 'control', id: `${name}-control`, name: `${name} Control`, target: 'Nested',
-          clips: [{ start: 0, duration: 1, timeline: `Assets/Timelines/${target}.mtimeline`, clip_in: clipIn }],
+          clips: [{
+            start: 0, duration: 1, timeline: `Assets/Timelines/${target}.mtimeline`, clip_in: clipIn,
+            ...(extrapolation ? { extrapolation } : {}),
+          }],
         }],
       }),
     );
@@ -1150,6 +1153,28 @@ test('buildPcPackage rejects Control Track cycles and out-of-range child windows
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /source window is outside/);
+
+    writeControl('A', 'B', 2, 'hold');
+    assert.doesNotThrow(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'hold-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }));
+    writeControl('A', 'B', 2, 'loop');
+    assert.doesNotThrow(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'loop-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }));
+    writeControl('A', 'B', 0, 'ping_pong');
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'invalid-extrapolation-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /control clip is invalid/);
 
     writeFileSync(join(paths.project, 'Assets', 'Timelines', 'B.mtimeline'), JSON.stringify({
       version: 1, duration: 2,

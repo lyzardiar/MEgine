@@ -68,6 +68,7 @@ import {
   snapTimelineAssetTime,
   TIMELINE_MAX_PARTICLE_TIME,
   timelineBindingTargets,
+  timelineControlSourceWindowIsValid,
   timelineHasSolo,
   timelineGroupForTrack,
   timelineTrackIsLocked,
@@ -1501,6 +1502,7 @@ export function Sequencer(props: SequencerProps) {
           timeline: defaultTimeline,
           clip_in: 0,
           speed: 1,
+          extrapolation: 'none',
           binding_overrides: {},
         });
         target.clips.sort((left, right) => left.start - right.start);
@@ -2733,11 +2735,8 @@ export function Sequencer(props: SequencerProps) {
   const selectedControlSourceEnd = selectedControlClip
     ? selectedControlClip.clip_in + selectedControlClip.duration * selectedControlClip.speed
     : 0;
-  const selectedControlWindowInvalid = Boolean(selectedControlClip && selectedControlAsset && (
-    selectedControlClip.clip_in > selectedControlAsset.duration + 0.0001
-    || selectedControlSourceEnd < -0.0001
-    || selectedControlSourceEnd > selectedControlAsset.duration + 0.0001
-  ));
+  const selectedControlWindowInvalid = Boolean(selectedControlClip && selectedControlAsset
+    && !timelineControlSourceWindowIsValid(selectedControlClip, selectedControlAsset.duration));
   const selectedControlBindingTargets = selectedControlAsset
     ? timelineBindingTargets(selectedControlAsset)
     : [];
@@ -3663,7 +3662,7 @@ export function Sequencer(props: SequencerProps) {
                       left: `${clip.start / asset.duration * 100}%`,
                       width: `${clip.duration / asset.duration * 100}%`,
                     }}
-                    title={`${clip.timeline} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · source ${clip.clip_in.toFixed(3)}s @ ${clip.speed.toFixed(2)}x`}
+                    title={`${clip.timeline} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · source ${clip.clip_in.toFixed(3)}s @ ${clip.speed.toFixed(2)}x · ${clip.extrapolation}`}
                     key={`${clip.start}-${clip.timeline}-${clipIndex}`}
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   ><span className="sequencer-clip-label">T {clip.timeline.split('/').at(-1)}</span></button>
@@ -4001,8 +4000,18 @@ export function Sequencer(props: SequencerProps) {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'control') track.clips[selection!.marker!].speed = Math.max(-4, Math.min(4, Number(event.target.value) || 0));
               })} /></label>
+              <label>Source Extrapolation <select value={selectedControlClip.extrapolation} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'control') track.clips[selection!.marker!].extrapolation = event.target.value as TimelineControlClip['extrapolation'];
+              })}>
+                <option value="none">None</option>
+                <option value="hold">Hold</option>
+                <option value="loop">Loop</option>
+              </select></label>
               {previewControlResourcesReady && !selectedControlAsset && <p className="sequencer-field-help error">This Sub-Timeline could not be loaded. Choose an existing project .mtimeline asset.</p>}
-              {selectedControlWindowInvalid && <p className="sequencer-field-help error">Source window {selectedControlClip.clip_in.toFixed(3)}s → {selectedControlSourceEnd.toFixed(3)}s is outside the child duration {selectedControlAsset!.duration.toFixed(3)}s.</p>}
+              {selectedControlWindowInvalid && <p className="sequencer-field-help error">{selectedControlClip.clip_in > selectedControlAsset!.duration + 0.0001
+                ? `Clip In ${selectedControlClip.clip_in.toFixed(3)}s is outside the child duration ${selectedControlAsset!.duration.toFixed(3)}s.`
+                : `Source window ${selectedControlClip.clip_in.toFixed(3)}s → ${selectedControlSourceEnd.toFixed(3)}s is outside the child duration ${selectedControlAsset!.duration.toFixed(3)}s. Choose Hold or Loop to extend it.`}</p>}
               {selectedControlAsset && <fieldset className="sequencer-control-bindings">
                 <legend>Child Binding Overrides</legend>
                 <p className="sequencer-field-help">Map a child Timeline target to a target or stable binding in this Timeline. Empty rows keep child-root lookup.</p>
@@ -4094,7 +4103,7 @@ export function Sequencer(props: SequencerProps) {
                 })}
                 {selectedControlBindingRows.length === 0 && <p className="sequencer-field-help">This child Timeline has no bindable targets.</p>}
               </fieldset>}
-              <p className="sequencer-field-help">The nested Timeline is evaluated relative to this Control Track target. Clip In and Speed map parent time into the child Timeline.</p>
+              <p className="sequencer-field-help">The nested Timeline is evaluated relative to this Control Track target. None requires the complete source window to fit; Hold freezes the first or last child frame; Loop wraps child time and Signals at every cycle boundary.</p>
             </>}
             {selectedCameraClip && <>
               <label>Camera (binding key / child path)<input value={selectedCameraClip.target} placeholder="Cameras/Main Camera" onChange={(event) => {

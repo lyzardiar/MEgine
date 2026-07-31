@@ -8,6 +8,8 @@ import {
   serializeTimelineAsset,
   snapTimelineAssetTime,
   timelineBindingTargets,
+  timelineControlSampleTime,
+  timelineControlSourceWindowIsValid,
   timelineHasSolo,
   timelineGroupForTrack,
   timelineTrackIsLocked,
@@ -315,7 +317,7 @@ test('timeline control tracks normalize nested assets and reject invalid windows
     tracks: [{
       type: 'control', id: 'dialogue', name: 'Dialogue', target: 'Sequences\\Dialogue',
       clips: [
-        { start: 3, duration: 2, timeline: 'assets\\Timelines\\Outro.mtimeline', clip_in: 1, speed: -0.5 },
+        { start: 3, duration: 2, timeline: 'assets\\Timelines\\Outro.mtimeline', clip_in: 1, speed: -0.5, extrapolation: ' LOOP ' },
         {
           start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline',
           binding_overrides: { 'Actor\\Body': 'Cast\\Lead' },
@@ -327,12 +329,24 @@ test('timeline control tracks normalize nested assets and reject invalid windows
   assert.deepEqual(asset.tracks[0].clips, [
     {
       start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline', clip_in: 0, speed: 1,
+      extrapolation: 'none',
       binding_overrides: { 'Actor/Body': 'Cast/Lead' },
     },
-    { start: 3, duration: 2, timeline: 'Assets/Timelines/Outro.mtimeline', clip_in: 1, speed: -0.5, binding_overrides: {} },
+    {
+      start: 3, duration: 2, timeline: 'Assets/Timelines/Outro.mtimeline', clip_in: 1, speed: -0.5,
+      extrapolation: 'loop', binding_overrides: {},
+    },
   ]);
   assert.deepEqual(timelineBindingTargets(asset), ['Cast/Lead', 'Sequences/Dialogue']);
   assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+  assert.equal(timelineControlSourceWindowIsValid(asset.tracks[0].clips[1], 1.5), true);
+  assert.equal(timelineControlSampleTime(asset.tracks[0].clips[1], 1.5, 5), 0);
+  const held = { ...asset.tracks[0].clips[0], start: 0, duration: 4, clip_in: 1, speed: 1, extrapolation: 'hold' };
+  assert.equal(timelineControlSourceWindowIsValid(held, 2), true);
+  assert.ok(timelineControlSampleTime(held, 2, 3) < 2);
+  assert.ok(timelineControlSampleTime(held, 2, 3) > 1.999);
+  const strict = { ...held, extrapolation: 'none' };
+  assert.equal(timelineControlSourceWindowIsValid(strict, 2), false);
   assert.throws(() => parseTimelineAsset(JSON.stringify({
     version: 1, duration: 2,
     tracks: [{ type: 'control', id: 'nested', name: 'Nested', target: 'Sequences', clips: [
@@ -351,6 +365,12 @@ test('timeline control tracks normalize nested assets and reject invalid windows
     tracks: [{ type: 'control', id: 'nested', name: 'Nested', target: 'Sequences', clips: [{
       start: 0, duration: 1, timeline: 'Assets/Timelines/Child.mtimeline',
       binding_overrides: { 'Actor\\Body': 'Cast/Lead', 'Actor/Body': 'Cast/Backup' },
+    }] }],
+  })), /invalid/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{ type: 'control', id: 'nested', name: 'Nested', target: 'Sequences', clips: [{
+      start: 0, duration: 1, timeline: 'Assets/Timelines/Child.mtimeline', extrapolation: 'ping_pong',
     }] }],
   })), /invalid/);
 });

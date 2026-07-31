@@ -10,6 +10,8 @@ import {
 } from './animationPreview.ts';
 import {
   timelineBindingTargets,
+  timelineControlSampleTime,
+  timelineControlSourceWindowIsValid,
   timelineHasSolo,
   timelineTrackIsMuted,
   type TimelineAsset,
@@ -173,9 +175,7 @@ export function buildTimelineScenePreview(
         diagnostics.push(`Control track '${track.name}' overrides unknown child binding '${unknownOverride}' in '${clip.timeline}'.`);
         continue;
       }
-      const sourceEnd = clip.clip_in + clip.duration * clip.speed;
-      if (clip.clip_in < -F32_EPSILON || clip.clip_in > child.duration + F32_EPSILON
-        || sourceEnd < -F32_EPSILON || sourceEnd > child.duration + F32_EPSILON) {
+      if (!timelineControlSourceWindowIsValid(clip, child.duration, F32_EPSILON)) {
         diagnostics.push(`Control track '${track.name}' clip source window is outside '${clip.timeline}' duration ${child.duration.toFixed(3)}s.`);
         continue;
       }
@@ -215,7 +215,7 @@ export function buildTimelineScenePreview(
         entities,
         target,
         childBindings,
-        clip.clip_in + (sampleTime - clip.start) * clip.speed,
+        timelineControlSampleTime(clip, child.duration, sampleTime),
         animationClips,
         controlAssets,
         clip.timeline,

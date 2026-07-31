@@ -75,8 +75,45 @@ export type TimelineControlClip = {
   timeline: string;
   clip_in: number;
   speed: number;
+  extrapolation: TimelineControlExtrapolation;
   binding_overrides: Record<string, string>;
 };
+
+export type TimelineControlExtrapolation = 'none' | 'hold' | 'loop';
+
+export function timelineControlExtrapolation(value: unknown): TimelineControlExtrapolation {
+  const normalized = String(value ?? 'none').trim().toLowerCase();
+  return normalized === 'hold' || normalized === 'loop' ? normalized : 'none';
+}
+
+export function timelineControlSourceWindowIsValid(
+  clip: Pick<TimelineControlClip, 'clip_in' | 'duration' | 'speed' | 'extrapolation'>,
+  childDuration: number,
+  epsilon = 0.0001,
+): boolean {
+  if (!Number.isFinite(childDuration) || childDuration <= 0
+    || clip.clip_in < -epsilon || clip.clip_in > childDuration + epsilon) return false;
+  if (!['none', 'hold', 'loop'].includes(clip.extrapolation)) return false;
+  if (clip.extrapolation !== 'none') return true;
+  const sourceEnd = clip.clip_in + clip.duration * clip.speed;
+  return sourceEnd >= -epsilon && sourceEnd <= childDuration + epsilon;
+}
+
+export function timelineControlSampleTime(
+  clip: Pick<TimelineControlClip, 'start' | 'clip_in' | 'speed' | 'extrapolation'>,
+  childDuration: number,
+  parentTime: number,
+): number {
+  const raw = clip.clip_in + (parentTime - clip.start) * clip.speed;
+  if (clip.extrapolation === 'loop' && childDuration > 0) {
+    return ((raw % childDuration) + childDuration) % childDuration;
+  }
+  if (clip.extrapolation === 'hold' && raw >= childDuration) {
+    const epsilon = Math.min(childDuration, Math.max(1.1920928955078125e-7, childDuration * 1.1920928955078125e-7));
+    return Math.max(0, childDuration - epsilon);
+  }
+  return Math.max(0, Math.min(childDuration, raw));
+}
 
 export const MAX_TIMELINE_CONTROL_BINDING_OVERRIDES = 256;
 
@@ -467,6 +504,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
             timeline: timelineAssetPath(clip.timeline),
             clip_in: Math.max(0, finite(clip.clip_in, 0)),
             speed: Math.max(-4, Math.min(4, finite(clip.speed, 1))),
+            extrapolation: timelineControlExtrapolation(clip.extrapolation),
             binding_overrides: normalizeControlBindingOverrides(clip.binding_overrides),
           } satisfies TimelineControlClip;
         })
@@ -606,6 +644,7 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
         if (!timelineAssetIsPortable(timelineAssetPath(clip.timeline))
           || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
           || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4
+          || !['none', 'hold', 'loop'].includes(clip.extrapolation)
           || !controlBindingOverridesAreValid(clip.binding_overrides)) {
           throw new Error(`Control track ${track.name} contains invalid clip settings`);
         }
@@ -804,6 +843,8 @@ export function parseTimelineAsset(text: string): TimelineAsset {
         || track.type === 'control' && (typeof clip.timeline !== 'string' || !timelineAssetIsPortable(timelineAssetPath(clip.timeline))
           || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
           || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4)
+          || clip.extrapolation != null && (typeof clip.extrapolation !== 'string'
+            || !['none', 'hold', 'loop'].includes(clip.extrapolation.trim().toLowerCase()))
           || clip.binding_overrides != null && !controlBindingOverridesAreValid(clip.binding_overrides))
         || clip.start < 0 || clip.duration <= 0
         || clip.start + clip.duration > parsedDuration) {

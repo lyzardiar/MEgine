@@ -1001,6 +1001,7 @@ function scanBuildAssetDependencies(
     clipIn: number;
     duration: number;
     speed: number;
+    extrapolation: 'none' | 'hold' | 'loop';
     bindingOverrides: Array<{ child: string; parent: string }>;
   }>>();
   const materialVariantRoots = new Set<string>();
@@ -1693,6 +1694,7 @@ function scanBuildAssetDependencies(
         clipIn: number;
         duration: number;
         speed: number;
+        extrapolation: 'none' | 'hold' | 'loop';
         bindingOverrides: Array<{ child: string; parent: string }>;
       }> = [];
       const requiredBindingTargets = new Set<string>();
@@ -1770,6 +1772,9 @@ function scanBuildAssetDependencies(
             const timelinePath = strictStringValue(clip, 'timeline', `Timeline control track ${name}`).replaceAll('\\', '/');
             const clipIn = clip.clip_in == null ? 0 : clip.clip_in;
             const speed = clip.speed == null ? 1 : clip.speed;
+            const extrapolation = clip.extrapolation == null
+              ? 'none'
+              : strictStringValue(clip, 'extrapolation', `Timeline control track ${name}`).toLowerCase();
             const rawOverrides = clip.binding_overrides == null ? {} : jsonObject(clip.binding_overrides);
             if (!rawOverrides || Object.keys(rawOverrides).length > 256) {
               throw new Error(`invalid Timeline asset ${source}: control binding_overrides must be an object with at most 256 entries`);
@@ -1794,7 +1799,8 @@ function scanBuildAssetDependencies(
               || timelinePath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
               || !/\.mtimeline$/i.test(timelinePath)
               || typeof clipIn !== 'number' || !Number.isFinite(clipIn) || clipIn < 0
-              || typeof speed !== 'number' || !Number.isFinite(speed) || speed < -4 || speed > 4) {
+              || typeof speed !== 'number' || !Number.isFinite(speed) || speed < -4 || speed > 4
+              || extrapolation !== 'none' && extrapolation !== 'hold' && extrapolation !== 'loop') {
               throw new Error(`invalid Timeline asset ${source}: control clip is invalid or outside duration`);
             }
             enqueue(timelinePath, source, `Timeline control track ${name} nested asset`);
@@ -1804,6 +1810,7 @@ function scanBuildAssetDependencies(
               clipIn,
               duration: clip.duration,
               speed,
+              extrapolation,
               bindingOverrides,
             });
             return clip as { start: number; duration: number };
@@ -2190,7 +2197,8 @@ function scanBuildAssetDependencies(
       }
       const sourceEnd = edge.clipIn + edge.duration * edge.speed;
       if (edge.clipIn < -0.0001 || edge.clipIn > childDuration + 0.0001
-        || sourceEnd < -0.0001 || sourceEnd > childDuration + 0.0001) {
+        || edge.extrapolation === 'none'
+          && (sourceEnd < -0.0001 || sourceEnd > childDuration + 0.0001)) {
         throw new Error(
           `invalid Timeline asset ${sourceKey}: control track ${edge.track} source window is outside ${edge.timeline} duration ${childDuration}`,
         );
