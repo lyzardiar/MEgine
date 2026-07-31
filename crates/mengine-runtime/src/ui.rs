@@ -1195,6 +1195,7 @@ fn walk(
     }
     let image = world.get_component::<Image>(entity);
     let raw_image = world.get_component::<RawImage>(entity);
+    let text = world.get_component::<Text>(entity);
     let graphic_start = primitives.len();
     let control_start = controls.len();
 
@@ -1261,6 +1262,18 @@ fn walk(
         }
     }
 
+    if text.is_some_and(|value| value.raycast_target) && state.blocks_raycasts {
+        controls.push(control_region(
+            entity,
+            rect,
+            rotation,
+            pivot,
+            clip,
+            UiControlKind::Blocker,
+            Value::Null,
+        ));
+    }
+
     if let Some(button) = world.get_component::<Button>(entity) {
         if image.is_none() {
             primitives.push(primitive(
@@ -1307,7 +1320,7 @@ fn walk(
         }
     }
 
-    if let Some(text) = world.get_component::<Text>(entity) {
+    if let Some(text) = text {
         push_text_styled(
             primitives,
             rect,
@@ -1957,6 +1970,16 @@ fn walk(
             &mut controls[control_start..],
         );
     }
+    controls[control_start..].sort_by_key(|control| {
+        if matches!(
+            &control.kind,
+            UiControlKind::Blocker | UiControlKind::ScrollView
+        ) {
+            0
+        } else {
+            1
+        }
+    });
 
     let mut children = children_of(world, entity);
     if let Some(tab_view) = world.get_component::<TabView>(entity) {
@@ -2974,6 +2997,80 @@ mod tests {
         assert!(frame.controls.iter().any(|control| {
             control.entity == image && matches!(control.kind, UiControlKind::Blocker)
         }));
+    }
+
+    #[test]
+    fn text_raycast_targets_block_and_same_entity_actions_stay_on_top() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+
+        let text_only = world.spawn_empty();
+        world.insert_component(
+            text_only,
+            RectTransform {
+                anchored_position: [-150.0, 0.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            text_only,
+            Text {
+                raycast_target: true,
+                ..Default::default()
+            },
+        );
+        world.set_parent(text_only, Some(canvas));
+
+        let composite_button = world.spawn_empty();
+        world.insert_component(
+            composite_button,
+            RectTransform {
+                anchored_position: [150.0, 0.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(composite_button, Button::default());
+        world.insert_component(
+            composite_button,
+            Text {
+                raycast_target: true,
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            composite_button,
+            Panel {
+                raycast_target: true,
+                ..Default::default()
+            },
+        );
+        world.set_parent(composite_button, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert!(frame.controls.iter().any(|control| {
+            control.entity == text_only && matches!(control.kind, UiControlKind::Blocker)
+        }));
+
+        let button_region = frame
+            .controls
+            .iter()
+            .find(|control| {
+                control.entity == composite_button && matches!(control.kind, UiControlKind::Button)
+            })
+            .unwrap();
+        let point = [
+            button_region.rect.x + button_region.rect.width * 0.5,
+            button_region.rect.y + button_region.rect.height * 0.5,
+        ];
+        let topmost = frame
+            .controls
+            .iter()
+            .rev()
+            .find(|control| control.contains(point[0], point[1]))
+            .unwrap();
+        assert_eq!(topmost.entity, composite_button);
+        assert!(matches!(topmost.kind, UiControlKind::Button));
     }
 
     #[test]

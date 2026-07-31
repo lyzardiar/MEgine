@@ -207,6 +207,33 @@ test('CanvasGroup ignore parent groups resets inherited alpha, interaction, and 
   );
 });
 
+test('Text raycast targets participate in editor Graphic hit testing', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({
+          anchor_min: [0, 0],
+          anchor_max: [1, 1],
+          size_delta: [0, 0],
+        }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect(),
+        Text: { text: 'Raycast target', raycast_target: true },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const text = items.find((item) => item.entity === 2);
+  assert.equal(hitTestUi(items, text.rect.x + 1, text.rect.y + 1)?.entity, text.entity);
+});
+
 test('World Space override-sorting Canvas subtrees are projected exactly once', () => {
   const entities = [
     {

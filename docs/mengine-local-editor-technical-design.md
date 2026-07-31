@@ -1867,3 +1867,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `CanvasGroup` 补齐 Unity `Ignore Parent Groups`，默认值为 `false`。默认路径继续累乘祖先 Alpha，并继承 Interactable 与 Blocks Raycasts；启用后从当前组重新计算这三个状态，使该组和完整子树不再受更上层 CanvasGroup 影响。旧场景保持原行为，Editor 预览和 Runtime 共用相同边界语义。
 - Editor 指针命中新增统一的 CanvasGroup 射线状态，不再只对 Panel 应用 `Blocks Raycasts`。Image、Raw Image、Text 与全部 Selectable 都会在祖先组禁用射线时让事件穿透；`Ignore Parent Groups` 子组可以恢复自己的射线和交互边界，同时不改变 Pixel Perfect 等独立 Canvas 状态。
 - 回归覆盖父组透明度、交互和射线三项继承，以及子组显式忽略后渲染 Alpha、控件命中区域和 Editor 点击命中的同步恢复。
+
+## 161. 2026-08-01 Graphic Raycast 目标与同实体优先级
+
+- Runtime 补齐 `Text.raycast_target`：显式启用的 Text 与 Image、Raw Image、Panel 一样生成真实 Graphic 阻挡区域，并继续服从 CanvasGroup 的 Blocks Raycasts 和 Ignore Parent Groups。Editor 与 Player 不再对同一 Text 得出不同的点击穿透结果。
+- 同一 UI 实体可同时拥有可操作控件与一个或多个被动 Graphic。Runtime 在每个实体完成收集后稳定地把 Blocker/ScrollView 放在本实体可操作控件之前，因此反向命中时 Button、Toggle、Slider 等事件目标位于自身 Graphic 之上；该排序不跨实体，不改变 Canvas、层级或 sibling 的视觉前后关系。
+- 回归覆盖纯 Text 阻挡，以及 Button + Text + Panel 组合对象在重叠命中时仍由 Button 接收事件。
