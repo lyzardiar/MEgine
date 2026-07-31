@@ -56,7 +56,7 @@ export function normalizedRangePosition(
   const dx = point.x - pivotPoint.x;
   const dy = point.y - pivotPoint.y;
   const localX = dx * c - dy * s + size.w * pivot[0];
-  const localY = dx * s + dy * c + size.h * pivot[1];
+  const localY = dx * s + dy * c + size.h * (1 - pivot[1]);
   return isVerticalRange(direction)
     ? localY / Math.max(1, size.h)
     : localX / Math.max(1, size.w);

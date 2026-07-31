@@ -316,7 +316,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         ...rt,
         anchored_position: [
           rt.anchored_position[0] + dx,
-          rt.anchored_position[1] + dy,
+          rt.anchored_position[1] - dy,
         ],
       };
     }
@@ -1676,7 +1676,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         ...rt,
         anchored_position: [
           rt.anchored_position[0] + dx,
-          rt.anchored_position[1] + dy,
+          rt.anchored_position[1] - dy,
         ],
       };
     },
@@ -1731,7 +1731,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           ...rt,
           anchored_position: [
             rt.anchored_position[0] + delta.dx,
-            rt.anchored_position[1] + delta.dy,
+            rt.anchored_position[1] - delta.dy,
           ],
         };
       }
@@ -1767,7 +1767,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           ...rt,
           anchored_position: [
             rt.anchored_position[0] + delta.dx,
-            rt.anchored_position[1] + delta.dy,
+            rt.anchored_position[1] - delta.dy,
           ],
           local_rotation: rt.local_rotation + delta.degrees,
         };
@@ -1808,7 +1808,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           ...rt,
           anchored_position: [
             rt.anchored_position[0] + delta.dx,
-            rt.anchored_position[1] + delta.dy,
+            rt.anchored_position[1] - delta.dy,
           ],
           local_scale: [
             Math.max(0.01, rt.local_scale[0] * delta.factorX),
@@ -1853,7 +1853,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         ],
         anchored_position: [
           rt.anchored_position[0] + plan.positionDelta[0],
-          rt.anchored_position[1] + plan.positionDelta[1],
+          rt.anchored_position[1] - plan.positionDelta[1],
         ],
       };
       return plan;

@@ -98,18 +98,18 @@ function AnchorIcon(props: { min: Vec2; max: Vec2 }) {
         className="rect-anchor-icon-range"
         style={{
           left: `${props.min[0] * 100}%`,
-          top: `${props.min[1] * 100}%`,
+          top: `${(1 - props.max[1]) * 100}%`,
           width: `${width * 100}%`,
           height: `${height * 100}%`,
         }}
       />
       <span
         className="rect-anchor-icon-point"
-        style={{ left: `${props.min[0] * 100}%`, top: `${props.min[1] * 100}%` }}
+        style={{ left: `${props.min[0] * 100}%`, top: `${(1 - props.min[1]) * 100}%` }}
       />
       <span
         className="rect-anchor-icon-point"
-        style={{ left: `${props.max[0] * 100}%`, top: `${props.max[1] * 100}%` }}
+        style={{ left: `${props.max[0] * 100}%`, top: `${(1 - props.max[1]) * 100}%` }}
       />
     </span>
   );

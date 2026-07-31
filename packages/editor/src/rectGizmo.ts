@@ -96,7 +96,7 @@ function sizeHandleBox(
 export function rectPivot(rect: Rect, pivot: [number, number] = [0.5, 0.5]): { x: number; y: number } {
   return {
     x: rect.x + rect.w * pivot[0],
-    y: rect.y + rect.h * pivot[1],
+    y: rect.y + rect.h * (1 - pivot[1]),
   };
 }
 
@@ -122,7 +122,7 @@ export function rectToolHandlePivot(
   if (mode === 'pivot') return { ...pivotPoint };
   const axes = rectLocalAxes(rotDeg);
   const localX = rect.w * (0.5 - pivotNorm[0]);
-  const localY = rect.h * (pivotNorm[1] - 0.5);
+  const localY = rect.h * (0.5 - pivotNorm[1]);
   return {
     x: pivotPoint.x + localX * axes.x.dx + localY * axes.y.dx,
     y: pivotPoint.y + localX * axes.x.dy + localY * axes.y.dy,
@@ -183,8 +183,8 @@ function sizeHandlePoints(
   // 因此「上」沿 +axes.y，「下」沿 -axes.y
   const l = -w * px;
   const r = w * (1 - px);
-  const top = h * py;
-  const bot = -h * (1 - py);
+  const top = h * (1 - py);
+  const bot = -h * py;
   return {
     nw: at(l, top),
     n: at((l + r) * 0.5, top),

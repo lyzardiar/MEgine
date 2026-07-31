@@ -85,9 +85,9 @@ test('Play-mode RectTransform nudge and alignment affect only live roots', async
     ]), true);
     const live = store.snapshot().entities;
     assert.deepEqual(live.find((entity) => entity.entity === first)
-      .components.RectTransform.anchored_position, [8, 5]);
+      .components.RectTransform.anchored_position, [8, -1]);
     assert.deepEqual(live.find((entity) => entity.entity === second)
-      .components.RectTransform.anchored_position, [7, 23]);
+      .components.RectTransform.anchored_position, [7, 17]);
     assert.deepEqual(store.authoredEntities().find((entity) => entity.entity === first)
       .components.RectTransform.anchored_position, [1, 2]);
 

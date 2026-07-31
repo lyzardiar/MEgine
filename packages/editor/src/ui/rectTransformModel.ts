@@ -26,9 +26,9 @@ const horizontal = [
 ] as const;
 
 const vertical = [
-  { key: 'top', label: 'Top', min: 0, max: 0, pivot: 0 },
+  { key: 'top', label: 'Top', min: 1, max: 1, pivot: 1 },
   { key: 'middle', label: 'Middle', min: 0.5, max: 0.5, pivot: 0.5 },
-  { key: 'bottom', label: 'Bottom', min: 1, max: 1, pivot: 1 },
+  { key: 'bottom', label: 'Bottom', min: 0, max: 0, pivot: 0 },
   { key: 'stretch', label: 'Stretch', min: 0, max: 1, pivot: 0.5 },
 ] as const;
 
@@ -128,8 +128,8 @@ export function applyPivotKeepingVisualRect(
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);
   const visualPivotDelta: Vec2 = [
-    localX * cos + localY * sin,
-    -localX * sin + localY * cos,
+    localX * cos - localY * sin,
+    localX * sin + localY * cos,
   ];
   return {
     ...value,
@@ -226,12 +226,14 @@ export function readRectAxis(value: RectTransformValue, axis: 0 | 1): RectAxisFi
   }
   const pivot = value.pivot[axis];
   const size = value.size_delta[axis];
+  const offsetMin = value.anchored_position[axis] - size * pivot;
+  const offsetMax = value.anchored_position[axis] + size * (1 - pivot);
   return {
     stretched: true,
     firstLabel: axis === 0 ? 'L' : 'T',
     secondLabel: axis === 0 ? 'R' : 'B',
-    first: value.anchored_position[axis] - size * pivot,
-    second: -(value.anchored_position[axis] + size * (1 - pivot)),
+    first: axis === 0 ? offsetMin : -offsetMax,
+    second: axis === 0 ? -offsetMax : offsetMin,
   };
 }
 
@@ -257,11 +259,16 @@ export function writeRectAxis(
     return next;
   }
 
-  const start = slot === 0 ? nextValue : current.first;
-  const end = slot === 1 ? nextValue : current.second;
-  const rawEnd = -end;
-  const size = rawEnd - start;
-  next.size_delta[axis] = size;
-  next.anchored_position[axis] = start + size * next.pivot[axis];
+  const first = slot === 0 ? nextValue : current.first;
+  const second = slot === 1 ? nextValue : current.second;
+  if (axis === 0) {
+    const size = -second - first;
+    next.size_delta[axis] = size;
+    next.anchored_position[axis] = first + size * next.pivot[axis];
+  } else {
+    const size = -(first + second);
+    next.size_delta[axis] = size;
+    next.anchored_position[axis] = second + size * next.pivot[axis];
+  }
   return next;
 }

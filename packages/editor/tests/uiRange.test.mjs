@@ -36,4 +36,12 @@ test('vertical range coordinates use screen-down UI space and honor rotation', (
     90,
     'TopToBottom',
   ) - 1) < 1e-8);
+  assert.equal(normalizedRangePosition(
+    { x: 10, y: 20 },
+    { x: 10, y: 20 },
+    { w: 20, h: 100 },
+    [0.5, 1],
+    0,
+    'TopToBottom',
+  ), 0);
 });

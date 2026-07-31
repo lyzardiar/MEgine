@@ -23,7 +23,7 @@ test('fit and envelope modes align the fitted rect using its pivot', () => {
   );
   assert.deepEqual(
     applyAspectRatio(rect, parent, [0, 0], 'EnvelopeParent', 1),
-    { x: 0, y: 0, w: 200, h: 200 },
+    { x: 0, y: -100, w: 200, h: 200 },
   );
 });
 

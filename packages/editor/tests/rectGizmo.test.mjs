@@ -3,10 +3,17 @@ import test from 'node:test';
 import {
   cursorForRectGizmo,
   hitTestRectGizmo,
+  rectPivot,
   rectToolHandlePivot,
   rotateRectToolPoint,
   scaleRectToolPoint,
 } from '../src/rectGizmo.ts';
+
+test('RectTransform pivot uses Unity bottom-left normalized Y', () => {
+  const rect = { x: 10, y: 20, w: 100, h: 40 };
+  assert.deepEqual(rectPivot(rect, [0, 0]), { x: 10, y: 60 });
+  assert.deepEqual(rectPivot(rect, [1, 1]), { x: 110, y: 20 });
+});
 
 test('Rect Tool body hit moves the selected rectangle', () => {
   const hits = [{

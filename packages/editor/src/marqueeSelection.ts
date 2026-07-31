@@ -26,15 +26,15 @@ function itemBounds(item: MarqueeItem): MarqueeRect {
   const pivot = item.pivot ?? [0.5, 0.5];
   const origin = item.pivotScreen ?? {
     x: item.rect.x + item.rect.w * pivot[0],
-    y: item.rect.y + item.rect.h * pivot[1],
+    y: item.rect.y + item.rect.h * (1 - pivot[1]),
   };
   const radians = rotation * Math.PI / 180;
   const xAxis = { x: Math.cos(radians), y: -Math.sin(radians) };
   const yAxis = { x: -Math.sin(radians), y: -Math.cos(radians) };
   const left = -item.rect.w * pivot[0];
   const right = item.rect.w * (1 - pivot[0]);
-  const top = item.rect.h * pivot[1];
-  const bottom = -item.rect.h * (1 - pivot[1]);
+  const top = item.rect.h * (1 - pivot[1]);
+  const bottom = -item.rect.h * pivot[1];
   const corners = [
     [left, top],
     [right, top],

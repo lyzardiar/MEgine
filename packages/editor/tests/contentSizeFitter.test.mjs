@@ -35,7 +35,7 @@ test('fit modes resize around the RectTransform pivot', () => {
   const content = measureLayoutContent({ ...base, direction: 'Vertical' }, 3);
   assert.deepEqual(
     applyContentSize(rect, [0.5, 1], 'PreferredSize', 'MinSize', content),
-    { x: 100, y: 196, w: 120, h: 24 },
+    { x: 100, y: 20, w: 120, h: 24 },
   );
   assert.deepEqual(
     applyContentSize(rect, [0.5, 0.5], 'Unconstrained', 'Unconstrained', content),

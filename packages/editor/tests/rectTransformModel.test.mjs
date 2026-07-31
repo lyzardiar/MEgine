@@ -11,6 +11,7 @@ import {
   writeRectAxis,
 } from '../src/ui/rectTransformModel.ts';
 import { solveRectTransform } from '../src/ui/rectLayout.ts';
+import { rectLocalAxes, rectPivot } from '../src/rectGizmo.ts';
 
 const base = () => ({
   anchor_min: [0.5, 0.5],
@@ -22,6 +23,20 @@ const base = () => ({
   local_scale: [1, 1],
 });
 
+function rotatedCorners(parent, value) {
+  const rect = solveRectTransform(parent, value);
+  const pivot = rectPivot(rect, value.pivot);
+  const axes = rectLocalAxes(value.local_rotation);
+  const left = -rect.w * value.pivot[0];
+  const right = rect.w * (1 - value.pivot[0]);
+  const bottom = -rect.h * value.pivot[1];
+  const top = rect.h * (1 - value.pivot[1]);
+  return [[left, bottom], [right, bottom], [right, top], [left, top]].map(([x, y]) => ({
+    x: pivot.x + x * axes.x.dx + y * axes.y.dx,
+    y: pivot.y + x * axes.x.dy + y * axes.y.dy,
+  }));
+}
+
 test('anchor presets support Unity-style Shift and Alt modifiers', () => {
   const stretch = ANCHOR_PRESETS.find((preset) => preset.key === 'stretch-stretch');
   assert.ok(stretch);
@@ -31,6 +46,51 @@ test('anchor presets support Unity-style Shift and Alt modifiers', () => {
   assert.deepEqual(next.pivot, [0.5, 0.5]);
   assert.deepEqual(next.anchored_position, [0, 0]);
   assert.deepEqual(next.size_delta, [0, 0]);
+});
+
+test('vertical anchor presets use Unity bottom-left normalized coordinates', () => {
+  const topLeft = ANCHOR_PRESETS.find((preset) => preset.key === 'top-left');
+  const bottomRight = ANCHOR_PRESETS.find((preset) => preset.key === 'bottom-right');
+  assert.deepEqual(topLeft?.anchorMin, [0, 1]);
+  assert.deepEqual(topLeft?.anchorMax, [0, 1]);
+  assert.deepEqual(topLeft?.pivot, [0, 1]);
+  assert.deepEqual(bottomRight?.anchorMin, [1, 0]);
+  assert.deepEqual(bottomRight?.anchorMax, [1, 0]);
+  assert.deepEqual(bottomRight?.pivot, [1, 0]);
+});
+
+test('layout converts Unity Y-up RectTransform data into screen coordinates', () => {
+  const parent = { x: 0, y: 0, w: 800, h: 600 };
+  assert.deepEqual(solveRectTransform(parent, {
+    anchor_min: [0, 0],
+    anchor_max: [0, 0],
+    pivot: [0, 0],
+    anchored_position: [10, 20],
+    size_delta: [100, 50],
+    local_scale: [1, 1],
+  }), { x: 10, y: 530, w: 100, h: 50 });
+  assert.deepEqual(solveRectTransform(parent, {
+    anchor_min: [1, 1],
+    anchor_max: [1, 1],
+    pivot: [1, 1],
+    anchored_position: [-10, -20],
+    size_delta: [100, 50],
+    local_scale: [1, 1],
+  }), { x: 690, y: 20, w: 100, h: 50 });
+});
+
+test('positive anchored Y moves a Unity UI rectangle upward on screen', () => {
+  const parent = { x: 0, y: 0, w: 800, h: 600 };
+  const lower = solveRectTransform(parent, { ...base(), anchored_position: [0, 0] });
+  const higher = solveRectTransform(parent, { ...base(), anchored_position: [0, 25] });
+  assert.equal(higher.y, lower.y - 25);
+  assert.deepEqual(solveRectTransform(parent, {
+    ...base(),
+    anchor_min: [0, 0],
+    anchor_max: [1, 1],
+    anchored_position: [0, 0],
+    size_delta: [0, 0],
+  }), parent);
 });
 
 test('stretch offsets round-trip through Left Right Top Bottom fields', () => {
@@ -53,6 +113,19 @@ test('stretch offsets round-trip through Left Right Top Bottom fields', () => {
   const fields = readRectAxis(withRight, 0);
   assert.equal(fields.first, 25);
   assert.equal(fields.second, 10);
+
+  assert.deepEqual(readRectAxis(value, 1), {
+    stretched: true,
+    firstLabel: 'T',
+    secondLabel: 'B',
+    first: 25,
+    second: 25,
+  });
+  const withTop = writeRectAxis(value, 1, 0, 30);
+  const withBottom = writeRectAxis(withTop, 1, 1, 12);
+  const vertical = readRectAxis(withBottom, 1);
+  assert.equal(vertical.first, 30);
+  assert.equal(vertical.second, 12);
 });
 
 test('pivot editing preserves a fixed-anchor rectangle', () => {
@@ -102,7 +175,14 @@ test('visual pivot compensation includes local scale and rotation', () => {
   const next = applyPivotKeepingVisualRect(value, [1, 0.5], [800, 600]);
   assert.deepEqual(next.pivot, [1, 0.5]);
   assert.ok(Math.abs(next.anchored_position[0] - 20) < 1e-10);
-  assert.equal(next.anchored_position[1], -70);
+  assert.equal(next.anchored_position[1], 130);
+  const parent = { x: 0, y: 0, w: 800, h: 600 };
+  const before = rotatedCorners(parent, value);
+  const after = rotatedCorners(parent, next);
+  before.forEach((corner, index) => {
+    assert.ok(Math.abs(after[index].x - corner.x) < 1e-8);
+    assert.ok(Math.abs(after[index].y - corner.y) < 1e-8);
+  });
 });
 
 test('visual pivot compensation preserves stretched scale-one layout', () => {

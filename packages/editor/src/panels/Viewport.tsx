@@ -245,7 +245,7 @@ function rectGizmoBounds(
   if (!size) return item.rect;
   return {
     x: pivot.x - size.w * pivotNorm[0],
-    y: pivot.y - size.h * pivotNorm[1],
+    y: pivot.y - size.h * (1 - pivotNorm[1]),
     w: size.w,
     h: size.h,
   };
@@ -261,11 +261,11 @@ function rectAnchorPoints(
   return {
     min: {
       x: parent.x + parent.w * anchorMin[0],
-      y: parent.y + parent.h * anchorMin[1],
+      y: parent.y + parent.h * (1 - anchorMin[1]),
     },
     max: {
       x: parent.x + parent.w * anchorMax[0],
-      y: parent.y + parent.h * anchorMax[1],
+      y: parent.y + parent.h * (1 - anchorMax[1]),
     },
   };
 }
@@ -2511,7 +2511,7 @@ export function Viewport(props: {
 
         if (d.anchorEditing && d.part.kind === 'anchor') {
           const deltaX = dx / Math.max(1, d.anchorParentSize.w);
-          const deltaY = dy / Math.max(1, d.anchorParentSize.h);
+          const deltaY = -dy / Math.max(1, d.anchorParentSize.h);
           const moved = moveAnchorHandle(
             d.anchorMin,
             d.anchorMax,
@@ -2540,7 +2540,7 @@ export function Viewport(props: {
           }
         } else if (d.pivotEditing && d.part.kind === 'center') {
           const deltaX = projectScreenDelta(dx, dy, localAxes.x) / Math.max(1, d.rectSize.w);
-          const deltaY = -projectScreenDelta(dx, dy, localAxes.y) / Math.max(1, d.rectSize.h);
+          const deltaY = projectScreenDelta(dx, dy, localAxes.y) / Math.max(1, d.rectSize.h);
           const nextPivot: [number, number] = [
             Math.max(0, Math.min(1, d.pivotNorm[0] + deltaX)),
             Math.max(0, Math.min(1, d.pivotNorm[1] + deltaY)),

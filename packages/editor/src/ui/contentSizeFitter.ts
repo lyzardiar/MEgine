@@ -82,7 +82,7 @@ export function applyContentSize(
       : rect.h;
   return {
     x: rect.x + (rect.w - width) * pivot[0],
-    y: rect.y + (rect.h - height) * pivot[1],
+    y: rect.y + (rect.h - height) * (1 - pivot[1]),
     w: Math.max(0, width),
     h: Math.max(0, height),
   };

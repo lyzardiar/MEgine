@@ -50,7 +50,10 @@ export function readRectTransform(raw: unknown): Required<{
   };
 }
 
-/** Unity RectTransform: anchors define min/max corners in parent, sizeDelta expands. */
+/**
+ * Unity RectTransform layout expressed as a top-left, screen-space rectangle.
+ * Serialized RectTransform values keep Unity's bottom-left, Y-up convention.
+ */
 export function solveRectTransform(parent: Rect, raw: unknown): Rect {
   const rt = readRectTransform(raw);
   const [aminX, aminY] = rt.anchor_min;
@@ -61,27 +64,21 @@ export function solveRectTransform(parent: Rect, raw: unknown): Rect {
   const [sx, sy] = rt.local_scale;
 
   const anchorMinX = parent.x + aminX * parent.w;
-  const anchorMinY = parent.y + aminY * parent.h;
   const anchorMaxX = parent.x + amaxX * parent.w;
-  const anchorMaxY = parent.y + amaxY * parent.h;
 
   const anchorW = anchorMaxX - anchorMinX;
-  const anchorH = anchorMaxY - anchorMinY;
+  const anchorH = (amaxY - aminY) * parent.h;
 
   const width = Math.max(0, (anchorW + sdX) * Math.abs(sx));
   const height = Math.max(0, (anchorH + sdY) * Math.abs(sy));
 
-  // Pivot point in parent space = lerp(anchorMin, anchorMax) + anchoredPosition
+  // Convert Unity's Y-up anchor reference and anchored position at the screen boundary.
   const pivotX = anchorMinX + anchorW * pivX + apX;
-  const pivotY = anchorMinY + anchorH * pivY + apY;
+  const anchorReferenceY = aminY + (amaxY - aminY) * pivY;
+  const pivotY = parent.y + (1 - anchorReferenceY) * parent.h - apY;
 
-  // Rect bottom-left (y-up in Unity; our canvas is y-down — keep y-down screen space)
-  // We treat parent.y as top of rect in screen coords (y grows down), matching Canvas 2D.
-  // Convert: Unity y-up local → screen y-down by flipping within parent.
-  // Simpler approach for Overlay: treat all coords as screen y-down directly
-  // (anchored_position y positive = down), matching HTML canvas.
   const x = pivotX - width * pivX;
-  const y = pivotY - height * pivY;
+  const y = pivotY - height * (1 - pivY);
 
   return { x, y, w: width, h: height };
 }
