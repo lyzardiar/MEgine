@@ -11,6 +11,7 @@ import {
 } from '../src/entityReferences.ts';
 
 const calls = () => ({
+  Canvas: { render_camera: '2' },
   Button: { on_click: { target: 2, component: 'Menu', method: 'Open' } },
   Toggle: { on_value_changed: { target: 99, component: 'Menu', method: 'Toggle' } },
   InputField: {
@@ -28,6 +29,7 @@ const calls = () => ({
 
 test('clone remapping changes internal UI event references and preserves external ones', () => {
   const remapped = remapComponentEntityReferences(calls(), new Map([[2, 20]]));
+  assert.equal(remapped.Canvas.render_camera, '20');
   assert.equal(remapped.Button.on_click.target, 20);
   assert.equal(remapped.Toggle.on_value_changed.target, 99);
   assert.equal(remapped.InputField.on_submit[0].target, 20);
@@ -40,6 +42,9 @@ test('clone remapping changes internal UI event references and preserves externa
 
 test('Prefab references use stable node tokens and external scene ids become explicit missing refs', () => {
   const localized = localizePrefabEntityReferences(calls(), new Map([[2, 'child']]));
+  assert.deepEqual(localized.Canvas.render_camera, {
+    [ENTITY_REFERENCE_TOKEN]: { kind: 'prefab_node', node: 'child' },
+  });
   assert.deepEqual(localized.Button.on_click.target, {
     [ENTITY_REFERENCE_TOKEN]: { kind: 'prefab_node', node: 'child' },
   });
@@ -52,6 +57,7 @@ test('Prefab references use stable node tokens and external scene ids become exp
 
   validatePrefabEntityReferences(localized, new Set(['root', 'child']));
   const resolved = resolvePrefabEntityReferences(localized, new Map([['child', 42]]));
+  assert.equal(resolved.Canvas.render_camera, '42');
   assert.equal(resolved.Button.on_click.target, 42);
   assert.deepEqual(parseSerializedEntityReference(resolved.Toggle.on_value_changed.target), {
     entity: null,
@@ -66,6 +72,7 @@ test('Prefab validation rejects dangling node tokens and legacy raw ids cannot b
     /missing prefab node 'gone'/,
   );
   const legacy = resolvePrefabEntityReferences(calls(), new Map());
+  assert.equal(legacy.Canvas.render_camera, '');
   assert.deepEqual(parseSerializedEntityReference(legacy.Button.on_click.target), {
     entity: null,
     missing: '2',

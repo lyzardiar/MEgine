@@ -197,7 +197,9 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
 mod tests {
     use super::*;
     use mengine_core::command::WorldCommand;
-    use mengine_core::generated::{Button, ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton};
+    use mengine_core::generated::{
+        Button, Canvas, ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton,
+    };
     use mengine_core::snapshot::EntitySnapshot;
     use serde_json::json;
 
@@ -754,10 +756,23 @@ mod tests {
                     components: HashMap::new(),
                 },
                 EntitySnapshot {
+                    entity: 25,
+                    name: Some("Camera Canvas".into()),
+                    parent: None,
+                    sibling_index: 2,
+                    active: true,
+                    tag: "Untagged".into(),
+                    layer: 0,
+                    components: HashMap::from([(
+                        "Canvas".into(),
+                        json!({ "render_camera": "20" }),
+                    )]),
+                },
+                EntitySnapshot {
                     entity: 30,
                     name: Some("Missing Button".into()),
                     parent: None,
-                    sibling_index: 2,
+                    sibling_index: 3,
                     active: true,
                     tag: "Untagged".into(),
                     layer: 0,
@@ -767,6 +782,16 @@ mod tests {
                             "on_click": { "target": 999, "component": "Menu", "method": "Gone" }
                         }),
                     )]),
+                },
+                EntitySnapshot {
+                    entity: 35,
+                    name: Some("Missing Camera Canvas".into()),
+                    parent: None,
+                    sibling_index: 4,
+                    active: true,
+                    tag: "Untagged".into(),
+                    layer: 0,
+                    components: HashMap::from([("Canvas".into(), json!({ "render_camera": 999 }))]),
                 },
             ],
             ..WorldSnapshot::default()
@@ -785,6 +810,14 @@ mod tests {
             .iter_entities()
             .find(|entity| world.entity_name(*entity) == Some("Missing Button"))
             .unwrap();
+        let camera_canvas = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Camera Canvas"))
+            .unwrap();
+        let missing_camera_canvas = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Missing Camera Canvas"))
+            .unwrap();
         assert_eq!(
             world.get_component::<Button>(button).unwrap().on_click["target"],
             target.to_u64().to_string()
@@ -793,6 +826,20 @@ mod tests {
             world.get_component::<Button>(missing).unwrap().on_click["target"]
                 ["$mengine_entity_ref"]["kind"],
             "missing"
+        );
+        assert_eq!(
+            world
+                .get_component::<Canvas>(camera_canvas)
+                .unwrap()
+                .render_camera,
+            target.to_u64().to_string()
+        );
+        assert_eq!(
+            world
+                .get_component::<Canvas>(missing_camera_canvas)
+                .unwrap()
+                .render_camera,
+            ""
         );
     }
 }

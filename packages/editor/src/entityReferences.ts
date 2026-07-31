@@ -29,6 +29,11 @@ export const COMPONENT_ENTITY_REFERENCE_FIELDS = [
   ['TabView', 'on_value_changed'],
 ] as const;
 
+/** Component fields that directly store an entity id rather than a persistent-call object. */
+export const COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS = [
+  ['Canvas', 'render_camera'],
+] as const;
+
 function object(value: unknown): Record<string, unknown> | null {
   return value != null && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -66,7 +71,7 @@ function targetSlots(
   return call ? [call] : [];
 }
 
-function rewriteTargets(
+function rewriteCallTargets(
   components: Record<string, unknown>,
   rewrite: (target: unknown) => unknown,
 ): void {
@@ -76,6 +81,23 @@ function rewriteTargets(
       call.target = rewrite(call.target);
     }
   }
+}
+
+function rewriteBuiltInDirectTargets(
+  components: Record<string, unknown>,
+  rewrite: (target: unknown) => unknown,
+): void {
+  for (const [componentName, field] of COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS) {
+    const component = object(components[componentName]);
+    if (!component || !Object.hasOwn(component, field) || component[field] == null) continue;
+    component[field] = rewrite(component[field]);
+  }
+}
+
+function rewriteMetadataTargets(
+  components: Record<string, unknown>,
+  rewrite: (target: unknown) => unknown,
+): void {
   for (const value of Object.values(components)) {
     const component = object(value);
     if (!component || !Array.isArray(component[ENTITY_REFERENCE_FIELDS_KEY])) continue;
@@ -110,14 +132,23 @@ export function remapComponentEntityReferences(
   entityMap: ReadonlyMap<number, number>,
 ): Record<string, unknown> {
   const components = structuredClone(source);
-  rewriteTargets(components, (target) => {
+  const remap = (target: unknown) => {
     const entity = decimalEntity(target);
     if (entity == null) return target;
     const numeric = Number(entity);
     return Number.isSafeInteger(numeric) && entityMap.has(numeric)
       ? entityMap.get(numeric)!
       : target;
+  };
+  rewriteCallTargets(components, remap);
+  rewriteBuiltInDirectTargets(components, (target) => {
+    const entity = decimalEntity(target);
+    if (entity == null) return target;
+    const numeric = Number(entity);
+    const remapped = Number.isSafeInteger(numeric) ? entityMap.get(numeric) : undefined;
+    return remapped == null ? target : String(remapped);
   });
+  rewriteMetadataTargets(components, remap);
   return components;
 }
 
@@ -127,7 +158,7 @@ export function localizePrefabEntityReferences(
   entityToNode: ReadonlyMap<number, string>,
 ): Record<string, unknown> {
   const components = structuredClone(source);
-  rewriteTargets(components, (target) => {
+  const localize = (target: unknown) => {
     if (token(target)) return target;
     const entity = decimalEntity(target);
     if (entity == null) return target;
@@ -136,7 +167,10 @@ export function localizePrefabEntityReferences(
     return node
       ? { [ENTITY_REFERENCE_TOKEN]: { kind: 'prefab_node', node } }
       : { [ENTITY_REFERENCE_TOKEN]: { kind: 'missing', entity } };
-  });
+  };
+  rewriteCallTargets(components, localize);
+  rewriteBuiltInDirectTargets(components, localize);
+  rewriteMetadataTargets(components, localize);
   return components;
 }
 
@@ -146,7 +180,7 @@ export function resolvePrefabEntityReferences(
   nodeToEntity: ReadonlyMap<string, number>,
 ): Record<string, unknown> {
   const components = structuredClone(source);
-  rewriteTargets(components, (target) => {
+  const resolvePortable = (target: unknown) => {
     const reference = token(target);
     if (reference?.kind === 'prefab_node') {
       const entity = nodeToEntity.get(reference.node);
@@ -159,6 +193,16 @@ export function resolvePrefabEntityReferences(
     return legacyEntity == null
       ? target
       : { [ENTITY_REFERENCE_TOKEN]: { kind: 'missing', entity: legacyEntity } };
+  };
+  rewriteCallTargets(components, resolvePortable);
+  rewriteMetadataTargets(components, resolvePortable);
+  rewriteBuiltInDirectTargets(components, (target) => {
+    const reference = token(target);
+    if (reference?.kind === 'prefab_node') {
+      return String(nodeToEntity.get(reference.node) ?? '');
+    }
+    if (reference?.kind === 'missing' || target == null) return '';
+    return decimalEntity(target) == null ? target : '';
   });
   return components;
 }
@@ -182,6 +226,11 @@ export function validatePrefabEntityReferences(
       if (!Object.hasOwn(call, 'target') || call.target == null) continue;
       validate(call.target, `${component}.${field}`);
     }
+  }
+  for (const [componentName, field] of COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS) {
+    const component = object(components[componentName]);
+    if (!component || !Object.hasOwn(component, field) || component[field] == null) continue;
+    validate(component[field], `${componentName}.${field}`);
   }
   for (const [componentName, value] of Object.entries(components)) {
     const component = object(value);

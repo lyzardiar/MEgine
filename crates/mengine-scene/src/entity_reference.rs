@@ -17,6 +17,7 @@ const COMPONENT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 10] = [
     ("ScrollView", "on_value_changed"),
     ("TabView", "on_value_changed"),
 ];
+const COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 1] = [("Canvas", "render_camera")];
 
 enum PrefabReference<'a> {
     Node(&'a str),
@@ -143,10 +144,48 @@ fn visit_targets_mut(
     Ok(())
 }
 
+fn visit_direct_targets_mut(
+    components: &mut Value,
+    mut visit: impl FnMut(&mut Value) -> Result<(), SceneError>,
+) -> Result<(), SceneError> {
+    let Some(components) = components.as_object_mut() else {
+        return Ok(());
+    };
+    for (component_name, field_name) in COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS {
+        let Some(target) = components
+            .get_mut(component_name)
+            .and_then(Value::as_object_mut)
+            .and_then(|component| component.get_mut(field_name))
+        else {
+            continue;
+        };
+        visit(target)?;
+    }
+    Ok(())
+}
+
 pub(crate) fn remap_scene_entity_references(
     components: &mut Value,
     entity_map: &HashMap<u64, Entity>,
 ) -> Result<(), SceneError> {
+    visit_direct_targets_mut(components, |target| {
+        if prefab_reference(target)?.is_some() {
+            *target = Value::String(String::new());
+            return Ok(());
+        }
+        if target.is_null() {
+            *target = Value::String(String::new());
+            return Ok(());
+        }
+        let Some(old_entity) = decimal_entity(target) else {
+            return Ok(());
+        };
+        *target = entity_map
+            .get(&old_entity)
+            .map(|entity| Value::String(entity.to_u64().to_string()))
+            .unwrap_or_else(|| Value::String(String::new()));
+        Ok(())
+    })?;
     visit_targets_mut(components, |target| {
         if target.is_null() || prefab_reference(target)?.is_some() {
             return Ok(());
@@ -166,6 +205,26 @@ pub(crate) fn resolve_prefab_entity_references(
     components: &mut Value,
     node_entities: &HashMap<String, Entity>,
 ) -> Result<(), SceneError> {
+    visit_direct_targets_mut(components, |target| {
+        match prefab_reference(target)? {
+            Some(PrefabReference::Node(node)) => {
+                let entity = node_entities.get(node).ok_or_else(|| {
+                    SceneError::InvalidPrefab(format!(
+                        "serialized entity reference points to missing prefab node '{node}'"
+                    ))
+                })?;
+                *target = Value::String(entity.to_u64().to_string());
+            }
+            Some(PrefabReference::Missing) => {
+                *target = Value::String(String::new());
+            }
+            None if target.is_null() || decimal_entity(target).is_some() => {
+                *target = Value::String(String::new());
+            }
+            None => {}
+        }
+        Ok(())
+    })?;
     visit_targets_mut(components, |target| {
         match prefab_reference(target)? {
             Some(PrefabReference::Node(node)) => {
@@ -195,6 +254,16 @@ pub(crate) fn validate_prefab_entity_references(
     node_ids: &HashSet<String>,
 ) -> Result<(), SceneError> {
     let mut cloned = components.clone();
+    visit_direct_targets_mut(&mut cloned, |target| {
+        if let Some(PrefabReference::Node(node)) = prefab_reference(target)? {
+            if !node_ids.contains(node) {
+                return Err(SceneError::InvalidPrefab(format!(
+                    "serialized entity reference points to missing prefab node '{node}'"
+                )));
+            }
+        }
+        Ok(())
+    })?;
     visit_targets_mut(&mut cloned, |target| {
         if let Some(PrefabReference::Node(node)) = prefab_reference(target)? {
             if !node_ids.contains(node) {
@@ -230,9 +299,27 @@ mod tests {
     }
 
     #[test]
+    fn scene_rebuild_remaps_canvas_camera_and_clears_missing_camera() {
+        let live = Entity::new(7, 4);
+        let mut components = json!({
+            "Canvas": { "render_camera": "20" }
+        });
+        remap_scene_entity_references(&mut components, &HashMap::from([(20, live)])).unwrap();
+        assert_eq!(
+            components["Canvas"]["render_camera"],
+            live.to_u64().to_string()
+        );
+
+        components["Canvas"]["render_camera"] = json!(99);
+        remap_scene_entity_references(&mut components, &HashMap::new()).unwrap();
+        assert_eq!(components["Canvas"]["render_camera"], "");
+    }
+
+    #[test]
     fn prefab_nodes_resolve_and_legacy_raw_ids_become_missing() {
         let target = Entity::new(8, 1);
         let mut components = json!({
+            "Canvas": { "render_camera": { TOKEN_KEY: { "kind": "prefab_node", "node": "label" } } },
             "Button": { "on_click": { "target": { TOKEN_KEY: { "kind": "prefab_node", "node": "label" } } } },
             "Toggle": { "on_value_changed": { "target": 99 } }
         });
@@ -241,6 +328,10 @@ mod tests {
             &HashMap::from([("label".to_owned(), target)]),
         )
         .unwrap();
+        assert_eq!(
+            components["Canvas"]["render_camera"],
+            target.to_u64().to_string()
+        );
         assert_eq!(
             components["Button"]["on_click"]["target"],
             target.to_u64().to_string()

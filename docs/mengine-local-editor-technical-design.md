@@ -1896,3 +1896,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Rust Runtime 过去把 Canvas 仅当作遍历入口，直接从第一个子节点开始收集 UI；Editor 预览却会遍历 Canvas 节点本身。这会跳过根 Canvas 上合法共存的 Graphic、Selectable、LayoutGroup、ScrollView 和 RectMask2D，并让根 RectMask2D 无法裁剪任何子元素。
 - 每个 Canvas render root 现在都以已经求解的 Canvas 矩形作为强制根矩形进入同一 `walk` 路径；CanvasGroup、Pixel Perfect、裁剪、布局、Graphic、控件和子节点继承不再拥有各自的根节点特例。`override_sorting` Canvas 仍是独立遍历边界，普通嵌套 Canvas 仍只收集一次。
 - Runtime 回归同时验证根 Canvas Image 会生成绘制 Primitive，以及带四边 Padding 的根 RectMask2D 会约束子 Button 的绘制/命中裁剪范围；遮罩只约束子元素，根 Graphic 自身仍使用进入 Canvas 的外层裁剪，保持 Unity 的父遮罩语义。
+
+## 166. 2026-08-01 Canvas Event Camera 实体引用闭环
+
+- `Canvas.render_camera` 是直接实体引用，不是普通字符串。此前 Inspector 虽能选择 Camera2D/Camera3D，但复制、Prefab 本地化和 Rust 场景重建只识别 UI Persistent Call 与脚本元数据引用；场景重新分配 Entity 后，旧数字可能静默指向无关对象，导致 Screen Space Camera/World Space Canvas 投影错误。
+- TypeScript 与 Rust 现在各自维护显式的直接实体引用注册表，并让 Canvas Event Camera 参与多选复制重映射、Prefab 节点 token 本地化/解析、Prefab 悬空引用校验和场景加载时的旧到新 Entity 映射。Prefab 外部场景相机与场景中已删除相机都会清为空引用，由 Runtime 按既有契约回退到活动相机，绝不让复用的 Entity slot 产生错误绑定。
+- 直接字符串引用与可保存缺失 token 的 Persistent Call 分开处理：Prefab 资产阶段可以持有稳定节点 token，实例化为 Canvas 前必须解析回十进制 Entity 字符串；缺失 token 不会流入生成的强类型 Canvas 组件。回归覆盖 Editor 内部复制、Prefab 稳定节点/旧裸 ID，以及 Rust 场景重建后的有效相机与已删除相机。
