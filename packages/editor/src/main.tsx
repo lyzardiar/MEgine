@@ -5,7 +5,7 @@ import { attachBridgeTransport } from './agent/transport';
 import { DesktopProjectGate } from './DesktopProjectGate';
 import { panelFromLocation } from './panels/detachedPanelWindow';
 import { editorWindowTypeFromLocation } from './editorWindow/nativeEditorWindow';
-import { RegisteredEditorWindowHost } from './editorWindow';
+import { createRegisteredEditorWindow, RegisteredEditorWindowHost } from './editorWindow';
 import { EditorDialogHost } from './EditorDialogHost';
 import { initializeAssetEditorEvents } from './assetEditorEvents';
 import { initializeBuildEditorEvents } from './buildEditorEvents';
@@ -28,6 +28,9 @@ async function bootstrap(): Promise<void> {
 
   const detachedPanel = panelFromLocation();
   const detachedEditorWindow = editorWindowTypeFromLocation();
+  const detachedEditorDefinition = detachedEditorWindow
+    ? createRegisteredEditorWindow(detachedEditorWindow)
+    : null;
 
   if (detachedPanel == null && detachedEditorWindow == null) {
     void attachBridgeTransport()
@@ -37,7 +40,11 @@ async function bootstrap(): Promise<void> {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <Fragment>
-        <DesktopProjectGate detached={detachedPanel != null || detachedEditorWindow != null}>
+        <DesktopProjectGate
+          detached={detachedPanel != null || detachedEditorWindow != null}
+          projectRequired={detachedEditorWindow == null
+            || detachedEditorDefinition?.requiresProject !== false}
+        >
           {detachedEditorWindow
             ? <RegisteredEditorWindowHost typeId={detachedEditorWindow} />
             : <App detachedPanel={detachedPanel} />}

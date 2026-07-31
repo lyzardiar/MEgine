@@ -23,6 +23,7 @@ test('registered editor window types are discoverable and sorted by stable id', 
     title: 'First',
     width: 320,
     height: 240,
+    requiresProject: false,
     render: () => null,
   }));
 
@@ -37,12 +38,14 @@ test('registered editor window types are discoverable and sorted by stable id', 
           title: 'First',
           width: 320,
           height: 240,
+          requiresProject: false,
         },
         {
           typeId: 'Test.Window.Second',
           title: 'Second',
           width: 640,
           height: 480,
+          requiresProject: true,
         },
       ],
     );

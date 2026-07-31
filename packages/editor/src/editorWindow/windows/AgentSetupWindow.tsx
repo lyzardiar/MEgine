@@ -181,6 +181,7 @@ registerEditorWindowType('EditorWindow.AgentSetupWindow', () => {
     title: window.title,
     width: 760,
     height: 700,
+    requiresProject: false,
     render: () => window.onGUI(),
   };
 });

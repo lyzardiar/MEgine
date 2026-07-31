@@ -65,10 +65,14 @@ export type EditorWindowDefinition = {
   title: string;
   width: number;
   height: number;
+  /** False for utility windows that must also work from the project hub. */
+  requiresProject?: boolean;
   render: () => ReactNode;
 };
 
-export type EditorWindowTypeInfo = Omit<EditorWindowDefinition, 'render'>;
+export type EditorWindowTypeInfo = Omit<EditorWindowDefinition, 'render' | 'requiresProject'> & {
+  requiresProject: boolean;
+};
 
 type Listener = () => void;
 
@@ -134,6 +138,7 @@ export function listRegisteredEditorWindowTypes(): EditorWindowTypeInfo[] {
         title: definition.title,
         width: definition.width,
         height: definition.height,
+        requiresProject: definition.requiresProject !== false,
       };
     })
     .sort((left, right) => left.typeId.localeCompare(right.typeId));

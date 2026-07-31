@@ -22,11 +22,13 @@ import {
   startDesktopProject,
 } from './transport/desktopProjectSession';
 import { recentProjectsRevision } from './recentProjectsRevision';
+import { createRegisteredEditorWindow } from './editorWindow/registry.ts';
+import { openNativeEditorWindow } from './editorWindow/nativeEditorWindow.ts';
 
 const MAX_RECENT_PROJECTS = 12;
 
 type HubMode = 'welcome' | 'create';
-type ProjectHubOperation = 'attach' | 'open' | 'create' | 'choose' | 'browse';
+type ProjectHubOperation = 'attach' | 'open' | 'create' | 'choose' | 'browse' | 'agent-setup';
 
 function errorMessage(reason: unknown): string {
   return reason && typeof reason === 'object' && 'message' in reason
@@ -67,9 +69,13 @@ function projectTime(timestamp: number): { iso: string; label: string } {
   return { iso: date.toISOString(), label: date.toLocaleString('zh-CN') };
 }
 
-export function DesktopProjectGate(props: { children: ReactNode; detached?: boolean }) {
+export function DesktopProjectGate(props: {
+  children: ReactNode;
+  detached?: boolean;
+  projectRequired?: boolean;
+}) {
   const desktop = isDesktopEditor();
-  const [ready, setReady] = useState(!desktop);
+  const [ready, setReady] = useState(!desktop || props.projectRequired === false);
   const [mode, setMode] = useState<HubMode>('welcome');
   const [operation, setOperation] = useState<ProjectHubOperation | null>(null);
   const [projectName, setProjectName] = useState('NewProject');
@@ -349,6 +355,27 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
     await createProjectAtPath(projectLocation, projectName.trim()).catch(() => undefined);
   };
 
+  const openAgentSetup = async () => {
+    if (operationRef.current) return;
+    updateOperation('agent-setup');
+    updateError(null);
+    try {
+      const definition = createRegisteredEditorWindow('EditorWindow.AgentSetupWindow');
+      if (!definition) throw new Error('AI Agent Setup window is not registered');
+      const opened = await openNativeEditorWindow({
+        typeId: definition.typeId,
+        title: definition.title,
+        width: definition.width,
+        height: definition.height,
+      });
+      if (!opened) throw new Error('无法创建 AI Agent Setup 窗口');
+    } catch (reason) {
+      updateError(`打开 AI Agent Setup 失败：${errorMessage(reason)}`);
+    } finally {
+      updateOperation(null);
+    }
+  };
+
   const targetPath = projectLocation
     ? `${projectLocation}${projectLocation.endsWith('\\') || projectLocation.endsWith('/') ? '' : '\\'}${projectName.trim()}`
     : '';
@@ -383,6 +410,16 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
               }}
             >
               新建工程
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              disabled={busy}
+              data-agent-interaction="blocked"
+              data-agent-alternative="open_editor_window"
+              onClick={() => void openAgentSetup()}
+            >
+              AI Agent Setup
             </button>
           </div>
         ) : (

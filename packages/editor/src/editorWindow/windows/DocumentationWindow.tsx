@@ -87,6 +87,7 @@ registerEditorWindowType('EditorWindow.DocumentationWindow', () => {
     title: window.title,
     width: 660,
     height: 680,
+    requiresProject: false,
     render: () => window.onGUI(),
   };
 });

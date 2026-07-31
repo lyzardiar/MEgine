@@ -441,7 +441,7 @@ Inspector 的每个组件块同时声明组件标题为 `data-agent-scope`。同
 
 - **进程**：独立 Node 进程（`packages/agent/mcp/`），实现 MCP stdio。
 - **连接**：读发现文件 `<project>/.mengine/agent-bridge.json` 拿到 WS 端口与 token，连上 Bridge Transport。
-- **启动**：MCP 客户端按配置启动安装版 `build-sdk/node(.exe)` 与 `agent/mcp/server.mjs`；编辑器的 **Help → AI Agent Setup** 会读取 Tauri 校验后的安装绝对路径并生成可复制配置。CLI/HTTP 另提供同目录启动脚本。
+- **启动**：MCP 客户端按配置启动安装版 `build-sdk/node(.exe)` 与 `agent/mcp/server.mjs`；欢迎页的 **AI Agent Setup** 与工程内 **Help → AI Agent Setup** 都能在无需活动工程时读取 Tauri 校验后的安装绝对路径并生成可复制配置。CLI/HTTP 另提供同目录启动脚本。
 
 **实现选型说明**：因为 AgentBridge 已经通过本地 WebSocket 暴露，MCP 适配器的实现语言与编辑器解耦——它只是一个「MCP(stdio) ↔ WS」的协议翻译器。两种选择：
 

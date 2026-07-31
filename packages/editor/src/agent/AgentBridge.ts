@@ -1829,12 +1829,9 @@ class AgentBridge {
     title: string;
     width: number;
     height: number;
-    requiresProject: true;
+    requiresProject: boolean;
   }> {
-    return listRegisteredEditorWindowTypes().map((entry) => ({
-      ...entry,
-      requiresProject: true,
-    }));
+    return listRegisteredEditorWindowTypes();
   }
 
   async openRegisteredEditorWindow(typeId: string): Promise<{
@@ -1856,12 +1853,6 @@ class AgentBridge {
         'Background registered editor windows require the desktop editor',
       );
     }
-    if (!this.store || !this.editorBootReady) {
-      throw new BridgeError(
-        'NOT_READY',
-        'Registered editor windows require an active project; open or create a project first',
-      );
-    }
     const normalizedTypeId = typeId.trim();
     if (!normalizedTypeId || normalizedTypeId.length > 256) {
       throw new BridgeError(
@@ -1874,6 +1865,12 @@ class AgentBridge {
       throw new BridgeError(
         'INVALID_ARGS',
         `Unknown editor window type "${normalizedTypeId}"; query window.types for registered types`,
+      );
+    }
+    if (definition.requiresProject !== false && (!this.store || !this.editorBootReady)) {
+      throw new BridgeError(
+        'NOT_READY',
+        `Editor window type "${normalizedTypeId}" requires an active project; open or create a project first`,
       );
     }
     const existing = (await this.listWindows()).find(

@@ -63,6 +63,15 @@ test('desktop package delivers all Agent adapters and exposes a background-reada
     path.join(editorRoot, 'src', 'editorWindow', 'index.ts'),
     'utf8',
   );
+  const bridge = fs.readFileSync(
+    path.join(editorRoot, 'src', 'agent', 'AgentBridge.ts'),
+    'utf8',
+  );
+  const gate = fs.readFileSync(
+    path.join(editorRoot, 'src', 'DesktopProjectGate.tsx'),
+    'utf8',
+  );
+  const main = fs.readFileSync(path.join(editorRoot, 'src', 'main.tsx'), 'utf8');
 
   for (const entry of ['mcp/server.mjs', 'cli/editor.mjs', 'http/server.mjs']) {
     assert.match(prepare, new RegExp(entry.replace('.', '\\.')));
@@ -77,10 +86,16 @@ test('desktop package delivers all Agent adapters and exposes a background-reada
   assert.match(transport, /invoke<AgentAdapterInfo>\('get_agent_adapter_info'\)/);
   assert.match(registry, /import '\.\/windows\/AgentSetupWindow'/);
   assert.match(window, /registerEditorWindowType\('EditorWindow\.AgentSetupWindow'/);
+  assert.match(window, /requiresProject: false/);
   assert.match(window, /registerMenuItem\('Help\/AI Agent Setup'/);
   assert.match(window, /context\.source !== 'agent'/);
   assert.match(window, /data-agent-interaction="blocked"/);
   assert.match(window, /aria-label="MCP client configuration JSON"/);
+  assert.match(bridge, /definition\.requiresProject !== false/);
+  assert.match(bridge, /requires an active project/);
+  assert.match(gate, /AI Agent Setup/);
+  assert.match(gate, /data-agent-alternative="open_editor_window"/);
+  assert.match(main, /detachedEditorDefinition\?\.requiresProject !== false/);
 });
 
 test('editor and packaged Agent adapter versions stay compatible', () => {

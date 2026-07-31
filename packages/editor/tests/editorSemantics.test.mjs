@@ -280,6 +280,7 @@ test('top-level help is implemented by a background-safe readable editor window'
     path.join(root, 'src', 'editorWindow', 'index.ts'),
     'utf8',
   );
+  const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
 
   assert.match(registry, /import '\.\/windows\/AgentSetupWindow'/);
   assert.match(registry, /import '\.\/windows\/DocumentationWindow'/);
@@ -292,6 +293,9 @@ test('top-level help is implemented by a background-safe readable editor window'
   assert.match(agentSetup, /data-agent-interaction="blocked"/);
   assert.match(agentSetup, /role="alert"/);
   assert.match(agentSetup, /role="status"/);
+  assert.match(agentSetup, /requiresProject: false/);
+  assert.match(gate, />\s*AI Agent Setup\s*</);
+  assert.match(gate, /data-agent-interaction="blocked"[\s\S]*data-agent-alternative="open_editor_window"/);
 });
 
 test('editor window failures stay isolated and dragging always releases global state', () => {
