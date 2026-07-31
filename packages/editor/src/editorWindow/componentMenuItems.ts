@@ -33,6 +33,7 @@ const COMPONENT_GROUPS: Record<string, string> = {
   CanvasGroup: 'UI/Layout',
   LayoutGroup: 'UI/Layout',
   RectMask2D: 'UI/Layout',
+  Mask: 'UI/Layout',
   Image: 'UI/Visual',
   RawImage: 'UI/Visual',
   Text: 'UI/Visual',

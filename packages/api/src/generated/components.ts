@@ -551,6 +551,11 @@ export interface RectMask2D {
   padding: [number, number, number, number];
 }
 
+export interface Mask {
+  enabled: boolean;
+  showMaskGraphic: boolean;
+}
+
 export interface ProgressBar {
   minValue: number;
   maxValue: number;
@@ -686,6 +691,7 @@ export type ComponentName =
   | 'CanvasGroup'
   | 'LayoutGroup'
   | 'RectMask2D'
+  | 'Mask'
   | 'ProgressBar'
   | 'InputField'
   | 'Dropdown'
@@ -750,6 +756,7 @@ export const COMPONENT_NAMES = [
   'CanvasGroup',
   'LayoutGroup',
   'RectMask2D',
+  'Mask',
   'ProgressBar',
   'InputField',
   'Dropdown',

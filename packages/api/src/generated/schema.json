@@ -1185,6 +1185,21 @@
     ],
     "type": "object"
   },
+  "Mask": {
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "show_mask_graphic": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "enabled",
+      "show_mask_graphic"
+    ],
+    "type": "object"
+  },
   "Material": {
     "properties": {
       "path": {

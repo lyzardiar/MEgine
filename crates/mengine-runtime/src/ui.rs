@@ -3,7 +3,7 @@ use crate::ui_raycast::{ray_plane, BlockingObjects, WorldRay};
 use glam::{Mat4, Quat, Vec3};
 use mengine_core::generated::{
     AspectRatioFitter, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
-    ContentSizeFitter, Dropdown, GraphicRaycaster, Image, InputField, LayoutGroup, ListView,
+    ContentSizeFitter, Dropdown, GraphicRaycaster, Image, InputField, LayoutGroup, ListView, Mask,
     Outline, Panel, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar,
     Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
 };
@@ -11,7 +11,7 @@ use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_rhi::{
     look_at, orthographic, perspective, FrameCamera, UiBatchKey, UiBatchPlan, UiBlendMode,
-    UiClipRect, UiPrimitive,
+    UiClipRect, UiPrimitive, UiStencilMode,
 };
 use serde_json::Value;
 
@@ -75,8 +75,31 @@ pub struct UiControlRegion {
     pub raycast_plane: Option<UiRaycastPlane>,
     /// Event camera that rendered this Canvas. This can differ from the active scene camera.
     pub raycast_camera: Option<FrameCamera>,
+    /// Active Unity Mask rectangles inherited by this Graphic (maximum stencil depth 8).
+    pub mask_regions: [Option<UiMaskRegion>; 8],
     pub kind: UiControlKind,
     pub callback: Value,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct UiMaskRegion {
+    pub rect: UiRect,
+    pub rotation_radians: f32,
+    pub pivot: [f32; 2],
+    pub corners: Option<[[f32; 2]; 4]>,
+}
+
+impl UiMaskRegion {
+    fn contains(self, x: f32, y: f32) -> bool {
+        point_in_ui_region(
+            self.rect,
+            self.rotation_radians,
+            self.pivot,
+            self.corners,
+            x,
+            y,
+        )
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -100,35 +123,22 @@ impl UiControlRegion {
         {
             return false;
         }
-        if let Some(corners) = self.corners {
-            let mut sign = 0.0_f32;
-            for index in 0..4 {
-                let a = corners[index];
-                let b = corners[(index + 1) % 4];
-                let cross = (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]);
-                if cross.abs() <= 0.0001 {
-                    continue;
-                }
-                if sign == 0.0 {
-                    sign = cross.signum();
-                } else if cross.signum() != sign {
-                    return false;
-                }
-            }
-            return true;
+        if self
+            .mask_regions
+            .iter()
+            .flatten()
+            .any(|mask| !mask.contains(x, y))
+        {
+            return false;
         }
-        let pivot_x = self.rect.x + self.rect.width * self.pivot[0];
-        let pivot_y = self.rect.y + self.rect.height * self.pivot[1];
-        let dx = x - pivot_x;
-        let dy = y - pivot_y;
-        let c = self.rotation_radians.cos();
-        let s = self.rotation_radians.sin();
-        let local_x = dx * c + dy * s + self.rect.width * self.pivot[0];
-        let local_y = -dx * s + dy * c + self.rect.height * self.pivot[1];
-        local_x >= 0.0
-            && local_y >= 0.0
-            && local_x <= self.rect.width
-            && local_y <= self.rect.height
+        point_in_ui_region(
+            self.rect,
+            self.rotation_radians,
+            self.pivot,
+            self.corners,
+            x,
+            y,
+        )
     }
 
     pub fn range_value_at(&self, x: f32, y: f32) -> Option<f32> {
@@ -194,6 +204,43 @@ impl UiControlRegion {
         }
         Some(value)
     }
+}
+
+fn point_in_ui_region(
+    rect: UiRect,
+    rotation_radians: f32,
+    pivot: [f32; 2],
+    corners: Option<[[f32; 2]; 4]>,
+    x: f32,
+    y: f32,
+) -> bool {
+    if let Some(corners) = corners {
+        let mut sign = 0.0_f32;
+        for index in 0..4 {
+            let a = corners[index];
+            let b = corners[(index + 1) % 4];
+            let cross = (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]);
+            if cross.abs() <= 0.0001 {
+                continue;
+            }
+            if sign == 0.0 {
+                sign = cross.signum();
+            } else if cross.signum() != sign {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    let pivot_x = rect.x + rect.width * pivot[0];
+    let pivot_y = rect.y + rect.height * pivot[1];
+    let dx = x - pivot_x;
+    let dy = y - pivot_y;
+    let c = rotation_radians.cos();
+    let s = rotation_radians.sin();
+    let local_x = dx * c + dy * s + rect.width * pivot[0];
+    let local_y = -dx * s + dy * c + rect.height * pivot[1];
+    local_x >= 0.0 && local_y >= 0.0 && local_x <= rect.width && local_y <= rect.height
 }
 
 fn quad_uv(corners: [[f32; 2]; 4], point: [f32; 2]) -> Option<[f32; 2]> {
@@ -435,6 +482,8 @@ struct UiInheritedState {
     blocking_mask: i32,
     pixel_perfect: bool,
     screen_space: bool,
+    stencil_depth: u8,
+    mask_regions: [Option<UiMaskRegion>; 8],
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -458,6 +507,8 @@ impl Default for UiInheritedState {
             blocking_mask: -1,
             pixel_perfect: false,
             screen_space: true,
+            stencil_depth: 0,
+            mask_regions: [None; 8],
         }
     }
 }
@@ -1033,6 +1084,15 @@ fn project_world_canvas_output(
             control.pivot = [0.5, 0.5];
             control.corners = Some(screen_corners);
             control.clip = projection.project_clip(control.clip)?;
+            for mask in control.mask_regions.iter_mut().flatten() {
+                let mask_corners =
+                    rotated_pixel_corners(mask.rect, mask.rotation_radians, mask.pivot);
+                let (_, mask_screen_corners) = projection.project_corners(mask_corners)?;
+                mask.rect = screen_bounds(mask_screen_corners);
+                mask.rotation_radians = 0.0;
+                mask.pivot = [0.5, 0.5];
+                mask.corners = Some(mask_screen_corners);
+            }
             control.raycast_plane = Some(plane);
             control.raycast_camera = Some(camera);
             Some(control)
@@ -1525,6 +1585,7 @@ fn walk(
                 blocking_mask: state.blocking_mask,
                 raycast_plane: None,
                 raycast_camera: None,
+                mask_regions: [None; 8],
                 kind: UiControlKind::Button,
                 callback: button.on_click.clone(),
             });
@@ -1614,6 +1675,7 @@ fn walk(
                 blocking_mask: state.blocking_mask,
                 raycast_plane: None,
                 raycast_camera: None,
+                mask_regions: [None; 8],
                 kind: UiControlKind::Toggle {
                     is_on: toggle.is_on,
                 },
@@ -1701,6 +1763,7 @@ fn walk(
                 blocking_mask: state.blocking_mask,
                 raycast_plane: None,
                 raycast_camera: None,
+                mask_regions: [None; 8],
                 kind: UiControlKind::Slider {
                     min: slider.min_value,
                     max: slider.max_value,
@@ -1773,6 +1836,7 @@ fn walk(
                 blocking_mask: state.blocking_mask,
                 raycast_plane: None,
                 raycast_camera: None,
+                mask_regions: [None; 8],
                 kind: UiControlKind::Scrollbar {
                     value: scrollbar.value,
                     size: scrollbar.size,
@@ -2203,9 +2267,53 @@ fn walk(
             &mut controls[control_start..],
         );
     }
+
+    let mask = world
+        .get_component::<Mask>(entity)
+        .filter(|mask| mask.enabled);
+    let mut mask_pop = Vec::new();
+    if graphic_start < primitives.len() {
+        let mut graphic: Vec<UiPrimitive> = primitives.drain(graphic_start..).collect();
+        if let Some(mask) = mask.filter(|_| state.stencil_depth < 8) {
+            if mask.show_mask_graphic {
+                let mut visible = graphic.clone();
+                if state.stencil_depth > 0 {
+                    for primitive in &mut visible {
+                        primitive.key.stencil = UiStencilMode::Test {
+                            reference: state.stencil_depth,
+                        };
+                    }
+                }
+                primitives.extend(visible);
+            }
+            for primitive in &mut graphic {
+                primitive.key.stencil = UiStencilMode::Push {
+                    reference: state.stencil_depth,
+                };
+            }
+            primitives.extend(graphic.iter().cloned());
+            mask_pop = graphic;
+            for primitive in &mut mask_pop {
+                primitive.key.stencil = UiStencilMode::Pop {
+                    reference: state.stencil_depth + 1,
+                };
+            }
+            state.stencil_depth += 1;
+        } else {
+            if state.stencil_depth > 0 {
+                for primitive in &mut graphic {
+                    primitive.key.stencil = UiStencilMode::Test {
+                        reference: state.stencil_depth,
+                    };
+                }
+            }
+            primitives.extend(graphic);
+        }
+    }
     for control in &mut controls[control_start..] {
         control.blocking_objects = state.blocking_objects;
         control.blocking_mask = state.blocking_mask;
+        control.mask_regions = inherited.mask_regions;
     }
     controls[control_start..].sort_by_key(|control| {
         if matches!(
@@ -2217,6 +2325,27 @@ fn walk(
             1
         }
     });
+
+    if mask.is_some() {
+        if let Some(slot) = state.mask_regions.iter_mut().find(|slot| slot.is_none()) {
+            let mask_rect = if state.pixel_perfect {
+                UiRect {
+                    x: rect.x.round(),
+                    y: rect.y.round(),
+                    width: rect.width.round(),
+                    height: rect.height.round(),
+                }
+            } else {
+                rect
+            };
+            *slot = Some(UiMaskRegion {
+                rect: mask_rect,
+                rotation_radians: rotation,
+                pivot,
+                corners: None,
+            });
+        }
+    }
 
     let mut children = children_of(world, entity);
     if let Some(tab_view) = world.get_component::<TabView>(entity) {
@@ -2272,6 +2401,7 @@ fn walk(
             controls,
         );
     }
+    primitives.extend(mask_pop);
 }
 
 fn children_of(world: &World, parent: Entity) -> Vec<Entity> {
@@ -2459,6 +2589,7 @@ fn control_region(
         blocking_mask: -1,
         raycast_plane: None,
         raycast_camera: None,
+        mask_regions: [None; 8],
         kind,
         callback,
     }
@@ -2830,6 +2961,7 @@ fn primitive(
             clip: Some(clip),
             blend: UiBlendMode::Alpha,
             depth_test: false,
+            stencil: Default::default(),
         },
     }
 }
@@ -4556,6 +4688,85 @@ mod tests {
     }
 
     #[test]
+    fn world_space_mask_projects_stencil_geometry_and_raycast_regions_together() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                render_mode: "WorldSpace".into(),
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(canvas, RectTransform::default());
+        world.insert_component(canvas, mengine_core::generated::Transform::default());
+
+        let mask_entity = world.spawn_empty();
+        world.insert_component(mask_entity, RectTransform::default());
+        world.insert_component(mask_entity, Image::default());
+        world.insert_component(
+            mask_entity,
+            Mask {
+                show_mask_graphic: false,
+                ..Mask::default()
+            },
+        );
+        world.set_parent(mask_entity, Some(canvas));
+
+        let child = world.spawn_empty();
+        world.insert_component(
+            child,
+            RectTransform {
+                size_delta: [200.0, 200.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(child, Image::default());
+        world.set_parent(child, Some(mask_entity));
+
+        let camera = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: perspective(60.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        };
+        let hierarchy = TransformHierarchy::build(&world);
+        let frame = collect_ui_frame_with_hierarchy_and_camera(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            camera,
+            &SortingLayers::default(),
+        );
+
+        let modes: Vec<_> = frame
+            .world_primitives
+            .iter()
+            .map(|primitive| primitive.primitive.key.stencil)
+            .collect();
+        assert_eq!(
+            modes,
+            vec![
+                UiStencilMode::Push { reference: 0 },
+                UiStencilMode::Test { reference: 1 },
+                UiStencilMode::Pop { reference: 1 },
+            ]
+        );
+        let control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == child)
+            .expect("World Space masked child hit region");
+        let mask = control.mask_regions[0].expect("projected mask region");
+        assert!(mask.corners.is_some());
+        let center_x = mask.rect.x + mask.rect.width * 0.5;
+        let center_y = mask.rect.y + mask.rect.height * 0.5;
+        assert!(control.contains(center_x, center_y));
+        assert!(!control.contains(mask.rect.x + mask.rect.width + 1.0, center_y));
+    }
+
+    #[test]
     fn world_space_graphic_raycaster_filters_reversed_graphics_unless_opted_out() {
         let legacy: GraphicRaycaster =
             serde_json::from_value(serde_json::json!({ "enabled": true })).unwrap();
@@ -4874,6 +5085,7 @@ mod tests {
             blocking_mask: -1,
             raycast_plane: None,
             raycast_camera: None,
+            mask_regions: [None; 8],
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -5043,6 +5255,7 @@ mod tests {
             blocking_mask: -1,
             raycast_plane: None,
             raycast_camera: None,
+            mask_regions: [None; 8],
             kind,
             callback: Value::Null,
         };
@@ -5518,6 +5731,7 @@ mod tests {
             blocking_mask: -1,
             raycast_plane: None,
             raycast_camera: None,
+            mask_regions: [None; 8],
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -5555,6 +5769,7 @@ mod tests {
             blocking_mask: -1,
             raycast_plane: None,
             raycast_camera: None,
+            mask_regions: [None; 8],
             kind: UiControlKind::Scrollbar {
                 value: 0.0,
                 size: 0.2,
@@ -5884,6 +6099,116 @@ mod tests {
             panel_control.clip.x as f32 - 1.0,
             panel_control.clip.y as f32 + 1.0,
         ));
+    }
+
+    #[test]
+    fn mask_hides_its_graphic_stencils_children_and_filters_raycast_rects() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+
+        let mask_entity = world.spawn_empty();
+        world.insert_component(mask_entity, RectTransform::default());
+        world.insert_component(mask_entity, Image::default());
+        world.insert_component(
+            mask_entity,
+            Mask {
+                show_mask_graphic: false,
+                ..Mask::default()
+            },
+        );
+        world.set_parent(mask_entity, Some(canvas));
+
+        let child = world.spawn_empty();
+        world.insert_component(
+            child,
+            RectTransform {
+                size_delta: [200.0, 200.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            child,
+            Panel {
+                raycast_target: true,
+                ..Panel::default()
+            },
+        );
+        world.set_parent(child, Some(mask_entity));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert!(frame.plan.primitives.len() >= 3);
+        assert!(matches!(
+            frame.plan.primitives[0].key.stencil,
+            UiStencilMode::Push { reference: 0 }
+        ));
+        assert!(matches!(
+            frame.plan.primitives.last().unwrap().key.stencil,
+            UiStencilMode::Pop { reference: 1 }
+        ));
+        assert!(frame.plan.primitives[1..frame.plan.primitives.len() - 1]
+            .iter()
+            .all(|primitive| matches!(
+                primitive.key.stencil,
+                UiStencilMode::Test { reference: 1 }
+            )));
+        let control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == child)
+            .expect("masked child remains raycastable inside the mask");
+        assert!(control.contains(400.0, 300.0));
+        assert!(!control.contains(475.0, 300.0));
+    }
+
+    #[test]
+    fn nested_masks_restore_parent_stencil_depth_after_each_subtree() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+
+        let outer = world.spawn_empty();
+        world.insert_component(outer, RectTransform::default());
+        world.insert_component(outer, Image::default());
+        world.insert_component(outer, Mask::default());
+        world.set_parent(outer, Some(canvas));
+
+        let inner = world.spawn_empty();
+        world.insert_component(inner, RectTransform::default());
+        world.insert_component(inner, Image::default());
+        world.insert_component(
+            inner,
+            Mask {
+                show_mask_graphic: false,
+                ..Mask::default()
+            },
+        );
+        world.set_parent(inner, Some(outer));
+
+        let child = world.spawn_empty();
+        world.insert_component(child, RectTransform::default());
+        world.insert_component(child, Image::default());
+        world.set_parent(child, Some(inner));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let modes: Vec<_> = frame
+            .plan
+            .primitives
+            .iter()
+            .map(|primitive| primitive.key.stencil)
+            .collect();
+        assert_eq!(
+            modes,
+            vec![
+                UiStencilMode::Disabled,
+                UiStencilMode::Push { reference: 0 },
+                UiStencilMode::Push { reference: 1 },
+                UiStencilMode::Test { reference: 2 },
+                UiStencilMode::Pop { reference: 2 },
+                UiStencilMode::Pop { reference: 1 },
+            ]
+        );
     }
 
     #[test]

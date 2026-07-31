@@ -18,6 +18,42 @@ pub enum UiBlendMode {
     Additive,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum UiStencilMode {
+    #[default]
+    Disabled,
+    /// Render only where the current stencil depth equals `reference`.
+    Test { reference: u8 },
+    /// Draw a mask and increment matching pixels for its children.
+    Push { reference: u8 },
+    /// Redraw the mask after its descendants and restore the parent depth.
+    Pop { reference: u8 },
+}
+
+impl UiStencilMode {
+    fn pipeline(self) -> UiStencilPipeline {
+        match self {
+            Self::Disabled => UiStencilPipeline::Disabled,
+            Self::Test { .. } => UiStencilPipeline::Test,
+            Self::Push { .. } => UiStencilPipeline::Push,
+            Self::Pop { .. } => UiStencilPipeline::Pop,
+        }
+    }
+
+    fn reference(self) -> u32 {
+        match self {
+            Self::Disabled => 0,
+            Self::Test { reference } | Self::Push { reference } | Self::Pop { reference } => {
+                u32::from(reference)
+            }
+        }
+    }
+
+    fn writes_stencil(self) -> bool {
+        matches!(self, Self::Push { .. } | Self::Pop { .. })
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct UiClipRect {
     pub x: u32,
@@ -34,6 +70,7 @@ pub struct UiBatchKey {
     pub blend: UiBlendMode,
     /// Test the primitive against the scene depth buffer without writing depth.
     pub depth_test: bool,
+    pub stencil: UiStencilMode,
 }
 
 impl Default for UiBatchKey {
@@ -44,6 +81,7 @@ impl Default for UiBatchKey {
             clip: None,
             blend: UiBlendMode::Alpha,
             depth_test: false,
+            stencil: UiStencilMode::Disabled,
         }
     }
 }
@@ -173,7 +211,11 @@ impl From<&UiPrimitive> for UiInstance {
                 } else {
                     0.0
                 },
-                0.0,
+                if value.key.stencil.writes_stencil() {
+                    1.0
+                } else {
+                    0.0
+                },
                 0.0,
             ],
             corners: value.clip_corners.unwrap_or([[0.0; 4]; 4]),
@@ -202,11 +244,23 @@ struct UiUniform {
     _padding: [f32; 2],
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+enum UiStencilPipeline {
+    Disabled,
+    Test,
+    Push,
+    Pop,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct UiPipelineKey {
+    blend: UiBlendMode,
+    depth_test: bool,
+    stencil: UiStencilPipeline,
+}
+
 pub(crate) struct UiRenderer {
-    alpha_pipeline: wgpu::RenderPipeline,
-    additive_pipeline: wgpu::RenderPipeline,
-    alpha_depth_pipeline: wgpu::RenderPipeline,
-    additive_depth_pipeline: wgpu::RenderPipeline,
+    pipelines: HashMap<UiPipelineKey, wgpu::RenderPipeline>,
     vertex_buffer: wgpu::Buffer,
     instance_buffer: wgpu::Buffer,
     instance_capacity: usize,
@@ -339,141 +393,38 @@ impl UiRenderer {
             bind_group_layouts: &[&bind_group_layout, &texture_bind_group_layout],
             push_constant_ranges: &[],
         });
-        let alpha_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("ui_instanced_pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                buffers: &[
-                    wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<UiVertex>() as u64,
-                        step_mode: wgpu::VertexStepMode::Vertex,
-                        attributes: &wgpu::vertex_attr_array![0 => Float32x2],
-                    },
-                    wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<UiInstance>() as u64,
-                        step_mode: wgpu::VertexStepMode::Instance,
-                        attributes: &wgpu::vertex_attr_array![
-                            1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
-                            5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
-                            9 => Float32x4, 10 => Float32x4, 11 => Float32x4
-                        ],
-                    },
-                ],
-                compilation_options: Default::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: Default::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                cull_mode: None,
-                ..Default::default()
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
-                depth_write_enabled: false,
-                depth_compare: wgpu::CompareFunction::Always,
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            multisample: wgpu::MultisampleState::default(),
-            multiview: None,
-            cache: None,
-        });
-
-        let additive_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("ui_instanced_additive_pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                buffers: &[
-                    wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<UiVertex>() as u64,
-                        step_mode: wgpu::VertexStepMode::Vertex,
-                        attributes: &wgpu::vertex_attr_array![0 => Float32x2],
-                    },
-                    wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<UiInstance>() as u64,
-                        step_mode: wgpu::VertexStepMode::Instance,
-                        attributes: &wgpu::vertex_attr_array![
-                            1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
-                            5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
-                            9 => Float32x4, 10 => Float32x4, 11 => Float32x4
-                        ],
-                    },
-                ],
-                compilation_options: Default::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format,
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::SrcAlpha,
-                            dst_factor: wgpu::BlendFactor::One,
-                            operation: wgpu::BlendOperation::Add,
-                        },
-                        alpha: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::One,
-                            dst_factor: wgpu::BlendFactor::One,
-                            operation: wgpu::BlendOperation::Add,
-                        },
-                    }),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: Default::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                cull_mode: None,
-                ..Default::default()
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
-                depth_write_enabled: false,
-                depth_compare: wgpu::CompareFunction::Always,
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            multisample: wgpu::MultisampleState::default(),
-            multiview: None,
-            cache: None,
-        });
-
-        let alpha_depth_pipeline = create_ui_depth_pipeline(
-            device,
-            &pipeline_layout,
-            &shader,
-            format,
-            "ui_instanced_depth_pipeline",
-            wgpu::BlendState::ALPHA_BLENDING,
-        );
-        let additive_depth_pipeline = create_ui_depth_pipeline(
-            device,
-            &pipeline_layout,
-            &shader,
-            format,
-            "ui_instanced_additive_depth_pipeline",
-            additive_blend_state(),
-        );
+        let mut pipelines = HashMap::new();
+        for blend in [UiBlendMode::Alpha, UiBlendMode::Additive] {
+            for depth_test in [false, true] {
+                for stencil in [UiStencilPipeline::Disabled, UiStencilPipeline::Test] {
+                    let key = UiPipelineKey {
+                        blend,
+                        depth_test,
+                        stencil,
+                    };
+                    pipelines.insert(
+                        key,
+                        create_ui_pipeline(device, &pipeline_layout, &shader, format, key),
+                    );
+                }
+            }
+        }
+        for depth_test in [false, true] {
+            for stencil in [UiStencilPipeline::Push, UiStencilPipeline::Pop] {
+                let key = UiPipelineKey {
+                    blend: UiBlendMode::Alpha,
+                    depth_test,
+                    stencil,
+                };
+                pipelines.insert(
+                    key,
+                    create_ui_pipeline(device, &pipeline_layout, &shader, format, key),
+                );
+            }
+        }
 
         Self {
-            alpha_pipeline,
-            additive_pipeline,
-            alpha_depth_pipeline,
-            additive_depth_pipeline,
+            pipelines,
             vertex_buffer,
             instance_buffer,
             instance_capacity,
@@ -567,12 +518,24 @@ impl UiRenderer {
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
         for batch in &plan.batches {
-            pass.set_pipeline(match (batch.key.blend, batch.key.depth_test) {
-                (UiBlendMode::Alpha, false) => &self.alpha_pipeline,
-                (UiBlendMode::Additive, false) => &self.additive_pipeline,
-                (UiBlendMode::Alpha, true) => &self.alpha_depth_pipeline,
-                (UiBlendMode::Additive, true) => &self.additive_depth_pipeline,
-            });
+            let pipeline_key = UiPipelineKey {
+                blend: if matches!(
+                    batch.key.stencil,
+                    UiStencilMode::Push { .. } | UiStencilMode::Pop { .. }
+                ) {
+                    UiBlendMode::Alpha
+                } else {
+                    batch.key.blend
+                },
+                depth_test: batch.key.depth_test,
+                stencil: batch.key.stencil.pipeline(),
+            };
+            pass.set_pipeline(
+                self.pipelines
+                    .get(&pipeline_key)
+                    .expect("all UI pipeline variants are created at startup"),
+            );
+            pass.set_stencil_reference(batch.key.stencil.reference());
             let texture = self
                 .textures
                 .get(&batch.key.texture)
@@ -614,16 +577,50 @@ fn additive_blend_state() -> wgpu::BlendState {
     }
 }
 
-fn create_ui_depth_pipeline(
+fn create_ui_pipeline(
     device: &wgpu::Device,
     layout: &wgpu::PipelineLayout,
     shader: &wgpu::ShaderModule,
     format: wgpu::TextureFormat,
-    label: &str,
-    blend: wgpu::BlendState,
+    key: UiPipelineKey,
 ) -> wgpu::RenderPipeline {
+    let (compare, pass_op, color_write) = match key.stencil {
+        UiStencilPipeline::Disabled => (
+            wgpu::CompareFunction::Always,
+            wgpu::StencilOperation::Keep,
+            true,
+        ),
+        UiStencilPipeline::Test => (
+            wgpu::CompareFunction::Equal,
+            wgpu::StencilOperation::Keep,
+            true,
+        ),
+        UiStencilPipeline::Push => (
+            wgpu::CompareFunction::Equal,
+            wgpu::StencilOperation::IncrementClamp,
+            false,
+        ),
+        UiStencilPipeline::Pop => (
+            wgpu::CompareFunction::Equal,
+            wgpu::StencilOperation::DecrementClamp,
+            false,
+        ),
+    };
+    let stencil_face = wgpu::StencilFaceState {
+        compare,
+        fail_op: wgpu::StencilOperation::Keep,
+        depth_fail_op: wgpu::StencilOperation::Keep,
+        pass_op,
+    };
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some(label),
+        label: Some(match (key.depth_test, key.stencil) {
+            (_, UiStencilPipeline::Push) => "ui_stencil_push",
+            (_, UiStencilPipeline::Pop) => "ui_stencil_pop",
+            (true, UiStencilPipeline::Test) => "ui_depth_stencil_test",
+            (false, UiStencilPipeline::Test) => "ui_stencil_test",
+            (true, UiStencilPipeline::Disabled) => "ui_depth",
+            (false, UiStencilPipeline::Disabled) => "ui_overlay",
+        }),
         layout: Some(layout),
         vertex: wgpu::VertexState {
             module: shader,
@@ -651,8 +648,15 @@ fn create_ui_depth_pipeline(
             entry_point: Some("fs_main"),
             targets: &[Some(wgpu::ColorTargetState {
                 format,
-                blend: Some(blend),
-                write_mask: wgpu::ColorWrites::ALL,
+                blend: Some(match key.blend {
+                    UiBlendMode::Alpha => wgpu::BlendState::ALPHA_BLENDING,
+                    UiBlendMode::Additive => additive_blend_state(),
+                }),
+                write_mask: if color_write {
+                    wgpu::ColorWrites::ALL
+                } else {
+                    wgpu::ColorWrites::empty()
+                },
             })],
             compilation_options: Default::default(),
         }),
@@ -662,10 +666,26 @@ fn create_ui_depth_pipeline(
             ..Default::default()
         },
         depth_stencil: Some(wgpu::DepthStencilState {
-            format: wgpu::TextureFormat::Depth32Float,
+            format: wgpu::TextureFormat::Depth24PlusStencil8,
             depth_write_enabled: false,
-            depth_compare: wgpu::CompareFunction::LessEqual,
-            stencil: Default::default(),
+            depth_compare: if key.depth_test {
+                wgpu::CompareFunction::LessEqual
+            } else {
+                wgpu::CompareFunction::Always
+            },
+            stencil: wgpu::StencilState {
+                front: stencil_face,
+                back: stencil_face,
+                read_mask: 0xff,
+                write_mask: if matches!(
+                    key.stencil,
+                    UiStencilPipeline::Push | UiStencilPipeline::Pop
+                ) {
+                    0xff
+                } else {
+                    0
+                },
+            },
             bias: Default::default(),
         }),
         multisample: wgpu::MultisampleState::default(),
@@ -786,6 +806,7 @@ struct VsOut {
     @builtin(position) clip: vec4<f32>,
     @location(0) color: vec4<f32>,
     @location(1) uv: vec2<f32>,
+    @location(2) alpha_clip: f32,
 };
 
 @vertex
@@ -818,12 +839,17 @@ fn vs_main(input: VsIn) -> VsOut {
     }
     output.color = input.color;
     output.uv = input.uv_rect.xy + vertex_position * input.uv_rect.zw;
+    output.alpha_clip = input.projection.z;
     return output;
 }
 
 @fragment
 fn fs_main(input: VsOut) -> @location(0) vec4<f32> {
-    return textureSample(ui_texture, ui_sampler, input.uv) * input.color;
+    let color = textureSample(ui_texture, ui_sampler, input.uv) * input.color;
+    if input.alpha_clip > 0.5 && color.a <= 0.001 {
+        discard;
+    }
+    return color;
 }
 "#;
 
@@ -901,6 +927,125 @@ mod tests {
         assert_eq!(instance.projection[0], 0.75);
         assert_eq!(instance.projection[1], 1.0);
         assert_eq!(instance.corners[2], [1.0, -1.0, 0.75, 1.0]);
+    }
+
+    #[test]
+    fn stencil_modes_split_batches_and_mark_only_mask_writes_for_alpha_clip() {
+        let mut visible = primitive("atlas", None);
+        visible.key.stencil = UiStencilMode::Test { reference: 1 };
+        let mut push = primitive("atlas", None);
+        push.key.stencil = UiStencilMode::Push { reference: 1 };
+        let mut child = primitive("atlas", None);
+        child.key.stencil = UiStencilMode::Test { reference: 2 };
+        let mut pop = primitive("atlas", None);
+        pop.key.stencil = UiStencilMode::Pop { reference: 2 };
+
+        let plan = UiBatchPlan::build(vec![visible.clone(), push.clone(), child, pop.clone()]);
+        assert_eq!(plan.batches.len(), 4);
+        assert_eq!(plan.batches[0].key.stencil.reference(), 1);
+        assert_eq!(plan.batches[1].key.stencil.reference(), 1);
+        assert_eq!(plan.batches[2].key.stencil.reference(), 2);
+        assert_eq!(plan.batches[3].key.stencil.reference(), 2);
+        assert_eq!(UiInstance::from(&visible).projection[2], 0.0);
+        assert_eq!(UiInstance::from(&push).projection[2], 1.0);
+        assert_eq!(UiInstance::from(&pop).projection[2], 1.0);
+    }
+
+    #[test]
+    fn stencil_pipelines_encode_on_an_available_headless_adapter() {
+        let instance = wgpu::Instance::default();
+        let Some(adapter) =
+            pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                compatible_surface: None,
+                force_fallback_adapter: false,
+            }))
+        else {
+            return;
+        };
+        let (device, queue) = pollster::block_on(adapter.request_device(
+            &wgpu::DeviceDescriptor {
+                label: Some("ui_stencil_test"),
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                memory_hints: Default::default(),
+            },
+            None,
+        ))
+        .expect("headless UI test device");
+        device.push_error_scope(wgpu::ErrorFilter::Validation);
+
+        let format = wgpu::TextureFormat::Bgra8UnormSrgb;
+        let mut renderer = UiRenderer::new(&device, &queue, format, 16, 16);
+        let mut push = primitive("white", None);
+        push.key.stencil = UiStencilMode::Push { reference: 0 };
+        let mut child = primitive("white", None);
+        child.key.stencil = UiStencilMode::Test { reference: 1 };
+        let mut pop = primitive("white", None);
+        pop.key.stencil = UiStencilMode::Pop { reference: 1 };
+        let plan = UiBatchPlan::build(vec![push, child, pop]);
+        renderer.prepare(&device, &queue, &plan);
+
+        let color = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("ui_stencil_test_color"),
+            size: wgpu::Extent3d {
+                width: 16,
+                height: 16,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        });
+        let depth = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("ui_stencil_test_depth"),
+            size: wgpu::Extent3d {
+                width: 16,
+                height: 16,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Depth24PlusStencil8,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        });
+        let color_view = color.create_view(&Default::default());
+        let depth_view = depth.create_view(&Default::default());
+        let mut encoder = device.create_command_encoder(&Default::default());
+        {
+            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("ui_stencil_test_pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &color_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &depth_view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                }),
+                ..Default::default()
+            });
+            renderer.draw(&mut pass, &plan);
+        }
+        queue.submit([encoder.finish()]);
+        let error = pollster::block_on(device.pop_error_scope());
+        assert!(error.is_none(), "UI stencil validation error: {error:?}");
     }
 
     #[test]

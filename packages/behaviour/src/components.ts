@@ -266,6 +266,12 @@ export class ContentSizeFitter {
   vertical_fit!: string;
 }
 
+export class Mask {
+  static readonly typeName = 'Mask' as const;
+  enabled!: boolean;
+  show_mask_graphic!: boolean;
+}
+
 /** UI Button component (not the @Button decorator). */
 export class UIButton {
   static readonly typeName = 'Button' as const;
@@ -304,6 +310,7 @@ export type BuiltinComponents = {
   RectTransform: RectTransform;
   AspectRatioFitter: AspectRatioFitter;
   ContentSizeFitter: ContentSizeFitter;
+  Mask: Mask;
   Image: Image;
   RawImage: RawImage;
   Shadow: Shadow;

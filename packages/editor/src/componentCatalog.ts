@@ -605,6 +605,13 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     create: () => ({ enabled: true, padding: [0, 0, 0, 0] }),
   },
   {
+    type: 'Mask',
+    label: 'Mask',
+    description: 'Unity-style Graphic alpha and stencil mask for child UI',
+    requires: ['RectTransform', 'Transform'],
+    create: () => ({ enabled: true, show_mask_graphic: true }),
+  },
+  {
     type: 'ProgressBar',
     label: 'Progress Bar',
     description: 'Read-only directional range display',

@@ -213,6 +213,12 @@ component RectMask2D {
   padding: float4 = [0, 0, 0, 0]
 }
 
+/// Unity-style alpha/stencil mask driven by a Graphic on the same entity.
+component Mask {
+  enabled:           bool = true
+  show_mask_graphic: bool = true
+}
+
 component ProgressBar {
   min_value:        float  = 0
   max_value:        float  = 1

@@ -1943,3 +1943,10 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Image Type` 补齐 Unity `Filled`，序列化字段与 Unity 默认一致：Fill Method 为 Radial 360、Fill Amount 为 1、Clockwise 开启、Origin 为 0。Inspector 根据 Horizontal、Vertical、Radial 90/180/360 动态显示对应 Origin 名称，切换 Method 会像 Unity 一样重置 Origin；Preserve Aspect 同时适用于 Simple 与 Filled。生成 API、Behaviour、组件目录与 Agent 组件 schema 共享同一数据契约。
 - Editor Canvas 与 Runtime 逐行复刻 uGUI `GenerateFilledSprite` / `RadialCut`：线性模式裁剪几何与 UV，径向模式生成最多四个归一化四边形，五种方法、所有 Origin 和顺/逆时针不使用近似扇形。RHI 实例新增可选的四顶点位置，仍复用原始 RectTransform 的 Pivot、旋转、World Space 透视四角与 Sprite UV，因此 Screen Space、Camera 和 World Space Canvas 走同一网格语义。
 - Fill Amount 会钳制到 0–1，小于 Unity 的 0.001 阈值时不生成网格；Preserve Aspect 只改变可见网格，不缩小 GraphicRaycaster 的完整 RectTransform 命中区域。TypeScript 纯几何、Canvas 数据传递、IDL 默认、Rust 网格/Pivot/Raycast、WGSL 解析与生产构建均有无界面回归。剩余 Image/Graphic 高级缺口主要是 Alpha Hit Test、Mask/Stencil、Sprite Atlas 紧密网格及材质/Additional Shader Channels。
+
+## 174. 2026-08-01 Unity Mask 与嵌套 Stencil
+
+- 新增 `Mask` 组件，默认启用并显示自身 Graphic，与 Unity 的 `Show Mask Graphic` 契约一致。IDL、Rust/TypeScript 生成类型、Behaviour、组件目录、Inspector、Add Component 菜单和 Agent 组件 schema 使用同一字段；Mask 依赖 RectTransform/Transform，最多支持 Unity 同级别的 8 层嵌套。
+- 原生 RHI 的主深度附件升级为 `Depth24PlusStencil8`。Runtime 按 UI 深度优先顺序先绘制可选的 Mask Graphic，再用同一纹理、颜色、Filled/Sliced/Tiled 网格和透明度写入 Stencil；子树执行 Equal 测试，离开子树后用对应网格恢复父深度。重叠 quad 通过“仅匹配当前深度后增减”保持幂等，透明纹理像素在 Fragment 阶段丢弃，不把 Mask 退化为矩形 scissor。World Space Canvas 继续保留透视四角与深度测试。
+- Editor Canvas 预览保存祖先 Mask Graphic 栈，并在可复用离屏层中用 `destination-in` 逐层相乘真实图形 Alpha；因此透明 Sprite、Filled、九宫格、平铺、旋转和嵌套 Mask 与 Runtime 使用同一可见形状。`Show Mask Graphic=false` 只隐藏自身显示，不影响其对子树的遮罩。视口截图直接捕获合成结果，后台 Agent 无需激活窗口即可观察正确画面。
+- Unity `Mask.IsRaycastLocationValid` 使用 RectTransform 矩形而不是 Sprite Alpha。Editor 与 Runtime 因此分别继承最多 8 个旋转矩形/投影四边形作为射线过滤器，并与 RectMask2D、CanvasGroup、GraphicRaycaster 物理遮挡共同生效；Screen Space、Camera 和 World Space 命中均有无界面回归。

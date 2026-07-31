@@ -518,6 +518,7 @@ fn collect_emitter(
                     clip: None,
                     blend,
                     depth_test: false,
+                    stencil: Default::default(),
                 },
             },
         });

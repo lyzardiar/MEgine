@@ -279,6 +279,7 @@ fn project_line(
                         clip: None,
                         blend: UiBlendMode::Alpha,
                         depth_test: false,
+                        stencil: Default::default(),
                     },
                 },
             })
@@ -386,6 +387,7 @@ fn project_sprite(
                 clip: None,
                 blend: UiBlendMode::Alpha,
                 depth_test: false,
+                stencil: Default::default(),
             },
         },
     })

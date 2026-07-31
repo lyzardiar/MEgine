@@ -61,6 +61,13 @@ export type UiEnt = {
   components: Record<string, unknown>;
 };
 
+export type UiMaskRegion = {
+  rect: Rect;
+  rotation: number;
+  pivot: [number, number];
+  screenCorners?: Array<{ x: number; y: number }>;
+};
+
 export type UiDrawItem = {
   entity: number;
   rect: Rect;
@@ -81,6 +88,12 @@ export type UiDrawItem = {
   raycastPlane?: UiRaycastPlane;
   raycastCamera?: Camera;
   clip?: Rect;
+  /** Enabled Unity Mask on this Graphic. Its alpha becomes the child stencil shape. */
+  mask?: { showGraphic: boolean };
+  /** Ancestor Mask Graphic entity ids, ordered outermost to innermost. */
+  maskStack?: number[];
+  /** Ancestor Mask rectangles used by Unity-style ICanvasRaycastFilter. */
+  maskRegions?: UiMaskRegion[];
   image?: {
     color: [number, number, number, number];
     sprite: string;
@@ -415,6 +428,19 @@ function pixelCorners(
   ]);
 }
 
+function screenRect(corners: Array<{ x: number; y: number }>): Rect {
+  const xs = corners.map((point) => point.x);
+  const ys = corners.map((point) => point.y);
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  return {
+    x,
+    y,
+    w: Math.max(...xs) - x,
+    h: Math.max(...ys) - y,
+  };
+}
+
 function scaleSceneVisuals(item: UiDrawItem, scale: number): UiDrawItem {
   const s = Math.max(0.01, scale);
   const font = (value: number) => Math.max(10, value * s);
@@ -728,6 +754,8 @@ export function layoutUiOverlay(
         blockingObjects: 'None' as UiBlockingObjects,
         blockingMask: -1,
         pixelPerfect: false,
+        visualMasks: [] as number[],
+        maskRegions: [] as UiMaskRegion[],
       },
       inheritedClip?: Rect,
     ) => {
@@ -802,7 +830,8 @@ export function layoutUiOverlay(
         blocking_mask?: number;
         blockingMask?: number;
       } | undefined;
-      const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
+      const rectMask = ent.components.RectMask2D as Record<string, unknown> | undefined;
+      const stencilMask = ent.components.Mask as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;
       const rotation = rt?.local_rotation ?? 0;
@@ -838,11 +867,13 @@ export function layoutUiOverlay(
         pixelPerfect: overridesPixelPerfect
           ? (canvasSettings?.pixel_perfect ?? canvasSettings?.pixelPerfect) === true
           : inherited.pixelPerfect,
+        visualMasks: inherited.visualMasks,
+        maskRegions: inherited.maskRegions,
       };
       const clip = inheritedClip;
       let childClip = inheritedClip;
-      if (mask && mask.enabled !== false) {
-        const maskRect = insetRect(rect, mask.padding, scale);
+      if (rectMask && rectMask.enabled !== false) {
+        const maskRect = insetRect(rect, rectMask.padding, scale);
         childClip = childClip ? intersectRect(childClip, maskRect) : maskRect;
       }
       if (scroll || list) childClip = childClip ? intersectRect(childClip, rect) : rect;
@@ -864,6 +895,8 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
+          maskStack: state.visualMasks,
+          maskRegions: state.maskRegions,
           selected: selectedIds.has(ent.entity),
         });
       } else if (img || rawImage || btn || text || toggle || slider || scrollbar || panel || progress || input || dropdown || list || scroll || tabs) {
@@ -881,6 +914,15 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
+          mask: stencilMask?.enabled !== false && stencilMask != null
+            ? {
+                showGraphic:
+                  stencilMask.show_mask_graphic !== false
+                  && stencilMask.showMaskGraphic !== false,
+              }
+            : undefined,
+          maskStack: state.visualMasks,
+          maskRegions: state.maskRegions,
           image: img
             ? {
                 color: color4(img.color, [1, 1, 1, 1]),
@@ -1156,8 +1198,29 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
+          maskStack: state.visualMasks,
+          maskRegions: state.maskRegions,
           selected: true,
         });
+      }
+
+      let childState = state;
+      if (stencilMask && stencilMask.enabled !== false) {
+        const nextMaskRegions = state.maskRegions.length < 8
+          ? [...state.maskRegions, { rect: renderedRect, rotation, pivot }]
+          : state.maskRegions;
+        const hasMaskGraphic = !!(
+          img || rawImage || btn || text || toggle || slider || scrollbar
+          || panel || progress || input || dropdown || list || scroll || tabs
+        );
+        const nextVisualMasks = hasMaskGraphic && state.visualMasks.length < 8
+          ? [...state.visualMasks, ent.entity]
+          : state.visualMasks;
+        childState = {
+          ...state,
+          visualMasks: nextVisualMasks,
+          maskRegions: nextMaskRegions,
+        };
       }
 
       let children = childrenOf(entities, ent.entity);
@@ -1180,7 +1243,7 @@ export function layoutUiOverlay(
         : rect;
       children.forEach((child, index) => {
         const forced = layout ? layoutChildRect(childParent, layout, index, children.length, scale) : undefined;
-        walk(child, childParent, depth + 1, false, forced, state, childClip);
+        walk(child, childParent, depth + 1, false, forced, childState, childClip);
       });
     };
 
@@ -1217,6 +1280,8 @@ export function layoutUiOverlay(
       blockingObjects: 'None',
       blockingMask: -1,
       pixelPerfect: canvasPixelPerfect(entities, canvas),
+      visualMasks: [] as number[],
+      maskRegions: [] as UiMaskRegion[],
     }, root);
     if (mode === 'ScreenSpaceCamera' && eventCamera) {
       const canvasSettings = inheritedCanvas.components.Canvas as Record<string, unknown>;
@@ -1320,6 +1385,19 @@ export function layoutUiWorldSpace(
       if (drawWidth <= 0.0001 || drawHeight <= 0.0001) continue;
       const angle = Math.atan2(topRight.y - topLeft.y, topRight.x - topLeft.x);
       const depth = projected.reduce((sum, point) => sum + point.depth, 0) / projected.length;
+      const maskRegions = item.maskRegions?.flatMap((mask) => {
+        const maskCorners = pixelCorners(mask.rect, mask.rotation, mask.pivot)
+          .map(([x, y]) => project(context.pixelToWorld(x, y), cam, viewport));
+        if (maskCorners.some((point) => !point)) return [];
+        const exact = (maskCorners as Array<{ x: number; y: number; depth: number }>)
+          .map(({ x, y }) => ({ x, y }));
+        return [{
+          rect: screenRect(exact),
+          rotation: 0,
+          pivot: [0.5, 0.5] as [number, number],
+          screenCorners: exact,
+        }];
+      });
       output.push({
         ...scaleSceneVisuals(item, drawWidth / Math.max(0.0001, item.rect.w)),
         rect: { x: topLeft.x, y: topLeft.y, w: drawWidth, h: drawHeight },
@@ -1327,6 +1405,7 @@ export function layoutUiWorldSpace(
         pivot: [0, 0],
         pivotScreen: { x: topLeft.x, y: topLeft.y },
         screenCorners,
+        maskRegions,
         blocksRaycasts: reversed ? false : item.blocksRaycasts,
         raycastPlane: plane,
         raycastCamera,
@@ -1526,6 +1605,19 @@ export function layoutUiScene3D(
       const pivS = project(uiPixelToWorld(pivPx.x, pivPx.y, cw, ch), cam, viewport);
 
       const sceneItem = scaleSceneVisuals(it, sceneScale);
+      const maskRegions = it.maskRegions?.flatMap((mask) => {
+        const maskCorners = pixelCorners(mask.rect, mask.rotation, mask.pivot)
+          .map(([px, py]) => project(uiPixelToWorld(px, py, cw, ch), cam, viewport));
+        if (maskCorners.some((point) => !point)) return [];
+        const exact = (maskCorners as Array<{ x: number; y: number; depth: number }>)
+          .map(({ x, y }) => ({ x, y }));
+        return [{
+          rect: screenRect(exact),
+          rotation: 0,
+          pivot: [0.5, 0.5] as [number, number],
+          screenCorners: exact,
+        }];
+      });
       out.push({
         ...sceneItem,
         rect: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
@@ -1536,6 +1628,7 @@ export function layoutUiScene3D(
         anchorParentRect: it.anchorParentRect
           ? projectPixelRect(it.anchorParentRect)
           : undefined,
+        maskRegions,
       });
     }
     depthBase += 1000;
@@ -1642,6 +1735,32 @@ function pointInUiItem(px: number, py: number, it: UiDrawItem): boolean {
   return u >= -w * pxN && u <= w * (1 - pxN) && v >= -h * pyN && v <= h * (1 - pyN);
 }
 
+function pointInMaskRegion(px: number, py: number, mask: UiMaskRegion): boolean {
+  if (mask.screenCorners?.length === 4) {
+    let sign = 0;
+    for (let index = 0; index < 4; index++) {
+      const a = mask.screenCorners[index];
+      const b = mask.screenCorners[(index + 1) % 4];
+      const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+      if (Math.abs(cross) < 1e-4) continue;
+      if (sign === 0) sign = Math.sign(cross);
+      else if (Math.sign(cross) !== sign) return false;
+    }
+    return true;
+  }
+  if (Math.abs(mask.rotation) < 1e-4) return pointInRect(px, py, mask.rect);
+  const pivot = rectPivot(mask.rect, mask.pivot);
+  const axes = rectLocalAxes(mask.rotation);
+  const dx = px - pivot.x;
+  const dy = py - pivot.y;
+  const u = dx * axes.x.dx + dy * axes.x.dy;
+  const v = dx * axes.y.dx + dy * axes.y.dy;
+  return u >= -mask.rect.w * mask.pivot[0]
+    && u <= mask.rect.w * (1 - mask.pivot[0])
+    && v >= -mask.rect.h * mask.pivot[1]
+    && v <= mask.rect.h * (1 - mask.pivot[1]);
+}
+
 export function hitTestUi(
   items: UiDrawItem[],
   x: number,
@@ -1654,6 +1773,7 @@ export function hitTestUi(
     if (it.role === 'canvas') continue;
     if (it.blocksRaycasts === false) continue;
     if (it.clip && !pointInRect(x, y, it.clip)) continue;
+    if (it.maskRegions?.some((mask) => !pointInMaskRegion(x, y, mask))) continue;
     const dropdownPopup = it.dropdown?.expanded
       && pointInRect(x, y, {
         x: it.rect.x,
@@ -1866,6 +1986,7 @@ export function hitTestUiSelect(items: UiDrawItem[], x: number, y: number): UiDr
     const it = items[i];
     if (it.role !== 'graphic') continue;
     if (it.clip && !pointInRect(x, y, it.clip)) continue;
+    if (it.maskRegions?.some((mask) => !pointInMaskRegion(x, y, mask))) continue;
     if (!pointInUiItem(x, y, it)) continue;
     return it;
   }
@@ -1877,6 +1998,27 @@ export function hitTestUiSelect(items: UiDrawItem[], x: number, y: number): UiDr
   return null;
 }
 
+function hideMaskGraphic(item: UiDrawItem): UiDrawItem {
+  if (!item.mask || item.mask.showGraphic) return item;
+  return {
+    ...item,
+    image: undefined,
+    rawImage: undefined,
+    button: undefined,
+    text: undefined,
+    toggle: undefined,
+    slider: undefined,
+    scrollbar: undefined,
+    panel: undefined,
+    progress: undefined,
+    input: undefined,
+    dropdown: undefined,
+    list: undefined,
+    scroll: undefined,
+    tabs: undefined,
+  };
+}
+
 export function drawUiItems(
   ctx: CanvasRenderingContext2D,
   items: UiDrawItem[],
@@ -1886,6 +2028,68 @@ export function drawUiItems(
 ) {
   const showLabel = !!opts?.sceneLabel;
   const batches = buildUiBatches(items);
+  const itemsByEntity = new Map(items.map((item) => [item.entity, item]));
+  let contentLayer: HTMLCanvasElement | null = null;
+  let maskLayer: HTMLCanvasElement | null = null;
+  const layer = (kind: 'content' | 'mask') => {
+    let canvas = kind === 'content' ? contentLayer : maskLayer;
+    if (!canvas) {
+      canvas = ctx.canvas.ownerDocument.createElement('canvas');
+      if (kind === 'content') contentLayer = canvas;
+      else maskLayer = canvas;
+    }
+    if (canvas.width !== ctx.canvas.width) canvas.width = ctx.canvas.width;
+    if (canvas.height !== ctx.canvas.height) canvas.height = ctx.canvas.height;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.setTransform(ctx.getTransform());
+    context.globalAlpha = kind === 'content' ? ctx.globalAlpha : 1;
+    context.globalCompositeOperation = 'source-over';
+    return context;
+  };
+  const drawMaskedItem = (item: UiDrawItem): boolean => {
+    if (item.mask?.showGraphic === false && !item.selected && opts?.focusId !== item.entity) {
+      return true;
+    }
+    if (!item.maskStack?.length) return false;
+    const masks = item.maskStack.map((entity) => itemsByEntity.get(entity));
+    if (masks.some((mask) => !mask)) return true;
+    const content = layer('content');
+    if (!content) return false;
+    drawUiItems(
+      content,
+      [{ ...item, maskStack: [] }],
+      hoverId,
+      pressId,
+      opts,
+    );
+    for (const mask of masks as UiDrawItem[]) {
+      const maskContext = layer('mask');
+      if (!maskContext || !maskLayer) return true;
+      drawUiItems(
+        maskContext,
+        [{ ...mask, mask: undefined, maskStack: [], selected: false }],
+        null,
+        null,
+      );
+      content.save();
+      content.setTransform(1, 0, 0, 1, 0, 0);
+      content.globalAlpha = 1;
+      content.globalCompositeOperation = 'destination-in';
+      content.drawImage(maskLayer, 0, 0);
+      content.restore();
+    }
+    if (!contentLayer) return true;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(contentLayer, 0, 0);
+    ctx.restore();
+    return true;
+  };
   const fillReadableText = (
     value: string,
     x: number,
@@ -1919,7 +2123,9 @@ export function drawUiItems(
     else ctx.fillText(value, x, y, maxWidth);
   };
 
-  for (const batch of batches) for (const it of batch.items) {
+  for (const batch of batches) for (const sourceItem of batch.items) {
+    if (drawMaskedItem(sourceItem)) continue;
+    const it = hideMaskGraphic(sourceItem);
     const { x, y, w, h } = it.rect;
     if (w < 0.5 || h < 0.5) continue;
 

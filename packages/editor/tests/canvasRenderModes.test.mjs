@@ -128,6 +128,96 @@ test('Filled Image authoring data reaches the Canvas draw plan', () => {
   assert.equal(item?.image?.fillOrigin, 3);
 });
 
+test('Unity Mask propagates nested alpha-mask stacks and rectangle raycast filters', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [120, 120] }),
+        Image: { image_type: 'Filled', fill_amount: 0.5 },
+        Mask: { enabled: true, show_mask_graphic: false },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [100, 100] }),
+        Image: {},
+        Mask: { enabled: true, show_mask_graphic: true },
+      },
+    },
+    {
+      entity: 4,
+      parent: 3,
+      components: {
+        RectTransform: rect({ size_delta: [240, 240] }),
+        Image: { raycast_target: true },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  );
+  const outer = items.find((item) => item.entity === 2);
+  const child = items.find((item) => item.entity === 4);
+  assert.deepEqual(outer.mask, { showGraphic: false });
+  assert.deepEqual(child.maskStack, [2, 3]);
+  assert.equal(child.maskRegions.length, 2);
+  assert.equal(hitTestUi(items, 400, 300)?.entity, 4);
+  assert.equal(hitTestUi(items, 475, 300), null);
+});
+
+test('disabled Mask does not alter child rendering or raycasts', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect(),
+        Image: {},
+        Mask: { enabled: false, show_mask_graphic: false },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [240, 240] }),
+        Image: { raycast_target: true },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  );
+  const child = items.find((item) => item.entity === 3);
+  assert.deepEqual(child.maskStack, []);
+  assert.deepEqual(child.maskRegions, []);
+  assert.equal(hitTestUi(items, 475, 300)?.entity, 3);
+});
+
 test('Game View filters Overlay and Camera canvases by their effective target display', () => {
   const entities = [
     {
@@ -485,6 +575,54 @@ test('World Space override-sorting Canvas subtrees are projected exactly once', 
   assert.equal(items.filter((item) => item.entity === 2).length, 1);
   assert.equal(items.filter((item) => item.entity === 3).length, 1);
   assert.equal(items.filter((item) => item.entity === 4).length, 1);
+});
+
+test('World Space Mask keeps projected visual and raycast regions aligned', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+        RectTransform: rect({ size_delta: [200, 200] }),
+        Canvas: { render_mode: 'WorldSpace' },
+        CanvasScaler: { reference_pixels_per_unit: 100, reference_resolution: [200, 200] },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [100, 100], local_rotation: 20 }),
+        Image: {},
+        Mask: { enabled: true, show_mask_graphic: false },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [200, 200] }),
+        Image: { raycast_target: true },
+      },
+    },
+  ];
+  const items = layoutUiWorldSpace(
+    entities,
+    camera,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  );
+  const child = items.find((item) => item.entity === 3);
+  assert.deepEqual(child.maskStack, [2]);
+  assert.equal(child.maskRegions[0].screenCorners.length, 4);
+  const mask = child.maskRegions[0];
+  const center = mask.screenCorners.reduce(
+    (sum, point) => ({ x: sum.x + point.x / 4, y: sum.y + point.y / 4 }),
+    { x: 0, y: 0 },
+  );
+  assert.equal(hitTestUi(items, center.x, center.y)?.entity, 3);
+  assert.equal(hitTestUi(items, mask.rect.x + mask.rect.w + 2, center.y), null);
 });
 
 test('World Space GraphicRaycaster ignores reversed graphics unless opted out', () => {

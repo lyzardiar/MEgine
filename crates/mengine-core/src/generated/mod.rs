@@ -2249,6 +2249,37 @@ impl Component for RectMask2D {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct Mask {
+    pub enabled: bool,
+    pub show_mask_graphic: bool,
+}
+
+impl Default for Mask {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            show_mask_graphic: true,
+        }
+    }
+}
+
+impl Component for Mask {
+    fn type_name() -> &'static str {
+        "Mask"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct ProgressBar {
     pub min_value: f32,
     pub max_value: f32,
@@ -2647,6 +2678,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "RectMask2D" => serde_json::from_value::<RectMask2D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "Mask" => serde_json::from_value::<Mask>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "ProgressBar" => serde_json::from_value::<ProgressBar>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "InputField" => serde_json::from_value::<InputField>(value)
@@ -2721,6 +2754,7 @@ pub mod meta {
         "CanvasGroup",
         "LayoutGroup",
         "RectMask2D",
+        "Mask",
         "ProgressBar",
         "InputField",
         "Dropdown",

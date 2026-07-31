@@ -695,6 +695,9 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     direction: { kind: 'enum', options: options('Horizontal', 'Vertical', 'Grid') },
     constraint_count: { min: 1, step: 1 },
   },
+  Mask: {
+    show_mask_graphic: { label: 'Show Mask Graphic' },
+  },
   ProgressBar: {
     direction: { kind: 'enum', options: direction },
     font_size: { min: 1, step: 1 },

@@ -193,6 +193,7 @@ mod tests {
                     clip: None,
                     blend: UiBlendMode::Alpha,
                     depth_test: false,
+                    stencil: Default::default(),
                 },
             },
         }
