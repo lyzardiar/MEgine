@@ -431,6 +431,24 @@ impl Default for UiInheritedState {
     }
 }
 
+fn apply_canvas_group(
+    mut state: UiInheritedState,
+    group: Option<&CanvasGroup>,
+) -> UiInheritedState {
+    let Some(group) = group else {
+        return state;
+    };
+    if group.ignore_parent_groups {
+        state.alpha = 1.0;
+        state.interactable = true;
+        state.blocks_raycasts = true;
+    }
+    state.alpha *= group.alpha.clamp(0.0, 1.0);
+    state.interactable &= group.interactable;
+    state.blocks_raycasts &= group.blocks_raycasts;
+    state
+}
+
 pub fn collect_ui_frame(world: &World, width: u32, height: u32) -> RuntimeUiFrame {
     let hierarchy = TransformHierarchy::build(world);
     collect_ui_frame_with_hierarchy(world, &hierarchy, width, height)
@@ -547,11 +565,14 @@ fn collect_ui_frame_internal(
         };
         let primitive_start = primitives.len();
         let control_start = controls.len();
-        let inherited_state = UiInheritedState {
-            pixel_perfect: !world_space && canvas_pixel_perfect(world, canvas_entity),
-            screen_space: !world_space,
-            ..UiInheritedState::default()
-        };
+        let inherited_state = apply_canvas_group(
+            UiInheritedState {
+                pixel_perfect: !world_space && canvas_pixel_perfect(world, canvas_entity),
+                screen_space: !world_space,
+                ..UiInheritedState::default()
+            },
+            world.get_component::<CanvasGroup>(canvas_entity),
+        );
         for child in children_of(world, canvas_entity) {
             walk(
                 world,
@@ -1172,16 +1193,7 @@ fn walk(
             }
         }
     }
-    if let Some(group) = world.get_component::<CanvasGroup>(entity) {
-        if group.ignore_parent_groups {
-            state.alpha = 1.0;
-            state.interactable = true;
-            state.blocks_raycasts = true;
-        }
-        state.alpha *= group.alpha.clamp(0.0, 1.0);
-        state.interactable &= group.interactable;
-        state.blocks_raycasts &= group.blocks_raycasts;
-    }
+    state = apply_canvas_group(state, world.get_component::<CanvasGroup>(entity));
     let mut child_clip = clip;
     if let Some(mask) = world.get_component::<RectMask2D>(entity) {
         if mask.enabled {
@@ -3164,6 +3176,90 @@ mod tests {
             "nested Canvas inherits root render mode"
         );
         assert!(primitive.rect[0] + primitive.rect[2] * 0.5 > 400.0);
+    }
+
+    #[test]
+    fn canvas_root_groups_apply_and_override_sorting_starts_a_new_group_boundary() {
+        let mut world = World::new();
+        let root = world.spawn_empty();
+        world.insert_component(root, Canvas::default());
+        world.insert_component(
+            root,
+            CanvasGroup {
+                alpha: 0.25,
+                interactable: false,
+                blocks_raycasts: false,
+                ..CanvasGroup::default()
+            },
+        );
+
+        let blocked_image = world.spawn_empty();
+        world.insert_component(
+            blocked_image,
+            RectTransform {
+                anchored_position: [-150.0, 0.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(blocked_image, Image::default());
+        world.set_parent(blocked_image, Some(root));
+
+        let nested = world.spawn_empty();
+        world.insert_component(
+            nested,
+            Canvas {
+                override_sorting: true,
+                sorting_order: 1,
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(
+            nested,
+            RectTransform {
+                anchored_position: [150.0, 0.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            nested,
+            CanvasGroup {
+                alpha: 0.5,
+                ..CanvasGroup::default()
+            },
+        );
+        world.set_parent(nested, Some(root));
+
+        let independent_image = world.spawn_empty();
+        world.insert_component(independent_image, RectTransform::default());
+        world.insert_component(independent_image, Image::default());
+        world.set_parent(independent_image, Some(nested));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert!(!frame
+            .controls
+            .iter()
+            .any(|control| control.entity == blocked_image));
+        assert!(frame
+            .controls
+            .iter()
+            .any(|control| control.entity == independent_image));
+        let image_primitives: Vec<_> = frame
+            .plan
+            .primitives
+            .iter()
+            .filter(|primitive| primitive.key.material == "ui/image")
+            .collect();
+        assert_eq!(image_primitives.len(), 2);
+        let blocked = image_primitives
+            .iter()
+            .find(|primitive| primitive.rect[0] < 350.0)
+            .unwrap();
+        let independent = image_primitives
+            .iter()
+            .find(|primitive| primitive.rect[0] > 350.0)
+            .unwrap();
+        assert!((blocked.color[3] - 0.25).abs() < 0.0001);
+        assert!((independent.color[3] - 0.5).abs() < 0.0001);
     }
 
     #[test]

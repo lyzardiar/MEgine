@@ -276,6 +276,51 @@ test('World Space override-sorting Canvas subtrees are projected exactly once', 
   assert.equal(items.filter((item) => item.entity === 4).length, 1);
 });
 
+test('Canvas root groups apply while override-sorting Canvas starts a new group boundary', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        CanvasGroup: { alpha: 0.25, interactable: false, blocks_raycasts: false },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [-150, 0] }),
+        Image: { raycast_target: true },
+      },
+    },
+    {
+      entity: 3,
+      parent: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [150, 0] }),
+        Canvas: { override_sorting: true, sorting_order: 1 },
+        CanvasGroup: { alpha: 0.5, interactable: true, blocks_raycasts: true },
+      },
+    },
+    {
+      entity: 4,
+      parent: 3,
+      components: {
+        RectTransform: rect(),
+        Image: { raycast_target: true },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const blocked = items.find((item) => item.entity === 2);
+  const independent = items.find((item) => item.entity === 4);
+  assert.equal(blocked.opacity, 0.25);
+  assert.equal(blocked.blocksRaycasts, false);
+  assert.equal(independent.opacity, 0.5);
+  assert.equal(independent.blocksRaycasts, true);
+});
+
 test('Scene framing uses the transformed World Space Canvas coordinates', () => {
   const entities = [
     {

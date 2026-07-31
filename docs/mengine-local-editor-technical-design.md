@@ -1878,3 +1878,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - Unity uGUI 的 `Graphic` 序列化字段 `m_RaycastTarget` 默认启用，Text 继承同一默认值。MEngine 将 Text 的 IDL、Rust/TypeScript 生成默认、组件目录和 `UI/Text` 新建对象路径统一为 `raycast_target=true`，与已经一致的 Image/Raw Image 保持同一 Graphic 契约。
 - 旧场景中显式保存的 `false` 继续保持穿透；缺少该字段的旧数据与新建 Text 使用 Unity 默认值。Runtime 回归直接构造 `Text::default()`，同时覆盖纯 Text 阻挡与 Button + Text + Panel 同实体操作目标优先级，防止默认值与实际命中逻辑再次分离。
+
+## 163. 2026-08-01 Canvas 根 CanvasGroup 与独立排序边界
+
+- Runtime 过去从 Canvas 的第一个子节点才开始累积 CanvasGroup，导致直接挂在根 Canvas 或 `override_sorting` 嵌套 Canvas 上的 Alpha、Interactable、Blocks Raycasts 全部失效；Editor 预览则会应用，形成编辑态与 Player 分歧。现在每个 Canvas render root 在遍历子树前先应用自身 CanvasGroup，普通后代继续复用同一状态合并函数。
+- `override_sorting` Canvas 仍作为独立 render root 从默认组状态开始，因此不会继承边界外的 CanvasGroup；但它自身的 CanvasGroup 会立即成为新子树的根状态。这与 Unity Graphic 射线遍历在 override-sorting Canvas 处停止向上查找过滤器的边界一致，也同步覆盖渲染 Alpha、控件交互和 Graphic 阻挡。
+- Editor/Runtime 回归使用外层禁用射线且 Alpha 0.25、内层独立排序 Canvas Alpha 0.5 的同一结构，证明外层 Graphic 被阻挡、内层 Graphic 可命中，并分别得到正确透明度。
