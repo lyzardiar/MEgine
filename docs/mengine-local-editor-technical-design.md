@@ -1757,3 +1757,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 验证覆盖新增 4 项时间映射回归、编辑器全量 627/627、TypeScript、生产前端构建和 Tauri Debug 构建。真实桌面验证使用独立配置与临时工程启动 `MENGINE_EDITOR_BACKGROUND=1`：Agent 打开 Parent Timeline 并展开 Control Track，语义快照读取到 2 条子轨道、5 个循环 Signal 和 3 个 Activation 映射；筛选 `activation` 后只保留 Child Visibility，Open 随后把活动文档切换到 Child Timeline。WebView2 完整窗口截图确认层级与父时间网格布局正常；所有步骤中窗口均保持 `visible=false`、`focused=false`，截图标记为 `backgroundSafe=true`。
 
 当前实现刻意保持一层内联，只读展示任意子轨道，并通过 Open 进入下一层编辑；它尚未提供递归多层同时展开、子轨道就地编辑、长时间轴虚拟化、Prefab Control、录制、轨道模板、嵌套求值缓存和 Timeline Profiler 依赖视图。后续递归展开必须加入资源循环检测、深度/节点预算和跨层选择身份，不能仅递归渲染现有 JSX。
+
+## 149. 2026-07-31 Sub-Timeline 递归层级与跨层时间合成
+
+- 内联层级树不再停留在一层。每条子 Control Track 都有独立的展开/折叠状态和深度语义，任意层的 Control Clip 会继续显示真实子资源、轨道及映射项；筛选会递归匹配路径、外推模式、轨道名称、类型和目标，并自动展开命中的祖先，但不会改写用户手动展开状态。每层仍可用 Open 进入真实资源编辑，内联内容保持只读，避免把父子资产的 Undo、脏状态和选择身份混在一起。
+- 新的跨层时间合成把上一层已经映射到根 Timeline 的分段继续与当前 Control Clip 求交，再执行当前层的 `clip_in`、`speed` 和 None/Hold/Loop 外推。正向、反向、父层循环和父层 Hold 冻结都保留根时间方向；共享 256 源分段预算会跨组合传播截断状态。Hold 在子源末尾使用最后一个可求值采样点，仍能正确显示恰好结束于子 Timeline 尾部的 Clip，不会因浮点端点保护而丢失。
+- 递归不是无界 JSX。当前硬边界为最大深度 8、每个展开 Control Track 最多 512 行、每行最多 2048 个映射项、每次时间映射最多 256 段；达到边界时通过可访问状态和可见警告明确报告。资源路径栈在每次下降前检测循环，`Parent → Child → Parent` 只渲染带 `cyclic dependency` 的边界摘要，不再加载或展开后代。Agent 语义同时暴露资源路径、层级深度、映射段数、轨道身份、父时间以及展开按钮。
+
+验证覆盖新增 4 项跨层映射回归，编辑器全量 631/631、TypeScript/Vite 生产构建和 Tauri Debug 应用构建均通过；主入口仍有既有的 836.37kB 大于 500kB 分包预算警告。真实桌面验证在隔离配置和临时工程中以 `MENGINE_EDITOR_BACKGROUND=1` 打开三层 Timeline：父层两次循环 Child，Grandchild 的两个 Signal 被合成为根时间 0.750、1.250、2.750、3.250 秒，Activation 也生成两段；回指 Parent 的第二个子片段被标记为循环依赖并停止递归。先手动折叠嵌套层，再筛选 `Grand Pulses`，语义快照仍自动展开祖先且只保留命中轨道。WebView2 离屏截图确认递归缩进和根时间网格布局正常，截图 `backgroundSafe=true`，原生窗口全过程保持 `visible=false`、`focused=false`；验证进程、工程、配置和截图随后全部清理。
+
+这一批完成的是递归只读依赖浏览和根时间可视化，不代表 Timeline 已完备。后续仍需审计子轨道就地编辑、长时间轴真实虚拟化、Prefab Control、录制模式、轨道模板、嵌套求值缓存和 Timeline Profiler 依赖视图，并继续按整编辑器基础与扩展能力逐项补齐。

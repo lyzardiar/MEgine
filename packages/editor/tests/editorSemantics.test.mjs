@@ -256,6 +256,10 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   assert.match(sequencer, /aria-label=\{`\$\{expandedControlTrackIds\.includes\(track\.id\) \? 'Collapse' : 'Expand'\} \$\{track\.name\} Sub-Timeline hierarchy`\}/);
   assert.match(sequencer, /data-agent-sub-timeline=\{normalizedPath\}/);
   assert.match(sequencer, /data-agent-sub-timeline-track=\{childTrack\.id\}/);
+  assert.match(sequencer, /data-agent-sub-timeline-depth=\{depth\}/);
+  assert.match(sequencer, /aria-label=\{`\$\{nestedExpanded \? 'Collapse' : 'Expand'\} \$\{childTrack\.name\} nested Sub-Timeline hierarchy at depth \$\{depth\}`\}/);
+  assert.match(sequencer, /timelineComposeControlSourceMap\(sourceMap, nestedClip, nestedAsset\.duration\)/);
+  assert.match(sequencer, /Sub-Timeline hierarchy limited to \$\{maxRows\} rows/);
   assert.match(sequencer, /aria-label=\{`\$\{childTrack\.name\} mapped into parent time`\}/);
   assert.equal(sequencer.match(/data-agent-drag-by="true"/g)?.length, 8);
   assert.match(sequencer, /aria-label=\{`\$\{selectedTrack\.type === 'signal'/);

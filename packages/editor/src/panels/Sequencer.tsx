@@ -9,6 +9,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import {
@@ -83,6 +84,7 @@ import {
   type TimelineTrackGroup,
 } from '../timelineAsset';
 import {
+  timelineComposeControlSourceMap,
   timelineControlSourceMap,
   timelineInlineTrackItems,
 } from '../timelineControlTree';
@@ -358,6 +360,7 @@ export function Sequencer(props: SequencerProps) {
   const [previewControlFailures, setPreviewControlFailures] = useState<string[]>([]);
   const [previewControlLoadKey, setPreviewControlLoadKey] = useState('');
   const [expandedControlTrackIds, setExpandedControlTrackIds] = useState<string[]>([]);
+  const [expandedControlNodeKeys, setExpandedControlNodeKeys] = useState<string[]>([]);
   const [controlTreeFilter, setControlTreeFilter] = useState('');
   const [previewWarning, setPreviewWarning] = useState<string | null>(null);
   const [previewAssetEpoch, setPreviewAssetEpoch] = useState(0);
@@ -739,6 +742,7 @@ export function Sequencer(props: SequencerProps) {
 
   useEffect(() => {
     setExpandedControlTrackIds([]);
+    setExpandedControlNodeKeys([]);
     setControlTreeFilter('');
   }, [props.assetPath]);
 
@@ -3141,103 +3145,231 @@ export function Sequencer(props: SequencerProps) {
     </div>;
   };
   const renderControlTreeRows = (track: TimelineControlTrack) => {
+    const maxDepth = 8;
+    const maxRows = 512;
+    const maxItemsPerRow = 2_048;
     const filter = controlTreeFilter.trim().toLowerCase();
-    return track.clips.map((clip, clipIndex) => {
+    const rootPath = (props.assetPath ?? '').trim().replaceAll('\\', '/').toLowerCase();
+    const rows: ReactNode[] = [];
+    let rowCount = 0;
+    let rowBudgetExceeded = false;
+    const pushRow = (row: ReactNode) => {
+      if (rowCount >= maxRows) {
+        rowBudgetExceeded = true;
+        return false;
+      }
+      rowCount += 1;
+      rows.push(row);
+      return true;
+    };
+    const trackSearchText = (candidate: TimelineAsset['tracks'][number]) => {
+      const target = 'target' in candidate ? candidate.target : '';
+      return `${candidate.name} ${candidate.type} ${target}`.toLowerCase();
+    };
+    const controlTrackHasDescendantMatch = (
+      candidate: TimelineControlTrack,
+      stack: readonly string[],
+      depth: number,
+    ): boolean => {
+      if (!filter || depth >= maxDepth) return false;
+      for (const nestedClip of candidate.clips) {
+        const nestedPath = nestedClip.timeline.trim().replaceAll('\\', '/');
+        const nestedKey = nestedPath.toLowerCase();
+        if (`${nestedPath} ${nestedClip.extrapolation}`.toLowerCase().includes(filter)) return true;
+        if (!nestedKey || stack.includes(nestedKey)) continue;
+        const nestedAsset = loadedPreviewControlAssets.get(nestedKey);
+        if (!nestedAsset) continue;
+        for (const nestedTrack of nestedAsset.tracks) {
+          if (trackSearchText(nestedTrack).includes(filter)) return true;
+          if (nestedTrack.type === 'control'
+            && controlTrackHasDescendantMatch(nestedTrack, [...stack, nestedKey], depth + 1)) return true;
+        }
+      }
+      return false;
+    };
+    const renderClip = (
+      clip: TimelineControlClip,
+      child: TimelineAsset | null,
+      sourceMap: ReturnType<typeof timelineControlSourceMap> | null,
+      nodePath: string,
+      depth: number,
+      stack: readonly string[],
+    ) => {
+      if (rowBudgetExceeded) return;
       const normalizedPath = clip.timeline.trim().replaceAll('\\', '/');
-      const child = loadedPreviewControlAssets.get(normalizedPath.toLowerCase()) ?? null;
-      const sourceMap = child ? timelineControlSourceMap(clip, child.duration) : null;
+      const childKey = normalizedPath.toLowerCase();
+      const cyclic = Boolean(childKey && stack.includes(childKey));
+      const nextStack = childKey ? [...stack, childKey] : [...stack];
       const sourceWindowValid = child ? timelineControlSourceWindowIsValid(clip, child.duration) : true;
-      const matchingTracks = child?.tracks.filter((childTrack) => {
+      const matchingTracks = !cyclic ? child?.tracks.filter((childTrack) => {
         if (!filter) return true;
-        const target = 'target' in childTrack ? childTrack.target : '';
-        return `${childTrack.name} ${childTrack.type} ${target}`.toLowerCase().includes(filter);
-      }) ?? [];
-      const clipMatches = !filter || `${normalizedPath} ${clip.extrapolation}`.toLowerCase().includes(filter);
-      if (filter && !clipMatches && matchingTracks.length === 0) return null;
+        return trackSearchText(childTrack).includes(filter)
+          || childTrack.type === 'control'
+            && controlTrackHasDescendantMatch(childTrack, nextStack, depth);
+      }) ?? [] : [];
+      const clipMatches = !filter
+        || `${normalizedPath} ${clip.extrapolation}`.toLowerCase().includes(filter);
+      if (filter && !clipMatches && matchingTracks.length === 0) return;
       const loadState = child
         ? `${child.tracks.length} tracks, ${child.duration.toFixed(3)} seconds`
         : previewControlResourcesReady
           ? 'asset unavailable'
           : 'loading asset';
-      return <Fragment key={`${track.id}:${clipIndex}:${normalizedPath}`}>
-        <div
-          className={`sequencer-control-tree-row summary${child ? '' : ' unavailable'}`}
+      const summarySegments = sourceMap?.segments ?? (depth === 1 ? [{
+        parentStart: clip.start,
+        parentEnd: clip.start + clip.duration,
+      }] : []);
+      if (!pushRow(<div
+        className={`sequencer-control-tree-row summary${child ? '' : ' unavailable'}${cyclic ? ' cyclic' : ''}`}
+        role="group"
+        aria-label={`Sub-Timeline depth ${depth}, ${normalizedPath || 'missing path'}, ${loadState}, ${clip.extrapolation} extrapolation${sourceWindowValid ? '' : ', invalid source window'}${cyclic ? ', cyclic dependency' : ''}`}
+        data-agent-sub-timeline={normalizedPath}
+        data-agent-sub-timeline-depth={depth}
+        data-agent-sub-timeline-map-segments={sourceMap?.segments.length ?? 0}
+        style={{ '--sequencer-control-tree-depth': depth } as CSSProperties}
+        key={`${nodePath}:summary`}
+      >
+        <div className="sequencer-control-tree-header">
+          <span className="sequencer-control-tree-branch" aria-hidden="true">└</span>
+          <FolderTree size={12} aria-hidden="true" />
+          <span className="sequencer-control-tree-name" title={normalizedPath}>{normalizedPath.split('/').at(-1) || 'Missing Timeline'}</span>
+          <small>{clip.extrapolation.toUpperCase()}</small>
+          <button
+            type="button"
+            aria-label={`Open child Timeline ${normalizedPath}`}
+            title={`Open ${normalizedPath}`}
+            disabled={!normalizedPath}
+            onClick={() => openTimelineAsset(normalizedPath)}
+          >Open</button>
+        </div>
+        <div className="sequencer-control-tree-lane">
+          {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
+          {summarySegments.map((segment, segmentIndex) => <span
+            className={`sequencer-inline-source ${clip.extrapolation}`}
+            style={{
+              left: `${segment.parentStart / asset.duration * 100}%`,
+              width: `${(segment.parentEnd - segment.parentStart) / asset.duration * 100}%`,
+            }}
+            title={`${normalizedPath} · source ${clip.clip_in.toFixed(3)}s @ ${clip.speed.toFixed(2)}x · ${clip.extrapolation}`}
+            key={`${nodePath}:source:${segmentIndex}`}
+          >{segmentIndex === 0 ? child ? loadState : loadState.toUpperCase() : ''}</span>)}
+          {sourceMap?.truncated && <span className="sequencer-inline-warning">First 256 source segments shown</span>}
+          {!sourceWindowValid && <span className="sequencer-inline-warning error">Invalid source window</span>}
+          {cyclic && <span className="sequencer-inline-warning error">Cyclic dependency</span>}
+          <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
+        </div>
+      </div>)) return;
+      if (!child || !sourceMap || cyclic) return;
+      for (const childTrack of matchingTracks) {
+        if (rowBudgetExceeded) break;
+        const target = 'target' in childTrack ? childTrack.target : '';
+        const count = childTrack.type === 'signal' ? childTrack.markers.length : childTrack.clips.length;
+        const items = timelineInlineTrackItems(childTrack, sourceMap);
+        const renderedItems = items.slice(0, maxItemsPerRow);
+        const childNodeKey = `${nodePath}/track:${childTrack.id}`;
+        const descendantMatches = childTrack.type === 'control'
+          && controlTrackHasDescendantMatch(childTrack, nextStack, depth);
+        const manuallyExpanded = expandedControlNodeKeys.includes(childNodeKey);
+        const nestedExpanded = manuallyExpanded || Boolean(filter && descendantMatches);
+        const canExpand = childTrack.type === 'control'
+          && childTrack.clips.length > 0
+          && depth < maxDepth;
+        if (!pushRow(<div
+          className="sequencer-control-tree-row child"
           role="group"
-          aria-label={`Sub-Timeline ${normalizedPath || 'missing path'}, ${loadState}, ${clip.extrapolation} extrapolation${sourceWindowValid ? '' : ', invalid source window'}`}
-          data-agent-sub-timeline={normalizedPath}
+          aria-label={`${childTrack.name}, ${childTrack.type} child track at depth ${depth}${target ? `, target ${target}` : ''}, ${count} source items, ${items.length} mapped items${items.length > maxItemsPerRow ? `, first ${maxItemsPerRow} shown` : ''}${childTrack.type === 'control' && depth >= maxDepth ? ', maximum hierarchy depth reached' : ''}`}
+          data-agent-sub-timeline-track={childTrack.id}
+          data-agent-sub-timeline-depth={depth}
+          style={{ '--sequencer-control-tree-depth': depth } as CSSProperties}
+          key={childNodeKey}
         >
-          <div className="sequencer-control-tree-header">
-            <span className="sequencer-control-tree-branch" aria-hidden="true">└</span>
-            <FolderTree size={12} aria-hidden="true" />
-            <span className="sequencer-control-tree-name" title={normalizedPath}>{normalizedPath.split('/').at(-1) || 'Missing Timeline'}</span>
-            <small>{clip.extrapolation.toUpperCase()}</small>
-            <button
+          <div className="sequencer-control-tree-header child">
+            <span className="sequencer-control-tree-branch" aria-hidden="true">└─</span>
+            {childTrack.type === 'control' && <button
               type="button"
-              aria-label={`Open child Timeline ${normalizedPath}`}
-              title={`Open ${normalizedPath}`}
-              disabled={!normalizedPath}
-              onClick={() => openTimelineAsset(normalizedPath)}
-            >Open</button>
+              className="sequencer-control-tree-nested-toggle"
+              aria-expanded={canExpand ? nestedExpanded : undefined}
+              aria-label={`${nestedExpanded ? 'Collapse' : 'Expand'} ${childTrack.name} nested Sub-Timeline hierarchy at depth ${depth}`}
+              title={depth >= maxDepth ? `Maximum nested Timeline depth ${maxDepth} reached` : `${nestedExpanded ? 'Collapse' : 'Expand'} nested Sub-Timeline tracks`}
+              disabled={!canExpand}
+              onClick={() => setExpandedControlNodeKeys((current) => current.includes(childNodeKey)
+                ? current.filter((key) => key !== childNodeKey)
+                : [...current, childNodeKey])}
+            >{nestedExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}</button>}
+            <span className={`sequencer-track-icon ${childTrack.type}`}>{childTrack.type === 'signal' ? 'S' : childTrack.type === 'activation' ? 'A' : childTrack.type === 'audio' ? '♪' : childTrack.type === 'animation' ? 'M' : childTrack.type === 'particle' ? 'P' : childTrack.type === 'control' ? 'T' : 'C'}</span>
+            <span className="sequencer-control-tree-name" title={target || childTrack.name}>{childTrack.name}</span>
+            <small>{childTrack.type === 'control' && depth >= maxDepth ? 'DEPTH' : count}</small>
           </div>
-          <div className="sequencer-control-tree-lane">
+          <div className="sequencer-control-tree-lane" aria-label={`${childTrack.name} mapped into parent time`}>
             {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
-            <span
-              className={`sequencer-inline-source ${clip.extrapolation}`}
-              style={{
-                left: `${clip.start / asset.duration * 100}%`,
-                width: `${clip.duration / asset.duration * 100}%`,
-              }}
-              title={`${normalizedPath} · source ${clip.clip_in.toFixed(3)}s @ ${clip.speed.toFixed(2)}x · ${clip.extrapolation}`}
-            >{child ? loadState : loadState.toUpperCase()}</span>
-            {sourceMap?.truncated && <span className="sequencer-inline-warning">First 256 source cycles shown</span>}
-            {!sourceWindowValid && <span className="sequencer-inline-warning error">Invalid source window</span>}
+            {renderedItems.map((item) => item.marker
+              ? <i
+                className={`sequencer-inline-marker ${childTrack.type}`}
+                style={{ left: `${item.start / asset.duration * 100}%` }}
+                title={`${item.label} @ ${item.start.toFixed(3)}s parent time`}
+                aria-label={`${item.label} at ${item.start.toFixed(3)} seconds parent time`}
+                key={item.key}
+              />
+              : <span
+                className={`sequencer-inline-item ${childTrack.type}`}
+                style={{
+                  left: `${item.start / asset.duration * 100}%`,
+                  width: `${Math.max(item.duration / asset.duration * 100, 0.15)}%`,
+                }}
+                title={`${item.label} · ${item.start.toFixed(3)}s + ${item.duration.toFixed(3)}s parent time`}
+                aria-label={`${item.label}, starts ${item.start.toFixed(3)} seconds, duration ${item.duration.toFixed(3)} seconds in parent Timeline`}
+                key={item.key}
+              >{item.label}</span>)}
+            {items.length > maxItemsPerRow && <span className="sequencer-inline-warning">First {maxItemsPerRow} of {items.length} items shown</span>}
             <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
           </div>
-        </div>
-        {child && sourceMap && matchingTracks.map((childTrack) => {
-          const target = 'target' in childTrack ? childTrack.target : '';
-          const count = childTrack.type === 'signal' ? childTrack.markers.length : childTrack.clips.length;
-          const items = timelineInlineTrackItems(childTrack, sourceMap);
-          return <div
-            className="sequencer-control-tree-row child"
-            role="group"
-            aria-label={`${childTrack.name}, ${childTrack.type} child track${target ? `, target ${target}` : ''}, ${count} source items, ${items.length} mapped items`}
-            data-agent-sub-timeline-track={childTrack.id}
-            key={`${track.id}:${clipIndex}:${childTrack.id}`}
-          >
-            <div className="sequencer-control-tree-header child">
-              <span className="sequencer-control-tree-branch" aria-hidden="true">└─</span>
-              <span className={`sequencer-track-icon ${childTrack.type}`}>{childTrack.type === 'signal' ? 'S' : childTrack.type === 'activation' ? 'A' : childTrack.type === 'audio' ? '♪' : childTrack.type === 'animation' ? 'M' : childTrack.type === 'particle' ? 'P' : childTrack.type === 'control' ? 'T' : 'C'}</span>
-              <span className="sequencer-control-tree-name" title={target || childTrack.name}>{childTrack.name}</span>
-              <small>{count}</small>
-            </div>
-            <div className="sequencer-control-tree-lane" aria-label={`${childTrack.name} mapped into parent time`}>
-              {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
-              {items.map((item) => item.marker
-                ? <i
-                  className={`sequencer-inline-marker ${childTrack.type}`}
-                  style={{ left: `${item.start / asset.duration * 100}%` }}
-                  title={`${item.label} @ ${item.start.toFixed(3)}s parent time`}
-                  aria-label={`${item.label} at ${item.start.toFixed(3)} seconds parent time`}
-                  key={item.key}
-                />
-                : <span
-                  className={`sequencer-inline-item ${childTrack.type}`}
-                  style={{
-                    left: `${item.start / asset.duration * 100}%`,
-                    width: `${Math.max(item.duration / asset.duration * 100, 0.15)}%`,
-                  }}
-                  title={`${item.label} · ${item.start.toFixed(3)}s + ${item.duration.toFixed(3)}s parent time`}
-                  aria-label={`${item.label}, starts ${item.start.toFixed(3)} seconds, duration ${item.duration.toFixed(3)} seconds in parent Timeline`}
-                  key={item.key}
-                >{item.label}</span>)}
-              <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
-            </div>
-          </div>;
-        })}
-        {child && filter && matchingTracks.length === 0 && clipMatches && <div className="sequencer-control-tree-empty">No child tracks match “{controlTreeFilter.trim()}”.</div>}
-      </Fragment>;
-    });
+        </div>)) break;
+        if (canExpand && nestedExpanded && childTrack.type === 'control') {
+          for (const [nestedClipIndex, nestedClip] of childTrack.clips.entries()) {
+            const nestedPath = nestedClip.timeline.trim().replaceAll('\\', '/');
+            const nestedAsset = loadedPreviewControlAssets.get(nestedPath.toLowerCase()) ?? null;
+            const nestedMap = nestedAsset
+              ? timelineComposeControlSourceMap(sourceMap, nestedClip, nestedAsset.duration)
+              : null;
+            renderClip(
+              nestedClip,
+              nestedAsset,
+              nestedMap,
+              `${childNodeKey}/clip:${nestedClipIndex}`,
+              depth + 1,
+              nextStack,
+            );
+          }
+        }
+      }
+      if (child && filter && matchingTracks.length === 0 && clipMatches) {
+        pushRow(<div
+          className="sequencer-control-tree-empty"
+          style={{ '--sequencer-control-tree-depth': depth } as CSSProperties}
+          key={`${nodePath}:empty`}
+        >No descendant tracks match “{controlTreeFilter.trim()}”.</div>);
+      }
+    };
+    for (const [clipIndex, clip] of track.clips.entries()) {
+      const normalizedPath = clip.timeline.trim().replaceAll('\\', '/');
+      const child = loadedPreviewControlAssets.get(normalizedPath.toLowerCase()) ?? null;
+      const sourceMap = child ? timelineControlSourceMap(clip, child.duration) : null;
+      renderClip(
+        clip,
+        child,
+        sourceMap,
+        `${track.id}/clip:${clipIndex}`,
+        1,
+        rootPath ? [rootPath] : [],
+      );
+    }
+    if (rowBudgetExceeded) rows.push(<div
+      className="sequencer-control-tree-empty warning"
+      role="status"
+      aria-label={`Sub-Timeline hierarchy limited to ${maxRows} rows`}
+      key={`${track.id}:row-budget`}
+    >Hierarchy limited to the first {maxRows} rows. Refine the filter to inspect more.</div>);
+    return rows;
   };
 
   return (

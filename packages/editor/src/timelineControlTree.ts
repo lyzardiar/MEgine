@@ -1,6 +1,7 @@
 import {
   timelineControlSourceWindowIsValid,
   type TimelineControlClip,
+  type TimelineControlExtrapolation,
   type TimelineTrack,
 } from './timelineAsset.ts';
 
@@ -37,26 +38,30 @@ function rawTime(clip: TimelineControlClip, parentTime: number): number {
   return clip.clip_in + (parentTime - clip.start) * clip.speed;
 }
 
-export function timelineControlSourceMap(
-  clip: TimelineControlClip,
+function segmentLimit(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(256, Math.floor(value)));
+}
+
+function sourceMapFromRawInterval(
+  parentStart: number,
+  parentEnd: number,
+  sourceStart: number,
+  sourceEnd: number,
+  extrapolation: TimelineControlExtrapolation,
   childDuration: number,
-  maxSegments = 256,
+  limit: number,
 ): TimelineControlSourceMap {
-  const segmentLimit = Math.max(0, Math.min(256, Math.floor(maxSegments)));
-  if (!Number.isFinite(childDuration) || childDuration <= 0 || segmentLimit <= 0) {
+  if (parentEnd - parentStart <= F32_EPSILON || limit <= 0) {
     return { segments: [], truncated: false };
   }
-  if (!timelineControlSourceWindowIsValid(clip, childDuration)) {
-    return { segments: [], truncated: false };
-  }
-  const parentStart = clip.start;
-  const parentEnd = clip.start + clip.duration;
-  const sourceStart = rawTime(clip, parentStart);
-  const sourceEnd = rawTime(clip, parentEnd);
-  if (Math.abs(clip.speed) <= F32_EPSILON) {
-    const sampled = clip.extrapolation === 'loop'
+  const sourceSpeed = (sourceEnd - sourceStart) / (parentEnd - parentStart);
+  const sourceAt = (parentTime: number) => sourceStart
+    + (parentTime - parentStart) * sourceSpeed;
+  if (Math.abs(sourceSpeed) <= F32_EPSILON) {
+    const sampled = extrapolation === 'loop'
       ? ((sourceStart % childDuration) + childDuration) % childDuration
-      : clip.extrapolation === 'hold' && sourceStart >= childDuration
+      : extrapolation === 'hold' && sourceStart >= childDuration
         ? endSample(childDuration)
         : Math.max(0, Math.min(childDuration, sourceStart));
     return {
@@ -74,28 +79,28 @@ export function timelineControlSourceMap(
 
   const parentBreaks = [parentStart];
   let truncated = false;
-  if (clip.extrapolation === 'loop') {
+  if (extrapolation === 'loop') {
     const lower = Math.min(sourceStart, sourceEnd);
     const upper = Math.max(sourceStart, sourceEnd);
     const firstBoundary = Math.floor(lower / childDuration) + 1;
     const lastBoundary = Math.ceil(upper / childDuration) - 1;
     const boundaryCount = Math.max(0, lastBoundary - firstBoundary + 1);
-    truncated = boundaryCount + 1 > segmentLimit;
-    const accepted = Math.min(boundaryCount, truncated ? segmentLimit : boundaryCount);
+    truncated = boundaryCount + 1 > limit;
+    const accepted = Math.min(boundaryCount, truncated ? limit : boundaryCount);
     for (let offset = 0; offset < accepted; offset += 1) {
-      const cycle = clip.speed > 0
+      const cycle = sourceSpeed > 0
         ? firstBoundary + offset
         : lastBoundary - offset;
-      const parent = parentStart + (cycle * childDuration - sourceStart) / clip.speed;
+      const parent = parentStart + (cycle * childDuration - sourceStart) / sourceSpeed;
       if (parent > parentStart + F32_EPSILON && parent < parentEnd - F32_EPSILON) {
         parentBreaks.push(parent);
       }
     }
     if (!truncated) parentBreaks.push(parentEnd);
-  } else if (clip.extrapolation === 'hold') {
+  } else if (extrapolation === 'hold') {
     parentBreaks.push(parentEnd);
     for (const boundary of [0, childDuration]) {
-      const parent = parentStart + (boundary - sourceStart) / clip.speed;
+      const parent = parentStart + (boundary - sourceStart) / sourceSpeed;
       if (parent > parentStart + F32_EPSILON && parent < parentEnd - F32_EPSILON) {
         parentBreaks.push(parent);
       }
@@ -106,13 +111,13 @@ export function timelineControlSourceMap(
   parentBreaks.sort((left, right) => left - right);
 
   const segments: TimelineControlSourceSegment[] = [];
-  for (let index = 1; index < parentBreaks.length && segments.length < segmentLimit; index += 1) {
+  for (let index = 1; index < parentBreaks.length && segments.length < limit; index += 1) {
     const segmentStart = parentBreaks[index - 1];
     const segmentEnd = parentBreaks[index];
-    const rawStart = rawTime(clip, segmentStart);
-    const rawEnd = rawTime(clip, segmentEnd);
-    const rawMiddle = rawTime(clip, (segmentStart + segmentEnd) * 0.5);
-    if (clip.extrapolation === 'loop') {
+    const rawStart = sourceAt(segmentStart);
+    const rawEnd = sourceAt(segmentEnd);
+    const rawMiddle = sourceAt((segmentStart + segmentEnd) * 0.5);
+    if (extrapolation === 'loop') {
       const cycle = Math.floor(rawMiddle / childDuration);
       segments.push({
         parentStart: segmentStart,
@@ -125,7 +130,7 @@ export function timelineControlSourceMap(
       continue;
     }
     const held = rawMiddle <= 0 || rawMiddle >= childDuration;
-    const sample = (value: number) => value >= childDuration && clip.extrapolation === 'hold'
+    const sample = (value: number) => value >= childDuration && extrapolation === 'hold'
       ? endSample(childDuration)
       : Math.max(0, Math.min(childDuration, value));
     segments.push({
@@ -137,8 +142,103 @@ export function timelineControlSourceMap(
       cycle: 0,
     });
   }
+  return { segments, truncated };
+}
+
+export function timelineControlSourceMap(
+  clip: TimelineControlClip,
+  childDuration: number,
+  maxSegments = 256,
+): TimelineControlSourceMap {
+  const limit = segmentLimit(maxSegments);
+  if (!Number.isFinite(childDuration) || childDuration <= 0 || limit <= 0) {
+    return { segments: [], truncated: false };
+  }
+  if (!timelineControlSourceWindowIsValid(clip, childDuration)) {
+    return { segments: [], truncated: false };
+  }
+  const parentStart = clip.start;
+  const parentEnd = clip.start + clip.duration;
+  const sourceStart = rawTime(clip, parentStart);
+  const sourceEnd = rawTime(clip, parentEnd);
+  return sourceMapFromRawInterval(
+    parentStart,
+    parentEnd,
+    sourceStart,
+    sourceEnd,
+    clip.extrapolation,
+    childDuration,
+    limit,
+  );
+}
+
+export function timelineComposeControlSourceMap(
+  parentMap: TimelineControlSourceMap,
+  clip: TimelineControlClip,
+  childDuration: number,
+  maxSegments = 256,
+): TimelineControlSourceMap {
+  const limit = segmentLimit(maxSegments);
+  if (!Number.isFinite(childDuration) || childDuration <= 0 || limit <= 0
+    || !timelineControlSourceWindowIsValid(clip, childDuration)) {
+    return { segments: [], truncated: false };
+  }
+  const clipStart = clip.start;
+  const clipEnd = clip.start + clip.duration;
+  const segments: TimelineControlSourceSegment[] = [];
+  let truncated = parentMap.truncated;
+  for (const [parentIndex, parent] of parentMap.segments.entries()) {
+    if (segments.length >= limit) {
+      truncated = true;
+      break;
+    }
+    const parentDelta = parent.childEnd - parent.childStart;
+    let rootStart: number;
+    let rootEnd: number;
+    let timelineStart: number;
+    let timelineEnd: number;
+    if (Math.abs(parentDelta) <= F32_EPSILON) {
+      if (parent.childStart < clipStart - F32_EPSILON
+        || parent.childStart >= clipEnd - F32_EPSILON) continue;
+      rootStart = parent.parentStart;
+      rootEnd = parent.parentEnd;
+      timelineStart = parent.childStart;
+      timelineEnd = parent.childEnd;
+    } else {
+      const minimum = Math.min(parent.childStart, parent.childEnd);
+      const maximum = Math.max(parent.childStart, parent.childEnd);
+      const overlapStart = Math.max(clipStart, minimum);
+      const overlapEnd = Math.min(clipEnd, maximum);
+      if (overlapEnd - overlapStart <= F32_EPSILON) continue;
+      const rootAt = (timelineTime: number) => parent.parentStart
+        + (parent.parentEnd - parent.parentStart)
+          * ((timelineTime - parent.childStart) / parentDelta);
+      const rootA = rootAt(overlapStart);
+      const rootB = rootAt(overlapEnd);
+      rootStart = Math.min(rootA, rootB);
+      rootEnd = Math.max(rootA, rootB);
+      timelineStart = rootA <= rootB ? overlapStart : overlapEnd;
+      timelineEnd = rootA <= rootB ? overlapEnd : overlapStart;
+    }
+    const rawStart = clip.clip_in + (timelineStart - clip.start) * clip.speed;
+    const rawEnd = clip.clip_in + (timelineEnd - clip.start) * clip.speed;
+    const nested = sourceMapFromRawInterval(
+      rootStart,
+      rootEnd,
+      rawStart,
+      rawEnd,
+      clip.extrapolation,
+      childDuration,
+      limit - segments.length,
+    );
+    segments.push(...nested.segments);
+    if (nested.truncated) truncated = true;
+    if (segments.length >= limit && parentIndex < parentMap.segments.length - 1) {
+      truncated = true;
+    }
+  }
   return {
-    segments,
+    segments: segments.sort((left, right) => left.parentStart - right.parentStart),
     truncated,
   };
 }
@@ -185,7 +285,7 @@ export function timelineInlineTrackItems(
       const delta = segment.childEnd - segment.childStart;
       if (Math.abs(delta) <= F32_EPSILON) {
         if (segment.childStart >= itemStart - F32_EPSILON
-          && segment.childStart < itemEnd - F32_EPSILON) {
+          && segment.childStart < itemEnd) {
           output.push({
             key: `${itemIndex}:${segmentIndex}`,
             label: clipLabel(track, itemIndex),

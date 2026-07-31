@@ -4937,16 +4937,18 @@ body.insp-scrubbing * {
 }
 .sequencer-control-tree-row.child { height: 28px; border-top-color: #172126; background: #1e2427; }
 .sequencer-control-tree-row.summary.unavailable { color: #d79b91; background: #302526; }
+.sequencer-control-tree-row.summary.cyclic { color: #e0a29a; background: #352526; }
 .sequencer-control-tree-empty {
   width: calc(180px + var(--sequencer-lane-width, 360px));
   min-width: 540px;
   height: 25px;
-  padding: 5px 10px 5px 47px;
+  padding: 5px 10px 5px calc(33px + var(--sequencer-control-tree-depth, 1) * 14px);
   border-top: 1px solid #172126;
   color: #788891;
   background: #1d2326;
   font: italic 10px var(--u-font);
 }
+.sequencer-control-tree-empty.warning { color: #dfbd83; background: #302b22; }
 
 .sequencer-panel.track-dragging,
 .sequencer-panel.track-dragging * { cursor: grabbing !important; user-select: none; }
@@ -5166,12 +5168,15 @@ body.insp-scrubbing * {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 4px 0 22px;
+  padding: 0 4px 0 calc(8px + var(--sequencer-control-tree-depth, 1) * 14px);
   border-right: 1px solid #111;
   background: #263238;
   font-size: 10px;
 }
-.sequencer-control-tree-header.child { padding-left: 32px; background: #232b2f; }
+.sequencer-control-tree-header.child {
+  padding-left: calc(18px + var(--sequencer-control-tree-depth, 1) * 14px);
+  background: #232b2f;
+}
 .sequencer-control-tree-branch { flex: 0 0 auto; color: #56717c; font: 10px var(--u-mono); }
 .sequencer-control-tree-name {
   min-width: 0;
@@ -5195,6 +5200,20 @@ body.insp-scrubbing * {
   color: #bde2ea;
   font-size: 9px;
 }
+.sequencer-control-tree-header .sequencer-control-tree-nested-toggle {
+  width: 15px;
+  height: 19px;
+  flex: 0 0 15px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #75b5c0;
+}
+.sequencer-control-tree-header .sequencer-control-tree-nested-toggle:hover:not(:disabled),
+.sequencer-control-tree-header .sequencer-control-tree-nested-toggle:focus-visible { color: #d7faff; background: #35464c; }
+.sequencer-control-tree-header .sequencer-control-tree-nested-toggle:disabled { color: #566066; }
 .sequencer-control-tree-header .sequencer-track-icon {
   width: 15px;
   height: 15px;
