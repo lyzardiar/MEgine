@@ -63,7 +63,12 @@ import {
   type UiBlockingObjects,
   type UiRaycastPlane,
 } from './uiPhysicsRaycast';
-import { layoutUiText, type UiTextLayoutRun } from './uiTextLayout';
+import {
+  layoutUiText,
+  type UiTextGlyphMeasurement,
+  type UiTextLayoutRun,
+} from './uiTextLayout';
+import type { UiRichTextGlyph } from './uiRichText';
 import { uiTextFontCss } from './uiFontAssets';
 
 /** World pixels-per-unit for Scene view Overlay canvas plane. */
@@ -3381,6 +3386,54 @@ export function drawUiItems(
         ctx.fillStyle = cssColor(it.text.color);
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
+        ctx.fontKerning = 'normal';
+        const glyphMeasurements = new Map<string, UiTextGlyphMeasurement>();
+        const pairKerning = new Map<string, number>();
+        const measureImportedGlyph = (glyph: UiRichTextGlyph): UiTextGlyphMeasurement => {
+          const key = `${glyph.fontSize}\0${glyph.fontStyle}\0${glyph.character}`;
+          const cached = glyphMeasurements.get(key);
+          if (cached) return cached;
+          ctx.font = uiTextFontCss(glyph.fontSize, glyph.fontStyle, it.text!.font);
+          const metrics = ctx.measureText(glyph.character);
+          const extended = metrics as TextMetrics & {
+            fontBoundingBoxAscent?: number;
+            fontBoundingBoxDescent?: number;
+            emHeightAscent?: number;
+            emHeightDescent?: number;
+          };
+          const left = metrics.actualBoundingBoxLeft;
+          const right = metrics.actualBoundingBoxRight;
+          const ascent = extended.fontBoundingBoxAscent
+            ?? extended.emHeightAscent
+            ?? metrics.actualBoundingBoxAscent;
+          const descent = extended.fontBoundingBoxDescent
+            ?? extended.emHeightDescent
+            ?? metrics.actualBoundingBoxDescent;
+          const measured = {
+            advance: metrics.width,
+            metricWidth: Number.isFinite(right) ? Math.max(metrics.width, right) : metrics.width,
+            lineHeight: Number.isFinite(ascent) && Number.isFinite(descent)
+              ? ascent + descent
+              : glyph.fontSize * (8 / 7),
+            geometry: Number.isFinite(left) && Number.isFinite(right)
+              ? [-left, right] as [number, number]
+              : null,
+          };
+          glyphMeasurements.set(key, measured);
+          return measured;
+        };
+        const measureImportedPairKerning = (left: UiRichTextGlyph, right: UiRichTextGlyph) => {
+          const key = `${left.fontSize}\0${left.fontStyle}\0${left.character}\0${right.character}`;
+          const cached = pairKerning.get(key);
+          if (cached != null) return cached;
+          ctx.font = uiTextFontCss(left.fontSize, left.fontStyle, it.text!.font);
+          ctx.fontKerning = 'none';
+          const unkerned = ctx.measureText(left.character + right.character).width;
+          ctx.fontKerning = 'normal';
+          const measured = ctx.measureText(left.character + right.character).width - unkerned;
+          pairKerning.set(key, measured);
+          return measured;
+        };
         const layout = layoutUiText(it.text.text, {
           width: w,
           height: h,
@@ -3397,36 +3450,8 @@ export function drawUiItems(
           verticalOverflow: it.text.verticalOverflow,
           alignment: it.text.alignment,
           verticalAlign: it.text.verticalAlign,
-          measureGlyph: it.text.font
-            ? (glyph) => {
-                ctx.font = uiTextFontCss(glyph.fontSize, glyph.fontStyle, it.text!.font);
-                const metrics = ctx.measureText(glyph.character);
-                const extended = metrics as TextMetrics & {
-                  fontBoundingBoxAscent?: number;
-                  fontBoundingBoxDescent?: number;
-                  emHeightAscent?: number;
-                  emHeightDescent?: number;
-                };
-                const left = metrics.actualBoundingBoxLeft;
-                const right = metrics.actualBoundingBoxRight;
-                const ascent = extended.fontBoundingBoxAscent
-                  ?? extended.emHeightAscent
-                  ?? metrics.actualBoundingBoxAscent;
-                const descent = extended.fontBoundingBoxDescent
-                  ?? extended.emHeightDescent
-                  ?? metrics.actualBoundingBoxDescent;
-                return {
-                  advance: metrics.width,
-                  metricWidth: Number.isFinite(right) ? Math.max(metrics.width, right) : metrics.width,
-                  lineHeight: Number.isFinite(ascent) && Number.isFinite(descent)
-                    ? ascent + descent
-                    : glyph.fontSize * (8 / 7),
-                  geometry: Number.isFinite(left) && Number.isFinite(right)
-                    ? [-left, right] as [number, number]
-                    : null,
-                };
-              }
-            : undefined,
+          measureGlyph: it.text.font ? measureImportedGlyph : undefined,
+          measurePairKerning: it.text.font ? measureImportedPairKerning : undefined,
         });
         for (const line of layout.lines) {
           const fallbackOrigin = x + line.x;

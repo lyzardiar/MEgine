@@ -350,6 +350,47 @@ test('Canvas preview measures and draws Text with its imported font family', () 
   assert.match(line.at(-1), /^italic 12px "MEngineFont_[0-9a-f]{8}", system-ui, sans-serif$/);
 });
 
+test('Canvas preview applies imported font kerning across rich-text draw runs', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: { Canvas: {}, RectTransform: { size_delta: [100, 100] } },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: { size_delta: [80, 30] },
+        Text: {
+          text: 'A<color=red>V</color>',
+          font: 'Assets/Fonts/Interface.ttf',
+          font_size: 10,
+          alignment: 'Left',
+          vertical_align: 'Top',
+          horizontal_overflow: 'Overflow',
+          vertical_overflow: 'Overflow',
+        },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  canvas.context.measureText = (value) => ({
+    width: value === 'AV' && canvas.context.fontKerning === 'normal'
+      ? 17
+      : String(value).length * 10,
+    actualBoundingBoxLeft: 0,
+    actualBoundingBoxRight: String(value).length * 10,
+    actualBoundingBoxAscent: 8,
+    actualBoundingBoxDescent: 2,
+  });
+  drawUiItems(canvas.context, items, null, null);
+  const runs = canvas.context.operations.filter((operation) => operation[0] === 'fillText');
+  assert.deepEqual(runs.map((operation) => operation[1]), ['A', 'V']);
+  assert.equal(runs[1][2] - runs[0][2], 7);
+});
+
 test('adding an authored Graphic creates and protects its CanvasRenderer dependency', async () => {
   const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
   const store = createEditorStore();

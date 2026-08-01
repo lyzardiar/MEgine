@@ -315,3 +315,66 @@ test('imported font measurements drive wrapping, line boxes, geometry, and Best 
   assert.equal(bounded.lineHeight, 2_048);
   assert.equal(bounded.lines[0].x, -2_048);
 });
+
+test('imported font pair kerning drives width, wrapping, runs, and Best Fit', () => {
+  const measureGlyph = ({ fontSize }) => ({
+    advance: fontSize,
+    metricWidth: fontSize,
+    lineHeight: fontSize,
+    geometry: [0, fontSize],
+  });
+  const measurePairKerning = (left, right) => (
+    left.character === 'A' && right.character === 'V' ? -left.fontSize * 0.3 : 0
+  );
+  const wrapped = layoutUiText('AVA', options({
+    width: 17,
+    height: 30,
+    fontSize: 10,
+    measureGlyph,
+    measurePairKerning,
+  }));
+  assert.deepEqual(wrapped.lines.map(({ text, width }) => ({ text, width })), [
+    { text: 'AV', width: 17 },
+    { text: 'A', width: 10 },
+  ]);
+
+  const colored = layoutUiText('A<color=red>V</color>A', options({
+    width: 40,
+    height: 20,
+    fontSize: 10,
+    horizontalOverflow: 'Overflow',
+    measureGlyph,
+    measurePairKerning,
+  }));
+  assert.equal(colored.lines[0].width, 27);
+  assert.deepEqual(colored.lines[0].runs.map(({ text, x }) => ({ text, x })), [
+    { text: 'A', x: 0 },
+    { text: 'V', x: 7 },
+    { text: 'A', x: 17 },
+  ]);
+
+  const bestFit = layoutUiText('AV', options({
+    width: 17,
+    height: 20,
+    bestFit: true,
+    minSize: 7,
+    maxSize: 10,
+    horizontalOverflow: 'Overflow',
+    verticalOverflow: 'Overflow',
+    measureGlyph,
+    measurePairKerning: (left, right) => (
+      left.character === 'A' && right.character === 'V' ? -left.fontSize * 0.25 : 0
+    ),
+  }));
+  assert.equal(bestFit.fontSize, 9);
+
+  const bounded = layoutUiText('AV', options({
+    width: 20,
+    height: 20,
+    fontSize: 10,
+    horizontalOverflow: 'Overflow',
+    measureGlyph,
+    measurePairKerning: () => -99_999,
+  }));
+  assert.equal(bounded.lines[0].width, 10);
+});

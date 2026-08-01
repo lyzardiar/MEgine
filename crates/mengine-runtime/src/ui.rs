@@ -45,6 +45,17 @@ pub trait UiFontResolver {
         font_style: &str,
     ) -> Option<UiFontGlyphMetrics>;
 
+    fn measure_pair_kerning(
+        &mut self,
+        _font: &str,
+        _left: char,
+        _right: char,
+        _font_size: f32,
+        _font_style: &str,
+    ) -> Option<f32> {
+        None
+    }
+
     fn resolve_glyph_texture(
         &mut self,
         font: &str,
@@ -4731,6 +4742,7 @@ struct BitmapTextGlyph {
     metric_width: f32,
     line_height: f32,
     geometry: Option<(f32, f32)>,
+    kerning_before: f32,
     asset_font: bool,
     font_style: String,
     color: Option<[f32; 4]>,
@@ -5027,6 +5039,7 @@ fn measure_bitmap_text_glyph(
         metric_width: 5.0 * glyph_scale + bitmap_text_style_overhang(&font_style, glyph_scale),
         line_height: 8.0 * glyph_scale,
         geometry: bitmap_glyph_geometry_bounds(character, glyph_scale, &font_style),
+        kerning_before: 0.0,
         asset_font: false,
         font_style,
         color,
@@ -5182,7 +5195,10 @@ fn bitmap_text_geometry_bounds(glyphs: &[BitmapTextGlyph]) -> Option<(f32, f32)>
     let mut minimum = f32::INFINITY;
     let mut maximum = f32::NEG_INFINITY;
     let mut cursor = 0.0;
-    for glyph in glyphs {
+    for (index, glyph) in glyphs.iter().enumerate() {
+        if index > 0 {
+            cursor += glyph.kerning_before;
+        }
         if let Some((left, right)) = glyph.geometry {
             minimum = minimum.min(cursor + left);
             maximum = maximum.max(cursor + right);
@@ -5197,11 +5213,13 @@ fn measured_bitmap_line_width(glyphs: &[BitmapTextGlyph]) -> f32 {
         .iter()
         .enumerate()
         .map(|(index, glyph)| {
-            if index + 1 == glyphs.len() {
-                glyph.metric_width
-            } else {
-                glyph.advance
-            }
+            let kerning = if index > 0 { glyph.kerning_before } else { 0.0 };
+            kerning
+                + if index + 1 == glyphs.len() {
+                    glyph.metric_width
+                } else {
+                    glyph.advance
+                }
         })
         .sum()
 }
@@ -5212,6 +5230,7 @@ fn expand_bitmap_tabs(glyphs: &[BitmapTextGlyph]) -> Vec<BitmapTextGlyph> {
         if glyph.character == '\t' {
             expanded.extend((0..4).map(|_| BitmapTextGlyph {
                 character: ' ',
+                kerning_before: 0.0,
                 ..glyph.clone()
             }));
         } else {
@@ -5241,6 +5260,7 @@ fn wrap_bitmap_paragraph(
             } else {
                 line_width - source[end - 1].metric_width
                     + source[end - 1].advance
+                    + glyph.kerning_before
                     + glyph.metric_width
             };
             if candidate_width > width + 1e-4 {
@@ -5309,7 +5329,7 @@ fn apply_font_metrics(
     if font.trim().is_empty() {
         return;
     }
-    for glyph in glyphs {
+    for glyph in glyphs.iter_mut() {
         if matches!(glyph.character, '\n' | '\r') {
             continue;
         }
@@ -5324,6 +5344,32 @@ fn apply_font_metrics(
         glyph.line_height = metrics.line_height;
         glyph.geometry = metrics.geometry;
         glyph.asset_font = true;
+    }
+    for index in 1..glyphs.len() {
+        let (left, right) = glyphs.split_at_mut(index);
+        let left = &left[index - 1];
+        let right = &mut right[0];
+        if !left.asset_font
+            || !right.asset_font
+            || left.font_size != right.font_size
+            || left.font_style != right.font_style
+            || matches!(left.character, '\n' | '\t')
+            || matches!(right.character, '\n' | '\t')
+        {
+            continue;
+        }
+        let Some(kerning) = resolver.measure_pair_kerning(
+            font,
+            left.character,
+            right.character,
+            left.font_size,
+            &left.font_style,
+        ) else {
+            continue;
+        };
+        if kerning.is_finite() {
+            right.kerning_before = kerning.clamp(-left.advance, 2_048.0);
+        }
     }
 }
 
@@ -5873,7 +5919,10 @@ fn push_text_styled_rich_internal(
     let mut font_glyphs = Vec::new();
     for line in &layout.lines {
         let mut cursor = 0.0;
-        for glyph in &line.glyphs {
+        for (index, glyph) in line.glyphs.iter().enumerate() {
+            if index > 0 {
+                cursor += glyph.kerning_before;
+            }
             let glyph_color = glyph.color.map_or(color, |rich| {
                 [rich[0], rich[1], rich[2], rich[3] * color[3]]
             });
@@ -6717,7 +6766,7 @@ mod tests {
                 font_style: &str,
             ) -> Option<UiFontGlyphMetrics> {
                 assert_eq!(font, "Assets/Fonts/Interface.ttf");
-                assert!(matches!(character, 'M' | 'A'));
+                assert!(matches!(character, 'M' | 'A' | 'V'));
                 assert_eq!(font_size, 12.0);
                 assert_eq!(font_style, "Normal");
                 Some(UiFontGlyphMetrics {
@@ -6728,6 +6777,21 @@ mod tests {
                 })
             }
 
+            fn measure_pair_kerning(
+                &mut self,
+                font: &str,
+                left: char,
+                right: char,
+                font_size: f32,
+                font_style: &str,
+            ) -> Option<f32> {
+                assert_eq!(font, "Assets/Fonts/Interface.ttf");
+                assert_eq!((left, right), ('A', 'V'));
+                assert_eq!(font_size, 12.0);
+                assert_eq!(font_style, "Normal");
+                Some(-2.0)
+            }
+
             fn resolve_glyph_texture(
                 &mut self,
                 font: &str,
@@ -6736,7 +6800,7 @@ mod tests {
                 font_style: &str,
             ) -> Option<UiFontGlyphTexture> {
                 assert_eq!(font, "Assets/Fonts/Interface.ttf");
-                assert_eq!(character, 'A');
+                assert!(matches!(character, 'A' | 'V'));
                 assert_eq!(font_size, 12.0);
                 assert_eq!(font_style, "Normal");
                 Some(UiFontGlyphTexture {
@@ -6761,7 +6825,7 @@ mod tests {
         world.insert_component(
             text,
             Text {
-                text: "A".into(),
+                text: "AV".into(),
                 font: "Assets/Fonts/Interface.ttf".into(),
                 font_size: 12.0,
                 alignment: "Left".into(),
@@ -6786,15 +6850,18 @@ mod tests {
             &HashMap::new(),
             &mut resolver,
         );
-        let primitive = frame
+        let glyphs = frame
             .plan
             .primitives
             .iter()
-            .find(|primitive| primitive.key.material == "ui/text/font")
-            .expect("font glyph primitive");
+            .filter(|primitive| primitive.key.material == "ui/text/font")
+            .collect::<Vec<_>>();
+        assert_eq!(glyphs.len(), 2);
+        let primitive = glyphs[0];
         assert_eq!(primitive.key.texture, "mengine-font://test/0");
         assert_eq!(primitive.uv, [0.1, 0.2, 0.3, 0.4]);
         assert_eq!([primitive.rect[2], primitive.rect[3]], [7.0, 9.0]);
+        assert_eq!(glyphs[1].rect[0] - glyphs[0].rect[0], 7.0);
         assert_eq!(
             frame
                 .plan

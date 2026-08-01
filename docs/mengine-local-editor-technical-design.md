@@ -2127,4 +2127,11 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Editor Canvas 使用浏览器 `FontFace` 从当前项目资产端点后台加载字体，并把项目资产 GUID 与 revision 纳入 family identity 和 URL，使项目切换及外部热更新不会复用旧字体。实际 `TextMetrics` 的 advance、行高和可见边界进入换行、Best Fit、富文本变量字号、Align By Geometry 与最终 `fillText`；加载失败、非 `Assets` 路径或测试环境不支持 `FontFace` 时安全回退到 `system-ui`，不要求窗口获得焦点或可见性。
 - PC Build 从 Scene/Prefab 的 `Text.font` 收集发布依赖，把字体标记为独立 `font` 内容类别，并在 staging 前检查 sfnt 签名、唯一表目录、`head/maxp/hhea/hmtx/cmap` 度量、可用字符映射以及 TrueType `loca/glyf` 或 OpenType `CFF/CFF2` 轮廓边界。最终 Player 包校验再次使用与渲染器相同的 `ab_glyph` 解析器，缺失、越界或损坏字体均在启动渲染前失败，不能通过手改清单绕过。
 - Runtime 按字体内容 SHA-256、量化字号与 Font Style 缓存字形，使用真实 advance、行高和可见轮廓参与完整 Text 排版，再把 alpha 字形装入共享 1024×1024 RGBA 图集并以单个纹理 quad 绘制；同页字形可合批，字体文件 revision 改变时旧 GPU 图集会退休。Bold 使用有限像素膨胀、Italic 使用有限斜切，Outline 复用同一 alpha 字形；单字体 64 MiB、字号 1–512、全局 32 页图集、Text 16,384 字符/65,536 图元等上限共同约束后台 Agent 写入的恶意内容，未变化的错误只报告一次。
-- 无窗口回归覆盖字体扩展名、资源槽与 Agent 默认值、项目索引损坏状态、项目隔离 family、真实 Canvas 字体度量、字体驱动的换行/行高/Best Fit/几何对齐、referenced build 依赖与损坏包拒绝、真实系统字体解析/栅格化/共享图集，以及组件到 Runtime 纹理图元的端到端传递。当前实现支持单字体 Unicode cmap 字形，但尚未实现字体 fallback 列表、pair kerning、连字、双向文本或复杂文字 shaping；这些仍是后续 Text 对齐项，不能把本批次描述成完整替代 Unity TextCore/TMP。
+- 无窗口回归覆盖字体扩展名、资源槽与 Agent 默认值、项目索引损坏状态、项目隔离 family、真实 Canvas 字体度量、字体驱动的换行/行高/Best Fit/几何对齐、referenced build 依赖与损坏包拒绝、真实系统字体解析/栅格化/共享图集，以及组件到 Runtime 纹理图元的端到端传递。当前实现支持单字体 Unicode cmap 字形，但尚未实现字体 fallback 列表、连字、双向文本或复杂文字 shaping；这些仍是后续 Text 对齐项，不能把本批次描述成完整替代 Unity TextCore/TMP。
+
+## 205. 2026-08-01 Unity Text Font Pair Kerning
+
+- 导入字体排版不再把每个字形的 advance 简单相加。Editor 比较同一 Canvas 字符对在 `fontKerning=normal` 与 `none` 下的宽度，只提取 kerning 而不把连字替换误算进来；Runtime 使用 `ab_glyph` 的缩放字形 pair kerning。负字距与正字距同时进入逐行宽度、按词/长词换行、Best Fit、Align By Geometry 和最终字形原点，因此 `AV`、`To` 等组合不会在预览与 Player 中产生不同间距。
+- Kerning 只跨越字号与 Font Style 相同的相邻字符，显式换行和 Tab 会断开字符对；富文本仅改变颜色时仍保留字符对并把下一 run 的起点精确移动，改变字号或样式时则建立新的排版 run。换行后的行首会忽略上一行遗留的 pair 值，避免软换行把前一行末尾字距带到下一行。
+- Editor 在单次 Text 绘制内缓存字号、样式、字符和字符对度量，Best Fit 二分搜索与重复字符不会反复触发相同 `measureText`；Runtime 继续复用每帧只检查一次文件状态的解析字体缓存。非有限 pair 值被拒绝，负值最多抵消左字形 advance，正值最多 2,048 像素，保持 hostile Agent 内容的坐标与时间复杂度有界。
+- 无窗口回归覆盖负字距行宽、软换行、跨颜色 rich-text run 的实际 Canvas 坐标、Best Fit、恶意极端值、Runtime 纹理字形位置和真实系统字体 pair 查询。剩余字体对齐项仍包括 fallback 列表、连字、双向文本和复杂文字 shaping。

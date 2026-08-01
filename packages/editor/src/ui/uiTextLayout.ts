@@ -25,6 +25,7 @@ export interface UiTextLayoutOptions {
   alignment: 'Left' | 'Center' | 'Right';
   verticalAlign: 'Top' | 'Middle' | 'Bottom';
   measureGlyph?: (glyph: UiRichTextGlyph) => UiTextGlyphMeasurement | null;
+  measurePairKerning?: (left: UiRichTextGlyph, right: UiRichTextGlyph) => number | null;
 }
 
 export interface UiTextGlyphMeasurement {
@@ -82,6 +83,7 @@ interface MeasuredGlyph extends UiRichTextGlyph {
   metricWidth: number;
   lineHeight: number;
   geometry: [number, number] | null;
+  kerningBefore: number;
 }
 
 function measureGlyph(
@@ -100,6 +102,7 @@ function measureGlyph(
     metricWidth: 5 * glyphScale + styleOverhang(glyph.fontStyle, glyphScale),
     lineHeight: 8 * glyphScale,
     geometry: glyphGeometryBounds(glyph.character, glyphScale, glyph.fontStyle),
+    kerningBefore: 0,
   };
   const measured = customMeasure?.({ ...glyph, fontSize });
   if (!measured
@@ -127,6 +130,7 @@ function measuredLineWidth(glyphs: readonly MeasuredGlyph[]): number {
   if (glyphs.length === 0) return 0;
   let width = 0;
   glyphs.forEach((glyph, index) => {
+    if (index > 0) width += glyph.kerningBefore;
     width += index === glyphs.length - 1 ? glyph.metricWidth : glyph.advance;
   });
   return width;
@@ -189,7 +193,8 @@ function textGeometryBounds(glyphs: readonly MeasuredGlyph[]): [number, number] 
   let minimum = Number.POSITIVE_INFINITY;
   let maximum = Number.NEGATIVE_INFINITY;
   let cursor = 0;
-  glyphs.forEach((glyph) => {
+  glyphs.forEach((glyph, index) => {
+    if (index > 0) cursor += glyph.kerningBefore;
     const bounds = glyph.geometry;
     if (bounds) {
       minimum = Math.min(minimum, cursor + bounds[0]);
@@ -205,7 +210,7 @@ function textGeometryBounds(glyphs: readonly MeasuredGlyph[]): [number, number] 
 function expandTabs(glyphs: readonly MeasuredGlyph[]): MeasuredGlyph[] {
   return glyphs.flatMap((glyph) => (
     glyph.character === '\t'
-      ? Array.from({ length: 4 }, () => ({ ...glyph, character: ' ' }))
+      ? Array.from({ length: 4 }, () => ({ ...glyph, character: ' ', kerningBefore: 0 }))
       : [glyph]
   ));
 }
@@ -226,7 +231,7 @@ function wrapParagraph(
       const candidateWidth = end === cursor
         ? glyph.metricWidth
         : lineWidth - source[end - 1].metricWidth
-          + source[end - 1].advance + glyph.metricWidth;
+          + source[end - 1].advance + glyph.kerningBefore + glyph.metricWidth;
       if (candidateWidth > width + 1e-4) break;
       lineWidth = candidateWidth;
       if (/\s/u.test(glyph.character)) lastWhitespace = end;
@@ -265,7 +270,8 @@ function buildRuns(
 ): UiTextLayoutRun[] {
   const runs: UiTextLayoutRun[] = [];
   let cursor = 0;
-  for (const glyph of glyphs) {
+  for (const [index, glyph] of glyphs.entries()) {
+    if (index > 0) cursor += glyph.kerningBefore;
     const y = lineHeight - glyph.lineHeight;
     const previous = runs.at(-1);
     if (previous
@@ -348,15 +354,25 @@ function parsedGlyphsAtFontSize(
   fontSize: number,
 ): { glyphs: MeasuredGlyph[]; truncated: boolean } {
   const normalized = normalizeAndBound(value);
-  return {
-    glyphs: parseUiRichText(normalized.value, {
-      enabled: options.supportRichText,
-      fontSize,
-      fontScale: finitePositive(options.fontScale, 1),
-      fontStyle: options.fontStyle,
-    }).map((glyph) => measureGlyph(glyph, options.measureGlyph)),
-    truncated: normalized.truncated,
-  };
+  const glyphs = parseUiRichText(normalized.value, {
+    enabled: options.supportRichText,
+    fontSize,
+    fontScale: finitePositive(options.fontScale, 1),
+    fontStyle: options.fontStyle,
+  }).map((glyph) => measureGlyph(glyph, options.measureGlyph));
+  for (let index = 1; index < glyphs.length; index += 1) {
+    const left = glyphs[index - 1];
+    const right = glyphs[index];
+    if (!options.measurePairKerning
+      || left.fontSize !== right.fontSize
+      || left.fontStyle !== right.fontStyle
+      || /[\n\t]/u.test(left.character)
+      || /[\n\t]/u.test(right.character)) continue;
+    const measured = options.measurePairKerning(left, right);
+    if (typeof measured !== 'number' || !Number.isFinite(measured)) continue;
+    right.kerningBefore = Math.max(-left.advance, Math.min(2_048, measured));
+  }
+  return { glyphs, truncated: normalized.truncated };
 }
 
 function authoredLines(

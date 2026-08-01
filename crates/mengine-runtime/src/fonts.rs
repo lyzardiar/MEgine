@@ -442,6 +442,19 @@ impl UiFontResolver for RuntimeFontCache {
         })
     }
 
+    fn measure_pair_kerning(
+        &mut self,
+        reference: &str,
+        left: char,
+        right: char,
+        font_size: f32,
+        _font_style: &str,
+    ) -> Option<f32> {
+        let (_, _, font) = self.font(reference)?;
+        let scaled = font.as_scaled(quantized_size(font_size) as f32);
+        Some(scaled.kern(scaled.glyph_id(left), scaled.glyph_id(right)))
+    }
+
     fn resolve_glyph_texture(
         &mut self,
         reference: &str,
@@ -617,6 +630,13 @@ mod tests {
             .unwrap();
         assert!(wide.advance > narrow.advance);
         assert!(wide.line_height > 0.0);
+        let kerning = cache
+            .measure_pair_kerning("Assets/Fonts/Test.ttf", 'A', 'V', 24.0, "Normal")
+            .unwrap();
+        assert!(
+            kerning < 0.0,
+            "expected the installed AV pair to tighten, got {kerning}"
+        );
         assert_eq!(cache.checked_fonts.len(), 1);
         let first = cache
             .resolve_glyph_texture("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal")
