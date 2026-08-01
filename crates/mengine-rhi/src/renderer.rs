@@ -1580,7 +1580,10 @@ impl Renderer {
     }
 
     fn prune_material_pipeline_cache(&mut self) {
-        if self.material_pipeline_epoch % MATERIAL_PIPELINE_PRUNE_INTERVAL != 0 {
+        if !self
+            .material_pipeline_epoch
+            .is_multiple_of(MATERIAL_PIPELINE_PRUNE_INTERVAL)
+        {
             return;
         }
         let custom_keys = self

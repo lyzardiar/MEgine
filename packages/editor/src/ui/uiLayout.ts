@@ -90,6 +90,8 @@ export type UiSoftClip = {
 
 export type UiDrawItem = {
   entity: number;
+  /** Nearest Canvas; nested Canvases are independent Unity batching islands. */
+  canvasBatchRoot: number;
   rect: Rect;
   depth: number;
   role: 'canvas' | 'graphic';
@@ -719,6 +721,7 @@ export function layoutUiOverlay(
 
   for (const canvas of canvases) {
     const canvasOutputStart = out.length;
+    let paintOrder = 0;
     const inheritedCanvas = outermostCanvas(entities, canvas);
     const mode =
       (inheritedCanvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
@@ -778,6 +781,7 @@ export function layoutUiOverlay(
       isCanvasRoot: boolean,
       forcedRect?: Rect,
       inherited = {
+        canvasBatchRoot: canvas.entity,
         opacity: 1,
         interactable: true,
         blocksRaycasts: true,
@@ -879,6 +883,7 @@ export function layoutUiOverlay(
         ? { opacity: 1, interactable: true, blocksRaycasts: true }
         : inherited;
       const state = {
+        canvasBatchRoot: canvasSettings ? ent.entity : inherited.canvasBatchRoot,
         opacity: groupBase.opacity * Math.max(0, Math.min(1, number(group?.alpha, 1))),
         interactable: groupBase.interactable && group?.interactable !== false,
         blocksRaycasts: groupBase.blocksRaycasts
@@ -935,8 +940,9 @@ export function layoutUiOverlay(
       if (isCanvas) {
         out.push({
           entity: ent.entity,
+          canvasBatchRoot: state.canvasBatchRoot,
           rect: renderedRect,
-          depth: depthBase + depth,
+          depth: depthBase + paintOrder++,
           role: 'canvas',
           rotation: 0,
           pivot: [0.5, 0.5],
@@ -954,8 +960,9 @@ export function layoutUiOverlay(
       } else if (img || rawImage || btn || text || toggle || slider || scrollbar || panel || progress || input || dropdown || list || scroll || tabs) {
         out.push({
           entity: ent.entity,
+          canvasBatchRoot: state.canvasBatchRoot,
           rect: renderedRect,
-          depth: depthBase + depth,
+          depth: depthBase + paintOrder++,
           role: 'graphic',
           rotation,
           pivot,
@@ -1249,8 +1256,9 @@ export function layoutUiOverlay(
       } else if (selectedIds.has(ent.entity) && hasRt) {
         out.push({
           entity: ent.entity,
+          canvasBatchRoot: state.canvasBatchRoot,
           rect: renderedRect,
-          depth: depthBase + depth,
+          depth: depthBase + paintOrder++,
           role: 'graphic',
           rotation,
           pivot,
@@ -1338,6 +1346,7 @@ export function layoutUiOverlay(
       ? solveRectTransform(canvasParent, scaleRt(canvas.components.RectTransform))
       : canvasParent;
     walk(canvas, canvasRt, 0, true, undefined, {
+      canvasBatchRoot: canvas.entity,
       opacity: 1,
       interactable: true,
       blocksRaycasts: true,
@@ -1375,7 +1384,7 @@ export function layoutUiOverlay(
         item.raycastCamera = canvasCamera;
       }
     }
-    depthBase += 1000;
+    depthBase += Math.max(1000, paintOrder + 1);
   }
 
   out.sort((a, b) => a.depth - b.depth);
@@ -1931,6 +1940,7 @@ function imageAllowsRaycast(it: UiDrawItem, x: number, y: number): boolean {
 
 export type UiBatch = {
   key: string;
+  canvasBatchRoot: number;
   start: number;
   end: number;
   items: UiDrawItem[];
@@ -1962,11 +1972,17 @@ export function buildUiBatches(items: UiDrawItem[]): UiBatch[] {
     const item = items[index];
     const key = batchKey(item);
     const tail = batches[batches.length - 1];
-    if (tail?.key === key) {
+    if (tail?.key === key && tail.canvasBatchRoot === item.canvasBatchRoot) {
       tail.end = index + 1;
       tail.items.push(item);
     } else {
-      batches.push({ key, start: index, end: index + 1, items: [item] });
+      batches.push({
+        key,
+        canvasBatchRoot: item.canvasBatchRoot,
+        start: index,
+        end: index + 1,
+        items: [item],
+      });
     }
   }
   return batches;

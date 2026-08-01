@@ -72,6 +72,9 @@ pub struct UiSoftClip {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct UiBatchKey {
+    /// Nested Canvases are independent Unity batching islands even when their
+    /// material and texture match the parent Canvas.
+    pub canvas_group: Option<u64>,
     pub material: String,
     pub texture: String,
     pub clip: Option<UiClipRect>,
@@ -84,6 +87,7 @@ pub struct UiBatchKey {
 impl Default for UiBatchKey {
     fn default() -> Self {
         Self {
+            canvas_group: None,
             material: "ui/default".into(),
             texture: "white".into(),
             clip: None,
@@ -1000,6 +1004,21 @@ mod tests {
         assert_eq!(plan.batches.len(), 3);
         assert_eq!((plan.batches[0].start, plan.batches[0].end), (0, 2));
         assert_eq!((plan.batches[2].start, plan.batches[2].end), (3, 4));
+    }
+
+    #[test]
+    fn canvas_groups_split_otherwise_compatible_batches() {
+        let mut parent_before = primitive("atlas", None);
+        parent_before.key.canvas_group = Some(1);
+        let mut nested = primitive("atlas", None);
+        nested.key.canvas_group = Some(2);
+        let mut parent_after = primitive("atlas", None);
+        parent_after.key.canvas_group = Some(1);
+        let plan = UiBatchPlan::build(vec![parent_before, nested, parent_after]);
+        assert_eq!(plan.batches.len(), 3);
+        assert_eq!(plan.batches[0].key.canvas_group, Some(1));
+        assert_eq!(plan.batches[1].key.canvas_group, Some(2));
+        assert_eq!(plan.batches[2].key.canvas_group, Some(1));
     }
 
     #[test]

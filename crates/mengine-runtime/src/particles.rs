@@ -514,6 +514,7 @@ fn collect_emitter(
                 vertex_positions: None,
                 soft_clips: [None; 8],
                 key: UiBatchKey {
+                    canvas_group: None,
                     material: material.into(),
                     texture: texture.clone(),
                     clip: None,

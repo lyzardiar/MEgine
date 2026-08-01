@@ -275,6 +275,7 @@ fn project_line(
                     vertex_positions: None,
                     soft_clips: [None; 8],
                     key: UiBatchKey {
+                        canvas_group: None,
                         material: "line2d/default".into(),
                         texture: "white".into(),
                         clip: None,
@@ -380,6 +381,7 @@ fn project_sprite(
             vertex_positions: None,
             soft_clips: [None; 8],
             key: UiBatchKey {
+                canvas_group: None,
                 material: "sprite/default".into(),
                 texture: if sprite.sprite.is_empty() {
                     "white".into()

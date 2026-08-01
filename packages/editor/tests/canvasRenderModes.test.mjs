@@ -11,7 +11,13 @@ const server = await createServer({
   logLevel: 'silent',
   server: { middlewareMode: true },
 });
-const { hitTestUi, layoutUiOverlay, layoutUiWorldSpace, uiEntityWorldPivot } = await server.ssrLoadModule(
+const {
+  buildUiBatches,
+  hitTestUi,
+  layoutUiOverlay,
+  layoutUiWorldSpace,
+  uiEntityWorldPivot,
+} = await server.ssrLoadModule(
   '/src/ui/uiLayout.ts',
 );
 test.after(() => server.close());
@@ -54,6 +60,49 @@ test('screen Canvas RectTransform is solved once at its render root', () => {
   const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
   assert.equal(items.find((item) => item.entity === 1).rect.x, 325);
   assert.equal(items.find((item) => item.entity === 2).rect.x, 415);
+});
+
+test('nested Canvases remain independent batching islands without changing draw order', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      siblingIndex: 0,
+      components: { RectTransform: rect(), Image: { sprite: 'white' } },
+    },
+    {
+      entity: 3,
+      parent: 1,
+      siblingIndex: 1,
+      components: { RectTransform: rect(), Canvas: { override_sorting: false } },
+    },
+    {
+      entity: 4,
+      parent: 3,
+      components: { RectTransform: rect(), Image: { sprite: 'white' } },
+    },
+    {
+      entity: 5,
+      parent: 1,
+      siblingIndex: 2,
+      components: { RectTransform: rect(), Image: { sprite: 'white' } },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  assert.deepEqual(items.map((item) => item.entity), [1, 2, 3, 4, 5]);
+  assert.deepEqual(
+    buildUiBatches(items)
+      .filter((batch) => batch.key === 'ui/image/white')
+      .map((batch) => batch.canvasBatchRoot),
+    [1, 3, 1],
+  );
 });
 
 test('Tiled Image authoring data reaches the Canvas draw plan', () => {

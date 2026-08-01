@@ -1981,3 +1981,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Image.pixels_per_unit_multiplier` 对齐 Unity `Image.pixelsPerUnitMultiplier`：默认值为 `1`，输入下限为 `0.01`，仅在 Sliced 与 Tiled 模式显示。IDL、生成的 Rust/TypeScript API、Behaviour、组件目录、Inspector 与 Agent schema 共用同一契约，旧场景缺省字段继续按 `1` 反序列化。
 - Unity uGUI 以 `pixelsPerUnit * multiplier` 生成 Sliced/Tiled 网格；MEngine 因此把 Canvas 派生的 Sprite Pixel Scale 除以该倍率。Editor Canvas 与 Runtime 使用同一个逐 Image 有效比例计算边框、tile 尺寸和网格预算，倍率增大时边框与 tile 变小、平铺密度提高，Simple/Filled 与 Set Native Size 保持不变。
 - Alpha Hit Test 同步使用逐 Image 有效比例与目标边框，因此可见切片/平铺像素和点击采样不会错位。无窗口回归覆盖默认与旧场景兼容、Inspector 条件和下限、Editor 布局数据、Tiled 密度、Runtime Sliced 网格以及 Alpha 映射。
+
+## 180. 2026-08-01 Nested Canvas Batching Islands
+
+- Unity 的每个 Canvas 都是独立几何与批处理单元；子 Canvas 即使未开启 Override Sorting，也不能和父 Canvas 或兄弟 Canvas 合并批次。MEngine 现在把最近 Canvas 的稳定实体身份写入 Runtime `UiBatchKey`，相同材质、纹理、裁剪、深度和 Stencil 只有在同一个 Canvas 内才允许连续合批。
+- 批处理边界不改变 Hierarchy 绘制顺序、继承 Render Mode、CanvasGroup、GraphicRaycaster、Mask/RectMask2D 或 Override Sorting 根的既有语义。非 UI 的 Sprite、Line 与 Particle 保持无 Canvas 分组；World Space Canvas 进入统一 2D 排序队列后也保留各自边界。
+- Editor Canvas 数据同步记录最近 Canvas，并让预览批次规划器使用同一边界；同时修复原先按层级深度重排导致嵌套子图形晚于父级后续兄弟绘制的问题。无窗口回归覆盖 Parent → Nested → Parent 的同纹理 Hierarchy 顺序、Editor/RHI 键分组以及 Runtime 完整 Canvas 遍历。

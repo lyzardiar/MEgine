@@ -768,6 +768,7 @@ pub struct RuntimeUiFrame {
 
 #[derive(Clone, Copy, Debug)]
 struct UiInheritedState {
+    canvas_group: Option<u64>,
     alpha: f32,
     interactable: bool,
     blocks_raycasts: bool,
@@ -794,6 +795,7 @@ struct UiWalkLayout {
 impl Default for UiInheritedState {
     fn default() -> Self {
         Self {
+            canvas_group: None,
             alpha: 1.0,
             interactable: true,
             blocks_raycasts: true,
@@ -1764,6 +1766,7 @@ fn walk(
     let pivot = rect_transform.pivot;
     let mut state = inherited;
     if world.get_component::<Canvas>(entity).is_some() {
+        state.canvas_group = Some(entity.to_u64());
         let raycaster = world.get_component::<GraphicRaycaster>(entity);
         state.raycaster_enabled = raycaster.is_some_and(|value| value.enabled);
         state.ignore_reversed_graphics = raycaster
@@ -2683,6 +2686,7 @@ fn walk(
     }
 
     for primitive in &mut primitives[graphic_start..] {
+        primitive.key.canvas_group = state.canvas_group;
         primitive.soft_clips = inherited.soft_clips;
     }
 
@@ -3432,6 +3436,7 @@ fn primitive(
         vertex_positions: None,
         soft_clips: [None; 8],
         key: UiBatchKey {
+            canvas_group: None,
             material: material.into(),
             texture: texture.into(),
             clip: Some(clip),
@@ -5040,6 +5045,46 @@ mod tests {
                 .count(),
             1
         );
+    }
+
+    #[test]
+    fn nested_canvases_keep_independent_runtime_batches() {
+        let mut world = World::new();
+        let root = world.spawn_empty();
+        world.insert_component(root, Canvas::default());
+
+        let parent_before = world.spawn_empty();
+        world.insert_component(parent_before, RectTransform::default());
+        world.insert_component(parent_before, Image::default());
+        world.set_parent(parent_before, Some(root));
+        world.set_editor_state(parent_before, 0, true);
+
+        let nested = world.spawn_empty();
+        world.insert_component(nested, Canvas::default());
+        world.insert_component(nested, RectTransform::default());
+        world.set_parent(nested, Some(root));
+        world.set_editor_state(nested, 1, true);
+
+        let nested_image = world.spawn_empty();
+        world.insert_component(nested_image, RectTransform::default());
+        world.insert_component(nested_image, Image::default());
+        world.set_parent(nested_image, Some(nested));
+
+        let parent_after = world.spawn_empty();
+        world.insert_component(parent_after, RectTransform::default());
+        world.insert_component(parent_after, Image::default());
+        world.set_parent(parent_after, Some(root));
+        world.set_editor_state(parent_after, 2, true);
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert_eq!(frame.plan.primitives.len(), 3);
+        assert_eq!(frame.plan.batches.len(), 3);
+        assert_eq!(frame.plan.batches[0].key.canvas_group, Some(root.to_u64()));
+        assert_eq!(
+            frame.plan.batches[1].key.canvas_group,
+            Some(nested.to_u64())
+        );
+        assert_eq!(frame.plan.batches[2].key.canvas_group, Some(root.to_u64()));
     }
 
     #[test]
