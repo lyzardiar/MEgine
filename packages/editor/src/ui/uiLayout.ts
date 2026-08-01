@@ -1012,7 +1012,12 @@ export function layoutUiOverlay(
         raycastPaddingSource?.raycast_padding ?? raycastPaddingSource?.raycastPadding,
         [0, 0, 0, 0],
       ).map((value) => value * scale) as [number, number, number, number];
-      const ownMaskEnabled = stencilMask?.enabled !== false && stencilMask != null;
+      const hasMaskGraphic = hasEnabledGraphic || !!(
+        btn || toggle || slider || scrollbar || progress || input || dropdown || list || scroll || tabs
+      );
+      const ownMaskEnabled = stencilMask?.enabled !== false
+        && stencilMask != null
+        && hasMaskGraphic;
       const itemMaskStack = graphicMaskable || ownMaskEnabled ? state.visualMasks : [];
       const itemMaskRegions = graphicMaskable ? state.maskRegions : [];
       const itemSoftClips = graphicMaskable ? state.softClips : [];
@@ -1359,15 +1364,11 @@ export function layoutUiOverlay(
       let childState = ownSoftClip && state.softClips.length < 8
         ? { ...state, softClips: [...state.softClips, ownSoftClip] }
         : state;
-      if (stencilMask && stencilMask.enabled !== false) {
+      if (ownMaskEnabled) {
         const nextMaskRegions = state.maskRegions.length < 8
           ? [...state.maskRegions, { rect: renderedRect, rotation, pivot }]
           : state.maskRegions;
-        const hasMaskGraphic = !!(
-          authoredImage || authoredRawImage || btn || authoredText || toggle || slider || scrollbar
-          || authoredPanel || progress || input || dropdown || list || scroll || tabs
-        );
-        const nextVisualMasks = hasMaskGraphic && state.visualMasks.length < 8
+        const nextVisualMasks = state.visualMasks.length < 8
           ? [...state.visualMasks, ent.entity]
           : state.visualMasks;
         childState = {

@@ -2021,3 +2021,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Image`、`RawImage`、`Text` 与引擎 `Panel` 统一新增 `maskable`，默认值为 true；IDL、生成的 Rust/TypeScript API、组件目录、Inspector 与 Agent 组件 schema 共享同一契约。设为 false 时，该 Graphic 不再接收祖先 `Mask` 的 Stencil 测试，也不再注册到祖先 `RectMask2D` 的硬裁剪或 Softness，但同实体作为 `Mask` 源时仍独立写入自己的 Stencil，保持 Unity 中 `Mask` 与 `MaskableGraphic` 的职责边界。
 - Editor Canvas 与 Runtime 将基础视口裁剪和 RectMask 裁剪拆成两条继承链。`maskable=false` 只移除 Mask/RectMask 过滤，不会逃出 Game View、ScrollView、ListView 或其他非遮罩视口；CanvasGroup 的 Alpha、交互和射线开关也继续生效。射线命中、可见图元、软裁剪栈与 Stencil 状态使用同一 maskable 判定，避免编辑器预览、后台 Agent 快照和 Player 结果分叉。
 - 无窗口回归覆盖四类 Graphic 默认值与 Inspector、Mask 与 RectMask2D 同节点的组合、嵌套 Softness、关闭 maskable 后的渲染和命中、CanvasGroup 继承，以及 ScrollView 基础裁剪保持；Rust 回归同时检查控制区域、GPU Stencil 键、Softness 栈和最终 Alpha。
+
+## 187. 2026-08-01 Mask Source Validity
+
+- Unity `Mask.MaskEnabled()` 只有在 Mask 自身启用且同实体能提供 Graphic 时才成立。MEngine 现在也把“已启用 Mask + 当前实体实际生成 UI Graphic”作为唯一有效 Mask source；只有有效源才向子树压入视觉 Mask、Stencil 深度和矩形射线过滤区。没有 Image、RawImage、Text、Panel 或引擎复合控件图形的空 Mask 不再出现“画面未遮罩、点击却被裁掉”的分叉。
+- Editor Canvas 与 Runtime 使用相同判定。Editor 的 `maskStack`、`maskRegions` 与离屏 Alpha 合成同步停用无 Graphic Mask；Runtime 不再为这类节点生成 Stencil Push/Pop、子 Graphic Stencil Test 或 `UiMaskRegion`。无窗口回归验证 200px 子 Graphic 可越过 100px 空 Mask 正常渲染和命中，同时保留已有有效 Mask、禁用 Mask、嵌套 Mask 与 `maskable` 行为。

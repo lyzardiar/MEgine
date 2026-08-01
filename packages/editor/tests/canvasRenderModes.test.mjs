@@ -270,6 +270,44 @@ test('disabled Mask does not alter child rendering or raycasts', () => {
   assert.equal(hitTestUi(items, 475, 300)?.entity, 3);
 });
 
+test('Mask without a Graphic is inactive for rendering and raycasts', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [100, 100] }),
+        Mask: { enabled: true, show_mask_graphic: false },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [200, 200] }),
+        Image: { raycast_target: true },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  );
+  const child = items.find((item) => item.entity === 3);
+  assert.deepEqual(child.maskStack, []);
+  assert.deepEqual(child.maskRegions, []);
+  assert.equal(hitTestUi(items, 475, 300)?.entity, 3);
+});
+
 test('RectMask2D uses Unity left, bottom, right, top padding order', () => {
   const entities = [
     {
