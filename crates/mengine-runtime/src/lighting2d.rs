@@ -158,6 +158,7 @@ mod tests {
                 soft_clips: [None; 8],
                 canvas_sorting_grid_size: None,
                 key: UiBatchKey::default(),
+                render_material: None,
             },
         }
     }

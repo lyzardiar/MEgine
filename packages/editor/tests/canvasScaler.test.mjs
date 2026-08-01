@@ -127,6 +127,7 @@ test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', ()
   const imageDefaults = {
     enabled: true,
     maskable: true,
+    material: '',
     sprite: 'white',
     color: [1, 1, 1, 1],
     image_type: 'Simple',
@@ -192,6 +193,15 @@ test('all authored Graphic components expose Unity raycast padding defaults', ()
     assert.deepEqual(getBuiltinInspectorField(type, 'enabled'), { label: 'Enabled' });
     assert.equal(createComponentDefaults(type).maskable, true);
     assert.deepEqual(getBuiltinInspectorField(type, 'maskable'), { label: 'Maskable' });
+    assert.equal(createComponentDefaults(type).material, '');
+    assert.deepEqual(getBuiltinInspectorField(type, 'material'), {
+      label: 'Material',
+      kind: 'project-asset',
+      referenceType: 'Material',
+      assetKinds: ['material'],
+      allowNone: true,
+      noneValue: '',
+    });
     assert.deepEqual(createComponentDefaults(type).raycast_padding, [0, 0, 0, 0]);
     assert.deepEqual(getBuiltinInspectorField(type, 'raycast_padding'), {
       label: 'Raycast Padding',

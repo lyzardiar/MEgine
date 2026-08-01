@@ -525,6 +525,7 @@ fn collect_emitter(
                     depth_test: false,
                     stencil: Default::default(),
                 },
+                render_material: None,
             },
         });
     }

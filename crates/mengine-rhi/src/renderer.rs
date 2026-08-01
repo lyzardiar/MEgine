@@ -1094,7 +1094,14 @@ impl Renderer {
         let mut meshes = HashMap::new();
         meshes.insert("cube".into(), MeshGpu::unit_cube(&device));
         let post_process = HdrPostProcess::new(&device, format, config.width, config.height);
-        let ui = UiRenderer::new(&device, &queue, format, config.width, config.height);
+        let ui = UiRenderer::new(
+            &device,
+            &queue,
+            format,
+            config.width,
+            config.height,
+            supports_anisotropy,
+        );
 
         Ok(Self {
             device,
@@ -1824,6 +1831,28 @@ impl Renderer {
 
     pub fn remove_ui_texture(&mut self, key: &str) -> bool {
         self.ui.remove_texture(key)
+    }
+
+    pub fn upload_ui_material_texture_rgba8(
+        &mut self,
+        key: &str,
+        width: u32,
+        height: u32,
+        rgba8: &[u8],
+        srgb: bool,
+    ) -> Result<(), UiTextureError> {
+        self.ui.upload_material_texture_rgba8(
+            &self.device,
+            &self.queue,
+            key,
+            [width, height],
+            rgba8,
+            srgb,
+        )
+    }
+
+    pub fn remove_ui_material_texture_variant(&mut self, key: &str, srgb: bool) -> bool {
+        self.ui.remove_material_texture(key, srgb)
     }
 
     pub fn upload_material_texture_rgba8(

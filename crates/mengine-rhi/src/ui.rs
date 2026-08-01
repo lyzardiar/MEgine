@@ -1,9 +1,14 @@
 use bytemuck::{Pod, Zeroable};
-use std::collections::HashMap;
-use std::hash::Hash;
+use mengine_core::surface_shader::{
+    parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS, MAX_SURFACE_SHADER_TEXTURES,
+};
+use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use thiserror::Error;
 use wgpu::util::DeviceExt;
+
+use crate::renderer::{MaterialFilter, MaterialWrap};
 
 #[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum UiTextureError {
@@ -16,7 +21,59 @@ pub enum UiTextureError {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum UiBlendMode {
     Alpha,
+    Premultiplied,
     Additive,
+    Multiply,
+}
+
+/// Resolved project material consumed by an instanced UI draw. Graphic texture and vertex tint
+/// stay on the primitive, matching Unity's `Graphic.material` contract where a replacement
+/// material still receives the Graphic's main texture and generated vertex stream.
+#[derive(Clone, Debug)]
+pub struct UiRenderMaterial {
+    pub base_color: [f32; 4],
+    pub blend: UiBlendMode,
+    pub shader: Arc<str>,
+    pub keywords: Vec<String>,
+    pub custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+    pub custom_textures: [String; MAX_SURFACE_SHADER_TEXTURES],
+    pub custom_texture_srgb: [bool; MAX_SURFACE_SHADER_TEXTURES],
+    pub wrap_u: MaterialWrap,
+    pub wrap_v: MaterialWrap,
+    pub filter: MaterialFilter,
+    pub mipmap_filter: MaterialFilter,
+    pub anisotropy: u8,
+    pub is_error: bool,
+}
+
+impl Default for UiRenderMaterial {
+    fn default() -> Self {
+        Self {
+            base_color: [1.0; 4],
+            blend: UiBlendMode::Alpha,
+            shader: Arc::from(""),
+            keywords: Vec::new(),
+            custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+            custom_textures: std::array::from_fn(|_| String::new()),
+            custom_texture_srgb: [false; MAX_SURFACE_SHADER_TEXTURES],
+            wrap_u: MaterialWrap::Clamp,
+            wrap_v: MaterialWrap::Clamp,
+            filter: MaterialFilter::Linear,
+            mipmap_filter: MaterialFilter::Nearest,
+            anisotropy: 1,
+            is_error: false,
+        }
+    }
+}
+
+impl UiRenderMaterial {
+    pub fn error() -> Self {
+        Self {
+            base_color: [1.0, 0.0, 1.0, 1.0],
+            is_error: true,
+            ..Self::default()
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -181,6 +238,9 @@ pub struct UiPrimitive {
     pub vertex_positions: Option<[[f32; 2]; 4]>,
     /// Allocated only when a custom UI mesh overrides Unity UIVertex defaults.
     pub shader_channel_data: Option<Arc<UiShaderChannelData>>,
+    /// Present only for an asset-backed replacement Graphic material. The batch key retains the
+    /// normalized asset path, while this resolved payload carries hot-reloadable GPU bindings.
+    pub render_material: Option<Arc<UiRenderMaterial>>,
     /// Nested RectMask2D soft clips, ordered outermost to innermost.
     pub soft_clips: [Option<UiSoftClip>; 8],
     /// Canvas-native overlap analysis cell size. `None` keeps non-Canvas draw
@@ -201,6 +261,7 @@ impl UiPrimitive {
             uv: [0.0, 0.0, 1.0, 1.0],
             vertex_positions: None,
             shader_channel_data: None,
+            render_material: None,
             soft_clips: [None; 8],
             canvas_sorting_grid_size: None,
             key: UiBatchKey::default(),
@@ -627,6 +688,26 @@ impl From<&UiPrimitive> for UiShaderChannelInstance {
     }
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+struct UiMaterialInstance {
+    base_color: [f32; 4],
+    custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+}
+
+impl From<&UiPrimitive> for UiMaterialInstance {
+    fn from(value: &UiPrimitive) -> Self {
+        let material = value.render_material.as_deref();
+        Self {
+            base_color: material.map_or([1.0; 4], |value| value.base_color),
+            custom_parameters: material
+                .map_or([[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS], |value| {
+                    value.custom_parameters
+                }),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum UiStencilPipeline {
     Disabled,
@@ -642,27 +723,82 @@ struct UiPipelineKey {
     stencil: UiStencilPipeline,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct UiMaterialPipelineKey {
+    state: UiPipelineKey,
+    shader_fingerprint: u64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct UiMaterialSamplerKey {
+    wrap_u: MaterialWrap,
+    wrap_v: MaterialWrap,
+    filter: MaterialFilter,
+    mipmap_filter: MaterialFilter,
+    anisotropy: u8,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+struct UiMaterialTextureSetKey {
+    textures: [String; MAX_SURFACE_SHADER_TEXTURES],
+    srgb: [bool; MAX_SURFACE_SHADER_TEXTURES],
+    sampler: UiMaterialSamplerKey,
+}
+
+impl From<&UiRenderMaterial> for UiMaterialTextureSetKey {
+    fn from(material: &UiRenderMaterial) -> Self {
+        Self {
+            textures: std::array::from_fn(|index| {
+                material.custom_textures[index].trim().to_owned()
+            }),
+            srgb: material.custom_texture_srgb,
+            sampler: UiMaterialSamplerKey {
+                wrap_u: material.wrap_u,
+                wrap_v: material.wrap_v,
+                filter: material.filter,
+                mipmap_filter: material.mipmap_filter,
+                anisotropy: material.anisotropy.clamp(1, 16),
+            },
+        }
+    }
+}
+
 pub(crate) struct UiRenderer {
     pipelines: HashMap<UiPipelineKey, wgpu::RenderPipeline>,
+    custom_pipelines: HashMap<UiMaterialPipelineKey, wgpu::RenderPipeline>,
+    error_pipelines: HashMap<UiPipelineKey, wgpu::RenderPipeline>,
+    rejected_shaders: HashMap<u64, String>,
+    pipeline_layout: wgpu::PipelineLayout,
+    format: wgpu::TextureFormat,
     vertex_buffer: wgpu::Buffer,
     instance_buffer: wgpu::Buffer,
     soft_clip_buffer: wgpu::Buffer,
     shader_channel_buffer: wgpu::Buffer,
+    material_buffer: wgpu::Buffer,
     instance_capacity: usize,
     shader_channel_capacity: usize,
+    material_capacity: usize,
     uniform_buffer: wgpu::Buffer,
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
     texture_bind_group_layout: wgpu::BindGroupLayout,
+    material_texture_bind_group_layout: wgpu::BindGroupLayout,
     sampler: wgpu::Sampler,
     fallback_texture: UiTextureGpu,
     textures: HashMap<String, UiTextureGpu>,
+    material_color_textures: HashMap<String, UiTextureGpu>,
+    material_data_textures: HashMap<String, UiTextureGpu>,
+    material_samplers: HashMap<UiMaterialSamplerKey, wgpu::Sampler>,
+    material_texture_sets: HashMap<UiMaterialTextureSetKey, wgpu::BindGroup>,
+    fallback_material_texture_set: wgpu::BindGroup,
+    supports_anisotropy: bool,
     viewport: [u32; 2],
     stats: UiFrameStats,
 }
 
 struct UiTextureGpu {
     _texture: wgpu::Texture,
+    view: wgpu::TextureView,
     bind_group: wgpu::BindGroup,
 }
 
@@ -673,6 +809,7 @@ impl UiRenderer {
         format: wgpu::TextureFormat,
         width: u32,
         height: u32,
+        supports_anisotropy: bool,
     ) -> Self {
         const VERTICES: [UiVertex; 6] = [
             UiVertex {
@@ -704,6 +841,8 @@ impl UiRenderer {
         let soft_clip_buffer = create_soft_clip_buffer(device, instance_capacity);
         let shader_channel_capacity = 1;
         let shader_channel_buffer = create_shader_channel_buffer(device, shader_channel_capacity);
+        let material_capacity = 1;
+        let material_buffer = create_material_buffer(device, material_capacity);
         let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("ui_frame_uniform"),
             contents: bytemuck::bytes_of(&UiUniform {
@@ -745,6 +884,16 @@ impl UiRenderer {
                     },
                     count: None,
                 },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
             ],
         });
         let bind_group = create_frame_bind_group(
@@ -753,6 +902,7 @@ impl UiRenderer {
             &uniform_buffer,
             &soft_clip_buffer,
             &shader_channel_buffer,
+            &material_buffer,
         );
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -786,14 +936,39 @@ impl UiRenderer {
             mipmap_filter: wgpu::FilterMode::Nearest,
             ..Default::default()
         });
+        let material_texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("ui_material_textures_bgl"),
+                entries: &[
+                    material_texture_layout_entry(0),
+                    material_texture_layout_entry(1),
+                    material_texture_layout_entry(2),
+                    material_texture_layout_entry(3),
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 4,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
         let fallback_texture = create_texture_rgba8(
             device,
             queue,
             &texture_bind_group_layout,
             &sampler,
-            "ui_white_texture",
-            [1, 1],
-            &[255, 255, 255, 255],
+            UiTextureUpload {
+                label: "ui_white_texture",
+                dimensions: [1, 1],
+                rgba8: &[255, 255, 255, 255],
+                srgb: true,
+            },
+        );
+        let fallback_material_texture_set = create_ui_material_texture_set(
+            device,
+            &material_texture_bind_group_layout,
+            std::array::from_fn(|_| &fallback_texture.view),
+            &sampler,
         );
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("ui_instanced"),
@@ -801,11 +976,20 @@ impl UiRenderer {
         });
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("ui_pipeline_layout"),
-            bind_group_layouts: &[&bind_group_layout, &texture_bind_group_layout],
+            bind_group_layouts: &[
+                &bind_group_layout,
+                &texture_bind_group_layout,
+                &material_texture_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
         let mut pipelines = HashMap::new();
-        for blend in [UiBlendMode::Alpha, UiBlendMode::Additive] {
+        for blend in [
+            UiBlendMode::Alpha,
+            UiBlendMode::Premultiplied,
+            UiBlendMode::Additive,
+            UiBlendMode::Multiply,
+        ] {
             for depth_test in [false, true] {
                 for stencil in [UiStencilPipeline::Disabled, UiStencilPipeline::Test] {
                     let key = UiPipelineKey {
@@ -836,19 +1020,33 @@ impl UiRenderer {
 
         Self {
             pipelines,
+            custom_pipelines: HashMap::new(),
+            error_pipelines: HashMap::new(),
+            rejected_shaders: HashMap::new(),
+            pipeline_layout,
+            format,
             vertex_buffer,
             instance_buffer,
             soft_clip_buffer,
             shader_channel_buffer,
+            material_buffer,
             instance_capacity,
             shader_channel_capacity,
+            material_capacity,
             uniform_buffer,
             bind_group_layout,
             bind_group,
             texture_bind_group_layout,
+            material_texture_bind_group_layout,
             sampler,
             fallback_texture,
             textures: HashMap::new(),
+            material_color_textures: HashMap::new(),
+            material_data_textures: HashMap::new(),
+            material_samplers: HashMap::new(),
+            material_texture_sets: HashMap::new(),
+            fallback_material_texture_set,
+            supports_anisotropy,
             viewport: [width.max(1), height.max(1)],
             stats: UiFrameStats::default(),
         }
@@ -869,9 +1067,12 @@ impl UiRenderer {
             queue,
             &self.texture_bind_group_layout,
             &self.sampler,
-            key,
-            [width, height],
-            rgba8,
+            UiTextureUpload {
+                label: key,
+                dimensions: [width, height],
+                rgba8,
+                srgb: true,
+            },
         );
         self.textures.insert(key.to_owned(), texture);
         Ok(())
@@ -879,6 +1080,50 @@ impl UiRenderer {
 
     pub fn remove_texture(&mut self, key: &str) -> bool {
         self.textures.remove(key).is_some()
+    }
+
+    pub fn upload_material_texture_rgba8(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        key: &str,
+        dimensions: [u32; 2],
+        rgba8: &[u8],
+        srgb: bool,
+    ) -> Result<(), UiTextureError> {
+        let [width, height] = dimensions;
+        validate_texture_rgba8(width, height, rgba8)?;
+        let texture = create_texture_rgba8(
+            device,
+            queue,
+            &self.texture_bind_group_layout,
+            &self.sampler,
+            UiTextureUpload {
+                label: "ui_material_texture",
+                dimensions,
+                rgba8,
+                srgb,
+            },
+        );
+        if srgb {
+            self.material_color_textures.insert(key.to_owned(), texture);
+        } else {
+            self.material_data_textures.insert(key.to_owned(), texture);
+        }
+        self.material_texture_sets.clear();
+        Ok(())
+    }
+
+    pub fn remove_material_texture(&mut self, key: &str, srgb: bool) -> bool {
+        let removed = if srgb {
+            self.material_color_textures.remove(key).is_some()
+        } else {
+            self.material_data_textures.remove(key).is_some()
+        };
+        if removed {
+            self.material_texture_sets.clear();
+        }
+        removed
     }
 
     pub fn resize(&mut self, queue: &wgpu::Queue, width: u32, height: u32) {
@@ -898,10 +1143,19 @@ impl UiRenderer {
             .primitives
             .iter()
             .any(|value| value.key.shader_channels.bits() != 0);
+        let needs_materials = plan
+            .primitives
+            .iter()
+            .any(|value| value.render_material.is_some());
         if needs_shader_channels && plan.primitives.len() > self.shader_channel_capacity {
             self.shader_channel_capacity = plan.primitives.len().next_power_of_two();
             self.shader_channel_buffer =
                 create_shader_channel_buffer(device, self.shader_channel_capacity);
+            recreate_bind_group = true;
+        }
+        if needs_materials && plan.primitives.len() > self.material_capacity {
+            self.material_capacity = plan.primitives.len().next_power_of_two();
+            self.material_buffer = create_material_buffer(device, self.material_capacity);
             recreate_bind_group = true;
         }
         if recreate_bind_group {
@@ -911,6 +1165,7 @@ impl UiRenderer {
                 &self.uniform_buffer,
                 &self.soft_clip_buffer,
                 &self.shader_channel_buffer,
+                &self.material_buffer,
             );
         }
         if !plan.primitives.is_empty() {
@@ -934,7 +1189,52 @@ impl UiRenderer {
                     bytemuck::cast_slice(&shader_channels),
                 );
             }
+            if needs_materials {
+                let materials: Vec<UiMaterialInstance> = plan
+                    .primitives
+                    .iter()
+                    .map(UiMaterialInstance::from)
+                    .collect();
+                queue.write_buffer(&self.material_buffer, 0, bytemuck::cast_slice(&materials));
+            }
         }
+        let mut live_pipelines = HashSet::new();
+        let mut live_shader_fingerprints = HashSet::new();
+        let mut live_texture_sets = HashSet::new();
+        let mut live_samplers = HashSet::new();
+        for batch in &plan.batches {
+            let material = plan.primitives[batch.start as usize]
+                .render_material
+                .as_ref()
+                .map(Arc::clone);
+            if let Some(material) = material {
+                if !material.is_error && !self.material_has_missing_textures(&material) {
+                    let texture_set = UiMaterialTextureSetKey::from(material.as_ref());
+                    live_samplers.insert(texture_set.sampler);
+                    live_texture_sets.insert(texture_set);
+                    let fingerprint = ui_shader_fingerprint(&material.shader, &material.keywords);
+                    if fingerprint != 0 {
+                        live_shader_fingerprints.insert(fingerprint);
+                        live_pipelines.insert(UiMaterialPipelineKey {
+                            state: ui_pipeline_state(&batch.key),
+                            shader_fingerprint: fingerprint,
+                        });
+                    }
+                }
+                if !material.is_error {
+                    self.ensure_material_texture_set(device, &material);
+                }
+                self.ensure_material_pipeline(device, batch, &material);
+            }
+        }
+        self.custom_pipelines
+            .retain(|key, _| live_pipelines.contains(key));
+        self.rejected_shaders
+            .retain(|fingerprint, _| live_shader_fingerprints.contains(fingerprint));
+        self.material_texture_sets
+            .retain(|key, _| live_texture_sets.contains(key));
+        self.material_samplers
+            .retain(|key, _| live_samplers.contains(key));
         self.write_uniform(queue);
         self.stats = UiFrameStats {
             primitives: plan.primitives.len() as u32,
@@ -965,6 +1265,117 @@ impl UiRenderer {
         );
     }
 
+    fn ensure_material_pipeline(
+        &mut self,
+        device: &wgpu::Device,
+        batch: &UiBatch,
+        material: &UiRenderMaterial,
+    ) {
+        let state = ui_pipeline_state(&batch.key);
+        if material.is_error || self.material_has_missing_textures(material) {
+            self.ensure_error_pipeline(device, state);
+            return;
+        }
+        let fingerprint = ui_shader_fingerprint(&material.shader, &material.keywords);
+        if fingerprint == 0 {
+            self.ensure_error_pipeline(device, state);
+            return;
+        }
+        let key = UiMaterialPipelineKey {
+            state,
+            shader_fingerprint: fingerprint,
+        };
+        if self.custom_pipelines.contains_key(&key)
+            || self.rejected_shaders.contains_key(&fingerprint)
+        {
+            if self.rejected_shaders.contains_key(&fingerprint) {
+                self.ensure_error_pipeline(device, state);
+            }
+            return;
+        }
+        let source = match compose_ui_shader(&material.shader, Some(&material.keywords)) {
+            Ok(source) => source,
+            Err(error) => {
+                log::warn!("UI shader rejected: {error}");
+                self.rejected_shaders.insert(fingerprint, error);
+                self.ensure_error_pipeline(device, state);
+                return;
+            }
+        };
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("custom_ui_material"),
+            source: wgpu::ShaderSource::Wgsl(source.into()),
+        });
+        self.custom_pipelines.insert(
+            key,
+            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state),
+        );
+    }
+
+    fn ensure_error_pipeline(&mut self, device: &wgpu::Device, state: UiPipelineKey) {
+        if self.error_pipelines.contains_key(&state) {
+            return;
+        }
+        let source = compose_ui_shader(ERROR_UI_SHADER_HOOK, None)
+            .expect("engine error UI Shader must remain valid");
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("error_ui_material"),
+            source: wgpu::ShaderSource::Wgsl(source.into()),
+        });
+        self.error_pipelines.insert(
+            state,
+            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state),
+        );
+    }
+
+    fn material_has_missing_textures(&self, material: &UiRenderMaterial) -> bool {
+        material
+            .custom_textures
+            .iter()
+            .zip(material.custom_texture_srgb)
+            .any(|(key, srgb)| {
+                let key = key.trim();
+                !key.is_empty()
+                    && if srgb {
+                        !self.material_color_textures.contains_key(key)
+                    } else {
+                        !self.material_data_textures.contains_key(key)
+                    }
+            })
+    }
+
+    fn ensure_material_texture_set(&mut self, device: &wgpu::Device, material: &UiRenderMaterial) {
+        if self.material_has_missing_textures(material) {
+            return;
+        }
+        let key = UiMaterialTextureSetKey::from(material);
+        if self.material_texture_sets.contains_key(&key) {
+            return;
+        }
+        self.material_samplers
+            .entry(key.sampler)
+            .or_insert_with(|| {
+                create_ui_material_sampler(device, key.sampler, self.supports_anisotropy)
+            });
+        let views = std::array::from_fn(|index| {
+            let texture = key.textures[index].trim();
+            if texture.is_empty() {
+                &self.fallback_texture.view
+            } else if key.srgb[index] {
+                &self.material_color_textures[texture].view
+            } else {
+                &self.material_data_textures[texture].view
+            }
+        });
+        let bind_group = create_ui_material_texture_set(
+            device,
+            &self.material_texture_bind_group_layout,
+            views,
+            &self.material_samplers[&key.sampler],
+        );
+        self.material_texture_sets.insert(key, bind_group);
+    }
+
     pub fn draw<'pass>(&'pass self, pass: &mut wgpu::RenderPass<'pass>, plan: &UiBatchPlan) {
         if plan.is_empty() {
             return;
@@ -973,29 +1384,46 @@ impl UiRenderer {
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
         for batch in &plan.batches {
-            let pipeline_key = UiPipelineKey {
-                blend: if matches!(
-                    batch.key.stencil,
-                    UiStencilMode::Push { .. } | UiStencilMode::Pop { .. }
-                ) {
-                    UiBlendMode::Alpha
-                } else {
-                    batch.key.blend
-                },
-                depth_test: batch.key.depth_test,
-                stencil: batch.key.stencil.pipeline(),
-            };
-            pass.set_pipeline(
+            let pipeline_key = ui_pipeline_state(&batch.key);
+            let material = plan.primitives[batch.start as usize]
+                .render_material
+                .as_deref();
+            let custom_fingerprint = material
+                .map(|value| ui_shader_fingerprint(&value.shader, &value.keywords))
+                .unwrap_or(0);
+            let use_error = material.is_some_and(|value| {
+                value.is_error
+                    || custom_fingerprint == 0
+                    || self.rejected_shaders.contains_key(&custom_fingerprint)
+                    || self.material_has_missing_textures(value)
+            });
+            let pipeline = if use_error {
+                &self.error_pipelines[&pipeline_key]
+            } else if let Some(material) = material {
+                &self.custom_pipelines[&UiMaterialPipelineKey {
+                    state: pipeline_key,
+                    shader_fingerprint: ui_shader_fingerprint(&material.shader, &material.keywords),
+                }]
+            } else {
                 self.pipelines
                     .get(&pipeline_key)
-                    .expect("all UI pipeline variants are created at startup"),
-            );
+                    .expect("all built-in UI pipeline variants are created at startup")
+            };
+            pass.set_pipeline(pipeline);
             pass.set_stencil_reference(batch.key.stencil.reference());
             let texture = self
                 .textures
                 .get(&batch.key.texture)
                 .unwrap_or(&self.fallback_texture);
             pass.set_bind_group(1, &texture.bind_group, &[]);
+            let material_texture_set = if use_error {
+                &self.fallback_material_texture_set
+            } else if let Some(material) = material {
+                &self.material_texture_sets[&UiMaterialTextureSetKey::from(material)]
+            } else {
+                &self.fallback_material_texture_set
+            };
+            pass.set_bind_group(2, material_texture_set, &[]);
             if let Some(clip) = batch.key.clip {
                 let x = clip.x.min(self.viewport[0]);
                 let y = clip.y.min(self.viewport[1]);
@@ -1029,6 +1457,51 @@ fn additive_blend_state() -> wgpu::BlendState {
             dst_factor: wgpu::BlendFactor::One,
             operation: wgpu::BlendOperation::Add,
         },
+    }
+}
+
+fn premultiplied_blend_state() -> wgpu::BlendState {
+    wgpu::BlendState {
+        color: wgpu::BlendComponent {
+            src_factor: wgpu::BlendFactor::One,
+            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+            operation: wgpu::BlendOperation::Add,
+        },
+        alpha: wgpu::BlendComponent {
+            src_factor: wgpu::BlendFactor::One,
+            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+            operation: wgpu::BlendOperation::Add,
+        },
+    }
+}
+
+fn multiply_blend_state() -> wgpu::BlendState {
+    wgpu::BlendState {
+        color: wgpu::BlendComponent {
+            src_factor: wgpu::BlendFactor::Dst,
+            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+            operation: wgpu::BlendOperation::Add,
+        },
+        alpha: wgpu::BlendComponent {
+            src_factor: wgpu::BlendFactor::Zero,
+            dst_factor: wgpu::BlendFactor::One,
+            operation: wgpu::BlendOperation::Add,
+        },
+    }
+}
+
+fn ui_pipeline_state(key: &UiBatchKey) -> UiPipelineKey {
+    UiPipelineKey {
+        blend: if matches!(
+            key.stencil,
+            UiStencilMode::Push { .. } | UiStencilMode::Pop { .. }
+        ) {
+            UiBlendMode::Alpha
+        } else {
+            key.blend
+        },
+        depth_test: key.depth_test,
+        stencil: key.stencil.pipeline(),
     }
 }
 
@@ -1105,7 +1578,9 @@ fn create_ui_pipeline(
                 format,
                 blend: Some(match key.blend {
                     UiBlendMode::Alpha => wgpu::BlendState::ALPHA_BLENDING,
+                    UiBlendMode::Premultiplied => premultiplied_blend_state(),
                     UiBlendMode::Additive => additive_blend_state(),
+                    UiBlendMode::Multiply => multiply_blend_state(),
                 }),
                 write_mask: if color_write {
                     wgpu::ColorWrites::ALL
@@ -1163,16 +1638,26 @@ fn validate_texture_rgba8(width: u32, height: u32, rgba8: &[u8]) -> Result<(), U
     Ok(())
 }
 
+struct UiTextureUpload<'a> {
+    label: &'a str,
+    dimensions: [u32; 2],
+    rgba8: &'a [u8],
+    srgb: bool,
+}
+
 fn create_texture_rgba8(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
     layout: &wgpu::BindGroupLayout,
     sampler: &wgpu::Sampler,
-    label: &str,
-    dimensions: [u32; 2],
-    rgba8: &[u8],
+    upload: UiTextureUpload<'_>,
 ) -> UiTextureGpu {
-    let [width, height] = dimensions;
+    let UiTextureUpload {
+        label,
+        dimensions: [width, height],
+        rgba8,
+        srgb,
+    } = upload;
     let size = wgpu::Extent3d {
         width,
         height,
@@ -1184,7 +1669,11 @@ fn create_texture_rgba8(
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        format: if srgb {
+            wgpu::TextureFormat::Rgba8UnormSrgb
+        } else {
+            wgpu::TextureFormat::Rgba8Unorm
+        },
         usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
         view_formats: &[],
     });
@@ -1220,6 +1709,7 @@ fn create_texture_rgba8(
     });
     UiTextureGpu {
         _texture: texture,
+        view,
         bind_group,
     }
 }
@@ -1251,12 +1741,22 @@ fn create_shader_channel_buffer(device: &wgpu::Device, capacity: usize) -> wgpu:
     })
 }
 
+fn create_material_buffer(device: &wgpu::Device, capacity: usize) -> wgpu::Buffer {
+    device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("ui_material_instances"),
+        size: (capacity.max(1) * std::mem::size_of::<UiMaterialInstance>()) as u64,
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    })
+}
+
 fn create_frame_bind_group(
     device: &wgpu::Device,
     layout: &wgpu::BindGroupLayout,
     uniform_buffer: &wgpu::Buffer,
     soft_clip_buffer: &wgpu::Buffer,
     shader_channel_buffer: &wgpu::Buffer,
+    material_buffer: &wgpu::Buffer,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("ui_frame_bg"),
@@ -1274,8 +1774,241 @@ fn create_frame_bind_group(
                 binding: 2,
                 resource: shader_channel_buffer.as_entire_binding(),
             },
+            wgpu::BindGroupEntry {
+                binding: 3,
+                resource: material_buffer.as_entire_binding(),
+            },
         ],
     })
+}
+
+fn material_texture_layout_entry(binding: u32) -> wgpu::BindGroupLayoutEntry {
+    wgpu::BindGroupLayoutEntry {
+        binding,
+        visibility: wgpu::ShaderStages::FRAGMENT,
+        ty: wgpu::BindingType::Texture {
+            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+            view_dimension: wgpu::TextureViewDimension::D2,
+            multisampled: false,
+        },
+        count: None,
+    }
+}
+
+fn create_ui_material_texture_set(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    views: [&wgpu::TextureView; MAX_SURFACE_SHADER_TEXTURES],
+    sampler: &wgpu::Sampler,
+) -> wgpu::BindGroup {
+    device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("ui_material_textures_bg"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::TextureView(views[0]),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::TextureView(views[1]),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: wgpu::BindingResource::TextureView(views[2]),
+            },
+            wgpu::BindGroupEntry {
+                binding: 3,
+                resource: wgpu::BindingResource::TextureView(views[3]),
+            },
+            wgpu::BindGroupEntry {
+                binding: 4,
+                resource: wgpu::BindingResource::Sampler(sampler),
+            },
+        ],
+    })
+}
+
+fn create_ui_material_sampler(
+    device: &wgpu::Device,
+    key: UiMaterialSamplerKey,
+    supports_anisotropy: bool,
+) -> wgpu::Sampler {
+    let filter = match key.filter {
+        MaterialFilter::Nearest => wgpu::FilterMode::Nearest,
+        MaterialFilter::Linear => wgpu::FilterMode::Linear,
+    };
+    let mipmap_filter = match key.mipmap_filter {
+        MaterialFilter::Nearest => wgpu::FilterMode::Nearest,
+        MaterialFilter::Linear => wgpu::FilterMode::Linear,
+    };
+    device.create_sampler(&wgpu::SamplerDescriptor {
+        label: Some("ui_material_sampler"),
+        address_mode_u: ui_material_address_mode(key.wrap_u),
+        address_mode_v: ui_material_address_mode(key.wrap_v),
+        address_mode_w: wgpu::AddressMode::ClampToEdge,
+        mag_filter: filter,
+        min_filter: filter,
+        mipmap_filter,
+        anisotropy_clamp: if supports_anisotropy
+            && filter == wgpu::FilterMode::Linear
+            && mipmap_filter == wgpu::FilterMode::Linear
+        {
+            u16::from(key.anisotropy.clamp(1, 16))
+        } else {
+            1
+        },
+        ..Default::default()
+    })
+}
+
+fn ui_material_address_mode(wrap: MaterialWrap) -> wgpu::AddressMode {
+    match wrap {
+        MaterialWrap::Repeat => wgpu::AddressMode::Repeat,
+        MaterialWrap::Clamp => wgpu::AddressMode::ClampToEdge,
+        MaterialWrap::Mirror => wgpu::AddressMode::MirrorRepeat,
+    }
+}
+
+const UI_HOOK_BEGIN: &str = "// MENGINE_UI_HOOK_BEGIN";
+const UI_HOOK_END: &str = "// MENGINE_UI_HOOK_END";
+const ERROR_UI_SHADER_HOOK: &str = r#"fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let cell = floor(input.screen_position / vec2<f32>(8.0));
+    let checker = (u32(cell.x) + u32(cell.y)) & 1u;
+    let intensity = select(0.12, 1.0, checker == 0u);
+    return vec4<f32>(intensity, 0.0, intensity, 1.0);
+}"#;
+
+pub fn validate_ui_shader_hook(source: &str) -> Result<(), String> {
+    compose_ui_shader(source, None).map(|_| ())
+}
+
+fn compose_ui_shader(source: &str, active_keywords: Option<&[String]>) -> Result<String, String> {
+    let hook = source.trim();
+    if hook.is_empty() {
+        return Err("UI shader source is empty".into());
+    }
+    for forbidden in ["@group", "@binding", "@vertex", "@fragment", "@compute"] {
+        if hook.contains(forbidden) {
+            return Err(format!(
+                "UI hook cannot declare engine bindings or entry points ({forbidden})"
+            ));
+        }
+    }
+    let compact = hook
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    if !compact.contains("fnmengine_ui_hook(") {
+        return Err("UI shader must define mengine_ui_hook".into());
+    }
+    let schema = parse_surface_shader_schema(hook)?;
+    let enabled_keywords = if let Some(active_keywords) = active_keywords {
+        let declared = schema
+            .keywords
+            .iter()
+            .map(|keyword| keyword.name.as_str())
+            .collect::<HashSet<_>>();
+        let mut enabled = HashSet::new();
+        for keyword in active_keywords {
+            if !declared.contains(keyword.as_str()) {
+                return Err(format!(
+                    "material keyword '{keyword}' is not declared by its UI Shader"
+                ));
+            }
+            if !enabled.insert(keyword.clone()) {
+                return Err(format!("duplicate enabled material keyword '{keyword}'"));
+            }
+        }
+        enabled
+    } else {
+        schema
+            .keywords
+            .iter()
+            .filter(|keyword| keyword.default)
+            .map(|keyword| keyword.name.clone())
+            .collect::<HashSet<_>>()
+    };
+    let parameter_helpers = schema
+        .parameters
+        .iter()
+        .enumerate()
+        .map(|(index, parameter)| {
+            format!(
+                "fn mengine_param_{}(instance_index: u32) -> {} {{ return ui_material_instances[instance_index].custom_parameters[{}u]{}; }}",
+                parameter.name,
+                parameter.parameter_type.wgsl_type(),
+                index,
+                parameter.parameter_type.wgsl_swizzle(),
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let keyword_helpers = schema
+        .keywords
+        .iter()
+        .map(|keyword| {
+            format!(
+                "fn mengine_keyword_{}() -> bool {{ return {}; }}",
+                keyword.name,
+                enabled_keywords.contains(&keyword.name)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let texture_helpers = schema
+        .textures
+        .iter()
+        .enumerate()
+        .map(|(index, texture)| {
+            format!(
+                "fn mengine_texture_{}(uv: vec2<f32>) -> vec4<f32> {{ return textureSample(mengine_custom_texture_{index}, ui_material_sampler, uv); }}",
+                texture.name,
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let start = UI_WGSL
+        .find(UI_HOOK_BEGIN)
+        .ok_or_else(|| "engine UI-hook start marker is missing".to_owned())?;
+    let end = UI_WGSL
+        .find(UI_HOOK_END)
+        .map(|index| index + UI_HOOK_END.len())
+        .ok_or_else(|| "engine UI-hook end marker is missing".to_owned())?;
+    let mut composed = UI_WGSL.to_owned();
+    composed.replace_range(
+        start..end,
+        &format!(
+            "{UI_HOOK_BEGIN}\n{parameter_helpers}\n{keyword_helpers}\n{texture_helpers}\n{hook}\n{UI_HOOK_END}"
+        ),
+    );
+    let module = naga::front::wgsl::parse_str(&composed)
+        .map_err(|error| format!("WGSL parse failed: {error}"))?;
+    naga::valid::Validator::new(
+        naga::valid::ValidationFlags::all(),
+        naga::valid::Capabilities::all(),
+    )
+    .validate(&module)
+    .map_err(|error| format!("WGSL validation failed: {error}: {error:?}"))?;
+    Ok(composed)
+}
+
+fn ui_shader_fingerprint(source: &str, keywords: &[String]) -> u64 {
+    if source.trim().is_empty() {
+        return 0;
+    }
+    let mut hasher = DefaultHasher::new();
+    source.hash(&mut hasher);
+    let mut canonical_keywords = keywords.to_vec();
+    canonical_keywords.sort();
+    canonical_keywords.dedup();
+    canonical_keywords.hash(&mut hasher);
+    let value = hasher.finish();
+    if value == 0 {
+        1
+    } else {
+        value
+    }
 }
 
 const UI_WGSL: &str = r#"
@@ -1301,8 +2034,18 @@ struct UiShaderChannelInstance {
     tangents: array<vec4<f32>, 4>,
 };
 @group(0) @binding(2) var<storage, read> shader_channel_instances: array<UiShaderChannelInstance>;
+struct UiMaterialInstance {
+    base_color: vec4<f32>,
+    custom_parameters: array<vec4<f32>, 16>,
+};
+@group(0) @binding(3) var<storage, read> ui_material_instances: array<UiMaterialInstance>;
 @group(1) @binding(0) var ui_texture: texture_2d<f32>;
 @group(1) @binding(1) var ui_sampler: sampler;
+@group(2) @binding(0) var mengine_custom_texture_0: texture_2d<f32>;
+@group(2) @binding(1) var mengine_custom_texture_1: texture_2d<f32>;
+@group(2) @binding(2) var mengine_custom_texture_2: texture_2d<f32>;
+@group(2) @binding(3) var mengine_custom_texture_3: texture_2d<f32>;
+@group(2) @binding(4) var ui_material_sampler: sampler;
 
 struct VsIn {
     @builtin(instance_index) instance_index: u32,
@@ -1333,6 +2076,33 @@ struct VsOut {
     @location(8) tangent: vec4<f32>,
     @location(9) @interpolate(flat) shader_channels: u32,
 };
+
+struct MEngineUiInput {
+    vertex_color: vec4<f32>,
+    uv0: vec2<f32>,
+    uv1: vec4<f32>,
+    uv2: vec4<f32>,
+    uv3: vec4<f32>,
+    normal: vec3<f32>,
+    tangent: vec4<f32>,
+    screen_position: vec2<f32>,
+    shader_channels: u32,
+    instance_index: u32,
+};
+
+fn mengine_ui_main_texture(uv: vec2<f32>) -> vec4<f32> {
+    return textureSample(ui_texture, ui_sampler, uv);
+}
+
+fn mengine_ui_material_color(instance_index: u32) -> vec4<f32> {
+    return ui_material_instances[instance_index].base_color;
+}
+
+// MENGINE_UI_HOOK_BEGIN
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    return mengine_ui_main_texture(input.uv0) * input.vertex_color;
+}
+// MENGINE_UI_HOOK_END
 
 @vertex
 fn vs_main(input: VsIn) -> VsOut {
@@ -1391,7 +2161,18 @@ fn vs_main(input: VsIn) -> VsOut {
 
 @fragment
 fn fs_main(input: VsOut) -> @location(0) vec4<f32> {
-    var color = textureSample(ui_texture, ui_sampler, input.uv) * input.color;
+    var color = mengine_ui_hook(MEngineUiInput(
+        input.color,
+        input.uv,
+        input.uv1,
+        input.uv2,
+        input.uv3,
+        input.normal,
+        input.tangent,
+        input.clip.xy,
+        input.shader_channels,
+        input.instance_index,
+    ));
     if input.alpha_clip > 0.5 && color.a <= 0.001 {
         discard;
     }
@@ -1603,6 +2384,31 @@ mod tests {
     }
 
     #[test]
+    fn custom_ui_hook_reflection_composes_parameters_keywords_textures_and_streams() {
+        let source = r#"/* MENGINE_PARAMETERS
+        {"parameters":[{"name":"strength","type":"float","default":1}],
+         "keywords":[{"name":"USE_DETAIL","default":true}],
+         "textures":[{"name":"detail","type":"color","default":""}]}
+        */
+        fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+            let detail = mengine_texture_detail(input.uv1.xy);
+            let normal_factor = abs(input.normal.z);
+            let keyword_factor = select(0.0, 1.0, mengine_keyword_USE_DETAIL());
+            return mengine_ui_main_texture(input.uv0) * input.vertex_color
+                * detail * (mengine_param_strength(input.instance_index) * normal_factor * keyword_factor);
+        }"#;
+        assert!(validate_ui_shader_hook(source).is_ok());
+        assert!(validate_ui_shader_hook(
+            "fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface { return surface; }"
+        )
+        .is_err());
+        assert!(validate_ui_shader_hook(
+            "@group(3) @binding(0) var stolen: texture_2d<f32>; fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> { return input.vertex_color; }"
+        )
+        .is_err());
+    }
+
+    #[test]
     fn shader_channel_mask_matches_unity_and_forces_camera_basis_streams() {
         assert_eq!(UiShaderChannels::TEX_COORD_1.bits(), 1);
         assert_eq!(UiShaderChannels::TEX_COORD_2.bits(), 2);
@@ -1726,7 +2532,11 @@ mod tests {
         device.push_error_scope(wgpu::ErrorFilter::Validation);
 
         let format = wgpu::TextureFormat::Bgra8UnormSrgb;
-        let mut renderer = UiRenderer::new(&device, &queue, format, 16, 16);
+        let supports_anisotropy = adapter
+            .get_downlevel_capabilities()
+            .flags
+            .contains(wgpu::DownlevelFlags::ANISOTROPIC_FILTERING);
+        let mut renderer = UiRenderer::new(&device, &queue, format, 16, 16, supports_anisotropy);
         let mut push = primitive("white", None);
         push.key.stencil = UiStencilMode::Push { reference: 0 };
         let mut child = primitive("white", None);
@@ -1735,10 +2545,24 @@ mod tests {
         let mut channel_data = UiShaderChannelData::default();
         channel_data.uv2[3] = [0.25, 0.5, 0.75, 1.0];
         child.shader_channel_data = Some(Arc::new(channel_data));
+        child.key.material = "Assets/Materials/HeadlessUi.mmat".into();
+        child.render_material = Some(Arc::new(UiRenderMaterial {
+            shader: Arc::from(
+                r#"fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+                    let stream = clamp(input.uv2.x + abs(input.normal.z), 0.0, 1.0);
+                    return mengine_ui_main_texture(input.uv0) * input.vertex_color
+                        * mengine_ui_material_color(input.instance_index)
+                        * vec4<f32>(stream, stream, stream, 1.0);
+                }"#,
+            ),
+            base_color: [0.5, 0.75, 1.0, 1.0],
+            ..UiRenderMaterial::default()
+        }));
         let mut pop = primitive("white", None);
         pop.key.stencil = UiStencilMode::Pop { reference: 1 };
         let plan = UiBatchPlan::build(vec![push, child, pop]);
         renderer.prepare(&device, &queue, &plan);
+        assert_eq!(renderer.custom_pipelines.len(), 1);
 
         let color = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("ui_stencil_test_color"),
@@ -1800,6 +2624,9 @@ mod tests {
         queue.submit([encoder.finish()]);
         let error = pollster::block_on(device.pop_error_scope());
         assert!(error.is_none(), "UI stencil validation error: {error:?}");
+        renderer.prepare(&device, &queue, &UiBatchPlan::default());
+        assert!(renderer.custom_pipelines.is_empty());
+        assert!(renderer.material_texture_sets.is_empty());
     }
 
     #[test]

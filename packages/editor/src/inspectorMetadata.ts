@@ -70,6 +70,14 @@ const sprite: InspectorFieldMeta = {
   allowNone: true,
   noneValue: 'white',
 };
+const materialAsset: InspectorFieldMeta = {
+  label: 'Material',
+  kind: 'project-asset',
+  referenceType: 'Material',
+  assetKinds: ['material'],
+  allowNone: true,
+  noneValue: '',
+};
 
 const screenSpaceCanvas: InspectorVisibilityCondition = {
   component: 'Canvas',
@@ -579,6 +587,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   Image: {
     enabled: { label: 'Enabled' },
     maskable: { label: 'Maskable' },
+    material: materialAsset,
     sprite,
     image_type: { kind: 'enum', options: options('Simple', 'Sliced', 'Tiled', 'Filled') },
     preserve_aspect: {
@@ -641,6 +650,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   RawImage: {
     enabled: { label: 'Enabled' },
     maskable: { label: 'Maskable' },
+    material: materialAsset,
     texture: sprite,
     uv_rect: { label: 'UV Rect' },
     raycast_padding: {
@@ -726,6 +736,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   Text: {
     enabled: { label: 'Enabled' },
     maskable: { label: 'Maskable' },
+    material: materialAsset,
     text: { kind: 'multiline' },
     font_size: { min: 1, step: 1 },
     alignment: { kind: 'enum', options: options('Left', 'Center', 'Right') },
@@ -757,6 +768,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   Panel: {
     enabled: { label: 'Enabled' },
     maskable: { label: 'Maskable' },
+    material: materialAsset,
     border_width: { min: 0, step: 0.25 },
     raycast_padding: {
       label: 'Raycast Padding',

@@ -4,6 +4,7 @@ use std::path::Path;
 
 pub const SURFACE_SHADER_HOOK_NAME: &str = "mengine_surface_hook";
 pub const LIT_SURFACE_SHADER_HOOK_NAME: &str = "mengine_lit_surface_hook";
+pub const UI_SHADER_HOOK_NAME: &str = "mengine_ui_hook";
 const MAX_SURFACE_SHADER_BYTES: usize = 256 * 1024;
 
 pub fn parse_surface_shader(bytes: &[u8]) -> Result<String, AssetError> {
@@ -29,12 +30,18 @@ pub fn parse_surface_shader(bytes: &[u8]) -> Result<String, AssetError> {
         .chars()
         .filter(|character| !character.is_whitespace())
         .collect();
-    if !compact.contains(&format!("fn{SURFACE_SHADER_HOOK_NAME}("))
-        && !compact.contains(&format!("fn{LIT_SURFACE_SHADER_HOOK_NAME}("))
-    {
+    let has_surface = compact.contains(&format!("fn{SURFACE_SHADER_HOOK_NAME}("))
+        || compact.contains(&format!("fn{LIT_SURFACE_SHADER_HOOK_NAME}("));
+    let has_ui = compact.contains(&format!("fn{UI_SHADER_HOOK_NAME}("));
+    if !has_surface && !has_ui {
         return Err(AssetError::Invalid(format!(
-            "surface shader must define fn {SURFACE_SHADER_HOOK_NAME} or fn {LIT_SURFACE_SHADER_HOOK_NAME}"
+            "shader must define fn {SURFACE_SHADER_HOOK_NAME}, fn {LIT_SURFACE_SHADER_HOOK_NAME}, or fn {UI_SHADER_HOOK_NAME}"
         )));
+    }
+    if has_surface && has_ui {
+        return Err(AssetError::Invalid(
+            "a .mshader asset must target either UI or forward Surface, not both".into(),
+        ));
     }
     Ok(format!("{source}\n"))
 }
@@ -71,6 +78,13 @@ mod tests {
         )
         .unwrap();
         assert!(lit.contains("fn mengine_lit_surface_hook"));
+        let ui = parse_surface_shader(
+            br#"fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+                return mengine_ui_main_texture(input.uv0) * input.vertex_color;
+            }"#,
+        )
+        .unwrap();
+        assert!(ui.contains("fn mengine_ui_hook"));
         assert!(parse_surface_shader(b"fn other() {}").is_err());
         assert!(parse_surface_shader(&[0xff, 0xfe]).is_err());
     }

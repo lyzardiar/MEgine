@@ -21,6 +21,7 @@ pub struct RuntimeTextureCache {
     project_root: Option<PathBuf>,
     attempted_ui: HashMap<String, FileStamp>,
     attempted_material: HashMap<String, FileStamp>,
+    attempted_ui_material: HashMap<String, FileStamp>,
     attempted_environment: HashMap<String, FileStamp>,
     sprite_regions: HashMap<String, CachedSpriteRegion>,
     alpha_sprites: HashMap<String, CachedAlphaSprite>,
@@ -77,6 +78,7 @@ impl RuntimeTextureCache {
             project_root,
             attempted_ui: HashMap::new(),
             attempted_material: HashMap::new(),
+            attempted_ui_material: HashMap::new(),
             attempted_environment: HashMap::new(),
             sprite_regions: HashMap::new(),
             alpha_sprites: HashMap::new(),
@@ -90,6 +92,7 @@ impl RuntimeTextureCache {
         self.project_root = project_root;
         self.attempted_ui.clear();
         self.attempted_material.clear();
+        self.attempted_ui_material.clear();
         self.attempted_environment.clear();
         self.sprite_regions.clear();
         self.alpha_sprites.clear();
@@ -98,6 +101,8 @@ impl RuntimeTextureCache {
     pub fn invalidate(&mut self, key: &str) {
         self.attempted_ui.remove(key);
         self.attempted_material
+            .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
+        self.attempted_ui_material
             .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
         self.attempted_environment.remove(key);
         self.sprite_regions.clear();
@@ -340,6 +345,75 @@ impl RuntimeTextureCache {
         failures
     }
 
+    pub fn sync_ui_materials(
+        &mut self,
+        renderer: &mut Renderer,
+        plan: &UiBatchPlan,
+    ) -> Vec<TextureLoadFailure> {
+        let Some(root) = self.project_root.as_deref() else {
+            return Vec::new();
+        };
+        let mut failures = Vec::new();
+        let references = ui_material_texture_references(plan);
+        let stale_attempts =
+            stale_material_texture_attempts(&self.attempted_ui_material, &references);
+        for attempt in stale_attempts {
+            self.attempted_ui_material.remove(&attempt);
+            if let Some((srgb, key)) = split_material_texture_attempt(&attempt) {
+                renderer.remove_ui_material_texture_variant(key, srgb);
+            }
+        }
+        for (key, srgb) in references {
+            let attempt = material_texture_attempt_key(&key, srgb);
+            let Some(path) = resolve_project_asset_path(root, &key) else {
+                renderer.remove_ui_material_texture_variant(&key, srgb);
+                if should_attempt(
+                    &mut self.attempted_ui_material,
+                    &attempt,
+                    FileStamp::default(),
+                ) {
+                    failures.push(TextureLoadFailure {
+                        key,
+                        path: root.to_owned(),
+                        error: "UI material texture must be a project-relative path without '..'"
+                            .into(),
+                    });
+                }
+                continue;
+            };
+            if !should_attempt(&mut self.attempted_ui_material, &attempt, file_stamp(&path)) {
+                continue;
+            }
+            match load_texture_rgba8(&path) {
+                Ok(texture) => {
+                    if let Err(error) = renderer.upload_ui_material_texture_rgba8(
+                        &key,
+                        texture.width,
+                        texture.height,
+                        &texture.pixels,
+                        srgb,
+                    ) {
+                        renderer.remove_ui_material_texture_variant(&key, srgb);
+                        failures.push(TextureLoadFailure {
+                            key,
+                            path,
+                            error: error.to_string(),
+                        });
+                    }
+                }
+                Err(error) => {
+                    renderer.remove_ui_material_texture_variant(&key, srgb);
+                    failures.push(TextureLoadFailure {
+                        key,
+                        path,
+                        error: error.to_string(),
+                    });
+                }
+            }
+        }
+        failures
+    }
+
     pub fn sync_environment(
         &mut self,
         renderer: &mut Renderer,
@@ -420,6 +494,27 @@ fn material_texture_references(objects: &[RenderObject]) -> Vec<(String, bool)> 
             )
             .filter(|(key, _)| !key.is_empty() && !key.eq_ignore_ascii_case("white"))
             .map(|(key, srgb)| (key.to_owned(), srgb)),
+        );
+    }
+    let mut references = references.into_iter().collect::<Vec<_>>();
+    references.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.cmp(&right.1)));
+    references
+}
+
+fn ui_material_texture_references(plan: &UiBatchPlan) -> Vec<(String, bool)> {
+    let mut references = HashSet::new();
+    for primitive in &plan.primitives {
+        let Some(material) = primitive.render_material.as_deref() else {
+            continue;
+        };
+        references.extend(
+            material
+                .custom_textures
+                .iter()
+                .zip(material.custom_texture_srgb)
+                .map(|(key, srgb)| (key.trim(), srgb))
+                .filter(|(key, _)| !key.is_empty() && !key.eq_ignore_ascii_case("white"))
+                .map(|(key, srgb)| (key.to_owned(), srgb)),
         );
     }
     let mut references = references.into_iter().collect::<Vec<_>>();
@@ -626,6 +721,24 @@ mod tests {
         assert_eq!(
             stale_material_texture_attempts(&attempted, &[("Assets/Shared.png".into(), true)]),
             vec![material_texture_attempt_key("Assets/Shared.png", false)]
+        );
+    }
+
+    #[test]
+    fn ui_material_texture_usage_reads_resolved_primitive_payloads() {
+        let mut first = UiPrimitive::solid([0.0; 4], [1.0; 4]);
+        let mut material = mengine_rhi::UiRenderMaterial::default();
+        material.custom_textures[0] = "Assets/UI/detail.png".into();
+        material.custom_texture_srgb[0] = true;
+        material.custom_textures[1] = "Assets/UI/mask.png".into();
+        first.render_material = Some(Arc::new(material));
+        let plan = UiBatchPlan::build(vec![first]);
+        assert_eq!(
+            ui_material_texture_references(&plan),
+            vec![
+                ("Assets/UI/detail.png".into(), true),
+                ("Assets/UI/mask.png".into(), false),
+            ]
         );
     }
 

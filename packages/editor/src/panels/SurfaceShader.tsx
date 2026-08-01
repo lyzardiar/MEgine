@@ -8,6 +8,7 @@ import {
 } from '../projectAssets';
 import {
   DEFAULT_SURFACE_SHADER,
+  DEFAULT_UI_SHADER,
   normalizeSurfaceShaderSource,
   surfaceShaderDiagnostics,
   validateSurfaceShaderSource,
@@ -51,10 +52,13 @@ function uniqueSurfaceShaderPath(baseName = 'New Surface Shader'): string {
   return path;
 }
 
-export async function createProjectSurfaceShader(open = true): Promise<string> {
+export async function createProjectSurfaceShader(
+  open = true,
+  domain: 'surface' | 'ui' = 'surface',
+): Promise<string> {
   await refreshProjectFiles();
-  const path = uniqueSurfaceShaderPath();
-  await writeProjectAssetText(path, DEFAULT_SURFACE_SHADER);
+  const path = uniqueSurfaceShaderPath(domain === 'ui' ? 'New UI Shader' : 'New Surface Shader');
+  await writeProjectAssetText(path, domain === 'ui' ? DEFAULT_UI_SHADER : DEFAULT_SURFACE_SHADER);
   await refreshProjectFiles();
   broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   if (open) openSurfaceShaderAsset(path);
@@ -280,9 +284,9 @@ export function SurfaceShaderEditor(props: {
     props.undoService.restoreCheckpoint(transaction.checkpoint);
   };
 
-  const createNew = async () => {
+  const createNew = async (domain: 'surface' | 'ui' = 'surface') => {
     try {
-      const path = await createProjectSurfaceShader();
+      const path = await createProjectSurfaceShader(true, domain);
       props.onOpenAsset(path);
       props.onAssetsChanged();
       props.onLog(`Created ${path}`);
@@ -485,7 +489,7 @@ export function SurfaceShaderEditor(props: {
   ]);
 
   if (!props.assetPath) {
-    return <div className="material-empty"><strong>Surface Shader</strong><span>Create or double-click a .mshader asset.</span><button type="button" onClick={() => void createNew()}>Create Shader</button></div>;
+    return <div className="material-empty"><strong>Surface / UI Shader</strong><span>Create or double-click a .mshader asset.</span><button type="button" onClick={() => void createNew('surface')}>Create Surface Shader</button><button type="button" onClick={() => void createNew('ui')}>Create UI Shader</button></div>;
   }
 
   return (
@@ -495,7 +499,8 @@ export function SurfaceShaderEditor(props: {
         <span className="spacer" />
         <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''}`} disabled={!props.undoService.canUndo || saving || validating} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
         <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''}`} disabled={!props.undoService.canRedo || saving || validating} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
-        <button type="button" onClick={() => void createNew()}>New</button>
+        <button type="button" onClick={() => void createNew('surface')}>New Surface</button>
+        <button type="button" onClick={() => void createNew('ui')}>New UI</button>
         <button type="button" disabled={loading || saving || validating} onClick={reloadFromDisk}>Reload</button>
         <button
           type="button"

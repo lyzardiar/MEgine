@@ -1761,6 +1761,7 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
     assert.deepEqual(manifest.surfaceShaderVariants, [
       {
         shader: 'Assets/Shaders/Rim.mshader',
+        domain: 'surface',
         enabledKeywords: ['USE_RIM'],
         blend: 'premultiplied',
         doubleSided: true,
@@ -1768,6 +1769,7 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       },
       {
         shader: 'Assets/Shaders/Rim.mshader',
+        domain: 'surface',
         enabledKeywords: ['USE_RIM'],
         blend: 'replace',
         doubleSided: false,
@@ -1813,6 +1815,79 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       engineVersion: 'test-engine',
     }), /MaterialPropertyBlock.*parameter 'removed' is not declared/i);
     assert.equal(existsSync(invalidOutput), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage collects UI Graphic materials and enforces the UI Shader domain', () => {
+  const paths = fixture('custom-ui-shader');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Shaders'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        Image: {
+          enabled: true,
+          material: 'Assets/Materials/GlowUi.mmat',
+          sprite: 'white',
+        },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Materials', 'GlowUi.mmat'), JSON.stringify({
+      version: 10,
+      shader: 'custom',
+      custom_shader: 'Assets/Shaders/GlowUi.mshader',
+      surface: 'transparent',
+      blend_mode: 'additive',
+      double_sided: true,
+      transparent_depth_write: true,
+      custom_textures: { detail: 'Assets/Textures/ui-detail.png' },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'ui-detail.png'), 'ui-detail');
+    const uiShader = `
+      /* MENGINE_PARAMETERS
+      {"textures":[{"name":"detail","type":"color","default":""}]}
+      */
+      fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+        return mengine_ui_main_texture(input.uv0)
+          * mengine_texture_detail(input.uv0)
+          * input.vertex_color;
+      }
+    `;
+    const shaderPath = join(paths.project, 'Assets', 'Shaders', 'GlowUi.mshader');
+    writeFileSync(shaderPath, uiShader);
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'GlowUi.mmat')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Shaders', 'GlowUi.mshader')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Textures', 'ui-detail.png')), true);
+    assert.deepEqual(manifest.surfaceShaderVariants, [{
+      shader: 'Assets/Shaders/GlowUi.mshader',
+      domain: 'ui',
+      enabledKeywords: [],
+      blend: 'additive',
+      doubleSided: false,
+      depthWrite: false,
+    }]);
+
+    writeFileSync(shaderPath, `
+      /* MENGINE_PARAMETERS
+      {"textures":[{"name":"detail","type":"color","default":""}]}
+      */
+      fn mengine_lit_surface_hook(
+        surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+      ) -> MEngineSurface { return surface; }
+    `);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'DomainMismatch'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /surface Shader cannot be used by ui renderers/i);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

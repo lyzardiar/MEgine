@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   DEFAULT_SURFACE_SHADER,
+  DEFAULT_UI_SHADER,
   normalizeSurfaceShaderParameterValue,
   normalizeSurfaceShaderSource,
   parseSurfaceShaderKeywords,
@@ -15,6 +16,15 @@ import {
 test('default surface shader satisfies the editor contract', () => {
   assert.deepEqual(surfaceShaderDiagnostics(DEFAULT_SURFACE_SHADER), []);
   assert.doesNotThrow(() => validateSurfaceShaderSource(DEFAULT_SURFACE_SHADER));
+});
+
+test('UI Shader is a valid exclusive Material Shader domain', () => {
+  assert.deepEqual(surfaceShaderDiagnostics(DEFAULT_UI_SHADER), []);
+  assert.doesNotThrow(() => validateSurfaceShaderSource(DEFAULT_UI_SHADER));
+  assert.match(
+    surfaceShaderDiagnostics(`${DEFAULT_UI_SHADER}\n${DEFAULT_SURFACE_SHADER}`).join(' '),
+    /either UI or forward Surface, not both/,
+  );
 });
 
 test('surface shader parameter schema reflects stable typed defaults', () => {

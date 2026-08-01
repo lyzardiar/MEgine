@@ -1355,7 +1355,7 @@ export function BuildSettings(props: {
                 </div>
               ))}
             </div>
-            <h4>Surface Shader Variants · {lastBuild.shaderVariants}/{lastBuild.shaderVariantLimit}</h4>
+            <h4>Material Shader Variants · {lastBuild.shaderVariants}/{lastBuild.shaderVariantLimit}</h4>
             {lastBuild.surfaceShaderVariants.length > 0
               ? <div className="build-content-table">
                   {lastBuild.surfaceShaderVariants
@@ -1363,15 +1363,15 @@ export function BuildSettings(props: {
                     .map((variant) => (
                     <div
                       className="build-content-row"
-                      key={`${variant.shader}\0${variant.enabledKeywords.join('\0')}\0${variant.blend}\0${variant.doubleSided}\0${variant.depthWrite}`}
+                      key={`${variant.shader}\0${variant.domain}\0${variant.enabledKeywords.join('\0')}\0${variant.blend}\0${variant.doubleSided}\0${variant.depthWrite}`}
                     >
                       <strong>{variant.shader}</strong>
-                      <span>{variant.blend} · {variant.doubleSided ? 'two-sided' : 'back-face cull'} · depth {variant.depthWrite ? 'write' : 'read'}</span>
+                      <span>{variant.domain} · {variant.blend} · {variant.doubleSided ? 'two-sided' : 'back-face cull'} · depth {variant.depthWrite ? 'write' : 'read'}</span>
                       <span>{variant.enabledKeywords.join(', ') || 'Default keywords'}</span>
                     </div>
                     ))}
                 </div>
-              : <div className="build-empty">No custom Surface Shader variants were collected.</div>}
+              : <div className="build-empty">No custom Material Shader variants were collected.</div>}
             {lastBuild.surfaceShaderVariants.length > MAX_RENDERED_SHADER_VARIANTS && (
               <small>
                 Showing the first {MAX_RENDERED_SHADER_VARIANTS} variants. The signed build Manifest contains all {lastBuild.surfaceShaderVariants.length} entries.

@@ -292,6 +292,7 @@ struct BuildPlayerResult {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct BuildShaderVariantResult {
     shader: String,
+    domain: String,
     enabled_keywords: Vec<String>,
     blend: String,
     double_sided: bool,
@@ -3163,10 +3164,13 @@ fn run_player_build_controlled(
     }
     if let Some(invalid) = surface_shader_variants.iter().find(|variant| {
         variant.shader.trim().is_empty()
+            || !matches!(variant.domain.as_str(), "surface" | "ui")
             || !matches!(
                 variant.blend.as_str(),
                 "replace" | "alpha" | "premultiplied" | "additive" | "multiply"
             )
+            || (variant.domain == "ui"
+                && (variant.blend == "replace" || variant.double_sided || variant.depth_write))
     }) {
         return Err(format!(
             "build manifest contains invalid Surface Shader pipeline variant for {}",
@@ -4196,7 +4200,23 @@ async fn validate_project_scripts(
 fn validate_surface_shader_source(source: &str) -> Result<(), String> {
     let normalized = mengine_assets::parse_surface_shader(source.as_bytes())
         .map_err(|error| error.to_string())?;
-    mengine_rhi::validate_surface_shader_hook(&normalized)
+    let compact = normalized
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    let has_ui = compact.contains("fnmengine_ui_hook(");
+    let has_surface = compact.contains("fnmengine_surface_hook(")
+        || compact.contains("fnmengine_lit_surface_hook(");
+    if has_ui && has_surface {
+        return Err("a .mshader asset must target either UI or forward Surface, not both".into());
+    }
+    if has_ui {
+        mengine_rhi::validate_ui_shader_hook(&normalized)?;
+    }
+    if has_surface {
+        mengine_rhi::validate_surface_shader_hook(&normalized)?;
+    }
+    Ok(())
 }
 
 #[tauri::command]

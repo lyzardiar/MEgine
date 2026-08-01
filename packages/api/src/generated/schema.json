@@ -969,6 +969,9 @@
       "maskable": {
         "type": "boolean"
       },
+      "material": {
+        "type": "string"
+      },
       "pixels_per_unit_multiplier": {
         "type": "number"
       },
@@ -997,6 +1000,7 @@
     "required": [
       "enabled",
       "maskable",
+      "material",
       "sprite",
       "color",
       "image_type",
@@ -1519,6 +1523,9 @@
       "maskable": {
         "type": "boolean"
       },
+      "material": {
+        "type": "string"
+      },
       "raycast_padding": {
         "items": {
           "type": "number"
@@ -1532,6 +1539,7 @@
     "required": [
       "enabled",
       "maskable",
+      "material",
       "color",
       "border_color",
       "border_width",
@@ -1921,6 +1929,9 @@
       "maskable": {
         "type": "boolean"
       },
+      "material": {
+        "type": "string"
+      },
       "raycast_padding": {
         "items": {
           "type": "number"
@@ -1943,6 +1954,7 @@
     "required": [
       "enabled",
       "maskable",
+      "material",
       "texture",
       "color",
       "uv_rect",
@@ -2624,6 +2636,9 @@
       "maskable": {
         "type": "boolean"
       },
+      "material": {
+        "type": "string"
+      },
       "outline_color": {
         "items": {
           "type": "number"
@@ -2652,6 +2667,7 @@
     "required": [
       "enabled",
       "maskable",
+      "material",
       "text",
       "color",
       "font_size",

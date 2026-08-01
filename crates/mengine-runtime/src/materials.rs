@@ -10,8 +10,9 @@ use mengine_core::surface_shader::{
     MAX_SURFACE_SHADER_PARAMETERS, MAX_SURFACE_SHADER_TEXTURES,
 };
 use mengine_rhi::{
-    validate_surface_shader_hook, MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial,
-    SurfaceShaderParameterBinding,
+    validate_surface_shader_hook, validate_ui_shader_hook, MaterialBlendMode, MaterialFilter,
+    MaterialWrap, RenderMaterial, SurfaceShaderParameterBinding, UiBlendMode, UiPrimitive,
+    UiRenderMaterial,
 };
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -22,6 +23,28 @@ use std::time::SystemTime;
 struct CachedMaterial {
     modified: Option<SystemTime>,
     result: Result<Arc<MaterialAsset>, String>,
+}
+
+/// Resolves authored Graphic material paths after primitive generation and before batching.
+/// Reusing an Arc per path keeps every primitive in a generated sliced/tiled/text mesh on the
+/// same immutable GPU material instance while preserving its authored main texture.
+pub fn resolve_ui_materials(primitives: &mut [UiPrimitive], cache: &mut RuntimeMaterialCache) {
+    let mut resolved = HashMap::<String, Arc<UiRenderMaterial>>::new();
+    for primitive in primitives {
+        let key = primitive.key.material.clone();
+        if !is_material_path(&key) {
+            continue;
+        }
+        let material = Arc::clone(resolved.entry(key.clone()).or_insert_with(|| {
+            Arc::new(
+                cache
+                    .resolve_ui(&key)
+                    .unwrap_or_else(UiRenderMaterial::error),
+            )
+        }));
+        primitive.key.blend = material.blend;
+        primitive.render_material = Some(material);
+    }
 }
 
 #[derive(Clone)]
@@ -80,36 +103,40 @@ impl RuntimeMaterialCache {
                 let mut render = render_material_from_asset(&material);
                 if material.shader == MaterialShader::Custom {
                     match self.load_custom_shader(&material.custom_shader) {
-                        Ok(shader) => match resolve_surface_shader_material_with_schema(
-                            &material,
-                            &shader.schema,
-                            Arc::clone(&shader.parameter_bindings),
-                            Arc::clone(&shader.texture_names),
-                        ) {
-                            Ok(bindings) => {
-                                self.clear_failure(normalized);
-                                self.clear_failure(&material.custom_shader);
-                                render.surface_shader = Arc::clone(&shader.source);
-                                render.surface_keywords = bindings.keywords;
-                                render.custom_parameters = bindings.parameters;
-                                render.custom_parameter_bindings = bindings.parameter_bindings;
-                                render.custom_textures = bindings.textures;
-                                render.custom_texture_names = bindings.texture_names;
-                                render.custom_texture_srgb = bindings.texture_srgb;
-                            }
-                            Err(error) => {
-                                self.clear_failure(&material.custom_shader);
-                                if self.record_failure(normalized, &error) {
-                                    log::warn!(
+                        Ok(shader) => {
+                            match validate_surface_shader_hook(&shader.source).and_then(|_| {
+                                resolve_surface_shader_material_with_schema(
+                                    &material,
+                                    &shader.schema,
+                                    Arc::clone(&shader.parameter_bindings),
+                                    Arc::clone(&shader.texture_names),
+                                )
+                            }) {
+                                Ok(bindings) => {
+                                    self.clear_failure(normalized);
+                                    self.clear_failure(&material.custom_shader);
+                                    render.surface_shader = Arc::clone(&shader.source);
+                                    render.surface_keywords = bindings.keywords;
+                                    render.custom_parameters = bindings.parameters;
+                                    render.custom_parameter_bindings = bindings.parameter_bindings;
+                                    render.custom_textures = bindings.textures;
+                                    render.custom_texture_names = bindings.texture_names;
+                                    render.custom_texture_srgb = bindings.texture_srgb;
+                                }
+                                Err(error) => {
+                                    self.clear_failure(&material.custom_shader);
+                                    if self.record_failure(normalized, &error) {
+                                        log::warn!(
                                         "material '{}' has invalid bindings for custom shader '{}': {}",
                                         normalized,
                                         material.custom_shader,
                                         error
                                     );
+                                    }
+                                    render = RenderMaterial::error();
                                 }
-                                render = RenderMaterial::error();
                             }
-                        },
+                        }
                         Err(error) => {
                             self.clear_failure(normalized);
                             if self.record_failure(&material.custom_shader, &error) {
@@ -132,6 +159,73 @@ impl RuntimeMaterialCache {
                     log::warn!("material '{}' could not be loaded: {}", normalized, error);
                 }
                 Some(RenderMaterial::error())
+            }
+        }
+    }
+
+    /// Resolves a Unity-style replacement Graphic material. UI uses the same `.mmat`/`.minst`
+    /// authoring and reflection data as 3D materials, but requires the domain-specific
+    /// `mengine_ui_hook` contract so incompatible forward shaders fail visibly.
+    pub fn resolve_ui(&mut self, key: &str) -> Option<UiRenderMaterial> {
+        let normalized = key.trim();
+        if !is_material_path(normalized) {
+            return None;
+        }
+        let result = self.resolve_asset(normalized).and_then(|material| {
+            if material.shader != MaterialShader::Custom {
+                return Err(
+                    "Graphic material requires a custom shader with mengine_ui_hook".into(),
+                );
+            }
+            let shader = self.load_custom_shader(&material.custom_shader)?;
+            validate_ui_shader_hook(&shader.source)?;
+            let bindings = resolve_surface_shader_material_with_schema(
+                &material,
+                &shader.schema,
+                Arc::clone(&shader.parameter_bindings),
+                Arc::clone(&shader.texture_names),
+            )?;
+            Ok(UiRenderMaterial {
+                base_color: material.base_color,
+                blend: match material.blend_mode {
+                    AssetMaterialBlendMode::Alpha => UiBlendMode::Alpha,
+                    AssetMaterialBlendMode::Premultiplied => UiBlendMode::Premultiplied,
+                    AssetMaterialBlendMode::Additive => UiBlendMode::Additive,
+                    AssetMaterialBlendMode::Multiply => UiBlendMode::Multiply,
+                },
+                shader: Arc::clone(&shader.source),
+                keywords: bindings.keywords,
+                custom_parameters: bindings.parameters,
+                custom_textures: bindings.textures,
+                custom_texture_srgb: bindings.texture_srgb,
+                wrap_u: render_wrap(material.wrap_u),
+                wrap_v: render_wrap(material.wrap_v),
+                filter: match material.filter {
+                    AssetMaterialFilter::Nearest => MaterialFilter::Nearest,
+                    AssetMaterialFilter::Linear => MaterialFilter::Linear,
+                },
+                mipmap_filter: match material.mipmap_filter {
+                    AssetMaterialFilter::Nearest => MaterialFilter::Nearest,
+                    AssetMaterialFilter::Linear => MaterialFilter::Linear,
+                },
+                anisotropy: material.anisotropy,
+                is_error: false,
+            })
+        });
+        match result {
+            Ok(material) => {
+                self.clear_failure(normalized);
+                Some(material)
+            }
+            Err(error) => {
+                if self.record_failure(normalized, &error) {
+                    log::warn!(
+                        "UI material '{}' could not be resolved: {}",
+                        normalized,
+                        error
+                    );
+                }
+                Some(UiRenderMaterial::error())
             }
         }
     }
@@ -308,7 +402,6 @@ impl RuntimeMaterialCache {
             let result = load_surface_shader(&path)
                 .map_err(|error| error.to_string())
                 .and_then(|source| {
-                    validate_surface_shader_hook(&source)?;
                     let schema = Arc::new(parse_surface_shader_schema(&source)?);
                     let (parameter_bindings, texture_names) = surface_shader_reflection(&schema);
                     Ok(Arc::new(LoadedSurfaceShader {
@@ -1240,6 +1333,62 @@ mod tests {
         assert!(!recovered.is_error);
         assert!(cache.diagnostics().is_empty());
 
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn ui_materials_resolve_reflection_and_reject_forward_use() {
+        let root = std::env::temp_dir().join(format!("mengine-ui-material-{}", Uuid::new_v4()));
+        let materials = root.join("Assets/Materials");
+        let shaders = root.join("Assets/Shaders");
+        std::fs::create_dir_all(&materials).unwrap();
+        std::fs::create_dir_all(&shaders).unwrap();
+        let material_key = "Assets/Materials/GlowUi.mmat";
+        std::fs::write(
+            materials.join("GlowUi.mmat"),
+            r#"{"version":10,"shader":"custom","custom_shader":"Assets/Shaders/GlowUi.mshader","surface":"transparent","blend_mode":"additive","base_color":[0.5,0.75,1,1],"custom_parameters":{"strength":[2,0,0,0]},"custom_textures":{"detail":"Assets/Textures/detail.png"}}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            shaders.join("GlowUi.mshader"),
+            r#"/* MENGINE_PARAMETERS
+{"parameters":[{"name":"strength","type":"float","default":1}],"textures":[{"name":"detail","type":"color","default":""}]}
+*/
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    return mengine_ui_main_texture(input.uv0) * input.vertex_color
+        * mengine_texture_detail(input.uv0)
+        * mengine_param_strength(input.instance_index);
+}"#,
+        )
+        .unwrap();
+
+        let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
+        let ui = cache.resolve_ui(material_key).unwrap();
+        assert!(!ui.is_error);
+        assert_eq!(ui.blend, UiBlendMode::Additive);
+        assert_eq!(ui.base_color, [0.5, 0.75, 1.0, 1.0]);
+        assert_eq!(ui.custom_parameters[0][0], 2.0);
+        assert_eq!(ui.custom_textures[0], "Assets/Textures/detail.png");
+
+        let mut primitives = vec![
+            UiPrimitive::solid([0.0; 4], [1.0; 4]),
+            UiPrimitive::solid([0.0; 4], [1.0; 4]),
+        ];
+        for primitive in &mut primitives {
+            primitive.key.material = material_key.into();
+        }
+        resolve_ui_materials(&mut primitives, &mut cache);
+        assert_eq!(primitives[0].key.blend, UiBlendMode::Additive);
+        assert!(Arc::ptr_eq(
+            primitives[0].render_material.as_ref().unwrap(),
+            primitives[1].render_material.as_ref().unwrap(),
+        ));
+
+        let forward = cache.resolve(material_key).unwrap();
+        assert!(
+            forward.is_error,
+            "a UI hook must not enter the forward pipeline"
+        );
         std::fs::remove_dir_all(root).unwrap();
     }
 }

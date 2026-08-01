@@ -82,6 +82,8 @@ component Image {
   enabled:         bool   = true
   /// Unity MaskableGraphic.maskable. False ignores parent Mask and RectMask2D.
   maskable:        bool   = true
+  /// Unity Graphic.material replacement. Empty uses the built-in UI material.
+  material:        string = ""
   sprite:          string = "white"
   color:           float4 = [1, 1, 1, 1]
   /// "Simple" | "Sliced" | "Tiled" | "Filled" (Unity Image.type)
@@ -116,6 +118,8 @@ component RawImage {
   enabled:         bool   = true
   /// Unity MaskableGraphic.maskable. False ignores parent Mask and RectMask2D.
   maskable:        bool   = true
+  /// Unity Graphic.material replacement. Empty uses the built-in UI material.
+  material:        string = ""
   texture:        string = "white"
   color:          float4 = [1, 1, 1, 1]
   uv_rect:        float4 = [0, 0, 1, 1]
@@ -166,6 +170,8 @@ component Text {
   enabled:         bool   = true
   /// Unity MaskableGraphic.maskable. False ignores parent Mask and RectMask2D.
   maskable:        bool   = true
+  /// Unity Graphic.material replacement. Empty uses the built-in UI material.
+  material:        string = ""
   text:            string = "Text"
   color:           float4 = [1, 1, 1, 1]
   font_size:       float  = 16
@@ -227,6 +233,8 @@ component Panel {
   enabled:        bool   = true
   /// Unity MaskableGraphic.maskable. False ignores parent Mask and RectMask2D.
   maskable:       bool   = true
+  /// Replacement UI material. Empty uses the built-in UI material.
+  material:       string = ""
   color:          float4 = [0.12, 0.14, 0.18, 0.96]
   border_color:   float4 = [0.32, 0.36, 0.44, 1]
   border_width:   float  = 1

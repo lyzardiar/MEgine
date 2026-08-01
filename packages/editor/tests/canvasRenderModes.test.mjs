@@ -64,6 +64,44 @@ const rect = (overrides = {}) => ({
   ...overrides,
 });
 
+test('Graphic replacement materials remain visible in Editor batch metadata', () => {
+  const entities = [
+    {
+      entity: 1,
+      parent: null,
+      components: {
+        RectTransform: rect({ size_delta: [800, 600] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      siblingIndex: 0,
+      components: {
+        RectTransform: rect({ anchored_position: [-100, 0] }),
+        Image: { sprite: 'white', material: 'Assets\\Materials\\GlowUi.mmat' },
+      },
+    },
+    {
+      entity: 3,
+      parent: 1,
+      siblingIndex: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [100, 0] }),
+        Image: { sprite: 'white', material: 'Assets/Materials/MaskUi.mmat' },
+      },
+    },
+  ];
+  const batches = buildUiBatches(
+    layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set()),
+  );
+  assert.deepEqual(batches.slice(1).map((batch) => batch.key), [
+    'ui/image/white|material=Assets/Materials/GlowUi.mmat',
+    'ui/image/white|material=Assets/Materials/MaskUi.mmat',
+  ]);
+});
+
 const camera = {
   eye: [0, 0, 10],
   target: [0, 0, 0],

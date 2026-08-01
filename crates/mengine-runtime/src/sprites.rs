@@ -286,6 +286,7 @@ fn project_line(
                         depth_test: false,
                         stencil: Default::default(),
                     },
+                    render_material: None,
                 },
             })
         })
@@ -399,6 +400,7 @@ fn project_sprite(
                 depth_test: false,
                 stencil: Default::default(),
             },
+            render_material: None,
         },
     })
 }

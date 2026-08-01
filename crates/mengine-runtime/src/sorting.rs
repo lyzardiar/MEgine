@@ -200,6 +200,7 @@ mod tests {
                     depth_test: false,
                     stencil: Default::default(),
                 },
+                render_material: None,
             },
         }
     }

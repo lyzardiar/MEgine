@@ -1928,6 +1928,7 @@ fn walk(
     });
 
     if let Some(image) = image {
+        let material_start = primitives.len();
         if image.image_type.eq_ignore_ascii_case("tiled") {
             push_tiled_image(
                 primitives,
@@ -1985,6 +1986,7 @@ fn walk(
                 clip,
             ));
         }
+        apply_graphic_material(primitives, material_start, &image.material);
         if image.raycast_target && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
@@ -2000,6 +2002,7 @@ fn walk(
     }
 
     if let Some(raw_image) = raw_image {
+        let material_start = primitives.len();
         let mut output = primitive(
             rect,
             multiply_alpha(raw_image.color, state.alpha),
@@ -2011,6 +2014,7 @@ fn walk(
         );
         output.uv = raw_image.uv_rect;
         primitives.push(output);
+        apply_graphic_material(primitives, material_start, &raw_image.material);
         if raw_image.raycast_target && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
@@ -2111,6 +2115,7 @@ fn walk(
     }
 
     if let Some(text) = text {
+        let material_start = primitives.len();
         push_text_styled(
             primitives,
             rect,
@@ -2123,6 +2128,7 @@ fn walk(
             &text.vertical_align,
             clip,
         );
+        apply_graphic_material(primitives, material_start, &text.material);
     }
 
     if let Some(toggle) = world.get_component::<Toggle>(entity) {
@@ -2391,6 +2397,7 @@ fn walk(
     }
 
     if let Some(panel) = panel {
+        let material_start = primitives.len();
         primitives.push(primitive(
             rect,
             multiply_alpha(panel.color, state.alpha),
@@ -2409,6 +2416,7 @@ fn walk(
                 clip,
             );
         }
+        apply_graphic_material(primitives, material_start, &panel.material);
         if panel.raycast_target && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
@@ -3634,6 +3642,17 @@ fn primitive(
             depth_test: false,
             stencil: Default::default(),
         },
+        render_material: None,
+    }
+}
+
+fn apply_graphic_material(primitives: &mut [UiPrimitive], start: usize, material: &str) {
+    let material = material.trim().replace('\\', "/");
+    if material.is_empty() {
+        return;
+    }
+    for primitive in &mut primitives[start..] {
+        primitive.key.material.clone_from(&material);
     }
 }
 
@@ -5004,6 +5023,7 @@ mod tests {
             RawImage {
                 enabled: true,
                 maskable: true,
+                material: String::new(),
                 texture: "Assets/UI/avatar.png".into(),
                 color: [0.5, 0.75, 1.0, 0.8],
                 uv_rect: [0.25, 0.0, 0.5, 1.0],
@@ -5375,6 +5395,58 @@ mod tests {
             .controls
             .iter()
             .all(|control| { ![image, raw_image, text, panel].contains(&control.entity) }));
+    }
+
+    #[test]
+    fn authored_graphic_material_replaces_every_generated_primitive() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+
+        let panel = world.spawn_empty();
+        world.insert_component(panel, RectTransform::default());
+        world.insert_component(
+            panel,
+            Panel {
+                material: "Assets/Materials/PanelUi.mmat".into(),
+                border_width: 2.0,
+                ..Default::default()
+            },
+        );
+        world.set_parent(panel, Some(canvas));
+
+        let text = world.spawn_empty();
+        world.insert_component(text, RectTransform::default());
+        world.insert_component(
+            text,
+            Text {
+                material: r"Assets\Materials\TextUi.mmat".into(),
+                text: "AI".into(),
+                outline_width: 1.0,
+                ..Default::default()
+            },
+        );
+        world.set_parent(text, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert!(
+            frame
+                .plan
+                .primitives
+                .iter()
+                .filter(|primitive| primitive.key.material == "Assets/Materials/PanelUi.mmat")
+                .count()
+                >= 5
+        );
+        assert!(
+            frame
+                .plan
+                .primitives
+                .iter()
+                .filter(|primitive| primitive.key.material == "Assets/Materials/TextUi.mmat")
+                .count()
+                >= 2
+        );
     }
 
     #[test]

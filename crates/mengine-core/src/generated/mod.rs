@@ -1759,6 +1759,7 @@ impl Component for ContentSizeFitter {
 pub struct Image {
     pub enabled: bool,
     pub maskable: bool,
+    pub material: String,
     pub sprite: String,
     pub color: [f32; 4],
     pub image_type: String,
@@ -1781,6 +1782,7 @@ impl Default for Image {
         Self {
             enabled: true,
             maskable: true,
+            material: "".into(),
             sprite: "white".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             image_type: "Simple".into(),
@@ -1820,6 +1822,7 @@ impl Component for Image {
 pub struct RawImage {
     pub enabled: bool,
     pub maskable: bool,
+    pub material: String,
     pub texture: String,
     pub color: [f32; 4],
     pub uv_rect: [f32; 4],
@@ -1832,6 +1835,7 @@ impl Default for RawImage {
         Self {
             enabled: true,
             maskable: true,
+            material: "".into(),
             texture: "white".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             uv_rect: [0.0, 0.0, 1.0, 1.0],
@@ -1988,6 +1992,7 @@ impl Component for Button {
 pub struct Text {
     pub enabled: bool,
     pub maskable: bool,
+    pub material: String,
     pub text: String,
     pub color: [f32; 4],
     pub font_size: f32,
@@ -2004,6 +2009,7 @@ impl Default for Text {
         Self {
             enabled: true,
             maskable: true,
+            material: "".into(),
             text: "Text".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             font_size: 16.0,
@@ -2189,6 +2195,7 @@ impl Component for Scrollbar {
 pub struct Panel {
     pub enabled: bool,
     pub maskable: bool,
+    pub material: String,
     pub color: [f32; 4],
     pub border_color: [f32; 4],
     pub border_width: f32,
@@ -2201,6 +2208,7 @@ impl Default for Panel {
         Self {
             enabled: true,
             maskable: true,
+            material: "".into(),
             color: [0.12, 0.14, 0.18, 0.96],
             border_color: [0.32, 0.36, 0.44, 1.0],
             border_width: 1.0,

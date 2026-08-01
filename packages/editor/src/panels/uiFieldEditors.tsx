@@ -1155,6 +1155,15 @@ export function ImageEditor(props: {
 
   return (
     <>
+      <ProjectAssetSlot
+        label="Material"
+        value={String(d.material ?? '')}
+        assetKinds={['material']}
+        referenceType="Material"
+        allowNone
+        noneValue=""
+        onChange={(material) => props.onPatch({ material })}
+      />
       <SpriteSlot
         label="Sprite"
         value={String(d.sprite ?? 'white')}

@@ -225,6 +225,7 @@ export type BuildPlayerResult = {
   shaderVariantLimit: number;
   surfaceShaderVariants: Array<{
     shader: string;
+    domain: 'surface' | 'ui';
     enabledKeywords: string[];
     blend: 'replace' | 'alpha' | 'premultiplied' | 'additive' | 'multiply';
     doubleSided: boolean;

@@ -7,27 +7,28 @@ use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
     AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Button, Camera2D, Camera3D,
     DirectionalLight, Dropdown, EnvironmentLight, Image, InputField, ListView,
-    MaterialPropertyBlock, MeshRenderer, ParticleEmitter2D, ParticleEmitter3D, PbrMaterial,
-    PointLight, RawImage, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer, TabView,
+    MaterialPropertyBlock, MeshRenderer, Panel, ParticleEmitter2D, ParticleEmitter3D, PbrMaterial,
+    PointLight, RawImage, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer, TabView, Text,
     Tilemap, TimelineDirector, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_platform::InputState;
 use mengine_rhi::{
-    look_at, orthographic, perspective, validate_surface_shader_hook, DirectionalLightData,
-    EnvironmentLightData, FrameCamera, FrameLighting, MaterialBlendMode, MaterialPipelineStats,
-    MaterialTextureStats, PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData,
-    UiBatchPlan,
+    look_at, orthographic, perspective, validate_surface_shader_hook, validate_ui_shader_hook,
+    DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting, MaterialBlendMode,
+    MaterialPipelineStats, MaterialTextureStats, PointLightData, RenderMaterial, RenderObject,
+    Renderer, SpotLightData, UiBatchPlan,
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::build_manifest::{
-    load_build_surface_shader_variants, verify_build_manifest, BuildSurfaceShaderBlend,
+    load_build_surface_shader_variants, verify_build_manifest, BuildShaderDomain,
+    BuildSurfaceShaderBlend,
 };
 use mengine_runtime::lighting2d::apply_2d_lighting;
 use mengine_runtime::materials::{
-    apply_material_property_block, resolve_surface_shader_material,
+    apply_material_property_block, resolve_surface_shader_material, resolve_ui_materials,
     validate_material_property_block, RuntimeMaterialCache,
 };
 use mengine_runtime::meshes::RuntimeMeshCache;
@@ -1867,10 +1868,19 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
+                    resolve_ui_materials(&mut ui.plan.primitives, &mut self.materials);
                     ui.plan = UiBatchPlan::build(std::mem::take(&mut ui.plan.primitives));
                     for failure in self.textures.sync(r, &ui.plan) {
                         log::warn!(
                             "UI texture '{}' could not be loaded from {}: {}",
+                            failure.key,
+                            failure.path.display(),
+                            failure.error
+                        );
+                    }
+                    for failure in self.textures.sync_ui_materials(r, &ui.plan) {
+                        log::warn!(
+                            "UI material texture '{}' could not be loaded from {}: {}",
                             failure.key,
                             failure.path.display(),
                             failure.error
@@ -2433,7 +2443,10 @@ fn packaged_surface_shader_materials(project_root: &Path) -> Result<Vec<RenderMa
     let variants = load_build_surface_shader_variants(project_root)?;
     let mut materials = Vec::with_capacity(variants.len());
     let mut shaders = HashMap::<String, (Arc<str>, HashSet<String>)>::new();
-    for variant in variants {
+    for variant in variants
+        .into_iter()
+        .filter(|variant| variant.domain == BuildShaderDomain::Surface)
+    {
         let shader_key = variant.shader.replace('\\', "/").to_ascii_lowercase();
         if !shaders.contains_key(&shader_key) {
             let path = mengine_runtime::textures::resolve_project_asset_path(
@@ -2610,64 +2623,63 @@ fn validate_world_assets(
                 || material.to_ascii_lowercase().ends_with(".minst")
             {
                 let path = resolve(material, "material")?;
-                if validated.insert(path.clone()) {
-                    let asset = material_cache.resolve_asset(material).map_err(|error| {
-                        anyhow::anyhow!("invalid material {}: {error}", path.display())
-                    })?;
-                    let mut custom_textures = Vec::new();
-                    if asset.shader == mengine_assets::MaterialShader::Custom {
-                        let shader = asset.custom_shader.trim();
-                        if shader.is_empty() {
-                            bail!(
-                                "invalid material {}: custom material requires a .mshader asset",
-                                path.display()
-                            );
-                        }
-                        if !shader.to_ascii_lowercase().ends_with(".mshader") {
-                            bail!(
-                                "invalid material {}: custom shader path must end with .mshader",
-                                path.display()
-                            );
-                        }
-                        let shader_path = resolve(shader, "material surface shader")?;
-                        validated.insert(shader_path.clone());
-                        let source = mengine_assets::load_surface_shader(&shader_path)
-                            .with_context(|| {
-                                format!("invalid material surface shader {}", shader_path.display())
-                            })?;
-                        validate_surface_shader_hook(&source).map_err(|error| {
-                            anyhow::anyhow!(
-                                "invalid material surface shader {}: {error}",
-                                shader_path.display()
-                            )
-                        })?;
-                        custom_textures.extend(
-                            resolve_surface_shader_material(&asset, &source)
-                                .map_err(|error| {
-                                    anyhow::anyhow!("invalid material {}: {error}", path.display())
-                                })?
-                                .textures,
+                validated.insert(path.clone());
+                let asset = material_cache.resolve_asset(material).map_err(|error| {
+                    anyhow::anyhow!("invalid material {}: {error}", path.display())
+                })?;
+                let mut custom_textures = Vec::new();
+                if asset.shader == mengine_assets::MaterialShader::Custom {
+                    let shader = asset.custom_shader.trim();
+                    if shader.is_empty() {
+                        bail!(
+                            "invalid material {}: custom material requires a .mshader asset",
+                            path.display()
                         );
                     }
-                    for texture in [
-                        asset.base_color_texture,
-                        asset.normal_texture,
-                        asset.metallic_roughness_texture,
-                        asset.occlusion_texture,
-                        asset.emissive_texture,
-                    ]
-                    .into_iter()
-                    .chain(custom_textures)
-                    {
-                        if texture.is_empty() {
-                            continue;
-                        }
-                        let texture_path = resolve(&texture, "material texture")?;
-                        if validated.insert(texture_path.clone()) {
-                            mengine_assets::load_texture_rgba8(&texture_path).with_context(
-                                || format!("invalid material texture {}", texture_path.display()),
-                            )?;
-                        }
+                    if !shader.to_ascii_lowercase().ends_with(".mshader") {
+                        bail!(
+                            "invalid material {}: custom shader path must end with .mshader",
+                            path.display()
+                        );
+                    }
+                    let shader_path = resolve(shader, "material surface shader")?;
+                    validated.insert(shader_path.clone());
+                    let source =
+                        mengine_assets::load_surface_shader(&shader_path).with_context(|| {
+                            format!("invalid material surface shader {}", shader_path.display())
+                        })?;
+                    validate_surface_shader_hook(&source).map_err(|error| {
+                        anyhow::anyhow!(
+                            "invalid material surface shader {}: {error}",
+                            shader_path.display()
+                        )
+                    })?;
+                    custom_textures.extend(
+                        resolve_surface_shader_material(&asset, &source)
+                            .map_err(|error| {
+                                anyhow::anyhow!("invalid material {}: {error}", path.display())
+                            })?
+                            .textures,
+                    );
+                }
+                for texture in [
+                    asset.base_color_texture,
+                    asset.normal_texture,
+                    asset.metallic_roughness_texture,
+                    asset.occlusion_texture,
+                    asset.emissive_texture,
+                ]
+                .into_iter()
+                .chain(custom_textures)
+                {
+                    if texture.is_empty() {
+                        continue;
+                    }
+                    let texture_path = resolve(&texture, "material texture")?;
+                    if validated.insert(texture_path.clone()) {
+                        mengine_assets::load_texture_rgba8(&texture_path).with_context(|| {
+                            format!("invalid material texture {}", texture_path.display())
+                        })?;
                     }
                 }
             }
@@ -2708,14 +2720,42 @@ fn validate_world_assets(
             validate_texture_asset(&renderer.sprite, "sprite", project_root, validated)?;
         }
         if let Some(image) = world.get_component::<Image>(entity) {
+            validate_ui_material_asset(
+                &image.material,
+                project_root,
+                validated,
+                &mut material_cache,
+            )?;
             validate_texture_asset(&image.sprite, "UI Image sprite", project_root, validated)?;
         }
         if let Some(image) = world.get_component::<RawImage>(entity) {
+            validate_ui_material_asset(
+                &image.material,
+                project_root,
+                validated,
+                &mut material_cache,
+            )?;
             validate_texture_asset(
                 &image.texture,
                 "UI RawImage texture",
                 project_root,
                 validated,
+            )?;
+        }
+        if let Some(text) = world.get_component::<Text>(entity) {
+            validate_ui_material_asset(
+                &text.material,
+                project_root,
+                validated,
+                &mut material_cache,
+            )?;
+        }
+        if let Some(panel) = world.get_component::<Panel>(entity) {
+            validate_ui_material_asset(
+                &panel.material,
+                project_root,
+                validated,
+                &mut material_cache,
             )?;
         }
         if let Some(button) = world.get_component::<Button>(entity) {
@@ -2954,6 +2994,65 @@ fn validate_audio_clip_asset(
         .with_context(|| format!("invalid audio clip {}", path.display()))?;
     validated.insert(path);
     Ok(Some(duration))
+}
+
+fn validate_ui_material_asset(
+    reference: &str,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+    material_cache: &mut RuntimeMaterialCache,
+) -> Result<()> {
+    let reference = reference.trim();
+    if reference.is_empty() {
+        return Ok(());
+    }
+    let lower = reference.to_ascii_lowercase();
+    if !lower.ends_with(".mmat") && !lower.ends_with(".mat") && !lower.ends_with(".minst") {
+        bail!("UI Graphic material must reference a .mmat, .mat, or .minst asset: {reference}");
+    }
+    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
+        .with_context(|| format!("unsafe UI Graphic material path: {reference}"))?;
+    validated.insert(path.clone());
+    let asset = material_cache.resolve_asset(reference).map_err(|error| {
+        anyhow::anyhow!("invalid UI Graphic material {}: {error}", path.display())
+    })?;
+    if asset.shader != mengine_assets::MaterialShader::Custom {
+        bail!(
+            "invalid UI Graphic material {}: a custom UI Shader is required",
+            path.display()
+        );
+    }
+    let shader = asset.custom_shader.trim();
+    if !shader.to_ascii_lowercase().ends_with(".mshader") {
+        bail!(
+            "invalid UI Graphic material {}: custom shader path must end with .mshader",
+            path.display()
+        );
+    }
+    let shader_path = mengine_runtime::textures::resolve_project_asset_path(project_root, shader)
+        .with_context(|| format!("unsafe UI Shader path: {shader}"))?;
+    validated.insert(shader_path.clone());
+    let source = mengine_assets::load_surface_shader(&shader_path)
+        .with_context(|| format!("invalid UI Shader {}", shader_path.display()))?;
+    validate_ui_shader_hook(&source)
+        .map_err(|error| anyhow::anyhow!("invalid UI Shader {}: {error}", shader_path.display()))?;
+    let bindings = resolve_surface_shader_material(&asset, &source).map_err(|error| {
+        anyhow::anyhow!("invalid UI Graphic material {}: {error}", path.display())
+    })?;
+    for texture in bindings.textures {
+        if texture.trim().is_empty() {
+            continue;
+        }
+        let texture_path =
+            mengine_runtime::textures::resolve_project_asset_path(project_root, &texture)
+                .with_context(|| format!("unsafe UI material texture path: {texture}"))?;
+        if validated.insert(texture_path.clone()) {
+            mengine_assets::load_texture_rgba8(&texture_path).with_context(|| {
+                format!("invalid UI material texture {}", texture_path.display())
+            })?;
+        }
+    }
+    Ok(())
 }
 
 fn validate_texture_asset(
@@ -3437,6 +3536,65 @@ mod tests {
         assert!(error
             .to_string()
             .contains("MaterialPropertyBlock parameter 'removed'"));
+    }
+
+    #[test]
+    fn packaged_asset_validation_includes_ui_material_shader_and_textures() {
+        let root = temporary_project_root("packaged-ui-material");
+        let material_path = root.join("Assets/Materials/GlowUi.mmat");
+        let shader_path = root.join("Assets/Shaders/GlowUi.mshader");
+        let texture_path = root.join("Assets/Textures/detail.bmp");
+        std::fs::create_dir_all(material_path.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(texture_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &material_path,
+            r#"{"version":10,"shader":"custom","custom_shader":"Assets/Shaders/GlowUi.mshader","surface":"transparent","blend_mode":"additive","custom_parameters":{"strength":[2,0,0,0]},"custom_textures":{"detail":"Assets/Textures/detail.bmp"}}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            &shader_path,
+            r#"/* MENGINE_PARAMETERS
+                {"parameters":[{"name":"strength","type":"float","default":1}],
+                 "textures":[{"name":"detail","type":"color"}]}
+                */
+                fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+                    return mengine_ui_main_texture(input.uv0) * input.vertex_color
+                        * mengine_texture_detail(input.uv0)
+                        * mengine_param_strength(input.instance_index);
+                }
+            "#,
+        )
+        .unwrap();
+        write_test_bmp(&texture_path);
+
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Custom UI material".into()),
+            components: json!({
+                "Image": {
+                    "material": "Assets/Materials/GlowUi.mmat"
+                }
+            }),
+        });
+        world.commit();
+        let mut validated = HashSet::new();
+        validate_world_assets(&world, &root, &mut validated)
+            .expect("UI material dependency closure should pass package validation");
+        assert_eq!(validated.len(), 3);
+        assert!(validated.contains(&material_path));
+        assert!(validated.contains(&shader_path));
+        assert!(validated.contains(&texture_path));
+
+        std::fs::write(
+            &shader_path,
+            "fn mengine_surface_hook(surface: MEngineSurface, uv: vec2<f32>) -> MEngineSurface { return surface; }",
+        )
+        .unwrap();
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("UI Graphics must reject Surface-domain shaders");
+        std::fs::remove_dir_all(&root).unwrap();
+        assert!(error.to_string().contains("invalid UI Shader"), "{error}");
     }
 
     #[test]

@@ -1,5 +1,6 @@
 export const SURFACE_SHADER_HOOK_NAME = 'mengine_surface_hook';
 export const LIT_SURFACE_SHADER_HOOK_NAME = 'mengine_lit_surface_hook';
+export const UI_SHADER_HOOK_NAME = 'mengine_ui_hook';
 export const MAX_SURFACE_SHADER_PARAMETERS = 16;
 export const MAX_SURFACE_SHADER_KEYWORDS = 16;
 export const MAX_SURFACE_SHADER_TEXTURES = 4;
@@ -32,6 +33,13 @@ export const DEFAULT_SURFACE_SHADER = `fn mengine_lit_surface_hook(
     world_position: vec3<f32>,
 ) -> MEngineSurface {
     return surface;
+}
+`;
+
+export const DEFAULT_UI_SHADER = `fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    return mengine_ui_main_texture(input.uv0)
+        * input.vertex_color
+        * mengine_ui_material_color(input.instance_index);
 }
 `;
 
@@ -284,8 +292,12 @@ export function surfaceShaderDiagnostics(source: string): string[] {
   }
   const hasLegacyHook = new RegExp(`\\bfn\\s+${SURFACE_SHADER_HOOK_NAME}\\s*\\(`).test(normalized);
   const hasLitHook = new RegExp(`\\bfn\\s+${LIT_SURFACE_SHADER_HOOK_NAME}\\s*\\(`).test(normalized);
-  if (!hasLegacyHook && !hasLitHook) {
-    diagnostics.push(`Missing fn ${LIT_SURFACE_SHADER_HOOK_NAME}(...) or fn ${SURFACE_SHADER_HOOK_NAME}(...).`);
+  const hasUiHook = new RegExp(`\\bfn\\s+${UI_SHADER_HOOK_NAME}\\s*\\(`).test(normalized);
+  if (hasUiHook && (hasLegacyHook || hasLitHook)) {
+    diagnostics.push('A .mshader asset must target either UI or forward Surface, not both.');
+  }
+  if (!hasLegacyHook && !hasLitHook && !hasUiHook) {
+    diagnostics.push(`Missing fn ${LIT_SURFACE_SHADER_HOOK_NAME}(...), fn ${SURFACE_SHADER_HOOK_NAME}(...), or fn ${UI_SHADER_HOOK_NAME}(...).`);
   }
   for (const token of ['@group', '@binding', '@vertex', '@fragment', '@compute']) {
     if (normalized.includes(token)) diagnostics.push(`${token} is reserved by the engine.`);

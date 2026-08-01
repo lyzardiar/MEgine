@@ -28,10 +28,20 @@ pub enum BuildSurfaceShaderBlend {
     Multiply,
 }
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum BuildShaderDomain {
+    #[default]
+    Surface,
+    Ui,
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct BuildSurfaceShaderVariant {
     pub shader: String,
+    #[serde(default)]
+    pub domain: BuildShaderDomain,
     pub enabled_keywords: Vec<String>,
     pub blend: BuildSurfaceShaderBlend,
     pub double_sided: bool,
@@ -240,9 +250,22 @@ fn validate_surface_shader_variants(
                 variant.shader
             )));
         }
-        if variant.blend == BuildSurfaceShaderBlend::Replace && !variant.depth_write {
+        if variant.domain == BuildShaderDomain::Surface
+            && variant.blend == BuildSurfaceShaderBlend::Replace
+            && !variant.depth_write
+        {
             return Err(BuildManifestError::ShaderVariant(format!(
                 "replace pipeline must enable depth writes for {}",
+                variant.shader
+            )));
+        }
+        if variant.domain == BuildShaderDomain::Ui
+            && (variant.blend == BuildSurfaceShaderBlend::Replace
+                || variant.double_sided
+                || variant.depth_write)
+        {
+            return Err(BuildManifestError::ShaderVariant(format!(
+                "UI pipeline must be blended, single-sided, and depth-write disabled for {}",
                 variant.shader
             )));
         }
@@ -261,6 +284,7 @@ fn validate_surface_shader_variants(
         canonical_keywords.sort();
         if !unique.insert((
             normalized.to_ascii_lowercase(),
+            variant.domain,
             canonical_keywords,
             variant.blend,
             variant.double_sided,
@@ -504,6 +528,7 @@ mod tests {
             load_build_surface_shader_variants(&root).unwrap(),
             vec![BuildSurfaceShaderVariant {
                 shader: "Assets/Shaders/Rim.mshader".into(),
+                domain: BuildShaderDomain::Surface,
                 enabled_keywords: vec!["USE_RIM".into()],
                 blend: BuildSurfaceShaderBlend::Alpha,
                 double_sided: true,
@@ -550,6 +575,48 @@ mod tests {
             .to_string(),
         )
         .unwrap();
+        assert!(matches!(
+            load_build_surface_shader_variants(&root),
+            Err(BuildManifestError::ShaderVariant(_))
+        ));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn validates_packaged_ui_shader_pipeline_invariants() {
+        let root = test_root("ui-variants");
+        let shader_path = root.join("Assets/Shaders/GlowUi.mshader");
+        std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        let bytes = b"fn mengine_ui_hook() {}";
+        std::fs::write(&shader_path, bytes).unwrap();
+        let hash = format!("{:x}", Sha256::digest(bytes));
+        let manifest = |depth_write: bool| {
+            serde_json::json!({
+                "schemaVersion": 1,
+                "surfaceShaderVariants": [{
+                    "shader": "Assets/Shaders/GlowUi.mshader",
+                    "domain": "ui",
+                    "enabledKeywords": [],
+                    "blend": "additive",
+                    "doubleSided": false,
+                    "depthWrite": depth_write,
+                }],
+                "files": [{
+                    "path": "Assets/Shaders/GlowUi.mshader",
+                    "size": bytes.len(),
+                    "sha256": hash,
+                }],
+            })
+            .to_string()
+        };
+        std::fs::write(root.join(BUILD_MANIFEST_FILE), manifest(false)).unwrap();
+        assert_eq!(
+            load_build_surface_shader_variants(&root).unwrap()[0].domain,
+            BuildShaderDomain::Ui
+        );
+        assert!(verify_build_manifest(&root).is_ok());
+
+        std::fs::write(root.join(BUILD_MANIFEST_FILE), manifest(true)).unwrap();
         assert!(matches!(
             load_build_surface_shader_variants(&root),
             Err(BuildManifestError::ShaderVariant(_))

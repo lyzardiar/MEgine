@@ -150,6 +150,7 @@ export interface PcBuildManifest {
 
 export interface BuildShaderVariant {
   shader: string;
+  domain: 'surface' | 'ui';
   enabledKeywords: string[];
   blend: 'replace' | 'alpha' | 'premultiplied' | 'additive' | 'multiply';
   doubleSided: boolean;
@@ -548,14 +549,21 @@ function strictStringValue(object: JsonObject, field: string, source: string): s
 }
 
 type SurfaceShaderBuildSchema = {
+  domain: 'surface' | 'ui';
   parameters: Set<string>;
   keywords: Map<string, boolean>;
   textures: Map<string, string>;
 };
 
-function surfaceShaderSchema(sourceText: string, source: string): SurfaceShaderBuildSchema {
+function surfaceShaderSchema(
+  sourceText: string,
+  source: string,
+  domain: SurfaceShaderBuildSchema['domain'],
+): SurfaceShaderBuildSchema {
   const marker = sourceText.indexOf(SURFACE_SHADER_PARAMETERS_MARKER);
-  if (marker < 0) return { parameters: new Set(), keywords: new Map(), textures: new Map() };
+  if (marker < 0) {
+    return { domain, parameters: new Set(), keywords: new Map(), textures: new Map() };
+  }
   const jsonStart = marker + SURFACE_SHADER_PARAMETERS_MARKER.length;
   const relativeEnd = sourceText.slice(jsonStart).indexOf('*/');
   if (relativeEnd < 0) {
@@ -682,7 +690,7 @@ function surfaceShaderSchema(sourceText: string, source: string): SurfaceShaderB
     }
     textureDefaults.set(name, defaultPath);
   }
-  return { parameters: names, keywords: keywordDefaults, textures: textureDefaults };
+  return { domain, parameters: names, keywords: keywordDefaults, textures: textureDefaults };
 }
 
 function customKeywordOverrides(value: unknown, source: string): Map<string, boolean> {
@@ -1005,6 +1013,7 @@ function scanBuildAssetDependencies(
     bindingOverrides: Array<{ child: string; parent: string }>;
   }>>();
   const materialVariantRoots = new Set<string>();
+  const materialUsageDomains = new Map<string, Set<'surface' | 'ui'>>();
   let auditedScenes = 0;
   let auditedPrefabs = 0;
   let auditedMaterials = 0;
@@ -1041,11 +1050,19 @@ function scanBuildAssetDependencies(
     queue.push({ path, from, kind, ...(spriteSlice ? { spriteSlice } : {}) });
   };
 
-  const enqueueMaterial = (rawPath: string, from: string) => {
+  const enqueueMaterial = (
+    rawPath: string,
+    from: string,
+    domain: 'surface' | 'ui',
+  ) => {
     const path = rawPath.trim();
     if (!path || ['default', 'gold', 'chrome', 'metal', 'unlit']
       .some((builtin) => builtin === path.toLowerCase())) return;
     if (/\.(?:mmat|mat|minst)$/i.test(path) || path.includes('/') || path.includes('\\')) {
+      const normalized = path.replaceAll('\\', '/').toLowerCase();
+      const usages = materialUsageDomains.get(normalized) ?? new Set<'surface' | 'ui'>();
+      usages.add(domain);
+      materialUsageDomains.set(normalized, usages);
       enqueue(path, from, 'material');
     }
   };
@@ -1060,7 +1077,7 @@ function scanBuildAssetDependencies(
       && (/\.(?:gltf|glb)$/i.test(mesh) || mesh.includes('/') || mesh.includes('\\'))) {
       enqueue(mesh, from, '3D model');
     }
-    enqueueMaterial(stringValue(meshRenderer, 'material'), from);
+    enqueueMaterial(stringValue(meshRenderer, 'material'), from, 'surface');
     const propertyBlock = component('MaterialPropertyBlock');
     if (propertyBlock) {
       const parameterNames = propertyBlock.custom_parameter_names ?? [];
@@ -1146,6 +1163,9 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('SpineSkeleton'), 'atlas'), from, 'Spine atlas');
     enqueue(stringValue(component('Image'), 'sprite'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
+    for (const name of ['Image', 'RawImage', 'Text', 'Panel']) {
+      enqueueMaterial(stringValue(component(name), 'material'), from, 'ui');
+    }
   };
 
   const prefabNodeReferences = (nodeValue: unknown, from: string) => {
@@ -1420,16 +1440,21 @@ function scanBuildAssetDependencies(
       if (Buffer.byteLength(sourceText, 'utf8') > 256 * 1024) {
         throw new Error(`invalid material surface shader ${source}: file exceeds 256 KiB`);
       }
-      if (!/\bfn\s+mengine_surface_hook\s*\(/.test(sourceText)
-        && !/\bfn\s+mengine_lit_surface_hook\s*\(/.test(sourceText)) {
-        throw new Error(`invalid material surface shader ${source}: missing fn mengine_lit_surface_hook or fn mengine_surface_hook`);
+      const hasSurfaceHook = /\bfn\s+mengine_surface_hook\s*\(/.test(sourceText)
+        || /\bfn\s+mengine_lit_surface_hook\s*\(/.test(sourceText);
+      const hasUiHook = /\bfn\s+mengine_ui_hook\s*\(/.test(sourceText);
+      if (!hasSurfaceHook && !hasUiHook) {
+        throw new Error(`invalid material shader ${source}: missing a Surface or UI hook`);
+      }
+      if (hasSurfaceHook && hasUiHook) {
+        throw new Error(`invalid material shader ${source}: UI and Surface hooks cannot be mixed`);
       }
       const forbidden = ['@group', '@binding', '@vertex', '@fragment', '@compute']
         .find((token) => sourceText.includes(token));
       if (forbidden) {
         throw new Error(`invalid material surface shader ${source}: ${forbidden} is reserved by the engine`);
       }
-      const schema = surfaceShaderSchema(sourceText, source);
+      const schema = surfaceShaderSchema(sourceText, source, hasUiHook ? 'ui' : 'surface');
       surfaceShaderSchemas.set(source.toLowerCase(), schema);
       surfaceShaderCanonicalPaths.set(source.toLowerCase(), source);
     } else if (pending.path.toLowerCase().endsWith('.sprite.json')) {
@@ -2453,6 +2478,7 @@ function scanBuildAssetDependencies(
   drainQueue();
   const resolveKeywordVariant = (start: string): {
     shader: string;
+    domain: BuildShaderVariant['domain'];
     enabled: string[];
     blend: BuildShaderVariant['blend'];
     doubleSided: boolean;
@@ -2482,6 +2508,12 @@ function scanBuildAssetDependencies(
       throw new Error(`invalid material ${start}: Surface Shader schema was not validated`);
     }
     const state = new Map(schema.keywords);
+    const usages = materialUsageDomains.get(start);
+    if (usages && (usages.size !== 1 || !usages.has(schema.domain))) {
+      throw new Error(
+        `invalid material ${start}: ${schema.domain} Shader cannot be used by ${[...usages].sort().join(' and ')} renderers`,
+      );
+    }
     const apply = (source: string, values: Map<string, boolean>) => {
       for (const [name, enabled] of values) {
         if (!schema.keywords.has(name)) {
@@ -2496,6 +2528,7 @@ function scanBuildAssetDependencies(
     for (const layer of layers.reverse()) apply(layer.source, layer.values);
     return {
       shader,
+      domain: schema.domain,
       enabled: [...schema.keywords.keys()].filter((name) => state.get(name) === true),
       ...(materialBasePipelineStates.get(base) ?? {
         blend: 'replace' as const,
@@ -2510,13 +2543,15 @@ function scanBuildAssetDependencies(
     if (variant) {
       const entry = {
         shader: surfaceShaderCanonicalPaths.get(variant.shader) ?? variant.shader,
+        domain: variant.domain,
         enabledKeywords: variant.enabled,
-        blend: variant.blend,
-        doubleSided: variant.doubleSided,
-        depthWrite: variant.depthWrite,
+        blend: variant.domain === 'ui' && variant.blend === 'replace' ? 'alpha' as const : variant.blend,
+        doubleSided: variant.domain === 'surface' && variant.doubleSided,
+        depthWrite: variant.domain === 'surface' && variant.depthWrite,
       };
       variants.set(JSON.stringify([
         variant.shader,
+        entry.domain,
         entry.enabledKeywords,
         entry.blend,
         entry.doubleSided,
@@ -2526,6 +2561,7 @@ function scanBuildAssetDependencies(
   }
   const surfaceShaderVariants = [...variants.values()].sort((left, right) => (
     compareFileNames(left.shader, right.shader)
+    || compareFileNames(left.domain, right.domain)
     || compareFileNames(left.enabledKeywords.join('\0'), right.enabledKeywords.join('\0'))
     || compareFileNames(left.blend, right.blend)
     || Number(left.doubleSided) - Number(right.doubleSided)

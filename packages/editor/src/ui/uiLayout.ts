@@ -131,6 +131,7 @@ export type UiDrawItem = {
   /** Ancestor Mask rectangles used by Unity-style ICanvasRaycastFilter. */
   maskRegions?: UiMaskRegion[];
   image?: {
+    material: string;
     color: [number, number, number, number];
     sprite: string;
     imageType: 'Simple' | 'Sliced' | 'Tiled' | 'Filled';
@@ -163,6 +164,7 @@ export type UiDrawItem = {
     onClick: unknown;
   };
   text?: {
+    material: string;
     text: string;
     color: [number, number, number, number];
     fontSize: number;
@@ -173,6 +175,7 @@ export type UiDrawItem = {
     raycastTarget: boolean;
   };
   rawImage?: {
+    material: string;
     color: [number, number, number, number];
     texture: string;
     uvRect: [number, number, number, number];
@@ -212,6 +215,7 @@ export type UiDrawItem = {
     onValueChanged: unknown;
   };
   panel?: {
+    material: string;
     color: [number, number, number, number];
     borderColor: [number, number, number, number];
     borderWidth: number;
@@ -1112,6 +1116,7 @@ export function layoutUiOverlay(
           maskRegions: itemMaskRegions,
           image: img
             ? {
+                material: String(img.material ?? '').trim().replaceAll('\\', '/'),
                 color: color4(img.color, [1, 1, 1, 1]),
                 sprite: resolveSpriteId(String(img.sprite ?? 'white')),
                 imageType: enumValue(
@@ -1161,6 +1166,7 @@ export function layoutUiOverlay(
             : undefined,
           rawImage: rawImage
             ? {
+                material: String(rawImage.material ?? '').trim().replaceAll('\\', '/'),
                 color: color4(rawImage.color, [1, 1, 1, 1]),
                 texture: resolveSpriteId(String(rawImage.texture ?? 'white')),
                 uvRect: number4(rawImage.uv_rect ?? rawImage.uvRect, [0, 0, 1, 1]),
@@ -1191,6 +1197,7 @@ export function layoutUiOverlay(
             : undefined,
           text: text
             ? {
+                material: String(text.material ?? '').trim().replaceAll('\\', '/'),
                 text: String(text.text ?? 'Text'),
                 color: color4(text.color, [1, 1, 1, 1]),
                 fontSize: number(text.font_size ?? text.fontSize, 16) * scale,
@@ -1287,6 +1294,7 @@ export function layoutUiOverlay(
             : undefined,
           panel: panel
             ? {
+                material: String(panel.material ?? '').trim().replaceAll('\\', '/'),
                 color: color4(panel.color, [0.12, 0.14, 0.18, 0.96]),
                 borderColor: color4(panel.border_color ?? panel.borderColor, [0.32, 0.36, 0.44, 1]),
                 borderWidth: number(panel.border_width ?? panel.borderWidth, 1) * scale,
@@ -2115,6 +2123,9 @@ export type UiBatch = {
 };
 
 function batchKey(it: UiDrawItem): string {
+  const withMaterial = (key: string, material: string | undefined) => (
+    material ? `${key}|material=${material}` : key
+  );
   if (it.role === 'canvas') return 'editor/canvas';
   if (it.tabs) return 'ui/solid/tabs+text';
   if (it.list) return 'ui/solid/list+text';
@@ -2122,14 +2133,18 @@ function batchKey(it: UiDrawItem): string {
   if (it.input) return 'ui/solid/input+text';
   if (it.progress) return 'ui/solid/progress+text';
   if (it.scroll) return 'ui/solid/scroll';
-  if (it.panel) return 'ui/solid/panel';
+  if (it.panel) return withMaterial('ui/solid/panel', it.panel.material);
   if (it.scrollbar) return 'ui/solid/scrollbar';
   if (it.slider) return 'ui/solid/slider';
   if (it.toggle) return 'ui/solid/toggle+text';
-  if (it.button) return `ui/button/${it.image?.sprite ?? 'white'}+text`;
-  if (it.text) return 'ui/text/system';
-  if (it.image) return `ui/image/${it.image.sprite}`;
-  if (it.rawImage) return `ui/raw-image/${it.rawImage.texture}`;
+  if (it.button) {
+    return withMaterial(`ui/button/${it.image?.sprite ?? 'white'}+text`, it.image?.material);
+  }
+  if (it.text) return withMaterial('ui/text/system', it.text.material);
+  if (it.image) return withMaterial(`ui/image/${it.image.sprite}`, it.image.material);
+  if (it.rawImage) {
+    return withMaterial(`ui/raw-image/${it.rawImage.texture}`, it.rawImage.material);
+  }
   return 'editor/selection';
 }
 

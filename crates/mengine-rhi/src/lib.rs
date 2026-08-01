@@ -18,8 +18,9 @@ pub use renderer::{
     SpotLightData, SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic,
 };
 pub use ui::{
-    UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect, UiFrameStats, UiPrimitive,
-    UiShaderChannelData, UiShaderChannels, UiSoftClip, UiStencilMode, UiTextureError,
+    validate_ui_shader_hook, UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect,
+    UiFrameStats, UiPrimitive, UiRenderMaterial, UiShaderChannelData, UiShaderChannels, UiSoftClip,
+    UiStencilMode, UiTextureError,
 };
 
 use thiserror::Error;

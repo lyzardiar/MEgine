@@ -440,6 +440,7 @@ export interface ContentSizeFitter {
 export interface Image {
   enabled: boolean;
   maskable: boolean;
+  material: string;
   sprite: string;
   color: [number, number, number, number];
   imageType: string;
@@ -460,6 +461,7 @@ export interface Image {
 export interface RawImage {
   enabled: boolean;
   maskable: boolean;
+  material: string;
   texture: string;
   color: [number, number, number, number];
   uvRect: [number, number, number, number];
@@ -502,6 +504,7 @@ export interface Button {
 export interface Text {
   enabled: boolean;
   maskable: boolean;
+  material: string;
   text: string;
   color: [number, number, number, number];
   fontSize: number;
@@ -554,6 +557,7 @@ export interface Scrollbar {
 export interface Panel {
   enabled: boolean;
   maskable: boolean;
+  material: string;
   color: [number, number, number, number];
   borderColor: [number, number, number, number];
   borderWidth: number;
@@ -1065,6 +1069,7 @@ export type SerializedComponentMap = {
   Image: {
     enabled: boolean;
     maskable: boolean;
+    material: string;
     sprite: string;
     color: [number, number, number, number];
     image_type: string;
@@ -1084,6 +1089,7 @@ export type SerializedComponentMap = {
   RawImage: {
     enabled: boolean;
     maskable: boolean;
+    material: string;
     texture: string;
     color: [number, number, number, number];
     uv_rect: [number, number, number, number];
@@ -1122,6 +1128,7 @@ export type SerializedComponentMap = {
   Text: {
     enabled: boolean;
     maskable: boolean;
+    material: string;
     text: string;
     color: [number, number, number, number];
     font_size: number;
@@ -1169,6 +1176,7 @@ export type SerializedComponentMap = {
   Panel: {
     enabled: boolean;
     maskable: boolean;
+    material: string;
     color: [number, number, number, number];
     border_color: [number, number, number, number];
     border_width: number;
