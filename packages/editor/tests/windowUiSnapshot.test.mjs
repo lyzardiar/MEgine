@@ -65,6 +65,7 @@ test('all-window UI snapshot is serial, complete, and totals every stable window
 
   assert.equal(maximumActive, 1);
   assert.equal(result.capturedAt, 123);
+  assert.equal(result.backgroundSafe, true);
   assert.equal(result.inventoryStable, true);
   assert.equal(result.complete, true);
   assert.equal(result.initialWindowCount, 2);
@@ -105,6 +106,7 @@ test('all-window UI snapshot exposes drift, failures, and per-window continuatio
   });
 
   assert.equal(result.inventoryStable, false);
+  assert.equal(result.backgroundSafe, false);
   assert.equal(result.complete, false);
   assert.equal(result.capturedWindowCount, 1);
   assert.equal(result.failedWindowCount, 1);
@@ -127,6 +129,23 @@ test('all-window UI snapshot bounds untrusted per-window error details', async (
   });
 
   assert.equal(result.complete, false);
+  assert.equal(result.backgroundSafe, false);
   assert.equal(result.windows[0].error.code, 'INTERNAL');
   assert.equal(result.windows[0].error.message.length, 1_000);
+});
+
+test('all-window UI snapshot propagates an unsafe per-window attestation', async () => {
+  const inventory = [windowInfo('main'), windowInfo('panel-game')];
+  const result = await collectAllWindowUiSnapshots({
+    maxElementsPerWindow: 50,
+    readWindows: async () => inventory,
+    inspectWindow: async (label) => snapshot(label, {
+      backgroundSafe: label !== 'panel-game',
+    }),
+  });
+
+  assert.equal(result.inventoryStable, true);
+  assert.equal(result.failedWindowCount, 0);
+  assert.equal(result.backgroundSafe, false);
+  assert.equal(result.complete, false);
 });

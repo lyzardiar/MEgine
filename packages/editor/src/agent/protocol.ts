@@ -332,7 +332,8 @@ export interface EditorWindowUiSnapshotEntry {
 export interface EditorUiWorkspaceSnapshot {
   version: number;
   capturedAt: number;
-  backgroundSafe: true;
+  /** True only when every requested window returned its own safety attestation. */
+  backgroundSafe: boolean;
   inventoryStable: boolean;
   complete: boolean;
   initialWindowCount: number;

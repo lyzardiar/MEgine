@@ -58,14 +58,17 @@ export async function collectAllWindowUiSnapshots(
   const snapshots = windows.flatMap((entry) => (entry.snapshot ? [entry.snapshot] : []));
   const failedWindowCount = windows.length - snapshots.length;
   const hasMore = snapshots.some((snapshot) => snapshot.hasMore);
-  const allBackgroundSafe = snapshots.every((snapshot) => snapshot.backgroundSafe);
+  // A failed capture is unknown, not proof of safety. Propagate every
+  // per-window attestation instead of unconditionally blessing the aggregate.
+  const backgroundSafe = failedWindowCount === 0
+    && snapshots.every((snapshot) => snapshot.backgroundSafe);
 
   return {
     version: 1,
     capturedAt: (options.now ?? Date.now)(),
-    backgroundSafe: true,
+    backgroundSafe,
     inventoryStable,
-    complete: inventoryStable && failedWindowCount === 0 && !hasMore && allBackgroundSafe,
+    complete: inventoryStable && !hasMore && backgroundSafe,
     initialWindowCount: initialWindows.length,
     finalWindowCount: finalWindows.length,
     capturedWindowCount: snapshots.length,

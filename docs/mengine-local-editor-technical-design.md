@@ -1993,3 +1993,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Image`、`RawImage`、`Text` 与引擎 `Panel` 现在统一暴露 `raycast_padding`，顺序对齐 Unity `Graphic.raycastPadding` 的 Left、Bottom、Right、Top；默认全零兼容旧场景，正值收缩命中区，负值扩张命中区，渲染几何保持不变。
 - Editor 与 Runtime 都先按 CanvasScaler 把 padding 转成实际像素，再围绕原 RectTransform pivot 生成独立命中几何。旋转 Graphic、Screen Space Camera 与透视 World Space Canvas 分别保留原可视四边形和 padded raycast 四边形，避免改变 Alpha Hit Test 的原图坐标；Button 等同实体交互接收器复用目标 Graphic 的 padding。
 - RectMask2D、Mask、CanvasGroup、GraphicRaycaster 物理遮挡和背面过滤继续在 padded 区域外层生效。无窗口回归覆盖四类 Graphic 默认值与 Inspector、非对称正负 padding、Canvas 缩放、旋转、Button 同实体继承，以及 Editor/Runtime 的 World Space 投影命中。
+
+## 182. 2026-08-01 All-window Agent Safety Attestation
+
+- `window.ui_snapshot_all` 的聚合 `backgroundSafe` 不再无条件为真：只有所有初始窗口都成功返回且每个窗口快照都明确证明 `backgroundSafe` 时，工作区级结果才给出安全证明。任一窗口读取失败属于未知状态，任一窗口明确不安全都会使 `backgroundSafe` 与 `complete` 同时为 false。
+- 聚合仍保持串行读取、前后两次原生窗口清单一致性检查、逐窗口分页与有界错误信息；新增无窗口回归覆盖完整安全结果、清单漂移伴随失败、纯失败，以及成功读取但单窗口安全证明为 false 的情况。
