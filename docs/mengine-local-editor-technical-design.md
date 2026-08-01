@@ -2057,3 +2057,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - `AudioSource.time` 已进入 Add Component 默认值，因此 Inspector 与 Agent component schema 会公开可编辑的播放位置（默认 0、最小 0、步进 0.01），与 IDL/Runtime 的 seek 状态一致。
 - 新回归逐个实例化所有 IDL-backed 组件目录项，并把默认值 key 与生成的 JSON Schema properties 做精确集合比较；以后 IDL 新增、删除或重命名字段而编辑器目录未同步时会立即失败，避免“Runtime 支持但 Inspector/Agent 不可发现”的静默漂移。
+
+## 194. 2026-08-01 UI RectTransform Authoring Dependencies
+
+- 所有会绘制或控制矩形布局的 UI Add Component 项现在显式依赖 `RectTransform`。用户或 Agent 向普通实体添加 Image、Text、Button、布局器、Mask/RectMask2D 或高级控件时，Store 会在同一 undo transaction 自动补齐可编辑矩形；删除 RectTransform 也会被依赖保护阻止，不再让 Editor/Runtime 各自使用不可见的隐式默认矩形。
+- Agent component schema 同步公布上述依赖；Canvas `sorting_layer` 也标记为项目动态枚举。回归同时校验 UI 依赖、Agent schema 依赖，以及所有 Inspector metadata 都只能引用真实目录字段。

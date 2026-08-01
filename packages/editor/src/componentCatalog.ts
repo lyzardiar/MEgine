@@ -301,18 +301,21 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'AspectRatioFitter',
     label: 'Aspect Ratio Fitter',
     description: 'Unity-style aspect ratio layout controller',
+    requires: ['RectTransform'],
     create: () => ({ aspect_mode: 'None', aspect_ratio: 1 }),
   },
   {
     type: 'ContentSizeFitter',
     label: 'Content Size Fitter',
     description: 'Resize a RectTransform from its Layout Group content',
+    requires: ['RectTransform'],
     create: () => ({ horizontal_fit: 'Unconstrained', vertical_fit: 'Unconstrained' }),
   },
   {
     type: 'Image',
     label: 'Image',
     description: 'UI 图形',
+    requires: ['RectTransform'],
     create: () => ({
       enabled: true,
       maskable: true,
@@ -337,6 +340,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Button',
     label: 'Button',
     description: '可点击 UI 按钮',
+    requires: ['RectTransform'],
     create: () => ({
       interactable: true,
       transition: 'ColorTint',
@@ -489,6 +493,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'RawImage',
     label: 'Raw Image',
     description: 'Texture view with an explicit normalized UV rectangle',
+    requires: ['RectTransform'],
     create: () => ({
       enabled: true,
       maskable: true,
@@ -541,6 +546,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Text',
     label: 'Text',
     description: 'UI 文本标签',
+    requires: ['RectTransform'],
     create: () => ({
       enabled: true,
       maskable: true,
@@ -565,6 +571,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Toggle',
     label: 'Toggle',
     description: '布尔开关控件',
+    requires: ['RectTransform'],
     create: () => ({
       is_on: false,
       interactable: true,
@@ -579,6 +586,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Slider',
     label: 'Slider',
     description: '数值滑动控件',
+    requires: ['RectTransform'],
     create: () => ({
       min_value: 0,
       max_value: 1,
@@ -596,12 +604,14 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Scrollbar',
     label: 'Scrollbar',
     description: 'Unity-style directional scrollbar with a normalized handle size',
+    requires: ['RectTransform'],
     create: () => createUiScrollbarComponents().Scrollbar,
   },
   {
     type: 'Panel',
     label: 'Panel',
     description: 'Colored UI container with an optional border',
+    requires: ['RectTransform'],
     create: () => createUiPanelComponents().Panel,
   },
   {
@@ -619,12 +629,14 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'LayoutGroup',
     label: 'Layout Group',
     description: 'Horizontal, vertical or grid automatic child layout',
+    requires: ['RectTransform'],
     create: () => createUiLayoutGroupComponents().LayoutGroup,
   },
   {
     type: 'RectMask2D',
     label: 'Rect Mask 2D',
     description: 'Rectangular clipping for child graphics and controls',
+    requires: ['RectTransform'],
     create: () => ({ enabled: true, padding: [0, 0, 0, 0], softness: [0, 0] }),
   },
   {
@@ -638,36 +650,42 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'ProgressBar',
     label: 'Progress Bar',
     description: 'Read-only directional range display',
+    requires: ['RectTransform'],
     create: () => createUiProgressBarComponents().ProgressBar,
   },
   {
     type: 'InputField',
     label: 'Input Field',
     description: 'Single-line or multiline editable text control',
+    requires: ['RectTransform'],
     create: () => createUiInputFieldComponents().InputField,
   },
   {
     type: 'Dropdown',
     label: 'Dropdown',
     description: 'Selectable popup option list',
+    requires: ['RectTransform'],
     create: () => createUiDropdownComponents().Dropdown,
   },
   {
     type: 'ListView',
     label: 'List View',
     description: 'Scrollable selectable item list',
+    requires: ['RectTransform'],
     create: () => createUiListViewComponents().ListView,
   },
   {
     type: 'ScrollView',
     label: 'Scroll View',
     description: 'Clipped scrollable child viewport',
+    requires: ['RectTransform'],
     create: () => createUiScrollViewComponents().ScrollView,
   },
   {
     type: 'TabView',
     label: 'Tab View',
     description: 'Tabbed container showing one child page at a time',
+    requires: ['RectTransform'],
     create: () => createUiTabViewComponents().TabView,
   },
 ];

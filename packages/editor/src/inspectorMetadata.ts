@@ -440,6 +440,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       kind: 'display',
       visibleWhen: { field: 'render_mode', equals: 'ScreenSpaceOverlay' },
     },
+    sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
     override_sorting: {},
   },
   CanvasScaler: {
