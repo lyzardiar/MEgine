@@ -1796,7 +1796,7 @@ fn create_owned_directory_in(
     parent: &Path,
     label: &str,
 ) -> Result<OwnedTemporaryDirectory, String> {
-    let metadata = std::fs::symlink_metadata(&parent)
+    let metadata = std::fs::symlink_metadata(parent)
         .map_err(|error| format!("cannot inspect temporary directory parent: {error}"))?;
     if metadata.file_type().is_symlink() || !metadata.is_dir() {
         return Err("temporary directory parent must be a regular non-symlink directory".into());

@@ -572,13 +572,11 @@ impl ProjectSession {
             return Err(ProjectError::ExternalSceneModification(old_portable));
         }
         let target = self.resolve_for_write(&new_relative)?;
-        if target.exists() {
-            if !same_existing_file(&source, &target)? {
-                return Err(ProjectError::InvalidProject(format!(
-                    "scene already exists: {}",
-                    new_relative.display()
-                )));
-            }
+        if target.exists() && !same_existing_file(&source, &target)? {
+            return Err(ProjectError::InvalidProject(format!(
+                "scene already exists: {}",
+                new_relative.display()
+            )));
         }
         mengine_assets::ensure_asset_sidecar(&source, "scene").map_err(|error| {
             ProjectError::InvalidProject(format!(

@@ -214,9 +214,9 @@ impl AnimationValue {
         in_tangent: &Self,
         span: f32,
         amount: f32,
-        out_weight: f32,
-        in_weight: f32,
+        weights: [f32; 2],
     ) -> Self {
+        let [out_weight, in_weight] = weights;
         fn bezier(a: f32, b: f32, c: f32, d: f32, amount: f32) -> f32 {
             let inverse = 1.0 - amount;
             inverse * inverse * inverse * a
@@ -549,8 +549,10 @@ pub fn sample_track(track: &AnimationTrack, time: f32) -> Option<AnimationValue>
                             &in_tangent,
                             span,
                             amount,
-                            left.out_weight.unwrap_or(1.0 / 3.0),
-                            right.in_weight.unwrap_or(1.0 / 3.0),
+                            [
+                                left.out_weight.unwrap_or(1.0 / 3.0),
+                                right.in_weight.unwrap_or(1.0 / 3.0),
+                            ],
                         ));
                     }
                     return Some(left.value.cubic(

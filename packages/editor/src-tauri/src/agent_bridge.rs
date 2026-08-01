@@ -191,7 +191,7 @@ impl OutboundMessage {
             return None;
         }
         Some(Self {
-            message: Some(Message::Text(text.into())),
+            message: Some(Message::Text(text)),
             byte_len,
             queued_bytes,
         })
@@ -721,6 +721,8 @@ pub fn spawn_bridge_server(app: AppHandle, hub: Arc<BridgeHub>) {
     });
 }
 
+// Tungstenite fixes the handshake callback error to a full HTTP response.
+#[allow(clippy::result_large_err)]
 async fn handle_connection(
     app: AppHandle,
     hub: Arc<BridgeHub>,
@@ -2027,6 +2029,8 @@ pub async fn read_editor_ui_content(
 /// It deliberately accepts no JavaScript from the caller and refuses to alter
 /// a window that could be part of the user's foreground workflow.
 #[tauri::command]
+// Tauri deserializes this stable command ABI by parameter name.
+#[allow(clippy::too_many_arguments)]
 pub async fn interact_editor_window(
     app: AppHandle,
     window_label: Option<String>,
@@ -2589,6 +2593,8 @@ async fn read_editor_ui_content_impl(
 }
 
 #[cfg(windows)]
+// Mirrors the stable Tauri command ABI while adding the Windows WebView2 transport.
+#[allow(clippy::too_many_arguments)]
 async fn interact_editor_window_impl(
     app: AppHandle,
     window_label: String,
