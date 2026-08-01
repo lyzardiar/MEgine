@@ -660,6 +660,607 @@ export interface TabView {
   onValueChanged: Record<string, unknown>;
 }
 
+/** Exact scene/Prefab JSON field names, shared with Behaviour scripts. */
+export type SerializedComponentMap = {
+  Name: {
+    value: string;
+  };
+  Transform: {
+    position: [number, number, number];
+    rotation: [number, number, number, number];
+    scale: [number, number, number];
+  };
+  Transform2D: {
+    position: [number, number];
+    rotation: number;
+    scale: [number, number];
+  };
+  Camera3D: {
+    fov_y_degrees: number;
+    near: number;
+    far: number;
+    primary: boolean;
+    target_display: number;
+    projection: string;
+    orthographic_size: number;
+    aspect: number;
+    clear_flags: string;
+    background_color: [number, number, number, number];
+  };
+  DirectionalLight: {
+    color: [number, number, number, number];
+    intensity: number;
+    cast_shadows: boolean;
+    shadow_strength: number;
+    shadow_bias: number;
+    shadow_normal_bias: number;
+    shadow_distance: number;
+  };
+  EnvironmentLight: {
+    sky_color: [number, number, number, number];
+    equator_color: [number, number, number, number];
+    ground_color: [number, number, number, number];
+    diffuse_intensity: number;
+    specular_intensity: number;
+    texture: string;
+    rotation_degrees: number;
+    background_enabled: boolean;
+    background_intensity: number;
+    exposure: number;
+  };
+  PointLight: {
+    color: [number, number, number, number];
+    intensity: number;
+    range: number;
+  };
+  SpotLight: {
+    color: [number, number, number, number];
+    intensity: number;
+    range: number;
+    inner_angle_degrees: number;
+    outer_angle_degrees: number;
+  };
+  Light2D: {
+    light_type: string;
+    color: [number, number, number, number];
+    intensity: number;
+    radius: number;
+    inner_radius: number;
+    falloff: number;
+    sorting_layers: string[];
+  };
+  Camera2D: {
+    size: number;
+    primary: boolean;
+    target_display: number;
+    clear_flags: string;
+    background_color: [number, number, number, number];
+  };
+  MeshRenderer: {
+    mesh: string;
+    material: string;
+    cast_shadows: boolean;
+    receive_shadows: boolean;
+  };
+  PbrMaterial: {
+    base_color: [number, number, number, number];
+    metallic: number;
+    roughness: number;
+    ior: number;
+    emissive: [number, number, number];
+    emissive_strength: number;
+    unlit: boolean;
+    double_sided: boolean;
+  };
+  MaterialPropertyBlock: {
+    override_base_color: boolean;
+    base_color: [number, number, number, number];
+    override_metallic: boolean;
+    metallic: number;
+    override_roughness: boolean;
+    roughness: number;
+    override_ior: boolean;
+    ior: number;
+    override_clearcoat: boolean;
+    clearcoat: number;
+    override_clearcoat_roughness: boolean;
+    clearcoat_roughness: number;
+    override_emissive: boolean;
+    emissive: [number, number, number];
+    override_emissive_strength: boolean;
+    emissive_strength: number;
+    custom_parameter_names: string[];
+    custom_parameter_values: [number, number, number, number][];
+    custom_texture_names: string[];
+    custom_texture_values: string[];
+  };
+  SpriteRenderer: {
+    sprite: string;
+    color: [number, number, number, number];
+    size: [number, number];
+    pivot: [number, number];
+    flip_x: boolean;
+    flip_y: boolean;
+    sorting_layer: string;
+    sorting_order: number;
+  };
+  AnimatedSprite2D: {
+    frames: string[];
+    fps: number;
+    playing: boolean;
+    looped: boolean;
+    frame: number;
+    color: [number, number, number, number];
+    size: [number, number];
+    pivot: [number, number];
+    flip_x: boolean;
+    flip_y: boolean;
+    sorting_layer: string;
+    sorting_order: number;
+  };
+  Line2D: {
+    points: [number, number][];
+    width: number;
+    color: [number, number, number, number];
+    closed: boolean;
+    sorting_layer: string;
+    sorting_order: number;
+  };
+  Grid: {
+    cell_size: [number, number];
+    cell_gap: [number, number];
+    cell_layout: string;
+  };
+  Tilemap: {
+    cells: [number, number][];
+    sprites: string[];
+    color: [number, number, number, number];
+    tile_anchor: [number, number];
+    sorting_layer: string;
+    sorting_order: number;
+  };
+  AnimationPlayer: {
+    clip: string;
+    play_on_awake: boolean;
+    playing: boolean;
+    speed: number;
+    time: number;
+  };
+  Animator: {
+    controller: string;
+    play_on_awake: boolean;
+    playing: boolean;
+    speed: number;
+    current_state: string;
+    parameters_json: string;
+    layer_weights_json: string;
+    layers_json: string;
+    state_time: number;
+    normalized_time: number;
+    transition_to: string;
+    transition_progress: number;
+  };
+  TimelineDirector: {
+    asset: string;
+    bindings_json: string;
+    play_on_awake: boolean;
+    playing: boolean;
+    speed: number;
+    time: number;
+    wrap_mode: string;
+  };
+  AudioListener: {
+    primary: boolean;
+  };
+  AudioSource: {
+    clip: string;
+    play_on_awake: boolean;
+    playing: boolean;
+    time: number;
+    looped: boolean;
+    volume: number;
+    pitch: number;
+    pan: number;
+    spatial_blend: number;
+    min_distance: number;
+    max_distance: number;
+    bus: string;
+    mute: boolean;
+  };
+  AudioMixer: {
+    master_volume: number;
+    music_volume: number;
+    sfx_volume: number;
+    ui_volume: number;
+    ambience_volume: number;
+    muted: boolean;
+  };
+  RigidBody3D: {
+    body_type: string;
+    mass: number;
+    gravity_scale: number;
+    linear_damping: number;
+    angular_damping: number;
+    velocity: [number, number, number];
+    angular_velocity: [number, number, number];
+    lock_rotation: boolean;
+    ccd: boolean;
+  };
+  BoxCollider3D: {
+    size: [number, number, number];
+    center: [number, number, number];
+    is_trigger: boolean;
+    friction: number;
+    restitution: number;
+  };
+  SphereCollider3D: {
+    radius: number;
+    center: [number, number, number];
+    is_trigger: boolean;
+    friction: number;
+    restitution: number;
+  };
+  Rigidbody2D: {
+    body_type: string;
+    mass: number;
+    gravity_scale: number;
+    linear_damping: number;
+    angular_damping: number;
+    velocity: [number, number];
+    angular_velocity: number;
+    freeze_rotation: boolean;
+    ccd: boolean;
+  };
+  BoxCollider2D: {
+    size: [number, number];
+    offset: [number, number];
+    is_trigger: boolean;
+    friction: number;
+    bounciness: number;
+  };
+  CircleCollider2D: {
+    radius: number;
+    offset: [number, number];
+    is_trigger: boolean;
+    friction: number;
+    bounciness: number;
+  };
+  Layer: {
+    value: number;
+  };
+  EditorOnly: {
+  };
+  AutoRotate: {
+    axis: [number, number, number];
+    angle: number;
+    speed: number;
+  };
+  ParticleEmitter2D: {
+    playing: boolean;
+    looping: boolean;
+    duration: number;
+    start_delay: number;
+    rate_over_time: number;
+    max_particles: number;
+    lifetime_min: number;
+    lifetime_max: number;
+    speed_min: number;
+    speed_max: number;
+    size_start: number;
+    size_end: number;
+    color_start: [number, number, number, number];
+    color_end: [number, number, number, number];
+    gravity: [number, number];
+    shape: string;
+    shape_radius: number;
+    shape_size: [number, number];
+    direction: [number, number];
+    spread_degrees: number;
+    simulation_space: string;
+    blend_mode: string;
+    texture: string;
+    sorting_layer: string;
+    sorting_order: number;
+    seed: number;
+  };
+  ParticleEmitter3D: {
+    playing: boolean;
+    looping: boolean;
+    duration: number;
+    start_delay: number;
+    rate_over_time: number;
+    max_particles: number;
+    lifetime_min: number;
+    lifetime_max: number;
+    speed_min: number;
+    speed_max: number;
+    size_start: number;
+    size_end: number;
+    color_start: [number, number, number, number];
+    color_end: [number, number, number, number];
+    gravity: [number, number, number];
+    shape: string;
+    shape_radius: number;
+    shape_size: [number, number, number];
+    direction: [number, number, number];
+    spread_degrees: number;
+    simulation_space: string;
+    blend_mode: string;
+    texture: string;
+    billboard: boolean;
+    seed: number;
+  };
+  SpineSkeleton: {
+    skeleton: string;
+    atlas: string;
+    animation: string;
+    skin: string;
+    loop_animation: boolean;
+    playing: boolean;
+    time_scale: number;
+    scale: number;
+    color: [number, number, number, number];
+    premultiplied_alpha: boolean;
+    sorting_layer: string;
+    sorting_order: number;
+  };
+  Canvas: {
+    enabled: boolean;
+    render_mode: string;
+    render_camera: string;
+    pixel_perfect: boolean;
+    override_pixel_perfect: boolean;
+    override_sorting: boolean;
+    sorting_layer: string;
+    sorting_order: number;
+    target_display: number;
+    plane_distance: number;
+  };
+  GraphicRaycaster: {
+    enabled: boolean;
+    ignore_reversed_graphics: boolean;
+    blocking_objects: string;
+    blocking_mask: number;
+  };
+  CanvasScaler: {
+    ui_scale_mode: string;
+    reference_pixels_per_unit: number;
+    scale_factor: number;
+    reference_resolution: [number, number];
+    screen_match_mode: string;
+    match_width_or_height: number;
+    physical_unit: string;
+    fallback_screen_dpi: number;
+    default_sprite_dpi: number;
+    dynamic_pixels_per_unit: number;
+  };
+  RectTransform: {
+    anchor_min: [number, number];
+    anchor_max: [number, number];
+    pivot: [number, number];
+    anchored_position: [number, number];
+    size_delta: [number, number];
+    local_rotation: number;
+    local_scale: [number, number];
+  };
+  AspectRatioFitter: {
+    aspect_mode: string;
+    aspect_ratio: number;
+  };
+  ContentSizeFitter: {
+    horizontal_fit: string;
+    vertical_fit: string;
+  };
+  Image: {
+    enabled: boolean;
+    maskable: boolean;
+    sprite: string;
+    color: [number, number, number, number];
+    image_type: string;
+    preserve_aspect: boolean;
+    fill_center: boolean;
+    pixels_per_unit_multiplier: number;
+    fill_method: string;
+    fill_amount: number;
+    fill_clockwise: boolean;
+    fill_origin: number;
+    border: [number, number, number, number];
+    source_size: [number, number];
+    raycast_target: boolean;
+    raycast_padding: [number, number, number, number];
+    alpha_hit_test_minimum_threshold: number;
+  };
+  RawImage: {
+    enabled: boolean;
+    maskable: boolean;
+    texture: string;
+    color: [number, number, number, number];
+    uv_rect: [number, number, number, number];
+    raycast_target: boolean;
+    raycast_padding: [number, number, number, number];
+  };
+  Shadow: {
+    effect_color: [number, number, number, number];
+    effect_distance: [number, number];
+    use_graphic_alpha: boolean;
+  };
+  Outline: {
+    effect_color: [number, number, number, number];
+    effect_distance: [number, number];
+    use_graphic_alpha: boolean;
+  };
+  Button: {
+    interactable: boolean;
+    transition: string;
+    normal_color: [number, number, number, number];
+    highlighted_color: [number, number, number, number];
+    pressed_color: [number, number, number, number];
+    selected_color: [number, number, number, number];
+    disabled_color: [number, number, number, number];
+    color_multiplier: number;
+    fade_duration: number;
+    highlighted_sprite: string;
+    pressed_sprite: string;
+    selected_sprite: string;
+    disabled_sprite: string;
+    label: string;
+    text_color: [number, number, number, number];
+    font_size: number;
+    on_click: Record<string, unknown>;
+  };
+  Text: {
+    enabled: boolean;
+    maskable: boolean;
+    text: string;
+    color: [number, number, number, number];
+    font_size: number;
+    outline_color: [number, number, number, number];
+    outline_width: number;
+    alignment: string;
+    vertical_align: string;
+    raycast_target: boolean;
+    raycast_padding: [number, number, number, number];
+  };
+  Toggle: {
+    is_on: boolean;
+    interactable: boolean;
+    label: string;
+    color: [number, number, number, number];
+    text_color: [number, number, number, number];
+    font_size: number;
+    on_value_changed: Record<string, unknown>;
+  };
+  ToggleGroup: {
+    allow_switch_off: boolean;
+  };
+  Slider: {
+    min_value: number;
+    max_value: number;
+    value: number;
+    whole_numbers: boolean;
+    interactable: boolean;
+    direction: string;
+    fill_color: [number, number, number, number];
+    background_color: [number, number, number, number];
+    handle_color: [number, number, number, number];
+    on_value_changed: Record<string, unknown>;
+  };
+  Scrollbar: {
+    value: number;
+    size: number;
+    number_of_steps: number;
+    interactable: boolean;
+    direction: string;
+    background_color: [number, number, number, number];
+    handle_color: [number, number, number, number];
+    on_value_changed: Record<string, unknown>;
+  };
+  Panel: {
+    enabled: boolean;
+    maskable: boolean;
+    color: [number, number, number, number];
+    border_color: [number, number, number, number];
+    border_width: number;
+    raycast_target: boolean;
+    raycast_padding: [number, number, number, number];
+  };
+  CanvasGroup: {
+    alpha: number;
+    interactable: boolean;
+    blocks_raycasts: boolean;
+    ignore_parent_groups: boolean;
+  };
+  LayoutGroup: {
+    direction: string;
+    padding: [number, number, number, number];
+    spacing: [number, number];
+    cell_size: [number, number];
+    constraint_count: number;
+    child_force_expand: boolean;
+  };
+  RectMask2D: {
+    enabled: boolean;
+    padding: [number, number, number, number];
+    softness: [number, number];
+  };
+  Mask: {
+    enabled: boolean;
+    show_mask_graphic: boolean;
+  };
+  ProgressBar: {
+    min_value: number;
+    max_value: number;
+    value: number;
+    direction: string;
+    background_color: [number, number, number, number];
+    fill_color: [number, number, number, number];
+    text_color: [number, number, number, number];
+    show_label: boolean;
+    font_size: number;
+  };
+  InputField: {
+    text: string;
+    placeholder: string;
+    text_color: [number, number, number, number];
+    placeholder_color: [number, number, number, number];
+    background_color: [number, number, number, number];
+    caret_color: [number, number, number, number];
+    font_size: number;
+    interactable: boolean;
+    multiline: boolean;
+    character_limit: number;
+    on_value_changed: Record<string, unknown>;
+    on_submit: Record<string, unknown>;
+  };
+  Dropdown: {
+    options: string[];
+    selected_index: number;
+    expanded: boolean;
+    interactable: boolean;
+    background_color: [number, number, number, number];
+    item_color: [number, number, number, number];
+    selected_color: [number, number, number, number];
+    text_color: [number, number, number, number];
+    font_size: number;
+    on_value_changed: Record<string, unknown>;
+  };
+  ListView: {
+    items: string[];
+    selected_index: number;
+    item_height: number;
+    spacing: number;
+    scroll_offset: number;
+    interactable: boolean;
+    background_color: [number, number, number, number];
+    item_color: [number, number, number, number];
+    selected_color: [number, number, number, number];
+    text_color: [number, number, number, number];
+    font_size: number;
+    on_value_changed: Record<string, unknown>;
+  };
+  ScrollView: {
+    horizontal: boolean;
+    vertical: boolean;
+    normalized_position: [number, number];
+    scroll_sensitivity: number;
+    viewport_color: [number, number, number, number];
+    show_scrollbar: boolean;
+    on_value_changed: Record<string, unknown>;
+  };
+  TabView: {
+    tabs: string[];
+    selected_index: number;
+    tab_height: number;
+    interactable: boolean;
+    background_color: [number, number, number, number];
+    tab_color: [number, number, number, number];
+    selected_color: [number, number, number, number];
+    text_color: [number, number, number, number];
+    font_size: number;
+    on_value_changed: Record<string, unknown>;
+  };
+};
+
 export type ComponentName =
   | 'Name'
   | 'Transform'

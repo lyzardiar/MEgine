@@ -2036,3 +2036,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - `@mengine/behaviour` 的公共入口现在导出 `components.ts` 中全部内置组件 token，使 Behaviour 与 AI Agent 生成的脚本可以直接通过包入口调用 `ctx.get(...)` / `ctx.set(...)`，不再依赖未公开的包内部路径。
 - UI Button 组件继续以 `UIButton` 导出，并保持场景类型名 `Button`，从而与已有 `@Button` 方法装饰器明确区分。真实包导入回归会逐一校验全部组件导出、`typeName` 和 `componentTypeName(...)` 契约。
+
+## 190. 2026-08-01 IDL-complete Behaviour Component Tokens
+
+- Behaviour SDK 不再手工维护一小部分组件字段，而是由 IDL codegen 生成的 `SerializedComponentMap` 提供与 Scene/Prefab JSON 完全相同的 snake_case 字段类型；现有 63 个 IDL 组件均具备强类型 runtime token，包括 UI、物理、灯光、材质、粒子、Spine、Animation 与 Timeline。
+- `BUILTIN_COMPONENT_TYPES` 的 key 由 `BuiltinComponentName` 做穷尽性编译检查，包入口直接重导出整个 token 模块；真实包回归再将运行时 registry 与 API 的 `COMPONENT_NAMES` 逐项比对，因此新增 IDL 组件但漏接 Behaviour SDK 会在构建或测试阶段立即失败。与装饰器同名的组件分别使用 `UIButton` 和 `UIProgressBar` 公共 token。
+- API codegen 与根入口统一使用显式 `.js` ESM 相对路径，Node/Agent 可以直接 import 已构建的 `@mengine/api`，不再依赖只被 bundler 容忍的目录解析。

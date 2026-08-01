@@ -25,6 +25,10 @@ importers:
         version: 5.9.3
 
   packages/behaviour:
+    dependencies:
+      '@mengine/api':
+        specifier: workspace:*
+        version: link:../api
     devDependencies:
       typescript:
         specifier: ^5.8.2

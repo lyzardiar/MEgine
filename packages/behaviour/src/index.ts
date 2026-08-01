@@ -53,38 +53,7 @@ export {
 } from './registry.js';
 export { createBehaviourRunner } from './runner.js';
 export { invokeBehaviourMethodEdit } from './invoke.js';
-export {
-  Transform,
-  Camera3D,
-  Camera2D,
-  MeshRenderer,
-  DirectionalLight,
-  Light2D,
-  Transform2D,
-  SpriteRenderer,
-  AnimatedSprite2D,
-  Line2D,
-  AnimationPlayer,
-  Animator,
-  AudioListener,
-  AudioSource,
-  AudioMixer,
-  Canvas,
-  CanvasScaler,
-  GraphicRaycaster,
-  RectTransform,
-  AspectRatioFitter,
-  ContentSizeFitter,
-  RectMask2D,
-  Mask,
-  Image,
-  RawImage,
-  Shadow,
-  Outline,
-  UIButton,
-  ToggleGroup,
-  componentTypeName,
-} from './components.js';
+export * from './components.js';
 export type {
   FieldMeta,
   FieldType,
@@ -95,16 +64,5 @@ export type {
   BehaviourEntry,
   BehaviourCtor,
 } from './types.js';
-export type {
-  Vec3,
-  Quat,
-  Color4,
-  TransformData,
-  Camera3DData,
-  Camera2DData,
-  BuiltinComponents,
-  BuiltinComponentName,
-  ComponentType,
-} from './components.js';
 export type { BehaviourRunner, BehaviourInstance, EntityLike } from './runner.js';
 export { ENTITY_REFERENCE_FIELDS_KEY } from './types.js';

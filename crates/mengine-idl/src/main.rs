@@ -58,7 +58,7 @@ fn main() -> Result<()> {
     fs::write(args.out_ts.join("schema.json"), schema)?;
     fs::write(
         args.out_ts.join("index.ts"),
-        "export * from './components';\n",
+        "export * from './components.js';\n",
     )?;
 
     log::info!("codegen OK → {:?} / {:?}", args.out_rust, args.out_ts);

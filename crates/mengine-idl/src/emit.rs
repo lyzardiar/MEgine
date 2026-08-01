@@ -214,6 +214,18 @@ pub fn emit_typescript(defs: &[Def]) -> String {
         out.push_str("}\n\n");
     }
 
+    out.push_str("/** Exact scene/Prefab JSON field names, shared with Behaviour scripts. */\n");
+    out.push_str("export type SerializedComponentMap = {\n");
+    for def in defs.iter().filter(|d| matches!(d.kind, DefKind::Component)) {
+        out.push_str(&format!("  {}: {{\n", def.name));
+        for f in &def.fields {
+            let opt = if f.optional { "?" } else { "" };
+            out.push_str(&format!("    {}{}: {};\n", f.name, opt, map_ts_type(&f.ty)));
+        }
+        out.push_str("  };\n");
+    }
+    out.push_str("};\n\n");
+
     out.push_str("export type ComponentName =\n");
     let names: Vec<_> = defs
         .iter()
@@ -405,6 +417,18 @@ mod tests {
         assert!(typescript.contains("values: [number, number, number, number][]"));
         assert!(schema.contains("\"minItems\": 4"));
         assert!(schema.contains("\"maxItems\": 4"));
+    }
+
+    #[test]
+    fn emits_exact_serialized_component_field_names_for_behaviours() {
+        let defs =
+            parse_idl("component Camera3D {\nfov_y_degrees: float = 60\ntarget_display?: int\n}")
+                .unwrap();
+        let typescript = emit_typescript(&defs);
+        assert!(typescript.contains("fovYDegrees: number;"));
+        assert!(typescript.contains("export type SerializedComponentMap = {"));
+        assert!(typescript.contains("Camera3D: {\n    fov_y_degrees: number;"));
+        assert!(typescript.contains("target_display?: number;"));
     }
 
     #[test]

@@ -1,6 +1,6 @@
-import type { ComponentName, Transform, WorldCommand } from './generated';
+import type { ComponentName, Transform, WorldCommand } from './generated/index.js';
 
-export * from './generated';
+export * from './generated/index.js';
 
 export type EntityId = number;
 
