@@ -105,6 +105,105 @@ test('nested Canvases remain independent batching islands without changing draw 
   );
 });
 
+test('Canvas sorting grid safely batches non-overlapping materials across hierarchy order', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay', normalized_sorting_grid_size: 0.25 },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      siblingIndex: 0,
+      components: { RectTransform: rect({ anchored_position: [-200, 0] }), Image: { sprite: 'atlas' } },
+    },
+    {
+      entity: 3,
+      parent: 1,
+      siblingIndex: 1,
+      components: { RectTransform: rect({ anchored_position: [0, 0] }), Image: { sprite: 'other' } },
+    },
+    {
+      entity: 4,
+      parent: 1,
+      siblingIndex: 2,
+      components: { RectTransform: rect({ anchored_position: [200, 0] }), Image: { sprite: 'atlas' } },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  assert.equal(items.find((item) => item.entity === 2).canvasSortingGridSize, 0.25);
+  const batches = buildUiBatches(items);
+  assert.deepEqual(batches.flatMap((batch) => batch.items.map((item) => item.entity)), [1, 2, 4, 3]);
+  assert.deepEqual(batches.map((batch) => batch.key), [
+    'editor/canvas',
+    'ui/image/atlas',
+    'ui/image/other',
+  ]);
+});
+
+test('Canvas sorting grid preserves hierarchy order for overlapping transparent graphics', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay', normalized_sorting_grid_size: 0 },
+      },
+    },
+    ...['atlas', 'other', 'atlas'].map((sprite, index) => ({
+      entity: index + 2,
+      parent: 1,
+      siblingIndex: index,
+      components: { RectTransform: rect(), Image: { sprite } },
+    })),
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const batches = buildUiBatches(items);
+  assert.deepEqual(batches.flatMap((batch) => batch.items.map((item) => item.entity)), [1, 2, 3, 4]);
+  assert.deepEqual(batches.map((batch) => batch.key), [
+    'editor/canvas',
+    'ui/image/atlas',
+    'ui/image/other',
+    'ui/image/atlas',
+  ]);
+});
+
+test('Canvas batching can move an unconstrained prefix around a later overlap edge', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    ...[
+      [2, -200, 'atlas'],
+      [3, 0, 'other'],
+      [4, 50, 'atlas'],
+    ].map(([entity, x, sprite], index) => ({
+      entity,
+      parent: 1,
+      siblingIndex: index,
+      components: {
+        RectTransform: rect({ anchored_position: [x, 0] }),
+        Image: { sprite },
+      },
+    })),
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const batches = buildUiBatches(items);
+  assert.deepEqual(batches.flatMap((batch) => batch.items.map((item) => item.entity)), [1, 3, 2, 4]);
+  assert.deepEqual(batches.map((batch) => batch.key), [
+    'editor/canvas',
+    'ui/image/other',
+    'ui/image/atlas',
+  ]);
+});
+
 test('Tiled Image authoring data reaches the Canvas draw plan', () => {
   const entities = [
     {

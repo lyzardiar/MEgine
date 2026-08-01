@@ -133,7 +133,29 @@ test('AudioSource playback time is authorable through Inspector and Agent schema
   });
 });
 
-test('Canvas sorting layer is exposed as a project-backed enum', () => {
+test('Canvas sorting and batching controls are exposed to Agents', () => {
   const canvas = buildAgentComponentSchema('Canvas');
   assert.equal(canvas?.fields.find((field) => field.name === 'sorting_layer')?.kind, 'enum');
+  assert.deepEqual(
+    canvas?.fields.find((field) => field.name === 'normalized_sorting_grid_size'),
+    {
+      name: 'normalized_sorting_grid_size',
+      type: 'number',
+      default: 0.1,
+      editable: true,
+      hidden: false,
+      label: 'Normalized Sorting Grid Size',
+      kind: undefined,
+      options: undefined,
+      assetKinds: undefined,
+      referenceType: undefined,
+      allowNone: undefined,
+      noneValue: undefined,
+      min: 0,
+      max: undefined,
+      step: 0.01,
+      visibleWhen: undefined,
+      multiline: false,
+    },
+  );
 });

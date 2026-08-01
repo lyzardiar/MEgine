@@ -2068,3 +2068,10 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - 新增独立 `CanvasRenderer` 组件及 `cull_transparent_mesh`，默认值为 `true`。Image、RawImage、Text 与 Panel 的 Add Component 依赖链会自动补齐 CanvasRenderer，新建标准 Graphic 也会显式序列化它；旧场景缺少组件时仍按默认开启处理，不要求破坏性迁移。IDL、生成的 Rust/TypeScript/JSON Schema、Behaviour token、组件目录、Inspector、Add Component 分类与 Agent component schema 使用同一契约。
 - Editor Canvas 与 Runtime 都在 Graphic Effect 完成后检查同一渲染器发出的全部顶点 Alpha；只有所有 Alpha 都接近零时才移除视觉几何。`use_graphic_alpha=false` 且自身 Alpha 可见的 Shadow/Outline 会保留网格，显式关闭 Cull Transparent Mesh 也会保留零 Alpha 几何。裁剪不移除 GraphicRaycaster 控件区域、选中/聚焦轮廓或关联 Mask 身份，因此透明点击阻挡仍可命中，透明 Mask 仍保留未写入的 Stencil 深度语义。
 - 回归覆盖目录/Agent 依赖、标准工厂序列化、旧场景隐式默认、显式关闭、接近零阈值、Alpha 独立 Graphic Effect、视觉裁剪后射线保留，以及透明 Mask 的空 Stencil 预留。该批只实现当前可序列化且可验证的 CanvasRenderer 能力，不伪造原生材质槽、Pop Material 或外部自定义 Mesh API。
+
+## 196. 2026-08-01 Unity Canvas Normalized Sorting Grid 与重叠安全合批
+
+- `Canvas.normalized_sorting_grid_size` 对齐 Unity `normalizedSortingGridSize`，默认 `0.1`；显式 `0`、负值或非有限值在批处理阶段同样回退到 `0.1`。IDL、Rust/TypeScript 生成类型、组件目录、新建 Canvas、Inspector 与 Agent component schema 使用同一字段，旧场景缺失字段由生成默认值兼容。
+- Editor Canvas 与原生 Runtime 不再只合并相邻图元。每个独立 Canvas 先用该归一化尺寸把全部可渲染包围盒划入空间网格，再为所有实际相交的透明图元建立原 Hierarchy painter-order 约束；拓扑排序只在当前无约束候选中优先延续相同批次键。因此非重叠的 `A(material X) → B(material Y) → C(material X)` 可以安全变成一个 X 批次加一个 Y 批次，而 B 同时覆盖 A/C 时仍严格保持 A→B→C。
+- 旋转 RectTransform、World Space 投影四边形与 Scissor Clip 都使用保守屏幕包围盒参与重叠判断；Mask/Stencil、Softness、Nested Canvas batching island 和非 Canvas 2D/3D 绘制流不跨边界重排。网格轴向格数、格引用数和重叠边数都有确定性上限；超限安全回退原顺序，防止恶意极小值或全屏重叠控件导致无界内存，同时不牺牲最终绘制正确性。
+- 无窗口回归覆盖默认/Inspector/Agent schema、字段传播、非重叠跨材质合批、重叠透明顺序、`0 → 0.1` 回退、嵌套 Canvas 边界，以及 Editor 与 Runtime 相同的批次数和图元顺序。

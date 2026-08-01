@@ -118,6 +118,9 @@ pub struct UiPrimitive {
     pub vertex_positions: Option<[[f32; 2]; 4]>,
     /// Nested RectMask2D soft clips, ordered outermost to innermost.
     pub soft_clips: [Option<UiSoftClip>; 8],
+    /// Canvas-native overlap analysis cell size. `None` keeps non-Canvas draw
+    /// streams in authored order; zero and invalid values use Unity's 0.1 default.
+    pub canvas_sorting_grid_size: Option<f32>,
     pub key: UiBatchKey,
 }
 
@@ -133,6 +136,7 @@ impl UiPrimitive {
             uv: [0.0, 0.0, 1.0, 1.0],
             vertex_positions: None,
             soft_clips: [None; 8],
+            canvas_sorting_grid_size: None,
             key: UiBatchKey::default(),
         }
     }
@@ -153,6 +157,7 @@ pub struct UiBatchPlan {
 
 impl UiBatchPlan {
     pub fn build(primitives: Vec<UiPrimitive>) -> Self {
+        let primitives = optimize_canvas_batch_order(primitives);
         let mut batches: Vec<UiBatch> = Vec::new();
         for (index, primitive) in primitives.iter().enumerate() {
             let index = index as u32;
@@ -177,6 +182,251 @@ impl UiBatchPlan {
     pub fn is_empty(&self) -> bool {
         self.primitives.is_empty()
     }
+}
+
+const DEFAULT_CANVAS_SORTING_GRID_SIZE: f32 = 0.1;
+const MAX_CANVAS_SORTING_GRID_AXIS: usize = 128;
+const MAX_CANVAS_SORTING_GRID_REFERENCES: usize = 1_048_576;
+const MAX_CANVAS_OVERLAP_EDGES: usize = 262_144;
+
+#[derive(Clone, Copy, Debug)]
+struct PrimitiveBounds {
+    min_x: f32,
+    min_y: f32,
+    max_x: f32,
+    max_y: f32,
+}
+
+impl PrimitiveBounds {
+    fn intersects(self, other: Self) -> bool {
+        self.min_x < other.max_x
+            && other.min_x < self.max_x
+            && self.min_y < other.max_y
+            && other.min_y < self.max_y
+    }
+
+    fn is_empty(self) -> bool {
+        !self.min_x.is_finite()
+            || !self.min_y.is_finite()
+            || !self.max_x.is_finite()
+            || !self.max_y.is_finite()
+            || self.max_x <= self.min_x
+            || self.max_y <= self.min_y
+    }
+}
+
+fn primitive_bounds(primitive: &UiPrimitive) -> PrimitiveBounds {
+    let [x, y, width, height] = primitive.rect;
+    let pivot_x = x + primitive.pivot[0] * width;
+    let pivot_y = y + primitive.pivot[1] * height;
+    let cosine = primitive.rotation_radians.cos();
+    let sine = primitive.rotation_radians.sin();
+    let mut bounds = PrimitiveBounds {
+        min_x: f32::INFINITY,
+        min_y: f32::INFINITY,
+        max_x: f32::NEG_INFINITY,
+        max_y: f32::NEG_INFINITY,
+    };
+    for [corner_x, corner_y] in [
+        [x, y],
+        [x + width, y],
+        [x + width, y + height],
+        [x, y + height],
+    ] {
+        let local_x = corner_x - pivot_x;
+        let local_y = corner_y - pivot_y;
+        let rotated_x = pivot_x + local_x * cosine - local_y * sine;
+        let rotated_y = pivot_y + local_x * sine + local_y * cosine;
+        bounds.min_x = bounds.min_x.min(rotated_x);
+        bounds.min_y = bounds.min_y.min(rotated_y);
+        bounds.max_x = bounds.max_x.max(rotated_x);
+        bounds.max_y = bounds.max_y.max(rotated_y);
+    }
+    if let Some(clip) = primitive.key.clip {
+        bounds.min_x = bounds.min_x.max(clip.x as f32);
+        bounds.min_y = bounds.min_y.max(clip.y as f32);
+        bounds.max_x = bounds.max_x.min(clip.x.saturating_add(clip.width) as f32);
+        bounds.max_y = bounds.max_y.min(clip.y.saturating_add(clip.height) as f32);
+    }
+    bounds
+}
+
+fn normalized_canvas_grid_size(value: f32) -> f32 {
+    if value.is_finite() && value > 0.0 {
+        value.min(1.0)
+    } else {
+        DEFAULT_CANVAS_SORTING_GRID_SIZE
+    }
+}
+
+/// Unity UI may join compatible graphics across an intermediate material only
+/// when their bounding boxes can be reordered without changing transparent
+/// overlap. The grid limits overlap candidates; the topological pass preserves
+/// every original order edge between intersecting graphics.
+fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> Vec<UiPrimitive> {
+    if primitives.len() < 3 {
+        return primitives;
+    }
+    let bounds: Vec<_> = primitives.iter().map(primitive_bounds).collect();
+    let non_empty: Vec<_> = bounds
+        .iter()
+        .copied()
+        .filter(|value| !value.is_empty())
+        .collect();
+    if non_empty.is_empty() {
+        return primitives;
+    }
+    let area = non_empty.iter().copied().fold(
+        PrimitiveBounds {
+            min_x: f32::INFINITY,
+            min_y: f32::INFINITY,
+            max_x: f32::NEG_INFINITY,
+            max_y: f32::NEG_INFINITY,
+        },
+        |mut total, value| {
+            total.min_x = total.min_x.min(value.min_x);
+            total.min_y = total.min_y.min(value.min_y);
+            total.max_x = total.max_x.max(value.max_x);
+            total.max_y = total.max_y.max(value.max_y);
+            total
+        },
+    );
+    let axis = ((1.0 / normalized_canvas_grid_size(grid_size)).ceil() as usize)
+        .clamp(1, MAX_CANVAS_SORTING_GRID_AXIS);
+    let cell_width = ((area.max_x - area.min_x) / axis as f32).max(f32::EPSILON);
+    let cell_height = ((area.max_y - area.min_y) / axis as f32).max(f32::EPSILON);
+    let cell_range = |value: PrimitiveBounds| {
+        let coordinate = |point: f32, origin: f32, extent: f32| {
+            (((point - origin) / extent).floor() as isize).clamp(0, axis as isize - 1) as usize
+        };
+        (
+            coordinate(value.min_x, area.min_x, cell_width),
+            coordinate(value.max_x, area.min_x, cell_width),
+            coordinate(value.min_y, area.min_y, cell_height),
+            coordinate(value.max_y, area.min_y, cell_height),
+        )
+    };
+
+    let mut cells: HashMap<(usize, usize), Vec<usize>> = HashMap::new();
+    let mut outgoing = vec![Vec::<usize>::new(); primitives.len()];
+    let mut indegree = vec![0usize; primitives.len()];
+    let mut grid_references = 0usize;
+    let mut overlap_edges = 0usize;
+    for (index, current) in bounds.iter().copied().enumerate() {
+        if current.is_empty() {
+            continue;
+        }
+        let (min_x, max_x, min_y, max_y) = cell_range(current);
+        let references = (max_x - min_x + 1).saturating_mul(max_y - min_y + 1);
+        grid_references = grid_references.saturating_add(references);
+        if grid_references > MAX_CANVAS_SORTING_GRID_REFERENCES {
+            return primitives;
+        }
+        let mut candidates = std::collections::BTreeSet::new();
+        for cell_x in min_x..=max_x {
+            for cell_y in min_y..=max_y {
+                if let Some(entries) = cells.get(&(cell_x, cell_y)) {
+                    candidates.extend(entries.iter().copied());
+                }
+            }
+        }
+        for earlier in candidates {
+            if bounds[earlier].intersects(current) {
+                overlap_edges += 1;
+                if overlap_edges > MAX_CANVAS_OVERLAP_EDGES {
+                    return primitives;
+                }
+                outgoing[earlier].push(index);
+                indegree[index] += 1;
+            }
+        }
+        for cell_x in min_x..=max_x {
+            for cell_y in min_y..=max_y {
+                cells.entry((cell_x, cell_y)).or_default().push(index);
+            }
+        }
+    }
+
+    let mut ready = std::collections::BTreeSet::new();
+    let mut ready_by_key: HashMap<UiBatchKey, std::collections::BTreeSet<usize>> = HashMap::new();
+    for (index, degree) in indegree.iter().copied().enumerate() {
+        if degree == 0 {
+            ready.insert(index);
+            ready_by_key
+                .entry(primitives[index].key.clone())
+                .or_default()
+                .insert(index);
+        }
+    }
+    let mut order = Vec::with_capacity(primitives.len());
+    let mut previous_key: Option<UiBatchKey> = None;
+    while !ready.is_empty() {
+        let next = previous_key
+            .as_ref()
+            .and_then(|key| ready_by_key.get(key))
+            .and_then(|entries| entries.first().copied())
+            .or_else(|| {
+                ready.iter().copied().find(|candidate| {
+                    outgoing[*candidate].iter().copied().any(|dependent| {
+                        indegree[dependent] == 1
+                            && ready_by_key.contains_key(&primitives[dependent].key)
+                    })
+                })
+            })
+            .or_else(|| ready.first().copied())
+            .expect("non-empty ready set");
+        ready.remove(&next);
+        let key = primitives[next].key.clone();
+        if let Some(entries) = ready_by_key.get_mut(&key) {
+            entries.remove(&next);
+            if entries.is_empty() {
+                ready_by_key.remove(&key);
+            }
+        }
+        order.push(next);
+        previous_key = Some(key);
+        for dependent in outgoing[next].iter().copied() {
+            indegree[dependent] -= 1;
+            if indegree[dependent] == 0 {
+                ready.insert(dependent);
+                ready_by_key
+                    .entry(primitives[dependent].key.clone())
+                    .or_default()
+                    .insert(dependent);
+            }
+        }
+    }
+    debug_assert_eq!(order.len(), primitives.len());
+    let mut slots: Vec<_> = primitives.drain(..).map(Some).collect();
+    order
+        .into_iter()
+        .map(|index| slots[index].take().expect("each primitive is emitted once"))
+        .collect()
+}
+
+fn optimize_canvas_batch_order(primitives: Vec<UiPrimitive>) -> Vec<UiPrimitive> {
+    let mut input = primitives.into_iter().peekable();
+    let mut output = Vec::with_capacity(input.size_hint().0);
+    while let Some(first) = input.next() {
+        let canvas_group = first.key.canvas_group;
+        let grid_size = first.canvas_sorting_grid_size;
+        let mut segment = vec![first];
+        while input.peek().is_some_and(|next| {
+            next.key.canvas_group == canvas_group
+                && next.canvas_sorting_grid_size.map(f32::to_bits) == grid_size.map(f32::to_bits)
+        }) {
+            segment.push(input.next().expect("peeked primitive must exist"));
+        }
+        if canvas_group.is_some() {
+            output.extend(optimize_canvas_segment(
+                segment,
+                grid_size.unwrap_or(DEFAULT_CANVAS_SORTING_GRID_SIZE),
+            ));
+        } else {
+            output.extend(segment);
+        }
+    }
+    output
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -1004,6 +1254,121 @@ mod tests {
         assert_eq!(plan.batches.len(), 3);
         assert_eq!((plan.batches[0].start, plan.batches[0].end), (0, 2));
         assert_eq!((plan.batches[2].start, plan.batches[2].end), (3, 4));
+    }
+
+    #[test]
+    fn canvas_batching_joins_non_overlapping_compatible_primitives() {
+        let mut first = primitive("atlas", None);
+        first.key.canvas_group = Some(1);
+        first.canvas_sorting_grid_size = Some(0.1);
+        first.rect = [0.0, 0.0, 10.0, 10.0];
+        let mut intermediate = primitive("other", None);
+        intermediate.key.canvas_group = Some(1);
+        intermediate.canvas_sorting_grid_size = Some(0.1);
+        intermediate.rect = [20.0, 0.0, 10.0, 10.0];
+        let mut last = primitive("atlas", None);
+        last.key.canvas_group = Some(1);
+        last.canvas_sorting_grid_size = Some(0.1);
+        last.rect = [40.0, 0.0, 10.0, 10.0];
+
+        let plan = UiBatchPlan::build(vec![first, intermediate, last]);
+        assert_eq!(plan.batches.len(), 2);
+        assert_eq!(plan.primitives[0].key.texture, "atlas");
+        assert_eq!(plan.primitives[1].key.texture, "atlas");
+        assert_eq!(plan.primitives[2].key.texture, "other");
+        assert_eq!((plan.batches[0].start, plan.batches[0].end), (0, 2));
+    }
+
+    #[test]
+    fn canvas_batching_preserves_overlapping_transparent_order() {
+        let mut first = primitive("atlas", None);
+        first.key.canvas_group = Some(1);
+        first.canvas_sorting_grid_size = Some(0.0);
+        let mut intermediate = primitive("other", None);
+        intermediate.key.canvas_group = Some(1);
+        intermediate.canvas_sorting_grid_size = Some(0.0);
+        let mut last = primitive("atlas", None);
+        last.key.canvas_group = Some(1);
+        last.canvas_sorting_grid_size = Some(0.0);
+
+        let plan = UiBatchPlan::build(vec![first, intermediate, last]);
+        assert_eq!(plan.batches.len(), 3);
+        assert_eq!(
+            plan.primitives
+                .iter()
+                .map(|value| value.key.texture.as_str())
+                .collect::<Vec<_>>(),
+            ["atlas", "other", "atlas"]
+        );
+        assert_eq!(normalized_canvas_grid_size(0.0), 0.1);
+        assert_eq!(normalized_canvas_grid_size(f32::NAN), 0.1);
+    }
+
+    #[test]
+    fn canvas_batching_moves_an_unconstrained_prefix_to_join_a_blocked_pair() {
+        let mut first = primitive("atlas", None);
+        first.key.canvas_group = Some(1);
+        first.canvas_sorting_grid_size = Some(0.1);
+        first.rect = [0.0, 0.0, 10.0, 10.0];
+        let mut intermediate = primitive("other", None);
+        intermediate.key.canvas_group = Some(1);
+        intermediate.canvas_sorting_grid_size = Some(0.1);
+        intermediate.rect = [20.0, 0.0, 10.0, 10.0];
+        let mut last = primitive("atlas", None);
+        last.key.canvas_group = Some(1);
+        last.canvas_sorting_grid_size = Some(0.1);
+        last.rect = [25.0, 0.0, 10.0, 10.0];
+
+        let plan = UiBatchPlan::build(vec![first, intermediate, last]);
+        assert_eq!(plan.batches.len(), 2);
+        assert_eq!(
+            plan.primitives
+                .iter()
+                .map(|value| value.key.texture.as_str())
+                .collect::<Vec<_>>(),
+            ["other", "atlas", "atlas"]
+        );
+    }
+
+    #[test]
+    fn canvas_batching_preserves_every_generated_overlap_edge() {
+        let mut primitives = Vec::new();
+        for index in 0..48 {
+            let mut value = primitive(if index % 3 == 0 { "atlas" } else { "other" }, None);
+            value.key.canvas_group = Some(9);
+            value.canvas_sorting_grid_size = Some(0.037);
+            value.rect = [
+                ((index * 17) % 61) as f32,
+                ((index * 29) % 47) as f32,
+                9.0 + (index % 5) as f32,
+                7.0 + (index % 7) as f32,
+            ];
+            value.color[0] = index as f32;
+            primitives.push(value);
+        }
+        let overlaps = (0..primitives.len())
+            .flat_map(|left| {
+                let primitives = &primitives;
+                (left + 1..primitives.len())
+                    .filter(move |right| {
+                        primitive_bounds(&primitives[left])
+                            .intersects(primitive_bounds(&primitives[*right]))
+                    })
+                    .map(move |right| (left, right))
+            })
+            .collect::<Vec<_>>();
+
+        let plan = UiBatchPlan::build(primitives);
+        let mut positions = vec![0usize; plan.primitives.len()];
+        for (position, value) in plan.primitives.iter().enumerate() {
+            positions[value.color[0] as usize] = position;
+        }
+        for (left, right) in overlaps {
+            assert!(
+                positions[left] < positions[right],
+                "overlap edge {left}->{right}"
+            );
+        }
     }
 
     #[test]

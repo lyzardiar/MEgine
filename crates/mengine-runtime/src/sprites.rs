@@ -274,6 +274,7 @@ fn project_line(
                     uv: [0.0, 0.0, 1.0, 1.0],
                     vertex_positions: None,
                     soft_clips: [None; 8],
+                    canvas_sorting_grid_size: None,
                     key: UiBatchKey {
                         canvas_group: None,
                         material: "line2d/default".into(),
@@ -380,6 +381,7 @@ fn project_sprite(
             ],
             vertex_positions: None,
             soft_clips: [None; 8],
+            canvas_sorting_grid_size: None,
             key: UiBatchKey {
                 canvas_group: None,
                 material: "sprite/default".into(),

@@ -821,6 +821,7 @@ pub struct RuntimeUiFrame {
 #[derive(Clone, Copy, Debug)]
 struct UiInheritedState {
     canvas_group: Option<u64>,
+    canvas_sorting_grid_size: Option<f32>,
     alpha: f32,
     interactable: bool,
     blocks_raycasts: bool,
@@ -851,6 +852,7 @@ impl Default for UiInheritedState {
     fn default() -> Self {
         Self {
             canvas_group: None,
+            canvas_sorting_grid_size: None,
             alpha: 1.0,
             interactable: true,
             blocks_raycasts: true,
@@ -1828,8 +1830,9 @@ fn walk(
     let rotation = -rect_transform.local_rotation.to_radians();
     let pivot = rect_transform.pivot;
     let mut state = inherited;
-    if world.get_component::<Canvas>(entity).is_some() {
+    if let Some(canvas) = world.get_component::<Canvas>(entity) {
         state.canvas_group = Some(entity.to_u64());
+        state.canvas_sorting_grid_size = Some(canvas.normalized_sorting_grid_size);
         let raycaster = world.get_component::<GraphicRaycaster>(entity);
         state.raycaster_enabled = raycaster.is_some_and(|value| value.enabled);
         state.ignore_reversed_graphics = raycaster
@@ -2825,6 +2828,7 @@ fn walk(
 
     for primitive in &mut primitives[graphic_start..] {
         primitive.key.canvas_group = state.canvas_group;
+        primitive.canvas_sorting_grid_size = state.canvas_sorting_grid_size;
         primitive.soft_clips = if graphic_maskable {
             inherited.soft_clips
         } else {
@@ -3613,6 +3617,7 @@ fn primitive(
         uv: [0.0, 0.0, 1.0, 1.0],
         vertex_positions: None,
         soft_clips: [None; 8],
+        canvas_sorting_grid_size: None,
         key: UiBatchKey {
             canvas_group: None,
             material: material.into(),
@@ -5549,6 +5554,58 @@ mod tests {
             Some(nested.to_u64())
         );
         assert_eq!(frame.plan.batches[2].key.canvas_group, Some(root.to_u64()));
+    }
+
+    #[test]
+    fn canvas_sorting_grid_reaches_overlap_aware_runtime_batching() {
+        let mut world = World::new();
+        let root = world.spawn_empty();
+        world.insert_component(
+            root,
+            Canvas {
+                normalized_sorting_grid_size: 0.25,
+                ..Canvas::default()
+            },
+        );
+        for (index, (x, sprite)) in [(-200.0, "atlas"), (0.0, "other"), (200.0, "atlas")]
+            .into_iter()
+            .enumerate()
+        {
+            let entity = world.spawn_empty();
+            world.insert_component(
+                entity,
+                RectTransform {
+                    anchored_position: [x, 0.0],
+                    ..RectTransform::default()
+                },
+            );
+            world.insert_component(
+                entity,
+                Image {
+                    sprite: sprite.into(),
+                    ..Image::default()
+                },
+            );
+            world.set_parent(entity, Some(root));
+            world.set_editor_state(entity, index as i32, true);
+        }
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert_eq!(frame.plan.batches.len(), 2);
+        assert!(frame
+            .plan
+            .primitives
+            .iter()
+            .all(|value| value.canvas_sorting_grid_size == Some(0.25)));
+        assert_eq!(
+            frame
+                .plan
+                .primitives
+                .iter()
+                .map(|value| value.key.texture.as_str())
+                .collect::<Vec<_>>(),
+            ["atlas", "atlas", "other"]
+        );
     }
 
     #[test]

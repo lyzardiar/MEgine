@@ -387,6 +387,7 @@ export interface Canvas {
   overrideSorting: boolean;
   sortingLayer: string;
   sortingOrder: number;
+  normalizedSortingGridSize: number;
   targetDisplay: number;
   planeDistance: number;
 }
@@ -1017,6 +1018,7 @@ export type SerializedComponentMap = {
     override_sorting: boolean;
     sorting_layer: string;
     sorting_order: number;
+    normalized_sorting_grid_size: number;
     target_display: number;
     plane_distance: number;
   };

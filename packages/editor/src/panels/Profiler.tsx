@@ -369,7 +369,7 @@ export function Profiler() {
           </div>
 
           <div className="profiler-scope-note">
-            Editor Canvas preview CPU metrics. UI batch count uses contiguous authoring-preview batches;
+            Editor Canvas preview CPU metrics. UI batch count uses overlap-aware authoring-preview batches;
             it is not native Player GPU timing, memory, or draw-call capture.
           </div>
         </div>

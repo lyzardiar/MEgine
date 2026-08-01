@@ -1500,6 +1500,7 @@ pub struct Canvas {
     pub override_sorting: bool,
     pub sorting_layer: String,
     pub sorting_order: i32,
+    pub normalized_sorting_grid_size: f32,
     pub target_display: i32,
     pub plane_distance: f32,
 }
@@ -1515,6 +1516,7 @@ impl Default for Canvas {
             override_sorting: false,
             sorting_layer: "default".into(),
             sorting_order: 0,
+            normalized_sorting_grid_size: 0.1,
             target_display: 0,
             plane_distance: 100.0,
         }

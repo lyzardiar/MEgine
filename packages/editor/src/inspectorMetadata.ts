@@ -441,6 +441,11 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       visibleWhen: { field: 'render_mode', equals: 'ScreenSpaceOverlay' },
     },
     sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
+    normalized_sorting_grid_size: {
+      label: 'Normalized Sorting Grid Size',
+      min: 0,
+      step: 0.01,
+    },
     override_sorting: {},
   },
   CanvasScaler: {

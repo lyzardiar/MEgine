@@ -92,6 +92,8 @@ export type UiDrawItem = {
   entity: number;
   /** Nearest Canvas; nested Canvases are independent Unity batching islands. */
   canvasBatchRoot: number;
+  /** Unity Canvas normalized spatial grid size used by overlap-aware batching. */
+  canvasSortingGridSize: number;
   rect: Rect;
   depth: number;
   role: 'canvas' | 'graphic';
@@ -835,6 +837,7 @@ export function layoutUiOverlay(
       forcedRect?: Rect,
       inherited = {
         canvasBatchRoot: canvas.entity,
+        canvasSortingGridSize: 0.1,
         opacity: 1,
         interactable: true,
         blocksRaycasts: true,
@@ -912,6 +915,8 @@ export function layoutUiOverlay(
         pixelPerfect?: boolean;
         override_pixel_perfect?: boolean;
         overridePixelPerfect?: boolean;
+        normalized_sorting_grid_size?: number;
+        normalizedSortingGridSize?: number;
       } | undefined;
       const raycaster = ent.components.GraphicRaycaster as {
         enabled?: boolean;
@@ -955,6 +960,13 @@ export function layoutUiOverlay(
         : inherited;
       const state = {
         canvasBatchRoot: canvasSettings ? ent.entity : inherited.canvasBatchRoot,
+        canvasSortingGridSize: canvasSettings
+          ? number(
+              canvasSettings.normalized_sorting_grid_size
+                ?? canvasSettings.normalizedSortingGridSize,
+              0.1,
+            )
+          : inherited.canvasSortingGridSize,
         opacity: groupBase.opacity * Math.max(0, Math.min(1, number(group?.alpha, 1))),
         interactable: groupBase.interactable && group?.interactable !== false,
         blocksRaycasts: groupBase.blocksRaycasts
@@ -1030,6 +1042,7 @@ export function layoutUiOverlay(
         out.push({
           entity: ent.entity,
           canvasBatchRoot: state.canvasBatchRoot,
+          canvasSortingGridSize: state.canvasSortingGridSize,
           rect: renderedRect,
           depth: depthBase + paintOrder++,
           role: 'canvas',
@@ -1050,6 +1063,7 @@ export function layoutUiOverlay(
         out.push({
           entity: ent.entity,
           canvasBatchRoot: state.canvasBatchRoot,
+          canvasSortingGridSize: state.canvasSortingGridSize,
           rect: renderedRect,
           depth: depthBase + paintOrder++,
           role: 'graphic',
@@ -1349,6 +1363,7 @@ export function layoutUiOverlay(
         out.push({
           entity: ent.entity,
           canvasBatchRoot: state.canvasBatchRoot,
+          canvasSortingGridSize: state.canvasSortingGridSize,
           rect: renderedRect,
           depth: depthBase + paintOrder++,
           role: 'graphic',
@@ -1444,6 +1459,7 @@ export function layoutUiOverlay(
       : canvasParent;
     walk(canvas, canvasRt, 0, true, undefined, {
       canvasBatchRoot: canvas.entity,
+      canvasSortingGridSize: 0.1,
       opacity: 1,
       interactable: true,
       blocksRaycasts: true,
@@ -2095,8 +2111,174 @@ function batchKey(it: UiDrawItem): string {
   return 'editor/selection';
 }
 
-/** Contiguous batching preserves painter order; non-adjacent items are never reordered. */
+const DEFAULT_CANVAS_SORTING_GRID_SIZE = 0.1;
+const MAX_CANVAS_SORTING_GRID_AXIS = 128;
+const MAX_CANVAS_SORTING_GRID_REFERENCES = 1_048_576;
+const MAX_CANVAS_OVERLAP_EDGES = 262_144;
+
+function normalizedCanvasSortingGridSize(value: number): number {
+  return Number.isFinite(value) && value > 0
+    ? Math.min(1, value)
+    : DEFAULT_CANVAS_SORTING_GRID_SIZE;
+}
+
+function uiBatchBounds(item: UiDrawItem): Rect | null {
+  const corners = item.screenCorners?.length === 4
+    ? item.screenCorners
+    : pixelCorners(item.rect, item.rotation, item.pivot);
+  let minX = Math.min(...corners.map((point) => Array.isArray(point) ? point[0] : point.x));
+  let minY = Math.min(...corners.map((point) => Array.isArray(point) ? point[1] : point.y));
+  let maxX = Math.max(...corners.map((point) => Array.isArray(point) ? point[0] : point.x));
+  let maxY = Math.max(...corners.map((point) => Array.isArray(point) ? point[1] : point.y));
+  if (item.clip) {
+    minX = Math.max(minX, item.clip.x);
+    minY = Math.max(minY, item.clip.y);
+    maxX = Math.min(maxX, item.clip.x + item.clip.w);
+    maxY = Math.min(maxY, item.clip.y + item.clip.h);
+  }
+  if (![minX, minY, maxX, maxY].every(Number.isFinite) || maxX <= minX || maxY <= minY) {
+    return null;
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+function uiBatchBoundsOverlap(left: Rect, right: Rect): boolean {
+  return left.x < right.x + right.w
+    && right.x < left.x + left.w
+    && left.y < right.y + right.h
+    && right.y < left.y + left.h;
+}
+
+/**
+ * Preserve every painter-order edge between overlapping transparent items,
+ * while preferring a ready item that continues the current material batch.
+ */
+function optimizeCanvasBatchSegment(items: UiDrawItem[], rawGridSize: number): UiDrawItem[] {
+  if (items.length < 3) return items;
+  const bounds = items.map(uiBatchBounds);
+  const visible = bounds.filter((value): value is Rect => value != null);
+  if (!visible.length) return items;
+  const area = visible.reduce((total, value) => ({
+    x: Math.min(total.x, value.x),
+    y: Math.min(total.y, value.y),
+    w: Math.max(total.x + total.w, value.x + value.w) - Math.min(total.x, value.x),
+    h: Math.max(total.y + total.h, value.y + value.h) - Math.min(total.y, value.y),
+  }));
+  const axis = Math.max(1, Math.min(
+    MAX_CANVAS_SORTING_GRID_AXIS,
+    Math.ceil(1 / normalizedCanvasSortingGridSize(rawGridSize)),
+  ));
+  const cellWidth = Math.max(Number.EPSILON, area.w / axis);
+  const cellHeight = Math.max(Number.EPSILON, area.h / axis);
+  const cellCoordinate = (point: number, origin: number, extent: number) => Math.max(
+    0,
+    Math.min(axis - 1, Math.floor((point - origin) / extent)),
+  );
+  const cellRange = (value: Rect) => ({
+    minX: cellCoordinate(value.x, area.x, cellWidth),
+    maxX: cellCoordinate(value.x + value.w, area.x, cellWidth),
+    minY: cellCoordinate(value.y, area.y, cellHeight),
+    maxY: cellCoordinate(value.y + value.h, area.y, cellHeight),
+  });
+  const cells = new Map<string, number[]>();
+  const outgoing = items.map(() => [] as number[]);
+  const indegree = items.map(() => 0);
+  let gridReferences = 0;
+  let overlapEdges = 0;
+  let exceededBudget = false;
+  bounds.forEach((current, index) => {
+    if (!current || exceededBudget) return;
+    const range = cellRange(current);
+    gridReferences += (range.maxX - range.minX + 1) * (range.maxY - range.minY + 1);
+    if (gridReferences > MAX_CANVAS_SORTING_GRID_REFERENCES) {
+      exceededBudget = true;
+      return;
+    }
+    const candidates = new Set<number>();
+    for (let x = range.minX; x <= range.maxX; x++) {
+      for (let y = range.minY; y <= range.maxY; y++) {
+        for (const candidate of cells.get(`${x}:${y}`) ?? []) candidates.add(candidate);
+      }
+    }
+    for (const earlier of candidates) {
+      if (bounds[earlier] && uiBatchBoundsOverlap(bounds[earlier], current)) {
+        overlapEdges++;
+        if (overlapEdges > MAX_CANVAS_OVERLAP_EDGES) {
+          exceededBudget = true;
+          return;
+        }
+        outgoing[earlier].push(index);
+        indegree[index]++;
+      }
+    }
+    for (let x = range.minX; x <= range.maxX; x++) {
+      for (let y = range.minY; y <= range.maxY; y++) {
+        const key = `${x}:${y}`;
+        const entries = cells.get(key) ?? [];
+        entries.push(index);
+        cells.set(key, entries);
+      }
+    }
+  });
+  if (exceededBudget) return items;
+
+  const ready = new Set<number>();
+  const readyByKey = new Map<string, Set<number>>();
+  const addReady = (index: number) => {
+    ready.add(index);
+    const key = batchKey(items[index]);
+    const entries = readyByKey.get(key) ?? new Set<number>();
+    entries.add(index);
+    readyByKey.set(key, entries);
+  };
+  indegree.forEach((degree, index) => {
+    if (degree === 0) addReady(index);
+  });
+  const order: number[] = [];
+  let previousKey: string | null = null;
+  while (ready.size) {
+    const matching = previousKey == null ? undefined : readyByKey.get(previousKey)?.values().next().value;
+    const unlocksBatch = matching == null
+      ? [...ready].find((candidate) => outgoing[candidate].some((dependent) => (
+          indegree[dependent] === 1
+          && readyByKey.has(batchKey(items[dependent]))
+        )))
+      : undefined;
+    const next = matching ?? unlocksBatch ?? ready.values().next().value;
+    if (next == null) break;
+    ready.delete(next);
+    const key = batchKey(items[next]);
+    const keyed = readyByKey.get(key);
+    keyed?.delete(next);
+    if (keyed?.size === 0) readyByKey.delete(key);
+    order.push(next);
+    previousKey = key;
+    for (const dependent of outgoing[next]) {
+      indegree[dependent]--;
+      if (indegree[dependent] === 0) addReady(dependent);
+    }
+  }
+  return order.length === items.length ? order.map((index) => items[index]) : items;
+}
+
+function optimizeUiBatchOrder(items: UiDrawItem[]): UiDrawItem[] {
+  const output: UiDrawItem[] = [];
+  for (let start = 0; start < items.length;) {
+    const root = items[start].canvasBatchRoot;
+    const gridSize = items[start].canvasSortingGridSize;
+    let end = start + 1;
+    while (end < items.length
+      && items[end].canvasBatchRoot === root
+      && Object.is(items[end].canvasSortingGridSize, gridSize)) end++;
+    output.push(...optimizeCanvasBatchSegment(items.slice(start, end), gridSize));
+    start = end;
+  }
+  return output;
+}
+
+/** Unity-style overlap-aware batching preserves painter order where pixels intersect. */
 export function buildUiBatches(items: UiDrawItem[]): UiBatch[] {
+  items = optimizeUiBatchOrder(items);
   const batches: UiBatch[] = [];
   for (let index = 0; index < items.length; index++) {
     const item = items[index];

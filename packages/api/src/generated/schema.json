@@ -530,6 +530,9 @@
       "enabled": {
         "type": "boolean"
       },
+      "normalized_sorting_grid_size": {
+        "type": "number"
+      },
       "override_pixel_perfect": {
         "type": "boolean"
       },
@@ -567,6 +570,7 @@
       "override_sorting",
       "sorting_layer",
       "sorting_order",
+      "normalized_sorting_grid_size",
       "target_display",
       "plane_distance"
     ],

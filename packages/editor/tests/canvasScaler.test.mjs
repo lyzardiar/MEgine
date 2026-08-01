@@ -39,6 +39,7 @@ const UNITY_CANVAS_DEFAULTS = {
   override_sorting: false,
   sorting_layer: 'default',
   sorting_order: 0,
+  normalized_sorting_grid_size: 0.1,
   target_display: 0,
   plane_distance: 100,
 };
@@ -63,6 +64,11 @@ test('Canvas catalog exposes all render modes and camera-aware defaults', () => 
     equals: ['ScreenSpaceOverlay', 'ScreenSpaceCamera'],
   });
   assert.equal(getBuiltinInspectorField('Canvas', 'override_sorting')?.visibleWhen, undefined);
+  assert.deepEqual(getBuiltinInspectorField('Canvas', 'normalized_sorting_grid_size'), {
+    label: 'Normalized Sorting Grid Size',
+    min: 0,
+    step: 0.01,
+  });
   assert.equal(getBuiltinInspectorField('Canvas', 'target_display')?.kind, 'display');
   assert.deepEqual(getBuiltinInspectorField('Canvas', 'target_display')?.visibleWhen, {
     field: 'render_mode',
