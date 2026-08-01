@@ -102,6 +102,8 @@ export const SpineSkeleton = defineBuiltinComponent('SpineSkeleton');
 export type SpineSkeleton = BuiltinComponents['SpineSkeleton'];
 export const Canvas = defineBuiltinComponent('Canvas');
 export type Canvas = BuiltinComponents['Canvas'];
+export const CanvasRenderer = defineBuiltinComponent('CanvasRenderer');
+export type CanvasRenderer = BuiltinComponents['CanvasRenderer'];
 export const GraphicRaycaster = defineBuiltinComponent('GraphicRaycaster');
 export type GraphicRaycaster = BuiltinComponents['GraphicRaycaster'];
 export const CanvasScaler = defineBuiltinComponent('CanvasScaler');
@@ -196,6 +198,7 @@ export const BUILTIN_COMPONENT_TYPES = {
   ParticleEmitter3D,
   SpineSkeleton,
   Canvas,
+  CanvasRenderer,
   GraphicRaycaster,
   CanvasScaler,
   RectTransform,

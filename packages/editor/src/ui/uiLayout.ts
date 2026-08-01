@@ -106,6 +106,8 @@ export type UiDrawItem = {
   blocksRaycasts?: boolean;
   /** False when authored Graphics exist but every one is disabled or opted out of raycasts. */
   graphicRaycastTarget?: boolean;
+  /** Unity CanvasRenderer transparent-vertex geometry culling. */
+  cullTransparentMesh?: boolean;
   /** Unity GraphicRaycaster back-face filtering for projected World Space quads. */
   ignoreReversedGraphics?: boolean;
   /** Unity GraphicRaycaster physics dimensions checked in front of this graphic. */
@@ -889,6 +891,7 @@ export function layoutUiOverlay(
 
       const authoredImage = ent.components.Image as Record<string, unknown> | undefined;
       const authoredRawImage = ent.components.RawImage as Record<string, unknown> | undefined;
+      const canvasRenderer = ent.components.CanvasRenderer as Record<string, unknown> | undefined;
       const shadow = ent.components.Shadow as Record<string, unknown> | undefined;
       const outline = ent.components.Outline as Record<string, unknown> | undefined;
       const btn = ent.components.Button as Record<string, unknown> | undefined;
@@ -1057,6 +1060,9 @@ export function layoutUiOverlay(
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
           graphicRaycastTarget: receivesGraphicRaycast,
+          cullTransparentMesh:
+            canvasRenderer?.cull_transparent_mesh !== false
+            && canvasRenderer?.cullTransparentMesh !== false,
           ignoreReversedGraphics: state.ignoreReversedGraphics,
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
@@ -2264,6 +2270,192 @@ function hideMaskGraphic(item: UiDrawItem): UiDrawItem {
   };
 }
 
+const TRANSPARENT_MESH_ALPHA_EPSILON = 1 / 255;
+
+/** Match CanvasRenderer by testing the alpha of every geometry source on one UI renderer. */
+export function uiTransparentMeshCulled(
+  item: UiDrawItem,
+  imageAlpha = item.image?.color[3] ?? item.rawImage?.color[3],
+): boolean {
+  if (item.role !== 'graphic' || item.cullTransparentMesh === false) return false;
+  const opacity = Number.isFinite(item.opacity)
+    ? Math.max(0, Math.min(1, item.opacity))
+    : 1;
+  if (opacity <= TRANSPARENT_MESH_ALPHA_EPSILON) return true;
+
+  const alphas: number[] = [];
+  if (item.image || item.rawImage) alphas.push(imageAlpha ?? 1);
+  if (item.text?.text) {
+    alphas.push(item.text.color[3]);
+    if (item.text.outlineWidth > 0) alphas.push(item.text.outlineColor[3]);
+  }
+  if (item.panel) {
+    alphas.push(item.panel.color[3]);
+    if (item.panel.borderWidth > 0) alphas.push(item.panel.borderColor[3]);
+  }
+  if (item.button) {
+    if (!item.image && !item.rawImage) alphas.push(1);
+    if (item.button.label) alphas.push(item.button.textColor[3]);
+  }
+  if (item.toggle) alphas.push(0.95, item.toggle.color[3], item.toggle.textColor[3]);
+  if (item.slider) {
+    alphas.push(
+      item.slider.backgroundColor[3],
+      item.slider.fillColor[3],
+      item.slider.handleColor[3],
+    );
+  }
+  if (item.scrollbar) {
+    alphas.push(item.scrollbar.backgroundColor[3], item.scrollbar.handleColor[3]);
+  }
+  if (item.progress) {
+    alphas.push(item.progress.backgroundColor[3], item.progress.fillColor[3]);
+    if (item.progress.showLabel) alphas.push(item.progress.textColor[3]);
+  }
+  if (item.input) {
+    alphas.push(
+      item.input.backgroundColor[3],
+      item.input.textColor[3],
+      item.input.placeholderColor[3],
+    );
+  }
+  if (item.dropdown) {
+    alphas.push(
+      item.dropdown.backgroundColor[3],
+      item.dropdown.itemColor[3],
+      item.dropdown.selectedColor[3],
+      item.dropdown.textColor[3],
+    );
+  }
+  if (item.list) {
+    alphas.push(
+      item.list.backgroundColor[3],
+      item.list.itemColor[3],
+      item.list.selectedColor[3],
+      item.list.textColor[3],
+    );
+  }
+  if (item.scroll) alphas.push(item.scroll.viewportColor[3], item.scroll.showScrollbar ? 0.12 : 0);
+  if (item.tabs) {
+    alphas.push(
+      item.tabs.backgroundColor[3],
+      item.tabs.tabColor[3],
+      item.tabs.selectedColor[3],
+      item.tabs.textColor[3],
+    );
+  }
+
+  const sourceGeometry = alphas.length > 0;
+  const sourceVisible = alphas.some((alpha) => (
+    Number.isFinite(alpha)
+    && Math.abs(alpha * opacity) > TRANSPARENT_MESH_ALPHA_EPSILON
+  ));
+  if (sourceVisible) return false;
+  if (sourceGeometry) {
+    for (const effect of [item.shadow, item.outline]) {
+      if (
+        effect
+        && !effect.useGraphicAlpha
+        && Number.isFinite(effect.color[3])
+        && Math.abs(effect.color[3] * opacity) > TRANSPARENT_MESH_ALPHA_EPSILON
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function alphaIndependentEffectSource(item: UiDrawItem): UiDrawItem {
+  const source = structuredClone(item);
+  const opaque = (color: [number, number, number, number]) => (
+    [color[0], color[1], color[2], 1] as [number, number, number, number]
+  );
+  source.opacity = 1;
+  source.cullTransparentMesh = false;
+  source.shadow = undefined;
+  source.outline = undefined;
+  source.mask = undefined;
+  source.maskStack = [];
+  source.softClips = [];
+  source.selected = false;
+  if (source.image) source.image.color = opaque(source.image.color);
+  if (source.rawImage) source.rawImage.color = opaque(source.rawImage.color);
+  if (source.text) {
+    source.text.color = opaque(source.text.color);
+    if (source.text.outlineColor[3] > 0) {
+      source.text.outlineColor = opaque(source.text.outlineColor);
+    }
+  }
+  if (source.panel) {
+    source.panel.color = opaque(source.panel.color);
+    source.panel.borderColor = opaque(source.panel.borderColor);
+  }
+  if (source.button) {
+    source.button.interactable = true;
+    source.button.textColor = opaque(source.button.textColor);
+    source.button.colorBlock = {
+      normal: opaque(source.button.colorBlock.normal),
+      highlighted: opaque(source.button.colorBlock.highlighted),
+      pressed: opaque(source.button.colorBlock.pressed),
+      selected: opaque(source.button.colorBlock.selected),
+      disabled: opaque(source.button.colorBlock.disabled),
+      multiplier: 1,
+      fadeDuration: 0,
+    };
+  }
+  if (source.toggle) {
+    source.toggle.interactable = true;
+    source.toggle.color = opaque(source.toggle.color);
+    source.toggle.textColor = opaque(source.toggle.textColor);
+  }
+  if (source.slider) {
+    source.slider.interactable = true;
+    source.slider.backgroundColor = opaque(source.slider.backgroundColor);
+    source.slider.fillColor = opaque(source.slider.fillColor);
+    source.slider.handleColor = opaque(source.slider.handleColor);
+  }
+  if (source.scrollbar) {
+    source.scrollbar.interactable = true;
+    source.scrollbar.backgroundColor = opaque(source.scrollbar.backgroundColor);
+    source.scrollbar.handleColor = opaque(source.scrollbar.handleColor);
+  }
+  if (source.progress) {
+    source.progress.backgroundColor = opaque(source.progress.backgroundColor);
+    source.progress.fillColor = opaque(source.progress.fillColor);
+    source.progress.textColor = opaque(source.progress.textColor);
+  }
+  if (source.input) {
+    source.input.interactable = true;
+    source.input.backgroundColor = opaque(source.input.backgroundColor);
+    source.input.textColor = opaque(source.input.textColor);
+    source.input.placeholderColor = opaque(source.input.placeholderColor);
+  }
+  if (source.dropdown) {
+    source.dropdown.interactable = true;
+    source.dropdown.backgroundColor = opaque(source.dropdown.backgroundColor);
+    source.dropdown.itemColor = opaque(source.dropdown.itemColor);
+    source.dropdown.selectedColor = opaque(source.dropdown.selectedColor);
+    source.dropdown.textColor = opaque(source.dropdown.textColor);
+  }
+  if (source.list) {
+    source.list.interactable = true;
+    source.list.backgroundColor = opaque(source.list.backgroundColor);
+    source.list.itemColor = opaque(source.list.itemColor);
+    source.list.selectedColor = opaque(source.list.selectedColor);
+    source.list.textColor = opaque(source.list.textColor);
+  }
+  if (source.scroll) source.scroll.viewportColor = opaque(source.scroll.viewportColor);
+  if (source.tabs) {
+    source.tabs.interactable = true;
+    source.tabs.backgroundColor = opaque(source.tabs.backgroundColor);
+    source.tabs.tabColor = opaque(source.tabs.tabColor);
+    source.tabs.selectedColor = opaque(source.tabs.selectedColor);
+    source.tabs.textColor = opaque(source.tabs.textColor);
+  }
+  return source;
+}
+
 const buttonTintStates = new WeakMap<HTMLCanvasElement, Map<number, ButtonTintTween>>();
 
 export function drawUiItems(
@@ -2290,12 +2482,18 @@ export function drawUiItems(
   const now = (globalThis.performance?.now() ?? Date.now()) / 1000;
   let contentLayer: HTMLCanvasElement | null = null;
   let maskLayer: HTMLCanvasElement | null = null;
-  const layer = (kind: 'content' | 'mask') => {
-    let canvas = kind === 'content' ? contentLayer : maskLayer;
+  let effectLayer: HTMLCanvasElement | null = null;
+  const layer = (kind: 'content' | 'mask' | 'effect') => {
+    let canvas = kind === 'content'
+      ? contentLayer
+      : kind === 'mask'
+        ? maskLayer
+        : effectLayer;
     if (!canvas) {
       canvas = ctx.canvas.ownerDocument.createElement('canvas');
       if (kind === 'content') contentLayer = canvas;
-      else maskLayer = canvas;
+      else if (kind === 'mask') maskLayer = canvas;
+      else effectLayer = canvas;
     }
     if (canvas.width !== ctx.canvas.width) canvas.width = ctx.canvas.width;
     if (canvas.height !== ctx.canvas.height) canvas.height = ctx.canvas.height;
@@ -2510,6 +2708,71 @@ export function drawUiItems(
       ctx.restore();
     };
 
+    const paintEditorOutline = () => {
+      if (opts?.focusId === it.entity) {
+        ctx.filter = 'none';
+        ctx.setLineDash([3, 2]);
+        ctx.strokeStyle = 'rgba(112, 210, 255, 0.98)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+        ctx.setLineDash([]);
+      }
+
+      if (it.selected) {
+        ctx.filter = 'none';
+        ctx.strokeStyle = 'rgba(100, 180, 255, 0.95)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+      }
+    };
+    const drawEditorOutline = () => withRot(paintEditorOutline);
+
+    const paintAlphaIndependentEffect = (
+      effect: UiGraphicEffect,
+      offset: [number, number],
+    ) => {
+      const effectContext = layer('effect');
+      if (!effectContext || !effectLayer) return;
+      drawUiItems(
+        effectContext,
+        [alphaIndependentEffectSource(it)],
+        null,
+        null,
+      );
+      effectContext.save();
+      effectContext.setTransform(1, 0, 0, 1, 0, 0);
+      effectContext.globalAlpha = 1;
+      effectContext.globalCompositeOperation = 'source-in';
+      effectContext.fillStyle = cssColor(effect.color);
+      effectContext.fillRect(0, 0, effectLayer.width, effectLayer.height);
+      effectContext.restore();
+
+      const cos = Math.cos(rotRad);
+      const sin = Math.sin(rotRad);
+      const screenOffset = [
+        offset[0] * cos - offset[1] * sin,
+        offset[0] * sin + offset[1] * cos,
+      ];
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(effectLayer, screenOffset[0], screenOffset[1]);
+      ctx.restore();
+    };
+
+    const paintAlphaIndependentEffects = () => {
+      if (it.shadow && !it.shadow.useGraphicAlpha && it.shadow.color[3] > 0) {
+        paintAlphaIndependentEffect(it.shadow, it.shadow.distance);
+      }
+      if (it.outline && !it.outline.useGraphicAlpha && it.outline.color[3] > 0) {
+        const dx = Math.abs(it.outline.distance[0]);
+        const dy = Math.abs(it.outline.distance[1]);
+        for (const offset of [[dx, dy], [dx, -dy], [-dx, dy], [-dx, -dy]] as const) {
+          paintAlphaIndependentEffect(it.outline, [...offset]);
+        }
+      }
+    };
+
     if (!it.image && !it.rawImage && !it.button && !it.text && !it.toggle && !it.slider && !it.scrollbar && !it.panel && !it.progress && !it.input && !it.dropdown && !it.list && !it.scroll && !it.tabs) {
       if (it.selected) {
         withRot(() => {
@@ -2542,6 +2805,14 @@ export function drawUiItems(
       buttonTints.set(it.entity, tween);
       [r, g, b, a] = multiplyButtonTint([r, g, b, a], tween.current);
     }
+
+    if (uiTransparentMeshCulled(it, a)) {
+      drawEditorOutline();
+      ctx.restore();
+      continue;
+    }
+
+    paintAlphaIndependentEffects();
 
     withRot(() => {
       ctx.filter = graphicEffectFilter(it.shadow, it.outline);
@@ -2885,21 +3156,7 @@ export function drawUiItems(
         }
       }
 
-      if (opts?.focusId === it.entity) {
-        ctx.filter = 'none';
-        ctx.setLineDash([3, 2]);
-        ctx.strokeStyle = 'rgba(112, 210, 255, 0.98)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
-        ctx.setLineDash([]);
-      }
-
-      if (it.selected) {
-        ctx.filter = 'none';
-        ctx.strokeStyle = 'rgba(100, 180, 255, 0.95)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
-      }
+      paintEditorOutline();
     });
     ctx.restore();
   }

@@ -595,6 +595,17 @@
     ],
     "type": "object"
   },
+  "CanvasRenderer": {
+    "properties": {
+      "cull_transparent_mesh": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "cull_transparent_mesh"
+    ],
+    "type": "object"
+  },
   "CanvasScaler": {
     "properties": {
       "default_sprite_dpi": {

@@ -20,10 +20,10 @@ export function graphicEffectFilter(
   outline?: UiGraphicEffect,
 ): string {
   const filters: string[] = [];
-  if (shadow && shadow.color[3] > 0) {
+  if (shadow?.useGraphicAlpha && shadow.color[3] > 0) {
     filters.push(dropShadow(shadow.distance, shadow.color));
   }
-  if (outline && outline.color[3] > 0) {
+  if (outline?.useGraphicAlpha && outline.color[3] > 0) {
     const dx = Math.abs(outline.distance[0]);
     const dy = Math.abs(outline.distance[1]);
     filters.push(dropShadow([dx, dy], outline.color));

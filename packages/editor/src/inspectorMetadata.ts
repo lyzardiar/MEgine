@@ -532,6 +532,9 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
     blocking_mask: { label: 'Blocking Mask', kind: 'layer-mask', step: 1 },
   },
+  CanvasRenderer: {
+    cull_transparent_mesh: { label: 'Cull Transparent Mesh' },
+  },
   AspectRatioFitter: {
     aspect_mode: {
       kind: 'enum',

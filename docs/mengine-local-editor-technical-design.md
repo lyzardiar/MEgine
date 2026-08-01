@@ -2062,3 +2062,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - 所有会绘制或控制矩形布局的 UI Add Component 项现在显式依赖 `RectTransform`。用户或 Agent 向普通实体添加 Image、Text、Button、布局器、Mask/RectMask2D 或高级控件时，Store 会在同一 undo transaction 自动补齐可编辑矩形；删除 RectTransform 也会被依赖保护阻止，不再让 Editor/Runtime 各自使用不可见的隐式默认矩形。
 - Agent component schema 同步公布上述依赖；Canvas `sorting_layer` 也标记为项目动态枚举。回归同时校验 UI 依赖、Agent schema 依赖，以及所有 Inspector metadata 都只能引用真实目录字段。
+
+## 195. 2026-08-01 Unity CanvasRenderer Transparent Mesh Culling
+
+- 新增独立 `CanvasRenderer` 组件及 `cull_transparent_mesh`，默认值为 `true`。Image、RawImage、Text 与 Panel 的 Add Component 依赖链会自动补齐 CanvasRenderer，新建标准 Graphic 也会显式序列化它；旧场景缺少组件时仍按默认开启处理，不要求破坏性迁移。IDL、生成的 Rust/TypeScript/JSON Schema、Behaviour token、组件目录、Inspector、Add Component 分类与 Agent component schema 使用同一契约。
+- Editor Canvas 与 Runtime 都在 Graphic Effect 完成后检查同一渲染器发出的全部顶点 Alpha；只有所有 Alpha 都接近零时才移除视觉几何。`use_graphic_alpha=false` 且自身 Alpha 可见的 Shadow/Outline 会保留网格，显式关闭 Cull Transparent Mesh 也会保留零 Alpha 几何。裁剪不移除 GraphicRaycaster 控件区域、选中/聚焦轮廓或关联 Mask 身份，因此透明点击阻挡仍可命中，透明 Mask 仍保留未写入的 Stencil 深度语义。
+- 回归覆盖目录/Agent 依赖、标准工厂序列化、旧场景隐式默认、显式关闭、接近零阈值、Alpha 独立 Graphic Effect、视觉裁剪后射线保留，以及透明 Mask 的空 Stencil 预留。该批只实现当前可序列化且可验证的 CanvasRenderer 能力，不伪造原生材质槽、Pop Material 或外部自定义 Mesh API。

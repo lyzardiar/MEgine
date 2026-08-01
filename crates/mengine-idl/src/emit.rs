@@ -76,10 +76,16 @@ fn emit_rust_component(def: &Def) -> String {
         if def.fields.len() == 1 {
             let field = &def.fields[0];
             let default = default_expr(&field.ty, field.default.as_deref(), field.optional);
-            out.push_str(&format!(
-                "    fn default() -> Self {{\n        Self {{ {}: {} }}\n    }}\n}}\n\n",
-                field.name, default
-            ));
+            let member = format!("{}: {}", field.name, default);
+            if member.len() <= 18 {
+                out.push_str(&format!(
+                    "    fn default() -> Self {{\n        Self {{ {member} }}\n    }}\n}}\n\n"
+                ));
+            } else {
+                out.push_str(&format!(
+                    "    fn default() -> Self {{\n        Self {{\n            {member},\n        }}\n    }}\n}}\n\n"
+                ));
+            }
         } else {
             out.push_str("    fn default() -> Self {\n        Self {\n");
             for f in &def.fields {
@@ -454,5 +460,13 @@ mod tests {
         assert!(rust.contains("fn type_name() -> &'static str {\n        \"Example\"\n    }"));
         assert!(rust.contains("fn as_any(&self) -> &dyn std::any::Any {\n        self\n    }"));
         assert!(!rust.contains("fn as_any(&self) -> &dyn std::any::Any { self }"));
+    }
+
+    #[test]
+    fn emits_long_single_field_defaults_in_rustfmt_stable_form() {
+        let defs = parse_idl("component CanvasRenderer {\n  cull_transparent_mesh: bool = true\n}")
+            .unwrap();
+        let rust = emit_rust(&defs);
+        assert!(rust.contains("Self {\n            cull_transparent_mesh: true,\n        }"));
     }
 }

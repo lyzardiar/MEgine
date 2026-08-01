@@ -17,6 +17,12 @@ component Canvas {
   plane_distance: float  = 100
 }
 
+/// Unity CanvasRenderer state owned by a UI Graphic entity.
+component CanvasRenderer {
+  /// Ignore emitted geometry when every vertex color alpha is close to zero.
+  cull_transparent_mesh: bool = true
+}
+
 /// Unity-style Canvas raycaster. Removing or disabling it keeps rendering active but disables UI hits.
 component GraphicRaycaster {
   enabled:                  bool = true

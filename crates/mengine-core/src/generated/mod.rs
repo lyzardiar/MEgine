@@ -1538,6 +1538,35 @@ impl Component for Canvas {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct CanvasRenderer {
+    pub cull_transparent_mesh: bool,
+}
+
+impl Default for CanvasRenderer {
+    fn default() -> Self {
+        Self {
+            cull_transparent_mesh: true,
+        }
+    }
+}
+
+impl Component for CanvasRenderer {
+    fn type_name() -> &'static str {
+        "CanvasRenderer"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct GraphicRaycaster {
     pub enabled: bool,
     pub ignore_reversed_graphics: bool,
@@ -2692,6 +2721,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Canvas" => serde_json::from_value::<Canvas>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "CanvasRenderer" => serde_json::from_value::<CanvasRenderer>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "GraphicRaycaster" => serde_json::from_value::<GraphicRaycaster>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "CanvasScaler" => serde_json::from_value::<CanvasScaler>(value)
@@ -2787,6 +2818,7 @@ pub mod meta {
         "ParticleEmitter3D",
         "SpineSkeleton",
         "Canvas",
+        "CanvasRenderer",
         "GraphicRaycaster",
         "CanvasScaler",
         "RectTransform",

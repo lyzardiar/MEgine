@@ -96,6 +96,13 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
     getBuiltinInspectorField('GraphicRaycaster', 'blocking_mask')?.kind,
     'layer-mask',
   );
+  assert.deepEqual(createComponentDefaults('CanvasRenderer'), {
+    cull_transparent_mesh: true,
+  });
+  assert.equal(
+    getBuiltinInspectorField('CanvasRenderer', 'cull_transparent_mesh')?.label,
+    'Cull Transparent Mesh',
+  );
 });
 
 test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', () => {
@@ -173,6 +180,15 @@ test('all authored Graphic components expose Unity raycast padding defaults', ()
       visibleWhen: { field: 'raycast_target', equals: true },
     });
   }
+});
+
+test('standard Graphic factories serialize a CanvasRenderer', () => {
+  assert.deepEqual(createUiImageComponents().CanvasRenderer, {
+    cull_transparent_mesh: true,
+  });
+  assert.deepEqual(createUiTextComponents().CanvasRenderer, {
+    cull_transparent_mesh: true,
+  });
 });
 
 test('CanvasScaler Inspector exposes all Unity scale and match modes', () => {

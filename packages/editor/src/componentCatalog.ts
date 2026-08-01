@@ -280,6 +280,13 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'CanvasRenderer',
+    label: 'Canvas Renderer',
+    description: 'Renders Graphic geometry and optionally culls fully transparent meshes',
+    requires: ['RectTransform'],
+    create: () => ({ cull_transparent_mesh: true }),
+  },
+  {
     type: 'GraphicRaycaster',
     label: 'Graphic Raycaster',
     description: 'Controls whether the attached Canvas participates in UI hit testing',
@@ -315,7 +322,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Image',
     label: 'Image',
     description: 'UI 图形',
-    requires: ['RectTransform'],
+    requires: ['RectTransform', 'CanvasRenderer'],
     create: () => ({
       enabled: true,
       maskable: true,
@@ -493,7 +500,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'RawImage',
     label: 'Raw Image',
     description: 'Texture view with an explicit normalized UV rectangle',
-    requires: ['RectTransform'],
+    requires: ['RectTransform', 'CanvasRenderer'],
     create: () => ({
       enabled: true,
       maskable: true,
@@ -546,7 +553,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Text',
     label: 'Text',
     description: 'UI 文本标签',
-    requires: ['RectTransform'],
+    requires: ['RectTransform', 'CanvasRenderer'],
     create: () => ({
       enabled: true,
       maskable: true,
@@ -611,7 +618,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Panel',
     label: 'Panel',
     description: 'Colored UI container with an optional border',
-    requires: ['RectTransform'],
+    requires: ['RectTransform', 'CanvasRenderer'],
     create: () => createUiPanelComponents().Panel,
   },
   {
@@ -781,6 +788,7 @@ export function createUiCanvasComponents(): Record<string, unknown> {
 export function createUiImageComponents(color: [number, number, number, number] = [1, 1, 1, 1]) {
   return {
     RectTransform: defaultRectTransform({ size_delta: [160, 40] }),
+    CanvasRenderer: { cull_transparent_mesh: true },
     Image: {
       enabled: true,
       maskable: true,
@@ -806,6 +814,7 @@ export function createUiImageComponents(color: [number, number, number, number] 
 export function createUiButtonComponents() {
   return {
     RectTransform: defaultRectTransform({ size_delta: [160, 40] }),
+    CanvasRenderer: { cull_transparent_mesh: true },
     Image: {
       enabled: true,
       maskable: true,
@@ -850,6 +859,7 @@ export function createUiButtonComponents() {
 export function createUiRawImageComponents(color: [number, number, number, number] = [1, 1, 1, 1]) {
   return {
     RectTransform: defaultRectTransform({ size_delta: [160, 100] }),
+    CanvasRenderer: { cull_transparent_mesh: true },
     RawImage: {
       enabled: true,
       maskable: true,
@@ -943,6 +953,7 @@ export function createSpineSkeleton(): Record<string, unknown> {
 export function createUiTextComponents(text = 'Text') {
   return {
     RectTransform: defaultRectTransform({ size_delta: [200, 36] }),
+    CanvasRenderer: { cull_transparent_mesh: true },
     Text: {
       enabled: true,
       maskable: true,
@@ -1013,6 +1024,7 @@ const callback = () => ({ target: null, component: '', method: '' });
 export function createUiPanelComponents() {
   return {
     RectTransform: defaultRectTransform({ size_delta: [320, 240] }),
+    CanvasRenderer: { cull_transparent_mesh: true },
     Panel: {
       enabled: true,
       maskable: true,
@@ -1028,6 +1040,7 @@ export function createUiPanelComponents() {
 export function createUiLayoutGroupComponents() {
   return {
     RectTransform: defaultRectTransform({ size_delta: [360, 200] }),
+    CanvasRenderer: { cull_transparent_mesh: true },
     Panel: {
       enabled: true,
       maskable: true,

@@ -51,6 +51,7 @@ test('Inspector metadata never targets a missing catalog field', () => {
 
 test('rendered and layout UI components require an authored RectTransform', () => {
   const rectTransformComponents = [
+    'CanvasRenderer',
     'AspectRatioFitter',
     'ContentSizeFitter',
     'Image',
@@ -81,6 +82,31 @@ test('rendered and layout UI components require an authored RectTransform', () =
       `${type} Agent schema must expose the RectTransform dependency`,
     );
   }
+});
+
+test('authored Graphic components require a CanvasRenderer visible to Agents', () => {
+  for (const type of ['Image', 'RawImage', 'Text', 'Panel']) {
+    assert.ok(
+      componentRequirements(type).includes('CanvasRenderer'),
+      `${type} must retain its CanvasRenderer`,
+    );
+    assert.ok(
+      buildAgentComponentSchema(type)?.requires.includes('CanvasRenderer'),
+      `${type} Agent schema must expose its CanvasRenderer dependency`,
+    );
+  }
+  const renderer = buildAgentComponentSchema('CanvasRenderer');
+  assert.deepEqual(renderer?.fields.map(({ name, default: value, editable, hidden }) => ({
+    name,
+    default: value,
+    editable,
+    hidden,
+  })), [{
+    name: 'cull_transparent_mesh',
+    default: true,
+    editable: true,
+    hidden: false,
+  }]);
 });
 
 test('AudioSource playback time is authorable through Inspector and Agent schema', () => {

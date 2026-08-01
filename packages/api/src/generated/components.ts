@@ -391,6 +391,10 @@ export interface Canvas {
   planeDistance: number;
 }
 
+export interface CanvasRenderer {
+  cullTransparentMesh: boolean;
+}
+
 export interface GraphicRaycaster {
   enabled: boolean;
   ignoreReversedGraphics: boolean;
@@ -1016,6 +1020,9 @@ export type SerializedComponentMap = {
     target_display: number;
     plane_distance: number;
   };
+  CanvasRenderer: {
+    cull_transparent_mesh: boolean;
+  };
   GraphicRaycaster: {
     enabled: boolean;
     ignore_reversed_graphics: boolean;
@@ -1299,6 +1306,7 @@ export type ComponentName =
   | 'ParticleEmitter3D'
   | 'SpineSkeleton'
   | 'Canvas'
+  | 'CanvasRenderer'
   | 'GraphicRaycaster'
   | 'CanvasScaler'
   | 'RectTransform'
@@ -1364,6 +1372,7 @@ export const COMPONENT_NAMES = [
   'ParticleEmitter3D',
   'SpineSkeleton',
   'Canvas',
+  'CanvasRenderer',
   'GraphicRaycaster',
   'CanvasScaler',
   'RectTransform',

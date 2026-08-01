@@ -2,10 +2,10 @@ use crate::sorting::{SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use crate::ui_raycast::{ray_plane, BlockingObjects, WorldRay};
 use glam::{Mat4, Quat, Vec3};
 use mengine_core::generated::{
-    AspectRatioFitter, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
-    ContentSizeFitter, Dropdown, GraphicRaycaster, Image, InputField, LayoutGroup, ListView, Mask,
-    Outline, Panel, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar,
-    Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
+    AspectRatioFitter, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasRenderer,
+    CanvasScaler, ContentSizeFitter, Dropdown, GraphicRaycaster, Image, InputField, LayoutGroup,
+    ListView, Mask, Outline, Panel, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView,
+    Scrollbar, Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, TransformHierarchy, World};
@@ -16,6 +16,8 @@ use mengine_rhi::{
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
+const TRANSPARENT_MESH_ALPHA_EPSILON: f32 = 1.0 / 255.0;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct UiRect {
@@ -2799,6 +2801,20 @@ fn walk(
             scale,
             state.alpha,
         );
+    }
+    let cull_transparent_mesh = world
+        .get_component::<CanvasRenderer>(entity)
+        .is_none_or(|renderer| renderer.cull_transparent_mesh);
+    if cull_transparent_mesh
+        && graphic_start < primitives.len()
+        && primitives[graphic_start..].iter().all(|primitive| {
+            primitive.color[3].is_finite()
+                && primitive.color[3].abs() <= TRANSPARENT_MESH_ALPHA_EPSILON
+        })
+    {
+        // CanvasRenderer culling is visual-only: keep controls and authored Mask
+        // identity so transparent blockers and empty stencil sources retain meaning.
+        primitives.truncate(graphic_start);
     }
     if state.pixel_perfect {
         snap_canvas_output_to_pixels(
@@ -6047,6 +6063,111 @@ mod tests {
             primitive.key.stencil,
             UiStencilMode::Test { reference: 1 }
         ));
+    }
+
+    #[test]
+    fn canvas_renderer_culls_transparent_geometry_but_preserves_raycast_controls() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(
+            image,
+            Image {
+                color: [1.0, 1.0, 1.0, 0.0],
+                ..Image::default()
+            },
+        );
+        world.set_parent(image, Some(canvas));
+
+        let culled = collect_ui_frame(&world, 800, 600);
+        assert!(culled.plan.primitives.is_empty());
+        assert!(culled
+            .controls
+            .iter()
+            .any(|control| control.entity == image));
+
+        world.insert_component(
+            image,
+            CanvasRenderer {
+                cull_transparent_mesh: false,
+            },
+        );
+        let retained = collect_ui_frame(&world, 800, 600);
+        assert_eq!(retained.plan.primitives.len(), 1);
+        assert_eq!(retained.plan.primitives[0].color[3], 0.0);
+    }
+
+    #[test]
+    fn alpha_independent_graphic_effect_prevents_canvas_renderer_culling() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(
+            image,
+            Image {
+                color: [1.0, 1.0, 1.0, 0.0],
+                ..Image::default()
+            },
+        );
+        world.insert_component(
+            image,
+            Shadow {
+                effect_color: [0.0, 0.0, 0.0, 0.5],
+                use_graphic_alpha: false,
+                ..Shadow::default()
+            },
+        );
+        world.set_parent(image, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert_eq!(frame.plan.primitives.len(), 2);
+        assert!(frame
+            .plan
+            .primitives
+            .iter()
+            .any(|primitive| primitive.color[3] == 0.5));
+    }
+
+    #[test]
+    fn transparent_culled_mask_keeps_an_empty_reserved_stencil_depth() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+
+        let mask = world.spawn_empty();
+        world.insert_component(mask, RectTransform::default());
+        world.insert_component(
+            mask,
+            Image {
+                color: [1.0, 1.0, 1.0, 0.0],
+                ..Image::default()
+            },
+        );
+        world.insert_component(mask, Mask::default());
+        world.set_parent(mask, Some(canvas));
+
+        let child = world.spawn_empty();
+        world.insert_component(child, RectTransform::default());
+        world.insert_component(child, Image::default());
+        world.set_parent(child, Some(mask));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert_eq!(frame.plan.primitives.len(), 1);
+        assert!(matches!(
+            frame.plan.primitives[0].key.stencil,
+            UiStencilMode::Test { reference: 1 }
+        ));
+        assert!(!frame.plan.primitives.iter().any(|primitive| matches!(
+            primitive.key.stencil,
+            UiStencilMode::Push { .. } | UiStencilMode::Pop { .. }
+        )));
     }
 
     #[test]
