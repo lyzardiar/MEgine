@@ -2052,3 +2052,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - Behaviour Runner 每帧按实体与组件 identity 对 Play clone 做增量 reconcile：运行中新增脚本会创建实例并执行 `onEnable`，删除脚本或实体会恰好执行一次 `onDisable` 并移除实例，删除的组件不会被旧实例下一帧写回。
 - `activeInHierarchy`（包括父链）现在驱动 `onEnable/onDisable` 边沿，inactive mount 不会误启用；`onEnable` 修改的序列化字段会在同帧 `onUpdate` 前保留，`onDisable` 在组件仍存在时也会同步最后状态。停止 Play 时使用最后的真实实体上下文，不再向脚本提供全部为空的伪 context。
+
+## 193. 2026-08-01 Component Catalog IDL Field Coverage
+
+- `AudioSource.time` 已进入 Add Component 默认值，因此 Inspector 与 Agent component schema 会公开可编辑的播放位置（默认 0、最小 0、步进 0.01），与 IDL/Runtime 的 seek 状态一致。
+- 新回归逐个实例化所有 IDL-backed 组件目录项，并把默认值 key 与生成的 JSON Schema properties 做精确集合比较；以后 IDL 新增、删除或重命名字段而编辑器目录未同步时会立即失败，避免“Runtime 支持但 Inspector/Agent 不可发现”的静默漂移。

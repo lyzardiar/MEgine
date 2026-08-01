@@ -460,6 +460,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       clip: '',
       play_on_awake: true,
       playing: true,
+      time: 0,
       looped: false,
       volume: 1,
       pitch: 1,
