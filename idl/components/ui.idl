@@ -92,6 +92,8 @@ component Image {
   /// Imported source texture size used to normalize sliced UVs.
   source_size:     float2 = [100, 100]
   raycast_target:  bool   = true
+  /// Unity Graphic.raycastPadding: left, bottom, right, top. Positive values shrink the hit area.
+  raycast_padding: float4 = [0, 0, 0, 0]
   /// Reject raycasts whose sampled Sprite alpha is below this Unity-style threshold.
   alpha_hit_test_minimum_threshold: float = 0
 }
@@ -102,6 +104,8 @@ component RawImage {
   color:          float4 = [1, 1, 1, 1]
   uv_rect:        float4 = [0, 0, 1, 1]
   raycast_target: bool   = true
+  /// Unity Graphic.raycastPadding: left, bottom, right, top. Positive values shrink the hit area.
+  raycast_padding: float4 = [0, 0, 0, 0]
 }
 
 /// Unity-style Graphic shadow effect.
@@ -153,6 +157,8 @@ component Text {
   /// "Top" | "Middle" | "Bottom"
   vertical_align:  string = "Middle"
   raycast_target:  bool   = true
+  /// Unity Graphic.raycastPadding: left, bottom, right, top. Positive values shrink the hit area.
+  raycast_padding: float4 = [0, 0, 0, 0]
 }
 
 component Toggle {
@@ -203,6 +209,8 @@ component Panel {
   border_color:   float4 = [0.32, 0.36, 0.44, 1]
   border_width:   float  = 1
   raycast_target: bool   = false
+  /// Unity Graphic.raycastPadding: left, bottom, right, top. Positive values shrink the hit area.
+  raycast_padding: float4 = [0, 0, 0, 0]
 }
 
 /// Inherited opacity/input state for a UI subtree.

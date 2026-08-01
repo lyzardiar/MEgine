@@ -327,6 +327,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       border: [0, 0, 0, 0],
       source_size: [100, 100],
       raycast_target: true,
+      raycast_padding: [0, 0, 0, 0],
       alpha_hit_test_minimum_threshold: 0,
     }),
   },
@@ -490,6 +491,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       color: [1, 1, 1, 1],
       uv_rect: [0, 0, 1, 1],
       raycast_target: true,
+      raycast_padding: [0, 0, 0, 0],
     }),
   },
   {
@@ -543,6 +545,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       alignment: 'Center',
       vertical_align: 'Middle',
       raycast_target: true,
+      raycast_padding: [0, 0, 0, 0],
     }),
   },
   {
@@ -767,6 +770,7 @@ export function createUiImageComponents(color: [number, number, number, number] 
       border: [0, 0, 0, 0],
       source_size: [100, 100],
       raycast_target: true,
+      raycast_padding: [0, 0, 0, 0],
       alpha_hit_test_minimum_threshold: 0,
     },
   };
@@ -789,6 +793,7 @@ export function createUiButtonComponents() {
       border: [0, 0, 0, 0],
       source_size: [100, 100],
       raycast_target: true,
+      raycast_padding: [0, 0, 0, 0],
       alpha_hit_test_minimum_threshold: 0,
     },
     Button: {
@@ -821,6 +826,7 @@ export function createUiRawImageComponents(color: [number, number, number, numbe
       color,
       uv_rect: [0, 0, 1, 1],
       raycast_target: true,
+      raycast_padding: [0, 0, 0, 0],
     },
   };
 }
@@ -915,6 +921,7 @@ export function createUiTextComponents(text = 'Text') {
       alignment: 'Center',
       vertical_align: 'Middle',
       raycast_target: true,
+      raycast_padding: [0, 0, 0, 0],
     },
   };
 }
@@ -978,6 +985,7 @@ export function createUiPanelComponents() {
       border_color: [0.32, 0.36, 0.44, 1],
       border_width: 1,
       raycast_target: false,
+      raycast_padding: [0, 0, 0, 0],
     },
   };
 }
@@ -990,6 +998,7 @@ export function createUiLayoutGroupComponents() {
       border_color: [0.3, 0.34, 0.42, 1],
       border_width: 1,
       raycast_target: false,
+      raycast_padding: [0, 0, 0, 0],
     },
     LayoutGroup: {
       direction: 'Vertical',

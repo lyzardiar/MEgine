@@ -113,6 +113,7 @@ test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', ()
     border: [0, 0, 0, 0],
     source_size: [100, 100],
     raycast_target: true,
+    raycast_padding: [0, 0, 0, 0],
     alpha_hit_test_minimum_threshold: 0,
   };
   assert.deepEqual(createComponentDefaults('Image'), imageDefaults);
@@ -155,6 +156,16 @@ test('CanvasGroup exposes Unity parent-group override defaults', () => {
 test('Text Graphic defaults to a Unity raycast target', () => {
   assert.equal(createComponentDefaults('Text').raycast_target, true);
   assert.equal(createUiTextComponents().Text.raycast_target, true);
+});
+
+test('all authored Graphic components expose Unity raycast padding defaults', () => {
+  for (const type of ['Image', 'RawImage', 'Text', 'Panel']) {
+    assert.deepEqual(createComponentDefaults(type).raycast_padding, [0, 0, 0, 0]);
+    assert.deepEqual(getBuiltinInspectorField(type, 'raycast_padding'), {
+      label: 'Raycast Padding',
+      visibleWhen: { field: 'raycast_target', equals: true },
+    });
+  }
 });
 
 test('CanvasScaler Inspector exposes all Unity scale and match modes', () => {

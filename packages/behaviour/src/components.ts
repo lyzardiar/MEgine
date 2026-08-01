@@ -155,6 +155,7 @@ export class Image {
   border!: Color4;
   source_size!: [number, number];
   raycast_target!: boolean;
+  raycast_padding!: Color4;
   alpha_hit_test_minimum_threshold!: number;
 }
 
@@ -240,6 +241,7 @@ export class RawImage {
   color!: Color4;
   uv_rect!: Color4;
   raycast_target!: boolean;
+  raycast_padding!: Color4;
 }
 
 export class Shadow {

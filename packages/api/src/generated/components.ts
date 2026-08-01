@@ -445,6 +445,7 @@ export interface Image {
   border: [number, number, number, number];
   sourceSize: [number, number];
   raycastTarget: boolean;
+  raycastPadding: [number, number, number, number];
   alphaHitTestMinimumThreshold: number;
 }
 
@@ -453,6 +454,7 @@ export interface RawImage {
   color: [number, number, number, number];
   uvRect: [number, number, number, number];
   raycastTarget: boolean;
+  raycastPadding: [number, number, number, number];
 }
 
 export interface Shadow {
@@ -496,6 +498,7 @@ export interface Text {
   alignment: string;
   verticalAlign: string;
   raycastTarget: boolean;
+  raycastPadding: [number, number, number, number];
 }
 
 export interface Toggle {
@@ -541,6 +544,7 @@ export interface Panel {
   borderColor: [number, number, number, number];
   borderWidth: number;
   raycastTarget: boolean;
+  raycastPadding: [number, number, number, number];
 }
 
 export interface CanvasGroup {

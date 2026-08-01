@@ -243,11 +243,15 @@ pub enum UiControlKind {
 pub struct UiControlRegion {
     pub entity: Entity,
     pub rect: UiRect,
+    /// Unity Graphic.raycastPadding in rendered pixels: left, bottom, right, top.
+    pub raycast_padding: [f32; 4],
     pub clip: UiClipRect,
     pub rotation_radians: f32,
     pub pivot: [f32; 2],
     /// Projected screen quad for perspective World Space Canvas hit testing.
     pub corners: Option<[[f32; 2]; 4]>,
+    /// Separately projected padded quad; visual corners remain unchanged for alpha mapping.
+    pub raycast_corners: Option<[[f32; 2]; 4]>,
     /// Per-corner reciprocal clip W used for perspective-correct pointer UVs.
     pub corner_inverse_w: Option<[f32; 4]>,
     /// Unity GraphicRaycaster back-face filtering for projected World Space quads.
@@ -410,14 +414,30 @@ impl UiControlRegion {
         {
             return false;
         }
-        if !point_in_ui_region(
-            self.rect,
-            self.rotation_radians,
-            self.pivot,
-            self.corners,
-            x,
-            y,
-        ) {
+        let inside_raycast_geometry = if let Some(corners) = self.raycast_corners {
+            point_in_ui_region(
+                self.rect,
+                self.rotation_radians,
+                self.pivot,
+                Some(corners),
+                x,
+                y,
+            )
+        } else if self.corners.is_some() && self.raycast_padding == [0.0; 4] {
+            point_in_ui_region(
+                self.rect,
+                self.rotation_radians,
+                self.pivot,
+                self.corners,
+                x,
+                y,
+            )
+        } else {
+            padded_raycast_geometry(self.rect, self.pivot, self.raycast_padding).is_some_and(
+                |(rect, pivot)| point_in_ui_region(rect, self.rotation_radians, pivot, None, x, y),
+            )
+        };
+        if !inside_raycast_geometry {
             return false;
         }
         self.image_alpha_hit_test.as_ref().is_none_or(|filter| {
@@ -518,6 +538,36 @@ fn point_in_ui_region(
     let local_x = dx * c + dy * s + rect.width * pivot[0];
     let local_y = -dx * s + dy * c + rect.height * pivot[1];
     local_x >= 0.0 && local_y >= 0.0 && local_x <= rect.width && local_y <= rect.height
+}
+
+fn padded_raycast_geometry(
+    rect: UiRect,
+    pivot: [f32; 2],
+    padding: [f32; 4],
+) -> Option<(UiRect, [f32; 2])> {
+    let finite = |value: f32| if value.is_finite() { value } else { 0.0 };
+    let left = finite(padding[0]);
+    let bottom = finite(padding[1]);
+    let right = finite(padding[2]);
+    let top = finite(padding[3]);
+    let width = rect.width - left - right;
+    let height = rect.height - top - bottom;
+    if width <= 0.0 || height <= 0.0 {
+        return None;
+    }
+    let x = rect.x + left;
+    let y = rect.y + top;
+    let pivot_x = rect.x + rect.width * pivot[0];
+    let pivot_y = rect.y + rect.height * pivot[1];
+    Some((
+        UiRect {
+            x,
+            y,
+            width,
+            height,
+        },
+        [(pivot_x - x) / width, (pivot_y - y) / height],
+    ))
 }
 
 fn quad_uv(
@@ -1434,6 +1484,11 @@ fn project_world_canvas_output(
     let projected_controls = controls
         .drain(control_start..)
         .filter_map(|mut control| {
+            let (raycast_rect, raycast_pivot) =
+                padded_raycast_geometry(control.rect, control.pivot, control.raycast_padding)?;
+            let raycast_pixel_corners =
+                rotated_pixel_corners(raycast_rect, control.rotation_radians, raycast_pivot);
+            let (_, raycast_screen_corners) = projection.project_corners(raycast_pixel_corners)?;
             let pixel_corners =
                 rotated_pixel_corners(control.rect, control.rotation_radians, control.pivot);
             let (clip_corners, screen_corners) = projection.project_corners(pixel_corners)?;
@@ -1444,6 +1499,7 @@ fn project_world_canvas_output(
             control.rotation_radians = 0.0;
             control.pivot = [0.5, 0.5];
             control.corners = Some(screen_corners);
+            control.raycast_corners = Some(raycast_screen_corners);
             control.corner_inverse_w = Some(clip_corners.map(|corner| {
                 if corner[3].is_finite() && corner[3].abs() > 0.000001 {
                     1.0 / corner[3].abs()
@@ -1985,10 +2041,12 @@ fn walk(
             controls.push(UiControlRegion {
                 entity,
                 rect,
+                raycast_padding: [0.0; 4],
                 clip,
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                raycast_corners: None,
                 corner_inverse_w: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
                 blocking_objects: state.blocking_objects,
@@ -2077,10 +2135,12 @@ fn walk(
             controls.push(UiControlRegion {
                 entity,
                 rect,
+                raycast_padding: [0.0; 4],
                 clip,
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                raycast_corners: None,
                 corner_inverse_w: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
                 blocking_objects: state.blocking_objects,
@@ -2167,10 +2227,12 @@ fn walk(
             controls.push(UiControlRegion {
                 entity,
                 rect,
+                raycast_padding: [0.0; 4],
                 clip,
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                raycast_corners: None,
                 corner_inverse_w: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
                 blocking_objects: state.blocking_objects,
@@ -2242,10 +2304,12 @@ fn walk(
             controls.push(UiControlRegion {
                 entity,
                 rect,
+                raycast_padding: [0.0; 4],
                 clip,
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                raycast_corners: None,
                 corner_inverse_w: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
                 blocking_objects: state.blocking_objects,
@@ -2732,6 +2796,23 @@ fn walk(
             primitives.extend(graphic);
         }
     }
+    let raycast_padding = image
+        .map(|graphic| graphic.raycast_padding)
+        .or_else(|| raw_image.map(|graphic| graphic.raycast_padding))
+        .or_else(|| text.map(|graphic| graphic.raycast_padding))
+        .or_else(|| {
+            world
+                .get_component::<Panel>(entity)
+                .map(|graphic| graphic.raycast_padding)
+        })
+        .unwrap_or([0.0; 4])
+        .map(|value| {
+            if value.is_finite() {
+                value * scale
+            } else {
+                0.0
+            }
+        });
     let image_alpha_hit_test = image.and_then(|image| {
         (image.raycast_target && image.alpha_hit_test_minimum_threshold > 0.0).then(|| {
             let sprite = world
@@ -2776,6 +2857,7 @@ fn walk(
         })
     });
     for control in &mut controls[control_start..] {
+        control.raycast_padding = raycast_padding;
         control.blocking_objects = state.blocking_objects;
         control.blocking_mask = state.blocking_mask;
         control.mask_regions = inherited.mask_regions;
@@ -3049,10 +3131,12 @@ fn control_region(
     UiControlRegion {
         entity,
         rect,
+        raycast_padding: [0.0; 4],
         clip,
         rotation_radians,
         pivot,
         corners: None,
+        raycast_corners: None,
         corner_inverse_w: None,
         ignore_reversed_graphics,
         blocking_objects: BlockingObjects::None,
@@ -4816,6 +4900,7 @@ mod tests {
                 color: [0.5, 0.75, 1.0, 0.8],
                 uv_rect: [0.25, 0.0, 0.5, 1.0],
                 raycast_target: true,
+                raycast_padding: [0.0; 4],
             },
         );
         world.set_parent(image, Some(canvas));
@@ -4833,6 +4918,139 @@ mod tests {
         assert!(frame.controls.iter().any(|control| {
             control.entity == image && matches!(control.kind, UiControlKind::Blocker)
         }));
+    }
+
+    #[test]
+    fn graphic_raycast_padding_scales_all_graphics_and_preserves_rotated_hits() {
+        let legacy_image: Image = serde_json::from_value(serde_json::json!({})).unwrap();
+        let legacy_raw_image: RawImage = serde_json::from_value(serde_json::json!({})).unwrap();
+        let legacy_text: Text = serde_json::from_value(serde_json::json!({})).unwrap();
+        let legacy_panel: Panel = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert_eq!(legacy_image.raycast_padding, [0.0; 4]);
+        assert_eq!(legacy_raw_image.raycast_padding, [0.0; 4]);
+        assert_eq!(legacy_text.raycast_padding, [0.0; 4]);
+        assert_eq!(legacy_panel.raycast_padding, [0.0; 4]);
+
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(
+            canvas,
+            CanvasScaler {
+                scale_factor: 2.0,
+                ..CanvasScaler::default()
+            },
+        );
+
+        let image = world.spawn_empty();
+        world.insert_component(
+            image,
+            RectTransform {
+                size_delta: [100.0, 80.0],
+                local_rotation: 30.0,
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            image,
+            Image {
+                raycast_padding: [10.0, 20.0, 30.0, 5.0],
+                ..Image::default()
+            },
+        );
+        world.insert_component(image, Button::default());
+        world.set_parent(image, Some(canvas));
+
+        let raw_image = world.spawn_empty();
+        world.insert_component(raw_image, RectTransform::default());
+        world.insert_component(
+            raw_image,
+            RawImage {
+                raycast_padding: [1.0, 2.0, 3.0, 4.0],
+                ..RawImage::default()
+            },
+        );
+        world.set_parent(raw_image, Some(canvas));
+
+        let text = world.spawn_empty();
+        world.insert_component(text, RectTransform::default());
+        world.insert_component(
+            text,
+            Text {
+                raycast_padding: [5.0, 6.0, 7.0, 8.0],
+                ..Text::default()
+            },
+        );
+        world.set_parent(text, Some(canvas));
+
+        let panel = world.spawn_empty();
+        world.insert_component(panel, RectTransform::default());
+        world.insert_component(
+            panel,
+            Panel {
+                raycast_target: true,
+                raycast_padding: [9.0, 10.0, 11.0, 12.0],
+                ..Panel::default()
+            },
+        );
+        world.set_parent(panel, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        for (entity, expected) in [
+            (image, [20.0, 40.0, 60.0, 10.0]),
+            (raw_image, [2.0, 4.0, 6.0, 8.0]),
+            (text, [10.0, 12.0, 14.0, 16.0]),
+            (panel, [18.0, 20.0, 22.0, 24.0]),
+        ] {
+            let controls = frame
+                .controls
+                .iter()
+                .filter(|control| control.entity == entity)
+                .collect::<Vec<_>>();
+            assert!(!controls.is_empty());
+            assert!(controls
+                .iter()
+                .all(|control| control.raycast_padding == expected));
+        }
+
+        let button = frame
+            .controls
+            .iter()
+            .find(|control| {
+                control.entity == image && matches!(control.kind, UiControlKind::Button)
+            })
+            .unwrap();
+        let screen_point = |local_x: f32, local_y: f32| {
+            let pivot_x = button.rect.x + button.rect.width * button.pivot[0];
+            let pivot_y = button.rect.y + button.rect.height * button.pivot[1];
+            let dx = local_x - button.rect.width * button.pivot[0];
+            let dy = local_y - button.rect.height * button.pivot[1];
+            let c = button.rotation_radians.cos();
+            let s = button.rotation_radians.sin();
+            [pivot_x + dx * c - dy * s, pivot_y + dx * s + dy * c]
+        };
+        let outside_left = screen_point(19.0, button.rect.height * 0.5);
+        let inside_left = screen_point(21.0, button.rect.height * 0.5);
+        assert!(!button.contains(outside_left[0], outside_left[1]));
+        assert!(button.contains(inside_left[0], inside_left[1]));
+
+        world
+            .get_component_mut::<Image>(image)
+            .unwrap()
+            .raycast_padding = [-10.0, -5.0, -20.0, -15.0];
+        let expanded = collect_ui_frame(&world, 800, 600);
+        let button = expanded
+            .controls
+            .iter()
+            .find(|control| {
+                control.entity == image && matches!(control.kind, UiControlKind::Button)
+            })
+            .unwrap();
+        assert!(button.contains(
+            button.rect.x - 10.0,
+            button.rect.y + button.rect.height * 0.5
+        ));
     }
 
     #[test]
@@ -5556,7 +5774,13 @@ mod tests {
                 ..RectTransform::default()
             },
         );
-        world.insert_component(image, Image::default());
+        world.insert_component(
+            image,
+            Image {
+                raycast_padding: [20.0, 10.0, 20.0, 10.0],
+                ..Image::default()
+            },
+        );
         world.set_parent(image, Some(canvas));
         let hierarchy = TransformHierarchy::build(&world);
         let camera = FrameCamera {
@@ -5593,6 +5817,7 @@ mod tests {
             camera.position
         );
         assert!(control.raycast_plane.is_some());
+        assert!(control.raycast_corners.is_some());
         let center = [
             control
                 .corners
@@ -5610,6 +5835,8 @@ mod tests {
                 * 0.25,
         ];
         assert!(control.contains(center[0], center[1]));
+        let visible_corner = control.corners.unwrap()[0];
+        assert!(!control.contains(visible_corner[0], visible_corner[1]));
         assert!(!control.contains(0.0, 0.0));
     }
 
@@ -5997,6 +6224,7 @@ mod tests {
                 width: 120.0,
                 height: 60.0,
             },
+            raycast_padding: [0.0; 4],
             clip: UiClipRect {
                 x: 0,
                 y: 0,
@@ -6006,6 +6234,7 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: Some([[10.0, 20.0], [130.0, 10.0], [110.0, 70.0], [20.0, 60.0]]),
+            raycast_corners: None,
             corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: BlockingObjects::None,
@@ -6174,10 +6403,12 @@ mod tests {
                 width: 100.0,
                 height: 30.0,
             },
+            raycast_padding: [0.0; 4],
             clip,
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            raycast_corners: None,
             corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: BlockingObjects::None,
@@ -6696,6 +6927,7 @@ mod tests {
                 width: 100.0,
                 height: 20.0,
             },
+            raycast_padding: [0.0; 4],
             clip: UiClipRect {
                 x: 0,
                 y: 0,
@@ -6705,6 +6937,7 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            raycast_corners: None,
             corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: BlockingObjects::None,
@@ -6736,6 +6969,7 @@ mod tests {
                 width: 20.0,
                 height: 100.0,
             },
+            raycast_padding: [0.0; 4],
             clip: UiClipRect {
                 x: 0,
                 y: 0,
@@ -6745,6 +6979,7 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            raycast_corners: None,
             corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: BlockingObjects::None,

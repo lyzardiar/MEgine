@@ -602,6 +602,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       label: 'Source Size',
       visibleWhen: { field: 'image_type', equals: ['Simple', 'Sliced', 'Tiled', 'Filled'] },
     },
+    raycast_padding: {
+      label: 'Raycast Padding',
+      visibleWhen: { field: 'raycast_target', equals: true },
+    },
     alpha_hit_test_minimum_threshold: {
       label: 'Alpha Hit Test Minimum Threshold',
       min: 0,
@@ -613,6 +617,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   RawImage: {
     texture: sprite,
     uv_rect: { label: 'UV Rect' },
+    raycast_padding: {
+      label: 'Raycast Padding',
+      visibleWhen: { field: 'raycast_target', equals: true },
+    },
   },
   Shadow: {
     effect_color: { label: 'Effect Color' },
@@ -695,6 +703,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     alignment: { kind: 'enum', options: options('Left', 'Center', 'Right') },
     vertical_align: { kind: 'enum', options: options('Top', 'Middle', 'Bottom') },
     outline_width: { label: 'Outline Width', min: 0, max: 16, step: 0.25 },
+    raycast_padding: {
+      label: 'Raycast Padding',
+      visibleWhen: { field: 'raycast_target', equals: true },
+    },
   },
   Toggle: {
     font_size: { min: 1, step: 1 },
@@ -714,7 +726,13 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     direction: { kind: 'enum', options: direction },
     on_value_changed: event,
   },
-  Panel: { border_width: { min: 0, step: 0.25 } },
+  Panel: {
+    border_width: { min: 0, step: 0.25 },
+    raycast_padding: {
+      label: 'Raycast Padding',
+      visibleWhen: { field: 'raycast_target', equals: true },
+    },
+  },
   CanvasGroup: { alpha: { min: 0, max: 1, step: 0.01 } },
   LayoutGroup: {
     direction: { kind: 'enum', options: options('Horizontal', 'Vertical', 'Grid') },

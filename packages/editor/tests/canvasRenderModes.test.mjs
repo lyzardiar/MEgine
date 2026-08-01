@@ -504,6 +504,45 @@ test('Text raycast targets participate in editor Graphic hit testing', () => {
   assert.equal(hitTestUi(items, text.rect.x + 1, text.rect.y + 1)?.entity, text.entity);
 });
 
+test('Graphic raycast padding shrinks and expands the screen-space hit region', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [100, 80] }),
+        Image: { raycast_target: true, raycast_padding: [10, 20, 30, 5] },
+      },
+    },
+  ];
+  let items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  let image = items.find((item) => item.entity === 2);
+  const centerY = image.rect.y + image.rect.h / 2;
+  assert.deepEqual(image.raycastPadding, [10, 20, 30, 5]);
+  assert.equal(hitTestUi(items, image.rect.x + 9, centerY), null);
+  assert.equal(hitTestUi(items, image.rect.x + 11, centerY)?.entity, 2);
+  assert.equal(hitTestUi(items, image.rect.x + image.rect.w - 29, centerY), null);
+  assert.equal(hitTestUi(items, image.rect.x + image.rect.w - 31, centerY)?.entity, 2);
+  assert.equal(hitTestUi(items, image.rect.x + 50, image.rect.y + 4), null);
+  assert.equal(hitTestUi(items, image.rect.x + 50, image.rect.y + 6)?.entity, 2);
+  assert.equal(hitTestUi(items, image.rect.x + 50, image.rect.y + image.rect.h - 19), null);
+  assert.equal(hitTestUi(items, image.rect.x + 50, image.rect.y + image.rect.h - 21)?.entity, 2);
+
+  entities[1].components.Image.raycast_padding = [-10, -5, -20, -15];
+  items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  image = items.find((item) => item.entity === 2);
+  assert.equal(hitTestUi(items, image.rect.x - 5, centerY)?.entity, 2);
+  assert.equal(hitTestUi(items, image.rect.x + image.rect.w + 10, centerY)?.entity, 2);
+});
+
 test('Image alpha hit threshold filters the same-entity Graphic raycast', () => {
   const entities = [
     {
@@ -661,6 +700,48 @@ test('World Space override-sorting Canvas subtrees are projected exactly once', 
   assert.equal(items.filter((item) => item.entity === 2).length, 1);
   assert.equal(items.filter((item) => item.entity === 3).length, 1);
   assert.equal(items.filter((item) => item.entity === 4).length, 1);
+});
+
+test('World Space raycast padding projects independently from visible Graphic corners', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+        RectTransform: rect({ size_delta: [200, 100], local_rotation: 12 }),
+        Canvas: { render_mode: 'WorldSpace' },
+        CanvasScaler: { reference_pixels_per_unit: 100, reference_resolution: [200, 100] },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [100, 60], local_rotation: 18 }),
+        Image: { raycast_target: true, raycast_padding: [20, 10, 20, 10] },
+      },
+    },
+  ];
+  let items = layoutUiWorldSpace(entities, camera, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  let image = items.find((item) => item.entity === 2);
+  assert.equal(image.screenCorners.length, 4);
+  assert.equal(image.raycastScreenCorners.length, 4);
+  const center = image.raycastScreenCorners.reduce(
+    (sum, point) => ({ x: sum.x + point.x / 4, y: sum.y + point.y / 4 }),
+    { x: 0, y: 0 },
+  );
+  assert.equal(hitTestUi(items, center.x, center.y)?.entity, 2);
+  assert.equal(hitTestUi(items, image.screenCorners[0].x, image.screenCorners[0].y), null);
+
+  entities[1].components.Image.raycast_padding = [-20, -10, -20, -10];
+  items = layoutUiWorldSpace(entities, camera, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  image = items.find((item) => item.entity === 2);
+  const expandedOnly = {
+    x: (image.raycastScreenCorners[0].x + image.screenCorners[0].x) / 2,
+    y: (image.raycastScreenCorners[0].y + image.screenCorners[0].y) / 2,
+  };
+  assert.equal(hitTestUi(items, expandedOnly.x, expandedOnly.y)?.entity, 2);
 });
 
 test('World Space Mask keeps projected visual and raycast regions aligned', () => {

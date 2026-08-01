@@ -950,6 +950,12 @@
       "preserve_aspect": {
         "type": "boolean"
       },
+      "raycast_padding": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "raycast_target": {
         "type": "boolean"
       },
@@ -977,6 +983,7 @@
       "border",
       "source_size",
       "raycast_target",
+      "raycast_padding",
       "alpha_hit_test_minimum_threshold"
     ],
     "type": "object"
@@ -1479,6 +1486,12 @@
         },
         "type": "array"
       },
+      "raycast_padding": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "raycast_target": {
         "type": "boolean"
       }
@@ -1487,7 +1500,8 @@
       "color",
       "border_color",
       "border_width",
-      "raycast_target"
+      "raycast_target",
+      "raycast_padding"
     ],
     "type": "object"
   },
@@ -1866,6 +1880,12 @@
         },
         "type": "array"
       },
+      "raycast_padding": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "raycast_target": {
         "type": "boolean"
       },
@@ -1883,7 +1903,8 @@
       "texture",
       "color",
       "uv_rect",
-      "raycast_target"
+      "raycast_target",
+      "raycast_padding"
     ],
     "type": "object"
   },
@@ -2563,6 +2584,12 @@
       "outline_width": {
         "type": "number"
       },
+      "raycast_padding": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "raycast_target": {
         "type": "boolean"
       },
@@ -2581,7 +2608,8 @@
       "outline_width",
       "alignment",
       "vertical_align",
-      "raycast_target"
+      "raycast_target",
+      "raycast_padding"
     ],
     "type": "object"
   },

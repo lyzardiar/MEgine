@@ -1987,3 +1987,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Unity 的每个 Canvas 都是独立几何与批处理单元；子 Canvas 即使未开启 Override Sorting，也不能和父 Canvas 或兄弟 Canvas 合并批次。MEngine 现在把最近 Canvas 的稳定实体身份写入 Runtime `UiBatchKey`，相同材质、纹理、裁剪、深度和 Stencil 只有在同一个 Canvas 内才允许连续合批。
 - 批处理边界不改变 Hierarchy 绘制顺序、继承 Render Mode、CanvasGroup、GraphicRaycaster、Mask/RectMask2D 或 Override Sorting 根的既有语义。非 UI 的 Sprite、Line 与 Particle 保持无 Canvas 分组；World Space Canvas 进入统一 2D 排序队列后也保留各自边界。
 - Editor Canvas 数据同步记录最近 Canvas，并让预览批次规划器使用同一边界；同时修复原先按层级深度重排导致嵌套子图形晚于父级后续兄弟绘制的问题。无窗口回归覆盖 Parent → Nested → Parent 的同纹理 Hierarchy 顺序、Editor/RHI 键分组以及 Runtime 完整 Canvas 遍历。
+
+## 181. 2026-08-01 Unity Graphic Raycast Padding
+
+- `Image`、`RawImage`、`Text` 与引擎 `Panel` 现在统一暴露 `raycast_padding`，顺序对齐 Unity `Graphic.raycastPadding` 的 Left、Bottom、Right、Top；默认全零兼容旧场景，正值收缩命中区，负值扩张命中区，渲染几何保持不变。
+- Editor 与 Runtime 都先按 CanvasScaler 把 padding 转成实际像素，再围绕原 RectTransform pivot 生成独立命中几何。旋转 Graphic、Screen Space Camera 与透视 World Space Canvas 分别保留原可视四边形和 padded raycast 四边形，避免改变 Alpha Hit Test 的原图坐标；Button 等同实体交互接收器复用目标 Graphic 的 padding。
+- RectMask2D、Mask、CanvasGroup、GraphicRaycaster 物理遮挡和背面过滤继续在 padded 区域外层生效。无窗口回归覆盖四类 Graphic 默认值与 Inspector、非对称正负 padding、Canvas 缩放、旋转、Button 同实体继承，以及 Editor/Runtime 的 World Space 投影命中。

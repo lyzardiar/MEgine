@@ -97,6 +97,10 @@ export type UiDrawItem = {
   role: 'canvas' | 'graphic';
   rotation: number;
   pivot: [number, number];
+  /** Unity Graphic.raycastPadding in rendered pixels: left, bottom, right, top. */
+  raycastPadding?: [number, number, number, number];
+  /** Projected padded quad used by World Space / Scene-view raycasts. */
+  raycastScreenCorners?: Array<{ x: number; y: number }>;
   opacity: number;
   /** Pointer raycasts are rejected when a CanvasGroup disables them. */
   blocksRaycasts?: boolean;
@@ -475,11 +479,32 @@ function screenRect(corners: Array<{ x: number; y: number }>): Rect {
   };
 }
 
+function paddedRaycastGeometry(
+  rect: Rect,
+  pivot: [number, number],
+  padding: [number, number, number, number] | undefined,
+): { rect: Rect; pivot: [number, number] } | null {
+  const [left, bottom, right, top] = padding ?? [0, 0, 0, 0];
+  const width = rect.w - left - right;
+  const height = rect.h - top - bottom;
+  if (!(width > 0) || !(height > 0)) return null;
+  const x = rect.x + left;
+  const y = rect.y + top;
+  const pivotPoint = rectPivot(rect, pivot);
+  return {
+    rect: { x, y, w: width, h: height },
+    pivot: [(pivotPoint.x - x) / width, (pivotPoint.y - y) / height],
+  };
+}
+
 function scaleSceneVisuals(item: UiDrawItem, scale: number): UiDrawItem {
   const s = Math.max(0.01, scale);
   const font = (value: number) => Math.max(10, value * s);
   return {
     ...item,
+    raycastPadding: item.raycastPadding?.map((value) => value * s) as
+      | [number, number, number, number]
+      | undefined,
     image: item.image
       ? {
           ...item.image,
@@ -936,6 +961,11 @@ export function layoutUiOverlay(
         1,
       ));
       const imageSpritePixelScale = spritePixelScale / imagePixelsPerUnitMultiplier;
+      const raycastPaddingSource = img ?? rawImage ?? text ?? panel;
+      const raycastPadding = number4(
+        raycastPaddingSource?.raycast_padding ?? raycastPaddingSource?.raycastPadding,
+        [0, 0, 0, 0],
+      ).map((value) => value * scale) as [number, number, number, number];
 
       if (isCanvas) {
         out.push({
@@ -966,6 +996,7 @@ export function layoutUiOverlay(
           role: 'graphic',
           rotation,
           pivot,
+          raycastPadding,
           anchorParentRect,
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
@@ -1447,6 +1478,19 @@ export function layoutUiWorldSpace(
     } satisfies UiRaycastPlane;
 
     for (const item of context.items) {
+      const raycastGeometry = paddedRaycastGeometry(
+        item.rect,
+        item.pivot,
+        item.raycastPadding,
+      );
+      const raycastProjected = raycastGeometry
+        ? pixelCorners(raycastGeometry.rect, item.rotation, raycastGeometry.pivot)
+            .map(([x, y]) => project(context.pixelToWorld(x, y), cam, viewport))
+        : [];
+      const raycastScreenCorners = raycastProjected.length === 4
+        && raycastProjected.every(Boolean)
+        ? (raycastProjected as Array<{ x: number; y: number }>).map(({ x, y }) => ({ x, y }))
+        : [];
       const corners = pixelCorners(item.rect, item.rotation, item.pivot)
         .map(([x, y]) => project(context.pixelToWorld(x, y), cam, viewport));
       if (corners.some((point) => !point)) continue;
@@ -1481,6 +1525,7 @@ export function layoutUiWorldSpace(
         pivot: [0, 0],
         pivotScreen: { x: topLeft.x, y: topLeft.y },
         screenCorners,
+        raycastScreenCorners,
         screenCornerInverseW: projected.map((point) => point.inverseW) as [number, number, number, number],
         maskRegions,
         blocksRaycasts: reversed ? false : item.blocksRaycasts,
@@ -1663,6 +1708,15 @@ export function layoutUiScene3D(
     };
 
     for (const it of laid) {
+      const raycastGeometry = paddedRaycastGeometry(it.rect, it.pivot, it.raycastPadding);
+      const raycastProjected = raycastGeometry
+        ? pixelCorners(raycastGeometry.rect, it.rotation, raycastGeometry.pivot)
+            .map(([px, py]) => project(uiPixelToWorld(px, py, cw, ch), cam, viewport))
+        : [];
+      const raycastScreenCorners = raycastProjected.length === 4
+        && raycastProjected.every(Boolean)
+        ? (raycastProjected as Array<{ x: number; y: number }>).map(({ x, y }) => ({ x, y }))
+        : [];
       const corners = pixelCorners(it.rect, it.rotation, it.pivot);
       const world = corners.map(([px, py]) => uiPixelToWorld(px, py, cw, ch));
       const scr = world.map((w) => project(w, cam, viewport));
@@ -1712,6 +1766,7 @@ export function layoutUiScene3D(
         clip: it.clip ? projectPixelRect(it.clip) : undefined,
         depth: depthBase + it.depth,
         pivotScreen: pivS ? { x: pivS.x, y: pivS.y } : undefined,
+        raycastScreenCorners,
         unrotatedSize: { w: it.rect.w * sceneScale, h: it.rect.h * sceneScale },
         anchorParentRect: it.anchorParentRect
           ? projectPixelRect(it.anchorParentRect)
@@ -1798,11 +1853,13 @@ export function uiEntityWorldPivot(
 }
 
 function pointInUiItem(px: number, py: number, it: UiDrawItem): boolean {
-  if (it.screenCorners?.length === 4) {
+  const projectedCorners = it.raycastScreenCorners ?? it.screenCorners;
+  if (projectedCorners) {
+    if (projectedCorners.length !== 4) return false;
     let sign = 0;
     for (let index = 0; index < 4; index++) {
-      const a = it.screenCorners[index];
-      const b = it.screenCorners[(index + 1) % 4];
+      const a = projectedCorners[index];
+      const b = projectedCorners[(index + 1) % 4];
       const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
       if (Math.abs(cross) < 1e-4) continue;
       if (sign === 0) sign = Math.sign(cross);
@@ -1810,17 +1867,19 @@ function pointInUiItem(px: number, py: number, it: UiDrawItem): boolean {
     }
     return true;
   }
+  const geometry = paddedRaycastGeometry(it.rect, it.pivot, it.raycastPadding);
+  if (!geometry) return false;
   if (it.role === 'canvas' || Math.abs(it.rotation) < 1e-4) {
-    return pointInRect(px, py, it.rect);
+    return pointInRect(px, py, geometry.rect);
   }
-  const { w, h } = it.rect;
-  const piv = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
+  const { w, h } = geometry.rect;
+  const piv = rectPivot(geometry.rect, geometry.pivot);
   const axes = rectLocalAxes(it.rotation);
   const dx = px - piv.x;
   const dy = py - piv.y;
   const u = dx * axes.x.dx + dy * axes.x.dy;
   const v = dx * axes.y.dx + dy * axes.y.dy;
-  const [pxN, pyN] = it.pivot;
+  const [pxN, pyN] = geometry.pivot;
   return u >= -w * pxN && u <= w * (1 - pxN) && v >= -h * pyN && v <= h * (1 - pyN);
 }
 
@@ -1906,6 +1965,10 @@ function imageAllowsRaycast(it: UiDrawItem, x: number, y: number): boolean {
   const projected = it.screenCorners
     ? projectedQuadUv(it.screenCorners, { x, y }, it.screenCornerInverseW)
     : null;
+  // Negative raycast padding may intentionally admit points outside the
+  // visible projected quad. Match Runtime by failing the texture-alpha filter
+  // open when no original-Graphic UV exists for that expanded-only point.
+  if (it.screenCorners && !projected) return true;
   let point: { x: number; y: number };
   if (projected) {
     point = {

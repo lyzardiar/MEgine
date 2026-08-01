@@ -730,6 +730,7 @@ mod tests {
                 width: 100.0,
                 height: 100.0,
             },
+            raycast_padding: [0.0; 4],
             clip: mengine_rhi::UiClipRect {
                 x: 0,
                 y: 0,
@@ -739,6 +740,7 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            raycast_corners: None,
             corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: crate::ui_raycast::BlockingObjects::None,

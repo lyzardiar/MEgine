@@ -1737,6 +1737,7 @@ pub struct Image {
     pub border: [f32; 4],
     pub source_size: [f32; 2],
     pub raycast_target: bool,
+    pub raycast_padding: [f32; 4],
     pub alpha_hit_test_minimum_threshold: f32,
 }
 
@@ -1756,6 +1757,7 @@ impl Default for Image {
             border: [0.0, 0.0, 0.0, 0.0],
             source_size: [100.0, 100.0],
             raycast_target: true,
+            raycast_padding: [0.0, 0.0, 0.0, 0.0],
             alpha_hit_test_minimum_threshold: 0.0,
         }
     }
@@ -1783,6 +1785,7 @@ pub struct RawImage {
     pub color: [f32; 4],
     pub uv_rect: [f32; 4],
     pub raycast_target: bool,
+    pub raycast_padding: [f32; 4],
 }
 
 impl Default for RawImage {
@@ -1792,6 +1795,7 @@ impl Default for RawImage {
             color: [1.0, 1.0, 1.0, 1.0],
             uv_rect: [0.0, 0.0, 1.0, 1.0],
             raycast_target: true,
+            raycast_padding: [0.0, 0.0, 0.0, 0.0],
         }
     }
 }
@@ -1949,6 +1953,7 @@ pub struct Text {
     pub alignment: String,
     pub vertical_align: String,
     pub raycast_target: bool,
+    pub raycast_padding: [f32; 4],
 }
 
 impl Default for Text {
@@ -1962,6 +1967,7 @@ impl Default for Text {
             alignment: "Center".into(),
             vertical_align: "Middle".into(),
             raycast_target: true,
+            raycast_padding: [0.0, 0.0, 0.0, 0.0],
         }
     }
 }
@@ -2140,6 +2146,7 @@ pub struct Panel {
     pub border_color: [f32; 4],
     pub border_width: f32,
     pub raycast_target: bool,
+    pub raycast_padding: [f32; 4],
 }
 
 impl Default for Panel {
@@ -2149,6 +2156,7 @@ impl Default for Panel {
             border_color: [0.32, 0.36, 0.44, 1.0],
             border_width: 1.0,
             raycast_target: false,
+            raycast_padding: [0.0, 0.0, 0.0, 0.0],
         }
     }
 }
