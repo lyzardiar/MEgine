@@ -2819,9 +2819,9 @@ fn walk(
     let mask = world
         .get_component::<Mask>(entity)
         .filter(|mask| mask.enabled);
-    let mask_enabled = mask.is_some()
-        && graphic_start < primitives.len()
-        && state.stencil_depth < state.mask_regions.len() as u8;
+    let has_mask_graphic = has_authored_graphic || graphic_start < primitives.len();
+    let mask_enabled =
+        mask.is_some() && has_mask_graphic && state.stencil_depth < state.mask_regions.len() as u8;
     let mut mask_pop = Vec::new();
     if graphic_start < primitives.len() {
         let mut graphic: Vec<UiPrimitive> = primitives.drain(graphic_start..).collect();
@@ -2860,6 +2860,10 @@ fn walk(
             }
             primitives.extend(graphic);
         }
+    } else if mask_enabled {
+        // Unity MaskEnabled only requires an associated Graphic. A disabled Graphic
+        // emits no stencil geometry, but descendants still test the reserved depth.
+        state.stencil_depth += 1;
     }
     let raycast_padding = image
         .map(|graphic| graphic.raycast_padding)
@@ -5978,6 +5982,71 @@ mod tests {
             .find(|primitive| primitive.key.material == "ui/image" && primitive.rect[2] == 200.0)
             .expect("child image primitive");
         assert_eq!(primitive.key.stencil, UiStencilMode::Disabled);
+    }
+
+    #[test]
+    fn mask_with_disabled_graphic_still_reserves_stencil_depth() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(
+            canvas,
+            RectTransform {
+                anchor_min: [0.0, 0.0],
+                anchor_max: [1.0, 1.0],
+                size_delta: [0.0, 0.0],
+                ..RectTransform::default()
+            },
+        );
+
+        let mask = world.spawn_empty();
+        world.insert_component(
+            mask,
+            RectTransform {
+                size_delta: [100.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            mask,
+            Image {
+                enabled: false,
+                ..Image::default()
+            },
+        );
+        world.insert_component(mask, Mask::default());
+        world.set_parent(mask, Some(canvas));
+
+        let child = world.spawn_empty();
+        world.insert_component(
+            child,
+            RectTransform {
+                size_delta: [200.0, 200.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(child, Image::default());
+        world.insert_component(child, Button::default());
+        world.set_parent(child, Some(mask));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == child)
+            .expect("child control");
+        assert!(control.mask_regions[0].is_some());
+        let primitive = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.key.material == "ui/image" && primitive.rect[2] == 200.0)
+            .expect("child image primitive");
+        assert!(matches!(
+            primitive.key.stencil,
+            UiStencilMode::Test { reference: 1 }
+        ));
     }
 
     #[test]

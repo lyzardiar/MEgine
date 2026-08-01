@@ -1012,7 +1012,7 @@ export function layoutUiOverlay(
         raycastPaddingSource?.raycast_padding ?? raycastPaddingSource?.raycastPadding,
         [0, 0, 0, 0],
       ).map((value) => value * scale) as [number, number, number, number];
-      const hasMaskGraphic = hasEnabledGraphic || !!(
+      const hasMaskGraphic = hasAuthoredGraphic || !!(
         btn || toggle || slider || scrollbar || progress || input || dropdown || list || scroll || tabs
       );
       const ownMaskEnabled = stencilMask?.enabled !== false

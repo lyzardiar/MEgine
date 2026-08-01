@@ -187,6 +187,39 @@ test('Canvas preview multiplies nested real Graphic alpha without showing hidden
   );
 });
 
+test('disabled associated Graphic leaves a transparent Mask stencil in the Canvas preview', () => {
+  const entities = [
+    { entity: 1, components: { Canvas: {}, RectTransform: {} } },
+    { entity: 2, parent: 1, components: {
+      RectTransform: { size_delta: [50, 50] },
+      Image: { enabled: false },
+      Mask: { enabled: true, show_mask_graphic: false },
+    } },
+    { entity: 3, parent: 2, components: {
+      RectTransform: { size_delta: [100, 100] },
+      Panel: {},
+    } },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  drawUiItems(canvas.context, items, null, null);
+
+  assert.equal(document.canvases.length, 2);
+  const maskOperations = document.canvases[1].context.operations;
+  assert.equal(
+    maskOperations.some(([operation]) => operation === 'fillRect' || operation === 'drawImage'),
+    false,
+    'the disabled Graphic must not synthesize any Mask alpha',
+  );
+  assert.ok(
+    document.canvases[0].context.operations.some((operation) => (
+      operation[0] === 'composite' && operation[1] === 'destination-in'
+    )),
+    'the child layer still consumes the reserved transparent Mask',
+  );
+});
+
 test('RectMask2D Softness defaults, propagates as a nested stack, and multiplies both axes', () => {
   assert.deepEqual(createComponentDefaults('RectMask2D'), {
     enabled: true,

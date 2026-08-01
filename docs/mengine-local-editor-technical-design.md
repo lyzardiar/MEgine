@@ -2026,3 +2026,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - Unity `Mask.MaskEnabled()` 只有在 Mask 自身启用且同实体能提供 Graphic 时才成立。MEngine 现在也把“已启用 Mask + 当前实体实际生成 UI Graphic”作为唯一有效 Mask source；只有有效源才向子树压入视觉 Mask、Stencil 深度和矩形射线过滤区。没有 Image、RawImage、Text、Panel 或引擎复合控件图形的空 Mask 不再出现“画面未遮罩、点击却被裁掉”的分叉。
 - Editor Canvas 与 Runtime 使用相同判定。Editor 的 `maskStack`、`maskRegions` 与离屏 Alpha 合成同步停用无 Graphic Mask；Runtime 不再为这类节点生成 Stencil Push/Pop、子 Graphic Stencil Test 或 `UiMaskRegion`。无窗口回归验证 200px 子 Graphic 可越过 100px 空 Mask 正常渲染和命中，同时保留已有有效 Mask、禁用 Mask、嵌套 Mask 与 `maskable` 行为。
+
+## 188. 2026-08-01 Disabled Mask Graphic Stencil Reservation
+
+- Unity `Mask.MaskEnabled()` 只要求关联 Graphic 存在，并不要求该 Graphic 自身启用。禁用关联 Graphic 会清空它的 CanvasRenderer、因而不写入 Mask Stencil，但后代 MaskableGraphic 仍为该 Mask 保留一层 Stencil 深度并继续执行矩形射线过滤；结果是后代可见图元无法通过未写入的 Stencil，同时点击也受 Mask Rect 约束。
+- MEngine 的 Editor Canvas 现在以“已创作 Graphic 是否存在”判定 Mask source 身份，以“已启用 Graphic”单独决定是否生成遮罩画面；Runtime 在禁用 Graphic 没有图元时仍递增该子树的局部 Stencil 深度，但不会伪造 Push/Pop 几何。回归分别固定空 Mask 完全失效与禁用 Graphic Mask 保留深度这两个容易混淆的边界，并同时检查 Editor mask stack/命中与 Runtime Stencil key/Mask region。
