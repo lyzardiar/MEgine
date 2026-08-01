@@ -2031,3 +2031,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - Unity `Mask.MaskEnabled()` 只要求关联 Graphic 存在，并不要求该 Graphic 自身启用。禁用关联 Graphic 会清空它的 CanvasRenderer、因而不写入 Mask Stencil，但后代 MaskableGraphic 仍为该 Mask 保留一层 Stencil 深度并继续执行矩形射线过滤；结果是后代可见图元无法通过未写入的 Stencil，同时点击也受 Mask Rect 约束。
 - MEngine 的 Editor Canvas 现在以“已创作 Graphic 是否存在”判定 Mask source 身份，以“已启用 Graphic”单独决定是否生成遮罩画面；Runtime 在禁用 Graphic 没有图元时仍递增该子树的局部 Stencil 深度，但不会伪造 Push/Pop 几何。回归分别固定空 Mask 完全失效与禁用 Graphic Mask 保留深度这两个容易混淆的边界，并同时检查 Editor mask stack/命中与 Runtime Stencil key/Mask region。
+
+## 189. 2026-08-01 Behaviour SDK Built-in Component Exports
+
+- `@mengine/behaviour` 的公共入口现在导出 `components.ts` 中全部内置组件 token，使 Behaviour 与 AI Agent 生成的脚本可以直接通过包入口调用 `ctx.get(...)` / `ctx.set(...)`，不再依赖未公开的包内部路径。
+- UI Button 组件继续以 `UIButton` 导出，并保持场景类型名 `Button`，从而与已有 `@Button` 方法装饰器明确区分。真实包导入回归会逐一校验全部组件导出、`typeName` 和 `componentTypeName(...)` 契约。
