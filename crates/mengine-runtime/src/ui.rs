@@ -11,7 +11,7 @@ use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_rhi::{
     look_at, orthographic, perspective, FrameCamera, UiBatchKey, UiBatchPlan, UiBlendMode,
-    UiClipRect, UiPrimitive, UiSoftClip, UiStencilMode,
+    UiClipRect, UiPrimitive, UiShaderChannels, UiSoftClip, UiStencilMode,
 };
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -822,6 +822,7 @@ pub struct RuntimeUiFrame {
 struct UiInheritedState {
     canvas_group: Option<u64>,
     canvas_sorting_grid_size: Option<f32>,
+    shader_channels: UiShaderChannels,
     alpha: f32,
     interactable: bool,
     blocks_raycasts: bool,
@@ -853,6 +854,7 @@ impl Default for UiInheritedState {
         Self {
             canvas_group: None,
             canvas_sorting_grid_size: None,
+            shader_channels: UiShaderChannels::default(),
             alpha: 1.0,
             interactable: true,
             blocks_raycasts: true,
@@ -1833,6 +1835,8 @@ fn walk(
     if let Some(canvas) = world.get_component::<Canvas>(entity) {
         state.canvas_group = Some(entity.to_u64());
         state.canvas_sorting_grid_size = Some(canvas.normalized_sorting_grid_size);
+        state.shader_channels =
+            UiShaderChannels::for_canvas(canvas.additional_shader_channels, &canvas.render_mode);
         let raycaster = world.get_component::<GraphicRaycaster>(entity);
         state.raycaster_enabled = raycaster.is_some_and(|value| value.enabled);
         state.ignore_reversed_graphics = raycaster
@@ -2828,6 +2832,7 @@ fn walk(
 
     for primitive in &mut primitives[graphic_start..] {
         primitive.key.canvas_group = state.canvas_group;
+        primitive.key.shader_channels = state.shader_channels;
         primitive.canvas_sorting_grid_size = state.canvas_sorting_grid_size;
         primitive.soft_clips = if graphic_maskable {
             inherited.soft_clips
@@ -3616,6 +3621,7 @@ fn primitive(
         clip_corners: None,
         uv: [0.0, 0.0, 1.0, 1.0],
         vertex_positions: None,
+        shader_channel_data: Default::default(),
         soft_clips: [None; 8],
         canvas_sorting_grid_size: None,
         key: UiBatchKey {
@@ -3624,6 +3630,7 @@ fn primitive(
             texture: texture.into(),
             clip: Some(clip),
             blend: UiBlendMode::Alpha,
+            shader_channels: Default::default(),
             depth_test: false,
             stencil: Default::default(),
         },
@@ -5606,6 +5613,62 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["atlas", "atlas", "other"]
         );
+    }
+
+    #[test]
+    fn canvas_additional_shader_channels_propagate_with_render_mode_defaults() {
+        for (render_mode, authored, expected) in [
+            ("ScreenSpaceOverlay", 1 | 4 | 64, 1 | 4),
+            ("ScreenSpaceCamera", 2, 2 | 8 | 16),
+            ("WorldSpace", 0, 8 | 16),
+        ] {
+            let mut world = World::new();
+            let root = world.spawn_empty();
+            world.insert_component(
+                root,
+                Canvas {
+                    render_mode: render_mode.into(),
+                    additional_shader_channels: authored,
+                    ..Canvas::default()
+                },
+            );
+            world.insert_component(root, RectTransform::default());
+            world.insert_component(root, mengine_core::generated::Transform::default());
+            let image = world.spawn_empty();
+            world.insert_component(image, RectTransform::default());
+            world.insert_component(image, Image::default());
+            world.set_parent(image, Some(root));
+
+            let hierarchy = TransformHierarchy::build(&world);
+            let frame = collect_ui_frame_with_hierarchy_and_camera(
+                &world,
+                &hierarchy,
+                800,
+                600,
+                FrameCamera {
+                    view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+                    proj: orthographic(5.0, 4.0 / 3.0, 0.1, 100.0),
+                    position: Vec3::new(0.0, 0.0, 10.0),
+                },
+                &SortingLayers::default(),
+            );
+            assert_eq!(
+                frame.plan.primitives.len() + frame.world_primitives.len(),
+                1,
+                "{render_mode}"
+            );
+            let primitive = frame
+                .plan
+                .primitives
+                .first()
+                .or_else(|| frame.world_primitives.first().map(|value| &value.primitive))
+                .expect("one Canvas primitive");
+            assert_eq!(
+                primitive.key.shader_channels.bits(),
+                expected,
+                "{render_mode}"
+            );
+        }
     }
 
     #[test]

@@ -13,6 +13,7 @@ const server = await createServer({
 });
 const {
   buildUiBatches,
+  effectiveCanvasShaderChannels,
   hitTestUi,
   layoutUiOverlay,
   layoutUiWorldSpace,
@@ -21,6 +22,36 @@ const {
   '/src/ui/uiLayout.ts',
 );
 test.after(() => server.close());
+
+test('Canvas shader channels match Unity masks and camera/world defaults', () => {
+  assert.equal(effectiveCanvasShaderChannels(1 | 4 | 64, 'ScreenSpaceOverlay'), 1 | 4);
+  assert.equal(effectiveCanvasShaderChannels(2, 'ScreenSpaceCamera'), 2 | 8 | 16);
+  assert.equal(effectiveCanvasShaderChannels(0, 'WorldSpace'), 8 | 16);
+
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: {
+          render_mode: 'ScreenSpaceOverlay',
+          additional_shader_channels: 1 | 2,
+        },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: { RectTransform: rect(), Image: { sprite: 'white' } },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  assert.equal(items.find((item) => item.entity === 2).canvasShaderChannels, 1 | 2);
+  assert.equal(
+    buildUiBatches(items).find((batch) => batch.key === 'ui/image/white').shaderChannels,
+    1 | 2,
+  );
+});
 
 const rect = (overrides = {}) => ({
   anchor_min: [0.5, 0.5],

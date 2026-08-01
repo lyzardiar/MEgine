@@ -94,6 +94,8 @@ export type UiDrawItem = {
   canvasBatchRoot: number;
   /** Unity Canvas normalized spatial grid size used by overlap-aware batching. */
   canvasSortingGridSize: number;
+  /** Effective Unity AdditionalCanvasShaderChannels mask for this Canvas. */
+  canvasShaderChannels: number;
   rect: Rect;
   depth: number;
   role: 'canvas' | 'graphic';
@@ -838,6 +840,7 @@ export function layoutUiOverlay(
       inherited = {
         canvasBatchRoot: canvas.entity,
         canvasSortingGridSize: 0.1,
+        canvasShaderChannels: 0,
         opacity: 1,
         interactable: true,
         blocksRaycasts: true,
@@ -917,6 +920,10 @@ export function layoutUiOverlay(
         overridePixelPerfect?: boolean;
         normalized_sorting_grid_size?: number;
         normalizedSortingGridSize?: number;
+        additional_shader_channels?: number;
+        additionalShaderChannels?: number;
+        render_mode?: string;
+        renderMode?: string;
       } | undefined;
       const raycaster = ent.components.GraphicRaycaster as {
         enabled?: boolean;
@@ -967,6 +974,16 @@ export function layoutUiOverlay(
               0.1,
             )
           : inherited.canvasSortingGridSize,
+        canvasShaderChannels: canvasSettings
+          ? effectiveCanvasShaderChannels(
+              number(
+                canvasSettings.additional_shader_channels
+                  ?? canvasSettings.additionalShaderChannels,
+                0,
+              ),
+              canvasSettings.render_mode ?? canvasSettings.renderMode ?? 'ScreenSpaceOverlay',
+            )
+          : inherited.canvasShaderChannels,
         opacity: groupBase.opacity * Math.max(0, Math.min(1, number(group?.alpha, 1))),
         interactable: groupBase.interactable && group?.interactable !== false,
         blocksRaycasts: groupBase.blocksRaycasts
@@ -1043,6 +1060,7 @@ export function layoutUiOverlay(
           entity: ent.entity,
           canvasBatchRoot: state.canvasBatchRoot,
           canvasSortingGridSize: state.canvasSortingGridSize,
+          canvasShaderChannels: state.canvasShaderChannels,
           rect: renderedRect,
           depth: depthBase + paintOrder++,
           role: 'canvas',
@@ -1064,6 +1082,7 @@ export function layoutUiOverlay(
           entity: ent.entity,
           canvasBatchRoot: state.canvasBatchRoot,
           canvasSortingGridSize: state.canvasSortingGridSize,
+          canvasShaderChannels: state.canvasShaderChannels,
           rect: renderedRect,
           depth: depthBase + paintOrder++,
           role: 'graphic',
@@ -1364,6 +1383,7 @@ export function layoutUiOverlay(
           entity: ent.entity,
           canvasBatchRoot: state.canvasBatchRoot,
           canvasSortingGridSize: state.canvasSortingGridSize,
+          canvasShaderChannels: state.canvasShaderChannels,
           rect: renderedRect,
           depth: depthBase + paintOrder++,
           role: 'graphic',
@@ -1460,6 +1480,7 @@ export function layoutUiOverlay(
     walk(canvas, canvasRt, 0, true, undefined, {
       canvasBatchRoot: canvas.entity,
       canvasSortingGridSize: 0.1,
+      canvasShaderChannels: 0,
       opacity: 1,
       interactable: true,
       blocksRaycasts: true,
@@ -2087,6 +2108,7 @@ function imageAllowsRaycast(it: UiDrawItem, x: number, y: number): boolean {
 export type UiBatch = {
   key: string;
   canvasBatchRoot: number;
+  shaderChannels: number;
   start: number;
   end: number;
   items: UiDrawItem[];
@@ -2109,6 +2131,19 @@ function batchKey(it: UiDrawItem): string {
   if (it.image) return `ui/image/${it.image.sprite}`;
   if (it.rawImage) return `ui/raw-image/${it.rawImage.texture}`;
   return 'editor/selection';
+}
+
+function batchCompatibilityKey(item: UiDrawItem): string {
+  return `${batchKey(item)}/channels:${item.canvasShaderChannels}`;
+}
+
+const ALL_CANVAS_SHADER_CHANNELS = 1 | 2 | 4 | 8 | 16;
+
+export function effectiveCanvasShaderChannels(mask: number, renderMode: string): number {
+  const authored = Math.trunc(Number.isFinite(mask) ? mask : 0) & ALL_CANVAS_SHADER_CHANNELS;
+  return renderMode === 'ScreenSpaceCamera' || renderMode === 'WorldSpace'
+    ? authored | 8 | 16
+    : authored;
 }
 
 const DEFAULT_CANVAS_SORTING_GRID_SIZE = 0.1;
@@ -2226,7 +2261,7 @@ function optimizeCanvasBatchSegment(items: UiDrawItem[], rawGridSize: number): U
   const readyByKey = new Map<string, Set<number>>();
   const addReady = (index: number) => {
     ready.add(index);
-    const key = batchKey(items[index]);
+    const key = batchCompatibilityKey(items[index]);
     const entries = readyByKey.get(key) ?? new Set<number>();
     entries.add(index);
     readyByKey.set(key, entries);
@@ -2241,13 +2276,13 @@ function optimizeCanvasBatchSegment(items: UiDrawItem[], rawGridSize: number): U
     const unlocksBatch = matching == null
       ? [...ready].find((candidate) => outgoing[candidate].some((dependent) => (
           indegree[dependent] === 1
-          && readyByKey.has(batchKey(items[dependent]))
+          && readyByKey.has(batchCompatibilityKey(items[dependent]))
         )))
       : undefined;
     const next = matching ?? unlocksBatch ?? ready.values().next().value;
     if (next == null) break;
     ready.delete(next);
-    const key = batchKey(items[next]);
+    const key = batchCompatibilityKey(items[next]);
     const keyed = readyByKey.get(key);
     keyed?.delete(next);
     if (keyed?.size === 0) readyByKey.delete(key);
@@ -2284,13 +2319,16 @@ export function buildUiBatches(items: UiDrawItem[]): UiBatch[] {
     const item = items[index];
     const key = batchKey(item);
     const tail = batches[batches.length - 1];
-    if (tail?.key === key && tail.canvasBatchRoot === item.canvasBatchRoot) {
+    if (tail?.key === key
+      && tail.canvasBatchRoot === item.canvasBatchRoot
+      && tail.shaderChannels === item.canvasShaderChannels) {
       tail.end = index + 1;
       tail.items.push(item);
     } else {
       batches.push({
         key,
         canvasBatchRoot: item.canvasBatchRoot,
+        shaderChannels: item.canvasShaderChannels,
         start: index,
         end: index + 1,
         items: [item],

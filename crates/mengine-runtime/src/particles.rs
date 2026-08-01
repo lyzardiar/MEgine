@@ -512,6 +512,7 @@ fn collect_emitter(
                 clip_corners: None,
                 uv: [0.0, 0.0, 1.0, 1.0],
                 vertex_positions: None,
+                shader_channel_data: Default::default(),
                 soft_clips: [None; 8],
                 canvas_sorting_grid_size: None,
                 key: UiBatchKey {
@@ -520,6 +521,7 @@ fn collect_emitter(
                     texture: texture.clone(),
                     clip: None,
                     blend,
+                    shader_channels: Default::default(),
                     depth_test: false,
                     stencil: Default::default(),
                 },

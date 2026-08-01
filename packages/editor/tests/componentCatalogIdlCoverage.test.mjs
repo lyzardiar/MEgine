@@ -109,6 +109,23 @@ test('authored Graphic components require a CanvasRenderer visible to Agents', (
   }]);
 });
 
+test('Agent schema exposes Canvas additional shader channels as an editable mask', () => {
+  const field = buildAgentComponentSchema('Canvas')?.fields.find(
+    ({ name }) => name === 'additional_shader_channels',
+  );
+  assert.deepEqual({
+    type: field?.type,
+    default: field?.default,
+    editable: field?.editable,
+    hidden: field?.hidden,
+  }, {
+    type: 'number',
+    default: 0,
+    editable: true,
+    hidden: false,
+  });
+});
+
 test('AudioSource playback time is authorable through Inspector and Agent schema', () => {
   const audioSource = buildAgentComponentSchema('AudioSource');
   const time = audioSource?.fields.find((field) => field.name === 'time');

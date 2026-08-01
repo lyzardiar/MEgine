@@ -388,6 +388,7 @@ export interface Canvas {
   sortingLayer: string;
   sortingOrder: number;
   normalizedSortingGridSize: number;
+  additionalShaderChannels: number;
   targetDisplay: number;
   planeDistance: number;
 }
@@ -1019,6 +1020,7 @@ export type SerializedComponentMap = {
     sorting_layer: string;
     sorting_order: number;
     normalized_sorting_grid_size: number;
+    additional_shader_channels: number;
     target_display: number;
     plane_distance: number;
   };

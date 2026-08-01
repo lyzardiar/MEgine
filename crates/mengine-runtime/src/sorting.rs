@@ -187,6 +187,7 @@ mod tests {
                 clip_corners: None,
                 uv: [0.0, 0.0, 1.0, 1.0],
                 vertex_positions: None,
+                shader_channel_data: Default::default(),
                 soft_clips: [None; 8],
                 canvas_sorting_grid_size: None,
                 key: UiBatchKey {
@@ -195,6 +196,7 @@ mod tests {
                     texture: "white".into(),
                     clip: None,
                     blend: UiBlendMode::Alpha,
+                    shader_channels: Default::default(),
                     depth_test: false,
                     stencil: Default::default(),
                 },

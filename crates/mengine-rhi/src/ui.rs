@@ -1,6 +1,7 @@
 use bytemuck::{Pod, Zeroable};
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::sync::Arc;
 use thiserror::Error;
 use wgpu::util::DeviceExt;
 
@@ -70,6 +71,65 @@ pub struct UiSoftClip {
     pub softness: [f32; 2],
 }
 
+/// Unity AdditionalCanvasShaderChannels bit mask carried by a Canvas draw stream.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct UiShaderChannels(u32);
+
+impl UiShaderChannels {
+    pub const TEX_COORD_1: Self = Self(1 << 0);
+    pub const TEX_COORD_2: Self = Self(1 << 1);
+    pub const TEX_COORD_3: Self = Self(1 << 2);
+    pub const NORMAL: Self = Self(1 << 3);
+    pub const TANGENT: Self = Self(1 << 4);
+    pub const ALL: Self = Self((1 << 5) - 1);
+
+    pub const fn from_additional_mask(mask: i32) -> Self {
+        Self((mask as u32) & Self::ALL.0)
+    }
+
+    pub fn for_canvas(mask: i32, render_mode: &str) -> Self {
+        let authored = Self::from_additional_mask(mask).0;
+        if matches!(render_mode, "ScreenSpaceCamera" | "WorldSpace") {
+            Self(authored | Self::NORMAL.0 | Self::TANGENT.0)
+        } else {
+            Self(authored)
+        }
+    }
+
+    pub const fn bits(self) -> u32 {
+        self.0
+    }
+
+    pub const fn contains(self, channel: Self) -> bool {
+        self.0 & channel.0 == channel.0
+    }
+}
+
+/// Optional per-vertex UI streams. Values follow Unity UIVertex defaults so
+/// custom mesh producers can override individual quad slots without changing
+/// the fixed instanced UI layout.
+#[derive(Clone, Debug, PartialEq)]
+pub struct UiShaderChannelData {
+    pub uv1: [[f32; 4]; 4],
+    pub uv2: [[f32; 4]; 4],
+    pub uv3: [[f32; 4]; 4],
+    pub normals: [[f32; 4]; 4],
+    pub tangents: [[f32; 4]; 4],
+}
+
+impl Default for UiShaderChannelData {
+    fn default() -> Self {
+        Self {
+            uv1: [[0.0; 4]; 4],
+            uv2: [[0.0; 4]; 4],
+            uv3: [[0.0; 4]; 4],
+            normals: [[0.0, 0.0, -1.0, 0.0]; 4],
+            tangents: [[1.0, 0.0, 0.0, -1.0]; 4],
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct UiBatchKey {
     /// Nested Canvases are independent Unity batching islands even when their
@@ -79,6 +139,8 @@ pub struct UiBatchKey {
     pub texture: String,
     pub clip: Option<UiClipRect>,
     pub blend: UiBlendMode,
+    /// Effective shader vertex streams. Different declarations cannot batch together.
+    pub shader_channels: UiShaderChannels,
     /// Test the primitive against the scene depth buffer without writing depth.
     pub depth_test: bool,
     pub stencil: UiStencilMode,
@@ -92,6 +154,7 @@ impl Default for UiBatchKey {
             texture: "white".into(),
             clip: None,
             blend: UiBlendMode::Alpha,
+            shader_channels: UiShaderChannels::default(),
             depth_test: false,
             stencil: UiStencilMode::Disabled,
         }
@@ -116,6 +179,8 @@ pub struct UiPrimitive {
     /// order is top-left, top-right, bottom-right, bottom-left. Custom polygons
     /// let Unity-style Filled Images retain their generated mesh and UV mapping.
     pub vertex_positions: Option<[[f32; 2]; 4]>,
+    /// Allocated only when a custom UI mesh overrides Unity UIVertex defaults.
+    pub shader_channel_data: Option<Arc<UiShaderChannelData>>,
     /// Nested RectMask2D soft clips, ordered outermost to innermost.
     pub soft_clips: [Option<UiSoftClip>; 8],
     /// Canvas-native overlap analysis cell size. `None` keeps non-Canvas draw
@@ -135,6 +200,7 @@ impl UiPrimitive {
             clip_corners: None,
             uv: [0.0, 0.0, 1.0, 1.0],
             vertex_positions: None,
+            shader_channel_data: None,
             soft_clips: [None; 8],
             canvas_sorting_grid_size: None,
             key: UiBatchKey::default(),
@@ -481,7 +547,7 @@ impl From<&UiPrimitive> for UiInstance {
                 } else {
                     0.0
                 },
-                0.0,
+                value.key.shader_channels.bits() as f32,
             ],
             corners: value.clip_corners.unwrap_or([[0.0; 4]; 4]),
             vertex_positions: [
@@ -536,6 +602,31 @@ impl From<&UiPrimitive> for UiSoftClipInstance {
     }
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+struct UiShaderChannelInstance {
+    meta: [u32; 4],
+    uv1: [[f32; 4]; 4],
+    uv2: [[f32; 4]; 4],
+    uv3: [[f32; 4]; 4],
+    normals: [[f32; 4]; 4],
+    tangents: [[f32; 4]; 4],
+}
+
+impl From<&UiPrimitive> for UiShaderChannelInstance {
+    fn from(value: &UiPrimitive) -> Self {
+        let data = value.shader_channel_data.as_deref();
+        Self {
+            meta: [value.key.shader_channels.bits(), 0, 0, 0],
+            uv1: data.map_or([[0.0; 4]; 4], |value| value.uv1),
+            uv2: data.map_or([[0.0; 4]; 4], |value| value.uv2),
+            uv3: data.map_or([[0.0; 4]; 4], |value| value.uv3),
+            normals: data.map_or([[0.0, 0.0, -1.0, 0.0]; 4], |value| value.normals),
+            tangents: data.map_or([[1.0, 0.0, 0.0, -1.0]; 4], |value| value.tangents),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum UiStencilPipeline {
     Disabled,
@@ -556,7 +647,9 @@ pub(crate) struct UiRenderer {
     vertex_buffer: wgpu::Buffer,
     instance_buffer: wgpu::Buffer,
     soft_clip_buffer: wgpu::Buffer,
+    shader_channel_buffer: wgpu::Buffer,
     instance_capacity: usize,
+    shader_channel_capacity: usize,
     uniform_buffer: wgpu::Buffer,
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
@@ -609,6 +702,8 @@ impl UiRenderer {
         let instance_capacity = 256;
         let instance_buffer = create_instance_buffer(device, instance_capacity);
         let soft_clip_buffer = create_soft_clip_buffer(device, instance_capacity);
+        let shader_channel_capacity = 1;
+        let shader_channel_buffer = create_shader_channel_buffer(device, shader_channel_capacity);
         let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("ui_frame_uniform"),
             contents: bytemuck::bytes_of(&UiUniform {
@@ -640,6 +735,16 @@ impl UiRenderer {
                     },
                     count: None,
                 },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
             ],
         });
         let bind_group = create_frame_bind_group(
@@ -647,6 +752,7 @@ impl UiRenderer {
             &bind_group_layout,
             &uniform_buffer,
             &soft_clip_buffer,
+            &shader_channel_buffer,
         );
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -733,7 +839,9 @@ impl UiRenderer {
             vertex_buffer,
             instance_buffer,
             soft_clip_buffer,
+            shader_channel_buffer,
             instance_capacity,
+            shader_channel_capacity,
             uniform_buffer,
             bind_group_layout,
             bind_group,
@@ -779,15 +887,30 @@ impl UiRenderer {
     }
 
     pub fn prepare(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, plan: &UiBatchPlan) {
+        let mut recreate_bind_group = false;
         if plan.primitives.len() > self.instance_capacity {
             self.instance_capacity = plan.primitives.len().next_power_of_two();
             self.instance_buffer = create_instance_buffer(device, self.instance_capacity);
             self.soft_clip_buffer = create_soft_clip_buffer(device, self.instance_capacity);
+            recreate_bind_group = true;
+        }
+        let needs_shader_channels = plan
+            .primitives
+            .iter()
+            .any(|value| value.key.shader_channels.bits() != 0);
+        if needs_shader_channels && plan.primitives.len() > self.shader_channel_capacity {
+            self.shader_channel_capacity = plan.primitives.len().next_power_of_two();
+            self.shader_channel_buffer =
+                create_shader_channel_buffer(device, self.shader_channel_capacity);
+            recreate_bind_group = true;
+        }
+        if recreate_bind_group {
             self.bind_group = create_frame_bind_group(
                 device,
                 &self.bind_group_layout,
                 &self.uniform_buffer,
                 &self.soft_clip_buffer,
+                &self.shader_channel_buffer,
             );
         }
         if !plan.primitives.is_empty() {
@@ -799,6 +922,18 @@ impl UiRenderer {
                 .map(UiSoftClipInstance::from)
                 .collect();
             queue.write_buffer(&self.soft_clip_buffer, 0, bytemuck::cast_slice(&soft_clips));
+            if needs_shader_channels {
+                let shader_channels: Vec<UiShaderChannelInstance> = plan
+                    .primitives
+                    .iter()
+                    .map(UiShaderChannelInstance::from)
+                    .collect();
+                queue.write_buffer(
+                    &self.shader_channel_buffer,
+                    0,
+                    bytemuck::cast_slice(&shader_channels),
+                );
+            }
         }
         self.write_uniform(queue);
         self.stats = UiFrameStats {
@@ -1107,11 +1242,21 @@ fn create_soft_clip_buffer(device: &wgpu::Device, capacity: usize) -> wgpu::Buff
     })
 }
 
+fn create_shader_channel_buffer(device: &wgpu::Device, capacity: usize) -> wgpu::Buffer {
+    device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("ui_shader_channels"),
+        size: (capacity.max(1) * std::mem::size_of::<UiShaderChannelInstance>()) as u64,
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    })
+}
+
 fn create_frame_bind_group(
     device: &wgpu::Device,
     layout: &wgpu::BindGroupLayout,
     uniform_buffer: &wgpu::Buffer,
     soft_clip_buffer: &wgpu::Buffer,
+    shader_channel_buffer: &wgpu::Buffer,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("ui_frame_bg"),
@@ -1124,6 +1269,10 @@ fn create_frame_bind_group(
             wgpu::BindGroupEntry {
                 binding: 1,
                 resource: soft_clip_buffer.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: shader_channel_buffer.as_entire_binding(),
             },
         ],
     })
@@ -1143,6 +1292,15 @@ struct UiSoftClipInstance {
     clips: array<UiSoftClip, 8>,
 };
 @group(0) @binding(1) var<storage, read> soft_clip_instances: array<UiSoftClipInstance>;
+struct UiShaderChannelInstance {
+    channel_mask: vec4<u32>,
+    uv1: array<vec4<f32>, 4>,
+    uv2: array<vec4<f32>, 4>,
+    uv3: array<vec4<f32>, 4>,
+    normals: array<vec4<f32>, 4>,
+    tangents: array<vec4<f32>, 4>,
+};
+@group(0) @binding(2) var<storage, read> shader_channel_instances: array<UiShaderChannelInstance>;
 @group(1) @binding(0) var ui_texture: texture_2d<f32>;
 @group(1) @binding(1) var ui_sampler: sampler;
 
@@ -1168,6 +1326,12 @@ struct VsOut {
     @location(1) uv: vec2<f32>,
     @location(2) alpha_clip: f32,
     @location(3) @interpolate(flat) instance_index: u32,
+    @location(4) uv1: vec4<f32>,
+    @location(5) uv2: vec4<f32>,
+    @location(6) uv3: vec4<f32>,
+    @location(7) normal: vec3<f32>,
+    @location(8) tangent: vec4<f32>,
+    @location(9) @interpolate(flat) shader_channels: u32,
 };
 
 @vertex
@@ -1202,6 +1366,26 @@ fn vs_main(input: VsIn) -> VsOut {
     output.uv = input.uv_rect.xy + vertex_position * input.uv_rect.zw;
     output.alpha_clip = input.projection.z;
     output.instance_index = input.instance_index;
+    let channels = u32(input.projection.w);
+    output.uv1 = vec4<f32>(0.0);
+    output.uv2 = vec4<f32>(0.0);
+    output.uv3 = vec4<f32>(0.0);
+    output.normal = vec3<f32>(0.0);
+    output.tangent = vec4<f32>(0.0);
+    if channels != 0u {
+        let channel_data = shader_channel_instances[input.instance_index];
+        let vertex_slot = select(
+            u32(input.position.x),
+            3u - u32(input.position.x),
+            input.position.y > 0.5,
+        );
+        output.uv1 = select(output.uv1, channel_data.uv1[vertex_slot], (channels & 1u) != 0u);
+        output.uv2 = select(output.uv2, channel_data.uv2[vertex_slot], (channels & 2u) != 0u);
+        output.uv3 = select(output.uv3, channel_data.uv3[vertex_slot], (channels & 4u) != 0u);
+        output.normal = select(output.normal, channel_data.normals[vertex_slot].xyz, (channels & 8u) != 0u);
+        output.tangent = select(output.tangent, channel_data.tangents[vertex_slot], (channels & 16u) != 0u);
+    }
+    output.shader_channels = channels;
     return output;
 }
 
@@ -1419,6 +1603,44 @@ mod tests {
     }
 
     #[test]
+    fn shader_channel_mask_matches_unity_and_forces_camera_basis_streams() {
+        assert_eq!(UiShaderChannels::TEX_COORD_1.bits(), 1);
+        assert_eq!(UiShaderChannels::TEX_COORD_2.bits(), 2);
+        assert_eq!(UiShaderChannels::TEX_COORD_3.bits(), 4);
+        assert_eq!(UiShaderChannels::NORMAL.bits(), 8);
+        assert_eq!(UiShaderChannels::TANGENT.bits(), 16);
+        assert_eq!(
+            UiShaderChannels::for_canvas(1 | 4 | 64, "ScreenSpaceOverlay").bits(),
+            1 | 4
+        );
+        assert_eq!(
+            UiShaderChannels::for_canvas(2, "ScreenSpaceCamera").bits(),
+            2 | 8 | 16
+        );
+        assert_eq!(UiShaderChannels::for_canvas(0, "WorldSpace").bits(), 8 | 16);
+    }
+
+    #[test]
+    fn shader_channel_streams_reach_gpu_storage_and_split_batches() {
+        let mut base = primitive("atlas", None);
+        base.key.shader_channels = UiShaderChannels::TEX_COORD_1;
+        let mut channel_data = UiShaderChannelData::default();
+        channel_data.uv1[2] = [0.2, 0.4, 0.6, 0.8];
+        base.shader_channel_data = Some(Arc::new(channel_data));
+        let gpu = UiShaderChannelInstance::from(&base);
+        assert_eq!(gpu.meta[0], 1);
+        assert_eq!(gpu.uv1[2], [0.2, 0.4, 0.6, 0.8]);
+        assert_eq!(gpu.normals[0], [0.0, 0.0, -1.0, 0.0]);
+        assert_eq!(gpu.tangents[0], [1.0, 0.0, 0.0, -1.0]);
+        assert_eq!(std::mem::size_of::<UiShaderChannelInstance>(), 336);
+
+        let mut normal = base.clone();
+        normal.key.shader_channels = UiShaderChannels::NORMAL;
+        let plan = UiBatchPlan::build(vec![base, normal]);
+        assert_eq!(plan.batches.len(), 2);
+    }
+
+    #[test]
     fn depth_state_changes_split_batches_and_reaches_instances() {
         let overlay = primitive("atlas", None);
         let mut camera = primitive("atlas", None);
@@ -1509,6 +1731,10 @@ mod tests {
         push.key.stencil = UiStencilMode::Push { reference: 0 };
         let mut child = primitive("white", None);
         child.key.stencil = UiStencilMode::Test { reference: 1 };
+        child.key.shader_channels = UiShaderChannels::for_canvas(1 | 2 | 4, "WorldSpace");
+        let mut channel_data = UiShaderChannelData::default();
+        channel_data.uv2[3] = [0.25, 0.5, 0.75, 1.0];
+        child.shader_channel_data = Some(Arc::new(channel_data));
         let mut pop = primitive("white", None);
         pop.key.stencil = UiStencilMode::Pop { reference: 1 };
         let plan = UiBatchPlan::build(vec![push, child, pop]);

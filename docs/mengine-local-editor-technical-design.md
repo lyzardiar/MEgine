@@ -2075,3 +2075,10 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Editor Canvas 与原生 Runtime 不再只合并相邻图元。每个独立 Canvas 先用该归一化尺寸把全部可渲染包围盒划入空间网格，再为所有实际相交的透明图元建立原 Hierarchy painter-order 约束；拓扑排序只在当前无约束候选中优先延续相同批次键。因此非重叠的 `A(material X) → B(material Y) → C(material X)` 可以安全变成一个 X 批次加一个 Y 批次，而 B 同时覆盖 A/C 时仍严格保持 A→B→C。
 - 旋转 RectTransform、World Space 投影四边形与 Scissor Clip 都使用保守屏幕包围盒参与重叠判断；Mask/Stencil、Softness、Nested Canvas batching island 和非 Canvas 2D/3D 绘制流不跨边界重排。网格轴向格数、格引用数和重叠边数都有确定性上限；超限安全回退原顺序，防止恶意极小值或全屏重叠控件导致无界内存，同时不牺牲最终绘制正确性。
 - 无窗口回归覆盖默认/Inspector/Agent schema、字段传播、非重叠跨材质合批、重叠透明顺序、`0 → 0.1` 回退、嵌套 Canvas 边界，以及 Editor 与 Runtime 相同的批次数和图元顺序。
+
+## 197. 2026-08-01 Unity Canvas Additional Shader Channels
+
+- `Canvas.additional_shader_channels` 对齐 Unity `AdditionalCanvasShaderChannels` 位掩码：TexCoord1/2/3、Normal、Tangent 分别为 1/2/4/8/16，非法高位在进入渲染链路时被丢弃。Screen Space Overlay 固有 Position、Color、UV0；Screen Space Camera 与 World Space 还会强制启用 Normal、Tangent。IDL、生成的 Rust/TypeScript/JSON Schema、Behaviour token、组件目录、Inspector 多选位掩码与 Agent component schema 共享默认值 `0`。
+- Runtime 把最近 Canvas 的有效通道掩码写入每个 `UiBatchKey`，不同顶点声明不允许合批；Editor Canvas 预览使用同一掩码做批次隔离并在 `UiBatch.shaderChannels` 中公开结果。嵌套 Canvas 会重新计算自己的掩码，不把父 Canvas 的额外流错误继承到独立 batching island。
+- RHI 新增逐实例只读 shader-channel storage buffer，完整携带每个 quad 四个顶点的 UV1/UV2/UV3、Normal、Tangent。缺省值对齐 Unity `UIVertex`：UV 为零、Normal 为 Vector3.back、Tangent 为 `(1,0,0,-1)`；WGSL 顶点阶段按掩码读取并输出这些流，同时保持原有 12 个顶点属性不变，避免突破 WebGPU 默认顶点属性上限。该链路是真实 GPU 数据契约，不是假 Inspector 字段；现有内置 UI shader 尚不使用额外流着色，自定义 UI shader/material authoring 仍是后续独立能力。
+- 无窗口回归覆盖 Unity 位值和 RenderMode 隐式流、IDL/Inspector/Agent 默认值、Editor/Runtime 传播与批次拆分、GPU storage 布局、WGSL 解析以及可用 headless adapter 上的真实管线创建与提交。

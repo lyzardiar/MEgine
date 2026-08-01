@@ -892,6 +892,18 @@ function GenericCompEditor(props: {
           );
         }
         if (typeof val === 'number') {
+          if (meta?.kind === 'flags') {
+            return (
+              <BitFlagsField
+                key={key}
+                label={label}
+                value={mixed ? 0 : val}
+                mixed={mixed}
+                options={meta.bitOptions ?? []}
+                onChange={setValue}
+              />
+            );
+          }
           if (meta?.kind === 'layer-mask') {
             return (
               <LayerMaskField
@@ -1019,6 +1031,48 @@ function GenericCompEditor(props: {
         );
       })}
     </>
+  );
+}
+
+function BitFlagsField(props: {
+  label: string;
+  value: number;
+  mixed: boolean;
+  options: Array<{ value: number; label: string }>;
+  onChange: (value: number) => void;
+}) {
+  const validMask = props.options.reduce((mask, option) => mask | option.value, 0);
+  const mask = Math.trunc(props.value) & validMask;
+  const selected = props.options.filter((option) => (mask & option.value) !== 0);
+  const summary = props.mixed
+    ? 'Mixed values'
+    : selected.length === 0
+      ? 'None'
+      : selected.map((option) => option.label).join(', ');
+  return (
+    <div className="field-row layer-mask-field bit-flags-field">
+      <label>{props.label}</label>
+      <details>
+        <summary aria-label={props.label}>{summary}</summary>
+        <div className="layer-mask-menu">
+          <div>
+            <button type="button" onClick={() => props.onChange(0)}>None</button>
+            <button type="button" onClick={() => props.onChange(validMask)}>Everything</button>
+          </div>
+          {props.options.map((option) => (
+            <label key={option.value}>
+              <input
+                type="checkbox"
+                checked={(mask & option.value) !== 0}
+                aria-label={`${props.label} ${option.label}`}
+                onChange={() => props.onChange(mask ^ option.value)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
+      </details>
+    </div>
   );
 }
 

@@ -273,6 +273,7 @@ fn project_line(
                     clip_corners: None,
                     uv: [0.0, 0.0, 1.0, 1.0],
                     vertex_positions: None,
+                    shader_channel_data: Default::default(),
                     soft_clips: [None; 8],
                     canvas_sorting_grid_size: None,
                     key: UiBatchKey {
@@ -281,6 +282,7 @@ fn project_line(
                         texture: "white".into(),
                         clip: None,
                         blend: UiBlendMode::Alpha,
+                        shader_channels: Default::default(),
                         depth_test: false,
                         stencil: Default::default(),
                     },
@@ -380,6 +382,7 @@ fn project_sprite(
                 if sprite.flip_y { -1.0 } else { 1.0 },
             ],
             vertex_positions: None,
+            shader_channel_data: Default::default(),
             soft_clips: [None; 8],
             canvas_sorting_grid_size: None,
             key: UiBatchKey {
@@ -392,6 +395,7 @@ fn project_sprite(
                 },
                 clip: None,
                 blend: UiBlendMode::Alpha,
+                shader_channels: Default::default(),
                 depth_test: false,
                 stencil: Default::default(),
             },

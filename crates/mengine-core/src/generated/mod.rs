@@ -1501,6 +1501,7 @@ pub struct Canvas {
     pub sorting_layer: String,
     pub sorting_order: i32,
     pub normalized_sorting_grid_size: f32,
+    pub additional_shader_channels: i32,
     pub target_display: i32,
     pub plane_distance: f32,
 }
@@ -1517,6 +1518,7 @@ impl Default for Canvas {
             sorting_layer: "default".into(),
             sorting_order: 0,
             normalized_sorting_grid_size: 0.1,
+            additional_shader_channels: 0,
             target_display: 0,
             plane_distance: 100.0,
         }

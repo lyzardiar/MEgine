@@ -40,6 +40,7 @@ const UNITY_CANVAS_DEFAULTS = {
   sorting_layer: 'default',
   sorting_order: 0,
   normalized_sorting_grid_size: 0.1,
+  additional_shader_channels: 0,
   target_display: 0,
   plane_distance: 100,
 };
@@ -68,6 +69,17 @@ test('Canvas catalog exposes all render modes and camera-aware defaults', () => 
     label: 'Normalized Sorting Grid Size',
     min: 0,
     step: 0.01,
+  });
+  assert.deepEqual(getBuiltinInspectorField('Canvas', 'additional_shader_channels'), {
+    label: 'Additional Shader Channels',
+    kind: 'flags',
+    bitOptions: [
+      { value: 1, label: 'TexCoord1' },
+      { value: 2, label: 'TexCoord2' },
+      { value: 4, label: 'TexCoord3' },
+      { value: 8, label: 'Normal' },
+      { value: 16, label: 'Tangent' },
+    ],
   });
   assert.equal(getBuiltinInspectorField('Canvas', 'target_display')?.kind, 'display');
   assert.deepEqual(getBuiltinInspectorField('Canvas', 'target_display')?.visibleWhen, {

@@ -29,9 +29,11 @@ export type InspectorFieldMeta = {
     | 'sprite-list'
     | 'vector2-list'
     | 'layer-mask'
+    | 'flags'
     | 'display'
     | 'multiline';
   options?: InspectorOption[];
+  bitOptions?: Array<{ value: number; label: string }>;
   assetKinds?: Array<
     | 'animation'
     | 'animator-controller'
@@ -445,6 +447,17 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       label: 'Normalized Sorting Grid Size',
       min: 0,
       step: 0.01,
+    },
+    additional_shader_channels: {
+      label: 'Additional Shader Channels',
+      kind: 'flags',
+      bitOptions: [
+        { value: 1, label: 'TexCoord1' },
+        { value: 2, label: 'TexCoord2' },
+        { value: 4, label: 'TexCoord3' },
+        { value: 8, label: 'Normal' },
+        { value: 16, label: 'Tangent' },
+      ],
     },
     override_sorting: {},
   },
