@@ -308,6 +308,81 @@ test('RectMask2D uses Unity left, bottom, right, top padding order', () => {
   }]);
 });
 
+test('MaskableGraphic can ignore parent masks without escaping non-mask viewports', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [100, 100] }),
+        Image: { raycast_target: false },
+        RectMask2D: { softness: [4, 6] },
+        Mask: { enabled: true, show_mask_graphic: false },
+        CanvasGroup: { alpha: 0.5 },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [200, 200] }),
+        Image: { maskable: true, raycast_target: true },
+      },
+    },
+    {
+      entity: 4,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [200, 200] }),
+        Image: { maskable: false, raycast_target: true },
+      },
+    },
+    {
+      entity: 5,
+      parent: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [200, 0], size_delta: [80, 80] }),
+        ScrollView: { horizontal: false, vertical: true },
+      },
+    },
+    {
+      entity: 6,
+      parent: 5,
+      components: {
+        RectTransform: rect({ size_delta: [200, 200] }),
+        Image: { maskable: false, raycast_target: true },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  );
+  const masked = items.find((item) => item.entity === 3);
+  const unmasked = items.find((item) => item.entity === 4);
+  const scrollChild = items.find((item) => item.entity === 6);
+  assert.deepEqual(masked.clip, { x: 350, y: 250, w: 100, h: 100 });
+  assert.deepEqual(masked.maskStack, [2]);
+  assert.equal(masked.maskRegions.length, 1);
+  assert.deepEqual(masked.softClips.map((clip) => clip.softness), [[4, 6]]);
+  assert.deepEqual(unmasked.clip, { x: 0, y: 0, w: 800, h: 600 });
+  assert.deepEqual(unmasked.maskStack, []);
+  assert.deepEqual(unmasked.maskRegions, []);
+  assert.deepEqual(unmasked.softClips, []);
+  assert.equal(unmasked.opacity, 0.5);
+  assert.equal(hitTestUi(items, 475, 300)?.entity, 4);
+  assert.deepEqual(scrollChild.clip, { x: 560, y: 260, w: 80, h: 80 });
+});
+
 test('Game View filters Overlay and Camera canvases by their effective target display', () => {
   const entities = [
     {

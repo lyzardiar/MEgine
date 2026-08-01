@@ -2015,3 +2015,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `RectMask2D.padding` 现在严格采用 Unity uGUI 的 `Left, Bottom, Right, Top` 顺序；Editor Canvas 与 Runtime 使用专用 L/B/R/T inset，通用 `LayoutGroup.padding` 继续保持 L/T/R/B，避免两类字段互相改义。Inspector 明确显示四边顺序，非对称回归同时约束硬裁剪、Softness 基准和命中区域。
 - 旧资源此前按 L/T/R/B 写入，因此 Scene 格式升级到 v3，并在加载 v1/v2 时交换 Padding 的 Bottom/Top；仅 v1 继续补齐历史隐式 GraphicRaycaster。Prefab 格式升级到 v2，递归迁移 v1 根节点与所有子节点。当前版本资源不重复迁移，Editor 与 Rust 载入器使用相同的版本边界并拒绝未知新版本。
 - Agent 场景 JSON 校验与 MCP/命令说明同步接受 Scene v1、v2、v3；导入后仍由统一迁移链进入当前版本。回归覆盖 Editor/Runtime 非对称裁剪、Scene 两代迁移与当前值保持、Prefab 递归迁移与当前值保持，确保后台 Agent 写入和磁盘加载不会产生不同语义。
+
+## 186. 2026-08-01 Unity MaskableGraphic Masking Control
+
+- `Image`、`RawImage`、`Text` 与引擎 `Panel` 统一新增 `maskable`，默认值为 true；IDL、生成的 Rust/TypeScript API、组件目录、Inspector 与 Agent 组件 schema 共享同一契约。设为 false 时，该 Graphic 不再接收祖先 `Mask` 的 Stencil 测试，也不再注册到祖先 `RectMask2D` 的硬裁剪或 Softness，但同实体作为 `Mask` 源时仍独立写入自己的 Stencil，保持 Unity 中 `Mask` 与 `MaskableGraphic` 的职责边界。
+- Editor Canvas 与 Runtime 将基础视口裁剪和 RectMask 裁剪拆成两条继承链。`maskable=false` 只移除 Mask/RectMask 过滤，不会逃出 Game View、ScrollView、ListView 或其他非遮罩视口；CanvasGroup 的 Alpha、交互和射线开关也继续生效。射线命中、可见图元、软裁剪栈与 Stencil 状态使用同一 maskable 判定，避免编辑器预览、后台 Agent 快照和 Player 结果分叉。
+- 无窗口回归覆盖四类 Graphic 默认值与 Inspector、Mask 与 RectMask2D 同节点的组合、嵌套 Softness、关闭 maskable 后的渲染和命中、CanvasGroup 继承，以及 ScrollView 基础裁剪保持；Rust 回归同时检查控制区域、GPU Stencil 键、Softness 栈和最终 Alpha。

@@ -947,6 +947,9 @@
       "image_type": {
         "type": "string"
       },
+      "maskable": {
+        "type": "boolean"
+      },
       "pixels_per_unit_multiplier": {
         "type": "number"
       },
@@ -974,6 +977,7 @@
     },
     "required": [
       "enabled",
+      "maskable",
       "sprite",
       "color",
       "image_type",
@@ -1493,6 +1497,9 @@
       "enabled": {
         "type": "boolean"
       },
+      "maskable": {
+        "type": "boolean"
+      },
       "raycast_padding": {
         "items": {
           "type": "number"
@@ -1505,6 +1512,7 @@
     },
     "required": [
       "enabled",
+      "maskable",
       "color",
       "border_color",
       "border_width",
@@ -1891,6 +1899,9 @@
       "enabled": {
         "type": "boolean"
       },
+      "maskable": {
+        "type": "boolean"
+      },
       "raycast_padding": {
         "items": {
           "type": "number"
@@ -1912,6 +1923,7 @@
     },
     "required": [
       "enabled",
+      "maskable",
       "texture",
       "color",
       "uv_rect",
@@ -2590,6 +2602,9 @@
       "font_size": {
         "type": "number"
       },
+      "maskable": {
+        "type": "boolean"
+      },
       "outline_color": {
         "items": {
           "type": "number"
@@ -2617,6 +2632,7 @@
     },
     "required": [
       "enabled",
+      "maskable",
       "text",
       "color",
       "font_size",

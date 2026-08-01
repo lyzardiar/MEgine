@@ -370,6 +370,12 @@ function intersectRect(a: Rect, b: Rect): Rect {
   return { x, y, w: Math.max(0, right - x), h: Math.max(0, bottom - y) };
 }
 
+function intersectOptionalRect(a: Rect | undefined, b: Rect | undefined): Rect | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  return intersectRect(a, b);
+}
+
 function insetRect(rect: Rect, raw: unknown, scale: number): Rect {
   const p = Array.isArray(raw) ? raw : [0, 0, 0, 0];
   const left = number(p[0], 0) * scale;
@@ -840,6 +846,7 @@ export function layoutUiOverlay(
         softClips: [] as UiSoftClip[],
       },
       inheritedClip?: Rect,
+      inheritedRectMaskClip?: Rect,
     ) => {
       const ownCanvas = ent.components.Canvas as { enabled?: boolean } | undefined;
       if (ownCanvas?.enabled === false) return;
@@ -923,6 +930,8 @@ export function layoutUiOverlay(
         || authoredText != null
         || authoredPanel != null;
       const hasEnabledGraphic = img != null || rawImage != null || text != null || panel != null;
+      const graphicSource = img ?? rawImage ?? text ?? panel;
+      const graphicMaskable = graphicSource?.maskable !== false;
       const receivesGraphicRaycast = !hasAuthoredGraphic
         || graphicRaycastTarget(img, true)
         || graphicRaycastTarget(rawImage, true)
@@ -968,15 +977,18 @@ export function layoutUiOverlay(
         maskRegions: inherited.maskRegions,
         softClips: inherited.softClips,
       };
-      const clip = inheritedClip;
+      const clip = graphicMaskable
+        ? intersectOptionalRect(inheritedClip, inheritedRectMaskClip)
+        : inheritedClip;
       let childClip = inheritedClip;
+      let childRectMaskClip = inheritedRectMaskClip;
       let ownSoftClip: UiSoftClip | undefined;
       if (rectMask && rectMask.enabled !== false) {
         const inset = insetRectLbrt(rect, rectMask.padding, scale);
         const maskRect = state.pixelPerfect
           ? { x: Math.round(inset.x), y: Math.round(inset.y), w: Math.round(inset.w), h: Math.round(inset.h) }
           : inset;
-        childClip = childClip ? intersectRect(childClip, maskRect) : maskRect;
+        childRectMaskClip = intersectOptionalRect(childRectMaskClip, maskRect);
         const softness = number2(rectMask.softness, [0, 0]);
         ownSoftClip = {
           rect: maskRect,
@@ -1000,6 +1012,10 @@ export function layoutUiOverlay(
         raycastPaddingSource?.raycast_padding ?? raycastPaddingSource?.raycastPadding,
         [0, 0, 0, 0],
       ).map((value) => value * scale) as [number, number, number, number];
+      const ownMaskEnabled = stencilMask?.enabled !== false && stencilMask != null;
+      const itemMaskStack = graphicMaskable || ownMaskEnabled ? state.visualMasks : [];
+      const itemMaskRegions = graphicMaskable ? state.maskRegions : [];
+      const itemSoftClips = graphicMaskable ? state.softClips : [];
 
       if (isCanvas) {
         out.push({
@@ -1016,9 +1032,9 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
-          softClips: state.softClips,
-          maskStack: state.visualMasks,
-          maskRegions: state.maskRegions,
+          softClips: itemSoftClips,
+          maskStack: itemMaskStack,
+          maskRegions: itemMaskRegions,
           selected: selectedIds.has(ent.entity),
         });
       } else if (hasAuthoredGraphic || btn || toggle || slider || scrollbar || progress || input || dropdown || list || scroll || tabs) {
@@ -1039,16 +1055,16 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
-          softClips: state.softClips,
-          mask: stencilMask?.enabled !== false && stencilMask != null
+          softClips: itemSoftClips,
+          mask: ownMaskEnabled
             ? {
                 showGraphic:
                   stencilMask.show_mask_graphic !== false
                   && stencilMask.showMaskGraphic !== false,
               }
             : undefined,
-          maskStack: state.visualMasks,
-          maskRegions: state.maskRegions,
+          maskStack: itemMaskStack,
+          maskRegions: itemMaskRegions,
           image: img
             ? {
                 color: color4(img.color, [1, 1, 1, 1]),
@@ -1333,9 +1349,9 @@ export function layoutUiOverlay(
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
           clip,
-          softClips: state.softClips,
-          maskStack: state.visualMasks,
-          maskRegions: state.maskRegions,
+          softClips: itemSoftClips,
+          maskStack: itemMaskStack,
+          maskRegions: itemMaskRegions,
           selected: true,
         });
       }
@@ -1355,7 +1371,7 @@ export function layoutUiOverlay(
           ? [...state.visualMasks, ent.entity]
           : state.visualMasks;
         childState = {
-          ...state,
+          ...childState,
           visualMasks: nextVisualMasks,
           maskRegions: nextMaskRegions,
         };
@@ -1381,7 +1397,16 @@ export function layoutUiOverlay(
         : rect;
       children.forEach((child, index) => {
         const forced = layout ? layoutChildRect(childParent, layout, index, children.length, scale) : undefined;
-        walk(child, childParent, depth + 1, false, forced, childState, childClip);
+        walk(
+          child,
+          childParent,
+          depth + 1,
+          false,
+          forced,
+          childState,
+          childClip,
+          childRectMaskClip,
+        );
       });
     };
 

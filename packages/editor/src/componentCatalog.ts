@@ -315,6 +315,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     description: 'UI 图形',
     create: () => ({
       enabled: true,
+      maskable: true,
       sprite: 'white',
       color: [1, 1, 1, 1],
       image_type: 'Simple',
@@ -489,6 +490,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     description: 'Texture view with an explicit normalized UV rectangle',
     create: () => ({
       enabled: true,
+      maskable: true,
       texture: 'white',
       color: [1, 1, 1, 1],
       uv_rect: [0, 0, 1, 1],
@@ -540,6 +542,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     description: 'UI 文本标签',
     create: () => ({
       enabled: true,
+      maskable: true,
       text: 'Text',
       color: [1, 1, 1, 1],
       font_size: 16,
@@ -761,6 +764,7 @@ export function createUiImageComponents(color: [number, number, number, number] 
     RectTransform: defaultRectTransform({ size_delta: [160, 40] }),
     Image: {
       enabled: true,
+      maskable: true,
       sprite: 'white',
       color,
       image_type: 'Simple',
@@ -785,6 +789,7 @@ export function createUiButtonComponents() {
     RectTransform: defaultRectTransform({ size_delta: [160, 40] }),
     Image: {
       enabled: true,
+      maskable: true,
       sprite: 'white',
       color: [0.25, 0.45, 0.85, 1],
       image_type: 'Simple',
@@ -828,6 +833,7 @@ export function createUiRawImageComponents(color: [number, number, number, numbe
     RectTransform: defaultRectTransform({ size_delta: [160, 100] }),
     RawImage: {
       enabled: true,
+      maskable: true,
       texture: 'white',
       color,
       uv_rect: [0, 0, 1, 1],
@@ -920,6 +926,7 @@ export function createUiTextComponents(text = 'Text') {
     RectTransform: defaultRectTransform({ size_delta: [200, 36] }),
     Text: {
       enabled: true,
+      maskable: true,
       text,
       color: [1, 1, 1, 1],
       font_size: 16,
@@ -989,6 +996,7 @@ export function createUiPanelComponents() {
     RectTransform: defaultRectTransform({ size_delta: [320, 240] }),
     Panel: {
       enabled: true,
+      maskable: true,
       color: [0.12, 0.14, 0.18, 0.96],
       border_color: [0.32, 0.36, 0.44, 1],
       border_width: 1,
@@ -1003,6 +1011,7 @@ export function createUiLayoutGroupComponents() {
     RectTransform: defaultRectTransform({ size_delta: [360, 200] }),
     Panel: {
       enabled: true,
+      maskable: true,
       color: [0.08, 0.09, 0.12, 0.9],
       border_color: [0.3, 0.34, 0.42, 1],
       border_width: 1,

@@ -838,7 +838,10 @@ struct UiWalkLayout {
     parent_rect: UiRect,
     scale: f32,
     sprite_pixel_scale: f32,
+    /// Viewport and control clipping that every Graphic must retain.
     clip: UiClipRect,
+    /// RectMask2D clipping, ignored by MaskableGraphic when maskable is false.
+    rect_mask_clip: Option<UiRect>,
     forced_rect: Option<UiRect>,
 }
 
@@ -1087,6 +1090,7 @@ fn collect_ui_frame_internal(
                 scale,
                 sprite_pixel_scale,
                 clip,
+                rect_mask_clip: None,
                 forced_rect: Some(canvas_rect),
             },
             UiInheritedState {
@@ -1793,7 +1797,8 @@ fn walk(
         parent_rect,
         scale,
         sprite_pixel_scale,
-        clip,
+        clip: base_clip,
+        rect_mask_clip,
         forced_rect,
     } = layout_state;
     let mut rect = forced_rect.unwrap_or_else(|| solve_rect(parent_rect, &rect_transform, scale));
@@ -1841,7 +1846,8 @@ fn walk(
         }
     }
     state = apply_canvas_group(state, world.get_component::<CanvasGroup>(entity));
-    let mut child_clip = clip;
+    let mut child_clip = base_clip;
+    let mut child_rect_mask_clip = rect_mask_clip;
     if let Some(mask) = world.get_component::<RectMask2D>(entity) {
         if mask.enabled {
             let mut mask_rect = inset_rect_lbrt(rect, mask.padding, scale);
@@ -1851,7 +1857,10 @@ fn walk(
                 mask_rect.width = mask_rect.width.round();
                 mask_rect.height = mask_rect.height.round();
             }
-            child_clip = intersect_clip(child_clip, mask_rect);
+            child_rect_mask_clip = Some(match child_rect_mask_clip {
+                Some(inherited) => intersect_rect(inherited, mask_rect),
+                None => mask_rect,
+            });
             if let Some(slot) = state.soft_clips.iter_mut().find(|slot| slot.is_none()) {
                 *slot = Some(UiSoftClip {
                     rect: [mask_rect.x, mask_rect.y, mask_rect.width, mask_rect.height],
@@ -1882,6 +1891,17 @@ fn walk(
         || authored_panel.is_some();
     let has_enabled_graphic =
         image.is_some() || raw_image.is_some() || text.is_some() || panel.is_some();
+    let graphic_maskable = image
+        .map(|graphic| graphic.maskable)
+        .or_else(|| raw_image.map(|graphic| graphic.maskable))
+        .or_else(|| text.map(|graphic| graphic.maskable))
+        .or_else(|| panel.map(|graphic| graphic.maskable))
+        .unwrap_or(true);
+    let clip = if graphic_maskable {
+        rect_mask_clip.map_or(base_clip, |mask_clip| intersect_clip(base_clip, mask_clip))
+    } else {
+        base_clip
+    };
     let receives_graphic_raycast = !has_authored_graphic
         || image.is_some_and(|graphic| graphic.raycast_target)
         || raw_image.is_some_and(|graphic| graphic.raycast_target)
@@ -2789,7 +2809,11 @@ fn walk(
 
     for primitive in &mut primitives[graphic_start..] {
         primitive.key.canvas_group = state.canvas_group;
-        primitive.soft_clips = inherited.soft_clips;
+        primitive.soft_clips = if graphic_maskable {
+            inherited.soft_clips
+        } else {
+            [None; 8]
+        };
     }
 
     let mask = world
@@ -2824,7 +2848,7 @@ fn walk(
             }
             state.stencil_depth += 1;
         } else {
-            if state.stencil_depth > 0 {
+            if graphic_maskable && state.stencil_depth > 0 {
                 for primitive in &mut graphic {
                     primitive.key.stencil = UiStencilMode::Test {
                         reference: state.stencil_depth,
@@ -2894,7 +2918,11 @@ fn walk(
         control.raycast_padding = raycast_padding;
         control.blocking_objects = state.blocking_objects;
         control.blocking_mask = state.blocking_mask;
-        control.mask_regions = inherited.mask_regions;
+        control.mask_regions = if graphic_maskable {
+            inherited.mask_regions
+        } else {
+            [None; 8]
+        };
         control.image_alpha_hit_test = image_alpha_hit_test.clone();
     }
     controls[control_start..].sort_by_key(|control| {
@@ -2976,6 +3004,7 @@ fn walk(
                 scale,
                 sprite_pixel_scale,
                 clip: child_clip,
+                rect_mask_clip: child_rect_mask_clip,
                 forced_rect: forced,
             },
             state,
@@ -4939,6 +4968,7 @@ mod tests {
             image,
             RawImage {
                 enabled: true,
+                maskable: true,
                 texture: "Assets/UI/avatar.png".into(),
                 color: [0.5, 0.75, 1.0, 0.8],
                 uv_rect: [0.25, 0.0, 0.5, 1.0],
@@ -5727,6 +5757,168 @@ mod tests {
             .find(|primitive| primitive.key.material == "ui/image")
             .unwrap();
         assert!(root_image.soft_clips.iter().all(Option::is_none));
+    }
+
+    #[test]
+    fn maskable_graphic_ignores_parent_stencil_and_rect_masks() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(
+            canvas,
+            RectTransform {
+                anchor_min: [0.0, 0.0],
+                anchor_max: [1.0, 1.0],
+                size_delta: [0.0, 0.0],
+                ..RectTransform::default()
+            },
+        );
+
+        let mask = world.spawn_empty();
+        world.insert_component(
+            mask,
+            RectTransform {
+                size_delta: [100.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            mask,
+            Image {
+                raycast_target: false,
+                ..Image::default()
+            },
+        );
+        world.insert_component(mask, Mask::default());
+        world.insert_component(
+            mask,
+            CanvasGroup {
+                alpha: 0.5,
+                ..CanvasGroup::default()
+            },
+        );
+        world.insert_component(
+            mask,
+            RectMask2D {
+                softness: [4.0, 6.0],
+                ..RectMask2D::default()
+            },
+        );
+        world.set_parent(mask, Some(canvas));
+
+        let masked = world.spawn_empty();
+        world.insert_component(
+            masked,
+            RectTransform {
+                anchored_position: [-120.0, 0.0],
+                size_delta: [200.0, 200.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(masked, Image::default());
+        world.insert_component(masked, Button::default());
+        world.set_parent(masked, Some(mask));
+
+        let unmasked = world.spawn_empty();
+        world.insert_component(
+            unmasked,
+            RectTransform {
+                anchored_position: [120.0, 0.0],
+                size_delta: [200.0, 200.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            unmasked,
+            Image {
+                maskable: false,
+                ..Image::default()
+            },
+        );
+        world.insert_component(unmasked, Button::default());
+        world.set_parent(unmasked, Some(mask));
+
+        let scroll = world.spawn_empty();
+        world.insert_component(
+            scroll,
+            RectTransform {
+                anchored_position: [250.0, 0.0],
+                size_delta: [80.0, 80.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(scroll, ScrollView::default());
+        world.set_parent(scroll, Some(canvas));
+        let scroll_child = world.spawn_empty();
+        world.insert_component(
+            scroll_child,
+            RectTransform {
+                size_delta: [200.0, 200.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            scroll_child,
+            Image {
+                maskable: false,
+                ..Image::default()
+            },
+        );
+        world.insert_component(scroll_child, Button::default());
+        world.set_parent(scroll_child, Some(scroll));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let masked_control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == masked)
+            .expect("masked control");
+        assert_eq!(masked_control.clip.width, 100);
+        assert!(masked_control.mask_regions[0].is_some());
+        let unmasked_control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == unmasked)
+            .expect("unmasked control");
+        assert_eq!(unmasked_control.clip.width, 800);
+        assert!(unmasked_control.mask_regions.iter().all(Option::is_none));
+        let scroll_control = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == scroll_child)
+            .expect("scroll child control");
+        assert_eq!(scroll_control.clip.width, 80);
+        assert_eq!(scroll_control.clip.height, 80);
+
+        let masked_primitive = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| {
+                primitive.key.material == "ui/image"
+                    && primitive.rect[0] < 300.0
+                    && primitive.rect[2] == 200.0
+            })
+            .expect("masked image primitive");
+        assert!(matches!(
+            masked_primitive.key.stencil,
+            UiStencilMode::Test { reference: 1 }
+        ));
+        assert!(masked_primitive.soft_clips[0].is_some());
+        let unmasked_primitive = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| {
+                primitive.key.material == "ui/image"
+                    && primitive.rect[0] > 400.0
+                    && primitive.rect[2] == 200.0
+            })
+            .expect("unmasked image primitive");
+        assert_eq!(unmasked_primitive.key.stencil, UiStencilMode::Disabled);
+        assert!(unmasked_primitive.soft_clips.iter().all(Option::is_none));
+        assert_eq!(unmasked_primitive.color[3], 0.5);
     }
 
     #[test]

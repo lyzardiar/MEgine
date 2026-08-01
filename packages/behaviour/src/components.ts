@@ -143,6 +143,7 @@ export class RectTransform {
 export class Image {
   static readonly typeName = 'Image' as const;
   enabled!: boolean;
+  maskable!: boolean;
   sprite!: string;
   color!: Color4;
   image_type!: string;
@@ -239,6 +240,7 @@ export class AudioMixer {
 export class RawImage {
   static readonly typeName = 'RawImage' as const;
   enabled!: boolean;
+  maskable!: boolean;
   texture!: string;
   color!: Color4;
   uv_rect!: Color4;

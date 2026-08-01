@@ -556,6 +556,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   Image: {
     enabled: { label: 'Enabled' },
+    maskable: { label: 'Maskable' },
     sprite,
     image_type: { kind: 'enum', options: options('Simple', 'Sliced', 'Tiled', 'Filled') },
     preserve_aspect: {
@@ -617,6 +618,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   RawImage: {
     enabled: { label: 'Enabled' },
+    maskable: { label: 'Maskable' },
     texture: sprite,
     uv_rect: { label: 'UV Rect' },
     raycast_padding: {
@@ -701,6 +703,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   Text: {
     enabled: { label: 'Enabled' },
+    maskable: { label: 'Maskable' },
     text: { kind: 'multiline' },
     font_size: { min: 1, step: 1 },
     alignment: { kind: 'enum', options: options('Left', 'Center', 'Right') },
@@ -731,6 +734,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   Panel: {
     enabled: { label: 'Enabled' },
+    maskable: { label: 'Maskable' },
     border_width: { min: 0, step: 0.25 },
     raycast_padding: {
       label: 'Raycast Padding',

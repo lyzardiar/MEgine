@@ -101,6 +101,7 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
 test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', () => {
   const imageDefaults = {
     enabled: true,
+    maskable: true,
     sprite: 'white',
     color: [1, 1, 1, 1],
     image_type: 'Simple',
@@ -119,6 +120,7 @@ test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', ()
   };
   assert.deepEqual(createComponentDefaults('Image'), imageDefaults);
   assert.deepEqual(createUiImageComponents().Image, imageDefaults);
+  assert.equal(getBuiltinInspectorField('Image', 'maskable')?.label, 'Maskable');
   assert.deepEqual(getBuiltinInspectorField('Image', 'preserve_aspect')?.visibleWhen, {
     field: 'image_type',
     equals: ['Simple', 'Filled'],
@@ -163,6 +165,8 @@ test('all authored Graphic components expose Unity raycast padding defaults', ()
   for (const type of ['Image', 'RawImage', 'Text', 'Panel']) {
     assert.equal(createComponentDefaults(type).enabled, true);
     assert.deepEqual(getBuiltinInspectorField(type, 'enabled'), { label: 'Enabled' });
+    assert.equal(createComponentDefaults(type).maskable, true);
+    assert.deepEqual(getBuiltinInspectorField(type, 'maskable'), { label: 'Maskable' });
     assert.deepEqual(createComponentDefaults(type).raycast_padding, [0, 0, 0, 0]);
     assert.deepEqual(getBuiltinInspectorField(type, 'raycast_padding'), {
       label: 'Raycast Padding',

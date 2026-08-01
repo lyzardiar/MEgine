@@ -433,6 +433,7 @@ export interface ContentSizeFitter {
 
 export interface Image {
   enabled: boolean;
+  maskable: boolean;
   sprite: string;
   color: [number, number, number, number];
   imageType: string;
@@ -452,6 +453,7 @@ export interface Image {
 
 export interface RawImage {
   enabled: boolean;
+  maskable: boolean;
   texture: string;
   color: [number, number, number, number];
   uvRect: [number, number, number, number];
@@ -493,6 +495,7 @@ export interface Button {
 
 export interface Text {
   enabled: boolean;
+  maskable: boolean;
   text: string;
   color: [number, number, number, number];
   fontSize: number;
@@ -544,6 +547,7 @@ export interface Scrollbar {
 
 export interface Panel {
   enabled: boolean;
+  maskable: boolean;
   color: [number, number, number, number];
   borderColor: [number, number, number, number];
   borderWidth: number;
