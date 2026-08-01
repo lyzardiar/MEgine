@@ -36,7 +36,8 @@ struct CachedFont {
 struct AtlasKey {
     font: String,
     revision: String,
-    size: u16,
+    layout_size: u16,
+    raster_size: u16,
     style: u8,
 }
 
@@ -461,12 +462,16 @@ impl UiFontResolver for RuntimeFontCache {
         character: char,
         font_size: f32,
         font_style: &str,
+        raster_scale: f32,
     ) -> Option<UiFontGlyphTexture> {
         let (font_key, revision, font) = self.font(reference)?;
+        let layout_size = quantized_size(font_size);
+        let raster_size = quantized_raster_size(font_size, raster_scale);
         let atlas_key = AtlasKey {
             font: font_key.clone(),
             revision,
-            size: quantized_size(font_size),
+            layout_size,
+            raster_size,
             style: style_key(font_style),
         };
         if let Some(glyph) = self
@@ -476,16 +481,19 @@ impl UiFontResolver for RuntimeFontCache {
         {
             return Some(glyph.clone());
         }
-        let geometry = Self::geometry(&font, character, font_size, font_style);
-        let alpha = Self::rasterize(&font, character, font_size, &geometry)?;
+        // Layout metrics stay in Canvas units. Only the backing glyph bitmap uses
+        // Dynamic Pixels Per Unit, so changing it cannot resize RectTransforms or text.
+        let layout_geometry = Self::geometry(&font, character, layout_size as f32, font_style);
+        let raster_geometry = Self::geometry(&font, character, raster_size as f32, font_style);
+        let alpha = Self::rasterize(&font, character, raster_size as f32, &raster_geometry)?;
         if let Some(glyph) = self.atlases.get_mut(&atlas_key).and_then(|pages| {
             pages.iter_mut().find_map(|page| {
                 page.insert(
                     character,
-                    geometry.width,
-                    geometry.height,
+                    raster_geometry.width,
+                    raster_geometry.height,
                     &alpha,
-                    geometry.bounds,
+                    layout_geometry.bounds,
                 )
             })
         }) {
@@ -503,17 +511,18 @@ impl UiFontResolver for RuntimeFontCache {
         let mut digest = Sha256::new();
         digest.update(atlas_key.font.as_bytes());
         digest.update(atlas_key.revision.as_bytes());
-        digest.update(atlas_key.size.to_le_bytes());
+        digest.update(atlas_key.layout_size.to_le_bytes());
+        digest.update(atlas_key.raster_size.to_le_bytes());
         digest.update([atlas_key.style]);
         let identity = format!("{:x}", digest.finalize());
         let mut page =
             FontAtlasPage::new(format!("mengine-font://{}/{page_index}", &identity[..16]));
         let glyph = page.insert(
             character,
-            geometry.width,
-            geometry.height,
+            raster_geometry.width,
+            raster_geometry.height,
             &alpha,
-            geometry.bounds,
+            layout_geometry.bounds,
         )?;
         self.atlases.entry(atlas_key).or_default().push(page);
         Some(glyph)
@@ -535,6 +544,17 @@ fn quantized_size(font_size: f32) -> u16 {
     } else {
         16
     }
+}
+
+fn quantized_raster_size(font_size: f32, raster_scale: f32) -> u16 {
+    let layout_size = quantized_size(font_size) as f32;
+    let scale = if raster_scale.is_finite() && raster_scale > 0.0 {
+        raster_scale.clamp(0.01, 64.0)
+    } else {
+        1.0
+    };
+    let maximum = ATLAS_SIZE.saturating_sub(GLYPH_PADDING * 2).max(1) as f32;
+    (layout_size * scale).round().clamp(1.0, maximum) as u16
 }
 
 fn file_stamp(path: &Path) -> FileStamp {
@@ -639,18 +659,24 @@ mod tests {
         );
         assert_eq!(cache.checked_fonts.len(), 1);
         let first = cache
-            .resolve_glyph_texture("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal")
+            .resolve_glyph_texture("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal", 1.0)
             .unwrap();
         let repeated = cache
-            .resolve_glyph_texture("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal")
+            .resolve_glyph_texture("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal", 1.0)
             .unwrap();
         let second = cache
-            .resolve_glyph_texture("Assets/Fonts/Test.ttf", 'I', 24.0, "Normal")
+            .resolve_glyph_texture("Assets/Fonts/Test.ttf", 'I', 24.0, "Normal", 1.0)
             .unwrap();
         assert_eq!(first, repeated);
         assert_eq!(first.key, second.key);
         assert!(first.key.starts_with("mengine-font://"));
         assert_eq!(cache.total_atlas_pages(), 1);
+        let denser = cache
+            .resolve_glyph_texture("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal", 2.0)
+            .unwrap();
+        assert_ne!(first.key, denser.key);
+        assert_eq!(first.bounds, denser.bounds);
+        assert_eq!(cache.total_atlas_pages(), 2);
         assert!(cache
             .atlases
             .values()
@@ -672,6 +698,10 @@ mod tests {
         assert_eq!(quantized_size(f32::NAN), 16);
         assert_eq!(quantized_size(-100.0), 1);
         assert_eq!(quantized_size(9999.0), 512);
+        assert_eq!(quantized_raster_size(24.0, 2.0), 48);
+        assert_eq!(quantized_raster_size(24.0, f32::NAN), 24);
+        assert_eq!(quantized_raster_size(24.0, -1.0), 24);
+        assert_eq!(quantized_raster_size(512.0, 64.0), 1022);
         assert_eq!(style_key("BoldAndItalic"), 3);
         assert_eq!(style_key("unknown"), 0);
     }

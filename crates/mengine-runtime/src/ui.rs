@@ -62,6 +62,7 @@ pub trait UiFontResolver {
         character: char,
         font_size: f32,
         font_style: &str,
+        raster_scale: f32,
     ) -> Option<UiFontGlyphTexture>;
 }
 
@@ -84,6 +85,7 @@ impl UiFontResolver for NoopUiFontResolver {
         _character: char,
         _font_size: f32,
         _font_style: &str,
+        _raster_scale: f32,
     ) -> Option<UiFontGlyphTexture> {
         None
     }
@@ -912,6 +914,8 @@ struct UiWalkLayout {
     parent_rect: UiRect,
     scale: f32,
     sprite_pixel_scale: f32,
+    /// CanvasScaler.dynamicPixelsPerUnit for dynamically rasterized World Space text.
+    font_raster_scale: f32,
     /// Viewport and control clipping that every Graphic must retain.
     clip: UiClipRect,
     /// RectMask2D clipping, ignored by MaskableGraphic when maskable is false.
@@ -1164,6 +1168,13 @@ fn collect_ui_frame_internal(
         let sprite_pixel_scale = scaler
             .map(|value| canvas_sprite_pixel_scale(value, scale))
             .unwrap_or(scale);
+        let font_raster_scale = if world_space {
+            scaler
+                .map(|value| finite_positive(value.dynamic_pixels_per_unit, 1.0).clamp(0.01, 64.0))
+                .unwrap_or(1.0)
+        } else {
+            1.0
+        };
         let canvas_rect_transform = world
             .get_component::<RectTransform>(inherited_canvas_entity)
             .cloned()
@@ -1197,6 +1208,7 @@ fn collect_ui_frame_internal(
                 parent_rect: canvas_rect,
                 scale,
                 sprite_pixel_scale,
+                font_raster_scale,
                 clip,
                 rect_mask_clip: None,
                 forced_rect: Some(canvas_rect),
@@ -1907,6 +1919,7 @@ fn walk(
         parent_rect,
         scale,
         sprite_pixel_scale,
+        font_raster_scale,
         clip: base_clip,
         rect_mask_clip,
         forced_rect,
@@ -2244,6 +2257,7 @@ fn walk(
                     &text.horizontal_overflow,
                     &text.vertical_overflow,
                     clip,
+                    font_raster_scale,
                     resolver,
                 );
             } else {
@@ -3209,6 +3223,7 @@ fn walk(
                 parent_rect: child_parent,
                 scale,
                 sprite_pixel_scale,
+                font_raster_scale,
                 clip: child_clip,
                 rect_mask_clip: child_rect_mask_clip,
                 forced_rect: forced,
@@ -5893,6 +5908,7 @@ fn push_text_styled_rich_internal(
     vertical_overflow: &str,
     clip: UiClipRect,
     font: &str,
+    font_raster_scale: f32,
     font_resolver: &mut dyn UiFontResolver,
 ) {
     let primitive_start = primitives.len();
@@ -5932,6 +5948,7 @@ fn push_text_styled_rich_internal(
                     glyph.character,
                     glyph.font_size,
                     &glyph.font_style,
+                    font_raster_scale,
                 );
                 if let Some(texture) = texture {
                     let [offset_x, offset_y, width, height] = texture.bounds;
@@ -6164,6 +6181,7 @@ fn push_text_styled_rich(
         vertical_overflow,
         clip,
         "",
+        1.0,
         &mut resolver,
     );
 }
@@ -6191,6 +6209,7 @@ fn push_text_styled_rich_with_font(
     horizontal_overflow: &str,
     vertical_overflow: &str,
     clip: UiClipRect,
+    font_raster_scale: f32,
     font_resolver: &mut dyn UiFontResolver,
 ) {
     push_text_styled_rich_internal(
@@ -6215,6 +6234,7 @@ fn push_text_styled_rich_with_font(
         vertical_overflow,
         clip,
         font,
+        font_raster_scale,
         font_resolver,
     );
 }
@@ -6798,11 +6818,13 @@ mod tests {
                 character: char,
                 font_size: f32,
                 font_style: &str,
+                raster_scale: f32,
             ) -> Option<UiFontGlyphTexture> {
                 assert_eq!(font, "Assets/Fonts/Interface.ttf");
                 assert!(matches!(character, 'A' | 'V'));
                 assert_eq!(font_size, 12.0);
                 assert_eq!(font_style, "Normal");
+                assert_eq!(raster_scale, 1.0);
                 Some(UiFontGlyphTexture {
                     key: "mengine-font://test/0".into(),
                     uv: [0.1, 0.2, 0.3, 0.4],
@@ -6874,6 +6896,147 @@ mod tests {
     }
 
     #[test]
+    fn world_space_dynamic_pixels_per_unit_only_changes_font_raster_density() {
+        #[derive(Default)]
+        struct DensityFont {
+            raster_scales: Vec<f32>,
+        }
+        impl UiFontResolver for DensityFont {
+            fn measure_glyph(
+                &mut self,
+                _font: &str,
+                _character: char,
+                _font_size: f32,
+                _font_style: &str,
+            ) -> Option<UiFontGlyphMetrics> {
+                Some(UiFontGlyphMetrics {
+                    advance: 9.0,
+                    metric_width: 8.0,
+                    line_height: 13.0,
+                    geometry: Some((1.0, 8.0)),
+                })
+            }
+
+            fn resolve_glyph_texture(
+                &mut self,
+                _font: &str,
+                _character: char,
+                _font_size: f32,
+                _font_style: &str,
+                raster_scale: f32,
+            ) -> Option<UiFontGlyphTexture> {
+                self.raster_scales.push(raster_scale);
+                Some(UiFontGlyphTexture {
+                    key: "mengine-font://density/0".into(),
+                    uv: [0.0, 0.0, 0.25, 0.25],
+                    bounds: [1.0, 2.0, 7.0, 9.0],
+                })
+            }
+        }
+
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(
+            canvas,
+            Canvas {
+                render_mode: "WorldSpace".into(),
+                ..Canvas::default()
+            },
+        );
+        world.insert_component(
+            canvas,
+            CanvasScaler {
+                reference_pixels_per_unit: 100.0,
+                dynamic_pixels_per_unit: 3.5,
+                ..CanvasScaler::default()
+            },
+        );
+        world.insert_component(
+            canvas,
+            RectTransform {
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(canvas, mengine_core::generated::Transform::default());
+        let text = world.spawn_empty();
+        world.insert_component(
+            text,
+            RectTransform {
+                size_delta: [80.0, 30.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            text,
+            Text {
+                text: "A".into(),
+                font: "Assets/Fonts/Interface.ttf".into(),
+                font_size: 12.0,
+                ..Text::default()
+            },
+        );
+        world.set_parent(text, Some(canvas));
+        let camera = FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: orthographic(5.0, 4.0 / 3.0, 0.1, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        };
+        let mut resolver = DensityFont::default();
+        let hierarchy = TransformHierarchy::build(&world);
+        let dense = collect_ui_frame_for_display_with_interaction_and_fonts(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            Some(camera),
+            &SortingLayers::default(),
+            0,
+            UiInteractionState::default(),
+            &HashMap::new(),
+            &mut resolver,
+        );
+        assert!(!resolver.raster_scales.is_empty());
+        assert!(resolver.raster_scales.iter().all(|value| *value == 3.5));
+        let dense_rect = dense
+            .world_primitives
+            .iter()
+            .find(|value| value.primitive.key.material == "ui/text/font")
+            .unwrap()
+            .primitive
+            .rect;
+
+        world
+            .get_component_mut::<CanvasScaler>(canvas)
+            .unwrap()
+            .dynamic_pixels_per_unit = -1.0;
+        resolver.raster_scales.clear();
+        let hierarchy = TransformHierarchy::build(&world);
+        let regular = collect_ui_frame_for_display_with_interaction_and_fonts(
+            &world,
+            &hierarchy,
+            800,
+            600,
+            Some(camera),
+            &SortingLayers::default(),
+            0,
+            UiInteractionState::default(),
+            &HashMap::new(),
+            &mut resolver,
+        );
+        assert!(!resolver.raster_scales.is_empty());
+        assert!(resolver.raster_scales.iter().all(|value| *value == 1.0));
+        let regular_rect = regular
+            .world_primitives
+            .iter()
+            .find(|value| value.primitive.key.material == "ui/text/font")
+            .unwrap()
+            .primitive
+            .rect;
+        assert_eq!(dense_rect, regular_rect);
+    }
+
+    #[test]
     fn imported_font_base_metrics_control_empty_line_height() {
         struct LineFont;
         impl UiFontResolver for LineFont {
@@ -6898,6 +7061,7 @@ mod tests {
                 _character: char,
                 _font_size: f32,
                 _font_style: &str,
+                _raster_scale: f32,
             ) -> Option<UiFontGlyphTexture> {
                 None
             }

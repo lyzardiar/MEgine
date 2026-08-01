@@ -176,6 +176,8 @@ export type UiDrawItem = {
     color: [number, number, number, number];
     font: string;
     fontSize: number;
+    /** World Space Canvas dynamic bitmap density; layout geometry remains unchanged. */
+    dynamicPixelsPerUnit: number;
     fontStyle: 'Normal' | 'Bold' | 'Italic' | 'BoldAndItalic';
     alignByGeometry: boolean;
     supportRichText: boolean;
@@ -1223,6 +1225,7 @@ export function layoutUiOverlay(
                   512,
                   Math.max(1, number(text.font_size ?? text.fontSize, 16) * scale),
                 ),
+                dynamicPixelsPerUnit: 1,
                 fontStyle: enumValue(
                   text.font_style ?? text.fontStyle,
                   ['Normal', 'Bold', 'Italic', 'BoldAndItalic'] as const,
@@ -1771,6 +1774,16 @@ function worldCanvasLayoutContext(
     undefined,
     null,
   ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === canvas.entity);
+  const authoredDynamicPixelsPerUnit = number(
+    scaler?.dynamic_pixels_per_unit ?? scaler?.dynamicPixelsPerUnit,
+    1,
+  );
+  const dynamicPixelsPerUnit = authoredDynamicPixelsPerUnit > 0
+    ? Math.min(64, Math.max(0.01, authoredDynamicPixelsPerUnit))
+    : 1;
+  for (const item of items) {
+    if (item.text) item.text.dynamicPixelsPerUnit = dynamicPixelsPerUnit;
+  }
   const worldTransform = transforms.get(inheritedCanvas.entity)?.transform ?? {
     position: [0, 0, 0] as Vec3,
     rotation: [0, 0, 0, 1] as Quat,

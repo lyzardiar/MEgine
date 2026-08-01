@@ -1889,7 +1889,7 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - CanvasScaler 现在显式依赖 Canvas；Editor 添加组件时递归解析完整依赖闭包，因此在普通 GameObject 上添加 CanvasScaler 会在同一 Undo 事务中补齐 Canvas、RectTransform 和 Transform。依赖循环会被访问集合截断，移除 Canvas/RectTransform 仍由现有 blocker 契约拒绝。
 - Inspector 条件元数据新增可选 sibling component 来源，Agent 组件 schema 会原样暴露该条件。CanvasScaler 在 Screen Space Overlay/Camera 只展示 UI Scale Mode 及其当前分支设置，在 World Space 隐藏不会执行的屏幕缩放选项，只展示通用 Reference Pixels Per Unit 与 World Space 专属 Dynamic Pixels Per Unit。
-- 当前固定 bitmap 字形后端尚不能通过提高 Dynamic Pixels Per Unit 生成更高分辨率字形；Inspector 保留 Unity 同名世界空间字段，但技术边界继续如实记录，不用改变几何尺寸冒充像素密度实现。后续接入动态字体图集时，应让该值只影响字形栅格密度和缓存键，不改变 RectTransform 布局或世界尺寸。
+- Dynamic Pixels Per Unit 当时尚未接入固定 bitmap 字形后端；动态字体图集接入后的完整实现见第 206 节。该值始终只影响字形栅格密度和缓存键，不改变 RectTransform 布局或世界尺寸。
 
 ## 165. 2026-08-01 Canvas 根节点统一 UI 遍历
 
@@ -2135,3 +2135,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Kerning 只跨越字号与 Font Style 相同的相邻字符，显式换行和 Tab 会断开字符对；富文本仅改变颜色时仍保留字符对并把下一 run 的起点精确移动，改变字号或样式时则建立新的排版 run。换行后的行首会忽略上一行遗留的 pair 值，避免软换行把前一行末尾字距带到下一行。
 - Editor 在单次 Text 绘制内缓存字号、样式、字符和字符对度量，Best Fit 二分搜索与重复字符不会反复触发相同 `measureText`；Runtime 继续复用每帧只检查一次文件状态的解析字体缓存。非有限 pair 值被拒绝，负值最多抵消左字形 advance，正值最多 2,048 像素，保持 hostile Agent 内容的坐标与时间复杂度有界。
 - 无窗口回归覆盖负字距行宽、软换行、跨颜色 rich-text run 的实际 Canvas 坐标、Best Fit、恶意极端值、Runtime 纹理字形位置和真实系统字体 pair 查询。剩余字体对齐项仍包括 fallback 列表、连字、双向文本和复杂文字 shaping。
+
+## 206. 2026-08-01 World Space Text Dynamic Pixels Per Unit
+
+- `CanvasScaler.dynamic_pixels_per_unit` 现在真正进入 World Space Canvas 的动态字体链。Runtime 将它作为独立 `raster_scale` 传给字体解析器；屏幕空间 Canvas 固定使用 `1`，非法、非有限或非正值安全回退为 `1`，有效值限制在 `0.01–64`。字形图集键同时包含逻辑字号与栅格字号，因而相同字体、字号和样式在不同密度下不会错误复用低分辨率位图。
+- 排版度量、换行、Best Fit、RectTransform 和世界尺寸继续使用逻辑字号；只有 alpha 字形在 `font_size * dynamic_pixels_per_unit` 的有界字号上重新栅格化，再映射回相同逻辑 bounds。栅格字号受 1024×1024 图集单页边界约束，密度不会制造无界纹理或几何。Editor 的浏览器 Canvas 使用最终屏幕分辨率矢量栅格化，同时在后台可读 `UiDrawItem.text.dynamicPixelsPerUnit` 中公开有效值，便于 Agent 无需窗口焦点检查实际语义。
+- 回归覆盖屏幕空间密度固定为 `1`、World Space 密度传播、密度变化不改变 Editor/Runtime 投影几何、不同密度生成独立共享图集、逻辑 bounds 保持一致，以及 NaN/负值/超大值的量化边界。本批不宣称完成 TextCore/TMP：字体 fallback、连字、双向文本和复杂文字 shaping 仍在审计清单中；TypeScript 预览由浏览器直接栅格化，原生 Player 才执行动态字体图集。

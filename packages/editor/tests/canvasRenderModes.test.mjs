@@ -140,6 +140,7 @@ test('Text paragraph settings reach the background-readable Canvas draw plan', (
   ).find((candidate) => candidate.entity === 2);
   assert.equal(item.text.lineSpacing, 1.25);
   assert.equal(item.text.font, 'Assets/Fonts/Interface.ttf');
+  assert.equal(item.text.dynamicPixelsPerUnit, 1);
   assert.equal(item.text.fontStyle, 'BoldAndItalic');
   assert.equal(item.text.alignByGeometry, true);
   assert.equal(item.text.supportRichText, false);
@@ -1201,6 +1202,49 @@ test('World Space override-sorting Canvas subtrees are projected exactly once', 
   assert.equal(items.filter((item) => item.entity === 2).length, 1);
   assert.equal(items.filter((item) => item.entity === 3).length, 1);
   assert.equal(items.filter((item) => item.entity === 4).length, 1);
+});
+
+test('World Space Text exposes Dynamic Pixels Per Unit without changing layout geometry', () => {
+  const makeEntities = (dynamicPixelsPerUnit) => [
+    {
+      entity: 1,
+      components: {
+        Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+        RectTransform: rect({ size_delta: [200, 100] }),
+        Canvas: { render_mode: 'WorldSpace' },
+        CanvasScaler: {
+          reference_pixels_per_unit: 100,
+          reference_resolution: [200, 100],
+          dynamic_pixels_per_unit: dynamicPixelsPerUnit,
+        },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [120, 40] }),
+        Text: { text: 'Agent', font: 'Assets/Fonts/Interface.ttf', font_size: 16 },
+      },
+    },
+  ];
+  const layout = (density) => layoutUiWorldSpace(
+    makeEntities(density),
+    camera,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((item) => item.entity === 2);
+  const regular = layout(1);
+  const dense = layout(3.5);
+  const invalid = layout(-2);
+  const bounded = layout(100);
+  assert.equal(regular.text.dynamicPixelsPerUnit, 1);
+  assert.equal(dense.text.dynamicPixelsPerUnit, 3.5);
+  assert.equal(invalid.text.dynamicPixelsPerUnit, 1);
+  assert.equal(bounded.text.dynamicPixelsPerUnit, 64);
+  assert.equal(dense.text.fontSize, regular.text.fontSize);
+  assert.deepEqual(dense.rect, regular.rect);
+  assert.deepEqual(dense.unrotatedSize, regular.unrotatedSize);
 });
 
 test('World Space raycast padding projects independently from visible Graphic corners', () => {
