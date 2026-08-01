@@ -1017,7 +1017,8 @@ export function layoutUiOverlay(
       );
       const ownMaskEnabled = stencilMask?.enabled !== false
         && stencilMask != null
-        && hasMaskGraphic;
+        && hasMaskGraphic
+        && state.visualMasks.length < 8;
       const itemMaskStack = graphicMaskable || ownMaskEnabled ? state.visualMasks : [];
       const itemMaskRegions = graphicMaskable ? state.maskRegions : [];
       const itemSoftClips = graphicMaskable ? state.softClips : [];

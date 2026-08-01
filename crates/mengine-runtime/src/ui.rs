@@ -7943,6 +7943,63 @@ mod tests {
     }
 
     #[test]
+    fn ninth_nested_mask_renders_normally_without_allocating_stencil_depth() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+
+        let mut parent = canvas;
+        for _ in 0..9 {
+            let entity = world.spawn_empty();
+            world.insert_component(entity, RectTransform::default());
+            world.insert_component(entity, Image::default());
+            world.insert_component(
+                entity,
+                Mask {
+                    show_mask_graphic: false,
+                    ..Mask::default()
+                },
+            );
+            world.set_parent(entity, Some(parent));
+            parent = entity;
+        }
+        let child = world.spawn_empty();
+        world.insert_component(child, RectTransform::default());
+        world.insert_component(child, Image::default());
+        world.set_parent(child, Some(parent));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let modes: Vec<_> = frame
+            .plan
+            .primitives
+            .iter()
+            .map(|primitive| primitive.key.stencil)
+            .collect();
+        assert_eq!(
+            modes
+                .iter()
+                .filter(|mode| matches!(mode, UiStencilMode::Push { .. }))
+                .count(),
+            8
+        );
+        assert_eq!(
+            modes
+                .iter()
+                .filter(|mode| matches!(mode, UiStencilMode::Pop { .. }))
+                .count(),
+            8
+        );
+        assert_eq!(modes[8], UiStencilMode::Test { reference: 8 });
+        assert_eq!(modes[9], UiStencilMode::Test { reference: 8 });
+        assert!(!modes.iter().any(|mode| matches!(
+            mode,
+            UiStencilMode::Push { reference: 8 }
+                | UiStencilMode::Test { reference: 9 }
+                | UiStencilMode::Pop { reference: 9 }
+        )));
+    }
+
+    #[test]
     fn canvas_below_an_inactive_parent_does_not_render_or_receive_input() {
         let mut world = World::new();
         let parent = world.spawn_empty();

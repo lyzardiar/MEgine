@@ -220,6 +220,43 @@ test('disabled associated Graphic leaves a transparent Mask stencil in the Canva
   );
 });
 
+test('Canvas preview treats a ninth nested Mask as an ordinary visible Graphic', () => {
+  const entities = [
+    { entity: 1, components: { Canvas: {}, RectTransform: {} } },
+  ];
+  let parent = 1;
+  for (let depth = 0; depth < 9; depth += 1) {
+    const entity = depth + 2;
+    entities.push({
+      entity,
+      parent,
+      components: {
+        RectTransform: { size_delta: [100 - depth * 4, 100 - depth * 4] },
+        Image: {},
+        Mask: { enabled: true, show_mask_graphic: false },
+      },
+    });
+    parent = entity;
+  }
+  entities.push({
+    entity: 11,
+    parent,
+    components: { RectTransform: { size_delta: [40, 40] }, Panel: {} },
+  });
+
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  for (let entity = 2; entity <= 9; entity += 1) {
+    assert.ok(items.find((item) => item.entity === entity).mask);
+  }
+  const ninthMask = items.find((item) => item.entity === 10);
+  const child = items.find((item) => item.entity === 11);
+  assert.equal(ninthMask.mask, undefined);
+  assert.ok(ninthMask.image, 'the ninth Mask ignores showMaskGraphic and renders normally');
+  assert.equal(ninthMask.maskStack.length, 8);
+  assert.equal(child.maskStack.length, 8, 'the ninth Mask does not affect descendants');
+  assert.equal(child.maskRegions.length, 8);
+});
+
 test('RectMask2D Softness defaults, propagates as a nested stack, and multiplies both axes', () => {
   assert.deepEqual(createComponentDefaults('RectMask2D'), {
     enabled: true,

@@ -2042,3 +2042,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Behaviour SDK 不再手工维护一小部分组件字段，而是由 IDL codegen 生成的 `SerializedComponentMap` 提供与 Scene/Prefab JSON 完全相同的 snake_case 字段类型；现有 63 个 IDL 组件均具备强类型 runtime token，包括 UI、物理、灯光、材质、粒子、Spine、Animation 与 Timeline。
 - `BUILTIN_COMPONENT_TYPES` 的 key 由 `BuiltinComponentName` 做穷尽性编译检查，包入口直接重导出整个 token 模块；真实包回归再将运行时 registry 与 API 的 `COMPONENT_NAMES` 逐项比对，因此新增 IDL 组件但漏接 Behaviour SDK 会在构建或测试阶段立即失败。与装饰器同名的组件分别使用 `UIButton` 和 `UIProgressBar` 公共 token。
 - API codegen 与根入口统一使用显式 `.js` ESM 相对路径，Node/Agent 可以直接 import 已构建的 `@mengine/api`，不再依赖只被 bundler 容忍的目录解析。
+
+## 191. 2026-08-01 Unity Eight-level Stencil Mask Limit
+
+- Editor Canvas 与 Runtime 统一只允许 8 层有效 `Mask`。第 9 层及更深的 `Mask` 不再分配 Stencil 深度、不再裁剪后代，并按普通 Graphic 渲染；此时 `show_mask_graphic=false` 也不会错误隐藏该 Graphic，与 Unity 在 Stencil 深度耗尽时返回原始 Graphic material 的行为一致。
+- Editor 回归验证第 9 层的 `maskStack`/射线区域保持 8 层且 Graphic 可见；Runtime 回归验证只产生 8 对 Push/Pop，第 9 层和其子 Graphic 都测试已有 reference 8，永不产生 reference 9。
