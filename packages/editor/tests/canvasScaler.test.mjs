@@ -186,6 +186,9 @@ test('Text Graphic defaults to a Unity raycast target', () => {
   for (const text of [createComponentDefaults('Text'), createUiTextComponents().Text]) {
     assert.equal(text.raycast_target, true);
     assert.equal(text.line_spacing, 1);
+    assert.equal(text.resize_text_for_best_fit, false);
+    assert.equal(text.resize_text_min_size, 10);
+    assert.equal(text.resize_text_max_size, 40);
     assert.equal(text.horizontal_overflow, 'Wrap');
     assert.equal(text.vertical_overflow, 'Truncate');
   }
@@ -193,6 +196,20 @@ test('Text Graphic defaults to a Unity raycast target', () => {
     getBuiltinInspectorField('Text', 'horizontal_overflow')?.options?.map(({ value }) => value),
     ['Wrap', 'Overflow'],
   );
+  assert.deepEqual(getBuiltinInspectorField('Text', 'resize_text_min_size'), {
+    label: 'Min Size',
+    min: 1,
+    max: 300,
+    step: 1,
+    visibleWhen: { field: 'resize_text_for_best_fit', equals: true },
+  });
+  assert.deepEqual(getBuiltinInspectorField('Text', 'resize_text_max_size'), {
+    label: 'Max Size',
+    min: 1,
+    max: 300,
+    step: 1,
+    visibleWhen: { field: 'resize_text_for_best_fit', equals: true },
+  });
   assert.deepEqual(
     getBuiltinInspectorField('Text', 'vertical_overflow')?.options?.map(({ value }) => value),
     ['Truncate', 'Overflow'],

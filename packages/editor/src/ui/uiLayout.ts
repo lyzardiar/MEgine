@@ -169,6 +169,10 @@ export type UiDrawItem = {
     text: string;
     color: [number, number, number, number];
     fontSize: number;
+    bestFit: boolean;
+    minSize: number;
+    maxSize: number;
+    fontScale: number;
     outlineColor: [number, number, number, number];
     outlineWidth: number;
     alignment: 'Left' | 'Center' | 'Right';
@@ -1208,6 +1212,18 @@ export function layoutUiOverlay(
                   512,
                   Math.max(1, number(text.font_size ?? text.fontSize, 16) * scale),
                 ),
+                bestFit:
+                  text.resize_text_for_best_fit === true
+                  || text.resizeTextForBestFit === true,
+                minSize: Math.min(300, Math.max(1, number(
+                  text.resize_text_min_size ?? text.resizeTextMinSize,
+                  10,
+                ))),
+                maxSize: Math.min(300, Math.max(1, number(
+                  text.resize_text_max_size ?? text.resizeTextMaxSize,
+                  40,
+                ))),
+                fontScale: scale,
                 outlineColor: color4(
                   text.outline_color ?? text.outlineColor,
                   [0, 0, 0, 1],
@@ -3318,9 +3334,7 @@ export function drawUiItems(
       }
 
       if (it.text) {
-        const fontSize = Math.max(8, it.text.fontSize);
         ctx.fillStyle = cssColor(it.text.color);
-        ctx.font = `${fontSize}px system-ui, sans-serif`;
         ctx.textAlign = it.text.alignment.toLowerCase() as CanvasTextAlign;
         ctx.textBaseline = 'top';
         const textX = it.text.alignment === 'Left'
@@ -3332,12 +3346,18 @@ export function drawUiItems(
           width: w,
           height: h,
           fontSize: it.text.fontSize,
+          bestFit: it.text.bestFit,
+          minSize: it.text.minSize,
+          maxSize: it.text.maxSize,
+          fontScale: it.text.fontScale,
           lineSpacing: it.text.lineSpacing,
           horizontalOverflow: it.text.horizontalOverflow,
           verticalOverflow: it.text.verticalOverflow,
           alignment: it.text.alignment,
           verticalAlign: it.text.verticalAlign,
         });
+        const fontSize = Math.max(1, layout.fontSize);
+        ctx.font = `${fontSize}px system-ui, sans-serif`;
         for (const line of layout.lines) {
           fillReadableText(
             line.text,

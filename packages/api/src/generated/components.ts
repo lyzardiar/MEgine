@@ -508,6 +508,9 @@ export interface Text {
   text: string;
   color: [number, number, number, number];
   fontSize: number;
+  resizeTextForBestFit: boolean;
+  resizeTextMinSize: number;
+  resizeTextMaxSize: number;
   outlineColor: [number, number, number, number];
   outlineWidth: number;
   alignment: string;
@@ -1135,6 +1138,9 @@ export type SerializedComponentMap = {
     text: string;
     color: [number, number, number, number];
     font_size: number;
+    resize_text_for_best_fit: boolean;
+    resize_text_min_size: number;
+    resize_text_max_size: number;
     outline_color: [number, number, number, number];
     outline_width: number;
     alignment: string;

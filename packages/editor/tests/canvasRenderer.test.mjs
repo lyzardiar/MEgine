@@ -82,7 +82,7 @@ class FakeContext {
   translate(...args) { this.operations.push(['translate', ...args]); }
   rotate(...args) { this.operations.push(['rotate', ...args]); }
   setLineDash(...args) { this.operations.push(['setLineDash', ...args]); }
-  fillText(...args) { this.operations.push(['fillText', ...args]); }
+  fillText(...args) { this.operations.push(['fillText', ...args, this.font]); }
   strokeText(...args) { this.operations.push(['strokeText', ...args]); }
   measureText(value) { return { width: String(value).length * 8 }; }
 }
@@ -198,6 +198,40 @@ test('Canvas preview draws wrapped Text as aligned complete lines', () => {
   const lines = canvas.context.operations.filter((operation) => operation[0] === 'fillText');
   assert.deepEqual(lines.map((operation) => operation[1]), ['alpha', 'beta']);
   assert.equal(lines[1][3] - lines[0][3], 8);
+  assert.equal(lines[0].at(-1), '7px system-ui, sans-serif');
+});
+
+test('Canvas preview draws Text with the resolved Unity Best Fit size', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: { Canvas: {}, RectTransform: { size_delta: [100, 100] } },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: { size_delta: [17, 16] },
+        Text: {
+          text: 'AB',
+          font_size: 16,
+          resize_text_for_best_fit: true,
+          resize_text_min_size: 7,
+          resize_text_max_size: 14,
+          alignment: 'Left',
+          vertical_align: 'Top',
+          horizontal_overflow: 'Overflow',
+          vertical_overflow: 'Truncate',
+        },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  drawUiItems(canvas.context, items, null, null);
+  const line = canvas.context.operations.find((operation) => operation[0] === 'fillText');
+  assert.equal(line.at(-1), '10px system-ui, sans-serif');
 });
 
 test('adding an authored Graphic creates and protects its CanvasRenderer dependency', async () => {

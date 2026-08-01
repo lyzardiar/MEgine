@@ -2663,6 +2663,15 @@
       "raycast_target": {
         "type": "boolean"
       },
+      "resize_text_for_best_fit": {
+        "type": "boolean"
+      },
+      "resize_text_max_size": {
+        "type": "number"
+      },
+      "resize_text_min_size": {
+        "type": "number"
+      },
       "text": {
         "type": "string"
       },
@@ -2680,6 +2689,9 @@
       "text",
       "color",
       "font_size",
+      "resize_text_for_best_fit",
+      "resize_text_min_size",
+      "resize_text_max_size",
       "outline_color",
       "outline_width",
       "alignment",

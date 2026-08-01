@@ -120,6 +120,9 @@ test('Text paragraph settings reach the background-readable Canvas draw plan', (
         Text: {
           text: 'alpha beta gamma',
           line_spacing: 1.25,
+          resize_text_for_best_fit: true,
+          resize_text_min_size: 9,
+          resize_text_max_size: 31,
           horizontal_overflow: 'Overflow',
           vertical_overflow: 'Overflow',
         },
@@ -132,6 +135,10 @@ test('Text paragraph settings reach the background-readable Canvas draw plan', (
     new Set(),
   ).find((candidate) => candidate.entity === 2);
   assert.equal(item.text.lineSpacing, 1.25);
+  assert.equal(item.text.bestFit, true);
+  assert.equal(item.text.minSize, 9);
+  assert.equal(item.text.maxSize, 31);
+  assert.equal(item.text.fontScale, 1);
   assert.equal(item.text.horizontalOverflow, 'Overflow');
   assert.equal(item.text.verticalOverflow, 'Overflow');
 });

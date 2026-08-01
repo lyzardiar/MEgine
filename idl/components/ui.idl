@@ -175,6 +175,12 @@ component Text {
   text:            string = "Text"
   color:           float4 = [1, 1, 1, 1]
   font_size:       float  = 16
+  /// Unity Text.resizeTextForBestFit. Chooses the largest fitting integer size in the range.
+  resize_text_for_best_fit: bool = false
+  /// Unity Text.resizeTextMinSize.
+  resize_text_min_size: int = 10
+  /// Unity Text.resizeTextMaxSize.
+  resize_text_max_size: int = 40
   outline_color:   float4 = [0, 0, 0, 1]
   outline_width:   float  = 0
   /// "Left" | "Center" | "Right"

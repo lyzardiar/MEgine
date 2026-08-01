@@ -199,4 +199,27 @@ test('Agent schema exposes Unity Text paragraph controls with bounded values', (
     step: 0.05,
   });
   assert.equal(fields.get('font_size')?.max, 512);
+  assert.equal(fields.get('resize_text_for_best_fit')?.default, false);
+  assert.deepEqual({
+    default: fields.get('resize_text_min_size')?.default,
+    min: fields.get('resize_text_min_size')?.min,
+    max: fields.get('resize_text_min_size')?.max,
+    visibleWhen: fields.get('resize_text_min_size')?.visibleWhen,
+  }, {
+    default: 10,
+    min: 1,
+    max: 300,
+    visibleWhen: { field: 'resize_text_for_best_fit', equals: true },
+  });
+  assert.deepEqual({
+    default: fields.get('resize_text_max_size')?.default,
+    min: fields.get('resize_text_max_size')?.min,
+    max: fields.get('resize_text_max_size')?.max,
+    visibleWhen: fields.get('resize_text_max_size')?.visibleWhen,
+  }, {
+    default: 40,
+    min: 1,
+    max: 300,
+    visibleWhen: { field: 'resize_text_for_best_fit', equals: true },
+  });
 });

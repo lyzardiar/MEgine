@@ -18,6 +18,10 @@ const options = (overrides = {}) => ({
   width: 29,
   height: 16,
   fontSize: 7,
+  bestFit: false,
+  minSize: 10,
+  maxSize: 40,
+  fontScale: 1,
   lineSpacing: 1,
   horizontalOverflow: 'Wrap',
   verticalOverflow: 'Truncate',
@@ -80,4 +84,67 @@ test('Text layout bounds hostile Agent-authored content deterministically', () =
   }));
   assert.equal(Array.from(layout.lines[0].text).length, 16_384);
   assert.equal(layout.truncated, true);
+});
+
+test('Unity Text Best Fit selects the largest integer size that fully fits', () => {
+  const maximum = layoutUiText('AB', options({
+    width: 80,
+    height: 80,
+    bestFit: true,
+    minSize: 7,
+    maxSize: 14,
+  }));
+  assert.equal(maximum.fontSize, 14);
+
+  const reduced = layoutUiText('AB', options({
+    width: 17,
+    height: 16,
+    bestFit: true,
+    minSize: 7,
+    maxSize: 14,
+    horizontalOverflow: 'Overflow',
+  }));
+  assert.equal(reduced.fontSize, 10);
+  assert.equal(reduced.truncated, false);
+});
+
+test('Unity Text Best Fit measures full overflow and falls back to its minimum', () => {
+  const horizontallyReduced = layoutUiText('ABCD', options({
+    width: 29,
+    height: 16,
+    bestFit: true,
+    minSize: 7,
+    maxSize: 14,
+    horizontalOverflow: 'Overflow',
+    verticalOverflow: 'Overflow',
+  }));
+  assert.equal(horizontallyReduced.fontSize, 8);
+
+  const minimumFallback = layoutUiText('A\nB\nC', options({
+    width: 40,
+    height: 4,
+    bestFit: true,
+    minSize: 7,
+    maxSize: 14,
+  }));
+  assert.equal(minimumFallback.fontSize, 7);
+  assert.equal(minimumFallback.truncated, true);
+});
+
+test('Unity Text Best Fit resolves authored integer sizes before Canvas scaling', () => {
+  const layout = layoutUiText('A', options({
+    width: 20,
+    height: 20,
+    bestFit: true,
+    minSize: 10,
+    maxSize: 10,
+    fontScale: 0.55,
+  }));
+  assert.equal(layout.fontSize, 5.5);
+  assert.equal(layoutUiText('A', options({ fontSize: -5 })).fontSize, 1);
+  assert.equal(layoutUiText('A', options({
+    bestFit: true,
+    minSize: -10,
+    maxSize: 0,
+  })).fontSize, 1);
 });

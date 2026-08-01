@@ -2124,6 +2124,10 @@ fn walk(
             multiply_alpha(text.outline_color, state.alpha),
             (text.outline_width * scale).max(0.0),
             text.font_size * scale,
+            text.resize_text_for_best_fit,
+            text.resize_text_min_size as f32,
+            text.resize_text_max_size as f32,
+            scale,
             &text.alignment,
             &text.vertical_align,
             text.line_spacing,
@@ -4555,6 +4559,10 @@ fn push_text(
         [0.0, 0.0, 0.0, 0.0],
         0.0,
         font_size,
+        false,
+        10.0,
+        40.0,
+        1.0,
         alignment,
         vertical_align,
         1.0,
@@ -4569,15 +4577,18 @@ struct BitmapTextLine {
     characters: Vec<char>,
     x: f32,
     y: f32,
+    width: f32,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 struct BitmapTextLayout {
     lines: Vec<BitmapTextLine>,
+    font_size: f32,
     glyph_scale: f32,
     advance: f32,
     line_height: f32,
     line_advance: f32,
+    block_height: f32,
     truncated: bool,
 }
 
@@ -4652,7 +4663,7 @@ fn wrap_bitmap_paragraph(value: &str, max_columns: usize) -> Vec<Vec<char>> {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn layout_bitmap_text(
+fn layout_bitmap_text_at_font_size(
     text: &str,
     rect: UiRect,
     font_size: f32,
@@ -4662,8 +4673,8 @@ fn layout_bitmap_text(
     horizontal_overflow: &str,
     vertical_overflow: &str,
 ) -> BitmapTextLayout {
-    let font_size = if font_size.is_finite() && font_size > 0.0 {
-        font_size.min(512.0)
+    let font_size = if font_size.is_finite() {
+        font_size.clamp(1.0, 512.0)
     } else {
         16.0
     };
@@ -4735,17 +4746,108 @@ fn layout_bitmap_text(
                 characters: characters.clone(),
                 x,
                 y: start_y + index as f32 * line_advance,
+                width: line_width,
             }
         })
         .collect();
     BitmapTextLayout {
         lines,
+        font_size,
         glyph_scale,
         advance,
         line_height,
         line_advance,
+        block_height,
         truncated,
     }
+}
+
+fn bitmap_text_layout_fits(layout: &BitmapTextLayout, rect: UiRect, text: &str) -> bool {
+    if text.is_empty() {
+        return true;
+    }
+    !layout.truncated
+        && layout.block_height <= rect.height.max(0.0) + 1e-4
+        && layout
+            .lines
+            .iter()
+            .all(|line| line.width <= rect.width.max(0.0) + 1e-4)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn layout_bitmap_text(
+    text: &str,
+    rect: UiRect,
+    font_size: f32,
+    best_fit: bool,
+    min_size: f32,
+    max_size: f32,
+    font_scale: f32,
+    alignment: &str,
+    vertical_align: &str,
+    line_spacing: f32,
+    horizontal_overflow: &str,
+    vertical_overflow: &str,
+) -> BitmapTextLayout {
+    if !best_fit {
+        return layout_bitmap_text_at_font_size(
+            text,
+            rect,
+            font_size,
+            alignment,
+            vertical_align,
+            line_spacing,
+            horizontal_overflow,
+            vertical_overflow,
+        );
+    }
+    let min_size = if min_size.is_finite() {
+        min_size.clamp(1.0, 300.0)
+    } else {
+        10.0
+    };
+    let max_size = if max_size.is_finite() {
+        max_size.clamp(1.0, 300.0)
+    } else {
+        40.0
+    };
+    let mut low = min_size.min(max_size).ceil().max(1.0) as i32;
+    let mut high = max_size.max(min_size).floor().max(low as f32) as i32;
+    let mut resolved = low;
+    let font_scale = if font_scale.is_finite() && font_scale > 0.0 {
+        font_scale
+    } else {
+        1.0
+    };
+    while low <= high {
+        let candidate = low + (high - low) / 2;
+        let layout = layout_bitmap_text_at_font_size(
+            text,
+            rect,
+            candidate as f32 * font_scale,
+            alignment,
+            vertical_align,
+            line_spacing,
+            horizontal_overflow,
+            "Overflow",
+        );
+        if bitmap_text_layout_fits(&layout, rect, text) {
+            resolved = candidate;
+            low = candidate + 1;
+        } else {
+            high = candidate - 1;
+        }
+    }
+    layout_bitmap_text_at_font_size(
+        text,
+        rect,
+        resolved as f32 * font_scale,
+        alignment,
+        vertical_align,
+        line_spacing,
+        horizontal_overflow,
+        vertical_overflow,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -4757,6 +4859,10 @@ fn push_text_styled(
     outline_color: [f32; 4],
     outline_width: f32,
     font_size: f32,
+    best_fit: bool,
+    min_size: f32,
+    max_size: f32,
+    font_scale: f32,
     alignment: &str,
     vertical_align: &str,
     line_spacing: f32,
@@ -4769,6 +4875,10 @@ fn push_text_styled(
         text,
         rect,
         font_size,
+        best_fit,
+        min_size,
+        max_size,
+        font_scale,
         alignment,
         vertical_align,
         line_spacing,
@@ -5277,6 +5387,9 @@ mod tests {
         assert_eq!(legacy_raw_image.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_text.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_text.line_spacing, 1.0);
+        assert!(!legacy_text.resize_text_for_best_fit);
+        assert_eq!(legacy_text.resize_text_min_size, 10);
+        assert_eq!(legacy_text.resize_text_max_size, 40);
         assert_eq!(legacy_text.horizontal_overflow, "Wrap");
         assert_eq!(legacy_text.vertical_overflow, "Truncate");
         assert_eq!(legacy_panel.raycast_padding, [0.0; 4]);
@@ -8071,6 +8184,10 @@ mod tests {
             [0.1, 0.2, 0.3, 0.75],
             2.0,
             16.0,
+            false,
+            10.0,
+            40.0,
+            1.0,
             "Center",
             "Middle",
             1.0,
@@ -8105,6 +8222,10 @@ mod tests {
             "alpha beta",
             rect,
             7.0,
+            false,
+            10.0,
+            40.0,
+            1.0,
             "Left",
             "Top",
             1.0,
@@ -8130,6 +8251,10 @@ mod tests {
                 ..rect
             },
             7.0,
+            false,
+            10.0,
+            40.0,
+            1.0,
             "Left",
             "Top",
             1.0,
@@ -8147,6 +8272,10 @@ mod tests {
                 ..rect
             },
             7.0,
+            false,
+            10.0,
+            40.0,
+            1.0,
             "Right",
             "Bottom",
             1.5,
@@ -8163,6 +8292,10 @@ mod tests {
             &"A".repeat(MAX_UI_TEXT_CHARACTERS + 1),
             rect,
             7.0,
+            false,
+            10.0,
+            40.0,
+            1.0,
             "Left",
             "Top",
             1.0,
@@ -8171,6 +8304,116 @@ mod tests {
         );
         assert_eq!(bounded.lines[0].characters.len(), MAX_UI_TEXT_CHARACTERS);
         assert!(bounded.truncated);
+    }
+
+    #[test]
+    fn text_best_fit_selects_largest_fitting_size_and_measures_overflow() {
+        let roomy = layout_bitmap_text(
+            "AB",
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 80.0,
+                height: 80.0,
+            },
+            16.0,
+            true,
+            7.0,
+            14.0,
+            1.0,
+            "Left",
+            "Top",
+            1.0,
+            "Wrap",
+            "Truncate",
+        );
+        assert_eq!(roomy.font_size, 14.0);
+
+        let reduced = layout_bitmap_text(
+            "AB",
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 17.0,
+                height: 16.0,
+            },
+            16.0,
+            true,
+            7.0,
+            14.0,
+            1.0,
+            "Left",
+            "Top",
+            1.0,
+            "Overflow",
+            "Overflow",
+        );
+        assert_eq!(reduced.font_size, 10.0);
+        assert!(!reduced.truncated);
+
+        let minimum_fallback = layout_bitmap_text(
+            "A\nB\nC",
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 40.0,
+                height: 4.0,
+            },
+            16.0,
+            true,
+            7.0,
+            14.0,
+            1.0,
+            "Left",
+            "Top",
+            1.0,
+            "Wrap",
+            "Truncate",
+        );
+        assert_eq!(minimum_fallback.font_size, 7.0);
+        assert!(minimum_fallback.truncated);
+
+        let scaled = layout_bitmap_text(
+            "A",
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 20.0,
+                height: 20.0,
+            },
+            16.0,
+            true,
+            10.0,
+            10.0,
+            0.55,
+            "Left",
+            "Top",
+            1.0,
+            "Wrap",
+            "Truncate",
+        );
+        assert_eq!(scaled.font_size, 5.5);
+
+        let bounded = layout_bitmap_text(
+            "A",
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 20.0,
+                height: 20.0,
+            },
+            -5.0,
+            true,
+            -10.0,
+            0.0,
+            1.0,
+            "Left",
+            "Top",
+            1.0,
+            "Wrap",
+            "Truncate",
+        );
+        assert_eq!(bounded.font_size, 1.0);
     }
 
     #[test]
@@ -8189,6 +8432,10 @@ mod tests {
             [0.0, 0.0, 0.0, 1.0],
             16.0,
             7.0,
+            false,
+            10.0,
+            40.0,
+            1.0,
             "Left",
             "Top",
             1.0,

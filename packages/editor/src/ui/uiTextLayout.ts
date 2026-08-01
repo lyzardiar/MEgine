@@ -5,6 +5,10 @@ export interface UiTextLayoutOptions {
   width: number;
   height: number;
   fontSize: number;
+  bestFit: boolean;
+  minSize: number;
+  maxSize: number;
+  fontScale: number;
   lineSpacing: number;
   horizontalOverflow: UiTextHorizontalOverflow;
   verticalOverflow: UiTextVerticalOverflow;
@@ -21,10 +25,12 @@ export interface UiTextLayoutLine {
 
 export interface UiTextLayout {
   lines: UiTextLayoutLine[];
+  fontSize: number;
   glyphScale: number;
   advance: number;
   lineHeight: number;
   lineAdvance: number;
+  blockHeight: number;
   truncated: boolean;
 }
 
@@ -67,10 +73,17 @@ function wrapParagraph(value: string, maxColumns: number): string[] {
   return lines;
 }
 
-export function layoutUiText(value: string, options: UiTextLayoutOptions): UiTextLayout {
+function layoutUiTextAtFontSize(
+  value: string,
+  options: UiTextLayoutOptions,
+  requestedFontSize: number,
+  verticalOverflow = options.verticalOverflow,
+): UiTextLayout {
   const width = Math.max(0, Number.isFinite(options.width) ? options.width : 0);
   const height = Math.max(0, Number.isFinite(options.height) ? options.height : 0);
-  const fontSize = Math.min(512, finitePositive(options.fontSize, 16));
+  const fontSize = Number.isFinite(requestedFontSize)
+    ? Math.min(512, Math.max(1, requestedFontSize))
+    : 16;
   const glyphScale = Math.max(1, Math.max(fontSize, 7) / 7);
   const advance = 6 * glyphScale;
   const lineHeight = 8 * glyphScale;
@@ -92,7 +105,7 @@ export function layoutUiText(value: string, options: UiTextLayoutOptions): UiTex
   ));
   const linesTruncated = allAuthoredLines.length > MAX_UI_TEXT_LINES;
   const authoredLines = allAuthoredLines.slice(0, MAX_UI_TEXT_LINES);
-  const maxVisibleLines = options.verticalOverflow === 'Overflow'
+  const maxVisibleLines = verticalOverflow === 'Overflow'
     ? authoredLines.length
     : height + 1e-4 < lineHeight
       ? 0
@@ -123,13 +136,62 @@ export function layoutUiText(value: string, options: UiTextLayoutOptions): UiTex
   });
   return {
     lines,
+    fontSize,
     glyphScale,
     advance,
     lineHeight,
     lineAdvance,
+    blockHeight,
     truncated: inputTruncated
       || linesTruncated
       || visibleLines.length < authoredLines.length
       || (normalizedCodePoints.length > 0 && authoredLines.length === 0),
   };
+}
+
+function textFits(layout: UiTextLayout, width: number, height: number, value: string): boolean {
+  if (value.length === 0) return true;
+  return !layout.truncated
+    && layout.blockHeight <= height + 1e-4
+    && layout.lines.every((line) => line.width <= width + 1e-4);
+}
+
+function resolveBestFitFontSize(value: string, options: UiTextLayoutOptions): number {
+  const width = Math.max(0, Number.isFinite(options.width) ? options.width : 0);
+  const height = Math.max(0, Number.isFinite(options.height) ? options.height : 0);
+  const rawMin = Number.isFinite(options.minSize)
+    ? Math.min(300, Math.max(1, options.minSize))
+    : 10;
+  const rawMax = Number.isFinite(options.maxSize)
+    ? Math.min(300, Math.max(1, options.maxSize))
+    : 40;
+  const fontScale = finitePositive(options.fontScale, 1);
+  const lower = Math.max(1, Math.ceil(Math.min(rawMin, rawMax)));
+  const upper = Math.max(lower, Math.floor(Math.max(rawMin, rawMax)));
+  let low = lower;
+  let high = upper;
+  let best = lower;
+  while (low <= high) {
+    const candidate = Math.floor((low + high) * 0.5);
+    const layout = layoutUiTextAtFontSize(
+      value,
+      options,
+      candidate * fontScale,
+      'Overflow',
+    );
+    if (textFits(layout, width, height, value)) {
+      best = candidate;
+      low = candidate + 1;
+    } else {
+      high = candidate - 1;
+    }
+  }
+  return best * fontScale;
+}
+
+export function layoutUiText(value: string, options: UiTextLayoutOptions): UiTextLayout {
+  const fontSize = options.bestFit
+    ? resolveBestFitFontSize(value, options)
+    : options.fontSize;
+  return layoutUiTextAtFontSize(value, options, fontSize);
 }
