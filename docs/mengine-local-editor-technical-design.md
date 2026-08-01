@@ -2009,3 +2009,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - MCP `take_all_window_screenshots` 不再在聚合层无条件返回 `backgroundSafe=true`。只有每个初始原生窗口都成功返回截图且逐窗明确标记后台安全时，聚合结果才给出安全证明；单窗关闭、输出上限、标签/图像校验失败或明确不安全都视为未知，使 `backgroundSafe` 与 `complete` 同时为 false。
 - 像素链路继续串行调用 WebView2 离屏截图，并在结束后重读原生窗口清单；`inventoryStable` 独立描述窗口集合和状态是否漂移。新增无窗口 MCP 回归覆盖完整安全采集、清单漂移伴随失败，以及成功返回图像但拒绝逐窗安全证明的情况。
+
+## 185. 2026-08-01 RectMask2D Padding Order and Asset Migration
+
+- `RectMask2D.padding` 现在严格采用 Unity uGUI 的 `Left, Bottom, Right, Top` 顺序；Editor Canvas 与 Runtime 使用专用 L/B/R/T inset，通用 `LayoutGroup.padding` 继续保持 L/T/R/B，避免两类字段互相改义。Inspector 明确显示四边顺序，非对称回归同时约束硬裁剪、Softness 基准和命中区域。
+- 旧资源此前按 L/T/R/B 写入，因此 Scene 格式升级到 v3，并在加载 v1/v2 时交换 Padding 的 Bottom/Top；仅 v1 继续补齐历史隐式 GraphicRaycaster。Prefab 格式升级到 v2，递归迁移 v1 根节点与所有子节点。当前版本资源不重复迁移，Editor 与 Rust 载入器使用相同的版本边界并拒绝未知新版本。
+- Agent 场景 JSON 校验与 MCP/命令说明同步接受 Scene v1、v2、v3；导入后仍由统一迁移链进入当前版本。回归覆盖 Editor/Runtime 非对称裁剪、Scene 两代迁移与当前值保持、Prefab 递归迁移与当前值保持，确保后台 Agent 写入和磁盘加载不会产生不同语义。

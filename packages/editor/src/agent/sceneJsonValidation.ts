@@ -1,12 +1,19 @@
 import { BridgeError } from './protocol.ts';
-import { CURRENT_SCENE_VERSION, LEGACY_SCENE_VERSION } from '../sceneMigration.ts';
+import {
+  CURRENT_SCENE_VERSION,
+  LEGACY_SCENE_VERSION,
+  PREVIOUS_SCENE_VERSION,
+} from '../sceneMigration.ts';
 
 const MAX_SCENE_JSON_BYTES = 8 * 1024 * 1024;
 const MAX_SCENE_ENTITIES = 20_000;
 const MAX_COMPONENTS_PER_ENTITY = 256;
 
 export type AgentSceneJsonSummary = {
-  version: typeof LEGACY_SCENE_VERSION | typeof CURRENT_SCENE_VERSION;
+  version:
+    | typeof LEGACY_SCENE_VERSION
+    | typeof PREVIOUS_SCENE_VERSION
+    | typeof CURRENT_SCENE_VERSION;
   name: string | null;
   entityCount: number;
   rootCount: number;
@@ -28,8 +35,14 @@ export function validateAgentSceneJson(json: string): AgentSceneJsonSummary {
     throw invalid(`Scene JSON is invalid: ${error instanceof Error ? error.message : String(error)}`);
   }
   const document = plainRecord(parsed, 'Scene JSON root');
-  if (document.version !== LEGACY_SCENE_VERSION && document.version !== CURRENT_SCENE_VERSION) {
-    throw invalid(`Scene JSON "version" must be ${LEGACY_SCENE_VERSION} or ${CURRENT_SCENE_VERSION}`);
+  if (
+    document.version !== LEGACY_SCENE_VERSION
+    && document.version !== PREVIOUS_SCENE_VERSION
+    && document.version !== CURRENT_SCENE_VERSION
+  ) {
+    throw invalid(
+      `Scene JSON "version" must be ${LEGACY_SCENE_VERSION}, ${PREVIOUS_SCENE_VERSION}, or ${CURRENT_SCENE_VERSION}`,
+    );
   }
   if (document.name !== undefined && document.name !== null && typeof document.name !== 'string') {
     throw invalid('Scene JSON "name" must be a string or null');

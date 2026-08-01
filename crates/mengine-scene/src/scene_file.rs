@@ -4,6 +4,7 @@ use mengine_core::generated::TimelineDirector;
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_core::World;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -12,8 +13,9 @@ use std::path::Path;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-pub const SCENE_VERSION: u32 = 2;
+pub const SCENE_VERSION: u32 = 3;
 const LEGACY_SCENE_VERSION: u32 = 1;
+const PREVIOUS_SCENE_VERSION: u32 = 2;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SceneFile {
@@ -102,15 +104,38 @@ fn sync_parent(_parent: &Path) -> std::io::Result<()> {
 pub fn load_scene(path: &Path, world: &mut World) -> Result<SceneFile, SceneError> {
     let text = std::fs::read_to_string(path)?;
     let mut file: SceneFile = serde_json::from_str(&text)?;
-    if file.version != LEGACY_SCENE_VERSION && file.version != SCENE_VERSION {
+    if file.version != LEGACY_SCENE_VERSION
+        && file.version != PREVIOUS_SCENE_VERSION
+        && file.version != SCENE_VERSION
+    {
         return Err(SceneError::Version(file.version));
     }
     if file.version == LEGACY_SCENE_VERSION {
         migrate_legacy_canvas_raycasters(&mut file.world);
+    }
+    if file.version != SCENE_VERSION {
+        migrate_legacy_rect_mask_padding_in_snapshot(&mut file.world);
         file.version = SCENE_VERSION;
     }
     apply_snapshot(world, &file.world);
     Ok(file)
+}
+
+pub(crate) fn migrate_legacy_rect_mask_padding(component: &mut Value) {
+    let Some(padding) = component.get_mut("padding").and_then(Value::as_array_mut) else {
+        return;
+    };
+    if padding.len() >= 4 {
+        padding.swap(1, 3);
+    }
+}
+
+fn migrate_legacy_rect_mask_padding_in_snapshot(snapshot: &mut WorldSnapshot) {
+    for entity in &mut snapshot.entities {
+        if let Some(mask) = entity.components.get_mut("RectMask2D") {
+            migrate_legacy_rect_mask_padding(mask);
+        }
+    }
 }
 
 fn migrate_legacy_canvas_raycasters(snapshot: &mut WorldSnapshot) {
@@ -221,7 +246,8 @@ mod tests {
     use super::*;
     use mengine_core::command::WorldCommand;
     use mengine_core::generated::{
-        Button, Canvas, GraphicRaycaster, ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton,
+        Button, Canvas, GraphicRaycaster, ParticleEmitter2D, ParticleEmitter3D, RectMask2D,
+        SpineSkeleton,
     };
     use mengine_core::snapshot::EntitySnapshot;
     use serde_json::json;
@@ -234,8 +260,12 @@ mod tests {
     }
 
     #[test]
-    fn legacy_scenes_gain_explicit_canvas_raycasters_but_current_scenes_preserve_removal() {
-        for (version, expects_raycaster) in [(LEGACY_SCENE_VERSION, true), (SCENE_VERSION, false)] {
+    fn migrates_canvas_raycasters_and_rect_mask_padding_by_scene_version() {
+        for (version, expects_raycaster, expects_padding_migration) in [
+            (LEGACY_SCENE_VERSION, true, true),
+            (PREVIOUS_SCENE_VERSION, false, true),
+            (SCENE_VERSION, false, false),
+        ] {
             let (dir, path) = temp_scene(&format!("canvas-v{version}.mscene"));
             std::fs::write(
                 &path,
@@ -246,7 +276,10 @@ mod tests {
                         "entities": [{
                             "entity": 10,
                             "name": "Canvas",
-                            "components": { "Canvas": {} }
+                            "components": {
+                                "Canvas": {},
+                                "RectMask2D": { "padding": [1, 2, 3, 4] }
+                            }
                         }]
                     }
                 }))
@@ -268,6 +301,14 @@ mod tests {
                 assert_eq!(raycaster.blocking_objects, "None");
                 assert_eq!(raycaster.blocking_mask, -1);
             }
+            assert_eq!(
+                world.get_component::<RectMask2D>(canvas).unwrap().padding,
+                if expects_padding_migration {
+                    [1.0, 4.0, 3.0, 2.0]
+                } else {
+                    [1.0, 2.0, 3.0, 4.0]
+                }
+            );
             std::fs::remove_dir_all(dir).unwrap();
         }
     }

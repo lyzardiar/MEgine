@@ -2522,7 +2522,7 @@ const TOOLS = [
     {
       json: {
         type: 'string',
-        description: 'Complete version 1 MEngine scene JSON (max 8 MiB and 20,000 entities)',
+        description: 'Complete MEngine scene JSON version 1, 2, or 3 (max 8 MiB and 20,000 entities)',
       },
     },
     ['json'],

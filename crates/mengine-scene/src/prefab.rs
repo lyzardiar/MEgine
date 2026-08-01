@@ -1,6 +1,6 @@
 use crate::{
     entity_reference::{resolve_prefab_entity_references, validate_prefab_entity_references},
-    scene_file::atomic_write,
+    scene_file::{atomic_write, migrate_legacy_rect_mask_padding},
     SceneError,
 };
 use mengine_core::command::WorldCommand;
@@ -10,7 +10,8 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::path::Path;
 
-pub const PREFAB_VERSION: u32 = 1;
+pub const PREFAB_VERSION: u32 = 2;
+const LEGACY_PREFAB_VERSION: u32 = 1;
 const MAX_PREFAB_NODES: usize = 65_536;
 const MAX_PREFAB_DEPTH: usize = 256;
 
@@ -164,11 +165,11 @@ impl Prefab {
 pub fn load_prefab(path: &Path) -> Result<Prefab, SceneError> {
     let text = std::fs::read_to_string(path)?;
     let value: Value = serde_json::from_str(&text)?;
-    let prefab = if value.get("root").is_some() {
+    let mut prefab = if value.get("root").is_some() {
         serde_json::from_value(value)?
     } else {
         let legacy: LegacyPrefabNode = serde_json::from_value(value)?;
-        let version = legacy.version.unwrap_or(PREFAB_VERSION);
+        let version = legacy.version.unwrap_or(LEGACY_PREFAB_VERSION);
         let name = legacy.name.clone();
         Prefab {
             version,
@@ -176,6 +177,25 @@ pub fn load_prefab(path: &Path) -> Result<Prefab, SceneError> {
             root: legacy.into_node(&mut Vec::new()),
         }
     };
+    if prefab.version != LEGACY_PREFAB_VERSION && prefab.version != PREFAB_VERSION {
+        return Err(SceneError::Version(prefab.version));
+    }
+    if prefab.version == LEGACY_PREFAB_VERSION {
+        fn migrate(node: &mut PrefabNode) {
+            if let Some(mask) = node
+                .components
+                .as_object_mut()
+                .and_then(|components| components.get_mut("RectMask2D"))
+            {
+                migrate_legacy_rect_mask_padding(mask);
+            }
+            for child in &mut node.children {
+                migrate(child);
+            }
+        }
+        migrate(&mut prefab.root);
+        prefab.version = PREFAB_VERSION;
+    }
     prefab.validate()?;
     Ok(prefab)
 }
@@ -344,12 +364,21 @@ mod tests {
         let path = dir.join("legacy.prefab");
         std::fs::write(
             &path,
-            r#"{"version":1,"name":"Root","components":{},"children":[{"name":"Child","components":{}}]}"#,
+            r#"{"version":1,"name":"Root","components":{"RectMask2D":{"padding":[1,2,3,4]}},"children":[{"name":"Child","components":{"RectMask2D":{"padding":[10,20,30,40]}}}]}"#,
         )
         .unwrap();
         let legacy = load_prefab(&path).unwrap();
+        assert_eq!(legacy.version, PREFAB_VERSION);
         assert_eq!(legacy.root.id, "root");
         assert_eq!(legacy.root.children[0].id, "node-0");
+        assert_eq!(
+            legacy.root.components["RectMask2D"]["padding"],
+            json!([1, 4, 3, 2])
+        );
+        assert_eq!(
+            legacy.root.children[0].components["RectMask2D"]["padding"],
+            json!([10, 40, 30, 20])
+        );
 
         let mut invalid = sample_prefab();
         invalid.root.children[0].id = "root".into();
@@ -357,6 +386,34 @@ mod tests {
             invalid.validate(),
             Err(SceneError::InvalidPrefab(_))
         ));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn current_prefab_preserves_unity_rect_mask_padding_order() {
+        let dir = std::env::temp_dir().join(format!("mengine-prefab-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("current.prefab");
+        std::fs::write(
+            &path,
+            serde_json::to_vec(&json!({
+                "version": PREFAB_VERSION,
+                "name": "Current",
+                "root": {
+                    "id": "root",
+                    "name": "Root",
+                    "components": { "RectMask2D": { "padding": [1, 2, 3, 4] } },
+                    "children": []
+                }
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let current = load_prefab(&path).unwrap();
+        assert_eq!(
+            current.root.components["RectMask2D"]["padding"],
+            json!([1, 2, 3, 4])
+        );
         std::fs::remove_dir_all(dir).unwrap();
     }
 }

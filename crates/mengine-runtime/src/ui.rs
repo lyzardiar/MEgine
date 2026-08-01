@@ -1844,7 +1844,7 @@ fn walk(
     let mut child_clip = clip;
     if let Some(mask) = world.get_component::<RectMask2D>(entity) {
         if mask.enabled {
-            let mut mask_rect = inset_rect(rect, mask.padding, scale);
+            let mut mask_rect = inset_rect_lbrt(rect, mask.padding, scale);
             if state.pixel_perfect {
                 mask_rect.x = mask_rect.x.round();
                 mask_rect.y = mask_rect.y.round();
@@ -3243,6 +3243,14 @@ fn inset_rect(rect: UiRect, padding: [f32; 4], scale: f32) -> UiRect {
         width: (rect.width - left - right).max(0.0),
         height: (rect.height - top - bottom).max(0.0),
     }
+}
+
+fn inset_rect_lbrt(rect: UiRect, padding: [f32; 4], scale: f32) -> UiRect {
+    inset_rect(
+        rect,
+        [padding[0], padding[3], padding[2], padding[1]],
+        scale,
+    )
 }
 
 fn intersect_rect(a: UiRect, b: UiRect) -> UiRect {
@@ -5694,7 +5702,7 @@ mod tests {
             .find(|control| control.entity == child)
             .expect("child button control");
         assert_eq!(control.clip.x, 10);
-        assert_eq!(control.clip.y, 20);
+        assert_eq!(control.clip.y, 40);
         assert_eq!(control.clip.width, 760);
         assert_eq!(control.clip.height, 540);
         assert!(!control.contains(5.0, 300.0));
@@ -5708,7 +5716,7 @@ mod tests {
         assert_eq!(
             button.soft_clips[0],
             Some(UiSoftClip {
-                rect: [10.0, 20.0, 760.0, 540.0],
+                rect: [10.0, 40.0, 760.0, 540.0],
                 softness: [12.0, 16.0],
             })
         );

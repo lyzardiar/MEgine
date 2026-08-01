@@ -746,6 +746,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     show_mask_graphic: { label: 'Show Mask Graphic' },
   },
   RectMask2D: {
+    padding: { label: 'Padding (L, B, R, T)' },
     softness: { label: 'Softness', min: 0, step: 1 },
   },
   ProgressBar: {

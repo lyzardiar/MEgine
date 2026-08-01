@@ -193,6 +193,7 @@ test('RectMask2D Softness defaults, propagates as a nested stack, and multiplies
     padding: [0, 0, 0, 0],
     softness: [0, 0],
   });
+  assert.equal(getBuiltinInspectorField('RectMask2D', 'padding')?.label, 'Padding (L, B, R, T)');
   assert.equal(getBuiltinInspectorField('RectMask2D', 'softness')?.min, 0);
 
   const entities = [

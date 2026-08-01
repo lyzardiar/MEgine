@@ -384,6 +384,11 @@ function insetRect(rect: Rect, raw: unknown, scale: number): Rect {
   };
 }
 
+function insetRectLbrt(rect: Rect, raw: unknown, scale: number): Rect {
+  const p = Array.isArray(raw) ? raw : [0, 0, 0, 0];
+  return insetRect(rect, [p[0], p[3], p[2], p[1]], scale);
+}
+
 function layoutChildRect(
   parent: Rect,
   group: Record<string, unknown>,
@@ -967,7 +972,7 @@ export function layoutUiOverlay(
       let childClip = inheritedClip;
       let ownSoftClip: UiSoftClip | undefined;
       if (rectMask && rectMask.enabled !== false) {
-        const inset = insetRect(rect, rectMask.padding, scale);
+        const inset = insetRectLbrt(rect, rectMask.padding, scale);
         const maskRect = state.pixelPerfect
           ? { x: Math.round(inset.x), y: Math.round(inset.y), w: Math.round(inset.w), h: Math.round(inset.h) }
           : inset;

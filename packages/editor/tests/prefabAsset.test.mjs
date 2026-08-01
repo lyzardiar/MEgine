@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  PREFAB_VERSION,
   PREFAB_LINK_COMPONENT,
   capturePrefabAsset,
   clonePrefabLinkedComponents,
@@ -94,6 +95,40 @@ test('finds instance root from a linked child and upgrades legacy assets', () =>
   }));
   assert.equal(legacy.root.id, 'root');
   assert.equal(legacy.root.children[0].id, 'node-0');
+  assert.equal(legacy.version, PREFAB_VERSION);
+});
+
+test('migrates legacy RectMask2D padding recursively and preserves current prefabs', () => {
+  const legacy = parsePrefabAsset(JSON.stringify({
+    version: 1,
+    name: 'Masked',
+    root: {
+      id: 'root',
+      name: 'Root',
+      components: { RectMask2D: { padding: [1, 2, 3, 4] } },
+      children: [{
+        id: 'child',
+        name: 'Child',
+        components: { RectMask2D: { padding: [10, 20, 30, 40] } },
+        children: [],
+      }],
+    },
+  }));
+  assert.equal(legacy.version, PREFAB_VERSION);
+  assert.deepEqual(legacy.root.components.RectMask2D.padding, [1, 4, 3, 2]);
+  assert.deepEqual(legacy.root.children[0].components.RectMask2D.padding, [10, 40, 30, 20]);
+
+  const current = parsePrefabAsset(JSON.stringify({
+    version: PREFAB_VERSION,
+    name: 'Current',
+    root: {
+      id: 'root',
+      name: 'Root',
+      components: { RectMask2D: { padding: [1, 2, 3, 4] } },
+      children: [],
+    },
+  }));
+  assert.deepEqual(current.root.components.RectMask2D.padding, [1, 2, 3, 4]);
 });
 
 test('rejects duplicate ids and invalid component payloads', () => {

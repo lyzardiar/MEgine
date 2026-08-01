@@ -270,6 +270,44 @@ test('disabled Mask does not alter child rendering or raycasts', () => {
   assert.equal(hitTestUi(items, 475, 300)?.entity, 3);
 });
 
+test('RectMask2D uses Unity left, bottom, right, top padding order', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [100, 80] }),
+        RectMask2D: { padding: [10, 20, 30, 5], softness: [4, 6] },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [200, 200] }),
+        Image: {},
+      },
+    },
+  ];
+  const child = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((item) => item.entity === 3);
+  assert.deepEqual(child.clip, { x: 360, y: 265, w: 60, h: 55 });
+  assert.deepEqual(child.softClips, [{
+    rect: { x: 360, y: 265, w: 60, h: 55 },
+    softness: [4, 6],
+  }]);
+});
+
 test('Game View filters Overlay and Camera canvases by their effective target display', () => {
   const entities = [
     {

@@ -236,7 +236,7 @@ component LayoutGroup {
   child_force_expand: bool   = true
 }
 
-/// Rectangular child clipping. Padding order is left, top, right, bottom.
+/// Rectangular child clipping. Padding order is left, bottom, right, top.
 component RectMask2D {
   enabled: bool   = true
   padding: float4 = [0, 0, 0, 0]

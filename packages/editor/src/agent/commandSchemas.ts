@@ -315,7 +315,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   }, ['path']),
   'scene.load_json': objectSchema({
     json: stringValue(
-      'Complete version 1 MEngine scene JSON (max 8 MiB and 20,000 entities)',
+      'Complete MEngine scene JSON version 1, 2, or 3 (max 8 MiB and 20,000 entities)',
     ),
   }, ['json']),
   'scene.rename': objectSchema({

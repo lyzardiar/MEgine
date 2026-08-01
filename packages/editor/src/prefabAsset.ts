@@ -4,8 +4,10 @@ import {
   validatePrefabEntityReferences,
 } from './entityReferences.ts';
 import { normalizeEntityTag, normalizeGameLayerIndex } from './sortingLayerModel.ts';
+import { migrateLegacyRectMaskPadding } from './rectMaskMigration.ts';
 
-export const PREFAB_VERSION = 1;
+export const PREFAB_VERSION = 2;
+export const LEGACY_PREFAB_VERSION = 1;
 export const PREFAB_LINK_COMPONENT = '__MEnginePrefab';
 
 export interface PrefabNode {
@@ -122,18 +124,31 @@ function validateReferenceTokens(prefab: PrefabAsset): PrefabAsset {
 
 export function normalizePrefabAsset(value: unknown): PrefabAsset {
   const raw = objectValue(value, 'prefab');
-  const version = Number(raw.version ?? PREFAB_VERSION);
-  if (version !== PREFAB_VERSION) throw new Error(`unsupported prefab version: ${version}`);
-  if (raw.root == null) {
-    const root = legacyNode(raw, []);
-    return validateReferenceTokens({ version: PREFAB_VERSION, name: root.name, root });
+  const version = Number(raw.version ?? LEGACY_PREFAB_VERSION);
+  if (version !== LEGACY_PREFAB_VERSION && version !== PREFAB_VERSION) {
+    throw new Error(`unsupported prefab version: ${version}`);
   }
-  const name = String(raw.name ?? '').trim();
-  if (!name) throw new Error('prefab name is empty');
+  let root: PrefabNode;
+  let name: string;
+  if (raw.root == null) {
+    root = legacyNode(raw, []);
+    name = root.name;
+  } else {
+    name = String(raw.name ?? '').trim();
+    if (!name) throw new Error('prefab name is empty');
+    root = normalizeNode(raw.root, 'root', new Set(), { value: 0 });
+  }
+  if (version === LEGACY_PREFAB_VERSION) {
+    const migrate = (node: PrefabNode): void => {
+      migrateLegacyRectMaskPadding(node.components);
+      node.children.forEach(migrate);
+    };
+    migrate(root);
+  }
   const prefab = {
     version: PREFAB_VERSION,
     name,
-    root: normalizeNode(raw.root, 'root', new Set(), { value: 0 }),
+    root,
   };
   return validateReferenceTokens(prefab);
 }

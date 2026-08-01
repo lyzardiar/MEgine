@@ -14,7 +14,10 @@ const scene = (version, components) => ({
 });
 
 test('scene v1 migration preserves legacy Canvas input through an explicit GraphicRaycaster', () => {
-  const document = migrateSceneDocument(scene(1, { Canvas: {} }));
+  const document = migrateSceneDocument(scene(1, {
+    Canvas: {},
+    RectMask2D: { padding: [1, 2, 3, 4] },
+  }));
   assert.equal(document.version, CURRENT_SCENE_VERSION);
   assert.deepEqual(document.world.entities[0].components.GraphicRaycaster, {
     enabled: true,
@@ -22,11 +25,16 @@ test('scene v1 migration preserves legacy Canvas input through an explicit Graph
     blocking_objects: 'None',
     blocking_mask: -1,
   });
+  assert.deepEqual(document.world.entities[0].components.RectMask2D.padding, [1, 4, 3, 2]);
 });
 
-test('scene v2 preserves intentional GraphicRaycaster removal and disablement', () => {
-  const removed = migrateSceneDocument(scene(2, { Canvas: {} }));
+test('scene v2 preserves raycaster intent while migrating RectMask2D padding', () => {
+  const removed = migrateSceneDocument(scene(2, {
+    Canvas: {},
+    RectMask2D: { padding: [10, 20, 30, 40] },
+  }));
   assert.equal(removed.world.entities[0].components.GraphicRaycaster, undefined);
+  assert.deepEqual(removed.world.entities[0].components.RectMask2D.padding, [10, 40, 30, 20]);
 
   const disabled = migrateSceneDocument(scene(2, {
     Canvas: {},
@@ -35,6 +43,13 @@ test('scene v2 preserves intentional GraphicRaycaster removal and disablement', 
   assert.deepEqual(disabled.world.entities[0].components.GraphicRaycaster, { enabled: false });
 });
 
+test('scene v3 preserves Unity-order RectMask2D padding without remigrating it', () => {
+  const document = migrateSceneDocument(scene(3, {
+    RectMask2D: { padding: [1, 2, 3, 4] },
+  }));
+  assert.deepEqual(document.world.entities[0].components.RectMask2D.padding, [1, 2, 3, 4]);
+});
+
 test('scene migration rejects versions newer than the editor understands', () => {
-  assert.throws(() => migrateSceneDocument(scene(3, {})), /Unsupported scene version 3/);
+  assert.throws(() => migrateSceneDocument(scene(4, {})), /Unsupported scene version 4/);
 });

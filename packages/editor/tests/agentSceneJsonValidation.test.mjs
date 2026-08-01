@@ -59,18 +59,20 @@ test('accepts a complete hierarchy and returns a bounded import summary', () => 
   });
 });
 
-test('accepts current scene version 2 without rewriting its summary', () => {
-  const summary = validateAgentSceneJson(JSON.stringify({
-    version: 2,
-    name: 'Current',
-    world: { entities: [] },
-  }));
-  assert.equal(summary.version, 2);
+test('accepts previous and current scene versions without rewriting their summaries', () => {
+  for (const version of [2, 3]) {
+    const summary = validateAgentSceneJson(JSON.stringify({
+      version,
+      name: 'Current',
+      world: { entities: [] },
+    }));
+    assert.equal(summary.version, version);
+  }
 });
 
 test('rejects malformed roots, unsupported versions, and scalar components', () => {
   assertInvalid('{', /Scene JSON is invalid/);
-  assertInvalid(JSON.stringify({ version: 3, world: { entities: [] } }), /version.*must be 1 or 2/);
+  assertInvalid(JSON.stringify({ version: 4, world: { entities: [] } }), /version.*must be 1, 2, or 3/);
   assertInvalid(JSON.stringify({ version: 1, world: [] }), /world.*must be an object/);
   assertInvalid(sceneJson({
     entities: [entity(1, { components: { Transform: 42 } })],
