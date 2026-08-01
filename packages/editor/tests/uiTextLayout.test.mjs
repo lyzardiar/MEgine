@@ -18,6 +18,7 @@ const options = (overrides = {}) => ({
   width: 29,
   height: 16,
   fontSize: 7,
+  fontStyle: 'Normal',
   bestFit: false,
   minSize: 10,
   maxSize: 40,
@@ -147,4 +148,36 @@ test('Unity Text Best Fit resolves authored integer sizes before Canvas scaling'
     minSize: -10,
     maxSize: 0,
   })).fontSize, 1);
+});
+
+test('Unity Font Style overhang participates in wrapping and Best Fit', () => {
+  const normal = layoutUiText('AB', options({
+    width: 12,
+    height: 24,
+    horizontalOverflow: 'Overflow',
+  }));
+  const styled = layoutUiText('AB', options({
+    width: 12,
+    height: 24,
+    fontStyle: 'BoldAndItalic',
+    horizontalOverflow: 'Overflow',
+  }));
+  assert.equal(normal.lines[0].width, 11);
+  assert.equal(styled.lines[0].width, 13);
+  assert.deepEqual(layoutUiText('AB', options({
+    width: 11,
+    height: 24,
+    fontStyle: 'BoldAndItalic',
+  })).lines.map((line) => line.text), ['A', 'B']);
+
+  const bestFit = layoutUiText('AB', options({
+    width: 17,
+    height: 20,
+    bestFit: true,
+    minSize: 7,
+    maxSize: 14,
+    fontStyle: 'BoldAndItalic',
+    horizontalOverflow: 'Overflow',
+  }));
+  assert.equal(bestFit.fontSize, 9);
 });

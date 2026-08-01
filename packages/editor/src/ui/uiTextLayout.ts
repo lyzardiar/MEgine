@@ -1,10 +1,12 @@
 export type UiTextHorizontalOverflow = 'Wrap' | 'Overflow';
 export type UiTextVerticalOverflow = 'Truncate' | 'Overflow';
+export type UiTextFontStyle = 'Normal' | 'Bold' | 'Italic' | 'BoldAndItalic';
 
 export interface UiTextLayoutOptions {
   width: number;
   height: number;
   fontSize: number;
+  fontStyle: UiTextFontStyle;
   bestFit: boolean;
   minSize: number;
   maxSize: number;
@@ -41,8 +43,19 @@ function finitePositive(value: number, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
-function textWidth(characterCount: number, advance: number, glyphScale: number): number {
-  return characterCount > 0 ? characterCount * advance - glyphScale : 0;
+function styleOverhang(fontStyle: UiTextFontStyle, glyphScale: number): number {
+  const bold = fontStyle === 'Bold' || fontStyle === 'BoldAndItalic';
+  const italic = fontStyle === 'Italic' || fontStyle === 'BoldAndItalic';
+  return (bold ? 0.5 * glyphScale : 0) + (italic ? 1.5 * glyphScale : 0);
+}
+
+function textWidth(
+  characterCount: number,
+  advance: number,
+  glyphScale: number,
+  overhang: number,
+): number {
+  return characterCount > 0 ? characterCount * advance - glyphScale + overhang : 0;
 }
 
 function wrapParagraph(value: string, maxColumns: number): string[] {
@@ -86,6 +99,7 @@ function layoutUiTextAtFontSize(
     : 16;
   const glyphScale = Math.max(1, Math.max(fontSize, 7) / 7);
   const advance = 6 * glyphScale;
+  const overhang = styleOverhang(options.fontStyle, glyphScale);
   const lineHeight = 8 * glyphScale;
   const lineSpacing = Math.min(10, Math.max(0.1, finitePositive(options.lineSpacing, 1)));
   const lineAdvance = lineHeight * lineSpacing;
@@ -97,7 +111,10 @@ function layoutUiTextAtFontSize(
     .slice(0, MAX_UI_TEXT_CHARACTERS)
     .join('')
     .split('\n');
-  const maxColumns = Math.max(0, Math.floor((width + glyphScale) / advance));
+  const maxColumns = Math.max(
+    0,
+    Math.floor((width + glyphScale - overhang) / advance),
+  );
   const allAuthoredLines = paragraphs.flatMap((paragraph) => (
     options.horizontalOverflow === 'Overflow'
       ? [paragraph.replaceAll('\t', '    ')]
@@ -121,7 +138,7 @@ function layoutUiTextAtFontSize(
       : (height - blockHeight) * 0.5;
   const lines = visibleLines.map((text, index) => {
     const characterCount = Array.from(text).length;
-    const measuredWidth = textWidth(characterCount, advance, glyphScale);
+    const measuredWidth = textWidth(characterCount, advance, glyphScale, overhang);
     const x = options.alignment === 'Left'
       ? 0
       : options.alignment === 'Right'

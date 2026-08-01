@@ -175,6 +175,8 @@ component Text {
   text:            string = "Text"
   color:           float4 = [1, 1, 1, 1]
   font_size:       float  = 16
+  /// Unity FontStyle: "Normal" | "Bold" | "Italic" | "BoldAndItalic".
+  font_style:      string = "Normal"
   /// Unity Text.resizeTextForBestFit. Chooses the largest fitting integer size in the range.
   resize_text_for_best_fit: bool = false
   /// Unity Text.resizeTextMinSize.

@@ -169,6 +169,7 @@ export type UiDrawItem = {
     text: string;
     color: [number, number, number, number];
     fontSize: number;
+    fontStyle: 'Normal' | 'Bold' | 'Italic' | 'BoldAndItalic';
     bestFit: boolean;
     minSize: number;
     maxSize: number;
@@ -1211,6 +1212,11 @@ export function layoutUiOverlay(
                 fontSize: Math.min(
                   512,
                   Math.max(1, number(text.font_size ?? text.fontSize, 16) * scale),
+                ),
+                fontStyle: enumValue(
+                  text.font_style ?? text.fontStyle,
+                  ['Normal', 'Bold', 'Italic', 'BoldAndItalic'] as const,
+                  'Normal',
                 ),
                 bestFit:
                   text.resize_text_for_best_fit === true
@@ -3346,6 +3352,7 @@ export function drawUiItems(
           width: w,
           height: h,
           fontSize: it.text.fontSize,
+          fontStyle: it.text.fontStyle,
           bestFit: it.text.bestFit,
           minSize: it.text.minSize,
           maxSize: it.text.maxSize,
@@ -3357,7 +3364,11 @@ export function drawUiItems(
           verticalAlign: it.text.verticalAlign,
         });
         const fontSize = Math.max(1, layout.fontSize);
-        ctx.font = `${fontSize}px system-ui, sans-serif`;
+        const bold = it.text.fontStyle === 'Bold'
+          || it.text.fontStyle === 'BoldAndItalic';
+        const italic = it.text.fontStyle === 'Italic'
+          || it.text.fontStyle === 'BoldAndItalic';
+        ctx.font = `${italic ? 'italic ' : ''}${bold ? '700 ' : ''}${fontSize}px system-ui, sans-serif`;
         for (const line of layout.lines) {
           fillReadableText(
             line.text,

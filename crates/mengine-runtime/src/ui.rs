@@ -2124,6 +2124,7 @@ fn walk(
             multiply_alpha(text.outline_color, state.alpha),
             (text.outline_width * scale).max(0.0),
             text.font_size * scale,
+            &text.font_style,
             text.resize_text_for_best_fit,
             text.resize_text_min_size as f32,
             text.resize_text_max_size as f32,
@@ -4559,6 +4560,7 @@ fn push_text(
         [0.0, 0.0, 0.0, 0.0],
         0.0,
         font_size,
+        "Normal",
         false,
         10.0,
         40.0,
@@ -4596,11 +4598,28 @@ const MAX_UI_TEXT_CHARACTERS: usize = 16_384;
 const MAX_UI_TEXT_LINES: usize = 4_096;
 const MAX_UI_TEXT_PRIMITIVES: usize = 65_536;
 
-fn bitmap_text_width(character_count: usize, advance: f32, glyph_scale: f32) -> f32 {
+fn bitmap_font_style(font_style: &str) -> (bool, bool) {
+    (
+        matches!(font_style, "Bold" | "BoldAndItalic"),
+        matches!(font_style, "Italic" | "BoldAndItalic"),
+    )
+}
+
+fn bitmap_text_style_overhang(font_style: &str, glyph_scale: f32) -> f32 {
+    let (bold, italic) = bitmap_font_style(font_style);
+    (if bold { 0.5 * glyph_scale } else { 0.0 }) + (if italic { 1.5 * glyph_scale } else { 0.0 })
+}
+
+fn bitmap_text_width(
+    character_count: usize,
+    advance: f32,
+    glyph_scale: f32,
+    style_overhang: f32,
+) -> f32 {
     if character_count == 0 {
         0.0
     } else {
-        character_count as f32 * advance - glyph_scale
+        character_count as f32 * advance - glyph_scale + style_overhang
     }
 }
 
@@ -4667,6 +4686,7 @@ fn layout_bitmap_text_at_font_size(
     text: &str,
     rect: UiRect,
     font_size: f32,
+    font_style: &str,
     alignment: &str,
     vertical_align: &str,
     line_spacing: f32,
@@ -4680,6 +4700,7 @@ fn layout_bitmap_text_at_font_size(
     };
     let glyph_scale = (font_size.max(7.0) / 7.0).max(1.0);
     let advance = 6.0 * glyph_scale;
+    let style_overhang = bitmap_text_style_overhang(font_style, glyph_scale);
     let line_height = 8.0 * glyph_scale;
     let line_spacing = if line_spacing.is_finite() && line_spacing > 0.0 {
         line_spacing.clamp(0.1, 10.0)
@@ -4689,7 +4710,9 @@ fn layout_bitmap_text_at_font_size(
     let line_advance = line_height * line_spacing;
     let width = rect.width.max(0.0);
     let height = rect.height.max(0.0);
-    let max_columns = ((width + glyph_scale) / advance).floor().max(0.0) as usize;
+    let max_columns = ((width + glyph_scale - style_overhang) / advance)
+        .floor()
+        .max(0.0) as usize;
     let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
     let input_truncated = normalized.chars().count() > MAX_UI_TEXT_CHARACTERS;
     let normalized = normalized
@@ -4736,7 +4759,8 @@ fn layout_bitmap_text_at_font_size(
         .iter()
         .enumerate()
         .map(|(index, characters)| {
-            let line_width = bitmap_text_width(characters.len(), advance, glyph_scale);
+            let line_width =
+                bitmap_text_width(characters.len(), advance, glyph_scale, style_overhang);
             let x = match alignment {
                 "Left" => rect.x,
                 "Right" => rect.x + width - line_width,
@@ -4779,6 +4803,7 @@ fn layout_bitmap_text(
     text: &str,
     rect: UiRect,
     font_size: f32,
+    font_style: &str,
     best_fit: bool,
     min_size: f32,
     max_size: f32,
@@ -4794,6 +4819,7 @@ fn layout_bitmap_text(
             text,
             rect,
             font_size,
+            font_style,
             alignment,
             vertical_align,
             line_spacing,
@@ -4825,6 +4851,7 @@ fn layout_bitmap_text(
             text,
             rect,
             candidate as f32 * font_scale,
+            font_style,
             alignment,
             vertical_align,
             line_spacing,
@@ -4842,6 +4869,7 @@ fn layout_bitmap_text(
         text,
         rect,
         resolved as f32 * font_scale,
+        font_style,
         alignment,
         vertical_align,
         line_spacing,
@@ -4859,6 +4887,7 @@ fn push_text_styled(
     outline_color: [f32; 4],
     outline_width: f32,
     font_size: f32,
+    font_style: &str,
     best_fit: bool,
     min_size: f32,
     max_size: f32,
@@ -4875,6 +4904,7 @@ fn push_text_styled(
         text,
         rect,
         font_size,
+        font_style,
         best_fit,
         min_size,
         max_size,
@@ -4885,6 +4915,15 @@ fn push_text_styled(
         horizontal_overflow,
         vertical_overflow,
     );
+    let (bold, italic) = bitmap_font_style(font_style);
+    let bold_width = if bold { layout.glyph_scale * 0.5 } else { 0.0 };
+    let italic_offset = |row_index: usize| {
+        if italic {
+            (6 - row_index) as f32 * layout.glyph_scale * 0.25
+        } else {
+            0.0
+        }
+    };
     let glyphs: Vec<(f32, f32, [u8; 7])> = layout
         .lines
         .iter()
@@ -4935,11 +4974,12 @@ fn push_text_styled(
                                 UiRect {
                                     x: *glyph_x
                                         + column as f32 * layout.glyph_scale
+                                        + italic_offset(row_index)
                                         + offset_x as f32,
                                     y: *glyph_y
                                         + row_index as f32 * layout.glyph_scale
                                         + offset_y as f32,
-                                    width: layout.glyph_scale,
+                                    width: layout.glyph_scale + bold_width,
                                     height: layout.glyph_scale,
                                 },
                                 outline_color,
@@ -4968,9 +5008,9 @@ fn push_text_styled(
                 }
                 primitives.push(primitive(
                     UiRect {
-                        x: glyph_x + column as f32 * layout.glyph_scale,
+                        x: glyph_x + column as f32 * layout.glyph_scale + italic_offset(row_index),
                         y: glyph_y + row_index as f32 * layout.glyph_scale,
-                        width: layout.glyph_scale,
+                        width: layout.glyph_scale + bold_width,
                         height: layout.glyph_scale,
                     },
                     color,
@@ -5387,6 +5427,7 @@ mod tests {
         assert_eq!(legacy_raw_image.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_text.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_text.line_spacing, 1.0);
+        assert_eq!(legacy_text.font_style, "Normal");
         assert!(!legacy_text.resize_text_for_best_fit);
         assert_eq!(legacy_text.resize_text_min_size, 10);
         assert_eq!(legacy_text.resize_text_max_size, 40);
@@ -8184,6 +8225,7 @@ mod tests {
             [0.1, 0.2, 0.3, 0.75],
             2.0,
             16.0,
+            "Normal",
             false,
             10.0,
             40.0,
@@ -8222,6 +8264,7 @@ mod tests {
             "alpha beta",
             rect,
             7.0,
+            "Normal",
             false,
             10.0,
             40.0,
@@ -8251,6 +8294,7 @@ mod tests {
                 ..rect
             },
             7.0,
+            "Normal",
             false,
             10.0,
             40.0,
@@ -8272,6 +8316,7 @@ mod tests {
                 ..rect
             },
             7.0,
+            "Normal",
             false,
             10.0,
             40.0,
@@ -8292,6 +8337,7 @@ mod tests {
             &"A".repeat(MAX_UI_TEXT_CHARACTERS + 1),
             rect,
             7.0,
+            "Normal",
             false,
             10.0,
             40.0,
@@ -8317,6 +8363,7 @@ mod tests {
                 height: 80.0,
             },
             16.0,
+            "Normal",
             true,
             7.0,
             14.0,
@@ -8338,6 +8385,7 @@ mod tests {
                 height: 16.0,
             },
             16.0,
+            "Normal",
             true,
             7.0,
             14.0,
@@ -8360,6 +8408,7 @@ mod tests {
                 height: 4.0,
             },
             16.0,
+            "Normal",
             true,
             7.0,
             14.0,
@@ -8382,6 +8431,7 @@ mod tests {
                 height: 20.0,
             },
             16.0,
+            "Normal",
             true,
             10.0,
             10.0,
@@ -8403,6 +8453,7 @@ mod tests {
                 height: 20.0,
             },
             -5.0,
+            "Normal",
             true,
             -10.0,
             0.0,
@@ -8414,6 +8465,89 @@ mod tests {
             "Truncate",
         );
         assert_eq!(bounded.font_size, 1.0);
+
+        let styled = layout_bitmap_text(
+            "AB",
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 17.0,
+                height: 20.0,
+            },
+            16.0,
+            "BoldAndItalic",
+            true,
+            7.0,
+            14.0,
+            1.0,
+            "Left",
+            "Top",
+            1.0,
+            "Overflow",
+            "Truncate",
+        );
+        assert_eq!(styled.font_size, 9.0);
+        assert!((styled.lines[0].width - 16.714_285).abs() < 1e-4);
+
+        let styled_wrap = layout_bitmap_text(
+            "AB",
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 11.0,
+                height: 24.0,
+            },
+            7.0,
+            "BoldAndItalic",
+            false,
+            10.0,
+            40.0,
+            1.0,
+            "Left",
+            "Top",
+            1.0,
+            "Wrap",
+            "Truncate",
+        );
+        assert_eq!(styled_wrap.lines.len(), 2);
+    }
+
+    #[test]
+    fn text_font_style_changes_runtime_bitmap_geometry() {
+        let mut primitives = Vec::new();
+        push_text_styled(
+            &mut primitives,
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 40.0,
+                height: 20.0,
+            },
+            "A",
+            [1.0; 4],
+            [0.0; 4],
+            0.0,
+            7.0,
+            "BoldAndItalic",
+            false,
+            10.0,
+            40.0,
+            1.0,
+            "Left",
+            "Top",
+            1.0,
+            "Overflow",
+            "Overflow",
+            UiClipRect {
+                x: 0,
+                y: 0,
+                width: 40,
+                height: 20,
+            },
+        );
+        assert!(!primitives.is_empty());
+        assert_eq!(primitives[0].rect[0], 2.5);
+        assert_eq!(primitives[0].rect[2], 1.5);
     }
 
     #[test]
@@ -8432,6 +8566,7 @@ mod tests {
             [0.0, 0.0, 0.0, 1.0],
             16.0,
             7.0,
+            "Normal",
             false,
             10.0,
             40.0,

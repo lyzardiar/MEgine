@@ -215,6 +215,7 @@ test('Canvas preview draws Text with the resolved Unity Best Fit size', () => {
         Text: {
           text: 'AB',
           font_size: 16,
+          font_style: 'BoldAndItalic',
           resize_text_for_best_fit: true,
           resize_text_min_size: 7,
           resize_text_max_size: 14,
@@ -231,7 +232,7 @@ test('Canvas preview draws Text with the resolved Unity Best Fit size', () => {
   const canvas = new FakeCanvas(document, 'output');
   drawUiItems(canvas.context, items, null, null);
   const line = canvas.context.operations.find((operation) => operation[0] === 'fillText');
-  assert.equal(line.at(-1), '10px system-ui, sans-serif');
+  assert.equal(line.at(-1), 'italic 700 9px system-ui, sans-serif');
 });
 
 test('adding an authored Graphic creates and protects its CanvasRenderer dependency', async () => {

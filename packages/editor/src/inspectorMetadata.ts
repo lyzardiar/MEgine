@@ -739,6 +739,11 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     material: materialAsset,
     text: { kind: 'multiline' },
     font_size: { min: 1, max: 512, step: 1 },
+    font_style: {
+      label: 'Font Style',
+      kind: 'enum',
+      options: options('Normal', 'Bold', 'Italic', 'BoldAndItalic'),
+    },
     resize_text_for_best_fit: { label: 'Best Fit' },
     resize_text_min_size: {
       label: 'Min Size',

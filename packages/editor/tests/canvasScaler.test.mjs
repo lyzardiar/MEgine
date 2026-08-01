@@ -186,6 +186,7 @@ test('Text Graphic defaults to a Unity raycast target', () => {
   for (const text of [createComponentDefaults('Text'), createUiTextComponents().Text]) {
     assert.equal(text.raycast_target, true);
     assert.equal(text.line_spacing, 1);
+    assert.equal(text.font_style, 'Normal');
     assert.equal(text.resize_text_for_best_fit, false);
     assert.equal(text.resize_text_min_size, 10);
     assert.equal(text.resize_text_max_size, 40);
@@ -195,6 +196,10 @@ test('Text Graphic defaults to a Unity raycast target', () => {
   assert.deepEqual(
     getBuiltinInspectorField('Text', 'horizontal_overflow')?.options?.map(({ value }) => value),
     ['Wrap', 'Overflow'],
+  );
+  assert.deepEqual(
+    getBuiltinInspectorField('Text', 'font_style')?.options?.map(({ value }) => value),
+    ['Normal', 'Bold', 'Italic', 'BoldAndItalic'],
   );
   assert.deepEqual(getBuiltinInspectorField('Text', 'resize_text_min_size'), {
     label: 'Min Size',

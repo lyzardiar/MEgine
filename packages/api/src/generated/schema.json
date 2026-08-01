@@ -2633,6 +2633,9 @@
       "font_size": {
         "type": "number"
       },
+      "font_style": {
+        "type": "string"
+      },
       "horizontal_overflow": {
         "type": "string"
       },
@@ -2689,6 +2692,7 @@
       "text",
       "color",
       "font_size",
+      "font_style",
       "resize_text_for_best_fit",
       "resize_text_min_size",
       "resize_text_max_size",
