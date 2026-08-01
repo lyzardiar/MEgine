@@ -1868,9 +1868,25 @@ fn walk(
     {
         child_clip = intersect_clip(child_clip, rect);
     }
-    let image = world.get_component::<Image>(entity);
-    let raw_image = world.get_component::<RawImage>(entity);
-    let text = world.get_component::<Text>(entity);
+    let authored_image = world.get_component::<Image>(entity);
+    let authored_raw_image = world.get_component::<RawImage>(entity);
+    let authored_text = world.get_component::<Text>(entity);
+    let authored_panel = world.get_component::<Panel>(entity);
+    let image = authored_image.filter(|graphic| graphic.enabled);
+    let raw_image = authored_raw_image.filter(|graphic| graphic.enabled);
+    let text = authored_text.filter(|graphic| graphic.enabled);
+    let panel = authored_panel.filter(|graphic| graphic.enabled);
+    let has_authored_graphic = authored_image.is_some()
+        || authored_raw_image.is_some()
+        || authored_text.is_some()
+        || authored_panel.is_some();
+    let has_enabled_graphic =
+        image.is_some() || raw_image.is_some() || text.is_some() || panel.is_some();
+    let receives_graphic_raycast = !has_authored_graphic
+        || image.is_some_and(|graphic| graphic.raycast_target)
+        || raw_image.is_some_and(|graphic| graphic.raycast_target)
+        || text.is_some_and(|graphic| graphic.raycast_target)
+        || panel.is_some_and(|graphic| graphic.raycast_target);
     let graphic_start = primitives.len();
     let control_start = controls.len();
     let image_sprite_pixel_scale = image.map_or(sprite_pixel_scale, |image| {
@@ -1994,7 +2010,7 @@ fn walk(
     }
 
     if let Some(button) = world.get_component::<Button>(entity) {
-        if image.is_none() && raw_image.is_none() {
+        if authored_image.is_none() && authored_raw_image.is_none() {
             primitives.push(primitive(
                 rect,
                 [0.25, 0.45, 0.85, state.alpha],
@@ -2037,7 +2053,11 @@ fn walk(
             "Middle",
             clip,
         );
-        if button.interactable && state.interactable && state.accepts_raycasts() {
+        if button.interactable
+            && state.interactable
+            && receives_graphic_raycast
+            && state.accepts_raycasts()
+        {
             controls.push(UiControlRegion {
                 entity,
                 rect,
@@ -2131,7 +2151,11 @@ fn walk(
             "Middle",
             clip,
         );
-        if toggle.interactable && state.interactable && state.accepts_raycasts() {
+        if toggle.interactable
+            && state.interactable
+            && receives_graphic_raycast
+            && state.accepts_raycasts()
+        {
             controls.push(UiControlRegion {
                 entity,
                 rect,
@@ -2223,7 +2247,11 @@ fn walk(
             "white",
             clip,
         ));
-        if slider.interactable && state.interactable && state.accepts_raycasts() {
+        if slider.interactable
+            && state.interactable
+            && receives_graphic_raycast
+            && state.accepts_raycasts()
+        {
             controls.push(UiControlRegion {
                 entity,
                 rect,
@@ -2300,7 +2328,11 @@ fn walk(
             "white",
             clip,
         ));
-        if scrollbar.interactable && state.interactable && state.accepts_raycasts() {
+        if scrollbar.interactable
+            && state.interactable
+            && receives_graphic_raycast
+            && state.accepts_raycasts()
+        {
             controls.push(UiControlRegion {
                 entity,
                 rect,
@@ -2329,7 +2361,7 @@ fn walk(
         }
     }
 
-    if let Some(panel) = world.get_component::<Panel>(entity) {
+    if let Some(panel) = panel {
         primitives.push(primitive(
             rect,
             multiply_alpha(panel.color, state.alpha),
@@ -2432,7 +2464,7 @@ fn walk(
             "Middle",
             clip,
         );
-        if enabled && state.accepts_raycasts() {
+        if enabled && receives_graphic_raycast && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -2487,7 +2519,7 @@ fn walk(
             "Middle",
             clip,
         );
-        if enabled && state.accepts_raycasts() {
+        if enabled && receives_graphic_raycast && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -2531,7 +2563,7 @@ fn walk(
                     "Middle",
                     clip,
                 );
-                if enabled && state.accepts_raycasts() {
+                if enabled && receives_graphic_raycast && state.accepts_raycasts() {
                     controls.push(control_region(
                         entity,
                         option_rect,
@@ -2602,7 +2634,7 @@ fn walk(
                 "Middle",
                 child_clip,
             );
-            if enabled && state.accepts_raycasts() {
+            if enabled && receives_graphic_raycast && state.accepts_raycasts() {
                 controls.push(control_region(
                     entity,
                     intersect_rect(row, rect),
@@ -2629,7 +2661,7 @@ fn walk(
             "white",
             clip,
         ));
-        if state.interactable && state.accepts_raycasts() {
+        if state.interactable && receives_graphic_raycast && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,
                 rect,
@@ -2717,7 +2749,11 @@ fn walk(
                 "Middle",
                 clip,
             );
-            if tab_view.interactable && state.interactable && state.accepts_raycasts() {
+            if tab_view.interactable
+                && state.interactable
+                && receives_graphic_raycast
+                && state.accepts_raycasts()
+            {
                 controls.push(control_region(
                     entity,
                     tab_rect,
@@ -2734,14 +2770,16 @@ fn walk(
         }
     }
 
-    apply_graphic_effects(
-        primitives,
-        graphic_start,
-        world.get_component::<Shadow>(entity),
-        world.get_component::<Outline>(entity),
-        scale,
-        state.alpha,
-    );
+    if has_enabled_graphic {
+        apply_graphic_effects(
+            primitives,
+            graphic_start,
+            world.get_component::<Shadow>(entity),
+            world.get_component::<Outline>(entity),
+            scale,
+            state.alpha,
+        );
+    }
     if state.pixel_perfect {
         snap_canvas_output_to_pixels(
             &mut primitives[graphic_start..],
@@ -2800,11 +2838,7 @@ fn walk(
         .map(|graphic| graphic.raycast_padding)
         .or_else(|| raw_image.map(|graphic| graphic.raycast_padding))
         .or_else(|| text.map(|graphic| graphic.raycast_padding))
-        .or_else(|| {
-            world
-                .get_component::<Panel>(entity)
-                .map(|graphic| graphic.raycast_padding)
-        })
+        .or_else(|| panel.map(|graphic| graphic.raycast_padding))
         .unwrap_or([0.0; 4])
         .map(|value| {
             if value.is_finite() {
@@ -4896,6 +4930,7 @@ mod tests {
         world.insert_component(
             image,
             RawImage {
+                enabled: true,
                 texture: "Assets/UI/avatar.png".into(),
                 color: [0.5, 0.75, 1.0, 0.8],
                 uv_rect: [0.25, 0.0, 0.5, 1.0],
@@ -5163,6 +5198,156 @@ mod tests {
             assert_eq!(frame.plan.primitives.len(), 1);
             assert!(frame.controls.is_empty());
         }
+    }
+
+    #[test]
+    fn graphic_enabled_defaults_are_legacy_safe_and_disabled_graphics_stop_output() {
+        assert!(Image::default().enabled);
+        assert!(RawImage::default().enabled);
+        assert!(Text::default().enabled);
+        assert!(Panel::default().enabled);
+        assert!(
+            serde_json::from_value::<Image>(serde_json::json!({}))
+                .unwrap()
+                .enabled
+        );
+        assert!(
+            serde_json::from_value::<RawImage>(serde_json::json!({}))
+                .unwrap()
+                .enabled
+        );
+        assert!(
+            serde_json::from_value::<Text>(serde_json::json!({}))
+                .unwrap()
+                .enabled
+        );
+        assert!(
+            serde_json::from_value::<Panel>(serde_json::json!({}))
+                .unwrap()
+                .enabled
+        );
+
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(
+            image,
+            Image {
+                enabled: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(image, Some(canvas));
+
+        let raw_image = world.spawn_empty();
+        world.insert_component(raw_image, RectTransform::default());
+        world.insert_component(
+            raw_image,
+            RawImage {
+                enabled: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(raw_image, Some(canvas));
+
+        let text = world.spawn_empty();
+        world.insert_component(text, RectTransform::default());
+        world.insert_component(
+            text,
+            Text {
+                enabled: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(text, Some(canvas));
+
+        let panel = world.spawn_empty();
+        world.insert_component(panel, RectTransform::default());
+        world.insert_component(
+            panel,
+            Panel {
+                enabled: false,
+                raycast_target: true,
+                ..Default::default()
+            },
+        );
+        world.set_parent(panel, Some(canvas));
+
+        let child = world.spawn_empty();
+        world.insert_component(child, RectTransform::default());
+        world.insert_component(child, Image::default());
+        world.set_parent(child, Some(image));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        assert_eq!(
+            frame
+                .plan
+                .primitives
+                .iter()
+                .filter(|primitive| primitive.key.material == "ui/image")
+                .count(),
+            1,
+            "disabling a Graphic must not deactivate its child hierarchy"
+        );
+        assert!(!frame.plan.primitives.iter().any(|primitive| {
+            primitive.key.material == "ui/raw-image"
+                || primitive.key.material == "ui/panel"
+                || primitive.key.material.starts_with("ui/text/")
+        }));
+        assert!(frame
+            .controls
+            .iter()
+            .all(|control| { ![image, raw_image, text, panel].contains(&control.entity) }));
+    }
+
+    #[test]
+    fn selectables_require_an_enabled_same_entity_graphic_when_one_is_authored() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+
+        let disabled_target = world.spawn_empty();
+        world.insert_component(disabled_target, RectTransform::default());
+        world.insert_component(disabled_target, Button::default());
+        world.insert_component(
+            disabled_target,
+            Image {
+                enabled: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(disabled_target, Some(canvas));
+
+        let pass_through_target = world.spawn_empty();
+        world.insert_component(pass_through_target, RectTransform::default());
+        world.insert_component(pass_through_target, Button::default());
+        world.insert_component(
+            pass_through_target,
+            Image {
+                raycast_target: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(pass_through_target, Some(canvas));
+
+        let standalone = world.spawn_empty();
+        world.insert_component(standalone, RectTransform::default());
+        world.insert_component(standalone, Button::default());
+        world.set_parent(standalone, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let buttons: Vec<Entity> = frame
+            .controls
+            .iter()
+            .filter(|control| matches!(control.kind, UiControlKind::Button))
+            .map(|control| control.entity)
+            .collect();
+        assert_eq!(buttons, vec![standalone]);
     }
 
     #[test]

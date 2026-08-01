@@ -926,6 +926,9 @@
         },
         "type": "array"
       },
+      "enabled": {
+        "type": "boolean"
+      },
       "fill_amount": {
         "type": "number"
       },
@@ -970,6 +973,7 @@
       }
     },
     "required": [
+      "enabled",
       "sprite",
       "color",
       "image_type",
@@ -1486,6 +1490,9 @@
         },
         "type": "array"
       },
+      "enabled": {
+        "type": "boolean"
+      },
       "raycast_padding": {
         "items": {
           "type": "number"
@@ -1497,6 +1504,7 @@
       }
     },
     "required": [
+      "enabled",
       "color",
       "border_color",
       "border_width",
@@ -1880,6 +1888,9 @@
         },
         "type": "array"
       },
+      "enabled": {
+        "type": "boolean"
+      },
       "raycast_padding": {
         "items": {
           "type": "number"
@@ -1900,6 +1911,7 @@
       }
     },
     "required": [
+      "enabled",
       "texture",
       "color",
       "uv_rect",
@@ -2572,6 +2584,9 @@
         },
         "type": "array"
       },
+      "enabled": {
+        "type": "boolean"
+      },
       "font_size": {
         "type": "number"
       },
@@ -2601,6 +2616,7 @@
       }
     },
     "required": [
+      "enabled",
       "text",
       "color",
       "font_size",

@@ -69,6 +69,7 @@ component ContentSizeFitter {
 }
 
 component Image {
+  enabled:         bool   = true
   sprite:          string = "white"
   color:           float4 = [1, 1, 1, 1]
   /// "Simple" | "Sliced" | "Tiled" | "Filled" (Unity Image.type)
@@ -100,6 +101,7 @@ component Image {
 
 /// Unity-style texture view with an explicit normalized UV rectangle.
 component RawImage {
+  enabled:         bool   = true
   texture:        string = "white"
   color:          float4 = [1, 1, 1, 1]
   uv_rect:        float4 = [0, 0, 1, 1]
@@ -147,6 +149,7 @@ component Button {
 }
 
 component Text {
+  enabled:         bool   = true
   text:            string = "Text"
   color:           float4 = [1, 1, 1, 1]
   font_size:       float  = 16
@@ -205,6 +208,7 @@ component Scrollbar {
 
 /// Background/container control inspired by Godot PanelContainer and FairyGUI GComponent.
 component Panel {
+  enabled:        bool   = true
   color:          float4 = [0.12, 0.14, 0.18, 0.96]
   border_color:   float4 = [0.32, 0.36, 0.44, 1]
   border_width:   float  = 1

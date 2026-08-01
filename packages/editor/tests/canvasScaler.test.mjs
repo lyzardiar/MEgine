@@ -100,6 +100,7 @@ test('CanvasScaler catalog and new Canvas use Unity defaults', () => {
 
 test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', () => {
   const imageDefaults = {
+    enabled: true,
     sprite: 'white',
     color: [1, 1, 1, 1],
     image_type: 'Simple',
@@ -160,6 +161,8 @@ test('Text Graphic defaults to a Unity raycast target', () => {
 
 test('all authored Graphic components expose Unity raycast padding defaults', () => {
   for (const type of ['Image', 'RawImage', 'Text', 'Panel']) {
+    assert.equal(createComponentDefaults(type).enabled, true);
+    assert.deepEqual(getBuiltinInspectorField(type, 'enabled'), { label: 'Enabled' });
     assert.deepEqual(createComponentDefaults(type).raycast_padding, [0, 0, 0, 0]);
     assert.deepEqual(getBuiltinInspectorField(type, 'raycast_padding'), {
       label: 'Raycast Padding',

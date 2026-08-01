@@ -432,6 +432,7 @@ export interface ContentSizeFitter {
 }
 
 export interface Image {
+  enabled: boolean;
   sprite: string;
   color: [number, number, number, number];
   imageType: string;
@@ -450,6 +451,7 @@ export interface Image {
 }
 
 export interface RawImage {
+  enabled: boolean;
   texture: string;
   color: [number, number, number, number];
   uvRect: [number, number, number, number];
@@ -490,6 +492,7 @@ export interface Button {
 }
 
 export interface Text {
+  enabled: boolean;
   text: string;
   color: [number, number, number, number];
   fontSize: number;
@@ -540,6 +543,7 @@ export interface Scrollbar {
 }
 
 export interface Panel {
+  enabled: boolean;
   color: [number, number, number, number];
   borderColor: [number, number, number, number];
   borderWidth: number;

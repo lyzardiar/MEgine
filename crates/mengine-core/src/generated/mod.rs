@@ -1724,6 +1724,7 @@ impl Component for ContentSizeFitter {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Image {
+    pub enabled: bool,
     pub sprite: String,
     pub color: [f32; 4],
     pub image_type: String,
@@ -1744,6 +1745,7 @@ pub struct Image {
 impl Default for Image {
     fn default() -> Self {
         Self {
+            enabled: true,
             sprite: "white".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             image_type: "Simple".into(),
@@ -1781,6 +1783,7 @@ impl Component for Image {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct RawImage {
+    pub enabled: bool,
     pub texture: String,
     pub color: [f32; 4],
     pub uv_rect: [f32; 4],
@@ -1791,6 +1794,7 @@ pub struct RawImage {
 impl Default for RawImage {
     fn default() -> Self {
         Self {
+            enabled: true,
             texture: "white".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             uv_rect: [0.0, 0.0, 1.0, 1.0],
@@ -1945,6 +1949,7 @@ impl Component for Button {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Text {
+    pub enabled: bool,
     pub text: String,
     pub color: [f32; 4],
     pub font_size: f32,
@@ -1959,6 +1964,7 @@ pub struct Text {
 impl Default for Text {
     fn default() -> Self {
         Self {
+            enabled: true,
             text: "Text".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             font_size: 16.0,
@@ -2142,6 +2148,7 @@ impl Component for Scrollbar {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Panel {
+    pub enabled: bool,
     pub color: [f32; 4],
     pub border_color: [f32; 4],
     pub border_width: f32,
@@ -2152,6 +2159,7 @@ pub struct Panel {
 impl Default for Panel {
     fn default() -> Self {
         Self {
+            enabled: true,
             color: [0.12, 0.14, 0.18, 0.96],
             border_color: [0.32, 0.36, 0.44, 1.0],
             border_width: 1.0,

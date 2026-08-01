@@ -1998,3 +1998,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - `window.ui_snapshot_all` 的聚合 `backgroundSafe` 不再无条件为真：只有所有初始窗口都成功返回且每个窗口快照都明确证明 `backgroundSafe` 时，工作区级结果才给出安全证明。任一窗口读取失败属于未知状态，任一窗口明确不安全都会使 `backgroundSafe` 与 `complete` 同时为 false。
 - 聚合仍保持串行读取、前后两次原生窗口清单一致性检查、逐窗口分页与有界错误信息；新增无窗口回归覆盖完整安全结果、清单漂移伴随失败、纯失败，以及成功读取但单窗口安全证明为 false 的情况。
+
+## 183. 2026-08-01 Unity Graphic Enabled Lifecycle
+
+- `Image`、`RawImage`、`Text` 与引擎 `Panel` 现在统一序列化 `enabled`，默认 true 并通过 IDL 缺省值兼容旧场景；Inspector、脚本类型、Editor Canvas 和 Runtime 使用同一字段。禁用 Graphic 只停止该组件的绘制、Graphic Effect 与射线接收，不会错误停用实体或子层级。
+- 同实体存在显式 Graphic 时，Button、Toggle、Slider 等 Selectable 只有在至少一个已启用 Graphic 保留 `raycast_target` 时才生成交互区域；没有显式 Graphic 的 MEngine 复合控件仍保留自己的合成交互表面。Editor 同时修正旧 `Text` 缺少 `raycast_target` 时被误判为 false 的问题，使缺省值与 Runtime/Unity 一致。
+- 无窗口回归覆盖四类 Graphic 默认值与旧数据、禁用后的渲染和命中、禁用 Graphic 下子层级继续工作，以及禁用/穿透目标不再替 Selectable 接收事件；Runtime UI 测试与 Editor Canvas 测试使用相同契约。

@@ -602,6 +602,100 @@ test('GraphicRaycaster removal or disablement preserves rendering while disablin
   }
 });
 
+test('disabled Graphics stop rendering and raycasts while legacy Text remains a target', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    ...[
+      ['Image', -180],
+      ['RawImage', -60],
+      ['Text', 60],
+      ['Panel', 180],
+    ].map(([type, x], index) => ({
+      entity: index + 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [x, 0] }),
+        [type]: { enabled: false, raycast_target: true },
+      },
+    })),
+    {
+      entity: 6,
+      parent: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [0, 180] }),
+        Text: { text: 'Legacy' },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set([2, 3, 4, 5]),
+  );
+  for (const entity of entities.slice(1, 5)) {
+    const item = items.find((candidate) => candidate.entity === entity.entity);
+    assert.ok(item, 'disabled Graphic RectTransforms stay authorable in Scene view');
+    assert.equal(item.image ?? item.rawImage ?? item.text ?? item.panel, undefined);
+    assert.equal(hitTestUi(items, item.rect.x + 50, item.rect.y + 50), null);
+  }
+  const legacyText = items.find((item) => item.entity === 6);
+  assert.equal(legacyText.text.raycastTarget, true);
+  assert.equal(hitTestUi(items, legacyText.rect.x + 50, legacyText.rect.y + 50)?.entity, 6);
+});
+
+test('Selectables use an enabled same-entity Graphic raycast target when authored', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [-150, 0] }),
+        Image: { enabled: false, raycast_target: true },
+        Button: { interactable: true },
+      },
+    },
+    {
+      entity: 3,
+      parent: 1,
+      components: {
+        RectTransform: rect(),
+        Image: { raycast_target: false },
+        Button: { interactable: true },
+      },
+    },
+    {
+      entity: 4,
+      parent: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [150, 0] }),
+        Button: { interactable: true },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  for (const entity of [2, 3]) {
+    const item = items.find((candidate) => candidate.entity === entity);
+    assert.equal(hitTestUi(items, item.rect.x + 50, item.rect.y + 50), null);
+  }
+  const standalone = items.find((item) => item.entity === 4);
+  assert.equal(hitTestUi(items, standalone.rect.x + 50, standalone.rect.y + 50)?.entity, 4);
+});
+
 test('disabled Canvas and inactive ancestors suppress override-sorting subtrees', () => {
   const disabledCanvas = [
     {

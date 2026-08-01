@@ -104,6 +104,8 @@ export type UiDrawItem = {
   opacity: number;
   /** Pointer raycasts are rejected when a CanvasGroup disables them. */
   blocksRaycasts?: boolean;
+  /** False when authored Graphics exist but every one is disabled or opted out of raycasts. */
+  graphicRaycastTarget?: boolean;
   /** Unity GraphicRaycaster back-face filtering for projected World Space quads. */
   ignoreReversedGraphics?: boolean;
   /** Unity GraphicRaycaster physics dimensions checked in front of this graphic. */
@@ -306,6 +308,19 @@ function color4(raw: unknown, fallback: [number, number, number, number]): [numb
 function number(raw: unknown, fallback: number): number {
   const value = Number(raw);
   return Number.isFinite(value) ? value : fallback;
+}
+
+function graphicEnabled(component: Record<string, unknown> | undefined): boolean {
+  return component != null && component.enabled !== false;
+}
+
+function graphicRaycastTarget(
+  component: Record<string, unknown> | undefined,
+  fallback: boolean,
+): boolean {
+  if (!graphicEnabled(component)) return false;
+  const value = component?.raycast_target ?? component?.raycastTarget;
+  return value == null ? fallback : value === true;
 }
 
 function canvasEventCamera(
@@ -860,16 +875,16 @@ export function layoutUiOverlay(
         );
       }
 
-      const img = ent.components.Image as Record<string, unknown> | undefined;
-      const rawImage = ent.components.RawImage as Record<string, unknown> | undefined;
+      const authoredImage = ent.components.Image as Record<string, unknown> | undefined;
+      const authoredRawImage = ent.components.RawImage as Record<string, unknown> | undefined;
       const shadow = ent.components.Shadow as Record<string, unknown> | undefined;
       const outline = ent.components.Outline as Record<string, unknown> | undefined;
       const btn = ent.components.Button as Record<string, unknown> | undefined;
-      const text = ent.components.Text as Record<string, unknown> | undefined;
+      const authoredText = ent.components.Text as Record<string, unknown> | undefined;
       const toggle = ent.components.Toggle as Record<string, unknown> | undefined;
       const slider = ent.components.Slider as Record<string, unknown> | undefined;
       const scrollbar = ent.components.Scrollbar as Record<string, unknown> | undefined;
-      const panel = ent.components.Panel as Record<string, unknown> | undefined;
+      const authoredPanel = ent.components.Panel as Record<string, unknown> | undefined;
       const progress = ent.components.ProgressBar as Record<string, unknown> | undefined;
       const input = ent.components.InputField as Record<string, unknown> | undefined;
       const dropdown = ent.components.Dropdown as Record<string, unknown> | undefined;
@@ -894,6 +909,20 @@ export function layoutUiOverlay(
       } | undefined;
       const rectMask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const stencilMask = ent.components.Mask as Record<string, unknown> | undefined;
+      const img = graphicEnabled(authoredImage) ? authoredImage : undefined;
+      const rawImage = graphicEnabled(authoredRawImage) ? authoredRawImage : undefined;
+      const text = graphicEnabled(authoredText) ? authoredText : undefined;
+      const panel = graphicEnabled(authoredPanel) ? authoredPanel : undefined;
+      const hasAuthoredGraphic = authoredImage != null
+        || authoredRawImage != null
+        || authoredText != null
+        || authoredPanel != null;
+      const hasEnabledGraphic = img != null || rawImage != null || text != null || panel != null;
+      const receivesGraphicRaycast = !hasAuthoredGraphic
+        || graphicRaycastTarget(img, true)
+        || graphicRaycastTarget(rawImage, true)
+        || graphicRaycastTarget(text, true)
+        || graphicRaycastTarget(panel, false);
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;
       const rotation = rt?.local_rotation ?? 0;
@@ -987,7 +1016,7 @@ export function layoutUiOverlay(
           maskRegions: state.maskRegions,
           selected: selectedIds.has(ent.entity),
         });
-      } else if (img || rawImage || btn || text || toggle || slider || scrollbar || panel || progress || input || dropdown || list || scroll || tabs) {
+      } else if (hasAuthoredGraphic || btn || toggle || slider || scrollbar || progress || input || dropdown || list || scroll || tabs) {
         out.push({
           entity: ent.entity,
           canvasBatchRoot: state.canvasBatchRoot,
@@ -1000,6 +1029,7 @@ export function layoutUiOverlay(
           anchorParentRect,
           opacity: state.opacity,
           blocksRaycasts: state.blocksRaycasts && state.raycasterEnabled,
+          graphicRaycastTarget: receivesGraphicRaycast,
           ignoreReversedGraphics: state.ignoreReversedGraphics,
           blockingObjects: state.blockingObjects,
           blockingMask: state.blockingMask,
@@ -1040,7 +1070,7 @@ export function layoutUiOverlay(
                   (value) => Math.max(0, value) * imageSpritePixelScale,
                 ) as SpriteBorder,
                 sourceSize: number2(img.source_size ?? img.sourceSize, [100, 100]),
-                raycastTarget: img.raycast_target !== false && img.raycastTarget !== false,
+                raycastTarget: graphicRaycastTarget(img, true),
                 alphaHitTestMinimumThreshold: number(
                   img.alpha_hit_test_minimum_threshold ?? img.alphaHitTestMinimumThreshold,
                   0,
@@ -1068,11 +1098,10 @@ export function layoutUiOverlay(
                 color: color4(rawImage.color, [1, 1, 1, 1]),
                 texture: resolveSpriteId(String(rawImage.texture ?? 'white')),
                 uvRect: number4(rawImage.uv_rect ?? rawImage.uvRect, [0, 0, 1, 1]),
-                raycastTarget:
-                  rawImage.raycast_target !== false && rawImage.raycastTarget !== false,
+                raycastTarget: graphicRaycastTarget(rawImage, true),
               }
             : undefined,
-          shadow: shadow
+          shadow: hasEnabledGraphic && shadow
             ? {
                 color: color4(shadow.effect_color ?? shadow.effectColor, [0, 0, 0, 0.5]),
                 distance: (() => {
@@ -1083,7 +1112,7 @@ export function layoutUiOverlay(
                   shadow.use_graphic_alpha !== false && shadow.useGraphicAlpha !== false,
               }
             : undefined,
-          outline: outline
+          outline: hasEnabledGraphic && outline
             ? {
                 color: color4(outline.effect_color ?? outline.effectColor, [0, 0, 0, 0.5]),
                 distance: (() => {
@@ -1117,8 +1146,7 @@ export function layoutUiOverlay(
                   ['Top', 'Middle', 'Bottom'] as const,
                   'Middle',
                 ),
-                raycastTarget:
-                  text.raycast_target === true || text.raycastTarget === true,
+                raycastTarget: graphicRaycastTarget(text, true),
               }
             : undefined,
           toggle: toggle
@@ -1196,7 +1224,7 @@ export function layoutUiOverlay(
                 color: color4(panel.color, [0.12, 0.14, 0.18, 0.96]),
                 borderColor: color4(panel.border_color ?? panel.borderColor, [0.32, 0.36, 0.44, 1]),
                 borderWidth: number(panel.border_width ?? panel.borderWidth, 1) * scale,
-                raycastTarget: (panel.raycast_target === true || panel.raycastTarget === true) && state.blocksRaycasts,
+                raycastTarget: graphicRaycastTarget(panel, false),
               }
             : undefined,
           progress: progress
@@ -1315,8 +1343,8 @@ export function layoutUiOverlay(
           ? [...state.maskRegions, { rect: renderedRect, rotation, pivot }]
           : state.maskRegions;
         const hasMaskGraphic = !!(
-          img || rawImage || btn || text || toggle || slider || scrollbar
-          || panel || progress || input || dropdown || list || scroll || tabs
+          authoredImage || authoredRawImage || btn || authoredText || toggle || slider || scrollbar
+          || authoredPanel || progress || input || dropdown || list || scroll || tabs
         );
         const nextVisualMasks = hasMaskGraphic && state.visualMasks.length < 8
           ? [...state.visualMasks, ent.entity]
@@ -1920,6 +1948,7 @@ export function hitTestUi(
     const it = items[i];
     if (it.role === 'canvas') continue;
     if (it.blocksRaycasts === false) continue;
+    if (it.graphicRaycastTarget === false) continue;
     if (it.clip && !pointInRect(x, y, it.clip)) continue;
     if (it.maskRegions?.some((mask) => !pointInMaskRegion(x, y, mask))) continue;
     const dropdownPopup = it.dropdown?.expanded
