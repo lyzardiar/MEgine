@@ -2047,3 +2047,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - Editor Canvas 与 Runtime 统一只允许 8 层有效 `Mask`。第 9 层及更深的 `Mask` 不再分配 Stencil 深度、不再裁剪后代，并按普通 Graphic 渲染；此时 `show_mask_graphic=false` 也不会错误隐藏该 Graphic，与 Unity 在 Stencil 深度耗尽时返回原始 Graphic material 的行为一致。
 - Editor 回归验证第 9 层的 `maskStack`/射线区域保持 8 层且 Graphic 可见；Runtime 回归验证只产生 8 对 Push/Pop，第 9 层和其子 Graphic 都测试已有 reference 8，永不产生 reference 9。
+
+## 192. 2026-08-01 Dynamic Behaviour Lifecycle Reconciliation
+
+- Behaviour Runner 每帧按实体与组件 identity 对 Play clone 做增量 reconcile：运行中新增脚本会创建实例并执行 `onEnable`，删除脚本或实体会恰好执行一次 `onDisable` 并移除实例，删除的组件不会被旧实例下一帧写回。
+- `activeInHierarchy`（包括父链）现在驱动 `onEnable/onDisable` 边沿，inactive mount 不会误启用；`onEnable` 修改的序列化字段会在同帧 `onUpdate` 前保留，`onDisable` 在组件仍存在时也会同步最后状态。停止 Play 时使用最后的真实实体上下文，不再向脚本提供全部为空的伪 context。
