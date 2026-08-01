@@ -112,6 +112,7 @@ test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', ()
     border: [0, 0, 0, 0],
     source_size: [100, 100],
     raycast_target: true,
+    alpha_hit_test_minimum_threshold: 0,
   };
   assert.deepEqual(createComponentDefaults('Image'), imageDefaults);
   assert.deepEqual(createUiImageComponents().Image, imageDefaults);

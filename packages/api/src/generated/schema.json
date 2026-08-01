@@ -911,6 +911,9 @@
   },
   "Image": {
     "properties": {
+      "alpha_hit_test_minimum_threshold": {
+        "type": "number"
+      },
       "border": {
         "items": {
           "type": "number"
@@ -969,7 +972,8 @@
       "fill_origin",
       "border",
       "source_size",
-      "raycast_target"
+      "raycast_target",
+      "alpha_hit_test_minimum_threshold"
     ],
     "type": "object"
   },

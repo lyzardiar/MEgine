@@ -15,6 +15,7 @@ use mengine_rhi::{
 };
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct UiRect {
@@ -247,6 +248,8 @@ pub struct UiControlRegion {
     pub pivot: [f32; 2],
     /// Projected screen quad for perspective World Space Canvas hit testing.
     pub corners: Option<[[f32; 2]; 4]>,
+    /// Per-corner reciprocal clip W used for perspective-correct pointer UVs.
+    pub corner_inverse_w: Option<[f32; 4]>,
     /// Unity GraphicRaycaster back-face filtering for projected World Space quads.
     pub ignore_reversed_graphics: bool,
     /// Physics dimensions checked before this graphic for Camera/World Space canvases.
@@ -259,8 +262,83 @@ pub struct UiControlRegion {
     pub raycast_camera: Option<FrameCamera>,
     /// Active Unity Mask rectangles inherited by this Graphic (maximum stencil depth 8).
     pub mask_regions: [Option<UiMaskRegion>; 8],
+    /// Unity Image alpha filter attached to every same-entity raycast receiver.
+    pub image_alpha_hit_test: Option<UiImageAlphaHitTest>,
     pub kind: UiControlKind,
     pub callback: Value,
+}
+
+#[derive(Clone, Debug)]
+pub struct UiAlphaTexture {
+    pub width: u32,
+    pub height: u32,
+    pub alpha: Arc<[u8]>,
+}
+
+impl UiAlphaTexture {
+    fn sample_bilinear(&self, u: f32, v: f32) -> Option<f32> {
+        if self.width == 0
+            || self.height == 0
+            || self.alpha.len() != self.width as usize * self.height as usize
+        {
+            return None;
+        }
+        let x = (u * self.width as f32 - 0.5).clamp(0.0, self.width.saturating_sub(1) as f32);
+        let y = (v * self.height as f32 - 0.5).clamp(0.0, self.height.saturating_sub(1) as f32);
+        let x0 = x.floor() as u32;
+        let y0 = y.floor() as u32;
+        let x1 = (x0 + 1).min(self.width - 1);
+        let y1 = (y0 + 1).min(self.height - 1);
+        let tx = x - x0 as f32;
+        let ty = y - y0 as f32;
+        let sample = |px: u32, py: u32| self.alpha[(py * self.width + px) as usize] as f32 / 255.0;
+        let top = sample(x0, y0) * (1.0 - tx) + sample(x1, y0) * tx;
+        let bottom = sample(x0, y1) * (1.0 - tx) + sample(x1, y1) * tx;
+        Some(top * (1.0 - ty) + bottom * ty)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct UiImageAlphaHitTest {
+    pub threshold: f32,
+    pub sprite: String,
+    pub image_type: String,
+    pub source_size: [f32; 2],
+    pub source_border: [f32; 4],
+    pub destination_border: [f32; 4],
+    pub destination_size: [f32; 2],
+    pub pixel_scale: f32,
+    pub fill_center: bool,
+    pub texture_uv: [f32; 4],
+    pub texture: Option<Arc<UiAlphaTexture>>,
+}
+
+impl UiImageAlphaHitTest {
+    fn allows(&self, point: [f32; 2], destination_size: [f32; 2]) -> bool {
+        if !self.threshold.is_finite() || self.threshold <= 0.0 {
+            return true;
+        }
+        let Some(texture) = self.texture.as_deref() else {
+            return true;
+        };
+        let Some(local_uv) = map_image_alpha_point(
+            point,
+            destination_size,
+            &self.image_type,
+            self.source_size,
+            self.source_border,
+            self.destination_border,
+            self.pixel_scale,
+            self.fill_center,
+        ) else {
+            return true;
+        };
+        let texture_u = self.texture_uv[0] + local_uv[0] * self.texture_uv[2];
+        let texture_v = self.texture_uv[1] + local_uv[1] * self.texture_uv[3];
+        texture
+            .sample_bilinear(texture_u, texture_v)
+            .is_none_or(|alpha| alpha >= self.threshold)
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -297,6 +375,25 @@ impl UiRaycastPlane {
 }
 
 impl UiControlRegion {
+    fn normalized_point(&self, x: f32, y: f32) -> Option<[f32; 2]> {
+        if let Some(corners) = self.corners {
+            return quad_uv(corners, [x, y], self.corner_inverse_w);
+        }
+        if self.rect.width <= 0.0 || self.rect.height <= 0.0 {
+            return None;
+        }
+        let pivot_x = self.rect.x + self.rect.width * self.pivot[0];
+        let pivot_y = self.rect.y + self.rect.height * self.pivot[1];
+        let dx = x - pivot_x;
+        let dy = y - pivot_y;
+        let c = self.rotation_radians.cos();
+        let s = self.rotation_radians.sin();
+        Some([
+            (dx * c + dy * s + self.rect.width * self.pivot[0]) / self.rect.width,
+            (-dx * s + dy * c + self.rect.height * self.pivot[1]) / self.rect.height,
+        ])
+    }
+
     pub fn contains(&self, x: f32, y: f32) -> bool {
         if x < self.clip.x as f32
             || y < self.clip.y as f32
@@ -313,14 +410,27 @@ impl UiControlRegion {
         {
             return false;
         }
-        point_in_ui_region(
+        if !point_in_ui_region(
             self.rect,
             self.rotation_radians,
             self.pivot,
             self.corners,
             x,
             y,
-        )
+        ) {
+            return false;
+        }
+        self.image_alpha_hit_test.as_ref().is_none_or(|filter| {
+            self.normalized_point(x, y).is_none_or(|uv| {
+                filter.allows(
+                    [
+                        uv[0] * filter.destination_size[0],
+                        uv[1] * filter.destination_size[1],
+                    ],
+                    filter.destination_size,
+                )
+            })
+        })
     }
 
     pub fn range_value_at(&self, x: f32, y: f32) -> Option<f32> {
@@ -347,22 +457,7 @@ impl UiControlRegion {
             ),
             _ => return None,
         };
-        let [u, v] = if let Some(corners) = self.corners {
-            quad_uv(corners, [x, y])?
-        } else {
-            let pivot_x = self.rect.x + self.rect.width * self.pivot[0];
-            let pivot_y = self.rect.y + self.rect.height * self.pivot[1];
-            let dx = x - pivot_x;
-            let dy = y - pivot_y;
-            let c = self.rotation_radians.cos();
-            let s = self.rotation_radians.sin();
-            let local_x = dx * c + dy * s + self.rect.width * self.pivot[0];
-            let local_y = -dx * s + dy * c + self.rect.height * self.pivot[1];
-            [
-                local_x / self.rect.width.max(1.0),
-                local_y / self.rect.height.max(1.0),
-            ]
-        };
+        let [u, v] = self.normalized_point(x, y)?;
         let mut t = if direction == "LeftToRight" || direction == "RightToLeft" {
             u
         } else {
@@ -425,7 +520,11 @@ fn point_in_ui_region(
     local_x >= 0.0 && local_y >= 0.0 && local_x <= rect.width && local_y <= rect.height
 }
 
-fn quad_uv(corners: [[f32; 2]; 4], point: [f32; 2]) -> Option<[f32; 2]> {
+fn quad_uv(
+    corners: [[f32; 2]; 4],
+    point: [f32; 2],
+    inverse_w: Option<[f32; 4]>,
+) -> Option<[f32; 2]> {
     let triangles = [
         ([0_usize, 1, 2], [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0]]),
         ([0_usize, 2, 3], [[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]]),
@@ -444,9 +543,23 @@ fn quad_uv(corners: [[f32; 2]; 4], point: [f32; 2]) -> Option<[f32; 2]> {
             ((c[1] - a[1]) * (point[0] - c[0]) + (a[0] - c[0]) * (point[1] - c[1])) / denominator;
         let wc = 1.0 - wa - wb;
         if wa >= -0.0001 && wb >= -0.0001 && wc >= -0.0001 {
+            let weights = [wa, wb, wc];
+            let corrected = std::array::from_fn::<_, 3, _>(|index| {
+                let reciprocal = inverse_w
+                    .map(|values| values[indices[index]])
+                    .filter(|value| value.is_finite() && *value > 0.0)
+                    .unwrap_or(1.0);
+                weights[index] * reciprocal
+            });
+            let total = corrected.iter().sum::<f32>();
+            if total <= 0.00000001 {
+                continue;
+            }
             return Some([
-                wa * uv[0][0] + wb * uv[1][0] + wc * uv[2][0],
-                wa * uv[0][1] + wb * uv[1][1] + wc * uv[2][1],
+                (corrected[0] * uv[0][0] + corrected[1] * uv[1][0] + corrected[2] * uv[2][0])
+                    / total,
+                (corrected[0] * uv[0][1] + corrected[1] * uv[1][1] + corrected[2] * uv[2][1])
+                    / total,
             ]);
         }
     }
@@ -788,6 +901,7 @@ pub fn collect_ui_frame_for_display(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn collect_ui_frame_for_display_with_interaction(
     world: &World,
     hierarchy: &TransformHierarchy,
@@ -812,6 +926,7 @@ pub fn collect_ui_frame_for_display_with_interaction(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn collect_ui_frame_internal(
     world: &World,
     hierarchy: &TransformHierarchy,
@@ -1319,7 +1434,7 @@ fn project_world_canvas_output(
         .filter_map(|mut control| {
             let pixel_corners =
                 rotated_pixel_corners(control.rect, control.rotation_radians, control.pivot);
-            let (_, screen_corners) = projection.project_corners(pixel_corners)?;
+            let (clip_corners, screen_corners) = projection.project_corners(pixel_corners)?;
             if control.ignore_reversed_graphics && is_reversed_screen_quad(screen_corners) {
                 return None;
             }
@@ -1327,6 +1442,13 @@ fn project_world_canvas_output(
             control.rotation_radians = 0.0;
             control.pivot = [0.5, 0.5];
             control.corners = Some(screen_corners);
+            control.corner_inverse_w = Some(clip_corners.map(|corner| {
+                if corner[3].is_finite() && corner[3].abs() > 0.000001 {
+                    1.0 / corner[3].abs()
+                } else {
+                    1.0
+                }
+            }));
             control.clip = projection.project_clip(control.clip)?;
             for mask in control.mask_regions.iter_mut().flatten() {
                 let mask_corners =
@@ -1375,6 +1497,7 @@ impl WorldCanvasProjection<'_> {
         Some(value.z / value.w)
     }
 
+    #[allow(clippy::type_complexity)]
     fn project_corners(&self, pixels: [[f32; 2]; 4]) -> Option<([[f32; 4]; 4], [[f32; 2]; 4])> {
         let mut clip = [[0.0; 4]; 4];
         let mut screen = [[0.0; 2]; 4];
@@ -1576,6 +1699,7 @@ fn screen_space_camera_depth(camera: FrameCamera, distance: f32) -> f32 {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn walk(
     world: &World,
     entity: Entity,
@@ -1854,12 +1978,14 @@ fn walk(
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                corner_inverse_w: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
                 blocking_objects: state.blocking_objects,
                 blocking_mask: state.blocking_mask,
                 raycast_plane: None,
                 raycast_camera: None,
                 mask_regions: [None; 8],
+                image_alpha_hit_test: None,
                 kind: UiControlKind::Button,
                 callback: button.on_click.clone(),
             });
@@ -1944,12 +2070,14 @@ fn walk(
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                corner_inverse_w: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
                 blocking_objects: state.blocking_objects,
                 blocking_mask: state.blocking_mask,
                 raycast_plane: None,
                 raycast_camera: None,
                 mask_regions: [None; 8],
+                image_alpha_hit_test: None,
                 kind: UiControlKind::Toggle {
                     is_on: toggle.is_on,
                 },
@@ -2032,12 +2160,14 @@ fn walk(
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                corner_inverse_w: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
                 blocking_objects: state.blocking_objects,
                 blocking_mask: state.blocking_mask,
                 raycast_plane: None,
                 raycast_camera: None,
                 mask_regions: [None; 8],
+                image_alpha_hit_test: None,
                 kind: UiControlKind::Slider {
                     min: slider.min_value,
                     max: slider.max_value,
@@ -2105,12 +2235,14 @@ fn walk(
                 rotation_radians: rotation,
                 pivot,
                 corners: None,
+                corner_inverse_w: None,
                 ignore_reversed_graphics: state.ignore_reversed_graphics,
                 blocking_objects: state.blocking_objects,
                 blocking_mask: state.blocking_mask,
                 raycast_plane: None,
                 raycast_camera: None,
                 mask_regions: [None; 8],
+                image_alpha_hit_test: None,
                 kind: UiControlKind::Scrollbar {
                     value: scrollbar.value,
                     size: scrollbar.size,
@@ -2588,10 +2720,54 @@ fn walk(
             primitives.extend(graphic);
         }
     }
+    let image_alpha_hit_test = image.and_then(|image| {
+        (image.raycast_target && image.alpha_hit_test_minimum_threshold > 0.0).then(|| {
+            let sprite = world
+                .get_component::<Button>(entity)
+                .filter(|button| button.transition.eq_ignore_ascii_case("SpriteSwap"))
+                .and_then(|button| {
+                    let visual_state =
+                        interaction.button_state(entity, button.interactable && state.interactable);
+                    button_target_sprite(button, visual_state)
+                })
+                .unwrap_or(&image.sprite)
+                .to_owned();
+            let pixel_scale = if sprite_pixel_scale.is_finite() {
+                sprite_pixel_scale.max(0.0)
+            } else {
+                1.0
+            };
+            UiImageAlphaHitTest {
+                threshold: image.alpha_hit_test_minimum_threshold,
+                sprite,
+                image_type: image.image_type.clone(),
+                source_size: image.source_size,
+                source_border: image.border,
+                destination_border: image.border.map(|value| value.max(0.0) * pixel_scale),
+                destination_size: [
+                    if state.pixel_perfect {
+                        rect.width.round()
+                    } else {
+                        rect.width
+                    },
+                    if state.pixel_perfect {
+                        rect.height.round()
+                    } else {
+                        rect.height
+                    },
+                ],
+                pixel_scale,
+                fill_center: image.fill_center,
+                texture_uv: [0.0, 0.0, 1.0, 1.0],
+                texture: None,
+            }
+        })
+    });
     for control in &mut controls[control_start..] {
         control.blocking_objects = state.blocking_objects;
         control.blocking_mask = state.blocking_mask;
         control.mask_regions = inherited.mask_regions;
+        control.image_alpha_hit_test = image_alpha_hit_test.clone();
     }
     controls[control_start..].sort_by_key(|control| {
         if matches!(
@@ -2847,6 +3023,7 @@ fn push_graphic_effect(
     }));
 }
 
+#[allow(clippy::too_many_arguments)]
 fn control_region(
     entity: Entity,
     rect: UiRect,
@@ -2864,12 +3041,14 @@ fn control_region(
         rotation_radians,
         pivot,
         corners: None,
+        corner_inverse_w: None,
         ignore_reversed_graphics,
         blocking_objects: BlockingObjects::None,
         blocking_mask: -1,
         raycast_plane: None,
         raycast_camera: None,
         mask_regions: [None; 8],
+        image_alpha_hit_test: None,
         kind,
         callback,
     }
@@ -3598,6 +3777,191 @@ fn split_axis(total: f32, start: f32, end: f32) -> [f32; 4] {
         1.0
     };
     [0.0, start * scale, total - end * scale, total]
+}
+
+fn map_stretched_axis(point: f32, source: [f32; 4], destination: [f32; 4]) -> f32 {
+    if point <= destination[1] && destination[1] > destination[0] {
+        return source[0]
+            + (point - destination[0]) * (source[1] - source[0])
+                / (destination[1] - destination[0]);
+    }
+    if point >= destination[2] && destination[3] > destination[2] {
+        return source[2]
+            + (point - destination[2]) * (source[3] - source[2])
+                / (destination[3] - destination[2]);
+    }
+    let destination_center = destination[2] - destination[1];
+    if destination_center <= 0.0 {
+        return source[1];
+    }
+    source[1] + (point - destination[1]) * (source[2] - source[1]) / destination_center
+}
+
+fn map_tiled_axis(point: f32, source: [f32; 4], destination: [f32; 4], tile_size: f32) -> f32 {
+    if point <= destination[1] || point >= destination[2] {
+        return map_stretched_axis(point, source, destination);
+    }
+    let source_center = source[2] - source[1];
+    if source_center <= 0.0 || !tile_size.is_finite() || tile_size <= 0.0 {
+        return map_stretched_axis(point, source, destination);
+    }
+    source[1] + (point - destination[1]).max(0.0).rem_euclid(tile_size) * source_center / tile_size
+}
+
+#[allow(clippy::too_many_arguments)]
+fn tiled_image_scale(
+    source_size: [f32; 2],
+    destination_size: [f32; 2],
+    source_border: [f32; 4],
+    destination_border: [f32; 4],
+    pixel_scale: f32,
+    fill_center: bool,
+) -> f32 {
+    let sx = split_axis(source_size[0], source_border[0], source_border[2]);
+    let sy = split_axis(source_size[1], source_border[3], source_border[1]);
+    let dx = split_axis(
+        destination_size[0],
+        destination_border[0],
+        destination_border[2],
+    );
+    let dy = split_axis(
+        destination_size[1],
+        destination_border[3],
+        destination_border[1],
+    );
+    let source_center_width = sx[2] - sx[1];
+    let source_center_height = sy[2] - sy[1];
+    let destination_center_width = dx[2] - dx[1];
+    let destination_center_height = dy[2] - dy[1];
+    let base_scale = if pixel_scale.is_finite() && pixel_scale > 0.0 {
+        pixel_scale
+    } else {
+        1.0
+    };
+    let has_border = source_border
+        .iter()
+        .any(|value| value.is_finite() && *value > 0.0);
+    let render_center = fill_center || !has_border;
+    let left_valid = sx[1] > sx[0] && dx[1] > dx[0];
+    let right_valid = sx[3] > sx[2] && dx[3] > dx[2];
+    let top_valid = sy[1] > sy[0] && dy[1] > dy[0];
+    let bottom_valid = sy[3] > sy[2] && dy[3] > dy[2];
+    let count = |scale: f32| {
+        let tile_width = source_center_width * base_scale * scale;
+        let tile_height = source_center_height * base_scale * scale;
+        let cap = MAX_TILED_IMAGE_QUADS + 1;
+        let columns =
+            if destination_center_width > 0.0 && tile_width.is_finite() && tile_width > 0.0 {
+                ((destination_center_width / tile_width).ceil() as usize).min(cap)
+            } else {
+                0
+            };
+        let rows =
+            if destination_center_height > 0.0 && tile_height.is_finite() && tile_height > 0.0 {
+                ((destination_center_height / tile_height).ceil() as usize).min(cap)
+            } else {
+                0
+            };
+        let corners = usize::from(left_valid && top_valid)
+            + usize::from(right_valid && top_valid)
+            + usize::from(left_valid && bottom_valid)
+            + usize::from(right_valid && bottom_valid);
+        corners
+            .saturating_add(
+                columns.saturating_mul(usize::from(top_valid) + usize::from(bottom_valid)),
+            )
+            .saturating_add(rows.saturating_mul(usize::from(left_valid) + usize::from(right_valid)))
+            .saturating_add(if render_center {
+                columns.saturating_mul(rows)
+            } else {
+                0
+            })
+            .min(cap)
+    };
+    if count(1.0) <= MAX_TILED_IMAGE_QUADS {
+        return 1.0;
+    }
+    let mut low = 1.0;
+    let mut high = 2.0;
+    while count(high) > MAX_TILED_IMAGE_QUADS {
+        high *= 2.0;
+    }
+    for _ in 0..40 {
+        let middle = (low + high) * 0.5;
+        if count(middle) > MAX_TILED_IMAGE_QUADS {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+    high
+}
+
+#[allow(clippy::too_many_arguments)]
+fn map_image_alpha_point(
+    point: [f32; 2],
+    destination_size: [f32; 2],
+    image_type: &str,
+    source_size: [f32; 2],
+    source_border: [f32; 4],
+    destination_border: [f32; 4],
+    pixel_scale: f32,
+    fill_center: bool,
+) -> Option<[f32; 2]> {
+    if source_size
+        .into_iter()
+        .chain(destination_size)
+        .any(|value| !value.is_finite() || value <= 0.0)
+    {
+        return None;
+    }
+    let point = [
+        point[0].clamp(0.0, destination_size[0]),
+        point[1].clamp(0.0, destination_size[1]),
+    ];
+    if image_type.eq_ignore_ascii_case("simple") || image_type.eq_ignore_ascii_case("filled") {
+        return Some([
+            point[0] / destination_size[0],
+            point[1] / destination_size[1],
+        ]);
+    }
+    let sx = split_axis(source_size[0], source_border[0], source_border[2]);
+    let sy = split_axis(source_size[1], source_border[3], source_border[1]);
+    let dx = split_axis(
+        destination_size[0],
+        destination_border[0],
+        destination_border[2],
+    );
+    let dy = split_axis(
+        destination_size[1],
+        destination_border[3],
+        destination_border[1],
+    );
+    if image_type.eq_ignore_ascii_case("sliced") {
+        return Some([
+            map_stretched_axis(point[0], sx, dx) / source_size[0],
+            map_stretched_axis(point[1], sy, dy) / source_size[1],
+        ]);
+    }
+    let tile_scale = tiled_image_scale(
+        source_size,
+        destination_size,
+        source_border,
+        destination_border,
+        pixel_scale,
+        fill_center,
+    );
+    let base_scale = if pixel_scale.is_finite() && pixel_scale > 0.0 {
+        pixel_scale
+    } else {
+        1.0
+    };
+    Some([
+        map_tiled_axis(point[0], sx, dx, (sx[2] - sx[1]) * base_scale * tile_scale)
+            / source_size[0],
+        map_tiled_axis(point[1], sy, dy, (sy[2] - sy[1]) * base_scale * tile_scale)
+            / source_size[1],
+    ])
 }
 
 const MAX_TILED_IMAGE_QUADS: usize = 16_250;
@@ -5589,12 +5953,14 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: Some([[10.0, 20.0], [130.0, 10.0], [110.0, 70.0], [20.0, 60.0]]),
+            corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: BlockingObjects::None,
             blocking_mask: -1,
             raycast_plane: None,
             raycast_camera: None,
             mask_regions: [None; 8],
+            image_alpha_hit_test: None,
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -5759,12 +6125,14 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: BlockingObjects::None,
             blocking_mask: -1,
             raycast_plane: None,
             raycast_camera: None,
             mask_regions: [None; 8],
+            image_alpha_hit_test: None,
             kind,
             callback: Value::Null,
         };
@@ -6235,12 +6603,14 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: BlockingObjects::None,
             blocking_mask: -1,
             raycast_plane: None,
             raycast_camera: None,
             mask_regions: [None; 8],
+            image_alpha_hit_test: None,
             kind: UiControlKind::Slider {
                 min: 0.0,
                 max: 10.0,
@@ -6273,12 +6643,14 @@ mod tests {
             rotation_radians: 0.0,
             pivot: [0.5, 0.5],
             corners: None,
+            corner_inverse_w: None,
             ignore_reversed_graphics: true,
             blocking_objects: BlockingObjects::None,
             blocking_mask: -1,
             raycast_plane: None,
             raycast_camera: None,
             mask_regions: [None; 8],
+            image_alpha_hit_test: None,
             kind: UiControlKind::Scrollbar {
                 value: 0.0,
                 size: 0.2,
@@ -6770,5 +7142,160 @@ mod tests {
         let frame = collect_ui_frame(&world, 1920, 1080);
         assert!(frame.plan.primitives.is_empty());
         assert!(frame.controls.is_empty());
+    }
+
+    fn alpha_filter(texture: Arc<UiAlphaTexture>) -> UiImageAlphaHitTest {
+        UiImageAlphaHitTest {
+            threshold: 0.5,
+            sprite: "test.png".into(),
+            image_type: "Simple".into(),
+            source_size: [2.0, 1.0],
+            source_border: [0.0; 4],
+            destination_border: [0.0; 4],
+            destination_size: [100.0, 20.0],
+            pixel_scale: 1.0,
+            fill_center: true,
+            texture_uv: [0.0, 0.0, 1.0, 1.0],
+            texture: Some(texture),
+        }
+    }
+
+    #[test]
+    fn image_alpha_hit_test_defaults_and_same_entity_controls_match_unity() {
+        assert_eq!(Image::default().alpha_hit_test_minimum_threshold, 0.0);
+        let legacy: Image = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert_eq!(legacy.alpha_hit_test_minimum_threshold, 0.0);
+
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        let button = world.spawn_empty();
+        world.insert_component(button, RectTransform::default());
+        world.insert_component(
+            button,
+            Image {
+                alpha_hit_test_minimum_threshold: 0.25,
+                ..Image::default()
+            },
+        );
+        world.insert_component(button, Button::default());
+        world.set_parent(button, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let controls = frame
+            .controls
+            .iter()
+            .filter(|control| control.entity == button)
+            .collect::<Vec<_>>();
+        assert_eq!(controls.len(), 2);
+        assert!(controls.iter().all(|control| control
+            .image_alpha_hit_test
+            .as_ref()
+            .is_some_and(|filter| { filter.threshold == 0.25 && filter.sprite == "white" })));
+    }
+
+    #[test]
+    fn alpha_hit_test_samples_transparent_pixels_after_rotation() {
+        let texture = Arc::new(UiAlphaTexture {
+            width: 2,
+            height: 1,
+            alpha: Arc::from([0_u8, 255_u8]),
+        });
+        let clip = UiClipRect {
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 200,
+        };
+        let mut control = control_region(
+            Entity::new(1, 1),
+            UiRect {
+                x: 10.0,
+                y: 20.0,
+                width: 100.0,
+                height: 20.0,
+            },
+            std::f32::consts::FRAC_PI_2,
+            [0.5, 0.5],
+            clip,
+            true,
+            UiControlKind::Button,
+            Value::Null,
+        );
+        control.image_alpha_hit_test = Some(alpha_filter(texture));
+        assert!(!control.contains(60.0, 5.0));
+        assert!(control.contains(60.0, 55.0));
+    }
+
+    #[test]
+    fn projected_alpha_hit_coordinates_use_reciprocal_clip_w() {
+        let mut control = control_region(
+            Entity::new(1, 1),
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 100.0,
+                height: 100.0,
+            },
+            0.0,
+            [0.5, 0.5],
+            UiClipRect {
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 100,
+            },
+            true,
+            UiControlKind::Blocker,
+            Value::Null,
+        );
+        control.corners = Some([[0.0, 0.0], [100.0, 0.0], [100.0, 100.0], [0.0, 100.0]]);
+        control.corner_inverse_w = Some([1.0, 0.5, 0.5, 1.0]);
+        let uv = control.normalized_point(50.0, 50.0).unwrap();
+        assert!((uv[0] - 1.0 / 3.0).abs() < 0.000001);
+        assert!((uv[1] - 1.0 / 3.0).abs() < 0.000001);
+    }
+
+    #[test]
+    fn sliced_and_tiled_alpha_mapping_matches_render_geometry() {
+        let sliced = map_image_alpha_point(
+            [90.0, 100.0],
+            [200.0, 200.0],
+            "Sliced",
+            [100.0, 100.0],
+            [10.0, 20.0, 30.0, 15.0],
+            [10.0, 20.0, 30.0, 15.0],
+            1.0,
+            true,
+        )
+        .unwrap();
+        assert!((sliced[0] - 0.4).abs() < 0.000001);
+        assert!((sliced[1] - 0.4848485).abs() < 0.000001);
+
+        let first = map_image_alpha_point(
+            [12.0, 12.0],
+            [100.0, 80.0],
+            "Tiled",
+            [40.0, 30.0],
+            [5.0; 4],
+            [5.0; 4],
+            1.0,
+            true,
+        )
+        .unwrap();
+        let repeated = map_image_alpha_point(
+            [42.0, 32.0],
+            [100.0, 80.0],
+            "Tiled",
+            [40.0, 30.0],
+            [5.0; 4],
+            [5.0; 4],
+            1.0,
+            true,
+        )
+        .unwrap();
+        assert!((first[0] - repeated[0]).abs() < 0.000001);
+        assert!((first[1] - repeated[1]).abs() < 0.000001);
     }
 }

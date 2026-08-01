@@ -1810,6 +1810,17 @@ function onTick(dt, frame) {
                         interaction,
                         &self.ui_button_tints,
                     );
+                    for failure in self
+                        .textures
+                        .resolve_image_alpha_hit_tests(&mut ui.controls)
+                    {
+                        log::warn!(
+                            "Image alpha hit-test Sprite '{}' could not be read from {}: {}",
+                            failure.key,
+                            failure.path.display(),
+                            failure.error
+                        );
+                    }
                     append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
                     let mut world_primitives = if has_authored_camera {
                         collect_world_primitives_with_hierarchy(

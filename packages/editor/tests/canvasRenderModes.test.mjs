@@ -452,6 +452,40 @@ test('Text raycast targets participate in editor Graphic hit testing', () => {
   assert.equal(hitTestUi(items, text.rect.x + 1, text.rect.y + 1)?.entity, text.entity);
 });
 
+test('Image alpha hit threshold filters the same-entity Graphic raycast', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+        GraphicRaycaster: { enabled: true },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect(),
+        Image: {
+          sprite: 'white',
+          raycast_target: true,
+          alpha_hit_test_minimum_threshold: 0.5,
+        },
+        Button: { interactable: true },
+      },
+    },
+  ];
+  let items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  let image = items.find((item) => item.entity === 2);
+  assert.equal(hitTestUi(items, image.rect.x + 50, image.rect.y + 50)?.entity, 2);
+
+  entities[1].components.Image.alpha_hit_test_minimum_threshold = 1.01;
+  items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  image = items.find((item) => item.entity === 2);
+  assert.equal(hitTestUi(items, image.rect.x + 50, image.rect.y + 50), null);
+});
+
 test('GraphicRaycaster removal or disablement preserves rendering while disabling hits', () => {
   const makeEntities = (raycaster) => [
     {

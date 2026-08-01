@@ -16,10 +16,12 @@ import {
   drawSpriteSlicedInRect,
   drawSpriteTiledInRect,
   drawSpriteUvInRect,
+  sampleSpriteAlpha,
 } from '../spriteDraw';
 import { planNineSlice, type SpriteBorder } from './nineSlice';
 import { fitImageAspectRect } from './imageGeometry';
 import { planTiledImage } from './tiledImage';
+import { imageAlphaHitTest, projectedQuadUv } from './imageAlphaHitTest';
 import {
   planFilledImage,
   traceFilledImagePath,
@@ -129,6 +131,12 @@ export type UiDrawItem = {
     displayBorder: SpriteBorder;
     sourceSize: [number, number];
     raycastTarget: boolean;
+    alphaHitTestMinimumThreshold: number;
+    /** Unprojected RectTransform geometry used by Unity Image.MapCoordinate. */
+    alphaHitTestSize: [number, number];
+    alphaHitTestBorder: SpriteBorder;
+    /** Last Selectable SpriteSwap result; falls back to the authored sprite before first draw. */
+    alphaHitTestSprite?: string;
   };
   button?: {
     interactable: boolean;
@@ -275,6 +283,8 @@ export type UiDrawItem = {
   anchorParentRect?: Rect;
   /** Exact projected quad for World Space Canvas selection and pointer interaction. */
   screenCorners?: Array<{ x: number; y: number }>;
+  /** Per-corner reciprocal clip W for perspective-correct pointer UVs. */
+  screenCornerInverseW?: [number, number, number, number];
 };
 
 function color4(raw: unknown, fallback: [number, number, number, number]): [number, number, number, number] {
@@ -988,6 +998,14 @@ export function layoutUiOverlay(
                 ) as SpriteBorder,
                 sourceSize: number2(img.source_size ?? img.sourceSize, [100, 100]),
                 raycastTarget: img.raycast_target !== false && img.raycastTarget !== false,
+                alphaHitTestMinimumThreshold: number(
+                  img.alpha_hit_test_minimum_threshold ?? img.alphaHitTestMinimumThreshold,
+                  0,
+                ),
+                alphaHitTestSize: [renderedRect.w, renderedRect.h],
+                alphaHitTestBorder: number4(img.border, [0, 0, 0, 0]).map(
+                  (value) => Math.max(0, value) * spritePixelScale,
+                ) as SpriteBorder,
               }
             : undefined,
           button: btn
@@ -1418,7 +1436,7 @@ export function layoutUiWorldSpace(
       const corners = pixelCorners(item.rect, item.rotation, item.pivot)
         .map(([x, y]) => project(context.pixelToWorld(x, y), cam, viewport));
       if (corners.some((point) => !point)) continue;
-      const projected = corners as Array<{ x: number; y: number; depth: number }>;
+      const projected = corners as Array<{ x: number; y: number; depth: number; inverseW: number }>;
       const screenCorners = projected.map(({ x, y }) => ({ x, y }));
       const reversed = item.ignoreReversedGraphics === true && isReversedScreenQuad(screenCorners);
       const topLeft = projected[0];
@@ -1449,6 +1467,7 @@ export function layoutUiWorldSpace(
         pivot: [0, 0],
         pivotScreen: { x: topLeft.x, y: topLeft.y },
         screenCorners,
+        screenCornerInverseW: projected.map((point) => point.inverseW) as [number, number, number, number],
         maskRegions,
         blocksRaycasts: reversed ? false : item.blocksRaycasts,
         raycastPlane: plane,
@@ -1849,6 +1868,7 @@ export function hitTestUi(
         physicsTransforms,
       )) continue;
     }
+    if (it.image?.raycastTarget && !imageAllowsRaycast(it, x, y)) continue;
     if (it.button?.interactable) return it;
     if (it.toggle?.interactable) return it;
     if (it.slider?.interactable) return it;
@@ -1864,6 +1884,44 @@ export function hitTestUi(
     if (it.text?.raycastTarget) return it;
   }
   return null;
+}
+
+function imageAllowsRaycast(it: UiDrawItem, x: number, y: number): boolean {
+  const image = it.image;
+  if (!image || image.alphaHitTestMinimumThreshold <= 0) return true;
+  const projected = it.screenCorners
+    ? projectedQuadUv(it.screenCorners, { x, y }, it.screenCornerInverseW)
+    : null;
+  let point: { x: number; y: number };
+  if (projected) {
+    point = {
+      x: projected.x * image.alphaHitTestSize[0],
+      y: projected.y * image.alphaHitTestSize[1],
+    };
+  } else {
+    const pivot = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
+    const axes = rectLocalAxes(it.rotation);
+    const dx = x - pivot.x;
+    const dy = y - pivot.y;
+    point = {
+      x: dx * axes.x.dx + dy * axes.x.dy + it.rect.w * it.pivot[0],
+      y: dx * axes.y.dx + dy * axes.y.dy + it.rect.h * it.pivot[1],
+    };
+  }
+  return imageAlphaHitTest(
+    point,
+    image.alphaHitTestSize,
+    {
+      imageType: image.imageType,
+      sourceSize: image.sourceSize,
+      sourceBorder: image.border,
+      destinationBorder: image.alphaHitTestBorder,
+      pixelScale: image.spritePixelScale,
+      fillCenter: image.fillCenter,
+    },
+    image.alphaHitTestMinimumThreshold,
+    (u, v) => sampleSpriteAlpha(image.alphaHitTestSprite ?? image.sprite, u, v),
+  );
 }
 
 export type UiBatch = {
@@ -1912,35 +1970,19 @@ export function buildUiBatches(items: UiDrawItem[]): UiBatch[] {
 function screenQuadUv(
   corners: Array<{ x: number; y: number }>,
   point: { x: number; y: number },
+  inverseW?: readonly number[],
 ): { u: number; v: number } | null {
-  if (corners.length !== 4) return null;
-  const triangles = [
-    { indices: [0, 1, 2], uv: [[0, 0], [1, 0], [1, 1]] },
-    { indices: [0, 2, 3], uv: [[0, 0], [1, 1], [0, 1]] },
-  ];
-  for (const triangle of triangles) {
-    const [a, b, c] = triangle.indices.map((index) => corners[index]);
-    const denominator = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
-    if (Math.abs(denominator) <= 1e-6) continue;
-    const wa = ((b.y - c.y) * (point.x - c.x) + (c.x - b.x) * (point.y - c.y))
-      / denominator;
-    const wb = ((c.y - a.y) * (point.x - c.x) + (a.x - c.x) * (point.y - c.y))
-      / denominator;
-    const wc = 1 - wa - wb;
-    if (wa < -1e-4 || wb < -1e-4 || wc < -1e-4) continue;
-    return {
-      u: wa * triangle.uv[0][0] + wb * triangle.uv[1][0] + wc * triangle.uv[2][0],
-      v: wa * triangle.uv[0][1] + wb * triangle.uv[1][1] + wc * triangle.uv[2][1],
-    };
-  }
-  return null;
+  const uv = projectedQuadUv(corners, point, inverseW);
+  return uv ? { u: uv.x, v: uv.y } : null;
 }
 
 export function sliderValueAtPoint(it: UiDrawItem, x: number, y: number): number | null {
   const slider = it.slider;
   if (!slider || !slider.interactable) return null;
   const pivot = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
-  const projected = it.screenCorners ? screenQuadUv(it.screenCorners, { x, y }) : null;
+  const projected = it.screenCorners
+    ? screenQuadUv(it.screenCorners, { x, y }, it.screenCornerInverseW)
+    : null;
   let t = projected
     ? (isVerticalRange(slider.direction) ? projected.v : projected.u)
     : normalizedRangePosition(
@@ -1964,7 +2006,9 @@ export function scrollbarValueAtPoint(it: UiDrawItem, x: number, y: number): num
   const scrollbar = it.scrollbar;
   if (!scrollbar || !scrollbar.interactable) return null;
   const pivot = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
-  const projected = it.screenCorners ? screenQuadUv(it.screenCorners, { x, y }) : null;
+  const projected = it.screenCorners
+    ? screenQuadUv(it.screenCorners, { x, y }, it.screenCornerInverseW)
+    : null;
   const normalized = projected
     ? (isVerticalRange(scrollbar.direction) ? projected.v : projected.u)
     : normalizedRangePosition(
@@ -2499,6 +2543,7 @@ export function drawUiItems(
           && it.button.transition.toLowerCase() === 'spriteswap'
           ? buttonTargetSprite(authoredSprite, selectableState, it.button.spriteState)
           : authoredSprite;
+        if (it.image) it.image.alphaHitTestSprite = sprite;
         const tint: [number, number, number, number] = [r, g, b, a];
         const imageRect = (it.image?.imageType === 'Simple' || it.image?.imageType === 'Filled') && it.image.preserveAspect
           ? fitImageAspectRect({ x, y, w, h }, it.image.sourceSize)

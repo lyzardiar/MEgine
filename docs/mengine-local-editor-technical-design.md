@@ -1968,3 +1968,10 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Button.transition` 新增 Unity `SpriteSwap`，并补齐 Highlighted、Pressed、Selected、Disabled 四个 SpriteState 引用；Normal 状态恢复同实体 Image 的 authored Sprite，任一未分配状态也安全回退 authored Sprite。IDL、生成 API、Behaviour、组件目录、Inspector 与 Agent schema 使用同一默认空引用契约，Inspector 只在 Sprite Swap 分支显示四个 Sprite 选择器。
 - Editor Canvas 与 Runtime 复用 ColorTint 已对齐的 Disabled、Pressed、Highlighted、Selected、Normal 状态优先级。Editor 在每次后台绘制时选择有效 Sprite，Runtime 在构建当帧 Image primitive 时替换纹理引用；SpriteSwap 不污染 ColorTint tween 缓存，也不错误作用到 RawImage、标签文字或无 Image 的 Button。
 - Packaged Player 的严格资产校验现在同时扫描 UI Image、RawImage 与四个 Button SpriteState，拒绝越界路径、损坏纹理和缺失 Sprite slice，避免编辑器预览正常但发布包遗漏交互态图片。无窗口回归覆盖默认值、Inspector 条件、空状态回退、状态优先级、Runtime 目标 Image 纹理与发布资产路径边界。
+
+## 178. 2026-08-01 Image Alpha Hit Test
+
+- `Image.alpha_hit_test_minimum_threshold` 对齐 Unity `Image.alphaHitTestMinimumThreshold`，默认值为 `0`。IDL、生成的 Rust/TypeScript API、Behaviour、组件目录、Inspector 与 Agent schema 使用同一字段；Inspector 在 Raycast Target 启用时显示 0–1 编辑范围。阈值为零保持完整 RectTransform 命中，正阈值按 Sprite 原始 Alpha 过滤，同实体 Button 等 Selectable 接收器使用相同过滤结果。
+- Editor 与 Player 共享 Simple/Filled、Sliced 和 Tiled 的目标坐标到 Sprite UV 映射。Sliced 按调整后的四边框分别拉伸，Tiled 按当前 Canvas Sprite Pixel Scale 和网格预算重复中心像素；Preserve Aspect、Fill Amount 和 Fill Center 不把 GraphicRaycaster 的基础矩形缩成可见网格。SpriteSwap 使用当前 Selectable 状态 Sprite，Sprite 子资源继续限制在导入切片 UV 内。
+- Editor 从已经加载的项目图片建立只读 Alpha 平面缓存，Player 从解码纹理建立共享 `Arc` CPU Alpha 缓存并按文件时间戳失效；采样使用双线性过滤。纹理尚未加载、不可读、路径无效或切片缺失时按 Unity 的容错语义保持可点击，同时仅对未变化的资产报告一次诊断，避免一个坏资源永久锁死界面。
+- 旋转 RectTransform 先逆变换到本地坐标；World Space Canvas 保存四个投影顶点的 reciprocal-W，并以透视正确的重心插值恢复 UV，因此斜向世界 UI 不会退化为屏幕包围盒近似。无界面回归覆盖默认/旧场景兼容、Inspector、三种坐标映射、透明阈值、不可读纹理容错、Sprite slice CPU 缓存、旋转命中和 World Space 透视校正。

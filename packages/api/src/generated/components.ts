@@ -444,6 +444,7 @@ export interface Image {
   border: [number, number, number, number];
   sourceSize: [number, number];
   raycastTarget: boolean;
+  alphaHitTestMinimumThreshold: number;
 }
 
 export interface RawImage {

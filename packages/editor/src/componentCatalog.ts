@@ -326,6 +326,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       border: [0, 0, 0, 0],
       source_size: [100, 100],
       raycast_target: true,
+      alpha_hit_test_minimum_threshold: 0,
     }),
   },
   {
@@ -764,6 +765,7 @@ export function createUiImageComponents(color: [number, number, number, number] 
       border: [0, 0, 0, 0],
       source_size: [100, 100],
       raycast_target: true,
+      alpha_hit_test_minimum_threshold: 0,
     },
   };
 }
@@ -784,6 +786,7 @@ export function createUiButtonComponents() {
       border: [0, 0, 0, 0],
       source_size: [100, 100],
       raycast_target: true,
+      alpha_hit_test_minimum_threshold: 0,
     },
     Button: {
       interactable: true,

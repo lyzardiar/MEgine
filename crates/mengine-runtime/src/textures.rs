@@ -1,3 +1,4 @@
+use crate::ui::{UiAlphaTexture, UiControlRegion};
 use mengine_assets::{
     load_environment_texture, load_sprite_import, load_texture_rgba8, split_sprite_reference,
     sprite_import_path, texture_dimensions,
@@ -5,6 +6,7 @@ use mengine_assets::{
 use mengine_rhi::{FrameLighting, RenderObject, Renderer, UiBatchPlan, UiPrimitive};
 use std::collections::{HashMap, HashSet};
 use std::path::{Component, Path, PathBuf};
+use std::sync::{Arc, OnceLock};
 use std::time::SystemTime;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -21,6 +23,7 @@ pub struct RuntimeTextureCache {
     attempted_material: HashMap<String, FileStamp>,
     attempted_environment: HashMap<String, FileStamp>,
     sprite_regions: HashMap<String, CachedSpriteRegion>,
+    alpha_sprites: HashMap<String, CachedAlphaSprite>,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -43,6 +46,31 @@ struct CachedSpriteRegion {
     reported: bool,
 }
 
+#[derive(Clone, Debug)]
+struct ResolvedAlphaSprite {
+    texture: Arc<UiAlphaTexture>,
+    uv: [f32; 4],
+}
+
+#[derive(Clone, Debug)]
+struct CachedAlphaSprite {
+    texture_stamp: FileStamp,
+    import_stamp: FileStamp,
+    result: Result<ResolvedAlphaSprite, TextureLoadFailure>,
+    reported: bool,
+}
+
+fn opaque_alpha_texture() -> Arc<UiAlphaTexture> {
+    static TEXTURE: OnceLock<Arc<UiAlphaTexture>> = OnceLock::new();
+    Arc::clone(TEXTURE.get_or_init(|| {
+        Arc::new(UiAlphaTexture {
+            width: 1,
+            height: 1,
+            alpha: Arc::from([255_u8]),
+        })
+    }))
+}
+
 impl RuntimeTextureCache {
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
@@ -51,6 +79,7 @@ impl RuntimeTextureCache {
             attempted_material: HashMap::new(),
             attempted_environment: HashMap::new(),
             sprite_regions: HashMap::new(),
+            alpha_sprites: HashMap::new(),
         }
     }
 
@@ -63,6 +92,7 @@ impl RuntimeTextureCache {
         self.attempted_material.clear();
         self.attempted_environment.clear();
         self.sprite_regions.clear();
+        self.alpha_sprites.clear();
     }
 
     pub fn invalidate(&mut self, key: &str) {
@@ -71,6 +101,67 @@ impl RuntimeTextureCache {
             .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
         self.attempted_environment.remove(key);
         self.sprite_regions.clear();
+        self.alpha_sprites.clear();
+    }
+
+    /// Populate CPU alpha planes used by Unity Image alpha hit testing.
+    pub fn resolve_image_alpha_hit_tests(
+        &mut self,
+        controls: &mut [UiControlRegion],
+    ) -> Vec<TextureLoadFailure> {
+        let Some(root) = self.project_root.clone() else {
+            return Vec::new();
+        };
+        let mut failures = Vec::new();
+        for control in controls {
+            let Some(filter) = control.image_alpha_hit_test.as_mut() else {
+                continue;
+            };
+            let original = filter.sprite.trim().to_owned();
+            if original.is_empty() || original.eq_ignore_ascii_case("white") {
+                filter.texture_uv = [0.0, 0.0, 1.0, 1.0];
+                filter.texture = Some(opaque_alpha_texture());
+                continue;
+            }
+            let (texture_reference, _) = split_sprite_reference(&original);
+            let texture_path = resolve_texture_path(&root, texture_reference);
+            let import_path = texture_path.as_deref().map(sprite_import_path);
+            let texture_stamp = texture_path.as_deref().map(file_stamp).unwrap_or_default();
+            let import_stamp = import_path.as_deref().map(file_stamp).unwrap_or_default();
+            let stale = self.alpha_sprites.get(&original).is_none_or(|cached| {
+                cached.texture_stamp != texture_stamp || cached.import_stamp != import_stamp
+            });
+            if stale {
+                self.alpha_sprites.insert(
+                    original.clone(),
+                    CachedAlphaSprite {
+                        texture_stamp,
+                        import_stamp,
+                        result: resolve_alpha_sprite(&root, &original),
+                        reported: false,
+                    },
+                );
+            }
+            let Some(cached) = self.alpha_sprites.get_mut(&original) else {
+                continue;
+            };
+            match &cached.result {
+                Ok(resolved) => {
+                    filter.texture_uv = resolved.uv;
+                    filter.texture = Some(Arc::clone(&resolved.texture));
+                }
+                Err(failure) => {
+                    // Unity treats unreadable texture alpha tests as valid raycasts. Keep that
+                    // behavior while surfacing the diagnostic only once per unchanged asset.
+                    filter.texture = None;
+                    if !cached.reported {
+                        cached.reported = true;
+                        failures.push(failure.clone());
+                    }
+                }
+            }
+        }
+        failures
     }
 
     /// Resolve `Assets/sheet.png#Slice` references before batching. Legacy texture paths pass through.
@@ -385,6 +476,58 @@ fn resolve_sprite_region(
     })
 }
 
+fn resolve_alpha_sprite(
+    project_root: &Path,
+    original: &str,
+) -> Result<ResolvedAlphaSprite, TextureLoadFailure> {
+    let (texture_reference, slice) = split_sprite_reference(original);
+    let texture_path = resolve_texture_path(project_root, texture_reference).ok_or_else(|| {
+        TextureLoadFailure {
+            key: original.to_owned(),
+            path: project_root.to_owned(),
+            error: "sprite texture must be a project-relative path without '..'".into(),
+        }
+    })?;
+    let texture = load_texture_rgba8(&texture_path).map_err(|error| TextureLoadFailure {
+        key: original.to_owned(),
+        path: texture_path.clone(),
+        error: error.to_string(),
+    })?;
+    let uv = if let Some(slice) = slice {
+        let import_path = sprite_import_path(&texture_path);
+        let import = load_sprite_import(&texture_path, [texture.width, texture.height]).map_err(
+            |error| TextureLoadFailure {
+                key: original.to_owned(),
+                path: import_path.clone(),
+                error: error.to_string(),
+            },
+        )?;
+        import
+            .resolve(slice, [texture.width, texture.height])
+            .map(|region| region.uv)
+            .ok_or_else(|| TextureLoadFailure {
+                key: original.to_owned(),
+                path: import_path,
+                error: format!("sprite slice '{slice}' is not defined"),
+            })?
+    } else {
+        [0.0, 0.0, 1.0, 1.0]
+    };
+    let alpha = texture
+        .pixels
+        .chunks_exact(4)
+        .map(|pixel| pixel[3])
+        .collect::<Vec<_>>();
+    Ok(ResolvedAlphaSprite {
+        texture: Arc::new(UiAlphaTexture {
+            width: texture.width,
+            height: texture.height,
+            alpha: alpha.into(),
+        }),
+        uv,
+    })
+}
+
 fn compose_uv(region: [f32; 4], authored: [f32; 4]) -> [f32; 4] {
     [
         region[0] + authored[0] * region[2],
@@ -574,6 +717,119 @@ mod tests {
         );
         assert!(cache
             .resolve_sprite_regions(std::slice::from_mut(&mut primitive))
+            .is_empty());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    fn alpha_control(sprite: &str) -> UiControlRegion {
+        UiControlRegion {
+            entity: mengine_core::Entity::new(1, 1),
+            rect: crate::ui::UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 100.0,
+                height: 100.0,
+            },
+            clip: mengine_rhi::UiClipRect {
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 100,
+            },
+            rotation_radians: 0.0,
+            pivot: [0.5, 0.5],
+            corners: None,
+            corner_inverse_w: None,
+            ignore_reversed_graphics: true,
+            blocking_objects: crate::ui_raycast::BlockingObjects::None,
+            blocking_mask: -1,
+            raycast_plane: None,
+            raycast_camera: None,
+            mask_regions: [None; 8],
+            image_alpha_hit_test: Some(crate::ui::UiImageAlphaHitTest {
+                threshold: 0.5,
+                sprite: sprite.into(),
+                image_type: "Simple".into(),
+                source_size: [2.0, 1.0],
+                source_border: [0.0; 4],
+                destination_border: [0.0; 4],
+                destination_size: [100.0, 100.0],
+                pixel_scale: 1.0,
+                fill_center: true,
+                texture_uv: [0.0, 0.0, 1.0, 1.0],
+                texture: None,
+            }),
+            kind: crate::ui::UiControlKind::Blocker,
+            callback: serde_json::Value::Null,
+        }
+    }
+
+    #[test]
+    fn alpha_hit_test_cache_resolves_sprite_slices_and_shares_cpu_pixels() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-alpha-hit-test-sprite-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let texture = root.join("Assets/sheet.png");
+        std::fs::create_dir_all(texture.parent().unwrap()).unwrap();
+        image::RgbaImage::from_raw(
+            4,
+            1,
+            vec![
+                255, 255, 255, 0, 255, 255, 255, 64, 255, 255, 255, 128, 255, 255, 255, 255,
+            ],
+        )
+        .unwrap()
+        .save(&texture)
+        .unwrap();
+        std::fs::write(
+            mengine_assets::sprite_import_path(&texture),
+            r#"{
+                "version":1,"mode":"multiple","pixels_per_unit":16,
+                "slices":[{"name":"Right","rect":[2,0,2,1],"pivot":[0.5,0.5]}]
+            }"#,
+        )
+        .unwrap();
+        let mut controls = [
+            alpha_control("Assets/sheet.png#Right"),
+            alpha_control("Assets/sheet.png#Right"),
+        ];
+        let mut cache = RuntimeTextureCache::new(Some(root.clone()));
+        assert!(cache
+            .resolve_image_alpha_hit_tests(&mut controls)
+            .is_empty());
+        let first = controls[0].image_alpha_hit_test.as_ref().unwrap();
+        let second = controls[1].image_alpha_hit_test.as_ref().unwrap();
+        assert_eq!(first.texture_uv, [0.5, 0.0, 0.5, 1.0]);
+        assert_eq!(
+            first.texture.as_ref().unwrap().alpha.as_ref(),
+            [0, 64, 128, 255]
+        );
+        assert!(Arc::ptr_eq(
+            first.texture.as_ref().unwrap(),
+            second.texture.as_ref().unwrap()
+        ));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn unreadable_alpha_hit_test_sprite_reports_once_and_fails_open() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-alpha-hit-test-missing-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let mut control = alpha_control("Assets/missing.png");
+        let mut cache = RuntimeTextureCache::new(Some(root.clone()));
+        assert_eq!(
+            cache
+                .resolve_image_alpha_hit_tests(std::slice::from_mut(&mut control))
+                .len(),
+            1
+        );
+        assert!(control.contains(50.0, 50.0));
+        assert!(cache
+            .resolve_image_alpha_hit_tests(std::slice::from_mut(&mut control))
             .is_empty());
         std::fs::remove_dir_all(root).unwrap();
     }

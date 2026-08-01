@@ -154,6 +154,7 @@ export class Image {
   border!: Color4;
   source_size!: [number, number];
   raycast_target!: boolean;
+  alpha_hit_test_minimum_threshold!: number;
 }
 
 export class AnimatedSprite2D {

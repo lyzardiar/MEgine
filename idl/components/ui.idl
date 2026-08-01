@@ -90,6 +90,8 @@ component Image {
   /// Imported source texture size used to normalize sliced UVs.
   source_size:     float2 = [100, 100]
   raycast_target:  bool   = true
+  /// Reject raycasts whose sampled Sprite alpha is below this Unity-style threshold.
+  alpha_hit_test_minimum_threshold: float = 0
 }
 
 /// Unity-style texture view with an explicit normalized UV rectangle.

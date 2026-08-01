@@ -1736,6 +1736,7 @@ pub struct Image {
     pub border: [f32; 4],
     pub source_size: [f32; 2],
     pub raycast_target: bool,
+    pub alpha_hit_test_minimum_threshold: f32,
 }
 
 impl Default for Image {
@@ -1753,6 +1754,7 @@ impl Default for Image {
             border: [0.0, 0.0, 0.0, 0.0],
             source_size: [100.0, 100.0],
             raycast_target: true,
+            alpha_hit_test_minimum_threshold: 0.0,
         }
     }
 }

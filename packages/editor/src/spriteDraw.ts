@@ -12,6 +12,12 @@ import { planNineSlice, type SpriteBorder } from './ui/nineSlice';
 import { planTiledImage } from './ui/tiledImage';
 
 const _cache = new Map<string, HTMLImageElement>();
+const _alphaCache = new Map<string, {
+  image: HTMLImageElement;
+  width: number;
+  height: number;
+  alpha: Uint8ClampedArray;
+}>();
 
 export function invalidateSpriteImage(sprite: string): void {
   const id = resolveSpriteTextureId(sprite);
@@ -19,6 +25,7 @@ export function invalidateSpriteImage(sprite: string): void {
   _cache.delete(`desktop:${id}`);
   const url = spriteAssetUrl(id);
   if (url) _cache.delete(url);
+  _alphaCache.clear();
 }
 
 export function getSpriteImage(sprite: string): HTMLImageElement | null {
@@ -70,6 +77,62 @@ export function getSpriteSourceRect(
   return width > 0 && height > 0
     ? [x, y, width, height]
     : [0, 0, image.naturalWidth, image.naturalHeight];
+}
+
+function spriteAlphaPixels(sprite: string): {
+  width: number;
+  height: number;
+  alpha: Uint8ClampedArray;
+} | null {
+  const image = getSpriteImage(sprite);
+  if (!image || !image.complete || image.naturalWidth < 1 || image.naturalHeight < 1) return null;
+  const source = getSpriteSourceRect(sprite, image);
+  const width = Math.max(1, Math.round(source[2]));
+  const height = Math.max(1, Math.round(source[3]));
+  const key = `${resolveSpriteId(sprite)}:${source.join(',')}`;
+  const cached = _alphaCache.get(key);
+  if (cached?.image === image && cached.width === width && cached.height === height) return cached;
+  if (typeof document === 'undefined') return null;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return null;
+    context.clearRect(0, 0, width, height);
+    context.drawImage(image, source[0], source[1], source[2], source[3], 0, 0, width, height);
+    const rgba = context.getImageData(0, 0, width, height).data;
+    const alpha = new Uint8ClampedArray(width * height);
+    for (let sourceIndex = 3, targetIndex = 0; sourceIndex < rgba.length; sourceIndex += 4) {
+      alpha[targetIndex++] = rgba[sourceIndex];
+    }
+    const entry = { image, width, height, alpha };
+    _alphaCache.set(key, entry);
+    return entry;
+  } catch {
+    // Match Unity: an unreadable texture logs there but must not make the Graphic unclickable.
+    return null;
+  }
+}
+
+/** Bilinear Sprite alpha sampling for Image.alphaHitTestMinimumThreshold. */
+export function sampleSpriteAlpha(sprite: string, u: number, v: number): number | null {
+  const id = resolveSpriteId(sprite);
+  if (!id || id === 'white') return 1;
+  const pixels = spriteAlphaPixels(sprite);
+  if (!pixels) return null;
+  const x = Math.max(0, Math.min(pixels.width - 1, u * pixels.width - 0.5));
+  const y = Math.max(0, Math.min(pixels.height - 1, v * pixels.height - 0.5));
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const x1 = Math.min(pixels.width - 1, x0 + 1);
+  const y1 = Math.min(pixels.height - 1, y0 + 1);
+  const tx = x - x0;
+  const ty = y - y0;
+  const at = (px: number, py: number) => pixels.alpha[py * pixels.width + px] / 255;
+  const top = at(x0, y0) * (1 - tx) + at(x1, y0) * tx;
+  const bottom = at(x0, y1) * (1 - tx) + at(x1, y1) * tx;
+  return top * (1 - ty) + bottom * ty;
 }
 
 /** Pixel size of sprite (Unity SetNativeSize). Resolves when image loads. */

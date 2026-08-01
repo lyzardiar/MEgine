@@ -1277,6 +1277,29 @@ export function ImageEditor(props: {
         value={d.raycast_target !== false && d.raycastTarget !== false}
         onChange={(raycast_target) => props.onPatch({ raycast_target })}
       />
+      {(d.raycast_target !== false && d.raycastTarget !== false) && (
+        <div className="field-row">
+          <label>Alpha Hit Test Minimum Threshold</label>
+          <input
+            type="number"
+            aria-label="Alpha Hit Test Minimum Threshold"
+            min={0}
+            max={1}
+            step={0.01}
+            value={Math.max(0, Math.min(1, Number(
+              d.alpha_hit_test_minimum_threshold ?? d.alphaHitTestMinimumThreshold ?? 0,
+            ) || 0))}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              props.onPatch({
+                alpha_hit_test_minimum_threshold: Number.isFinite(value)
+                  ? Math.max(0, Math.min(1, value))
+                  : 0,
+              });
+            }}
+          />
+        </div>
+      )}
       <div className="schema-buttons">
         <button
           type="button"

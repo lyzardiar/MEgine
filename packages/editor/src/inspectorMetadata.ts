@@ -596,6 +596,13 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       label: 'Source Size',
       visibleWhen: { field: 'image_type', equals: ['Simple', 'Sliced', 'Tiled', 'Filled'] },
     },
+    alpha_hit_test_minimum_threshold: {
+      label: 'Alpha Hit Test Minimum Threshold',
+      min: 0,
+      max: 1,
+      step: 0.01,
+      visibleWhen: { field: 'raycast_target', equals: true },
+    },
   },
   RawImage: {
     texture: sprite,

@@ -641,9 +641,9 @@ pub fn apply_material_property_block(
         };
         let binding = &material.custom_parameter_bindings[index];
         let components = usize::from(binding.components).min(4);
-        for component in 0..components {
+        for (component, authored_value) in authored.iter().take(components).enumerate() {
             let mut value = finite_or(
-                authored[component],
+                *authored_value,
                 material.custom_parameters[index][component],
             );
             if let Some(minimum) = binding.min {

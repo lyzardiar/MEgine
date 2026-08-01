@@ -111,7 +111,7 @@ export function project(
   world: Vec3,
   cam: Camera,
   viewport: { x: number; y: number; w: number; h: number },
-): { x: number; y: number; depth: number } | null {
+): { x: number; y: number; depth: number; inverseW: number } | null {
   const { forward, right, up } = lookBasis(cam.eye, cam.target, cam.up);
   if (len(right) < 1e-6) return null;
   const rel = sub(world, cam.eye);
@@ -138,6 +138,7 @@ export function project(
     x: viewport.x + (ndcX * 0.5 + 0.5) * viewport.w,
     y: viewport.y + (1 - (ndcY * 0.5 + 0.5)) * viewport.h,
     depth: z,
+    inverseW: cam.projection === 'orthographic' ? 1 : 1 / z,
   };
 }
 
