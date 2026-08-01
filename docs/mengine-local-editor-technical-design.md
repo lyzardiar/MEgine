@@ -2004,3 +2004,8 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Image`、`RawImage`、`Text` 与引擎 `Panel` 现在统一序列化 `enabled`，默认 true 并通过 IDL 缺省值兼容旧场景；Inspector、脚本类型、Editor Canvas 和 Runtime 使用同一字段。禁用 Graphic 只停止该组件的绘制、Graphic Effect 与射线接收，不会错误停用实体或子层级。
 - 同实体存在显式 Graphic 时，Button、Toggle、Slider 等 Selectable 只有在至少一个已启用 Graphic 保留 `raycast_target` 时才生成交互区域；没有显式 Graphic 的 MEngine 复合控件仍保留自己的合成交互表面。Editor 同时修正旧 `Text` 缺少 `raycast_target` 时被误判为 false 的问题，使缺省值与 Runtime/Unity 一致。
 - 无窗口回归覆盖四类 Graphic 默认值与旧数据、禁用后的渲染和命中、禁用 Graphic 下子层级继续工作，以及禁用/穿透目标不再替 Selectable 接收事件；Runtime UI 测试与 Editor Canvas 测试使用相同契约。
+
+## 184. 2026-08-01 All-window Pixel Safety Attestation
+
+- MCP `take_all_window_screenshots` 不再在聚合层无条件返回 `backgroundSafe=true`。只有每个初始原生窗口都成功返回截图且逐窗明确标记后台安全时，聚合结果才给出安全证明；单窗关闭、输出上限、标签/图像校验失败或明确不安全都视为未知，使 `backgroundSafe` 与 `complete` 同时为 false。
+- 像素链路继续串行调用 WebView2 离屏截图，并在结束后重读原生窗口清单；`inventoryStable` 独立描述窗口集合和状态是否漂移。新增无窗口 MCP 回归覆盖完整安全采集、清单漂移伴随失败，以及成功返回图像但拒绝逐窗安全证明的情况。

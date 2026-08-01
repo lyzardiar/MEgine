@@ -592,6 +592,7 @@ test('all-window screenshots capture serially with coherent complete inventory e
   assert.equal(maximumActive, 1);
   assert.equal(result.capturedAt, 123);
   assert.equal(result.requestedMaxSize, 768);
+  assert.equal(result.backgroundSafe, true);
   assert.equal(result.inventoryStable, true);
   assert.equal(result.complete, true);
   assert.equal(result.initialWindowCount, 2);
@@ -624,12 +625,35 @@ test('all-window screenshots preserve failures and native inventory drift', asyn
   });
 
   assert.equal(result.inventoryStable, false);
+  assert.equal(result.backgroundSafe, false);
   assert.equal(result.complete, false);
   assert.equal(result.capturedWindowCount, 1);
   assert.equal(result.failedWindowCount, 1);
   assert.deepEqual(result.windows[1].error, {
     code: 'NOT_READY',
     message: 'window closed',
+  });
+});
+
+test('all-window screenshots reject an unsafe per-window attestation', async () => {
+  const result = await captureAllWindowScreenshots({
+    listWindows: async () => [{ label: 'main', visible: false, focused: false }],
+    captureWindow: async (windowLabel) => ({
+      dataUrl: 'data:image/png;base64,aGVsbG8=',
+      windowLabel,
+      mime: 'image/png',
+      backgroundSafe: false,
+    }),
+  });
+
+  assert.equal(result.inventoryStable, true);
+  assert.equal(result.backgroundSafe, false);
+  assert.equal(result.complete, false);
+  assert.equal(result.capturedWindowCount, 0);
+  assert.equal(result.failedWindowCount, 1);
+  assert.deepEqual(result.windows[0].error, {
+    code: 'INTERNAL',
+    message: 'Screenshot for window main was not marked background-safe',
   });
 });
 

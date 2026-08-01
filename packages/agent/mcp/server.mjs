@@ -714,12 +714,16 @@ async function captureAllWindowScreenshots({
     === nativeWindowInventorySignature(finalWindows);
   const capturedWindowCount = windows.filter((entry) => entry.screenshot).length;
   const failedWindowCount = windows.length - capturedWindowCount;
+  // Missing pixels are unknown, not evidence that every native window was
+  // captured without foreground activation. Preserve the per-window proof.
+  const backgroundSafe = failedWindowCount === 0
+    && windows.every((entry) => entry.screenshot?.backgroundSafe === true);
   return {
     version: 1,
     capturedAt: now(),
-    backgroundSafe: true,
+    backgroundSafe,
     inventoryStable,
-    complete: inventoryStable && failedWindowCount === 0,
+    complete: inventoryStable && backgroundSafe,
     requestedMaxSize: maxSize,
     initialWindowCount: initialWindows.length,
     finalWindowCount: finalWindows.length,
