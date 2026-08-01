@@ -3,6 +3,7 @@ export const ASSET_IMPORT_ACCEPT = [
   '.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tga', '.tif', '.tiff', '.hdr', '.exr',
   '.wav', '.ogg', '.mp3', '.flac',
   '.gltf', '.glb',
+  '.ttf', '.otf',
   '.atlas', '.skel', '.json',
   '.mmat', '.mat', '.minst', '.mshader', '.prefab', '.matlas', '.manim', '.mcontroller', '.mavatar', '.mtimeline',
 ].join(',');

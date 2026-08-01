@@ -119,6 +119,7 @@ test('Text paragraph settings reach the background-readable Canvas draw plan', (
         RectTransform: rect({ size_delta: [120, 48] }),
         Text: {
           text: 'alpha beta gamma',
+          font: 'Assets\\Fonts\\Interface.ttf',
           font_style: 'BoldAndItalic',
           align_by_geometry: true,
           support_rich_text: false,
@@ -138,6 +139,7 @@ test('Text paragraph settings reach the background-readable Canvas draw plan', (
     new Set(),
   ).find((candidate) => candidate.entity === 2);
   assert.equal(item.text.lineSpacing, 1.25);
+  assert.equal(item.text.font, 'Assets/Fonts/Interface.ttf');
   assert.equal(item.text.fontStyle, 'BoldAndItalic');
   assert.equal(item.text.alignByGeometry, true);
   assert.equal(item.text.supportRichText, false);

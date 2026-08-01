@@ -19,6 +19,65 @@ use std::sync::Arc;
 
 const TRANSPARENT_MESH_ALPHA_EPSILON: f32 = 1.0 / 255.0;
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct UiFontGlyphMetrics {
+    pub advance: f32,
+    pub metric_width: f32,
+    pub line_height: f32,
+    /// Horizontal visible bounds relative to the glyph origin.
+    pub geometry: Option<(f32, f32)>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct UiFontGlyphTexture {
+    pub key: String,
+    pub uv: [f32; 4],
+    /// Visible x, y, width and height relative to the top of the glyph line box.
+    pub bounds: [f32; 4],
+}
+
+pub trait UiFontResolver {
+    fn measure_glyph(
+        &mut self,
+        font: &str,
+        character: char,
+        font_size: f32,
+        font_style: &str,
+    ) -> Option<UiFontGlyphMetrics>;
+
+    fn resolve_glyph_texture(
+        &mut self,
+        font: &str,
+        character: char,
+        font_size: f32,
+        font_style: &str,
+    ) -> Option<UiFontGlyphTexture>;
+}
+
+struct NoopUiFontResolver;
+
+impl UiFontResolver for NoopUiFontResolver {
+    fn measure_glyph(
+        &mut self,
+        _font: &str,
+        _character: char,
+        _font_size: f32,
+        _font_style: &str,
+    ) -> Option<UiFontGlyphMetrics> {
+        None
+    }
+
+    fn resolve_glyph_texture(
+        &mut self,
+        _font: &str,
+        _character: char,
+        _font_size: f32,
+        _font_style: &str,
+    ) -> Option<UiFontGlyphTexture> {
+        None
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct UiRect {
     pub x: f32,
@@ -916,6 +975,7 @@ pub fn collect_ui_frame_with_hierarchy(
         0,
         UiInteractionState::default(),
         None,
+        None,
     )
 }
 
@@ -936,6 +996,7 @@ pub fn collect_ui_frame_with_hierarchy_and_camera(
         Some(sorting_layers),
         0,
         UiInteractionState::default(),
+        None,
         None,
     )
 }
@@ -958,6 +1019,7 @@ pub fn collect_ui_frame_for_display(
         Some(sorting_layers),
         normalize_target_display(target_display),
         UiInteractionState::default(),
+        None,
         None,
     )
 }
@@ -984,6 +1046,34 @@ pub fn collect_ui_frame_for_display_with_interaction(
         normalize_target_display(target_display),
         interaction,
         Some(button_tints),
+        None,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn collect_ui_frame_for_display_with_interaction_and_fonts(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    width: u32,
+    height: u32,
+    active_camera: Option<FrameCamera>,
+    sorting_layers: &SortingLayers,
+    target_display: i32,
+    interaction: UiInteractionState,
+    button_tints: &HashMap<Entity, UiButtonTintTween>,
+    font_resolver: &mut dyn UiFontResolver,
+) -> RuntimeUiFrame {
+    collect_ui_frame_internal(
+        world,
+        hierarchy,
+        width,
+        height,
+        active_camera,
+        Some(sorting_layers),
+        normalize_target_display(target_display),
+        interaction,
+        Some(button_tints),
+        Some(font_resolver),
     )
 }
 
@@ -998,6 +1088,7 @@ fn collect_ui_frame_internal(
     target_display: i32,
     interaction: UiInteractionState,
     button_tints: Option<&HashMap<Entity, UiButtonTintTween>>,
+    mut font_resolver: Option<&mut dyn UiFontResolver>,
 ) -> RuntimeUiFrame {
     let root = UiRect {
         x: 0.0,
@@ -1106,6 +1197,7 @@ fn collect_ui_frame_internal(
             },
             interaction,
             button_tints,
+            &mut font_resolver,
             &mut primitives,
             &mut controls,
         );
@@ -1776,6 +1868,7 @@ fn walk(
     inherited: UiInheritedState,
     interaction: UiInteractionState,
     button_tints: Option<&HashMap<Entity, UiButtonTintTween>>,
+    font_resolver: &mut Option<&mut dyn UiFontResolver>,
     primitives: &mut Vec<UiPrimitive>,
     controls: &mut Vec<UiControlRegion>,
 ) {
@@ -2116,28 +2209,80 @@ fn walk(
 
     if let Some(text) = text {
         let material_start = primitives.len();
-        push_text_styled_rich(
-            primitives,
-            rect,
-            &text.text,
-            multiply_alpha(text.color, state.alpha),
-            multiply_alpha(text.outline_color, state.alpha),
-            (text.outline_width * scale).max(0.0),
-            text.font_size * scale,
-            &text.font_style,
-            text.align_by_geometry,
-            text.support_rich_text,
-            text.resize_text_for_best_fit,
-            text.resize_text_min_size as f32,
-            text.resize_text_max_size as f32,
-            scale,
-            &text.alignment,
-            &text.vertical_align,
-            text.line_spacing,
-            &text.horizontal_overflow,
-            &text.vertical_overflow,
-            clip,
-        );
+        if !text.font.trim().is_empty() {
+            if let Some(resolver) = font_resolver.as_deref_mut() {
+                push_text_styled_rich_with_font(
+                    primitives,
+                    rect,
+                    &text.text,
+                    multiply_alpha(text.color, state.alpha),
+                    multiply_alpha(text.outline_color, state.alpha),
+                    (text.outline_width * scale).max(0.0),
+                    &text.font,
+                    text.font_size * scale,
+                    &text.font_style,
+                    text.align_by_geometry,
+                    text.support_rich_text,
+                    text.resize_text_for_best_fit,
+                    text.resize_text_min_size as f32,
+                    text.resize_text_max_size as f32,
+                    scale,
+                    &text.alignment,
+                    &text.vertical_align,
+                    text.line_spacing,
+                    &text.horizontal_overflow,
+                    &text.vertical_overflow,
+                    clip,
+                    resolver,
+                );
+            } else {
+                push_text_styled_rich(
+                    primitives,
+                    rect,
+                    &text.text,
+                    multiply_alpha(text.color, state.alpha),
+                    multiply_alpha(text.outline_color, state.alpha),
+                    (text.outline_width * scale).max(0.0),
+                    text.font_size * scale,
+                    &text.font_style,
+                    text.align_by_geometry,
+                    text.support_rich_text,
+                    text.resize_text_for_best_fit,
+                    text.resize_text_min_size as f32,
+                    text.resize_text_max_size as f32,
+                    scale,
+                    &text.alignment,
+                    &text.vertical_align,
+                    text.line_spacing,
+                    &text.horizontal_overflow,
+                    &text.vertical_overflow,
+                    clip,
+                );
+            }
+        } else {
+            push_text_styled_rich(
+                primitives,
+                rect,
+                &text.text,
+                multiply_alpha(text.color, state.alpha),
+                multiply_alpha(text.outline_color, state.alpha),
+                (text.outline_width * scale).max(0.0),
+                text.font_size * scale,
+                &text.font_style,
+                text.align_by_geometry,
+                text.support_rich_text,
+                text.resize_text_for_best_fit,
+                text.resize_text_min_size as f32,
+                text.resize_text_max_size as f32,
+                scale,
+                &text.alignment,
+                &text.vertical_align,
+                text.line_spacing,
+                &text.horizontal_overflow,
+                &text.vertical_overflow,
+                clip,
+            );
+        }
         apply_graphic_material(primitives, material_start, &text.material);
     }
 
@@ -3060,6 +3205,7 @@ fn walk(
             state,
             interaction,
             button_tints,
+            font_resolver,
             primitives,
             controls,
         );
@@ -4584,6 +4730,8 @@ struct BitmapTextGlyph {
     advance: f32,
     metric_width: f32,
     line_height: f32,
+    geometry: Option<(f32, f32)>,
+    asset_font: bool,
     font_style: String,
     color: Option<[f32; 4]>,
 }
@@ -4596,6 +4744,17 @@ struct PositionedBitmapGlyph {
     glyph_scale: f32,
     bold_width: f32,
     italic: bool,
+    color: [f32; 4],
+}
+
+#[derive(Clone, Debug)]
+struct PositionedFontGlyph {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    texture: String,
+    uv: [f32; 4],
     color: [f32; 4],
 }
 
@@ -4867,6 +5026,8 @@ fn measure_bitmap_text_glyph(
         advance: 6.0 * glyph_scale,
         metric_width: 5.0 * glyph_scale + bitmap_text_style_overhang(&font_style, glyph_scale),
         line_height: 8.0 * glyph_scale,
+        geometry: bitmap_glyph_geometry_bounds(character, glyph_scale, &font_style),
+        asset_font: false,
         font_style,
         color,
     }
@@ -5022,9 +5183,7 @@ fn bitmap_text_geometry_bounds(glyphs: &[BitmapTextGlyph]) -> Option<(f32, f32)>
     let mut maximum = f32::NEG_INFINITY;
     let mut cursor = 0.0;
     for glyph in glyphs {
-        if let Some((left, right)) =
-            bitmap_glyph_geometry_bounds(glyph.character, glyph.glyph_scale, &glyph.font_style)
-        {
+        if let Some((left, right)) = glyph.geometry {
             minimum = minimum.min(cursor + left);
             maximum = maximum.max(cursor + right);
         }
@@ -5142,6 +5301,57 @@ fn split_bitmap_paragraphs(glyphs: &[BitmapTextGlyph]) -> Vec<Vec<BitmapTextGlyp
     paragraphs
 }
 
+fn apply_font_metrics(
+    glyphs: &mut [BitmapTextGlyph],
+    font: &str,
+    resolver: &mut dyn UiFontResolver,
+) {
+    if font.trim().is_empty() {
+        return;
+    }
+    for glyph in glyphs {
+        if matches!(glyph.character, '\n' | '\r') {
+            continue;
+        }
+        let Some(metrics) = resolver
+            .measure_glyph(font, glyph.character, glyph.font_size, &glyph.font_style)
+            .and_then(sanitize_font_metrics)
+        else {
+            continue;
+        };
+        glyph.advance = metrics.advance;
+        glyph.metric_width = metrics.metric_width;
+        glyph.line_height = metrics.line_height;
+        glyph.geometry = metrics.geometry;
+        glyph.asset_font = true;
+    }
+}
+
+fn sanitize_font_metrics(mut metrics: UiFontGlyphMetrics) -> Option<UiFontGlyphMetrics> {
+    if !metrics.advance.is_finite()
+        || metrics.advance < 0.0
+        || !metrics.metric_width.is_finite()
+        || metrics.metric_width < 0.0
+        || !metrics.line_height.is_finite()
+        || metrics.line_height <= 0.0
+        || metrics
+            .geometry
+            .is_some_and(|(left, right)| !left.is_finite() || !right.is_finite() || right < left)
+    {
+        return None;
+    }
+    metrics.advance = metrics.advance.min(2_048.0);
+    metrics.metric_width = metrics.metric_width.min(2_048.0);
+    metrics.line_height = metrics.line_height.min(2_048.0);
+    metrics.geometry = metrics.geometry.map(|(left, right)| {
+        (
+            left.clamp(-2_048.0, 2_048.0),
+            right.clamp(-2_048.0, 2_048.0),
+        )
+    });
+    Some(metrics)
+}
+
 fn bitmap_line_block_height(lines: &[BitmapTextLine], line_spacing: f32) -> f32 {
     let Some(last) = lines.last() else {
         return 0.0;
@@ -5154,7 +5364,7 @@ fn bitmap_line_block_height(lines: &[BitmapTextLine], line_spacing: f32) -> f32 
 }
 
 #[allow(clippy::too_many_arguments)]
-fn layout_bitmap_text_at_font_size(
+fn layout_bitmap_text_at_font_size_with_font(
     text: &str,
     rect: UiRect,
     font_size: f32,
@@ -5167,6 +5377,8 @@ fn layout_bitmap_text_at_font_size(
     line_spacing: f32,
     horizontal_overflow: &str,
     vertical_overflow: &str,
+    font: &str,
+    font_resolver: Option<&mut dyn UiFontResolver>,
 ) -> BitmapTextLayout {
     let font_size = if font_size.is_finite() {
         font_size.clamp(1.0, 512.0)
@@ -5174,14 +5386,13 @@ fn layout_bitmap_text_at_font_size(
         16.0
     };
     let glyph_scale = (font_size.max(7.0) / 7.0).max(1.0);
-    let advance = 6.0 * glyph_scale;
-    let line_height = 8.0 * glyph_scale;
+    let mut advance = 6.0 * glyph_scale;
+    let mut line_height = 8.0 * glyph_scale;
     let line_spacing = if line_spacing.is_finite() && line_spacing > 0.0 {
         line_spacing.clamp(0.1, 10.0)
     } else {
         1.0
     };
-    let line_advance = line_height * line_spacing;
     let width = rect.width.max(0.0);
     let height = rect.height.max(0.0);
     let font_scale = if font_scale.is_finite() && font_scale > 0.0 {
@@ -5195,13 +5406,24 @@ fn layout_bitmap_text_at_font_size(
         .chars()
         .take(MAX_UI_TEXT_CHARACTERS)
         .collect::<String>();
-    let parsed = parse_bitmap_rich_text(
+    let mut parsed = parse_bitmap_rich_text(
         &normalized,
         support_rich_text,
         font_size,
         font_scale,
         font_style,
     );
+    if let Some(resolver) = font_resolver {
+        if let Some(metrics) = resolver
+            .measure_glyph(font, 'M', font_size, font_style)
+            .and_then(sanitize_font_metrics)
+        {
+            advance = metrics.advance;
+            line_height = metrics.line_height;
+        }
+        apply_font_metrics(&mut parsed, font, resolver);
+    }
+    let line_advance = line_height * line_spacing;
     let parsed_non_empty = !parsed.is_empty();
     let mut authored_lines = Vec::new();
     let mut wrapped_dropped = false;
@@ -5301,7 +5523,7 @@ fn bitmap_text_layout_fits(layout: &BitmapTextLayout, rect: UiRect, text: &str) 
 }
 
 #[allow(clippy::too_many_arguments)]
-fn layout_bitmap_text_rich(
+fn layout_bitmap_text_rich_with_font(
     text: &str,
     rect: UiRect,
     font_size: f32,
@@ -5317,6 +5539,8 @@ fn layout_bitmap_text_rich(
     line_spacing: f32,
     horizontal_overflow: &str,
     vertical_overflow: &str,
+    font: &str,
+    font_resolver: &mut dyn UiFontResolver,
 ) -> BitmapTextLayout {
     let font_scale = if font_scale.is_finite() && font_scale > 0.0 {
         font_scale
@@ -5324,7 +5548,7 @@ fn layout_bitmap_text_rich(
         1.0
     };
     if !best_fit {
-        return layout_bitmap_text_at_font_size(
+        return layout_bitmap_text_at_font_size_with_font(
             text,
             rect,
             font_size,
@@ -5337,6 +5561,8 @@ fn layout_bitmap_text_rich(
             line_spacing,
             horizontal_overflow,
             vertical_overflow,
+            font,
+            Some(font_resolver),
         );
     }
     let min_size = if min_size.is_finite() {
@@ -5354,7 +5580,7 @@ fn layout_bitmap_text_rich(
     let mut resolved = low;
     while low <= high {
         let candidate = low + (high - low) / 2;
-        let layout = layout_bitmap_text_at_font_size(
+        let layout = layout_bitmap_text_at_font_size_with_font(
             text,
             rect,
             candidate as f32 * font_scale,
@@ -5367,6 +5593,8 @@ fn layout_bitmap_text_rich(
             line_spacing,
             horizontal_overflow,
             "Overflow",
+            font,
+            Some(&mut *font_resolver),
         );
         if bitmap_text_layout_fits(&layout, rect, text) {
             resolved = candidate;
@@ -5375,7 +5603,7 @@ fn layout_bitmap_text_rich(
             high = candidate - 1;
         }
     }
-    layout_bitmap_text_at_font_size(
+    layout_bitmap_text_at_font_size_with_font(
         text,
         rect,
         resolved as f32 * font_scale,
@@ -5388,6 +5616,49 @@ fn layout_bitmap_text_rich(
         line_spacing,
         horizontal_overflow,
         vertical_overflow,
+        font,
+        Some(font_resolver),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg(test)]
+fn layout_bitmap_text_rich(
+    text: &str,
+    rect: UiRect,
+    font_size: f32,
+    font_style: &str,
+    align_by_geometry: bool,
+    support_rich_text: bool,
+    best_fit: bool,
+    min_size: f32,
+    max_size: f32,
+    font_scale: f32,
+    alignment: &str,
+    vertical_align: &str,
+    line_spacing: f32,
+    horizontal_overflow: &str,
+    vertical_overflow: &str,
+) -> BitmapTextLayout {
+    let mut resolver = NoopUiFontResolver;
+    layout_bitmap_text_rich_with_font(
+        text,
+        rect,
+        font_size,
+        font_style,
+        align_by_geometry,
+        support_rich_text,
+        best_fit,
+        min_size,
+        max_size,
+        font_scale,
+        alignment,
+        vertical_align,
+        line_spacing,
+        horizontal_overflow,
+        vertical_overflow,
+        "",
+        &mut resolver,
     )
 }
 
@@ -5554,7 +5825,7 @@ fn push_text_styled_aligned(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn push_text_styled_rich(
+fn push_text_styled_rich_internal(
     primitives: &mut Vec<UiPrimitive>,
     rect: UiRect,
     text: &str,
@@ -5575,9 +5846,11 @@ fn push_text_styled_rich(
     horizontal_overflow: &str,
     vertical_overflow: &str,
     clip: UiClipRect,
+    font: &str,
+    font_resolver: &mut dyn UiFontResolver,
 ) {
     let primitive_start = primitives.len();
-    let layout = layout_bitmap_text_rich(
+    let layout = layout_bitmap_text_rich_with_font(
         text,
         rect,
         font_size,
@@ -5593,15 +5866,46 @@ fn push_text_styled_rich(
         line_spacing,
         horizontal_overflow,
         vertical_overflow,
+        font,
+        font_resolver,
     );
     let mut glyphs = Vec::new();
+    let mut font_glyphs = Vec::new();
     for line in &layout.lines {
         let mut cursor = 0.0;
         for glyph in &line.glyphs {
-            let (bold, italic) = bitmap_font_style(&glyph.font_style);
             let glyph_color = glyph.color.map_or(color, |rich| {
                 [rich[0], rich[1], rich[2], rich[3] * color[3]]
             });
+            if glyph.asset_font {
+                let texture = font_resolver.resolve_glyph_texture(
+                    font,
+                    glyph.character,
+                    glyph.font_size,
+                    &glyph.font_style,
+                );
+                if let Some(texture) = texture {
+                    let [offset_x, offset_y, width, height] = texture.bounds;
+                    if width > 0.0 && height > 0.0 {
+                        font_glyphs.push(PositionedFontGlyph {
+                            x: line.x + cursor + offset_x,
+                            y: line.y + line.height - glyph.line_height + offset_y,
+                            width,
+                            height,
+                            texture: texture.key,
+                            uv: texture.uv,
+                            color: glyph_color,
+                        });
+                    }
+                    cursor += glyph.advance;
+                    continue;
+                }
+                if glyph.geometry.is_none() {
+                    cursor += glyph.advance;
+                    continue;
+                }
+            }
+            let (bold, italic) = bitmap_font_style(&glyph.font_style);
             glyphs.push(PositionedBitmapGlyph {
                 x: line.x + cursor,
                 y: line.y + line.height - glyph.line_height,
@@ -5624,12 +5928,44 @@ fn push_text_styled_rich(
                 .sum::<usize>()
         })
         .sum::<usize>()
+        .saturating_add(font_glyphs.len())
         .min(MAX_UI_TEXT_PRIMITIVES);
     let outline_budget = MAX_UI_TEXT_PRIMITIVES.saturating_sub(fill_primitive_count);
 
     let radius = outline_width.ceil().clamp(0.0, 16.0) as i32;
     if radius > 0 && outline_color[3] > 0.0 {
         let mut outline_primitives = 0;
+        'font_outline: for glyph in &font_glyphs {
+            for offset_y in -radius..=radius {
+                for offset_x in -radius..=radius {
+                    if offset_x == 0 && offset_y == 0
+                        || offset_x * offset_x + offset_y * offset_y > radius * radius
+                    {
+                        continue;
+                    }
+                    if outline_primitives >= outline_budget {
+                        break 'font_outline;
+                    }
+                    let mut output = primitive(
+                        UiRect {
+                            x: glyph.x + offset_x as f32,
+                            y: glyph.y + offset_y as f32,
+                            width: glyph.width,
+                            height: glyph.height,
+                        },
+                        outline_color,
+                        [0.5, 0.5],
+                        0.0,
+                        "ui/text/font-outline",
+                        &glyph.texture,
+                        clip,
+                    );
+                    output.uv = glyph.uv;
+                    primitives.push(output);
+                    outline_primitives += 1;
+                }
+            }
+        }
         'outline: for glyph in &glyphs {
             for (row_index, row) in glyph.rows.iter().enumerate() {
                 let italic_offset = if glyph.italic {
@@ -5678,6 +6014,28 @@ fn push_text_styled_rich(
         }
     }
 
+    for glyph in font_glyphs {
+        if primitives.len() - primitive_start >= MAX_UI_TEXT_PRIMITIVES {
+            break;
+        }
+        let mut output = primitive(
+            UiRect {
+                x: glyph.x,
+                y: glyph.y,
+                width: glyph.width,
+                height: glyph.height,
+            },
+            glyph.color,
+            [0.5, 0.5],
+            0.0,
+            "ui/text/font",
+            &glyph.texture,
+            clip,
+        );
+        output.uv = glyph.uv;
+        primitives.push(output);
+    }
+
     'fill: for glyph in glyphs {
         for (row_index, row) in glyph.rows.iter().enumerate() {
             let italic_offset = if glyph.italic {
@@ -5709,6 +6067,107 @@ fn push_text_styled_rich(
             }
         }
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_text_styled_rich(
+    primitives: &mut Vec<UiPrimitive>,
+    rect: UiRect,
+    text: &str,
+    color: [f32; 4],
+    outline_color: [f32; 4],
+    outline_width: f32,
+    font_size: f32,
+    font_style: &str,
+    align_by_geometry: bool,
+    support_rich_text: bool,
+    best_fit: bool,
+    min_size: f32,
+    max_size: f32,
+    font_scale: f32,
+    alignment: &str,
+    vertical_align: &str,
+    line_spacing: f32,
+    horizontal_overflow: &str,
+    vertical_overflow: &str,
+    clip: UiClipRect,
+) {
+    let mut resolver = NoopUiFontResolver;
+    push_text_styled_rich_internal(
+        primitives,
+        rect,
+        text,
+        color,
+        outline_color,
+        outline_width,
+        font_size,
+        font_style,
+        align_by_geometry,
+        support_rich_text,
+        best_fit,
+        min_size,
+        max_size,
+        font_scale,
+        alignment,
+        vertical_align,
+        line_spacing,
+        horizontal_overflow,
+        vertical_overflow,
+        clip,
+        "",
+        &mut resolver,
+    );
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_text_styled_rich_with_font(
+    primitives: &mut Vec<UiPrimitive>,
+    rect: UiRect,
+    text: &str,
+    color: [f32; 4],
+    outline_color: [f32; 4],
+    outline_width: f32,
+    font: &str,
+    font_size: f32,
+    font_style: &str,
+    align_by_geometry: bool,
+    support_rich_text: bool,
+    best_fit: bool,
+    min_size: f32,
+    max_size: f32,
+    font_scale: f32,
+    alignment: &str,
+    vertical_align: &str,
+    line_spacing: f32,
+    horizontal_overflow: &str,
+    vertical_overflow: &str,
+    clip: UiClipRect,
+    font_resolver: &mut dyn UiFontResolver,
+) {
+    push_text_styled_rich_internal(
+        primitives,
+        rect,
+        text,
+        color,
+        outline_color,
+        outline_width,
+        font_size,
+        font_style,
+        align_by_geometry,
+        support_rich_text,
+        best_fit,
+        min_size,
+        max_size,
+        font_scale,
+        alignment,
+        vertical_align,
+        line_spacing,
+        horizontal_overflow,
+        vertical_overflow,
+        clip,
+        font,
+        font_resolver,
+    );
 }
 
 fn multiply_alpha(mut color: [f32; 4], factor: f32) -> [f32; 4] {
@@ -6113,6 +6572,7 @@ mod tests {
         assert_eq!(legacy_raw_image.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_text.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_text.line_spacing, 1.0);
+        assert!(legacy_text.font.is_empty());
         assert_eq!(legacy_text.font_style, "Normal");
         assert!(!legacy_text.align_by_geometry);
         assert!(legacy_text.support_rich_text);
@@ -6243,6 +6703,174 @@ mod tests {
             button.rect.x - 10.0,
             button.rect.y + button.rect.height * 0.5
         ));
+    }
+
+    #[test]
+    fn authored_text_font_flows_through_layout_and_shared_texture_primitives() {
+        struct MockFont;
+        impl UiFontResolver for MockFont {
+            fn measure_glyph(
+                &mut self,
+                font: &str,
+                character: char,
+                font_size: f32,
+                font_style: &str,
+            ) -> Option<UiFontGlyphMetrics> {
+                assert_eq!(font, "Assets/Fonts/Interface.ttf");
+                assert!(matches!(character, 'M' | 'A'));
+                assert_eq!(font_size, 12.0);
+                assert_eq!(font_style, "Normal");
+                Some(UiFontGlyphMetrics {
+                    advance: if character == 'M' { 10.0 } else { 9.0 },
+                    metric_width: if character == 'M' { 9.0 } else { 8.0 },
+                    line_height: if character == 'M' { 11.0 } else { 13.0 },
+                    geometry: Some((1.0, if character == 'M' { 9.0 } else { 8.0 })),
+                })
+            }
+
+            fn resolve_glyph_texture(
+                &mut self,
+                font: &str,
+                character: char,
+                font_size: f32,
+                font_style: &str,
+            ) -> Option<UiFontGlyphTexture> {
+                assert_eq!(font, "Assets/Fonts/Interface.ttf");
+                assert_eq!(character, 'A');
+                assert_eq!(font_size, 12.0);
+                assert_eq!(font_style, "Normal");
+                Some(UiFontGlyphTexture {
+                    key: "mengine-font://test/0".into(),
+                    uv: [0.1, 0.2, 0.3, 0.4],
+                    bounds: [1.0, 2.0, 7.0, 9.0],
+                })
+            }
+        }
+
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        let text = world.spawn_empty();
+        world.insert_component(
+            text,
+            RectTransform {
+                size_delta: [80.0, 30.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            text,
+            Text {
+                text: "A".into(),
+                font: "Assets/Fonts/Interface.ttf".into(),
+                font_size: 12.0,
+                alignment: "Left".into(),
+                vertical_align: "Top".into(),
+                horizontal_overflow: "Overflow".into(),
+                vertical_overflow: "Overflow".into(),
+                ..Text::default()
+            },
+        );
+        world.set_parent(text, Some(canvas));
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut resolver = MockFont;
+        let frame = collect_ui_frame_for_display_with_interaction_and_fonts(
+            &world,
+            &hierarchy,
+            100,
+            100,
+            None,
+            &SortingLayers::default(),
+            0,
+            UiInteractionState::default(),
+            &HashMap::new(),
+            &mut resolver,
+        );
+        let primitive = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.key.material == "ui/text/font")
+            .expect("font glyph primitive");
+        assert_eq!(primitive.key.texture, "mengine-font://test/0");
+        assert_eq!(primitive.uv, [0.1, 0.2, 0.3, 0.4]);
+        assert_eq!([primitive.rect[2], primitive.rect[3]], [7.0, 9.0]);
+        assert_eq!(
+            frame
+                .plan
+                .primitives
+                .iter()
+                .filter(|primitive| primitive.key.material == "ui/text/bitmap")
+                .count(),
+            0
+        );
+    }
+
+    #[test]
+    fn imported_font_base_metrics_control_empty_line_height() {
+        struct LineFont;
+        impl UiFontResolver for LineFont {
+            fn measure_glyph(
+                &mut self,
+                _font: &str,
+                _character: char,
+                _font_size: f32,
+                _font_style: &str,
+            ) -> Option<UiFontGlyphMetrics> {
+                Some(UiFontGlyphMetrics {
+                    advance: 4.0,
+                    metric_width: 3.0,
+                    line_height: 5.0,
+                    geometry: None,
+                })
+            }
+
+            fn resolve_glyph_texture(
+                &mut self,
+                _font: &str,
+                _character: char,
+                _font_size: f32,
+                _font_style: &str,
+            ) -> Option<UiFontGlyphTexture> {
+                None
+            }
+        }
+        let mut resolver = LineFont;
+        let layout = layout_bitmap_text_rich_with_font(
+            "\n",
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 20.0,
+                height: 20.0,
+            },
+            12.0,
+            "Normal",
+            false,
+            true,
+            false,
+            10.0,
+            40.0,
+            1.0,
+            "Left",
+            "Top",
+            1.0,
+            "Overflow",
+            "Overflow",
+            "Assets/Fonts/Interface.ttf",
+            &mut resolver,
+        );
+        assert_eq!(layout.line_height, 5.0);
+        assert_eq!(layout.line_advance, 5.0);
+        assert_eq!(layout.block_height, 10.0);
+        assert_eq!(
+            layout
+                .lines
+                .iter()
+                .map(|line| line.height)
+                .collect::<Vec<_>>(),
+            [5.0, 5.0]
+        );
     }
 
     #[test]

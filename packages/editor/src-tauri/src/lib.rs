@@ -12,7 +12,7 @@ use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
-    Arc,
+    Arc, OnceLock,
 };
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::{path::BaseDirectory, Emitter, Manager, State};
@@ -3536,6 +3536,8 @@ const IMPORTABLE_ASSET_EXTENSIONS: &[&str] = &[
     ".flac",
     ".gltf",
     ".glb",
+    ".ttf",
+    ".otf",
     ".atlas",
     ".skel",
     ".json",
@@ -3592,6 +3594,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("prefab")
     } else if lower.ends_with(".gltf") || lower.ends_with(".glb") {
         Some("model")
+    } else if lower.ends_with(".ttf") || lower.ends_with(".otf") {
+        Some("font")
     } else if [
         ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tga", ".tif", ".tiff", ".hdr", ".exr",
     ]
@@ -3684,6 +3688,14 @@ fn project_asset_info(root: &Path, path: &Path) -> Option<ProjectAssetInfo> {
         (None, "auxiliary".to_string(), None)
     } else {
         match mengine_assets::ensure_asset_sidecar(path, kind) {
+            Ok(sidecar) if kind == "font" => match validate_project_font(path) {
+                Ok(()) => (Some(sidecar.guid.0.to_string()), "ready".to_string(), None),
+                Err(error) => (
+                    Some(sidecar.guid.0.to_string()),
+                    "invalid".to_string(),
+                    Some(error),
+                ),
+            },
             Ok(sidecar) => (Some(sidecar.guid.0.to_string()), "ready".to_string(), None),
             Err(error) => (None, "invalid".to_string(), Some(error)),
         }
@@ -3700,6 +3712,37 @@ fn project_asset_info(root: &Path, path: &Path) -> Option<ProjectAssetInfo> {
         meta_status,
         meta_error,
     })
+}
+
+type ProjectFontValidationCache = BTreeMap<PathBuf, (String, Result<(), String>)>;
+
+fn validate_project_font(path: &Path) -> Result<(), String> {
+    static CACHE: OnceLock<Mutex<ProjectFontValidationCache>> = OnceLock::new();
+    let metadata = std::fs::metadata(path).map_err(|error| error.to_string())?;
+    if !metadata.is_file() || metadata.len() > 64 * 1024 * 1024 {
+        return Err("font must be a regular file no larger than 64 MiB".into());
+    }
+    let revision = project_file_revision(&metadata);
+    let cache = CACHE.get_or_init(|| Mutex::new(BTreeMap::new()));
+    {
+        let cache = cache.lock();
+        if let Some((_, result)) = cache.get(path).filter(|(cached, _)| cached == &revision) {
+            return result.clone();
+        }
+    }
+    let result = std::fs::read(path)
+        .map_err(|error| error.to_string())
+        .and_then(|bytes| {
+            ab_glyph::FontArc::try_from_vec(bytes)
+                .map(|_| ())
+                .map_err(|error| format!("invalid OpenType font: {error}"))
+        });
+    let mut cache = cache.lock();
+    if cache.len() >= 512 {
+        cache.clear();
+    }
+    cache.insert(path.to_path_buf(), (revision, result.clone()));
+    result
 }
 
 fn project_file_revision(metadata: &std::fs::Metadata) -> String {
@@ -5824,6 +5867,38 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn project_font_assets_are_indexed_with_parse_validation() {
+        assert_eq!(importable_asset_extension("Interface.TTF"), Some(".ttf"));
+        assert_eq!(importable_asset_extension("Display.otf"), Some(".otf"));
+        assert_eq!(project_asset_kind("Interface.ttf"), Some("font"));
+        let root = std::env::temp_dir().join(format!(
+            "mengine-project-font-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let font = root.join("Assets/Fonts/Broken.ttf");
+        std::fs::create_dir_all(font.parent().unwrap()).unwrap();
+        std::fs::write(&font, b"not a font").unwrap();
+        let indexed = project_asset_info(&root, &font).unwrap();
+        assert_eq!(indexed.kind, "font");
+        assert_eq!(indexed.rel_path, "Assets/Fonts/Broken.ttf");
+        assert_eq!(indexed.meta_status, "invalid");
+        assert!(
+            indexed.guid.is_some(),
+            "invalid fonts retain stable sidecar identity"
+        );
+        assert!(indexed
+            .meta_error
+            .as_deref()
+            .is_some_and(|error| error.contains("invalid OpenType font")));
+        assert!(font.with_file_name("Broken.ttf.meta").is_file());
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn project_script_diagnostics_require_a_bounded_consistent_schema() {

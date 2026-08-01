@@ -23,6 +23,7 @@ import {
   Palette,
   RotateCcw,
   Trash2,
+  Type,
   Upload,
   Workflow,
 } from 'lucide-react';
@@ -83,6 +84,7 @@ const STATIC_FOLDERS = [
   'Assets/Animations',
   'Assets/Timelines',
   'Assets/Audio',
+  'Assets/Fonts',
   'Assets/Prefabs',
   'Assets/Scripts',
   'Assets/Materials',
@@ -96,7 +98,7 @@ type AssetItem = {
   assetPath?: string;
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'font' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
   icon: ReactNode;
   sceneName?: string;
@@ -357,6 +359,8 @@ export function Project(props: {
         ? 'texture'
       : asset.kind === 'audio'
         ? 'audio'
+      : asset.kind === 'font'
+        ? 'font'
       : asset.kind === 'material'
         ? 'material'
         : asset.kind === 'shader'
@@ -387,6 +391,8 @@ export function Project(props: {
         ? <Layers3 size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'audio'
         ? <Music size={24} strokeWidth={1.4} aria-hidden="true" />
+        : kind === 'font'
+        ? <Type size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'animation'
         ? <Film size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'material'
@@ -1033,6 +1039,7 @@ export function Project(props: {
                 || a.kind === 'sprite-atlas'
                 || a.kind === 'texture'
                 || a.kind === 'audio'
+                || a.kind === 'font'
                 || a.kind === 'material'
                 || a.kind === 'shader'
                 || a.kind === 'model'
@@ -1049,6 +1056,7 @@ export function Project(props: {
                   && a.kind !== 'sprite-atlas'
                   && a.kind !== 'texture'
                   && a.kind !== 'audio'
+                  && a.kind !== 'font'
                   && a.kind !== 'material'
                   && a.kind !== 'shader'
                   && a.kind !== 'model'
@@ -1100,6 +1108,8 @@ export function Project(props: {
                             ? `Sprite Atlas - double-click to edit - ${a.spriteId}`
                           : a.kind === 'texture'
                             ? `Environment Texture - drag to Environment Light - ${a.spriteId}`
+                          : a.kind === 'font'
+                            ? `Font - drag to a Text Font field - ${a.spriteId}`
                           : a.kind === 'animator-controller'
                             ? `Animator Controller · ${a.spriteId}`
                           : a.kind === 'avatar-mask'

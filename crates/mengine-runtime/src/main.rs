@@ -26,6 +26,7 @@ use mengine_runtime::build_manifest::{
     load_build_surface_shader_variants, verify_build_manifest, BuildShaderDomain,
     BuildSurfaceShaderBlend,
 };
+use mengine_runtime::fonts::RuntimeFontCache;
 use mengine_runtime::lighting2d::apply_2d_lighting;
 use mengine_runtime::materials::{
     apply_material_property_block, resolve_surface_shader_material, resolve_ui_materials,
@@ -41,7 +42,7 @@ use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::timeline::{RuntimeCameraOverride, RuntimeParticleCommand, TimelineRuntime};
 use mengine_runtime::ui::{
-    append_ui_focus_ring, collect_ui_frame_for_display_with_interaction, next_ui_focus,
+    append_ui_focus_ring, collect_ui_frame_for_display_with_interaction_and_fonts, next_ui_focus,
     set_toggle_value, update_ui_button_tints, UiButtonTintTween, UiControlKind, UiControlRegion,
     UiInteractionState,
 };
@@ -119,6 +120,7 @@ struct App {
     particles: ParticleWorld,
     sorting_layers: SortingLayers,
     textures: RuntimeTextureCache,
+    fonts: RuntimeFontCache,
     animations: AnimationRuntime,
     timelines: TimelineRuntime,
     audio: AudioRuntime,
@@ -143,6 +145,7 @@ impl App {
             });
         }
         let textures = RuntimeTextureCache::new(args.project_root.clone());
+        let fonts = RuntimeFontCache::new(args.project_root.clone());
         let animations = AnimationRuntime::new(args.project_root.clone());
         let timelines = TimelineRuntime::new(args.project_root.clone());
         let audio = AudioRuntime::new(args.project_root.clone());
@@ -183,6 +186,7 @@ impl App {
             particles: ParticleWorld::default(),
             sorting_layers,
             textures,
+            fonts,
             animations,
             timelines,
             audio,
@@ -1800,7 +1804,8 @@ function onTick(dt, frame) {
                         .as_ref()
                         .map(|window| window.inner_size())
                         .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
-                    let mut ui = collect_ui_frame_for_display_with_interaction(
+                    self.fonts.begin_frame();
+                    let mut ui = collect_ui_frame_for_display_with_interaction_and_fonts(
                         &self.world,
                         &hierarchy,
                         window_size.width,
@@ -1810,6 +1815,7 @@ function onTick(dt, frame) {
                         0,
                         interaction,
                         &self.ui_button_tints,
+                        &mut self.fonts,
                     );
                     for failure in self
                         .textures
@@ -1870,6 +1876,15 @@ function onTick(dt, frame) {
                     }
                     resolve_ui_materials(&mut ui.plan.primitives, &mut self.materials);
                     ui.plan = UiBatchPlan::build(std::mem::take(&mut ui.plan.primitives));
+                    self.fonts.sync(r);
+                    for failure in self.fonts.take_failures() {
+                        log::warn!(
+                            "Font '{}' could not be loaded from {}: {}",
+                            failure.key,
+                            failure.path.display(),
+                            failure.error
+                        );
+                    }
                     for failure in self.textures.sync(r, &ui.plan) {
                         log::warn!(
                             "UI texture '{}' could not be loaded from {}: {}",
@@ -2749,6 +2764,7 @@ fn validate_world_assets(
                 validated,
                 &mut material_cache,
             )?;
+            validate_font_asset(&text.font, project_root, validated)?;
         }
         if let Some(panel) = world.get_component::<Panel>(entity) {
             validate_ui_material_asset(
@@ -3055,6 +3071,49 @@ fn validate_ui_material_asset(
     Ok(())
 }
 
+fn validate_font_asset(
+    reference: &str,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+) -> Result<()> {
+    let reference = reference.trim().replace('\\', "/");
+    if reference.is_empty() {
+        return Ok(());
+    }
+    if !reference.starts_with("Assets/") {
+        bail!("UI Text font must be stored under Assets: {reference}");
+    }
+    if !reference.to_ascii_lowercase().ends_with(".ttf")
+        && !reference.to_ascii_lowercase().ends_with(".otf")
+    {
+        bail!("UI Text font must reference a .ttf or .otf asset: {reference}");
+    }
+    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, &reference)
+        .with_context(|| format!("unsafe UI Text font path: {reference}"))?;
+    if !validated.insert(path.clone()) {
+        return Ok(());
+    }
+    let metadata = std::fs::symlink_metadata(&path)
+        .with_context(|| format!("missing UI Text font {}", path.display()))?;
+    let confined = !metadata.file_type().is_symlink()
+        && project_root
+            .canonicalize()
+            .ok()
+            .zip(path.canonicalize().ok())
+            .is_some_and(|(root, path)| path.starts_with(root));
+    if !confined || !metadata.is_file() || metadata.len() > 64 * 1024 * 1024 {
+        bail!(
+            "invalid UI Text font {}: expected a confined regular file no larger than 64 MiB",
+            path.display()
+        );
+    }
+    let bytes = std::fs::read(&path)
+        .with_context(|| format!("failed to read UI Text font {}", path.display()))?;
+    ab_glyph::FontArc::try_from_vec(bytes)
+        .map_err(|error| anyhow::anyhow!("invalid UI Text font {}: {error}", path.display()))?;
+    Ok(())
+}
+
 fn validate_texture_asset(
     reference: &str,
     kind: &str,
@@ -3183,6 +3242,51 @@ mod tests {
         });
         world.commit();
         world
+    }
+
+    fn world_with_text_font(reference: &str) -> World {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Font validation".into()),
+            components: json!({
+                "Text": { "text": "Agent UI", "font": reference }
+            }),
+        });
+        world.commit();
+        world
+    }
+
+    #[test]
+    fn final_package_validation_parses_text_fonts_and_rejects_corruption() {
+        let root = temporary_project_root("text-font-validation");
+        let font = root.join("Assets/Fonts/Interface.ttf");
+        std::fs::create_dir_all(font.parent().unwrap()).unwrap();
+        std::fs::write(&font, b"not a font").unwrap();
+        let world = world_with_text_font("Assets/Fonts/Interface.ttf");
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("corrupt font must fail final package validation");
+        assert!(error.to_string().contains("invalid UI Text font"));
+        let error = validate_world_assets(
+            &world_with_text_font("ProjectSettings/Interface.ttf"),
+            &root,
+            &mut HashSet::new(),
+        )
+        .expect_err("font outside Assets must fail final package validation");
+        assert!(error.to_string().contains("stored under Assets"));
+
+        let installed = [
+            PathBuf::from(r"C:\Windows\Fonts\arial.ttf"),
+            PathBuf::from("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+            PathBuf::from("/System/Library/Fonts/Supplemental/Arial.ttf"),
+        ]
+        .into_iter()
+        .find(|path| path.is_file());
+        if let Some(installed) = installed {
+            std::fs::copy(installed, &font).unwrap();
+            validate_world_assets(&world, &root, &mut HashSet::new())
+                .expect("valid installed font should pass final package validation");
+        }
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

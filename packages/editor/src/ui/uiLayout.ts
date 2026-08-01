@@ -64,6 +64,7 @@ import {
   type UiRaycastPlane,
 } from './uiPhysicsRaycast';
 import { layoutUiText, type UiTextLayoutRun } from './uiTextLayout';
+import { uiTextFontCss } from './uiFontAssets';
 
 /** World pixels-per-unit for Scene view Overlay canvas plane. */
 export const UI_SCENE_PPU = 100;
@@ -168,6 +169,7 @@ export type UiDrawItem = {
     material: string;
     text: string;
     color: [number, number, number, number];
+    font: string;
     fontSize: number;
     fontStyle: 'Normal' | 'Bold' | 'Italic' | 'BoldAndItalic';
     alignByGeometry: boolean;
@@ -1211,6 +1213,7 @@ export function layoutUiOverlay(
                 material: String(text.material ?? '').trim().replaceAll('\\', '/'),
                 text: String(text.text ?? 'Text'),
                 color: color4(text.color, [1, 1, 1, 1]),
+                font: String(text.font ?? '').trim().replaceAll('\\', '/'),
                 fontSize: Math.min(
                   512,
                   Math.max(1, number(text.font_size ?? text.fontSize, 16) * scale),
@@ -2915,22 +2918,21 @@ export function drawUiItems(
     if (maxWidth == null) ctx.fillText(value, x, y);
     else ctx.fillText(value, x, y, maxWidth);
   };
-  const textRunFont = (run: UiTextLayoutRun) => {
-    const bold = run.fontStyle === 'Bold' || run.fontStyle === 'BoldAndItalic';
-    const italic = run.fontStyle === 'Italic' || run.fontStyle === 'BoldAndItalic';
-    return `${italic ? 'italic ' : ''}${bold ? '700 ' : ''}${Math.max(1, run.fontSize)}px system-ui, sans-serif`;
-  };
+  const textRunFont = (run: UiTextLayoutRun, font = '') => (
+    uiTextFontCss(run.fontSize, run.fontStyle, font)
+  );
   const measuredGeometryLineOrigin = (
     runs: readonly UiTextLayoutRun[],
     rectX: number,
     rectWidth: number,
     alignment: 'Left' | 'Center' | 'Right',
     fallback: number,
+    font: string,
   ) => {
     let minimum = Number.POSITIVE_INFINITY;
     let maximum = Number.NEGATIVE_INFINITY;
     for (const run of runs) {
-      ctx.font = textRunFont(run);
+      ctx.font = textRunFont(run, font);
       const metrics = ctx.measureText(run.text);
       const left = metrics.actualBoundingBoxLeft;
       const right = metrics.actualBoundingBoxRight;
@@ -3395,6 +3397,36 @@ export function drawUiItems(
           verticalOverflow: it.text.verticalOverflow,
           alignment: it.text.alignment,
           verticalAlign: it.text.verticalAlign,
+          measureGlyph: it.text.font
+            ? (glyph) => {
+                ctx.font = uiTextFontCss(glyph.fontSize, glyph.fontStyle, it.text!.font);
+                const metrics = ctx.measureText(glyph.character);
+                const extended = metrics as TextMetrics & {
+                  fontBoundingBoxAscent?: number;
+                  fontBoundingBoxDescent?: number;
+                  emHeightAscent?: number;
+                  emHeightDescent?: number;
+                };
+                const left = metrics.actualBoundingBoxLeft;
+                const right = metrics.actualBoundingBoxRight;
+                const ascent = extended.fontBoundingBoxAscent
+                  ?? extended.emHeightAscent
+                  ?? metrics.actualBoundingBoxAscent;
+                const descent = extended.fontBoundingBoxDescent
+                  ?? extended.emHeightDescent
+                  ?? metrics.actualBoundingBoxDescent;
+                return {
+                  advance: metrics.width,
+                  metricWidth: Number.isFinite(right) ? Math.max(metrics.width, right) : metrics.width,
+                  lineHeight: Number.isFinite(ascent) && Number.isFinite(descent)
+                    ? ascent + descent
+                    : glyph.fontSize * (8 / 7),
+                  geometry: Number.isFinite(left) && Number.isFinite(right)
+                    ? [-left, right] as [number, number]
+                    : null,
+                };
+              }
+            : undefined,
         });
         for (const line of layout.lines) {
           const fallbackOrigin = x + line.x;
@@ -3405,13 +3437,14 @@ export function drawUiItems(
                 w,
                 it.text.alignment,
                 fallbackOrigin,
+                it.text.font,
               )
             : fallbackOrigin;
           for (const run of line.runs) {
             const runColor: [number, number, number, number] = run.color
               ? [run.color[0], run.color[1], run.color[2], run.color[3] * it.text.color[3]]
               : it.text.color;
-            ctx.font = textRunFont(run);
+            ctx.font = textRunFont(run, it.text.font);
             ctx.fillStyle = cssColor(runColor);
             fillReadableText(
               run.text,

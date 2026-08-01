@@ -507,6 +507,7 @@ export interface Text {
   material: string;
   text: string;
   color: [number, number, number, number];
+  font: string;
   fontSize: number;
   fontStyle: string;
   alignByGeometry: boolean;
@@ -1140,6 +1141,7 @@ export type SerializedComponentMap = {
     material: string;
     text: string;
     color: [number, number, number, number];
+    font: string;
     font_size: number;
     font_style: string;
     align_by_geometry: boolean;

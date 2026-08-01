@@ -184,6 +184,7 @@ test('CanvasGroup exposes Unity parent-group override defaults', () => {
 
 test('Text Graphic defaults to a Unity raycast target', () => {
   for (const text of [createComponentDefaults('Text'), createUiTextComponents().Text]) {
+    assert.equal(text.font, '');
     assert.equal(text.raycast_target, true);
     assert.equal(text.line_spacing, 1);
     assert.equal(text.font_style, 'Normal');
@@ -195,6 +196,12 @@ test('Text Graphic defaults to a Unity raycast target', () => {
     assert.equal(text.horizontal_overflow, 'Wrap');
     assert.equal(text.vertical_overflow, 'Truncate');
   }
+  assert.deepEqual(getBuiltinInspectorField('Text', 'font'), {
+    kind: 'project-asset',
+    assetKinds: ['font'],
+    referenceType: 'Font',
+    allowNone: true,
+  });
   assert.deepEqual(
     getBuiltinInspectorField('Text', 'horizontal_overflow')?.options?.map(({ value }) => value),
     ['Wrap', 'Overflow'],

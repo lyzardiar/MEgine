@@ -311,6 +311,45 @@ test('Canvas preview draws Unity Rich Text as styled and colored runs', () => {
   ]);
 });
 
+test('Canvas preview measures and draws Text with its imported font family', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: { Canvas: {}, RectTransform: { size_delta: [100, 100] } },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: { size_delta: [80, 30] },
+        Text: {
+          text: 'Wide',
+          font: 'Assets/Fonts/Interface.ttf',
+          font_size: 12,
+          font_style: 'Italic',
+          alignment: 'Left',
+          vertical_align: 'Top',
+          horizontal_overflow: 'Overflow',
+          vertical_overflow: 'Overflow',
+        },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  canvas.context.measureText = (value) => ({
+    width: String(value).length * 4,
+    actualBoundingBoxLeft: 0,
+    actualBoundingBoxRight: String(value).length * 4,
+    actualBoundingBoxAscent: 9,
+    actualBoundingBoxDescent: 3,
+  });
+  drawUiItems(canvas.context, items, null, null);
+  const line = canvas.context.operations.find((operation) => operation[0] === 'fillText');
+  assert.match(line.at(-1), /^italic 12px "MEngineFont_[0-9a-f]{8}", system-ui, sans-serif$/);
+});
+
 test('adding an authored Graphic creates and protects its CanvasRenderer dependency', async () => {
   const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
   const store = createEditorStore();

@@ -24,6 +24,14 @@ export interface UiTextLayoutOptions {
   verticalOverflow: UiTextVerticalOverflow;
   alignment: 'Left' | 'Center' | 'Right';
   verticalAlign: 'Top' | 'Middle' | 'Bottom';
+  measureGlyph?: (glyph: UiRichTextGlyph) => UiTextGlyphMeasurement | null;
+}
+
+export interface UiTextGlyphMeasurement {
+  advance: number;
+  metricWidth: number;
+  lineHeight: number;
+  geometry: [number, number] | null;
 }
 
 export interface UiTextLayoutLine {
@@ -73,20 +81,45 @@ interface MeasuredGlyph extends UiRichTextGlyph {
   advance: number;
   metricWidth: number;
   lineHeight: number;
+  geometry: [number, number] | null;
 }
 
-function measureGlyph(glyph: UiRichTextGlyph): MeasuredGlyph {
+function measureGlyph(
+  glyph: UiRichTextGlyph,
+  customMeasure?: UiTextLayoutOptions['measureGlyph'],
+): MeasuredGlyph {
   const fontSize = Number.isFinite(glyph.fontSize)
     ? Math.min(512, Math.max(1, glyph.fontSize))
     : 16;
   const glyphScale = Math.max(1, Math.max(fontSize, 7) / 7);
-  return {
+  const fallback: MeasuredGlyph = {
     ...glyph,
     fontSize,
     glyphScale,
     advance: 6 * glyphScale,
     metricWidth: 5 * glyphScale + styleOverhang(glyph.fontStyle, glyphScale),
     lineHeight: 8 * glyphScale,
+    geometry: glyphGeometryBounds(glyph.character, glyphScale, glyph.fontStyle),
+  };
+  const measured = customMeasure?.({ ...glyph, fontSize });
+  if (!measured
+    || !Number.isFinite(measured.advance) || measured.advance < 0
+    || !Number.isFinite(measured.metricWidth) || measured.metricWidth < 0
+    || !Number.isFinite(measured.lineHeight) || measured.lineHeight <= 0
+    || (measured.geometry != null
+      && (!Number.isFinite(measured.geometry[0])
+        || !Number.isFinite(measured.geometry[1])
+        || measured.geometry[1] < measured.geometry[0]))) {
+    return fallback;
+  }
+  return {
+    ...fallback,
+    advance: Math.min(2_048, measured.advance),
+    metricWidth: Math.min(2_048, measured.metricWidth),
+    lineHeight: Math.min(2_048, measured.lineHeight),
+    geometry: measured.geometry
+      ? measured.geometry.map((value) => Math.max(-2_048, Math.min(2_048, value))) as [number, number]
+      : null,
   };
 }
 
@@ -157,11 +190,7 @@ function textGeometryBounds(glyphs: readonly MeasuredGlyph[]): [number, number] 
   let maximum = Number.NEGATIVE_INFINITY;
   let cursor = 0;
   glyphs.forEach((glyph) => {
-    const bounds = glyphGeometryBounds(
-      glyph.character,
-      glyph.glyphScale,
-      glyph.fontStyle,
-    );
+    const bounds = glyph.geometry;
     if (bounds) {
       minimum = Math.min(minimum, cursor + bounds[0]);
       maximum = Math.max(maximum, cursor + bounds[1]);
@@ -325,7 +354,7 @@ function parsedGlyphsAtFontSize(
       fontSize,
       fontScale: finitePositive(options.fontScale, 1),
       fontStyle: options.fontStyle,
-    }).map(measureGlyph),
+    }).map((glyph) => measureGlyph(glyph, options.measureGlyph)),
     truncated: normalized.truncated,
   };
 }
@@ -349,12 +378,18 @@ function authoredLines(
   return { lines, dropped };
 }
 
-function baseTextMetrics(fontSize: number) {
+function baseTextMetrics(fontSize: number, options: UiTextLayoutOptions) {
   const glyphScale = Math.max(1, Math.max(fontSize, 7) / 7);
+  const sample = measureGlyph({
+    character: 'M',
+    fontSize,
+    fontStyle: options.fontStyle,
+    color: null,
+  }, options.measureGlyph);
   return {
     glyphScale,
-    advance: 6 * glyphScale,
-    lineHeight: 8 * glyphScale,
+    advance: sample.advance,
+    lineHeight: sample.lineHeight,
   };
 }
 
@@ -369,7 +404,7 @@ function layoutUiTextAtFontSize(
   const fontSize = Number.isFinite(requestedFontSize)
     ? Math.min(512, Math.max(1, requestedFontSize))
     : 16;
-  const base = baseTextMetrics(fontSize);
+  const base = baseTextMetrics(fontSize, options);
   const lineSpacing = Math.min(10, Math.max(0.1, finitePositive(options.lineSpacing, 1)));
   const parsed = parsedGlyphsAtFontSize(value, options, fontSize);
   const authored = authoredLines(parsed.glyphs, width, options.horizontalOverflow);

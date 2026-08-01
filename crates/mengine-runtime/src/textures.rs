@@ -240,7 +240,10 @@ impl RuntimeTextureCache {
         let mut failures = Vec::new();
         for batch in &plan.batches {
             let key = batch.key.texture.trim();
-            if key.is_empty() || key.eq_ignore_ascii_case("white") {
+            if key.is_empty()
+                || key.eq_ignore_ascii_case("white")
+                || key.starts_with("mengine-font://")
+            {
                 continue;
             }
             let Some(path) = resolve_texture_path(root, key) else {

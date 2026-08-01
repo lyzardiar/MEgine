@@ -179,6 +179,7 @@ test('Canvas sorting and batching controls are exposed to Agents', () => {
 
 test('Agent schema exposes Unity Text paragraph controls with bounded values', () => {
   const fields = new Map(buildAgentComponentSchema('Text')?.fields.map((field) => [field.name, field]));
+  assert.equal(fields.get('font')?.default, '');
   assert.deepEqual(fields.get('horizontal_overflow')?.options?.map(({ value }) => value), [
     'Wrap',
     'Overflow',

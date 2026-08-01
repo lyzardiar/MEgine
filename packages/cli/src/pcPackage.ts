@@ -110,6 +110,7 @@ export type BuildContentCategory =
   | 'animation'
   | 'timeline'
   | 'audio'
+  | 'font'
   | 'prefab'
   | 'spine'
   | 'settings'
@@ -534,6 +535,116 @@ function readJsonAsset(path: string, projectDir: string, kind: string): JsonObje
   const object = jsonObject(parsed);
   if (!object) throw new Error(`invalid ${kind} ${label}: root must be an object`);
   return object;
+}
+
+function validateOpenTypeFont(path: string, source: string): void {
+  const data = readFileSync(path);
+  if (data.length < 28 || data.length > 64 * 1024 * 1024) {
+    throw new Error(`invalid UI font ${source}: expected 28 bytes to 64 MiB`);
+  }
+  const signature = data.toString('ascii', 0, 4);
+  const trueType = data.readUInt32BE(0) === 0x0001_0000 || signature === 'true';
+  const openType = signature === 'OTTO';
+  if (!trueType && !openType) {
+    throw new Error(`invalid UI font ${source}: unsupported sfnt signature`);
+  }
+  const tableCount = data.readUInt16BE(4);
+  if (tableCount === 0 || tableCount > 4_096 || 12 + tableCount * 16 > data.length) {
+    throw new Error(`invalid UI font ${source}: corrupt table directory`);
+  }
+  const tables = new Map<string, { offset: number; length: number }>();
+  for (let index = 0; index < tableCount; index += 1) {
+    const offset = 12 + index * 16;
+    const tag = data.toString('ascii', offset, offset + 4);
+    const tableOffset = data.readUInt32BE(offset + 8);
+    const tableLength = data.readUInt32BE(offset + 12);
+    if (tableOffset > data.length || tableLength > data.length - tableOffset) {
+      throw new Error(`invalid UI font ${source}: table ${tag} escapes the file`);
+    }
+    if (tables.has(tag)) throw new Error(`invalid UI font ${source}: duplicate ${tag} table`);
+    tables.set(tag, { offset: tableOffset, length: tableLength });
+  }
+  for (const required of ['cmap', 'head', 'hhea', 'hmtx', 'maxp']) {
+    if (!tables.has(required)) {
+      throw new Error(`invalid UI font ${source}: missing ${required} table`);
+    }
+  }
+  if (trueType && (!tables.has('glyf') || !tables.has('loca'))) {
+    throw new Error(`invalid UI font ${source}: missing TrueType outlines`);
+  }
+  if (openType && !tables.has('CFF ') && !tables.has('CFF2')) {
+    throw new Error(`invalid UI font ${source}: missing OpenType CFF outlines`);
+  }
+
+  const table = (tag: string, minimum: number) => {
+    const value = tables.get(tag);
+    if (!value || value.length < minimum) {
+      throw new Error(`invalid UI font ${source}: truncated ${tag} table`);
+    }
+    return value;
+  };
+  const head = table('head', 54);
+  if (data.readUInt32BE(head.offset + 12) !== 0x5f0f_3cf5) {
+    throw new Error(`invalid UI font ${source}: invalid head magic`);
+  }
+  const unitsPerEm = data.readUInt16BE(head.offset + 18);
+  const locaFormat = data.readInt16BE(head.offset + 50);
+  if (unitsPerEm < 16 || unitsPerEm > 16_384 || ![0, 1].includes(locaFormat)) {
+    throw new Error(`invalid UI font ${source}: invalid head metrics`);
+  }
+  const maxp = table('maxp', 6);
+  const glyphCount = data.readUInt16BE(maxp.offset + 4);
+  const hhea = table('hhea', 36);
+  const horizontalMetricCount = data.readUInt16BE(hhea.offset + 34);
+  if (glyphCount === 0 || horizontalMetricCount === 0 || horizontalMetricCount > glyphCount) {
+    throw new Error(`invalid UI font ${source}: invalid glyph metrics`);
+  }
+  table('hmtx', horizontalMetricCount * 4 + (glyphCount - horizontalMetricCount) * 2);
+
+  const cmap = table('cmap', 4);
+  const cmapCount = data.readUInt16BE(cmap.offset + 2);
+  if (cmapCount === 0 || cmap.length < 4 + cmapCount * 8) {
+    throw new Error(`invalid UI font ${source}: corrupt cmap directory`);
+  }
+  let usableCmap = false;
+  for (let index = 0; index < cmapCount; index += 1) {
+    const record = cmap.offset + 4 + index * 8;
+    const relativeOffset = data.readUInt32BE(record + 4);
+    if (relativeOffset > cmap.length - 2) continue;
+    const subtable = cmap.offset + relativeOffset;
+    const format = data.readUInt16BE(subtable);
+    let length = 0;
+    if ([0, 4, 6].includes(format) && relativeOffset <= cmap.length - 4) {
+      length = data.readUInt16BE(subtable + 2);
+    } else if ([10, 12, 13].includes(format) && relativeOffset <= cmap.length - 8) {
+      length = data.readUInt32BE(subtable + 4);
+    }
+    const minimum = new Map([[0, 262], [4, 16], [6, 10], [10, 20], [12, 16], [13, 16]])
+      .get(format) ?? Number.POSITIVE_INFINITY;
+    if (length >= minimum && length <= cmap.length - relativeOffset) usableCmap = true;
+  }
+  if (!usableCmap) throw new Error(`invalid UI font ${source}: no usable cmap subtable`);
+
+  if (trueType) {
+    const glyf = table('glyf', 1);
+    const loca = table('loca', (glyphCount + 1) * (locaFormat === 0 ? 2 : 4));
+    let previous = 0;
+    for (let index = 0; index <= glyphCount; index += 1) {
+      const value = locaFormat === 0
+        ? data.readUInt16BE(loca.offset + index * 2) * 2
+        : data.readUInt32BE(loca.offset + index * 4);
+      if (value < previous || value > glyf.length) {
+        throw new Error(`invalid UI font ${source}: corrupt glyph locations`);
+      }
+      previous = value;
+    }
+  } else {
+    const cff = tables.has('CFF ') ? table('CFF ', 4) : table('CFF2', 5);
+    const headerSize = data[cff.offset + 2];
+    if (headerSize < 4 || headerSize > cff.length) {
+      throw new Error(`invalid UI font ${source}: corrupt CFF header`);
+    }
+  }
 }
 
 function stringValue(object: JsonObject | null, field: string): string {
@@ -1163,6 +1274,7 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('SpineSkeleton'), 'atlas'), from, 'Spine atlas');
     enqueue(stringValue(component('Image'), 'sprite'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
+    enqueue(stringValue(component('Text'), 'font'), from, 'UI font');
     for (const name of ['Image', 'RawImage', 'Text', 'Panel']) {
       enqueueMaterial(stringValue(component(name), 'material'), from, 'ui');
     }
@@ -2114,6 +2226,8 @@ function scanBuildAssetDependencies(
           groupedTrackIds.add(trackId);
         }
       }
+    } else if (extension === '.ttf' || extension === '.otf') {
+      validateOpenTypeFont(absolute, source);
     } else if (extension === '.gltf') {
       const model = readJsonAsset(absolute, root, 'glTF model');
       const enqueueUri = (value: unknown, kind: string) => {
@@ -3387,6 +3501,7 @@ function contentCategory(
   if (/\.(?:manim|mcontroller|mavatar)$/i.test(lower)) return 'animation';
   if (lower.endsWith('.mtimeline')) return 'timeline';
   if (/\.(?:wav|ogg|mp3|flac)$/i.test(lower)) return 'audio';
+  if (/\.(?:ttf|otf)$/i.test(lower)) return 'font';
   if (lower.endsWith('.prefab')) return 'prefab';
   if (/\.(?:atlas|skel)$/i.test(lower)) return 'spine';
   if (lower.endsWith('.json')) return 'metadata';

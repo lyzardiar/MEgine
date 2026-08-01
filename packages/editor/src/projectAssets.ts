@@ -15,6 +15,7 @@ export type ProjectFileAsset = {
     | 'avatar-mask'
     | 'timeline'
     | 'audio'
+    | 'font'
     | 'material'
     | 'shader'
     | 'model'

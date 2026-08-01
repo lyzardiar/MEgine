@@ -2633,6 +2633,9 @@
       "enabled": {
         "type": "boolean"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -2697,6 +2700,7 @@
       "material",
       "text",
       "color",
+      "font",
       "font_size",
       "font_style",
       "align_by_geometry",

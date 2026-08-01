@@ -70,6 +70,12 @@ function fixture(name) {
   return { root, project, runtime, output: join(root, 'Build') };
 }
 
+const installedFont = [
+  'C:\\Windows\\Fonts\\arial.ttf',
+  '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+  '/System/Library/Fonts/Supplemental/Arial.ttf',
+].find((candidate) => existsSync(candidate));
+
 test('buildPcPackage signs the deterministic artifact identity with an external Ed25519 key', () => {
   const paths = fixture('artifact-signature');
   try {
@@ -919,6 +925,55 @@ test('buildPcPackage referenced mode copies the validated closure and always-inc
       kind: 'material',
       from: 'Assets/Prefabs/Dynamic.prefab',
     }]);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('referenced builds include validated Text fonts and reject corrupt sfnt data', {
+  skip: installedFont == null ? 'no system TrueType font is available' : false,
+}, () => {
+  const paths = fixture('text-font');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Fonts'), { recursive: true });
+    const projectPath = join(paths.project, 'project.json');
+    const project = JSON.parse(readFileSync(projectPath, 'utf8'));
+    project.assetMode = 'referenced';
+    writeFileSync(projectPath, JSON.stringify(project));
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      world: {
+        entities: [{
+          entity: 1,
+          components: { Text: { text: 'Agent UI', font: 'Assets/Fonts/Interface.ttf' } },
+        }],
+      },
+    }));
+    const fontPath = join(paths.project, 'Assets', 'Fonts', 'Interface.ttf');
+    writeFileSync(fontPath, readFileSync(installedFont));
+
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Fonts', 'Interface.ttf')), true);
+    const packaged = manifest.files.find((file) => file.path === 'Assets/Fonts/Interface.ttf');
+    assert.equal(packaged?.category, 'font');
+    assert.deepEqual(packaged?.includedBy, [{
+      kind: 'UI font',
+      from: 'Assets/Scenes/Main.mscene',
+    }]);
+
+    writeFileSync(fontPath, Buffer.from('not a font'));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'CorruptBuild'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /invalid UI font Assets\/Fonts\/Interface\.ttf/);
+    assert.equal(existsSync(join(paths.root, 'CorruptBuild')), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

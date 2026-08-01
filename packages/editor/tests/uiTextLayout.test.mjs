@@ -254,3 +254,64 @@ test('disabling Unity Rich Text renders markup as ordinary bounded text', () => 
   assert.equal(rich.lines[0].text, 'A');
   assert.equal(plain.lines[0].text, source);
 });
+
+test('imported font measurements drive wrapping, line boxes, geometry, and Best Fit', () => {
+  const measured = layoutUiText('WI', options({
+    width: 10,
+    height: 30,
+    measureGlyph: ({ character }) => ({
+      advance: character === 'W' ? 10 : 2,
+      metricWidth: character === 'W' ? 10 : 1,
+      lineHeight: 12,
+      geometry: character === 'W' ? [1, 9] : [0, 1],
+    }),
+  }));
+  assert.deepEqual(measured.lines.map(({ text, width, height }) => ({ text, width, height })), [
+    { text: 'W', width: 10, height: 12 },
+    { text: 'I', width: 1, height: 12 },
+  ]);
+
+  const geometry = layoutUiText('W', options({
+    width: 20,
+    height: 20,
+    horizontalOverflow: 'Overflow',
+    alignment: 'Right',
+    alignByGeometry: true,
+    measureGlyph: () => ({ advance: 10, metricWidth: 10, lineHeight: 12, geometry: [1, 9] }),
+  }));
+  assert.equal(geometry.lines[0].x, 11);
+
+  const bestFit = layoutUiText('AB', options({
+    width: 20,
+    height: 20,
+    horizontalOverflow: 'Overflow',
+    verticalOverflow: 'Overflow',
+    bestFit: true,
+    minSize: 7,
+    maxSize: 14,
+    measureGlyph: ({ fontSize }) => ({
+      advance: fontSize,
+      metricWidth: fontSize,
+      lineHeight: fontSize,
+      geometry: [0, fontSize],
+    }),
+  }));
+  assert.equal(bestFit.fontSize, 10);
+
+  const bounded = layoutUiText('A', options({
+    width: 20,
+    height: 20,
+    horizontalOverflow: 'Overflow',
+    verticalOverflow: 'Overflow',
+    alignByGeometry: true,
+    measureGlyph: () => ({
+      advance: 99_999,
+      metricWidth: 99_999,
+      lineHeight: 99_999,
+      geometry: [3_000, 4_000],
+    }),
+  }));
+  assert.equal(bounded.advance, 2_048);
+  assert.equal(bounded.lineHeight, 2_048);
+  assert.equal(bounded.lines[0].x, -2_048);
+});

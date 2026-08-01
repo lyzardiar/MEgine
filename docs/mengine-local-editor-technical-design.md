@@ -2120,3 +2120,11 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Text.support_rich_text` 对齐 legacy Unity `Text.supportRichText`，默认 `true`。IDL、生成的 Rust/TypeScript/JSON Schema、Behaviour token、组件目录、标准 Text 工厂、Inspector 与 Agent component schema 共享同一字段；关闭后所有标签按普通字符显示，旧场景缺失字段则继续采用 Unity 默认开启状态。
 - Editor 与 Runtime 使用同一有界语义解释 legacy UGUI 的 `<b>`、`<i>`、`<size=N>` 和 `<color=...>`，支持正确嵌套、大小写不敏感标签、引号或无引号参数、`#RRGGBB`、`#RRGGBBAA` 以及 Unity 命名颜色。未知、非法、错序或未闭合标签不会被静默吞掉，而是作为普通文本保留；标签源字符串仍受 16,384 Unicode 字符、4,096 行和 65,536 Runtime 图元上限约束。
 - 富文本不是绘制阶段的表面替换：每个可见字形携带解析后的字号、组合 Font Style 与颜色，变量 advance/行高参与按词换行、Vertical Overflow、块对齐、Align By Geometry 和 Best Fit；同一行的小字号按底部对齐到最大字号行盒。Editor 实际 Canvas 按 run 切换系统字体和颜色，并以全部 run 的真实 `TextMetrics` 计算几何对齐；Runtime 按 run 生成不同缩放、Bold/Italic 和颜色的位图像素，Outline 与全局透明度继续作用于最终结果。无窗口回归覆盖默认/禁用、嵌套/非法标签、字号缩放与换行、颜色 alpha、后台 draw plan、Editor 多 run draw call、Runtime 像素尺寸/颜色及图元预算。剩余主要 Text 缺口是可导入 Font 资产及其 Player 字形链。
+
+## 204. 2026-08-01 Unity Text Font 资产与动态字形图集
+
+- `Text.font` 新增可为空的 Font 资产引用，默认空值继续使用确定性的内置位图回退。`.ttf` 与 `.otf` 已进入导入白名单、项目资源索引、`Assets/Fonts` 视图、可拖放 Project 项、Inspector Font 槽、IDL、生成的 Rust/TypeScript/JSON Schema、组件目录、标准 Text 工厂与 Agent component schema；字体解析失败时保留 Sidecar/GUID，但在项目索引中明确标记 `invalid` 并公开错误，不会伪装成可用资源。
+- Editor Canvas 使用浏览器 `FontFace` 从当前项目资产端点后台加载字体，并把项目资产 GUID 与 revision 纳入 family identity 和 URL，使项目切换及外部热更新不会复用旧字体。实际 `TextMetrics` 的 advance、行高和可见边界进入换行、Best Fit、富文本变量字号、Align By Geometry 与最终 `fillText`；加载失败、非 `Assets` 路径或测试环境不支持 `FontFace` 时安全回退到 `system-ui`，不要求窗口获得焦点或可见性。
+- PC Build 从 Scene/Prefab 的 `Text.font` 收集发布依赖，把字体标记为独立 `font` 内容类别，并在 staging 前检查 sfnt 签名、唯一表目录、`head/maxp/hhea/hmtx/cmap` 度量、可用字符映射以及 TrueType `loca/glyf` 或 OpenType `CFF/CFF2` 轮廓边界。最终 Player 包校验再次使用与渲染器相同的 `ab_glyph` 解析器，缺失、越界或损坏字体均在启动渲染前失败，不能通过手改清单绕过。
+- Runtime 按字体内容 SHA-256、量化字号与 Font Style 缓存字形，使用真实 advance、行高和可见轮廓参与完整 Text 排版，再把 alpha 字形装入共享 1024×1024 RGBA 图集并以单个纹理 quad 绘制；同页字形可合批，字体文件 revision 改变时旧 GPU 图集会退休。Bold 使用有限像素膨胀、Italic 使用有限斜切，Outline 复用同一 alpha 字形；单字体 64 MiB、字号 1–512、全局 32 页图集、Text 16,384 字符/65,536 图元等上限共同约束后台 Agent 写入的恶意内容，未变化的错误只报告一次。
+- 无窗口回归覆盖字体扩展名、资源槽与 Agent 默认值、项目索引损坏状态、项目隔离 family、真实 Canvas 字体度量、字体驱动的换行/行高/Best Fit/几何对齐、referenced build 依赖与损坏包拒绝、真实系统字体解析/栅格化/共享图集，以及组件到 Runtime 纹理图元的端到端传递。当前实现支持单字体 Unicode cmap 字形，但尚未实现字体 fallback 列表、pair kerning、连字、双向文本或复杂文字 shaping；这些仍是后续 Text 对齐项，不能把本批次描述成完整替代 Unity TextCore/TMP。

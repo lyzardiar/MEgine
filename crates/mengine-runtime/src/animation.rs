@@ -1927,13 +1927,20 @@ mod tests {
     use super::*;
     use mengine_core::generated::{AnimationPlayer, Animator, Transform};
     use std::fs;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TEMP_PROJECT_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
     fn temp_project() -> PathBuf {
-        let unique = SystemTime::now()
+        let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path = std::env::temp_dir().join(format!("mengine-animation-{unique}"));
+        let sequence = TEMP_PROJECT_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "mengine-animation-{}-{timestamp}-{sequence}",
+            std::process::id()
+        ));
         fs::create_dir_all(path.join("Assets/Animations")).unwrap();
         path
     }

@@ -40,6 +40,7 @@ export type InspectorFieldMeta = {
     | 'avatar-mask'
     | 'timeline'
     | 'audio'
+    | 'font'
     | 'material'
     | 'model'
     | 'prefab'
@@ -738,6 +739,12 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     maskable: { label: 'Maskable' },
     material: materialAsset,
     text: { kind: 'multiline' },
+    font: {
+      kind: 'project-asset',
+      assetKinds: ['font'],
+      referenceType: 'Font',
+      allowNone: true,
+    },
     font_size: { min: 1, max: 512, step: 1 },
     font_style: {
       label: 'Font Style',
