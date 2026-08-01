@@ -2678,6 +2678,9 @@
       "resize_text_min_size": {
         "type": "number"
       },
+      "support_rich_text": {
+        "type": "boolean"
+      },
       "text": {
         "type": "string"
       },
@@ -2697,6 +2700,7 @@
       "font_size",
       "font_style",
       "align_by_geometry",
+      "support_rich_text",
       "resize_text_for_best_fit",
       "resize_text_min_size",
       "resize_text_max_size",

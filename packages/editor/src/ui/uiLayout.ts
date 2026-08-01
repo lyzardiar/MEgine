@@ -63,7 +63,7 @@ import {
   type UiBlockingObjects,
   type UiRaycastPlane,
 } from './uiPhysicsRaycast';
-import { layoutUiText } from './uiTextLayout';
+import { layoutUiText, type UiTextLayoutRun } from './uiTextLayout';
 
 /** World pixels-per-unit for Scene view Overlay canvas plane. */
 export const UI_SCENE_PPU = 100;
@@ -171,6 +171,7 @@ export type UiDrawItem = {
     fontSize: number;
     fontStyle: 'Normal' | 'Bold' | 'Italic' | 'BoldAndItalic';
     alignByGeometry: boolean;
+    supportRichText: boolean;
     bestFit: boolean;
     minSize: number;
     maxSize: number;
@@ -1221,6 +1222,8 @@ export function layoutUiOverlay(
                 ),
                 alignByGeometry:
                   text.align_by_geometry === true || text.alignByGeometry === true,
+                supportRichText:
+                  text.support_rich_text !== false && text.supportRichText !== false,
                 bestFit:
                   text.resize_text_for_best_fit === true
                   || text.resizeTextForBestFit === true,
@@ -2912,22 +2915,35 @@ export function drawUiItems(
     if (maxWidth == null) ctx.fillText(value, x, y);
     else ctx.fillText(value, x, y, maxWidth);
   };
-  const measuredGeometryTextX = (
-    value: string,
+  const textRunFont = (run: UiTextLayoutRun) => {
+    const bold = run.fontStyle === 'Bold' || run.fontStyle === 'BoldAndItalic';
+    const italic = run.fontStyle === 'Italic' || run.fontStyle === 'BoldAndItalic';
+    return `${italic ? 'italic ' : ''}${bold ? '700 ' : ''}${Math.max(1, run.fontSize)}px system-ui, sans-serif`;
+  };
+  const measuredGeometryLineOrigin = (
+    runs: readonly UiTextLayoutRun[],
     rectX: number,
     rectWidth: number,
     alignment: 'Left' | 'Center' | 'Right',
     fallback: number,
   ) => {
-    const metrics = ctx.measureText(value);
-    const left = metrics.actualBoundingBoxLeft;
-    const right = metrics.actualBoundingBoxRight;
-    if (!Number.isFinite(left) || !Number.isFinite(right) || left + right <= 0) {
+    let minimum = Number.POSITIVE_INFINITY;
+    let maximum = Number.NEGATIVE_INFINITY;
+    for (const run of runs) {
+      ctx.font = textRunFont(run);
+      const metrics = ctx.measureText(run.text);
+      const left = metrics.actualBoundingBoxLeft;
+      const right = metrics.actualBoundingBoxRight;
+      if (!Number.isFinite(left) || !Number.isFinite(right)) return fallback;
+      minimum = Math.min(minimum, run.x - left);
+      maximum = Math.max(maximum, run.x + right);
+    }
+    if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || maximum <= minimum) {
       return fallback;
     }
-    if (alignment === 'Left') return rectX + left;
-    if (alignment === 'Right') return rectX + rectWidth - right;
-    return rectX + rectWidth * 0.5 + (left - right) * 0.5;
+    if (alignment === 'Left') return rectX - minimum;
+    if (alignment === 'Right') return rectX + rectWidth - maximum;
+    return rectX + (rectWidth - minimum - maximum) * 0.5;
   };
 
   for (const batch of batches) for (const sourceItem of batch.items) {
@@ -3369,6 +3385,7 @@ export function drawUiItems(
           fontSize: it.text.fontSize,
           fontStyle: it.text.fontStyle,
           alignByGeometry: it.text.alignByGeometry,
+          supportRichText: it.text.supportRichText,
           bestFit: it.text.bestFit,
           minSize: it.text.minSize,
           maxSize: it.text.maxSize,
@@ -3379,32 +3396,33 @@ export function drawUiItems(
           alignment: it.text.alignment,
           verticalAlign: it.text.verticalAlign,
         });
-        const fontSize = Math.max(1, layout.fontSize);
-        const bold = it.text.fontStyle === 'Bold'
-          || it.text.fontStyle === 'BoldAndItalic';
-        const italic = it.text.fontStyle === 'Italic'
-          || it.text.fontStyle === 'BoldAndItalic';
-        ctx.font = `${italic ? 'italic ' : ''}${bold ? '700 ' : ''}${fontSize}px system-ui, sans-serif`;
         for (const line of layout.lines) {
-          const fallbackX = x + line.x;
-          const textX = it.text.alignByGeometry
-            ? measuredGeometryTextX(
-                line.text,
+          const fallbackOrigin = x + line.x;
+          const lineOrigin = it.text.alignByGeometry
+            ? measuredGeometryLineOrigin(
+                line.runs,
                 x,
                 w,
                 it.text.alignment,
-                fallbackX,
+                fallbackOrigin,
               )
-            : fallbackX;
-          fillReadableText(
-            line.text,
-            textX,
-            y + line.y,
-            undefined,
-            it.text.color,
-            fontSize,
-            { color: it.text.outlineColor, width: it.text.outlineWidth },
-          );
+            : fallbackOrigin;
+          for (const run of line.runs) {
+            const runColor: [number, number, number, number] = run.color
+              ? [run.color[0], run.color[1], run.color[2], run.color[3] * it.text.color[3]]
+              : it.text.color;
+            ctx.font = textRunFont(run);
+            ctx.fillStyle = cssColor(runColor);
+            fillReadableText(
+              run.text,
+              lineOrigin + run.x,
+              y + line.y + run.y,
+              undefined,
+              runColor,
+              run.fontSize,
+              { color: it.text.outlineColor, width: it.text.outlineWidth },
+            );
+          }
         }
       }
 

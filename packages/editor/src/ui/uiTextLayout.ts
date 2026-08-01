@@ -1,3 +1,9 @@
+import {
+  parseUiRichText,
+  type UiRichTextColor,
+  type UiRichTextGlyph,
+} from './uiRichText';
+
 export type UiTextHorizontalOverflow = 'Wrap' | 'Overflow';
 export type UiTextVerticalOverflow = 'Truncate' | 'Overflow';
 export type UiTextFontStyle = 'Normal' | 'Bold' | 'Italic' | 'BoldAndItalic';
@@ -8,6 +14,7 @@ export interface UiTextLayoutOptions {
   fontSize: number;
   fontStyle: UiTextFontStyle;
   alignByGeometry: boolean;
+  supportRichText: boolean;
   bestFit: boolean;
   minSize: number;
   maxSize: number;
@@ -24,6 +31,17 @@ export interface UiTextLayoutLine {
   x: number;
   y: number;
   width: number;
+  height: number;
+  runs: UiTextLayoutRun[];
+}
+
+export interface UiTextLayoutRun {
+  text: string;
+  x: number;
+  y: number;
+  fontSize: number;
+  fontStyle: UiTextFontStyle;
+  color: UiRichTextColor | null;
 }
 
 export interface UiTextLayout {
@@ -50,13 +68,35 @@ function styleOverhang(fontStyle: UiTextFontStyle, glyphScale: number): number {
   return (bold ? 0.5 * glyphScale : 0) + (italic ? 1.5 * glyphScale : 0);
 }
 
-function textWidth(
-  characterCount: number,
-  advance: number,
-  glyphScale: number,
-  overhang: number,
-): number {
-  return characterCount > 0 ? characterCount * advance - glyphScale + overhang : 0;
+interface MeasuredGlyph extends UiRichTextGlyph {
+  glyphScale: number;
+  advance: number;
+  metricWidth: number;
+  lineHeight: number;
+}
+
+function measureGlyph(glyph: UiRichTextGlyph): MeasuredGlyph {
+  const fontSize = Number.isFinite(glyph.fontSize)
+    ? Math.min(512, Math.max(1, glyph.fontSize))
+    : 16;
+  const glyphScale = Math.max(1, Math.max(fontSize, 7) / 7);
+  return {
+    ...glyph,
+    fontSize,
+    glyphScale,
+    advance: 6 * glyphScale,
+    metricWidth: 5 * glyphScale + styleOverhang(glyph.fontStyle, glyphScale),
+    lineHeight: 8 * glyphScale,
+  };
+}
+
+function measuredLineWidth(glyphs: readonly MeasuredGlyph[]): number {
+  if (glyphs.length === 0) return 0;
+  let width = 0;
+  glyphs.forEach((glyph, index) => {
+    width += index === glyphs.length - 1 ? glyph.metricWidth : glyph.advance;
+  });
+  return width;
 }
 
 const BITMAP_GLYPH_ROWS: Readonly<Record<string, readonly number[]>> = {
@@ -112,51 +152,210 @@ function glyphGeometryBounds(
     : null;
 }
 
-function textGeometryBounds(
-  value: string,
-  advance: number,
-  glyphScale: number,
-  fontStyle: UiTextFontStyle,
-): [number, number] | null {
+function textGeometryBounds(glyphs: readonly MeasuredGlyph[]): [number, number] | null {
   let minimum = Number.POSITIVE_INFINITY;
   let maximum = Number.NEGATIVE_INFINITY;
-  Array.from(value).forEach((character, index) => {
-    const bounds = glyphGeometryBounds(character, glyphScale, fontStyle);
-    if (!bounds) return;
-    minimum = Math.min(minimum, index * advance + bounds[0]);
-    maximum = Math.max(maximum, index * advance + bounds[1]);
+  let cursor = 0;
+  glyphs.forEach((glyph) => {
+    const bounds = glyphGeometryBounds(
+      glyph.character,
+      glyph.glyphScale,
+      glyph.fontStyle,
+    );
+    if (bounds) {
+      minimum = Math.min(minimum, cursor + bounds[0]);
+      maximum = Math.max(maximum, cursor + bounds[1]);
+    }
+    cursor += glyph.advance;
   });
   return Number.isFinite(minimum) && Number.isFinite(maximum)
     ? [minimum, maximum]
     : null;
 }
 
-function wrapParagraph(value: string, maxColumns: number): string[] {
-  const source = Array.from(value.replaceAll('\t', '    '));
-  if (source.length === 0) return [''];
-  if (maxColumns < 1) return [];
-  const lines: string[] = [];
+function expandTabs(glyphs: readonly MeasuredGlyph[]): MeasuredGlyph[] {
+  return glyphs.flatMap((glyph) => (
+    glyph.character === '\t'
+      ? Array.from({ length: 4 }, () => ({ ...glyph, character: ' ' }))
+      : [glyph]
+  ));
+}
+
+function wrapParagraph(
+  source: readonly MeasuredGlyph[],
+  width: number,
+): { lines: MeasuredGlyph[][]; dropped: boolean } {
+  if (source.length === 0) return { lines: [[]], dropped: false };
+  const lines: MeasuredGlyph[][] = [];
   let cursor = 0;
-  while (source.length - cursor > maxColumns) {
-    let split = -1;
-    for (let index = cursor + maxColumns - 1; index >= cursor; index -= 1) {
-      if (/\s/u.test(source[index] ?? '')) {
-        split = index;
-        break;
-      }
+  while (cursor < source.length) {
+    let end = cursor;
+    let lineWidth = 0;
+    let lastWhitespace = -1;
+    while (end < source.length) {
+      const glyph = source[end];
+      const candidateWidth = end === cursor
+        ? glyph.metricWidth
+        : lineWidth - source[end - 1].metricWidth
+          + source[end - 1].advance + glyph.metricWidth;
+      if (candidateWidth > width + 1e-4) break;
+      lineWidth = candidateWidth;
+      if (/\s/u.test(glyph.character)) lastWhitespace = end;
+      end += 1;
     }
-    if (split <= cursor) {
-      lines.push(source.slice(cursor, cursor + maxColumns).join(''));
-      cursor += maxColumns;
-      while (cursor < source.length && /\s/u.test(source[cursor] ?? '')) cursor += 1;
-      continue;
+    if (end === source.length) {
+      lines.push(source.slice(cursor));
+      return { lines, dropped: false };
     }
-    lines.push(source.slice(cursor, split).join('').trimEnd());
-    cursor = split + 1;
-    while (cursor < source.length && /\s/u.test(source[cursor] ?? '')) cursor += 1;
+    if (end === cursor) return { lines, dropped: true };
+    if (lastWhitespace > cursor) {
+      let lineEnd = lastWhitespace;
+      while (lineEnd > cursor && /\s/u.test(source[lineEnd - 1].character)) lineEnd -= 1;
+      lines.push(source.slice(cursor, lineEnd));
+      cursor = lastWhitespace + 1;
+      while (cursor < source.length && /\s/u.test(source[cursor].character)) cursor += 1;
+    } else {
+      lines.push(source.slice(cursor, end));
+      cursor = end;
+      while (cursor < source.length && /\s/u.test(source[cursor].character)) cursor += 1;
+    }
+    if (lines.length > MAX_UI_TEXT_LINES) {
+      return { lines, dropped: cursor < source.length };
+    }
   }
-  lines.push(source.slice(cursor).join(''));
-  return lines;
+  return { lines, dropped: false };
+}
+
+function colorsEqual(a: UiRichTextColor | null, b: UiRichTextColor | null): boolean {
+  return a === b || (a != null && b != null && a.every((value, index) => value === b[index]));
+}
+
+function buildRuns(
+  glyphs: readonly MeasuredGlyph[],
+  lineHeight: number,
+): UiTextLayoutRun[] {
+  const runs: UiTextLayoutRun[] = [];
+  let cursor = 0;
+  for (const glyph of glyphs) {
+    const y = lineHeight - glyph.lineHeight;
+    const previous = runs.at(-1);
+    if (previous
+      && previous.fontSize === glyph.fontSize
+      && previous.fontStyle === glyph.fontStyle
+      && previous.y === y
+      && colorsEqual(previous.color, glyph.color)) {
+      previous.text += glyph.character;
+    } else {
+      runs.push({
+        text: glyph.character,
+        x: cursor,
+        y,
+        fontSize: glyph.fontSize,
+        fontStyle: glyph.fontStyle,
+        color: glyph.color ? [...glyph.color] : null,
+      });
+    }
+    cursor += glyph.advance;
+  }
+  return runs;
+}
+
+function lineBlockHeight(
+  lines: readonly { height: number }[],
+  lineSpacing: number,
+): number {
+  if (lines.length === 0) return 0;
+  return lines.slice(0, -1).reduce(
+    (height, line) => height + line.height * lineSpacing,
+    0,
+  ) + lines.at(-1)!.height;
+}
+
+function lineOffsets(lines: readonly { height: number }[], lineSpacing: number): number[] {
+  const offsets: number[] = [];
+  let cursor = 0;
+  for (const line of lines) {
+    offsets.push(cursor);
+    cursor += line.height * lineSpacing;
+  }
+  return offsets;
+}
+
+function splitParagraphs(glyphs: readonly MeasuredGlyph[]): MeasuredGlyph[][] {
+  const paragraphs: MeasuredGlyph[][] = [[]];
+  for (const glyph of glyphs) {
+    if (glyph.character === '\n') paragraphs.push([]);
+    else paragraphs.at(-1)!.push(glyph);
+  }
+  return paragraphs;
+}
+
+function visibleLinesForHeight<T extends { height: number }>(
+  lines: readonly T[],
+  height: number,
+  lineSpacing: number,
+): T[] {
+  const visible: T[] = [];
+  for (const line of lines) {
+    if (lineBlockHeight([...visible, line], lineSpacing) > height + 1e-4) break;
+    visible.push(line);
+  }
+  return visible;
+}
+
+function normalizeAndBound(value: string): { value: string; truncated: boolean } {
+  const codePoints = Array.from(
+    String(value).replaceAll('\r\n', '\n').replaceAll('\r', '\n'),
+  );
+  return {
+    value: codePoints.slice(0, MAX_UI_TEXT_CHARACTERS).join(''),
+    truncated: codePoints.length > MAX_UI_TEXT_CHARACTERS,
+  };
+}
+
+function parsedGlyphsAtFontSize(
+  value: string,
+  options: UiTextLayoutOptions,
+  fontSize: number,
+): { glyphs: MeasuredGlyph[]; truncated: boolean } {
+  const normalized = normalizeAndBound(value);
+  return {
+    glyphs: parseUiRichText(normalized.value, {
+      enabled: options.supportRichText,
+      fontSize,
+      fontScale: finitePositive(options.fontScale, 1),
+      fontStyle: options.fontStyle,
+    }).map(measureGlyph),
+    truncated: normalized.truncated,
+  };
+}
+
+function authoredLines(
+  glyphs: readonly MeasuredGlyph[],
+  width: number,
+  horizontalOverflow: UiTextHorizontalOverflow,
+): { lines: MeasuredGlyph[][]; dropped: boolean } {
+  const lines: MeasuredGlyph[][] = [];
+  let dropped = false;
+  for (const paragraph of splitParagraphs(glyphs)) {
+    const expanded = expandTabs(paragraph);
+    const result = horizontalOverflow === 'Overflow'
+      ? { lines: [expanded], dropped: false }
+      : wrapParagraph(expanded, width);
+    lines.push(...result.lines);
+    dropped ||= result.dropped;
+    if (lines.length > MAX_UI_TEXT_LINES) break;
+  }
+  return { lines, dropped };
+}
+
+function baseTextMetrics(fontSize: number) {
+  const glyphScale = Math.max(1, Math.max(fontSize, 7) / 7);
+  return {
+    glyphScale,
+    advance: 6 * glyphScale,
+    lineHeight: 8 * glyphScale,
+  };
 }
 
 function layoutUiTextAtFontSize(
@@ -170,51 +369,31 @@ function layoutUiTextAtFontSize(
   const fontSize = Number.isFinite(requestedFontSize)
     ? Math.min(512, Math.max(1, requestedFontSize))
     : 16;
-  const glyphScale = Math.max(1, Math.max(fontSize, 7) / 7);
-  const advance = 6 * glyphScale;
-  const overhang = styleOverhang(options.fontStyle, glyphScale);
-  const lineHeight = 8 * glyphScale;
+  const base = baseTextMetrics(fontSize);
   const lineSpacing = Math.min(10, Math.max(0.1, finitePositive(options.lineSpacing, 1)));
-  const lineAdvance = lineHeight * lineSpacing;
-  const normalizedCodePoints = Array.from(
-    String(value).replaceAll('\r\n', '\n').replaceAll('\r', '\n'),
-  );
-  const inputTruncated = normalizedCodePoints.length > MAX_UI_TEXT_CHARACTERS;
-  const paragraphs = normalizedCodePoints
-    .slice(0, MAX_UI_TEXT_CHARACTERS)
-    .join('')
-    .split('\n');
-  const maxColumns = Math.max(
-    0,
-    Math.floor((width + glyphScale - overhang) / advance),
-  );
-  const allAuthoredLines = paragraphs.flatMap((paragraph) => (
-    options.horizontalOverflow === 'Overflow'
-      ? [paragraph.replaceAll('\t', '    ')]
-      : wrapParagraph(paragraph, maxColumns)
-  ));
-  const linesTruncated = allAuthoredLines.length > MAX_UI_TEXT_LINES;
-  const authoredLines = allAuthoredLines.slice(0, MAX_UI_TEXT_LINES);
-  const maxVisibleLines = verticalOverflow === 'Overflow'
-    ? authoredLines.length
-    : height + 1e-4 < lineHeight
-      ? 0
-      : Math.max(0, Math.floor((height - lineHeight + 1e-4) / lineAdvance) + 1);
-  const visibleLines = authoredLines.slice(0, maxVisibleLines);
-  const blockHeight = visibleLines.length > 0
-    ? lineHeight + (visibleLines.length - 1) * lineAdvance
-    : 0;
+  const parsed = parsedGlyphsAtFontSize(value, options, fontSize);
+  const authored = authoredLines(parsed.glyphs, width, options.horizontalOverflow);
+  const linesTruncated = authored.lines.length > MAX_UI_TEXT_LINES;
+  const boundedLines = authored.lines.slice(0, MAX_UI_TEXT_LINES).map((glyphs) => ({
+    glyphs,
+    height: glyphs.reduce(
+      (maximum, glyph) => Math.max(maximum, glyph.lineHeight),
+      base.lineHeight,
+    ),
+  }));
+  const visibleLines = verticalOverflow === 'Overflow'
+    ? boundedLines
+    : visibleLinesForHeight(boundedLines, height, lineSpacing);
+  const blockHeight = lineBlockHeight(visibleLines, lineSpacing);
   const startY = options.verticalAlign === 'Top'
     ? 0
     : options.verticalAlign === 'Bottom'
       ? height - blockHeight
       : (height - blockHeight) * 0.5;
-  const lines = visibleLines.map((text, index) => {
-    const characterCount = Array.from(text).length;
-    const measuredWidth = textWidth(characterCount, advance, glyphScale, overhang);
-    const geometry = options.alignByGeometry
-      ? textGeometryBounds(text, advance, glyphScale, options.fontStyle)
-      : null;
+  const offsets = lineOffsets(visibleLines, lineSpacing);
+  const lines = visibleLines.map((line, index) => {
+    const measuredWidth = measuredLineWidth(line.glyphs);
+    const geometry = options.alignByGeometry ? textGeometryBounds(line.glyphs) : null;
     const leftExtent = geometry?.[0] ?? 0;
     const rightExtent = geometry?.[1] ?? measuredWidth;
     const x = options.alignment === 'Left'
@@ -223,24 +402,27 @@ function layoutUiTextAtFontSize(
         ? width - rightExtent
         : (width - leftExtent - rightExtent) * 0.5;
     return {
-      text,
+      text: line.glyphs.map((glyph) => glyph.character).join(''),
       x,
-      y: startY + index * lineAdvance,
+      y: startY + offsets[index],
       width: measuredWidth,
+      height: line.height,
+      runs: buildRuns(line.glyphs, line.height),
     };
   });
   return {
     lines,
     fontSize,
-    glyphScale,
-    advance,
-    lineHeight,
-    lineAdvance,
+    glyphScale: base.glyphScale,
+    advance: base.advance,
+    lineHeight: base.lineHeight,
+    lineAdvance: base.lineHeight * lineSpacing,
     blockHeight,
-    truncated: inputTruncated
+    truncated: parsed.truncated
+      || authored.dropped
       || linesTruncated
-      || visibleLines.length < authoredLines.length
-      || (normalizedCodePoints.length > 0 && authoredLines.length === 0),
+      || visibleLines.length < boundedLines.length
+      || (parsed.glyphs.length > 0 && boundedLines.length === 0),
   };
 }
 

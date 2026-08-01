@@ -207,6 +207,7 @@ test('Agent schema exposes Unity Text paragraph controls with bounded values', (
   ]);
   assert.equal(fields.get('font_style')?.default, 'Normal');
   assert.equal(fields.get('align_by_geometry')?.default, false);
+  assert.equal(fields.get('support_rich_text')?.default, true);
   assert.equal(fields.get('resize_text_for_best_fit')?.default, false);
   assert.deepEqual({
     default: fields.get('resize_text_min_size')?.default,

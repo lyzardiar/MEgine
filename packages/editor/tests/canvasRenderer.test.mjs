@@ -82,7 +82,7 @@ class FakeContext {
   translate(...args) { this.operations.push(['translate', ...args]); }
   rotate(...args) { this.operations.push(['rotate', ...args]); }
   setLineDash(...args) { this.operations.push(['setLineDash', ...args]); }
-  fillText(...args) { this.operations.push(['fillText', ...args, this.font]); }
+  fillText(...args) { this.operations.push(['fillText', ...args, this.fillStyle, this.font]); }
   strokeText(...args) { this.operations.push(['strokeText', ...args]); }
   measureText(value) { return { width: String(value).length * 8 }; }
 }
@@ -270,6 +270,45 @@ test('Canvas preview positions Text from Unity visible geometry alignment', () =
   const line = canvas.context.operations.find((operation) => operation[0] === 'fillText');
   assert.equal(line[2], 57);
   assert.equal(canvas.context.textAlign, 'left');
+});
+
+test('Canvas preview draws Unity Rich Text as styled and colored runs', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: { Canvas: {}, RectTransform: { size_delta: [100, 100] } },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: { size_delta: [80, 30] },
+        Text: {
+          text: 'A<b>B</b><color=#ff0000>C</color>',
+          font_size: 7,
+          alignment: 'Left',
+          vertical_align: 'Top',
+          horizontal_overflow: 'Overflow',
+          vertical_overflow: 'Overflow',
+        },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  drawUiItems(canvas.context, items, null, null);
+  const runs = canvas.context.operations.filter((operation) => operation[0] === 'fillText');
+  assert.deepEqual(runs.map((operation) => ({
+    text: operation[1],
+    x: operation[2],
+    color: operation.at(-2),
+    font: operation.at(-1),
+  })), [
+    { text: 'A', x: 10, color: 'rgba(255,255,255,1)', font: '7px system-ui, sans-serif' },
+    { text: 'B', x: 16, color: 'rgba(255,255,255,1)', font: '700 7px system-ui, sans-serif' },
+    { text: 'C', x: 22, color: 'rgba(255,0,0,1)', font: '7px system-ui, sans-serif' },
+  ]);
 });
 
 test('adding an authored Graphic creates and protects its CanvasRenderer dependency', async () => {

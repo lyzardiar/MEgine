@@ -20,6 +20,7 @@ const options = (overrides = {}) => ({
   fontSize: 7,
   fontStyle: 'Normal',
   alignByGeometry: false,
+  supportRichText: true,
   bestFit: false,
   minSize: 10,
   maxSize: 40,
@@ -214,4 +215,42 @@ test('Unity Align By Geometry aligns visible glyph bounds instead of advance met
     alignByGeometry: true,
   }));
   assert.equal(leading.lines[0].x, -12);
+});
+
+test('Unity Rich Text changes runs, variable line geometry, wrapping, and color', () => {
+  const layout = layoutUiText(
+    'A<b>B<i>C</i></b><size=14>D</size><color=#ff000080>E</color>',
+    options({ width: 80, height: 30, horizontalOverflow: 'Overflow' }),
+  );
+  assert.equal(layout.lines[0].text, 'ABCDE');
+  assert.deepEqual(layout.lines[0].runs.map((run) => ({
+    text: run.text,
+    x: run.x,
+    y: run.y,
+    fontSize: run.fontSize,
+    fontStyle: run.fontStyle,
+    color: run.color,
+  })), [
+    { text: 'A', x: 0, y: 8, fontSize: 7, fontStyle: 'Normal', color: null },
+    { text: 'B', x: 6, y: 8, fontSize: 7, fontStyle: 'Bold', color: null },
+    { text: 'C', x: 12, y: 8, fontSize: 7, fontStyle: 'BoldAndItalic', color: null },
+    { text: 'D', x: 18, y: 0, fontSize: 14, fontStyle: 'Normal', color: null },
+    { text: 'E', x: 30, y: 8, fontSize: 7, fontStyle: 'Normal', color: [1, 0, 0, 128 / 255] },
+  ]);
+  assert.equal(layout.lines[0].width, 35);
+  assert.equal(layout.blockHeight, 16);
+
+  const wrapped = layoutUiText('<size=14>A</size>B', options({ width: 16, height: 30 }));
+  assert.deepEqual(wrapped.lines.map((line) => line.text), ['A', 'B']);
+});
+
+test('disabling Unity Rich Text renders markup as ordinary bounded text', () => {
+  const source = '<b>A</b>';
+  const rich = layoutUiText(source, options({ horizontalOverflow: 'Overflow' }));
+  const plain = layoutUiText(source, options({
+    horizontalOverflow: 'Overflow',
+    supportRichText: false,
+  }));
+  assert.equal(rich.lines[0].text, 'A');
+  assert.equal(plain.lines[0].text, source);
 });

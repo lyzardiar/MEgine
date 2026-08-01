@@ -745,6 +745,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       options: options('Normal', 'Bold', 'Italic', 'BoldAndItalic'),
     },
     align_by_geometry: { label: 'Align By Geometry' },
+    support_rich_text: { label: 'Rich Text' },
     resize_text_for_best_fit: { label: 'Best Fit' },
     resize_text_min_size: {
       label: 'Min Size',

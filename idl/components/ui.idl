@@ -179,6 +179,8 @@ component Text {
   font_style:      string = "Normal"
   /// Unity Text.alignByGeometry. Aligns visible glyph bounds instead of advance metrics.
   align_by_geometry: bool = false
+  /// Unity Text.supportRichText. Interprets legacy b/i/size/color markup when enabled.
+  support_rich_text: bool = true
   /// Unity Text.resizeTextForBestFit. Chooses the largest fitting integer size in the range.
   resize_text_for_best_fit: bool = false
   /// Unity Text.resizeTextMinSize.

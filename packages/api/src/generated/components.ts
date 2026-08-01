@@ -510,6 +510,7 @@ export interface Text {
   fontSize: number;
   fontStyle: string;
   alignByGeometry: boolean;
+  supportRichText: boolean;
   resizeTextForBestFit: boolean;
   resizeTextMinSize: number;
   resizeTextMaxSize: number;
@@ -1142,6 +1143,7 @@ export type SerializedComponentMap = {
     font_size: number;
     font_style: string;
     align_by_geometry: boolean;
+    support_rich_text: boolean;
     resize_text_for_best_fit: boolean;
     resize_text_min_size: number;
     resize_text_max_size: number;
