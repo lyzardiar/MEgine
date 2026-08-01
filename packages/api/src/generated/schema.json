@@ -2633,6 +2633,12 @@
       "font_size": {
         "type": "number"
       },
+      "horizontal_overflow": {
+        "type": "string"
+      },
+      "line_spacing": {
+        "type": "number"
+      },
       "maskable": {
         "type": "boolean"
       },
@@ -2662,6 +2668,9 @@
       },
       "vertical_align": {
         "type": "string"
+      },
+      "vertical_overflow": {
+        "type": "string"
       }
     },
     "required": [
@@ -2675,6 +2684,9 @@
       "outline_width",
       "alignment",
       "vertical_align",
+      "line_spacing",
+      "horizontal_overflow",
+      "vertical_overflow",
       "raycast_target",
       "raycast_padding"
     ],

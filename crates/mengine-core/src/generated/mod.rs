@@ -2000,6 +2000,9 @@ pub struct Text {
     pub outline_width: f32,
     pub alignment: String,
     pub vertical_align: String,
+    pub line_spacing: f32,
+    pub horizontal_overflow: String,
+    pub vertical_overflow: String,
     pub raycast_target: bool,
     pub raycast_padding: [f32; 4],
 }
@@ -2017,6 +2020,9 @@ impl Default for Text {
             outline_width: 0.0,
             alignment: "Center".into(),
             vertical_align: "Middle".into(),
+            line_spacing: 1.0,
+            horizontal_overflow: "Wrap".into(),
+            vertical_overflow: "Truncate".into(),
             raycast_target: true,
             raycast_padding: [0.0, 0.0, 0.0, 0.0],
         }

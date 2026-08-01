@@ -165,6 +165,41 @@ test('Canvas preview renders alpha-independent effects from an opaque geometry m
   );
 });
 
+test('Canvas preview draws wrapped Text as aligned complete lines', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        Canvas: {},
+        RectTransform: { size_delta: [100, 100] },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: { size_delta: [29, 16] },
+        Text: {
+          text: 'alpha beta',
+          font_size: 7,
+          alignment: 'Left',
+          vertical_align: 'Top',
+          line_spacing: 1,
+          horizontal_overflow: 'Wrap',
+          vertical_overflow: 'Truncate',
+        },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  drawUiItems(canvas.context, items, null, null);
+  const lines = canvas.context.operations.filter((operation) => operation[0] === 'fillText');
+  assert.deepEqual(lines.map((operation) => operation[1]), ['alpha', 'beta']);
+  assert.equal(lines[1][3] - lines[0][3], 8);
+});
+
 test('adding an authored Graphic creates and protects its CanvasRenderer dependency', async () => {
   const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
   const store = createEditorStore();

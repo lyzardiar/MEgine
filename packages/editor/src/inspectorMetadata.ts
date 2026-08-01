@@ -738,9 +738,20 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     maskable: { label: 'Maskable' },
     material: materialAsset,
     text: { kind: 'multiline' },
-    font_size: { min: 1, step: 1 },
+    font_size: { min: 1, max: 512, step: 1 },
     alignment: { kind: 'enum', options: options('Left', 'Center', 'Right') },
     vertical_align: { kind: 'enum', options: options('Top', 'Middle', 'Bottom') },
+    line_spacing: { label: 'Line Spacing', min: 0.1, max: 10, step: 0.05 },
+    horizontal_overflow: {
+      label: 'Horizontal Overflow',
+      kind: 'enum',
+      options: options('Wrap', 'Overflow'),
+    },
+    vertical_overflow: {
+      label: 'Vertical Overflow',
+      kind: 'enum',
+      options: options('Truncate', 'Overflow'),
+    },
     outline_width: { label: 'Outline Width', min: 0, max: 16, step: 0.25 },
     raycast_padding: {
       label: 'Raycast Padding',

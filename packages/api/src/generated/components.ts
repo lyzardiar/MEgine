@@ -512,6 +512,9 @@ export interface Text {
   outlineWidth: number;
   alignment: string;
   verticalAlign: string;
+  lineSpacing: number;
+  horizontalOverflow: string;
+  verticalOverflow: string;
   raycastTarget: boolean;
   raycastPadding: [number, number, number, number];
 }
@@ -1136,6 +1139,9 @@ export type SerializedComponentMap = {
     outline_width: number;
     alignment: string;
     vertical_align: string;
+    line_spacing: number;
+    horizontal_overflow: string;
+    vertical_overflow: string;
     raycast_target: boolean;
     raycast_padding: [number, number, number, number];
   };

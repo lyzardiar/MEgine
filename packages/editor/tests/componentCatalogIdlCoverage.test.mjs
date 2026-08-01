@@ -176,3 +176,27 @@ test('Canvas sorting and batching controls are exposed to Agents', () => {
     },
   );
 });
+
+test('Agent schema exposes Unity Text paragraph controls with bounded values', () => {
+  const fields = new Map(buildAgentComponentSchema('Text')?.fields.map((field) => [field.name, field]));
+  assert.deepEqual(fields.get('horizontal_overflow')?.options?.map(({ value }) => value), [
+    'Wrap',
+    'Overflow',
+  ]);
+  assert.deepEqual(fields.get('vertical_overflow')?.options?.map(({ value }) => value), [
+    'Truncate',
+    'Overflow',
+  ]);
+  assert.deepEqual({
+    default: fields.get('line_spacing')?.default,
+    min: fields.get('line_spacing')?.min,
+    max: fields.get('line_spacing')?.max,
+    step: fields.get('line_spacing')?.step,
+  }, {
+    default: 1,
+    min: 0.1,
+    max: 10,
+    step: 0.05,
+  });
+  assert.equal(fields.get('font_size')?.max, 512);
+});

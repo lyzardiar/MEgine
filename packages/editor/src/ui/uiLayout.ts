@@ -63,6 +63,7 @@ import {
   type UiBlockingObjects,
   type UiRaycastPlane,
 } from './uiPhysicsRaycast';
+import { layoutUiText } from './uiTextLayout';
 
 /** World pixels-per-unit for Scene view Overlay canvas plane. */
 export const UI_SCENE_PPU = 100;
@@ -172,6 +173,9 @@ export type UiDrawItem = {
     outlineWidth: number;
     alignment: 'Left' | 'Center' | 'Right';
     verticalAlign: 'Top' | 'Middle' | 'Bottom';
+    lineSpacing: number;
+    horizontalOverflow: 'Wrap' | 'Overflow';
+    verticalOverflow: 'Truncate' | 'Overflow';
     raycastTarget: boolean;
   };
   rawImage?: {
@@ -1200,7 +1204,10 @@ export function layoutUiOverlay(
                 material: String(text.material ?? '').trim().replaceAll('\\', '/'),
                 text: String(text.text ?? 'Text'),
                 color: color4(text.color, [1, 1, 1, 1]),
-                fontSize: number(text.font_size ?? text.fontSize, 16) * scale,
+                fontSize: Math.min(
+                  512,
+                  Math.max(1, number(text.font_size ?? text.fontSize, 16) * scale),
+                ),
                 outlineColor: color4(
                   text.outline_color ?? text.outlineColor,
                   [0, 0, 0, 1],
@@ -1218,6 +1225,20 @@ export function layoutUiOverlay(
                   text.vertical_align ?? text.verticalAlign,
                   ['Top', 'Middle', 'Bottom'] as const,
                   'Middle',
+                ),
+                lineSpacing: Math.min(
+                  10,
+                  Math.max(0.1, number(text.line_spacing ?? text.lineSpacing, 1)),
+                ),
+                horizontalOverflow: enumValue(
+                  text.horizontal_overflow ?? text.horizontalOverflow,
+                  ['Wrap', 'Overflow'] as const,
+                  'Wrap',
+                ),
+                verticalOverflow: enumValue(
+                  text.vertical_overflow ?? text.verticalOverflow,
+                  ['Truncate', 'Overflow'] as const,
+                  'Truncate',
                 ),
                 raycastTarget: graphicRaycastTarget(text, true),
               }
@@ -3297,22 +3318,37 @@ export function drawUiItems(
       }
 
       if (it.text) {
-        const tx = it.text.alignment === 'Left' ? x + 4 : it.text.alignment === 'Right' ? x + w - 4 : x + w * 0.5;
-        const ty = it.text.verticalAlign === 'Top' ? y + 2 : it.text.verticalAlign === 'Bottom' ? y + h - 2 : y + h * 0.5;
         const fontSize = Math.max(8, it.text.fontSize);
         ctx.fillStyle = cssColor(it.text.color);
         ctx.font = `${fontSize}px system-ui, sans-serif`;
         ctx.textAlign = it.text.alignment.toLowerCase() as CanvasTextAlign;
-        ctx.textBaseline = it.text.verticalAlign === 'Top' ? 'top' : it.text.verticalAlign === 'Bottom' ? 'bottom' : 'middle';
-        fillReadableText(
-          it.text.text,
-          tx,
-          ty,
-          Math.max(0, w - 8),
-          it.text.color,
-          fontSize,
-          { color: it.text.outlineColor, width: it.text.outlineWidth },
-        );
+        ctx.textBaseline = 'top';
+        const textX = it.text.alignment === 'Left'
+          ? x
+          : it.text.alignment === 'Right'
+            ? x + w
+            : x + w * 0.5;
+        const layout = layoutUiText(it.text.text, {
+          width: w,
+          height: h,
+          fontSize: it.text.fontSize,
+          lineSpacing: it.text.lineSpacing,
+          horizontalOverflow: it.text.horizontalOverflow,
+          verticalOverflow: it.text.verticalOverflow,
+          alignment: it.text.alignment,
+          verticalAlign: it.text.verticalAlign,
+        });
+        for (const line of layout.lines) {
+          fillReadableText(
+            line.text,
+            textX,
+            y + line.y,
+            undefined,
+            it.text.color,
+            fontSize,
+            { color: it.text.outlineColor, width: it.text.outlineWidth },
+          );
+        }
       }
 
       if (it.toggle) {

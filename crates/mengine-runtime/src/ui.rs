@@ -2126,6 +2126,9 @@ fn walk(
             text.font_size * scale,
             &text.alignment,
             &text.vertical_align,
+            text.line_spacing,
+            &text.horizontal_overflow,
+            &text.vertical_overflow,
             clip,
         );
         apply_graphic_material(primitives, material_start, &text.material);
@@ -4554,8 +4557,195 @@ fn push_text(
         font_size,
         alignment,
         vertical_align,
+        1.0,
+        "Overflow",
+        "Overflow",
         clip,
     );
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct BitmapTextLine {
+    characters: Vec<char>,
+    x: f32,
+    y: f32,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct BitmapTextLayout {
+    lines: Vec<BitmapTextLine>,
+    glyph_scale: f32,
+    advance: f32,
+    line_height: f32,
+    line_advance: f32,
+    truncated: bool,
+}
+
+const MAX_UI_TEXT_CHARACTERS: usize = 16_384;
+const MAX_UI_TEXT_LINES: usize = 4_096;
+const MAX_UI_TEXT_PRIMITIVES: usize = 65_536;
+
+fn bitmap_text_width(character_count: usize, advance: f32, glyph_scale: f32) -> f32 {
+    if character_count == 0 {
+        0.0
+    } else {
+        character_count as f32 * advance - glyph_scale
+    }
+}
+
+fn bitmap_text_characters(value: &str) -> Vec<char> {
+    let mut characters = Vec::with_capacity(value.len());
+    for character in value.chars() {
+        if character == '\t' {
+            characters.extend([' '; 4]);
+        } else {
+            characters.push(character);
+        }
+    }
+    characters
+}
+
+fn wrap_bitmap_paragraph(value: &str, max_columns: usize) -> Vec<Vec<char>> {
+    let source = bitmap_text_characters(value);
+    if source.is_empty() {
+        return vec![Vec::new()];
+    }
+    if max_columns == 0 {
+        return Vec::new();
+    }
+    let mut lines = Vec::new();
+    let mut cursor = 0;
+    while source.len() - cursor > max_columns {
+        let split = source[cursor..cursor + max_columns]
+            .iter()
+            .rposition(|character| character.is_whitespace())
+            .map(|split| cursor + split);
+        if let Some(split) = split.filter(|split| *split > cursor) {
+            let mut line = source[cursor..split].to_vec();
+            while line
+                .last()
+                .is_some_and(|character| character.is_whitespace())
+            {
+                line.pop();
+            }
+            cursor = split + 1;
+            while source
+                .get(cursor)
+                .is_some_and(|character| character.is_whitespace())
+            {
+                cursor += 1;
+            }
+            lines.push(line);
+        } else {
+            lines.push(source[cursor..cursor + max_columns].to_vec());
+            cursor += max_columns;
+            while source
+                .get(cursor)
+                .is_some_and(|character| character.is_whitespace())
+            {
+                cursor += 1;
+            }
+        }
+    }
+    lines.push(source[cursor..].to_vec());
+    lines
+}
+
+#[allow(clippy::too_many_arguments)]
+fn layout_bitmap_text(
+    text: &str,
+    rect: UiRect,
+    font_size: f32,
+    alignment: &str,
+    vertical_align: &str,
+    line_spacing: f32,
+    horizontal_overflow: &str,
+    vertical_overflow: &str,
+) -> BitmapTextLayout {
+    let font_size = if font_size.is_finite() && font_size > 0.0 {
+        font_size.min(512.0)
+    } else {
+        16.0
+    };
+    let glyph_scale = (font_size.max(7.0) / 7.0).max(1.0);
+    let advance = 6.0 * glyph_scale;
+    let line_height = 8.0 * glyph_scale;
+    let line_spacing = if line_spacing.is_finite() && line_spacing > 0.0 {
+        line_spacing.clamp(0.1, 10.0)
+    } else {
+        1.0
+    };
+    let line_advance = line_height * line_spacing;
+    let width = rect.width.max(0.0);
+    let height = rect.height.max(0.0);
+    let max_columns = ((width + glyph_scale) / advance).floor().max(0.0) as usize;
+    let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
+    let input_truncated = normalized.chars().count() > MAX_UI_TEXT_CHARACTERS;
+    let normalized = normalized
+        .chars()
+        .take(MAX_UI_TEXT_CHARACTERS)
+        .collect::<String>();
+    let mut authored_lines = normalized
+        .split('\n')
+        .flat_map(|paragraph| {
+            if horizontal_overflow == "Overflow" {
+                vec![bitmap_text_characters(paragraph)]
+            } else {
+                wrap_bitmap_paragraph(paragraph, max_columns)
+            }
+        })
+        .take(MAX_UI_TEXT_LINES + 1)
+        .collect::<Vec<_>>();
+    let lines_truncated = authored_lines.len() > MAX_UI_TEXT_LINES;
+    authored_lines.truncate(MAX_UI_TEXT_LINES);
+    let max_visible_lines = if vertical_overflow == "Overflow" {
+        authored_lines.len()
+    } else if height + 1e-4 < line_height {
+        0
+    } else {
+        (((height - line_height + 1e-4) / line_advance).floor() as usize + 1)
+            .min(authored_lines.len())
+    };
+    let truncated = input_truncated
+        || lines_truncated
+        || max_visible_lines < authored_lines.len()
+        || (!normalized.is_empty() && authored_lines.is_empty());
+    let visible_lines = &authored_lines[..max_visible_lines];
+    let block_height = if visible_lines.is_empty() {
+        0.0
+    } else {
+        line_height + (visible_lines.len() - 1) as f32 * line_advance
+    };
+    let start_y = match vertical_align {
+        "Top" => rect.y,
+        "Bottom" => rect.y + height - block_height,
+        _ => rect.y + (height - block_height) * 0.5,
+    };
+    let lines = visible_lines
+        .iter()
+        .enumerate()
+        .map(|(index, characters)| {
+            let line_width = bitmap_text_width(characters.len(), advance, glyph_scale);
+            let x = match alignment {
+                "Left" => rect.x,
+                "Right" => rect.x + width - line_width,
+                _ => rect.x + (width - line_width) * 0.5,
+            };
+            BitmapTextLine {
+                characters: characters.clone(),
+                x,
+                y: start_y + index as f32 * line_advance,
+            }
+        })
+        .collect();
+    BitmapTextLayout {
+        lines,
+        glyph_scale,
+        advance,
+        line_height,
+        line_advance,
+        truncated,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -4569,35 +4759,53 @@ fn push_text_styled(
     font_size: f32,
     alignment: &str,
     vertical_align: &str,
+    line_spacing: f32,
+    horizontal_overflow: &str,
+    vertical_overflow: &str,
     clip: UiClipRect,
 ) {
-    let scale = (font_size.max(7.0) / 7.0).max(1.0);
-    let advance = 6.0 * scale;
-    let line_height = 8.0 * scale;
-    let chars: Vec<char> = text.chars().collect();
-    let line_width = chars.len() as f32 * advance - if chars.is_empty() { 0.0 } else { scale };
-    let start_x = match alignment {
-        "Left" => rect.x,
-        "Right" => rect.x + rect.width - line_width,
-        _ => rect.x + (rect.width - line_width) * 0.5,
-    };
-    let start_y = match vertical_align {
-        "Top" => rect.y,
-        "Bottom" => rect.y + rect.height - line_height,
-        _ => rect.y + (rect.height - line_height) * 0.5,
-    };
-
-    let glyphs: Vec<(f32, [u8; 7])> = chars
-        .into_iter()
-        .enumerate()
-        .map(|(char_index, character)| {
-            (start_x + char_index as f32 * advance, glyph_rows(character))
+    let primitive_start = primitives.len();
+    let layout = layout_bitmap_text(
+        text,
+        rect,
+        font_size,
+        alignment,
+        vertical_align,
+        line_spacing,
+        horizontal_overflow,
+        vertical_overflow,
+    );
+    let glyphs: Vec<(f32, f32, [u8; 7])> = layout
+        .lines
+        .iter()
+        .flat_map(|line| {
+            line.characters
+                .iter()
+                .enumerate()
+                .map(|(char_index, character)| {
+                    (
+                        line.x + char_index as f32 * layout.advance,
+                        line.y,
+                        glyph_rows(*character),
+                    )
+                })
         })
         .collect();
+    let fill_primitive_count = glyphs
+        .iter()
+        .map(|(_, _, rows)| {
+            rows.iter()
+                .map(|row| row.count_ones() as usize)
+                .sum::<usize>()
+        })
+        .sum::<usize>()
+        .min(MAX_UI_TEXT_PRIMITIVES);
+    let outline_budget = MAX_UI_TEXT_PRIMITIVES.saturating_sub(fill_primitive_count);
 
     let radius = outline_width.ceil().clamp(0.0, 16.0) as i32;
     if radius > 0 && outline_color[3] > 0.0 {
-        for (glyph_x, rows) in &glyphs {
+        let mut outline_primitives = 0;
+        'outline: for (glyph_x, glyph_y, rows) in &glyphs {
             for (row_index, row) in rows.iter().enumerate() {
                 for column in 0..5 {
                     if row & (1 << (4 - column)) == 0 {
@@ -4610,12 +4818,19 @@ fn push_text_styled(
                             {
                                 continue;
                             }
+                            if outline_primitives >= outline_budget {
+                                break 'outline;
+                            }
                             primitives.push(primitive(
                                 UiRect {
-                                    x: *glyph_x + column as f32 * scale + offset_x as f32,
-                                    y: start_y + row_index as f32 * scale + offset_y as f32,
-                                    width: scale,
-                                    height: scale,
+                                    x: *glyph_x
+                                        + column as f32 * layout.glyph_scale
+                                        + offset_x as f32,
+                                    y: *glyph_y
+                                        + row_index as f32 * layout.glyph_scale
+                                        + offset_y as f32,
+                                    width: layout.glyph_scale,
+                                    height: layout.glyph_scale,
                                 },
                                 outline_color,
                                 [0.5, 0.5],
@@ -4624,6 +4839,7 @@ fn push_text_styled(
                                 "white",
                                 clip,
                             ));
+                            outline_primitives += 1;
                         }
                     }
                 }
@@ -4631,18 +4847,21 @@ fn push_text_styled(
         }
     }
 
-    for (glyph_x, rows) in glyphs {
+    'fill: for (glyph_x, glyph_y, rows) in glyphs {
         for (row_index, row) in rows.iter().enumerate() {
             for column in 0..5 {
                 if row & (1 << (4 - column)) == 0 {
                     continue;
                 }
+                if primitives.len() - primitive_start >= MAX_UI_TEXT_PRIMITIVES {
+                    break 'fill;
+                }
                 primitives.push(primitive(
                     UiRect {
-                        x: glyph_x + column as f32 * scale,
-                        y: start_y + row_index as f32 * scale,
-                        width: scale,
-                        height: scale,
+                        x: glyph_x + column as f32 * layout.glyph_scale,
+                        y: glyph_y + row_index as f32 * layout.glyph_scale,
+                        width: layout.glyph_scale,
+                        height: layout.glyph_scale,
                     },
                     color,
                     [0.5, 0.5],
@@ -5057,6 +5276,9 @@ mod tests {
         assert_eq!(legacy_image.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_raw_image.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_text.raycast_padding, [0.0; 4]);
+        assert_eq!(legacy_text.line_spacing, 1.0);
+        assert_eq!(legacy_text.horizontal_overflow, "Wrap");
+        assert_eq!(legacy_text.vertical_overflow, "Truncate");
         assert_eq!(legacy_panel.raycast_padding, [0.0; 4]);
 
         let mut world = World::new();
@@ -7851,6 +8073,9 @@ mod tests {
             16.0,
             "Center",
             "Middle",
+            1.0,
+            "Overflow",
+            "Overflow",
             clip,
         );
 
@@ -7864,6 +8089,120 @@ mod tests {
                 && primitive.color == [0.1, 0.2, 0.3, 0.75]
         }));
         assert!(primitives[first_fill..]
+            .iter()
+            .all(|primitive| primitive.key.material == "ui/text/bitmap"));
+    }
+
+    #[test]
+    fn text_layout_wraps_truncates_and_aligns_complete_lines() {
+        let rect = UiRect {
+            x: 10.0,
+            y: 20.0,
+            width: 29.0,
+            height: 16.0,
+        };
+        let wrapped = layout_bitmap_text(
+            "alpha beta",
+            rect,
+            7.0,
+            "Left",
+            "Top",
+            1.0,
+            "Wrap",
+            "Truncate",
+        );
+        assert_eq!(
+            wrapped
+                .lines
+                .iter()
+                .map(|line| line.characters.iter().collect::<String>())
+                .collect::<Vec<_>>(),
+            ["alpha", "beta"]
+        );
+        assert_eq!(wrapped.lines[0].x, 10.0);
+        assert_eq!(wrapped.lines[1].y, 28.0);
+        assert!(!wrapped.truncated);
+
+        let truncated = layout_bitmap_text(
+            "one\ntwo\nthree",
+            UiRect {
+                height: 15.0,
+                ..rect
+            },
+            7.0,
+            "Left",
+            "Top",
+            1.0,
+            "Overflow",
+            "Truncate",
+        );
+        assert_eq!(truncated.lines.len(), 1);
+        assert!(truncated.truncated);
+
+        let aligned = layout_bitmap_text(
+            "A\nBB",
+            UiRect {
+                width: 40.0,
+                height: 30.0,
+                ..rect
+            },
+            7.0,
+            "Right",
+            "Bottom",
+            1.5,
+            "Overflow",
+            "Overflow",
+        );
+        assert_eq!(aligned.line_advance, 12.0);
+        assert_eq!(aligned.lines[0].x, 45.0);
+        assert_eq!(aligned.lines[0].y, 30.0);
+        assert_eq!(aligned.lines[1].x, 39.0);
+        assert_eq!(aligned.lines[1].y, 42.0);
+
+        let bounded = layout_bitmap_text(
+            &"A".repeat(MAX_UI_TEXT_CHARACTERS + 1),
+            rect,
+            7.0,
+            "Left",
+            "Top",
+            1.0,
+            "Overflow",
+            "Overflow",
+        );
+        assert_eq!(bounded.lines[0].characters.len(), MAX_UI_TEXT_CHARACTERS);
+        assert!(bounded.truncated);
+    }
+
+    #[test]
+    fn text_geometry_budget_preserves_fill_before_optional_outline() {
+        let mut primitives = Vec::new();
+        push_text_styled(
+            &mut primitives,
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 100.0,
+                height: 100.0,
+            },
+            &"A".repeat(4_000),
+            [1.0; 4],
+            [0.0, 0.0, 0.0, 1.0],
+            16.0,
+            7.0,
+            "Left",
+            "Top",
+            1.0,
+            "Overflow",
+            "Overflow",
+            UiClipRect {
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 100,
+            },
+        );
+        assert_eq!(primitives.len(), MAX_UI_TEXT_PRIMITIVES);
+        assert!(primitives
             .iter()
             .all(|primitive| primitive.key.material == "ui/text/bitmap"));
     }

@@ -181,6 +181,12 @@ component Text {
   alignment:       string = "Center"
   /// "Top" | "Middle" | "Bottom"
   vertical_align:  string = "Middle"
+  /// Multiplier applied to the font line height. Unity uses 1 for normal spacing.
+  line_spacing:    float  = 1
+  /// "Wrap" | "Overflow"
+  horizontal_overflow: string = "Wrap"
+  /// "Truncate" | "Overflow"
+  vertical_overflow:   string = "Truncate"
   raycast_target:  bool   = true
   /// Unity Graphic.raycastPadding: left, bottom, right, top. Positive values shrink the hit area.
   raycast_padding: float4 = [0, 0, 0, 0]

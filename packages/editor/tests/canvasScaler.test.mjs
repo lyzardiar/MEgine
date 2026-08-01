@@ -183,8 +183,20 @@ test('CanvasGroup exposes Unity parent-group override defaults', () => {
 });
 
 test('Text Graphic defaults to a Unity raycast target', () => {
-  assert.equal(createComponentDefaults('Text').raycast_target, true);
-  assert.equal(createUiTextComponents().Text.raycast_target, true);
+  for (const text of [createComponentDefaults('Text'), createUiTextComponents().Text]) {
+    assert.equal(text.raycast_target, true);
+    assert.equal(text.line_spacing, 1);
+    assert.equal(text.horizontal_overflow, 'Wrap');
+    assert.equal(text.vertical_overflow, 'Truncate');
+  }
+  assert.deepEqual(
+    getBuiltinInspectorField('Text', 'horizontal_overflow')?.options?.map(({ value }) => value),
+    ['Wrap', 'Overflow'],
+  );
+  assert.deepEqual(
+    getBuiltinInspectorField('Text', 'vertical_overflow')?.options?.map(({ value }) => value),
+    ['Truncate', 'Overflow'],
+  );
 });
 
 test('all authored Graphic components expose Unity raycast padding defaults', () => {

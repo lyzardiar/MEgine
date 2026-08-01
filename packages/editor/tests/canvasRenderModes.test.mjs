@@ -102,6 +102,40 @@ test('Graphic replacement materials remain visible in Editor batch metadata', ()
   ]);
 });
 
+test('Text paragraph settings reach the background-readable Canvas draw plan', () => {
+  const entities = [
+    {
+      entity: 1,
+      parent: null,
+      components: {
+        RectTransform: rect({ size_delta: [800, 600] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [120, 48] }),
+        Text: {
+          text: 'alpha beta gamma',
+          line_spacing: 1.25,
+          horizontal_overflow: 'Overflow',
+          vertical_overflow: 'Overflow',
+        },
+      },
+    },
+  ];
+  const item = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((candidate) => candidate.entity === 2);
+  assert.equal(item.text.lineSpacing, 1.25);
+  assert.equal(item.text.horizontalOverflow, 'Overflow');
+  assert.equal(item.text.verticalOverflow, 'Overflow');
+});
+
 const camera = {
   eye: [0, 0, 10],
   target: [0, 0, 0],
