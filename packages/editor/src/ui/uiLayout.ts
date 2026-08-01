@@ -926,6 +926,11 @@ export function layoutUiOverlay(
       const renderedRect = state.pixelPerfect
         ? { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.w), h: Math.round(rect.h) }
         : rect;
+      const imagePixelsPerUnitMultiplier = Math.max(0.01, number(
+        img?.pixels_per_unit_multiplier ?? img?.pixelsPerUnitMultiplier,
+        1,
+      ));
+      const imageSpritePixelScale = spritePixelScale / imagePixelsPerUnitMultiplier;
 
       if (isCanvas) {
         out.push({
@@ -991,10 +996,10 @@ export function layoutUiOverlay(
                 fillAmount: number(img.fill_amount ?? img.fillAmount, 1),
                 fillClockwise: img.fill_clockwise !== false && img.fillClockwise !== false,
                 fillOrigin: Math.trunc(number(img.fill_origin ?? img.fillOrigin, 0)),
-                spritePixelScale,
+                spritePixelScale: imageSpritePixelScale,
                 border: number4(img.border, [0, 0, 0, 0]),
                 displayBorder: number4(img.border, [0, 0, 0, 0]).map(
-                  (value) => Math.max(0, value) * spritePixelScale,
+                  (value) => Math.max(0, value) * imageSpritePixelScale,
                 ) as SpriteBorder,
                 sourceSize: number2(img.source_size ?? img.sourceSize, [100, 100]),
                 raycastTarget: img.raycast_target !== false && img.raycastTarget !== false,
@@ -1004,7 +1009,7 @@ export function layoutUiOverlay(
                 ),
                 alphaHitTestSize: [renderedRect.w, renderedRect.h],
                 alphaHitTestBorder: number4(img.border, [0, 0, 0, 0]).map(
-                  (value) => Math.max(0, value) * spritePixelScale,
+                  (value) => Math.max(0, value) * imageSpritePixelScale,
                 ) as SpriteBorder,
               }
             : undefined,

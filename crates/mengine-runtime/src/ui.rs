@@ -1814,6 +1814,14 @@ fn walk(
     let text = world.get_component::<Text>(entity);
     let graphic_start = primitives.len();
     let control_start = controls.len();
+    let image_sprite_pixel_scale = image.map_or(sprite_pixel_scale, |image| {
+        let multiplier = if image.pixels_per_unit_multiplier.is_finite() {
+            image.pixels_per_unit_multiplier.max(0.01)
+        } else {
+            1.0
+        };
+        sprite_pixel_scale / multiplier
+    });
 
     if let Some(image) = image {
         if image.image_type.eq_ignore_ascii_case("tiled") {
@@ -1826,7 +1834,7 @@ fn walk(
                 &image.sprite,
                 image.border,
                 image.source_size,
-                sprite_pixel_scale,
+                image_sprite_pixel_scale,
                 image.fill_center,
                 clip,
             );
@@ -1856,7 +1864,7 @@ fn walk(
                 &image.sprite,
                 image.border,
                 image.source_size,
-                sprite_pixel_scale,
+                image_sprite_pixel_scale,
                 image.fill_center,
                 clip,
             );
@@ -2732,8 +2740,8 @@ fn walk(
                 })
                 .unwrap_or(&image.sprite)
                 .to_owned();
-            let pixel_scale = if sprite_pixel_scale.is_finite() {
-                sprite_pixel_scale.max(0.0)
+            let pixel_scale = if image_sprite_pixel_scale.is_finite() {
+                image_sprite_pixel_scale.max(0.0)
             } else {
                 1.0
             };
@@ -6257,6 +6265,55 @@ mod tests {
             assert!((pivot_x - 110.0).abs() < 0.0001);
             assert!((pivot_y - 70.0).abs() < 0.0001);
         }
+    }
+
+    #[test]
+    fn image_pixels_per_unit_multiplier_scales_geometry_and_alpha_mapping() {
+        assert_eq!(Image::default().pixels_per_unit_multiplier, 1.0);
+        let legacy: Image = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert_eq!(legacy.pixels_per_unit_multiplier, 1.0);
+
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        let image = world.spawn_empty();
+        world.insert_component(
+            image,
+            RectTransform {
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        world.insert_component(
+            image,
+            Image {
+                image_type: "Sliced".into(),
+                border: [10.0, 20.0, 30.0, 15.0],
+                source_size: [100.0, 80.0],
+                pixels_per_unit_multiplier: 2.0,
+                alpha_hit_test_minimum_threshold: 0.25,
+                ..Image::default()
+            },
+        );
+        world.set_parent(image, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let first = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.key.material == "ui/image-sliced")
+            .unwrap();
+        assert_eq!([first.rect[2], first.rect[3]], [5.0, 7.5]);
+        let filter = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == image)
+            .and_then(|control| control.image_alpha_hit_test.as_ref())
+            .unwrap();
+        assert_eq!(filter.pixel_scale, 0.5);
+        assert_eq!(filter.destination_border, [5.0, 10.0, 15.0, 7.5]);
     }
 
     #[test]

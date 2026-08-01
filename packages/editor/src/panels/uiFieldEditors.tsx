@@ -1134,6 +1134,12 @@ export function ImageEditor(props: {
   const rawFillAmount = Number(d.fill_amount ?? d.fillAmount ?? 1);
   const fillAmount = Number.isFinite(rawFillAmount) ? Math.max(0, Math.min(1, rawFillAmount)) : 1;
   const fillOrigin = Math.max(0, Math.min(fillOrigins.length - 1, Math.trunc(Number(d.fill_origin ?? d.fillOrigin) || 0)));
+  const rawPixelsPerUnitMultiplier = Number(
+    d.pixels_per_unit_multiplier ?? d.pixelsPerUnitMultiplier ?? 1,
+  );
+  const pixelsPerUnitMultiplier = Number.isFinite(rawPixelsPerUnitMultiplier)
+    ? Math.max(0.01, rawPixelsPerUnitMultiplier)
+    : 1;
 
   const setNativeSize = () => {
     const sprite = String(d.sprite ?? 'white');
@@ -1193,6 +1199,24 @@ export function ImageEditor(props: {
             value={d.fill_center !== false && d.fillCenter !== false}
             onChange={(fill_center) => props.onPatch({ fill_center })}
           />
+          <div className="field-row">
+            <label>Pixels Per Unit Multiplier</label>
+            <input
+              type="number"
+              aria-label="Pixels Per Unit Multiplier"
+              min={0.01}
+              step={0.01}
+              value={pixelsPerUnitMultiplier}
+              onChange={(event) => {
+                const value = Number(event.target.value);
+                props.onPatch({
+                  pixels_per_unit_multiplier: Number.isFinite(value)
+                    ? Math.max(0.01, value)
+                    : 1,
+                });
+              }}
+            />
+          </div>
           <NumberVectorField
             label="Border"
             axes={['L', 'B', 'R', 'T']}

@@ -1975,3 +1975,9 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - Editor 与 Player 共享 Simple/Filled、Sliced 和 Tiled 的目标坐标到 Sprite UV 映射。Sliced 按调整后的四边框分别拉伸，Tiled 按当前 Canvas Sprite Pixel Scale 和网格预算重复中心像素；Preserve Aspect、Fill Amount 和 Fill Center 不把 GraphicRaycaster 的基础矩形缩成可见网格。SpriteSwap 使用当前 Selectable 状态 Sprite，Sprite 子资源继续限制在导入切片 UV 内。
 - Editor 从已经加载的项目图片建立只读 Alpha 平面缓存，Player 从解码纹理建立共享 `Arc` CPU Alpha 缓存并按文件时间戳失效；采样使用双线性过滤。纹理尚未加载、不可读、路径无效或切片缺失时按 Unity 的容错语义保持可点击，同时仅对未变化的资产报告一次诊断，避免一个坏资源永久锁死界面。
 - 旋转 RectTransform 先逆变换到本地坐标；World Space Canvas 保存四个投影顶点的 reciprocal-W，并以透视正确的重心插值恢复 UV，因此斜向世界 UI 不会退化为屏幕包围盒近似。无界面回归覆盖默认/旧场景兼容、Inspector、三种坐标映射、透明阈值、不可读纹理容错、Sprite slice CPU 缓存、旋转命中和 World Space 透视校正。
+
+## 179. 2026-08-01 Image Pixels Per Unit Multiplier
+
+- `Image.pixels_per_unit_multiplier` 对齐 Unity `Image.pixelsPerUnitMultiplier`：默认值为 `1`，输入下限为 `0.01`，仅在 Sliced 与 Tiled 模式显示。IDL、生成的 Rust/TypeScript API、Behaviour、组件目录、Inspector 与 Agent schema 共用同一契约，旧场景缺省字段继续按 `1` 反序列化。
+- Unity uGUI 以 `pixelsPerUnit * multiplier` 生成 Sliced/Tiled 网格；MEngine 因此把 Canvas 派生的 Sprite Pixel Scale 除以该倍率。Editor Canvas 与 Runtime 使用同一个逐 Image 有效比例计算边框、tile 尺寸和网格预算，倍率增大时边框与 tile 变小、平铺密度提高，Simple/Filled 与 Set Native Size 保持不变。
+- Alpha Hit Test 同步使用逐 Image 有效比例与目标边框，因此可见切片/平铺像素和点击采样不会错位。无窗口回归覆盖默认与旧场景兼容、Inspector 条件和下限、Editor 布局数据、Tiled 密度、Runtime Sliced 网格以及 Alpha 映射。

@@ -119,6 +119,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} target: \$\{targetLabel\}`\}/);
   assert.match(fieldEditors, /aria-label=\{`Select \$\{props\.label\} target GameObject`\}/);
   assert.match(fieldEditors, /aria-label="Image Type"/);
+  assert.match(fieldEditors, /aria-label="Pixels Per Unit Multiplier"/);
   assert.match(projectSettings, /aria-label=\{`Remove tag \$\{tag\}`\}/);
   assert.match(projectSettings, /aria-label=\{`Remove GameObject layer \$\{layer\.name\}`\}/);
   assert.match(projectSettings, /aria-label=\{`Remove sorting layer \$\{layer\.name\}`\}/);

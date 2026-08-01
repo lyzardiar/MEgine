@@ -565,6 +565,12 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       label: 'Fill Center',
       visibleWhen: { field: 'image_type', equals: ['Sliced', 'Tiled'] },
     },
+    pixels_per_unit_multiplier: {
+      label: 'Pixels Per Unit Multiplier',
+      min: 0.01,
+      step: 0.01,
+      visibleWhen: { field: 'image_type', equals: ['Sliced', 'Tiled'] },
+    },
     border: { visibleWhen: { field: 'image_type', equals: ['Sliced', 'Tiled'] } },
     fill_method: {
       label: 'Fill Method',

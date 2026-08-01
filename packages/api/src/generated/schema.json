@@ -944,6 +944,9 @@
       "image_type": {
         "type": "string"
       },
+      "pixels_per_unit_multiplier": {
+        "type": "number"
+      },
       "preserve_aspect": {
         "type": "boolean"
       },
@@ -966,6 +969,7 @@
       "image_type",
       "preserve_aspect",
       "fill_center",
+      "pixels_per_unit_multiplier",
       "fill_method",
       "fill_amount",
       "fill_clockwise",

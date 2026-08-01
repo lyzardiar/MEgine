@@ -437,6 +437,7 @@ export interface Image {
   imageType: string;
   preserveAspect: boolean;
   fillCenter: boolean;
+  pixelsPerUnitMultiplier: number;
   fillMethod: string;
   fillAmount: number;
   fillClockwise: boolean;

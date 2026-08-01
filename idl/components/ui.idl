@@ -77,6 +77,8 @@ component Image {
   preserve_aspect: bool   = false
   /// Render the center region of a bordered Sliced image.
   fill_center:     bool   = true
+  /// Image-local density multiplier used by Unity Sliced and Tiled geometry.
+  pixels_per_unit_multiplier: float = 1
   /// "Horizontal" | "Vertical" | "Radial90" | "Radial180" | "Radial360"
   fill_method:     string = "Radial360"
   /// Visible fraction for Filled images, clamped to 0..1.

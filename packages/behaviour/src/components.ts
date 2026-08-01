@@ -147,6 +147,7 @@ export class Image {
   image_type!: string;
   preserve_aspect!: boolean;
   fill_center!: boolean;
+  pixels_per_unit_multiplier!: number;
   fill_method!: string;
   fill_amount!: number;
   fill_clockwise!: boolean;

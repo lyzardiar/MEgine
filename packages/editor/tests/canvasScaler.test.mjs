@@ -105,6 +105,7 @@ test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', ()
     image_type: 'Simple',
     preserve_aspect: false,
     fill_center: true,
+    pixels_per_unit_multiplier: 1,
     fill_method: 'Radial360',
     fill_amount: 1,
     fill_clockwise: true,
@@ -123,6 +124,12 @@ test('Image exposes Unity Preserve Aspect, Fill Center, and Filled defaults', ()
   assert.deepEqual(getBuiltinInspectorField('Image', 'fill_center')?.visibleWhen, {
     field: 'image_type',
     equals: ['Sliced', 'Tiled'],
+  });
+  assert.deepEqual(getBuiltinInspectorField('Image', 'pixels_per_unit_multiplier'), {
+    label: 'Pixels Per Unit Multiplier',
+    min: 0.01,
+    step: 0.01,
+    visibleWhen: { field: 'image_type', equals: ['Sliced', 'Tiled'] },
   });
   assert.deepEqual(
     getBuiltinInspectorField('Image', 'image_type')?.options?.map(({ value }) => value),

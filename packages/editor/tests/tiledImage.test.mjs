@@ -33,6 +33,28 @@ test('Tiled Image Fill Center keeps borders while borderless sprites remain visi
   assert.equal(borderless.length, 6);
 });
 
+test('Image pixels-per-unit multiplier increases tiled density', () => {
+  const baseline = planTiledImage(
+    [40, 30],
+    [75, 55],
+    [5, 5, 5, 5],
+    [5, 5, 5, 5],
+    1,
+    true,
+  );
+  const doubledPixelsPerUnit = planTiledImage(
+    [40, 30],
+    [75, 55],
+    [5, 5, 5, 5],
+    [2.5, 2.5, 2.5, 2.5],
+    0.5,
+    true,
+  );
+  assert.equal(baseline.length, 25);
+  assert.equal(doubledPixelsPerUnit.length, 49);
+  assert.deepEqual(doubledPixelsPerUnit[0].destination, { x: 0, y: 0, w: 2.5, h: 2.5 });
+});
+
 test('Tiled Image enlarges tiles instead of exceeding Unity mesh budget', () => {
   const regions = planTiledImage([1, 1], [1_000_000, 1_000_000], [0, 0, 0, 0]);
   assert.ok(regions.length <= MAX_TILED_IMAGE_QUADS);

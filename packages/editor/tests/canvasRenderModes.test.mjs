@@ -74,6 +74,7 @@ test('Tiled Image authoring data reaches the Canvas draw plan', () => {
           sprite: 'white',
           image_type: 'Tiled',
           fill_center: false,
+          pixels_per_unit_multiplier: 2,
           border: [5, 5, 5, 5],
           source_size: [40, 30],
         },
@@ -87,7 +88,9 @@ test('Tiled Image authoring data reaches the Canvas draw plan', () => {
   ).find((candidate) => candidate.entity === 2);
   assert.equal(item?.image?.imageType, 'Tiled');
   assert.equal(item?.image?.fillCenter, false);
-  assert.equal(item?.image?.spritePixelScale, 1);
+  assert.equal(item?.image?.spritePixelScale, 0.5);
+  assert.deepEqual(item?.image?.displayBorder, [2.5, 2.5, 2.5, 2.5]);
+  assert.deepEqual(item?.image?.alphaHitTestBorder, [2.5, 2.5, 2.5, 2.5]);
 });
 
 test('Filled Image authoring data reaches the Canvas draw plan', () => {
