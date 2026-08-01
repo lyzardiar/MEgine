@@ -120,6 +120,7 @@ test('Text paragraph settings reach the background-readable Canvas draw plan', (
         Text: {
           text: 'alpha beta gamma',
           font_style: 'BoldAndItalic',
+          align_by_geometry: true,
           line_spacing: 1.25,
           resize_text_for_best_fit: true,
           resize_text_min_size: 9,
@@ -137,6 +138,7 @@ test('Text paragraph settings reach the background-readable Canvas draw plan', (
   ).find((candidate) => candidate.entity === 2);
   assert.equal(item.text.lineSpacing, 1.25);
   assert.equal(item.text.fontStyle, 'BoldAndItalic');
+  assert.equal(item.text.alignByGeometry, true);
   assert.equal(item.text.bestFit, true);
   assert.equal(item.text.minSize, 9);
   assert.equal(item.text.maxSize, 31);

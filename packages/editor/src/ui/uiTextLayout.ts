@@ -7,6 +7,7 @@ export interface UiTextLayoutOptions {
   height: number;
   fontSize: number;
   fontStyle: UiTextFontStyle;
+  alignByGeometry: boolean;
   bestFit: boolean;
   minSize: number;
   maxSize: number;
@@ -56,6 +57,78 @@ function textWidth(
   overhang: number,
 ): number {
   return characterCount > 0 ? characterCount * advance - glyphScale + overhang : 0;
+}
+
+const BITMAP_GLYPH_ROWS: Readonly<Record<string, readonly number[]>> = {
+  A: [14, 17, 17, 31, 17, 17, 17], B: [30, 17, 17, 30, 17, 17, 30],
+  C: [15, 16, 16, 16, 16, 16, 15], D: [30, 17, 17, 17, 17, 17, 30],
+  E: [31, 16, 16, 30, 16, 16, 31], F: [31, 16, 16, 30, 16, 16, 16],
+  G: [15, 16, 16, 23, 17, 17, 15], H: [17, 17, 17, 31, 17, 17, 17],
+  I: [31, 4, 4, 4, 4, 4, 31], J: [7, 2, 2, 2, 18, 18, 12],
+  K: [17, 18, 20, 24, 20, 18, 17], L: [16, 16, 16, 16, 16, 16, 31],
+  M: [17, 27, 21, 21, 17, 17, 17], N: [17, 25, 21, 19, 17, 17, 17],
+  O: [14, 17, 17, 17, 17, 17, 14], P: [30, 17, 17, 30, 16, 16, 16],
+  Q: [14, 17, 17, 17, 21, 18, 13], R: [30, 17, 17, 30, 20, 18, 17],
+  S: [15, 16, 16, 14, 1, 1, 30], T: [31, 4, 4, 4, 4, 4, 4],
+  U: [17, 17, 17, 17, 17, 17, 14], V: [17, 17, 17, 17, 17, 10, 4],
+  W: [17, 17, 17, 21, 21, 21, 10], X: [17, 17, 10, 4, 10, 17, 17],
+  Y: [17, 17, 10, 4, 4, 4, 4], Z: [31, 1, 2, 4, 8, 16, 31],
+  '0': [14, 17, 19, 21, 25, 17, 14], '1': [4, 12, 4, 4, 4, 4, 14],
+  '2': [14, 17, 1, 2, 4, 8, 31], '3': [30, 1, 1, 14, 1, 1, 30],
+  '4': [2, 6, 10, 18, 31, 2, 2], '5': [31, 16, 16, 30, 1, 1, 30],
+  '6': [14, 16, 16, 30, 17, 17, 14], '7': [31, 1, 2, 4, 8, 8, 8],
+  '8': [14, 17, 17, 14, 17, 17, 14], '9': [14, 17, 17, 15, 1, 1, 14],
+  ' ': [0, 0, 0, 0, 0, 0, 0], '-': [0, 0, 0, 31, 0, 0, 0],
+  '.': [0, 0, 0, 0, 0, 12, 12], ':': [0, 12, 12, 0, 12, 12, 0],
+};
+
+const FALLBACK_GLYPH_ROWS = [31, 17, 6, 4, 6, 17, 31] as const;
+
+function glyphGeometryBounds(
+  character: string,
+  glyphScale: number,
+  fontStyle: UiTextFontStyle,
+): [number, number] | null {
+  const rows = BITMAP_GLYPH_ROWS[character.toUpperCase()] ?? FALLBACK_GLYPH_ROWS;
+  const boldWidth = fontStyle === 'Bold' || fontStyle === 'BoldAndItalic'
+    ? glyphScale * 0.5
+    : 0;
+  const italic = fontStyle === 'Italic' || fontStyle === 'BoldAndItalic';
+  let minimum = Number.POSITIVE_INFINITY;
+  let maximum = Number.NEGATIVE_INFINITY;
+  rows.forEach((row, rowIndex) => {
+    const italicOffset = italic ? (6 - rowIndex) * glyphScale * 0.25 : 0;
+    for (let column = 0; column < 5; column += 1) {
+      if ((row & (1 << (4 - column))) === 0) continue;
+      minimum = Math.min(minimum, column * glyphScale + italicOffset);
+      maximum = Math.max(
+        maximum,
+        (column + 1) * glyphScale + italicOffset + boldWidth,
+      );
+    }
+  });
+  return Number.isFinite(minimum) && Number.isFinite(maximum)
+    ? [minimum, maximum]
+    : null;
+}
+
+function textGeometryBounds(
+  value: string,
+  advance: number,
+  glyphScale: number,
+  fontStyle: UiTextFontStyle,
+): [number, number] | null {
+  let minimum = Number.POSITIVE_INFINITY;
+  let maximum = Number.NEGATIVE_INFINITY;
+  Array.from(value).forEach((character, index) => {
+    const bounds = glyphGeometryBounds(character, glyphScale, fontStyle);
+    if (!bounds) return;
+    minimum = Math.min(minimum, index * advance + bounds[0]);
+    maximum = Math.max(maximum, index * advance + bounds[1]);
+  });
+  return Number.isFinite(minimum) && Number.isFinite(maximum)
+    ? [minimum, maximum]
+    : null;
 }
 
 function wrapParagraph(value: string, maxColumns: number): string[] {
@@ -139,11 +212,16 @@ function layoutUiTextAtFontSize(
   const lines = visibleLines.map((text, index) => {
     const characterCount = Array.from(text).length;
     const measuredWidth = textWidth(characterCount, advance, glyphScale, overhang);
+    const geometry = options.alignByGeometry
+      ? textGeometryBounds(text, advance, glyphScale, options.fontStyle)
+      : null;
+    const leftExtent = geometry?.[0] ?? 0;
+    const rightExtent = geometry?.[1] ?? measuredWidth;
     const x = options.alignment === 'Left'
-      ? 0
+      ? (leftExtent === 0 ? 0 : -leftExtent)
       : options.alignment === 'Right'
-        ? width - measuredWidth
-        : (width - measuredWidth) * 0.5;
+        ? width - rightExtent
+        : (width - leftExtent - rightExtent) * 0.5;
     return {
       text,
       x,

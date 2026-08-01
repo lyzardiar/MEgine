@@ -235,6 +235,43 @@ test('Canvas preview draws Text with the resolved Unity Best Fit size', () => {
   assert.equal(line.at(-1), 'italic 700 9px system-ui, sans-serif');
 });
 
+test('Canvas preview positions Text from Unity visible geometry alignment', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: { Canvas: {}, RectTransform: { size_delta: [100, 100] } },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: { size_delta: [20, 16] },
+        Text: {
+          text: '1',
+          font_size: 7,
+          alignment: 'Right',
+          vertical_align: 'Top',
+          align_by_geometry: true,
+          horizontal_overflow: 'Overflow',
+          vertical_overflow: 'Truncate',
+        },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 100, h: 100 }, new Set());
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  canvas.context.measureText = () => ({
+    width: 5,
+    actualBoundingBoxLeft: 1,
+    actualBoundingBoxRight: 3,
+  });
+  drawUiItems(canvas.context, items, null, null);
+  const line = canvas.context.operations.find((operation) => operation[0] === 'fillText');
+  assert.equal(line[2], 57);
+  assert.equal(canvas.context.textAlign, 'left');
+});
+
 test('adding an authored Graphic creates and protects its CanvasRenderer dependency', async () => {
   const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
   const store = createEditorStore();

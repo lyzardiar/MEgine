@@ -2116,7 +2116,7 @@ fn walk(
 
     if let Some(text) = text {
         let material_start = primitives.len();
-        push_text_styled(
+        push_text_styled_aligned(
             primitives,
             rect,
             &text.text,
@@ -2125,6 +2125,7 @@ fn walk(
             (text.outline_width * scale).max(0.0),
             text.font_size * scale,
             &text.font_style,
+            text.align_by_geometry,
             text.resize_text_for_best_fit,
             text.resize_text_min_size as f32,
             text.resize_text_max_size as f32,
@@ -4623,6 +4624,52 @@ fn bitmap_text_width(
     }
 }
 
+fn bitmap_glyph_geometry_bounds(
+    character: char,
+    glyph_scale: f32,
+    font_style: &str,
+) -> Option<(f32, f32)> {
+    let rows = glyph_rows(character);
+    let (bold, italic) = bitmap_font_style(font_style);
+    let bold_width = if bold { glyph_scale * 0.5 } else { 0.0 };
+    let mut minimum = f32::INFINITY;
+    let mut maximum = f32::NEG_INFINITY;
+    for (row_index, row) in rows.iter().enumerate() {
+        let italic_offset = if italic {
+            (6 - row_index) as f32 * glyph_scale * 0.25
+        } else {
+            0.0
+        };
+        for column in 0..5 {
+            if row & (1 << (4 - column)) == 0 {
+                continue;
+            }
+            minimum = minimum.min(column as f32 * glyph_scale + italic_offset);
+            maximum = maximum.max((column + 1) as f32 * glyph_scale + italic_offset + bold_width);
+        }
+    }
+    (minimum.is_finite() && maximum.is_finite()).then_some((minimum, maximum))
+}
+
+fn bitmap_text_geometry_bounds(
+    characters: &[char],
+    advance: f32,
+    glyph_scale: f32,
+    font_style: &str,
+) -> Option<(f32, f32)> {
+    let mut minimum = f32::INFINITY;
+    let mut maximum = f32::NEG_INFINITY;
+    for (index, character) in characters.iter().enumerate() {
+        let Some((left, right)) = bitmap_glyph_geometry_bounds(*character, glyph_scale, font_style)
+        else {
+            continue;
+        };
+        minimum = minimum.min(index as f32 * advance + left);
+        maximum = maximum.max(index as f32 * advance + right);
+    }
+    (minimum.is_finite() && maximum.is_finite()).then_some((minimum, maximum))
+}
+
 fn bitmap_text_characters(value: &str) -> Vec<char> {
     let mut characters = Vec::with_capacity(value.len());
     for character in value.chars() {
@@ -4687,6 +4734,7 @@ fn layout_bitmap_text_at_font_size(
     rect: UiRect,
     font_size: f32,
     font_style: &str,
+    align_by_geometry: bool,
     alignment: &str,
     vertical_align: &str,
     line_spacing: f32,
@@ -4761,10 +4809,17 @@ fn layout_bitmap_text_at_font_size(
         .map(|(index, characters)| {
             let line_width =
                 bitmap_text_width(characters.len(), advance, glyph_scale, style_overhang);
+            let geometry = if align_by_geometry {
+                bitmap_text_geometry_bounds(characters, advance, glyph_scale, font_style)
+            } else {
+                None
+            };
+            let left_extent = geometry.map_or(0.0, |bounds| bounds.0);
+            let right_extent = geometry.map_or(line_width, |bounds| bounds.1);
             let x = match alignment {
-                "Left" => rect.x,
-                "Right" => rect.x + width - line_width,
-                _ => rect.x + (width - line_width) * 0.5,
+                "Left" => rect.x - left_extent,
+                "Right" => rect.x + width - right_extent,
+                _ => rect.x + (width - left_extent - right_extent) * 0.5,
             };
             BitmapTextLine {
                 characters: characters.clone(),
@@ -4799,11 +4854,12 @@ fn bitmap_text_layout_fits(layout: &BitmapTextLayout, rect: UiRect, text: &str) 
 }
 
 #[allow(clippy::too_many_arguments)]
-fn layout_bitmap_text(
+fn layout_bitmap_text_aligned(
     text: &str,
     rect: UiRect,
     font_size: f32,
     font_style: &str,
+    align_by_geometry: bool,
     best_fit: bool,
     min_size: f32,
     max_size: f32,
@@ -4820,6 +4876,7 @@ fn layout_bitmap_text(
             rect,
             font_size,
             font_style,
+            align_by_geometry,
             alignment,
             vertical_align,
             line_spacing,
@@ -4852,6 +4909,7 @@ fn layout_bitmap_text(
             rect,
             candidate as f32 * font_scale,
             font_style,
+            align_by_geometry,
             alignment,
             vertical_align,
             line_spacing,
@@ -4870,6 +4928,42 @@ fn layout_bitmap_text(
         rect,
         resolved as f32 * font_scale,
         font_style,
+        align_by_geometry,
+        alignment,
+        vertical_align,
+        line_spacing,
+        horizontal_overflow,
+        vertical_overflow,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg(test)]
+fn layout_bitmap_text(
+    text: &str,
+    rect: UiRect,
+    font_size: f32,
+    font_style: &str,
+    best_fit: bool,
+    min_size: f32,
+    max_size: f32,
+    font_scale: f32,
+    alignment: &str,
+    vertical_align: &str,
+    line_spacing: f32,
+    horizontal_overflow: &str,
+    vertical_overflow: &str,
+) -> BitmapTextLayout {
+    layout_bitmap_text_aligned(
+        text,
+        rect,
+        font_size,
+        font_style,
+        false,
+        best_fit,
+        min_size,
+        max_size,
+        font_scale,
         alignment,
         vertical_align,
         line_spacing,
@@ -4899,12 +4993,58 @@ fn push_text_styled(
     vertical_overflow: &str,
     clip: UiClipRect,
 ) {
+    push_text_styled_aligned(
+        primitives,
+        rect,
+        text,
+        color,
+        outline_color,
+        outline_width,
+        font_size,
+        font_style,
+        false,
+        best_fit,
+        min_size,
+        max_size,
+        font_scale,
+        alignment,
+        vertical_align,
+        line_spacing,
+        horizontal_overflow,
+        vertical_overflow,
+        clip,
+    );
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_text_styled_aligned(
+    primitives: &mut Vec<UiPrimitive>,
+    rect: UiRect,
+    text: &str,
+    color: [f32; 4],
+    outline_color: [f32; 4],
+    outline_width: f32,
+    font_size: f32,
+    font_style: &str,
+    align_by_geometry: bool,
+    best_fit: bool,
+    min_size: f32,
+    max_size: f32,
+    font_scale: f32,
+    alignment: &str,
+    vertical_align: &str,
+    line_spacing: f32,
+    horizontal_overflow: &str,
+    vertical_overflow: &str,
+    clip: UiClipRect,
+) {
     let primitive_start = primitives.len();
-    let layout = layout_bitmap_text(
+    let layout = layout_bitmap_text_aligned(
         text,
         rect,
         font_size,
         font_style,
+        align_by_geometry,
         best_fit,
         min_size,
         max_size,
@@ -5428,6 +5568,7 @@ mod tests {
         assert_eq!(legacy_text.raycast_padding, [0.0; 4]);
         assert_eq!(legacy_text.line_spacing, 1.0);
         assert_eq!(legacy_text.font_style, "Normal");
+        assert!(!legacy_text.align_by_geometry);
         assert!(!legacy_text.resize_text_for_best_fit);
         assert_eq!(legacy_text.resize_text_min_size, 10);
         assert_eq!(legacy_text.resize_text_max_size, 40);
@@ -8350,6 +8491,50 @@ mod tests {
         );
         assert_eq!(bounded.lines[0].characters.len(), MAX_UI_TEXT_CHARACTERS);
         assert!(bounded.truncated);
+    }
+
+    #[test]
+    fn text_align_by_geometry_uses_visible_bitmap_glyph_bounds() {
+        let rect = UiRect {
+            x: 10.0,
+            y: 20.0,
+            width: 20.0,
+            height: 16.0,
+        };
+        let metric = layout_bitmap_text(
+            "1", rect, 7.0, "Normal", false, 10.0, 40.0, 1.0, "Right", "Top", 1.0, "Overflow",
+            "Truncate",
+        );
+        let geometry = layout_bitmap_text_aligned(
+            "1", rect, 7.0, "Normal", true, false, 10.0, 40.0, 1.0, "Right", "Top", 1.0,
+            "Overflow", "Truncate",
+        );
+        assert_eq!(metric.lines[0].x, 25.0);
+        assert_eq!(geometry.lines[0].x, 26.0);
+
+        let styled_geometry = layout_bitmap_text_aligned(
+            "1",
+            rect,
+            7.0,
+            "BoldAndItalic",
+            true,
+            false,
+            10.0,
+            40.0,
+            1.0,
+            "Right",
+            "Top",
+            1.0,
+            "Overflow",
+            "Truncate",
+        );
+        assert_eq!(styled_geometry.lines[0].x, 25.0);
+
+        let leading_spaces = layout_bitmap_text_aligned(
+            "  A", rect, 7.0, "Normal", true, false, 10.0, 40.0, 1.0, "Left", "Top", 1.0,
+            "Overflow", "Truncate",
+        );
+        assert_eq!(leading_spaces.lines[0].x, -2.0);
     }
 
     #[test]

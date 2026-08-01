@@ -177,6 +177,8 @@ component Text {
   font_size:       float  = 16
   /// Unity FontStyle: "Normal" | "Bold" | "Italic" | "BoldAndItalic".
   font_style:      string = "Normal"
+  /// Unity Text.alignByGeometry. Aligns visible glyph bounds instead of advance metrics.
+  align_by_geometry: bool = false
   /// Unity Text.resizeTextForBestFit. Chooses the largest fitting integer size in the range.
   resize_text_for_best_fit: bool = false
   /// Unity Text.resizeTextMinSize.

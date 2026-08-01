@@ -170,6 +170,7 @@ export type UiDrawItem = {
     color: [number, number, number, number];
     fontSize: number;
     fontStyle: 'Normal' | 'Bold' | 'Italic' | 'BoldAndItalic';
+    alignByGeometry: boolean;
     bestFit: boolean;
     minSize: number;
     maxSize: number;
@@ -1218,6 +1219,8 @@ export function layoutUiOverlay(
                   ['Normal', 'Bold', 'Italic', 'BoldAndItalic'] as const,
                   'Normal',
                 ),
+                alignByGeometry:
+                  text.align_by_geometry === true || text.alignByGeometry === true,
                 bestFit:
                   text.resize_text_for_best_fit === true
                   || text.resizeTextForBestFit === true,
@@ -2909,6 +2912,23 @@ export function drawUiItems(
     if (maxWidth == null) ctx.fillText(value, x, y);
     else ctx.fillText(value, x, y, maxWidth);
   };
+  const measuredGeometryTextX = (
+    value: string,
+    rectX: number,
+    rectWidth: number,
+    alignment: 'Left' | 'Center' | 'Right',
+    fallback: number,
+  ) => {
+    const metrics = ctx.measureText(value);
+    const left = metrics.actualBoundingBoxLeft;
+    const right = metrics.actualBoundingBoxRight;
+    if (!Number.isFinite(left) || !Number.isFinite(right) || left + right <= 0) {
+      return fallback;
+    }
+    if (alignment === 'Left') return rectX + left;
+    if (alignment === 'Right') return rectX + rectWidth - right;
+    return rectX + rectWidth * 0.5 + (left - right) * 0.5;
+  };
 
   for (const batch of batches) for (const sourceItem of batch.items) {
     if (drawMaskedItem(sourceItem)) continue;
@@ -3341,18 +3361,14 @@ export function drawUiItems(
 
       if (it.text) {
         ctx.fillStyle = cssColor(it.text.color);
-        ctx.textAlign = it.text.alignment.toLowerCase() as CanvasTextAlign;
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        const textX = it.text.alignment === 'Left'
-          ? x
-          : it.text.alignment === 'Right'
-            ? x + w
-            : x + w * 0.5;
         const layout = layoutUiText(it.text.text, {
           width: w,
           height: h,
           fontSize: it.text.fontSize,
           fontStyle: it.text.fontStyle,
+          alignByGeometry: it.text.alignByGeometry,
           bestFit: it.text.bestFit,
           minSize: it.text.minSize,
           maxSize: it.text.maxSize,
@@ -3370,6 +3386,16 @@ export function drawUiItems(
           || it.text.fontStyle === 'BoldAndItalic';
         ctx.font = `${italic ? 'italic ' : ''}${bold ? '700 ' : ''}${fontSize}px system-ui, sans-serif`;
         for (const line of layout.lines) {
+          const fallbackX = x + line.x;
+          const textX = it.text.alignByGeometry
+            ? measuredGeometryTextX(
+                line.text,
+                x,
+                w,
+                it.text.alignment,
+                fallbackX,
+              )
+            : fallbackX;
           fillReadableText(
             line.text,
             textX,

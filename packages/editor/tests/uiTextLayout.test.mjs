@@ -19,6 +19,7 @@ const options = (overrides = {}) => ({
   height: 16,
   fontSize: 7,
   fontStyle: 'Normal',
+  alignByGeometry: false,
   bestFit: false,
   minSize: 10,
   maxSize: 40,
@@ -180,4 +181,37 @@ test('Unity Font Style overhang participates in wrapping and Best Fit', () => {
     horizontalOverflow: 'Overflow',
   }));
   assert.equal(bestFit.fontSize, 9);
+});
+
+test('Unity Align By Geometry aligns visible glyph bounds instead of advance metrics', () => {
+  const metric = layoutUiText('1', options({
+    width: 20,
+    horizontalOverflow: 'Overflow',
+    alignment: 'Right',
+  }));
+  const geometry = layoutUiText('1', options({
+    width: 20,
+    horizontalOverflow: 'Overflow',
+    alignment: 'Right',
+    alignByGeometry: true,
+  }));
+  assert.equal(metric.lines[0].x, 15);
+  assert.equal(geometry.lines[0].x, 16);
+
+  const styledGeometry = layoutUiText('1', options({
+    width: 20,
+    fontStyle: 'BoldAndItalic',
+    horizontalOverflow: 'Overflow',
+    alignment: 'Right',
+    alignByGeometry: true,
+  }));
+  assert.equal(styledGeometry.lines[0].x, 15);
+
+  const leading = layoutUiText('  A', options({
+    width: 20,
+    horizontalOverflow: 'Overflow',
+    alignment: 'Left',
+    alignByGeometry: true,
+  }));
+  assert.equal(leading.lines[0].x, -12);
 });

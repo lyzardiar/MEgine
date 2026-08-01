@@ -187,6 +187,7 @@ test('Text Graphic defaults to a Unity raycast target', () => {
     assert.equal(text.raycast_target, true);
     assert.equal(text.line_spacing, 1);
     assert.equal(text.font_style, 'Normal');
+    assert.equal(text.align_by_geometry, false);
     assert.equal(text.resize_text_for_best_fit, false);
     assert.equal(text.resize_text_min_size, 10);
     assert.equal(text.resize_text_max_size, 40);

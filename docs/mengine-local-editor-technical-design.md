@@ -2095,7 +2095,7 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `Text` 新增 Unity 风格的 `line_spacing`、`horizontal_overflow` 与 `vertical_overflow`，默认分别为 `1`、`Wrap`、`Truncate`。IDL、生成的 Rust/TypeScript/JSON Schema、组件目录、标准 UI/Text 工厂、Inspector 枚举与 Agent component schema 使用同一契约；旧场景缺失字段时通过生成默认值进入 Unity 的常规段落行为。
 - Editor Canvas 与 Runtime 现在先规范化 CRLF、显式换行和 Tab，再使用同一固定字形度量执行按词换行；超长单词按 Unicode 字符边界拆分，不切断代理对。每行独立执行 Left/Center/Right，对整个可见文本块执行 Top/Middle/Bottom；Line Spacing 是字体行高乘数。Horizontal Overflow 关闭自动换行但保留显式换行，Vertical Overflow 允许完整文本块越过自身 RectTransform；Truncate 只保留完整可容纳行，不制造半行几何。文字 Outline、替换 UI Material、CanvasGroup、Mask/Stencil、RectMask2D 与最终批次继续作用于排版后的全部字形。
 - 排版输入限制为 16,384 个 Unicode 字符和 4,096 行，Runtime 单个 Text 每帧最多生成 65,536 个字形像素/轮廓图元；超限使用确定性前缀并标记布局截断，避免恶意或失控 Agent 写入导致无界 CPU、内存和 GPU 实例增长。无窗口回归覆盖按词换行、CRLF、长词/Unicode、垂直截断、Overflow、行距、块对齐、Editor 实际多次 draw call、Runtime 字形几何以及 hostile input 上限。
-- 当前 Runtime 仍使用内置 5×7 位图字形，Editor 使用系统字体近似；Font 资产、Rich Text 与 Align By Geometry 尚未纳入本批，因此该批完成的是基础段落与溢出契约，不宣称 Unity Text 已全部等价。
+- 当前 Runtime 仍使用内置 5×7 位图字形，Editor 使用系统字体近似；Font 资产与 Rich Text 尚未纳入本批，因此该批完成的是基础段落与溢出契约，不宣称 Unity Text 已全部等价。
 
 ## 200. 2026-08-01 Unity Text Best Fit
 
@@ -2107,4 +2107,10 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 
 - `Text.font_style` 对齐 Unity `FontStyle` 的 `Normal`、`Bold`、`Italic`、`BoldAndItalic` 四个值并默认 `Normal`。IDL、生成的 Rust/TypeScript/JSON Schema、Behaviour token、组件目录、标准 Text 工厂、Inspector 枚举与 Agent component schema 使用同一契约；旧场景缺失字段继续呈现普通字体。
 - Editor Canvas 使用真实 CSS font weight/style 绘制加粗、斜体或组合样式。Runtime 内置位图字体用增加半个像素单元宽度实现 Bold，并按字形行从底到顶执行最大 1.5 个像素单元的正向斜切实现 Italic；Outline 使用同一变形后的字形矩形，因此不会与正文样式脱节。样式外伸量同时进入逐行宽度、Left/Center/Right 对齐、自动换行与 Best Fit 求解，不会出现预览看似缩小但 Player 样式几何仍越界的假支持。
-- 字形数量和每帧 65,536 图元预算保持不变；Bold 扩宽现有像素矩形而不是无界复制，Italic 只改变有限坐标。无窗口回归覆盖默认值、四值枚举、Agent schema、后台 Canvas draw plan、实际 Editor font 字符串、样式宽度、Best Fit 缩小以及 Runtime 字形坐标和宽度。Editor 仍使用系统字体近似、Runtime 仍使用 5×7 位图，Font 资产、Rich Text 与 Align By Geometry 继续作为独立缺口。
+- 字形数量和每帧 65,536 图元预算保持不变；Bold 扩宽现有像素矩形而不是无界复制，Italic 只改变有限坐标。无窗口回归覆盖默认值、四值枚举、Agent schema、后台 Canvas draw plan、实际 Editor font 字符串、样式宽度、Best Fit 缩小以及 Runtime 字形坐标和宽度。Editor 仍使用系统字体近似、Runtime 仍使用 5×7 位图，Font 资产与 Rich Text 继续作为独立缺口。
+
+## 202. 2026-08-01 Unity Text Align By Geometry
+
+- `Text.align_by_geometry` 对齐 Unity `Text.alignByGeometry` authoring 契约，默认 `false`。IDL、生成的 Rust/TypeScript/JSON Schema、组件目录、标准 Text 工厂、Inspector 与 Agent schema 共享同一字段，后台 Canvas draw plan 也显式暴露最终取值。
+- 关闭时沿用字形 advance metrics；开启时 Left/Center/Right 改用每行可见字形的左右几何边界，因此前导/尾随空格与 `1`、`.`、`:` 等窄字形不会把可见内容错误推离目标边缘。换行、Best Fit 和逐行宽度仍按 advance metrics 求解，避免对齐开关改变排版换行，这是 Unity 该选项只影响水平对齐的边界。
+- Editor 不再把水平对齐委托给浏览器字体锚点：实际 Canvas 优先使用当前系统字体的 `TextMetrics.actualBoundingBoxLeft/Right`，不提供该度量的后台测试环境则使用同一份确定性 5×7 几何回退。Runtime 逐行扫描真正点亮的位图像素并包含每一行实际的 Bold 扩宽与 Italic 斜切，而不是仅对少数字符写死边界。无窗口回归覆盖旧场景默认值、Agent schema、后台 draw plan、Editor 实际 `fillText` 坐标、Runtime 窄字形、组合样式与前导空格。当前系统字体和内置位图的具体字形轮廓仍是近似，Font 资产与 Rich Text 作为后续独立缺口。
