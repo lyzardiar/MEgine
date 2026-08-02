@@ -149,7 +149,10 @@ export function SchemaFieldEditor(props: {
     if (f.type === 'asset') {
       const supportedKinds = (f.assetKinds ?? []).filter(
         (kind): kind is ProjectFileAsset['kind'] =>
-          kind === 'spine-json' || kind === 'spine-binary' || kind === 'spine-atlas',
+          kind === 'spine-json'
+          || kind === 'spine-binary'
+          || kind === 'spine-atlas'
+          || kind === 'effekseer-effect',
       );
       return (
         <FieldChrome key={f.key} field={f}>

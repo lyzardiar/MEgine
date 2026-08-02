@@ -22,6 +22,7 @@ import {
   Package,
   Palette,
   RotateCcw,
+  Sparkles,
   Trash2,
   Type,
   Upload,
@@ -98,7 +99,7 @@ type AssetItem = {
   assetPath?: string;
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'font' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'effekseer-effect' | 'font' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
   icon: ReactNode;
   sceneName?: string;
@@ -133,6 +134,7 @@ export function Project(props: {
   onOpenTimeline: (path: string) => void;
   onOpenSprite: (path: string) => void;
   onOpenSpriteAtlas: (path: string) => void;
+  onOpenEffekseer: (path: string) => void;
   onRenameScene: (oldName: string, newName: string) => boolean | Promise<boolean>;
   onDeleteScene: (name: string) => boolean | Promise<boolean>;
   onPrepareAssetTransaction: () => boolean | Promise<boolean>;
@@ -361,6 +363,8 @@ export function Project(props: {
         ? 'audio'
       : asset.kind === 'font'
         ? 'font'
+      : asset.kind === 'effekseer-effect'
+        ? 'effekseer-effect'
       : asset.kind === 'material'
         ? 'material'
         : asset.kind === 'shader'
@@ -393,6 +397,8 @@ export function Project(props: {
         ? <Music size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'font'
         ? <Type size={24} strokeWidth={1.4} aria-hidden="true" />
+        : kind === 'effekseer-effect'
+        ? <Sparkles size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'animation'
         ? <Film size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'material'
@@ -539,6 +545,10 @@ export function Project(props: {
       void toggleProjectAudioPreview(a.spriteId)
         .then((state) => props.onLog?.(`${state === 'playing' ? 'Previewing' : 'Stopped'} ${a.name}`))
         .catch((error) => props.onLog?.(`Audio preview failed: ${String(error)}`, 'error'));
+      return;
+    }
+    if (a.kind === 'effekseer-effect' && a.spriteId) {
+      props.onOpenEffekseer(a.spriteId);
       return;
     }
     if (a.kind === 'prefab' && a.spriteId) {

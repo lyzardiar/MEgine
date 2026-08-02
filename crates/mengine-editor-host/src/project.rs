@@ -326,6 +326,14 @@ pub struct ProjectSession {
 }
 
 impl ProjectSession {
+    pub fn project_root(&self) -> &Path {
+        &self.project_root
+    }
+
+    pub fn active_world(&self) -> &World {
+        self.editor.active_world()
+    }
+
     pub fn create(parent: impl AsRef<Path>, name: &str) -> Result<Self, ProjectError> {
         let name = validate_project_name(name)?;
         let parent = std::fs::canonicalize(parent.as_ref())?;

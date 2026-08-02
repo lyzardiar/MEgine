@@ -67,6 +67,18 @@ export function gameResolutionAspect(resolution: GameResolution | null): number 
   return resolution ? resolution.width / resolution.height : null;
 }
 
+/** Logical Scene Canvas size: fixed Game pixels, or the visible Free Aspect fallback. */
+export function sceneCanvasLogicalSize(
+  resolution: GameResolution | null,
+  fallback: { w: number; h: number },
+): { w: number; h: number } {
+  if (resolution) return { w: resolution.width, h: resolution.height };
+  const finiteDimension = (value: number) => (
+    Number.isFinite(value) ? Math.max(1, value) : 1
+  );
+  return { w: finiteDimension(fallback.w), h: finiteDimension(fallback.h) };
+}
+
 export function gameResolutionOrientation(
   resolution: GameResolution | null,
 ): GameOrientation {

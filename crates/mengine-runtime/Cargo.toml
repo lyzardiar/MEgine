@@ -23,6 +23,7 @@ mengine-platform.workspace = true
 mengine-jobs.workspace = true
 mengine-audio.workspace = true
 mengine-physics.workspace = true
+mengine-effekseer.workspace = true
 winit.workspace = true
 pollster.workspace = true
 clap.workspace = true

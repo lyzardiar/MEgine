@@ -363,6 +363,16 @@ export interface ParticleEmitter3D {
   seed: number;
 }
 
+export interface EffekseerEffect {
+  effect: string;
+  playing: boolean;
+  looping: boolean;
+  speed: number;
+  startFrame: number;
+  prewarm: boolean;
+  autoDestroy: boolean;
+}
+
 export interface SpineSkeleton {
   skeleton: string;
   atlas: string;
@@ -435,6 +445,16 @@ export interface AspectRatioFitter {
 export interface ContentSizeFitter {
   horizontalFit: string;
   verticalFit: string;
+}
+
+export interface LayoutElement {
+  ignoreLayout: boolean;
+  minWidth: number;
+  minHeight: number;
+  preferredWidth: number;
+  preferredHeight: number;
+  flexibleWidth: number;
+  flexibleHeight: number;
 }
 
 export interface Image {
@@ -587,8 +607,19 @@ export interface LayoutGroup {
   padding: [number, number, number, number];
   spacing: [number, number];
   cellSize: [number, number];
-  constraintCount: number;
+  childAlignment: string;
+  childControlWidth: boolean;
+  childControlHeight: boolean;
   childForceExpand: boolean;
+  childForceExpandWidth: boolean;
+  childForceExpandHeight: boolean;
+  useChildScaleWidth: boolean;
+  useChildScaleHeight: boolean;
+  reverseArrangement: boolean;
+  startCorner: string;
+  startAxis: string;
+  constraint: string;
+  constraintCount: number;
 }
 
 export interface RectMask2D {
@@ -1010,6 +1041,15 @@ export type SerializedComponentMap = {
     billboard: boolean;
     seed: number;
   };
+  EffekseerEffect: {
+    effect: string;
+    playing: boolean;
+    looping: boolean;
+    speed: number;
+    start_frame: number;
+    prewarm: boolean;
+    auto_destroy: boolean;
+  };
   SpineSkeleton: {
     skeleton: string;
     atlas: string;
@@ -1075,6 +1115,15 @@ export type SerializedComponentMap = {
   ContentSizeFitter: {
     horizontal_fit: string;
     vertical_fit: string;
+  };
+  LayoutElement: {
+    ignore_layout: boolean;
+    min_width: number;
+    min_height: number;
+    preferred_width: number;
+    preferred_height: number;
+    flexible_width: number;
+    flexible_height: number;
   };
   Image: {
     enabled: boolean;
@@ -1214,8 +1263,19 @@ export type SerializedComponentMap = {
     padding: [number, number, number, number];
     spacing: [number, number];
     cell_size: [number, number];
-    constraint_count: number;
+    child_alignment: string;
+    child_control_width: boolean;
+    child_control_height: boolean;
     child_force_expand: boolean;
+    child_force_expand_width: boolean;
+    child_force_expand_height: boolean;
+    use_child_scale_width: boolean;
+    use_child_scale_height: boolean;
+    reverse_arrangement: boolean;
+    start_corner: string;
+    start_axis: string;
+    constraint: string;
+    constraint_count: number;
   };
   RectMask2D: {
     enabled: boolean;
@@ -1336,6 +1396,7 @@ export type ComponentName =
   | 'AutoRotate'
   | 'ParticleEmitter2D'
   | 'ParticleEmitter3D'
+  | 'EffekseerEffect'
   | 'SpineSkeleton'
   | 'Canvas'
   | 'CanvasRenderer'
@@ -1344,6 +1405,7 @@ export type ComponentName =
   | 'RectTransform'
   | 'AspectRatioFitter'
   | 'ContentSizeFitter'
+  | 'LayoutElement'
   | 'Image'
   | 'RawImage'
   | 'Shadow'
@@ -1402,6 +1464,7 @@ export const COMPONENT_NAMES = [
   'AutoRotate',
   'ParticleEmitter2D',
   'ParticleEmitter3D',
+  'EffekseerEffect',
   'SpineSkeleton',
   'Canvas',
   'CanvasRenderer',
@@ -1410,6 +1473,7 @@ export const COMPONENT_NAMES = [
   'RectTransform',
   'AspectRatioFitter',
   'ContentSizeFitter',
+  'LayoutElement',
   'Image',
   'RawImage',
   'Shadow',

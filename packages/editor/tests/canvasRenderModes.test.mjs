@@ -16,12 +16,30 @@ const {
   effectiveCanvasShaderChannels,
   hitTestUi,
   layoutUiOverlay,
+  layoutUiScene3D,
   layoutUiWorldSpace,
+  projectedQuadPoint,
+  uiPixelToWorld,
   uiEntityWorldPivot,
 } = await server.ssrLoadModule(
   '/src/ui/uiLayout.ts',
 );
 test.after(() => server.close());
+
+test('projected quad interpolation preserves corners and perspective depth', () => {
+  const corners = [
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    { x: 80, y: 80 },
+    { x: 20, y: 80 },
+  ];
+  assert.deepEqual(projectedQuadPoint(corners, [1, 0.5, 0.5, 1], 0, 0), corners[0]);
+  assert.deepEqual(projectedQuadPoint(corners, [1, 0.5, 0.5, 1], 1, 1), corners[2]);
+  const center = projectedQuadPoint(corners, [1, 0.5, 0.5, 1], 0.5, 0.5);
+  assert.ok(center);
+  assert.ok(Math.abs(center.x - 36.6666666667) < 1e-6);
+  assert.equal(center.y, 40);
+});
 
 test('Canvas shader channels match Unity masks and camera/world defaults', () => {
   assert.equal(effectiveCanvasShaderChannels(1 | 4 | 64, 'ScreenSpaceOverlay'), 1 | 4);
@@ -159,6 +177,609 @@ const camera = {
   projection: 'orthographic',
   orthographicSize: 5,
 };
+
+test('Scene screen Canvas uses logical resolution units and projects as a movable quad', () => {
+  assert.deepEqual(uiPixelToWorld(0, 0, 1920, 1080), [-960, 540, 0]);
+  assert.deepEqual(uiPixelToWorld(1920, 1080, 1920, 1080), [960, -540, 0]);
+
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+  ];
+  const viewport = { x: 0, y: 0, w: 800, h: 600 };
+  const front = layoutUiScene3D(
+    entities,
+    { eye: [0, 0, 2400], target: [0, 0, 0], fovYDeg: 60 },
+    viewport,
+    new Set(),
+    { w: 1920, h: 1080 },
+  ).items[0];
+  assert.equal(front.role, 'canvas');
+  assert.equal(front.screenCorners.length, 4);
+  assert.ok(
+    front.screenCorners[0].y < front.screenCorners[3].y,
+    'projected UI corners must start at top-left so Scene content is not flipped',
+  );
+  assert.equal(front.rect.x, Math.min(...front.screenCorners.map((point) => point.x)));
+  assert.equal(front.rect.y, Math.min(...front.screenCorners.map((point) => point.y)));
+  assert.ok(front.rect.w > 400, '1920-unit Canvas must not collapse to viewport-letterbox world size');
+
+  const panned = layoutUiScene3D(
+    entities,
+    { eye: [400, 0, 2400], target: [400, 0, 0], fovYDeg: 60 },
+    viewport,
+    new Set(),
+    { w: 1920, h: 1080 },
+  ).items[0];
+  assert.ok(
+    Math.abs(panned.rect.x - front.rect.x) > 1,
+    'Scene camera pan must move the Canvas quad',
+  );
+
+  const oblique = layoutUiScene3D(
+    entities,
+    { eye: [1800, 900, 2400], target: [0, 0, 0], fovYDeg: 60 },
+    viewport,
+    new Set(),
+    { w: 1920, h: 1080 },
+  ).items[0];
+  const distinctRightEdges = Math.abs(oblique.screenCorners[1].x - oblique.screenCorners[2].x);
+  assert.ok(distinctRightEdges > 1, 'oblique Scene projection must preserve a quad instead of an AABB overlay');
+  assert.equal(oblique.rect.x, Math.min(...oblique.screenCorners.map((point) => point.x)));
+  assert.equal(oblique.rect.y, Math.min(...oblique.screenCorners.map((point) => point.y)));
+  assert.equal(
+    oblique.rect.h,
+    Math.max(...oblique.screenCorners.map((point) => point.y)) - oblique.rect.y,
+    'Scene labels and grids must use the projected quad bounds instead of one arbitrary corner',
+  );
+});
+
+test('Scene projects each override-sorting Canvas island exactly once', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: { RectTransform: rect(), Panel: {} },
+    },
+    {
+      entity: 3,
+      parent: 1,
+      components: {
+        RectTransform: rect({ anchored_position: [200, 0] }),
+        Canvas: { override_sorting: true, sorting_order: 10 },
+      },
+    },
+    {
+      entity: 4,
+      parent: 3,
+      components: { RectTransform: rect(), Image: {} },
+    },
+  ];
+  const { items } = layoutUiScene3D(
+    entities,
+    { eye: [0, 0, 1200], target: [0, 0, 0], fovYDeg: 60 },
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+    { w: 800, h: 600 },
+  );
+  assert.deepEqual(items.map((item) => item.entity).sort((a, b) => a - b), [1, 2, 3, 4]);
+  assert.equal(items.filter((item) => item.entity === 3).length, 1);
+  assert.equal(items.filter((item) => item.entity === 4).length, 1);
+});
+
+test('Editor LayoutGroup rebuilds alignment and excludes ignored LayoutElements', () => {
+  const layoutGroup = {
+    direction: 'Horizontal',
+    padding: [0, 0, 0, 0],
+    spacing: [10, 0],
+    cell_size: [50, 20],
+    child_alignment: 'MiddleCenter',
+    child_control_width: true,
+    child_control_height: true,
+    child_force_expand: false,
+    child_force_expand_width: true,
+    child_force_expand_height: true,
+  };
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [300, 100] }),
+        LayoutGroup: layoutGroup,
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: { RectTransform: rect(), Panel: {} },
+    },
+    {
+      entity: 4,
+      parent: 2,
+      components: {
+        RectTransform: rect(),
+        LayoutElement: { ignore_layout: true },
+        Panel: {},
+      },
+    },
+    {
+      entity: 5,
+      parent: 2,
+      components: { RectTransform: rect(), Panel: {} },
+    },
+  ];
+  const first = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const firstChild = first.find((item) => item.entity === 3).rect;
+  const ignored = first.find((item) => item.entity === 4).rect;
+  const lastChild = first.find((item) => item.entity === 5).rect;
+  assert.deepEqual(firstChild, { x: 345, y: 290, w: 50, h: 20 });
+  assert.equal(lastChild.x - firstChild.x, 60);
+
+  layoutGroup.child_alignment = 'MiddleRight';
+  const rebuilt = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  assert.equal(rebuilt.find((item) => item.entity === 3).rect.x - firstChild.x, 95);
+  assert.deepEqual(rebuilt.find((item) => item.entity === 4).rect, ignored);
+});
+
+test('Editor LayoutGroup consumes implicit Image and Text preferred sizes', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [500, 100] }),
+        LayoutGroup: {
+          direction: 'Horizontal',
+          padding: [0, 0, 0, 0],
+          spacing: [10, 0],
+          cell_size: [5, 5],
+          child_alignment: 'UpperLeft',
+          child_control_width: true,
+          child_control_height: true,
+          child_force_expand: false,
+        },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect(),
+        Image: { source_size: [80, 40], pixels_per_unit_multiplier: 2 },
+      },
+    },
+    {
+      entity: 4,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [100, 30] }),
+        Text: {
+          text: 'ABC',
+          font_size: 14,
+          font_style: 'Normal',
+          support_rich_text: true,
+          line_spacing: 1,
+          horizontal_overflow: 'Overflow',
+        },
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const image = items.find((item) => item.entity === 3).rect;
+  const text = items.find((item) => item.entity === 4).rect;
+  assert.deepEqual(image, { x: 150, y: 250, w: 40, h: 20 });
+  assert.equal(text.x, 200);
+  assert.ok(text.w > 30 && text.h >= 16, 'Text must use glyph metrics instead of the 5x5 cell fallback');
+
+  entities[2].components.LayoutElement = { preferred_width: 25, preferred_height: 12 };
+  const overridden = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((item) => item.entity === 3).rect;
+  assert.deepEqual(overridden, { x: 150, y: 250, w: 25, h: 12 });
+});
+
+test('parent LayoutGroup ownership prevents child ContentSizeFitter feedback', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [300, 100] }),
+        LayoutGroup: {
+          direction: 'Horizontal',
+          padding: [0, 0, 0, 0],
+          spacing: [0, 0],
+          cell_size: [50, 10],
+          child_alignment: 'UpperLeft',
+          child_control_width: true,
+          child_control_height: false,
+          child_force_expand: false,
+        },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [100, 100] }),
+        LayoutElement: { preferred_width: 50 },
+        Panel: {},
+        LayoutGroup: {
+          direction: 'Vertical',
+          padding: [0, 0, 0, 0],
+          spacing: [0, 0],
+          cell_size: [200, 30],
+          child_force_expand: false,
+        },
+        ContentSizeFitter: {
+          horizontal_fit: 'PreferredSize',
+          vertical_fit: 'PreferredSize',
+        },
+      },
+    },
+    {
+      entity: 4,
+      parent: 3,
+      components: { RectTransform: rect(), Panel: {} },
+    },
+  ];
+  const child = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((item) => item.entity === 3);
+  assert.deepEqual(child.rect, { x: 250, y: 285, w: 50, h: 30 });
+});
+
+test('ContentSizeFitter axes are not overwritten by a same-entity AspectRatioFitter', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [100, 100] }),
+        Panel: {},
+        LayoutGroup: {
+          direction: 'Vertical',
+          padding: [0, 0, 0, 0],
+          spacing: [0, 0],
+          cell_size: [80, 30],
+          child_force_expand: false,
+        },
+        ContentSizeFitter: {
+          horizontal_fit: 'PreferredSize',
+          vertical_fit: 'PreferredSize',
+        },
+        AspectRatioFitter: {
+          aspect_mode: 'WidthControlsHeight',
+          aspect_ratio: 4,
+        },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: { RectTransform: rect(), Panel: {} },
+    },
+  ];
+  const fitted = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+  ).find((item) => item.entity === 2);
+  assert.deepEqual(fitted.rect, { x: 360, y: 285, w: 80, h: 30 });
+});
+
+test('Editor imported font metrics drive Text preferred layout size', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [300, 100] }),
+        LayoutGroup: {
+          direction: 'Horizontal',
+          padding: [0, 0, 0, 0],
+          spacing: [0, 0],
+          cell_size: [5, 5],
+          child_force_expand: false,
+        },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect(),
+        Text: {
+          text: 'AB',
+          font: 'Assets/Fonts/Preferred.ttf',
+          font_size: 16,
+          horizontal_overflow: 'Overflow',
+        },
+      },
+    },
+  ];
+  const item = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+    undefined,
+    undefined,
+    0,
+    {
+      measureGlyph: () => ({
+        advance: 20,
+        metricWidth: 18,
+        lineHeight: 30,
+        geometry: [0, 18],
+      }),
+      measurePairKerning: () => 0,
+    },
+  ).find((candidate) => candidate.entity === 3);
+  assert.equal(item.rect.w, 38);
+  assert.equal(item.rect.h, 30);
+});
+
+test('Editor LayoutGroup remeasures wrapped Text after assigning its width', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [50, 100] }),
+        LayoutGroup: {
+          direction: 'Vertical',
+          padding: [0, 0, 0, 0],
+          spacing: [0, 0],
+          cell_size: [5, 5],
+          child_control_width: true,
+          child_control_height: true,
+          child_force_expand: false,
+          child_force_expand_width: true,
+        },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      components: {
+        RectTransform: rect({ size_delta: [200, 10] }),
+        Text: {
+          text: 'AAAA',
+          font: 'Assets/Fonts/Wrapped.ttf',
+          font_size: 10,
+          horizontal_overflow: 'Wrap',
+        },
+      },
+    },
+  ];
+  const item = layoutUiOverlay(
+    entities,
+    { x: 0, y: 0, w: 800, h: 600 },
+    new Set(),
+    undefined,
+    undefined,
+    0,
+    {
+      measureGlyph: () => ({
+        advance: 20,
+        metricWidth: 18,
+        lineHeight: 30,
+        geometry: [0, 18],
+      }),
+      measurePairKerning: () => 0,
+    },
+  ).find((candidate) => candidate.entity === 3);
+  assert.equal(item.rect.w, 50);
+  assert.equal(item.rect.h, 60);
+});
+
+test('nested LayoutGroups report recursive metrics with per-field LayoutElement overrides', () => {
+  const entities = [
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay' },
+      },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        RectTransform: rect({ size_delta: [300, 100] }),
+        LayoutGroup: {
+          direction: 'Horizontal',
+          padding: [0, 0, 0, 0],
+          spacing: [10, 0],
+          cell_size: [5, 5],
+          child_force_expand: false,
+        },
+      },
+    },
+    {
+      entity: 3,
+      parent: 2,
+      siblingIndex: 0,
+      components: {
+        RectTransform: rect({ size_delta: [10, 10] }),
+        LayoutElement: { preferred_height: 75 },
+        LayoutGroup: {
+          direction: 'Vertical',
+          padding: [5, 7, 5, 7],
+          spacing: [0, 3],
+          cell_size: [5, 5],
+          child_force_expand: false,
+        },
+        Panel: {},
+      },
+    },
+    {
+      entity: 4,
+      parent: 3,
+      siblingIndex: 0,
+      components: {
+        RectTransform: rect(),
+        LayoutElement: {
+          min_width: 40,
+          preferred_width: 100,
+          flexible_width: 1,
+          min_height: 10,
+          preferred_height: 20,
+          flexible_height: 2,
+        },
+        Panel: {},
+      },
+    },
+    {
+      entity: 5,
+      parent: 3,
+      siblingIndex: 1,
+      components: {
+        RectTransform: rect(),
+        LayoutElement: {
+          min_width: 60,
+          preferred_width: 80,
+          flexible_width: 3,
+          min_height: 15,
+          preferred_height: 30,
+          flexible_height: 4,
+        },
+        Panel: {},
+      },
+    },
+    {
+      entity: 6,
+      parent: 2,
+      siblingIndex: 1,
+      components: {
+        RectTransform: rect(),
+        LayoutElement: { preferred_width: 50, preferred_height: 20, flexible_width: 1 },
+        Panel: {},
+      },
+    },
+  ];
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  const nested = items.find((item) => item.entity === 3).rect;
+  const sibling = items.find((item) => item.entity === 6).rect;
+  assert.deepEqual(nested, { x: 250, y: 250, w: 207.5, h: 75 });
+  assert.deepEqual(sibling, { x: 467.5, y: 250, w: 82.5, h: 20 });
+});
+
+test('Scene places Screen Space Camera Canvas on its assigned camera plane', () => {
+  const makeEntities = (planeDistance) => [
+    {
+      entity: 10,
+      components: {
+        Transform: { position: [10, 0, 20], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+        Camera3D: {
+          projection: 'perspective',
+          fov_y_degrees: 60,
+          near: 0.1,
+          far: 100,
+        },
+      },
+    },
+    {
+      entity: 1,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: {
+          render_mode: 'ScreenSpaceCamera',
+          render_camera: '10',
+          plane_distance: planeDistance,
+        },
+      },
+    },
+  ];
+  const sceneCamera = { eye: [0, 0, 30], target: [0, 0, 0], fovYDeg: 60 };
+  const viewport = { x: 0, y: 0, w: 800, h: 600 };
+  const nearPlane = layoutUiScene3D(
+    makeEntities(5),
+    sceneCamera,
+    viewport,
+    new Set(),
+    { w: 800, h: 600 },
+  ).items[0];
+  const farPlane = layoutUiScene3D(
+    makeEntities(10),
+    sceneCamera,
+    viewport,
+    new Set(),
+    { w: 800, h: 600 },
+  ).items[0];
+  const centerX = nearPlane.screenCorners.reduce((sum, point) => sum + point.x / 4, 0);
+  assert.ok(centerX > viewport.w / 2, 'assigned camera position must move the authoring Quad');
+  assert.ok(
+    farPlane.rect.w > nearPlane.rect.w * 1.4,
+    'perspective camera plane size must grow with plane distance and Scene projection depth',
+  );
+
+  const framing = uiEntityWorldPivot(makeEntities(5), 1, { w: 800, h: 600 });
+  assert.ok(framing);
+  assert.ok(Math.abs(framing.position[0] - 10) < 1e-9);
+  assert.ok(Math.abs(framing.position[1]) < 1e-9);
+  assert.ok(Math.abs(framing.position[2] - 15) < 1e-9);
+  assert.ok(Math.abs(framing.size - (10 * Math.tan(Math.PI / 6) * 4 / 3)) < 1e-9);
+});
 
 test('screen Canvas RectTransform is solved once at its render root', () => {
   const entities = [

@@ -11,6 +11,25 @@ import {
 } from 'react';
 import { cursorPosition, getCurrentWindow } from '@tauri-apps/api/window';
 import {
+  Box,
+  Clapperboard,
+  Clock3,
+  ExternalLink,
+  FileCode,
+  FolderOpen,
+  Gamepad2,
+  Gauge,
+  Hammer,
+  Image,
+  Images,
+  ListTree,
+  Palette,
+  Settings2,
+  SlidersHorizontal,
+  Sparkles,
+  SquareTerminal,
+} from 'lucide-react';
+import {
   CORE_PANEL_IDS,
   PANEL_TITLES,
   closeAllDetachedPanelWindows,
@@ -33,6 +52,36 @@ import { nextHorizontalTabIndex } from '../tabKeyboardNavigation';
 import './dock.css';
 
 export type PanelKind = CorePanelId;
+
+const PANEL_ICONS: Record<PanelKind, typeof Box> = {
+  hierarchy: ListTree,
+  scene: Box,
+  game: Gamepad2,
+  inspector: SlidersHorizontal,
+  project: FolderOpen,
+  console: SquareTerminal,
+  profiler: Gauge,
+  timeline: Clock3,
+  animator: Clapperboard,
+  material: Palette,
+  shader: FileCode,
+  spriteEditor: Image,
+  spriteAtlas: Images,
+  effekseer: Sparkles,
+  build: Hammer,
+  projectSettings: Settings2,
+};
+
+const PANEL_TAB_LABELS: Record<PanelKind, string> = {
+  ...PANEL_TITLES,
+  inspector: 'Inspector',
+  shader: 'Shader',
+  build: 'Build',
+  projectSettings: 'Project',
+  spriteEditor: 'Sprite',
+  spriteAtlas: 'Atlas',
+  effekseer: 'Effekseer',
+};
 
 export type DockGroup = {
   panels: PanelKind[];
@@ -159,7 +208,7 @@ function defaultTree(): DockNode {
         b: leaf(['inspector', 'material', 'shader', 'build', 'projectSettings']),
       },
     },
-    b: leaf(['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas']),
+    b: leaf(['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer']),
   };
 }
 
@@ -743,6 +792,7 @@ function DockLeaf(props: {
             const dirty = props.dirtyPanels.has(kind);
             const tabId = `dock-tab-${node.id}-${kind}`;
             const panelId = `dock-panel-${node.id}-${kind}`;
+            const PanelIcon = PANEL_ICONS[kind];
             return (
               <button
                 key={kind}
@@ -756,7 +806,7 @@ function DockLeaf(props: {
                 className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}${dirty ? ' dirty' : ''}`}
                 title={dirty
                   ? `Save ${PANEL_TITLES[kind]} before moving or detaching it`
-                  : '拖到面板中间=叠页签；拖到边缘=上下左右拆分'}
+                  : `${PANEL_TITLES[kind]} - drag to dock or split`}
                 onClick={(event) => {
                   if (suppressClick.current) {
                     suppressClick.current = false;
@@ -838,7 +888,9 @@ function DockLeaf(props: {
                   if (current?.started) props.onDragEnd();
                 }}
               >
-                {PANEL_TITLES[kind]}{dirty ? ' *' : ''}
+                <PanelIcon className="dock-tab-icon" size={14} strokeWidth={1.8} aria-hidden />
+                <span className="dock-tab-label">{PANEL_TAB_LABELS[kind]}</span>
+                {dirty && <span className="dock-tab-dirty" aria-label="Unsaved changes" />}
               </button>
             );
           })}
@@ -853,7 +905,7 @@ function DockLeaf(props: {
               disabled={props.dirtyPanels.has(active)}
               onClick={() => props.onDetach(active)}
             >
-              ↗
+              <ExternalLink size={14} aria-hidden />
             </button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import {
   AlignHorizontalSpaceAround,
   Anchor,
@@ -7,7 +8,9 @@ import {
   Focus,
   Grid3X3,
   Magnet,
+  Minus,
   Paintbrush,
+  Plus,
   ScanLine,
 } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
@@ -18,6 +21,7 @@ import {
   gameResolutionKey,
   gameResolutionOrientation,
   normalizeGameResolution,
+  sceneCanvasLogicalSize,
   type GameResolution,
 } from '../gameResolution';
 import {
@@ -84,6 +88,7 @@ import {
   type RectGizmoHit,
 } from '../rectGizmo';
 import {
+  canvasUiTextLayoutMeasurement,
   drawUiItems,
   hitTestUi,
   hitTestUiSelect,
@@ -97,6 +102,11 @@ import {
   type UiDrawItem,
 } from '../ui/uiLayout';
 import { canvasDisplayScaleFactor, readRectTransform } from '../ui/rectLayout';
+import {
+  normalizeUiInputText,
+  resolveUiInputEdit,
+  uiInputKeyAction,
+} from '../ui/inputEditing';
 import {
   collectParticleDrawItems,
   createParticleEmitterState,
@@ -146,7 +156,11 @@ import {
 } from '../rectAlignment';
 import { buildSceneGrid } from '../sceneGrid';
 import { moveAnchorHandle } from '../ui/rectTransformModel';
-import { distanceForSceneZoom, normalizeSceneZoom } from '../sceneZoom';
+import {
+  clampSceneCameraDistance,
+  distanceForSceneZoom,
+  normalizeSceneZoom,
+} from '../sceneZoom';
 import {
   rectAxisTranslationAmount,
   rectTranslationAlongAxis,
@@ -200,6 +214,8 @@ import {
   invalidateEnvironmentPreviews,
   type EnvironmentBackground,
 } from '../environmentPreview';
+
+const MAX_NATIVE_SCENE_VIEW_DIMENSION = 4096;
 
 function drawCanvasGrid(
   ctx: CanvasRenderingContext2D,
@@ -489,6 +505,24 @@ export function Viewport(props: {
   ) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const nativeGameFrameRef = useRef<{
+    image: HTMLImageElement;
+    width: number;
+    height: number;
+    hasAuthoredCamera: boolean;
+  } | null>(null);
+  const nativeGameRequestRef = useRef({ inFlight: false, lastRequestAt: 0, reportedError: false });
+  const nativeSceneFrameRef = useRef<{
+    image: HTMLImageElement;
+    width: number;
+    height: number;
+  } | null>(null);
+  const nativeSceneRequestRef = useRef({
+    inFlight: false,
+    lastRequestAt: 0,
+    reportedError: false,
+    generation: 0,
+  });
   const hitsRef = useRef<Hit[]>([]);
   const gizmoHitsRef = useRef<GizmoHit[]>([]);
   const rectGizmoHitsRef = useRef<RectGizmoHit[]>([]);
@@ -500,6 +534,16 @@ export function Viewport(props: {
   const uiPressRef = useRef<number | null>(null);
   const focusedInputRef = useRef<number | null>(null);
   const focusedUiRef = useRef<number | null>(null);
+  const inputProxyRef = useRef<HTMLTextAreaElement>(null);
+  const inputCompositionRef = useRef(false);
+  const inputProxyValueRef = useRef('');
+  const inputProxyFocusTokenRef = useRef(0);
+  const [inputProxy, setInputProxy] = useState<{
+    entity: number;
+    left: number;
+    top: number;
+    focusToken: number;
+  } | null>(null);
   const uiStatsRef = useRef({ elements: 0, batches: 0 });
   const particleStatesRef = useRef(new Map<number, ParticleEmitterState>());
   const reportedMaterialErrorsRef = useRef(new Set<string>());
@@ -526,6 +570,95 @@ export function Viewport(props: {
   const lastCameraRef = useRef<Camera>({ eye: [0, 0, 10], target: [0, 0, 0], fovYDeg: 60 });
   const propsRef = useRef(props);
   propsRef.current = props;
+
+  const closeGameInput = (focusCanvas = false) => {
+    focusedInputRef.current = null;
+    inputCompositionRef.current = false;
+    setInputProxy(null);
+    if (focusCanvas) {
+      window.requestAnimationFrame(() => canvasRef.current?.focus({ preventScroll: true }));
+    }
+  };
+
+  const focusGameInput = (item: UiDrawItem | null) => {
+    if (!item?.input?.interactable) {
+      closeGameInput();
+      return;
+    }
+    focusedInputRef.current = item.entity;
+    inputProxyFocusTokenRef.current += 1;
+    const canvas = canvasRef.current;
+    setInputProxy({
+      entity: item.entity,
+      left: (canvas?.offsetLeft ?? 0) + item.rect.x + Math.max(0, item.rect.w * 0.5),
+      top: (canvas?.offsetTop ?? 0) + item.rect.y + Math.max(0, item.rect.h),
+      focusToken: inputProxyFocusTokenRef.current,
+    });
+  };
+
+  const commitGameInput = (
+    element: HTMLTextAreaElement,
+    callback: unknown,
+    force = false,
+    composing = inputCompositionRef.current,
+  ): string | null => {
+    const entity = focusedInputRef.current;
+    if (entity == null) {
+      closeGameInput();
+      return null;
+    }
+    const item = uiItemsRef.current.find((candidate) => candidate.entity === entity);
+    if (!item?.input?.interactable) {
+      closeGameInput();
+      return null;
+    }
+    const edit = resolveUiInputEdit(
+      element.value,
+      item.input.multiline,
+      item.input.characterLimit,
+      composing,
+    );
+    const next = edit.text;
+    if (!edit.commit) return next;
+    if (next !== element.value) {
+      const selection = Math.min(next.length, element.selectionStart ?? next.length);
+      element.value = next;
+      element.setSelectionRange(selection, selection);
+    }
+    if (!force && next === inputProxyValueRef.current) return next;
+    inputProxyValueRef.current = next;
+    propsRef.current.onUiValueChange?.(entity, 'InputField', { text: next }, callback);
+    return next;
+  };
+
+  useEffect(() => {
+    if (!inputProxy) return;
+    const element = inputProxyRef.current;
+    const item = uiItemsRef.current.find(
+      (candidate) => candidate.entity === inputProxy.entity && candidate.input?.interactable,
+    );
+    if (!element || !item?.input) {
+      focusedInputRef.current = null;
+      setInputProxy(null);
+      return;
+    }
+    const value = normalizeUiInputText(
+      item.input.text,
+      item.input.multiline,
+      item.input.characterLimit,
+    );
+    element.value = value;
+    inputProxyValueRef.current = value;
+    element.focus({ preventScroll: true });
+    element.setSelectionRange(value.length, value.length);
+  }, [inputProxy]);
+
+  useEffect(() => {
+    if (props.tab === 'game') return;
+    focusedInputRef.current = null;
+    inputCompositionRef.current = false;
+    setInputProxy(null);
+  }, [props.tab]);
 
   // Expose this viewport's canvas to the AgentBridge so AI agents can capture
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
@@ -779,6 +912,8 @@ export function Viewport(props: {
     const clear = () => {
       clearModelPreview();
       clearMaterialPreviews();
+      nativeGameFrameRef.current = null;
+      nativeSceneFrameRef.current = null;
       reportedMaterialErrorsRef.current.clear();
       invalidateEnvironmentPreviews();
     };
@@ -860,6 +995,48 @@ export function Viewport(props: {
       : { x: 0, y: 0, w: pw, h: ph };
     lastVpRef.current = vp;
 
+    if (
+      isGame
+      && '__TAURI_INTERNALS__' in window
+      && !nativeGameRequestRef.current.inFlight
+      && now - nativeGameRequestRef.current.lastRequestAt >= (p.playing ? 100 : 300)
+    ) {
+      const request = nativeGameRequestRef.current;
+      request.inFlight = true;
+      request.lastRequestAt = now;
+      const nativeWidth = p.gameResolution?.width ?? Math.max(1, Math.round(vp.w * dpr));
+      const nativeHeight = p.gameResolution?.height ?? Math.max(1, Math.round(vp.h * dpr));
+      void invoke<{
+        width: number;
+        height: number;
+        pngBase64: string;
+        hasAuthoredCamera: boolean;
+      }>('render_native_game_view', { width: nativeWidth, height: nativeHeight })
+        .then((result) => {
+          const image = new Image();
+          image.decoding = 'async';
+          image.onload = () => {
+            nativeGameFrameRef.current = {
+              image,
+              width: result.width,
+              height: result.height,
+              hasAuthoredCamera: result.hasAuthoredCamera,
+            };
+          };
+          image.src = `data:image/png;base64,${result.pngBase64}`;
+          request.reportedError = false;
+        })
+        .catch((error) => {
+          if (!request.reportedError) {
+            console.warn('Native Game View rendering is unavailable', error);
+            request.reportedError = true;
+          }
+        })
+        .finally(() => {
+          request.inFlight = false;
+        });
+    }
+
     if (isGame && (vp.w < pw - 1 || vp.h < ph - 1)) {
       ctx.fillStyle = '#0d0d0d';
       ctx.fillRect(0, 0, pw, ph);
@@ -868,14 +1045,72 @@ export function Viewport(props: {
     const gameCamera = isGame
       ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay)
       : null;
+    const scene2DActive = !isGame && scene2DRef.current;
     const cam: Camera = isGame
       ? gameCamera ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 }
       : {
           eye: orbitEye(sc.pivot, sc.yaw, sc.pitch, sc.distance),
           target: sc.pivot,
           fovYDeg: 60,
+          projection: scene2DActive ? 'orthographic' : 'perspective',
+          orthographicSize: scene2DActive
+            ? sc.distance * Math.tan(Math.PI / 6)
+            : undefined,
         };
     lastCameraRef.current = cam;
+    if (
+      !isGame
+      && '__TAURI_INTERNALS__' in window
+      && !nativeSceneRequestRef.current.inFlight
+      && now - nativeSceneRequestRef.current.lastRequestAt
+        >= (draggingRef.current ? 50 : p.playing ? 80 : 200)
+    ) {
+      const request = nativeSceneRequestRef.current;
+      const generation = ++request.generation;
+      request.inFlight = true;
+      request.lastRequestAt = now;
+      const nativeScale = Math.min(
+        dpr,
+        MAX_NATIVE_SCENE_VIEW_DIMENSION / Math.max(1, vp.w),
+        MAX_NATIVE_SCENE_VIEW_DIMENSION / Math.max(1, vp.h),
+      );
+      void invoke<{
+        width: number;
+        height: number;
+        pngBase64: string;
+        hasAuthoredCamera: boolean;
+      }>('render_native_scene_view', {
+        request: {
+          width: Math.max(1, Math.round(vp.w * nativeScale)),
+          height: Math.max(1, Math.round(vp.h * nativeScale)),
+          eye: cam.eye,
+          target: cam.target,
+          orthographic: cam.projection === 'orthographic',
+          orthographicSize: cam.orthographicSize ?? 5,
+          fovYDegrees: cam.fovYDeg,
+        },
+      }).then((result) => {
+        const image = new Image();
+        image.decoding = 'async';
+        image.onload = () => {
+          if (request.generation !== generation) return;
+          nativeSceneFrameRef.current = {
+            image,
+            width: result.width,
+            height: result.height,
+          };
+        };
+        image.src = `data:image/png;base64,${result.pngBase64}`;
+        request.reportedError = false;
+      }).catch((error) => {
+        if (!request.reportedError) {
+          console.warn('Native Scene View rendering is unavailable', error);
+          request.reportedError = true;
+        }
+      }).finally(() => {
+        request.inFlight = false;
+      });
+    }
     const isActive = (id: number) =>
       p.activeInHierarchy ? p.activeInHierarchy(id) : true;
     const environment = p.entities.find(
@@ -896,14 +1131,19 @@ export function Viewport(props: {
       const environmentBackground = isGame && gameCamera?.clearFlags === 'skybox'
         ? { ...(environment ?? {}), background_enabled: true }
         : environment;
-      drewEnvironment = drawEnvironmentBackground(ctx, vp, cam, environmentBackground);
+      drewEnvironment = scene2DActive
+        ? false
+        : drawEnvironmentBackground(ctx, vp, cam, environmentBackground);
     }
     if (isGame && gameCamera?.clearFlags !== 'solid_color' && !drewEnvironment) {
       const [r, g, b, a] = p.clearColor;
       ctx.fillStyle = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
       ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
     } else if (!isGame) {
-      if (!drewEnvironment) {
+      if (scene2DActive) {
+        ctx.fillStyle = '#2a3038';
+        ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+      } else if (!drewEnvironment) {
         const sky = ctx.createLinearGradient(vp.x, vp.y, vp.x, vp.y + vp.h);
         sky.addColorStop(0, '#6a8aaa');
         sky.addColorStop(0.5, '#3d4858');
@@ -911,7 +1151,7 @@ export function Viewport(props: {
         ctx.fillStyle = sky;
         ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
       }
-      drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
+      if (!scene2DActive) drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
     }
 
     const worldTransforms = buildWorldTransforms(p.entities);
@@ -1539,6 +1779,111 @@ export function Viewport(props: {
       if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
     }
 
+    const nativeSceneFrame = !isGame ? nativeSceneFrameRef.current : null;
+    if (nativeSceneFrame?.image.complete) {
+      ctx.drawImage(nativeSceneFrame.image, vp.x, vp.y, vp.w, vp.h);
+      if (!scene2DActive && sceneGridRef.current) {
+        drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
+      }
+      for (const entity of p.entities) {
+        if (!isActive(entity.entity)) continue;
+        const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
+        if (!transform) continue;
+        const selected = selSet.has(entity.entity);
+        const camera2D = entity.components.Camera2D as Camera2DData | undefined;
+        const camera3D = entity.components.Camera3D as Camera3DData | undefined;
+        try {
+          const cameraHit = camera2D
+            ? drawCamera2DGizmo(
+                ctx,
+                cam,
+                vp,
+                transform,
+                camera2D,
+                vp.w / Math.max(1, vp.h),
+                selected,
+              )
+            : camera3D
+              ? drawCameraGizmo(ctx, cam, vp, transform, camera3D, selected)
+              : null;
+          if (cameraHit) {
+            hitsRef.current.push({
+              kind: 'object',
+              id: entity.entity,
+              x: cameraHit.x,
+              y: cameraHit.y,
+              r: cameraHit.r,
+            });
+          }
+        } catch (error) {
+          console.error('drawCameraGizmo overlay', error);
+        }
+
+        const point = entity.components.PointLight as { range?: number } | undefined;
+        const spot = entity.components.SpotLight as
+          | { range?: number; outer_angle_degrees?: number }
+          | undefined;
+        const light2D = entity.components.Light2D as
+          | { light_type?: unknown; radius?: unknown }
+          | undefined;
+        const directional = entity.components.DirectionalLight;
+        if ((point || spot || light2D || directional) && !entity.components.MeshRenderer) {
+          try {
+            const lightHit = light2D
+              ? String(light2D.light_type ?? 'point').toLowerCase() === 'global'
+                ? drawDirectionalLightGizmo(ctx, cam, vp, transform, selected)
+                : drawPointLightGizmo(ctx, cam, vp, transform, Number(light2D.radius) || 5, selected)
+              : point
+                ? drawPointLightGizmo(ctx, cam, vp, transform, point.range ?? 10, selected)
+                : spot
+                  ? drawSpotLightGizmo(
+                      ctx,
+                      cam,
+                      vp,
+                      transform,
+                      spot.range ?? 12,
+                      spot.outer_angle_degrees ?? 40,
+                      selected,
+                    )
+                  : drawDirectionalLightGizmo(ctx, cam, vp, transform, selected);
+            if (lightHit) {
+              hitsRef.current.push({
+                kind: 'object',
+                id: entity.entity,
+                x: lightHit.x,
+                y: lightHit.y,
+                r: lightHit.r,
+              });
+            }
+          } catch (error) {
+            console.error('drawLightGizmo overlay', error);
+          }
+        }
+
+        const spine = entity.components.SpineSkeleton as Record<string, unknown> | undefined;
+        if (spine) {
+          const origin = transform.position as Vec3;
+          const screen = project(origin, cam, vp);
+          const unit = project([origin[0] + 1, origin[1], origin[2]], cam, vp);
+          if (screen) {
+            const transformScale = Math.max(0.0001, Math.abs(transform.scale[0] ?? 1));
+            const pixelsPerWorldUnit = (unit
+              ? Math.max(1, Math.hypot(unit.x - screen.x, unit.y - screen.y))
+              : 64) * transformScale;
+            spineRuntimeRef.current?.drawEntity({
+              entity: entity.entity,
+              component: spine,
+              context: ctx,
+              screenX: screen.x,
+              screenY: screen.y,
+              pixelsPerWorldUnit,
+              deltaSeconds: 0,
+            });
+          }
+        }
+      }
+    }
+
     if (!isGame) {
       for (const { e, t, renderKind } of drawn) {
         if (renderKind !== 'entity') continue;
@@ -1661,14 +2006,25 @@ export function Viewport(props: {
 
     // UI Canvas — Game: screen overlay; Scene: world XY plane (zoomable)
     {
+      const textMeasurement = canvasUiTextLayoutMeasurement(ctx);
       if (isGame) {
         const uiRoot = vp;
         const logicalUiSize = p.gameResolution
           ? { w: p.gameResolution.width, h: p.gameResolution.height }
           : { w: uiRoot.w, h: uiRoot.h };
         const uiItems = [
-          ...(gameCamera ? layoutUiWorldSpace(p.entities, cam, vp, selSet) : []),
-          ...layoutUiOverlay(p.entities, uiRoot, selSet, logicalUiSize, gameCamera ?? undefined, p.gameDisplay),
+          ...(gameCamera
+            ? layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement)
+            : []),
+          ...layoutUiOverlay(
+            p.entities,
+            uiRoot,
+            selSet,
+            logicalUiSize,
+            gameCamera ?? undefined,
+            p.gameDisplay,
+            textMeasurement,
+          ),
         ];
         uiItemsRef.current = uiItems;
 
@@ -1719,17 +2075,19 @@ export function Viewport(props: {
           ctx.restore();
         }
       } else {
-        // 与 Game 同一 letterbox 尺寸，竖屏时 Scene Canvas 也是竖图
+        // Scene Canvas is a world quad whose authored size is the logical Game resolution.
         const gameBox = letterbox(pw, ph, p.gameResolution);
+        const sceneCanvasSize = sceneCanvasLogicalSize(p.gameResolution, gameBox);
         const { items: screenUiItems, layoutScale } = layoutUiScene3D(
           p.entities,
           cam,
           vp,
           selSet,
-          { w: gameBox.w, h: gameBox.h },
+          sceneCanvasSize,
+          textMeasurement,
         );
         const uiItems = [
-          ...layoutUiWorldSpace(p.entities, cam, vp, selSet),
+          ...layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement),
           ...screenUiItems,
         ];
         uiItemsRef.current = uiItems;
@@ -1814,6 +2172,10 @@ export function Viewport(props: {
     }
 
     if (isGame) {
+      const nativeFrame = nativeGameFrameRef.current;
+      if (nativeFrame?.image.complete) {
+        ctx.drawImage(nativeFrame.image, vp.x, vp.y, vp.w, vp.h);
+      }
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
       ctx.strokeRect(vp.x + 1, vp.y + 1, vp.w - 2, vp.h - 2);
@@ -1980,7 +2342,7 @@ export function Viewport(props: {
         });
         if (ui?.slider?.interactable || ui?.scrollbar?.interactable) {
           focusedUiRef.current = ui.entity;
-          focusedInputRef.current = null;
+          closeGameInput();
           const component = ui.slider ? 'Slider' : 'Scrollbar';
           const value = component === 'Slider'
             ? sliderValueAtPoint(ui, x, y)
@@ -2012,10 +2374,11 @@ export function Viewport(props: {
         ) {
           uiPressRef.current = ui.entity;
           focusedUiRef.current = ui.entity;
-          focusedInputRef.current = ui.input?.interactable ? ui.entity : null;
+          if (ui.input?.interactable) focusGameInput(ui);
+          else closeGameInput();
         } else {
           focusedUiRef.current = null;
-          focusedInputRef.current = null;
+          closeGameInput();
         }
       }
       return;
@@ -2973,7 +3336,7 @@ export function Viewport(props: {
     if (propsRef.current.tab !== 'scene') return;
     ev.preventDefault();
     const factor = ev.deltaY > 0 ? 1.12 : 0.9;
-    liveCam.current.distance = Math.max(0.5, Math.min(200, liveCam.current.distance * factor));
+    liveCam.current.distance = clampSceneCameraDistance(liveCam.current.distance * factor);
     syncCamToStore();
   };
 
@@ -2996,10 +3359,13 @@ export function Viewport(props: {
         Math.max(1, canvasRef.current?.clientHeight ?? 600),
         propsRef.current.gameResolution,
       );
+      const logicalCanvasSize = sceneCanvasLogicalSize(propsRef.current.gameResolution, box);
       liveCam.current.pivot = [0, 0, 0];
-      const worldW = box.w / UI_SCENE_PPU;
-      const worldH = box.h / UI_SCENE_PPU;
-      liveCam.current.distance = Math.max(2, Math.max(worldW, worldH) * 1.15);
+      const worldW = logicalCanvasSize.w / UI_SCENE_PPU;
+      const worldH = logicalCanvasSize.h / UI_SCENE_PPU;
+      const viewportAspect = Math.max(0.01, box.w / Math.max(1, box.h));
+      const framingSpan = Math.max(worldH, worldW / viewportAspect);
+      liveCam.current.distance = Math.max(2, framingSpan * 1.15);
       syncCamToStore();
     } else if (savedOrbitRef.current) {
       liveCam.current.yaw = savedOrbitRef.current.yaw;
@@ -3106,45 +3472,16 @@ export function Viewport(props: {
       propsRef.current.onEndGesture();
     };
     const onKey = (ev: KeyboardEvent) => {
+      if (propsRef.current.tab === 'game' && ev.target === inputProxyRef.current) return;
       if (propsRef.current.tab === 'game' && ev.key === 'Tab') {
         focusedUiRef.current = nextUiSelectable(
           uiItemsRef.current,
           focusedUiRef.current,
           ev.shiftKey,
         );
-        focusedInputRef.current = null;
+        closeGameInput();
         ev.preventDefault();
         ev.stopImmediatePropagation();
-        return;
-      }
-      const focused = focusedInputRef.current;
-      if (propsRef.current.tab === 'game' && focused != null) {
-        const item = uiItemsRef.current.find((candidate) => candidate.entity === focused);
-        if (!item?.input?.interactable) {
-          focusedInputRef.current = null;
-          return;
-        }
-        let next = item.input.text;
-        let callback = item.input.onValueChanged;
-        if (ev.key === 'Backspace') {
-          next = Array.from(next).slice(0, -1).join('');
-        } else if (ev.key === 'Enter') {
-          if (item.input.multiline) next += '\n';
-          else focusedInputRef.current = null;
-          callback = item.input.onSubmit;
-        } else if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
-          if (item.input.characterLimit <= 0 || Array.from(next).length < item.input.characterLimit) {
-            next += ev.key;
-          }
-        } else if (ev.key === 'Escape') {
-          focusedInputRef.current = null;
-          return;
-        } else {
-          return;
-        }
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        propsRef.current.onUiValueChange?.(focused, 'InputField', { text: next }, callback);
         return;
       }
       if (propsRef.current.tab === 'game' && focusedUiRef.current != null) {
@@ -3162,7 +3499,7 @@ export function Viewport(props: {
           if (action.kind === 'click') {
             propsRef.current.onUiClick?.(item.entity, action.callback);
           } else if (action.kind === 'focus-input') {
-            focusedInputRef.current = item.entity;
+            focusGameInput(item);
           } else {
             propsRef.current.onUiValueChange?.(
               item.entity,
@@ -3247,152 +3584,159 @@ export function Viewport(props: {
     <div className="viewport-wrap">
       {props.tab === 'scene' && (
         <div className="game-toolbar scene-toolbar">
-          <div className="orient-toggle" title="2D：锁定正视 Canvas，仅平移/缩放">
+          <div className="scene-toolbar-group">
+            <div className="orient-toggle" title="2D：锁定正视 Canvas，仅平移/缩放">
+              <button
+                type="button"
+                className={scene2D ? 'active' : ''}
+                aria-label="Toggle 2D Scene mode"
+                aria-pressed={scene2D}
+                onClick={() => applyScene2D(!scene2D)}
+              >
+                2D
+              </button>
+            </div>
             <button
               type="button"
-              className={scene2D ? 'active' : ''}
-              aria-label="Toggle 2D Scene mode"
-              aria-pressed={scene2D}
-              onClick={() => applyScene2D(!scene2D)}
+              className="scene-grid-toggle scene-icon-button"
+              aria-label="Frame selected"
+              disabled={props.selected == null}
+              title="Frame Selected (F)"
+              onClick={props.onFrame}
             >
-              2D
+              <Focus size={13} aria-hidden />
             </button>
           </div>
-          <div className="scene-zoom" aria-label="2D Scene zoom">
-            <button
-              type="button"
-              disabled={!canZoomScene}
-              aria-label="Zoom out"
-              title="Zoom out"
-              onClick={() => applySceneZoom(sceneCanvasScaleRef.current / 1.25)}
-            >
-              -
-            </button>
-            <button
-              type="button"
-              disabled={!canZoomScene}
-              className="scene-zoom-value"
-              title="Reset Canvas to 1:1 pixels"
-              onClick={() => applySceneZoom(1)}
-            >
-              {sceneZoomPercent}%
-            </button>
-            <button
-              type="button"
-              disabled={!canZoomScene}
-              aria-label="Zoom in"
-              title="Zoom in"
-              onClick={() => applySceneZoom(sceneCanvasScaleRef.current * 1.25)}
-            >
-              +
-            </button>
-          </div>
-          <button
-            type="button"
-            className="scene-grid-toggle scene-icon-button"
-            aria-label="Frame selected"
-            disabled={props.selected == null}
-            title="Frame Selected (F)"
-            onClick={props.onFrame}
-          >
-            <Focus size={13} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className={`scene-grid-toggle scene-icon-button${sceneGrid && scene2D ? ' active' : ''}`}
-            aria-label="Toggle 2D grid"
-            aria-pressed={sceneGrid && scene2D}
-            disabled={!scene2D}
-            title="Show the Canvas pixel grid using the Move Snap increment"
-            onClick={toggleSceneGrid}
-          >
-            <Grid3X3 size={14} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className={`scene-grid-toggle scene-icon-button${tilePaintEnabled && selectedTilemap && scene2D ? ' active' : ''}`}
-            aria-label="Toggle Tilemap paint brush"
-            aria-pressed={tilePaintEnabled && !!selectedTilemap && scene2D}
-            disabled={!selectedTilemap || props.playing}
-            title="Enable Tilemap editing. Hold Shift with Paint or Box to erase."
-            onClick={() => {
-              if (!scene2D) applyScene2D(true);
-              setTilePaintEnabled((enabled) => !enabled);
-            }}
-          >
-            <Paintbrush size={14} aria-hidden />
-          </button>
-          {selectedTilemap && (
+          {scene2D && (
             <>
-              <select
-                className="tile-tool-select"
-                aria-label="Tilemap edit tool"
-                title="Tilemap edit tool"
-                value={tileTool}
-                onChange={(event) => setTileTool(event.target.value as TilemapTool)}
-              >
-                <option value="paint">Paint</option>
-                <option value="erase">Erase</option>
-                <option value="box">Box</option>
-                <option value="fill">Fill</option>
-                <option value="picker">Picker</option>
-              </select>
-              <select
-                className="tile-brush-select"
-                aria-label="Tile brush sprite"
-                title="Sprite painted into Tilemap cells"
-                value={tileBrushSprite}
-                onChange={(event) => setTileBrushSprite(event.target.value)}
-              >
-                <option value="white">White</option>
-                {tileBrushOptions.map((sprite) => (
-                  <option key={sprite.id} value={sprite.id}>{sprite.name}</option>
-                ))}
-              </select>
+              <div className="scene-toolbar-group">
+                <div className="scene-zoom" aria-label="2D Scene zoom">
+                  <button
+                    type="button"
+                    disabled={!canZoomScene}
+                    aria-label="Zoom out"
+                    title="Zoom out"
+                    onClick={() => applySceneZoom(sceneCanvasScaleRef.current / 1.25)}
+                  >
+                    <Minus size={13} aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!canZoomScene}
+                    className="scene-zoom-value"
+                    title="Reset Canvas to 1:1 pixels"
+                    onClick={() => applySceneZoom(1)}
+                  >
+                    {sceneZoomPercent}%
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!canZoomScene}
+                    aria-label="Zoom in"
+                    title="Zoom in"
+                    onClick={() => applySceneZoom(sceneCanvasScaleRef.current * 1.25)}
+                  >
+                    <Plus size={13} aria-hidden />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className={`scene-grid-toggle scene-icon-button${sceneGrid ? ' active' : ''}`}
+                  aria-label="Toggle 2D grid"
+                  aria-pressed={sceneGrid}
+                  title="Show the Canvas pixel grid using the Move Snap increment"
+                  onClick={toggleSceneGrid}
+                >
+                  <Grid3X3 size={14} aria-hidden />
+                </button>
+              </div>
+              <div className="scene-toolbar-group">
+                <button
+                  type="button"
+                  className={`scene-grid-toggle scene-icon-button${tilePaintEnabled && selectedTilemap ? ' active' : ''}`}
+                  aria-label="Toggle Tilemap paint brush"
+                  aria-pressed={tilePaintEnabled && !!selectedTilemap}
+                  disabled={!selectedTilemap || props.playing}
+                  title="Enable Tilemap editing. Hold Shift with Paint or Box to erase."
+                  onClick={() => setTilePaintEnabled((enabled) => !enabled)}
+                >
+                  <Paintbrush size={14} aria-hidden />
+                </button>
+                {selectedTilemap && (
+                  <>
+                    <select
+                      className="tile-tool-select"
+                      aria-label="Tilemap edit tool"
+                      title="Tilemap edit tool"
+                      value={tileTool}
+                      onChange={(event) => setTileTool(event.target.value as TilemapTool)}
+                    >
+                      <option value="paint">Paint</option>
+                      <option value="erase">Erase</option>
+                      <option value="box">Box</option>
+                      <option value="fill">Fill</option>
+                      <option value="picker">Picker</option>
+                    </select>
+                    <select
+                      className="tile-brush-select"
+                      aria-label="Tile brush sprite"
+                      title="Sprite painted into Tilemap cells"
+                      value={tileBrushSprite}
+                      onChange={(event) => setTileBrushSprite(event.target.value)}
+                    >
+                      <option value="white">White</option>
+                      {tileBrushOptions.map((sprite) => (
+                        <option key={sprite.id} value={sprite.id}>{sprite.name}</option>
+                      ))}
+                    </select>
+                  </>
+                )}
+              </div>
             </>
           )}
-          <button
-            type="button"
-            className={`scene-grid-toggle scene-icon-button${smartGuidesEnabled && scene2D ? ' active' : ''}`}
-            aria-label="Toggle smart alignment guides"
-            aria-pressed={smartGuidesEnabled && scene2D}
-            disabled={!scene2D}
-            title="Snap moved RectTransforms to Canvas and sibling edges or centers"
-            onClick={toggleSmartGuides}
-          >
-            <ScanLine size={14} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className={`scene-grid-toggle scene-icon-button${pivotEditing && canEditPivot ? ' active' : ''}`}
-            aria-label="Edit RectTransform pivot"
-            aria-pressed={pivotEditing && canEditPivot}
-            disabled={!canEditPivot}
-            title="Drag the selected RectTransform pivot without moving its rectangle"
-            onClick={() => setPivotEditing((editing) => {
-              const next = !editing;
-              if (next) setAnchorEditing(false);
-              return next;
-            })}
-          >
-            <CircleDot size={14} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className={`scene-grid-toggle scene-icon-button${anchorEditing && canEditPivot ? ' active' : ''}`}
-            aria-label="Edit RectTransform anchors"
-            aria-pressed={anchorEditing && canEditPivot}
-            disabled={!canEditPivot}
-            title="Drag fixed or stretched anchors while preserving the rectangle"
-            onClick={() => setAnchorEditing((editing) => {
-              const next = !editing;
-              if (next) setPivotEditing(false);
-              return next;
-            })}
-          >
-            <Anchor size={14} aria-hidden />
-          </button>
-          <div className="scene-snap" ref={snapSettingsElementRef}>
+          {scene2D && (
+            <div className="scene-toolbar-group scene-toolbar-layout-tools">
+              <button
+                type="button"
+                className={`scene-grid-toggle scene-icon-button${smartGuidesEnabled ? ' active' : ''}`}
+                aria-label="Toggle smart alignment guides"
+                aria-pressed={smartGuidesEnabled}
+                title="Snap moved RectTransforms to Canvas and sibling edges or centers"
+                onClick={toggleSmartGuides}
+              >
+                <ScanLine size={14} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className={`scene-grid-toggle scene-icon-button${pivotEditing && canEditPivot ? ' active' : ''}`}
+                aria-label="Edit RectTransform pivot"
+                aria-pressed={pivotEditing && canEditPivot}
+                disabled={!canEditPivot}
+                title="Drag the selected RectTransform pivot without moving its rectangle"
+                onClick={() => setPivotEditing((editing) => {
+                  const next = !editing;
+                  if (next) setAnchorEditing(false);
+                  return next;
+                })}
+              >
+                <CircleDot size={14} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className={`scene-grid-toggle scene-icon-button${anchorEditing && canEditPivot ? ' active' : ''}`}
+                aria-label="Edit RectTransform anchors"
+                aria-pressed={anchorEditing && canEditPivot}
+                disabled={!canEditPivot}
+                title="Drag fixed or stretched anchors while preserving the rectangle"
+                onClick={() => setAnchorEditing((editing) => {
+                  const next = !editing;
+                  if (next) setPivotEditing(false);
+                  return next;
+                })}
+              >
+                <Anchor size={14} aria-hidden />
+              </button>
+              <div className="scene-snap" ref={snapSettingsElementRef}>
             <div className="scene-snap-buttons">
               <button
                 type="button"
@@ -3460,8 +3804,8 @@ export function Viewport(props: {
                 <small>Ctrl/Cmd: snap the current drag</small>
               </div>
             )}
-          </div>
-          <div className="scene-align" ref={alignElementRef}>
+              </div>
+              <div className="scene-align" ref={alignElementRef}>
             <button
               type="button"
               aria-label="Align RectTransforms"
@@ -3517,12 +3861,9 @@ export function Viewport(props: {
                 </div>
               </div>
             )}
-          </div>
-          <span className="game-hint">
-            {scene2D
-              ? '正视 Canvas · Ctrl/Shift Click 多选 · Arrows 1px / Shift 10px · F 聚焦 · RMB/MMB 平移'
-              : 'RMB 旋转 · MMB/Alt+LMB 平移 · Wheel 缩放 · F 聚焦'}
-          </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {props.tab === 'game' && (
@@ -3598,6 +3939,77 @@ export function Viewport(props: {
           <span className="game-hint">UI {uiStats.elements} elements · {uiStats.batches} batches</span>
         </div>
       )}
+      {inputProxy && (
+        <textarea
+          ref={inputProxyRef}
+          className="viewport-input-proxy"
+          aria-label="Game InputField text editor"
+          autoCapitalize="off"
+          autoComplete="off"
+          spellCheck={false}
+          wrap="off"
+          style={{ left: inputProxy.left, top: inputProxy.top }}
+          onInput={(event) => {
+            const native = event.nativeEvent as Event & { isComposing?: boolean };
+            const entity = focusedInputRef.current;
+            const item = entity == null
+              ? undefined
+              : uiItemsRef.current.find((candidate) => candidate.entity === entity);
+            commitGameInput(
+              event.currentTarget,
+              item?.input?.onValueChanged,
+              false,
+              inputCompositionRef.current || native.isComposing === true,
+            );
+          }}
+          onCompositionStart={() => {
+            inputCompositionRef.current = true;
+          }}
+          onCompositionEnd={(event) => {
+            inputCompositionRef.current = false;
+            const entity = focusedInputRef.current;
+            const item = entity == null
+              ? undefined
+              : uiItemsRef.current.find((candidate) => candidate.entity === entity);
+            commitGameInput(event.currentTarget, item?.input?.onValueChanged, false, false);
+          }}
+          onKeyDown={(event) => {
+            const entity = focusedInputRef.current;
+            const item = entity == null
+              ? undefined
+              : uiItemsRef.current.find((candidate) => candidate.entity === entity);
+            if (!item?.input?.interactable) {
+              closeGameInput(true);
+              return;
+            }
+            const native = event.nativeEvent as KeyboardEvent;
+            const action = uiInputKeyAction(
+              event.key,
+              item.input.multiline,
+              inputCompositionRef.current || native.isComposing || native.keyCode === 229,
+            );
+            if (action === 'native') return;
+            event.preventDefault();
+            event.stopPropagation();
+            if (action === 'navigate') {
+              focusedUiRef.current = nextUiSelectable(
+                uiItemsRef.current,
+                focusedUiRef.current,
+                event.shiftKey,
+              );
+              closeGameInput(true);
+            } else if (action === 'submit') {
+              commitGameInput(event.currentTarget, item.input.onSubmit, true, false);
+              closeGameInput(true);
+            } else {
+              closeGameInput(true);
+            }
+          }}
+          onBlur={() => {
+            if (!inputCompositionRef.current) closeGameInput();
+          }}
+        />
+      )}
       <canvas
         ref={canvasRef}
         data-scene-viewport={props.tab === 'scene' ? 'true' : undefined}
@@ -3671,15 +4083,6 @@ export function Viewport(props: {
             height: marquee.h,
           }}
         />
-      )}
-      {props.tab === 'scene' && (
-        <div className="viewport-overlay">
-          Scene{scene2D ? ' 2D' : ''}
-          <br />
-          {scene2D
-            ? 'Pan · Zoom · Rect gizmos · Box select'
-            : 'Orbit · Pan · Zoom · F frame'}
-        </div>
       )}
     </div>
   );

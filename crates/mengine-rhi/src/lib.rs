@@ -14,8 +14,9 @@ pub use renderer::{
     look_at, orthographic, perspective, project_world_to_viewport, validate_surface_shader_hook,
     ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting,
     MaterialBlendMode, MaterialFilter, MaterialPipelinePrewarmReport, MaterialPipelineStats,
-    MaterialTextureStats, MaterialWrap, PointLightData, RenderMaterial, RenderObject, Renderer,
-    SpotLightData, SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic,
+    MaterialTextureStats, MaterialWrap, OffscreenRenderTarget, PointLightData, RenderFrame,
+    RenderMaterial, RenderObject, RenderTarget, Renderer, SpotLightData,
+    SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic,
 };
 pub use ui::{
     validate_ui_shader_hook, UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect,
@@ -33,4 +34,6 @@ pub enum RhiError {
     RequestDevice(String),
     #[error("no adapter")]
     NoAdapter,
+    #[error("invalid render target: {0}")]
+    InvalidTarget(String),
 }

@@ -1125,6 +1125,7 @@ function scanBuildAssetDependencies(
   }>>();
   const materialVariantRoots = new Set<string>();
   const materialUsageDomains = new Map<string, Set<'surface' | 'ui'>>();
+  const scannedEffekseerDirectories = new Set<string>();
   let auditedScenes = 0;
   let auditedPrefabs = 0;
   let auditedMaterials = 0;
@@ -1267,6 +1268,11 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('Animator'), 'controller'), from, 'animator controller');
     enqueue(stringValue(component('TimelineDirector'), 'asset'), from, 'Timeline asset');
     enqueue(stringValue(component('AudioSource'), 'clip'), from, 'audio clip');
+    enqueue(
+      stringValue(component('EffekseerEffect'), 'effect'),
+      from,
+      'Effekseer effect',
+    );
     for (const name of ['ParticleEmitter2D', 'ParticleEmitter3D']) {
       enqueue(stringValue(component(name), 'texture'), from, 'particle texture', ['white']);
     }
@@ -1293,7 +1299,37 @@ function scanBuildAssetDependencies(
   const inspectJsonDependency = (absolute: string, pending: PendingAsset) => {
     const extension = extname(pending.path).toLowerCase();
     const source = portablePath(relative(root, absolute));
-    if (extension === '.mscene') {
+    if (extension === '.efk' || extension === '.efkefc') {
+      const effectDirectory = dirname(absolute);
+      const directoryKey = process.platform === 'win32'
+        ? effectDirectory.toLowerCase()
+        : effectDirectory;
+      if (!scannedEffekseerDirectories.has(directoryKey)) {
+        scannedEffekseerDirectories.add(directoryKey);
+        const walk = (candidate: string) => {
+          assertBuildNotCancelled(isCancelled, 'Effekseer dependency scan');
+          const metadata = lstatSync(candidate);
+          if (metadata.isSymbolicLink()) {
+            throw new Error(`symbolic links are not allowed in Effekseer asset directories: ${portablePath(relative(root, candidate))}`);
+          }
+          if (metadata.isDirectory()) {
+            for (const entry of readdirSync(candidate, { withFileTypes: true })
+              .sort((left, right) => compareFileNames(left.name, right.name))) {
+              walk(join(candidate, entry.name));
+            }
+          } else if (metadata.isFile()
+            && !/\.tsx?$/i.test(candidate)
+            && !isEditorAssetMetadata(candidate)) {
+            enqueue(
+              portablePath(relative(root, candidate)),
+              source,
+              'Effekseer companion asset',
+            );
+          }
+        };
+        walk(effectDirectory);
+      }
+    } else if (extension === '.mscene') {
       auditedScenes += 1;
       const scene = readJsonAsset(absolute, root, 'scene');
       validateSceneEntityReferences(scene, source);

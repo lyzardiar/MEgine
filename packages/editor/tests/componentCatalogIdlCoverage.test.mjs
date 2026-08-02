@@ -54,6 +54,7 @@ test('rendered and layout UI components require an authored RectTransform', () =
     'CanvasRenderer',
     'AspectRatioFitter',
     'ContentSizeFitter',
+    'LayoutElement',
     'Image',
     'RawImage',
     'Button',

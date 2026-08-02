@@ -548,6 +548,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     create: () => createParticleEmitter3D(),
   },
   {
+    type: 'EffekseerEffect',
+    label: 'Effekseer Effect',
+    description: 'Effekseer 1.80 effect evaluated by the shared MEngine runtime',
+    create: () => createEffekseerEffect(),
+  },
+  {
     type: 'SpineSkeleton',
     label: 'Spine Skeleton 4.3',
     description: 'Official Spine 4.3 skeleton, atlas, skin and animation player',
@@ -645,6 +651,21 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       interactable: true,
       blocks_raycasts: true,
       ignore_parent_groups: false,
+    }),
+  },
+  {
+    type: 'LayoutElement',
+    label: 'Layout Element',
+    description: 'Per-child minimum, preferred and flexible layout sizing',
+    requires: ['RectTransform'],
+    create: () => ({
+      ignore_layout: false,
+      min_width: -1,
+      min_height: -1,
+      preferred_width: -1,
+      preferred_height: -1,
+      flexible_width: -1,
+      flexible_height: -1,
     }),
   },
   {
@@ -970,6 +991,18 @@ export function createSpineSkeleton(): Record<string, unknown> {
   };
 }
 
+export function createEffekseerEffect(): Record<string, unknown> {
+  return {
+    effect: '',
+    playing: true,
+    looping: true,
+    speed: 1,
+    start_frame: 0,
+    prewarm: false,
+    auto_destroy: false,
+  };
+}
+
 export function createUiTextComponents(text = 'Text') {
   return {
     RectTransform: defaultRectTransform({ size_delta: [200, 36] }),
@@ -1088,8 +1121,19 @@ export function createUiLayoutGroupComponents() {
       padding: [8, 8, 8, 8],
       spacing: [6, 6],
       cell_size: [160, 36],
-      constraint_count: 1,
+      child_alignment: 'UpperLeft',
+      child_control_width: true,
+      child_control_height: true,
       child_force_expand: true,
+      child_force_expand_width: true,
+      child_force_expand_height: true,
+      use_child_scale_width: false,
+      use_child_scale_height: false,
+      reverse_arrangement: false,
+      start_corner: 'UpperLeft',
+      start_axis: 'Horizontal',
+      constraint: 'FixedColumnCount',
+      constraint_count: 1,
     },
   };
 }

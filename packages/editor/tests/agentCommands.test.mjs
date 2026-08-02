@@ -183,7 +183,7 @@ function createContext() {
         pivot: partial.pivot ? [...partial.pivot] : store.sceneCamera.pivot,
       };
       store.sceneCamera.pitch = Math.max(-89, Math.min(89, store.sceneCamera.pitch));
-      store.sceneCamera.distance = Math.max(0.5, Math.min(200, store.sceneCamera.distance));
+      store.sceneCamera.distance = Math.max(0.5, Math.min(1_000_000, store.sceneCamera.distance));
     },
   };
   return {

@@ -824,6 +824,41 @@
     "properties": {},
     "type": "object"
   },
+  "EffekseerEffect": {
+    "properties": {
+      "auto_destroy": {
+        "type": "boolean"
+      },
+      "effect": {
+        "type": "string"
+      },
+      "looping": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "prewarm": {
+        "type": "boolean"
+      },
+      "speed": {
+        "type": "number"
+      },
+      "start_frame": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "effect",
+      "playing",
+      "looping",
+      "speed",
+      "start_frame",
+      "prewarm",
+      "auto_destroy"
+    ],
+    "type": "object"
+  },
   "EnvironmentLight": {
     "properties": {
       "background_enabled": {
@@ -1097,6 +1132,41 @@
     ],
     "type": "object"
   },
+  "LayoutElement": {
+    "properties": {
+      "flexible_height": {
+        "type": "number"
+      },
+      "flexible_width": {
+        "type": "number"
+      },
+      "ignore_layout": {
+        "type": "boolean"
+      },
+      "min_height": {
+        "type": "number"
+      },
+      "min_width": {
+        "type": "number"
+      },
+      "preferred_height": {
+        "type": "number"
+      },
+      "preferred_width": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "ignore_layout",
+      "min_width",
+      "min_height",
+      "preferred_width",
+      "preferred_height",
+      "flexible_width",
+      "flexible_height"
+    ],
+    "type": "object"
+  },
   "LayoutGroup": {
     "properties": {
       "cell_size": {
@@ -1105,8 +1175,26 @@
         },
         "type": "array"
       },
+      "child_alignment": {
+        "type": "string"
+      },
+      "child_control_height": {
+        "type": "boolean"
+      },
+      "child_control_width": {
+        "type": "boolean"
+      },
       "child_force_expand": {
         "type": "boolean"
+      },
+      "child_force_expand_height": {
+        "type": "boolean"
+      },
+      "child_force_expand_width": {
+        "type": "boolean"
+      },
+      "constraint": {
+        "type": "string"
       },
       "constraint_count": {
         "type": "number"
@@ -1120,11 +1208,26 @@
         },
         "type": "array"
       },
+      "reverse_arrangement": {
+        "type": "boolean"
+      },
       "spacing": {
         "items": {
           "type": "number"
         },
         "type": "array"
+      },
+      "start_axis": {
+        "type": "string"
+      },
+      "start_corner": {
+        "type": "string"
+      },
+      "use_child_scale_height": {
+        "type": "boolean"
+      },
+      "use_child_scale_width": {
+        "type": "boolean"
       }
     },
     "required": [
@@ -1132,8 +1235,19 @@
       "padding",
       "spacing",
       "cell_size",
-      "constraint_count",
-      "child_force_expand"
+      "child_alignment",
+      "child_control_width",
+      "child_control_height",
+      "child_force_expand",
+      "child_force_expand_width",
+      "child_force_expand_height",
+      "use_child_scale_width",
+      "use_child_scale_height",
+      "reverse_arrangement",
+      "start_corner",
+      "start_axis",
+      "constraint",
+      "constraint_count"
     ],
     "type": "object"
   },

@@ -78,6 +78,17 @@ component ContentSizeFitter {
   vertical_fit:   string = "Unconstrained"
 }
 
+/// Per-child sizing overrides consumed by a parent LayoutGroup.
+component LayoutElement {
+  ignore_layout:    bool  = false
+  min_width:        float = -1
+  min_height:       float = -1
+  preferred_width:  float = -1
+  preferred_height: float = -1
+  flexible_width:   float = -1
+  flexible_height:  float = -1
+}
+
 component Image {
   enabled:         bool   = true
   /// Unity MaskableGraphic.maskable. False ignores parent Mask and RectMask2D.
@@ -274,12 +285,28 @@ component CanvasGroup {
 
 /// Automatic child arrangement: "Horizontal" | "Vertical" | "Grid".
 component LayoutGroup {
-  direction:          string = "Vertical"
-  padding:            float4 = [8, 8, 8, 8]
-  spacing:            float2 = [6, 6]
-  cell_size:          float2 = [120, 32]
-  constraint_count:   int    = 1
-  child_force_expand: bool   = true
+  direction:                 string = "Vertical"
+  padding:                   float4 = [8, 8, 8, 8]
+  spacing:                   float2 = [6, 6]
+  cell_size:                 float2 = [120, 32]
+  /// "UpperLeft" | "UpperCenter" | "UpperRight" | "MiddleLeft" | "MiddleCenter" | "MiddleRight" | "LowerLeft" | "LowerCenter" | "LowerRight"
+  child_alignment:           string = "UpperLeft"
+  child_control_width:       bool   = true
+  child_control_height:      bool   = true
+  /// Backward-compatible master switch for both force-expand axes.
+  child_force_expand:        bool   = true
+  child_force_expand_width:  bool   = true
+  child_force_expand_height: bool   = true
+  use_child_scale_width:     bool   = false
+  use_child_scale_height:    bool   = false
+  reverse_arrangement:       bool   = false
+  /// Grid only: "UpperLeft" | "UpperRight" | "LowerLeft" | "LowerRight"
+  start_corner:              string = "UpperLeft"
+  /// Grid only: "Horizontal" | "Vertical"
+  start_axis:                string = "Horizontal"
+  /// Grid only: "Flexible" | "FixedColumnCount" | "FixedRowCount"
+  constraint:                string = "FixedColumnCount"
+  constraint_count:          int    = 1
 }
 
 /// Rectangular child clipping. Padding order is left, bottom, right, top.

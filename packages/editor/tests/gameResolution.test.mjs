@@ -7,6 +7,7 @@ import {
   legacyGameResolution,
   normalizeGameDisplay,
   normalizeGameResolution,
+  sceneCanvasLogicalSize,
 } from '../src/gameResolution.ts';
 
 test('Game orientation is derived only from the configured resolution', () => {
@@ -33,6 +34,15 @@ test('Game resolutions normalize persisted and editable forms safely', () => {
     height: 720,
   });
   assert.equal(gameResolutionKey({ width: 1024, height: 768 }), '1024x768');
+});
+
+test('Scene Canvas uses fixed Game pixels instead of the editor panel letterbox', () => {
+  assert.deepEqual(
+    sceneCanvasLogicalSize({ width: 1920, height: 1080 }, { w: 800, h: 450 }),
+    { w: 1920, h: 1080 },
+  );
+  assert.deepEqual(sceneCanvasLogicalSize(null, { w: 800, h: 450 }), { w: 800, h: 450 });
+  assert.deepEqual(sceneCanvasLogicalSize(null, { w: Number.NaN, h: 0 }), { w: 1, h: 1 });
 });
 
 test('Legacy aspect and orientation settings migrate to concrete resolutions', () => {

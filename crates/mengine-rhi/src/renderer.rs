@@ -334,6 +334,47 @@ pub struct FrameLighting {
     pub spots: Vec<SpotLightData>,
 }
 
+/// Backend-independent description of one fully evaluated render frame.
+///
+/// Player, editor viewports and headless capture must all submit this same
+/// contract. Presentation targets are selected by the renderer and never
+/// change scene extraction, material resolution or pass ordering.
+pub struct RenderFrame<'a> {
+    pub clear: ClearColor,
+    pub camera: FrameCamera,
+    pub objects: &'a [RenderObject],
+    pub lighting: &'a FrameLighting,
+    pub ui: Option<&'a UiBatchPlan>,
+}
+
+/// A renderer-owned color target for editor viewports, capture, and headless rendering.
+pub struct OffscreenRenderTarget {
+    texture: wgpu::Texture,
+    view: wgpu::TextureView,
+    size: PhysicalSize<u32>,
+    format: wgpu::TextureFormat,
+}
+
+impl OffscreenRenderTarget {
+    pub fn texture(&self) -> &wgpu::Texture {
+        &self.texture
+    }
+
+    pub fn view(&self) -> &wgpu::TextureView {
+        &self.view
+    }
+
+    pub fn size(&self) -> PhysicalSize<u32> {
+        self.size
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum RenderTarget<'a> {
+    Window,
+    Offscreen(&'a OffscreenRenderTarget),
+}
+
 impl Default for FrameLighting {
     fn default() -> Self {
         Self {
@@ -538,7 +579,7 @@ fn material_has_missing_textures(
 pub struct Renderer {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
-    surface: wgpu::Surface<'static>,
+    surface: Option<wgpu::Surface<'static>>,
     config: wgpu::SurfaceConfiguration,
     material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     error_material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
@@ -596,19 +637,32 @@ impl Renderer {
     pub async fn new(window: Arc<winit::window::Window>) -> Result<Self, RhiError> {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            // Keep cross-platform defaults, but allow diagnostics and deployments to pin a
-            // backend with WGPU_BACKEND (for example `dx12` on Windows build agents).
-            backends: wgpu::Backends::PRIMARY.with_env(),
+            backends: preferred_backends(),
             ..Default::default()
         });
         let surface = instance
             .create_surface(window.clone())
             .map_err(|e| RhiError::RequestDevice(e.to_string()))?;
+        Self::new_with_optional_surface(instance, Some(surface), size).await
+    }
 
+    pub async fn new_headless(size: PhysicalSize<u32>) -> Result<Self, RhiError> {
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            backends: preferred_backends(),
+            ..Default::default()
+        });
+        Self::new_with_optional_surface(instance, None, size).await
+    }
+
+    async fn new_with_optional_surface(
+        instance: wgpu::Instance,
+        surface: Option<wgpu::Surface<'static>>,
+        size: PhysicalSize<u32>,
+    ) -> Result<Self, RhiError> {
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
-                compatible_surface: Some(&surface),
+                compatible_surface: surface.as_ref(),
                 force_fallback_adapter: false,
             })
             .await
@@ -631,13 +685,19 @@ impl Renderer {
             .await
             .map_err(|e| RhiError::RequestDevice(e.to_string()))?;
 
-        let caps = surface.get_capabilities(&adapter);
+        let caps = surface
+            .as_ref()
+            .map(|surface| surface.get_capabilities(&adapter));
         let format = caps
-            .formats
-            .iter()
-            .copied()
-            .find(|f| f.is_srgb())
-            .unwrap_or(caps.formats[0]);
+            .as_ref()
+            .and_then(|caps| {
+                caps.formats
+                    .iter()
+                    .copied()
+                    .find(|format| format.is_srgb())
+                    .or_else(|| caps.formats.first().copied())
+            })
+            .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb);
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -645,11 +705,16 @@ impl Renderer {
             width: size.width.max(1),
             height: size.height.max(1),
             present_mode: wgpu::PresentMode::Fifo,
-            alpha_mode: caps.alpha_modes[0],
+            alpha_mode: caps
+                .as_ref()
+                .and_then(|caps| caps.alpha_modes.first().copied())
+                .unwrap_or(wgpu::CompositeAlphaMode::Opaque),
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
-        surface.configure(&device, &config);
+        if let Some(surface) = surface.as_ref() {
+            surface.configure(&device, &config);
+        }
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("forward_material"),
@@ -1170,16 +1235,136 @@ impl Renderer {
         if new_size.width == 0 || new_size.height == 0 {
             return;
         }
-        self.size = new_size;
         self.config.width = new_size.width;
         self.config.height = new_size.height;
-        self.surface.configure(&self.device, &self.config);
+        if let Some(surface) = self.surface.as_ref() {
+            surface.configure(&self.device, &self.config);
+        }
+        self.ensure_render_size(new_size);
+    }
+
+    fn ensure_render_size(&mut self, new_size: PhysicalSize<u32>) {
+        let new_size = PhysicalSize::new(new_size.width.max(1), new_size.height.max(1));
+        if self.size == new_size {
+            return;
+        }
+        self.size = new_size;
         let (tex, view) = create_depth(&self.device, new_size.width, new_size.height);
         self.depth_texture = tex;
         self.depth_view = view;
         self.post_process
             .resize(&self.device, new_size.width, new_size.height);
         self.ui.resize(&self.queue, new_size.width, new_size.height);
+    }
+
+    pub fn create_offscreen_target(&self, size: PhysicalSize<u32>) -> OffscreenRenderTarget {
+        let size = PhysicalSize::new(size.width.max(1), size.height.max(1));
+        let texture = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("mengine_offscreen_target"),
+            size: wgpu::Extent3d {
+                width: size.width,
+                height: size.height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: self.config.format,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::COPY_SRC
+                | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
+        });
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        OffscreenRenderTarget {
+            texture,
+            view,
+            size,
+            format: self.config.format,
+        }
+    }
+
+    /// Synchronously read a completed offscreen target into tightly packed top-left RGBA8 rows.
+    pub fn read_offscreen_rgba8(
+        &self,
+        target: &OffscreenRenderTarget,
+    ) -> Result<Vec<u8>, RhiError> {
+        let width = target.size.width;
+        let height = target.size.height;
+        let row_bytes = width * 4;
+        let alignment = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
+        let padded_row_bytes = row_bytes.div_ceil(alignment) * alignment;
+        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("mengine_offscreen_readback"),
+            size: (padded_row_bytes as u64) * (height as u64),
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("mengine_offscreen_readback"),
+            });
+        encoder.copy_texture_to_buffer(
+            wgpu::TexelCopyTextureInfo {
+                texture: &target.texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::TexelCopyBufferInfo {
+                buffer: &buffer,
+                layout: wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(padded_row_bytes),
+                    rows_per_image: Some(height),
+                },
+            },
+            wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+        );
+        self.queue.submit(std::iter::once(encoder.finish()));
+
+        let slice = buffer.slice(..);
+        let (sender, receiver) = std::sync::mpsc::sync_channel(1);
+        slice.map_async(wgpu::MapMode::Read, move |result| {
+            let _ = sender.send(result);
+        });
+        let _ = self.device.poll(wgpu::Maintain::Wait);
+        receiver
+            .recv()
+            .map_err(|error| RhiError::InvalidTarget(format!("readback callback failed: {error}")))?
+            .map_err(|error| {
+                RhiError::InvalidTarget(format!("readback mapping failed: {error}"))
+            })?;
+
+        let mapped = slice.get_mapped_range();
+        let mut rgba = Vec::with_capacity((row_bytes * height) as usize);
+        for row in mapped.chunks_exact(padded_row_bytes as usize) {
+            rgba.extend_from_slice(&row[..row_bytes as usize]);
+        }
+        if matches!(
+            target.format,
+            wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb
+        ) {
+            for pixel in rgba.chunks_exact_mut(4) {
+                pixel.swap(0, 2);
+            }
+        } else if !matches!(
+            target.format,
+            wgpu::TextureFormat::Rgba8Unorm | wgpu::TextureFormat::Rgba8UnormSrgb
+        ) {
+            return Err(RhiError::InvalidTarget(format!(
+                "RGBA8 readback does not support {:?}",
+                target.format
+            )));
+        }
+        drop(mapped);
+        buffer.unmap();
+        Ok(rgba)
     }
 
     pub fn render(
@@ -1206,6 +1391,30 @@ impl Renderer {
         lighting: &FrameLighting,
         ui: Option<&UiBatchPlan>,
     ) -> Result<(), RhiError> {
+        self.render_lit_frame_to_target(camera, objects, lighting, ui, RenderTarget::Window)
+    }
+
+    fn render_lit_frame_to_target(
+        &mut self,
+        camera: FrameCamera,
+        objects: &[RenderObject],
+        lighting: &FrameLighting,
+        ui: Option<&UiBatchPlan>,
+        target: RenderTarget<'_>,
+    ) -> Result<(), RhiError> {
+        let target_size = match target {
+            RenderTarget::Window => PhysicalSize::new(self.config.width, self.config.height),
+            RenderTarget::Offscreen(target) => {
+                if target.format != self.config.format {
+                    return Err(RhiError::InvalidTarget(format!(
+                        "expected {:?}, got {:?}",
+                        self.config.format, target.format
+                    )));
+                }
+                target.size
+            }
+        };
+        self.ensure_render_size(target_size);
         self.material_pipeline_epoch = self.material_pipeline_epoch.wrapping_add(1);
         self.ensure_object_capacity(objects.len().max(1));
         let environment_key = lighting.environment.texture.trim();
@@ -1263,10 +1472,30 @@ impl Renderer {
             self.ensure_material_texture_set(&object.material);
         }
         self.prune_material_pipeline_cache();
-        let frame = self.surface.get_current_texture()?;
-        let view = frame
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+        let surface_frame = match target {
+            RenderTarget::Window => Some(
+                self.surface
+                    .as_ref()
+                    .ok_or_else(|| {
+                        RhiError::InvalidTarget(
+                            "headless renderer cannot submit to a window".to_string(),
+                        )
+                    })?
+                    .get_current_texture()?,
+            ),
+            RenderTarget::Offscreen(_) => None,
+        };
+        let surface_view = surface_frame.as_ref().map(|frame| {
+            frame
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default())
+        });
+        let view = match target {
+            RenderTarget::Window => surface_view
+                .as_ref()
+                .expect("window target acquired before frame encoding"),
+            RenderTarget::Offscreen(target) => &target.view,
+        };
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -1433,7 +1662,7 @@ impl Renderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("aces_tone_mapping"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
@@ -1450,7 +1679,7 @@ impl Renderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("ui_overlay"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,
@@ -1474,8 +1703,29 @@ impl Renderer {
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
-        frame.present();
+        if let Some(frame) = surface_frame {
+            frame.present();
+        }
         Ok(())
+    }
+
+    pub fn submit_frame(&mut self, frame: &RenderFrame<'_>) -> Result<(), RhiError> {
+        self.submit_frame_to(frame, RenderTarget::Window)
+    }
+
+    pub fn submit_frame_to(
+        &mut self,
+        frame: &RenderFrame<'_>,
+        target: RenderTarget<'_>,
+    ) -> Result<(), RhiError> {
+        self.clear = frame.clear;
+        self.render_lit_frame_to_target(
+            frame.camera,
+            frame.objects,
+            frame.lighting,
+            frame.ui,
+            target,
+        )
     }
 
     fn ensure_object_capacity(&mut self, required: usize) {
@@ -1987,6 +2237,19 @@ impl Renderer {
     pub fn upload_gltf_static(&mut self, key: &str, vertices: &[Vertex], indices: &[u32]) {
         let mesh = MeshGpu::upload(&self.device, vertices, indices);
         self.meshes.insert(key.to_string(), mesh);
+    }
+}
+
+fn preferred_backends() -> wgpu::Backends {
+    // AMD's Windows Vulkan driver can crash in-process when several headless viewport devices
+    // initialize together. DX12 is the native Windows path and remains overridable for diagnostics.
+    #[cfg(target_os = "windows")]
+    {
+        wgpu::Backends::DX12.with_env()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        wgpu::Backends::PRIMARY.with_env()
     }
 }
 

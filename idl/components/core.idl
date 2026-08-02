@@ -404,6 +404,17 @@ component ParticleEmitter3D {
   seed:             int    = 1
 }
 
+/// Effekseer 1.80 effect evaluated by the shared runtime and rendered through MEngine RHI.
+component EffekseerEffect {
+  effect:       string = ""
+  playing:      bool   = true
+  looping:      bool   = true
+  speed:        float  = 1
+  start_frame:  int    = 0
+  prewarm:      bool   = false
+  auto_destroy: bool   = false
+}
+
 /// Spine 4.3 skeleton instance. Skeleton and atlas paths are project-relative assets.
 component SpineSkeleton {
   skeleton:             string = ""

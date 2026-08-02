@@ -4,6 +4,7 @@ mod gizmo;
 mod project;
 mod session;
 mod undo;
+mod viewport;
 
 pub use gizmo::{GizmoMode, GizmoState};
 pub use project::{
@@ -15,3 +16,4 @@ pub use project::{
 };
 pub use session::{EditorMode, EditorSession};
 pub use undo::{EditorCommand, UndoStack};
+pub use viewport::{EditorSceneCamera, EditorViewportFrame, EditorViewportRenderer};

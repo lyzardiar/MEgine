@@ -98,6 +98,8 @@ export const ParticleEmitter2D = defineBuiltinComponent('ParticleEmitter2D');
 export type ParticleEmitter2D = BuiltinComponents['ParticleEmitter2D'];
 export const ParticleEmitter3D = defineBuiltinComponent('ParticleEmitter3D');
 export type ParticleEmitter3D = BuiltinComponents['ParticleEmitter3D'];
+export const EffekseerEffect = defineBuiltinComponent('EffekseerEffect');
+export type EffekseerEffect = BuiltinComponents['EffekseerEffect'];
 export const SpineSkeleton = defineBuiltinComponent('SpineSkeleton');
 export type SpineSkeleton = BuiltinComponents['SpineSkeleton'];
 export const Canvas = defineBuiltinComponent('Canvas');
@@ -114,6 +116,8 @@ export const AspectRatioFitter = defineBuiltinComponent('AspectRatioFitter');
 export type AspectRatioFitter = BuiltinComponents['AspectRatioFitter'];
 export const ContentSizeFitter = defineBuiltinComponent('ContentSizeFitter');
 export type ContentSizeFitter = BuiltinComponents['ContentSizeFitter'];
+export const LayoutElement = defineBuiltinComponent('LayoutElement');
+export type LayoutElement = BuiltinComponents['LayoutElement'];
 export const Image = defineBuiltinComponent('Image');
 export type Image = BuiltinComponents['Image'];
 export const RawImage = defineBuiltinComponent('RawImage');
@@ -196,6 +200,7 @@ export const BUILTIN_COMPONENT_TYPES = {
   AutoRotate,
   ParticleEmitter2D,
   ParticleEmitter3D,
+  EffekseerEffect,
   SpineSkeleton,
   Canvas,
   CanvasRenderer,
@@ -204,6 +209,7 @@ export const BUILTIN_COMPONENT_TYPES = {
   RectTransform,
   AspectRatioFitter,
   ContentSizeFitter,
+  LayoutElement,
   Image,
   RawImage,
   Shadow,

@@ -1,9 +1,11 @@
+use base64::Engine as _;
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_editor_host::{
     AssetDeleteSnapshot, AssetDuplicateRequest, AssetDuplicateResult, AssetRenameRequest,
     AssetRenameResult, AssetRestoreRequest, AssetRestoreResult, AssetTrashInventory,
     AssetTrashRequest, AssetTrashResult, BuildAssetMode, EditorFailure, EditorRequest,
-    EditorResult, ProjectSession, ProjectSnapshot, SceneRecoveryInfo,
+    EditorResult, EditorSceneCamera, EditorViewportFrame, EditorViewportRenderer, ProjectSession,
+    ProjectSnapshot, SceneRecoveryInfo,
 };
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
@@ -33,6 +35,48 @@ struct AppState {
     project: Mutex<Option<ProjectSession>>,
     active_build: Arc<Mutex<Option<ActiveBuild>>>,
     next_build_id: AtomicU64,
+}
+
+static VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
+static SCENE_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
+static EFFEKSEER_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
+    OnceLock::new();
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeViewportFrame {
+    width: u32,
+    height: u32,
+    png_base64: String,
+    has_authored_camera: bool,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeSceneViewRequest {
+    width: u32,
+    height: u32,
+    eye: [f32; 3],
+    target: [f32; 3],
+    orthographic: bool,
+    orthographic_size: f32,
+    fov_y_degrees: f32,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct EffekseerPreviewRequest {
+    effect: String,
+    width: u32,
+    height: u32,
+    playing: bool,
+    looping: bool,
+    speed: f32,
+    restart: u64,
+    camera_yaw: f32,
+    camera_pitch: f32,
+    camera_distance: f32,
+    background: [f32; 4],
 }
 
 #[derive(Clone)]
@@ -3594,6 +3638,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("prefab")
     } else if lower.ends_with(".gltf") || lower.ends_with(".glb") {
         Some("model")
+    } else if lower.ends_with(".efkefc") || lower.ends_with(".efk") {
+        Some("effekseer-effect")
     } else if lower.ends_with(".ttf") || lower.ends_with(".otf") {
         Some("font")
     } else if [
@@ -4075,6 +4121,184 @@ fn get_project_snapshot(state: State<'_, AppState>) -> Result<ProjectSnapshot, E
         .as_ref()
         .map(ProjectSession::snapshot)
         .ok_or_else(no_project)
+}
+
+fn encode_native_viewport_frame(
+    frame: EditorViewportFrame,
+    label: &str,
+) -> Result<NativeViewportFrame, String> {
+    let mut png_bytes = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut png_bytes, frame.width, frame.height);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder
+            .write_header()
+            .map_err(|error| format!("could not encode {label} PNG: {error}"))?;
+        writer
+            .write_image_data(&frame.rgba)
+            .map_err(|error| format!("could not encode {label} PNG: {error}"))?;
+    }
+    Ok(NativeViewportFrame {
+        width: frame.width,
+        height: frame.height,
+        png_base64: base64::engine::general_purpose::STANDARD.encode(png_bytes),
+        has_authored_camera: frame.has_authored_camera,
+    })
+}
+
+fn world_from_snapshot(snapshot: &WorldSnapshot) -> mengine_core::World {
+    let mut world = mengine_core::World::new();
+    mengine_scene::apply_snapshot(&mut world, snapshot);
+    world
+}
+
+#[tauri::command]
+async fn render_native_game_view(
+    width: u32,
+    height: u32,
+    state: State<'_, AppState>,
+) -> Result<NativeViewportFrame, String> {
+    let (project_root, snapshot) = {
+        let project = state.project.lock();
+        let session = project
+            .as_ref()
+            .ok_or_else(|| "no MEngine project is open".to_string())?;
+        (
+            session.project_root().to_owned(),
+            WorldSnapshot::from_world(session.active_world()),
+        )
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        let world = world_from_snapshot(&snapshot);
+        let viewport = VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
+        let mut viewport = viewport.lock();
+        if viewport
+            .as_ref()
+            .is_none_or(|renderer| renderer.project_root() != project_root)
+        {
+            *viewport = Some(
+                pollster::block_on(EditorViewportRenderer::new(
+                    project_root,
+                    width,
+                    height,
+                ))
+                .map_err(|error| error.to_string())?,
+            );
+        }
+        let frame = viewport
+            .as_mut()
+            .expect("viewport renderer initialized above")
+            .render_game(&world, width, height)
+            .map_err(|error| error.to_string())?;
+        encode_native_viewport_frame(frame, "viewport")
+    })
+    .await
+    .map_err(|error| format!("Game viewport worker failed: {error}"))?
+}
+
+#[tauri::command]
+async fn render_native_scene_view(
+    request: NativeSceneViewRequest,
+    state: State<'_, AppState>,
+) -> Result<NativeViewportFrame, String> {
+    let (project_root, snapshot) = {
+        let project = state.project.lock();
+        let session = project
+            .as_ref()
+            .ok_or_else(|| "no MEngine project is open".to_string())?;
+        (
+            session.project_root().to_owned(),
+            WorldSnapshot::from_world(session.active_world()),
+        )
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        let world = world_from_snapshot(&snapshot);
+        let viewport = SCENE_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
+        let mut viewport = viewport.lock();
+        if viewport
+            .as_ref()
+            .is_none_or(|renderer| renderer.project_root() != project_root)
+        {
+            *viewport = Some(
+                pollster::block_on(EditorViewportRenderer::new(
+                    project_root,
+                    request.width,
+                    request.height,
+                ))
+                .map_err(|error| error.to_string())?,
+            );
+        }
+        let frame = viewport
+            .as_mut()
+            .expect("Scene viewport renderer initialized above")
+            .render_scene(
+                &world,
+                request.width,
+                request.height,
+                EditorSceneCamera {
+                    eye: request.eye,
+                    target: request.target,
+                    orthographic: request.orthographic,
+                    orthographic_size: request.orthographic_size,
+                    fov_y_degrees: request.fov_y_degrees,
+                },
+            )
+            .map_err(|error| error.to_string())?;
+        encode_native_viewport_frame(frame, "Scene viewport")
+    })
+    .await
+    .map_err(|error| format!("Scene viewport worker failed: {error}"))?
+}
+
+#[tauri::command]
+async fn render_effekseer_preview(
+    request: EffekseerPreviewRequest,
+    state: State<'_, AppState>,
+) -> Result<NativeViewportFrame, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.project_root().to_owned())
+        .ok_or_else(|| "no MEngine project is open".to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let viewport = EFFEKSEER_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
+        let mut viewport = viewport.lock();
+        if viewport
+            .as_ref()
+            .is_none_or(|renderer| renderer.project_root() != project_root)
+        {
+            *viewport = Some(
+                pollster::block_on(EditorViewportRenderer::new(
+                    project_root,
+                    request.width,
+                    request.height,
+                ))
+                .map_err(|error| error.to_string())?,
+            );
+        }
+        let frame = viewport
+            .as_mut()
+            .expect("Effekseer viewport renderer initialized above")
+            .render_effekseer_preview(
+                request.effect,
+                request.width,
+                request.height,
+                request.playing,
+                request.looping,
+                request.speed,
+                request.restart,
+                request.camera_yaw,
+                request.camera_pitch,
+                request.camera_distance,
+                request.background,
+            )
+            .map_err(|error| error.to_string())?;
+        encode_native_viewport_frame(frame, "Effekseer preview")
+    })
+    .await
+    .map_err(|error| format!("Effekseer viewport worker failed: {error}"))?
 }
 
 #[tauri::command]
@@ -5778,6 +6002,9 @@ pub fn run() {
             list_recent_projects,
             remove_recent_project,
             get_project_snapshot,
+            render_native_game_view,
+            render_native_scene_view,
+            render_effekseer_preview,
             list_project_scenes,
             rename_project_scene,
             delete_project_scene,

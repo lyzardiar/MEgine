@@ -31,3 +31,22 @@ test('none and invalid ratios leave layout unchanged', () => {
   assert.deepEqual(applyAspectRatio(rect, parent, [0.5, 0.5], 'None', 2), rect);
   assert.deepEqual(applyAspectRatio(rect, parent, [0.5, 0.5], 'FitInParent', 0), rect);
 });
+
+test('parent-driven axes cannot be overwritten by an AspectRatioFitter', () => {
+  assert.deepEqual(
+    applyAspectRatio(rect, parent, [0.5, 0.5], 'WidthControlsHeight', 1, [false, true]),
+    rect,
+  );
+  assert.deepEqual(
+    applyAspectRatio(rect, parent, [0.5, 0.5], 'HeightControlsWidth', 4, [true, false]),
+    rect,
+  );
+  assert.deepEqual(
+    applyAspectRatio(rect, parent, [0.5, 0.5], 'FitInParent', 1, [true, false]),
+    { x: 50, y: 0, w: 100, h: 100 },
+  );
+  assert.deepEqual(
+    applyAspectRatio(rect, parent, [0.5, 0.5], 'EnvelopeParent', 4, [false, true]),
+    { x: 0, y: 25, w: 200, h: 50 },
+  );
+});

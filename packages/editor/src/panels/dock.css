@@ -198,6 +198,10 @@ body.dock-resizing-y {
 }
 
 .dock-popout {
+  display: inline-flex;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
   margin-left: auto;
   width: 28px;
   border: 0;

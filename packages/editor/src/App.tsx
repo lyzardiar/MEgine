@@ -153,6 +153,7 @@ const SpriteAtlasEditor = lazy(async () => ({ default: (await import('./panels/S
 const BuildSettings = lazy(async () => ({ default: (await import('./panels/BuildSettings')).BuildSettings }));
 const Profiler = lazy(async () => ({ default: (await import('./panels/Profiler')).Profiler }));
 const ProjectSettings = lazy(async () => ({ default: (await import('./panels/ProjectSettings')).ProjectSettings }));
+const EffekseerPreview = lazy(async () => ({ default: (await import('./panels/EffekseerPreview')).EffekseerPreview }));
 
 function isTypingTarget(el: EventTarget | null) {
   if (!(el instanceof HTMLElement)) return false;
@@ -268,6 +269,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [animationDirty, setAnimationDirty] = useState(false);
   const [animationAssetPath, setAnimationAssetPath] = useState<string | null>(null);
   const [timelineAssetPath, setTimelineAssetPath] = useState<string | null>(null);
+  const [effekseerPreviewPath, setEffekseerPreviewPath] = useState<string | null>(null);
   const [sequencerDirty, setSequencerDirty] = useState(false);
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [buildSettingsDirty, setBuildSettingsDirty] = useState(false);
@@ -3238,6 +3240,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onOpenTimeline={(path) => openTimelineAsset(path)}
               onOpenSprite={(path) => openSpriteAsset(path)}
               onOpenSpriteAtlas={(path) => openSpriteAtlasAsset(path)}
+              onOpenEffekseer={(path) => {
+                setEffekseerPreviewPath(path);
+                window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
+                  detail: { panel: 'effekseer', activateWindow: true },
+                }));
+              }}
               onRenameScene={async (oldName, newName) => {
                 try {
                   const next = await renameScene(oldName, newName);
@@ -3605,6 +3613,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onAssetsChanged={bumpScenes}
               onDirtyChange={setSpriteAtlasDirty}
               onLog={log}
+            />
+          ),
+          effekseer: (
+            <EffekseerPreview
+              selectedPath={effekseerPreviewPath}
+              onSelectPath={setEffekseerPreviewPath}
             />
           ),
           build: (

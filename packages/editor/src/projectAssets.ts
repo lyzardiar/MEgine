@@ -25,6 +25,7 @@ export type ProjectFileAsset = {
     | 'spine-json'
     | 'spine-binary'
     | 'spine-atlas'
+    | 'effekseer-effect'
     | 'scene'
     | 'script'
     | 'sprite-import';

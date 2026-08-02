@@ -359,3 +359,29 @@ test('adding CanvasScaler resolves the complete Canvas dependency chain in one u
     await server.close();
   }
 });
+
+test('Frame Selected uses fixed Game pixels for screen Canvas geometry', async () => {
+  const server = await createServer({
+    root,
+    server: { middlewareMode: true },
+    appType: 'custom',
+    logLevel: 'silent',
+  });
+  try {
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const store = createEditorStore();
+    const canvas = store.spawnUiCanvas();
+    assert.notEqual(canvas, null);
+    store.patchComponent(canvas, 'Canvas', { target_display: 3 });
+    store.patchComponent(canvas, 'CanvasScaler', { reference_resolution: [1920, 1080] });
+    store.setGameResolution({ width: 1280, height: 720 });
+
+    store.select(canvas);
+    store.frameSelected();
+
+    assert.deepEqual(store.sceneCamera.pivot, [0, 0, 0]);
+    assert.equal(store.sceneCamera.distance, 1280 * 2.5);
+  } finally {
+    await server.close();
+  }
+});

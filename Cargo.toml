@@ -13,6 +13,7 @@ members = [
     "crates/mengine-jobs",
     "crates/mengine-audio",
     "crates/mengine-physics",
+    "crates/mengine-effekseer",
     "packages/editor/src-tauri",
 ]
 default-members = [
@@ -37,6 +38,7 @@ mengine-idl      = { path = "crates/mengine-idl" }
 mengine-jobs     = { path = "crates/mengine-jobs" }
 mengine-audio    = { path = "crates/mengine-audio" }
 mengine-physics  = { path = "crates/mengine-physics" }
+mengine-effekseer = { path = "crates/mengine-effekseer" }
 
 glam       = { version = "0.29", features = ["serde"] }
 serde      = { version = "1", features = ["derive"] }

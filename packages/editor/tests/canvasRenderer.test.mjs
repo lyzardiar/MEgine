@@ -12,6 +12,7 @@ const server = await createServer({
   server: { middlewareMode: true },
 });
 const {
+  canvasUiTextLayoutMeasurement,
   drawUiItems,
   hitTestUi,
   layoutUiOverlay,
@@ -56,6 +57,7 @@ class FakeContext {
   lineWidth = 1;
   lineJoin = 'miter';
   font = '';
+  fontKerning = 'auto';
   textAlign = 'start';
   textBaseline = 'alphabetic';
   stack = [];
@@ -86,6 +88,58 @@ class FakeContext {
   strokeText(...args) { this.operations.push(['strokeText', ...args]); }
   measureText(value) { return { width: String(value).length * 8 }; }
 }
+
+test('Canvas text measurement uses imported metrics without leaking drawing state', () => {
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  canvas.context.font = '13px initial';
+  canvas.context.fontKerning = 'auto';
+  let calls = 0;
+  canvas.context.measureText = (value) => {
+    calls += 1;
+    const width = value === 'AV' && canvas.context.fontKerning === 'normal' ? 17 : 10;
+    return {
+      width,
+      actualBoundingBoxLeft: 1,
+      actualBoundingBoxRight: 12,
+      actualBoundingBoxAscent: 8,
+      actualBoundingBoxDescent: 3,
+    };
+  };
+  const measurement = canvasUiTextLayoutMeasurement(canvas.context);
+  const left = { character: 'A', fontSize: 10, fontStyle: 'Normal' };
+  const right = { character: 'V', fontSize: 10, fontStyle: 'Normal' };
+
+  assert.deepEqual(measurement.measureGlyph('Assets/Fonts/Interface.ttf', left), {
+    advance: 10,
+    metricWidth: 12,
+    lineHeight: 11,
+    geometry: [-1, 12],
+  });
+  assert.equal(measurement.measurePairKerning('Assets/Fonts/Interface.ttf', left, right), 7);
+  assert.equal(canvas.context.font, '13px initial');
+  assert.equal(canvas.context.fontKerning, 'auto');
+
+  measurement.measureGlyph('Assets/Fonts/Interface.ttf', left);
+  measurement.measurePairKerning('Assets/Fonts/Interface.ttf', left, right);
+  assert.equal(calls, 3, 'glyph and pair metrics should be cached independently');
+});
+
+test('Canvas text measurement rejects invalid browser metrics safely', () => {
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  canvas.context.font = '11px initial';
+  canvas.context.fontKerning = 'auto';
+  canvas.context.measureText = () => ({ width: Number.NaN });
+  const measurement = canvasUiTextLayoutMeasurement(canvas.context);
+  const left = { character: 'A', fontSize: 10, fontStyle: 'Normal' };
+  const right = { character: 'V', fontSize: 10, fontStyle: 'Normal' };
+
+  assert.equal(measurement.measureGlyph('', left), null);
+  assert.equal(measurement.measurePairKerning('', left, right), 0);
+  assert.equal(canvas.context.font, '11px initial');
+  assert.equal(canvas.context.fontKerning, 'auto');
+});
 
 function imageItem(canvasRenderer, color = [1, 1, 1, 0]) {
   const entities = [

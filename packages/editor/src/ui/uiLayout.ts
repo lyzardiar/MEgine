@@ -28,7 +28,14 @@ import {
   type ImageFillMethod,
 } from './imageFill';
 import { applyAspectRatio } from './aspectRatioFitter';
-import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
+import {
+  applyContentSize,
+  layoutGroupChildRects,
+  measureLayoutContent,
+  type ContentSize,
+  type LayoutChildMetrics,
+  type LayoutMetrics,
+} from './contentSizeFitter';
 import { graphicEffectFilter, type UiGraphicEffect } from './graphicEffect';
 import {
   advanceButtonTint,
@@ -44,7 +51,7 @@ import {
   type ButtonSpriteState,
 } from './buttonSpriteSwap';
 import { resolveSpriteId } from '../spriteLibrary';
-import { add, cross, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
+import { add, cross, lookBasis, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
 import { buildWorldTransforms } from '../worldTransform';
 import { getSortingLayerRank } from '../sortingLayers';
@@ -71,8 +78,8 @@ import {
 import type { UiRichTextGlyph } from './uiRichText';
 import { uiTextFontCss } from './uiFontAssets';
 
-/** World pixels-per-unit for Scene view Overlay canvas plane. */
-export const UI_SCENE_PPU = 100;
+/** Screen-space Canvas pixels map 1:1 to Scene world units, matching its RectTransform size. */
+export const UI_SCENE_PPU = 1;
 
 export type UiEnt = {
   entity: number;
@@ -81,6 +88,15 @@ export type UiEnt = {
   siblingIndex?: number;
   active?: boolean;
   components: Record<string, unknown>;
+};
+
+export type UiTextLayoutMeasurement = {
+  measureGlyph: (font: string, glyph: UiRichTextGlyph) => UiTextGlyphMeasurement | null;
+  measurePairKerning: (
+    font: string,
+    left: UiRichTextGlyph,
+    right: UiRichTextGlyph,
+  ) => number | null;
 };
 
 export type UiMaskRegion = {
@@ -425,63 +441,227 @@ function insetRectLbrt(rect: Rect, raw: unknown, scale: number): Rect {
   return insetRect(rect, [p[0], p[3], p[2], p[1]], scale);
 }
 
-function layoutChildRect(
-  parent: Rect,
-  group: Record<string, unknown>,
-  index: number,
-  count: number,
-  scale: number,
-): Rect {
-  const content = insetRect(parent, group.padding, scale);
-  const spacing = number2(group.spacing, [6, 6]);
-  const cell = number2(group.cell_size ?? group.cellSize, [120, 32]);
-  const sx = spacing[0] * scale;
-  const sy = spacing[1] * scale;
-  const expand = group.child_force_expand !== false && group.childForceExpand !== false;
-  const direction = String(group.direction ?? 'Vertical');
-  if (direction === 'Horizontal') {
-    const w = expand && count > 0
-      ? Math.max(0, content.w - sx * Math.max(0, count - 1)) / count
-      : cell[0] * scale;
-    return {
-      x: content.x + index * (w + sx),
-      y: content.y,
-      w,
-      h: expand ? content.h : cell[1] * scale,
-    };
-  }
-  if (direction === 'Grid') {
-    const columns = Math.max(1, Math.trunc(number(group.constraint_count ?? group.constraintCount, 1)));
-    const column = index % columns;
-    const row = Math.floor(index / columns);
-    const w = expand
-      ? Math.max(0, content.w - sx * Math.max(0, columns - 1)) / columns
-      : cell[0] * scale;
-    const h = cell[1] * scale;
-    return { x: content.x + column * (w + sx), y: content.y + row * (h + sy), w, h };
-  }
-  const h = expand && count > 0
-    ? Math.max(0, content.h - sy * Math.max(0, count - 1)) / count
-    : cell[1] * scale;
-  return {
-    x: content.x,
-    y: content.y + index * (h + sy),
-    w: expand ? content.w : cell[0] * scale,
-    h,
-  };
-}
-
 function layoutMetrics(group: Record<string, unknown>): LayoutMetrics {
+  const legacyExpand = group.child_force_expand !== false && group.childForceExpand !== false;
   return {
     direction: String(group.direction ?? 'Vertical'),
     padding: number4(group.padding, [8, 8, 8, 8]),
     spacing: number2(group.spacing, [6, 6]),
     cellSize: number2(group.cell_size ?? group.cellSize, [120, 32]),
+    childAlignment: String(group.child_alignment ?? group.childAlignment ?? 'UpperLeft'),
+    childControlWidth: group.child_control_width !== false && group.childControlWidth !== false,
+    childControlHeight: group.child_control_height !== false && group.childControlHeight !== false,
+    childForceExpandWidth: legacyExpand
+      && group.child_force_expand_width !== false
+      && group.childForceExpandWidth !== false,
+    childForceExpandHeight: legacyExpand
+      && group.child_force_expand_height !== false
+      && group.childForceExpandHeight !== false,
+    useChildScaleWidth:
+      group.use_child_scale_width === true || group.useChildScaleWidth === true,
+    useChildScaleHeight:
+      group.use_child_scale_height === true || group.useChildScaleHeight === true,
+    reverseArrangement:
+      group.reverse_arrangement === true || group.reverseArrangement === true,
+    startCorner: String(group.start_corner ?? group.startCorner ?? 'UpperLeft'),
+    startAxis: String(group.start_axis ?? group.startAxis ?? 'Horizontal'),
+    constraint: String(group.constraint ?? 'FixedColumnCount'),
     constraintCount: Math.max(
       1,
       Math.trunc(number(group.constraint_count ?? group.constraintCount, 1)),
     ),
   };
+}
+
+function textIntrinsicPreferredSize(
+  text: Record<string, unknown>,
+  authoredWidth: number,
+  measurement?: UiTextLayoutMeasurement,
+): [number, number] | null {
+  const value = String(text.text ?? 'Text');
+  if (text.enabled === false || value.length === 0) return null;
+  const fontSize = Math.min(512, Math.max(1, number(text.font_size ?? text.fontSize, 16)));
+  const fontStyle = enumValue(
+    text.font_style ?? text.fontStyle,
+    ['Normal', 'Bold', 'Italic', 'BoldAndItalic'] as const,
+    'Normal',
+  );
+  const common = {
+    fontSize,
+    fontStyle,
+    alignByGeometry: text.align_by_geometry === true || text.alignByGeometry === true,
+    supportRichText: text.support_rich_text !== false && text.supportRichText !== false,
+    bestFit: false,
+    minSize: Math.max(1, number(text.resize_text_min_size ?? text.resizeTextMinSize, 10)),
+    maxSize: Math.max(1, number(text.resize_text_max_size ?? text.resizeTextMaxSize, 40)),
+    fontScale: 1,
+    lineSpacing: number(text.line_spacing ?? text.lineSpacing, 1),
+    verticalOverflow: 'Overflow' as const,
+    alignment: 'Left' as const,
+    verticalAlign: 'Top' as const,
+    measureGlyph: measurement
+      ? (glyph: UiRichTextGlyph) => measurement.measureGlyph(String(text.font ?? ''), glyph)
+      : undefined,
+    measurePairKerning: measurement
+      ? (left: UiRichTextGlyph, right: UiRichTextGlyph) => (
+          measurement.measurePairKerning(String(text.font ?? ''), left, right)
+        )
+      : undefined,
+  };
+  const unwrapped = layoutUiText(value, {
+    ...common,
+    width: 16_777_216,
+    height: 16_777_216,
+    horizontalOverflow: 'Overflow',
+  });
+  const wrapped = layoutUiText(value, {
+    ...common,
+    width: Math.max(1, authoredWidth),
+    height: 16_777_216,
+    horizontalOverflow: enumValue(
+      text.horizontal_overflow ?? text.horizontalOverflow,
+      ['Wrap', 'Overflow'] as const,
+      'Wrap',
+    ),
+  });
+  return [
+    Math.max(0, ...unwrapped.lines.map((line) => line.width)),
+    Math.max(0, wrapped.blockHeight),
+  ];
+}
+
+export function canvasUiTextLayoutMeasurement(
+  ctx: CanvasRenderingContext2D,
+): UiTextLayoutMeasurement {
+  const glyphCache = new Map<string, UiTextGlyphMeasurement>();
+  const pairCache = new Map<string, number>();
+  return {
+    measureGlyph: (font, glyph) => {
+      const key = `${font}\0${glyph.fontSize}\0${glyph.fontStyle}\0${glyph.character}`;
+      const cached = glyphCache.get(key);
+      if (cached) return cached;
+      const previousFont = ctx.font;
+      try {
+        ctx.font = uiTextFontCss(glyph.fontSize, glyph.fontStyle, font);
+        const metrics = ctx.measureText(glyph.character);
+        const extended = metrics as TextMetrics & {
+          fontBoundingBoxAscent?: number;
+          fontBoundingBoxDescent?: number;
+          emHeightAscent?: number;
+          emHeightDescent?: number;
+        };
+        const left = metrics.actualBoundingBoxLeft;
+        const right = metrics.actualBoundingBoxRight;
+        const ascent = extended.fontBoundingBoxAscent
+          ?? extended.emHeightAscent
+          ?? metrics.actualBoundingBoxAscent;
+        const descent = extended.fontBoundingBoxDescent
+          ?? extended.emHeightDescent
+          ?? metrics.actualBoundingBoxDescent;
+        if (!Number.isFinite(metrics.width) || metrics.width < 0) return null;
+        const measured: UiTextGlyphMeasurement = {
+          advance: metrics.width,
+          metricWidth: Number.isFinite(right) ? Math.max(metrics.width, right) : metrics.width,
+          lineHeight: Number.isFinite(ascent) && Number.isFinite(descent)
+            ? Math.max(0, ascent + descent)
+            : glyph.fontSize * (8 / 7),
+          geometry: Number.isFinite(left) && Number.isFinite(right)
+            ? [-left, right]
+            : null,
+        };
+        glyphCache.set(key, measured);
+        return measured;
+      } finally {
+        ctx.font = previousFont;
+      }
+    },
+    measurePairKerning: (font, left, right) => {
+      if (left.fontSize !== right.fontSize || left.fontStyle !== right.fontStyle) return 0;
+      const key = `${font}\0${left.fontSize}\0${left.fontStyle}\0${left.character}\0${right.character}`;
+      const cached = pairCache.get(key);
+      if (cached != null) return cached;
+      const previousFont = ctx.font;
+      const previousKerning = ctx.fontKerning;
+      try {
+        ctx.font = uiTextFontCss(left.fontSize, left.fontStyle, font);
+        ctx.fontKerning = 'none';
+        const unkerned = ctx.measureText(left.character + right.character).width;
+        ctx.fontKerning = 'normal';
+        const measured = ctx.measureText(left.character + right.character).width - unkerned;
+        const kerning = Number.isFinite(measured) ? measured : 0;
+        pairCache.set(key, kerning);
+        return kerning;
+      } finally {
+        ctx.font = previousFont;
+        ctx.fontKerning = previousKerning;
+      }
+    },
+  };
+}
+
+function layoutChildMetrics(
+  entity: UiEnt,
+  textMeasurement?: UiTextLayoutMeasurement,
+  measuredWidth?: number,
+  nestedContent?: ContentSize,
+): LayoutChildMetrics {
+  const rt = readRectTransform(entity.components.RectTransform);
+  const element = entity.components.LayoutElement as Record<string, unknown> | undefined;
+  const image = entity.components.Image as Record<string, unknown> | undefined;
+  const text = entity.components.Text as Record<string, unknown> | undefined;
+  const implicitPreferred: Array<[number, number]> = [];
+  if (image && image.enabled !== false) {
+    const source = number2(image.source_size ?? image.sourceSize, [100, 100]);
+    const multiplier = Math.max(0.01, number(
+      image.pixels_per_unit_multiplier ?? image.pixelsPerUnitMultiplier,
+      1,
+    ));
+    implicitPreferred.push([
+      Math.max(0, source[0]) / multiplier,
+      Math.max(0, source[1]) / multiplier,
+    ]);
+  }
+  const textPreferred = text
+    ? textIntrinsicPreferredSize(
+        text,
+        Math.max(0, measuredWidth ?? rt.size_delta[0]),
+        textMeasurement,
+      )
+    : null;
+  if (textPreferred) implicitPreferred.push(textPreferred);
+  const implicitWidth = implicitPreferred.length
+    ? Math.max(...implicitPreferred.map((size) => size[0]))
+    : undefined;
+  const implicitHeight = implicitPreferred.length
+    ? Math.max(...implicitPreferred.map((size) => size[1]))
+    : undefined;
+  const optionalSize = (snake: string, camel: string) => {
+    const value = number(element?.[snake] ?? element?.[camel], -1);
+    return value >= 0 ? value : undefined;
+  };
+  return {
+    width: Math.max(0, rt.size_delta[0]),
+    height: Math.max(0, rt.size_delta[1]),
+    minWidth: optionalSize('min_width', 'minWidth') ?? nestedContent?.minWidth,
+    minHeight: optionalSize('min_height', 'minHeight') ?? nestedContent?.minHeight,
+    preferredWidth: optionalSize('preferred_width', 'preferredWidth')
+      ?? nestedContent?.preferredWidth
+      ?? implicitWidth,
+    preferredHeight: optionalSize('preferred_height', 'preferredHeight')
+      ?? nestedContent?.preferredHeight
+      ?? implicitHeight,
+    flexibleWidth: optionalSize('flexible_width', 'flexibleWidth')
+      ?? nestedContent?.flexibleWidth,
+    flexibleHeight: optionalSize('flexible_height', 'flexibleHeight')
+      ?? nestedContent?.flexibleHeight,
+    scaleWidth: Math.abs(rt.local_scale[0]),
+    scaleHeight: Math.abs(rt.local_scale[1]),
+  };
+}
+
+function participatesInLayout(entity: UiEnt): boolean {
+  const element = entity.components.LayoutElement as Record<string, unknown> | undefined;
+  return element?.ignore_layout !== true && element?.ignoreLayout !== true;
 }
 
 function childrenOf(entities: UiEnt[], parent: number | null): UiEnt[] {
@@ -501,6 +681,31 @@ export function uiPixelToWorld(
   return [(px - canvasW * 0.5) / ppu, (canvasH * 0.5 - py) / ppu, 0];
 }
 
+function cameraCanvasPixelToWorld(
+  px: number,
+  py: number,
+  canvasW: number,
+  canvasH: number,
+  camera: Camera,
+  planeDistance: number,
+): Vec3 {
+  const { forward, right, up } = lookBasis(camera.eye, camera.target, camera.up);
+  const distance = Number.isFinite(planeDistance) ? Math.max(0.01, planeDistance) : 100;
+  const halfHeight = camera.projection === 'orthographic'
+    ? Math.max(0.001, camera.orthographicSize ?? 5)
+    : distance * Math.tan((Math.max(1, Math.min(179, camera.fovYDeg)) * Math.PI) / 360);
+  const halfWidth = halfHeight * canvasW / Math.max(1, canvasH);
+  const ndcX = (px / Math.max(1, canvasW)) * 2 - 1;
+  const ndcY = 1 - (py / Math.max(1, canvasH)) * 2;
+  return add(
+    add(
+      add(camera.eye, scaleVec3(forward, distance)),
+      scaleVec3(right, ndcX * halfWidth),
+    ),
+    scaleVec3(up, ndcY * halfHeight),
+  );
+}
+
 function pixelCorners(
   rect: Rect,
   rotation: number,
@@ -511,10 +716,10 @@ function pixelCorners(
   const [px, py] = pivot;
   const { w, h } = rect;
   const locals: Array<[number, number]> = [
-    [-w * px, -h * py],
-    [w * (1 - px), -h * py],
-    [w * (1 - px), h * (1 - py)],
     [-w * px, h * (1 - py)],
+    [w * (1 - px), h * (1 - py)],
+    [w * (1 - px), -h * py],
+    [-w * px, -h * py],
   ];
   return locals.map(([u, v]) => [
     piv.x + u * axes.x.dx + v * axes.y.dx,
@@ -785,6 +990,7 @@ export function layoutUiOverlay(
   logicalSize?: { w: number; h: number },
   eventCamera?: Camera,
   targetDisplay: number | null = 0,
+  textMeasurement?: UiTextLayoutMeasurement,
 ): UiDrawItem[] {
   const canvases = entities
     .filter((e) => e.components.Canvas
@@ -809,6 +1015,7 @@ export function layoutUiOverlay(
       ?? (inheritedCanvas.components.Canvas as { renderMode?: string })?.renderMode
       ?? 'ScreenSpaceOverlay';
     if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
+
     if (targetDisplay != null) {
       const display = normalizeGameDisplay(targetDisplay);
       const canvasSettings = inheritedCanvas.components.Canvas as Record<string, unknown>;
@@ -841,6 +1048,70 @@ export function layoutUiOverlay(
       logicalSize?.h,
     );
     const spritePixelScale = canvasSpritePixelScale(scaler, scale);
+    const layoutChildMetricsCache = new Map<string, LayoutChildMetrics>();
+    const metricsForLayoutChild = (
+      entity: UiEnt,
+      measuredWidth?: number,
+      resolving: ReadonlySet<number> = new Set(),
+    ): LayoutChildMetrics => {
+      const key = `${entity.entity}:${measuredWidth ?? 'authored'}`;
+      const cached = layoutChildMetricsCache.get(key);
+      if (cached) return cached;
+      if (resolving.has(entity.entity)) {
+        return layoutChildMetrics(entity, textMeasurement, measuredWidth);
+      }
+      const nestedLayoutRaw = entity.components.LayoutGroup as Record<string, unknown> | undefined;
+      let nestedContent: ContentSize | undefined;
+      if (nestedLayoutRaw) {
+        const nextResolving = new Set(resolving).add(entity.entity);
+        const nestedLayout = layoutMetrics(nestedLayoutRaw);
+        const nestedChildren = childrenOf(entities, entity.entity).filter(participatesInLayout);
+        let nestedMetrics = nestedChildren.map((child) => (
+          metricsForLayoutChild(child, undefined, nextResolving)
+        ));
+        if (nestedLayout.direction !== 'Grid' && nestedChildren.length > 0) {
+          const rt = readRectTransform(entity.components.RectTransform);
+          const provisional = layoutGroupChildRects(
+            {
+              x: 0,
+              y: 0,
+              w: Math.max(0, measuredWidth ?? rt.size_delta[0]),
+              h: Math.max(0, rt.size_delta[1]),
+            },
+            nestedLayout,
+            nestedMetrics,
+          );
+          nestedMetrics = nestedChildren.map((child, index) => metricsForLayoutChild(
+            child,
+            provisional[index]?.w,
+            nextResolving,
+          ));
+        }
+        nestedContent = measureLayoutContent(nestedLayout, nestedMetrics);
+      }
+      const measured = layoutChildMetrics(
+        entity,
+        textMeasurement,
+        measuredWidth,
+        nestedContent,
+      );
+      layoutChildMetricsCache.set(key, measured);
+      return measured;
+    };
+    const metricsForLayoutChildren = (
+      parent: Rect,
+      group: LayoutMetrics,
+      children: UiEnt[],
+    ) => {
+      const initial = children.map((child) => metricsForLayoutChild(child));
+      if (group.direction === 'Grid') return initial;
+      const provisional = layoutGroupChildRects(parent, group, initial, scale);
+      const inverseScale = 1 / Math.max(0.000001, scale);
+      return children.map((child, index) => metricsForLayoutChild(
+        child,
+        provisional[index]?.w * inverseScale,
+      ));
+    };
     const root: Rect = { x: viewRect.x, y: viewRect.y, w: viewRect.w, h: viewRect.h };
 
     const scaleRt = (raw: unknown) => {
@@ -860,7 +1131,7 @@ export function layoutUiOverlay(
       parentRect: Rect,
       depth: number,
       isCanvasRoot: boolean,
-      forcedRect?: Rect,
+      forcedLayout?: { rect: Rect; controlled: [boolean, boolean] },
       inherited = {
         canvasBatchRoot: canvas.entity,
         canvasSortingGridSize: 0.1,
@@ -892,20 +1163,49 @@ export function layoutUiOverlay(
       }
       const hasRt = !!ent.components.RectTransform;
       const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
-      let rect = forcedRect ?? (isCanvasRoot
+      let rect = forcedLayout?.rect ?? (isCanvasRoot
         ? parentRect
         : hasRt
           ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform))
           : parentRect);
       const layout = ent.components.LayoutGroup as Record<string, unknown> | undefined;
       const contentFitter = ent.components.ContentSizeFitter as Record<string, unknown> | undefined;
+      let drivenAxes: [boolean, boolean] = forcedLayout?.controlled ?? [false, false];
       if (contentFitter && layout && rt) {
+        const layoutChildren = childrenOf(entities, ent.entity).filter(participatesInLayout);
+        const resolvedLayout = layoutMetrics(layout);
+        const horizontalFit = forcedLayout?.controlled[0]
+          ? 'Unconstrained'
+          : String(contentFitter.horizontal_fit ?? contentFitter.horizontalFit ?? 'Unconstrained');
+        const verticalFit = forcedLayout?.controlled[1]
+          ? 'Unconstrained'
+          : String(contentFitter.vertical_fit ?? contentFitter.verticalFit ?? 'Unconstrained');
+        drivenAxes = [
+          drivenAxes[0] || horizontalFit !== 'Unconstrained',
+          drivenAxes[1] || verticalFit !== 'Unconstrained',
+        ];
+        const initialContent = measureLayoutContent(
+          resolvedLayout,
+          layoutChildren.map((child) => metricsForLayoutChild(child)),
+          scale,
+        );
         rect = applyContentSize(
           rect,
           rt.pivot,
-          String(contentFitter.horizontal_fit ?? contentFitter.horizontalFit ?? 'Unconstrained'),
-          String(contentFitter.vertical_fit ?? contentFitter.verticalFit ?? 'Unconstrained'),
-          measureLayoutContent(layoutMetrics(layout), childrenOf(entities, ent.entity).length, scale),
+          horizontalFit,
+          'Unconstrained',
+          initialContent,
+        );
+        rect = applyContentSize(
+          rect,
+          rt.pivot,
+          'Unconstrained',
+          verticalFit,
+          measureLayoutContent(
+            resolvedLayout,
+            metricsForLayoutChildren(rect, resolvedLayout, layoutChildren),
+            scale,
+          ),
         );
       }
       const aspect = ent.components.AspectRatioFitter as Record<string, unknown> | undefined;
@@ -916,6 +1216,7 @@ export function layoutUiOverlay(
           rt.pivot,
           String(aspect.aspect_mode ?? aspect.aspectMode ?? 'None'),
           number(aspect.aspect_ratio ?? aspect.aspectRatio, 1),
+          drivenAxes,
         );
       }
 
@@ -1506,8 +1807,28 @@ export function layoutUiOverlay(
               h: Math.max(0, rect.h - Math.max(0, Math.min(rect.h, number(tabs.tab_height ?? tabs.tabHeight, 32) * scale))),
             }
         : rect;
-      children.forEach((child, index) => {
-        const forced = layout ? layoutChildRect(childParent, layout, index, children.length, scale) : undefined;
+      const layoutChildren = layout ? children.filter(participatesInLayout) : [];
+      const resolvedLayout = layout ? layoutMetrics(layout) : null;
+      const forcedRects = resolvedLayout
+        ? layoutGroupChildRects(
+            childParent,
+            resolvedLayout,
+            metricsForLayoutChildren(childParent, resolvedLayout, layoutChildren),
+            scale,
+          )
+        : [];
+      const controlled: [boolean, boolean] = resolvedLayout?.direction === 'Grid'
+        ? [true, true]
+        : [
+            resolvedLayout?.childControlWidth !== false,
+            resolvedLayout?.childControlHeight !== false,
+          ];
+      const forcedByEntity = new Map(layoutChildren.map((child, index) => [
+        child.entity,
+        { rect: forcedRects[index], controlled },
+      ]));
+      children.forEach((child) => {
+        const forced = forcedByEntity.get(child.entity);
         walk(
           child,
           childParent,
@@ -1601,7 +1922,7 @@ function isReversedScreenQuad(corners: Array<{ x: number; y: number }>): boolean
     const next = corners[(index + 1) % corners.length];
     twiceArea += current.x * next.y - current.y * next.x;
   }
-  return twiceArea > 0.0001;
+  return twiceArea < -0.0001;
 }
 
 /** Project World Space Canvas trees through the active authoring/Game camera. */
@@ -1610,6 +1931,7 @@ export function layoutUiWorldSpace(
   cam: Camera,
   viewport: Rect,
   selectedIds: Set<number>,
+  textMeasurement?: UiTextLayoutMeasurement,
 ): UiDrawItem[] {
   const transforms = buildWorldTransforms(entities);
   const canvases = entities
@@ -1631,7 +1953,13 @@ export function layoutUiWorldSpace(
   const output: UiDrawItem[] = [];
 
   for (const canvas of canvases) {
-    const context = worldCanvasLayoutContext(entities, canvas, selectedIds, transforms);
+    const context = worldCanvasLayoutContext(
+      entities,
+      canvas,
+      selectedIds,
+      transforms,
+      textMeasurement,
+    );
     const inheritedCanvas = outermostCanvas(entities, canvas);
     const raycastCamera = canvasEventCamera(
       entities,
@@ -1691,7 +2019,7 @@ export function layoutUiWorldSpace(
       });
       output.push({
         ...scaleSceneVisuals(item, drawWidth / Math.max(0.0001, item.rect.w)),
-        rect: { x: topLeft.x, y: topLeft.y, w: drawWidth, h: drawHeight },
+        rect: screenRect(screenCorners),
         rotation: (-angle * 180) / Math.PI,
         pivot: [0, 0],
         pivotScreen: { x: topLeft.x, y: topLeft.y },
@@ -1717,6 +2045,7 @@ function worldCanvasLayoutContext(
   canvas: UiEnt,
   selectedIds: Set<number>,
   transforms = buildWorldTransforms(entities),
+  textMeasurement?: UiTextLayoutMeasurement,
 ): { items: UiDrawItem[]; pixelToWorld: (px: number, py: number) => Vec3 } {
   const inheritedCanvas = outermostCanvas(entities, canvas);
   const rectTransform = readRectTransform(inheritedCanvas.components.RectTransform);
@@ -1773,6 +2102,7 @@ function worldCanvasLayoutContext(
     { w: width, h: height },
     undefined,
     null,
+    textMeasurement,
   ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === canvas.entity);
   const authoredDynamicPixelsPerUnit = number(
     scaler?.dynamic_pixels_per_unit ?? scaler?.dynamicPixelsPerUnit,
@@ -1817,8 +2147,8 @@ function worldCanvasLayoutContext(
 }
 
 /**
- * Scene view: Overlay UI on world XY plane.
- * `canvasSize` must match Game letterbox (w×h) so portrait/landscape stay aligned.
+ * Scene view: screen-space UI projected as a resolution-sized quad on the world XY plane.
+ * `canvasSize` is the logical Game resolution, not the Scene panel's letterbox size.
  */
 export function layoutUiScene3D(
   entities: UiEnt[],
@@ -1826,6 +2156,7 @@ export function layoutUiScene3D(
   viewport: Rect,
   selectedIds: Set<number>,
   canvasSize: { w: number; h: number },
+  textMeasurement?: UiTextLayoutMeasurement,
 ): { items: UiDrawItem[]; layoutScale: number } {
   const canvases = entities.filter(
     (e) => e.components.Canvas
@@ -1850,13 +2181,38 @@ export function layoutUiScene3D(
       ?? 'ScreenSpaceOverlay';
     if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
 
-    const laid = layoutUiOverlay(entities, pixelRoot, selectedIds, undefined, cam, null).filter((it) =>
-      inCanvasTree(entities, it.entity, canvas.entity),
+    const canvasSettings = inheritedCanvas.components.Canvas as Record<string, unknown>;
+    const canvasCamera = mode === 'ScreenSpaceCamera'
+      ? canvasEventCamera(entities, null, canvasSettings, cam)
+      : null;
+    const planeDistance = number(
+      canvasSettings.plane_distance ?? canvasSettings.planeDistance,
+      100,
     );
+    const pixelToWorld = canvasCamera
+      ? (px: number, py: number) => cameraCanvasPixelToWorld(
+          px,
+          py,
+          cw,
+          ch,
+          canvasCamera,
+          planeDistance,
+        )
+      : (px: number, py: number) => uiPixelToWorld(px, py, cw, ch);
+
+    const laid = layoutUiOverlay(
+      entities,
+      pixelRoot,
+      selectedIds,
+      undefined,
+      cam,
+      null,
+      textMeasurement,
+    ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === canvas.entity);
 
     let sceneScale = 1;
-    const c0 = project(uiPixelToWorld(cw * 0.5, ch * 0.5, cw, ch), cam, viewport);
-    const c1 = project(uiPixelToWorld(cw * 0.5 + 1, ch * 0.5, cw, ch), cam, viewport);
+    const c0 = project(pixelToWorld(cw * 0.5, ch * 0.5), cam, viewport);
+    const c1 = project(pixelToWorld(cw * 0.5 + 1, ch * 0.5), cam, viewport);
     if (c0 && c1) {
       const s = Math.hypot(c1.x - c0.x, c1.y - c0.y);
       if (s > 1e-4) {
@@ -1873,7 +2229,7 @@ export function layoutUiScene3D(
 
     const projectPixelRect = (rect: Rect): Rect | undefined => {
       const projected = pixelCorners(rect, 0, [0.5, 0.5])
-        .map(([px, py]) => project(uiPixelToWorld(px, py, cw, ch), cam, viewport));
+        .map(([px, py]) => project(pixelToWorld(px, py), cam, viewport));
       if (projected.some((point) => !point)) return undefined;
       const points = projected as Array<{ x: number; y: number; depth: number }>;
       const xs = points.map((point) => point.x);
@@ -1892,34 +2248,33 @@ export function layoutUiScene3D(
       const raycastGeometry = paddedRaycastGeometry(it.rect, it.pivot, it.raycastPadding);
       const raycastProjected = raycastGeometry
         ? pixelCorners(raycastGeometry.rect, it.rotation, raycastGeometry.pivot)
-            .map(([px, py]) => project(uiPixelToWorld(px, py, cw, ch), cam, viewport))
+            .map(([px, py]) => project(pixelToWorld(px, py), cam, viewport))
         : [];
       const raycastScreenCorners = raycastProjected.length === 4
         && raycastProjected.every(Boolean)
         ? (raycastProjected as Array<{ x: number; y: number }>).map(({ x, y }) => ({ x, y }))
         : [];
       const corners = pixelCorners(it.rect, it.rotation, it.pivot);
-      const world = corners.map(([px, py]) => uiPixelToWorld(px, py, cw, ch));
+      const world = corners.map(([px, py]) => pixelToWorld(px, py));
       const scr = world.map((w) => project(w, cam, viewport));
       if (scr.some((p) => !p)) continue;
-      const P = scr as Array<{ x: number; y: number; depth: number }>;
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
-      for (const p of P) {
-        minX = Math.min(minX, p.x);
-        minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x);
-        maxY = Math.max(maxY, p.y);
-      }
+      const P = scr as Array<{ x: number; y: number; depth: number; inverseW: number }>;
+      const screenCorners = P.map(({ x, y }) => ({ x, y }));
+      const topLeft = P[0];
+      const topRight = P[1];
+      const bottomLeft = P[3];
+      const drawWidth = Math.hypot(topRight.x - topLeft.x, topRight.y - topLeft.y);
+      const drawHeight = Math.hypot(bottomLeft.x - topLeft.x, bottomLeft.y - topLeft.y);
+      if (drawWidth <= 0.0001 || drawHeight <= 0.0001) continue;
+      const angle = Math.atan2(topRight.y - topLeft.y, topRight.x - topLeft.x);
       const pivPx = rectPivot(it.rect, it.pivot);
-      const pivS = project(uiPixelToWorld(pivPx.x, pivPx.y, cw, ch), cam, viewport);
+      const pivS = project(pixelToWorld(pivPx.x, pivPx.y), cam, viewport);
 
-      const sceneItem = scaleSceneVisuals(it, sceneScale);
+      const itemSceneScale = drawWidth / Math.max(0.0001, it.rect.w);
+      const sceneItem = scaleSceneVisuals(it, itemSceneScale);
       const maskRegions = it.maskRegions?.flatMap((mask) => {
         const maskCorners = pixelCorners(mask.rect, mask.rotation, mask.pivot)
-          .map(([px, py]) => project(uiPixelToWorld(px, py, cw, ch), cam, viewport));
+          .map(([px, py]) => project(pixelToWorld(px, py), cam, viewport));
         if (maskCorners.some((point) => !point)) return [];
         const exact = (maskCorners as Array<{ x: number; y: number; depth: number }>)
           .map(({ x, y }) => ({ x, y }));
@@ -1943,12 +2298,16 @@ export function layoutUiScene3D(
       });
       out.push({
         ...sceneItem,
-        rect: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
+        rect: screenRect(screenCorners),
+        rotation: (-angle * 180) / Math.PI,
+        pivot: [0, 0],
         clip: it.clip ? projectPixelRect(it.clip) : undefined,
         depth: depthBase + it.depth,
         pivotScreen: pivS ? { x: pivS.x, y: pivS.y } : undefined,
+        screenCorners,
+        screenCornerInverseW: P.map((point) => point.inverseW) as [number, number, number, number],
         raycastScreenCorners,
-        unrotatedSize: { w: it.rect.w * sceneScale, h: it.rect.h * sceneScale },
+        unrotatedSize: { w: drawWidth, h: drawHeight },
         anchorParentRect: it.anchorParentRect
           ? projectPixelRect(it.anchorParentRect)
           : undefined,
@@ -1991,8 +2350,9 @@ export function uiEntityWorldPivot(
   const renderRoot = canvasLayoutRootForEntity(entities, entityId);
   if (renderRoot) {
     const inherited = outermostCanvas(entities, renderRoot);
-    const canvas = inherited.components.Canvas as { render_mode?: string; renderMode?: string };
-    if ((canvas.render_mode ?? canvas.renderMode) === 'WorldSpace') {
+    const canvas = inherited.components.Canvas as Record<string, unknown>;
+    const mode = String(canvas.render_mode ?? canvas.renderMode ?? 'ScreenSpaceOverlay');
+    if (mode === 'WorldSpace') {
       const context = worldCanvasLayoutContext(entities, renderRoot, new Set([entityId]));
       const item = context.items.find((candidate) => candidate.entity === entityId);
       if (!item) return null;
@@ -2009,26 +2369,50 @@ export function uiEntityWorldPivot(
         size: Math.max(0.5, edgeLength(corners[0], corners[1]), edgeLength(corners[0], corners[3])),
       };
     }
-  }
-  const canvases = entities.filter((e) => e.components.Canvas && e.active !== false);
-  for (const canvas of canvases) {
-    const size =
-      canvasSize ??
-      gameAlignedCanvasSize(canvas.components.CanvasScaler, null);
+
+    const size = canvasSize ?? gameAlignedCanvasSize(inherited.components.CanvasScaler, null);
     const cw = Math.max(1, size.w);
     const ch = Math.max(1, size.h);
     const laid = layoutUiOverlay(
       entities,
       { x: 0, y: 0, w: cw, h: ch },
       new Set([entityId]),
-    );
-    const it = laid.find((x) => x.entity === entityId);
-    if (!it) continue;
-    if (!inCanvasTree(entities, entityId, canvas.entity)) continue;
+      undefined,
+      undefined,
+      null,
+    ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === renderRoot.entity);
+    const it = laid.find((item) => item.entity === entityId);
+    if (!it) return null;
+    const rawCamera = canvas.render_camera ?? canvas.renderCamera;
+    const cameraEntity = Number(rawCamera);
+    const assignedCamera = mode === 'ScreenSpaceCamera'
+      && Number.isSafeInteger(cameraEntity)
+      && cameraEntity >= 0
+      ? gameCameraForEntity(entities, cameraEntity)
+      : null;
+    const planeDistance = number(canvas.plane_distance ?? canvas.planeDistance, 100);
+    const pixelToWorld = assignedCamera
+      ? (x: number, y: number) => cameraCanvasPixelToWorld(
+          x,
+          y,
+          cw,
+          ch,
+          assignedCamera,
+          planeDistance,
+        )
+      : (x: number, y: number) => uiPixelToWorld(x, y, cw, ch);
     const piv = rectPivot(it.rect, it.pivot);
-    const pos = uiPixelToWorld(piv.x, piv.y, cw, ch);
-    const extent = Math.max(it.rect.w, it.rect.h) / UI_SCENE_PPU;
-    return { position: pos, size: Math.max(0.5, extent) };
+    const corners = pixelCorners(it.rect, it.rotation, it.pivot)
+      .map(([x, y]) => pixelToWorld(x, y));
+    const edgeLength = (left: Vec3, right: Vec3) => Math.hypot(
+      right[0] - left[0],
+      right[1] - left[1],
+      right[2] - left[2],
+    );
+    return {
+      position: pixelToWorld(piv.x, piv.y),
+      size: Math.max(0.5, edgeLength(corners[0], corners[1]), edgeLength(corners[0], corners[3])),
+    };
   }
   return null;
 }
@@ -2763,6 +3147,82 @@ function alphaIndependentEffectSource(item: UiDrawItem): UiDrawItem {
 
 const buttonTintStates = new WeakMap<HTMLCanvasElement, Map<number, ButtonTintTween>>();
 
+export function projectedQuadPoint(
+  corners: readonly { x: number; y: number }[],
+  inverseW: readonly number[] | undefined,
+  u: number,
+  v: number,
+): { x: number; y: number } | null {
+  if (corners.length !== 4) return null;
+  const weights = [
+    (1 - u) * (1 - v),
+    u * (1 - v),
+    u * v,
+    (1 - u) * v,
+  ];
+  let denominator = 0;
+  let x = 0;
+  let y = 0;
+  for (let index = 0; index < 4; index++) {
+    const reciprocal = Number.isFinite(inverseW?.[index])
+      ? Math.max(Number.EPSILON, inverseW![index])
+      : 1;
+    const contribution = weights[index] * reciprocal;
+    denominator += contribution;
+    x += corners[index].x * contribution;
+    y += corners[index].y * contribution;
+  }
+  if (!Number.isFinite(denominator) || Math.abs(denominator) < Number.EPSILON) return null;
+  return { x: x / denominator, y: y / denominator };
+}
+
+function drawImageTriangle(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLCanvasElement,
+  source: readonly { x: number; y: number }[],
+  destination: readonly { x: number; y: number }[],
+): void {
+  const [s0, s1, s2] = source;
+  const [d0, d1, d2] = destination;
+  const denominator = s0.x * (s1.y - s2.y)
+    + s1.x * (s2.y - s0.y)
+    + s2.x * (s0.y - s1.y);
+  if (!Number.isFinite(denominator) || Math.abs(denominator) < 1e-8) return;
+  const affine = (v0: number, v1: number, v2: number) => ({
+    x: (v0 * (s1.y - s2.y) + v1 * (s2.y - s0.y) + v2 * (s0.y - s1.y))
+      / denominator,
+    y: (v0 * (s2.x - s1.x) + v1 * (s0.x - s2.x) + v2 * (s1.x - s0.x))
+      / denominator,
+    offset: (
+      v0 * (s1.x * s2.y - s2.x * s1.y)
+      + v1 * (s2.x * s0.y - s0.x * s2.y)
+      + v2 * (s0.x * s1.y - s1.x * s0.y)
+    ) / denominator,
+  });
+  const horizontal = affine(d0.x, d1.x, d2.x);
+  const vertical = affine(d0.y, d1.y, d2.y);
+  if (![horizontal.x, horizontal.y, horizontal.offset, vertical.x, vertical.y, vertical.offset]
+    .every(Number.isFinite)) return;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(d0.x, d0.y);
+  ctx.lineTo(d1.x, d1.y);
+  ctx.lineTo(d2.x, d2.y);
+  ctx.closePath();
+  ctx.clip();
+  ctx.transform(
+    horizontal.x,
+    vertical.x,
+    horizontal.y,
+    vertical.y,
+    horizontal.offset,
+    vertical.offset,
+  );
+  ctx.drawImage(image, 0, 0);
+  ctx.restore();
+}
+
 export function drawUiItems(
   ctx: CanvasRenderingContext2D,
   items: UiDrawItem[],
@@ -2772,6 +3232,7 @@ export function drawUiItems(
 ) {
   const showLabel = !!opts?.sceneLabel;
   const batches = buildUiBatches(items);
+  const textMeasurement = canvasUiTextLayoutMeasurement(ctx);
   const itemsByEntity = new Map(items.map((item) => [item.entity, item]));
   let buttonTints = buttonTintStates.get(ctx.canvas);
   if (!buttonTints) {
@@ -2788,6 +3249,7 @@ export function drawUiItems(
   let contentLayer: HTMLCanvasElement | null = null;
   let maskLayer: HTMLCanvasElement | null = null;
   let effectLayer: HTMLCanvasElement | null = null;
+  let projectedLayer: HTMLCanvasElement | null = null;
   const layer = (kind: 'content' | 'mask' | 'effect') => {
     let canvas = kind === 'content'
       ? contentLayer
@@ -2810,6 +3272,101 @@ export function drawUiItems(
     context.globalAlpha = kind === 'content' ? ctx.globalAlpha : 1;
     context.globalCompositeOperation = 'source-over';
     return context;
+  };
+  const drawProjectedItem = (item: UiDrawItem): boolean => {
+    const corners = item.screenCorners;
+    const localWidth = item.unrotatedSize?.w ?? item.rect.w;
+    const localHeight = item.unrotatedSize?.h ?? item.rect.h;
+    if (corners?.length !== 4 || localWidth <= 0 || localHeight <= 0) return false;
+    const ownerDocument = ctx.canvas.ownerDocument;
+    if (!ownerDocument?.createElement) return false;
+
+    const effectDistance = Math.max(
+      0,
+      ...[item.shadow, item.outline].flatMap((effect) => (
+        effect ? [Math.abs(effect.distance[0]), Math.abs(effect.distance[1])] : []
+      )),
+    );
+    const padding = Math.max(4, Math.ceil(effectDistance + 3));
+    const dropdownOverflow = item.dropdown?.expanded
+      ? item.dropdown.options.length * localHeight
+      : 0;
+    const logicalWidth = localWidth + padding * 2;
+    const logicalHeight = localHeight + padding * 2 + dropdownOverflow;
+    const rasterScale = Math.min(1.5, 1_024 / Math.max(logicalWidth, logicalHeight, 1));
+    const rasterWidth = Math.max(1, Math.ceil(logicalWidth * rasterScale));
+    const rasterHeight = Math.max(1, Math.ceil(logicalHeight * rasterScale));
+    if (!projectedLayer) projectedLayer = ownerDocument.createElement('canvas');
+    if (projectedLayer.width !== rasterWidth) projectedLayer.width = rasterWidth;
+    if (projectedLayer.height !== rasterHeight) projectedLayer.height = rasterHeight;
+    const projectedContext = projectedLayer.getContext('2d');
+    if (!projectedContext) return false;
+    projectedContext.setTransform(1, 0, 0, 1, 0, 0);
+    projectedContext.clearRect(0, 0, rasterWidth, rasterHeight);
+    projectedContext.setTransform(rasterScale, 0, 0, rasterScale, 0, 0);
+    drawUiItems(
+      projectedContext,
+      [{
+        ...item,
+        rect: { x: padding, y: padding, w: localWidth, h: localHeight },
+        rotation: 0,
+        pivot: [0, 0],
+        pivotScreen: { x: padding, y: padding },
+        opacity: 1,
+        clip: undefined,
+        screenCorners: undefined,
+        screenCornerInverseW: undefined,
+        raycastScreenCorners: undefined,
+        maskStack: [],
+        softClips: [],
+      }],
+      hoverId,
+      pressId,
+      opts,
+    );
+
+    const uMin = -padding / localWidth;
+    const uMax = 1 + padding / localWidth;
+    const vMin = -padding / localHeight;
+    const vMax = 1 + (padding + dropdownOverflow) / localHeight;
+    const reciprocals = item.screenCornerInverseW?.filter(
+      (value) => Number.isFinite(value) && value > 0,
+    ) ?? [];
+    const perspectiveRatio = reciprocals.length === 4
+      ? Math.max(...reciprocals) / Math.max(Number.EPSILON, Math.min(...reciprocals))
+      : 1;
+    const subdivisions = perspectiveRatio > 1.02
+      ? Math.max(2, Math.min(12, Math.ceil((perspectiveRatio - 1) * 8)))
+      : 1;
+    const sourcePoint = (u: number, v: number) => ({
+      x: ((u - uMin) / (uMax - uMin)) * rasterWidth,
+      y: ((v - vMin) / (vMax - vMin)) * rasterHeight,
+    });
+    const destinationPoint = (u: number, v: number) => (
+      projectedQuadPoint(corners, item.screenCornerInverseW, u, v)
+    );
+
+    ctx.imageSmoothingEnabled = true;
+    for (let row = 0; row < subdivisions; row++) {
+      const v0 = vMin + (vMax - vMin) * row / subdivisions;
+      const v1 = vMin + (vMax - vMin) * (row + 1) / subdivisions;
+      for (let column = 0; column < subdivisions; column++) {
+        const u0 = uMin + (uMax - uMin) * column / subdivisions;
+        const u1 = uMin + (uMax - uMin) * (column + 1) / subdivisions;
+        const s00 = sourcePoint(u0, v0);
+        const s10 = sourcePoint(u1, v0);
+        const s11 = sourcePoint(u1, v1);
+        const s01 = sourcePoint(u0, v1);
+        const d00 = destinationPoint(u0, v0);
+        const d10 = destinationPoint(u1, v0);
+        const d11 = destinationPoint(u1, v1);
+        const d01 = destinationPoint(u0, v1);
+        if (!d00 || !d10 || !d11 || !d01) continue;
+        drawImageTriangle(ctx, projectedLayer, [s00, s10, s11], [d00, d10, d11]);
+        drawImageTriangle(ctx, projectedLayer, [s00, s11, s01], [d00, d11, d01]);
+      }
+    }
+    return true;
   };
   const softGradient = (
     context: CanvasRenderingContext2D,
@@ -2922,16 +3479,6 @@ export function drawUiItems(
       ctx.lineWidth = Math.max(0.25, outline.width * 2);
       if (maxWidth == null) ctx.strokeText(value, x, y);
       else ctx.strokeText(value, x, y, maxWidth);
-    } else if (showLabel) {
-      const [r, g, b] = color;
-      const luminance = r * 0.2126 + g * 0.7152 + b * 0.0722;
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = luminance < 0.42
-        ? 'rgba(255,255,255,0.9)'
-        : 'rgba(0,0,0,0.9)';
-      ctx.lineWidth = Math.max(2, Math.min(4, fontSize * 0.14));
-      if (maxWidth == null) ctx.strokeText(value, x, y);
-      else ctx.strokeText(value, x, y, maxWidth);
     }
     if (maxWidth == null) ctx.fillText(value, x, y);
     else ctx.fillText(value, x, y, maxWidth);
@@ -3023,6 +3570,11 @@ export function drawUiItems(
       ctx.beginPath();
       ctx.rect(it.clip.x, it.clip.y, it.clip.w, it.clip.h);
       ctx.clip();
+    }
+
+    if (drawProjectedItem(it)) {
+      ctx.restore();
+      continue;
     }
 
     let [r, g, b, a] = it.image?.color ?? it.rawImage?.color ?? [0.85, 0.85, 0.9, 0.92];
@@ -3400,53 +3952,6 @@ export function drawUiItems(
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fontKerning = 'normal';
-        const glyphMeasurements = new Map<string, UiTextGlyphMeasurement>();
-        const pairKerning = new Map<string, number>();
-        const measureImportedGlyph = (glyph: UiRichTextGlyph): UiTextGlyphMeasurement => {
-          const key = `${glyph.fontSize}\0${glyph.fontStyle}\0${glyph.character}`;
-          const cached = glyphMeasurements.get(key);
-          if (cached) return cached;
-          ctx.font = uiTextFontCss(glyph.fontSize, glyph.fontStyle, it.text!.font);
-          const metrics = ctx.measureText(glyph.character);
-          const extended = metrics as TextMetrics & {
-            fontBoundingBoxAscent?: number;
-            fontBoundingBoxDescent?: number;
-            emHeightAscent?: number;
-            emHeightDescent?: number;
-          };
-          const left = metrics.actualBoundingBoxLeft;
-          const right = metrics.actualBoundingBoxRight;
-          const ascent = extended.fontBoundingBoxAscent
-            ?? extended.emHeightAscent
-            ?? metrics.actualBoundingBoxAscent;
-          const descent = extended.fontBoundingBoxDescent
-            ?? extended.emHeightDescent
-            ?? metrics.actualBoundingBoxDescent;
-          const measured = {
-            advance: metrics.width,
-            metricWidth: Number.isFinite(right) ? Math.max(metrics.width, right) : metrics.width,
-            lineHeight: Number.isFinite(ascent) && Number.isFinite(descent)
-              ? ascent + descent
-              : glyph.fontSize * (8 / 7),
-            geometry: Number.isFinite(left) && Number.isFinite(right)
-              ? [-left, right] as [number, number]
-              : null,
-          };
-          glyphMeasurements.set(key, measured);
-          return measured;
-        };
-        const measureImportedPairKerning = (left: UiRichTextGlyph, right: UiRichTextGlyph) => {
-          const key = `${left.fontSize}\0${left.fontStyle}\0${left.character}\0${right.character}`;
-          const cached = pairKerning.get(key);
-          if (cached != null) return cached;
-          ctx.font = uiTextFontCss(left.fontSize, left.fontStyle, it.text!.font);
-          ctx.fontKerning = 'none';
-          const unkerned = ctx.measureText(left.character + right.character).width;
-          ctx.fontKerning = 'normal';
-          const measured = ctx.measureText(left.character + right.character).width - unkerned;
-          pairKerning.set(key, measured);
-          return measured;
-        };
         const layout = layoutUiText(it.text.text, {
           width: w,
           height: h,
@@ -3463,8 +3968,12 @@ export function drawUiItems(
           verticalOverflow: it.text.verticalOverflow,
           alignment: it.text.alignment,
           verticalAlign: it.text.verticalAlign,
-          measureGlyph: it.text.font ? measureImportedGlyph : undefined,
-          measurePairKerning: it.text.font ? measureImportedPairKerning : undefined,
+          measureGlyph: it.text.font
+            ? (glyph) => textMeasurement.measureGlyph(it.text!.font, glyph)
+            : undefined,
+          measurePairKerning: it.text.font
+            ? (left, right) => textMeasurement.measurePairKerning(it.text!.font, left, right)
+            : undefined,
         });
         for (const line of layout.lines) {
           const fallbackOrigin = x + line.x;

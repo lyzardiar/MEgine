@@ -3,7 +3,9 @@
 pub mod animation;
 pub mod audio;
 pub mod build_manifest;
+pub mod effekseer;
 pub mod fonts;
+pub mod frame_compiler;
 pub mod lighting2d;
 pub mod materials;
 pub mod meshes;

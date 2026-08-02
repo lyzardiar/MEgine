@@ -168,6 +168,8 @@ impl UiShaderChannels {
 /// the fixed instanced UI layout.
 #[derive(Clone, Debug, PartialEq)]
 pub struct UiShaderChannelData {
+    pub uv0: [[f32; 4]; 4],
+    pub colors: [[f32; 4]; 4],
     pub uv1: [[f32; 4]; 4],
     pub uv2: [[f32; 4]; 4],
     pub uv3: [[f32; 4]; 4],
@@ -178,6 +180,13 @@ pub struct UiShaderChannelData {
 impl Default for UiShaderChannelData {
     fn default() -> Self {
         Self {
+            uv0: [
+                [0.0, 0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0, 0.0],
+                [1.0, 1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+            ],
+            colors: [[1.0; 4]; 4],
             uv1: [[0.0; 4]; 4],
             uv2: [[0.0; 4]; 4],
             uv3: [[0.0; 4]; 4],
@@ -590,7 +599,12 @@ impl From<&UiPrimitive> for UiInstance {
         Self {
             rect: value.rect,
             color: value.color,
-            transform: [value.rotation_radians, value.pivot[0], value.pivot[1], 0.0],
+            transform: [
+                value.rotation_radians,
+                value.pivot[0],
+                value.pivot[1],
+                if value.shader_channel_data.is_some() { 1.0 } else { 0.0 },
+            ],
             uv: value.uv,
             projection: [
                 if value.depth.is_finite() {
@@ -667,6 +681,8 @@ impl From<&UiPrimitive> for UiSoftClipInstance {
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct UiShaderChannelInstance {
     meta: [u32; 4],
+    uv0: [[f32; 4]; 4],
+    colors: [[f32; 4]; 4],
     uv1: [[f32; 4]; 4],
     uv2: [[f32; 4]; 4],
     uv3: [[f32; 4]; 4],
@@ -677,8 +693,16 @@ struct UiShaderChannelInstance {
 impl From<&UiPrimitive> for UiShaderChannelInstance {
     fn from(value: &UiPrimitive) -> Self {
         let data = value.shader_channel_data.as_deref();
+        let defaults = UiShaderChannelData::default();
         Self {
-            meta: [value.key.shader_channels.bits(), 0, 0, 0],
+            meta: [
+                value.key.shader_channels.bits(),
+                u32::from(data.is_some()),
+                0,
+                0,
+            ],
+            uv0: data.map_or(defaults.uv0, |value| value.uv0),
+            colors: data.map_or(defaults.colors, |value| value.colors),
             uv1: data.map_or([[0.0; 4]; 4], |value| value.uv1),
             uv2: data.map_or([[0.0; 4]; 4], |value| value.uv2),
             uv3: data.map_or([[0.0; 4]; 4], |value| value.uv3),
@@ -1142,7 +1166,9 @@ impl UiRenderer {
         let needs_shader_channels = plan
             .primitives
             .iter()
-            .any(|value| value.key.shader_channels.bits() != 0);
+            .any(|value| {
+                value.key.shader_channels.bits() != 0 || value.shader_channel_data.is_some()
+            });
         let needs_materials = plan
             .primitives
             .iter()
@@ -2027,6 +2053,8 @@ struct UiSoftClipInstance {
 @group(0) @binding(1) var<storage, read> soft_clip_instances: array<UiSoftClipInstance>;
 struct UiShaderChannelInstance {
     channel_mask: vec4<u32>,
+    uv0: array<vec4<f32>, 4>,
+    colors: array<vec4<f32>, 4>,
     uv1: array<vec4<f32>, 4>,
     uv2: array<vec4<f32>, 4>,
     uv3: array<vec4<f32>, 4>,
@@ -2142,13 +2170,17 @@ fn vs_main(input: VsIn) -> VsOut {
     output.uv3 = vec4<f32>(0.0);
     output.normal = vec3<f32>(0.0);
     output.tangent = vec4<f32>(0.0);
-    if channels != 0u {
+    if channels != 0u || input.transform.w > 0.5 {
         let channel_data = shader_channel_instances[input.instance_index];
         let vertex_slot = select(
             u32(input.position.x),
             3u - u32(input.position.x),
             input.position.y > 0.5,
         );
+        if channel_data.channel_mask.y != 0u {
+            output.color *= channel_data.colors[vertex_slot];
+            output.uv = channel_data.uv0[vertex_slot].xy;
+        }
         output.uv1 = select(output.uv1, channel_data.uv1[vertex_slot], (channels & 1u) != 0u);
         output.uv2 = select(output.uv2, channel_data.uv2[vertex_slot], (channels & 2u) != 0u);
         output.uv3 = select(output.uv3, channel_data.uv3[vertex_slot], (channels & 4u) != 0u);
@@ -2438,7 +2470,7 @@ mod tests {
         assert_eq!(gpu.uv1[2], [0.2, 0.4, 0.6, 0.8]);
         assert_eq!(gpu.normals[0], [0.0, 0.0, -1.0, 0.0]);
         assert_eq!(gpu.tangents[0], [1.0, 0.0, 0.0, -1.0]);
-        assert_eq!(std::mem::size_of::<UiShaderChannelInstance>(), 336);
+        assert_eq!(std::mem::size_of::<UiShaderChannelInstance>(), 464);
 
         let mut normal = base.clone();
         normal.key.shader_channels = UiShaderChannels::NORMAL;

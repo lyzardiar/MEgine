@@ -12,6 +12,7 @@ import {
   quatMul,
   quatNormalize,
 } from './math3d';
+import { clampSceneCameraDistance } from './sceneZoom';
 import {
   componentRemovalBlockers,
   componentRequirements,
@@ -115,6 +116,7 @@ import {
 import './behaviours';
 import {
   gameResolutionAspect,
+  sceneCanvasLogicalSize,
   legacyGameResolution,
   normalizeGameDisplay,
   normalizeGameResolution,
@@ -835,7 +837,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         pivot: partial.pivot ? ([...partial.pivot] as Vec3) : sceneCamera.pivot,
       };
       sceneCamera.pitch = Math.max(-89, Math.min(89, sceneCamera.pitch));
-      sceneCamera.distance = Math.max(0.5, Math.min(200, sceneCamera.distance));
+      sceneCamera.distance = clampSceneCameraDistance(sceneCamera.distance);
     },
     snapshot(): WorldSnapshotView & { selectedIds: number[]; simulationTime: number } {
       return {
@@ -1906,10 +1908,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         let walk: EntityRec | undefined = entity;
         while (walk) {
           if (walk.components.Canvas) {
-            canvasSize = gameAlignedCanvasSize(
+            const fallbackSize = gameAlignedCanvasSize(
               walk.components.CanvasScaler,
               gameResolutionAspect(gameResolution),
             );
+            canvasSize = sceneCanvasLogicalSize(gameResolution, fallbackSize);
             break;
           }
           const parentId: number | null = walk.parent ?? null;

@@ -1440,6 +1440,47 @@ impl Component for ParticleEmitter3D {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct EffekseerEffect {
+    pub effect: String,
+    pub playing: bool,
+    pub looping: bool,
+    pub speed: f32,
+    pub start_frame: i32,
+    pub prewarm: bool,
+    pub auto_destroy: bool,
+}
+
+impl Default for EffekseerEffect {
+    fn default() -> Self {
+        Self {
+            effect: "".into(),
+            playing: true,
+            looping: true,
+            speed: 1.0,
+            start_frame: 0,
+            prewarm: false,
+            auto_destroy: false,
+        }
+    }
+}
+
+impl Component for EffekseerEffect {
+    fn type_name() -> &'static str {
+        "EffekseerEffect"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct SpineSkeleton {
     pub skeleton: String,
     pub atlas: String,
@@ -1742,6 +1783,47 @@ impl Default for ContentSizeFitter {
 impl Component for ContentSizeFitter {
     fn type_name() -> &'static str {
         "ContentSizeFitter"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct LayoutElement {
+    pub ignore_layout: bool,
+    pub min_width: f32,
+    pub min_height: f32,
+    pub preferred_width: f32,
+    pub preferred_height: f32,
+    pub flexible_width: f32,
+    pub flexible_height: f32,
+}
+
+impl Default for LayoutElement {
+    fn default() -> Self {
+        Self {
+            ignore_layout: false,
+            min_width: -1.0,
+            min_height: -1.0,
+            preferred_width: -1.0,
+            preferred_height: -1.0,
+            flexible_width: -1.0,
+            flexible_height: -1.0,
+        }
+    }
+}
+
+impl Component for LayoutElement {
+    fn type_name() -> &'static str {
+        "LayoutElement"
     }
     fn as_any(&self) -> &dyn std::any::Any {
         self
@@ -2295,8 +2377,19 @@ pub struct LayoutGroup {
     pub padding: [f32; 4],
     pub spacing: [f32; 2],
     pub cell_size: [f32; 2],
-    pub constraint_count: i32,
+    pub child_alignment: String,
+    pub child_control_width: bool,
+    pub child_control_height: bool,
     pub child_force_expand: bool,
+    pub child_force_expand_width: bool,
+    pub child_force_expand_height: bool,
+    pub use_child_scale_width: bool,
+    pub use_child_scale_height: bool,
+    pub reverse_arrangement: bool,
+    pub start_corner: String,
+    pub start_axis: String,
+    pub constraint: String,
+    pub constraint_count: i32,
 }
 
 impl Default for LayoutGroup {
@@ -2306,8 +2399,19 @@ impl Default for LayoutGroup {
             padding: [8.0, 8.0, 8.0, 8.0],
             spacing: [6.0, 6.0],
             cell_size: [120.0, 32.0],
-            constraint_count: 1,
+            child_alignment: "UpperLeft".into(),
+            child_control_width: true,
+            child_control_height: true,
             child_force_expand: true,
+            child_force_expand_width: true,
+            child_force_expand_height: true,
+            use_child_scale_width: false,
+            use_child_scale_height: false,
+            reverse_arrangement: false,
+            start_corner: "UpperLeft".into(),
+            start_axis: "Horizontal".into(),
+            constraint: "FixedColumnCount".into(),
+            constraint_count: 1,
         }
     }
 }
@@ -2749,6 +2853,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "ParticleEmitter3D" => serde_json::from_value::<ParticleEmitter3D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "EffekseerEffect" => serde_json::from_value::<EffekseerEffect>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "SpineSkeleton" => serde_json::from_value::<SpineSkeleton>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Canvas" => serde_json::from_value::<Canvas>(value)
@@ -2764,6 +2870,8 @@ pub fn component_from_value(
         "AspectRatioFitter" => serde_json::from_value::<AspectRatioFitter>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "ContentSizeFitter" => serde_json::from_value::<ContentSizeFitter>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
+        "LayoutElement" => serde_json::from_value::<LayoutElement>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Image" => serde_json::from_value::<Image>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
@@ -2848,6 +2956,7 @@ pub mod meta {
         "AutoRotate",
         "ParticleEmitter2D",
         "ParticleEmitter3D",
+        "EffekseerEffect",
         "SpineSkeleton",
         "Canvas",
         "CanvasRenderer",
@@ -2856,6 +2965,7 @@ pub mod meta {
         "RectTransform",
         "AspectRatioFitter",
         "ContentSizeFitter",
+        "LayoutElement",
         "Image",
         "RawImage",
         "Shadow",

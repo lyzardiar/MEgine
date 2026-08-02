@@ -17,6 +17,7 @@ export const CORE_PANEL_IDS = [
   'shader',
   'spriteEditor',
   'spriteAtlas',
+  'effekseer',
   'build',
   'projectSettings',
 ] as const;
@@ -37,6 +38,7 @@ export const PANEL_TITLES: Record<CorePanelId, string> = {
   shader: 'Surface Shader',
   spriteEditor: 'Sprite Editor',
   spriteAtlas: 'Sprite Atlas',
+  effekseer: 'Effekseer Preview',
   build: 'Build Settings',
   projectSettings: 'Project Settings',
 };

@@ -48,6 +48,7 @@ export type InspectorFieldMeta = {
     | 'spine-json'
     | 'spine-binary'
     | 'spine-atlas'
+    | 'effekseer-effect'
   >;
   referenceType?: string;
   allowNone?: boolean;
@@ -717,6 +718,16 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     blend_mode: { kind: 'enum', options: options('alpha', 'additive') },
     texture: { ...sprite, noneValue: '' },
   },
+  EffekseerEffect: {
+    effect: {
+      kind: 'project-asset',
+      assetKinds: ['effekseer-effect'],
+      referenceType: 'Effekseer Effect',
+      allowNone: true,
+    },
+    speed: { min: 0, step: 0.1 },
+    start_frame: { min: 0, step: 1 },
+  },
   SpineSkeleton: {
     skeleton: {
       kind: 'project-asset',
@@ -816,9 +827,78 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
   },
   CanvasGroup: { alpha: { min: 0, max: 1, step: 0.01 } },
+  LayoutElement: {
+    min_width: { min: -1, step: 1 },
+    min_height: { min: -1, step: 1 },
+    preferred_width: { min: -1, step: 1 },
+    preferred_height: { min: -1, step: 1 },
+    flexible_width: { min: -1, step: 0.1 },
+    flexible_height: { min: -1, step: 0.1 },
+  },
   LayoutGroup: {
     direction: { kind: 'enum', options: options('Horizontal', 'Vertical', 'Grid') },
-    constraint_count: { min: 1, step: 1 },
+    child_alignment: {
+      kind: 'enum',
+      options: options(
+        'UpperLeft',
+        'UpperCenter',
+        'UpperRight',
+        'MiddleLeft',
+        'MiddleCenter',
+        'MiddleRight',
+        'LowerLeft',
+        'LowerCenter',
+        'LowerRight',
+      ),
+    },
+    child_control_width: {
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    child_control_height: {
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    child_force_expand: {
+      label: 'Force Expand (Legacy Master)',
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    child_force_expand_width: {
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    child_force_expand_height: {
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    use_child_scale_width: {
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    use_child_scale_height: {
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    reverse_arrangement: {
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    start_corner: {
+      kind: 'enum',
+      options: options('UpperLeft', 'UpperRight', 'LowerLeft', 'LowerRight'),
+      visibleWhen: { field: 'direction', equals: 'Grid' },
+    },
+    start_axis: {
+      kind: 'enum',
+      options: options('Horizontal', 'Vertical'),
+      visibleWhen: { field: 'direction', equals: 'Grid' },
+    },
+    constraint: {
+      kind: 'enum',
+      options: options('Flexible', 'FixedColumnCount', 'FixedRowCount'),
+      visibleWhen: { field: 'direction', equals: 'Grid' },
+    },
+    constraint_count: {
+      min: 1,
+      step: 1,
+      visibleWhen: [
+        { field: 'direction', equals: 'Grid' },
+        { field: 'constraint', equals: ['FixedColumnCount', 'FixedRowCount'] },
+      ],
+    },
   },
   Mask: {
     show_mask_graphic: { label: 'Show Mask Graphic' },

@@ -752,7 +752,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'view.set_camera': objectSchema({
     yaw: numberValue('Orbit yaw in degrees'),
     pitch: numberValue('Orbit pitch in degrees; clamped to -89..89'),
-    distance: numberValue('Orbit distance; clamped to 0.5..200'),
+    distance: numberValue('Orbit distance; clamped to 0.5..1000000'),
     pivot: finiteTuple(3, 'Orbit pivot [x, y, z]'),
   }, [], {
     anyOf: [

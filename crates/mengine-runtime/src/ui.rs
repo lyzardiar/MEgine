@@ -3,9 +3,9 @@ use crate::ui_raycast::{ray_plane, BlockingObjects, WorldRay};
 use glam::{Mat4, Quat, Vec3};
 use mengine_core::generated::{
     AspectRatioFitter, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasRenderer,
-    CanvasScaler, ContentSizeFitter, Dropdown, GraphicRaycaster, Image, InputField, LayoutGroup,
-    ListView, Mask, Outline, Panel, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView,
-    Scrollbar, Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
+    CanvasScaler, ContentSizeFitter, Dropdown, GraphicRaycaster, Image, InputField, LayoutElement,
+    LayoutGroup, ListView, Mask, Outline, Panel, ProgressBar, RawImage, RectMask2D, RectTransform,
+    ScrollView, Scrollbar, Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, TransformHierarchy, World};
@@ -921,6 +921,8 @@ struct UiWalkLayout {
     /// RectMask2D clipping, ignored by MaskableGraphic when maskable is false.
     rect_mask_clip: Option<UiRect>,
     forced_rect: Option<UiRect>,
+    /// Axes whose size is owned by a parent LayoutGroup.
+    forced_axes: Option<[bool; 2]>,
 }
 
 impl Default for UiInheritedState {
@@ -1212,6 +1214,7 @@ fn collect_ui_frame_internal(
                 clip,
                 rect_mask_clip: None,
                 forced_rect: Some(canvas_rect),
+                forced_axes: None,
             },
             UiInheritedState {
                 pixel_perfect: !world_space && canvas_pixel_perfect(world, canvas_entity),
@@ -1923,18 +1926,51 @@ fn walk(
         clip: base_clip,
         rect_mask_clip,
         forced_rect,
+        forced_axes,
     } = layout_state;
     let mut rect = forced_rect.unwrap_or_else(|| solve_rect(parent_rect, &rect_transform, scale));
+    let mut driven_axes = forced_axes.unwrap_or([false, false]);
     if let (Some(fitter), Some(layout)) = (
         world.get_component::<ContentSizeFitter>(entity),
         world.get_component::<LayoutGroup>(entity),
     ) {
+        let layout_children = layout_children_of(world, entity);
+        let layout_metrics = layout_children_metrics(world, &layout_children, None, font_resolver);
+        let horizontal_fit = if forced_axes.is_some_and(|axes| axes[0]) {
+            "Unconstrained"
+        } else {
+            &fitter.horizontal_fit
+        };
+        let vertical_fit = if forced_axes.is_some_and(|axes| axes[1]) {
+            "Unconstrained"
+        } else {
+            &fitter.vertical_fit
+        };
+        driven_axes = [
+            driven_axes[0] || horizontal_fit != "Unconstrained",
+            driven_axes[1] || vertical_fit != "Unconstrained",
+        ];
         rect = apply_content_size(
             rect,
             rect_transform.pivot,
-            &fitter.horizontal_fit,
-            &fitter.vertical_fit,
-            measure_layout_content(layout, children_of(world, entity).len(), scale),
+            horizontal_fit,
+            "Unconstrained",
+            measure_layout_content(layout, &layout_metrics, scale),
+        );
+        let layout_metrics = layout_children_metrics_for_rect(
+            world,
+            &layout_children,
+            layout,
+            rect,
+            scale,
+            font_resolver,
+        );
+        rect = apply_content_size(
+            rect,
+            rect_transform.pivot,
+            "Unconstrained",
+            vertical_fit,
+            measure_layout_content(layout, &layout_metrics, scale),
         );
     }
     if let Some(fitter) = world.get_component::<AspectRatioFitter>(entity) {
@@ -1944,6 +1980,7 @@ fn walk(
             rect_transform.pivot,
             &fitter.aspect_mode,
             fitter.aspect_ratio,
+            driven_axes,
         );
     }
     let rotation = -rect_transform.local_rotation.to_radians();
@@ -3211,10 +3248,38 @@ fn walk(
     } else {
         rect
     };
-    let child_count = children.len();
-    for (index, child) in children.into_iter().enumerate() {
-        let forced =
-            layout.map(|group| layout_child_rect(child_parent, group, index, child_count, scale));
+    let layout_children: Vec<_> = if layout.is_some() {
+        children
+            .iter()
+            .copied()
+            .filter(|child| participates_in_layout(world, *child))
+            .collect()
+    } else {
+        Vec::new()
+    };
+    let forced_rects = layout.map_or_else(Vec::new, |group| {
+        let metrics = layout_children_metrics_for_rect(
+            world,
+            &layout_children,
+            group,
+            child_parent,
+            scale,
+            font_resolver,
+        );
+        layout_child_rects(child_parent, group, &metrics, scale)
+    });
+    let forced_axes = layout.map(|group| {
+        if group.direction == "Grid" {
+            [true, true]
+        } else {
+            [group.child_control_width, group.child_control_height]
+        }
+    });
+    for child in children {
+        let forced = layout_children
+            .iter()
+            .position(|candidate| *candidate == child)
+            .and_then(|index| forced_rects.get(index).copied());
         walk(
             world,
             child,
@@ -3227,6 +3292,7 @@ fn walk(
                 clip: child_clip,
                 rect_mask_clip: child_rect_mask_clip,
                 forced_rect: forced,
+                forced_axes: forced.map(|_| forced_axes.unwrap_or([false, false])),
             },
             state,
             interaction,
@@ -3259,10 +3325,318 @@ struct ContentSize {
     min_height: f32,
     preferred_width: f32,
     preferred_height: f32,
+    flexible_width: f32,
+    flexible_height: f32,
 }
 
-fn measure_layout_content(group: &LayoutGroup, child_count: usize, scale: f32) -> ContentSize {
-    let count = child_count;
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+struct LayoutChildMetrics {
+    width: f32,
+    height: f32,
+    min_width: Option<f32>,
+    min_height: Option<f32>,
+    preferred_width: Option<f32>,
+    preferred_height: Option<f32>,
+    flexible_width: Option<f32>,
+    flexible_height: Option<f32>,
+    scale_width: f32,
+    scale_height: f32,
+}
+
+fn intrinsic_text_layout(
+    text: &Text,
+    width: f32,
+    horizontal_overflow: &str,
+    font_resolver: Option<&mut dyn UiFontResolver>,
+) -> BitmapTextLayout {
+    layout_bitmap_text_at_font_size_with_font(
+        &text.text,
+        UiRect {
+            x: 0.0,
+            y: 0.0,
+            width,
+            height: 16_777_216.0,
+        },
+        text.font_size,
+        &text.font_style,
+        text.align_by_geometry,
+        text.support_rich_text,
+        1.0,
+        "Left",
+        "Top",
+        text.line_spacing,
+        horizontal_overflow,
+        "Overflow",
+        &text.font,
+        font_resolver,
+    )
+}
+
+fn text_intrinsic_preferred_size(
+    text: &Text,
+    authored_width: f32,
+    font_resolver: &mut Option<&mut dyn UiFontResolver>,
+) -> Option<[f32; 2]> {
+    if !text.enabled || text.text.is_empty() {
+        return None;
+    }
+    let unwrapped = if !text.font.trim().is_empty() {
+        if let Some(resolver) = font_resolver.as_mut() {
+            intrinsic_text_layout(text, 16_777_216.0, "Overflow", Some(&mut **resolver))
+        } else {
+            intrinsic_text_layout(text, 16_777_216.0, "Overflow", None)
+        }
+    } else {
+        intrinsic_text_layout(text, 16_777_216.0, "Overflow", None)
+    };
+    let wrapped = if !text.font.trim().is_empty() {
+        if let Some(resolver) = font_resolver.as_mut() {
+            intrinsic_text_layout(
+                text,
+                authored_width.max(1.0),
+                &text.horizontal_overflow,
+                Some(&mut **resolver),
+            )
+        } else {
+            intrinsic_text_layout(
+                text,
+                authored_width.max(1.0),
+                &text.horizontal_overflow,
+                None,
+            )
+        }
+    } else {
+        intrinsic_text_layout(
+            text,
+            authored_width.max(1.0),
+            &text.horizontal_overflow,
+            None,
+        )
+    };
+    Some([
+        unwrapped
+            .lines
+            .iter()
+            .map(|line| line.width)
+            .fold(0.0, f32::max),
+        wrapped.block_height.max(0.0),
+    ])
+}
+
+fn layout_child_metrics(
+    world: &World,
+    entity: Entity,
+    measured_width: Option<f32>,
+    font_resolver: &mut Option<&mut dyn UiFontResolver>,
+    nested_content: Option<ContentSize>,
+) -> LayoutChildMetrics {
+    let rect = world
+        .get_component::<RectTransform>(entity)
+        .cloned()
+        .unwrap_or_default();
+    let element = world.get_component::<LayoutElement>(entity);
+    let mut implicit_preferred: Vec<[f32; 2]> = Vec::new();
+    if let Some(image) = world
+        .get_component::<Image>(entity)
+        .filter(|image| image.enabled)
+    {
+        let multiplier = if image.pixels_per_unit_multiplier.is_finite() {
+            image.pixels_per_unit_multiplier.max(0.01)
+        } else {
+            1.0
+        };
+        implicit_preferred.push([
+            image.source_size[0].max(0.0) / multiplier,
+            image.source_size[1].max(0.0) / multiplier,
+        ]);
+    }
+    if let Some(text) = world.get_component::<Text>(entity) {
+        if let Some(preferred) = text_intrinsic_preferred_size(
+            text,
+            measured_width.unwrap_or(rect.size_delta[0]).max(0.0),
+            font_resolver,
+        ) {
+            implicit_preferred.push(preferred);
+        }
+    }
+    let implicit_width = implicit_preferred
+        .iter()
+        .map(|size| size[0])
+        .reduce(f32::max);
+    let implicit_height = implicit_preferred
+        .iter()
+        .map(|size| size[1])
+        .reduce(f32::max);
+    let optional = |value: f32| (value.is_finite() && value >= 0.0).then_some(value);
+    LayoutChildMetrics {
+        width: rect.size_delta[0].max(0.0),
+        height: rect.size_delta[1].max(0.0),
+        min_width: element
+            .and_then(|value| optional(value.min_width))
+            .or(nested_content.map(|content| content.min_width)),
+        min_height: element
+            .and_then(|value| optional(value.min_height))
+            .or(nested_content.map(|content| content.min_height)),
+        preferred_width: element
+            .and_then(|value| optional(value.preferred_width))
+            .or(nested_content.map(|content| content.preferred_width))
+            .or(implicit_width),
+        preferred_height: element
+            .and_then(|value| optional(value.preferred_height))
+            .or(nested_content.map(|content| content.preferred_height))
+            .or(implicit_height),
+        flexible_width: element
+            .and_then(|value| optional(value.flexible_width))
+            .or(nested_content.map(|content| content.flexible_width)),
+        flexible_height: element
+            .and_then(|value| optional(value.flexible_height))
+            .or(nested_content.map(|content| content.flexible_height)),
+        scale_width: rect.local_scale[0].abs(),
+        scale_height: rect.local_scale[1].abs(),
+    }
+}
+
+fn layout_finite_non_negative(value: Option<f32>, fallback: f32) -> f32 {
+    value
+        .filter(|value| value.is_finite() && *value >= 0.0)
+        .unwrap_or(fallback.max(0.0))
+}
+
+fn child_axis_sizes(
+    group: &LayoutGroup,
+    child: LayoutChildMetrics,
+    axis: usize,
+    scale: f32,
+) -> (f32, f32, f32) {
+    let control = if axis == 0 {
+        group.child_control_width
+    } else {
+        group.child_control_height
+    };
+    let use_scale = if axis == 0 {
+        group.use_child_scale_width
+    } else {
+        group.use_child_scale_height
+    };
+    let authored = if axis == 0 { child.width } else { child.height };
+    let fallback = if control {
+        group.cell_size[axis]
+    } else {
+        authored
+    };
+    let raw_min = if axis == 0 {
+        child.min_width
+    } else {
+        child.min_height
+    };
+    let raw_preferred = if axis == 0 {
+        child.preferred_width
+    } else {
+        child.preferred_height
+    };
+    let raw_flexible = if axis == 0 {
+        child.flexible_width
+    } else {
+        child.flexible_height
+    };
+    let child_scale = if use_scale {
+        layout_finite_non_negative(
+            Some(if axis == 0 {
+                child.scale_width
+            } else {
+                child.scale_height
+            }),
+            1.0,
+        )
+    } else {
+        1.0
+    };
+    let min = if control {
+        layout_finite_non_negative(raw_min, 0.0)
+    } else {
+        layout_finite_non_negative(Some(authored), 0.0)
+    };
+    let preferred = if control {
+        min.max(layout_finite_non_negative(raw_preferred, fallback))
+    } else {
+        min
+    };
+    (
+        min * scale * child_scale,
+        preferred * scale * child_scale,
+        layout_finite_non_negative(raw_flexible, 0.0),
+    )
+}
+
+fn preferred_grid_dimensions(group: &LayoutGroup, count: usize) -> (usize, usize) {
+    let constraint_count = group.constraint_count.max(1) as usize;
+    match group.constraint.as_str() {
+        "FixedRowCount" => {
+            let rows = count.min(constraint_count).max(1);
+            (count.div_ceil(rows), rows)
+        }
+        "Flexible" => {
+            let columns = (count as f32).sqrt().ceil() as usize;
+            (columns.max(1), count.div_ceil(columns.max(1)))
+        }
+        _ => {
+            let columns = count.min(constraint_count).max(1);
+            (columns, count.div_ceil(columns))
+        }
+    }
+}
+
+fn combined_layout_flexible(
+    group: &LayoutGroup,
+    sizes: &[(f32, f32, f32)],
+    axis: usize,
+    main_axis: bool,
+) -> f32 {
+    let controlled = if axis == 0 {
+        group.child_control_width
+    } else {
+        group.child_control_height
+    };
+    if !controlled || sizes.is_empty() {
+        return 0.0;
+    }
+    let force_expand = group.child_force_expand
+        && if axis == 0 {
+            group.child_force_expand_width
+        } else {
+            group.child_force_expand_height
+        };
+    if main_axis {
+        sizes
+            .iter()
+            .map(|value| {
+                if force_expand {
+                    value.2.max(1.0)
+                } else {
+                    value.2
+                }
+            })
+            .sum()
+    } else {
+        sizes
+            .iter()
+            .map(|value| {
+                if force_expand {
+                    value.2.max(1.0)
+                } else {
+                    value.2
+                }
+            })
+            .fold(0.0, f32::max)
+    }
+}
+
+fn measure_layout_content(
+    group: &LayoutGroup,
+    children: &[LayoutChildMetrics],
+    scale: f32,
+) -> ContentSize {
+    let count = children.len();
     let left = (group.padding[0] * scale).max(0.0);
     let top = (group.padding[1] * scale).max(0.0);
     let right = (group.padding[2] * scale).max(0.0);
@@ -3279,33 +3653,83 @@ fn measure_layout_content(group: &LayoutGroup, child_count: usize, scale: f32) -
             min_height,
             preferred_width: min_width,
             preferred_height: min_height,
+            flexible_width: 0.0,
+            flexible_height: 0.0,
         };
     }
-    let (preferred_width, preferred_height) = match group.direction.as_str() {
-        "Horizontal" => (
-            min_width + cell_width * count as f32 + spacing_x * count.saturating_sub(1) as f32,
-            min_height + cell_height,
-        ),
-        "Grid" => {
-            let columns = (group.constraint_count.max(1) as usize).min(count);
-            let rows = count.div_ceil(columns);
+    let (
+        measured_min_width,
+        measured_min_height,
+        preferred_width,
+        preferred_height,
+        flexible_width,
+        flexible_height,
+    ) = match group.direction.as_str() {
+        "Horizontal" => {
+            let widths: Vec<_> = children
+                .iter()
+                .map(|child| child_axis_sizes(group, *child, 0, scale))
+                .collect();
+            let heights: Vec<_> = children
+                .iter()
+                .map(|child| child_axis_sizes(group, *child, 1, scale))
+                .collect();
             (
+                min_width
+                    + widths.iter().map(|value| value.0).sum::<f32>()
+                    + spacing_x * count.saturating_sub(1) as f32,
+                min_height + heights.iter().map(|value| value.0).fold(0.0, f32::max),
+                min_width
+                    + widths.iter().map(|value| value.1).sum::<f32>()
+                    + spacing_x * count.saturating_sub(1) as f32,
+                min_height + heights.iter().map(|value| value.1).fold(0.0, f32::max),
+                combined_layout_flexible(group, &widths, 0, true),
+                combined_layout_flexible(group, &heights, 1, false),
+            )
+        }
+        "Grid" => {
+            let (columns, rows) = preferred_grid_dimensions(group, count);
+            (
+                min_width,
+                min_height,
                 min_width
                     + cell_width * columns as f32
                     + spacing_x * columns.saturating_sub(1) as f32,
                 min_height + cell_height * rows as f32 + spacing_y * rows.saturating_sub(1) as f32,
+                0.0,
+                0.0,
             )
         }
-        _ => (
-            min_width + cell_width,
-            min_height + cell_height * count as f32 + spacing_y * count.saturating_sub(1) as f32,
-        ),
+        _ => {
+            let widths: Vec<_> = children
+                .iter()
+                .map(|child| child_axis_sizes(group, *child, 0, scale))
+                .collect();
+            let heights: Vec<_> = children
+                .iter()
+                .map(|child| child_axis_sizes(group, *child, 1, scale))
+                .collect();
+            (
+                min_width + widths.iter().map(|value| value.0).fold(0.0, f32::max),
+                min_height
+                    + heights.iter().map(|value| value.0).sum::<f32>()
+                    + spacing_y * count.saturating_sub(1) as f32,
+                min_width + widths.iter().map(|value| value.1).fold(0.0, f32::max),
+                min_height
+                    + heights.iter().map(|value| value.1).sum::<f32>()
+                    + spacing_y * count.saturating_sub(1) as f32,
+                combined_layout_flexible(group, &widths, 0, false),
+                combined_layout_flexible(group, &heights, 1, true),
+            )
+        }
     };
     ContentSize {
-        min_width,
-        min_height,
+        min_width: measured_min_width,
+        min_height: measured_min_height,
         preferred_width,
         preferred_height,
+        flexible_width,
+        flexible_height,
     }
 }
 
@@ -3537,71 +3961,381 @@ fn intersect_clip(clip: UiClipRect, rect: UiRect) -> UiClipRect {
     }
 }
 
-fn layout_child_rect(
+fn alignment_factors(alignment: &str) -> (f32, f32) {
+    let x = if alignment.ends_with("Center") {
+        0.5
+    } else if alignment.ends_with("Right") {
+        1.0
+    } else {
+        0.0
+    };
+    let y = if alignment.starts_with("Middle") {
+        0.5
+    } else if alignment.starts_with("Lower") {
+        1.0
+    } else {
+        0.0
+    };
+    (x, y)
+}
+
+fn layout_axis_sizes(
+    available: f32,
+    spacing: f32,
+    sizes: &[(f32, f32, f32)],
+    force_expand: bool,
+) -> Vec<f32> {
+    if sizes.is_empty() {
+        return Vec::new();
+    }
+    let usable = (available - spacing * sizes.len().saturating_sub(1) as f32).max(0.0);
+    let total_min: f32 = sizes.iter().map(|value| value.0).sum();
+    let total_preferred: f32 = sizes.iter().map(|value| value.1).sum();
+    if usable <= total_min || total_preferred <= total_min {
+        let factor = if total_min > 0.0 {
+            (usable / total_min).min(1.0)
+        } else {
+            0.0
+        };
+        return sizes.iter().map(|value| value.0 * factor).collect();
+    }
+    if usable < total_preferred {
+        let t = (usable - total_min) / (total_preferred - total_min);
+        return sizes
+            .iter()
+            .map(|value| value.0 + (value.1 - value.0) * t)
+            .collect();
+    }
+    let flexible: Vec<f32> = sizes
+        .iter()
+        .map(|value| {
+            if force_expand {
+                value.2.max(1.0)
+            } else {
+                value.2
+            }
+        })
+        .collect();
+    let total_flexible: f32 = flexible.iter().sum();
+    let surplus = usable - total_preferred;
+    sizes
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            value.1
+                + if total_flexible > 0.0 {
+                    surplus * flexible[index] / total_flexible
+                } else {
+                    0.0
+                }
+        })
+        .collect()
+}
+
+fn grid_dimensions(
+    content: UiRect,
+    group: &LayoutGroup,
+    count: usize,
+    cell_width: f32,
+    cell_height: f32,
+    spacing_x: f32,
+    spacing_y: f32,
+) -> (usize, usize) {
+    let constraint_count = group.constraint_count.max(1) as usize;
+    match group.constraint.as_str() {
+        "FixedRowCount" => {
+            let rows = count.min(constraint_count).max(1);
+            (count.div_ceil(rows), rows)
+        }
+        "Flexible" if group.start_axis == "Vertical" => {
+            let step = cell_height + spacing_y;
+            let rows = if step > 0.0 {
+                ((content.height + spacing_y) / step).floor() as usize
+            } else {
+                1
+            }
+            .clamp(1, count);
+            (count.div_ceil(rows), rows)
+        }
+        "Flexible" => {
+            let step = cell_width + spacing_x;
+            let columns = if step > 0.0 {
+                ((content.width + spacing_x) / step).floor() as usize
+            } else {
+                1
+            }
+            .clamp(1, count);
+            (columns, count.div_ceil(columns))
+        }
+        _ => {
+            let columns = count.min(constraint_count).max(1);
+            (columns, count.div_ceil(columns))
+        }
+    }
+}
+
+fn layout_child_rects(
     parent: UiRect,
     group: &LayoutGroup,
-    index: usize,
-    count: usize,
+    children: &[LayoutChildMetrics],
     scale: f32,
-) -> UiRect {
+) -> Vec<UiRect> {
+    if children.is_empty() {
+        return Vec::new();
+    }
     let content = inset_rect(parent, group.padding, scale);
     let spacing_x = group.spacing[0] * scale;
     let spacing_y = group.spacing[1] * scale;
-    match group.direction.as_str() {
-        "Horizontal" => {
-            let width = if group.child_force_expand && count > 0 {
-                (content.width - spacing_x * count.saturating_sub(1) as f32).max(0.0) / count as f32
-            } else {
-                group.cell_size[0] * scale
-            };
-            UiRect {
-                x: content.x + index as f32 * (width + spacing_x),
-                y: content.y,
-                width,
-                height: if group.child_force_expand {
-                    content.height
+    let (align_x, align_y) = alignment_factors(&group.child_alignment);
+    if group.direction == "Grid" {
+        let cell_width = (group.cell_size[0] * scale).max(0.0);
+        let cell_height = (group.cell_size[1] * scale).max(0.0);
+        let (columns, rows) = grid_dimensions(
+            content,
+            group,
+            children.len(),
+            cell_width,
+            cell_height,
+            spacing_x,
+            spacing_y,
+        );
+        let grid_width = cell_width * columns as f32 + spacing_x * columns.saturating_sub(1) as f32;
+        let grid_height = cell_height * rows as f32 + spacing_y * rows.saturating_sub(1) as f32;
+        let origin_x = content.x + (content.width - grid_width) * align_x;
+        let origin_y = content.y + (content.height - grid_height) * align_y;
+        let horizontal = group.start_axis != "Vertical";
+        let right_to_left = group.start_corner.ends_with("Right");
+        let bottom_to_top = group.start_corner.starts_with("Lower");
+        return (0..children.len())
+            .map(|index| {
+                let mut column = if horizontal {
+                    index % columns
                 } else {
-                    group.cell_size[1] * scale
-                },
-            }
-        }
-        "Grid" => {
-            let columns = group.constraint_count.max(1) as usize;
-            let column = index % columns;
-            let row = index / columns;
-            let width = if group.child_force_expand {
-                (content.width - spacing_x * columns.saturating_sub(1) as f32).max(0.0)
-                    / columns as f32
-            } else {
-                group.cell_size[0] * scale
-            };
-            let height = group.cell_size[1] * scale;
-            UiRect {
-                x: content.x + column as f32 * (width + spacing_x),
-                y: content.y + row as f32 * (height + spacing_y),
-                width,
-                height,
-            }
-        }
-        _ => {
-            let height = if group.child_force_expand && count > 0 {
-                (content.height - spacing_y * count.saturating_sub(1) as f32).max(0.0)
-                    / count as f32
-            } else {
-                group.cell_size[1] * scale
-            };
-            UiRect {
-                x: content.x,
-                y: content.y + index as f32 * (height + spacing_y),
-                width: if group.child_force_expand {
-                    content.width
+                    index / rows
+                };
+                let mut row = if horizontal {
+                    index / columns
                 } else {
-                    group.cell_size[0] * scale
-                },
-                height,
-            }
-        }
+                    index % rows
+                };
+                if right_to_left {
+                    column = columns - 1 - column;
+                }
+                if bottom_to_top {
+                    row = rows - 1 - row;
+                }
+                UiRect {
+                    x: origin_x + column as f32 * (cell_width + spacing_x),
+                    y: origin_y + row as f32 * (cell_height + spacing_y),
+                    width: cell_width,
+                    height: cell_height,
+                }
+            })
+            .collect();
     }
+
+    let horizontal = group.direction == "Horizontal";
+    let main_axis = if horizontal { 0 } else { 1 };
+    let cross_axis = if horizontal { 1 } else { 0 };
+    let main_spacing = if horizontal { spacing_x } else { spacing_y };
+    let main_available = if horizontal {
+        content.width
+    } else {
+        content.height
+    };
+    let main_metrics: Vec<_> = children
+        .iter()
+        .map(|child| child_axis_sizes(group, *child, main_axis, scale))
+        .collect();
+    let control_main = if horizontal {
+        group.child_control_width
+    } else {
+        group.child_control_height
+    };
+    let expand_main = group.child_force_expand
+        && control_main
+        && if horizontal {
+            group.child_force_expand_width
+        } else {
+            group.child_force_expand_height
+        };
+    let main_sizes = layout_axis_sizes(main_available, main_spacing, &main_metrics, expand_main);
+    let used_main: f32 =
+        main_sizes.iter().sum::<f32>() + main_spacing * children.len().saturating_sub(1) as f32;
+    let main_alignment = if horizontal { align_x } else { align_y };
+    let mut cursor = if horizontal { content.x } else { content.y }
+        + (main_available - used_main) * main_alignment;
+    let mut result = vec![content; children.len()];
+    let mut order: Vec<usize> = (0..children.len()).collect();
+    if group.reverse_arrangement {
+        order.reverse();
+    }
+    for child_index in order {
+        let main_size = main_sizes[child_index];
+        let cross_metric = child_axis_sizes(group, children[child_index], cross_axis, scale);
+        let control_cross = if horizontal {
+            group.child_control_height
+        } else {
+            group.child_control_width
+        };
+        let expand_cross = group.child_force_expand
+            && control_cross
+            && if horizontal {
+                group.child_force_expand_height
+            } else {
+                group.child_force_expand_width
+            };
+        let cross_available = if horizontal {
+            content.height
+        } else {
+            content.width
+        };
+        let cross_size = if expand_cross {
+            cross_available
+        } else {
+            cross_metric.1.min(cross_available)
+        };
+        let cross_alignment = if horizontal { align_y } else { align_x };
+        let cross_start = if horizontal { content.y } else { content.x }
+            + (cross_available - cross_size) * cross_alignment;
+        result[child_index] = if horizontal {
+            UiRect {
+                x: cursor,
+                y: cross_start,
+                width: main_size,
+                height: cross_size,
+            }
+        } else {
+            UiRect {
+                x: cross_start,
+                y: cursor,
+                width: cross_size,
+                height: main_size,
+            }
+        };
+        cursor += main_size + main_spacing;
+    }
+    result
+}
+
+fn participates_in_layout(world: &World, entity: Entity) -> bool {
+    !world
+        .get_component::<LayoutElement>(entity)
+        .is_some_and(|element| element.ignore_layout)
+}
+
+fn layout_children_of(world: &World, parent: Entity) -> Vec<Entity> {
+    children_of(world, parent)
+        .into_iter()
+        .filter(|entity| participates_in_layout(world, *entity))
+        .collect()
+}
+
+fn layout_children_metrics(
+    world: &World,
+    children: &[Entity],
+    measured_widths: Option<&[f32]>,
+    font_resolver: &mut Option<&mut dyn UiFontResolver>,
+) -> Vec<LayoutChildMetrics> {
+    layout_children_metrics_with_guard(
+        world,
+        children,
+        measured_widths,
+        font_resolver,
+        &mut HashSet::new(),
+    )
+}
+
+fn layout_children_metrics_with_guard(
+    world: &World,
+    children: &[Entity],
+    measured_widths: Option<&[f32]>,
+    font_resolver: &mut Option<&mut dyn UiFontResolver>,
+    resolving: &mut HashSet<Entity>,
+) -> Vec<LayoutChildMetrics> {
+    let mut metrics = Vec::with_capacity(children.len());
+    for (index, entity) in children.iter().enumerate() {
+        metrics.push(layout_child_metrics_recursive(
+            world,
+            *entity,
+            measured_widths
+                .and_then(|widths| widths.get(index))
+                .copied(),
+            font_resolver,
+            resolving,
+        ));
+    }
+    metrics
+}
+
+fn layout_child_metrics_recursive(
+    world: &World,
+    entity: Entity,
+    measured_width: Option<f32>,
+    font_resolver: &mut Option<&mut dyn UiFontResolver>,
+    resolving: &mut HashSet<Entity>,
+) -> LayoutChildMetrics {
+    if !resolving.insert(entity) {
+        return layout_child_metrics(world, entity, measured_width, font_resolver, None);
+    }
+    let nested_content = world.get_component::<LayoutGroup>(entity).map(|group| {
+        let children = layout_children_of(world, entity);
+        let initial =
+            layout_children_metrics_with_guard(world, &children, None, font_resolver, resolving);
+        let metrics = if group.direction == "Grid" || children.is_empty() {
+            initial
+        } else {
+            let rect = world
+                .get_component::<RectTransform>(entity)
+                .cloned()
+                .unwrap_or_default();
+            let provisional = layout_child_rects(
+                UiRect {
+                    x: 0.0,
+                    y: 0.0,
+                    width: measured_width.unwrap_or(rect.size_delta[0]).max(0.0),
+                    height: rect.size_delta[1].max(0.0),
+                },
+                group,
+                &initial,
+                1.0,
+            );
+            let widths: Vec<f32> = provisional.iter().map(|rect| rect.width).collect();
+            layout_children_metrics_with_guard(
+                world,
+                &children,
+                Some(&widths),
+                font_resolver,
+                resolving,
+            )
+        };
+        measure_layout_content(group, &metrics, 1.0)
+    });
+    let metrics =
+        layout_child_metrics(world, entity, measured_width, font_resolver, nested_content);
+    resolving.remove(&entity);
+    metrics
+}
+
+fn layout_children_metrics_for_rect(
+    world: &World,
+    children: &[Entity],
+    group: &LayoutGroup,
+    parent: UiRect,
+    scale: f32,
+    font_resolver: &mut Option<&mut dyn UiFontResolver>,
+) -> Vec<LayoutChildMetrics> {
+    let initial = layout_children_metrics(world, children, None, font_resolver);
+    if group.direction == "Grid" {
+        return initial;
+    }
+    let provisional = layout_child_rects(parent, group, &initial, scale);
+    let inverse_scale = 1.0 / scale.max(0.000_001);
+    let widths: Vec<f32> = provisional
+        .iter()
+        .map(|rect| rect.width * inverse_scale)
+        .collect();
+    layout_children_metrics(world, children, Some(&widths), font_resolver)
 }
 
 fn push_border(
@@ -3667,13 +4401,20 @@ fn apply_aspect_ratio(
     pivot: [f32; 2],
     mode: &str,
     aspect_ratio: f32,
+    driven_axes: [bool; 2],
 ) -> UiRect {
     if mode.eq_ignore_ascii_case("none") || !aspect_ratio.is_finite() || aspect_ratio <= 0.0 {
+        return rect;
+    }
+    if driven_axes[0] && driven_axes[1] {
         return rect;
     }
     let pivot_x = rect.x + rect.width * pivot[0];
     let pivot_y = rect.y + rect.height * pivot[1];
     if mode.eq_ignore_ascii_case("widthcontrolsheight") {
+        if driven_axes[1] {
+            return rect;
+        }
         let height = rect.width / aspect_ratio;
         return UiRect {
             y: pivot_y - height * pivot[1],
@@ -3682,6 +4423,9 @@ fn apply_aspect_ratio(
         };
     }
     if mode.eq_ignore_ascii_case("heightcontrolswidth") {
+        if driven_axes[0] {
+            return rect;
+        }
         let width = rect.height * aspect_ratio;
         return UiRect {
             x: pivot_x - width * pivot[0],
@@ -3691,7 +4435,26 @@ fn apply_aspect_ratio(
     }
     let fit = mode.eq_ignore_ascii_case("fitinparent");
     let envelope = mode.eq_ignore_ascii_case("envelopeparent");
-    if (!fit && !envelope) || parent.width <= 0.0 || parent.height <= 0.0 {
+    if !fit && !envelope {
+        return rect;
+    }
+    if driven_axes[0] {
+        let height = rect.width / aspect_ratio;
+        return UiRect {
+            y: pivot_y - height * pivot[1],
+            height,
+            ..rect
+        };
+    }
+    if driven_axes[1] {
+        let width = rect.height * aspect_ratio;
+        return UiRect {
+            x: pivot_x - width * pivot[0],
+            width,
+            ..rect
+        };
+    }
+    if parent.width <= 0.0 || parent.height <= 0.0 {
         return rect;
     }
     let parent_ratio = parent.width / parent.height;
@@ -9019,7 +9782,14 @@ mod tests {
             height: 50.0,
         };
         assert_eq!(
-            apply_aspect_ratio(rect, parent, [0.5, 0.5], "WidthControlsHeight", 1.0),
+            apply_aspect_ratio(
+                rect,
+                parent,
+                [0.5, 0.5],
+                "WidthControlsHeight",
+                1.0,
+                [false, false],
+            ),
             UiRect {
                 x: 50.0,
                 y: 0.0,
@@ -9028,7 +9798,7 @@ mod tests {
             }
         );
         assert_eq!(
-            apply_aspect_ratio(rect, parent, [0.5, 0.5], "FitInParent", 1.0),
+            apply_aspect_ratio(rect, parent, [0.5, 0.5], "FitInParent", 1.0, [false, false],),
             UiRect {
                 x: 50.0,
                 y: 0.0,
@@ -9037,13 +9807,40 @@ mod tests {
             }
         );
         assert_eq!(
-            apply_aspect_ratio(rect, parent, [0.0, 0.0], "EnvelopeParent", 1.0),
+            apply_aspect_ratio(
+                rect,
+                parent,
+                [0.0, 0.0],
+                "EnvelopeParent",
+                1.0,
+                [false, false],
+            ),
             UiRect {
                 x: 0.0,
                 y: 0.0,
                 width: 200.0,
                 height: 200.0,
             }
+        );
+        assert_eq!(
+            apply_aspect_ratio(
+                rect,
+                parent,
+                [0.5, 0.5],
+                "WidthControlsHeight",
+                1.0,
+                [false, true],
+            ),
+            rect,
+        );
+        assert_eq!(
+            apply_aspect_ratio(rect, parent, [0.5, 0.5], "FitInParent", 1.0, [true, false],),
+            UiRect {
+                x: 50.0,
+                y: 0.0,
+                width: 100.0,
+                height: 100.0,
+            },
         );
     }
 
@@ -9056,8 +9853,9 @@ mod tests {
             cell_size: [100.0, 30.0],
             constraint_count: 2,
             child_force_expand: true,
+            ..Default::default()
         };
-        let content = measure_layout_content(&group, 3, 1.0);
+        let content = measure_layout_content(&group, &[LayoutChildMetrics::default(); 3], 1.0);
         assert_eq!(content.preferred_width, 226.0);
         assert_eq!(content.preferred_height, 88.0);
         assert_eq!(
@@ -9080,6 +9878,621 @@ mod tests {
                 height: 24.0,
             }
         );
+    }
+
+    #[test]
+    fn layout_group_aligns_flexible_children_and_grid_start_corner() {
+        let horizontal = LayoutGroup {
+            direction: "Horizontal".into(),
+            padding: [0.0; 4],
+            spacing: [10.0, 0.0],
+            cell_size: [50.0, 20.0],
+            child_alignment: "MiddleCenter".into(),
+            child_force_expand: true,
+            child_force_expand_width: true,
+            child_force_expand_height: false,
+            ..Default::default()
+        };
+        let children = [
+            LayoutChildMetrics {
+                preferred_width: Some(50.0),
+                flexible_width: Some(1.0),
+                ..Default::default()
+            },
+            LayoutChildMetrics {
+                preferred_width: Some(100.0),
+                flexible_width: Some(3.0),
+                ..Default::default()
+            },
+        ];
+        let rects = layout_child_rects(
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 300.0,
+                height: 100.0,
+            },
+            &horizontal,
+            &children,
+            1.0,
+        );
+        assert_eq!(rects[0].width, 85.0);
+        assert_eq!(rects[1].width, 205.0);
+        assert_eq!(rects[0].y, 40.0);
+
+        let grid = LayoutGroup {
+            direction: "Grid".into(),
+            padding: [0.0; 4],
+            spacing: [10.0, 10.0],
+            cell_size: [50.0, 40.0],
+            child_alignment: "MiddleCenter".into(),
+            start_corner: "LowerRight".into(),
+            start_axis: "Vertical".into(),
+            constraint: "FixedRowCount".into(),
+            constraint_count: 2,
+            ..Default::default()
+        };
+        let rects = layout_child_rects(
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 300.0,
+                height: 200.0,
+            },
+            &grid,
+            &[LayoutChildMetrics::default(); 5],
+            1.0,
+        );
+        assert_eq!((rects[0].x, rects[0].y), (185.0, 105.0));
+        assert_eq!((rects[1].x, rects[1].y), (185.0, 55.0));
+        assert_eq!((rects[2].x, rects[2].y), (125.0, 105.0));
+    }
+
+    #[test]
+    fn layout_element_ignore_and_group_changes_rebuild_on_the_next_frame() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(canvas, RectTransform::default());
+
+        let layout = world.spawn_empty();
+        world.insert_component(
+            layout,
+            RectTransform {
+                size_delta: [300.0, 100.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            layout,
+            LayoutGroup {
+                direction: "Horizontal".into(),
+                padding: [0.0; 4],
+                spacing: [10.0, 0.0],
+                cell_size: [50.0, 20.0],
+                child_alignment: "UpperLeft".into(),
+                child_force_expand: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(layout, Some(canvas));
+
+        let first = world.spawn_empty();
+        world.insert_component(first, RectTransform::default());
+        world.insert_component(first, InputField::default());
+        world.set_parent(first, Some(layout));
+
+        let ignored = world.spawn_empty();
+        world.insert_component(ignored, RectTransform::default());
+        world.insert_component(ignored, InputField::default());
+        world.insert_component(
+            ignored,
+            LayoutElement {
+                ignore_layout: true,
+                ..Default::default()
+            },
+        );
+        world.set_parent(ignored, Some(layout));
+
+        let last = world.spawn_empty();
+        world.insert_component(last, RectTransform::default());
+        world.insert_component(last, InputField::default());
+        world.set_parent(last, Some(layout));
+
+        let first_frame = collect_ui_frame(&world, 800, 600);
+        let first_rect = first_frame
+            .controls
+            .iter()
+            .find(|control| control.entity == first)
+            .unwrap()
+            .rect;
+        let ignored_rect = first_frame
+            .controls
+            .iter()
+            .find(|control| control.entity == ignored)
+            .unwrap()
+            .rect;
+        let last_rect = first_frame
+            .controls
+            .iter()
+            .find(|control| control.entity == last)
+            .unwrap()
+            .rect;
+        assert_eq!(last_rect.x - first_rect.x, 60.0);
+
+        world
+            .get_component_mut::<LayoutGroup>(layout)
+            .unwrap()
+            .child_alignment = "UpperRight".into();
+        let rebuilt = collect_ui_frame(&world, 800, 600);
+        let rebuilt_first = rebuilt
+            .controls
+            .iter()
+            .find(|control| control.entity == first)
+            .unwrap()
+            .rect;
+        let rebuilt_ignored = rebuilt
+            .controls
+            .iter()
+            .find(|control| control.entity == ignored)
+            .unwrap()
+            .rect;
+        assert_eq!(rebuilt_first.x - first_rect.x, 190.0);
+        assert_eq!(rebuilt_ignored, ignored_rect);
+    }
+
+    #[test]
+    fn layout_group_consumes_image_text_and_explicit_preferred_sizes() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(canvas, RectTransform::default());
+
+        let layout = world.spawn_empty();
+        world.insert_component(
+            layout,
+            RectTransform {
+                size_delta: [500.0, 100.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            layout,
+            LayoutGroup {
+                direction: "Horizontal".into(),
+                padding: [0.0; 4],
+                spacing: [10.0, 0.0],
+                cell_size: [5.0, 5.0],
+                child_force_expand: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(layout, Some(canvas));
+
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(
+            image,
+            Image {
+                source_size: [80.0, 40.0],
+                pixels_per_unit_multiplier: 2.0,
+                ..Default::default()
+            },
+        );
+        world.set_parent(image, Some(layout));
+
+        let text = world.spawn_empty();
+        world.insert_component(
+            text,
+            RectTransform {
+                size_delta: [100.0, 30.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            text,
+            Text {
+                text: "ABC".into(),
+                font_size: 14.0,
+                horizontal_overflow: "Overflow".into(),
+                ..Default::default()
+            },
+        );
+        world.set_parent(text, Some(layout));
+
+        let frame = collect_ui_frame(&world, 800, 600);
+        let image_rect = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == image)
+            .unwrap()
+            .rect;
+        let text_rect = frame
+            .controls
+            .iter()
+            .find(|control| control.entity == text)
+            .unwrap()
+            .rect;
+        assert_eq!(image_rect.width, 40.0);
+        assert_eq!(image_rect.height, 20.0);
+        assert_eq!(text_rect.x - image_rect.x, 50.0);
+        assert_eq!(text_rect.width, 34.0);
+        assert_eq!(text_rect.height, 16.0);
+
+        world.insert_component(
+            image,
+            LayoutElement {
+                preferred_width: 25.0,
+                preferred_height: 12.0,
+                ..Default::default()
+            },
+        );
+        let overridden = collect_ui_frame(&world, 800, 600)
+            .controls
+            .into_iter()
+            .find(|control| control.entity == image)
+            .unwrap()
+            .rect;
+        assert_eq!((overridden.width, overridden.height), (25.0, 12.0));
+    }
+
+    #[test]
+    fn imported_font_metrics_drive_text_layout_preferred_size() {
+        struct PreferredFont;
+        impl UiFontResolver for PreferredFont {
+            fn measure_glyph(
+                &mut self,
+                _font: &str,
+                _character: char,
+                _font_size: f32,
+                _font_style: &str,
+            ) -> Option<UiFontGlyphMetrics> {
+                Some(UiFontGlyphMetrics {
+                    advance: 20.0,
+                    metric_width: 18.0,
+                    line_height: 30.0,
+                    geometry: Some((0.0, 18.0)),
+                })
+            }
+
+            fn resolve_glyph_texture(
+                &mut self,
+                _font: &str,
+                _character: char,
+                _font_size: f32,
+                _font_style: &str,
+                _raster_scale: f32,
+            ) -> Option<UiFontGlyphTexture> {
+                None
+            }
+        }
+
+        let text = Text {
+            text: "AB".into(),
+            font: "Assets/Fonts/Preferred.ttf".into(),
+            horizontal_overflow: "Overflow".into(),
+            ..Default::default()
+        };
+        let mut resolver = PreferredFont;
+        let mut resolver: Option<&mut dyn UiFontResolver> = Some(&mut resolver);
+        assert_eq!(
+            text_intrinsic_preferred_size(&text, 100.0, &mut resolver),
+            Some([38.0, 30.0]),
+        );
+    }
+
+    #[test]
+    fn layout_group_remeasures_wrapped_text_after_assigning_its_width() {
+        struct WrappedFont;
+        impl UiFontResolver for WrappedFont {
+            fn measure_glyph(
+                &mut self,
+                _font: &str,
+                _character: char,
+                _font_size: f32,
+                _font_style: &str,
+            ) -> Option<UiFontGlyphMetrics> {
+                Some(UiFontGlyphMetrics {
+                    advance: 20.0,
+                    metric_width: 18.0,
+                    line_height: 30.0,
+                    geometry: Some((0.0, 18.0)),
+                })
+            }
+
+            fn resolve_glyph_texture(
+                &mut self,
+                _font: &str,
+                _character: char,
+                _font_size: f32,
+                _font_style: &str,
+                _raster_scale: f32,
+            ) -> Option<UiFontGlyphTexture> {
+                None
+            }
+        }
+
+        let mut world = World::new();
+        let parent = world.spawn_empty();
+        world.insert_component(
+            parent,
+            LayoutGroup {
+                direction: "Vertical".into(),
+                padding: [0.0; 4],
+                spacing: [0.0; 2],
+                cell_size: [5.0, 5.0],
+                child_control_width: true,
+                child_control_height: true,
+                child_force_expand: false,
+                child_force_expand_width: true,
+                ..Default::default()
+            },
+        );
+        let text = world.spawn_empty();
+        world.insert_component(
+            text,
+            RectTransform {
+                size_delta: [200.0, 10.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            text,
+            Text {
+                text: "AAAA".into(),
+                font: "Assets/Fonts/Wrapped.ttf".into(),
+                font_size: 10.0,
+                horizontal_overflow: "Wrap".into(),
+                ..Default::default()
+            },
+        );
+        world.set_parent(text, Some(parent));
+
+        let children = layout_children_of(&world, parent);
+        let group = world.get_component::<LayoutGroup>(parent).unwrap();
+        let mut font = WrappedFont;
+        let mut resolver: Option<&mut dyn UiFontResolver> = Some(&mut font);
+        let metrics = layout_children_metrics_for_rect(
+            &world,
+            &children,
+            group,
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 50.0,
+                height: 100.0,
+            },
+            1.0,
+            &mut resolver,
+        );
+        let rects = layout_child_rects(
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 50.0,
+                height: 100.0,
+            },
+            group,
+            &metrics,
+            1.0,
+        );
+        assert_eq!((rects[0].width, rects[0].height), (50.0, 60.0));
+    }
+
+    #[test]
+    fn nested_layout_groups_report_recursive_metrics_with_field_overrides() {
+        let mut world = World::new();
+        let nested = world.spawn_empty();
+        world.insert_component(
+            nested,
+            RectTransform {
+                size_delta: [10.0, 10.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            nested,
+            LayoutElement {
+                preferred_height: 75.0,
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            nested,
+            LayoutGroup {
+                direction: "Vertical".into(),
+                padding: [5.0, 7.0, 5.0, 7.0],
+                spacing: [0.0, 3.0],
+                cell_size: [5.0, 5.0],
+                child_force_expand: false,
+                ..Default::default()
+            },
+        );
+
+        let first = world.spawn_empty();
+        world.insert_component(first, RectTransform::default());
+        world.insert_component(
+            first,
+            LayoutElement {
+                min_width: 40.0,
+                preferred_width: 100.0,
+                flexible_width: 1.0,
+                min_height: 10.0,
+                preferred_height: 20.0,
+                flexible_height: 2.0,
+                ..Default::default()
+            },
+        );
+        world.set_parent(first, Some(nested));
+
+        let second = world.spawn_empty();
+        world.insert_component(second, RectTransform::default());
+        world.insert_component(
+            second,
+            LayoutElement {
+                min_width: 60.0,
+                preferred_width: 80.0,
+                flexible_width: 3.0,
+                min_height: 15.0,
+                preferred_height: 30.0,
+                flexible_height: 4.0,
+                ..Default::default()
+            },
+        );
+        world.set_parent(second, Some(nested));
+
+        let mut resolver = None;
+        let metrics = layout_children_metrics(&world, &[nested], None, &mut resolver);
+        assert_eq!(metrics[0].min_width, Some(70.0));
+        assert_eq!(metrics[0].min_height, Some(42.0));
+        assert_eq!(metrics[0].preferred_width, Some(110.0));
+        assert_eq!(metrics[0].preferred_height, Some(75.0));
+        assert_eq!(metrics[0].flexible_width, Some(3.0));
+        assert_eq!(metrics[0].flexible_height, Some(6.0));
+    }
+
+    #[test]
+    fn parent_layout_controlled_axes_win_over_child_content_size_fitter() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(canvas, RectTransform::default());
+
+        let parent = world.spawn_empty();
+        world.insert_component(
+            parent,
+            RectTransform {
+                size_delta: [300.0, 100.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            parent,
+            LayoutGroup {
+                direction: "Horizontal".into(),
+                padding: [0.0; 4],
+                spacing: [0.0; 2],
+                cell_size: [50.0, 10.0],
+                child_control_width: true,
+                child_control_height: false,
+                child_force_expand: false,
+                ..Default::default()
+            },
+        );
+        world.set_parent(parent, Some(canvas));
+
+        let child = world.spawn_empty();
+        world.insert_component(
+            child,
+            RectTransform {
+                size_delta: [100.0, 100.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(child, InputField::default());
+        world.insert_component(
+            child,
+            LayoutElement {
+                preferred_width: 50.0,
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            child,
+            LayoutGroup {
+                direction: "Vertical".into(),
+                padding: [0.0; 4],
+                spacing: [0.0; 2],
+                cell_size: [200.0, 30.0],
+                child_force_expand: false,
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            child,
+            ContentSizeFitter {
+                horizontal_fit: "PreferredSize".into(),
+                vertical_fit: "PreferredSize".into(),
+            },
+        );
+        world.set_parent(child, Some(parent));
+
+        let grandchild = world.spawn_empty();
+        world.insert_component(grandchild, RectTransform::default());
+        world.insert_component(grandchild, Panel::default());
+        world.set_parent(grandchild, Some(child));
+
+        let rect = collect_ui_frame(&world, 800, 600)
+            .controls
+            .into_iter()
+            .find(|control| control.entity == child)
+            .unwrap()
+            .rect;
+        assert_eq!(
+            (rect.x, rect.y, rect.width, rect.height),
+            (250.0, 285.0, 50.0, 30.0)
+        );
+    }
+
+    #[test]
+    fn content_size_fitter_axes_win_over_same_entity_aspect_ratio_fitter() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, GraphicRaycaster::default());
+        world.insert_component(canvas, RectTransform::default());
+
+        let fitted = world.spawn_empty();
+        world.insert_component(
+            fitted,
+            RectTransform {
+                size_delta: [100.0, 100.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(fitted, InputField::default());
+        world.insert_component(
+            fitted,
+            LayoutGroup {
+                direction: "Vertical".into(),
+                padding: [0.0; 4],
+                spacing: [0.0; 2],
+                cell_size: [80.0, 30.0],
+                child_force_expand: false,
+                ..Default::default()
+            },
+        );
+        world.insert_component(
+            fitted,
+            ContentSizeFitter {
+                horizontal_fit: "PreferredSize".into(),
+                vertical_fit: "PreferredSize".into(),
+            },
+        );
+        world.insert_component(
+            fitted,
+            AspectRatioFitter {
+                aspect_mode: "WidthControlsHeight".into(),
+                aspect_ratio: 4.0,
+            },
+        );
+        world.set_parent(fitted, Some(canvas));
+
+        let child = world.spawn_empty();
+        world.insert_component(child, RectTransform::default());
+        world.insert_component(child, InputField::default());
+        world.set_parent(child, Some(fitted));
+
+        let rect = collect_ui_frame(&world, 800, 600)
+            .controls
+            .into_iter()
+            .find(|control| control.entity == fitted)
+            .unwrap()
+            .rect;
+        assert_eq!((rect.width, rect.height), (80.0, 30.0));
     }
 
     #[test]

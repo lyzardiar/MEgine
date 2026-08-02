@@ -2,23 +2,27 @@
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
-use glam::{Quat, Vec3, Vec4};
+use glam::Vec4;
+#[cfg(test)]
+use glam::{Quat, Vec3};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
-    AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Button, Camera2D, Camera3D,
-    DirectionalLight, Dropdown, EnvironmentLight, Image, InputField, ListView,
-    MaterialPropertyBlock, MeshRenderer, Panel, ParticleEmitter2D, ParticleEmitter3D, PbrMaterial,
-    PointLight, RawImage, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer, TabView, Text,
-    Tilemap, TimelineDirector, Toggle, Transform,
+    AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Button, Dropdown, EffekseerEffect,
+    EnvironmentLight, Image, InputField, ListView, MaterialPropertyBlock, MeshRenderer, Panel,
+    ParticleEmitter2D, ParticleEmitter3D, RawImage, ScrollView, Scrollbar, Slider, SpriteRenderer,
+    TabView, Text, Tilemap, TimelineDirector, Toggle, Transform,
 };
+#[cfg(test)]
+use mengine_core::generated::{Camera3D, PbrMaterial, PointLight};
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_platform::InputState;
+use mengine_effekseer::{DependencyKind, EffectManager};
+#[cfg(test)]
+use mengine_rhi::{look_at, orthographic, perspective, FrameCamera, FrameLighting};
 use mengine_rhi::{
-    look_at, orthographic, perspective, validate_surface_shader_hook, validate_ui_shader_hook,
-    DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting, MaterialBlendMode,
-    MaterialPipelineStats, MaterialTextureStats, PointLightData, RenderMaterial, RenderObject,
-    Renderer, SpotLightData, UiBatchPlan,
+    validate_surface_shader_hook, validate_ui_shader_hook, MaterialBlendMode,
+    MaterialPipelineStats, MaterialTextureStats, RenderMaterial, Renderer,
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
@@ -26,25 +30,32 @@ use mengine_runtime::build_manifest::{
     load_build_surface_shader_variants, verify_build_manifest, BuildShaderDomain,
     BuildSurfaceShaderBlend,
 };
+use mengine_runtime::effekseer::EffekseerWorld;
 use mengine_runtime::fonts::RuntimeFontCache;
-use mengine_runtime::lighting2d::apply_2d_lighting;
+#[cfg(test)]
+use mengine_runtime::frame_compiler::{
+    collect_lighting, find_camera, parse_camera_clear_flags, render_material_from_component,
+    resolve_camera_background, ActiveFrameCamera, CameraClearFlags,
+};
+use mengine_runtime::frame_compiler::{
+    collect_objects, material_preset, FrameCompileRequest, FrameCompiler,
+};
 use mengine_runtime::materials::{
-    apply_material_property_block, resolve_surface_shader_material, resolve_ui_materials,
-    validate_material_property_block, RuntimeMaterialCache,
+    resolve_surface_shader_material, validate_material_property_block, RuntimeMaterialCache,
 };
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
 use mengine_runtime::prefabs::instantiate_project_prefab;
 use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
-use mengine_runtime::sorting::{sort_world_primitives, SortingLayers};
-use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
+use mengine_runtime::sorting::SortingLayers;
 use mengine_runtime::textures::RuntimeTextureCache;
-use mengine_runtime::timeline::{RuntimeCameraOverride, RuntimeParticleCommand, TimelineRuntime};
+#[cfg(test)]
+use mengine_runtime::timeline::RuntimeCameraOverride;
+use mengine_runtime::timeline::{RuntimeParticleCommand, TimelineRuntime};
 use mengine_runtime::ui::{
-    append_ui_focus_ring, collect_ui_frame_for_display_with_interaction_and_fonts, next_ui_focus,
-    set_toggle_value, update_ui_button_tints, UiButtonTintTween, UiControlKind, UiControlRegion,
-    UiInteractionState,
+    next_ui_focus, set_toggle_value, update_ui_button_tints, UiButtonTintTween, UiControlKind,
+    UiControlRegion, UiInteractionState,
 };
 use mengine_runtime::ui_raycast::{raycast_blocking_colliders, viewport_world_ray};
 use mengine_scene::load_scene;
@@ -118,6 +129,7 @@ struct App {
     last_material_pipeline_stats: Option<MaterialPipelineStats>,
     last_material_texture_stats: Option<MaterialTextureStats>,
     particles: ParticleWorld,
+    effekseer: Option<EffekseerWorld>,
     sorting_layers: SortingLayers,
     textures: RuntimeTextureCache,
     fonts: RuntimeFontCache,
@@ -151,6 +163,9 @@ impl App {
         let audio = AudioRuntime::new(args.project_root.clone());
         let materials = RuntimeMaterialCache::new(args.project_root.clone());
         let meshes = RuntimeMeshCache::new(args.project_root.clone());
+        let effekseer = EffekseerWorld::new(args.project_root.clone())
+            .map_err(|error| log::warn!("Effekseer runtime is unavailable: {error}"))
+            .ok();
         let sorting_layers =
             SortingLayers::load(args.project_root.as_deref()).unwrap_or_else(|error| {
                 log::warn!("sorting layer settings rejected; using Default only: {error}");
@@ -184,6 +199,7 @@ impl App {
             last_material_pipeline_stats: None,
             last_material_texture_stats: None,
             particles: ParticleWorld::default(),
+            effekseer,
             sorting_layers,
             textures,
             fonts,
@@ -1767,24 +1783,57 @@ function onTick(dt, frame) {
                 }
 
                 let hierarchy = TransformHierarchy::build(&self.world);
+                if let Some(effekseer) = self.effekseer.as_mut() {
+                    for failure in effekseer.update(&self.world, &hierarchy, dt) {
+                        log::warn!(
+                            "Effekseer effect '{}' on {:?} could not be loaded from {}: {}",
+                            failure.effect,
+                            failure.entity,
+                            failure.path.display(),
+                            failure.error
+                        );
+                    }
+                }
                 let interaction = self.ui_interaction_state(&hierarchy, self.ui_viewport_size());
                 update_ui_button_tints(&self.world, interaction, dt, &mut self.ui_button_tints);
                 if let Some(r) = self.renderer.as_mut() {
-                    let aspect = r.aspect();
-                    let active_camera = find_camera(
-                        &self.world,
-                        &hierarchy,
-                        aspect,
-                        self.timelines.camera_override(),
-                    );
-                    let camera = active_camera.frame;
-                    let has_authored_camera = active_camera.entity.is_some();
-                    let objects = if has_authored_camera {
-                        collect_objects(&self.world, &hierarchy, &mut self.materials)
-                    } else {
-                        Vec::new()
-                    };
-                    for failure in self.meshes.sync(r, &objects) {
+                    let window_size = self
+                        .window
+                        .as_ref()
+                        .map(|window| window.inner_size())
+                        .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
+                    let mut frame = FrameCompiler {
+                        materials: &mut self.materials,
+                        particles: &mut self.particles,
+                        textures: &mut self.textures,
+                        fonts: &mut self.fonts,
+                    }
+                    .compile(FrameCompileRequest {
+                        world: &self.world,
+                        hierarchy: &hierarchy,
+                        viewport: [window_size.width, window_size.height],
+                        scene_clear: self.world.time.clear_color,
+                        camera_override: self.timelines.camera_override(),
+                        view_camera: None,
+                        include_ui: true,
+                        target_display: 0,
+                        interaction,
+                        button_tints: &self.ui_button_tints,
+                        focused_ui: self.focused_ui,
+                        sorting_layers: &self.sorting_layers,
+                        delta_seconds: dt,
+                    });
+                    if let Some(effekseer) = self.effekseer.as_mut() {
+                        for failure in effekseer.append_to_frame(&mut frame) {
+                            log::warn!(
+                                "Effekseer render asset '{}' could not be loaded from {}: {}",
+                                failure.asset,
+                                failure.path.display(),
+                                failure.error
+                            );
+                        }
+                    }
+                    for failure in self.meshes.sync(r, &frame.objects) {
                         log::warn!(
                             "Mesh '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1792,35 +1841,7 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    let mut lighting = collect_lighting(&self.world, &hierarchy);
-                    r.clear = resolve_camera_background(
-                        &active_camera,
-                        self.world.time.clear_color,
-                        &mut lighting,
-                    )
-                    .into();
-                    let window_size = self
-                        .window
-                        .as_ref()
-                        .map(|window| window.inner_size())
-                        .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
-                    self.fonts.begin_frame();
-                    let mut ui = collect_ui_frame_for_display_with_interaction_and_fonts(
-                        &self.world,
-                        &hierarchy,
-                        window_size.width,
-                        window_size.height,
-                        has_authored_camera.then_some(camera),
-                        &self.sorting_layers,
-                        0,
-                        interaction,
-                        &self.ui_button_tints,
-                        &mut self.fonts,
-                    );
-                    for failure in self
-                        .textures
-                        .resolve_image_alpha_hit_tests(&mut ui.controls)
-                    {
+                    for failure in frame.texture_failures.drain(..) {
                         log::warn!(
                             "Image alpha hit-test Sprite '{}' could not be read from {}: {}",
                             failure.key,
@@ -1828,56 +1849,8 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
-                    let mut world_primitives = if has_authored_camera {
-                        collect_world_primitives_with_hierarchy(
-                            &self.world,
-                            &hierarchy,
-                            camera,
-                            [window_size.width, window_size.height],
-                        )
-                    } else {
-                        Vec::new()
-                    };
-                    let particle_primitives =
-                        self.particles.update_and_collect_world_with_hierarchy(
-                            &self.world,
-                            &hierarchy,
-                            camera,
-                            [window_size.width, window_size.height],
-                            dt,
-                        );
-                    if has_authored_camera {
-                        world_primitives.extend(particle_primitives);
-                    }
-                    apply_2d_lighting(&self.world, &hierarchy, &mut world_primitives);
-                    // World Space Canvas uses Unity-style Sorting Layer/Order alongside other 2D
-                    // renderers, but joins after lighting because standard UI is unlit.
-                    world_primitives.append(&mut ui.world_primitives);
-                    if !world_primitives.is_empty() {
-                        sort_world_primitives(&mut world_primitives, &self.sorting_layers);
-                        let mut primitives = world_primitives
-                            .into_iter()
-                            .map(|value| value.primitive)
-                            .collect::<Vec<_>>();
-                        primitives.extend(std::mem::take(&mut ui.plan.primitives));
-                        ui.plan = UiBatchPlan::build(primitives);
-                    }
-                    for failure in self
-                        .textures
-                        .resolve_sprite_regions(&mut ui.plan.primitives)
-                    {
-                        log::warn!(
-                            "Sprite '{}' could not be resolved from {}: {}",
-                            failure.key,
-                            failure.path.display(),
-                            failure.error
-                        );
-                    }
-                    resolve_ui_materials(&mut ui.plan.primitives, &mut self.materials);
-                    ui.plan = UiBatchPlan::build(std::mem::take(&mut ui.plan.primitives));
                     self.fonts.sync(r);
-                    for failure in self.fonts.take_failures() {
+                    for failure in frame.font_failures.drain(..) {
                         log::warn!(
                             "Font '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1885,7 +1858,7 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    for failure in self.textures.sync(r, &ui.plan) {
+                    for failure in self.textures.sync(r, &frame.ui) {
                         log::warn!(
                             "UI texture '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1893,7 +1866,7 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    for failure in self.textures.sync_ui_materials(r, &ui.plan) {
+                    for failure in self.textures.sync_ui_materials(r, &frame.ui) {
                         log::warn!(
                             "UI material texture '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1901,7 +1874,7 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    for failure in self.textures.sync_materials(r, &objects) {
+                    for failure in self.textures.sync_materials(r, &frame.objects) {
                         log::warn!(
                             "Material texture '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1909,7 +1882,7 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    for failure in self.textures.sync_environment(r, &lighting) {
+                    for failure in self.textures.sync_environment(r, &frame.lighting) {
                         log::warn!(
                             "Environment texture '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1917,9 +1890,8 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    self.ui_controls = ui.controls;
-                    if let Err(e) = r.render_lit_frame(camera, &objects, &lighting, Some(&ui.plan))
-                    {
+                    self.ui_controls = std::mem::take(&mut frame.controls);
+                    if let Err(e) = r.submit_frame(&frame.render_frame()) {
                         log::warn!("render: {e}");
                     }
                     let pipeline_stats = r.material_pipeline_stats();
@@ -1974,291 +1946,6 @@ function onTick(dt, frame) {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum CameraClearFlags {
-    Scene,
-    Skybox,
-    SolidColor,
-}
-
-#[derive(Clone, Copy, Debug)]
-struct ActiveFrameCamera {
-    frame: FrameCamera,
-    clear_flags: CameraClearFlags,
-    background_color: [f32; 4],
-    entity: Option<Entity>,
-}
-
-#[derive(Clone, Copy, Debug)]
-enum CameraProjection {
-    Perspective { fov: f32, near: f32, far: f32 },
-    Orthographic { size: f32, near: f32, far: f32 },
-}
-
-#[derive(Clone, Copy, Debug)]
-struct CameraDefinition {
-    entity: Option<Entity>,
-    position: Vec3,
-    rotation: Quat,
-    projection: CameraProjection,
-    clear_flags: CameraClearFlags,
-    background_color: [f32; 4],
-    target_display: i32,
-}
-
-impl CameraDefinition {
-    fn active(self, viewport_aspect: f32) -> ActiveFrameCamera {
-        let forward = self.rotation * -Vec3::Z;
-        let up = self.rotation * Vec3::Y;
-        let aspect = viewport_aspect.max(0.001);
-        let proj = match self.projection {
-            CameraProjection::Perspective { fov, near, far } => {
-                perspective(fov.clamp(1.0, 179.0), aspect, near, far)
-            }
-            CameraProjection::Orthographic { size, near, far } => {
-                orthographic(size.max(0.001), aspect, near, far)
-            }
-        };
-        ActiveFrameCamera {
-            frame: FrameCamera {
-                view: look_at(self.position, self.position + forward, up),
-                proj,
-                position: self.position,
-            },
-            clear_flags: self.clear_flags,
-            background_color: self.background_color,
-            entity: self.entity,
-        }
-    }
-}
-
-fn find_camera(
-    world: &World,
-    hierarchy: &TransformHierarchy,
-    viewport_aspect: f32,
-    timeline: Option<RuntimeCameraOverride>,
-) -> ActiveFrameCamera {
-    const TARGET_DISPLAY: i32 = 0;
-    if let Some(timeline) = timeline {
-        if let Some(target) = camera_definition(world, hierarchy, timeline.target)
-            .filter(|camera| camera.target_display == TARGET_DISPLAY)
-        {
-            let source = timeline
-                .source
-                .and_then(|entity| camera_definition(world, hierarchy, entity))
-                .filter(|camera| camera.target_display == TARGET_DISPLAY)
-                .or_else(|| primary_camera_definition(world, hierarchy, TARGET_DISPLAY))
-                .unwrap_or_else(default_camera_definition);
-            return blend_camera_definitions(source, target, timeline.weight)
-                .active(viewport_aspect);
-        }
-    }
-    primary_camera_definition(world, hierarchy, TARGET_DISPLAY)
-        .unwrap_or_else(default_camera_definition)
-        .active(viewport_aspect)
-}
-
-fn primary_camera_definition(
-    world: &World,
-    hierarchy: &TransformHierarchy,
-    target_display: i32,
-) -> Option<CameraDefinition> {
-    for entity in world.iter_entities() {
-        if world
-            .get_component::<Camera2D>(entity)
-            .is_some_and(|camera| {
-                camera.primary && camera.target_display.clamp(0, 7) == target_display
-            })
-        {
-            if let Some(camera) = camera_definition(world, hierarchy, entity) {
-                return Some(camera);
-            }
-        }
-    }
-    for entity in world.iter_entities() {
-        if world
-            .get_component::<Camera3D>(entity)
-            .is_some_and(|camera| {
-                camera.primary && camera.target_display.clamp(0, 7) == target_display
-            })
-        {
-            if let Some(camera) = camera_definition(world, hierarchy, entity) {
-                return Some(camera);
-            }
-        }
-    }
-    None
-}
-
-fn camera_definition(
-    world: &World,
-    hierarchy: &TransformHierarchy,
-    entity: Entity,
-) -> Option<CameraDefinition> {
-    let transform = hierarchy.get(entity)?.to_transform();
-    let position = Vec3::from(transform.position);
-    let rotation = safe_rotation(transform.rotation);
-    if let Some(camera) = world.get_component::<Camera2D>(entity) {
-        return Some(CameraDefinition {
-            entity: Some(entity),
-            position,
-            rotation,
-            projection: CameraProjection::Orthographic {
-                size: camera.size.max(0.001),
-                near: 0.01,
-                far: 1000.0,
-            },
-            clear_flags: parse_camera_clear_flags(&camera.clear_flags),
-            background_color: camera.background_color,
-            target_display: camera.target_display.clamp(0, 7),
-        });
-    }
-    let camera = world.get_component::<Camera3D>(entity)?;
-    let near = camera.near.max(0.001);
-    let far = camera.far.max(near + 0.001);
-    let projection = if camera.projection.eq_ignore_ascii_case("orthographic") {
-        CameraProjection::Orthographic {
-            size: camera.orthographic_size.max(0.001),
-            near,
-            far,
-        }
-    } else {
-        CameraProjection::Perspective {
-            fov: camera.fov_y_degrees.clamp(1.0, 179.0),
-            near,
-            far,
-        }
-    };
-    Some(CameraDefinition {
-        entity: Some(entity),
-        position,
-        rotation,
-        projection,
-        clear_flags: parse_camera_clear_flags(&camera.clear_flags),
-        background_color: camera.background_color,
-        target_display: camera.target_display.clamp(0, 7),
-    })
-}
-
-fn default_camera_definition() -> CameraDefinition {
-    CameraDefinition {
-        entity: None,
-        position: Vec3::new(0.0, 1.5, 4.0),
-        rotation: Quat::from_rotation_x(-0.35877067),
-        projection: CameraProjection::Perspective {
-            fov: 60.0,
-            near: 0.1,
-            far: 100.0,
-        },
-        clear_flags: CameraClearFlags::Scene,
-        background_color: [0.1, 0.1, 0.14, 1.0],
-        target_display: 0,
-    }
-}
-
-fn blend_camera_definitions(
-    source: CameraDefinition,
-    target: CameraDefinition,
-    weight: f32,
-) -> CameraDefinition {
-    let weight = weight.clamp(0.0, 1.0);
-    let projection = match (source.projection, target.projection) {
-        (
-            CameraProjection::Perspective {
-                fov: source_fov,
-                near: source_near,
-                far: source_far,
-            },
-            CameraProjection::Perspective {
-                fov: target_fov,
-                near: target_near,
-                far: target_far,
-            },
-        ) => CameraProjection::Perspective {
-            fov: source_fov + (target_fov - source_fov) * weight,
-            near: source_near + (target_near - source_near) * weight,
-            far: source_far + (target_far - source_far) * weight,
-        },
-        (
-            CameraProjection::Orthographic {
-                size: source_size,
-                near: source_near,
-                far: source_far,
-            },
-            CameraProjection::Orthographic {
-                size: target_size,
-                near: target_near,
-                far: target_far,
-            },
-        ) => CameraProjection::Orthographic {
-            size: source_size + (target_size - source_size) * weight,
-            near: source_near + (target_near - source_near) * weight,
-            far: source_far + (target_far - source_far) * weight,
-        },
-        _ => return if weight < 0.5 { source } else { target },
-    };
-    let mut background_color = [0.0; 4];
-    for (index, channel) in background_color.iter_mut().enumerate() {
-        *channel = source.background_color[index]
-            + (target.background_color[index] - source.background_color[index]) * weight;
-    }
-    CameraDefinition {
-        entity: if weight < 0.5 {
-            source.entity
-        } else {
-            target.entity
-        },
-        position: source.position.lerp(target.position, weight),
-        rotation: source.rotation.slerp(target.rotation, weight),
-        projection,
-        clear_flags: if weight < 0.5 {
-            source.clear_flags
-        } else {
-            target.clear_flags
-        },
-        background_color,
-        target_display: target.target_display,
-    }
-}
-
-fn parse_camera_clear_flags(value: &str) -> CameraClearFlags {
-    match value.trim().to_ascii_lowercase().as_str() {
-        "skybox" => CameraClearFlags::Skybox,
-        "solid_color" | "solidcolor" | "solid" => CameraClearFlags::SolidColor,
-        _ => CameraClearFlags::Scene,
-    }
-}
-
-fn resolve_camera_background(
-    camera: &ActiveFrameCamera,
-    scene_clear: Vec4,
-    lighting: &mut FrameLighting,
-) -> Vec4 {
-    match camera.clear_flags {
-        CameraClearFlags::Scene => scene_clear,
-        CameraClearFlags::Skybox => {
-            lighting.environment.background_enabled = true;
-            scene_clear
-        }
-        CameraClearFlags::SolidColor => {
-            lighting.environment.background_enabled = false;
-            let channel = |value: f32, fallback: f32, maximum: f32| {
-                if value.is_finite() {
-                    value.clamp(0.0, maximum)
-                } else {
-                    fallback
-                }
-            };
-            Vec4::new(
-                channel(camera.background_color[0], 0.1, 1.0),
-                channel(camera.background_color[1], 0.1, 1.0),
-                channel(camera.background_color[2], 0.14, 1.0),
-                channel(camera.background_color[3], 1.0, 1.0),
-            )
-        }
-    }
-}
-
 #[cfg(test)]
 fn camera_from_components(t: &Transform, c: &Camera3D, viewport_aspect: f32) -> FrameCamera {
     let position = Vec3::from(t.position);
@@ -2280,154 +1967,6 @@ fn camera_from_components(t: &Transform, c: &Camera3D, viewport_aspect: f32) -> 
     }
 }
 
-fn collect_objects(
-    world: &World,
-    hierarchy: &TransformHierarchy,
-    materials: &mut RuntimeMaterialCache,
-) -> Vec<RenderObject> {
-    let mut out = Vec::new();
-    for e in world.iter_entities() {
-        if let (Some(t), Some(m)) = (hierarchy.get(e), world.get_component::<MeshRenderer>(e)) {
-            let mut material = world
-                .get_component::<PbrMaterial>(e)
-                .map(render_material_from_component)
-                .unwrap_or_else(|| {
-                    materials
-                        .resolve(&m.material)
-                        .unwrap_or_else(|| material_preset(&m.material))
-                });
-            if let Some(block) = world.get_component::<MaterialPropertyBlock>(e) {
-                material = apply_material_property_block(material, block);
-            }
-            out.push(RenderObject {
-                mesh_key: m.mesh.trim().replace('\\', "/"),
-                model: t.matrix,
-                cast_shadows: m.cast_shadows,
-                receive_shadows: m.receive_shadows,
-                material,
-            });
-        }
-    }
-    out
-}
-
-fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameLighting {
-    let mut frame = FrameLighting {
-        environment: EnvironmentLightData::default(),
-        directional: None,
-        points: Vec::new(),
-        spots: Vec::new(),
-    };
-    let mut environment_found = false;
-    for entity in world.iter_entities() {
-        let Some(transform) = hierarchy.get(entity) else {
-            continue;
-        };
-        if !environment_found {
-            if let Some(environment) = world.get_component::<EnvironmentLight>(entity) {
-                frame.environment = EnvironmentLightData {
-                    sky_color: [
-                        environment.sky_color[0],
-                        environment.sky_color[1],
-                        environment.sky_color[2],
-                    ],
-                    equator_color: [
-                        environment.equator_color[0],
-                        environment.equator_color[1],
-                        environment.equator_color[2],
-                    ],
-                    ground_color: [
-                        environment.ground_color[0],
-                        environment.ground_color[1],
-                        environment.ground_color[2],
-                    ],
-                    diffuse_intensity: environment.diffuse_intensity,
-                    specular_intensity: environment.specular_intensity,
-                    texture: environment.texture.trim().replace('\\', "/"),
-                    rotation_degrees: environment.rotation_degrees,
-                    background_enabled: environment.background_enabled,
-                    background_intensity: environment.background_intensity,
-                    exposure: environment.exposure,
-                };
-                environment_found = true;
-            }
-        }
-        let rotation = transform.rotation;
-        let direction = rotation * -Vec3::Z;
-        if frame.directional.is_none() {
-            if let Some(light) = world.get_component::<DirectionalLight>(entity) {
-                frame.directional = Some(DirectionalLightData {
-                    direction,
-                    color: [light.color[0], light.color[1], light.color[2]],
-                    intensity: light.intensity,
-                    cast_shadows: light.cast_shadows,
-                    shadow_strength: light.shadow_strength,
-                    shadow_bias: light.shadow_bias,
-                    shadow_normal_bias: light.shadow_normal_bias,
-                    shadow_distance: light.shadow_distance,
-                });
-            }
-        }
-        if let Some(light) = world.get_component::<PointLight>(entity) {
-            frame.points.push(PointLightData {
-                position: transform.position,
-                color: [light.color[0], light.color[1], light.color[2]],
-                intensity: light.intensity,
-                range: light.range,
-            });
-        }
-        if let Some(light) = world.get_component::<SpotLight>(entity) {
-            frame.spots.push(SpotLightData {
-                position: transform.position,
-                direction,
-                color: [light.color[0], light.color[1], light.color[2]],
-                intensity: light.intensity,
-                range: light.range,
-                inner_angle_degrees: light.inner_angle_degrees,
-                outer_angle_degrees: light.outer_angle_degrees,
-            });
-        }
-    }
-    frame
-}
-
-fn render_material_from_component(material: &PbrMaterial) -> RenderMaterial {
-    RenderMaterial {
-        base_color: material.base_color,
-        metallic: material.metallic,
-        roughness: material.roughness,
-        ior: material.ior,
-        emissive: material.emissive,
-        emissive_strength: material.emissive_strength,
-        unlit: material.unlit,
-        double_sided: material.double_sided,
-        ..Default::default()
-    }
-}
-
-fn material_preset(name: &str) -> RenderMaterial {
-    match name.to_ascii_lowercase().as_str() {
-        "gold" => RenderMaterial {
-            base_color: [1.0, 0.55, 0.08, 1.0],
-            metallic: 0.9,
-            roughness: 0.22,
-            ..Default::default()
-        },
-        "chrome" | "metal" => RenderMaterial {
-            base_color: [0.62, 0.7, 0.82, 1.0],
-            metallic: 1.0,
-            roughness: 0.1,
-            ..Default::default()
-        },
-        "unlit" => RenderMaterial {
-            base_color: [0.25, 0.7, 1.0, 1.0],
-            unlit: true,
-            ..Default::default()
-        },
-        _ => RenderMaterial::default(),
-    }
-}
-
 fn material_cube(
     position: [f32; 3],
     base_color: [f32; 4],
@@ -2445,6 +1984,7 @@ fn material_cube(
     })
 }
 
+#[cfg(test)]
 fn safe_rotation(value: [f32; 4]) -> Quat {
     let rotation = Quat::from_array(value);
     if rotation.is_finite() && rotation.length_squared() > 0.000001 {
@@ -2620,6 +2160,8 @@ fn validate_world_assets(
             .with_context(|| format!("unsafe {kind} path: {reference}"))
     };
     let mut material_cache = RuntimeMaterialCache::new(Some(project_root.to_path_buf()));
+    let mut effekseer_manager = None;
+    let mut validated_effects = HashSet::new();
     for entity in world.iter_entities() {
         if let Some(renderer) = world.get_component::<MeshRenderer>(entity) {
             let mesh = renderer.mesh.trim();
@@ -2857,6 +2399,15 @@ fn validate_world_assets(
         if let Some(source) = world.get_component::<AudioSource>(entity) {
             let _ = validate_audio_clip_asset(&source.clip, project_root, validated)?;
         }
+        if let Some(effect) = world.get_component::<EffekseerEffect>(entity) {
+            validate_effekseer_effect_asset(
+                &effect.effect,
+                project_root,
+                validated,
+                &mut validated_effects,
+                &mut effekseer_manager,
+            )?;
+        }
         if let Some(director) = world.get_component::<TimelineDirector>(entity) {
             let reference = director.asset.trim();
             if !reference.is_empty() {
@@ -2871,6 +2422,139 @@ fn validate_world_assets(
         }
     }
     Ok(())
+}
+
+fn validate_effekseer_effect_asset(
+    reference: &str,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+    validated_effects: &mut HashSet<PathBuf>,
+    manager: &mut Option<EffectManager>,
+) -> Result<()> {
+    let reference = reference.trim().replace('\\', "/");
+    if reference.is_empty() {
+        return Ok(());
+    }
+    if !reference.to_ascii_lowercase().ends_with(".efk")
+        && !reference.to_ascii_lowercase().ends_with(".efkefc")
+    {
+        bail!("Effekseer effect path must end with .efk or .efkefc: {reference}");
+    }
+    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, &reference)
+        .with_context(|| format!("unsafe Effekseer effect path: {reference}"))?;
+    validated.insert(path.clone());
+    if !validated_effects.insert(path.clone()) {
+        return Ok(());
+    }
+    let bytes = std::fs::read(&path)
+        .with_context(|| format!("invalid Effekseer effect {}", path.display()))?;
+    if manager.is_none() {
+        *manager = Some(
+            EffectManager::new(16_384)
+                .context("failed to create Effekseer manager for package validation")?,
+        );
+    }
+    let manager = manager.as_mut().expect("Effekseer manager was initialized");
+    let effect = manager
+        .load_effect_named(&bytes, &reference)
+        .with_context(|| format!("invalid Effekseer effect {}", path.display()))?;
+    const DEPENDENCY_KINDS: [(DependencyKind, &str); 7] = [
+        (DependencyKind::ColorTexture, "color texture"),
+        (DependencyKind::NormalTexture, "normal texture"),
+        (DependencyKind::DistortionTexture, "distortion texture"),
+        (DependencyKind::Model, "model"),
+        (DependencyKind::Material, "material"),
+        (DependencyKind::Sound, "sound"),
+        (DependencyKind::Curve, "curve"),
+    ];
+    let dependency_result = (|| -> Result<Vec<(String, &'static str)>> {
+        let mut dependencies = Vec::new();
+        for (kind, label) in DEPENDENCY_KINDS {
+            for dependency in manager.dependencies(effect, kind).with_context(|| {
+                format!(
+                    "invalid Effekseer {label} dependency list in {}",
+                    path.display()
+                )
+            })? {
+                dependencies.push((dependency, label));
+            }
+        }
+        Ok(dependencies)
+    })();
+    manager.release_effect(effect);
+
+    for (dependency, label) in dependency_result? {
+        let dependency_reference =
+            resolve_effekseer_dependency_reference(&reference, &dependency).with_context(|| {
+                format!(
+                    "unsafe Effekseer {label} dependency '{dependency}' in {}",
+                    path.display()
+                )
+            })?;
+        let dependency_path = mengine_runtime::textures::resolve_project_asset_path(
+            project_root,
+            &dependency_reference,
+        )
+        .with_context(|| {
+            format!(
+                "unsafe Effekseer {label} dependency '{dependency}' in {}",
+                path.display()
+            )
+        })?;
+        if validated.insert(dependency_path.clone()) {
+            std::fs::read(&dependency_path).with_context(|| {
+                format!(
+                    "missing Effekseer {label} dependency {} referenced by {}",
+                    dependency_path.display(),
+                    path.display()
+                )
+            })?;
+        }
+    }
+    Ok(())
+}
+
+fn resolve_effekseer_dependency_reference(effect: &str, dependency: &str) -> Result<String> {
+    use std::path::Component;
+
+    let dependency = dependency.trim().replace('\\', "/");
+    if dependency.is_empty() {
+        bail!("dependency path is empty");
+    }
+    let dependency_path = Path::new(&dependency);
+    if dependency_path.is_absolute() {
+        bail!("absolute dependency paths are not allowed");
+    }
+    let candidate = if dependency.starts_with("Assets/")
+        || dependency.starts_with("Packages/")
+    {
+        dependency_path.to_path_buf()
+    } else {
+        Path::new(effect)
+            .parent()
+            .unwrap_or_else(|| Path::new(""))
+            .join(dependency_path)
+    };
+    let mut normalized = PathBuf::new();
+    for component in candidate.components() {
+        match component {
+            Component::Normal(value) => normalized.push(value),
+            Component::CurDir => {}
+            Component::ParentDir => {
+                if !normalized.pop() {
+                    bail!("dependency escapes the project root");
+                }
+            }
+            Component::Prefix(_) | Component::RootDir => {
+                bail!("absolute dependency paths are not allowed");
+            }
+        }
+    }
+    let normalized = normalized.to_string_lossy().replace('\\', "/");
+    if normalized.is_empty() {
+        bail!("dependency path resolves to the project root");
+    }
+    Ok(normalized)
 }
 
 struct TimelineValidationSummary {
