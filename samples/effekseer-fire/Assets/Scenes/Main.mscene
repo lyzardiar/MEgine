@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "name": "EffekseerFire",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [0.0, 1.5, 4.0],
+            "rotation": [-0.122, 0.0, 0.0, 0.9925],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "Camera3D": {
+            "fov_y_degrees": 60.0,
+            "near": 0.1,
+            "far": 100.0,
+            "primary": true
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Effekseer Fire",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [0.0, 0.0, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "EffekseerEffect": {
+            "effect": "Assets/Effects/ef_fire01.efkefc",
+            "playing": true,
+            "looping": true,
+            "speed": 1.0,
+            "start_frame": 0,
+            "prewarm": true,
+            "auto_destroy": false
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [0.025, 0.03, 0.045, 1.0],
+    "selected": 2
+  }
+}

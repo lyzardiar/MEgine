@@ -129,6 +129,30 @@
 - Scene View 已接入使用 Editor Camera 的原生 RHI Base Pass，世界对象、2D primitive、粒子和 Effekseer 由共享 Frame Compiler 输出；相机/灯光图标、Spine 兼容层、Collider、Transform/Rect Gizmo 与 UI 作者叠加层继续覆盖在原生帧之上。
 - Scene View 的编辑器叠加层与交互命中当前仍由前端维护；Gizmo/Picking 尚未进入原生 ID-buffer 流程，不能据此宣称统一视口或总体编辑器审计完成。
 
+## 2026-08-03 current batch: discoverable Effekseer sample
+
+Completed:
+
+- Added `samples/effekseer-fire`, a standard editor project with a directly
+  openable scene and the minimal dependency closure for the official CC0
+  `ef_fire01.efkefc` effect.
+- Added `npm.cmd run sample:effekseer`, root/sample documentation, a native
+  dependency and draw-call inspection example, a runtime real-asset rendering
+  regression, and a CLI packaging regression.
+- Fixed the Effekseer build script so vendored CMake source lists work with
+  both LF and CRLF checkouts on Windows.
+
+Verified boundaries and remaining work:
+
+- This sample proves effect loading, dependency enumeration, CPU evaluation,
+  RHI primitive generation, scene serialization, and PC package asset closure.
+  It is not proof of every Effekseer renderer feature or GPU pixel parity.
+- File Material shading, distortion, normal/lighting, advanced alpha and
+  flipbook parity, subtractive blending, and exact rotated/directional
+  billboards remain the next Effekseer compatibility audit.
+- Foreground editor interaction was intentionally not used in this batch;
+  a background/headless GPU capture can be added later without taking focus.
+
 ## 明确未完成或仍需继续审核
 
 以下项目保持未完成状态，后续不得因为相邻能力已通过测试而宣称整体编辑器完成：

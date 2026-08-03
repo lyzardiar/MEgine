@@ -633,3 +633,98 @@ fn file_stamp(path: &Path) -> FileStamp {
         })
         .unwrap_or_default()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::{Mat4, Vec3, Vec4};
+    use mengine_rhi::{ClearColor, FrameCamera, FrameLighting, UiBatchPlan};
+
+    fn sample_root() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/effekseer-fire")
+    }
+
+    fn frame() -> crate::frame_compiler::CompiledFrame {
+        let eye = Vec3::new(0.0, 1.5, 4.0);
+        crate::frame_compiler::CompiledFrame {
+            clear: ClearColor::from(Vec4::new(0.025, 0.03, 0.045, 1.0)),
+            camera: FrameCamera {
+                view: Mat4::look_at_rh(eye, Vec3::ZERO, Vec3::Y),
+                proj: Mat4::perspective_rh(60.0_f32.to_radians(), 16.0 / 9.0, 0.1, 100.0),
+                position: eye,
+            },
+            objects: Vec::new(),
+            lighting: FrameLighting::default(),
+            ui: UiBatchPlan::default(),
+            controls: Vec::new(),
+            texture_failures: Vec::new(),
+            font_failures: Vec::new(),
+            has_authored_camera: true,
+        }
+    }
+
+    #[test]
+    fn official_fire_sample_loads_dependencies_and_emits_render_primitives() {
+        let root = sample_root();
+        let effect = "Assets/Effects/ef_fire01.efkefc";
+        assert!(root.join(effect).is_file());
+
+        let mut world = World::new();
+        let scene = mengine_scene::load_scene(
+            &root.join("Assets/Scenes/Main.mscene"),
+            &mut world,
+        )
+        .expect("load Effekseer sample scene");
+        assert_eq!(scene.name, "EffekseerFire");
+        assert!(world.iter_entities().any(|entity| world
+            .get_component::<EffekseerEffect>(entity)
+            .is_some_and(|component| component.effect == effect)));
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut runtime = EffekseerWorld::new(Some(root.clone())).expect("Effekseer runtime");
+        let mut peak_primitives = 0;
+        let mut draw_textures = HashSet::new();
+
+        for _ in 0..180 {
+            assert!(runtime.update(&world, &hierarchy, 1.0 / 60.0).is_empty());
+            let mut compiled = frame();
+            assert!(runtime.append_to_frame(&mut compiled).is_empty());
+            peak_primitives = peak_primitives.max(compiled.ui.primitives.len());
+            draw_textures.extend(
+                compiled
+                    .ui
+                    .primitives
+                    .iter()
+                    .map(|primitive| primitive.key.texture.clone())
+                    .filter(|path| !path.is_empty()),
+            );
+        }
+
+        let dependencies = runtime.dependencies(effect).expect("loaded dependencies");
+        let paths = dependencies
+            .iter()
+            .map(|dependency| dependency.path.as_str())
+            .collect::<HashSet<_>>();
+        for path in [
+            "Textures/tx_fire_flipbook01_1024.png",
+            "Textures/tx_glow02_128.png",
+            "Textures/tx_noise01_256.png",
+            "Materials/mt_dissolve02.efkmat",
+        ] {
+            assert!(paths.contains(path), "missing dependency {path}");
+            assert!(
+                root.join("Assets/Effects").join(path).is_file(),
+                "missing asset {path}"
+            );
+        }
+        assert!(
+            peak_primitives > 0,
+            "the sample effect produced no render primitives"
+        );
+        for texture in [
+            "Assets/Effects/Textures/tx_fire_flipbook01_1024.png",
+            "Assets/Effects/Textures/tx_glow02_128.png",
+        ] {
+            assert!(draw_textures.contains(texture), "unused draw texture {texture}");
+        }
+    }
+}

@@ -12,7 +12,8 @@
     "build:editor": "pnpm.cmd --filter @mengine/api build && pnpm.cmd --filter @mengine/behaviour build && pnpm.cmd --filter @mengine/agent build && pnpm.cmd --filter @mengine/editor build",
     "build:editor:desktop": "npm.cmd --prefix packages/editor run tauri:build",
     "build:editor:desktop:debug": "npm.cmd --prefix packages/editor run tauri:build:debug",
-    "sample:cube": "npm.cmd run build:samples && cargo run -p mengine-runtime -- --sample spinning-cube"
+    "sample:cube": "npm.cmd run build:samples && cargo run -p mengine-runtime -- --sample spinning-cube",
+    "sample:effekseer": "cargo run -p mengine-runtime -- --scene samples/effekseer-fire/Assets/Scenes/Main.mscene"
   },
   "engines": {
     "node": ">=20"

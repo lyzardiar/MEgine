@@ -36,9 +36,9 @@ fn effekseer_sources(cmake: &str) -> Vec<PathBuf> {
         .find("set(effekseer_src")
         .expect("Effekseer source list start");
     let body = &cmake[start..];
-    let end = body
-        .find("\n\nadd_library")
-        .expect("Effekseer source list end");
+    // The vendored SDK may be checked out with LF or CRLF line endings.
+    // Locate the next CMake command instead of depending on blank-line bytes.
+    let end = body.find("add_library").expect("Effekseer source list end");
     let sources = body[..end]
         .split_whitespace()
         .filter(|token| token.ends_with(".cpp"))

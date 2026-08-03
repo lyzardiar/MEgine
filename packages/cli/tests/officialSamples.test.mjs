@@ -39,3 +39,36 @@ test('official spinning-cube sample is a standard editor and PC Build project', 
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('official Effekseer sample packages its real effect dependency closure', () => {
+  const root = join(tmpdir(), `mengine-effekseer-sample-${process.pid}-${Date.now()}`);
+  const project = join(repositoryRoot, 'samples', 'effekseer-fire');
+  const runtime = join(root, process.platform === 'win32' ? 'runtime.exe' : 'runtime');
+  const output = join(root, 'Build');
+  try {
+    mkdirSync(root, { recursive: true });
+    writeFileSync(runtime, 'runtime-binary');
+
+    const manifest = buildPcPackage({
+      projectDir: project,
+      outputDir: output,
+      runtimePath: runtime,
+      engineVersion: 'sample-contract-test',
+    });
+
+    assert.equal(manifest.project.mainScene, 'Assets/Scenes/Main.mscene');
+    assert.deepEqual(manifest.project.buildScenes, ['Assets/Scenes/Main.mscene']);
+    for (const dependency of [
+      'Assets/Effects/ef_fire01.efkefc',
+      'Assets/Effects/Materials/mt_dissolve02.efkmat',
+      'Assets/Effects/Textures/tx_fire_flipbook01_1024.png',
+      'Assets/Effects/Textures/tx_glow02_128.png',
+      'Assets/Effects/Textures/tx_noise01_256.png',
+    ]) {
+      assert.equal(existsSync(join(output, ...dependency.split('/'))), true, dependency);
+      assert.equal(manifest.files.some((asset) => asset.path === dependency), true, dependency);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
