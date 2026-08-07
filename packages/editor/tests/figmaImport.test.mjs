@@ -29,9 +29,9 @@ function source() {
           wrap: 'NO_WRAP',
           itemSpacing: 12,
           paddingLeft: 24,
-          paddingRight: 24,
+          paddingRight: 28,
           paddingTop: 20,
-          paddingBottom: 20,
+          paddingBottom: 32,
           primaryAlign: 'MIN',
           counterAlign: 'CENTER',
           sizingHorizontal: 'FIXED',
@@ -104,7 +104,7 @@ test('Figma import maps auto layout, text, stable component ids, and raster asse
 
   const root = plan.nodes[0];
   assert.equal(root.components.LayoutGroup.direction, 'Vertical');
-  assert.deepEqual(root.components.LayoutGroup.padding, [24, 24, 20, 20]);
+  assert.deepEqual(root.components.LayoutGroup.padding, [24, 20, 28, 32]);
   assert.deepEqual(root.components.RectTransform.size_delta, [400, 800]);
 
   const text = plan.nodes.find((node) => node.sourceNodeId === '1:2');

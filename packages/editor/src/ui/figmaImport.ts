@@ -319,8 +319,8 @@ function applyLayout(
     direction: layout.mode === 'HORIZONTAL' ? 'Horizontal' : 'Vertical',
     padding: [
       nonNegative(layout.paddingLeft),
-      nonNegative(layout.paddingRight),
       nonNegative(layout.paddingTop),
+      nonNegative(layout.paddingRight),
       nonNegative(layout.paddingBottom),
     ],
     spacing: [nonNegative(layout.itemSpacing), nonNegative(layout.itemSpacing)],

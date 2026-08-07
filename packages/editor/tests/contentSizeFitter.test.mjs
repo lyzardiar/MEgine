@@ -156,6 +156,46 @@ test('disabled child size control ignores flexible metrics on that axis', () => 
   assert.deepEqual(rects.map((rect) => rect.w), [40, 60]);
 });
 
+test('positive flexible size fills only that child on a layout cross axis', () => {
+  const vertical = layoutGroupChildRects(
+    { x: 0, y: 0, w: 300, h: 200 },
+    {
+      ...base,
+      direction: 'Vertical',
+      padding: [20, 0, 20, 0],
+      spacing: [0, 10],
+      childControlWidth: true,
+      childControlHeight: true,
+      childForceExpandWidth: false,
+      childForceExpandHeight: false,
+    },
+    [
+      { width: 10, height: 10, preferredWidth: 80, preferredHeight: 30 },
+      { width: 10, height: 10, preferredWidth: 80, preferredHeight: 30, flexibleWidth: 1 },
+    ],
+  );
+  assert.deepEqual(vertical.map((rect) => rect.w), [80, 260]);
+
+  const horizontal = layoutGroupChildRects(
+    { x: 0, y: 0, w: 300, h: 200 },
+    {
+      ...base,
+      direction: 'Horizontal',
+      padding: [0, 20, 0, 20],
+      spacing: [10, 0],
+      childControlWidth: true,
+      childControlHeight: true,
+      childForceExpandWidth: false,
+      childForceExpandHeight: false,
+    },
+    [
+      { width: 10, height: 10, preferredWidth: 40, preferredHeight: 50 },
+      { width: 10, height: 10, preferredWidth: 40, preferredHeight: 50, flexibleHeight: 1 },
+    ],
+  );
+  assert.deepEqual(horizontal.map((rect) => rect.h), [50, 160]);
+});
+
 test('empty content fits to padding only', () => {
   const measured = measureLayoutContent({ ...base, direction: 'Grid' }, 0, 2);
   assert.equal(measured.preferredWidth, 40);

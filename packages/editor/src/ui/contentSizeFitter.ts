@@ -325,9 +325,13 @@ export function layoutGroupChildRects(
     const controlCross = horizontal
       ? layout.childControlHeight !== false
       : layout.childControlWidth !== false;
-    const expandCross = controlCross && (horizontal
+    const forceExpandCross = horizontal
       ? layout.childForceExpandHeight !== false
-      : layout.childForceExpandWidth !== false);
+      : layout.childForceExpandWidth !== false;
+    // Unity layout elements may opt into the available cross-axis size with a
+    // positive flexible value even when the group does not force every child
+    // to expand. Figma FILL maps to that per-child contract.
+    const expandCross = controlCross && (forceExpandCross || crossMetric.flexible > 0);
     const crossAvailable = horizontal ? content.h : content.w;
     const crossSize = expandCross ? crossAvailable : Math.min(crossAvailable, crossMetric.preferred);
     const crossAlignment = horizontal ? alignY : alignX;

@@ -720,7 +720,7 @@ test('nested LayoutGroups report recursive metrics with per-field LayoutElement 
   const items = layoutUiOverlay(entities, { x: 0, y: 0, w: 800, h: 600 }, new Set());
   const nested = items.find((item) => item.entity === 3).rect;
   const sibling = items.find((item) => item.entity === 6).rect;
-  assert.deepEqual(nested, { x: 250, y: 250, w: 207.5, h: 75 });
+  assert.deepEqual(nested, { x: 250, y: 250, w: 207.5, h: 100 });
   assert.deepEqual(sibling, { x: 467.5, y: 250, w: 82.5, h: 20 });
 });
 
