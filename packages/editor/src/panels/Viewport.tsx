@@ -187,6 +187,13 @@ import {
   normalizeSceneZoom,
 } from '../sceneZoom';
 import {
+  activeSceneOrientation,
+  sceneOrientationCamera,
+  sceneOrientationHandles,
+  sceneOrientationLabel,
+  type SceneOrientationView,
+} from '../sceneOrientation';
+import {
   rectAxisTranslationAmount,
   rectTranslationAlongAxis,
   screenRectTranslation,
@@ -2912,6 +2919,14 @@ export function Viewport(props: {
     });
   };
 
+  const applySceneOrientation = (view: SceneOrientationView) => {
+    const camera = sceneOrientationCamera(view);
+    liveCam.current.yaw = camera.yaw;
+    liveCam.current.pitch = camera.pitch;
+    syncCamToStore();
+    setTick((value) => value + 1);
+  };
+
   const sceneDropWorldPoint = (x: number, y: number): Vec3 => {
     const origin = [...liveCam.current.pivot] as Vec3;
     const screen = project(origin, lastCameraRef.current, lastVpRef.current);
@@ -4404,6 +4419,14 @@ export function Viewport(props: {
   const selectedResolutionOption = props.gameResolution
     ? presetResolution ? resolutionKey : 'custom'
     : 'free';
+  const orientationHandles = sceneOrientationHandles(
+    props.sceneCamera.yaw,
+    props.sceneCamera.pitch,
+  );
+  const activeOrientation = activeSceneOrientation(
+    props.sceneCamera.yaw,
+    props.sceneCamera.pitch,
+  );
 
   return (
     <div className="viewport-wrap">
@@ -4868,6 +4891,69 @@ export function Viewport(props: {
           )}
           <span className="game-hint">Uses Main Camera · no Scene gizmos</span>
           <span className="game-hint">UI {uiStats.elements} elements · {uiStats.batches} batches</span>
+        </div>
+      )}
+      {props.tab === 'scene' && !scene2D && (
+        <div className="scene-orientation-gizmo" role="group" aria-label="Scene orientation">
+          <svg className="scene-orientation-lines" viewBox="0 0 104 88" aria-hidden>
+            {(['x', 'y', 'z'] as const).map((axis) => {
+              const negative = orientationHandles.find(
+                (handle) => handle.axis === axis && handle.sign === -1,
+              )!;
+              const positive = orientationHandles.find(
+                (handle) => handle.axis === axis && handle.sign === 1,
+              )!;
+              return (
+                <line
+                  key={axis}
+                  className={`axis-${axis}`}
+                  x1={52 + negative.x}
+                  y1={44 + negative.y}
+                  x2={52 + positive.x}
+                  y2={44 + positive.y}
+                />
+              );
+            })}
+          </svg>
+          {[...orientationHandles]
+            .sort((a, b) => a.depth - b.depth)
+            .map((handle) => (
+              <button
+                type="button"
+                key={handle.view}
+                className={`scene-orientation-axis axis-${handle.axis}${handle.depth < 0 ? ' rear' : ''}${activeOrientation === handle.view ? ' active' : ''}`}
+                style={{
+                  left: 52 + handle.x,
+                  top: 44 + handle.y,
+                  zIndex: handle.depth < 0 ? 1 : 4,
+                }}
+                aria-label={`View from ${handle.sign > 0 ? '+' : '-'}${handle.axis.toUpperCase()} (${sceneOrientationLabel(
+                  sceneOrientationCamera(handle.view).yaw,
+                  sceneOrientationCamera(handle.view).pitch,
+                )})`}
+                aria-pressed={activeOrientation === handle.view}
+                title={`Snap to ${handle.view} view`}
+                onClick={() => applySceneOrientation(handle.view)}
+              >
+                {handle.sign > 0 ? handle.axis.toUpperCase() : ''}
+              </button>
+            ))}
+          <button
+            type="button"
+            className="scene-orientation-center"
+            aria-label="Return to Perspective view"
+            title="Return to Perspective view"
+            onClick={() => applySceneOrientation('perspective')}
+          >
+            <svg viewBox="0 0 36 36" aria-hidden>
+              <polygon className="cube-top" points="18,2 33,10 18,18 3,10" />
+              <polygon className="cube-left" points="3,10 18,18 18,34 3,26" />
+              <polygon className="cube-right" points="18,18 33,10 33,26 18,34" />
+            </svg>
+          </button>
+          <span className="scene-orientation-label">
+            {sceneOrientationLabel(props.sceneCamera.yaw, props.sceneCamera.pitch)}
+          </span>
         </div>
       )}
       {inputProxy && (
