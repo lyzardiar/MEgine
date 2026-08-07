@@ -8,6 +8,30 @@ import {
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import {
+  Bone,
+  Box,
+  Camera,
+  ChevronDown,
+  ChevronRight,
+  Circle,
+  FoldVertical,
+  Grid3X3,
+  Image,
+  Layers3,
+  Lightbulb,
+  Map as MapIcon,
+  Music,
+  PanelTop,
+  Plus,
+  Sparkles,
+  Square,
+  UnfoldVertical,
+  Volume2,
+  Waves,
+  Waypoints,
+  type LucideIcon,
+} from 'lucide-react';
 import type { EditorStore, EntityRec, TreeNode } from '../store';
 import { HierarchyContextMenu, type CtxAction } from './HierarchyContextMenu';
 import { subscribePing } from '../pingBus';
@@ -18,28 +42,29 @@ import {
   type MenuItemContext,
 } from '../editorWindow';
 import { filterHierarchyCreateItems } from '../hierarchyCreateMenu';
+import { filterHierarchyTree, hierarchyEntityMatches } from '../hierarchySearch';
 
-function iconFor(e: EntityRec) {
+function iconFor(e: EntityRec): LucideIcon {
   const c = e.components;
-  if (c.Tilemap) return '▦';
-  if (c.Grid) return '⌗';
-  if (c.AudioSource || c.AudioListener || c.AudioMixer) return '♪';
-  if (c.RawImage) return '\u25a1';
-  if (c.Canvas) return '🖼️';
-  if (c.Button) return '🔘';
-  if (c.Image) return '▭';
-  if (c.Camera3D || c.Camera2D) return '🎥';
-  if (c.DirectionalLight || c.PointLight || c.SpotLight || c.Light2D) return '💡';
-  if (c.EnvironmentLight) return '\u25c9';
-  if (c.MeshRenderer) return '🧊';
-  if (c.SpriteRenderer) return '🎴';
-  if (c.AnimatedSprite2D) return '🎞';
-  if (c.Line2D) return '⌁';
-  if (c.TrailRenderer2D) return '〰';
-  if (c.SpineSkeleton) return '🦴';
-  if (c.ParticleEmitter2D || c.ParticleEmitter3D) return '✨';
-  if ((e.name ?? '').toLowerCase().includes('light')) return '💡';
-  return '○';
+  if (c.Tilemap) return MapIcon;
+  if (c.Grid) return Grid3X3;
+  if (c.AudioSource || c.AudioListener || c.AudioMixer) return Volume2;
+  if (c.Canvas) return PanelTop;
+  if (c.Button) return Square;
+  if (c.RawImage || c.Image) return Image;
+  if (c.Camera3D || c.Camera2D) return Camera;
+  if (c.DirectionalLight || c.PointLight || c.SpotLight || c.Light2D) return Lightbulb;
+  if (c.EnvironmentLight) return Circle;
+  if (c.MeshRenderer) return Box;
+  if (c.SpriteRenderer || c.AnimatedSprite2D) return Image;
+  if (c.Line2D) return Waypoints;
+  if (c.TrailRenderer2D) return Waves;
+  if (c.SpineSkeleton) return Bone;
+  if (c.ParticleEmitter2D || c.ParticleEmitter3D) return Sparkles;
+  if (c.AudioClip) return Music;
+  if (c.RectTransform) return Layers3;
+  if ((e.name ?? '').toLowerCase().includes('light')) return Lightbulb;
+  return Box;
 }
 
 type DropPos = 'before' | 'after' | 'into';
@@ -147,12 +172,26 @@ export function Hierarchy(props: {
   }, [props.store, props.onRefresh]);
 
   const filtered = useMemo(() => {
-    const q = props.filter.trim().toLowerCase();
+    const q = props.filter.trim();
     if (!q) return props.nodes;
-    return props.nodes.filter((n) =>
-      (n.entity.name ?? `Entity ${n.entity.entity}`).toLowerCase().includes(q),
+    return filterHierarchyTree(props.store.authoredEntities(), q);
+  }, [props.nodes, props.filter, props.store]);
+
+  const matchingIds = useMemo(() => {
+    const q = props.filter.trim();
+    if (!q) return new Set<number>();
+    return new Set(
+      props.store.authoredEntities()
+        .filter((entity) => hierarchyEntityMatches(entity, q))
+        .map((entity) => entity.entity),
     );
-  }, [props.nodes, props.filter]);
+  }, [props.filter, props.store, props.nodes]);
+
+  useEffect(() => {
+    const selected = props.store.selected;
+    if (selected == null || props.filter.trim()) return;
+    requestAnimationFrame(() => rowRefs.current.get(selected)?.scrollIntoView({ block: 'nearest' }));
+  }, [props.store.selected, props.filter, props.nodes]);
 
   useEffect(() => {
     if (props.pendingRenameId == null) return;
@@ -453,10 +492,36 @@ export function Hierarchy(props: {
       <div className="dock-toolbar">
         <input
           className="search"
-          placeholder="Search…"
+          type="search"
+          placeholder="Name, type, tag, layer…"
+          aria-label="Search hierarchy"
           value={props.filter}
           onChange={(e) => props.onFilter(e.target.value)}
         />
+        <button
+          type="button"
+          className="hier-tool"
+          title="Collapse All"
+          aria-label="Collapse all hierarchy nodes"
+          onClick={() => {
+            props.store.collapseAll();
+            props.onRefresh();
+          }}
+        >
+          <FoldVertical size={14} />
+        </button>
+        <button
+          type="button"
+          className="hier-tool"
+          title="Expand All"
+          aria-label="Expand all hierarchy nodes"
+          onClick={() => {
+            props.store.expandAll();
+            props.onRefresh();
+          }}
+        >
+          <UnfoldVertical size={14} />
+        </button>
         <button
           ref={createButtonRef}
           type="button"
@@ -470,7 +535,7 @@ export function Hierarchy(props: {
             setCreateOpen((open) => !open);
           }}
         >
-          +
+          <Plus size={15} />
         </button>
         {createOpen && (
           <div
@@ -524,8 +589,15 @@ export function Hierarchy(props: {
         role="tree"
         aria-label="Scene hierarchy"
         tabIndex={0}
-        title="拖到节点中部更改父级；拖到上下边缘调整顺序；拖到空白处移到根节点"
+        title="Drop onto a row to reparent, onto an edge to reorder, or into empty space for root"
         onContextMenu={(e) => onContext(e, null)}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === 'ArrowDown' && filtered.length) {
+            event.preventDefault();
+            rowRefs.current.get(filtered[0].entity.entity)?.focus();
+          }
+        }}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={clearPointerDrag}
@@ -578,6 +650,8 @@ export function Hierarchy(props: {
           const selected = props.selectedIds.includes(id);
           const inactive = !n.entity.active;
           const drop = dropTarget?.id === id ? dropTarget.pos : null;
+          const Icon = iconFor(n.entity);
+          const match = matchingIds.has(id);
           return (
             <div
               key={id}
@@ -591,6 +665,7 @@ export function Hierarchy(props: {
                 inactive ? 'inactive' : '',
                 dragId === id ? 'dragging' : '',
                 pingId === id ? 'ping' : '',
+                match ? 'search-match' : '',
                 drop === 'into' ? 'drop-into' : '',
                 drop === 'before' ? 'drop-before' : '',
                 drop === 'after' ? 'drop-after' : '',
@@ -619,6 +694,34 @@ export function Hierarchy(props: {
                 } else if (event.key === 'F2') {
                   event.preventDefault();
                   beginRename(id, n.entity.name ?? '');
+                } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  const index = filtered.findIndex((candidate) => candidate.entity.entity === id);
+                  const next = event.key === 'ArrowDown' ? index + 1 : index - 1;
+                  const target = filtered[Math.max(0, Math.min(filtered.length - 1, next))];
+                  rowRefs.current.get(target.entity.entity)?.focus();
+                } else if (event.key === 'Home' || event.key === 'End') {
+                  event.preventDefault();
+                  const target = event.key === 'Home' ? filtered[0] : filtered.at(-1);
+                  if (target) rowRefs.current.get(target.entity.entity)?.focus();
+                } else if (event.key === 'ArrowRight') {
+                  event.preventDefault();
+                  if (n.hasChildren && !n.expanded && !props.filter.trim()) {
+                    props.store.expand(id);
+                    props.onRefresh();
+                  } else {
+                    const index = filtered.findIndex((candidate) => candidate.entity.entity === id);
+                    const child = filtered[index + 1];
+                    if (child?.depth === n.depth + 1) rowRefs.current.get(child.entity.entity)?.focus();
+                  }
+                } else if (event.key === 'ArrowLeft') {
+                  event.preventDefault();
+                  if (n.hasChildren && n.expanded && !props.filter.trim()) {
+                    props.store.collapse(id);
+                    props.onRefresh();
+                  } else if (n.entity.parent != null) {
+                    rowRefs.current.get(n.entity.parent)?.focus();
+                  }
                 }
               }}
               onContextMenu={(e) => onContext(e, id)}
@@ -649,7 +752,11 @@ export function Hierarchy(props: {
                   }
                 }}
               >
-                {n.hasChildren ? (n.expanded ? '▾' : '▸') : '·'}
+                {n.hasChildren
+                  ? n.expanded
+                    ? <ChevronDown size={12} />
+                    : <ChevronRight size={12} />
+                  : null}
               </button>
               <input
                 type="checkbox"
@@ -666,11 +773,11 @@ export function Hierarchy(props: {
                 className="hier-icon"
                 draggable={editing !== id}
                 aria-label={`Drag ${n.entity.name ?? `Entity ${id}`}`}
-                title="拖动节点行调整层级；拖动图标可赋值给对象引用"
+                title="Drag the row to reorder; drag the icon to assign an object reference"
                 onDragStart={(e) => onDragStart(e, id)}
                 onDragEnd={clearPointerDrag}
               >
-                {iconFor(n.entity)}
+                <Icon size={14} strokeWidth={1.7} />
               </span>
               {editing === id ? (
                 <input
@@ -689,6 +796,7 @@ export function Hierarchy(props: {
               ) : (
                 <span className="hier-name">{n.entity.name ?? `Entity ${id}`}</span>
               )}
+              {match && props.filter.trim() && <span className="hier-match-badge">match</span>}
             </div>
           );
         })}

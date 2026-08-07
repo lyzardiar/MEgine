@@ -1,14 +1,26 @@
 import {
+  createContext,
   useEffect,
   useId,
+  useContext,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import {
+  Box,
+  FoldVertical,
+  MoreVertical,
+  PanelTop,
+  Search,
+  UnfoldVertical,
+  X,
+} from 'lucide-react';
 import { getBehaviour } from '@mengine/behaviour';
 import { PROJECT_ASSETS_CHANGED_EVENT } from '../assetEditorEvents';
 import { createComponentDefaults, getComponentCatalog } from '../componentCatalog';
+import { componentCatalogMatches, inspectorSectionMatches } from '../inspectorSearch';
 import {
   copyComponentValue,
   pasteComponentValue,
@@ -206,8 +218,48 @@ function axisSemanticLabel(scope: string, field: string, axis: string): string {
   return `${scope} ${field} ${axis.toUpperCase()}`;
 }
 
+type InspectorExpansionCommand = { revision: number; open: boolean };
+
+const InspectorPanelContext = createContext<{
+  query: string;
+  expansion: InspectorExpansionCommand;
+}>({ query: '', expansion: { revision: 0, open: true } });
+
+function InspectorToolbar(props: {
+  query: string;
+  onQuery: (query: string) => void;
+  onExpand: (open: boolean) => void;
+}) {
+  return (
+    <div className="insp-toolbar">
+      <label className="insp-search">
+        <Search size={13} aria-hidden />
+        <input
+          type="search"
+          aria-label="Search Inspector properties"
+          placeholder="Filter components and properties…"
+          value={props.query}
+          onChange={(event) => props.onQuery(event.target.value)}
+        />
+        {props.query && (
+          <button type="button" title="Clear filter" aria-label="Clear Inspector filter" onClick={() => props.onQuery('')}>
+            <X size={12} />
+          </button>
+        )}
+      </label>
+      <button type="button" title="Collapse All" aria-label="Collapse all Inspector components" onClick={() => props.onExpand(false)}>
+        <FoldVertical size={14} />
+      </button>
+      <button type="button" title="Expand All" aria-label="Expand all Inspector components" onClick={() => props.onExpand(true)}>
+        <UnfoldVertical size={14} />
+      </button>
+    </div>
+  );
+}
+
 function CompBlock(props: {
   title: string;
+  searchText?: string;
   children: ReactNode;
   defaultOpen?: boolean;
   onRemove?: () => void;
@@ -218,6 +270,7 @@ function CompBlock(props: {
     separatorBefore?: boolean;
   }>;
 }) {
+  const panel = useContext(InspectorPanelContext);
   const [open, setOpen] = useState(props.defaultOpen ?? true);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -231,6 +284,10 @@ function CompBlock(props: {
       separatorBefore: true,
     }] : []),
   ];
+
+  useEffect(() => {
+    if (panel.expansion.revision > 0) setOpen(panel.expansion.open);
+  }, [panel.expansion]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -250,16 +307,19 @@ function CompBlock(props: {
     };
   }, [menuOpen]);
 
+  if (!inspectorSectionMatches(panel.query, props.title, props.searchText)) return null;
+  const expanded = panel.query.trim() ? true : open;
+
   return (
     <div className="comp" data-agent-scope={props.title}>
       <div className="comp-head">
         <button
           type="button"
           className="comp-toggle"
-          aria-expanded={open}
+          aria-expanded={expanded}
           onClick={() => setOpen(!open)}
         >
-          <span className="comp-foldout" aria-hidden>{open ? '▾' : '▸'}</span>
+          <span className="comp-foldout" aria-hidden>{expanded ? '▾' : '▸'}</span>
           <span className="comp-icon" aria-hidden>{props.title.slice(0, 1).toUpperCase()}</span>
           <span className="comp-title">{props.title}</span>
         </button>
@@ -292,7 +352,7 @@ function CompBlock(props: {
                   });
                 }}
               >
-                ⋮
+                <MoreVertical size={14} />
               </button>
               {menuOpen && (
                 <div
@@ -335,7 +395,7 @@ function CompBlock(props: {
           )}
         </div>
       </div>
-      {open && <div className="comp-body">{props.children}</div>}
+      {expanded && <div className="comp-body">{props.children}</div>}
     </div>
   );
 }
@@ -1346,6 +1406,7 @@ function MultiSelectionInspector(props: {
   onEndEditGesture?: () => void;
 }) {
   const [componentMenuOpen, setComponentMenuOpen] = useState(false);
+  const [componentSearch, setComponentSearch] = useState('');
   const componentMenuRef = useRef<HTMLDivElement>(null);
   const transformEntities = props.entities.filter((entity) => entity.components.Transform != null);
   const rectEntities = props.entities.filter((entity) => entity.components.RectTransform != null);
@@ -1385,6 +1446,9 @@ function MultiSelectionInspector(props: {
   const catalog = getComponentCatalog();
   const availableComponents = catalog.filter((component) => (
     props.entities.every((entity) => entity.components[component.type] == null)
+  ));
+  const filteredAvailableComponents = availableComponents.filter((component) => (
+    componentCatalogMatches(componentSearch, component)
   ));
   const sharedComponents = Object.keys(props.primary.components)
     .filter((type) => (
@@ -1525,6 +1589,7 @@ function MultiSelectionInspector(props: {
         {allRects && primaryRect && (
           <CompBlock
             title="Rect Transform (Multi)"
+            searchText="anchor pivot position size width height rotation scale left right top bottom"
             contextMenuItems={componentEditMenu(
               'RectTransform',
               primaryRect,
@@ -1589,6 +1654,7 @@ function MultiSelectionInspector(props: {
         {allTransforms && primaryTransform && (
           <CompBlock
             title="Transform (Multi)"
+            searchText="position rotation scale x y z"
             contextMenuItems={componentEditMenu(
               'Transform',
               primaryTransform as unknown as Record<string, unknown>,
@@ -1641,6 +1707,7 @@ function MultiSelectionInspector(props: {
             <CompBlock
               key={type}
               title={`${label} (Multi)`}
+              searchText={`${type} ${Object.keys(value).join(' ')}`}
               onRemove={() => props.onRemoveComponents?.(entityIds, type)}
               contextMenuItems={componentEditMenu(
                 type,
@@ -1683,16 +1750,30 @@ function MultiSelectionInspector(props: {
             type="button"
             className="add-comp"
             aria-label="Add Component to selection"
-            onClick={() => setComponentMenuOpen((open) => !open)}
+            onClick={() => {
+              setComponentSearch('');
+              setComponentMenuOpen((open) => !open);
+            }}
           >
             Add Component
           </button>
           {componentMenuOpen && (
             <div className="add-comp-menu">
-              {availableComponents.length === 0 && (
+              <div className="add-comp-search">
+                <Search size={13} aria-hidden />
+                <input
+                  autoFocus
+                  type="search"
+                  aria-label="Search shared components"
+                  placeholder="Search components…"
+                  value={componentSearch}
+                  onChange={(event) => setComponentSearch(event.target.value)}
+                />
+              </div>
+              {filteredAvailableComponents.length === 0 && (
                 <div className="add-comp-empty">No shared component can be added</div>
               )}
-              {availableComponents.map((component) => (
+              {filteredAvailableComponents.map((component) => (
                 <button
                   key={component.type}
                   type="button"
@@ -1776,6 +1857,9 @@ export function Inspector(props: {
   onEndEditGesture?: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [componentSearch, setComponentSearch] = useState('');
+  const [inspectorQuery, setInspectorQuery] = useState('');
+  const [expansion, setExpansion] = useState<InspectorExpansionCommand>({ revision: 0, open: true });
   const [nameDraft, setNameDraft] = useState('');
   const [componentClipboard, setComponentClipboard] = useState<ComponentClipboard | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -1803,7 +1887,12 @@ export function Inspector(props: {
       .map((id) => byId.get(id))
       .filter((entity): entity is NonNullable<typeof entity> => entity != null);
     return (
-      <>
+      <InspectorPanelContext.Provider value={{ query: inspectorQuery, expansion }}>
+        <InspectorToolbar
+          query={inspectorQuery}
+          onQuery={setInspectorQuery}
+          onExpand={(open) => setExpansion((current) => ({ revision: current.revision + 1, open }))}
+        />
         {props.previewNotice && <div className="inspector-preview-notice">{props.previewNotice}</div>}
         <MultiSelectionInspector
           count={selectedEntities.length}
@@ -1824,7 +1913,7 @@ export function Inspector(props: {
           onBeginEditGesture={props.onBeginEditGesture}
           onEndEditGesture={props.onEndEditGesture}
         />
-      </>
+      </InspectorPanelContext.Provider>
     );
   }
 
@@ -1924,8 +2013,17 @@ export function Inspector(props: {
     }
     return true;
   });
+  const filteredAvailable = available.filter((component) => (
+    componentCatalogMatches(componentSearch, component)
+  ));
 
   return (
+    <InspectorPanelContext.Provider value={{ query: inspectorQuery, expansion }}>
+    <InspectorToolbar
+      query={inspectorQuery}
+      onQuery={setInspectorQuery}
+      onExpand={(open) => setExpansion((current) => ({ revision: current.revision + 1, open }))}
+    />
     <InspectorGestureProvider
       begin={props.onBeginEditGesture ?? (() => {})}
       end={props.onEndEditGesture ?? (() => {})}
@@ -1942,7 +2040,7 @@ export function Inspector(props: {
             onChange={(event) => props.onSetActive?.(entity.entity, event.target.checked)}
           />
           <span className={`insp-object-icon${hasRect ? ' ui' : ''}`} aria-hidden>
-            {hasRect ? '▣' : '◇'}
+            {hasRect ? <PanelTop size={15} /> : <Box size={15} />}
           </span>
           <input
             className="insp-name-input"
@@ -1988,11 +2086,16 @@ export function Inspector(props: {
       </div>
       {props.previewNotice && <div className="inspector-preview-notice">{props.previewNotice}</div>}
 
-      {hasRect && (
+      {hasRect && inspectorSectionMatches(
+        inspectorQuery,
+        'Rect Transform',
+        'anchor pivot position size width height rotation scale left right top bottom driven',
+      ) && (
         <div className="insp-ui-group">
           <div className="insp-ui-group-title">Layout</div>
         <CompBlock
           title="Rect Transform"
+          searchText="anchor pivot position size width height rotation scale left right top bottom driven"
           contextMenuItems={standardComponentMenu(
             'RectTransform',
             entity.components.RectTransform as Record<string, unknown>,
@@ -2012,6 +2115,7 @@ export function Inspector(props: {
       {hasTransform && (
         <CompBlock
           title={hasRect ? 'Advanced · Transform' : 'Transform'}
+          searchText="position rotation scale x y z"
           defaultOpen={!hasRect}
           contextMenuItems={standardComponentMenu(
             'Transform',
@@ -2098,6 +2202,9 @@ export function Inspector(props: {
         const group = uiInspectorGroup(k);
         const previousGroup = index > 0 ? uiInspectorGroup(orderedExtras[index - 1]) : null;
         const behaviour = getBehaviour(k);
+        const blockTitle = behaviour?.label ?? catalog.find((entry) => entry.type === k)?.label ?? k;
+        const blockSearchText = `${k} ${Object.keys(data).join(' ')} ${behaviour?.fields.map((field) => field.label ?? field.key).join(' ') ?? ''}`;
+        if (!inspectorSectionMatches(inspectorQuery, blockTitle, blockSearchText)) return null;
         const behaviourItems =
           behaviour?.methods
             .filter((m) => m.contextMenu)
@@ -2118,7 +2225,8 @@ export function Inspector(props: {
             <div className="insp-ui-group-title">{group}</div>
           )}
           <CompBlock
-            title={behaviour?.label ?? catalog.find((entry) => entry.type === k)?.label ?? k}
+            title={blockTitle}
+            searchText={blockSearchText}
             defaultOpen={!hasRect || group !== 'Advanced'}
             onRemove={() => props.onRemoveComponent(entity.entity, k)}
             contextMenuItems={ctxItems}
@@ -2207,16 +2315,30 @@ export function Inspector(props: {
         <button
           type="button"
           className="add-comp"
-          onClick={() => setMenuOpen((o) => !o)}
+          onClick={() => {
+            setComponentSearch('');
+            setMenuOpen((open) => !open);
+          }}
         >
           Add Component
         </button>
         {menuOpen && (
           <div className="add-comp-menu">
-            {available.length === 0 && (
+            <div className="add-comp-search">
+              <Search size={13} aria-hidden />
+              <input
+                autoFocus
+                type="search"
+                aria-label="Search components"
+                placeholder="Search components…"
+                value={componentSearch}
+                onChange={(event) => setComponentSearch(event.target.value)}
+              />
+            </div>
+            {filteredAvailable.length === 0 && (
               <div className="add-comp-empty">No more components</div>
             )}
-            {available.map((c) => (
+            {filteredAvailable.map((c) => (
               <button
                 key={c.type}
                 type="button"
@@ -2235,5 +2357,6 @@ export function Inspector(props: {
       </div>
     </InspectorEditScope>
     </InspectorGestureProvider>
+    </InspectorPanelContext.Provider>
   );
 }

@@ -2141,3 +2141,12 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 - `CanvasScaler.dynamic_pixels_per_unit` 现在真正进入 World Space Canvas 的动态字体链。Runtime 将它作为独立 `raster_scale` 传给字体解析器；屏幕空间 Canvas 固定使用 `1`，非法、非有限或非正值安全回退为 `1`，有效值限制在 `0.01–64`。字形图集键同时包含逻辑字号与栅格字号，因而相同字体、字号和样式在不同密度下不会错误复用低分辨率位图。
 - 排版度量、换行、Best Fit、RectTransform 和世界尺寸继续使用逻辑字号；只有 alpha 字形在 `font_size * dynamic_pixels_per_unit` 的有界字号上重新栅格化，再映射回相同逻辑 bounds。栅格字号受 1024×1024 图集单页边界约束，密度不会制造无界纹理或几何。Editor 的浏览器 Canvas 使用最终屏幕分辨率矢量栅格化，同时在后台可读 `UiDrawItem.text.dynamicPixelsPerUnit` 中公开有效值，便于 Agent 无需窗口焦点检查实际语义。
 - 回归覆盖屏幕空间密度固定为 `1`、World Space 密度传播、密度变化不改变 Editor/Runtime 投影几何、不同密度生成独立共享图集、逻辑 bounds 保持一致，以及 NaN/负值/超大值的量化边界。本批不宣称完成 TextCore/TMP：字体 fallback、连字、双向文本和复杂文字 shaping 仍在审计清单中；TypeScript 预览由浏览器直接栅格化，原生 Player 才执行动态字体图集。
+
+## 207. 2026-08-07 Profiler、Transform Gizmo 与对象工作台
+
+- Profiler 不再只显示 WebView 帧间隔。原生 Editor Host 在真实 Game/Scene 离屏渲染路径记录 Transform Hierarchy、Frame Compiler、各资源缓存同步、RHI Submit、Readback 和 Profiler Snapshot 的 Total/Self/Calls 调用树；内存按 CPU/GPU、exact/estimate/lower-bound 标明来源，资源表公开类型、资产、解析路径、源文件字节、GPU 估算、加载状态和引用者。`profiler.get_samples` 同时返回有界的前端样本与 `nativeLatest`，普通状态查询不内嵌大样本。
+- Transform Gizmo 的绘制与命中改用同一组类型化几何。X/Y/Z 轴、平面手柄、旋转环、中心等比缩放和标签具有一致命中范围；平面拖动使用一次射线/平面求交，Shift 精细调节与 Move/Rotate/Scale Snap 进入原有单手势单 Undo 事务。Rect Tool 继续只改 RectTransform 尺寸/偏移，不以 Scale 模拟宽高。
+- `ParticleEmitter2D` 与 `TrailRenderer2D` 的 Texture/Sprite Slice、Tint 和 Blend 语义已进入 Editor 预览和原生 Frame Compiler；缓存按纹理和颜色有界复用。隐藏后台 Game View 的真实像素回归用项目纹理创建粒子并确认纹理几何出现在原生输出，随后两次 Undo 恢复未修改场景。
+- Hierarchy 使用 Lucide 线性图标替代平台相关 Emoji，支持名称、组件类型、Tag、Layer 与字段前缀（`t:`、`tag:`、`layer:`）的有界模糊搜索；命中项自动带出完整祖先路径。Arrow/Home/End、展开/折叠、F2、范围/多选和拖放继续复用现有实体 ID 与 Store，长列表行使用浏览器 `content-visibility` 降低不可见渲染成本。
+- Inspector 新增组件/属性键搜索、全局展开/折叠和可搜索 Add Component；搜索时只保留包含匹配属性的组件并自动展开，UI 组件继续按 Layout、Appearance、Interaction、Advanced 渐进披露。布局驱动字段、组件剪贴板、多选混合值、单手势 Undo 与现有专用字段编辑器保持不变。
+- 桌面验收只通过 `required-background` 操作新构建的 Debug 编辑器。窗口持续 `visible=false`、`focused=false`，WebView2 离屏截图标记 `backgroundSafe=true`；语义回归实际执行 Inspector `material` 筛选、Hierarchy `t:image` 筛选及 ArrowDown 焦点移动，并读取到原生调用树、内存来源与资源表。

@@ -75,8 +75,11 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(inspector, /aria-label="Camera 3D Primary"/);
   assert.match(
     inspector,
-    /className="comp-toggle"\s*aria-expanded=\{open\}/,
+    /className="comp-toggle"\s*aria-expanded=\{expanded\}/,
   );
+  assert.match(inspector, /aria-label="Search Inspector properties"/);
+  assert.match(hierarchy, /aria-label="Search hierarchy"/);
+  assert.match(hierarchy, /event\.key === 'ArrowRight'/);
   assert.match(inspector, /className="comp" data-agent-scope=\{props\.title\}/);
   assert.match(inspector, /className="comp-foldout" aria-hidden/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.ariaLabel/);

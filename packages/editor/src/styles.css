@@ -799,9 +799,14 @@ button, input, select {
   pointer-events: none;
 }
 
-.hier-add {
+.hier-add,
+.hier-tool {
   width: 22px;
   height: 22px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  padding: 0;
   border: 1px solid var(--u-border-2);
   background: var(--u-input);
   color: var(--u-text);
@@ -810,7 +815,8 @@ button, input, select {
   line-height: 1;
 }
 
-.hier-add:hover { background: var(--u-hover); }
+.hier-add:hover,
+.hier-tool:hover { background: var(--u-hover); color: var(--u-text-bright); }
 
 .hier-row {
   position: relative;
@@ -821,9 +827,15 @@ button, input, select {
   cursor: grab;
   white-space: nowrap;
   transition: background 0.1s ease, color 0.1s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 22px;
 }
 
 .hier-row:hover { background: var(--u-hover); }
+.hier-row:focus-visible {
+  outline: 1px solid #77b8e5;
+  outline-offset: -1px;
+}
 .hier-row.selected {
   background: var(--u-selected);
   color: #fff;
@@ -882,12 +894,31 @@ button, input, select {
   font-size: 12px;
   line-height: 14px;
   text-align: center;
+  display: grid;
+  place-items: center;
 }
 
 .hier-name {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.hier-row.search-match .hier-name {
+  color: #f4f8fb;
+  font-weight: 600;
+}
+
+.hier-match-badge {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 1px 4px;
+  border: 1px solid rgba(105, 180, 230, 0.38);
+  border-radius: 2px;
+  color: #9ed5fa;
+  font-size: 9px;
+  line-height: 1.25;
+  text-transform: uppercase;
 }
 
 .hier-rename {
@@ -953,6 +984,64 @@ button, input, select {
 .hier-ctx button:hover:not(:disabled) .hint { color: rgba(255, 255, 255, 0.7); }
 
 /* Inspector */
+.insp-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px 24px;
+  gap: 4px;
+  align-items: center;
+  padding: 5px 6px;
+  border-bottom: 1px solid #1f1f1f;
+  background: #303030;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.insp-toolbar > button,
+.insp-search > button {
+  width: 24px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #222;
+  background: #363636;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.insp-toolbar > button:hover,
+.insp-search > button:hover { color: #fff; background: #484848; }
+
+.insp-search {
+  min-width: 0;
+  height: 22px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  padding-left: 5px;
+  border: 1px solid #202020;
+  border-bottom-color: #555;
+  background: #262626;
+  color: #8e9ca7;
+}
+
+.insp-search:focus-within { border-color: #4f86ad; }
+
+.insp-search input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #ddd;
+  font: inherit;
+  font-size: 11px;
+}
+
+.insp-search > button { border: none; background: transparent; }
+
 .insp-header {
   padding: 7px 8px 8px;
   border-bottom: 1px solid #202020;
@@ -2194,6 +2283,33 @@ body.insp-scrubbing * {
   border-radius: 3px;
 }
 
+.add-comp-search {
+  position: sticky;
+  top: -4px;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  margin: 0 4px 4px;
+  padding: 3px 5px;
+  border: 1px solid #202020;
+  border-bottom-color: #555;
+  background: #292929;
+  color: #8e9ca7;
+}
+
+.add-comp-search:focus-within { border-color: #4f86ad; }
+
+.add-comp-search input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #ddd;
+  font: inherit;
+}
+
 .add-comp-item {
   display: flex;
   flex-direction: column;
@@ -3124,6 +3240,8 @@ body.insp-scrubbing * {
   color: #c9ccd1;
   font-size: 21px;
   line-height: 1;
+  display: grid;
+  place-items: center;
 }
 
 .asset-reference-dialog > header button:hover {
@@ -8728,9 +8846,9 @@ input[type='checkbox']:disabled { opacity: 0.4; cursor: default; }
 .hier-row:hover .hier-active,
 .hier-row.selected .hier-active { opacity: 1; }
 
-/* — Hierarchy icons: colorful emoji → Unity monochrome glyphs — */
-.hier-icon { filter: grayscale(1) brightness(1.12); }
-.hier-row.selected .hier-icon { filter: grayscale(1) brightness(1.5); }
+/* Hierarchy icons use one shared line-icon vocabulary. */
+.hier-icon { color: #9baab6; }
+.hier-row.selected .hier-icon { color: #e1edf5; }
 
 /* — Range sliders: native → Unity thin track + beveled thumb — */
 input[type='range'] {

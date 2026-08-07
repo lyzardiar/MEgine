@@ -175,12 +175,16 @@ Verified boundaries and remaining work:
 - 顶部 `Window > Figma Settings` 统一管理非敏感导入参数；Figma Frame 可经预览、revision 门禁和一次 Undo 转换为现有 MEngine UI 层级，CLI/MCP/HTTP 共用同一设置与导入协议。
 - `GameObject > UI > Templates` 新增 Inventory、Leaderboard、Shop 三套由现有布局组件组成的响应式游戏 UI 模板。
 - `ParticleEmitter2D` 新增 burst 与 drag，提供 Fire、Smoke、Spark Burst、Magic Aura、Snow 五个预设；新增 `TrailRenderer2D`，Editor 2D Scene、原生 Runtime/Player、Inspector、Agent 类型和 Behaviour token 已贯通。
+- Profiler 已接入原生 Editor Host/RHI 调用树、带来源与确定性的内存分类、实际渲染资源表，并通过 Agent `profiler.get_samples.nativeLatest` 有界读取。
+- Transform Gizmo 已统一绘制/命中几何，补齐轴标签、平面精确拖动、中心等比缩放、Shift 精细调节和三维吸附；Hierarchy/Inspector 已完成线性图标、元数据搜索、标准树键盘导航、组件/属性过滤和统一折叠控制。
+- 粒子与拖尾的 Texture/Sprite Slice、Tint、Blend 已进入 Editor 预览及原生 Runtime Frame Compiler；项目纹理的隐藏 Game View 像素回归确认赋值会改变实际输出。
 
 当前验证门禁：
 
-- Editor 全量测试 835 项通过。
+- Editor 全量测试 846 项通过。
 - `cargo check --workspace --all-targets`、TypeScript/Vite 生产构建和 Tauri Debug 构建通过。
 - 隐藏 WebView2 像素回归确认粒子跨帧变化和拖尾开关差异；验证期间窗口始终 `visible=false`、`focused=false`，未操作前台编辑器。
+- 新构建的 Debug 后台实例完成 Hierarchy/Inspector 语义交互、Gizmo/Profiler/纹理粒子完整窗口截图；原生 Profiler 样本含 15 个调用树节点、5 个内存分类和 2 个真实资源，截图继续标记 `backgroundSafe=true`。
 
 已知边界：
 
