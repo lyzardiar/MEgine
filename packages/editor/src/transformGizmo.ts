@@ -44,24 +44,25 @@ export type GizmoHit =
 
 const AXES: GizmoAxis[] = ['x', 'y', 'z'];
 const AXIS_COLORS: Record<GizmoAxis, string> = {
-  x: '#e94b4b',
-  y: '#79c447',
-  z: '#4285e5',
+  x: '#f05252',
+  y: '#8ac748',
+  z: '#4b8cf5',
 };
 const PLANE_COLORS: Record<GizmoPlane, string> = {
   xy: AXIS_COLORS.z,
   xz: AXIS_COLORS.y,
   yz: AXIS_COLORS.x,
 };
-const HOVER = '#ffc640';
-const ACTIVE = '#fff1a3';
-const AXIS_LENGTH = 72;
-const AXIS_GAP = 7;
-const ARROW_LENGTH = 11;
-const PLANE_OFFSET = 13;
-const PLANE_SIZE = 12;
-const ROTATE_RADIUS = 60;
-const HIT_AXIS = 8;
+const HOVER = '#ffd34d';
+const ACTIVE = '#fff3a6';
+const AXIS_LENGTH = 94;
+const AXIS_GAP = 8;
+const ARROW_LENGTH = 17;
+const ARROW_WIDTH = 13;
+const PLANE_OFFSET = 17;
+const PLANE_SIZE = 16;
+const ROTATE_RADIUS = 72;
+const HIT_AXIS = 10;
 const HIT_RING = 9;
 
 function samePart(left: GizmoPart | null, right: GizmoPart): boolean {
@@ -82,7 +83,14 @@ function partColor(part: GizmoPart, hover: GizmoPart | null, active: GizmoPart |
 }
 
 function projectedAxis(origin: Vec3, direction: Vec3, camera: Camera, viewport: Vp, center: Point) {
-  const projected = project(add(origin, direction), camera, viewport);
+  // Only the direction comes from world space; the visible handle remains screen-sized.
+  // Scale the direction sample with distance so distant objects do not lose whole axes.
+  const cameraDistance = Math.hypot(...sub(origin, camera.eye));
+  const projected = project(
+    add(origin, scale(direction, Math.max(1, cameraDistance * 0.04))),
+    camera,
+    viewport,
+  );
   if (!projected) return null;
   const dx = projected.x - center.x;
   const dy = projected.y - center.y;
@@ -93,6 +101,7 @@ function projectedAxis(origin: Vec3, direction: Vec3, camera: Camera, viewport: 
     unit,
     tip: { x: center.x + unit.x * AXIS_LENGTH, y: center.y + unit.y * AXIS_LENGTH },
     angle: Math.atan2(unit.y, unit.x),
+    depth: projected.depth,
   };
 }
 
@@ -107,8 +116,8 @@ function outlinedLine(
   context.beginPath();
   context.moveTo(start.x, start.y);
   context.lineTo(end.x, end.y);
-  context.strokeStyle = 'rgba(18,18,18,0.72)';
-  context.lineWidth = width + 1.5;
+  context.strokeStyle = 'rgba(12,12,12,0.88)';
+  context.lineWidth = width + 2.5;
   context.stroke();
   context.strokeStyle = color;
   context.lineWidth = width;
@@ -116,19 +125,19 @@ function outlinedLine(
 }
 
 function arrowHead(context: CanvasRenderingContext2D, tip: Point, angle: number, color: string) {
+  const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+  const normal = { x: -direction.y, y: direction.x };
+  const base = {
+    x: tip.x - direction.x * ARROW_LENGTH,
+    y: tip.y - direction.y * ARROW_LENGTH,
+  };
   context.beginPath();
   context.moveTo(tip.x, tip.y);
-  context.lineTo(
-    tip.x - ARROW_LENGTH * Math.cos(angle - 0.48),
-    tip.y - ARROW_LENGTH * Math.sin(angle - 0.48),
-  );
-  context.lineTo(
-    tip.x - ARROW_LENGTH * Math.cos(angle + 0.48),
-    tip.y - ARROW_LENGTH * Math.sin(angle + 0.48),
-  );
+  context.lineTo(base.x + normal.x * ARROW_WIDTH * 0.5, base.y + normal.y * ARROW_WIDTH * 0.5);
+  context.lineTo(base.x - normal.x * ARROW_WIDTH * 0.5, base.y - normal.y * ARROW_WIDTH * 0.5);
   context.closePath();
-  context.lineWidth = 1;
-  context.strokeStyle = 'rgba(18,18,18,0.8)';
+  context.lineWidth = 2;
+  context.strokeStyle = 'rgba(12,12,12,0.9)';
   context.stroke();
   context.fillStyle = color;
   context.fill();
@@ -161,10 +170,13 @@ function drawPlane(
   context.moveTo(corners[0].x, corners[0].y);
   for (const corner of corners.slice(1)) context.lineTo(corner.x, corner.y);
   context.closePath();
-  context.fillStyle = `rgba(${channels.join(',')},${hot ? 0.52 : 0.2})`;
+  context.fillStyle = `rgba(${channels.join(',')},${hot ? 0.58 : 0.3})`;
   context.fill();
+  context.strokeStyle = 'rgba(12,12,12,0.78)';
+  context.lineWidth = hot ? 4 : 3;
+  context.stroke();
   context.strokeStyle = color;
-  context.lineWidth = hot ? 2 : 1;
+  context.lineWidth = hot ? 2.5 : 1.5;
   context.stroke();
 }
 
@@ -203,12 +215,42 @@ function drawEllipse(
     else context.lineTo(point.x, point.y);
   }
   context.closePath();
-  context.strokeStyle = 'rgba(18,18,18,0.72)';
-  context.lineWidth = hot ? 4.5 : 3.5;
+  context.strokeStyle = 'rgba(12,12,12,0.82)';
+  context.lineWidth = hot ? 6 : 5;
   context.stroke();
   context.strokeStyle = color;
-  context.lineWidth = hot ? 3 : 2;
+  context.lineWidth = hot ? 3.5 : 2.5;
   context.stroke();
+}
+
+function drawScaleCap(
+  context: CanvasRenderingContext2D,
+  tip: Point,
+  color: string,
+  hot: boolean,
+) {
+  const half = hot ? 7 : 6;
+  context.fillStyle = 'rgba(12,12,12,0.9)';
+  context.fillRect(tip.x - half - 2, tip.y - half - 2, half * 2 + 4, half * 2 + 4);
+  context.fillStyle = color;
+  context.fillRect(tip.x - half, tip.y - half, half * 2, half * 2);
+}
+
+function drawCenterHandle(
+  context: CanvasRenderingContext2D,
+  center: Point,
+  color: string,
+  hot: boolean,
+) {
+  const half = hot ? 7 : 6;
+  context.beginPath();
+  context.rect(center.x - half - 2, center.y - half - 2, half * 2 + 4, half * 2 + 4);
+  context.fillStyle = 'rgba(12,12,12,0.9)';
+  context.fill();
+  context.beginPath();
+  context.rect(center.x - half, center.y - half, half * 2, half * 2);
+  context.fillStyle = color;
+  context.fill();
 }
 
 export function drawTransformGizmo(
@@ -223,12 +265,16 @@ export function drawTransformGizmo(
 ): GizmoHit[] {
   const projectedOrigin = project(worldOrigin, camera, viewport);
   if (!projectedOrigin) return [];
+  context.save();
   const center = { x: projectedOrigin.x, y: projectedOrigin.y };
   const basis = transformBasis(rotation);
   const directions: Record<GizmoAxis, Vec3> = { x: basis.right, y: basis.up, z: basis.forward };
   const projected = Object.fromEntries(
     AXES.map((axis) => [axis, projectedAxis(worldOrigin, directions[axis], camera, viewport, center)]),
   ) as Record<GizmoAxis, ReturnType<typeof projectedAxis>>;
+  const drawAxes = [...AXES].sort(
+    (left, right) => (projected[right]?.depth ?? 0) - (projected[left]?.depth ?? 0),
+  );
   const hits: GizmoHit[] = [];
 
   if (mode === 'translate') {
@@ -247,7 +293,11 @@ export function drawTransformGizmo(
   }
 
   if (mode === 'rotate') {
-    for (const axis of AXES) {
+    context.beginPath();
+    context.arc(center.x, center.y, ROTATE_RADIUS - 1, 0, Math.PI * 2);
+    context.fillStyle = 'rgba(10,10,10,0.07)';
+    context.fill();
+    for (const axis of drawAxes) {
       const otherAxes = AXES.filter((candidate) => candidate !== axis);
       const first = projected[otherAxes[0]]?.unit;
       const second = projected[otherAxes[1]]?.unit;
@@ -257,19 +307,19 @@ export function drawTransformGizmo(
       drawEllipse(context, center, ROTATE_RADIUS, first, second, color, samePart(hover, part) || samePart(active, part));
       hits.push({ kind: 'axis', axis, shape: 'ellipse', center, radius: ROTATE_RADIUS, u: first, v: second });
     }
-    const radius = ROTATE_RADIUS + 13;
+    const radius = ROTATE_RADIUS + 14;
     const part: GizmoPart = { kind: 'center' };
     context.beginPath();
     context.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    context.strokeStyle = 'rgba(18,18,18,0.72)';
-    context.lineWidth = samePart(hover, part) || samePart(active, part) ? 4.5 : 3.5;
+    context.strokeStyle = 'rgba(12,12,12,0.82)';
+    context.lineWidth = samePart(hover, part) || samePart(active, part) ? 6 : 5;
     context.stroke();
     context.strokeStyle = partColor(part, hover, active);
-    context.lineWidth -= 1.5;
+    context.lineWidth -= 2.5;
     context.stroke();
     hits.push({ kind: 'center', shape: 'annulus', center, radius, band: HIT_RING });
   } else {
-    for (const axis of AXES) {
+    for (const axis of drawAxes) {
       const handle = projected[axis];
       if (!handle) continue;
       const part: GizmoPart = { kind: 'axis', axis };
@@ -285,28 +335,20 @@ export function drawTransformGizmo(
             y: handle.tip.y - handle.unit.y * (ARROW_LENGTH - 2),
           }
         : handle.tip;
-      outlinedLine(context, start, end, color, hot ? 3.5 : 2);
+      outlinedLine(context, start, end, color, hot ? 4.5 : 3);
       if (mode === 'translate') arrowHead(context, handle.tip, handle.angle, color);
-      else {
-        const size = hot ? 5 : 4;
-        context.fillStyle = 'rgba(18,18,18,0.8)';
-        context.fillRect(handle.tip.x - size - 1, handle.tip.y - size - 1, size * 2 + 2, size * 2 + 2);
-        context.fillStyle = color;
-        context.fillRect(handle.tip.x - size, handle.tip.y - size, size * 2, size * 2);
-      }
+      else drawScaleCap(context, handle.tip, color, hot);
       hits.push({ kind: 'axis', axis, shape: 'segment', start, end: handle.tip });
     }
 
     const part: GizmoPart = { kind: 'center' };
     const hot = samePart(hover, part) || samePart(active, part);
-    const half = hot ? 5 : 4;
-    context.fillStyle = 'rgba(18,18,18,0.82)';
-    context.fillRect(center.x - half - 1, center.y - half - 1, half * 2 + 2, half * 2 + 2);
-    context.fillStyle = partColor(part, hover, active);
-    context.fillRect(center.x - half, center.y - half, half * 2, half * 2);
+    const half = hot ? 7 : 6;
+    drawCenterHandle(context, center, partColor(part, hover, active), hot);
     hits.push({ kind: 'center', shape: 'circle', center, radius: half + 4, band: 0 });
   }
 
+  context.restore();
   return hits;
 }
 

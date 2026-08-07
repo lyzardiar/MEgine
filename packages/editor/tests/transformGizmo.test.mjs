@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { project } from '../src/math3d.ts';
 import {
+  drawTransformGizmo,
   gizmoPartEquals,
   hitTestTransformGizmo,
   worldDeltaOnPlane,
@@ -10,6 +11,18 @@ import {
 
 const viewport = { x: 0, y: 0, w: 800, h: 600 };
 const camera = { eye: [3, 4, 7], target: [0, 0, 0], fovYDeg: 60 };
+
+function drawingContext() {
+  return new Proxy({}, {
+    get(target, key) {
+      return key in target ? target[key] : () => {};
+    },
+    set(target, key, value) {
+      target[key] = value;
+      return true;
+    },
+  });
+}
 
 test('plane drag solves projected axes together without double-counting oblique motion', () => {
   const origin = [0, 0, 0];
@@ -53,4 +66,28 @@ test('gizmo parts compare by stable semantic identity', () => {
   assert.equal(gizmoPartEquals({ kind: 'axis', axis: 'x' }, { kind: 'axis', axis: 'x' }), true);
   assert.equal(gizmoPartEquals({ kind: 'axis', axis: 'x' }, { kind: 'axis', axis: 'y' }), false);
   assert.equal(gizmoPartEquals({ kind: 'center' }, { kind: 'center' }), true);
+});
+
+test('Unity-style gizmos stay large enough to read and hit at any camera distance', () => {
+  for (const sceneCamera of [camera, { ...camera, eye: [30, 40, 70] }]) {
+    const translate = drawTransformGizmo(
+      drawingContext(), sceneCamera, viewport, [0, 0, 0], null, 'translate', null, null,
+    );
+    const axes = translate.filter((hit) => hit.kind === 'axis' && hit.shape === 'segment');
+    const planes = translate.filter((hit) => hit.kind === 'plane');
+    assert.equal(axes.length, 3);
+    assert.equal(planes.length, 3);
+    for (const axis of axes) {
+      assert.ok(Math.hypot(axis.end.x - axis.start.x, axis.end.y - axis.start.y) >= 84);
+    }
+    assert.equal(translate.find((hit) => hit.kind === 'center')?.radius, 10);
+  }
+
+  const rotate = drawTransformGizmo(
+    drawingContext(), camera, viewport, [0, 0, 0], null, 'rotate', null, null,
+  );
+  const rings = rotate.filter((hit) => hit.kind === 'axis' && hit.shape === 'ellipse');
+  assert.equal(rings.length, 3);
+  assert.ok(rings.every((ring) => ring.radius === 72));
+  assert.equal(rotate.find((hit) => hit.kind === 'center')?.radius, 86);
 });
