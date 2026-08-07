@@ -21,6 +21,10 @@ const {
   buildCanvasPlanPage,
   resolveCanvasPlanEntity,
 } = await server.ssrLoadModule('/src/ui/canvasPlan.ts');
+const {
+  artboardFrameAt,
+  layoutCanvasArtboards,
+} = await server.ssrLoadModule('/src/ui/canvasArtboardLayout.ts');
 test.after(() => server.close());
 
 const rect = (overrides = {}) => ({
@@ -145,6 +149,15 @@ test('Canvas artboards normalize legacy input, update Game Resolution, dedupe, a
     preferences.artboards.find((entry) => entry.key === 'phone')?.safeArea,
     { x: 0, y: 80, width: 1080, height: 1840 },
   );
+  const phoneActive = normalizeCanvasWorkspacePreferences({
+    activeKey: 'phone',
+    artboards: [
+      { key: 'game', label: 'Game', width: 1920, height: 1080 },
+      { key: 'phone', label: 'Phone', width: 1080, height: 1920 },
+    ],
+  }, { width: 1080, height: 1920 });
+  assert.equal(phoneActive.activeKey, 'phone');
+  assert.equal(phoneActive.artboards.length, 2);
 });
 
 test('Canvas plan derives all deterministic diagnostics from the shared layout result', () => {
@@ -237,4 +250,55 @@ test('Canvas plan paging is bounded, revisioned, and follows the selected Canvas
   assert.equal(second.planRevision, first.planRevision);
   assert.match(first.planRevision, /^canvas-plan-v1-12-[0-9a-f]{16}$/);
   assert.ok(first.artboards.length >= 3);
+});
+
+test('Canvas artboard camera fits all, frames active, and supports exact 1:1 layout', () => {
+  const artboards = [
+    { key: 'desktop', label: 'Desktop', width: 1920, height: 1080 },
+    { key: 'tablet', label: 'Tablet', width: 1024, height: 768 },
+    { key: 'phone', label: 'Phone', width: 1080, height: 1920 },
+  ];
+  const fitAll = layoutCanvasArtboards({
+    viewportWidth: 1200,
+    viewportHeight: 700,
+    artboards,
+    activeKey: 'desktop',
+    fitMode: 'all',
+    customScale: 1,
+    pan: [0, 0],
+  });
+  assert.ok(fitAll.scale < 1);
+  assert.ok(fitAll.frames.every((frame) => (
+    frame.x >= -0.01
+    && frame.y >= -0.01
+    && frame.x + frame.w <= 1200.01
+    && frame.y + frame.h <= 700.01
+  )));
+
+  const fitActive = layoutCanvasArtboards({
+    viewportWidth: 1200,
+    viewportHeight: 700,
+    artboards,
+    activeKey: 'phone',
+    fitMode: 'active',
+    customScale: 1,
+    pan: [0, 0],
+  });
+  const phone = fitActive.frames.find((frame) => frame.active);
+  assert.ok(Math.abs(phone.x + phone.w * 0.5 - 600) < 0.01);
+  assert.ok(Math.abs(phone.y + phone.h * 0.5 - 350) < 0.01);
+
+  const oneToOne = layoutCanvasArtboards({
+    viewportWidth: 1200,
+    viewportHeight: 700,
+    artboards,
+    activeKey: 'tablet',
+    fitMode: 'custom',
+    customScale: 1,
+    pan: [20, -10],
+  });
+  const tablet = oneToOne.frames.find((frame) => frame.active);
+  assert.equal(tablet.w, 1024);
+  assert.equal(tablet.h, 768);
+  assert.equal(artboardFrameAt(oneToOne.frames, tablet.x + 1, tablet.y + 1).key, 'tablet');
 });

@@ -21,6 +21,7 @@ export type CanvasWorkspacePreferences = {
   artboards: CanvasArtboardPreset[];
   showSafeArea: boolean;
   showDiagnostics: boolean;
+  fitMode: 'all' | 'active' | 'custom';
   zoom: number;
   pan: [number, number];
 };
@@ -95,15 +96,16 @@ export function defaultCanvasArtboards(
 export function normalizeCanvasArtboards(
   raw: readonly CanvasArtboardPreset[] | null | undefined,
   gameResolution: GameResolution | null = FALLBACK_GAME_RESOLUTION,
+  syncGameResolution = true,
 ): CanvasArtboardPreset[] {
   const candidates = Array.isArray(raw) && raw.length > 0
     ? [...raw]
     : defaultCanvasArtboards(gameResolution);
   const game = gameResolution ?? FALLBACK_GAME_RESOLUTION;
   const gameIndex = candidates.findIndex((entry) => entry?.key === 'game');
-  if (gameIndex >= 0) {
+  if (gameIndex >= 0 && syncGameResolution) {
     candidates[gameIndex] = { ...candidates[gameIndex], ...game, key: 'game' };
-  } else {
+  } else if (gameIndex < 0) {
     candidates.unshift({ key: 'game', label: 'Game Resolution', ...game });
   }
   const dimensions = new Set<string>();
@@ -126,8 +128,12 @@ export function normalizeCanvasWorkspacePreferences(
   raw: CanvasWorkspacePreferencesPatch | null | undefined,
   gameResolution: GameResolution | null = FALLBACK_GAME_RESOLUTION,
 ): CanvasWorkspacePreferences {
-  const artboards = normalizeCanvasArtboards(raw?.artboards, gameResolution);
   const requestedActiveKey = String(raw?.activeKey ?? 'game');
+  const artboards = normalizeCanvasArtboards(
+    raw?.artboards,
+    gameResolution,
+    requestedActiveKey === 'game',
+  );
   const activeKey = artboards.some((entry) => entry.key === requestedActiveKey)
     ? requestedActiveKey
     : artboards[0].key;
@@ -146,6 +152,9 @@ export function normalizeCanvasWorkspacePreferences(
     artboards,
     showSafeArea: raw?.showSafeArea !== false,
     showDiagnostics: raw?.showDiagnostics !== false,
+    fitMode: raw?.fitMode === 'active' || raw?.fitMode === 'custom'
+      ? raw.fitMode
+      : 'all',
     zoom,
     pan,
   };

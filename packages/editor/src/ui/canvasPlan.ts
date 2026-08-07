@@ -164,6 +164,13 @@ function descendantsOf(entities: readonly UiEnt[], root: number): Set<number> {
   return result;
 }
 
+export function canvasPlanEntityIds(
+  entities: readonly UiEnt[],
+  canvasEntity: number,
+): Set<number> {
+  return descendantsOf(entities, canvasEntity);
+}
+
 function bounds(rect: Rect): CanvasPlanBounds {
   return { x: rect.x, y: rect.y, width: rect.w, height: rect.h };
 }

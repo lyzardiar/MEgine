@@ -432,7 +432,7 @@ export interface EditorState {
   /** Compact Canvas Workspace state; the full draw plan is available through view.canvas_plan. */
   canvasWorkspace: Pick<
     CanvasWorkspacePreferences,
-    'enabled' | 'activeKey' | 'showSafeArea' | 'showDiagnostics'
+    'enabled' | 'activeKey' | 'showSafeArea' | 'showDiagnostics' | 'fitMode'
   > & {
     artboards: Array<{ key: string; label: string; width: number; height: number }>;
   };

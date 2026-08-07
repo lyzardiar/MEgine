@@ -1412,6 +1412,7 @@ class AgentBridge {
         activeKey: canvasWorkspace.activeKey,
         showSafeArea: canvasWorkspace.showSafeArea,
         showDiagnostics: canvasWorkspace.showDiagnostics,
+        fitMode: canvasWorkspace.fitMode,
         artboards: canvasWorkspace.artboards.map(({ key, label, width, height }) => ({
           key,
           label,

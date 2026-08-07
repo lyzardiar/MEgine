@@ -856,6 +856,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       },
       showSafeArea: booleanValue('Show safe-area bounds on artboards'),
       showDiagnostics: booleanValue('Show deterministic Canvas diagnostics'),
+      fitMode: { type: 'string', enum: ['all', 'active', 'custom'] },
       zoom: { type: 'number', minimum: 0.1, maximum: 8 },
       pan: {
         type: 'array',
@@ -870,6 +871,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
         { required: ['artboards'] },
         { required: ['showSafeArea'] },
         { required: ['showDiagnostics'] },
+        { required: ['fitMode'] },
         { required: ['zoom'] },
         { required: ['pan'] },
       ],

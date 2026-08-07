@@ -3486,6 +3486,7 @@ const TOOLS = [
           },
           showSafeArea: { type: 'boolean' },
           showDiagnostics: { type: 'boolean' },
+          fitMode: { type: 'string', enum: ['all', 'active', 'custom'] },
           zoom: { type: 'number', minimum: 0.1, maximum: 8 },
           pan: {
             type: 'array',
@@ -3500,6 +3501,7 @@ const TOOLS = [
           { required: ['artboards'] },
           { required: ['showSafeArea'] },
           { required: ['showDiagnostics'] },
+          { required: ['fitMode'] },
           { required: ['zoom'] },
           { required: ['pan'] },
         ],

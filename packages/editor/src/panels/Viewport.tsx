@@ -134,6 +134,19 @@ import {
   updateSceneViewPreferences,
   type SceneViewPreferencesChangeDetail,
 } from '../sceneViewPreferences';
+import { normalizeCanvasWorkspacePreferences } from '../canvasWorkspace';
+import {
+  artboardFrameAt,
+  artboardFrameVisible,
+  layoutCanvasArtboards,
+  normalizeCanvasWorkspaceScale,
+  type CanvasArtboardFrame,
+} from '../ui/canvasArtboardLayout';
+import {
+  buildCanvasArtboardPlan,
+  canvasPlanEntityIds,
+  resolveCanvasPlanEntity,
+} from '../ui/canvasPlan';
 import {
   marqueeHitIds,
   normalizeMarquee,
@@ -249,6 +262,61 @@ function drawCanvasGrid(
       : 'rgba(151, 181, 198, 0.11)';
     ctx.lineWidth = 1;
     ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawArtboardBackground(
+  ctx: CanvasRenderingContext2D,
+  frame: CanvasArtboardFrame,
+): void {
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
+  ctx.shadowBlur = frame.active ? 16 : 10;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = '#20242b';
+  ctx.fillRect(frame.x, frame.y, frame.w, frame.h);
+  ctx.restore();
+}
+
+function drawArtboardOverlay(
+  ctx: CanvasRenderingContext2D,
+  frame: CanvasArtboardFrame,
+  diagnosticCount: number,
+  showSafeArea: boolean,
+): void {
+  ctx.save();
+  ctx.strokeStyle = frame.active ? '#4ca7ff' : '#59616d';
+  ctx.lineWidth = frame.active ? 2 : 1;
+  ctx.strokeRect(frame.x + 0.5, frame.y + 0.5, frame.w - 1, frame.h - 1);
+  if (showSafeArea && frame.safeArea) {
+    ctx.strokeStyle = 'rgba(77, 210, 158, 0.9)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(
+      frame.x + frame.safeArea.x * frame.scale + 0.5,
+      frame.y + frame.safeArea.y * frame.scale + 0.5,
+      frame.safeArea.width * frame.scale - 1,
+      frame.safeArea.height * frame.scale - 1,
+    );
+    ctx.setLineDash([]);
+  }
+  ctx.fillStyle = frame.active ? '#d9efff' : '#bdc4ce';
+  ctx.font = `${frame.active ? 600 : 500} 11px sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const title = `${frame.label}  ${frame.width} × ${frame.height}  ${Math.round(frame.scale * 100)}%`;
+  ctx.fillText(title, frame.x, frame.y - 12);
+  if (diagnosticCount > 0) {
+    const label = `${diagnosticCount}`;
+    const badgeWidth = Math.max(18, ctx.measureText(label).width + 10);
+    ctx.fillStyle = '#b86a32';
+    ctx.beginPath();
+    ctx.roundRect(frame.x + frame.w - badgeWidth, frame.y - 20, badgeWidth, 16, 8);
+    ctx.fill();
+    ctx.fillStyle = '#fff4e8';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, frame.x + frame.w - badgeWidth * 0.5, frame.y - 12);
   }
   ctx.restore();
 }
@@ -528,6 +596,23 @@ export function Viewport(props: {
   const rectGizmoHitsRef = useRef<RectGizmoHit[]>([]);
   const linePointHitsRef = useRef<LinePointHit[]>([]);
   const uiItemsRef = useRef<UiDrawItem[]>([]);
+  const canvasWorkspaceActiveRef = useRef(false);
+  const canvasWorkspaceEntityRef = useRef<number | null>(null);
+  const artboardFramesRef = useRef<CanvasArtboardFrame[]>([]);
+  const secondaryArtboardCacheRef = useRef(new Map<string, {
+    canvas: HTMLCanvasElement;
+    entities: readonly Ent[];
+    canvasEntity: number;
+    selectionKey: string;
+    width: number;
+    height: number;
+  }>());
+  const artboardDiagnosticCacheRef = useRef<{
+    entities: readonly Ent[] | null;
+    canvasEntity: number | null;
+    signature: string;
+    counts: Map<string, number>;
+  }>({ entities: null, canvasEntity: null, signature: '', counts: new Map() });
   const uiLayoutScaleRef = useRef(1);
   const usingRectGizmoRef = useRef(false);
   const uiHoverRef = useRef<number | null>(null);
@@ -734,6 +819,7 @@ export function Viewport(props: {
     | null
     | { type: 'orbit'; lx: number; ly: number }
     | { type: 'pan'; lx: number; ly: number }
+    | { type: 'workspacePan'; lx: number; ly: number }
     | {
         type: 'linePoint';
         lx: number;
@@ -826,6 +912,24 @@ export function Viewport(props: {
   );
   const scene2DRef = useRef(scene2D);
   scene2DRef.current = scene2D;
+  const [canvasWorkspace, setCanvasWorkspace] = useState(
+    () => normalizeCanvasWorkspacePreferences(
+      readSceneViewPreferences().canvasWorkspace,
+      props.gameResolution,
+    ),
+  );
+  const canvasWorkspaceRef = useRef(canvasWorkspace);
+  canvasWorkspaceRef.current = normalizeCanvasWorkspacePreferences(
+    canvasWorkspace,
+    props.gameResolution,
+  );
+  const workspaceScaleRef = useRef(canvasWorkspace.zoom);
+  const workspacePanRef = useRef<[number, number]>([...canvasWorkspace.pan]);
+  const [workspaceZoomPercent, setWorkspaceZoomPercent] = useState(
+    Math.round(canvasWorkspace.zoom * 100),
+  );
+  const workspaceZoomPercentRef = useRef(workspaceZoomPercent);
+  const spacePressedRef = useRef(false);
   const [sceneGrid, setSceneGrid] = useState(
     () => readSceneViewPreferences().gridVisible,
   );
@@ -1046,6 +1150,20 @@ export function Viewport(props: {
       ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay)
       : null;
     const scene2DActive = !isGame && scene2DRef.current;
+    const workspacePreferences = normalizeCanvasWorkspacePreferences(
+      canvasWorkspaceRef.current,
+      p.gameResolution,
+    );
+    const workspaceCanvasEntity = scene2DActive && workspacePreferences.enabled
+      ? resolveCanvasPlanEntity(
+          p.entities,
+          undefined,
+          p.selectedIds ?? (p.selected == null ? [] : [p.selected]),
+        )
+      : null;
+    const canvasWorkspaceActive = workspaceCanvasEntity != null;
+    canvasWorkspaceActiveRef.current = canvasWorkspaceActive;
+    canvasWorkspaceEntityRef.current = workspaceCanvasEntity;
     const cam: Camera = isGame
       ? gameCamera ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 }
       : {
@@ -1060,6 +1178,7 @@ export function Viewport(props: {
     lastCameraRef.current = cam;
     if (
       !isGame
+      && !canvasWorkspaceActive
       && '__TAURI_INTERNALS__' in window
       && !nativeSceneRequestRef.current.inFlight
       && now - nativeSceneRequestRef.current.lastRequestAt
@@ -2075,25 +2194,132 @@ export function Viewport(props: {
           ctx.restore();
         }
       } else {
-        // Scene Canvas is a world quad whose authored size is the logical Game resolution.
-        const gameBox = letterbox(pw, ph, p.gameResolution);
-        const sceneCanvasSize = sceneCanvasLogicalSize(p.gameResolution, gameBox);
-        const { items: screenUiItems, layoutScale } = layoutUiScene3D(
-          p.entities,
-          cam,
-          vp,
-          selSet,
-          sceneCanvasSize,
-          textMeasurement,
-        );
-        const uiItems = [
-          ...layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement),
-          ...screenUiItems,
-        ];
+        let uiItems: UiDrawItem[];
+        let layoutScale: number;
+        let workspaceFrames: CanvasArtboardFrame[] = [];
+        if (canvasWorkspaceActive && workspaceCanvasEntity != null) {
+          ctx.fillStyle = '#171a1f';
+          ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+          const artboardLayout = layoutCanvasArtboards({
+            viewportWidth: vp.w,
+            viewportHeight: vp.h,
+            artboards: workspacePreferences.artboards,
+            activeKey: workspacePreferences.activeKey,
+            fitMode: workspacePreferences.fitMode,
+            customScale: workspaceScaleRef.current,
+            pan: workspacePanRef.current,
+          });
+          workspaceFrames = artboardLayout.frames.map((frame) => ({
+            ...frame,
+            x: frame.x + vp.x,
+            y: frame.y + vp.y,
+          }));
+          artboardFramesRef.current = workspaceFrames;
+          for (const key of secondaryArtboardCacheRef.current.keys()) {
+            if (!workspaceFrames.some((frame) => frame.key === key)) {
+              secondaryArtboardCacheRef.current.delete(key);
+            }
+          }
+          workspaceScaleRef.current = artboardLayout.scale;
+          const zoomPercent = Math.round(artboardLayout.scale * 100);
+          if (zoomPercent !== workspaceZoomPercentRef.current) {
+            workspaceZoomPercentRef.current = zoomPercent;
+            setWorkspaceZoomPercent(zoomPercent);
+          }
+          const subtree = canvasPlanEntityIds(p.entities, workspaceCanvasEntity);
+          const canvasEntities = p.entities.filter((entity) => subtree.has(entity.entity));
+          const activeFrame = workspaceFrames.find((frame) => frame.active)
+            ?? workspaceFrames[0];
+          const activeCanvas = p.entities.find((entity) => entity.entity === workspaceCanvasEntity);
+          layoutScale = activeFrame
+            ? canvasDisplayScaleFactor(
+                activeCanvas?.components.CanvasScaler,
+                activeFrame.w,
+                activeFrame.h,
+                activeFrame.width,
+                activeFrame.height,
+              )
+            : 1;
+          const selectionKey = [...selSet].sort((left, right) => left - right).join(',');
+          for (const frame of workspaceFrames) {
+            if (!artboardFrameVisible(frame, pw, ph)) continue;
+            drawArtboardBackground(ctx, frame);
+            if (frame.active) continue;
+            const cache = secondaryArtboardCacheRef.current.get(frame.key);
+            const cacheValid = cache != null
+              && cache.entities === p.entities
+              && cache.canvasEntity === workspaceCanvasEntity
+              && cache.selectionKey === selectionKey
+              && Math.abs(cache.width - frame.w) < 0.5
+              && Math.abs(cache.height - frame.h) < 0.5;
+            let drawable = cache;
+            if (!cacheValid && !draggingRef.current) {
+              const offscreen = document.createElement('canvas');
+              offscreen.width = Math.max(1, Math.round(frame.w * dpr));
+              offscreen.height = Math.max(1, Math.round(frame.h * dpr));
+              const offscreenContext = offscreen.getContext('2d');
+              if (offscreenContext) {
+                offscreenContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+                const secondaryItems = layoutUiOverlay(
+                  canvasEntities,
+                  { x: 0, y: 0, w: frame.w, h: frame.h },
+                  selSet,
+                  { w: frame.width, h: frame.height },
+                  undefined,
+                  null,
+                  canvasUiTextLayoutMeasurement(offscreenContext),
+                );
+                drawUiItems(offscreenContext, secondaryItems, null, null);
+                drawable = {
+                  canvas: offscreen,
+                  entities: p.entities,
+                  canvasEntity: workspaceCanvasEntity,
+                  selectionKey,
+                  width: frame.w,
+                  height: frame.h,
+                };
+                secondaryArtboardCacheRef.current.set(frame.key, drawable);
+              }
+            }
+            if (drawable) {
+              ctx.drawImage(drawable.canvas, frame.x, frame.y, frame.w, frame.h);
+            }
+          }
+          uiItems = activeFrame
+            ? layoutUiOverlay(
+                canvasEntities,
+                { x: activeFrame.x, y: activeFrame.y, w: activeFrame.w, h: activeFrame.h },
+                selSet,
+                { w: activeFrame.width, h: activeFrame.height },
+                undefined,
+                null,
+                textMeasurement,
+              )
+            : [];
+        } else {
+          artboardFramesRef.current = [];
+          // Scene Canvas is a world quad whose authored size is the logical Game resolution.
+          const gameBox = letterbox(pw, ph, p.gameResolution);
+          const sceneCanvasSize = sceneCanvasLogicalSize(p.gameResolution, gameBox);
+          const screenLayout = layoutUiScene3D(
+            p.entities,
+            cam,
+            vp,
+            selSet,
+            sceneCanvasSize,
+            textMeasurement,
+          );
+          layoutScale = screenLayout.layoutScale;
+          uiItems = [
+            ...layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement),
+            ...screenLayout.items,
+          ];
+        }
         uiItemsRef.current = uiItems;
         uiLayoutScaleRef.current = layoutScale || 1;
 
-        if (scene2DRef.current) {
+        if (scene2DRef.current && !canvasWorkspaceActive) {
+          const gameBox = letterbox(pw, ph, p.gameResolution);
           const canvasItem = uiItems.find((item) => item.role === 'canvas');
           if (canvasItem && gameBox.w > 1) {
             const nextScale = normalizeSceneZoom(canvasItem.rect.w / gameBox.w);
@@ -2108,11 +2334,18 @@ export function Viewport(props: {
 
         if (uiItems.length) {
           if (scene2DRef.current && sceneGridRef.current) {
-            for (const item of uiItems) {
-              if (item.role !== 'canvas') continue;
+            const gridRects = canvasWorkspaceActive
+              ? workspaceFrames.filter((frame) => frame.active).map((frame) => ({
+                  x: frame.x,
+                  y: frame.y,
+                  w: frame.w,
+                  h: frame.h,
+                }))
+              : uiItems.filter((item) => item.role === 'canvas').map((item) => item.rect);
+            for (const rect of gridRects) {
               drawCanvasGrid(
                 ctx,
-                item.rect,
+                rect,
                 snapSettingsRef.current.move,
                 layoutScale || 1,
               );
@@ -2161,6 +2394,54 @@ export function Viewport(props: {
                 handleRotDeg,
               );
               rectGizmoHitsRef.current = rh;
+            }
+          }
+          if (canvasWorkspaceActive && workspaceCanvasEntity != null) {
+            const diagnosticSignature = `${p.gameDisplay}|${workspacePreferences.artboards
+              .map((artboard) => `${artboard.key}:${artboard.width}x${artboard.height}:${
+                artboard.safeArea ? JSON.stringify(artboard.safeArea) : ''
+              }`)
+              .join('|')}`;
+            const diagnosticCache = artboardDiagnosticCacheRef.current;
+            if (
+              diagnosticCache.entities !== p.entities
+              || diagnosticCache.canvasEntity !== workspaceCanvasEntity
+              || diagnosticCache.signature !== diagnosticSignature
+            ) {
+              diagnosticCache.entities = p.entities;
+              diagnosticCache.canvasEntity = workspaceCanvasEntity;
+              diagnosticCache.signature = diagnosticSignature;
+              diagnosticCache.counts.clear();
+            }
+            for (const frame of workspaceFrames) {
+              if (
+                workspacePreferences.showDiagnostics
+                && artboardFrameVisible(frame, pw, ph)
+                && !diagnosticCache.counts.has(frame.key)
+                && !draggingRef.current
+              ) {
+                try {
+                  diagnosticCache.counts.set(
+                    frame.key,
+                    buildCanvasArtboardPlan(
+                      p.entities,
+                      workspaceCanvasEntity,
+                      frame,
+                      p.gameDisplay,
+                    ).diagnostics.length,
+                  );
+                } catch {
+                  diagnosticCache.counts.set(frame.key, 0);
+                }
+              }
+              drawArtboardOverlay(
+                ctx,
+                frame,
+                workspacePreferences.showDiagnostics
+                  ? diagnosticCache.counts.get(frame.key) ?? 0
+                  : 0,
+                workspacePreferences.showSafeArea,
+              );
             }
           }
         }
@@ -2247,6 +2528,7 @@ export function Viewport(props: {
           return { kind: 'object', id: ui.entity, x, y, r: 8 };
         }
       }
+      if (canvasWorkspaceActiveRef.current) return null;
     }
 
     let best: { h: Hit; d: number } | null = null;
@@ -2384,6 +2666,19 @@ export function Viewport(props: {
       return;
     }
     if (propsRef.current.tab === 'scene') {
+      if (
+        canvasWorkspaceActiveRef.current
+        && (ev.button === 1 || (ev.button === 0 && spacePressedRef.current))
+      ) {
+        draggingRef.current = true;
+        dragRef.current = { type: 'workspacePan', lx: ev.clientX, ly: ev.clientY };
+        ev.preventDefault();
+        return;
+      }
+      if (canvasWorkspaceActiveRef.current && ev.button === 2) {
+        ev.preventDefault();
+        return;
+      }
       // 2D：右键改为平移，禁止环绕旋转
       if (ev.button === 2) {
         draggingRef.current = true;
@@ -2402,6 +2697,29 @@ export function Viewport(props: {
         return;
       }
       if (ev.button === 0) {
+        if (canvasWorkspaceActiveRef.current) {
+          const frame = artboardFrameAt(artboardFramesRef.current, x, y);
+          if (frame && !frame.active) {
+            const next = updateSceneViewPreferences({
+              canvasWorkspace: { activeKey: frame.key, fitMode: 'active' },
+            }).canvasWorkspace;
+            canvasWorkspaceRef.current = next;
+            setCanvasWorkspace(next);
+            workspaceScaleRef.current = next.zoom;
+            workspacePanRef.current = [...next.pan];
+            propsRef.current.onGameResolution({
+              width: frame.width,
+              height: frame.height,
+            });
+            ev.preventDefault();
+            return;
+          }
+          if (!frame?.active) {
+            propsRef.current.onMarqueeSelect([], 'replace');
+            ev.preventDefault();
+            return;
+          }
+        }
         const tilemapEntity = propsRef.current.selected == null
           ? undefined
           : propsRef.current.entities.find(
@@ -2412,6 +2730,7 @@ export function Viewport(props: {
           && tilemapEntity
           && !propsRef.current.playing
           && scene2DRef.current
+          && !canvasWorkspaceActiveRef.current
           && propsRef.current.onTilemapChange
         ) {
           const component = tilemapEntity.components.Tilemap as { cells?: unknown; sprites?: unknown };
@@ -2473,7 +2792,9 @@ export function Viewport(props: {
           ev.preventDefault();
           return;
         }
-        const linePoint = hitTestLinePoint(linePointHitsRef.current, x, y);
+        const linePoint = canvasWorkspaceActiveRef.current
+          ? null
+          : hitTestLinePoint(linePointHitsRef.current, x, y);
         if (linePoint && propsRef.current.onLinePointChange) {
           draggingRef.current = true;
           dragRef.current = {
@@ -2845,6 +3166,20 @@ export function Viewport(props: {
         liveCam.current.yaw -= dx * 0.35;
         liveCam.current.pitch = Math.max(-89, Math.min(89, liveCam.current.pitch + dy * 0.25));
         syncCamToStore();
+      } else if (d.type === 'workspacePan') {
+        const pan: [number, number] = [
+          workspacePanRef.current[0] + dx,
+          workspacePanRef.current[1] + dy,
+        ];
+        workspacePanRef.current = pan;
+        const next = {
+          ...canvasWorkspaceRef.current,
+          fitMode: 'custom' as const,
+          zoom: workspaceScaleRef.current,
+          pan,
+        };
+        canvasWorkspaceRef.current = next;
+        setCanvasWorkspace(next);
       } else if (d.type === 'pan') {
         const eye = orbitEye(
           liveCam.current.pivot,
@@ -3272,6 +3607,15 @@ export function Viewport(props: {
       if (dragRef.current?.type === 'orbit' || dragRef.current?.type === 'pan') {
         syncCamToStore();
       }
+      if (dragRef.current?.type === 'workspacePan') {
+        updateSceneViewPreferences({
+          canvasWorkspace: {
+            fitMode: 'custom',
+            zoom: workspaceScaleRef.current,
+            pan: workspacePanRef.current,
+          },
+        });
+      }
       if (
         dragRef.current?.type === 'gizmo'
         || dragRef.current?.type === 'rectGizmo'
@@ -3335,6 +3679,35 @@ export function Viewport(props: {
     }
     if (propsRef.current.tab !== 'scene') return;
     ev.preventDefault();
+    if (canvasWorkspaceActiveRef.current) {
+      const currentScale = workspaceScaleRef.current;
+      const nextScale = normalizeCanvasWorkspaceScale(
+        currentScale * (ev.deltaY > 0 ? 0.9 : 1.1),
+      );
+      const { x, y } = localPos(ev);
+      const frames = artboardFramesRef.current;
+      const active = frames.find((frame) => frame.active) ?? frames[0];
+      if (active && currentScale > 0) {
+        const centerX = active.x + active.w * 0.5;
+        const centerY = active.y + active.h * 0.5;
+        const ratio = nextScale / currentScale;
+        workspacePanRef.current = [
+          workspacePanRef.current[0] + (x - centerX) * (1 - ratio),
+          workspacePanRef.current[1] + (y - centerY) * (1 - ratio),
+        ];
+      }
+      workspaceScaleRef.current = nextScale;
+      workspaceZoomPercentRef.current = Math.round(nextScale * 100);
+      setWorkspaceZoomPercent(workspaceZoomPercentRef.current);
+      updateSceneViewPreferences({
+        canvasWorkspace: {
+          fitMode: 'custom',
+          zoom: nextScale,
+          pan: workspacePanRef.current,
+        },
+      });
+      return;
+    }
     const factor = ev.deltaY > 0 ? 1.12 : 0.9;
     liveCam.current.distance = clampSceneCameraDistance(liveCam.current.distance * factor);
     syncCamToStore();
@@ -3409,6 +3782,24 @@ export function Viewport(props: {
     });
   };
 
+  const updateCanvasWorkspace = (
+    patch: Parameters<typeof updateSceneViewPreferences>[0]['canvasWorkspace'],
+  ) => {
+    const next = updateSceneViewPreferences({ canvasWorkspace: patch }).canvasWorkspace;
+    canvasWorkspaceRef.current = next;
+    setCanvasWorkspace(next);
+    workspaceScaleRef.current = next.zoom;
+    workspacePanRef.current = [...next.pan];
+    workspaceZoomPercentRef.current = Math.round(next.zoom * 100);
+    setWorkspaceZoomPercent(workspaceZoomPercentRef.current);
+  };
+
+  const applyCanvasWorkspaceFit = (fitMode: 'all' | 'active' | 'custom') => {
+    updateCanvasWorkspace(fitMode === 'custom'
+      ? { fitMode, zoom: 1, pan: [0, 0] }
+      : { fitMode, pan: [0, 0] });
+  };
+
   useEffect(() => {
     initializeSceneViewPreferencesEvents();
     const applyPreferences = (
@@ -3423,6 +3814,17 @@ export function Viewport(props: {
       if (!preferences.smartGuidesEnabled) smartGuidesRef.current = [];
       snapSettingsRef.current = preferences.snap;
       setSnapSettings(preferences.snap);
+      const workspace = normalizeCanvasWorkspacePreferences(
+        preferences.canvasWorkspace,
+        propsRef.current.gameResolution,
+      );
+      canvasWorkspaceRef.current = workspace;
+      setCanvasWorkspace(workspace);
+      workspaceScaleRef.current = workspace.zoom;
+      workspacePanRef.current = [...workspace.pan];
+      const zoomPercent = Math.round(workspace.zoom * 100);
+      workspaceZoomPercentRef.current = zoomPercent;
+      setWorkspaceZoomPercent(zoomPercent);
     };
     const onPreferencesChanged = (event: Event) => {
       applyPreferences(
@@ -3513,6 +3915,12 @@ export function Viewport(props: {
       }
       if (propsRef.current.tab !== 'scene') return;
       const isSceneCanvas = ev.target === canvasRef.current;
+      if (isSceneCanvas && ev.code === 'Space' && canvasWorkspaceActiveRef.current) {
+        spacePressedRef.current = true;
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        return;
+      }
       const isArrow =
         ev.key === 'ArrowLeft' ||
         ev.key === 'ArrowRight' ||
@@ -3539,16 +3947,24 @@ export function Viewport(props: {
       if (ev.key === 'f' || ev.key === 'F') propsRef.current.onFrame();
     };
     const onKeyUp = (ev: KeyboardEvent) => {
+      if (ev.code === 'Space') {
+        spacePressedRef.current = false;
+        return;
+      }
       if (!heldNudgeKeys.delete(ev.key)) return;
       if (!heldNudgeKeys.size) propsRef.current.onEndGesture();
     };
+    const onBlur = () => {
+      spacePressedRef.current = false;
+      endNudge();
+    };
     window.addEventListener('keydown', onKey);
     window.addEventListener('keyup', onKeyUp);
-    window.addEventListener('blur', endNudge);
+    window.addEventListener('blur', onBlur);
     return () => {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('blur', endNudge);
+      window.removeEventListener('blur', onBlur);
       endNudge();
     };
   }, []);
@@ -3565,6 +3981,17 @@ export function Viewport(props: {
   const canZoomScene = scene2D && props.entities.some(
     (entity) => entity.active !== false && entity.components.Canvas != null,
   );
+  const normalizedCanvasWorkspace = normalizeCanvasWorkspacePreferences(
+    canvasWorkspace,
+    props.gameResolution,
+  );
+  const canvasWorkspaceActive = scene2D
+    && normalizedCanvasWorkspace.enabled
+    && resolveCanvasPlanEntity(
+      props.entities,
+      undefined,
+      props.selectedIds ?? (props.selected == null ? [] : [props.selected]),
+    ) != null;
   const selectedTilemap = props.selected == null
     ? undefined
     : props.entities.find(
@@ -3610,35 +4037,70 @@ export function Viewport(props: {
           {scene2D && (
             <>
               <div className="scene-toolbar-group">
-                <div className="scene-zoom" aria-label="2D Scene zoom">
-                  <button
-                    type="button"
-                    disabled={!canZoomScene}
-                    aria-label="Zoom out"
-                    title="Zoom out"
-                    onClick={() => applySceneZoom(sceneCanvasScaleRef.current / 1.25)}
-                  >
-                    <Minus size={13} aria-hidden />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!canZoomScene}
-                    className="scene-zoom-value"
-                    title="Reset Canvas to 1:1 pixels"
-                    onClick={() => applySceneZoom(1)}
-                  >
-                    {sceneZoomPercent}%
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!canZoomScene}
-                    aria-label="Zoom in"
-                    title="Zoom in"
-                    onClick={() => applySceneZoom(sceneCanvasScaleRef.current * 1.25)}
-                  >
-                    <Plus size={13} aria-hidden />
-                  </button>
-                </div>
+                {canvasWorkspaceActive ? (
+                  <div className="scene-zoom scene-workspace-fit" aria-label="Canvas Workspace camera">
+                    <button
+                      type="button"
+                      className={normalizedCanvasWorkspace.fitMode === 'all' ? 'active' : ''}
+                      title="Fit all artboards"
+                      onClick={() => applyCanvasWorkspaceFit('all')}
+                    >
+                      Fit All
+                    </button>
+                    <button
+                      type="button"
+                      className={normalizedCanvasWorkspace.fitMode === 'active' ? 'active' : ''}
+                      title="Fit active artboard"
+                      onClick={() => applyCanvasWorkspaceFit('active')}
+                    >
+                      Fit Active
+                    </button>
+                    <button
+                      type="button"
+                      className={
+                        normalizedCanvasWorkspace.fitMode === 'custom'
+                        && Math.abs(workspaceZoomPercent - 100) < 1
+                          ? 'active'
+                          : ''
+                      }
+                      title="Show artboards at one screen pixel per design pixel"
+                      onClick={() => applyCanvasWorkspaceFit('custom')}
+                    >
+                      1:1
+                    </button>
+                    <span className="scene-zoom-value">{workspaceZoomPercent}%</span>
+                  </div>
+                ) : (
+                  <div className="scene-zoom" aria-label="2D Scene zoom">
+                    <button
+                      type="button"
+                      disabled={!canZoomScene}
+                      aria-label="Zoom out"
+                      title="Zoom out"
+                      onClick={() => applySceneZoom(sceneCanvasScaleRef.current / 1.25)}
+                    >
+                      <Minus size={13} aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!canZoomScene}
+                      className="scene-zoom-value"
+                      title="Reset Canvas to 1:1 pixels"
+                      onClick={() => applySceneZoom(1)}
+                    >
+                      {sceneZoomPercent}%
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!canZoomScene}
+                      aria-label="Zoom in"
+                      title="Zoom in"
+                      onClick={() => applySceneZoom(sceneCanvasScaleRef.current * 1.25)}
+                    >
+                      <Plus size={13} aria-hidden />
+                    </button>
+                  </div>
+                )}
                 <button
                   type="button"
                   className={`scene-grid-toggle scene-icon-button${sceneGrid ? ' active' : ''}`}
@@ -3649,8 +4111,34 @@ export function Viewport(props: {
                 >
                   <Grid3X3 size={14} aria-hidden />
                 </button>
+                {canvasWorkspaceActive && (
+                  <>
+                    <button
+                      type="button"
+                      className={`scene-grid-toggle${normalizedCanvasWorkspace.showSafeArea ? ' active' : ''}`}
+                      aria-pressed={normalizedCanvasWorkspace.showSafeArea}
+                      title="Show artboard safe areas"
+                      onClick={() => updateCanvasWorkspace({
+                        showSafeArea: !normalizedCanvasWorkspace.showSafeArea,
+                      })}
+                    >
+                      Safe
+                    </button>
+                    <button
+                      type="button"
+                      className={`scene-grid-toggle${normalizedCanvasWorkspace.showDiagnostics ? ' active' : ''}`}
+                      aria-pressed={normalizedCanvasWorkspace.showDiagnostics}
+                      title="Show responsive layout diagnostics"
+                      onClick={() => updateCanvasWorkspace({
+                        showDiagnostics: !normalizedCanvasWorkspace.showDiagnostics,
+                      })}
+                    >
+                      Issues
+                    </button>
+                  </>
+                )}
               </div>
-              <div className="scene-toolbar-group">
+              {!canvasWorkspaceActive && <div className="scene-toolbar-group">
                 <button
                   type="button"
                   className={`scene-grid-toggle scene-icon-button${tilePaintEnabled && selectedTilemap ? ' active' : ''}`}
@@ -3691,7 +4179,7 @@ export function Viewport(props: {
                     </select>
                   </>
                 )}
-              </div>
+              </div>}
             </>
           )}
           {scene2D && (
