@@ -63,7 +63,7 @@ import {
   type Camera2DData,
   type Camera3DData,
 } from '../editorGizmos';
-import { timelineGameCamera } from '../gameCamera';
+import { gameCameraForEntity, timelineGameCamera } from '../gameCamera';
 import type {
   TimelineCameraPreview,
   TimelineParticlePreview,
@@ -241,6 +241,16 @@ import {
 } from '../environmentPreview';
 
 const MAX_NATIVE_SCENE_VIEW_DIMENSION = 4096;
+
+function decodeNativeFrame(pngBase64: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.decoding = 'async';
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('native viewport returned an invalid PNG frame'));
+    image.src = `data:image/png;base64,${pngBase64}`;
+  });
+}
 
 function drawCanvasGrid(
   ctx: CanvasRenderingContext2D,
@@ -627,7 +637,12 @@ export function Viewport(props: {
     height: number;
     hasAuthoredCamera: boolean;
   } | null>(null);
-  const nativeGameRequestRef = useRef({ inFlight: false, lastRequestAt: 0, reportedError: false });
+  const nativeGameRequestRef = useRef({
+    inFlight: false,
+    lastRequestAt: 0,
+    reportedError: false,
+    ready: null as Promise<void> | null,
+  });
   const nativeSceneFrameRef = useRef<{
     image: HTMLImageElement;
     width: number;
@@ -638,6 +653,18 @@ export function Viewport(props: {
     lastRequestAt: 0,
     reportedError: false,
     generation: 0,
+    ready: null as Promise<void> | null,
+  });
+  const nativeCameraPreviewFrameRef = useRef<{
+    image: HTMLImageElement;
+    entity: number;
+  } | null>(null);
+  const nativeCameraPreviewRequestRef = useRef({
+    inFlight: false,
+    lastRequestAt: 0,
+    reportedError: false,
+    generation: 0,
+    ready: null as Promise<void> | null,
   });
   const hitsRef = useRef<Hit[]>([]);
   const gizmoHitsRef = useRef<GizmoHit[]>([]);
@@ -804,10 +831,23 @@ export function Viewport(props: {
   // Expose this viewport's canvas to the AgentBridge so AI agents can capture
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
-    return agentBridge.registerViewportCapture(props.tab, (format, quality, maxSize = 2_048) => {
+    return agentBridge.registerViewportCapture(props.tab, async (format, quality, maxSize = 2_048) => {
       // Hidden WebView2 windows can throttle requestAnimationFrame. Paint on
       // demand so an Agent capture always reflects the latest store revision.
       paint();
+      if ('__TAURI_INTERNALS__' in window) {
+        const requests = propsRef.current.tab === 'game'
+          ? [nativeGameRequestRef.current.ready]
+          : [nativeSceneRequestRef.current.ready, nativeCameraPreviewRequestRef.current.ready];
+        const ready = requests.filter((request): request is Promise<void> => request != null);
+        if (ready.length) {
+          await Promise.race([
+            Promise.all(ready),
+            new Promise<void>((resolve) => window.setTimeout(resolve, 2_500)),
+          ]);
+          paint();
+        }
+      }
       const canvas = canvasRef.current;
       if (!canvas) return null;
       try {
@@ -1079,6 +1119,7 @@ export function Viewport(props: {
       clearMaterialPreviews();
       nativeGameFrameRef.current = null;
       nativeSceneFrameRef.current = null;
+      nativeCameraPreviewFrameRef.current = null;
       reportedMaterialErrorsRef.current.clear();
       invalidateEnvironmentPreviews();
     };
@@ -1171,26 +1212,22 @@ export function Viewport(props: {
       request.lastRequestAt = now;
       const nativeWidth = p.gameResolution?.width ?? Math.max(1, Math.round(vp.w * dpr));
       const nativeHeight = p.gameResolution?.height ?? Math.max(1, Math.round(vp.h * dpr));
-      void invoke<{
+      request.ready = invoke<{
         width: number;
         height: number;
         pngBase64: string;
         hasAuthoredCamera: boolean;
         profile: NativeViewportProfilePayload;
       }>('render_native_game_view', { width: nativeWidth, height: nativeHeight })
-        .then((result) => {
+        .then(async (result) => {
           recordNativeViewportProfile('game', result.profile);
-          const image = new Image();
-          image.decoding = 'async';
-          image.onload = () => {
-            nativeGameFrameRef.current = {
-              image,
-              width: result.width,
-              height: result.height,
-              hasAuthoredCamera: result.hasAuthoredCamera,
-            };
+          const image = await decodeNativeFrame(result.pngBase64);
+          nativeGameFrameRef.current = {
+            image,
+            width: result.width,
+            height: result.height,
+            hasAuthoredCamera: result.hasAuthoredCamera,
           };
-          image.src = `data:image/png;base64,${result.pngBase64}`;
           request.reportedError = false;
         })
         .catch((error) => {
@@ -1201,6 +1238,7 @@ export function Viewport(props: {
         })
         .finally(() => {
           request.inFlight = false;
+          request.ready = null;
         });
     }
 
@@ -1211,6 +1249,9 @@ export function Viewport(props: {
 
     const gameCamera = isGame
       ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay)
+      : null;
+    const selectedCamera = !isGame && p.selected != null
+      ? gameCameraForEntity(p.entities, p.selected)
       : null;
     const scene2DActive = !isGame && scene2DRef.current;
     const workspacePreferences = normalizeCanvasWorkspacePreferences(
@@ -1256,7 +1297,7 @@ export function Viewport(props: {
         MAX_NATIVE_SCENE_VIEW_DIMENSION / Math.max(1, vp.w),
         MAX_NATIVE_SCENE_VIEW_DIMENSION / Math.max(1, vp.h),
       );
-      void invoke<{
+      request.ready = invoke<{
         width: number;
         height: number;
         pngBase64: string;
@@ -1272,19 +1313,15 @@ export function Viewport(props: {
           orthographicSize: cam.orthographicSize ?? 5,
           fovYDegrees: cam.fovYDeg,
         },
-      }).then((result) => {
+      }).then(async (result) => {
         recordNativeViewportProfile('scene', result.profile);
-        const image = new Image();
-        image.decoding = 'async';
-        image.onload = () => {
-          if (request.generation !== generation) return;
-          nativeSceneFrameRef.current = {
-            image,
-            width: result.width,
-            height: result.height,
-          };
+        const image = await decodeNativeFrame(result.pngBase64);
+        if (request.generation !== generation) return;
+        nativeSceneFrameRef.current = {
+          image,
+          width: result.width,
+          height: result.height,
         };
-        image.src = `data:image/png;base64,${result.pngBase64}`;
         request.reportedError = false;
       }).catch((error) => {
         if (!request.reportedError) {
@@ -1293,6 +1330,54 @@ export function Viewport(props: {
         }
       }).finally(() => {
         request.inFlight = false;
+        request.ready = null;
+      });
+    }
+    if (
+      selectedCamera
+      && '__TAURI_INTERNALS__' in window
+      && !nativeCameraPreviewRequestRef.current.inFlight
+      && now - nativeCameraPreviewRequestRef.current.lastRequestAt >= (p.playing ? 120 : 500)
+    ) {
+      const request = nativeCameraPreviewRequestRef.current;
+      const generation = ++request.generation;
+      request.inFlight = true;
+      request.lastRequestAt = now;
+      const aspect = p.gameResolution
+        ? p.gameResolution.width / Math.max(1, p.gameResolution.height)
+        : 16 / 9;
+      const previewWidth = 320;
+      const previewHeight = Math.max(120, Math.round(previewWidth / Math.max(0.5, Math.min(2.5, aspect))));
+      request.ready = invoke<{
+        width: number;
+        height: number;
+        pngBase64: string;
+      }>('render_native_scene_view', {
+        request: {
+          width: previewWidth,
+          height: previewHeight,
+          eye: selectedCamera.eye,
+          target: selectedCamera.target,
+          orthographic: selectedCamera.projection === 'orthographic',
+          orthographicSize: selectedCamera.orthographicSize ?? 5,
+          fovYDegrees: selectedCamera.fovYDeg,
+        },
+      }).then(async (result) => {
+        const image = await decodeNativeFrame(result.pngBase64);
+        if (request.generation !== generation) return;
+        nativeCameraPreviewFrameRef.current = {
+          image,
+          entity: selectedCamera.entity,
+        };
+        request.reportedError = false;
+      }).catch((error) => {
+        if (!request.reportedError) {
+          console.warn('Native Camera Preview rendering is unavailable', error);
+          request.reportedError = true;
+        }
+      }).finally(() => {
+        request.inFlight = false;
+        request.ready = null;
       });
     }
     const isActive = (id: number) =>
@@ -2193,6 +2278,16 @@ export function Viewport(props: {
           }
         }
       }
+    } else if (!isGame && !scene2DActive && '__TAURI_INTERNALS__' in window) {
+      // Do not flash the approximate Web renderer before the first native RHI
+      // frame. The selected-object overlays below remain immediately usable.
+      ctx.fillStyle = '#252a31';
+      ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+      ctx.fillStyle = '#aab0b7';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Rendering Scene View…', vp.x + vp.w / 2, vp.y + vp.h / 2);
     }
 
     if (!isGame) {
@@ -2649,6 +2744,14 @@ export function Viewport(props: {
       const nativeFrame = nativeGameFrameRef.current;
       if (nativeFrame?.image.complete) {
         ctx.drawImage(nativeFrame.image, vp.x, vp.y, vp.w, vp.h);
+      } else if ('__TAURI_INTERNALS__' in window) {
+        ctx.fillStyle = '#171b24';
+        ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+        ctx.fillStyle = '#aab0b7';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Rendering Game View…', vp.x + vp.w / 2, vp.y + vp.h / 2);
       }
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
@@ -2670,6 +2773,47 @@ export function Viewport(props: {
         : 'Free Aspect';
       const label = `${resolutionLabel}${orientationLabel}  ${vp.w | 0}×${vp.h | 0}`;
       ctx.fillText(`Display ${p.gameDisplay + 1} · ${label}`, vp.x + 14, vp.y + 22);
+    }
+
+    if (!isGame && selectedCamera) {
+      const aspect = p.gameResolution
+        ? p.gameResolution.width / Math.max(1, p.gameResolution.height)
+        : 16 / 9;
+      const panelWidth = Math.min(320, Math.max(180, vp.w * 0.34));
+      const imageHeight = panelWidth / Math.max(0.5, Math.min(2.5, aspect));
+      const headerHeight = 24;
+      const panelHeight = imageHeight + headerHeight;
+      const x = vp.x + vp.w - panelWidth - 12;
+      const y = vp.y + vp.h - panelHeight - 12;
+      const frame = nativeCameraPreviewFrameRef.current;
+      ctx.save();
+      ctx.fillStyle = '#202226';
+      ctx.fillRect(x, y, panelWidth, panelHeight);
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, panelWidth - 1, panelHeight - 1);
+      ctx.fillStyle = '#303338';
+      ctx.fillRect(x + 1, y + 1, panelWidth - 2, headerHeight - 1);
+      ctx.fillStyle = '#e0e0e0';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const cameraName = p.entities.find((entity) => entity.entity === selectedCamera.entity)?.name
+        ?? `Camera ${selectedCamera.entity}`;
+      ctx.fillText(`Camera Preview · ${cameraName}`, x + 8, y + headerHeight / 2, panelWidth - 16);
+      if (
+        frame?.image.complete
+        && frame.entity === selectedCamera.entity
+      ) {
+        ctx.drawImage(frame.image, x + 1, y + headerHeight, panelWidth - 2, imageHeight - 1);
+      } else {
+        ctx.fillStyle = '#151820';
+        ctx.fillRect(x + 1, y + headerHeight, panelWidth - 2, imageHeight - 1);
+        ctx.fillStyle = '#8d949c';
+        ctx.textAlign = 'center';
+        ctx.fillText('Rendering camera…', x + panelWidth / 2, y + headerHeight + imageHeight / 2);
+      }
+      ctx.restore();
     }
 
     ctx.restore();

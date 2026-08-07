@@ -146,6 +146,10 @@ test('core editor navigation exposes named semantic controls', () => {
     [...viewport.matchAll(/window\.addEventListener\('keydown', closeWithEscape, true\)/g)].length,
     2,
   );
+  assert.match(viewport, /gameCameraForEntity\(p\.entities, p\.selected\)/);
+  assert.match(viewport, /Camera Preview · \$\{cameraName\}/);
+  assert.match(viewport, /Rendering Scene View…/);
+  assert.match(viewport, /Promise\.all\(ready\)/);
 
   assert.match(dock, /role="tablist" aria-label="Dock panels"/);
   assert.match(dock, /role="tab"/);

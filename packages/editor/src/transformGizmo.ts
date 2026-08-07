@@ -44,23 +44,23 @@ export type GizmoHit =
 
 const AXES: GizmoAxis[] = ['x', 'y', 'z'];
 const AXIS_COLORS: Record<GizmoAxis, string> = {
-  x: '#ef5a5a',
-  y: '#62c96b',
-  z: '#4e9dea',
+  x: '#e94b4b',
+  y: '#79c447',
+  z: '#4285e5',
 };
 const PLANE_COLORS: Record<GizmoPlane, string> = {
   xy: AXIS_COLORS.z,
   xz: AXIS_COLORS.y,
   yz: AXIS_COLORS.x,
 };
-const HOVER = '#ffd15c';
-const ACTIVE = '#fff0a0';
-const AXIS_LENGTH = 82;
-const AXIS_GAP = 13;
-const ARROW_LENGTH = 14;
-const PLANE_OFFSET = 23;
-const PLANE_SIZE = 17;
-const ROTATE_RADIUS = 67;
+const HOVER = '#ffc640';
+const ACTIVE = '#fff1a3';
+const AXIS_LENGTH = 72;
+const AXIS_GAP = 7;
+const ARROW_LENGTH = 11;
+const PLANE_OFFSET = 13;
+const PLANE_SIZE = 12;
+const ROTATE_RADIUS = 60;
 const HIT_AXIS = 8;
 const HIT_RING = 9;
 
@@ -107,8 +107,8 @@ function outlinedLine(
   context.beginPath();
   context.moveTo(start.x, start.y);
   context.lineTo(end.x, end.y);
-  context.strokeStyle = 'rgba(0,0,0,0.58)';
-  context.lineWidth = width + 2;
+  context.strokeStyle = 'rgba(18,18,18,0.72)';
+  context.lineWidth = width + 1.5;
   context.stroke();
   context.strokeStyle = color;
   context.lineWidth = width;
@@ -119,35 +119,19 @@ function arrowHead(context: CanvasRenderingContext2D, tip: Point, angle: number,
   context.beginPath();
   context.moveTo(tip.x, tip.y);
   context.lineTo(
-    tip.x - ARROW_LENGTH * Math.cos(angle - 0.42),
-    tip.y - ARROW_LENGTH * Math.sin(angle - 0.42),
+    tip.x - ARROW_LENGTH * Math.cos(angle - 0.48),
+    tip.y - ARROW_LENGTH * Math.sin(angle - 0.48),
   );
   context.lineTo(
-    tip.x - ARROW_LENGTH * Math.cos(angle + 0.42),
-    tip.y - ARROW_LENGTH * Math.sin(angle + 0.42),
+    tip.x - ARROW_LENGTH * Math.cos(angle + 0.48),
+    tip.y - ARROW_LENGTH * Math.sin(angle + 0.48),
   );
   context.closePath();
-  context.fillStyle = 'rgba(0,0,0,0.55)';
-  context.lineWidth = 3;
-  context.strokeStyle = 'rgba(0,0,0,0.55)';
+  context.lineWidth = 1;
+  context.strokeStyle = 'rgba(18,18,18,0.8)';
   context.stroke();
   context.fillStyle = color;
   context.fill();
-}
-
-function axisLabel(context: CanvasRenderingContext2D, axis: GizmoAxis, tip: Point, unit: Point) {
-  context.save();
-  context.font = '600 10px ui-monospace, Consolas, monospace';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.lineWidth = 3;
-  context.strokeStyle = 'rgba(0,0,0,0.75)';
-  context.fillStyle = AXIS_COLORS[axis];
-  const x = tip.x + unit.x * 9;
-  const y = tip.y + unit.y * 9;
-  context.strokeText(axis.toUpperCase(), x, y);
-  context.fillText(axis.toUpperCase(), x, y);
-  context.restore();
 }
 
 function planeCorners(center: Point, axisA: Point, axisB: Point): [Point, Point, Point, Point] {
@@ -177,7 +161,7 @@ function drawPlane(
   context.moveTo(corners[0].x, corners[0].y);
   for (const corner of corners.slice(1)) context.lineTo(corner.x, corner.y);
   context.closePath();
-  context.fillStyle = `rgba(${channels.join(',')},${hot ? 0.58 : 0.24})`;
+  context.fillStyle = `rgba(${channels.join(',')},${hot ? 0.52 : 0.2})`;
   context.fill();
   context.strokeStyle = color;
   context.lineWidth = hot ? 2 : 1;
@@ -219,11 +203,11 @@ function drawEllipse(
     else context.lineTo(point.x, point.y);
   }
   context.closePath();
-  context.strokeStyle = 'rgba(0,0,0,0.58)';
-  context.lineWidth = hot ? 7 : 5;
+  context.strokeStyle = 'rgba(18,18,18,0.72)';
+  context.lineWidth = hot ? 4.5 : 3.5;
   context.stroke();
   context.strokeStyle = color;
-  context.lineWidth = hot ? 5 : 3;
+  context.lineWidth = hot ? 3 : 2;
   context.stroke();
 }
 
@@ -273,15 +257,15 @@ export function drawTransformGizmo(
       drawEllipse(context, center, ROTATE_RADIUS, first, second, color, samePart(hover, part) || samePart(active, part));
       hits.push({ kind: 'axis', axis, shape: 'ellipse', center, radius: ROTATE_RADIUS, u: first, v: second });
     }
-    const radius = ROTATE_RADIUS + 17;
+    const radius = ROTATE_RADIUS + 13;
     const part: GizmoPart = { kind: 'center' };
     context.beginPath();
     context.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    context.strokeStyle = 'rgba(0,0,0,0.58)';
-    context.lineWidth = samePart(hover, part) || samePart(active, part) ? 6 : 4;
+    context.strokeStyle = 'rgba(18,18,18,0.72)';
+    context.lineWidth = samePart(hover, part) || samePart(active, part) ? 4.5 : 3.5;
     context.stroke();
     context.strokeStyle = partColor(part, hover, active);
-    context.lineWidth -= 2;
+    context.lineWidth -= 1.5;
     context.stroke();
     hits.push({ kind: 'center', shape: 'annulus', center, radius, band: HIT_RING });
   } else {
@@ -301,30 +285,26 @@ export function drawTransformGizmo(
             y: handle.tip.y - handle.unit.y * (ARROW_LENGTH - 2),
           }
         : handle.tip;
-      outlinedLine(context, start, end, color, hot ? 5 : 3);
+      outlinedLine(context, start, end, color, hot ? 3.5 : 2);
       if (mode === 'translate') arrowHead(context, handle.tip, handle.angle, color);
       else {
-        const size = hot ? 7 : 6;
-        context.fillStyle = 'rgba(0,0,0,0.55)';
+        const size = hot ? 5 : 4;
+        context.fillStyle = 'rgba(18,18,18,0.8)';
         context.fillRect(handle.tip.x - size - 1, handle.tip.y - size - 1, size * 2 + 2, size * 2 + 2);
         context.fillStyle = color;
         context.fillRect(handle.tip.x - size, handle.tip.y - size, size * 2, size * 2);
       }
-      axisLabel(context, axis, handle.tip, handle.unit);
       hits.push({ kind: 'axis', axis, shape: 'segment', start, end: handle.tip });
     }
 
     const part: GizmoPart = { kind: 'center' };
     const hot = samePart(hover, part) || samePart(active, part);
-    const radius = hot ? 8 : 7;
-    context.beginPath();
-    context.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    context.fillStyle = 'rgba(0,0,0,0.72)';
-    context.fill();
-    context.lineWidth = 2;
-    context.strokeStyle = partColor(part, hover, active);
-    context.stroke();
-    hits.push({ kind: 'center', shape: 'circle', center, radius: radius + 3, band: 0 });
+    const half = hot ? 5 : 4;
+    context.fillStyle = 'rgba(18,18,18,0.82)';
+    context.fillRect(center.x - half - 1, center.y - half - 1, half * 2 + 2, half * 2 + 2);
+    context.fillStyle = partColor(part, hover, active);
+    context.fillRect(center.x - half, center.y - half, half * 2, half * 2);
+    hits.push({ kind: 'center', shape: 'circle', center, radius: half + 4, band: 0 });
   }
 
   return hits;

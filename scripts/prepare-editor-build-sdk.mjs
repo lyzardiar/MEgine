@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const root = resolve(scriptDir, '..');
 const sdkDir = join(root, 'packages', 'editor', 'src-tauri', 'build-sdk');
+const cargoTargetDir = resolve(root, process.env.CARGO_TARGET_DIR || 'target');
 const cliDir = join(root, 'packages', 'cli');
 const agentDir = join(root, 'packages', 'agent');
 const runtimeName = process.platform === 'win32' ? 'mengine-runtime.exe' : 'mengine-runtime';
@@ -79,8 +80,8 @@ if (!skipBuild) {
 }
 
 const cliEntry = requireFile(join(cliDir, 'dist', 'cli.js'), 'MEngine CLI');
-const debugRuntime = requireFile(join(root, 'target', 'debug', runtimeName), 'Debug player runtime');
-const releaseRuntime = requireFile(join(root, 'target', 'release', runtimeName), 'Release player runtime');
+const debugRuntime = requireFile(join(cargoTargetDir, 'debug', runtimeName), 'Debug player runtime');
+const releaseRuntime = requireFile(join(cargoTargetDir, 'release', runtimeName), 'Release player runtime');
 const requireFromCli = createRequire(join(cliDir, 'package.json'));
 const typescriptPackage = requireFromCli.resolve('typescript/package.json');
 const typescriptRoot = dirname(typescriptPackage);

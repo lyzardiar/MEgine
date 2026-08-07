@@ -242,7 +242,7 @@ type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
   quality?: number,
   maxSize?: number,
-) => ScreenshotResult | null;
+) => ScreenshotResult | null | Promise<ScreenshotResult | null>;
 
 const DEFAULT_SCREENSHOT_MAX_SIZE = 2_048;
 const MIN_SCREENSHOT_INTERVAL_MS = 250;
@@ -752,12 +752,12 @@ class AgentBridge {
     quality?: number,
     maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
   ): Promise<ScreenshotResult> {
-    return this.scheduleScreenshot(() => {
+    return this.scheduleScreenshot(async () => {
       const fn = this.captures.get(tab);
       if (!fn) {
         throw new BridgeError('NOT_READY', `No viewport capture registered for "${tab}"`);
       }
-      const result = fn(format, quality, normalizeScreenshotMaxSize(maxSize));
+      const result = await fn(format, quality, normalizeScreenshotMaxSize(maxSize));
       if (!result) {
         throw new BridgeError('NOT_READY', `Viewport "${tab}" canvas is not available yet`);
       }
