@@ -213,6 +213,18 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     COMMAND_PARAMS_SCHEMAS['entity.create_typed'].properties.kind.enum,
     TYPED_ENTITY_KINDS,
   );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['figma.import_ui'].required,
+    ['source', 'expectedPlanRevision'],
+  );
+  assert.match(
+    COMMAND_PARAMS_SCHEMAS['figma.import_ui'].properties.expectedPlanRevision.pattern,
+    /figma-plan-v1/u,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['figma.import_ui'].properties.source.properties.nodes.maxItems,
+    1_000,
+  );
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['transform.translate'].properties.delta.minItems,
     3,

@@ -77,6 +77,7 @@ test('desktop package delivers all Agent adapters and exposes a background-reada
   for (const entry of ['mcp/server.mjs', 'cli/editor.mjs', 'http/server.mjs']) {
     assert.match(prepare, new RegExp(entry.replace('.', '\\.')));
   }
+  assert.match(prepare, /\['mcp', 'cli', 'http', 'figma'\]/);
   for (const launcher of ['mengine-mcp', 'mengine-agent', 'mengine-agent-http']) {
     assert.match(prepare, new RegExp(launcher));
   }

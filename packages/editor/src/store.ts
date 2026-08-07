@@ -40,6 +40,7 @@ import {
 import { CURRENT_SCENE_VERSION, migrateSceneDocument } from './sceneMigration';
 import { readRectTransform } from './ui/rectLayout';
 import { applyAnchorsKeepingRect, applyPivotKeepingVisualRect } from './ui/rectTransformModel';
+import type { FigmaUiImportPlan } from './ui/figmaImport.ts';
 import {
   gameAlignedCanvasSize,
   uiEntityWorldPivot,
@@ -569,6 +570,42 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (parent == null) return null;
     }
     return spawnAt(name, components, parent ?? null, false);
+  };
+
+  const importFigmaUiPlan = (
+    plan: FigmaUiImportPlan,
+    requestedParent?: number,
+  ): { root: number; created: number[]; sourceEntities: Record<string, number> } | null => {
+    if (mode !== 'edit' || plan.nodes.length === 0) return null;
+    pushUndo(`Import Figma UI: ${plan.source.rootName}`);
+    let parent: number | null | undefined = requestedParent;
+    if (parent === undefined) {
+      const selected = primarySelected();
+      const selectedEntity = selected != null ? find(selected) : null;
+      parent = selectedEntity && (selectedEntity.components.Canvas || selectedEntity.components.RectTransform)
+        ? selected
+        : ensureUiCanvasInternal(false);
+    }
+    if (parent == null) return null;
+    const sourceEntities: Record<string, number> = {};
+    const created: number[] = [];
+    let root = -1;
+    for (const node of plan.nodes) {
+      const nodeParent = node.parentSourceNodeId == null
+        ? parent
+        : sourceEntities[node.parentSourceNodeId];
+      if (nodeParent == null) return null;
+      const id = spawnAt(node.name, structuredClone(node.components), nodeParent, false);
+      if (id == null) return null;
+      sourceEntities[node.sourceNodeId] = id;
+      created.push(id);
+      if (node.parentSourceNodeId == null) root = id;
+    }
+    if (root < 0) return null;
+    selectedIds = [root];
+    selectionAnchor = root;
+    expanded.add(root);
+    return { root, created, sourceEntities };
   };
 
   const spawnSpriteAsset = (
@@ -2249,6 +2286,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     spawnUiTabView(parent?: number | null) {
       return spawnUiControl('Tab View', createUiTabViewComponents(), parent);
     },
+    importFigmaUiPlan,
     spawnSpriteAsset,
     spawnSpriteQuad() {
       return spawnSpriteAsset('white', {

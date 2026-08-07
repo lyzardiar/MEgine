@@ -271,6 +271,44 @@ test('Agent HTTP serves authenticated bounded query and execute envelopes', asyn
   }
 });
 
+test('Agent HTTP exposes the same direct Figma preview and import workflows', async () => {
+  const calls = [];
+  const { server, origin } = await listenTestServer({
+    figmaPreview: async (body, options) => {
+      calls.push({ operation: 'preview', body, signal: options.signal });
+      return { plan: { planRevision: 'figma-plan-v1-0000000000000000' } };
+    },
+    figmaImport: async (body, options) => {
+      calls.push({ operation: 'import', body, signal: options.signal });
+      return { result: { data: { root: 42 } } };
+    },
+  });
+  try {
+    const request = {
+      url: 'https://www.figma.com/design/AbCdEf123456/Game?node-id=1-2',
+      componentMappings: { '9:9': 'button' },
+    };
+    const preview = await jsonRequest(origin, '/v1/figma/preview', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+    assert.equal(preview.status, 200);
+    assert.equal(preview.body.operation, 'figma-preview');
+
+    const imported = await jsonRequest(origin, '/v1/figma/import', {
+      method: 'POST',
+      body: JSON.stringify({ ...request, requestId: 'http-figma-import' }),
+    });
+    assert.equal(imported.status, 200);
+    assert.equal(imported.body.operation, 'figma-import');
+    assert.equal(imported.body.data.result.data.root, 42);
+    assert.deepEqual(calls.map((call) => call.operation), ['preview', 'import']);
+    assert.equal(calls.every((call) => call.signal.aborted === false), true);
+  } finally {
+    await closeTestServer(server);
+  }
+});
+
 test('Agent HTTP bounds active work and cancels a request when its client disconnects', async () => {
   let releaseSlow;
   let slowStartedResolve;

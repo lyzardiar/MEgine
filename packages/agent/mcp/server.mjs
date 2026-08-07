@@ -29,6 +29,11 @@ import {
   normalizeAgentEditorMode,
   processIsAlive,
 } from './backgroundEditor.mjs';
+import {
+  FigmaBridgeError,
+  importFigmaUi as importFigmaUiBridge,
+  previewFigmaUi as previewFigmaUiBridge,
+} from '../figma/bridge.mjs';
 
 const SUPPORTED_PROTOCOL_VERSIONS = Object.freeze([
   '2025-11-25',
@@ -408,6 +413,7 @@ async function agentDoctor() {
     return {
       ok: true,
       mode,
+      figma: { configured: typeof process.env.FIGMA_ACCESS_TOKEN === 'string' && process.env.FIGMA_ACCESS_TOKEN.length >= 8 },
       before,
       records: discoveryHealth(),
       launch: lastBackgroundLaunchResult,
@@ -423,6 +429,7 @@ async function agentDoctor() {
     return {
       ok: false,
       mode,
+      figma: { configured: typeof process.env.FIGMA_ACCESS_TOKEN === 'string' && process.env.FIGMA_ACCESS_TOKEN.length >= 8 },
       before,
       records: discoveryHealth(),
       launch: lastBackgroundLaunchResult,
@@ -1483,6 +1490,113 @@ const TOOLS = [
       ],
     },
     handler: async (args) => textContent(await bridgeQuery('view.canvas_plan', args)),
+  },
+  {
+    name: 'preview_figma_ui',
+    description:
+      'Fetch one selected Figma frame with FIGMA_ACCESS_TOKEN and preview its deterministic MEngine RectTransform, LayoutGroup, text, component-mapping, diagnostics, and raster-asset plan. Does not mutate the project or scene.',
+    schemaAdapter: true,
+    inputSchema: {
+      type: 'object',
+      required: ['url'],
+      additionalProperties: false,
+      properties: {
+        url: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 2048,
+          description: 'Figma design URL copied from the selected frame; normally includes node-id',
+        },
+        nodeId: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 128,
+          pattern: '^[A-Za-z0-9:;._-]+$',
+          description: 'Explicit Figma node id when the URL has no node-id',
+        },
+        componentMappings: {
+          type: 'object',
+          maxProperties: 512,
+          additionalProperties: {
+            type: 'string',
+            enum: ['button', 'toggle', 'slider', 'input_field', 'dropdown', 'scroll_view', 'panel', 'image', 'raw_image', 'text'],
+          },
+          description: 'Stable Figma component id to MEngine game-control kind mapping; omitted instances remain visual and non-interactive',
+        },
+        maxNodes: { type: 'integer', minimum: 1, maximum: 1000, description: 'Visible node cap; default 1000' },
+      },
+    },
+    handler: async (args, context = {}) => textContent(await previewFigmaUiBridge(args, {
+      query: (query, queryArgs, options) => query === 'figma.import_plan'
+        ? bridgeQuery('figma.import_plan', queryArgs, options)
+        : bridgeQuery(query, queryArgs, options),
+      signal: context.signal,
+    })),
+  },
+  {
+    name: 'import_figma_ui',
+    description:
+      'Fetch one selected Figma frame, preview the conversion, land bounded PNG exports under Assets/Figma, then create the complete game UI as one scene Undo transaction. Requires FIGMA_ACCESS_TOKEN with file_content:read. Component semantics are mapped only when explicitly supplied.',
+    bridgeCommand: 'figma.import_ui',
+    schemaAdapter: true,
+    inputSchema: {
+      type: 'object',
+      required: ['url'],
+      additionalProperties: false,
+      properties: {
+        url: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 2048,
+          description: 'Figma design URL copied from the selected frame; normally includes node-id',
+        },
+        nodeId: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 128,
+          pattern: '^[A-Za-z0-9:;._-]+$',
+        },
+        componentMappings: {
+          type: 'object',
+          maxProperties: 512,
+          additionalProperties: {
+            type: 'string',
+            enum: ['button', 'toggle', 'slider', 'input_field', 'dropdown', 'scroll_view', 'panel', 'image', 'raw_image', 'text'],
+          },
+        },
+        maxNodes: { type: 'integer', minimum: 1, maximum: 1000 },
+        parent: { ...ENTITY_ID_SCHEMA, description: 'Existing Canvas or RectTransform parent; defaults to current UI context' },
+        assetFolder: {
+          type: 'string',
+          minLength: 6,
+          maxLength: 256,
+          pattern: '^Assets(?:/[A-Za-z0-9 _.-]+)*$',
+          description: 'Project-relative PNG destination root; default Assets/Figma',
+        },
+        requestId: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 128,
+          description: 'Idempotency key for the final scene transaction; generated when omitted',
+        },
+        expectedSceneRevision: {
+          type: 'integer',
+          minimum: 0,
+          description: 'Optional current scene revision guard',
+        },
+        screenshot: {
+          type: 'boolean',
+          description: 'Capture a post-import viewport screenshot',
+        },
+      },
+    },
+    handler: async (args, context = {}) => textContent(await importFigmaUiBridge(args, {
+      query: (query, queryArgs, options) => query === 'figma.import_plan'
+        ? bridgeQuery('figma.import_plan', queryArgs, options)
+        : bridgeQuery(query, queryArgs, options),
+      execute: bridgeExecute,
+      signal: context.signal,
+    })),
   },
   {
     name: 'get_selection',
@@ -3929,6 +4043,7 @@ const ADDITIVE_BRIDGE_COMMANDS = new Set([
   'asset.duplicate',
   'entity.create',
   'entity.create_typed',
+  'figma.import_ui',
   'entity.duplicate',
   'component.add',
   'component.add_many',
@@ -3986,6 +4101,7 @@ const OPEN_WORLD_BRIDGE_COMMANDS = new Set([
   'project.open',
   'project.create',
   'asset.import_file',
+  'figma.import_ui',
   'build.start',
   'build.verify',
   'build.run',
@@ -4576,6 +4692,7 @@ const SERVER_INSTRUCTIONS = [
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
   'Dangerous scene deletion, asset trash, build, Player launch, and build-artifact commands may return PERMISSION_DENIED when the editor policy is deny or token. Approved adapters forward MENGINE_AGENT_APPROVAL_TOKEN automatically; never place approval tokens in tool arguments or logs.',
+  'For Figma UI conversion, use a selected-frame URL with node-id and call preview_figma_ui before import_figma_ui. FIGMA_ACCESS_TOKEN stays in the Agent process; never place it in tool arguments, scene data, or logs. Map interactive components only by stable component id instead of guessing from layer names.',
   'Prefer domain tools over semantic window UI actions. Start broad observation with get_all_window_ui; complete any per-window continuation through get_window_ui using that window snapshot revision. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector. If unrelated live UI values change, the write may proceed only while the cached target element, its action-relevant semantic signature, its exposed action, and the current invalidation epoch still match; the native layer refreshes that guard and dispatches synchronously in one renderer task, transient focus, geometry, and scroll telemetry are re-read at dispatch, and changed or expired target meaning, value, state, policy, or capability is rejected as stale. Successful UI writes report preSnapshotRevision and snapshotDriftedBeforeAction, settle two target-window render opportunities, and return a postSnapshotRevision when post-action semantic observation succeeds.',
   'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
   'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. Use take_all_window_screenshots when visual evidence from the complete native workspace is materially useful; it captures serially and reports inventory drift, per-window failures, and aggregate output limits without showing or focusing windows. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',
@@ -4837,6 +4954,13 @@ function incomingMessageError(message) {
 }
 
 function structuredError(error) {
+  if (error instanceof FigmaBridgeError) {
+    return {
+      code: error.code,
+      message: error.message,
+      ...(error.data === undefined ? {} : { data: error.data }),
+    };
+  }
   if (error instanceof ToolInputValidationError) {
     return {
       code: 'INVALID_ARGS',

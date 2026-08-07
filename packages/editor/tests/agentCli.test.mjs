@@ -71,6 +71,29 @@ test('Agent CLI parses strict query and revision-safe execute invocations', () =
     screenshot: false,
     compact: true,
   });
+  assert.deepEqual(parseCliArguments([
+    'figma-import',
+    'https://www.figma.com/design/AbCdEf123456/Game?node-id=1-2',
+    '--args',
+    '{"parent":7}',
+    '--request-id',
+    'figma-cli-test',
+    '--expected-scene-revision',
+    '12',
+  ]), {
+    help: false,
+    operation: 'figma-import',
+    id: null,
+    figmaUrl: 'https://www.figma.com/design/AbCdEf123456/Game?node-id=1-2',
+    argsSource: '{"parent":7}',
+    discoveryFile: null,
+    editorMode: null,
+    editorExecutable: null,
+    requestId: 'figma-cli-test',
+    expectedSceneRevision: 12,
+    screenshot: false,
+    compact: false,
+  });
 });
 
 test('Agent CLI rejects ambiguous flags and malformed safe-integer options', () => {
@@ -81,6 +104,8 @@ test('Agent CLI rejects ambiguous flags and malformed safe-integer options', () 
     ['query', 'editor.state', '--request-id', 'query-write-key'],
     ['query', 'editor.state', '--expected-scene-revision', '1'],
     ['query', 'editor.state', '--screenshot'],
+    ['figma-preview'],
+    ['figma-preview', 'https://www.figma.com/design/AbCdEf123456/Game?node-id=1-2', '--screenshot'],
     ['execute', 'history.undo', '--expected-scene-revision', '-1'],
     ['execute', 'history.undo', '--expected-scene-revision', '1.5'],
     ['execute', 'history.undo', '--args', '{}', '--args', '{}'],

@@ -125,6 +125,11 @@ import { setEditorPrefs } from '../sceneLibrary';
 import { normalizeGameDisplay, type GameResolution } from '../gameResolution';
 import { normalizeCanvasWorkspacePreferences } from '../canvasWorkspace';
 import {
+  buildFigmaUiImportPlan,
+  type FigmaComponentKind,
+  type FigmaImportSource,
+} from '../ui/figmaImport.ts';
+import {
   initializeSceneViewPreferencesEvents,
   readSceneViewPreferences,
   SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
@@ -1496,6 +1501,13 @@ class AgentBridge {
       );
     }
     return page;
+  }
+
+  getFigmaImportPlan(params: Record<string, unknown>): unknown {
+    return buildFigmaUiImportPlan(params.source as unknown as FigmaImportSource, {
+      componentMappings: (params.componentMappings ?? {}) as Record<string, FigmaComponentKind>,
+      ...(typeof params.maxNodes === 'number' ? { maxNodes: params.maxNodes } : {}),
+    });
   }
 
   getProjectState(): AgentProjectLifecycleState & {
@@ -5270,6 +5282,8 @@ class AgentBridge {
         );
       case 'view.canvas_plan':
         return this.getCanvasPlan(params);
+      case 'figma.import_plan':
+        return this.getFigmaImportPlan(params);
       case 'view.window_screenshot':
         return this.captureWindow(
           typeof params.windowLabel === 'string' && params.windowLabel

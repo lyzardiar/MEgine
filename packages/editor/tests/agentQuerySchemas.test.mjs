@@ -12,6 +12,21 @@ import {
 } from '../src/agent/querySchemas.ts';
 
 const editorRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const figmaSource = {
+  schemaVersion: 1,
+  fileKey: 'AbCdEf123456',
+  fileName: 'HUD',
+  version: '7',
+  rootId: '1:2',
+  rootName: 'HUD Frame',
+  nodes: [{
+    id: '1:2',
+    parentId: null,
+    name: 'HUD Frame',
+    type: 'FRAME',
+    bounds: { x: 0, y: 0, width: 320, height: 640 },
+  }],
+};
 
 test('every AgentBridge query has one strict authoritative parameter schema', () => {
   const source = fs.readFileSync(
@@ -61,6 +76,11 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       offset: 2,
       limit: 200,
       expectedPlanRevision: 'canvas-plan-v1-12-0123456789abcdef',
+    }],
+    ['figma.import_plan', {
+      source: figmaSource,
+      componentMappings: { '9:9': 'button' },
+      maxNodes: 500,
     }],
     ['view.window_screenshot', { windowLabel: 'main', maxSize: 4_096 }],
     ['view.capture_region', {
@@ -160,6 +180,10 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       offset: 1,
       expectedPlanRevision: 'not-a-canvas-plan',
     }],
+    ['figma.import_plan', { source: figmaSource, maxNodes: 1001 }],
+    ['figma.import_plan', {
+      source: { ...figmaSource, nodes: [{ ...figmaSource.nodes[0], id: 'bad id' }] },
+    }],
     ['view.window_screenshot', { maxSize: 4_097 }],
     ['view.capture_region', { x: 0, y: 0, width: 0, height: 100 }],
     ['view.capture_region', { x: -1, y: 0, width: 100, height: 100 }],
@@ -218,6 +242,8 @@ test('query schemas accept documented read shapes and reject malformed or extra 
 
 test('query discovery is exposed through MCP tools and a resource', () => {
   assert.ok(TOOLS.some((tool) => tool.name === 'get_canvas_plan'));
+  assert.ok(TOOLS.some((tool) => tool.name === 'preview_figma_ui'));
+  assert.ok(TOOLS.some((tool) => tool.name === 'import_figma_ui'));
   assert.ok(TOOLS.some((tool) => tool.name === 'list_queries'));
   assert.ok(TOOLS.some((tool) => tool.name === 'describe_query'));
   assert.ok(RESOURCES.some((resource) => (

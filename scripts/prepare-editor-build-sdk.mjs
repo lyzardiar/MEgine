@@ -63,7 +63,7 @@ writeFileSync(join(sdkDir, '.gitkeep'), '');
 copyFileSync(process.execPath, join(sdkDir, nodeName));
 cpSync(join(cliDir, 'dist'), join(sdkDir, 'cli', 'dist'), { recursive: true, dereference: true });
 copyFileSync(join(cliDir, 'package.json'), join(sdkDir, 'cli', 'package.json'));
-for (const adapter of ['mcp', 'cli', 'http']) {
+for (const adapter of ['mcp', 'cli', 'http', 'figma']) {
   cpSync(join(agentDir, adapter), join(sdkDir, 'agent', adapter), {
     recursive: true,
     dereference: true,

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { TEST_BEHAVIOUR_TYPE } from './testBehaviourFixture.mjs';
 import { WRITE_COMMANDS } from '../src/agent/commands.ts';
+import { buildFigmaUiImportPlan } from '../src/ui/figmaImport.ts';
 
 function createContext() {
   const entities = [
@@ -360,6 +361,48 @@ test('typed cube creation uses the root GameObject path instead of selected-chil
   assert.deepEqual(result.data, { entity: 3, kind: 'cube' });
   assert.deepEqual(calls, [['spawnPrefab', 'Cube'], ['select', 3]]);
   assert.equal(entities.at(-1).parent, null);
+});
+
+test('Figma import revalidates its preview revision and uses one store transaction', () => {
+  const { ctx, calls } = createContext();
+  const source = {
+    schemaVersion: 1,
+    fileKey: 'AbCdEf123456',
+    fileName: 'HUD',
+    version: '7',
+    rootId: '1:2',
+    rootName: 'HUD Frame',
+    nodes: [{
+      id: '1:2',
+      parentId: null,
+      name: 'HUD Frame',
+      type: 'FRAME',
+      bounds: { x: 0, y: 0, width: 320, height: 640 },
+    }],
+  };
+  const preview = buildFigmaUiImportPlan(source);
+  ctx.store.importFigmaUiPlan = (plan, parent) => {
+    calls.push(['importFigmaUiPlan', plan.planRevision, parent]);
+    return { root: 3, created: [3], sourceEntities: { '1:2': 3 } };
+  };
+
+  const result = run(ctx, 'figma.import_ui', {
+    source,
+    parent: 2,
+    expectedPlanRevision: preview.planRevision,
+  });
+  assert.deepEqual(calls, [['importFigmaUiPlan', preview.planRevision, 2]]);
+  assert.equal(result.data.root, 3);
+
+  assertBridgeError(
+    () => run(ctx, 'figma.import_ui', {
+      source,
+      parent: 2,
+      expectedPlanRevision: 'figma-plan-v1-0000000000000000',
+    }),
+    'STALE_REVISION',
+  );
+  assert.equal(calls.length, 1);
 });
 
 test('component set and patch require an existing component and object payload', () => {

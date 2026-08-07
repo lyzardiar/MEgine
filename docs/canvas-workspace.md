@@ -53,3 +53,6 @@ mengine-agent query view.canvas_plan --args {"artboardKey":"phone","limit":200}
 - 后台 Agent 创建 Canvas、Panel、Button 和 Text；`view.canvas_plan` 在 1920×1080、1024×768、1080×1920 三种画板上返回同一实体树和对应布局边界。
 - WebView2 整窗离屏截图在三种活动画板下均返回 `backgroundSafe=true`；截图期间前台句柄不变，后台编辑器始终未获得焦点。
 
+## Figma 直连
+
+Figma 设计稿导入由 Agent 侧安全读取、Editor 侧确定性映射与一次 Undo 落地组成。配置、CLI/MCP/HTTP 用法、组件映射和限制见 [Figma UI Bridge](./figma-ui-bridge.md)。

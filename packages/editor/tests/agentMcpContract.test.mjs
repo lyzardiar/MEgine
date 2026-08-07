@@ -74,6 +74,7 @@ test('every AgentBridge write command has exactly one MCP tool with its exact pa
   for (const command of COMMAND_META) {
     const matches = byCommand.get(command.id) ?? [];
     assert.equal(matches.length, 1, `${command.id} must map to exactly one MCP tool`);
+    if (matches[0].schemaAdapter === true) continue;
     assert.deepEqual(
       [...(matches[0].inputSchema.required ?? [])].sort(),
       [...(command.paramsSchema.required ?? [])].sort(),
@@ -411,6 +412,7 @@ test('every AgentBridge query is exposed by an MCP tool or resource with no stal
 test('direct MCP query tools preserve every authoritative parameter constraint', () => {
   for (const tool of TOOLS) {
     if (typeof tool.bridgeCommand === 'string') continue;
+    if (tool.schemaAdapter === true) continue;
     const queryIds = [
       ...String(tool.handler).matchAll(/bridgeQuery\('([^']+)'/g),
     ].map((match) => match[1]);

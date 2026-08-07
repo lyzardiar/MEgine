@@ -22,6 +22,11 @@ import {
 } from '../componentCatalog.ts';
 import type { EditorStore } from '../store';
 import { readRectTransform } from '../ui/rectLayout.ts';
+import {
+  buildFigmaUiImportPlan,
+  type FigmaComponentKind,
+  type FigmaImportSource,
+} from '../ui/figmaImport.ts';
 import { BridgeError, type ScreenshotResult } from './protocol.ts';
 import {
   COMMAND_PARAMS_SCHEMAS,
@@ -638,6 +643,63 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.select(id);
     return { ok: true, data: { entity: id, kind } };
   },
+  'figma.import_ui': (ctx, args) => {
+    requireEditMode(ctx);
+    const parent = args.parent === undefined ? undefined : entityId(args, 'parent');
+    if (parent !== undefined) {
+      const entity = requireEntity(ctx, parent);
+      if (!entity.components.Canvas && !entity.components.RectTransform) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `Figma import parent ${parent} must have Canvas or RectTransform`,
+        );
+      }
+    }
+    const source = args.source as unknown as FigmaImportSource;
+    const componentMappings = (args.componentMappings ?? {}) as Record<string, FigmaComponentKind>;
+    const assetPaths = (args.assetPaths ?? {}) as Record<string, string>;
+    const plan = buildFigmaUiImportPlan(source, {
+      componentMappings,
+      assetPaths,
+      ...(typeof args.maxNodes === 'number' ? { maxNodes: args.maxNodes } : {}),
+    });
+    const expectedPlanRevision = str(args, 'expectedPlanRevision');
+    if (plan.planRevision !== expectedPlanRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'The Figma import plan changed after preview; preview it again before importing',
+        { expectedPlanRevision, currentPlanRevision: plan.planRevision },
+      );
+    }
+    if (!plan.readyToImport) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'The Figma import plan contains blocking diagnostics',
+        { diagnostics: plan.diagnostics.filter((entry) => entry.severity === 'error') },
+      );
+    }
+    const missingAssets = plan.assets.filter((asset) => !assetPaths[asset.nodeId]);
+    if (missingAssets.length > 0) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'The Figma import is missing required raster assets',
+        { missingAssets },
+      );
+    }
+    const imported = ctx.store.importFigmaUiPlan(plan, parent);
+    if (!imported) throw new BridgeError('INTERNAL', 'The editor did not import the Figma UI plan');
+    return {
+      ok: true,
+      data: {
+        planRevision: plan.planRevision,
+        source: plan.source,
+        root: imported.root,
+        created: imported.created,
+        sourceEntities: imported.sourceEntities,
+        diagnostics: plan.diagnostics.filter((entry) => entry.code !== 'ASSET_REQUIRED'),
+      },
+    };
+  },
   'entity.delete': (ctx, args) => {
     requireEditMode(ctx);
     const ids = args.ids === undefined ? ctx.store.selectedIds : entityIdArray(args, 'ids');
@@ -1226,6 +1288,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'selection.reveal', category: 'selection', description: 'Select an entity and expand its ancestors (ping)', readOnly: false },
   { id: 'entity.create', category: 'entity', description: 'Create a GameObject with optional components and parent', readOnly: false },
   { id: 'entity.create_typed', category: 'entity', description: 'Create any built-in GameObject kind with composite parent handling', readOnly: false },
+  { id: 'figma.import_ui', category: 'figma', description: 'Import a revision-guarded Figma UI plan as one scene Undo transaction', readOnly: false },
   { id: 'entity.delete', category: 'entity', description: 'Delete the given (or currently selected) entities', readOnly: false },
   { id: 'entity.duplicate', category: 'entity', description: 'Duplicate the given (or currently selected) entities', readOnly: false },
   { id: 'entity.rename', category: 'entity', description: 'Rename an entity', readOnly: false },

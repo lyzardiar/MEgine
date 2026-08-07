@@ -11,6 +11,10 @@ import {
   closeBridgeConnection,
   structuredError,
 } from '../mcp/server.mjs';
+import {
+  importFigmaUi as importFigmaUiBridge,
+  previewFigmaUi as previewFigmaUiBridge,
+} from '../figma/bridge.mjs';
 
 const MAX_ARGS_BYTES = 8 * 1024 * 1024;
 
@@ -19,6 +23,8 @@ const HELP = `MEngine Agent CLI
 Usage:
   mengine-agent query <query-id> [options]
   mengine-agent execute <command-id> [options]
+  mengine-agent figma-preview <figma-url> [options]
+  mengine-agent figma-import <figma-url> [options]
   mengine-agent doctor [options]
 
 Options:
@@ -35,11 +41,13 @@ Options:
 Environment:
   MENGINE_EDITOR_CONFIG_DIR       Discover background/foreground records in this directory
   MENGINE_AGENT_BRIDGE_FILE       Override discovery with one exact record
+  FIGMA_ACCESS_TOKEN              Figma token with file_content:read; never sent to the editor
 
 Examples:
   mengine-agent query window.list
   mengine-agent query window.ui_snapshot --args "{\\"windowLabel\\":\\"main\\"}"
   mengine-agent execute intent.apply --args @intent.json --expected-scene-revision 12
+  mengine-agent figma-preview "https://www.figma.com/design/KEY/Name?node-id=1-2"
 `;
 
 class CliUsageError extends Error {
@@ -78,18 +86,22 @@ export function parseCliArguments(argv) {
     return { help: true };
   }
   const operation = argv[0];
-  if (operation !== 'query' && operation !== 'execute' && operation !== 'doctor') {
-    throw new CliUsageError('First argument must be "query", "execute", or "doctor"');
+  if (!['query', 'execute', 'doctor', 'figma-preview', 'figma-import'].includes(operation)) {
+    throw new CliUsageError('First argument must be "query", "execute", "figma-preview", "figma-import", or "doctor"');
   }
-  const id = operation === 'doctor' ? null : argv[1];
-  if (operation !== 'doctor' && (!id || id.startsWith('-'))) {
-    throw new CliUsageError(`${operation} requires an exact Bridge id`);
+  const figmaOperation = operation === 'figma-preview' || operation === 'figma-import';
+  const id = operation === 'doctor' || figmaOperation ? null : argv[1];
+  const figmaUrl = figmaOperation ? argv[1] : null;
+  const target = figmaOperation ? figmaUrl : id;
+  if (operation !== 'doctor' && (!target || target.startsWith('-'))) {
+    throw new CliUsageError(`${operation} requires ${figmaOperation ? 'a Figma URL' : 'an exact Bridge id'}`);
   }
 
   const options = {
     help: false,
     operation,
     id,
+    ...(figmaOperation ? { figmaUrl } : {}),
     argsSource: null,
     discoveryFile: null,
     editorMode: null,
@@ -155,15 +167,21 @@ export function parseCliArguments(argv) {
     throw new CliUsageError(`Unknown option "${option}"`);
   }
 
-  if (operation === 'query') {
+  if (operation === 'query' || operation === 'figma-preview') {
     if (options.requestId !== null) {
-      throw new CliUsageError('--request-id is valid only for execute');
+      throw new CliUsageError(operation === 'query'
+        ? '--request-id is valid only for execute'
+        : '--request-id is valid only for figma-import');
     }
     if (options.expectedSceneRevision !== undefined) {
-      throw new CliUsageError('--expected-scene-revision is valid only for execute');
+      throw new CliUsageError(operation === 'query'
+        ? '--expected-scene-revision is valid only for execute'
+        : '--expected-scene-revision is valid only for figma-import');
     }
     if (options.screenshot) {
-      throw new CliUsageError('--screenshot is valid only for execute');
+      throw new CliUsageError(operation === 'query'
+        ? '--screenshot is valid only for execute'
+        : '--screenshot is valid only for figma-import');
     }
   }
   if (operation === 'doctor' && (
@@ -274,6 +292,37 @@ export async function runCli(argv) {
       return data.ok ? 0 : 1;
     }
     const args = await parseArgsObject(options.argsSource);
+    if (options.operation === 'figma-preview') {
+      const data = await previewFigmaUiBridge({ ...args, url: options.figmaUrl }, {
+        query: bridgeQuery,
+      });
+      writeJson(process.stdout, {
+        ok: true,
+        operation: 'figma-preview',
+        data,
+      }, options.compact);
+      return 0;
+    }
+    if (options.operation === 'figma-import') {
+      const data = await importFigmaUiBridge({
+        ...args,
+        url: options.figmaUrl,
+        ...(options.requestId === null ? {} : { requestId: options.requestId }),
+        ...(options.expectedSceneRevision === undefined
+          ? {}
+          : { expectedSceneRevision: options.expectedSceneRevision }),
+        ...(options.screenshot ? { screenshot: true } : {}),
+      }, {
+        query: bridgeQuery,
+        execute: bridgeExecute,
+      });
+      writeJson(process.stdout, {
+        ok: true,
+        operation: 'figma-import',
+        data,
+      }, options.compact);
+      return 0;
+    }
     if (options.operation === 'query') {
       const data = await bridgeQuery(options.id, args);
       writeJson(process.stdout, {

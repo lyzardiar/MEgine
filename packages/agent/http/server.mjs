@@ -23,6 +23,10 @@ import {
   closeBridgeConnection,
   structuredError,
 } from '../mcp/server.mjs';
+import {
+  importFigmaUi as importFigmaUiBridge,
+  previewFigmaUi as previewFigmaUiBridge,
+} from '../figma/bridge.mjs';
 
 const HTTP_SCHEMA_VERSION = 1;
 const MAX_HTTP_BODY_BYTES = 8 * 1024 * 1024;
@@ -47,6 +51,8 @@ Endpoints:
   GET  /v1/health
   POST /v1/query
   POST /v1/execute
+  POST /v1/figma/preview
+  POST /v1/figma/import
 
 The adapter always binds 127.0.0.1. It writes and prints a discovery record
 containing its port, bearer token, and process id.
@@ -378,6 +384,24 @@ function bridgeErrorStatus(error) {
       return 409;
     case 'RATE_LIMITED':
       return 429;
+    case 'FIGMA_TOKEN_MISSING':
+      return 503;
+    case 'FIGMA_PERMISSION_DENIED':
+      return 403;
+    case 'FIGMA_NOT_FOUND':
+    case 'FIGMA_NODE_NOT_FOUND':
+      return 404;
+    case 'FIGMA_ASSET_CONFLICT':
+    case 'FIGMA_IMPORT_BLOCKED':
+      return 409;
+    case 'FIGMA_RESPONSE_TOO_LARGE':
+    case 'FIGMA_ASSET_LIMIT':
+      return 413;
+    case 'FIGMA_CONNECTION':
+    case 'FIGMA_TIMEOUT':
+    case 'FIGMA_API_ERROR':
+    case 'FIGMA_ASSET_EXPORT_FAILED':
+      return 502;
     case 'BRIDGE_CONNECTION':
     case 'NOT_READY':
     case 'PROJECT_NOT_OPEN':
@@ -429,6 +453,8 @@ export function createAgentHttpServer({
   token,
   query = bridgeQuery,
   execute = bridgeExecute,
+  figmaPreview,
+  figmaImport,
   maxBodyBytes = MAX_HTTP_BODY_BYTES,
   maxResponseBytes = MAX_HTTP_RESPONSE_BYTES,
   maxActiveRequests = MAX_ACTIVE_HTTP_REQUESTS,
@@ -438,6 +464,15 @@ export function createAgentHttpServer({
   }
   let listenPort = null;
   let activeRequests = 0;
+  const previewFigma = figmaPreview ?? ((body, options) => previewFigmaUiBridge(body, {
+    query,
+    signal: options.signal,
+  }));
+  const importFigma = figmaImport ?? ((body, options) => importFigmaUiBridge(body, {
+    query,
+    execute,
+    signal: options.signal,
+  }));
 
   const server = http.createServer(async (request, response) => {
     response.on('error', () => {
@@ -455,7 +490,7 @@ export function createAgentHttpServer({
       if (url.search) {
         throw new AgentHttpError(400, 'INVALID_ARGS', 'Query strings are not supported');
       }
-      if (!['/v1/health', '/v1/query', '/v1/execute'].includes(url.pathname)) {
+      if (!['/v1/health', '/v1/query', '/v1/execute', '/v1/figma/preview', '/v1/figma/import'].includes(url.pathname)) {
         throw new AgentHttpError(404, 'NOT_FOUND', `Unknown endpoint: ${url.pathname}`);
       }
       if (url.pathname === '/v1/health') {
@@ -501,6 +536,28 @@ export function createAgentHttpServer({
             ok: true,
             operation: 'query',
             id: input.query,
+            data,
+          }, maxResponseBytes);
+          return;
+        }
+
+        if (url.pathname === '/v1/figma/preview') {
+          const data = await previewFigma(body, { signal: controller.signal });
+          if (controller.signal.aborted || response.destroyed) return;
+          jsonResponse(response, 200, {
+            ok: true,
+            operation: 'figma-preview',
+            data,
+          }, maxResponseBytes);
+          return;
+        }
+
+        if (url.pathname === '/v1/figma/import') {
+          const data = await importFigma(body, { signal: controller.signal });
+          if (controller.signal.aborted || response.destroyed) return;
+          jsonResponse(response, 200, {
+            ok: true,
+            operation: 'figma-import',
             data,
           }, maxResponseBytes);
           return;
