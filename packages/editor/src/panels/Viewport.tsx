@@ -241,6 +241,7 @@ import {
 } from '../environmentPreview';
 
 const MAX_NATIVE_SCENE_VIEW_DIMENSION = 4096;
+const NATIVE_CAPTURE_READY_TIMEOUT_MS = 8_000;
 
 function decodeNativeFrame(pngBase64: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -843,7 +844,7 @@ export function Viewport(props: {
         if (ready.length) {
           await Promise.race([
             Promise.all(ready),
-            new Promise<void>((resolve) => window.setTimeout(resolve, 2_500)),
+            new Promise<void>((resolve) => window.setTimeout(resolve, NATIVE_CAPTURE_READY_TIMEOUT_MS)),
           ]);
           paint();
         }
@@ -1229,6 +1230,9 @@ export function Viewport(props: {
             hasAuthoredCamera: result.hasAuthoredCamera,
           };
           request.reportedError = false;
+          // Hidden WebViews may suspend requestAnimationFrame. Commit the decoded frame
+          // immediately so first-open output never waits for a click or resize event.
+          paint();
         })
         .catch((error) => {
           if (!request.reportedError) {
@@ -1323,6 +1327,7 @@ export function Viewport(props: {
           height: result.height,
         };
         request.reportedError = false;
+        paint();
       }).catch((error) => {
         if (!request.reportedError) {
           console.warn('Native Scene View rendering is unavailable', error);
@@ -1370,6 +1375,7 @@ export function Viewport(props: {
           entity: selectedCamera.entity,
         };
         request.reportedError = false;
+        paint();
       }).catch((error) => {
         if (!request.reportedError) {
           console.warn('Native Camera Preview rendering is unavailable', error);
@@ -2833,6 +2839,26 @@ export function Viewport(props: {
     });
     void tick;
   };
+
+  // A background WebView can stop delivering animation frames altogether. React still commits
+  // project and selection updates, so use those commits to start the native request explicitly.
+  // The request completion paths above repaint once more with the decoded image.
+  useEffect(() => {
+    paint();
+    // `paint` reads the latest values through refs; only authoring changes should trigger this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    props.entities,
+    props.gameDisplay,
+    props.gameResolution,
+    props.gizmo,
+    props.handleOrientation,
+    props.playing,
+    props.selected,
+    props.selectedIds,
+    props.tab,
+    props.timelineCameraPreview,
+  ]);
 
   const localPos = (ev: { clientX: number; clientY: number }) => {
     const rect = canvasRef.current!.getBoundingClientRect();

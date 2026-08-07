@@ -744,6 +744,24 @@ class AgentBridge {
     };
   }
 
+  private async prepareMainViewportCapture(windowLabel: string): Promise<void> {
+    if (windowLabel !== 'main') return;
+    if (this.captures.size === 0) {
+      const deadline = Date.now() + 1_000;
+      while (this.captures.size === 0 && Date.now() < deadline) {
+        await new Promise((resolve) => window.setTimeout(resolve, 16));
+      }
+    }
+    for (const capture of this.captures.values()) {
+      await capture('image/png', undefined, 256);
+    }
+    if (this.captures.size > 0) {
+      // Canvas pixels are current now; yield once so WebView2 can commit them to the compositor
+      // before the native DevTools screenshot is requested in the same bridge operation.
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+  }
+
   // ── Observer ──────────────────────────────────────────────────────────
 
   async captureViewport(
@@ -777,10 +795,13 @@ class AgentBridge {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Full-window capture requires the desktop editor');
     }
-    return this.scheduleScreenshot(() => invoke<ScreenshotResult>(
-      'capture_editor_window',
-      { windowLabel, maxSize: normalizeScreenshotMaxSize(maxSize) },
-    ));
+    return this.scheduleScreenshot(async () => {
+      await this.prepareMainViewportCapture(windowLabel);
+      return invoke<ScreenshotResult>(
+        'capture_editor_window',
+        { windowLabel, maxSize: normalizeScreenshotMaxSize(maxSize) },
+      );
+    });
   }
 
   /**
@@ -795,14 +816,17 @@ class AgentBridge {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Editor-window region capture requires the desktop editor');
     }
-    return this.scheduleScreenshot(() => invoke<ScreenshotResult>(
-      'capture_editor_window',
-      {
-        windowLabel,
-        maxSize: normalizeScreenshotMaxSize(maxSize),
-        region,
-      },
-    ));
+    return this.scheduleScreenshot(async () => {
+      await this.prepareMainViewportCapture(windowLabel);
+      return invoke<ScreenshotResult>(
+        'capture_editor_window',
+        {
+          windowLabel,
+          maxSize: normalizeScreenshotMaxSize(maxSize),
+          region,
+        },
+      );
+    });
   }
 
   /**
