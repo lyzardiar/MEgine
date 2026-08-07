@@ -103,6 +103,17 @@ export type EditorProfilerSample = Omit<ViewportProfilerFrame, 'frameIntervalMs'
   paintMaxMs: number;
 };
 
+export type EditorProfilerFrame = {
+  timestamp: number;
+  sample: EditorProfilerSample | null;
+  nativeProfile: NativeViewportProfile | null;
+};
+
+export type NativeProfilerMemoryNode = NativeProfilerMemoryCategory & {
+  id: string;
+  children: NativeProfilerMemoryNode[];
+};
+
 type ProfilerBucket = {
   source: EditorProfilerSource;
   startedAt: number;
@@ -252,6 +263,131 @@ export function summarizeEditorProfilerSamples(
     p95PaintMs: percentile(paintValues, 0.95),
     peakPaintMs: Math.max(...samples.map((sample) => sample.paintMaxMs)),
   };
+}
+
+function nearestTimestampValue<T extends { timestamp: number }>(
+  values: readonly T[],
+  timestamp: number,
+): T | null {
+  if (!values.length) return null;
+  return values.reduce((nearest, candidate) => (
+    Math.abs(candidate.timestamp - timestamp) < Math.abs(nearest.timestamp - timestamp)
+      ? candidate
+      : nearest
+  ));
+}
+
+export function buildEditorProfilerFrames(
+  inputSamples: readonly EditorProfilerSample[],
+  inputNativeProfiles: readonly NativeViewportProfile[],
+): EditorProfilerFrame[] {
+  const orderedSamples = [...inputSamples].sort((left, right) => left.timestamp - right.timestamp);
+  const orderedNativeProfiles = [...inputNativeProfiles]
+    .sort((left, right) => left.timestamp - right.timestamp);
+  if (orderedNativeProfiles.length) {
+    return orderedNativeProfiles.map((nativeProfile) => ({
+      timestamp: nativeProfile.timestamp,
+      sample: nearestTimestampValue(orderedSamples, nativeProfile.timestamp),
+      nativeProfile,
+    }));
+  }
+  return orderedSamples.map((sample) => ({
+    timestamp: sample.timestamp,
+    sample,
+    nativeProfile: null,
+  }));
+}
+
+export function nearestEditorProfilerFrame(
+  frames: readonly EditorProfilerFrame[],
+  timestamp: number,
+): EditorProfilerFrame | null {
+  return nearestTimestampValue(frames, timestamp);
+}
+
+function memoryBranch(
+  id: string,
+  name: string,
+  domain: string,
+  children: NativeProfilerMemoryNode[],
+): NativeProfilerMemoryNode {
+  const certainties = new Set(children.map((child) => child.certainty));
+  return {
+    id,
+    name,
+    domain,
+    bytes: children.reduce((total, child) => total + child.bytes, 0),
+    certainty: certainties.size === 1 ? children[0]?.certainty ?? 'exact' : 'mixed',
+    source: `${children.length} ${children.length === 1 ? 'entry' : 'entries'}`,
+    children,
+  };
+}
+
+export function buildNativeProfilerMemoryTree(
+  profile: Pick<NativeViewportProfile, 'memory' | 'resources'>,
+): NativeProfilerMemoryNode[] {
+  const domains = new Map<string, NativeProfilerMemoryCategory[]>();
+  for (const category of profile.memory) {
+    const domain = category.domain.trim().toLowerCase() || 'other';
+    const values = domains.get(domain) ?? [];
+    values.push(category);
+    domains.set(domain, values);
+  }
+
+  return [...domains.entries()].map(([domain, categories]) => {
+    const direct: NativeProfilerMemoryNode[] = [];
+    const groups = new Map<string, NativeProfilerMemoryNode[]>();
+    categories.forEach((category, index) => {
+      let group: string | null = null;
+      let name = category.name;
+      const slash = category.name.indexOf(' / ');
+      if (slash > 0) {
+        group = category.name.slice(0, slash);
+        name = category.name.slice(slash + 3);
+      } else if (/^GPU offscreen /i.test(category.name)) {
+        group = 'Offscreen targets';
+        name = category.name.replace(/^GPU offscreen /i, '');
+      } else if (category.name.toLowerCase().startsWith(`${domain} `)) {
+        name = category.name.slice(domain.length + 1);
+      }
+
+      const resourceChildren = /texture residency/i.test(category.name)
+        ? profile.resources.flatMap((resource, resourceIndex) => (
+            resource.gpuBytesEstimate == null
+              ? []
+              : [{
+                  id: `memory:${domain}:${index}:resource:${resourceIndex}`,
+                  name: resource.asset,
+                  domain,
+                  bytes: resource.gpuBytesEstimate,
+                  certainty: 'estimate',
+                  source: `${resource.kind}${resource.referencedBy.length ? ` · ${resource.referencedBy.join(', ')}` : ''}`,
+                  children: [],
+                }]
+          ))
+        : [];
+      const node: NativeProfilerMemoryNode = {
+        ...category,
+        id: `memory:${domain}:${index}`,
+        name,
+        children: resourceChildren,
+      };
+      if (group) {
+        const values = groups.get(group) ?? [];
+        values.push(node);
+        groups.set(group, values);
+      } else {
+        direct.push(node);
+      }
+    });
+    const children = [
+      ...direct,
+      ...[...groups.entries()].map(([name, values], index) => (
+        memoryBranch(`memory:${domain}:group:${index}`, name, domain, values)
+      )),
+    ];
+    return memoryBranch(`memory:${domain}`, domain.toUpperCase(), domain, children);
+  });
 }
 
 type ProfilerChannelMessage =

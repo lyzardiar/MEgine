@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
+  buildEditorProfilerFrames,
+  buildNativeProfilerMemoryTree,
   clearEditorProfilerSamples,
   editorProfilerUiRefreshDelay,
+  nearestEditorProfilerFrame,
   readNativeViewportProfiles,
   readEditorProfilerSamples,
   subscribeEditorProfiler,
   summarizeEditorProfilerSamples,
   type EditorProfilerSample,
+  type EditorProfilerFrame,
   type EditorProfilerSource,
-  type NativeProfilerMemoryCategory,
+  type NativeProfilerMemoryNode,
   type NativeProfilerNode,
   type NativeProfilerResource,
-  type NativeViewportProfile,
 } from '../editorProfiler';
 import {
   clearTimelineProfilerSnapshots,
@@ -51,16 +54,6 @@ function formatBytes(value: number | null | undefined): string {
   return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 }
 
-function flattenCallTree(
-  node: NativeProfilerNode,
-  depth = 0,
-): Array<{ node: NativeProfilerNode; depth: number }> {
-  return [
-    { node, depth },
-    ...node.children.flatMap((child) => flattenCallTree(child, depth + 1)),
-  ];
-}
-
 function compareValues(left: string | number | boolean | null, right: string | number | boolean | null): number {
   if (typeof left === 'string' || typeof right === 'string') {
     return String(left ?? '').localeCompare(String(right ?? ''), undefined, { numeric: true });
@@ -75,6 +68,87 @@ function sortedRows<Row, Key extends string>(
 ): Row[] {
   const direction = sort.direction === 'asc' ? 1 : -1;
   return [...rows].sort((left, right) => direction * compareValues(value(left, sort.key), value(right, sort.key)));
+}
+
+type CpuTreeRow = {
+  id: string;
+  node: NativeProfilerNode;
+  depth: number;
+  expandable: boolean;
+  expanded: boolean;
+};
+
+type MemoryTreeRow = {
+  id: string;
+  node: NativeProfilerMemoryNode;
+  depth: number;
+  expandable: boolean;
+  expanded: boolean;
+};
+
+function cpuSortValue(node: NativeProfilerNode, key: CpuSortKey, frameMs: number): string | number {
+  if (key === 'name') return node.name;
+  if (key === 'frame') return frameMs > 0 ? node.totalMs / frameMs : 0;
+  return node[key];
+}
+
+function flattenCallTree(
+  root: NativeProfilerNode,
+  sort: SortState<CpuSortKey>,
+  collapsed: ReadonlySet<string>,
+  query: string,
+  frameMs: number,
+): CpuTreeRow[] {
+  const visit = (node: NativeProfilerNode, id: string, depth: number): { matches: boolean; rows: CpuTreeRow[] } => {
+    const childResults = sortedRows(
+      node.children.map((child, index) => ({ child, index })),
+      sort,
+      (entry, key) => cpuSortValue(entry.child, key, frameMs),
+    ).map(({ child, index }) => visit(child, `${id}:${index}`, depth + 1));
+    const matches = !query
+      || node.name.toLowerCase().includes(query)
+      || childResults.some((child) => child.matches);
+    if (!matches) return { matches: false, rows: [] };
+    const expanded = Boolean(node.children.length) && (!collapsed.has(id) || Boolean(query));
+    return {
+      matches: true,
+      rows: [{ id, node, depth, expandable: node.children.length > 0, expanded },
+        ...(expanded ? childResults.flatMap((child) => child.rows) : [])],
+    };
+  };
+  return visit(root, 'cpu', 0).rows;
+}
+
+function memorySortValue(node: NativeProfilerMemoryNode, key: MemorySortKey): string | number {
+  return node[key];
+}
+
+function flattenMemoryTree(
+  roots: readonly NativeProfilerMemoryNode[],
+  sort: SortState<MemorySortKey>,
+  collapsed: ReadonlySet<string>,
+  query: string,
+): MemoryTreeRow[] {
+  const visit = (node: NativeProfilerMemoryNode, depth: number): { matches: boolean; rows: MemoryTreeRow[] } => {
+    const childResults = sortedRows(node.children, sort, memorySortValue)
+      .map((child) => visit(child, depth + 1));
+    const matches = !query
+      || `${node.name} ${node.domain} ${node.certainty} ${node.source}`.toLowerCase().includes(query)
+      || childResults.some((child) => child.matches);
+    if (!matches) return { matches: false, rows: [] };
+    const expanded = Boolean(node.children.length) && (!collapsed.has(node.id) || Boolean(query));
+    return {
+      matches: true,
+      rows: [{
+        id: node.id,
+        node,
+        depth,
+        expandable: node.children.length > 0,
+        expanded,
+      }, ...(expanded ? childResults.flatMap((child) => child.rows) : [])],
+    };
+  };
+  return sortedRows(roots, sort, memorySortValue).flatMap((root) => visit(root, 0).rows);
 }
 
 function nextSort<Key extends string>(current: SortState<Key>, key: Key): SortState<Key> {
@@ -97,19 +171,6 @@ function SortableHeader<Key extends string>(props: {
       </button>
     </th>
   );
-}
-
-function nearestNativeProfile(
-  profiles: readonly NativeViewportProfile[],
-  timestamp: number | null,
-): NativeViewportProfile | null {
-  if (!profiles.length) return null;
-  if (timestamp == null) return profiles.at(-1) ?? null;
-  return profiles.reduce((nearest, candidate) => (
-    Math.abs(candidate.timestamp - timestamp) < Math.abs(nearest.timestamp - timestamp)
-      ? candidate
-      : nearest
-  ));
 }
 
 function ProfileGraph(props: {
@@ -211,6 +272,8 @@ export function Profiler() {
   const [cpuSort, setCpuSort] = useState<SortState<CpuSortKey>>({ key: 'totalMs', direction: 'desc' });
   const [memorySort, setMemorySort] = useState<SortState<MemorySortKey>>({ key: 'bytes', direction: 'desc' });
   const [resourceSort, setResourceSort] = useState<SortState<ResourceSortKey>>({ key: 'gpuBytesEstimate', direction: 'desc' });
+  const [collapsedCpuNodes, setCollapsedCpuNodes] = useState<Set<string>>(() => new Set());
+  const [collapsedMemoryNodes, setCollapsedMemoryNodes] = useState<Set<string>>(() => new Set());
   const [visible, setVisible] = useState(true);
   const [samples, setSamples] = useState(() => readEditorProfilerSamples('game'));
   const [nativeProfiles, setNativeProfiles] = useState(() => readNativeViewportProfiles('game'));
@@ -273,27 +336,36 @@ export function Profiler() {
   }, [frozen, source, visible]);
 
   const summary = useMemo(() => summarizeEditorProfilerSamples(samples), [samples]);
-  const selectedSampleIndex = selectedTimestamp == null
-    ? samples.length - 1
-    : samples.findIndex((sample) => sample.timestamp === selectedTimestamp);
-  const latest = selectedSampleIndex >= 0 ? samples[selectedSampleIndex] : summary.latest;
-  const latestNative = nearestNativeProfile(nativeProfiles, latest?.timestamp ?? null);
-  const cpuRows = useMemo(() => {
-    if (!latestNative) return [];
-    const query = filter.trim().toLowerCase();
-    const rows = flattenCallTree(latestNative.callTree)
-      .filter(({ node }) => !query || node.name.toLowerCase().includes(query));
-    return sortedRows(rows, cpuSort, (row, key) => {
-      if (key === 'name') return row.node.name;
-      if (key === 'frame') return latestNative.totalMs > 0 ? row.node.totalMs / latestNative.totalMs : 0;
-      return row.node[key];
-    });
-  }, [cpuSort, filter, latestNative]);
-  const memoryRows = useMemo(() => sortedRows(
-    latestNative?.memory ?? [],
-    memorySort,
-    (row: NativeProfilerMemoryCategory, key) => row[key],
-  ), [latestNative, memorySort]);
+  const frames = useMemo(
+    () => buildEditorProfilerFrames(samples, nativeProfiles),
+    [nativeProfiles, samples],
+  );
+  const frameSelectionIndex = selectedTimestamp == null
+    ? frames.length - 1
+    : frames.findIndex((frame) => frame.timestamp === selectedTimestamp);
+  const selectedFrame = frameSelectionIndex >= 0 ? frames[frameSelectionIndex] : frames.at(-1) ?? null;
+  const latest = selectedFrame?.sample ?? null;
+  const latestNative = selectedFrame?.nativeProfile ?? null;
+  const normalizedFilter = filter.trim().toLowerCase();
+  const cpuRows = useMemo(() => (
+    latestNative
+      ? flattenCallTree(
+          latestNative.callTree,
+          cpuSort,
+          collapsedCpuNodes,
+          normalizedFilter,
+          latestNative.totalMs,
+        )
+      : []
+  ), [collapsedCpuNodes, cpuSort, latestNative, normalizedFilter]);
+  const memoryTree = useMemo(
+    () => latestNative ? buildNativeProfilerMemoryTree(latestNative) : [],
+    [latestNative],
+  );
+  const memoryRows = useMemo(
+    () => flattenMemoryTree(memoryTree, memorySort, collapsedMemoryNodes, normalizedFilter),
+    [collapsedMemoryNodes, memorySort, memoryTree, normalizedFilter],
+  );
   const resources = useMemo(() => {
     const query = filter.trim().toLowerCase();
     const rows = (latestNative?.resources ?? []).filter((resource) => (
@@ -329,13 +401,26 @@ export function Profiler() {
   const itemsPerBatch = latest && latest.uiBatches > 0
     ? latest.uiPrimitives / latest.uiBatches
     : latest?.uiPrimitives ? latest.uiPrimitives : 0;
-  const frameSelectionIndex = latest
-    ? samples.findIndex((sample) => sample.timestamp === latest.timestamp)
-    : -1;
-  const selectFrame = (sample: EditorProfilerSample) => {
-    setSelectedTimestamp(sample.timestamp);
+  const selectFrame = (frame: EditorProfilerFrame) => {
+    setSelectedTimestamp(frame.timestamp);
     setFrozen(true);
   };
+  const selectSample = (sample: EditorProfilerSample) => {
+    const frame = nearestEditorProfilerFrame(frames, sample.timestamp);
+    if (frame) selectFrame(frame);
+  };
+  const toggleCpuNode = (id: string) => setCollapsedCpuNodes((current) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+  const toggleMemoryNode = (id: string) => setCollapsedMemoryNodes((current) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
   const returnToLive = () => {
     setSelectedTimestamp(null);
     setFrozen(false);
@@ -379,7 +464,11 @@ export function Profiler() {
         </span>
         <button type="button" aria-pressed={frozen} onClick={() => {
           if (frozen) returnToLive();
-          else setFrozen(true);
+          else {
+            const frame = frames.at(-1);
+            if (frame) selectFrame(frame);
+            else setFrozen(true);
+          }
         }}>
           {frozen ? 'Resume' : 'Freeze'}
         </button>
@@ -506,7 +595,7 @@ export function Profiler() {
                   setFilter('');
                 }}
                 key={value}
-              >{value[0].toUpperCase() + value.slice(1)}</button>
+              >{value === 'cpu' ? 'CPU' : value[0].toUpperCase() + value.slice(1)}</button>
             ))}
           </div>
 
@@ -515,28 +604,32 @@ export function Profiler() {
               type="button"
               aria-label="Previous frame"
               disabled={frameSelectionIndex <= 0}
-              onClick={() => samples[frameSelectionIndex - 1] && selectFrame(samples[frameSelectionIndex - 1])}
+              onClick={() => frames[frameSelectionIndex - 1] && selectFrame(frames[frameSelectionIndex - 1])}
             ><ChevronLeft size={14} aria-hidden="true" /></button>
             <input
               type="range"
               min={0}
-              max={Math.max(0, samples.length - 1)}
+              max={Math.max(0, frames.length - 1)}
               value={Math.max(0, frameSelectionIndex)}
-              disabled={samples.length < 2}
+              disabled={frames.length < 2}
               aria-label="Selected frame"
-              onChange={(event) => samples[Number(event.target.value)] && selectFrame(samples[Number(event.target.value)])}
+              onChange={(event) => frames[Number(event.target.value)] && selectFrame(frames[Number(event.target.value)])}
             />
             <button
               type="button"
               aria-label="Next frame"
-              disabled={frameSelectionIndex < 0 || frameSelectionIndex >= samples.length - 1}
-              onClick={() => samples[frameSelectionIndex + 1] && selectFrame(samples[frameSelectionIndex + 1])}
+              disabled={frameSelectionIndex < 0 || frameSelectionIndex >= frames.length - 1}
+              onClick={() => frames[frameSelectionIndex + 1] && selectFrame(frames[frameSelectionIndex + 1])}
             ><ChevronRight size={14} aria-hidden="true" /></button>
             <span>
-              {samples.length ? `Frame ${frameSelectionIndex + 1} / ${samples.length}` : 'No frames'}
-              {latestNative && latest ? ` · native ${Math.abs(latestNative.timestamp - latest.timestamp).toFixed(0)} ms away` : ''}
+              {frames.length
+                ? `${latestNative ? 'Native frame' : 'Frame'} ${frameSelectionIndex + 1} / ${frames.length}`
+                : 'No frames'}
+              {latestNative && latest
+                ? ` · WebView sample Δ ${Math.abs(latestNative.timestamp - latest.timestamp).toFixed(0)} ms`
+                : ''}
             </span>
-            <button type="button" className={selectedTimestamp == null ? 'active' : ''} aria-pressed={selectedTimestamp == null} onClick={returnToLive}>
+            <button type="button" className={!frozen && selectedTimestamp == null ? 'active' : ''} aria-pressed={!frozen && selectedTimestamp == null} onClick={returnToLive}>
               Live
             </button>
           </div>
@@ -592,8 +685,8 @@ export function Profiler() {
               color="#55b8d0"
               budget={FRAME_BUDGET_MS}
               label="Frame Interval"
-              selectedTimestamp={selectedTimestamp}
-              onSelect={selectFrame}
+              selectedTimestamp={latest?.timestamp ?? null}
+              onSelect={selectSample}
             />
             <ProfileGraph
               samples={samples}
@@ -601,8 +694,8 @@ export function Profiler() {
               peakField="paintMaxMs"
               color="#7ac56b"
               label="Viewport CPU"
-              selectedTimestamp={selectedTimestamp}
-              onSelect={selectFrame}
+              selectedTimestamp={latest?.timestamp ?? null}
+              onSelect={selectSample}
             />
           </div>
 
@@ -634,8 +727,20 @@ export function Profiler() {
                 <SortableHeader label="Frame" column="frame" sort={cpuSort} onSort={setCpuSort} />
                 <SortableHeader label="Calls" column="calls" sort={cpuSort} onSort={setCpuSort} />
               </tr></thead>
-              <tbody>{cpuRows.map(({ node, depth }, index) => <tr key={`${node.name}:${depth}:${index}`}>
-                <td title={node.name}><span style={{ paddingLeft: depth * 14 }}>{depth > 0 ? '↳ ' : ''}{node.name}</span></td>
+              <tbody>{cpuRows.map(({ id, node, depth, expandable, expanded }) => <tr key={id}>
+                <td title={node.name}><div className="profiler-tree-cell" style={{ paddingLeft: depth * 14 }}>
+                  {expandable ? <button
+                    type="button"
+                    className="profiler-tree-toggle"
+                    aria-label={`${expanded ? 'Collapse' : 'Expand'} ${node.name}`}
+                    aria-expanded={expanded}
+                    onClick={() => toggleCpuNode(id)}
+                  >{expanded
+                    ? <ChevronDown size={12} aria-hidden="true" />
+                    : <ChevronRight size={12} aria-hidden="true" />}</button>
+                    : <span className="profiler-tree-spacer" />}
+                  <span>{node.name}</span>
+                </div></td>
                 <td>{formatMs(node.totalMs)}</td><td>{formatMs(node.selfMs)}</td>
                 <td>{latestNative.totalMs > 0 ? `${(node.totalMs / latestNative.totalMs * 100).toFixed(1)}%` : '—'}</td>
                 <td>{formatCount(node.calls)}</td>
@@ -644,7 +749,10 @@ export function Profiler() {
           </section>}
 
           {module === 'memory' && <section className="profiler-detail-section" aria-label="Native memory provenance">
-            <header><div><strong>Memory Provenance</strong><span>exact, estimate, and lower-bound values stay separate</span></div></header>
+            <header>
+              <div><strong>Memory Provenance</strong><span>expand CPU/GPU systems to allocation and resource sources</span></div>
+              <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter allocation…" aria-label="Filter profiler memory" />
+            </header>
             {latestNative ? <>
               <div className="profiler-metrics profiler-metrics-secondary">
                 <Metric label="CPU" value={formatBytes(latestNative.memory.filter((item) => item.domain === 'cpu').reduce((sum, item) => sum + item.bytes, 0))} />
@@ -660,10 +768,23 @@ export function Profiler() {
                   <SortableHeader label="Certainty" column="certainty" sort={memorySort} onSort={setMemorySort} />
                   <SortableHeader label="Provenance" column="source" sort={memorySort} onSort={setMemorySort} />
                 </tr></thead>
-                <tbody>{memoryRows.map((item) => <tr key={`${item.domain}:${item.name}`}>
-                  <td>{item.name}</td><td>{item.domain.toUpperCase()}</td><td>{formatBytes(item.bytes)}</td>
-                  <td><span className={`profiler-certainty ${item.certainty}`}>{item.certainty}</span></td>
-                  <td title={item.source}>{item.source}</td>
+                <tbody>{memoryRows.map(({ id, node, depth, expandable, expanded }) => <tr key={id}>
+                  <td title={node.name}><div className="profiler-tree-cell" style={{ paddingLeft: depth * 14 }}>
+                    {expandable ? <button
+                      type="button"
+                      className="profiler-tree-toggle"
+                      aria-label={`${expanded ? 'Collapse' : 'Expand'} ${node.name}`}
+                      aria-expanded={expanded}
+                      onClick={() => toggleMemoryNode(id)}
+                    >{expanded
+                      ? <ChevronDown size={12} aria-hidden="true" />
+                      : <ChevronRight size={12} aria-hidden="true" />}</button>
+                      : <span className="profiler-tree-spacer" />}
+                    <span>{node.name}</span>
+                  </div></td>
+                  <td>{node.domain.toUpperCase()}</td><td>{formatBytes(node.bytes)}</td>
+                  <td><span className={`profiler-certainty ${node.certainty}`}>{node.certainty}</span></td>
+                  <td title={node.source}>{node.source}</td>
                 </tr>)}</tbody>
               </table>
             </> : <p>No native memory snapshot. Keep the viewport visible.</p>}

@@ -215,7 +215,9 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(profiler, /aria-label="Previous frame"/);
   assert.match(profiler, /aria-label="Next frame"/);
   assert.match(profiler, /function SortableHeader/);
-  assert.match(profiler, /selectedTimestamp=\{selectedTimestamp\}/);
+  assert.match(profiler, /selectedTimestamp=\{latest\?\.timestamp \?\? null\}/);
+  assert.match(profiler, /buildEditorProfilerFrames\(samples, nativeProfiles\)/);
+  assert.match(profiler, /aria-expanded=\{expanded\}/);
   assert.match(profiler, /editorProfilerUiRefreshDelay/);
   assert.match(profiler, /document\.hasFocus\(\)/);
   assert.match(profiler, /role="tab"[^>]*aria-selected=\{source === value\}/);

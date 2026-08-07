@@ -26,5 +26,5 @@ test('shared button states preserve authored colors and expose active workbench 
 
   const profiler = source('Profiler.tsx');
   assert.match(profiler, /aria-pressed=\{frozen\}/);
-  assert.match(profiler, /aria-pressed=\{selectedTimestamp == null\}/);
+  assert.match(profiler, /aria-pressed=\{!frozen && selectedTimestamp == null\}/);
 });

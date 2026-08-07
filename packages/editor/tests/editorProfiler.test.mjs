@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  buildEditorProfilerFrames,
+  buildNativeProfilerMemoryTree,
   clearEditorProfilerSamples,
   createEditorProfilerSampler,
   EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS,
   editorProfilerUiRefreshDelay,
+  nearestEditorProfilerFrame,
   readNativeViewportProfiles,
   recordNativeViewportProfile,
   summarizeEditorProfilerSamples,
@@ -131,4 +134,57 @@ test('native viewport profiles default to the frame sampler monotonic clock', ()
   const [profile] = readNativeViewportProfiles('scene');
   assert.ok(profile.timestamp >= before && profile.timestamp <= after);
   clearEditorProfilerSamples();
+});
+
+test('profiler frame selection is keyed by exact native snapshots instead of nearby WebView buckets', () => {
+  const samples = [
+    { ...frame(100), frameMs: 12, frameMaxMs: 14, paintMs: 2, paintMaxMs: 3, sampleCount: 15 },
+    { ...frame(350), frameMs: 18, frameMaxMs: 20, paintMs: 4, paintMaxMs: 5, sampleCount: 15 },
+    { ...frame(600), frameMs: 16, frameMaxMs: 17, paintMs: 3, paintMaxMs: 4, sampleCount: 15 },
+  ];
+  const nativeProfiles = [
+    { timestamp: 330, marker: 'first native frame' },
+    { timestamp: 570, marker: 'second native frame' },
+  ];
+
+  const frames = buildEditorProfilerFrames(samples, nativeProfiles);
+  assert.deepEqual(frames.map((value) => value.timestamp), [330, 570]);
+  assert.equal(frames[0].nativeProfile.marker, 'first native frame');
+  assert.equal(frames[0].sample.timestamp, 350);
+  assert.equal(frames[1].sample.timestamp, 600);
+  assert.equal(nearestEditorProfilerFrame(frames, 560), frames[1]);
+
+  const fallback = buildEditorProfilerFrames(samples, []);
+  assert.deepEqual(fallback.map((value) => value.timestamp), [100, 350, 600]);
+  assert.ok(fallback.every((value) => value.nativeProfile === null));
+});
+
+test('native memory profile expands into domain, subsystem, allocation, and resource levels', () => {
+  const tree = buildNativeProfilerMemoryTree({
+    memory: [
+      { name: 'CPU readback RGBA', domain: 'cpu', bytes: 100, certainty: 'exact', source: 'readback Vec' },
+      { name: 'Frame packet / render objects', domain: 'cpu', bytes: 20, certainty: 'lower-bound', source: 'objects' },
+      { name: 'Frame packet / UI batches', domain: 'cpu', bytes: 10, certainty: 'lower-bound', source: 'batches' },
+      { name: 'GPU offscreen color', domain: 'gpu', bytes: 200, certainty: 'estimate', source: 'RGBA8' },
+      { name: 'GPU offscreen depth', domain: 'gpu', bytes: 200, certainty: 'estimate', source: 'depth' },
+      { name: 'GPU texture residency', domain: 'gpu', bytes: 64, certainty: 'estimate', source: 'textures' },
+    ],
+    resources: [{
+      kind: 'texture', asset: 'Assets/UI/button.png', resolvedPath: 'C:/button.png', loaded: true,
+      sourceBytes: 32, gpuBytesEstimate: 64, dimensions: [4, 4], referencedBy: ['UI batch'],
+    }],
+  });
+
+  const cpu = tree.find((node) => node.name === 'CPU');
+  const gpu = tree.find((node) => node.name === 'GPU');
+  assert.equal(cpu.bytes, 130);
+  assert.deepEqual(
+    cpu.children.find((node) => node.name === 'Frame packet').children.map((node) => node.name),
+    ['render objects', 'UI batches'],
+  );
+  assert.equal(gpu.children.find((node) => node.name === 'Offscreen targets').children.length, 2);
+  assert.deepEqual(
+    gpu.children.find((node) => node.name === 'texture residency').children.map((node) => node.name),
+    ['Assets/UI/button.png'],
+  );
 });
