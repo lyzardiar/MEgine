@@ -223,7 +223,7 @@ test('command schemas expose exact high-risk guards and shared optimistic option
   );
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences'].anyOf.length,
-    6,
+    7,
   );
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences']
@@ -234,6 +234,11 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences']
       .properties.snap.properties.move.exclusiveMinimum,
     0,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences']
+      .properties.canvasWorkspace.properties.artboards.maxItems,
+    6,
   );
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['view.set_timeline_preferences'].anyOf.length,

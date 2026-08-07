@@ -123,6 +123,7 @@ import {
 } from '../spriteImport';
 import { setEditorPrefs } from '../sceneLibrary';
 import { normalizeGameDisplay, type GameResolution } from '../gameResolution';
+import { normalizeCanvasWorkspacePreferences } from '../canvasWorkspace';
 import {
   initializeSceneViewPreferencesEvents,
   readSceneViewPreferences,
@@ -1394,13 +1395,30 @@ class AgentBridge {
     this.observe();
     const store = this.requireStore();
     const snapshot = store.snapshot();
+    const sceneView = readSceneViewPreferences();
+    const canvasWorkspace = normalizeCanvasWorkspacePreferences(
+      sceneView.canvasWorkspace,
+      store.gameResolution,
+    );
     return {
       mode: store.mode,
       frame: snapshot.frame,
       simulationTime: snapshot.simulationTime,
       gizmo: store.gizmo,
       sceneCamera: store.sceneCamera,
-      sceneView: readSceneViewPreferences(),
+      sceneView,
+      canvasWorkspace: {
+        enabled: canvasWorkspace.enabled,
+        activeKey: canvasWorkspace.activeKey,
+        showSafeArea: canvasWorkspace.showSafeArea,
+        showDiagnostics: canvasWorkspace.showDiagnostics,
+        artboards: canvasWorkspace.artboards.map(({ key, label, width, height }) => ({
+          key,
+          label,
+          width,
+          height,
+        })),
+      },
       timelinePreferences: readTimelineEditorPreferences(),
       gameResolution: store.gameResolution,
       gameDisplay: store.gameDisplay,
@@ -1418,6 +1436,65 @@ class AgentBridge {
   getSelection(): SelectionInfo {
     const store = this.requireStore();
     return { selected: store.selected, selectedIds: store.selectedIds };
+  }
+
+  async getCanvasPlan(params: Record<string, unknown>): Promise<unknown> {
+    this.observe(true);
+    const store = this.requireStore();
+    const snapshot = store.snapshot();
+    const canvasEntity = typeof params.canvasEntity === 'number'
+      ? params.canvasEntity
+      : undefined;
+    const preferences = normalizeCanvasWorkspacePreferences(
+      readSceneViewPreferences().canvasWorkspace,
+      store.gameResolution,
+    );
+    if (
+      typeof params.artboardKey === 'string'
+      && !preferences.artboards.some((artboard) => artboard.key === params.artboardKey)
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Canvas artboard "${params.artboardKey}" does not exist`,
+        { availableArtboards: preferences.artboards.map((artboard) => artboard.key) },
+      );
+    }
+    const { buildCanvasPlanPage } = await import('../ui/canvasPlan');
+    const page = buildCanvasPlanPage({
+      entities: snapshot.entities,
+      selectedIds: snapshot.selectedIds,
+      sceneRevision: this.sceneChanges.revision,
+      gameResolution: store.gameResolution,
+      gameDisplay: store.gameDisplay,
+      preferences,
+      canvasEntity,
+      artboardKey: typeof params.artboardKey === 'string' ? params.artboardKey : undefined,
+      offset: typeof params.offset === 'number' ? params.offset : 0,
+      limit: typeof params.limit === 'number' ? params.limit : 200,
+    });
+    if (!page) {
+      throw new BridgeError(
+        canvasEntity == null ? 'NOT_READY' : 'ENTITY_NOT_FOUND',
+        canvasEntity == null
+          ? 'The active scene has no screen-space Canvas'
+          : `Entity ${canvasEntity} is not a screen-space Canvas`,
+      );
+    }
+    if (
+      typeof params.expectedPlanRevision === 'string'
+      && params.expectedPlanRevision !== page.planRevision
+    ) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Canvas plan changed; restart pagination from offset 0',
+        {
+          expectedPlanRevision: params.expectedPlanRevision,
+          currentPlanRevision: page.planRevision,
+          sceneRevision: page.sceneRevision,
+        },
+      );
+    }
+    return page;
   }
 
   getProjectState(): AgentProjectLifecycleState & {
@@ -3924,9 +4001,14 @@ class AgentBridge {
         args.snap as NonNullable<SceneViewPreferencesPatch['snap']>,
       );
     }
+    if (args.canvasWorkspace !== undefined) {
+      patch.canvasWorkspace = structuredClone(
+        args.canvasWorkspace as NonNullable<SceneViewPreferencesPatch['canvasWorkspace']>,
+      );
+    }
     updateSceneViewPreferences(patch);
     this.observe();
-    this.logProvider?.('Agent updated persistent Scene View preferences');
+    this.logProvider?.('Agent updated persistent Scene View and Canvas Workspace preferences');
     return this.getEditorState();
   }
 
@@ -5185,6 +5267,8 @@ class AgentBridge {
             ? params.maxSize
             : DEFAULT_SCREENSHOT_MAX_SIZE,
         );
+      case 'view.canvas_plan':
+        return this.getCanvasPlan(params);
       case 'view.window_screenshot':
         return this.captureWindow(
           typeof params.windowLabel === 'string' && params.windowLabel

@@ -8,7 +8,7 @@
 
 ### AI Agent 后台开发
 
-- AgentBridge 已覆盖发现、观察、操作与验证主路径；组件 schema、场景状态、Canvas draw plan 和窗口语义树均可机器读取。
+- AgentBridge 已覆盖发现、观察、操作与验证主路径；组件 schema、场景状态、窗口语义树，以及带分页与 revision 防撕裂的 `view.canvas_plan` 均可机器读取。
 - 全部原生编辑器窗口支持聚合语义快照与逐窗截图；聚合结果只有在窗口清单稳定、全部读取成功且逐窗声明安全时才会标记 `complete/backgroundSafe`。
 - UI 等待支持期望 revision 与零超时稳定观察；截图优先走 WebView2 页面捕获，不依赖抢占前台焦点。
 - Agent 适配器随桌面构建发布，并可在项目打开前进入配置与文档入口。

@@ -1440,6 +1440,51 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('editor.state')),
   },
   {
+    name: 'get_canvas_plan',
+    description:
+      'Read the shared semantic Canvas layout plan for one screen-space Canvas and artboard. Returns revision-safe paged draw items, every configured artboard summary, CanvasScaler output, text measurement, batching metadata, and deterministic diagnostics without activating an editor window.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        canvasEntity: {
+          ...ENTITY_ID_SCHEMA,
+          description: 'Screen-space Canvas entity; defaults to the selected Canvas or first Canvas',
+        },
+        artboardKey: {
+          ...nonEmptyStringSchema('Artboard key; defaults to the active artboard'),
+          maxLength: 64,
+        },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 1000000,
+          description: 'Zero-based item cursor (default 0)',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 500,
+          description: 'Maximum Canvas items (default 200)',
+        },
+        expectedPlanRevision: {
+          type: 'string',
+          pattern: '^canvas-plan-v1-\\d+-[0-9a-f]{16}$',
+          maxLength: 80,
+          description: 'planRevision from the first page; required when offset is greater than 0',
+        },
+      },
+      anyOf: [
+        { properties: { offset: { type: 'integer', maximum: 0 } } },
+        {
+          required: ['offset', 'expectedPlanRevision'],
+          properties: { offset: { type: 'integer', minimum: 1 } },
+        },
+      ],
+    },
+    handler: async (args) => textContent(await bridgeQuery('view.canvas_plan', args)),
+  },
+  {
     name: 'get_selection',
     description: 'Get the currently selected entity id(s) in the hierarchy.',
     inputSchema: { type: 'object', properties: {} },
@@ -3406,6 +3451,59 @@ const TOOLS = [
           { required: ['scale'] },
         ],
       },
+      canvasWorkspace: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          enabled: { type: 'boolean' },
+          activeKey: { ...nonEmptyStringSchema('Active artboard key'), maxLength: 64 },
+          artboards: {
+            type: 'array',
+            minItems: 1,
+            maxItems: 6,
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['key', 'label', 'width', 'height'],
+              properties: {
+                key: { ...nonEmptyStringSchema('Stable artboard key'), maxLength: 64 },
+                label: { ...nonEmptyStringSchema('Artboard label'), maxLength: 64 },
+                width: { type: 'integer', minimum: 64, maximum: 16384 },
+                height: { type: 'integer', minimum: 64, maximum: 16384 },
+                safeArea: {
+                  type: 'object',
+                  additionalProperties: false,
+                  required: ['x', 'y', 'width', 'height'],
+                  properties: {
+                    x: { type: 'number', minimum: 0 },
+                    y: { type: 'number', minimum: 0 },
+                    width: { type: 'number', exclusiveMinimum: 0 },
+                    height: { type: 'number', exclusiveMinimum: 0 },
+                  },
+                },
+              },
+            },
+          },
+          showSafeArea: { type: 'boolean' },
+          showDiagnostics: { type: 'boolean' },
+          zoom: { type: 'number', minimum: 0.1, maximum: 8 },
+          pan: {
+            type: 'array',
+            minItems: 2,
+            maxItems: 2,
+            items: { type: 'number' },
+          },
+        },
+        anyOf: [
+          { required: ['enabled'] },
+          { required: ['activeKey'] },
+          { required: ['artboards'] },
+          { required: ['showSafeArea'] },
+          { required: ['showDiagnostics'] },
+          { required: ['zoom'] },
+          { required: ['pan'] },
+        ],
+      },
     },
     [],
     undefined,
@@ -3417,6 +3515,7 @@ const TOOLS = [
         { required: ['pivotMode'] },
         { required: ['handleOrientation'] },
         { required: ['snap'] },
+        { required: ['canvasWorkspace'] },
       ],
     },
   ),

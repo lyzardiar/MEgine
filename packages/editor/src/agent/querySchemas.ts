@@ -136,6 +136,35 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       'Maximum output width or height in pixels; default 2048',
     ),
   }),
+  'view.canvas_plan': objectSchema({
+    canvasEntity: entityId('Screen-space Canvas entity; defaults to the selected Canvas or first Canvas'),
+    artboardKey: {
+      ...nonEmptyString('Artboard key; defaults to the active Canvas Workspace artboard'),
+      maxLength: 64,
+    },
+    offset: boundedInteger(0, 1_000_000, 'Zero-based item cursor; default 0'),
+    limit: boundedInteger(1, 500, 'Maximum Canvas items; default 200'),
+    expectedPlanRevision: {
+      type: 'string',
+      pattern: '^canvas-plan-v1-\\d+-[0-9a-f]{16}$',
+      maxLength: 80,
+      description: 'planRevision from the first page; required when offset is greater than 0',
+    },
+  }, [], {
+    anyOf: [
+      {
+        properties: {
+          offset: { type: 'integer', maximum: 0 },
+        },
+      },
+      {
+        required: ['offset', 'expectedPlanRevision'],
+        properties: {
+          offset: { type: 'integer', minimum: 1 },
+        },
+      },
+    ],
+  }),
   'view.window_screenshot': objectSchema({
     windowLabel: stringValue('Window label from window.list; default main'),
     maxSize: boundedInteger(
@@ -474,6 +503,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'entity.find', category: 'entity', description: 'Find entities by name, component, or active state', readOnly: true },
   { id: 'entity.get_component', category: 'entity', description: 'Read one exact component value from an entity', readOnly: true },
   { id: 'view.screenshot', category: 'view', description: 'Capture a Scene or Game viewport without activating a window', readOnly: true },
+  { id: 'view.canvas_plan', category: 'view', description: 'Read a revision-safe paged semantic Canvas plan and deterministic layout diagnostics', readOnly: true },
   { id: 'view.window_screenshot', category: 'window', description: 'Capture a complete editor window without activating it', readOnly: true },
   { id: 'view.capture_region', category: 'window', description: 'Capture an exact CSS-pixel region of any editor window without activating it', readOnly: true },
   { id: 'view.capture_element', category: 'window', description: 'Capture a revision-guarded semantic element by selector without activating its window', readOnly: true },

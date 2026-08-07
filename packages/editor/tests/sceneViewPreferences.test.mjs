@@ -11,6 +11,7 @@ import {
   createEditorBroadcastChannel,
   initializeEditorInstance,
 } from '../src/editorInstance.ts';
+import { normalizeCanvasWorkspacePreferences } from '../src/canvasWorkspace.ts';
 
 test('Scene view preferences persist and notify local and remote editor windows', async () => {
   const originalWindow = globalThis.window;
@@ -65,6 +66,7 @@ test('Scene view preferences persist and notify local and remote editor windows'
       pivotMode: 'center',
       handleOrientation: 'global',
       snap: { enabled: true, move: 4, rotate: 15, scale: 0.1 },
+      canvasWorkspace: normalizeCanvasWorkspacePreferences(null),
     });
     assert.deepEqual(readSceneViewPreferences(), local);
     assert.equal(changes.length, 1);

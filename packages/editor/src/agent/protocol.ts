@@ -9,6 +9,7 @@
 
 import type { SceneViewPreferences } from '../sceneViewPreferences';
 import type { TimelineEditorPreferences } from '../timelineEditorPreferences';
+import type { CanvasWorkspacePreferences } from '../canvasWorkspace';
 
 /** A captured image, returned as a data URL so any client can consume it. */
 export interface ScreenshotResult {
@@ -428,6 +429,13 @@ export interface EditorState {
   };
   /** Persistent Scene-view editing switches shared by all project windows. */
   sceneView: SceneViewPreferences;
+  /** Compact Canvas Workspace state; the full draw plan is available through view.canvas_plan. */
+  canvasWorkspace: Pick<
+    CanvasWorkspacePreferences,
+    'enabled' | 'activeKey' | 'showSafeArea' | 'showDiagnostics'
+  > & {
+    artboards: Array<{ key: string; label: string; width: number; height: number }>;
+  };
   /** Persistent Animation Timeline and Sequencer editing switches. */
   timelinePreferences: TimelineEditorPreferences;
   /** Current project Game-view resolution, or free aspect when null. */

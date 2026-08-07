@@ -834,6 +834,46 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
         { required: ['scale'] },
       ],
     }),
+    canvasWorkspace: objectSchema({
+      enabled: booleanValue('Enable the screen-space Canvas multi-artboard workspace'),
+      activeKey: { type: 'string', minLength: 1, maxLength: 64, pattern: '\\S' },
+      artboards: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 6,
+        items: objectSchema({
+          key: { type: 'string', minLength: 1, maxLength: 64, pattern: '\\S' },
+          label: { type: 'string', minLength: 1, maxLength: 64, pattern: '\\S' },
+          width: { type: 'integer', minimum: 64, maximum: 16_384 },
+          height: { type: 'integer', minimum: 64, maximum: 16_384 },
+          safeArea: objectSchema({
+            x: { type: 'number', minimum: 0 },
+            y: { type: 'number', minimum: 0 },
+            width: { type: 'number', exclusiveMinimum: 0 },
+            height: { type: 'number', exclusiveMinimum: 0 },
+          }, ['x', 'y', 'width', 'height']),
+        }, ['key', 'label', 'width', 'height']),
+      },
+      showSafeArea: booleanValue('Show safe-area bounds on artboards'),
+      showDiagnostics: booleanValue('Show deterministic Canvas diagnostics'),
+      zoom: { type: 'number', minimum: 0.1, maximum: 8 },
+      pan: {
+        type: 'array',
+        minItems: 2,
+        maxItems: 2,
+        items: { type: 'number' },
+      },
+    }, [], {
+      anyOf: [
+        { required: ['enabled'] },
+        { required: ['activeKey'] },
+        { required: ['artboards'] },
+        { required: ['showSafeArea'] },
+        { required: ['showDiagnostics'] },
+        { required: ['zoom'] },
+        { required: ['pan'] },
+      ],
+    }),
   }, [], {
     anyOf: [
       { required: ['mode2D'] },
@@ -842,6 +882,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       { required: ['pivotMode'] },
       { required: ['handleOrientation'] },
       { required: ['snap'] },
+      { required: ['canvasWorkspace'] },
     ],
   }),
   'view.set_timeline_preferences': objectSchema({

@@ -7,6 +7,11 @@ import type {
   ToolHandleOrientation,
   ToolPivotMode,
 } from './editorTool.ts';
+import {
+  normalizeCanvasWorkspacePreferences,
+  type CanvasWorkspacePreferences,
+  type CanvasWorkspacePreferencesPatch,
+} from './canvasWorkspace.ts';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -14,6 +19,7 @@ const SCENE_GRID_KEY = 'mengine.scene.grid';
 const SCENE_SMART_GUIDES_KEY = 'mengine.scene.smart-guides';
 const SCENE_PIVOT_MODE_KEY = 'mengine.scene.pivot-mode';
 const SCENE_HANDLE_ORIENTATION_KEY = 'mengine.scene.handle-orientation';
+const SCENE_CANVAS_WORKSPACE_KEY = 'mengine.scene.canvas-workspace';
 const SCENE_VIEW_CHANNEL = 'mengine.editor.scene-view.v1';
 
 export const SCENE_VIEW_PREFERENCES_CHANGED_EVENT =
@@ -26,6 +32,7 @@ export type SceneViewPreferences = {
   pivotMode: ToolPivotMode;
   handleOrientation: ToolHandleOrientation;
   snap: SceneSnapSettings;
+  canvasWorkspace: CanvasWorkspacePreferences;
 };
 
 export type SceneViewPreferencesPatch = {
@@ -35,6 +42,7 @@ export type SceneViewPreferencesPatch = {
   pivotMode?: ToolPivotMode;
   handleOrientation?: ToolHandleOrientation;
   snap?: Partial<SceneSnapSettings>;
+  canvasWorkspace?: CanvasWorkspacePreferencesPatch;
 };
 
 type SceneViewPreferencesMessage = {
@@ -61,6 +69,16 @@ function loadStoredSnap(): SceneSnapSettings {
   }
 }
 
+function loadStoredCanvasWorkspace(): CanvasWorkspacePreferences {
+  try {
+    return normalizeCanvasWorkspacePreferences(
+      JSON.parse(localStorage.getItem(SCENE_CANVAS_WORKSPACE_KEY) ?? '{}'),
+    );
+  } catch {
+    return normalizeCanvasWorkspacePreferences(null);
+  }
+}
+
 export function readSceneViewPreferences(): SceneViewPreferences {
   if (sceneViewPreferencesCache) {
     return structuredClone(sceneViewPreferencesCache);
@@ -80,6 +98,7 @@ export function readSceneViewPreferences(): SceneViewPreferences {
           ? 'global'
           : 'local',
       snap: loadStoredSnap(),
+      canvasWorkspace: loadStoredCanvasWorkspace(),
     };
   } catch {
     sceneViewPreferencesCache = {
@@ -89,6 +108,7 @@ export function readSceneViewPreferences(): SceneViewPreferences {
       pivotMode: 'pivot',
       handleOrientation: 'local',
       snap: normalizeSceneSnapSettings(null),
+      canvasWorkspace: normalizeCanvasWorkspacePreferences(null),
     };
   }
   return structuredClone(sceneViewPreferencesCache);
@@ -111,6 +131,10 @@ function persistSceneViewPreferences(preferences: SceneViewPreferences): void {
       preferences.handleOrientation,
     );
     localStorage.setItem(SCENE_SNAP_KEY, JSON.stringify(preferences.snap));
+    localStorage.setItem(
+      SCENE_CANVAS_WORKSPACE_KEY,
+      JSON.stringify(preferences.canvasWorkspace),
+    );
   } catch {
     /* Keep the live editor state usable when storage is unavailable. */
   }
@@ -159,6 +183,9 @@ export function initializeSceneViewPreferencesEvents(): void {
             ? 'global'
             : 'local',
         snap: normalizeSceneSnapSettings(message.preferences.snap),
+        canvasWorkspace: normalizeCanvasWorkspacePreferences(
+          message.preferences.canvasWorkspace,
+        ),
       };
       sceneViewPreferencesCache = preferences;
       persistSceneViewPreferences(preferences);
@@ -203,6 +230,13 @@ export function updateSceneViewPreferences(
     snap: normalizeSceneSnapSettings({
       ...current.snap,
       ...(patch.snap ?? {}),
+    }),
+    canvasWorkspace: normalizeCanvasWorkspacePreferences({
+      ...current.canvasWorkspace,
+      ...(patch.canvasWorkspace ?? {}),
+      artboards:
+        patch.canvasWorkspace?.artboards
+        ?? current.canvasWorkspace.artboards,
     }),
   };
   sceneViewPreferencesCache = preferences;

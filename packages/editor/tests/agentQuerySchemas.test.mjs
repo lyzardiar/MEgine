@@ -55,6 +55,13 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       quality: 0.8,
       maxSize: 2_048,
     }],
+    ['view.canvas_plan', {
+      canvasEntity: 1,
+      artboardKey: 'phone',
+      offset: 2,
+      limit: 200,
+      expectedPlanRevision: 'canvas-plan-v1-12-0123456789abcdef',
+    }],
     ['view.window_screenshot', { windowLabel: 'main', maxSize: 4_096 }],
     ['view.capture_region', {
       windowLabel: 'main',
@@ -147,6 +154,12 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['view.screenshot', { target: 'window' }],
     ['view.screenshot', { quality: 2 }],
     ['view.screenshot', { maxSize: 255 }],
+    ['view.canvas_plan', { limit: 501 }],
+    ['view.canvas_plan', { offset: 1 }],
+    ['view.canvas_plan', {
+      offset: 1,
+      expectedPlanRevision: 'not-a-canvas-plan',
+    }],
     ['view.window_screenshot', { maxSize: 4_097 }],
     ['view.capture_region', { x: 0, y: 0, width: 0, height: 100 }],
     ['view.capture_region', { x: -1, y: 0, width: 100, height: 100 }],
@@ -204,6 +217,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
 });
 
 test('query discovery is exposed through MCP tools and a resource', () => {
+  assert.ok(TOOLS.some((tool) => tool.name === 'get_canvas_plan'));
   assert.ok(TOOLS.some((tool) => tool.name === 'list_queries'));
   assert.ok(TOOLS.some((tool) => tool.name === 'describe_query'));
   assert.ok(RESOURCES.some((resource) => (
