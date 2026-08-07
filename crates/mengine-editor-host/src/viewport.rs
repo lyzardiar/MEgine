@@ -216,6 +216,7 @@ impl EditorViewportRenderer {
         camera_yaw: f32,
         camera_pitch: f32,
         camera_distance: f32,
+        render_mode: String,
         background: [f32; 4],
     ) -> Result<EditorViewportFrame> {
         if restart != self.preview_restart {
@@ -226,6 +227,7 @@ impl EditorViewportRenderer {
         }
         let mut world = World::new();
         world.time.clear_color = glam::Vec4::from_array(background);
+        let screen_space = render_mode.eq_ignore_ascii_case("screen");
         let entity = world.spawn_empty();
         world.insert_component(entity, Transform::default());
         world.insert_component(
@@ -238,6 +240,14 @@ impl EditorViewportRenderer {
                 start_frame: 0,
                 prewarm: true,
                 auto_destroy: false,
+                render_mode,
+                screen_position: [0.5, 0.5],
+                screen_scale: if screen_space {
+                    0.08
+                } else {
+                    (1.0 / camera_distance.max(0.1)).clamp(0.01, 2.0)
+                },
+                sorting_order: 0,
             },
         );
         let yaw = camera_yaw.to_radians();
@@ -330,7 +340,7 @@ impl EditorViewportRenderer {
 
         let stage_started = Instant::now();
         if let Some(effekseer) = self.effekseer.as_mut() {
-            for failure in effekseer.append_to_frame(&mut frame) {
+            for failure in effekseer.append_to_frame(&mut frame, [size.width, size.height]) {
                 log::warn!(
                     "viewport Effekseer render asset '{}' could not be loaded from {}: {}",
                     failure.asset,

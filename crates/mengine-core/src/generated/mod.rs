@@ -1507,6 +1507,10 @@ pub struct EffekseerEffect {
     pub start_frame: i32,
     pub prewarm: bool,
     pub auto_destroy: bool,
+    pub render_mode: String,
+    pub screen_position: [f32; 2],
+    pub screen_scale: f32,
+    pub sorting_order: i32,
 }
 
 impl Default for EffekseerEffect {
@@ -1519,6 +1523,10 @@ impl Default for EffekseerEffect {
             start_frame: 0,
             prewarm: false,
             auto_destroy: false,
+            render_mode: "world".into(),
+            screen_position: [0.5, 0.5],
+            screen_scale: 0.12,
+            sorting_order: 0,
         }
     }
 }

@@ -28,6 +28,7 @@ type NativeViewportFrame = {
 };
 
 type CameraPreset = 'front' | 'quarter' | 'top';
+type RenderMode = 'world' | 'screen';
 
 const CAMERA_PRESETS: Record<CameraPreset, { yaw: number; pitch: number }> = {
   front: { yaw: 180, pitch: 0 },
@@ -51,6 +52,7 @@ export function EffekseerPreview(props: {
   const [speed, setSpeed] = useState(1);
   const [restart, setRestart] = useState(0);
   const [camera, setCamera] = useState({ yaw: 145, pitch: 20, distance: 8 });
+  const [renderMode, setRenderMode] = useState<RenderMode>('world');
   const [background, setBackground] = useState(BACKGROUNDS[0]);
   const [frame, setFrame] = useState<NativeViewportFrame | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +125,7 @@ export function EffekseerPreview(props: {
           cameraYaw: camera.yaw,
           cameraPitch: camera.pitch,
           cameraDistance: camera.distance,
+          renderMode,
           background: background.value,
         },
       }).then((next) => {
@@ -144,7 +147,7 @@ export function EffekseerPreview(props: {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [background, camera, looping, playing, restart, selected, size, speed]);
+  }, [background, camera, looping, playing, renderMode, restart, selected, size, speed]);
 
   const chooseCamera = (preset: CameraPreset) => {
     setCamera((current) => ({ ...current, ...CAMERA_PRESETS[preset] }));
@@ -262,9 +265,29 @@ export function EffekseerPreview(props: {
               onChange={(event) => setSpeed(Number(event.target.value))}
             />
           </label>
+          <div className="effekseer-preview-segment" aria-label="Render mode">
+            {(['world', 'screen'] as RenderMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                className={renderMode === mode ? 'active' : ''}
+                aria-pressed={renderMode === mode}
+                title={mode === 'world' ? '3D world preview' : '2D UI overlay preview'}
+                onClick={() => setRenderMode(mode)}
+              >
+                <span>{mode === 'world' ? '3D' : '2D / UI'}</span>
+              </button>
+            ))}
+          </div>
           <div className="effekseer-preview-segment" aria-label="Camera preset">
             {(['front', 'quarter', 'top'] as CameraPreset[]).map((preset) => (
-              <button key={preset} type="button" title={`${preset} camera`} onClick={() => chooseCamera(preset)}>
+              <button
+                key={preset}
+                type="button"
+                title={`${preset} camera`}
+                disabled={renderMode === 'screen'}
+                onClick={() => chooseCamera(preset)}
+              >
                 <Camera size={14} />
                 <span>{preset === 'quarter' ? '3/4' : preset}</span>
               </button>

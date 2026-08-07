@@ -15,7 +15,7 @@ Cross-platform game engine: **Rust** core + **TypeScript** scripting/tools.
 npm install   # or pnpm.cmd install
 npm run codegen
 cargo run -p mengine-runtime -- --sample spinning-cube
-# Effekseer test project (also directly open samples/effekseer-fire in the editor)
+# Effekseer 15-effect 3D + 2D/UI showcase (open samples/effekseer-fire in the editor)
 npm.cmd run sample:effekseer
 ```
 

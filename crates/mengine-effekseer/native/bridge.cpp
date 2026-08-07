@@ -7,7 +7,9 @@
 #include <cstring>
 #include <locale>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace
@@ -49,6 +51,8 @@ struct RawModelInstance
     int32_t effectLength;
 };
 
+std::string utf8(const char16_t* value);
+
 struct Vertex
 {
     float x = 0.0f;
@@ -64,8 +68,8 @@ struct Triangle
     Vertex vertices[3];
     int32_t blend = 1;
     int32_t depthTest = 0;
-    std::string texture;
-    std::string effect;
+    std::string_view texture;
+    std::string_view effect;
 };
 
 struct ModelInstance
@@ -79,9 +83,9 @@ struct ModelInstance
     float magnification = 1.0f;
     int32_t blend = 1;
     int32_t depthTest = 0;
-    std::string texture;
-    std::string model;
-    std::string effect;
+    std::string_view texture;
+    std::string_view model;
+    std::string_view effect;
 };
 
 struct State
@@ -89,6 +93,8 @@ struct State
     Effekseer::ManagerRef manager;
     std::unordered_map<uint64_t, Effekseer::EffectRef> effects;
     std::unordered_map<const Effekseer::Effect*, std::string> references;
+    std::unordered_set<std::string> strings;
+    std::unordered_map<const char16_t*, std::string_view> paths;
     std::vector<Triangle> triangles;
     std::vector<ModelInstance> models;
     float cameraRight[3]{1.0f, 0.0f, 0.0f};
@@ -96,6 +102,27 @@ struct State
     float cameraFront[3]{0.0f, 0.0f, -1.0f};
     float cameraPosition[3]{0.0f, 0.0f, 0.0f};
     uint64_t nextEffect = 1;
+
+    std::string_view intern(std::string value)
+    {
+        return *strings.emplace(std::move(value)).first;
+    }
+
+    std::string_view path(const char16_t* value)
+    {
+        if (value == nullptr)
+        {
+            return {};
+        }
+        const auto found = paths.find(value);
+        if (found != paths.end())
+        {
+            return found->second;
+        }
+        const auto resolved = intern(utf8(value));
+        paths.emplace(value, resolved);
+        return resolved;
+    }
 };
 
 Effekseer::EffectRef findEffect(State* state, uint64_t id)
@@ -137,18 +164,18 @@ const char16_t* dependencyPath(const Effekseer::EffectRef& effect, int kind, int
     }
 }
 
-std::string effectReference(State* state, Effekseer::Effect* effect)
+std::string_view effectReference(State* state, Effekseer::Effect* effect)
 {
     const auto found = state->references.find(effect);
-    return found == state->references.end() ? std::string{} : found->second;
+    return found == state->references.end() ? std::string_view{} : found->second;
 }
 
 struct Style
 {
     int32_t blend = 1;
     int32_t depthTest = 0;
-    std::string texture;
-    std::string effect;
+    std::string_view texture;
+    std::string_view effect;
 };
 
 Style styleFor(State* state, Effekseer::Effect* effect, bool depthTest, Effekseer::NodeRendererBasicParameter* basic)
@@ -162,7 +189,24 @@ Style styleFor(State* state, Effekseer::Effect* effect, bool depthTest, Effeksee
         const auto index = basic->TextureIndexes[static_cast<size_t>(Effekseer::RendererTextureType::Color)];
         if (effect != nullptr && index >= 0)
         {
-            style.texture = utf8(effect->GetColorImagePath(index));
+            style.texture = state->path(effect->GetColorImagePath(index));
+        }
+        else if (
+            effect != nullptr &&
+            basic->MaterialType == Effekseer::RendererMaterialType::File &&
+            basic->MaterialRenderDataPtr != nullptr)
+        {
+            // MEngine's backend-neutral capture path cannot execute an authored
+            // Effekseer material yet. Use its first color input as a faithful
+            // textured fallback instead of emitting an opaque white quad.
+            const auto& textures = basic->MaterialRenderDataPtr->MaterialTextures;
+            const auto fallback = std::find_if(textures.begin(), textures.end(), [](const auto& texture) {
+                return texture.Type == 0 && texture.Index >= 0;
+            });
+            if (fallback != textures.end())
+            {
+                style.texture = state->path(effect->GetColorImagePath(fallback->Index));
+            }
         }
     }
     return style;
@@ -495,7 +539,7 @@ public:
         model.blend = style.blend;
         model.depthTest = style.depthTest;
         model.texture = style.texture;
-        model.model = utf8(parameter.EffectPointer->GetModelPath(parameter.ModelIndex));
+        model.model = state_->path(parameter.EffectPointer->GetModelPath(parameter.ModelIndex));
         model.effect = style.effect;
         state_->models.push_back(std::move(model));
     }
@@ -509,6 +553,39 @@ void copyVertex(const Vertex& input, RawVertex& output)
     output.uv[0] = input.u;
     output.uv[1] = input.v;
     copyColor(input.color, output.color);
+}
+
+void copyTriangle(const Triangle& input, RawTriangle& output)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        copyVertex(input.vertices[i], output.vertices[i]);
+    }
+    output.blend = input.blend;
+    output.depthTest = input.depthTest;
+    output.texture = input.texture.data();
+    output.textureLength = static_cast<int32_t>(input.texture.size());
+    output.effect = input.effect.data();
+    output.effectLength = static_cast<int32_t>(input.effect.size());
+}
+
+void copyModel(const ModelInstance& input, RawModelInstance& output)
+{
+    std::memcpy(output.origin, input.origin, sizeof(input.origin));
+    std::memcpy(output.axisX, input.axisX, sizeof(input.axisX));
+    std::memcpy(output.axisY, input.axisY, sizeof(input.axisY));
+    std::memcpy(output.axisZ, input.axisZ, sizeof(input.axisZ));
+    copyColor(input.color, output.color);
+    output.time = input.time;
+    output.magnification = input.magnification;
+    output.blend = input.blend;
+    output.depthTest = input.depthTest;
+    output.texture = input.texture.data();
+    output.textureLength = static_cast<int32_t>(input.texture.size());
+    output.model = input.model.data();
+    output.modelLength = static_cast<int32_t>(input.model.size());
+    output.effect = input.effect.data();
+    output.effectLength = static_cast<int32_t>(input.effect.size());
 }
 } // namespace
 
@@ -552,6 +629,7 @@ uint64_t mengine_effekseer_load_effect(void* raw, const uint8_t* data, int size,
     state->references[effect.Get()] = reference != nullptr && referenceLength > 0
         ? std::string(reference, static_cast<size_t>(referenceLength))
         : std::string{};
+    state->paths.clear();
     state->effects.emplace(id, effect);
     return id;
 }
@@ -568,6 +646,7 @@ void mengine_effekseer_release_effect(void* raw, uint64_t effect)
     {
         state->references.erase(found->second.Get());
         state->effects.erase(found);
+        state->paths.clear();
     }
 }
 
@@ -594,7 +673,8 @@ int mengine_effekseer_capture(
     const float* cameraRight,
     const float* cameraUp,
     const float* cameraFront,
-    const float* cameraPosition)
+    const float* cameraPosition,
+    int cameraMask)
 {
     auto state = static_cast<State*>(raw);
     if (state == nullptr)
@@ -610,7 +690,7 @@ int mengine_effekseer_capture(
     Effekseer::Manager::DrawParameter parameter;
     parameter.CameraPosition = {cameraPosition[0], cameraPosition[1], cameraPosition[2]};
     parameter.CameraFrontDirection = {cameraFront[0], cameraFront[1], cameraFront[2]};
-    parameter.CameraCullingMask = state->manager->GetCameraCullingMaskToShowAllEffects();
+    parameter.CameraCullingMask = cameraMask;
     parameter.IsSortingEffectsEnabled = true;
     state->manager->Draw(parameter);
     return static_cast<int>(state->triangles.size());
@@ -629,17 +709,7 @@ bool mengine_effekseer_triangle(void* raw, int index, RawTriangle* output)
     {
         return false;
     }
-    const auto& triangle = state->triangles[static_cast<size_t>(index)];
-    for (int i = 0; i < 3; i++)
-    {
-        copyVertex(triangle.vertices[i], output->vertices[i]);
-    }
-    output->blend = triangle.blend;
-    output->depthTest = triangle.depthTest;
-    output->texture = triangle.texture.data();
-    output->textureLength = static_cast<int32_t>(triangle.texture.size());
-    output->effect = triangle.effect.data();
-    output->effectLength = static_cast<int32_t>(triangle.effect.size());
+    copyTriangle(state->triangles[static_cast<size_t>(index)], *output);
     return true;
 }
 
@@ -656,22 +726,7 @@ bool mengine_effekseer_model(void* raw, int index, RawModelInstance* output)
     {
         return false;
     }
-    const auto& model = state->models[static_cast<size_t>(index)];
-    std::memcpy(output->origin, model.origin, sizeof(model.origin));
-    std::memcpy(output->axisX, model.axisX, sizeof(model.axisX));
-    std::memcpy(output->axisY, model.axisY, sizeof(model.axisY));
-    std::memcpy(output->axisZ, model.axisZ, sizeof(model.axisZ));
-    copyColor(model.color, output->color);
-    output->time = model.time;
-    output->magnification = model.magnification;
-    output->blend = model.blend;
-    output->depthTest = model.depthTest;
-    output->texture = model.texture.data();
-    output->textureLength = static_cast<int32_t>(model.texture.size());
-    output->model = model.model.data();
-    output->modelLength = static_cast<int32_t>(model.model.size());
-    output->effect = model.effect.data();
-    output->effectLength = static_cast<int32_t>(model.effect.size());
+    copyModel(state->models[static_cast<size_t>(index)], *output);
     return true;
 }
 
@@ -703,6 +758,24 @@ void mengine_effekseer_set_location(void* raw, int handle, float x, float y, flo
 {
     auto state = static_cast<State*>(raw);
     if (state != nullptr) state->manager->SetLocation(handle, x, y, z);
+}
+
+void mengine_effekseer_set_rotation(void* raw, int handle, float x, float y, float z)
+{
+    auto state = static_cast<State*>(raw);
+    if (state != nullptr) state->manager->SetRotation(handle, x, y, z);
+}
+
+void mengine_effekseer_set_scale(void* raw, int handle, float x, float y, float z)
+{
+    auto state = static_cast<State*>(raw);
+    if (state != nullptr) state->manager->SetScale(handle, x, y, z);
+}
+
+void mengine_effekseer_set_layer(void* raw, int handle, int layer)
+{
+    auto state = static_cast<State*>(raw);
+    if (state != nullptr) state->manager->SetLayer(handle, layer);
 }
 
 int mengine_effekseer_dependency_count(void* raw, uint64_t effect, int kind)

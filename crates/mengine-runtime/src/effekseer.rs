@@ -43,6 +43,10 @@ struct ActiveEffect {
     asset: String,
     effect: EffectId,
     handle: EffectHandle,
+    screen_space: bool,
+    screen_position: [f32; 2],
+    screen_scale: f32,
+    sorting_order: i32,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -165,6 +169,10 @@ impl EffekseerWorld {
                                     asset: reference.clone(),
                                     effect,
                                     handle,
+                                    screen_space: false,
+                                    screen_position: [0.5, 0.5],
+                                    screen_scale: 0.12,
+                                    sorting_order: 0,
                                 },
                             );
                         }
@@ -177,8 +185,24 @@ impl EffekseerWorld {
                     }
                 }
             }
-            if let Some(active) = self.active.get(&entity) {
-                self.manager.set_location(active.handle, position);
+            if let Some(active) = self.active.get_mut(&entity) {
+                active.screen_space = component.render_mode.eq_ignore_ascii_case("screen");
+                active.screen_position = finite_screen_position(component.screen_position);
+                active.screen_scale = finite_positive(component.screen_scale, 0.12);
+                active.sorting_order = component.sorting_order;
+                self.manager
+                    .set_layer(active.handle, i32::from(active.screen_space));
+                if active.screen_space {
+                    self.manager.set_rotation(active.handle, [0.0; 3]);
+                    self.manager
+                        .set_scale(active.handle, [active.screen_scale; 3]);
+                } else {
+                    let (x, y, z) = transform.rotation.to_euler(glam::EulerRot::XYZ);
+                    self.manager.set_location(active.handle, position);
+                    self.manager.set_rotation(active.handle, [x, y, z]);
+                    self.manager
+                        .set_scale(active.handle, transform.scale.to_array());
+                }
                 self.manager.set_speed(active.handle, component.speed);
                 self.manager.set_paused(active.handle, !component.playing);
             }
@@ -240,29 +264,88 @@ impl EffekseerWorld {
     pub fn append_to_frame(
         &mut self,
         frame: &mut crate::frame_compiler::CompiledFrame,
+        viewport: [u32; 2],
     ) -> Vec<EffekseerRenderFailure> {
         let inverse_view = frame.camera.view.inverse();
-        let camera_right = inverse_view.x_axis.truncate().normalize_or_zero().to_array();
-        let camera_up = inverse_view.y_axis.truncate().normalize_or_zero().to_array();
+        let camera_right = inverse_view
+            .x_axis
+            .truncate()
+            .normalize_or_zero()
+            .to_array();
+        let camera_up = inverse_view
+            .y_axis
+            .truncate()
+            .normalize_or_zero()
+            .to_array();
         let camera_front = (-inverse_view.z_axis.truncate())
             .normalize_or_zero()
             .to_array();
-        let draws = self.manager.capture(
-            camera_right,
-            camera_up,
-            camera_front,
-            frame.camera.position.to_array(),
-        );
         let view_projection = frame.camera.proj * frame.camera.view;
-        let mut primitives = Vec::with_capacity(draws.triangles.len());
-        for triangle in draws.triangles {
-            if let Some(primitive) = effect_triangle_primitive(&triangle, view_projection) {
-                primitives.push(primitive);
+        let mut primitives = Vec::new();
+        let mut models = Vec::new();
+        if self.active.values().any(|effect| !effect.screen_space) {
+            let draws = self.manager.capture_layer(
+                camera_right,
+                camera_up,
+                camera_front,
+                frame.camera.position.to_array(),
+                1,
+            );
+            primitives.reserve(draws.triangles.len());
+            for triangle in draws.triangles {
+                if let Some(primitive) =
+                    effect_triangle_primitive(&triangle, view_projection, false)
+                {
+                    primitives.push(primitive);
+                }
             }
+            models.extend(
+                draws
+                    .models
+                    .into_iter()
+                    .map(|model| (model, false, view_projection)),
+            );
+        }
+        if self.active.values().any(|effect| effect.screen_space) {
+            let aspect = viewport[0].max(1) as f32 / viewport[1].max(1) as f32;
+            for active in self.active.values().filter(|effect| effect.screen_space) {
+                let position = [
+                    (active.screen_position[0] * 2.0 - 1.0) * aspect,
+                    1.0 - active.screen_position[1] * 2.0,
+                    active.sorting_order as f32 * 0.001,
+                ];
+                self.manager.set_location(active.handle, position);
+            }
+            let eye = glam::Vec3::new(0.0, 0.0, 10.0);
+            let overlay_view = glam::Mat4::look_at_rh(eye, glam::Vec3::ZERO, glam::Vec3::Y);
+            let overlay_projection =
+                glam::Mat4::orthographic_rh(-aspect, aspect, -1.0, 1.0, 0.01, 100.0);
+            let overlay_view_projection = overlay_projection * overlay_view;
+            let draws = self.manager.capture_layer(
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, -1.0],
+                eye.to_array(),
+                2,
+            );
+            primitives.reserve(draws.triangles.len());
+            for triangle in draws.triangles {
+                if let Some(primitive) =
+                    effect_triangle_primitive(&triangle, overlay_view_projection, true)
+                {
+                    primitives.push(primitive);
+                }
+            }
+            models.extend(
+                draws
+                    .models
+                    .into_iter()
+                    .map(|model| (model, true, overlay_view_projection)),
+            );
         }
 
         let mut failures = Vec::new();
-        for model in draws.models {
+        for (model, screen_space, projection) in models {
             let reference = resolve_dependency_reference(&model.effect, &model.model);
             let path = self.resolve_path(&reference);
             let stamp = file_stamp(&path);
@@ -282,7 +365,8 @@ impl EffekseerWorld {
                     &mut primitives,
                     &model,
                     frames,
-                    view_projection,
+                    projection,
+                    screen_space,
                 ),
                 Some(Err(error)) => failures.push(EffekseerRenderFailure {
                     asset: reference,
@@ -358,6 +442,7 @@ impl EffekseerWorld {
 fn effect_triangle_primitive(
     triangle: &EffectDrawTriangle,
     view_projection: glam::Mat4,
+    screen_space: bool,
 ) -> Option<UiPrimitive> {
     let mut clips = [[0.0; 4]; 4];
     let mut channel_data = UiShaderChannelData::default();
@@ -388,7 +473,11 @@ fn effect_triangle_primitive(
         render_material: None,
         soft_clips: [None; 8],
         canvas_sorting_grid_size: None,
-        key: effect_batch_key(texture, triangle.blend, triangle.depth_test),
+        key: effect_batch_key(
+            texture,
+            triangle.blend,
+            triangle.depth_test && !screen_space,
+        ),
     })
 }
 
@@ -397,6 +486,7 @@ fn append_model_primitives(
     instance: &EffectModelInstance,
     frames: &[EffectModelFrame],
     view_projection: glam::Mat4,
+    screen_space: bool,
 ) {
     let Some(frame) = frames.get(instance.time.rem_euclid(frames.len().max(1) as i32) as usize)
     else {
@@ -434,10 +524,11 @@ fn append_model_primitives(
             vertices: converted,
             blend: instance.blend,
             depth_test: instance.depth_test,
-            texture: texture.clone(),
-            effect: String::new(),
+            texture: texture.clone().into(),
+            effect: "".into(),
         };
-        if let Some(primitive) = effect_triangle_primitive(&triangle, view_projection) {
+        if let Some(primitive) = effect_triangle_primitive(&triangle, view_projection, screen_space)
+        {
             output.push(primitive);
         }
     }
@@ -634,6 +725,24 @@ fn file_stamp(path: &Path) -> FileStamp {
         .unwrap_or_default()
 }
 
+fn finite_screen_position(position: [f32; 2]) -> [f32; 2] {
+    std::array::from_fn(|index| {
+        if position[index].is_finite() {
+            position[index]
+        } else {
+            0.5
+        }
+    })
+}
+
+fn finite_positive(value: f32, fallback: f32) -> f32 {
+    if value.is_finite() && value > 0.0 {
+        value
+    } else {
+        fallback
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -670,25 +779,33 @@ mod tests {
         assert!(root.join(effect).is_file());
 
         let mut world = World::new();
-        let scene = mengine_scene::load_scene(
-            &root.join("Assets/Scenes/Main.mscene"),
-            &mut world,
-        )
-        .expect("load Effekseer sample scene");
-        assert_eq!(scene.name, "EffekseerFire");
+        let scene = mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world)
+            .expect("load Effekseer sample scene");
+        assert_eq!(scene.name, "EffekseerShowcase");
         assert!(world.iter_entities().any(|entity| world
             .get_component::<EffekseerEffect>(entity)
             .is_some_and(|component| component.effect == effect)));
         let hierarchy = TransformHierarchy::build(&world);
         let mut runtime = EffekseerWorld::new(Some(root.clone())).expect("Effekseer runtime");
         let mut peak_primitives = 0;
+        let mut peak_untextured = 0;
         let mut draw_textures = HashSet::new();
 
         for _ in 0..180 {
             assert!(runtime.update(&world, &hierarchy, 1.0 / 60.0).is_empty());
             let mut compiled = frame();
-            assert!(runtime.append_to_frame(&mut compiled).is_empty());
+            assert!(runtime
+                .append_to_frame(&mut compiled, [1280, 720])
+                .is_empty());
             peak_primitives = peak_primitives.max(compiled.ui.primitives.len());
+            peak_untextured = peak_untextured.max(
+                compiled
+                    .ui
+                    .primitives
+                    .iter()
+                    .filter(|primitive| primitive.key.texture == "white")
+                    .count(),
+            );
             draw_textures.extend(
                 compiled
                     .ui
@@ -720,11 +837,60 @@ mod tests {
             peak_primitives > 0,
             "the sample effect produced no render primitives"
         );
+        assert_eq!(
+            peak_untextured, 0,
+            "custom-material particles must not degrade to opaque white geometry"
+        );
         for texture in [
             "Assets/Effects/Textures/tx_fire_flipbook01_1024.png",
             "Assets/Effects/Textures/tx_glow02_128.png",
         ] {
-            assert!(draw_textures.contains(texture), "unused draw texture {texture}");
+            assert!(
+                draw_textures.contains(texture),
+                "unused draw texture {texture}"
+            );
         }
+    }
+
+    #[test]
+    fn screen_mode_renders_as_depth_independent_ui_overlay() {
+        let root = sample_root();
+        let mut world = World::new();
+        mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world)
+            .expect("load Effekseer sample scene");
+        let entity = world
+            .iter_entities()
+            .find(|entity| world.get_component::<EffekseerEffect>(*entity).is_some())
+            .expect("sample Effekseer entity");
+        let component = world
+            .get_component_mut::<EffekseerEffect>(entity)
+            .expect("sample Effekseer component");
+        component.render_mode = "screen".into();
+        component.screen_position = [0.25, 0.75];
+        component.screen_scale = 0.2;
+        component.sorting_order = 4;
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut runtime = EffekseerWorld::new(Some(root)).expect("Effekseer runtime");
+        let mut primitives = Vec::new();
+        for _ in 0..30 {
+            assert!(runtime.update(&world, &hierarchy, 1.0 / 60.0).is_empty());
+            let mut compiled = frame();
+            assert!(runtime
+                .append_to_frame(&mut compiled, [1920, 1080])
+                .is_empty());
+            primitives = compiled.ui.primitives;
+            if !primitives.is_empty() {
+                break;
+            }
+        }
+        assert!(
+            !primitives.is_empty(),
+            "screen effect produced no UI primitives"
+        );
+        assert!(
+            primitives.iter().all(|primitive| !primitive.key.depth_test),
+            "screen effects must render independently of scene depth"
+        );
     }
 }

@@ -9278,6 +9278,11 @@ input[type='search']::-webkit-search-decoration { -webkit-appearance: none; }
   border-right: 0;
 }
 
+.effekseer-preview-segment button.active {
+  background: #38546f;
+  color: #f4f7fa;
+}
+
 .effekseer-preview-backgrounds {
   display: flex;
   gap: 4px;

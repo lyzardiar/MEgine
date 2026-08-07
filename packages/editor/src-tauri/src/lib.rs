@@ -77,6 +77,7 @@ struct EffekseerPreviewRequest {
     camera_yaw: f32,
     camera_pitch: f32,
     camera_distance: f32,
+    render_mode: String,
     background: [f32; 4],
 }
 
@@ -4302,6 +4303,7 @@ async fn render_effekseer_preview(
                 request.camera_yaw,
                 request.camera_pitch,
                 request.camera_distance,
+                request.render_mode,
                 request.background,
             )
             .map_err(|error| error.to_string())?;

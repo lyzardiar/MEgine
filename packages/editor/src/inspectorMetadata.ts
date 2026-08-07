@@ -740,6 +740,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
     speed: { min: 0, step: 0.1 },
     start_frame: { min: 0, step: 1 },
+    render_mode: { label: 'Render Mode', kind: 'enum', options: options('world', 'screen') },
+    screen_position: { label: 'Screen Position' },
+    screen_scale: { label: 'Screen Scale', min: 0.001, step: 0.01 },
+    sorting_order: { label: 'Sorting Order', step: 1 },
   },
   SpineSkeleton: {
     skeleton: {

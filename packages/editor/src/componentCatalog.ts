@@ -1027,6 +1027,10 @@ export function createEffekseerEffect(): Record<string, unknown> {
     start_frame: 0,
     prewarm: false,
     auto_destroy: false,
+    render_mode: 'world',
+    screen_position: [0.5, 0.5],
+    screen_scale: 0.12,
+    sorting_order: 0,
   };
 }
 

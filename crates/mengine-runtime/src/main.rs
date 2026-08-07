@@ -15,9 +15,9 @@ use mengine_core::generated::{
 #[cfg(test)]
 use mengine_core::generated::{Camera3D, PbrMaterial, PointLight};
 use mengine_core::{Entity, TransformHierarchy, World};
+use mengine_effekseer::{DependencyKind, EffectManager};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_platform::InputState;
-use mengine_effekseer::{DependencyKind, EffectManager};
 #[cfg(test)]
 use mengine_rhi::{look_at, orthographic, perspective, FrameCamera, FrameLighting};
 use mengine_rhi::{
@@ -1829,7 +1829,9 @@ function onTick(dt, frame) {
                         delta_seconds: dt,
                     });
                     if let Some(effekseer) = self.effekseer.as_mut() {
-                        for failure in effekseer.append_to_frame(&mut frame) {
+                        for failure in effekseer
+                            .append_to_frame(&mut frame, [window_size.width, window_size.height])
+                        {
                             log::warn!(
                                 "Effekseer render asset '{}' could not be loaded from {}: {}",
                                 failure.asset,
@@ -2492,8 +2494,8 @@ fn validate_effekseer_effect_asset(
     manager.release_effect(effect);
 
     for (dependency, label) in dependency_result? {
-        let dependency_reference =
-            resolve_effekseer_dependency_reference(&reference, &dependency).with_context(|| {
+        let dependency_reference = resolve_effekseer_dependency_reference(&reference, &dependency)
+            .with_context(|| {
                 format!(
                     "unsafe Effekseer {label} dependency '{dependency}' in {}",
                     path.display()
@@ -2533,9 +2535,7 @@ fn resolve_effekseer_dependency_reference(effect: &str, dependency: &str) -> Res
     if dependency_path.is_absolute() {
         bail!("absolute dependency paths are not allowed");
     }
-    let candidate = if dependency.starts_with("Assets/")
-        || dependency.starts_with("Packages/")
-    {
+    let candidate = if dependency.starts_with("Assets/") || dependency.starts_with("Packages/") {
         dependency_path.to_path_buf()
     } else {
         Path::new(effect)

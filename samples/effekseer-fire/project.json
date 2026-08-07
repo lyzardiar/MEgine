@@ -1,9 +1,10 @@
 {
-  "name": "effekseer-fire",
+  "name": "effekseer-showcase",
   "version": 1,
   "language": "typescript",
   "mainScene": "Assets/Scenes/Main.mscene",
   "buildScenes": [
-    "Assets/Scenes/Main.mscene"
+    "Assets/Scenes/Main.mscene",
+    "Assets/Scenes/UI.mscene"
   ]
 }

@@ -1,9 +1,11 @@
 //! Safe Rust ownership and lifecycle API for the vendored Effekseer 1.80.6 evaluator.
 
-use std::ffi::{c_char, c_void};
 use std::cell::Cell;
+use std::collections::HashMap;
+use std::ffi::{c_char, c_void};
 use std::marker::PhantomData;
 use std::ptr::NonNull;
+use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct EffectId(u64);
@@ -35,8 +37,8 @@ pub struct EffectDrawTriangle {
     pub vertices: [EffectDrawVertex; 3],
     pub blend: i32,
     pub depth_test: bool,
-    pub texture: String,
-    pub effect: String,
+    pub texture: Arc<str>,
+    pub effect: Arc<str>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -50,9 +52,9 @@ pub struct EffectModelInstance {
     pub magnification: f32,
     pub blend: i32,
     pub depth_test: bool,
-    pub texture: String,
-    pub model: String,
-    pub effect: String,
+    pub texture: Arc<str>,
+    pub model: Arc<str>,
+    pub effect: Arc<str>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -190,12 +192,45 @@ impl EffectManager {
         }
     }
 
+    pub fn set_rotation(&mut self, handle: EffectHandle, rotation_radians: [f32; 3]) {
+        unsafe {
+            mengine_effekseer_set_rotation(
+                self.raw.as_ptr(),
+                handle.0,
+                rotation_radians[0],
+                rotation_radians[1],
+                rotation_radians[2],
+            )
+        }
+    }
+
+    pub fn set_scale(&mut self, handle: EffectHandle, scale: [f32; 3]) {
+        unsafe {
+            mengine_effekseer_set_scale(self.raw.as_ptr(), handle.0, scale[0], scale[1], scale[2])
+        }
+    }
+
+    pub fn set_layer(&mut self, handle: EffectHandle, layer: i32) {
+        unsafe { mengine_effekseer_set_layer(self.raw.as_ptr(), handle.0, layer.clamp(0, 31)) }
+    }
+
     pub fn capture(
         &mut self,
         camera_right: [f32; 3],
         camera_up: [f32; 3],
         camera_front: [f32; 3],
         camera_position: [f32; 3],
+    ) -> EffectDrawList {
+        self.capture_layer(camera_right, camera_up, camera_front, camera_position, -1)
+    }
+
+    pub fn capture_layer(
+        &mut self,
+        camera_right: [f32; 3],
+        camera_up: [f32; 3],
+        camera_front: [f32; 3],
+        camera_position: [f32; 3],
+        camera_mask: i32,
     ) -> EffectDrawList {
         unsafe {
             mengine_effekseer_capture(
@@ -204,13 +239,13 @@ impl EffectManager {
                 camera_up.as_ptr(),
                 camera_front.as_ptr(),
                 camera_position.as_ptr(),
+                camera_mask,
             );
         }
-        let triangle_count =
-            unsafe { mengine_effekseer_triangle_count(self.raw.as_ptr()) }.max(0);
+        let triangle_count = unsafe { mengine_effekseer_triangle_count(self.raw.as_ptr()) }.max(0);
         let model_count = unsafe { mengine_effekseer_model_count(self.raw.as_ptr()) }.max(0);
+        let mut strings = HashMap::new();
         let mut triangles = Vec::with_capacity(triangle_count as usize);
-        let mut models = Vec::with_capacity(model_count as usize);
         for index in 0..triangle_count {
             let mut raw = RawTriangle::default();
             if unsafe { mengine_effekseer_triangle(self.raw.as_ptr(), index, &mut raw) } {
@@ -218,11 +253,16 @@ impl EffectManager {
                     vertices: raw.vertices.map(EffectDrawVertex::from),
                     blend: raw.blend,
                     depth_test: raw.depth_test != 0,
-                    texture: unsafe { read_raw_string(raw.texture, raw.texture_length) },
-                    effect: unsafe { read_raw_string(raw.effect, raw.effect_length) },
+                    texture: unsafe {
+                        intern_raw_string(&mut strings, raw.texture, raw.texture_length)
+                    },
+                    effect: unsafe {
+                        intern_raw_string(&mut strings, raw.effect, raw.effect_length)
+                    },
                 });
             }
         }
+        let mut models = Vec::with_capacity(model_count as usize);
         for index in 0..model_count {
             let mut raw = RawModelInstance::default();
             if unsafe { mengine_effekseer_model(self.raw.as_ptr(), index, &mut raw) } {
@@ -236,9 +276,13 @@ impl EffectManager {
                     magnification: raw.magnification,
                     blend: raw.blend,
                     depth_test: raw.depth_test != 0,
-                    texture: unsafe { read_raw_string(raw.texture, raw.texture_length) },
-                    model: unsafe { read_raw_string(raw.model, raw.model_length) },
-                    effect: unsafe { read_raw_string(raw.effect, raw.effect_length) },
+                    texture: unsafe {
+                        intern_raw_string(&mut strings, raw.texture, raw.texture_length)
+                    },
+                    model: unsafe { intern_raw_string(&mut strings, raw.model, raw.model_length) },
+                    effect: unsafe {
+                        intern_raw_string(&mut strings, raw.effect, raw.effect_length)
+                    },
                 });
             }
         }
@@ -382,12 +426,22 @@ impl Default for RawModelInstance {
     }
 }
 
-unsafe fn read_raw_string(pointer: *const c_char, length: i32) -> String {
+unsafe fn intern_raw_string(
+    strings: &mut HashMap<(usize, i32), Arc<str>>,
+    pointer: *const c_char,
+    length: i32,
+) -> Arc<str> {
     if pointer.is_null() || length <= 0 {
-        return String::new();
+        return Arc::from("");
+    }
+    let key = (pointer as usize, length);
+    if let Some(value) = strings.get(&key) {
+        return Arc::clone(value);
     }
     let bytes = unsafe { std::slice::from_raw_parts(pointer.cast::<u8>(), length as usize) };
-    String::from_utf8_lossy(bytes).into_owned()
+    let value: Arc<str> = String::from_utf8_lossy(bytes).into_owned().into();
+    strings.insert(key, Arc::clone(&value));
+    value
 }
 
 impl Drop for EffectManager {
@@ -422,13 +476,11 @@ unsafe extern "C" {
         camera_up: *const f32,
         camera_front: *const f32,
         camera_position: *const f32,
+        camera_mask: i32,
     ) -> i32;
     fn mengine_effekseer_triangle_count(state: *mut c_void) -> i32;
-    fn mengine_effekseer_triangle(
-        state: *mut c_void,
-        index: i32,
-        output: *mut RawTriangle,
-    ) -> bool;
+    fn mengine_effekseer_triangle(state: *mut c_void, index: i32, output: *mut RawTriangle)
+        -> bool;
     fn mengine_effekseer_model_count(state: *mut c_void) -> i32;
     fn mengine_effekseer_model(
         state: *mut c_void,
@@ -440,6 +492,9 @@ unsafe extern "C" {
     fn mengine_effekseer_set_paused(state: *mut c_void, handle: i32, paused: bool);
     fn mengine_effekseer_set_speed(state: *mut c_void, handle: i32, speed: f32);
     fn mengine_effekseer_set_location(state: *mut c_void, handle: i32, x: f32, y: f32, z: f32);
+    fn mengine_effekseer_set_rotation(state: *mut c_void, handle: i32, x: f32, y: f32, z: f32);
+    fn mengine_effekseer_set_scale(state: *mut c_void, handle: i32, x: f32, y: f32, z: f32);
+    fn mengine_effekseer_set_layer(state: *mut c_void, handle: i32, layer: i32);
     fn mengine_effekseer_dependency_count(state: *mut c_void, effect: u64, kind: i32) -> i32;
     fn mengine_effekseer_dependency_path(
         state: *mut c_void,

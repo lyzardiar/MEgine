@@ -390,6 +390,10 @@ export interface EffekseerEffect {
   startFrame: number;
   prewarm: boolean;
   autoDestroy: boolean;
+  renderMode: string;
+  screenPosition: [number, number];
+  screenScale: number;
+  sortingOrder: number;
 }
 
 export interface SpineSkeleton {
@@ -1086,6 +1090,10 @@ export type SerializedComponentMap = {
     start_frame: number;
     prewarm: boolean;
     auto_destroy: boolean;
+    render_mode: string;
+    screen_position: [number, number];
+    screen_scale: number;
+    sorting_order: number;
   };
   SpineSkeleton: {
     skeleton: string;

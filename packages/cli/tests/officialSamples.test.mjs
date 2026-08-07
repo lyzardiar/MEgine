@@ -57,7 +57,10 @@ test('official Effekseer sample packages its real effect dependency closure', ()
     });
 
     assert.equal(manifest.project.mainScene, 'Assets/Scenes/Main.mscene');
-    assert.deepEqual(manifest.project.buildScenes, ['Assets/Scenes/Main.mscene']);
+    assert.deepEqual(manifest.project.buildScenes, [
+      'Assets/Scenes/Main.mscene',
+      'Assets/Scenes/UI.mscene',
+    ]);
     for (const dependency of [
       'Assets/Effects/ef_fire01.efkefc',
       'Assets/Effects/Materials/mt_dissolve02.efkmat',
@@ -68,6 +71,11 @@ test('official Effekseer sample packages its real effect dependency closure', ()
       assert.equal(existsSync(join(output, ...dependency.split('/'))), true, dependency);
       assert.equal(manifest.files.some((asset) => asset.path === dependency), true, dependency);
     }
+    const effects = manifest.files
+      .map((asset) => asset.path)
+      .filter((asset) => /^Assets\/Effects\/ef_[^/]+\.efkefc$/.test(asset));
+    assert.equal(effects.length, 15);
+    assert.equal(existsSync(join(output, 'Assets', 'Scenes', 'UI.mscene')), true);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

@@ -841,6 +841,21 @@
       "prewarm": {
         "type": "boolean"
       },
+      "render_mode": {
+        "type": "string"
+      },
+      "screen_position": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "screen_scale": {
+        "type": "number"
+      },
+      "sorting_order": {
+        "type": "number"
+      },
       "speed": {
         "type": "number"
       },
@@ -855,7 +870,11 @@
       "speed",
       "start_frame",
       "prewarm",
-      "auto_destroy"
+      "auto_destroy",
+      "render_mode",
+      "screen_position",
+      "screen_scale",
+      "sorting_order"
     ],
     "type": "object"
   },
