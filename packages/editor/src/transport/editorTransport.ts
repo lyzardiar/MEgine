@@ -373,6 +373,7 @@ export async function getEditorInstanceId(): Promise<string> {
 export type AgentAdapterCommand = {
   command: string;
   args: string[];
+  env?: Record<string, string>;
 };
 
 export type AgentAdapterInfo = {
@@ -396,9 +397,21 @@ export async function getAgentAdapterInfo(): Promise<AgentAdapterInfo> {
     return {
       schemaVersion: 1,
       source: 'workspace',
-      mcp: { command: 'node', args: ['packages/agent/mcp/server.mjs'] },
-      cli: { command: 'node', args: ['packages/agent/cli/editor.mjs'] },
-      http: { command: 'node', args: ['packages/agent/http/server.mjs'] },
+      mcp: {
+        command: 'node',
+        args: ['packages/agent/mcp/server.mjs'],
+        env: { MENGINE_AGENT_EDITOR_MODE: 'auto-background' },
+      },
+      cli: {
+        command: 'node',
+        args: ['packages/agent/cli/editor.mjs'],
+        env: { MENGINE_AGENT_EDITOR_MODE: 'auto-background' },
+      },
+      http: {
+        command: 'node',
+        args: ['packages/agent/http/server.mjs'],
+        env: { MENGINE_AGENT_EDITOR_MODE: 'auto-background' },
+      },
       mcpLauncher: null,
       cliLauncher: null,
       httpLauncher: null,

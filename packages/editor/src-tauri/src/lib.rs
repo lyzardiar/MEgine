@@ -640,6 +640,7 @@ struct BuildSdk {
 struct AgentAdapterCommand {
     command: String,
     args: Vec<String>,
+    env: BTreeMap<String, String>,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -821,10 +822,18 @@ fn load_build_sdk(root: &Path, profile: &str) -> Result<BuildSdk, String> {
     })
 }
 
+fn agent_adapter_environment() -> BTreeMap<String, String> {
+    BTreeMap::from([(
+        "MENGINE_AGENT_EDITOR_MODE".to_string(),
+        "auto-background".to_string(),
+    )])
+}
+
 fn adapter_command(node: &Path, script: &Path) -> AgentAdapterCommand {
     AgentAdapterCommand {
         command: child_process_path(node).to_string_lossy().into_owned(),
         args: vec![child_process_path(script).to_string_lossy().into_owned()],
+        env: agent_adapter_environment(),
     }
 }
 
@@ -900,14 +909,17 @@ fn load_workspace_agent_adapters(root: &Path) -> Result<AgentAdapterInfo, String
         mcp: AgentAdapterCommand {
             command: "node".into(),
             args: vec![child_process_path(&mcp).to_string_lossy().into_owned()],
+            env: agent_adapter_environment(),
         },
         cli: AgentAdapterCommand {
             command: "node".into(),
             args: vec![child_process_path(&cli).to_string_lossy().into_owned()],
+            env: agent_adapter_environment(),
         },
         http: AgentAdapterCommand {
             command: "node".into(),
             args: vec![child_process_path(&http).to_string_lossy().into_owned()],
+            env: agent_adapter_environment(),
         },
         mcp_launcher: None,
         cli_launcher: None,

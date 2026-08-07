@@ -24,6 +24,11 @@ import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import {
+  launchBackgroundEditor,
+  normalizeAgentEditorMode,
+  processIsAlive,
+} from './backgroundEditor.mjs';
 
 const SUPPORTED_PROTOCOL_VERSIONS = Object.freeze([
   '2025-11-25',
@@ -153,6 +158,7 @@ function readDiscoveryCandidates({
 
 let activeConnection = null;
 let connectionAttempt = null;
+let lastBackgroundLaunchResult = null;
 let subscriptionReconnectTimer = null;
 let successfulConnections = 0;
 const pending = new Map();
@@ -298,25 +304,131 @@ async function ensureBridgeConnected() {
 }
 
 async function connectLatestBridge() {
+  const mode = normalizeAgentEditorMode(process.env.MENGINE_AGENT_EDITOR_MODE);
   let lastError;
-  for (let attempt = 0; attempt < BRIDGE_CONNECT_ATTEMPTS; attempt += 1) {
+  let launchResult = null;
+  const maxAttempts = mode === 'auto-background' ? 75 : BRIDGE_CONNECT_ATTEMPTS;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
       const candidates = readDiscoveryCandidates();
-      for (const discovery of candidates) {
+      const liveForeground = candidates.find((candidate) => (
+        candidate.background !== true
+        && candidate.pid != null
+        && processIsAlive(candidate.pid)
+      ));
+      if (mode !== 'discovery-only' && process.env.MENGINE_AGENT_BRIDGE_FILE && liveForeground) {
+        const conflict = new BridgeConnectionError(
+          `Explicit AgentBridge record ${liveForeground.file} belongs to a live foreground editor`,
+        );
+        conflict.foregroundConflict = true;
+        throw conflict;
+      }
+      const eligible = mode === 'discovery-only'
+        ? candidates
+        : candidates.filter((candidate) => (
+            candidate.background === true
+            && (candidate.pid == null || processIsAlive(candidate.pid))
+          ));
+      for (const discovery of eligible) {
         try {
           return await connectBridge(discovery);
         } catch (error) {
           lastError = error;
         }
       }
+      if (
+        mode === 'auto-background'
+        && launchResult == null
+        && !eligible.some((candidate) => candidate.pid == null || processIsAlive(candidate.pid))
+      ) {
+        const backgroundFile = process.env.MENGINE_AGENT_BRIDGE_FILE
+          ? path.resolve(process.env.MENGINE_AGENT_BRIDGE_FILE)
+          : defaultDiscoveryPaths()[0];
+        launchResult = launchBackgroundEditor({ discoveryFile: backgroundFile });
+        lastBackgroundLaunchResult = launchResult;
+      }
     } catch (error) {
       lastError = error;
+      if (error?.foregroundConflict === true) break;
+      if (mode === 'auto-background' && launchResult == null) {
+        try {
+          const backgroundFile = process.env.MENGINE_AGENT_BRIDGE_FILE
+            ? path.resolve(process.env.MENGINE_AGENT_BRIDGE_FILE)
+            : defaultDiscoveryPaths()[0];
+          launchResult = launchBackgroundEditor({ discoveryFile: backgroundFile });
+          lastBackgroundLaunchResult = launchResult;
+        } catch (launchError) {
+          lastError = launchError;
+          break;
+        }
+      }
     }
-    if (attempt + 1 < BRIDGE_CONNECT_ATTEMPTS) {
+    if (attempt + 1 < maxAttempts) {
       await new Promise((resolve) => setTimeout(resolve, BRIDGE_CONNECT_RETRY_MS));
     }
   }
-  throw lastError;
+  throw lastError ?? new BridgeConnectionError(
+    mode === 'required-background'
+      ? 'No healthy background MEngine editor is available'
+      : 'No healthy MEngine editor is available',
+  );
+}
+
+function discoveryHealth() {
+  const explicitFile = process.env.MENGINE_AGENT_BRIDGE_FILE || null;
+  const files = explicitFile ? [path.resolve(explicitFile)] : defaultDiscoveryPaths();
+  return files.map((file) => {
+    try {
+      const discovery = readDiscoveryFile(file);
+      return {
+        file,
+        valid: true,
+        background: discovery.background,
+        pid: discovery.pid,
+        pidAlive: discovery.pid == null ? null : processIsAlive(discovery.pid),
+        port: discovery.port,
+        runtimeIdentifier: discovery.runtimeIdentifier,
+      };
+    } catch (error) {
+      return {
+        file,
+        valid: false,
+        error: error?.message || String(error),
+      };
+    }
+  });
+}
+
+async function agentDoctor() {
+  const mode = normalizeAgentEditorMode(process.env.MENGINE_AGENT_EDITOR_MODE);
+  const before = discoveryHealth();
+  lastBackgroundLaunchResult = null;
+  try {
+    const connection = await ensureBridgeConnected();
+    return {
+      ok: true,
+      mode,
+      before,
+      records: discoveryHealth(),
+      launch: lastBackgroundLaunchResult,
+      selected: {
+        file: connection.discovery.file,
+        background: connection.discovery.background,
+        pid: connection.discovery.pid,
+        port: connection.discovery.port,
+        runtimeIdentifier: connection.discovery.runtimeIdentifier,
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      mode,
+      before,
+      records: discoveryHealth(),
+      launch: lastBackgroundLaunchResult,
+      error: structuredError(error),
+    };
+  }
 }
 
 function scheduleSubscriptionReconnect(delayMs = SUBSCRIPTION_RECONNECT_MS) {
@@ -5072,6 +5184,7 @@ if (launchedAsMain) {
 
 export {
   allWindowScreenshotContent,
+  agentDoctor,
   BridgeOutcomeUnknownError,
   EVENT_RESOURCE_URIS,
   RESOURCES,

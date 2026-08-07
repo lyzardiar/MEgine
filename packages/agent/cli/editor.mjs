@@ -5,6 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import {
+  agentDoctor,
   bridgeExecute,
   bridgeQuery,
   closeBridgeConnection,
@@ -18,10 +19,13 @@ const HELP = `MEngine Agent CLI
 Usage:
   mengine-agent query <query-id> [options]
   mengine-agent execute <command-id> [options]
+  mengine-agent doctor [options]
 
 Options:
   --args <json|@file|->           Argument object; @file reads UTF-8 JSON, - reads stdin
   --discovery-file <path>         Override the AgentBridge discovery file
+  --editor-mode <mode>            auto-background, required-background, or discovery-only
+  --editor <path>                 Exact background editor executable
   --request-id <id>               Execute idempotency key (auto-generated when omitted)
   --expected-scene-revision <n>   Reject the write if the live scene revision differs
   --screenshot                    Capture a post-command viewport screenshot
@@ -74,11 +78,11 @@ export function parseCliArguments(argv) {
     return { help: true };
   }
   const operation = argv[0];
-  if (operation !== 'query' && operation !== 'execute') {
-    throw new CliUsageError('First argument must be "query" or "execute"');
+  if (operation !== 'query' && operation !== 'execute' && operation !== 'doctor') {
+    throw new CliUsageError('First argument must be "query", "execute", or "doctor"');
   }
-  const id = argv[1];
-  if (!id || id.startsWith('-')) {
+  const id = operation === 'doctor' ? null : argv[1];
+  if (operation !== 'doctor' && (!id || id.startsWith('-'))) {
     throw new CliUsageError(`${operation} requires an exact Bridge id`);
   }
 
@@ -88,12 +92,14 @@ export function parseCliArguments(argv) {
     id,
     argsSource: null,
     discoveryFile: null,
+    editorMode: null,
+    editorExecutable: null,
     requestId: null,
     expectedSceneRevision: undefined,
     screenshot: false,
     compact: false,
   };
-  for (let index = 2; index < argv.length; index += 1) {
+  for (let index = operation === 'doctor' ? 1 : 2; index < argv.length; index += 1) {
     const option = argv[index];
     if (option === '-h' || option === '--help') {
       return { help: true };
@@ -108,6 +114,20 @@ export function parseCliArguments(argv) {
     }
     if (option === '--discovery-file') {
       options.discoveryFile = requiredValue(argv, index, option);
+      index += 1;
+      continue;
+    }
+    if (option === '--editor-mode') {
+      const mode = requiredValue(argv, index, option);
+      if (!['auto-background', 'required-background', 'discovery-only'].includes(mode)) {
+        throw new CliUsageError(`${option} must be auto-background, required-background, or discovery-only`);
+      }
+      options.editorMode = mode;
+      index += 1;
+      continue;
+    }
+    if (option === '--editor') {
+      options.editorExecutable = requiredValue(argv, index, option);
       index += 1;
       continue;
     }
@@ -145,6 +165,14 @@ export function parseCliArguments(argv) {
     if (options.screenshot) {
       throw new CliUsageError('--screenshot is valid only for execute');
     }
+  }
+  if (operation === 'doctor' && (
+    options.argsSource !== null
+    || options.requestId !== null
+    || options.expectedSceneRevision !== undefined
+    || options.screenshot
+  )) {
+    throw new CliUsageError('doctor accepts only connection, editor, and output options');
   }
   if (
     options.requestId !== null
@@ -235,6 +263,15 @@ export async function runCli(argv) {
     }
     if (options.discoveryFile) {
       process.env.MENGINE_AGENT_BRIDGE_FILE = path.resolve(options.discoveryFile);
+    }
+    if (options.editorMode) process.env.MENGINE_AGENT_EDITOR_MODE = options.editorMode;
+    if (options.editorExecutable) {
+      process.env.MENGINE_EDITOR_EXECUTABLE = path.resolve(options.editorExecutable);
+    }
+    if (options.operation === 'doctor') {
+      const data = await agentDoctor();
+      writeJson(process.stdout, data, options.compact);
+      return data.ok ? 0 : 1;
     }
     const args = await parseArgsObject(options.argsSource);
     if (options.operation === 'query') {

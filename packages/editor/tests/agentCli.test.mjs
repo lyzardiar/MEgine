@@ -21,6 +21,8 @@ test('Agent CLI parses strict query and revision-safe execute invocations', () =
     id: 'window.list',
     argsSource: null,
     discoveryFile: null,
+    editorMode: null,
+    editorExecutable: null,
     requestId: null,
     expectedSceneRevision: undefined,
     screenshot: false,
@@ -42,10 +44,32 @@ test('Agent CLI parses strict query and revision-safe execute invocations', () =
     id: 'intent.apply',
     argsSource: '{"intent":{"kind":"SetClearColor","color":[0,0,0,1]}}',
     discoveryFile: null,
+    editorMode: null,
+    editorExecutable: null,
     requestId: 'cli-test',
     expectedSceneRevision: 12,
     screenshot: true,
     compact: false,
+  });
+  assert.deepEqual(parseCliArguments([
+    'doctor',
+    '--editor-mode',
+    'required-background',
+    '--editor',
+    'target/debug/mengine-editor-tauri.exe',
+    '--compact',
+  ]), {
+    help: false,
+    operation: 'doctor',
+    id: null,
+    argsSource: null,
+    discoveryFile: null,
+    editorMode: 'required-background',
+    editorExecutable: 'target/debug/mengine-editor-tauri.exe',
+    requestId: null,
+    expectedSceneRevision: undefined,
+    screenshot: false,
+    compact: true,
   });
 });
 
@@ -61,6 +85,8 @@ test('Agent CLI rejects ambiguous flags and malformed safe-integer options', () 
     ['execute', 'history.undo', '--expected-scene-revision', '1.5'],
     ['execute', 'history.undo', '--args', '{}', '--args', '{}'],
     ['execute', 'history.undo', '--unknown'],
+    ['doctor', '--editor-mode', 'foreground'],
+    ['doctor', '--args', '{}'],
   ]) {
     if (argv.length === 0) {
       assert.deepEqual(parseCliArguments(argv), { help: true });

@@ -9,6 +9,7 @@ export function createMcpClientConfiguration(info: AgentAdapterInfo): string {
       mengine: {
         command: info.mcp.command,
         args: info.mcp.args,
+        ...(info.mcp.env ? { env: info.mcp.env } : {}),
       },
     },
   }, null, 2);

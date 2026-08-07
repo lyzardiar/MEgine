@@ -18,6 +18,7 @@ test('MCP client configuration preserves verified command and argument boundarie
     mcp: {
       command: 'C:\\Program Files\\MEngine\\build-sdk\\node.exe',
       args: ['C:\\Program Files\\MEngine\\build-sdk\\agent\\mcp\\server.mjs'],
+      env: { MENGINE_AGENT_EDITOR_MODE: 'auto-background' },
     },
     cli: { command: 'node', args: ['agent/cli/editor.mjs'] },
     http: { command: 'node', args: ['agent/http/server.mjs'] },

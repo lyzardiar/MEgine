@@ -107,13 +107,13 @@ for (const [adapter, entry] of Object.entries(adapterEntries)) {
   if (process.platform === 'win32') {
     writeFileSync(
       join(sdkDir, launcher),
-      `@echo off\r\n"%~dp0${nodeName}" "%~dp0${entry.replaceAll('/', '\\')}" %*\r\n`,
+      `@echo off\r\nset "MENGINE_AGENT_EDITOR_MODE=auto-background"\r\n"%~dp0${nodeName}" "%~dp0${entry.replaceAll('/', '\\')}" %*\r\n`,
       'utf8',
     );
   } else {
     writeFileSync(
       join(sdkDir, launcher),
-      `#!/bin/sh\nSCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\nexec "$SCRIPT_DIR/${nodeName}" "$SCRIPT_DIR/${entry}" "$@"\n`,
+      `#!/bin/sh\nSCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\nMENGINE_AGENT_EDITOR_MODE=auto-background exec "$SCRIPT_DIR/${nodeName}" "$SCRIPT_DIR/${entry}" "$@"\n`,
       'utf8',
     );
     chmodSync(join(sdkDir, launcher), 0o755);
