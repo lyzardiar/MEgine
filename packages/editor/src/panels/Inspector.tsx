@@ -42,6 +42,7 @@ import {
 } from '../materialPropertyBlock';
 import { readProjectAssetText } from '../projectAssets';
 import { readRectTransform } from '../ui/rectLayout';
+import { rectLayoutDrive } from '../ui/rectLayoutDrive';
 import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
 import { getSortingLayerOptions } from '../sortingLayers';
 import { loadSpriteNativeSize } from '../spriteDraw';
@@ -79,6 +80,27 @@ type Transform = {
   rotation: [number, number, number, number];
   scale: [number, number, number];
 };
+
+type UiInspectorGroup = 'Layout' | 'Appearance' | 'Interaction' | 'Advanced';
+
+const UI_LAYOUT_COMPONENTS = new Set([
+  'LayoutGroup', 'LayoutElement', 'ContentSizeFitter', 'AspectRatioFitter',
+]);
+const UI_APPEARANCE_COMPONENTS = new Set([
+  'Image', 'RawImage', 'Text', 'Panel', 'Shadow', 'Outline', 'Mask', 'RectMask2D',
+]);
+const UI_INTERACTION_COMPONENTS = new Set([
+  'Button', 'Toggle', 'Slider', 'Scrollbar', 'ProgressBar', 'InputField', 'Dropdown',
+  'ListView', 'ScrollView', 'TabView', 'Selectable', 'GraphicRaycaster', 'CanvasGroup',
+]);
+const UI_GROUP_ORDER: UiInspectorGroup[] = ['Layout', 'Appearance', 'Interaction', 'Advanced'];
+
+function uiInspectorGroup(component: string): UiInspectorGroup {
+  if (UI_LAYOUT_COMPONENTS.has(component)) return 'Layout';
+  if (UI_APPEARANCE_COMPONENTS.has(component)) return 'Appearance';
+  if (UI_INTERACTION_COMPONENTS.has(component)) return 'Interaction';
+  return 'Advanced';
+}
 
 const MIXED_SELECT_VALUE = '__mengine_mixed_value__';
 
@@ -1699,6 +1721,7 @@ function MultiSelectionInspector(props: {
 export function Inspector(props: {
   entity: {
     entity: number;
+    parent?: number | null;
     name?: string | null;
     active?: boolean;
     tag?: string;
@@ -1707,6 +1730,7 @@ export function Inspector(props: {
   } | null;
   entities?: Array<{
     entity: number;
+    parent?: number | null;
     name?: string | null;
     active?: boolean;
     tag?: string;
@@ -1716,6 +1740,7 @@ export function Inspector(props: {
   selectedIds?: number[];
   selectionCount?: number;
   previewNotice?: string;
+  canvasSize?: { width: number; height: number };
   onChangeTransform: (entity: number, t: Transform) => void;
   onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
   onAddComponent: (entity: number, type: string, value: Record<string, unknown>) => void;
@@ -1821,6 +1846,17 @@ export function Inspector(props: {
     rotation: [0, 0, 0, 1],
     scale: [1, 1, 1],
   }) as Transform;
+  const rectParent = entity.parent == null
+    ? null
+    : props.entities?.find((candidate) => candidate.entity === entity.parent) ?? null;
+  const parentRect = readRectTransform(rectParent?.components.RectTransform);
+  const rectParentSize: [number, number] = rectParent?.components.Canvas
+    ? [props.canvasSize?.width ?? 1920, props.canvasSize?.height ?? 1080]
+    : [
+        Math.max(1, Math.abs(parentRect.size_delta[0])),
+        Math.max(1, Math.abs(parentRect.size_delta[1])),
+      ];
+  const drivenRect = rectLayoutDrive(entity, rectParent);
 
   const replaceComponent = (type: string, value: Record<string, unknown>) => {
     if (type === 'Transform') {
@@ -1873,6 +1909,12 @@ export function Inspector(props: {
   const extras = Object.keys(entity.components).filter(
     (k) => k !== 'Transform' && k !== 'RectTransform' && !k.startsWith('__'),
   );
+  const orderedExtras = hasRect
+    ? [...extras].sort((left, right) => (
+        UI_GROUP_ORDER.indexOf(uiInspectorGroup(left))
+        - UI_GROUP_ORDER.indexOf(uiInspectorGroup(right))
+      ))
+    : extras;
   const catalog = getComponentCatalog();
   const available = catalog.filter((c) => {
     if (entity.components[c.type] != null) {
@@ -1947,6 +1989,8 @@ export function Inspector(props: {
       {props.previewNotice && <div className="inspector-preview-notice">{props.previewNotice}</div>}
 
       {hasRect && (
+        <div className="insp-ui-group">
+          <div className="insp-ui-group-title">Layout</div>
         <CompBlock
           title="Rect Transform"
           contextMenuItems={standardComponentMenu(
@@ -1957,14 +2001,18 @@ export function Inspector(props: {
         >
           <RectTransformEditor
             data={entity.components.RectTransform}
+            parentSize={rectParentSize}
+            driven={drivenRect}
             onChange={(next) => props.onSetComponent(entity.entity, 'RectTransform', next)}
           />
         </CompBlock>
+        </div>
       )}
 
       {hasTransform && (
         <CompBlock
-          title="Transform"
+          title={hasRect ? 'Advanced · Transform' : 'Transform'}
+          defaultOpen={!hasRect}
           contextMenuItems={standardComponentMenu(
             'Transform',
             t as unknown as Record<string, unknown>,
@@ -2045,8 +2093,10 @@ export function Inspector(props: {
         </div>
       )}
 
-      {extras.map((k) => {
+      {orderedExtras.map((k, index) => {
         const data = entity.components[k] as Record<string, unknown>;
+        const group = uiInspectorGroup(k);
+        const previousGroup = index > 0 ? uiInspectorGroup(orderedExtras[index - 1]) : null;
         const behaviour = getBehaviour(k);
         const behaviourItems =
           behaviour?.methods
@@ -2063,9 +2113,13 @@ export function Inspector(props: {
           })),
         ];
         return (
+          <div className="insp-ui-group" key={k}>
+          {hasRect && group !== previousGroup && (
+            <div className="insp-ui-group-title">{group}</div>
+          )}
           <CompBlock
-            key={k}
             title={behaviour?.label ?? catalog.find((entry) => entry.type === k)?.label ?? k}
+            defaultOpen={!hasRect || group !== 'Advanced'}
             onRemove={() => props.onRemoveComponent(entity.entity, k)}
             contextMenuItems={ctxItems}
           >
@@ -2145,6 +2199,7 @@ export function Inspector(props: {
               />
             )}
           </CompBlock>
+          </div>
         );
       })}
 

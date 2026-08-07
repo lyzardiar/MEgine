@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type DragEvent,
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -10,6 +11,13 @@ import {
 import type { EditorStore, EntityRec, TreeNode } from '../store';
 import { HierarchyContextMenu, type CtxAction } from './HierarchyContextMenu';
 import { subscribePing } from '../pingBus';
+import {
+  getMenuRevision,
+  listMenuItems,
+  subscribeMenuItems,
+  type MenuItemContext,
+} from '../editorWindow';
+import { filterHierarchyCreateItems } from '../hierarchyCreateMenu';
 
 function iconFor(e: EntityRec) {
   const c = e.components;
@@ -56,6 +64,10 @@ export function Hierarchy(props: {
   const [dropTarget, setDropTarget] = useState<{ id: number; pos: DropPos } | null>(null);
   const [rootDrop, setRootDrop] = useState(false);
   const [pingId, setPingId] = useState<number | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createSearch, setCreateSearch] = useState('');
+  const createMenuRef = useRef<HTMLDivElement>(null);
+  const createButtonRef = useRef<HTMLButtonElement>(null);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const hierarchyBodyRef = useRef<HTMLDivElement>(null);
   const pointerDrag = useRef<{
@@ -69,6 +81,56 @@ export function Hierarchy(props: {
   const pointerRootDrop = useRef(false);
   const suppressClick = useRef(false);
   const lastClick = useRef<{ id: number; t: number }>({ id: -1, t: 0 });
+  useSyncExternalStore(subscribeMenuItems, getMenuRevision, getMenuRevision);
+
+  const createContext: MenuItemContext = {
+    source: 'hierarchy',
+    store: props.store,
+    selectedIds: props.selectedIds,
+    contextEntity: props.store.selected,
+    refresh: props.onRefresh,
+    log: props.onLog,
+  };
+  const selectedInUi = (() => {
+    const byId = new Map(props.nodes.map((node) => [node.entity.entity, node.entity]));
+    const visited = new Set<number>();
+    let current = props.store.selected;
+    while (current != null && !visited.has(current)) {
+      visited.add(current);
+      const entity = byId.get(current);
+      if (!entity) break;
+      if (entity.components.Canvas || entity.components.RectTransform) return true;
+      current = entity.parent ?? null;
+    }
+    return false;
+  })();
+  const createItems = filterHierarchyCreateItems(
+    listMenuItems('GameObject'),
+    createSearch,
+    selectedInUi,
+  );
+
+  useEffect(() => {
+    if (!createOpen) return;
+    const close = (event: PointerEvent) => {
+      if (
+        createMenuRef.current?.contains(event.target as Node)
+        || createButtonRef.current?.contains(event.target as Node)
+      ) return;
+      setCreateOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setCreateOpen(false);
+      createButtonRef.current?.focus({ preventScroll: true });
+    };
+    window.addEventListener('pointerdown', close, true);
+    window.addEventListener('keydown', escape);
+    return () => {
+      window.removeEventListener('pointerdown', close, true);
+      window.removeEventListener('keydown', escape);
+    };
+  }, [createOpen]);
 
   useEffect(() => {
     return subscribePing((e) => {
@@ -395,16 +457,65 @@ export function Hierarchy(props: {
           onChange={(e) => props.onFilter(e.target.value)}
         />
         <button
+          ref={createButtonRef}
           type="button"
           className="hier-add"
-          title="Create Empty"
+          title="Create GameObject"
+          aria-label="Create GameObject"
+          aria-haspopup="dialog"
+          aria-expanded={createOpen}
           onClick={() => {
-            props.store.createEmpty(null);
-            props.onRefresh();
+            setCreateSearch('');
+            setCreateOpen((open) => !open);
           }}
         >
           +
         </button>
+        {createOpen && (
+          <div
+            ref={createMenuRef}
+            className="hier-create-menu"
+            role="dialog"
+            aria-label="Create GameObject"
+          >
+            <input
+              autoFocus
+              type="search"
+              value={createSearch}
+              placeholder="Search GameObjects..."
+              aria-label="Search GameObjects"
+              onChange={(event) => setCreateSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                const first = createItems.find((entry) => entry.validate?.(createContext) !== false);
+                if (!first) return;
+                void first.action(createContext);
+                setCreateOpen(false);
+              }}
+            />
+            <div className="hier-create-results" role="menu">
+              {createItems.map((entry) => {
+                const disabled = entry.validate?.(createContext) === false;
+                return (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    key={entry.path}
+                    disabled={disabled}
+                    onClick={() => {
+                      void entry.action(createContext);
+                      setCreateOpen(false);
+                    }}
+                  >
+                    <span>{entry.label}</span>
+                    <small>{entry.segments.slice(1, -1).join(' / ') || 'General'}</small>
+                  </button>
+                );
+              })}
+              {createItems.length === 0 && <div className="empty-state">No matching GameObjects</div>}
+            </div>
+          </div>
+        )}
       </div>
       <div
         ref={hierarchyBodyRef}

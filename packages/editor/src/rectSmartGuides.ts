@@ -5,6 +5,8 @@ export type RectSmartGuide = {
   position: number;
   from: number;
   to: number;
+  kind?: 'gap';
+  distance?: number;
 };
 
 export type RectSmartSnap = {
@@ -13,6 +15,7 @@ export type RectSmartSnap = {
 };
 
 type Match = { adjustment: number; position: number; rect: GuideRect };
+type GapMatch = { adjustment: number; guide: RectSmartGuide };
 
 function points(rect: GuideRect, axis: 'x' | 'y'): number[] {
   return axis === 'x'
@@ -41,6 +44,72 @@ function bestMatch(
   return best;
 }
 
+function overlap(
+  left: GuideRect,
+  right: GuideRect,
+  axis: 'x' | 'y',
+): boolean {
+  return axis === 'x'
+    ? Math.min(left.y + left.h, right.y + right.h) > Math.max(left.y, right.y)
+    : Math.min(left.x + left.w, right.x + right.w) > Math.max(left.x, right.x);
+}
+
+function bestGapMatch(
+  moving: GuideRect,
+  candidates: GuideRect[],
+  axis: 'x' | 'y',
+  threshold: number,
+  screenScale: number,
+): GapMatch | null {
+  let best: GapMatch | null = null;
+  const start = (rect: GuideRect) => axis === 'x' ? rect.x : rect.y;
+  const size = (rect: GuideRect) => axis === 'x' ? rect.w : rect.h;
+  const end = (rect: GuideRect) => start(rect) + size(rect);
+  const crossCenter = (rect: GuideRect) => axis === 'x'
+    ? rect.y + rect.h * 0.5
+    : rect.x + rect.w * 0.5;
+  const accept = (targetStart: number, gapFrom: number, gapTo: number, cross: number) => {
+    const adjustment = targetStart - start(moving);
+    if (Math.abs(adjustment) > threshold) return;
+    const distance = Math.max(0, gapTo - gapFrom);
+    const guide: RectSmartGuide = axis === 'x'
+      ? {
+          kind: 'gap', axis, position: cross, from: gapFrom, to: gapTo,
+          distance: Math.round(distance / screenScale),
+        }
+      : {
+          kind: 'gap', axis, position: cross, from: gapFrom, to: gapTo,
+          distance: Math.round(distance / screenScale),
+        };
+    if (!best || Math.abs(adjustment) < Math.abs(best.adjustment)) {
+      best = { adjustment, guide };
+    }
+  };
+
+  for (let leftIndex = 0; leftIndex < candidates.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < candidates.length; rightIndex += 1) {
+      let left = candidates[leftIndex];
+      let right = candidates[rightIndex];
+      if (start(right) < start(left)) [left, right] = [right, left];
+      if (!overlap(left, right, axis) || end(left) > start(right)) continue;
+      const existingGap = start(right) - end(left);
+      if (existingGap <= 0) continue;
+      const cross = (crossCenter(left) + crossCenter(right)) * 0.5;
+
+      accept(start(left) - existingGap - size(moving), start(left) - existingGap, start(left), cross);
+      accept(end(right) + existingGap, end(right), end(right) + existingGap, cross);
+
+      const available = start(right) - end(left) - size(moving);
+      if (available >= 0) {
+        const equalGap = available * 0.5;
+        const targetStart = end(left) + equalGap;
+        accept(targetStart, end(left), targetStart, cross);
+      }
+    }
+  }
+  return best;
+}
+
 export function rectBounds(rects: GuideRect[]): GuideRect | null {
   if (!rects.length) return null;
   const x = Math.min(...rects.map((rect) => rect.x));
@@ -54,16 +123,26 @@ export function snapRectToGuides(
   startRect: GuideRect,
   candidates: GuideRect[],
   desiredOffset: { x: number; y: number },
-  threshold = 6,
+  threshold = 8,
+  screenScale = 1,
 ): RectSmartSnap {
   const moved: GuideRect = {
     ...startRect,
     x: startRect.x + desiredOffset.x,
     y: startRect.y + desiredOffset.y,
   };
-  const safeThreshold = Number.isFinite(threshold) ? Math.max(0, threshold) : 6;
-  const xMatch = bestMatch(moved, candidates, 'x', safeThreshold);
-  const yMatch = bestMatch(moved, candidates, 'y', safeThreshold);
+  const safeThreshold = Number.isFinite(threshold) ? Math.max(0, threshold) : 8;
+  const safeScale = Number.isFinite(screenScale) && screenScale > 0 ? screenScale : 1;
+  const xAlignment = bestMatch(moved, candidates, 'x', safeThreshold);
+  const yAlignment = bestMatch(moved, candidates, 'y', safeThreshold);
+  const xGap = bestGapMatch(moved, candidates, 'x', safeThreshold, safeScale);
+  const yGap = bestGapMatch(moved, candidates, 'y', safeThreshold, safeScale);
+  const xMatch = xGap && (!xAlignment || Math.abs(xGap.adjustment) < Math.abs(xAlignment.adjustment))
+    ? xGap
+    : xAlignment;
+  const yMatch = yGap && (!yAlignment || Math.abs(yGap.adjustment) < Math.abs(yAlignment.adjustment))
+    ? yGap
+    : yAlignment;
   const offset = {
     x: desiredOffset.x + (xMatch?.adjustment ?? 0),
     y: desiredOffset.y + (yMatch?.adjustment ?? 0),
@@ -74,7 +153,9 @@ export function snapRectToGuides(
     y: startRect.y + offset.y,
   };
   const guides: RectSmartGuide[] = [];
-  if (xMatch) {
+  if (xMatch && 'guide' in xMatch) {
+    guides.push(xMatch.guide);
+  } else if (xMatch) {
     guides.push({
       axis: 'x',
       position: xMatch.position,
@@ -82,7 +163,9 @@ export function snapRectToGuides(
       to: Math.max(snappedRect.y + snappedRect.h, xMatch.rect.y + xMatch.rect.h),
     });
   }
-  if (yMatch) {
+  if (yMatch && 'guide' in yMatch) {
+    guides.push(yMatch.guide);
+  } else if (yMatch) {
     guides.push({
       axis: 'y',
       position: yMatch.position,

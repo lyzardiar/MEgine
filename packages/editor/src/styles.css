@@ -1192,6 +1192,20 @@ button, input, select {
   background: #383838;
 }
 
+.insp-ui-group-title {
+  padding: 7px 8px 4px;
+  color: #9fb6c8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.insp-ui-group + .insp-ui-group .insp-ui-group-title {
+  margin-top: 3px;
+  border-top: 1px solid var(--u-border);
+}
+
 .rect-anchor-section {
   position: relative;
   display: grid;
@@ -1318,6 +1332,31 @@ button, input, select {
 .rect-anchor-preset-grid button:hover {
   border-color: #5794bd;
   background: #454b50;
+}
+
+.rect-raw-edit {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 6px;
+  color: var(--u-muted);
+  font-size: 10px;
+}
+
+.rect-driven-notice {
+  margin: 0 0 7px;
+  padding: 5px 7px;
+  border-left: 2px solid #d39b52;
+  background: rgb(211 155 82 / 10%);
+  color: #d9c19f;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.scrub-label.disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 /* Schema / Odin-style field chrome */
@@ -2541,6 +2580,137 @@ body.insp-scrubbing * {
   padding: 0 6px;
   border-left: 1px solid var(--u-border-2);
   font-size: 11px;
+}
+
+.scene-workspace-issues-wrap {
+  position: relative;
+}
+
+.scene-workspace-issues {
+  position: absolute;
+  z-index: 90;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 340px;
+  padding: 7px;
+  border: 1px solid var(--u-border-2);
+  background: var(--u-panel);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 45%);
+}
+
+.scene-workspace-issues > label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 2px 7px;
+  color: var(--u-muted);
+  font-size: 10px;
+}
+
+.scene-workspace-issue-list {
+  display: flex;
+  max-height: 340px;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.scene-workspace-issue-list > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  padding: 6px 7px;
+  border: 0;
+  border-top: 1px solid var(--u-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--u-text);
+  text-align: left;
+}
+
+.scene-workspace-issue-list > button:hover,
+.scene-workspace-issue-list > button:focus-visible {
+  background: var(--u-selected);
+}
+
+.scene-workspace-issue-list .severity {
+  overflow: hidden;
+  color: #efb26e;
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.scene-workspace-issue-list .severity.error {
+  color: #ff7770;
+}
+
+.scene-workspace-issue-list strong {
+  color: var(--u-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.scene-workspace-issue-list small {
+  grid-column: 1 / -1;
+  color: var(--u-muted);
+  line-height: 1.3;
+}
+
+.dock-toolbar:has(.hier-add) {
+  position: relative;
+  overflow: visible;
+}
+
+.hier-create-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 3px);
+  right: 4px;
+  width: min(320px, calc(100vw - 16px));
+  padding: 6px;
+  border: 1px solid var(--u-border-2);
+  background: var(--u-panel);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 45%);
+}
+
+.hier-create-menu > input {
+  width: 100%;
+  height: 28px;
+  margin-bottom: 5px;
+}
+
+.hier-create-results {
+  display: flex;
+  max-height: 360px;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.hier-create-results > button {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 7px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--u-text);
+  text-align: left;
+}
+
+.hier-create-results > button:hover:not(:disabled),
+.hier-create-results > button:focus-visible {
+  background: var(--u-selected);
+  color: #fff;
+}
+
+.hier-create-results small {
+  overflow: hidden;
+  color: var(--u-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scene-snap {

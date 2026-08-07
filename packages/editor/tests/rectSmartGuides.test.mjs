@@ -39,3 +39,31 @@ test('computes one stable bounding box for multi-selection snapping', () => {
   ]), { x: -5, y: 20, w: 45, h: 40 });
   assert.equal(rectBounds([]), null);
 });
+
+test('snaps equal gaps within eight screen pixels and labels design pixels', () => {
+  const repeatedGap = snapRectToGuides(
+    { x: 0, y: 10, w: 20, h: 20 },
+    [
+      { x: 0, y: 0, w: 50, h: 40 },
+      { x: 100, y: 0, w: 50, h: 40 },
+    ],
+    { x: 198, y: 0 },
+    8,
+    2,
+  );
+  assert.equal(repeatedGap.offset.x, 200);
+  assert.deepEqual(repeatedGap.guides.find((guide) => guide.kind === 'gap'), {
+    kind: 'gap', axis: 'x', position: 20, from: 150, to: 200, distance: 25,
+  });
+
+  const centeredGap = snapRectToGuides(
+    { x: 0, y: 10, w: 20, h: 20 },
+    [
+      { x: 0, y: 0, w: 40, h: 40 },
+      { x: 100, y: 0, w: 40, h: 40 },
+    ],
+    { x: 59, y: 0 },
+  );
+  assert.equal(centeredGap.offset.x, 60);
+  assert.equal(centeredGap.guides.find((guide) => guide.kind === 'gap')?.distance, 20);
+});

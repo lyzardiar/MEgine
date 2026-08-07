@@ -146,6 +146,7 @@ import {
   buildCanvasArtboardPlan,
   canvasPlanEntityIds,
   resolveCanvasPlanEntity,
+  type CanvasPlanDiagnostic,
 } from '../ui/canvasPlan';
 import {
   marqueeHitIds,
@@ -378,7 +379,23 @@ function drawSmartGuides(ctx: CanvasRenderingContext2D, guides: RectSmartGuide[]
   ctx.setLineDash([5, 3]);
   ctx.beginPath();
   for (const guide of guides) {
-    if (guide.axis === 'x') {
+    if (guide.kind === 'gap' && guide.axis === 'x') {
+      const y = Math.round(guide.position) + 0.5;
+      ctx.moveTo(guide.from, y);
+      ctx.lineTo(guide.to, y);
+      ctx.moveTo(guide.from, y - 4);
+      ctx.lineTo(guide.from, y + 4);
+      ctx.moveTo(guide.to, y - 4);
+      ctx.lineTo(guide.to, y + 4);
+    } else if (guide.kind === 'gap') {
+      const x = Math.round(guide.position) + 0.5;
+      ctx.moveTo(x, guide.from);
+      ctx.lineTo(x, guide.to);
+      ctx.moveTo(x - 4, guide.from);
+      ctx.lineTo(x + 4, guide.from);
+      ctx.moveTo(x - 4, guide.to);
+      ctx.lineTo(x + 4, guide.to);
+    } else if (guide.axis === 'x') {
       const x = Math.round(guide.position) + 0.5;
       ctx.moveTo(x, guide.from);
       ctx.lineTo(x, guide.to);
@@ -389,6 +406,23 @@ function drawSmartGuides(ctx: CanvasRenderingContext2D, guides: RectSmartGuide[]
     }
   }
   ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#f4a4f4';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  for (const guide of guides) {
+    if (guide.kind !== 'gap' || guide.distance == null) continue;
+    if (guide.axis === 'x') {
+      ctx.fillText(`${guide.distance}px`, (guide.from + guide.to) * 0.5, guide.position - 3);
+    } else {
+      ctx.save();
+      ctx.translate(guide.position - 3, (guide.from + guide.to) * 0.5);
+      ctx.rotate(-Math.PI * 0.5);
+      ctx.fillText(`${guide.distance}px`, 0, 0);
+      ctx.restore();
+    }
+  }
   ctx.restore();
 }
 
@@ -612,7 +646,14 @@ export function Viewport(props: {
     canvasEntity: number | null;
     signature: string;
     counts: Map<string, number>;
-  }>({ entities: null, canvasEntity: null, signature: '', counts: new Map() });
+    diagnostics: Map<string, CanvasPlanDiagnostic[]>;
+  }>({
+    entities: null,
+    canvasEntity: null,
+    signature: '',
+    counts: new Map(),
+    diagnostics: new Map(),
+  });
   const uiLayoutScaleRef = useRef(1);
   const usingRectGizmoRef = useRef(false);
   const uiHoverRef = useRef<number | null>(null);
@@ -928,6 +969,7 @@ export function Viewport(props: {
   const [workspaceZoomPercent, setWorkspaceZoomPercent] = useState(
     Math.round(canvasWorkspace.zoom * 100),
   );
+  const [workspaceIssuesOpen, setWorkspaceIssuesOpen] = useState(false);
   const workspaceZoomPercentRef = useRef(workspaceZoomPercent);
   const spacePressedRef = useRef(false);
   const [sceneGrid, setSceneGrid] = useState(
@@ -2412,6 +2454,7 @@ export function Viewport(props: {
               diagnosticCache.canvasEntity = workspaceCanvasEntity;
               diagnosticCache.signature = diagnosticSignature;
               diagnosticCache.counts.clear();
+              diagnosticCache.diagnostics.clear();
             }
             for (const frame of workspaceFrames) {
               if (
@@ -2421,17 +2464,17 @@ export function Viewport(props: {
                 && !draggingRef.current
               ) {
                 try {
-                  diagnosticCache.counts.set(
-                    frame.key,
-                    buildCanvasArtboardPlan(
-                      p.entities,
-                      workspaceCanvasEntity,
-                      frame,
-                      p.gameDisplay,
-                    ).diagnostics.length,
+                  const plan = buildCanvasArtboardPlan(
+                    p.entities,
+                    workspaceCanvasEntity,
+                    frame,
+                    p.gameDisplay,
                   );
+                  diagnosticCache.counts.set(frame.key, plan.diagnostics.length);
+                  diagnosticCache.diagnostics.set(frame.key, plan.diagnostics);
                 } catch {
                   diagnosticCache.counts.set(frame.key, 0);
+                  diagnosticCache.diagnostics.set(frame.key, []);
                 }
               }
               drawArtboardOverlay(
@@ -3346,6 +3389,8 @@ export function Viewport(props: {
                   x: d.snap.x.applied * scale,
                   y: d.snap.y.applied * scale,
                 },
+                8,
+                scale,
               );
               propsRef.current.onRectTranslate?.(
                 d.entity,
@@ -3992,6 +4037,10 @@ export function Viewport(props: {
       undefined,
       props.selectedIds ?? (props.selected == null ? [] : [props.selected]),
     ) != null;
+  const workspaceDiagnostics = normalizedCanvasWorkspace.artboards.flatMap((artboard) => (
+    (artboardDiagnosticCacheRef.current.diagnostics.get(artboard.key) ?? [])
+      .map((diagnostic) => ({ diagnostic, artboard }))
+  )).slice(0, 100);
   const selectedTilemap = props.selected == null
     ? undefined
     : props.entities.find(
@@ -4124,17 +4173,62 @@ export function Viewport(props: {
                     >
                       Safe
                     </button>
-                    <button
-                      type="button"
-                      className={`scene-grid-toggle${normalizedCanvasWorkspace.showDiagnostics ? ' active' : ''}`}
-                      aria-pressed={normalizedCanvasWorkspace.showDiagnostics}
-                      title="Show responsive layout diagnostics"
-                      onClick={() => updateCanvasWorkspace({
-                        showDiagnostics: !normalizedCanvasWorkspace.showDiagnostics,
-                      })}
-                    >
-                      Issues
-                    </button>
+                    <div className="scene-workspace-issues-wrap">
+                      <button
+                        type="button"
+                        className={`scene-grid-toggle${workspaceIssuesOpen ? ' active' : ''}`}
+                        aria-haspopup="dialog"
+                        aria-expanded={workspaceIssuesOpen}
+                        title="Open responsive layout diagnostics"
+                        onClick={() => setWorkspaceIssuesOpen((open) => !open)}
+                      >
+                        Issues {workspaceDiagnostics.length || ''}
+                      </button>
+                      {workspaceIssuesOpen && (
+                        <div className="scene-workspace-issues" role="dialog" aria-label="Canvas diagnostics">
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={normalizedCanvasWorkspace.showDiagnostics}
+                              onChange={(event) => updateCanvasWorkspace({
+                                showDiagnostics: event.target.checked,
+                              })}
+                            />
+                            Show badges on artboards
+                          </label>
+                          <div className="scene-workspace-issue-list">
+                            {workspaceDiagnostics.map(({ diagnostic, artboard }) => (
+                              <button
+                                type="button"
+                                key={diagnostic.id}
+                                onClick={() => {
+                                  updateCanvasWorkspace({
+                                    activeKey: artboard.key,
+                                    fitMode: 'active',
+                                  });
+                                  props.onGameResolution({
+                                    width: artboard.width,
+                                    height: artboard.height,
+                                  });
+                                  props.onPick(diagnostic.entity, {
+                                    toggle: false,
+                                    additive: false,
+                                  });
+                                  setWorkspaceIssuesOpen(false);
+                                }}
+                              >
+                                <span className={`severity ${diagnostic.severity}`}>{diagnostic.code}</span>
+                                <strong>{artboard.label}</strong>
+                                <small>{diagnostic.reason}</small>
+                              </button>
+                            ))}
+                            {workspaceDiagnostics.length === 0 && (
+                              <div className="empty-state">No Canvas issues</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
               </div>

@@ -3094,6 +3094,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <Inspector
               entity={authoredInspectorEntities.find((e) => e.entity === selected) ?? null}
               entities={authoredInspectorEntities}
+              canvasSize={gameResolution ?? { width: 800, height: 600 }}
               previewNotice={timelinePreviewActive
                 ? 'Timeline Preview is active. Inspector fields show and edit authored values.'
                 : undefined}

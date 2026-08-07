@@ -2,10 +2,13 @@ import { useRef, useEffect, useState, type PointerEvent as ReactPointerEvent } f
 import { readRectTransform, type Vec2 } from '../ui/rectLayout';
 import {
   ANCHOR_PRESETS,
+  applyAnchorsKeepingRect,
   applyAnchorPreset,
+  applyPivotKeepingRect,
   readRectAxis,
   writeRectAxis,
 } from '../ui/rectTransformModel';
+import type { RectLayoutDrive } from '../ui/rectLayoutDrive';
 import { useInspectorGesture } from './inspectorGesture';
 
 type RT = ReturnType<typeof readRectTransform>;
@@ -63,6 +66,8 @@ function Axis(props: {
   value: number;
   onChange: (v: number) => void;
   step?: number;
+  disabled?: boolean;
+  drivenBy?: string;
 }) {
   const step = props.step ?? 1;
   const onScrub = useScrub(props.value, step, props.onChange);
@@ -70,10 +75,11 @@ function Axis(props: {
   return (
     <div className="axis">
       <span
-        className={`scrub-label ${cls}`}
+        className={`scrub-label ${cls}${props.disabled ? ' disabled' : ''}`}
         data-agent-drag-by="true"
         aria-label={`Adjust ${props.ariaLabel}`}
-        onPointerDown={onScrub}
+        title={props.drivenBy ? `Driven by ${props.drivenBy}` : undefined}
+        onPointerDown={props.disabled ? undefined : onScrub}
       >
         {props.label.toUpperCase()}
       </span>
@@ -81,6 +87,8 @@ function Axis(props: {
         type="number"
         step={step}
         aria-label={props.ariaLabel}
+        disabled={props.disabled}
+        title={props.drivenBy ? `Driven by ${props.drivenBy}` : undefined}
         value={Number(props.value.toFixed(4))}
         onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
       />
@@ -118,9 +126,12 @@ function AnchorIcon(props: { min: Vec2; max: Vec2 }) {
 export function RectTransformEditor(props: {
   data: unknown;
   onChange: (next: RT) => void;
+  parentSize?: Vec2;
+  driven?: RectLayoutDrive;
 }) {
   const rt = readRectTransform(props.data);
   const [presetOpen, setPresetOpen] = useState(false);
+  const [rawEdit, setRawEdit] = useState(false);
   const presetRef = useRef<HTMLDivElement>(null);
   const set = (partial: Partial<RT>) => props.onChange({ ...rt, ...partial });
   const setV2 = (key: keyof RT, i: number, v: number) => {
@@ -130,6 +141,7 @@ export function RectTransformEditor(props: {
   };
   const horizontal = readRectAxis(rt, 0);
   const vertical = readRectAxis(rt, 1);
+  const parentSize = props.parentSize ?? [1920, 1080];
 
   useEffect(() => {
     if (!presetOpen) return;
@@ -180,7 +192,9 @@ export function RectTransformEditor(props: {
             aria-label="Anchor Presets"
           >
             <div className="rect-anchor-popup-title">Anchor Presets</div>
-            <div className="rect-anchor-popup-hint">Shift: also set pivot · Alt: also set position</div>
+            <div className="rect-anchor-popup-hint">
+              {rawEdit ? 'Raw Edit · Shift: pivot · Alt: snap' : 'Keeps visual bounds · Shift: pivot · Alt: snap'}
+            </div>
             <div className="rect-anchor-preset-grid">
               {ANCHOR_PRESETS.map((preset) => (
                 <button
@@ -189,10 +203,27 @@ export function RectTransformEditor(props: {
                   title={preset.label}
                   aria-label={preset.label}
                   onClick={(event) => {
-                    props.onChange(applyAnchorPreset(rt, preset, {
-                      setPivot: event.shiftKey,
-                      snap: event.altKey,
-                    }));
+                    let next = rawEdit
+                      ? applyAnchorPreset(rt, preset, {
+                          setPivot: event.shiftKey,
+                          snap: event.altKey,
+                        })
+                      : applyAnchorsKeepingRect(
+                          rt,
+                          preset.anchorMin,
+                          preset.anchorMax,
+                          parentSize,
+                        );
+                    if (!rawEdit && event.shiftKey) {
+                      next = applyPivotKeepingRect(next, preset.pivot);
+                    }
+                    if (!rawEdit && event.altKey) {
+                      next = applyAnchorPreset(next, preset, {
+                        setPivot: event.shiftKey,
+                        snap: true,
+                      });
+                    }
+                    props.onChange(next);
                     setPresetOpen(false);
                   }}
                 >
@@ -203,16 +234,32 @@ export function RectTransformEditor(props: {
           </div>
         )}
       </div>
-      <div className="axis-row">
-        <label>Anch Min</label>
-        <Axis label="x" ariaLabel="Anchor Min X" value={rt.anchor_min[0]} step={0.05} onChange={(v) => setV2('anchor_min', 0, v)} />
-        <Axis label="y" ariaLabel="Anchor Min Y" value={rt.anchor_min[1]} step={0.05} onChange={(v) => setV2('anchor_min', 1, v)} />
-      </div>
-      <div className="axis-row">
-        <label>Anch Max</label>
-        <Axis label="x" ariaLabel="Anchor Max X" value={rt.anchor_max[0]} step={0.05} onChange={(v) => setV2('anchor_max', 0, v)} />
-        <Axis label="y" ariaLabel="Anchor Max Y" value={rt.anchor_max[1]} step={0.05} onChange={(v) => setV2('anchor_max', 1, v)} />
-      </div>
+      <label className="rect-raw-edit">
+        <input type="checkbox" checked={rawEdit} onChange={(event) => setRawEdit(event.target.checked)} />
+        Raw Edit
+      </label>
+      {rawEdit && (
+        <>
+          <div className="axis-row">
+            <label>Anch Min</label>
+            <Axis label="x" ariaLabel="Anchor Min X" value={rt.anchor_min[0]} step={0.05} onChange={(v) => setV2('anchor_min', 0, v)} />
+            <Axis label="y" ariaLabel="Anchor Min Y" value={rt.anchor_min[1]} step={0.05} onChange={(v) => setV2('anchor_min', 1, v)} />
+          </div>
+          <div className="axis-row">
+            <label>Anch Max</label>
+            <Axis label="x" ariaLabel="Anchor Max X" value={rt.anchor_max[0]} step={0.05} onChange={(v) => setV2('anchor_max', 0, v)} />
+            <Axis label="y" ariaLabel="Anchor Max Y" value={rt.anchor_max[1]} step={0.05} onChange={(v) => setV2('anchor_max', 1, v)} />
+          </div>
+        </>
+      )}
+      {(props.driven?.horizontal || props.driven?.vertical) && (
+        <div className="rect-driven-notice">
+          Layout values are driven by {[...new Set([
+            props.driven.horizontal,
+            props.driven.vertical,
+          ].filter(Boolean))].join(' and ')}.
+        </div>
+      )}
       <div className="axis-row">
         <label>Pivot</label>
         <Axis label="x" ariaLabel="Pivot X" value={rt.pivot[0]} step={0.05} onChange={(v) => setV2('pivot', 0, v)} />
@@ -224,12 +271,16 @@ export function RectTransformEditor(props: {
           label={horizontal.firstLabel.toLowerCase()}
           ariaLabel={`Horizontal ${horizontal.firstLabel}`}
           value={horizontal.first}
+          disabled={!!props.driven?.horizontal}
+          drivenBy={props.driven?.horizontal}
           onChange={(value) => props.onChange(writeRectAxis(rt, 0, 0, value))}
         />
         <Axis
           label={horizontal.secondLabel.toLowerCase()}
           ariaLabel={`Horizontal ${horizontal.secondLabel}`}
           value={horizontal.second}
+          disabled={!!props.driven?.horizontal}
+          drivenBy={props.driven?.horizontal}
           onChange={(value) => props.onChange(writeRectAxis(rt, 0, 1, value))}
         />
       </div>
@@ -239,12 +290,16 @@ export function RectTransformEditor(props: {
           label={vertical.firstLabel.toLowerCase()}
           ariaLabel={`Vertical ${vertical.firstLabel}`}
           value={vertical.first}
+          disabled={!!props.driven?.vertical}
+          drivenBy={props.driven?.vertical}
           onChange={(value) => props.onChange(writeRectAxis(rt, 1, 0, value))}
         />
         <Axis
           label={vertical.secondLabel.toLowerCase()}
           ariaLabel={`Vertical ${vertical.secondLabel}`}
           value={vertical.second}
+          disabled={!!props.driven?.vertical}
+          drivenBy={props.driven?.vertical}
           onChange={(value) => props.onChange(writeRectAxis(rt, 1, 1, value))}
         />
       </div>
