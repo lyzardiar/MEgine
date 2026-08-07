@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { createMaterialAsset } from '../src/materialAsset.ts';
 import { resolveMaterialPreviewAppearance } from '../src/materialPreview.ts';
+
+const editorRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 test('material asset preview carries PBR and unlit authoring values', () => {
   const material = createMaterialAsset('Neon');
@@ -126,4 +131,23 @@ test('failed material preview uses the runtime error-material appearance', () =>
       unlit: true,
     },
   );
+});
+
+test('material editors use the native RHI preview command instead of a CSS sphere', () => {
+  const preview = fs.readFileSync(
+    path.join(editorRoot, 'src', 'panels', 'NativeMaterialPreview.tsx'),
+    'utf8',
+  );
+  const material = fs.readFileSync(path.join(editorRoot, 'src', 'panels', 'Material.tsx'), 'utf8');
+  const instance = fs.readFileSync(
+    path.join(editorRoot, 'src', 'panels', 'MaterialInstance.tsx'),
+    'utf8',
+  );
+  const nativeHost = fs.readFileSync(path.join(editorRoot, 'src-tauri', 'src', 'lib.rs'), 'utf8');
+  assert.match(preview, /invoke<NativeViewportFrame>\('render_material_preview'/);
+  assert.match(material, /<NativeMaterialPreview/);
+  assert.match(instance, /<NativeMaterialPreview/);
+  assert.doesNotMatch(`${material}\n${instance}`, /material-preview-sphere/);
+  assert.match(nativeHost, /async fn render_material_preview/);
+  assert.match(nativeHost, /render_material_preview,/);
 });

@@ -3,7 +3,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type DragEvent,
   type FocusEvent as ReactFocusEvent,
 } from 'react';
@@ -54,6 +53,7 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import { MaterialInstanceEditor } from './MaterialInstance';
+import { NativeMaterialPreview } from './NativeMaterialPreview';
 import {
   normalizeSurfaceShaderParameterValue,
   parseSurfaceShaderKeywords,
@@ -777,7 +777,6 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
 
   const baseRgb = colorHex(material.base_color);
   const emissiveRgb = colorHex(material.emissive);
-  const dielectricF0 = ((material.ior - 1) / (material.ior + 1)) ** 2;
   return (
     <div
       className="material-editor"
@@ -812,19 +811,10 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
         </div>
       )}
       <div className="material-body">
-        <div
-          className="material-preview"
-          style={{
-            '--material-color': `rgba(${material.base_color.slice(0, 3).map((value) => Math.round(value * 255)).join(',')},${material.base_color[3]})`,
-            '--material-highlight': `rgba(255,255,255,${material.shader === 'unlit'
-              ? 0
-              : Math.min(0.95, dielectricF0 * 4 + material.metallic * (1 - material.roughness) * 0.35
-                + material.clearcoat * (1 - material.clearcoat_roughness) * 0.58)})`,
-          } as CSSProperties}
-        >
-          <div className="material-preview-sphere" />
-          <span>{material.shader.toUpperCase()} · {material.surface}{material.clearcoat > 0 && material.shader !== 'unlit' ? ` · Coat ${material.clearcoat.toFixed(2)}` : ''}</span>
-        </div>
+        <NativeMaterialPreview
+          material={material}
+          label={`${material.shader.toUpperCase()} · ${material.surface}${material.clearcoat > 0 && material.shader !== 'unlit' ? ` · Coat ${material.clearcoat.toFixed(2)}` : ''}`}
+        />
 
         <div className="material-fields">
           <label>Name <input value={material.name} onChange={(event) => update('name', event.target.value)} /></label>

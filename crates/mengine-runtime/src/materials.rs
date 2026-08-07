@@ -163,6 +163,31 @@ impl RuntimeMaterialCache {
         }
     }
 
+    /// Resolves an in-memory authoring draft through the same runtime material path used by
+    /// scene assets. This lets editor previews render unsaved changes without temporary files.
+    pub fn resolve_preview(&mut self, material: &MaterialAsset) -> Result<RenderMaterial, String> {
+        let mut render = render_material_from_asset(material);
+        if material.shader != MaterialShader::Custom {
+            return Ok(render);
+        }
+        let shader = self.load_custom_shader(&material.custom_shader)?;
+        validate_surface_shader_hook(&shader.source)?;
+        let bindings = resolve_surface_shader_material_with_schema(
+            material,
+            &shader.schema,
+            Arc::clone(&shader.parameter_bindings),
+            Arc::clone(&shader.texture_names),
+        )?;
+        render.surface_shader = Arc::clone(&shader.source);
+        render.surface_keywords = bindings.keywords;
+        render.custom_parameters = bindings.parameters;
+        render.custom_parameter_bindings = bindings.parameter_bindings;
+        render.custom_textures = bindings.textures;
+        render.custom_texture_names = bindings.texture_names;
+        render.custom_texture_srgb = bindings.texture_srgb;
+        Ok(render)
+    }
+
     /// Resolves a Unity-style replacement Graphic material. UI uses the same `.mmat`/`.minst`
     /// authoring and reflection data as 3D materials, but requires the domain-specific
     /// `mengine_ui_hook` contract so incompatible forward shaders fail visibly.
@@ -1092,6 +1117,11 @@ mod tests {
         assert_eq!(material.custom_texture_names[0], "detail");
         assert_eq!(material.custom_texture_names[1], "mask");
         assert_eq!(material.custom_texture_srgb, [true, false, false, false]);
+        let draft = load_material_asset(&root.join("Assets/Materials/Rim.mmat")).unwrap();
+        let preview = cache.resolve_preview(&draft).unwrap();
+        assert_eq!(preview.custom_parameters, material.custom_parameters);
+        assert_eq!(preview.custom_textures, material.custom_textures);
+        assert_eq!(preview.surface_shader, material.surface_shader);
         let repeated = cache.resolve("Assets/Materials/Rim.mmat").unwrap();
         assert!(Arc::ptr_eq(
             &material.surface_shader,

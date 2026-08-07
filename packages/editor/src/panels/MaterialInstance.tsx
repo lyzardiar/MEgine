@@ -3,10 +3,10 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type FocusEvent as ReactFocusEvent,
 } from 'react';
 import { Redo2, Undo2 } from 'lucide-react';
+import { NativeMaterialPreview } from './NativeMaterialPreview';
 import {
   createMaterialAsset,
   parseMaterialAsset,
@@ -827,7 +827,6 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     .filter((field) => field !== 'custom_parameters'
       && field !== 'custom_keywords'
       && field !== 'custom_textures').length;
-  const dielectricF0 = ((displayed.ior - 1) / (displayed.ior + 1)) ** 2;
   const parentMissing = !materialAssets.some(
     (asset) => asset.relPath.toLowerCase() === instance.parent.toLowerCase(),
   );
@@ -889,18 +888,10 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       </div>
       {error && <div className="material-error">{error}</div>}
       <div className="material-body">
-        <div
-          className="material-preview"
-          style={{
-            '--material-color': `rgba(${displayed.base_color.slice(0, 3).map((value) => Math.round(value * 255)).join(',')},${displayed.base_color[3]})`,
-            '--material-highlight': `rgba(255,255,255,${Math.min(0.95,
-              dielectricF0 * 4 + displayed.metallic * (1 - displayed.roughness) * 0.35
-              + displayed.clearcoat * (1 - displayed.clearcoat_roughness) * 0.58)})`,
-          } as CSSProperties}
-        >
-          <div className="material-preview-sphere" />
-          <span>{displayed.shader.toUpperCase()} · {displayed.surface} · {standardOverrideCount + customOverrideCount} overrides</span>
-        </div>
+        <NativeMaterialPreview
+          material={displayed}
+          label={`${displayed.shader.toUpperCase()} · ${displayed.surface} · ${standardOverrideCount + customOverrideCount} overrides`}
+        />
         <div className="material-fields material-instance-fields">
           <label>Name <input value={instance.name} onChange={(event) => updateInstance(
             (current) => ({ ...current, name: event.target.value }),

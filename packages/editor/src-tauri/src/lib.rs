@@ -41,6 +41,8 @@ static VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = Once
 static SCENE_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static EFFEKSEER_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
     OnceLock::new();
+static MATERIAL_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
+    OnceLock::new();
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -78,6 +80,18 @@ struct EffekseerPreviewRequest {
     camera_pitch: f32,
     camera_distance: f32,
     render_mode: String,
+    background: [f32; 4],
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct MaterialPreviewRequest {
+    material: mengine_assets::MaterialAsset,
+    width: u32,
+    height: u32,
+    camera_yaw: f32,
+    camera_pitch: f32,
+    camera_distance: f32,
     background: [f32; 4],
 }
 
@@ -4314,6 +4328,52 @@ async fn render_effekseer_preview(
 }
 
 #[tauri::command]
+async fn render_material_preview(
+    request: MaterialPreviewRequest,
+    state: State<'_, AppState>,
+) -> Result<NativeViewportFrame, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.project_root().to_owned())
+        .ok_or_else(|| "no MEngine project is open".to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let viewport = MATERIAL_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
+        let mut viewport = viewport.lock();
+        if viewport
+            .as_ref()
+            .is_none_or(|renderer| renderer.project_root() != project_root)
+        {
+            *viewport = Some(
+                pollster::block_on(EditorViewportRenderer::new(
+                    project_root,
+                    request.width,
+                    request.height,
+                ))
+                .map_err(|error| error.to_string())?,
+            );
+        }
+        let frame = viewport
+            .as_mut()
+            .expect("Material viewport renderer initialized above")
+            .render_material_preview(
+                request.material,
+                request.width,
+                request.height,
+                request.camera_yaw,
+                request.camera_pitch,
+                request.camera_distance,
+                request.background,
+            )
+            .map_err(|error| error.to_string())?;
+        encode_native_viewport_frame(frame, "Material preview")
+    })
+    .await
+    .map_err(|error| format!("Material viewport worker failed: {error}"))?
+}
+
+#[tauri::command]
 fn list_project_scenes(state: State<'_, AppState>) -> Result<Vec<ProjectSceneInfo>, String> {
     let project_root = state
         .project
@@ -6056,6 +6116,7 @@ pub fn run() {
             render_native_game_view,
             render_native_scene_view,
             render_effekseer_preview,
+            render_material_preview,
             list_project_scenes,
             rename_project_scene,
             delete_project_scene,

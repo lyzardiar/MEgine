@@ -1,9 +1,13 @@
 use anyhow::{Context, Result};
 use glam::Vec3;
-use mengine_core::generated::{EffekseerEffect, Transform};
+use mengine_assets::MaterialAsset;
+use mengine_core::generated::{
+    DirectionalLight, EffekseerEffect, EnvironmentLight, MeshRenderer, Transform,
+};
 use mengine_core::{TransformHierarchy, World};
 use mengine_rhi::{
-    look_at, orthographic, perspective, FrameCamera, OffscreenRenderTarget, RenderTarget, Renderer,
+    look_at, orthographic, perspective, FrameCamera, OffscreenRenderTarget, RenderMaterial,
+    RenderTarget, Renderer,
 };
 use mengine_runtime::effekseer::EffekseerWorld;
 use mengine_runtime::fonts::RuntimeFontCache;
@@ -173,7 +177,7 @@ impl EditorViewportRenderer {
         width: u32,
         height: u32,
     ) -> Result<EditorViewportFrame> {
-        self.render_world(world, width, height, None, true)
+        self.render_world(world, width, height, None, true, None)
     }
 
     pub fn render_scene(
@@ -200,7 +204,88 @@ impl EditorViewportRenderer {
             },
             position: eye,
         };
-        self.render_world(world, width, height, Some(view_camera), false)
+        self.render_world(world, width, height, Some(view_camera), false, None)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn render_material_preview(
+        &mut self,
+        material: MaterialAsset,
+        width: u32,
+        height: u32,
+        camera_yaw: f32,
+        camera_pitch: f32,
+        camera_distance: f32,
+        background: [f32; 4],
+    ) -> Result<EditorViewportFrame> {
+        let mut world = World::new();
+        world.time.clear_color = glam::Vec4::from_array(background);
+
+        let object = world.spawn_empty();
+        world.insert_component(object, Transform::default());
+        world.insert_component(object, MeshRenderer::default());
+
+        let light = world.spawn_empty();
+        world.insert_component(
+            light,
+            Transform {
+                rotation: glam::Quat::from_euler(
+                    glam::EulerRot::YXZ,
+                    -35.0_f32.to_radians(),
+                    -40.0_f32.to_radians(),
+                    0.0,
+                )
+                .to_array(),
+                ..Transform::default()
+            },
+        );
+        world.insert_component(
+            light,
+            DirectionalLight {
+                intensity: 1.8,
+                cast_shadows: false,
+                ..DirectionalLight::default()
+            },
+        );
+        world.insert_component(
+            light,
+            EnvironmentLight {
+                background_enabled: false,
+                diffuse_intensity: 0.65,
+                specular_intensity: 1.0,
+                ..EnvironmentLight::default()
+            },
+        );
+
+        let yaw = camera_yaw.to_radians();
+        let pitch = camera_pitch.clamp(-89.0, 89.0).to_radians();
+        let distance = camera_distance.clamp(1.5, 20.0);
+        let target = Vec3::ZERO;
+        let eye = target
+            + Vec3::new(
+                yaw.sin() * pitch.cos(),
+                pitch.sin(),
+                yaw.cos() * pitch.cos(),
+            ) * distance;
+        let aspect = width.max(1) as f32 / height.max(1) as f32;
+        let camera = FrameCamera {
+            view: look_at(eye, target, Vec3::Y),
+            proj: perspective(38.0, aspect, 0.01, 100.0),
+            position: eye,
+        };
+        let render_material = self
+            .materials
+            .resolve_preview(&material)
+            .map_err(anyhow::Error::msg)
+            .context("could not resolve material preview")?;
+        self.render_world(
+            &world,
+            width,
+            height,
+            Some(camera),
+            false,
+            Some(render_material),
+        )
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -281,6 +366,7 @@ impl EditorViewportRenderer {
         height: u32,
         view_camera: Option<FrameCamera>,
         include_ui: bool,
+        material_override: Option<RenderMaterial>,
     ) -> Result<EditorViewportFrame> {
         let render_started = Instant::now();
         let mut stages = Vec::new();
@@ -336,6 +422,9 @@ impl EditorViewportRenderer {
             sorting_layers: &self.sorting_layers,
             delta_seconds: effect_delta,
         });
+        if let (Some(material), Some(object)) = (material_override, frame.objects.first_mut()) {
+            object.material = material;
+        }
         finish_stage(&mut stages, "FrameCompiler.compile", stage_started);
 
         let stage_started = Instant::now();
