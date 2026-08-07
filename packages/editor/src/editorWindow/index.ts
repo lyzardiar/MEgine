@@ -31,6 +31,7 @@ export { RegisteredEditorWindowHost } from './RegisteredEditorWindowHost';
 
 /** Side-effect: register Window menu items */
 import './windows/AgentSetupWindow';
+import './windows/FigmaSettingsWindow';
 import './windows/DecoratorGalleryWindow';
 import './windows/DocumentationWindow';
 import './assetMenuItems';

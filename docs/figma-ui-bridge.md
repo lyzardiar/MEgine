@@ -14,6 +14,15 @@ Figma 文件读取和图片导出均需要 `file_content:read`。官方接口说
 
 ## 使用方式
 
+编辑器顶部菜单选择 `Window > Figma Settings`，可以统一设置：
+
+- PNG 资源目录。
+- 单次导入节点上限。
+- 复杂视觉节点的 PNG 导出倍率。
+- 稳定 Figma `componentId` 到 MEngine 游戏控件的映射。
+
+设置由 CLI、MCP、HTTP 和编辑器导入计划共享；命令显式传入的参数优先。访问令牌不保存在设置窗口或工程文件中。
+
 在启动 Agent 的环境中配置令牌：
 
 ```powershell
@@ -33,6 +42,7 @@ mengine-agent figma-import "https://www.figma.com/design/FILE_KEY/Game-UI?node-i
 {
   "parent": 42,
   "assetFolder": "Assets/Figma",
+  "imageScale": 2,
   "maxNodes": 500,
   "componentMappings": {
     "123:456": "button",
@@ -42,6 +52,8 @@ mengine-agent figma-import "https://www.figma.com/design/FILE_KEY/Game-UI?node-i
 ```
 
 MCP 暴露 `preview_figma_ui` 和 `import_figma_ui`；本地 HTTP 适配器暴露 `POST /v1/figma/preview` 与 `POST /v1/figma/import`。`mengine-agent doctor` 只报告 `figma.configured`，不会输出令牌。
+
+Agent 也可通过 `get_figma_settings` / `set_figma_settings` 读取或修改同一组非敏感默认值；CLI 可使用通用 `query figma.settings` 和 `execute figma.settings.set`。
 
 ## 确定性映射
 

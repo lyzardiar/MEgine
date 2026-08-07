@@ -1492,6 +1492,48 @@ const TOOLS = [
     handler: async (args) => textContent(await bridgeQuery('view.canvas_plan', args)),
   },
   {
+    name: 'get_figma_settings',
+    description:
+      'Read the non-secret defaults shared by Figma preview and import: asset folder, node limit, PNG export scale, and stable component mappings.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    handler: async () => textContent(await bridgeQuery('figma.settings', {})),
+  },
+  execTool(
+    'set_figma_settings',
+    'Persist non-secret Figma bridge defaults without changing the scene. FIGMA_ACCESS_TOKEN remains an Agent environment variable and is never accepted here.',
+    'figma.settings.set',
+    {
+      assetFolder: {
+        type: 'string',
+        minLength: 6,
+        maxLength: 256,
+        pattern: '^Assets(?:/[A-Za-z0-9 _.-]+)*$',
+        description: 'Project-relative PNG destination root',
+      },
+      maxNodes: {
+        type: 'integer',
+        minimum: 1,
+        maximum: 1000,
+        description: 'Visible Figma node limit',
+      },
+      imageScale: {
+        type: 'integer',
+        enum: [1, 2, 3, 4],
+        description: 'PNG raster export scale',
+      },
+      componentMappings: {
+        type: 'object',
+        maxProperties: 512,
+        additionalProperties: {
+          type: 'string',
+          enum: ['button', 'toggle', 'slider', 'input_field', 'dropdown', 'scroll_view', 'panel', 'image', 'raw_image', 'text'],
+        },
+        description: 'Stable Figma component id to MEngine control kind',
+      },
+    },
+    ['assetFolder', 'maxNodes', 'imageScale', 'componentMappings'],
+  ),
+  {
     name: 'preview_figma_ui',
     description:
       'Fetch one selected Figma frame with FIGMA_ACCESS_TOKEN and preview its deterministic MEngine RectTransform, LayoutGroup, text, component-mapping, diagnostics, and raster-asset plan. Does not mutate the project or scene.',
@@ -1565,6 +1607,11 @@ const TOOLS = [
           },
         },
         maxNodes: { type: 'integer', minimum: 1, maximum: 1000 },
+        imageScale: {
+          type: 'integer',
+          enum: [1, 2, 3, 4],
+          description: 'PNG export scale; defaults to the Figma Settings window value',
+        },
         parent: { ...ENTITY_ID_SCHEMA, description: 'Existing Canvas or RectTransform parent; defaults to current UI context' },
         assetFolder: {
           type: 'string',
@@ -4091,6 +4138,7 @@ const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
   'view.set_game_display',
   'view.set_scene_preferences',
   'view.set_timeline_preferences',
+  'figma.settings.set',
   'sprite.import_settings.set',
   'panel.focus',
   'panel.reset_layout',

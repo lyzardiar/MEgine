@@ -82,6 +82,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       componentMappings: { '9:9': 'button' },
       maxNodes: 500,
     }],
+    ['figma.settings', {}],
     ['view.window_screenshot', { windowLabel: 'main', maxSize: 4_096 }],
     ['view.capture_region', {
       windowLabel: 'main',

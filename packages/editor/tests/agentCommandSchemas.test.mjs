@@ -69,6 +69,14 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['json'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['figma.settings.set'].required,
+    ['assetFolder', 'maxNodes', 'imageScale', 'componentMappings'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['figma.settings.set'].properties.imageScale.enum,
+    [1, 2, 3, 4],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['asset.open'].required,
     ['path'],
   );

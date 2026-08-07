@@ -86,6 +86,12 @@ test('preview keeps the Figma token in the Agent process and sends only normaliz
       return jsonResponse(figmaPayload);
     },
     query: async (query, args) => {
+      if (query === 'figma.settings') return {
+        assetFolder: 'Assets/Figma',
+        maxNodes: 500,
+        imageScale: 2,
+        componentMappings: { '9:9': 'button' },
+      };
       assert.equal(query, 'figma.import_plan');
       editorArgs = args;
       return { readyToImport: true, planRevision: 'figma-plan-v1-0000000000000000', assets: [] };
@@ -93,6 +99,8 @@ test('preview keeps the Figma token in the Agent process and sends only normaliz
   });
   assert.equal(requestHeaders['X-Figma-Token'], 'figma-secret-token');
   assert.equal(JSON.stringify(editorArgs).includes('figma-secret-token'), false);
+  assert.equal(editorArgs.maxNodes, 500);
+  assert.equal(editorArgs.componentMappings['9:9'], 'button');
   assert.equal(result.figma.nodeCount, 2);
 });
 
@@ -107,6 +115,9 @@ test('direct import previews first and sends one guarded scene command when no r
     fetchImpl: async () => jsonResponse(figmaPayload),
     query: async (query, args) => {
       calls.push({ operation: 'query', query, args });
+      if (query === 'figma.settings') return {
+        assetFolder: 'Assets/Figma', maxNodes: 1000, imageScale: 1, componentMappings: {},
+      };
       return {
         readyToImport: true,
         planRevision: 'figma-plan-v1-0000000000000000',
@@ -119,11 +130,11 @@ test('direct import previews first and sends one guarded scene command when no r
       return { ok: true, data: { root: 99 } };
     },
   });
-  assert.deepEqual(calls.map((call) => call.operation), ['query', 'execute']);
-  assert.equal(calls[1].command, 'figma.import_ui');
-  assert.equal(calls[1].args.expectedPlanRevision, 'figma-plan-v1-0000000000000000');
-  assert.equal(calls[1].options.expectedSceneRevision, 12);
-  assert.equal(JSON.stringify(calls[1]).includes('figma-secret-token'), false);
+  assert.deepEqual(calls.map((call) => call.operation), ['query', 'query', 'execute']);
+  assert.equal(calls[2].command, 'figma.import_ui');
+  assert.equal(calls[2].args.expectedPlanRevision, 'figma-plan-v1-0000000000000000');
+  assert.equal(calls[2].options.expectedSceneRevision, 12);
+  assert.equal(JSON.stringify(calls[2]).includes('figma-secret-token'), false);
   assert.equal(result.result.data.root, 99);
 });
 
@@ -159,6 +170,9 @@ test('direct import exports bounded PNGs through the existing asset importer bef
     },
     query: async (query) => {
       calls.push(query);
+      if (query === 'figma.settings') {
+        return { assetFolder: 'Assets/Figma', maxNodes: 1000, imageScale: 3, componentMappings: {} };
+      }
       if (query === 'figma.import_plan') {
         return {
           readyToImport: true,
@@ -184,7 +198,8 @@ test('direct import exports bounded PNGs through the existing asset importer bef
   const resultPath = result.assetPaths['1:4'];
   assert.match(resultPath, /^Assets\/Figma\/.+\/1-4\.png$/u);
   assert.equal(finalArgs.assetPaths['1:4'], resultPath);
-  assert.deepEqual(calls, ['figma.import_plan', 'asset.list', 'asset.import_file', 'figma.import_ui']);
+  assert.equal(result.imageScale, 3);
+  assert.deepEqual(calls, ['figma.settings', 'figma.import_plan', 'asset.list', 'asset.import_file', 'figma.import_ui']);
 });
 
 test('missing tokens fail before any network or editor request', async () => {

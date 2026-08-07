@@ -123,7 +123,7 @@ export const FIGMA_IMPORT_SOURCE_SCHEMA: AgentJsonSchema = {
   additionalProperties: false,
 };
 
-const componentMappings: AgentJsonSchema = {
+export const FIGMA_COMPONENT_MAPPINGS_SCHEMA: AgentJsonSchema = {
   type: 'object',
   maxProperties: 512,
   additionalProperties: { type: 'string', enum: [...FIGMA_COMPONENT_KINDS] },
@@ -131,12 +131,36 @@ const componentMappings: AgentJsonSchema = {
 
 const commonProperties = {
   source: FIGMA_IMPORT_SOURCE_SCHEMA,
-  componentMappings,
+  componentMappings: FIGMA_COMPONENT_MAPPINGS_SCHEMA,
   maxNodes: {
     type: 'integer',
     minimum: 1,
     maximum: FIGMA_IMPORT_MAX_NODES,
   },
+};
+
+export const FIGMA_SETTINGS_PARAMS_SCHEMA: AgentJsonSchema = {
+  type: 'object',
+  required: ['assetFolder', 'maxNodes', 'imageScale', 'componentMappings'],
+  properties: {
+    assetFolder: {
+      type: 'string',
+      minLength: 6,
+      maxLength: 256,
+      pattern: '^Assets(?:/[A-Za-z0-9 _.-]+)*$',
+    },
+    maxNodes: {
+      type: 'integer',
+      minimum: 1,
+      maximum: FIGMA_IMPORT_MAX_NODES,
+    },
+    imageScale: {
+      type: 'integer',
+      enum: [1, 2, 3, 4],
+    },
+    componentMappings: FIGMA_COMPONENT_MAPPINGS_SCHEMA,
+  },
+  additionalProperties: false,
 };
 
 export const FIGMA_IMPORT_PLAN_PARAMS_SCHEMA: AgentJsonSchema = {

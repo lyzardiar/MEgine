@@ -113,7 +113,7 @@ function validateAssetFolder(value) {
   return folder.replace(/\/+$/u, '');
 }
 
-export function normalizeFigmaRequest(value, { write = false } = {}) {
+export function normalizeFigmaRequest(value, { write = false, defaults = {} } = {}) {
   if (!plainObject(value)) {
     throw new FigmaBridgeError('INVALID_ARGS', 'Figma request must be a JSON object');
   }
@@ -123,7 +123,7 @@ export function normalizeFigmaRequest(value, { write = false } = {}) {
     'componentMappings',
     'maxNodes',
     ...(write
-      ? ['parent', 'assetFolder', 'requestId', 'expectedSceneRevision', 'screenshot']
+      ? ['parent', 'assetFolder', 'imageScale', 'requestId', 'expectedSceneRevision', 'screenshot']
       : []),
   ]);
   for (const key of Object.keys(value)) {
@@ -135,14 +135,14 @@ export function normalizeFigmaRequest(value, { write = false } = {}) {
     throw new FigmaBridgeError('INVALID_ARGS', 'url must be a Figma URL up to 2048 characters');
   }
   const parsed = parseFigmaUrl(value.url, value.nodeId);
-  const maxNodes = value.maxNodes ?? MAX_FIGMA_NODES;
+  const maxNodes = value.maxNodes ?? defaults.maxNodes ?? MAX_FIGMA_NODES;
   if (!Number.isSafeInteger(maxNodes) || maxNodes < 1 || maxNodes > MAX_FIGMA_NODES) {
     throw new FigmaBridgeError('INVALID_ARGS', `maxNodes must be an integer from 1 to ${MAX_FIGMA_NODES}`);
   }
   const request = {
     url: value.url,
     ...parsed,
-    componentMappings: validateMappings(value.componentMappings),
+    componentMappings: validateMappings(value.componentMappings ?? defaults.componentMappings),
     maxNodes,
   };
   if (!write) return request;
@@ -164,10 +164,15 @@ export function normalizeFigmaRequest(value, { write = false } = {}) {
   if (value.screenshot !== undefined && typeof value.screenshot !== 'boolean') {
     throw new FigmaBridgeError('INVALID_ARGS', 'screenshot must be a boolean');
   }
+  const imageScale = value.imageScale ?? defaults.imageScale ?? 1;
+  if (![1, 2, 3, 4].includes(imageScale)) {
+    throw new FigmaBridgeError('INVALID_ARGS', 'imageScale must be 1, 2, 3, or 4');
+  }
   return {
     ...request,
     ...(value.parent === undefined ? {} : { parent: value.parent }),
-    assetFolder: validateAssetFolder(value.assetFolder),
+    assetFolder: validateAssetFolder(value.assetFolder ?? defaults.assetFolder),
+    imageScale,
     requestId: value.requestId ?? `figma:${randomUUID()}`,
     ...(value.expectedSceneRevision === undefined
       ? {}
@@ -489,7 +494,9 @@ export async function previewFigmaUi(
     signal,
   },
 ) {
-  const request = normalizeFigmaRequest(rawRequest);
+  tokenFromEnvironment(env);
+  const defaults = await query('figma.settings', {}, { signal });
+  const request = normalizeFigmaRequest(rawRequest, { defaults });
   const source = await loadFigmaSource(request, { env, fetchImpl, signal });
   const plan = await query('figma.import_plan', planArgs(source, request), { signal });
   return {
@@ -499,6 +506,10 @@ export async function previewFigmaUi(
       rootId: source.rootId,
       rootName: source.rootName,
       nodeCount: source.nodes.length,
+    },
+    settings: {
+      maxNodes: request.maxNodes,
+      componentMappingCount: Object.keys(request.componentMappings).length,
     },
     plan,
   };
@@ -518,7 +529,7 @@ async function exportedImageUrls(request, assets, { env, fetchImpl, signal }) {
     const endpoint = new URL(`${FIGMA_API_ROOT}/images/${encodeURIComponent(request.fileKey)}`);
     endpoint.searchParams.set('ids', chunk.map((asset) => asset.nodeId).join(','));
     endpoint.searchParams.set('format', 'png');
-    endpoint.searchParams.set('scale', '1');
+    endpoint.searchParams.set('scale', String(request.imageScale));
     const payload = await figmaJson(endpoint, { token, fetchImpl, signal });
     for (const asset of chunk) {
       const url = payload?.images?.[asset.nodeId];
@@ -649,7 +660,9 @@ export async function importFigmaUi(
     signal,
   },
 ) {
-  const request = normalizeFigmaRequest(rawRequest, { write: true });
+  tokenFromEnvironment(env);
+  const defaults = await query('figma.settings', {}, { signal });
+  const request = normalizeFigmaRequest(rawRequest, { write: true, defaults });
   const source = await loadFigmaSource(request, { env, fetchImpl, signal });
   const plan = await query('figma.import_plan', planArgs(source, request), { signal });
   if (!plan?.readyToImport) {
@@ -686,6 +699,12 @@ export async function importFigmaUi(
       nodeCount: source.nodes.length,
     },
     planRevision: plan.planRevision,
+    settings: {
+      assetFolder: request.assetFolder,
+      maxNodes: request.maxNodes,
+      componentMappingCount: Object.keys(request.componentMappings).length,
+    },
+    imageScale: request.imageScale,
     assetPaths,
     result,
   };

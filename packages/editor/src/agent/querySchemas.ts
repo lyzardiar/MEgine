@@ -167,6 +167,7 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     ],
   }),
   'figma.import_plan': FIGMA_IMPORT_PLAN_PARAMS_SCHEMA,
+  'figma.settings': emptySchema,
   'view.window_screenshot': objectSchema({
     windowLabel: stringValue('Window label from window.list; default main'),
     maxSize: boundedInteger(
@@ -507,6 +508,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'view.screenshot', category: 'view', description: 'Capture a Scene or Game viewport without activating a window', readOnly: true },
   { id: 'view.canvas_plan', category: 'view', description: 'Read a revision-safe paged semantic Canvas plan and deterministic layout diagnostics', readOnly: true },
   { id: 'figma.import_plan', category: 'figma', description: 'Preview deterministic Figma-to-game-UI mapping without mutating the scene', readOnly: true },
+  { id: 'figma.settings', category: 'figma', description: 'Read non-secret defaults used by every Figma UI bridge adapter', readOnly: true },
   { id: 'view.window_screenshot', category: 'window', description: 'Capture a complete editor window without activating it', readOnly: true },
   { id: 'view.capture_region', category: 'window', description: 'Capture an exact CSS-pixel region of any editor window without activating it', readOnly: true },
   { id: 'view.capture_element', category: 'window', description: 'Capture a revision-guarded semantic element by selector without activating its window', readOnly: true },

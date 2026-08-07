@@ -1289,6 +1289,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'entity.create', category: 'entity', description: 'Create a GameObject with optional components and parent', readOnly: false },
   { id: 'entity.create_typed', category: 'entity', description: 'Create any built-in GameObject kind with composite parent handling', readOnly: false },
   { id: 'figma.import_ui', category: 'figma', description: 'Import a revision-guarded Figma UI plan as one scene Undo transaction', readOnly: false },
+  { id: 'figma.settings.set', category: 'figma', description: 'Set non-secret Figma bridge defaults without changing the scene', readOnly: false },
   { id: 'entity.delete', category: 'entity', description: 'Delete the given (or currently selected) entities', readOnly: false },
   { id: 'entity.duplicate', category: 'entity', description: 'Duplicate the given (or currently selected) entities', readOnly: false },
   { id: 'entity.rename', category: 'entity', description: 'Rename an entity', readOnly: false },

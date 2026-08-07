@@ -130,6 +130,10 @@ import {
   type FigmaImportSource,
 } from '../ui/figmaImport.ts';
 import {
+  readFigmaBridgePreferences,
+  updateFigmaBridgePreferences,
+} from '../figmaSettings.ts';
+import {
   initializeSceneViewPreferencesEvents,
   readSceneViewPreferences,
   SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
@@ -1508,6 +1512,10 @@ class AgentBridge {
       componentMappings: (params.componentMappings ?? {}) as Record<string, FigmaComponentKind>,
       ...(typeof params.maxNodes === 'number' ? { maxNodes: params.maxNodes } : {}),
     });
+  }
+
+  getFigmaSettings(): unknown {
+    return readFigmaBridgePreferences();
   }
 
   getProjectState(): AgentProjectLifecycleState & {
@@ -4990,6 +4998,15 @@ class AgentBridge {
       const result = this.setTimelineEditorPreferences(args);
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'figma.settings.set') {
+      const result = updateFigmaBridgePreferences({
+        assetFolder: requiredString(args, 'assetFolder'),
+        maxNodes: requiredNonNegativeInteger(args, 'maxNodes'),
+        imageScale: requiredNonNegativeInteger(args, 'imageScale') as 1 | 2 | 3 | 4,
+        componentMappings: args.componentMappings as Record<string, FigmaComponentKind>,
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'menu.invoke') {
       const path = typeof args.path === 'string' ? args.path : '';
       const result = await this.invokeMenu(path);
@@ -5284,6 +5301,8 @@ class AgentBridge {
         return this.getCanvasPlan(params);
       case 'figma.import_plan':
         return this.getFigmaImportPlan(params);
+      case 'figma.settings':
+        return this.getFigmaSettings();
       case 'view.window_screenshot':
         return this.captureWindow(
           typeof params.windowLabel === 'string' && params.windowLabel

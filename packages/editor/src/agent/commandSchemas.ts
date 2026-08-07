@@ -1,6 +1,9 @@
 import { INTENT_SCHEMA } from '@mengine/agent';
 import { TYPED_ENTITY_KINDS } from './typedEntityKinds.ts';
-import { FIGMA_IMPORT_COMMAND_PARAMS_SCHEMA } from './figmaAgentSchemas.ts';
+import {
+  FIGMA_IMPORT_COMMAND_PARAMS_SCHEMA,
+  FIGMA_SETTINGS_PARAMS_SCHEMA,
+} from './figmaAgentSchemas.ts';
 
 export type AgentJsonSchema = Record<string, unknown>;
 
@@ -541,6 +544,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     },
   }, ['kind']),
   'figma.import_ui': FIGMA_IMPORT_COMMAND_PARAMS_SCHEMA,
+  'figma.settings.set': FIGMA_SETTINGS_PARAMS_SCHEMA,
   'entity.delete': objectSchema({
     ids: entityIds('Entity ids to delete; omit to use current selection'),
   }),
