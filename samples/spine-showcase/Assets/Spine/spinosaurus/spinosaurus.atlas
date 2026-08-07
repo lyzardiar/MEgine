@@ -1,0 +1,29 @@
+leaves.png
+	size: 1042, 522
+	filter: Linear, Linear
+leaves
+	bounds: 0, 0, 1042, 522
+
+logo.png
+	size: 917, 323
+	filter: Linear, Linear
+logo
+	bounds: 0, 0, 917, 323
+
+play.png
+	size: 218, 77
+	filter: Linear, Linear
+play
+	bounds: 0, 0, 218, 77
+
+quit.png
+	size: 216, 77
+	filter: Linear, Linear
+quit
+	bounds: 0, 0, 216, 77
+
+settings.png
+	size: 446, 76
+	filter: Linear, Linear
+settings
+	bounds: 0, 0, 446, 76

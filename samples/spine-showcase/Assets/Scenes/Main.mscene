@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "name": "SpineShowcase",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [0.0, 0.0, 10.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "Camera3D": {
+            "fov_y_degrees": 60.0,
+            "near": 0.1,
+            "far": 100.0,
+            "primary": true,
+            "target_display": 0,
+            "projection": "orthographic",
+            "orthographic_size": 5.0,
+            "aspect": 1.777778,
+            "clear_flags": "solid_color",
+            "background_color": [0.035, 0.045, 0.07, 1.0]
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Spineboy · Run",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [-5.6, 0.6, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "SpineSkeleton": {
+            "skeleton": "Assets/Spine/spineboy/spineboy-pro.json",
+            "atlas": "Assets/Spine/spineboy/spineboy-pma.atlas",
+            "animation": "run",
+            "skin": "default",
+            "loop_animation": true,
+            "playing": true,
+            "time_scale": 1.0,
+            "scale": 0.38,
+            "color": [1.0, 1.0, 1.0, 1.0],
+            "premultiplied_alpha": true,
+            "sorting_layer": "default",
+            "sorting_order": 0
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Raptor · Walk",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [-2.1, 0.4, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "SpineSkeleton": {
+            "skeleton": "Assets/Spine/raptor/raptor-pro.json",
+            "atlas": "Assets/Spine/raptor/raptor-pma.atlas",
+            "animation": "walk",
+            "skin": "default",
+            "loop_animation": true,
+            "playing": true,
+            "time_scale": 1.0,
+            "scale": 0.2,
+            "color": [1.0, 1.0, 1.0, 1.0],
+            "premultiplied_alpha": true,
+            "sorting_layer": "default",
+            "sorting_order": 1
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Goblin Girl · Walk",
+        "parent": null,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [1.0, 0.2, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "SpineSkeleton": {
+            "skeleton": "Assets/Spine/goblins/goblins-pro.json",
+            "atlas": "Assets/Spine/goblins/goblins-pma.atlas",
+            "animation": "walk",
+            "skin": "goblingirl",
+            "loop_animation": true,
+            "playing": true,
+            "time_scale": 1.0,
+            "scale": 0.5,
+            "color": [1.0, 1.0, 1.0, 1.0],
+            "premultiplied_alpha": true,
+            "sorting_layer": "default",
+            "sorting_order": 2
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Owl · Idle",
+        "parent": null,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [4.8, 0.3, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "SpineSkeleton": {
+            "skeleton": "Assets/Spine/owl/owl-pro.json",
+            "atlas": "Assets/Spine/owl/owl-pma.atlas",
+            "animation": "idle",
+            "skin": "default",
+            "loop_animation": true,
+            "playing": true,
+            "time_scale": 1.0,
+            "scale": 0.18,
+            "color": [1.0, 1.0, 1.0, 1.0],
+            "premultiplied_alpha": true,
+            "sorting_layer": "default",
+            "sorting_order": 3
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Alien · Run",
+        "parent": null,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [-3.8, -3.0, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "SpineSkeleton": {
+            "skeleton": "Assets/Spine/alien/alien-pro.json",
+            "atlas": "Assets/Spine/alien/alien-pma.atlas",
+            "animation": "run",
+            "skin": "default",
+            "loop_animation": true,
+            "playing": true,
+            "time_scale": 1.0,
+            "scale": 0.45,
+            "color": [1.0, 1.0, 1.0, 1.0],
+            "premultiplied_alpha": true,
+            "sorting_layer": "default",
+            "sorting_order": 4
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Coin · Animation",
+        "parent": null,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [0.0, -2.8, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "SpineSkeleton": {
+            "skeleton": "Assets/Spine/coin/coin-pro.json",
+            "atlas": "Assets/Spine/coin/coin-pma.atlas",
+            "animation": "animation",
+            "skin": "default",
+            "loop_animation": true,
+            "playing": true,
+            "time_scale": 1.0,
+            "scale": 0.65,
+            "color": [1.0, 1.0, 1.0, 1.0],
+            "premultiplied_alpha": true,
+            "sorting_layer": "default",
+            "sorting_order": 5
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Tank · Drive",
+        "parent": null,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [4.0, -2.8, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "SpineSkeleton": {
+            "skeleton": "Assets/Spine/tank/tank-pro.json",
+            "atlas": "Assets/Spine/tank/tank-pma.atlas",
+            "animation": "drive",
+            "skin": "default",
+            "loop_animation": true,
+            "playing": true,
+            "time_scale": 1.0,
+            "scale": 0.04,
+            "color": [1.0, 1.0, 1.0, 1.0],
+            "premultiplied_alpha": true,
+            "sorting_layer": "default",
+            "sorting_order": 6
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [0.035, 0.045, 0.07, 1.0],
+    "selected": 2
+  }
+}

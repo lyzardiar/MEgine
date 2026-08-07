@@ -1,0 +1,9 @@
+{
+  "name": "spine-showcase",
+  "version": 1,
+  "language": "typescript",
+  "mainScene": "Assets/Scenes/Main.mscene",
+  "buildScenes": [
+    "Assets/Scenes/Main.mscene"
+  ]
+}

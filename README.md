@@ -17,6 +17,8 @@ npm run codegen
 cargo run -p mengine-runtime -- --sample spinning-cube
 # Effekseer 15-effect 3D + 2D/UI showcase (open samples/effekseer-fire in the editor)
 npm.cmd run sample:effekseer
+# Spine 4.3 gallery with all 27 explicitly redistributable official export sets
+# Open samples/spine-showcase in the editor.
 ```
 
 ## Windows 编辑器 EXE 打包
