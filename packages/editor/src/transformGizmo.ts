@@ -99,6 +99,7 @@ function projectedAxis(origin: Vec3, direction: Vec3, camera: Camera, viewport: 
   const unit = { x: dx / length, y: dy / length };
   return {
     unit,
+    screen: { x: dx, y: dy },
     tip: { x: center.x + unit.x * AXIS_LENGTH, y: center.y + unit.y * AXIS_LENGTH },
     angle: Math.atan2(unit.y, unit.x),
     depth: projected.depth,
@@ -117,7 +118,7 @@ function outlinedLine(
   context.moveTo(start.x, start.y);
   context.lineTo(end.x, end.y);
   context.strokeStyle = 'rgba(12,12,12,0.88)';
-  context.lineWidth = width + 2.5;
+  context.lineWidth = width + 1.5;
   context.stroke();
   context.strokeStyle = color;
   context.lineWidth = width;
@@ -136,7 +137,7 @@ function arrowHead(context: CanvasRenderingContext2D, tip: Point, angle: number,
   context.lineTo(base.x + normal.x * ARROW_WIDTH * 0.5, base.y + normal.y * ARROW_WIDTH * 0.5);
   context.lineTo(base.x - normal.x * ARROW_WIDTH * 0.5, base.y - normal.y * ARROW_WIDTH * 0.5);
   context.closePath();
-  context.lineWidth = 2;
+  context.lineWidth = 1.25;
   context.strokeStyle = 'rgba(12,12,12,0.9)';
   context.stroke();
   context.fillStyle = color;
@@ -172,11 +173,11 @@ function drawPlane(
   context.closePath();
   context.fillStyle = `rgba(${channels.join(',')},${hot ? 0.58 : 0.3})`;
   context.fill();
-  context.strokeStyle = 'rgba(12,12,12,0.78)';
-  context.lineWidth = hot ? 4 : 3;
+  context.strokeStyle = 'rgba(12,12,12,0.62)';
+  context.lineWidth = hot ? 3 : 2;
   context.stroke();
   context.strokeStyle = color;
-  context.lineWidth = hot ? 2.5 : 1.5;
+  context.lineWidth = hot ? 2 : 1.25;
   context.stroke();
 }
 
@@ -195,31 +196,82 @@ function polygonContains(point: Point, corners: [Point, Point, Point, Point]): b
   return true;
 }
 
-function drawEllipse(
+function strokeEllipse(
   context: CanvasRenderingContext2D,
   center: Point,
   radius: number,
   u: Point,
   v: Point,
-  color: string,
-  hot: boolean,
+  include: (angle: number) => boolean,
 ) {
   context.beginPath();
-  for (let index = 0; index <= 72; index += 1) {
-    const angle = index / 72 * Math.PI * 2;
+  let drawing = false;
+  for (let index = 0; index <= 96; index += 1) {
+    const angle = index / 96 * Math.PI * 2;
     const point = {
       x: center.x + (Math.cos(angle) * u.x + Math.sin(angle) * v.x) * radius,
       y: center.y + (Math.cos(angle) * u.y + Math.sin(angle) * v.y) * radius,
     };
-    if (index === 0) context.moveTo(point.x, point.y);
-    else context.lineTo(point.x, point.y);
+    if (!include(angle)) {
+      drawing = false;
+    } else if (!drawing) {
+      context.moveTo(point.x, point.y);
+      drawing = true;
+    } else {
+      context.lineTo(point.x, point.y);
+    }
   }
-  context.closePath();
-  context.strokeStyle = 'rgba(12,12,12,0.82)';
-  context.lineWidth = hot ? 6 : 5;
+  context.stroke();
+}
+
+function drawRotationRing(
+  context: CanvasRenderingContext2D,
+  center: Point,
+  radius: number,
+  u: Point,
+  v: Point,
+  worldU: Vec3,
+  worldV: Vec3,
+  viewToCamera: Vec3,
+  color: string,
+  hot: boolean,
+) {
+  const front = (angle: number) => dot(
+    add(scale(worldU, Math.cos(angle)), scale(worldV, Math.sin(angle))),
+    viewToCamera,
+  ) >= 0;
+  context.save();
+  context.globalAlpha = hot ? 0.42 : 0.22;
+  context.strokeStyle = color;
+  context.lineWidth = hot ? 2.5 : 1.5;
+  strokeEllipse(context, center, radius, u, v, () => true);
+
+  context.globalAlpha = hot ? 0.72 : 0.38;
+  context.strokeStyle = 'rgba(12,12,12,0.85)';
+  context.lineWidth = hot ? 5 : 3.5;
+  strokeEllipse(context, center, radius, u, v, front);
+
+  context.globalAlpha = 1;
+  context.strokeStyle = color;
+  context.lineWidth = hot ? 3.25 : 2.25;
+  strokeEllipse(context, center, radius, u, v, front);
+  context.restore();
+}
+
+function drawViewRotationRing(
+  context: CanvasRenderingContext2D,
+  center: Point,
+  radius: number,
+  color: string,
+  hot: boolean,
+) {
+  context.beginPath();
+  context.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  context.strokeStyle = 'rgba(12,12,12,0.58)';
+  context.lineWidth = hot ? 4.5 : 3;
   context.stroke();
   context.strokeStyle = color;
-  context.lineWidth = hot ? 3.5 : 2.5;
+  context.lineWidth = hot ? 2.5 : 1.5;
   context.stroke();
 }
 
@@ -231,7 +283,7 @@ function drawScaleCap(
 ) {
   const half = hot ? 7 : 6;
   context.fillStyle = 'rgba(12,12,12,0.9)';
-  context.fillRect(tip.x - half - 2, tip.y - half - 2, half * 2 + 4, half * 2 + 4);
+  context.fillRect(tip.x - half - 1, tip.y - half - 1, half * 2 + 2, half * 2 + 2);
   context.fillStyle = color;
   context.fillRect(tip.x - half, tip.y - half, half * 2, half * 2);
 }
@@ -244,7 +296,7 @@ function drawCenterHandle(
 ) {
   const half = hot ? 7 : 6;
   context.beginPath();
-  context.rect(center.x - half - 2, center.y - half - 2, half * 2 + 4, half * 2 + 4);
+  context.rect(center.x - half - 1, center.y - half - 1, half * 2 + 2, half * 2 + 2);
   context.fillStyle = 'rgba(12,12,12,0.9)';
   context.fill();
   context.beginPath();
@@ -293,30 +345,51 @@ export function drawTransformGizmo(
   }
 
   if (mode === 'rotate') {
-    context.beginPath();
-    context.arc(center.x, center.y, ROTATE_RADIUS - 1, 0, Math.PI * 2);
-    context.fillStyle = 'rgba(10,10,10,0.07)';
-    context.fill();
+    const viewToCamera = norm(sub(camera.eye, worldOrigin));
     for (const axis of drawAxes) {
       const otherAxes = AXES.filter((candidate) => candidate !== axis);
-      const first = projected[otherAxes[0]]?.unit;
-      const second = projected[otherAxes[1]]?.unit;
-      if (!first || !second || Math.abs(first.x * second.y - second.x * first.y) < 0.08) continue;
+      const firstHandle = projected[otherAxes[0]];
+      const secondHandle = projected[otherAxes[1]];
+      if (!firstHandle || !secondHandle
+        || Math.abs(firstHandle.unit.x * secondHandle.unit.y
+          - secondHandle.unit.x * firstHandle.unit.y) < 0.08) continue;
+      const scaleToRadius = 1 / Math.max(
+        Math.hypot(firstHandle.screen.x, firstHandle.screen.y),
+        Math.hypot(secondHandle.screen.x, secondHandle.screen.y),
+      );
+      const first = {
+        x: firstHandle.screen.x * scaleToRadius,
+        y: firstHandle.screen.y * scaleToRadius,
+      };
+      const second = {
+        x: secondHandle.screen.x * scaleToRadius,
+        y: secondHandle.screen.y * scaleToRadius,
+      };
       const part: GizmoPart = { kind: 'axis', axis };
       const color = partColor(part, hover, active);
-      drawEllipse(context, center, ROTATE_RADIUS, first, second, color, samePart(hover, part) || samePart(active, part));
+      drawRotationRing(
+        context,
+        center,
+        ROTATE_RADIUS,
+        first,
+        second,
+        directions[otherAxes[0]],
+        directions[otherAxes[1]],
+        viewToCamera,
+        color,
+        samePart(hover, part) || samePart(active, part),
+      );
       hits.push({ kind: 'axis', axis, shape: 'ellipse', center, radius: ROTATE_RADIUS, u: first, v: second });
     }
     const radius = ROTATE_RADIUS + 14;
     const part: GizmoPart = { kind: 'center' };
-    context.beginPath();
-    context.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    context.strokeStyle = 'rgba(12,12,12,0.82)';
-    context.lineWidth = samePart(hover, part) || samePart(active, part) ? 6 : 5;
-    context.stroke();
-    context.strokeStyle = partColor(part, hover, active);
-    context.lineWidth -= 2.5;
-    context.stroke();
+    drawViewRotationRing(
+      context,
+      center,
+      radius,
+      partColor(part, hover, active),
+      samePart(hover, part) || samePart(active, part),
+    );
     hits.push({ kind: 'center', shape: 'annulus', center, radius, band: HIT_RING });
   } else {
     for (const axis of drawAxes) {

@@ -89,5 +89,8 @@ test('Unity-style gizmos stay large enough to read and hit at any camera distanc
   const rings = rotate.filter((hit) => hit.kind === 'axis' && hit.shape === 'ellipse');
   assert.equal(rings.length, 3);
   assert.ok(rings.every((ring) => ring.radius === 72));
+  assert.ok(rings.some((ring) => (
+    Math.abs(Math.hypot(ring.u.x, ring.u.y) - Math.hypot(ring.v.x, ring.v.y)) > 0.05
+  )), '3D rotation rings preserve projected foreshortening instead of becoming tangled circles');
   assert.equal(rotate.find((hit) => hit.kind === 'center')?.radius, 86);
 });
