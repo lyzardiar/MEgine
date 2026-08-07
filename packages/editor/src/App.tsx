@@ -84,7 +84,7 @@ import {
 import { loadSpriteNativeSize } from './spriteDraw';
 import { spriteNativeWorldSize } from './spriteImport';
 import { combineMarqueeSelection } from './marqueeSelection';
-import { instantiateProjectPrefab } from './prefabWorkflow';
+import { createProjectPrefabsFromEntities, instantiateProjectPrefab } from './prefabWorkflow';
 import { exitDesktopEditor, isDesktopEditor } from './transport/editorTransport';
 import {
   checkpointDesktopScene,
@@ -3221,6 +3221,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <Project
               activeScene={sceneName}
               sceneTick={sceneTick}
+              onCreatePrefabs={async (entityIds, folder) => {
+                const paths = await createProjectPrefabsFromEntities(store, entityIds, folder);
+                refresh();
+                return paths;
+              }}
               onInstantiatePrefab={(path) => {
                 void instantiateProjectPrefab(store, path)
                   .then(() => {

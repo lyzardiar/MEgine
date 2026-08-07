@@ -298,8 +298,10 @@ export function Hierarchy(props: {
     setDragId(id);
     // 勿在拖拽时改选中：否则 Inspector 切走，Object 槽（如 On Click）会消失
     ev.dataTransfer.setData('text/mengine-entity', String(id));
+    ev.dataTransfer.setData('application/x-mengine-entities+json', JSON.stringify(selectedDragIds(id)));
     ev.dataTransfer.setData('text/plain', String(id));
-    ev.dataTransfer.effectAllowed = 'move';
+    // Hierarchy -> Hierarchy is a move; Hierarchy -> Project is a Prefab copy.
+    ev.dataTransfer.effectAllowed = 'copyMove';
   };
 
   const isEntityDrag = (ev: DragEvent) =>

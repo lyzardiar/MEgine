@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   clearEditorProfilerSamples,
   editorProfilerUiRefreshDelay,
@@ -8,7 +9,9 @@ import {
   summarizeEditorProfilerSamples,
   type EditorProfilerSample,
   type EditorProfilerSource,
+  type NativeProfilerMemoryCategory,
   type NativeProfilerNode,
+  type NativeProfilerResource,
   type NativeViewportProfile,
 } from '../editorProfiler';
 import {
@@ -25,6 +28,11 @@ const PROFILER_SOURCES = ['scene', 'game', 'timeline'] as const;
 type ProfilerSource = EditorProfilerSource | 'timeline';
 const PROFILER_MODULES = ['overview', 'cpu', 'memory', 'resources'] as const;
 type ProfilerModule = typeof PROFILER_MODULES[number];
+type SortDirection = 'asc' | 'desc';
+type SortState<Key extends string> = { key: Key; direction: SortDirection };
+type CpuSortKey = 'name' | 'totalMs' | 'selfMs' | 'frame' | 'calls';
+type MemorySortKey = 'name' | 'domain' | 'bytes' | 'certainty' | 'source';
+type ResourceSortKey = 'kind' | 'asset' | 'sourceBytes' | 'gpuBytesEstimate' | 'loaded' | 'referencedBy';
 
 function formatMs(value: number): string {
   return Number.isFinite(value) ? `${value.toFixed(value >= 10 ? 1 : 2)} ms` : '—';
@@ -53,6 +61,57 @@ function flattenCallTree(
   ];
 }
 
+function compareValues(left: string | number | boolean | null, right: string | number | boolean | null): number {
+  if (typeof left === 'string' || typeof right === 'string') {
+    return String(left ?? '').localeCompare(String(right ?? ''), undefined, { numeric: true });
+  }
+  return Number(left ?? 0) - Number(right ?? 0);
+}
+
+function sortedRows<Row, Key extends string>(
+  rows: readonly Row[],
+  sort: SortState<Key>,
+  value: (row: Row, key: Key) => string | number | boolean | null,
+): Row[] {
+  const direction = sort.direction === 'asc' ? 1 : -1;
+  return [...rows].sort((left, right) => direction * compareValues(value(left, sort.key), value(right, sort.key)));
+}
+
+function nextSort<Key extends string>(current: SortState<Key>, key: Key): SortState<Key> {
+  if (current.key !== key) return { key, direction: 'desc' };
+  return { key, direction: current.direction === 'desc' ? 'asc' : 'desc' };
+}
+
+function SortableHeader<Key extends string>(props: {
+  label: string;
+  column: Key;
+  sort: SortState<Key>;
+  onSort: (next: SortState<Key>) => void;
+}) {
+  const active = props.sort.key === props.column;
+  const Icon = !active ? ArrowUpDown : props.sort.direction === 'asc' ? ArrowUp : ArrowDown;
+  return (
+    <th aria-sort={!active ? 'none' : props.sort.direction === 'asc' ? 'ascending' : 'descending'}>
+      <button type="button" onClick={() => props.onSort(nextSort(props.sort, props.column))}>
+        <span>{props.label}</span><Icon size={11} aria-hidden="true" />
+      </button>
+    </th>
+  );
+}
+
+function nearestNativeProfile(
+  profiles: readonly NativeViewportProfile[],
+  timestamp: number | null,
+): NativeViewportProfile | null {
+  if (!profiles.length) return null;
+  if (timestamp == null) return profiles.at(-1) ?? null;
+  return profiles.reduce((nearest, candidate) => (
+    Math.abs(candidate.timestamp - timestamp) < Math.abs(nearest.timestamp - timestamp)
+      ? candidate
+      : nearest
+  ));
+}
+
 function ProfileGraph(props: {
   samples: EditorProfilerSample[];
   averageField: 'frameMs' | 'paintMs';
@@ -60,6 +119,8 @@ function ProfileGraph(props: {
   color: string;
   budget?: number;
   label: string;
+  selectedTimestamp: number | null;
+  onSelect: (sample: EditorProfilerSample) => void;
 }) {
   const values = props.samples.slice(-GRAPH_SAMPLES);
   const maximum = Math.max(
@@ -77,10 +138,39 @@ function ProfileGraph(props: {
   const budgetY = props.budget == null
     ? null
     : 68 - Math.min(1, props.budget / maximum) * 64;
+  const selectedIndex = props.selectedTimestamp == null
+    ? values.length - 1
+    : values.findIndex((sample) => sample.timestamp === props.selectedTimestamp);
+  const selectedX = selectedIndex < 0 || values.length <= 1
+    ? null
+    : selectedIndex / (values.length - 1) * 300;
+  const selectAtClientX = (clientX: number, element: SVGSVGElement) => {
+    if (!values.length) return;
+    const rect = element.getBoundingClientRect();
+    const ratio = rect.width > 0 ? Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) : 1;
+    props.onSelect(values[Math.round(ratio * (values.length - 1))]);
+  };
   return (
     <section className="profiler-graph">
       <header><strong>{props.label}</strong><span>0–{maximum.toFixed(1)} ms</span></header>
-      <svg role="img" viewBox="0 0 300 72" preserveAspectRatio="none" aria-label={`${props.label} history`}>
+      <svg
+        role="slider"
+        tabIndex={0}
+        aria-label={`${props.label} frame history`}
+        aria-valuemin={1}
+        aria-valuemax={Math.max(1, values.length)}
+        aria-valuenow={Math.max(1, selectedIndex + 1)}
+        viewBox="0 0 300 72"
+        preserveAspectRatio="none"
+        onPointerDown={(event) => selectAtClientX(event.clientX, event.currentTarget)}
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          const direction = event.key === 'ArrowLeft' ? -1 : 1;
+          const index = Math.max(0, Math.min(values.length - 1, selectedIndex + direction));
+          if (values[index]) props.onSelect(values[index]);
+        }}
+      >
         <path className="profiler-grid" d="M0 20H300 M0 36H300 M0 52H300" />
         {budgetY != null && (
           <path className="profiler-budget" d={`M0 ${budgetY.toFixed(2)}H300`} />
@@ -95,6 +185,7 @@ function ProfileGraph(props: {
             />
           </>
         )}
+        {selectedX != null && <path className="profiler-selected-frame-line" d={`M${selectedX.toFixed(2)} 0V72`} />}
       </svg>
     </section>
   );
@@ -116,10 +207,20 @@ export function Profiler() {
   const [module, setModule] = useState<ProfilerModule>('overview');
   const [filter, setFilter] = useState('');
   const [frozen, setFrozen] = useState(false);
+  const [selectedTimestamp, setSelectedTimestamp] = useState<number | null>(null);
+  const [cpuSort, setCpuSort] = useState<SortState<CpuSortKey>>({ key: 'totalMs', direction: 'desc' });
+  const [memorySort, setMemorySort] = useState<SortState<MemorySortKey>>({ key: 'bytes', direction: 'desc' });
+  const [resourceSort, setResourceSort] = useState<SortState<ResourceSortKey>>({ key: 'gpuBytesEstimate', direction: 'desc' });
   const [visible, setVisible] = useState(true);
   const [samples, setSamples] = useState(() => readEditorProfilerSamples('game'));
   const [nativeProfiles, setNativeProfiles] = useState(() => readNativeViewportProfiles('game'));
   const [timelineSnapshots, setTimelineSnapshots] = useState(readTimelineProfilerSnapshots);
+
+  useEffect(() => {
+    setSelectedTimestamp(null);
+    setFrozen(false);
+    setFilter('');
+  }, [source]);
 
   useEffect(() => {
     const element = panelRef.current;
@@ -172,23 +273,39 @@ export function Profiler() {
   }, [frozen, source, visible]);
 
   const summary = useMemo(() => summarizeEditorProfilerSamples(samples), [samples]);
-  const latest = summary.latest;
-  const latestNative = nativeProfiles.at(-1) ?? null;
+  const selectedSampleIndex = selectedTimestamp == null
+    ? samples.length - 1
+    : samples.findIndex((sample) => sample.timestamp === selectedTimestamp);
+  const latest = selectedSampleIndex >= 0 ? samples[selectedSampleIndex] : summary.latest;
+  const latestNative = nearestNativeProfile(nativeProfiles, latest?.timestamp ?? null);
   const cpuRows = useMemo(() => {
     if (!latestNative) return [];
     const query = filter.trim().toLowerCase();
-    return flattenCallTree(latestNative.callTree)
+    const rows = flattenCallTree(latestNative.callTree)
       .filter(({ node }) => !query || node.name.toLowerCase().includes(query));
-  }, [filter, latestNative]);
+    return sortedRows(rows, cpuSort, (row, key) => {
+      if (key === 'name') return row.node.name;
+      if (key === 'frame') return latestNative.totalMs > 0 ? row.node.totalMs / latestNative.totalMs : 0;
+      return row.node[key];
+    });
+  }, [cpuSort, filter, latestNative]);
+  const memoryRows = useMemo(() => sortedRows(
+    latestNative?.memory ?? [],
+    memorySort,
+    (row: NativeProfilerMemoryCategory, key) => row[key],
+  ), [latestNative, memorySort]);
   const resources = useMemo(() => {
     const query = filter.trim().toLowerCase();
-    return (latestNative?.resources ?? []).filter((resource) => (
+    const rows = (latestNative?.resources ?? []).filter((resource) => (
       !query
       || resource.asset.toLowerCase().includes(query)
       || resource.kind.toLowerCase().includes(query)
       || resource.referencedBy.some((reference) => reference.toLowerCase().includes(query))
     ));
-  }, [filter, latestNative]);
+    return sortedRows(rows, resourceSort, (row: NativeProfilerResource, key) => (
+      key === 'referencedBy' ? row.referencedBy.join(', ') : row[key]
+    ));
+  }, [filter, latestNative, resourceSort]);
   const latestTimeline = timelineSnapshots.at(-1) ?? null;
   const timelineHotspots = useMemo(() => (
     latestTimeline?.dependency.nodes
@@ -212,6 +329,17 @@ export function Profiler() {
   const itemsPerBatch = latest && latest.uiBatches > 0
     ? latest.uiPrimitives / latest.uiBatches
     : latest?.uiPrimitives ? latest.uiPrimitives : 0;
+  const frameSelectionIndex = latest
+    ? samples.findIndex((sample) => sample.timestamp === latest.timestamp)
+    : -1;
+  const selectFrame = (sample: EditorProfilerSample) => {
+    setSelectedTimestamp(sample.timestamp);
+    setFrozen(true);
+  };
+  const returnToLive = () => {
+    setSelectedTimestamp(null);
+    setFrozen(false);
+  };
 
   return (
     <div className="profiler-panel" ref={panelRef}>
@@ -249,14 +377,19 @@ export function Profiler() {
         <span className={`profiler-record-state${frozen ? ' frozen' : ''}`}>
           <i />{frozen ? 'Frozen' : 'Recording'}
         </span>
-        <button type="button" onClick={() => setFrozen((value) => !value)}>
+        <button type="button" onClick={() => {
+          if (frozen) returnToLive();
+          else setFrozen(true);
+        }}>
           {frozen ? 'Resume' : 'Freeze'}
         </button>
         <button type="button" onClick={() => {
           clearEditorProfilerSamples();
           clearTimelineProfilerSnapshots();
           setSamples([]);
+          setNativeProfiles([]);
           setTimelineSnapshots([]);
+          setSelectedTimestamp(null);
         }}>Clear</button>
       </div>
 
@@ -377,6 +510,37 @@ export function Profiler() {
             ))}
           </div>
 
+          <div className="profiler-frame-navigator" aria-label="Profiler frame selection">
+            <button
+              type="button"
+              aria-label="Previous frame"
+              disabled={frameSelectionIndex <= 0}
+              onClick={() => samples[frameSelectionIndex - 1] && selectFrame(samples[frameSelectionIndex - 1])}
+            ><ChevronLeft size={14} aria-hidden="true" /></button>
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, samples.length - 1)}
+              value={Math.max(0, frameSelectionIndex)}
+              disabled={samples.length < 2}
+              aria-label="Selected frame"
+              onChange={(event) => samples[Number(event.target.value)] && selectFrame(samples[Number(event.target.value)])}
+            />
+            <button
+              type="button"
+              aria-label="Next frame"
+              disabled={frameSelectionIndex < 0 || frameSelectionIndex >= samples.length - 1}
+              onClick={() => samples[frameSelectionIndex + 1] && selectFrame(samples[frameSelectionIndex + 1])}
+            ><ChevronRight size={14} aria-hidden="true" /></button>
+            <span>
+              {samples.length ? `Frame ${frameSelectionIndex + 1} / ${samples.length}` : 'No frames'}
+              {latestNative && latest ? ` · native ${Math.abs(latestNative.timestamp - latest.timestamp).toFixed(0)} ms away` : ''}
+            </span>
+            <button type="button" className={selectedTimestamp == null ? 'active' : ''} onClick={returnToLive}>
+              Live
+            </button>
+          </div>
+
           {module === 'overview' && <div className="profiler-metrics profiler-metrics-primary">
             <Metric
               label="Native Render"
@@ -428,6 +592,8 @@ export function Profiler() {
               color="#55b8d0"
               budget={FRAME_BUDGET_MS}
               label="Frame Interval"
+              selectedTimestamp={selectedTimestamp}
+              onSelect={selectFrame}
             />
             <ProfileGraph
               samples={samples}
@@ -435,6 +601,8 @@ export function Profiler() {
               peakField="paintMaxMs"
               color="#7ac56b"
               label="Viewport CPU"
+              selectedTimestamp={selectedTimestamp}
+              onSelect={selectFrame}
             />
           </div>
 
@@ -459,7 +627,13 @@ export function Profiler() {
               <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter function…" aria-label="Filter profiler functions" />
             </header>
             {latestNative ? <table className="profiler-detail-table">
-              <thead><tr><th>Function</th><th>Total</th><th>Self</th><th>Frame</th><th>Calls</th></tr></thead>
+              <thead><tr>
+                <SortableHeader label="Function" column="name" sort={cpuSort} onSort={setCpuSort} />
+                <SortableHeader label="Total" column="totalMs" sort={cpuSort} onSort={setCpuSort} />
+                <SortableHeader label="Self" column="selfMs" sort={cpuSort} onSort={setCpuSort} />
+                <SortableHeader label="Frame" column="frame" sort={cpuSort} onSort={setCpuSort} />
+                <SortableHeader label="Calls" column="calls" sort={cpuSort} onSort={setCpuSort} />
+              </tr></thead>
               <tbody>{cpuRows.map(({ node, depth }, index) => <tr key={`${node.name}:${depth}:${index}`}>
                 <td title={node.name}><span style={{ paddingLeft: depth * 14 }}>{depth > 0 ? '↳ ' : ''}{node.name}</span></td>
                 <td>{formatMs(node.totalMs)}</td><td>{formatMs(node.selfMs)}</td>
@@ -479,8 +653,14 @@ export function Profiler() {
                 <Metric label="Readback Exact" value={formatBytes(latestNative.memory.find((item) => item.name === 'CPU readback RGBA')?.bytes)} />
               </div>
               <table className="profiler-detail-table">
-                <thead><tr><th>Allocation source</th><th>Domain</th><th>Bytes</th><th>Certainty</th><th>Provenance</th></tr></thead>
-                <tbody>{latestNative.memory.map((item) => <tr key={`${item.domain}:${item.name}`}>
+                <thead><tr>
+                  <SortableHeader label="Allocation source" column="name" sort={memorySort} onSort={setMemorySort} />
+                  <SortableHeader label="Domain" column="domain" sort={memorySort} onSort={setMemorySort} />
+                  <SortableHeader label="Bytes" column="bytes" sort={memorySort} onSort={setMemorySort} />
+                  <SortableHeader label="Certainty" column="certainty" sort={memorySort} onSort={setMemorySort} />
+                  <SortableHeader label="Provenance" column="source" sort={memorySort} onSort={setMemorySort} />
+                </tr></thead>
+                <tbody>{memoryRows.map((item) => <tr key={`${item.domain}:${item.name}`}>
                   <td>{item.name}</td><td>{item.domain.toUpperCase()}</td><td>{formatBytes(item.bytes)}</td>
                   <td><span className={`profiler-certainty ${item.certainty}`}>{item.certainty}</span></td>
                   <td title={item.source}>{item.source}</td>
@@ -495,7 +675,14 @@ export function Profiler() {
               <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter asset or type…" aria-label="Filter profiler resources" />
             </header>
             {latestNative ? <table className="profiler-detail-table profiler-resource-table">
-              <thead><tr><th>Type</th><th>Asset</th><th>Source</th><th>GPU est.</th><th>Status</th><th>Used by</th></tr></thead>
+              <thead><tr>
+                <SortableHeader label="Type" column="kind" sort={resourceSort} onSort={setResourceSort} />
+                <SortableHeader label="Asset" column="asset" sort={resourceSort} onSort={setResourceSort} />
+                <SortableHeader label="Source" column="sourceBytes" sort={resourceSort} onSort={setResourceSort} />
+                <SortableHeader label="GPU est." column="gpuBytesEstimate" sort={resourceSort} onSort={setResourceSort} />
+                <SortableHeader label="Status" column="loaded" sort={resourceSort} onSort={setResourceSort} />
+                <SortableHeader label="Used by" column="referencedBy" sort={resourceSort} onSort={setResourceSort} />
+              </tr></thead>
               <tbody>{resources.map((resource) => <tr key={`${resource.kind}:${resource.asset}`}>
                 <td>{resource.kind}</td><td title={resource.resolvedPath ?? resource.asset}>{resource.asset}</td>
                 <td>{formatBytes(resource.sourceBytes)}</td><td>{formatBytes(resource.gpuBytesEstimate)}</td>

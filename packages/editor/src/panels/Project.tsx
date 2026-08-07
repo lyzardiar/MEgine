@@ -25,7 +25,6 @@ import {
   Sparkles,
   Trash2,
   Type,
-  Upload,
   Workflow,
 } from 'lucide-react';
 import { listScenes, sceneFileName, type SceneMeta } from '../sceneLibrary';
@@ -123,6 +122,7 @@ function projectAssetKey(
 export function Project(props: {
   activeScene: string | null;
   sceneTick: number;
+  onCreatePrefabs: (entityIds: number[], folder: string) => Promise<string[]>;
   onInstantiatePrefab: (path: string) => void;
   onInstantiateModel: (path: string) => void;
   onInstantiateSprite: (path: string) => void;
@@ -151,6 +151,7 @@ export function Project(props: {
   const [pingKey, setPingKey] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [draggingFiles, setDraggingFiles] = useState(false);
+  const [draggingEntities, setDraggingEntities] = useState(false);
   const [referenceReport, setReferenceReport] = useState<{
     assetName: string;
     loading: boolean;
@@ -943,11 +944,41 @@ export function Project(props: {
     }
   };
 
-  const onFileDrop = (event: DragEvent<HTMLDivElement>) => {
-    if (event.dataTransfer.files.length === 0) return;
+  const hierarchyEntityIds = (event: DragEvent<HTMLDivElement>): number[] => {
+    const encoded = event.dataTransfer.getData('application/x-mengine-entities+json');
+    if (encoded) {
+      try {
+        const values = JSON.parse(encoded) as unknown;
+        if (Array.isArray(values)) {
+          return [...new Set(values.map(Number).filter(Number.isFinite))];
+        }
+      } catch {
+        // Fall through to the single-entity compatibility payload.
+      }
+    }
+    const single = Number(event.dataTransfer.getData('text/mengine-entity'));
+    return Number.isFinite(single) ? [single] : [];
+  };
+
+  const onProjectDrop = (event: DragEvent<HTMLDivElement>) => {
+    if (event.dataTransfer.files.length > 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      void completeImport(Array.from(event.dataTransfer.files));
+      return;
+    }
+    const entityIds = hierarchyEntityIds(event);
+    if (!entityIds.length) return;
     event.preventDefault();
     event.stopPropagation();
-    void completeImport(Array.from(event.dataTransfer.files));
+    setDraggingEntities(false);
+    void props.onCreatePrefabs(entityIds, folder)
+      .then((paths) => {
+        setLibTick((tick) => tick + 1);
+        if (paths[0]) pingProjectAsset(paths[0]);
+        props.onLog?.(`Created ${paths.length} Prefab${paths.length === 1 ? '' : 's'} in ${folder}.`);
+      })
+      .catch((error) => props.onLog?.(`Prefab creation failed: ${String(error)}`, 'error'));
   };
 
   return (
@@ -978,7 +1009,7 @@ export function Project(props: {
           <span className="project-folder-path" title={folder}>{folder}</span>
         </div>
         <div
-          className={`project-grid${draggingFiles ? ' file-drop-active' : ''}`}
+          className={`project-grid${draggingFiles ? ' file-drop-active' : ''}${draggingEntities ? ' entity-drop-active' : ''}`}
           role="region"
           aria-label={`${folder} contents`}
           onContextMenu={(event) => {
@@ -987,18 +1018,24 @@ export function Project(props: {
           }}
           onDragEnter={(event) => {
             if (event.dataTransfer.types.includes('Files')) setDraggingFiles(true);
+            if (event.dataTransfer.types.includes('text/mengine-entity')) setDraggingEntities(true);
           }}
           onDragOver={(event) => {
-            if (!event.dataTransfer.types.includes('Files')) return;
+            const hasFiles = event.dataTransfer.types.includes('Files');
+            const hasEntities = event.dataTransfer.types.includes('text/mengine-entity');
+            if (!hasFiles && !hasEntities) return;
             event.preventDefault();
             event.dataTransfer.dropEffect = 'copy';
+            setDraggingFiles(hasFiles);
+            setDraggingEntities(hasEntities);
           }}
           onDragLeave={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
               setDraggingFiles(false);
+              setDraggingEntities(false);
             }
           }}
-          onDrop={onFileDrop}
+          onDrop={onProjectDrop}
         >
           {visible.length === 0 && folder === 'Assets/Scenes' && (
             <div className="project-empty">
@@ -1180,6 +1217,12 @@ export function Project(props: {
           {draggingFiles && (
             <div className="project-drop-overlay" aria-hidden="true">
               Drop to import into {folder}
+            </div>
+          )}
+          {draggingEntities && (
+            <div className="project-drop-overlay project-prefab-drop-overlay" aria-hidden="true">
+              <Package size={22} />
+              <strong>Create Prefab in {folder}</strong>
             </div>
           )}
         </div>

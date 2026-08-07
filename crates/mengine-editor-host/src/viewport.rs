@@ -429,11 +429,17 @@ impl EditorViewportRenderer {
         profile.total_ms += profile_overhead_ms;
         profile.call_tree.total_ms += profile_overhead_ms;
         profile.call_tree.children.push(EditorViewportProfileNode {
-            name: "Profiler.snapshot".into(),
+            name: "Profiler".into(),
             total_ms: profile_overhead_ms,
-            self_ms: profile_overhead_ms,
+            self_ms: 0.0,
             calls: 1,
-            children: Vec::new(),
+            children: vec![EditorViewportProfileNode {
+                name: "Profiler.snapshot".into(),
+                total_ms: profile_overhead_ms,
+                self_ms: profile_overhead_ms,
+                calls: 1,
+                children: Vec::new(),
+            }],
         });
         Ok(EditorViewportFrame {
             width: size.width,
@@ -462,10 +468,10 @@ fn build_viewport_profile(
         .filter_map(|resource| resource.gpu_bytes_estimate)
         .sum::<u64>();
     let viewport_pixels = u64::from(width) * u64::from(height);
-    let frame_packet_bytes = size_of_val(frame.objects.as_slice())
-        + size_of_val(frame.ui.primitives.as_slice())
-        + size_of_val(frame.ui.batches.as_slice())
-        + size_of_val(frame.controls.as_slice());
+    let frame_object_bytes = size_of_val(frame.objects.as_slice()) as u64;
+    let frame_ui_primitive_bytes = size_of_val(frame.ui.primitives.as_slice()) as u64;
+    let frame_ui_batch_bytes = size_of_val(frame.ui.batches.as_slice()) as u64;
+    let frame_control_bytes = size_of_val(frame.controls.as_slice()) as u64;
     let memory = vec![
         EditorViewportMemoryCategory {
             name: "CPU readback RGBA".into(),
@@ -475,11 +481,32 @@ fn build_viewport_profile(
             source: "Renderer.read_offscreen_rgba8 Vec length".into(),
         },
         EditorViewportMemoryCategory {
-            name: "CPU frame packet".into(),
+            name: "Frame packet / render objects".into(),
             domain: "cpu".into(),
-            bytes: frame_packet_bytes as u64,
+            bytes: frame_object_bytes,
             certainty: "lower-bound".into(),
-            source: "Rust shallow sizes for objects, UI primitives, batches, and controls".into(),
+            source: "Rust shallow size for compiled render objects".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "Frame packet / UI primitives".into(),
+            domain: "cpu".into(),
+            bytes: frame_ui_primitive_bytes,
+            certainty: "lower-bound".into(),
+            source: "Rust shallow size for compiled UI primitives".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "Frame packet / UI batches".into(),
+            domain: "cpu".into(),
+            bytes: frame_ui_batch_bytes,
+            certainty: "lower-bound".into(),
+            source: "Rust shallow size for compiled UI batches".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "Frame packet / controls".into(),
+            domain: "cpu".into(),
+            bytes: frame_control_bytes,
+            certainty: "lower-bound".into(),
+            source: "Rust shallow size for compiled UI controls".into(),
         },
         EditorViewportMemoryCategory {
             name: "GPU offscreen color".into(),
@@ -505,19 +532,45 @@ fn build_viewport_profile(
     ];
     let total_ms = render_started.elapsed().as_secs_f64() * 1_000.0;
     let child_total = stages.iter().map(|stage| stage.duration_ms).sum::<f64>();
+    let mut grouped_stages = BTreeMap::<&str, Vec<ProfileStage>>::new();
+    for stage in stages {
+        let group =
+            if stage.name.starts_with("Renderer.") || stage.name.starts_with("OffscreenTarget.") {
+                "Render backend"
+            } else if stage.name.starts_with("Runtime") {
+                "Resource sync"
+            } else if stage.name.starts_with("Effekseer") {
+                "Effects"
+            } else {
+                "Frame compile"
+            };
+        grouped_stages.entry(group).or_default().push(stage);
+    }
     let call_tree = EditorViewportProfileNode {
         name: "EditorViewportRenderer.render_world".into(),
         total_ms,
         self_ms: (total_ms - child_total).max(0.0),
         calls: 1,
-        children: stages
+        children: grouped_stages
             .into_iter()
-            .map(|stage| EditorViewportProfileNode {
-                name: stage.name.into(),
-                total_ms: stage.duration_ms,
-                self_ms: stage.duration_ms,
-                calls: 1,
-                children: Vec::new(),
+            .map(|(group, stages)| {
+                let group_total = stages.iter().map(|stage| stage.duration_ms).sum();
+                EditorViewportProfileNode {
+                    name: group.into(),
+                    total_ms: group_total,
+                    self_ms: 0.0,
+                    calls: 1,
+                    children: stages
+                        .into_iter()
+                        .map(|stage| EditorViewportProfileNode {
+                            name: stage.name.into(),
+                            total_ms: stage.duration_ms,
+                            self_ms: stage.duration_ms,
+                            calls: 1,
+                            children: Vec::new(),
+                        })
+                        .collect(),
+                }
             })
             .collect(),
     };

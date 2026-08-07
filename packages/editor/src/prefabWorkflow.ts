@@ -18,15 +18,23 @@ function safePrefabName(name: string): string {
   return cleaned || 'New Prefab';
 }
 
-async function uniquePrefabPath(name: string): Promise<string> {
-  await refreshProjectFiles();
-  const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
+function prefabFolder(folder: string | null | undefined): string {
+  const normalized = normalizeProjectAssetPath(folder || 'Assets/Prefabs').replace(/\/$/, '');
+  return normalized === 'Assets' || normalized.startsWith('Assets/')
+    ? normalized
+    : 'Assets/Prefabs';
+}
+
+function uniquePrefabPath(name: string, folder: string, used: Set<string>): string {
   const base = safePrefabName(name);
   let index = 0;
   while (true) {
     const suffix = index === 0 ? '' : ` ${index}`;
-    const path = `Assets/Prefabs/${base}${suffix}.prefab`;
-    if (!used.has(path.toLowerCase())) return path;
+    const path = `${folder}/${base}${suffix}.prefab`;
+    if (!used.has(path.toLowerCase())) {
+      used.add(path.toLowerCase());
+      return path;
+    }
     index += 1;
   }
 }
@@ -43,17 +51,48 @@ export async function instantiateProjectPrefab(
   return root;
 }
 
+export async function createProjectPrefabsFromEntities(
+  store: EditorStore,
+  roots: readonly number[],
+  destinationFolder = 'Assets/Prefabs',
+): Promise<string[]> {
+  const entities = store.authoredEntities();
+  const entityIds = new Set(entities.map((entity) => entity.entity));
+  const uniqueRoots = [...new Set(roots)].filter((root) => entityIds.has(root));
+  if (!uniqueRoots.length) throw new Error('drag one or more live hierarchy entities');
+
+  // If both a parent and its descendant are selected, the parent Prefab already
+  // captures the descendant. Matching Unity here avoids duplicate nested assets.
+  const rootSet = new Set(uniqueRoots);
+  const topLevelRoots = uniqueRoots.filter((root) => {
+    let parent = entities.find((entity) => entity.entity === root)?.parent ?? null;
+    while (parent != null) {
+      if (rootSet.has(parent)) return false;
+      parent = entities.find((entity) => entity.entity === parent)?.parent ?? null;
+    }
+    return true;
+  });
+
+  await refreshProjectFiles();
+  const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
+  const folder = prefabFolder(destinationFolder);
+  const created: string[] = [];
+  for (const root of topLevelRoots) {
+    const entity = entities.find((candidate) => candidate.entity === root)!;
+    const path = uniquePrefabPath(entity.name ?? 'New Prefab', folder, used);
+    const captured = capturePrefabAsset(entity.name ?? 'New Prefab', entities, root);
+    await writeProjectAssetText(path, serializePrefabAsset(captured.asset), null);
+    store.markPrefabInstance(root, path, captured.nodeIds);
+    created.push(path);
+  }
+  await refreshProjectFiles();
+  return created;
+}
+
 export async function createProjectPrefabFromSelection(store: EditorStore): Promise<string> {
   const root = store.selected;
   if (root == null) throw new Error('select one hierarchy root to create a prefab');
-  const entities = store.authoredEntities();
-  const entity = entities.find((candidate) => candidate.entity === root);
-  if (!entity) throw new Error('selected entity no longer exists');
-  const path = await uniquePrefabPath(entity.name ?? 'New Prefab');
-  const captured = capturePrefabAsset(entity.name ?? 'New Prefab', entities, root);
-  await writeProjectAssetText(path, serializePrefabAsset(captured.asset), null);
-  store.markPrefabInstance(root, path, captured.nodeIds);
-  await refreshProjectFiles();
+  const [path] = await createProjectPrefabsFromEntities(store, [root]);
   return path;
 }
 

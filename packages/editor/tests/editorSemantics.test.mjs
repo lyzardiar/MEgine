@@ -55,6 +55,11 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(hierarchy, /event\.key === 'F2'/);
   assert.match(hierarchy, /aria-label=\{`Rename \$\{n\.entity\.name/);
   assert.match(hierarchy, /aria-label=\{`Drag \$\{n\.entity\.name/);
+  assert.match(hierarchy, /application\/x-mengine-entities\+json/);
+  assert.match(hierarchy, /effectAllowed = 'copyMove'/);
+  assert.match(project, /Create Prefab in \{folder\}/);
+  assert.match(project, /const entityIds = hierarchyEntityIds\(event\)/);
+  assert.match(project, /props\.onCreatePrefabs\(entityIds, folder\)/);
 
   assert.match(menu, /role="menubar" aria-label="Main menu"/);
   assert.match(menu, /role="menuitem"/);
@@ -193,7 +198,12 @@ test('core editor navigation exposes named semantic controls', () => {
     /role="application"[^>]*data-agent-wheel="true"[^>]*aria-roledescription="animation curve editor"/,
   );
   assert.equal(timeline.match(/data-agent-wheel="true"/g)?.length, 2);
-  assert.match(profiler, /role="img"[^>]*aria-label=\{`\$\{props\.label\} history`\}/);
+  assert.match(profiler, /role="slider"[^>]*aria-label=\{`\$\{props\.label\} frame history`\}/);
+  assert.match(profiler, /aria-label="Profiler frame selection"/);
+  assert.match(profiler, /aria-label="Previous frame"/);
+  assert.match(profiler, /aria-label="Next frame"/);
+  assert.match(profiler, /function SortableHeader/);
+  assert.match(profiler, /selectedTimestamp=\{selectedTimestamp\}/);
   assert.match(profiler, /editorProfilerUiRefreshDelay/);
   assert.match(profiler, /document\.hasFocus\(\)/);
   assert.match(profiler, /role="tab"[^>]*aria-selected=\{source === value\}/);
