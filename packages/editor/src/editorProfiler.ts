@@ -22,6 +22,65 @@ export function editorProfilerUiRefreshDelay(
 
 export type EditorProfilerSource = 'scene' | 'game';
 
+export type NativeProfilerNode = {
+  name: string;
+  totalMs: number;
+  selfMs: number;
+  calls: number;
+  children: NativeProfilerNode[];
+};
+
+export type NativeProfilerMemoryCategory = {
+  name: string;
+  domain: 'cpu' | 'gpu' | string;
+  bytes: number;
+  certainty: 'exact' | 'estimate' | 'lower-bound' | string;
+  source: string;
+};
+
+export type NativeProfilerResource = {
+  kind: string;
+  asset: string;
+  resolvedPath: string | null;
+  loaded: boolean;
+  sourceBytes: number | null;
+  gpuBytesEstimate: number | null;
+  dimensions: [number, number] | null;
+  referencedBy: string[];
+};
+
+export type NativeProfilerCounts = {
+  entities: number;
+  renderObjects: number;
+  uiPrimitives: number;
+  uiBatches: number;
+  uiDrawCalls: number;
+  materialPipelinesBuiltIn: number;
+  materialPipelinesCustom: number;
+  materialPipelinesResidentCustom: number;
+  materialPipelinesRejected: number;
+  materialPipelineEvictions: number;
+  materialTexturesColor: number;
+  materialTexturesData: number;
+  materialTextureBindGroups: number;
+  materialSamplers: number;
+};
+
+export type NativeViewportProfile = {
+  schemaVersion: 1;
+  source: EditorProfilerSource;
+  timestamp: number;
+  totalMs: number;
+  callTree: NativeProfilerNode;
+  memory: NativeProfilerMemoryCategory[];
+  residentMemoryEstimateBytes: number;
+  resources: NativeProfilerResource[];
+  resourcesTruncated: boolean;
+  counts: NativeProfilerCounts;
+};
+
+export type NativeViewportProfilePayload = Omit<NativeViewportProfile, 'source' | 'timestamp'>;
+
 export type ViewportProfilerFrame = {
   source: EditorProfilerSource;
   timestamp: number;
@@ -197,10 +256,12 @@ export function summarizeEditorProfilerSamples(
 
 type ProfilerChannelMessage =
   | { type: 'sample'; sample: EditorProfilerSample }
+  | { type: 'native-profile'; profile: NativeViewportProfile }
   | { type: 'clear' };
 
 const CHANNEL_NAME = 'mengine.editor.profiler.v1';
 const samples: EditorProfilerSample[] = [];
+const nativeProfiles: NativeViewportProfile[] = [];
 const listeners = new Set<() => void>();
 const sampler = createEditorProfilerSampler();
 let channel: BroadcastChannel | null = null;
@@ -225,14 +286,26 @@ function appendSample(sample: EditorProfilerSample, broadcast: boolean): void {
 
 function profilerChannel(): BroadcastChannel | null {
   if (channel) return channel;
-  const created = createEditorBroadcastChannel(CHANNEL_NAME);
+  let created: BroadcastChannel | null;
+  try {
+    created = createEditorBroadcastChannel(CHANNEL_NAME);
+  } catch {
+    return null;
+  }
   if (!created) return null;
   channel = created;
   created.addEventListener('message', (event: MessageEvent<ProfilerChannelMessage>) => {
     const message = event.data;
     if (message?.type === 'clear') {
       samples.length = 0;
+      nativeProfiles.length = 0;
       notify();
+      return;
+    }
+    if (message?.type === 'native-profile') {
+      const profile = message.profile;
+      if (!profile || (profile.source !== 'scene' && profile.source !== 'game')) return;
+      appendNativeProfile(profile, false);
       return;
     }
     if (message?.type !== 'sample') return;
@@ -279,6 +352,36 @@ export function recordViewportProfilerFrame(frame: ViewportProfilerFrame): void 
   if (sample) appendSample(sample, true);
 }
 
+function appendNativeProfile(profile: NativeViewportProfile, broadcast: boolean): void {
+  nativeProfiles.push(structuredClone(profile));
+  const sourceProfiles = nativeProfiles.filter((candidate) => candidate.source === profile.source);
+  if (sourceProfiles.length > 240) {
+    const oldest = nativeProfiles.findIndex((candidate) => candidate.source === profile.source);
+    if (oldest >= 0) nativeProfiles.splice(oldest, 1);
+  }
+  notify();
+  if (broadcast) {
+    profilerChannel()?.postMessage({ type: 'native-profile', profile } satisfies ProfilerChannelMessage);
+  }
+}
+
+export function recordNativeViewportProfile(
+  source: EditorProfilerSource,
+  payload: NativeViewportProfilePayload,
+  timestamp = Date.now(),
+): void {
+  if (payload.schemaVersion !== 1 || !Number.isFinite(payload.totalMs)) return;
+  appendNativeProfile({ ...structuredClone(payload), source, timestamp }, true);
+}
+
+export function readNativeViewportProfiles(
+  source?: EditorProfilerSource,
+): NativeViewportProfile[] {
+  return nativeProfiles
+    .filter((profile) => !source || profile.source === source)
+    .map((profile) => structuredClone(profile));
+}
+
 export function readEditorProfilerSamples(
   source?: EditorProfilerSource,
 ): EditorProfilerSample[] {
@@ -287,6 +390,7 @@ export function readEditorProfilerSamples(
 
 export function clearEditorProfilerSamples(): void {
   samples.length = 0;
+  nativeProfiles.length = 0;
   notify();
   profilerChannel()?.postMessage({ type: 'clear' } satisfies ProfilerChannelMessage);
 }

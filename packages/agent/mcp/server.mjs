@@ -2321,7 +2321,7 @@ const TOOLS = [
   {
     name: 'get_profiler_samples',
     description:
-      'Read bounded Scene or Game editor Canvas preview samples plus latest, average, p95, and peak frame/paint metrics. This is editor CPU telemetry, not native Player GPU or memory profiling.',
+      'Read bounded Scene or Game WebView timing plus the latest instrumented native editor-host/RHI call tree, memory provenance, and render-bound resources. GPU bytes are explicit estimates, not driver allocation data.',
     inputSchema: {
       type: 'object',
       properties: {

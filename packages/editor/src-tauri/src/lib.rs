@@ -49,6 +49,7 @@ struct NativeViewportFrame {
     height: u32,
     png_base64: String,
     has_authored_camera: bool,
+    profile: mengine_editor_host::EditorViewportProfile,
 }
 
 #[derive(serde::Deserialize)]
@@ -4156,6 +4157,7 @@ fn encode_native_viewport_frame(
         height: frame.height,
         png_base64: base64::engine::general_purpose::STANDARD.encode(png_bytes),
         has_authored_camera: frame.has_authored_camera,
+        profile: frame.profile,
     })
 }
 
@@ -4190,12 +4192,8 @@ async fn render_native_game_view(
             .is_none_or(|renderer| renderer.project_root() != project_root)
         {
             *viewport = Some(
-                pollster::block_on(EditorViewportRenderer::new(
-                    project_root,
-                    width,
-                    height,
-                ))
-                .map_err(|error| error.to_string())?,
+                pollster::block_on(EditorViewportRenderer::new(project_root, width, height))
+                    .map_err(|error| error.to_string())?,
             );
         }
         let frame = viewport

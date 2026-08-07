@@ -15,7 +15,9 @@ use mengine_runtime::sorting::SortingLayers;
 use mengine_runtime::textures::{RuntimeTextureCache, TextureLoadFailure};
 use mengine_runtime::trails::TrailWorld;
 use mengine_runtime::ui::UiInteractionState;
-use std::collections::HashMap;
+use serde::Serialize;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::mem::size_of_val;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 use winit::dpi::PhysicalSize;
@@ -25,6 +27,85 @@ pub struct EditorViewportFrame {
     pub height: u32,
     pub rgba: Vec<u8>,
     pub has_authored_camera: bool,
+    pub profile: EditorViewportProfile,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorViewportProfileNode {
+    pub name: String,
+    pub total_ms: f64,
+    pub self_ms: f64,
+    pub calls: u32,
+    pub children: Vec<EditorViewportProfileNode>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorViewportMemoryCategory {
+    pub name: String,
+    pub domain: String,
+    pub bytes: u64,
+    pub certainty: String,
+    pub source: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorViewportResource {
+    pub kind: String,
+    pub asset: String,
+    pub resolved_path: Option<String>,
+    pub loaded: bool,
+    pub source_bytes: Option<u64>,
+    pub gpu_bytes_estimate: Option<u64>,
+    pub dimensions: Option<[u32; 2]>,
+    pub referenced_by: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorViewportProfileCounts {
+    pub entities: usize,
+    pub render_objects: usize,
+    pub ui_primitives: usize,
+    pub ui_batches: usize,
+    pub ui_draw_calls: u32,
+    pub material_pipelines_built_in: usize,
+    pub material_pipelines_custom: usize,
+    pub material_pipelines_resident_custom: usize,
+    pub material_pipelines_rejected: usize,
+    pub material_pipeline_evictions: u64,
+    pub material_textures_color: usize,
+    pub material_textures_data: usize,
+    pub material_texture_bind_groups: usize,
+    pub material_samplers: usize,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorViewportProfile {
+    pub schema_version: u32,
+    pub total_ms: f64,
+    pub call_tree: EditorViewportProfileNode,
+    pub memory: Vec<EditorViewportMemoryCategory>,
+    pub resident_memory_estimate_bytes: u64,
+    pub resources: Vec<EditorViewportResource>,
+    pub resources_truncated: bool,
+    pub counts: EditorViewportProfileCounts,
+}
+
+#[derive(Clone, Debug)]
+struct ProfileStage {
+    name: &'static str,
+    duration_ms: f64,
+}
+
+fn finish_stage(stages: &mut Vec<ProfileStage>, name: &'static str, started: Instant) {
+    stages.push(ProfileStage {
+        name,
+        duration_ms: started.elapsed().as_secs_f64() * 1_000.0,
+    });
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -191,18 +272,25 @@ impl EditorViewportRenderer {
         view_camera: Option<FrameCamera>,
         include_ui: bool,
     ) -> Result<EditorViewportFrame> {
+        let render_started = Instant::now();
+        let mut stages = Vec::new();
         let size = normalized_size(width, height);
+        let stage_started = Instant::now();
         if self.target.size() != size {
             self.target = self.renderer.create_offscreen_target(size);
         }
+        finish_stage(&mut stages, "OffscreenTarget.ensure_size", stage_started);
 
+        let stage_started = Instant::now();
         let hierarchy = TransformHierarchy::build(world);
+        finish_stage(&mut stages, "TransformHierarchy.build", stage_started);
         let now = Instant::now();
         let effect_delta = now
             .duration_since(self.last_effect_frame)
             .as_secs_f32()
             .min(0.25);
         self.last_effect_frame = now;
+        let stage_started = Instant::now();
         if let Some(effekseer) = self.effekseer.as_mut() {
             for failure in effekseer.update(world, &hierarchy, effect_delta) {
                 log::warn!(
@@ -213,7 +301,9 @@ impl EditorViewportRenderer {
                 );
             }
         }
+        finish_stage(&mut stages, "EffekseerWorld.update", stage_started);
         let button_tints = HashMap::new();
+        let stage_started = Instant::now();
         let mut frame = FrameCompiler {
             materials: &mut self.materials,
             particles: &mut self.particles,
@@ -236,7 +326,9 @@ impl EditorViewportRenderer {
             sorting_layers: &self.sorting_layers,
             delta_seconds: effect_delta,
         });
+        finish_stage(&mut stages, "FrameCompiler.compile", stage_started);
 
+        let stage_started = Instant::now();
         if let Some(effekseer) = self.effekseer.as_mut() {
             for failure in effekseer.append_to_frame(&mut frame) {
                 log::warn!(
@@ -247,8 +339,12 @@ impl EditorViewportRenderer {
                 );
             }
         }
+        finish_stage(&mut stages, "EffekseerWorld.append_to_frame", stage_started);
 
+        let stage_started = Instant::now();
         log_texture_failures(frame.texture_failures.drain(..));
+        finish_stage(&mut stages, "Diagnostics.texture_failures", stage_started);
+        let stage_started = Instant::now();
         for failure in self.meshes.sync(&mut self.renderer, &frame.objects) {
             log::warn!(
                 "viewport mesh '{}' could not be loaded from {}: {}",
@@ -257,6 +353,8 @@ impl EditorViewportRenderer {
                 failure.error
             );
         }
+        finish_stage(&mut stages, "RuntimeMeshCache.sync", stage_started);
+        let stage_started = Instant::now();
         self.fonts.sync(&mut self.renderer);
         for failure in frame.font_failures.drain(..) {
             log::warn!(
@@ -266,34 +364,284 @@ impl EditorViewportRenderer {
                 failure.error
             );
         }
+        finish_stage(&mut stages, "RuntimeFontCache.sync", stage_started);
+        let stage_started = Instant::now();
         log_texture_failures(self.textures.sync(&mut self.renderer, &frame.ui));
+        finish_stage(&mut stages, "RuntimeTextureCache.sync_ui", stage_started);
+        let stage_started = Instant::now();
         log_texture_failures(
             self.textures
                 .sync_ui_materials(&mut self.renderer, &frame.ui),
         );
+        finish_stage(
+            &mut stages,
+            "RuntimeTextureCache.sync_ui_materials",
+            stage_started,
+        );
+        let stage_started = Instant::now();
         log_texture_failures(
             self.textures
                 .sync_materials(&mut self.renderer, &frame.objects),
         );
+        finish_stage(
+            &mut stages,
+            "RuntimeTextureCache.sync_materials",
+            stage_started,
+        );
+        let stage_started = Instant::now();
         log_texture_failures(
             self.textures
                 .sync_environment(&mut self.renderer, &frame.lighting),
         );
+        finish_stage(
+            &mut stages,
+            "RuntimeTextureCache.sync_environment",
+            stage_started,
+        );
 
-        self.renderer
-            .submit_frame_to(&frame.render_frame(), RenderTarget::Offscreen(&self.target))
-            .context("could not render the editor viewport")?;
+        let stage_started = Instant::now();
+        let submit = self
+            .renderer
+            .submit_frame_to(&frame.render_frame(), RenderTarget::Offscreen(&self.target));
+        finish_stage(&mut stages, "Renderer.submit_frame_to", stage_started);
+        submit.context("could not render the editor viewport")?;
+        let stage_started = Instant::now();
         let rgba = self
             .renderer
             .read_offscreen_rgba8(&self.target)
             .context("could not read the editor viewport")?;
+        finish_stage(&mut stages, "Renderer.read_offscreen_rgba8", stage_started);
+        let stage_started = Instant::now();
+        let profile = build_viewport_profile(
+            &self.project_root,
+            world,
+            &frame,
+            &self.renderer,
+            size.width,
+            size.height,
+            rgba.len(),
+            stages,
+            render_started,
+        );
+        // Snapshot construction is intentionally reported as profiler overhead.
+        let profile_overhead_ms = stage_started.elapsed().as_secs_f64() * 1_000.0;
+        let mut profile = profile;
+        profile.total_ms += profile_overhead_ms;
+        profile.call_tree.total_ms += profile_overhead_ms;
+        profile.call_tree.children.push(EditorViewportProfileNode {
+            name: "Profiler.snapshot".into(),
+            total_ms: profile_overhead_ms,
+            self_ms: profile_overhead_ms,
+            calls: 1,
+            children: Vec::new(),
+        });
         Ok(EditorViewportFrame {
             width: size.width,
             height: size.height,
             rgba,
             has_authored_camera: frame.has_authored_camera,
+            profile,
         })
     }
+}
+
+fn build_viewport_profile(
+    project_root: &Path,
+    world: &World,
+    frame: &mengine_runtime::frame_compiler::CompiledFrame,
+    renderer: &Renderer,
+    width: u32,
+    height: u32,
+    readback_bytes: usize,
+    stages: Vec<ProfileStage>,
+    render_started: Instant,
+) -> EditorViewportProfile {
+    let (resources, resources_truncated) = collect_frame_resources(project_root, frame);
+    let texture_gpu_bytes = resources
+        .iter()
+        .filter_map(|resource| resource.gpu_bytes_estimate)
+        .sum::<u64>();
+    let viewport_pixels = u64::from(width) * u64::from(height);
+    let frame_packet_bytes = size_of_val(frame.objects.as_slice())
+        + size_of_val(frame.ui.primitives.as_slice())
+        + size_of_val(frame.ui.batches.as_slice())
+        + size_of_val(frame.controls.as_slice());
+    let memory = vec![
+        EditorViewportMemoryCategory {
+            name: "CPU readback RGBA".into(),
+            domain: "cpu".into(),
+            bytes: readback_bytes as u64,
+            certainty: "exact".into(),
+            source: "Renderer.read_offscreen_rgba8 Vec length".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "CPU frame packet".into(),
+            domain: "cpu".into(),
+            bytes: frame_packet_bytes as u64,
+            certainty: "lower-bound".into(),
+            source: "Rust shallow sizes for objects, UI primitives, batches, and controls".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "GPU offscreen color".into(),
+            domain: "gpu".into(),
+            bytes: viewport_pixels * 4,
+            certainty: "estimate".into(),
+            source: "viewport width x height x 4 RGBA8 bytes".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "GPU offscreen depth".into(),
+            domain: "gpu".into(),
+            bytes: viewport_pixels * 4,
+            certainty: "estimate".into(),
+            source: "viewport width x height x 4 depth bytes".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "GPU texture residency".into(),
+            domain: "gpu".into(),
+            bytes: texture_gpu_bytes,
+            certainty: "estimate".into(),
+            source: "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded".into(),
+        },
+    ];
+    let total_ms = render_started.elapsed().as_secs_f64() * 1_000.0;
+    let child_total = stages.iter().map(|stage| stage.duration_ms).sum::<f64>();
+    let call_tree = EditorViewportProfileNode {
+        name: "EditorViewportRenderer.render_world".into(),
+        total_ms,
+        self_ms: (total_ms - child_total).max(0.0),
+        calls: 1,
+        children: stages
+            .into_iter()
+            .map(|stage| EditorViewportProfileNode {
+                name: stage.name.into(),
+                total_ms: stage.duration_ms,
+                self_ms: stage.duration_ms,
+                calls: 1,
+                children: Vec::new(),
+            })
+            .collect(),
+    };
+    let ui_stats = renderer.ui_stats();
+    let pipeline_stats = renderer.material_pipeline_stats();
+    let texture_stats = renderer.material_texture_stats();
+    EditorViewportProfile {
+        schema_version: 1,
+        total_ms,
+        call_tree,
+        resident_memory_estimate_bytes: memory.iter().map(|category| category.bytes).sum(),
+        memory,
+        resources,
+        resources_truncated,
+        counts: EditorViewportProfileCounts {
+            entities: world.iter_entities().count(),
+            render_objects: frame.objects.len(),
+            ui_primitives: frame.ui.primitives.len(),
+            ui_batches: frame.ui.batches.len(),
+            ui_draw_calls: ui_stats.draw_calls,
+            material_pipelines_built_in: pipeline_stats.built_in,
+            material_pipelines_custom: pipeline_stats.custom,
+            material_pipelines_resident_custom: pipeline_stats.resident_custom,
+            material_pipelines_rejected: pipeline_stats.rejected,
+            material_pipeline_evictions: pipeline_stats.evictions,
+            material_textures_color: texture_stats.color,
+            material_textures_data: texture_stats.data,
+            material_texture_bind_groups: texture_stats.bind_groups,
+            material_samplers: texture_stats.samplers,
+        },
+    }
+}
+
+fn collect_frame_resources(
+    project_root: &Path,
+    frame: &mengine_runtime::frame_compiler::CompiledFrame,
+) -> (Vec<EditorViewportResource>, bool) {
+    let mut references = BTreeMap::<(String, String), BTreeSet<String>>::new();
+    let mut add = |kind: &str, asset: &str, referenced_by: &str| {
+        let normalized = asset.trim().replace('\\', "/");
+        if normalized.is_empty() || normalized.eq_ignore_ascii_case("white") {
+            return;
+        }
+        references
+            .entry((kind.into(), normalized))
+            .or_default()
+            .insert(referenced_by.into());
+    };
+    for batch in &frame.ui.batches {
+        let texture_kind = if batch.key.texture.starts_with("mengine-font://") {
+            "font-atlas"
+        } else {
+            "texture"
+        };
+        add(texture_kind, &batch.key.texture, "UI batch");
+        if batch.key.material.starts_with("Assets/") {
+            add("material", &batch.key.material, "UI batch");
+        }
+    }
+    for object in &frame.objects {
+        add("mesh", &object.mesh_key, "RenderObject");
+        for texture in [
+            &object.material.base_color_texture,
+            &object.material.normal_texture,
+            &object.material.metallic_roughness_texture,
+            &object.material.occlusion_texture,
+            &object.material.emissive_texture,
+        ] {
+            add("texture", texture, "3D material");
+        }
+        for texture in &object.material.custom_textures {
+            add("texture", texture, "Surface Shader");
+        }
+    }
+    add(
+        "texture",
+        &frame.lighting.environment.texture,
+        "EnvironmentLight",
+    );
+
+    const MAX_RESOURCES: usize = 256;
+    let truncated = references.len() > MAX_RESOURCES;
+    let resources = references
+        .into_iter()
+        .take(MAX_RESOURCES)
+        .map(|((kind, asset), referenced_by)| {
+            if kind == "font-atlas" {
+                return EditorViewportResource {
+                    kind,
+                    asset,
+                    resolved_path: None,
+                    loaded: true,
+                    source_bytes: None,
+                    gpu_bytes_estimate: Some(1024 * 1024 * 4),
+                    dimensions: Some([1024, 1024]),
+                    referenced_by: referenced_by.into_iter().collect(),
+                };
+            }
+            let resolved =
+                mengine_runtime::textures::resolve_project_asset_path(project_root, &asset);
+            let metadata = resolved
+                .as_deref()
+                .and_then(|path| std::fs::metadata(path).ok());
+            let dimensions = (kind == "texture")
+                .then(|| {
+                    resolved
+                        .as_deref()
+                        .and_then(|path| mengine_assets::texture_dimensions(path).ok())
+                })
+                .flatten();
+            EditorViewportResource {
+                kind,
+                asset,
+                resolved_path: resolved.as_ref().map(|path| path.display().to_string()),
+                loaded: metadata.as_ref().is_some_and(|value| value.is_file()),
+                source_bytes: metadata.as_ref().map(std::fs::Metadata::len),
+                gpu_bytes_estimate: dimensions
+                    .map(|size| u64::from(size[0]) * u64::from(size[1]) * 4),
+                dimensions,
+                referenced_by: referenced_by.into_iter().collect(),
+            }
+        })
+        .collect();
+    (resources, truncated)
 }
 
 fn normalized_size(width: u32, height: u32) -> PhysicalSize<u32> {

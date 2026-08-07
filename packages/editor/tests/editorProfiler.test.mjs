@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  clearEditorProfilerSamples,
   createEditorProfilerSampler,
   EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS,
   editorProfilerUiRefreshDelay,
+  readNativeViewportProfiles,
+  recordNativeViewportProfile,
   summarizeEditorProfilerSamples,
 } from '../src/editorProfiler.ts';
 
@@ -85,4 +88,37 @@ test('editor profiler UI coalesces only background updates into stable snapshot 
   assert.equal(editorProfilerUiRefreshDelay(2_000, 1_000, false), 0);
   assert.equal(editorProfilerUiRefreshDelay(1_000, Number.NaN, false), 0);
   assert.equal(editorProfilerUiRefreshDelay(1_000, 1_001, false, -1), 0);
+});
+
+test('native viewport profiles retain call trees, memory provenance, and render resources', () => {
+  clearEditorProfilerSamples();
+  recordNativeViewportProfile('game', {
+    schemaVersion: 1,
+    totalMs: 3.5,
+    callTree: { name: 'render', totalMs: 3.5, selfMs: 0.5, calls: 1, children: [
+      { name: 'submit', totalMs: 3, selfMs: 3, calls: 1, children: [] },
+    ] },
+    memory: [{ name: 'readback', domain: 'cpu', bytes: 16, certainty: 'exact', source: 'Vec length' }],
+    residentMemoryEstimateBytes: 16,
+    resources: [{
+      kind: 'texture', asset: 'Assets/a.png', resolvedPath: 'C:/p/Assets/a.png', loaded: true,
+      sourceBytes: 4, gpuBytesEstimate: 16, dimensions: [2, 2], referencedBy: ['UI batch'],
+    }],
+    resourcesTruncated: false,
+    counts: {
+      entities: 1, renderObjects: 0, uiPrimitives: 1, uiBatches: 1, uiDrawCalls: 1,
+      materialPipelinesBuiltIn: 1, materialPipelinesCustom: 0,
+      materialPipelinesResidentCustom: 0, materialPipelinesRejected: 0,
+      materialPipelineEvictions: 0, materialTexturesColor: 0, materialTexturesData: 0,
+      materialTextureBindGroups: 0, materialSamplers: 0,
+    },
+  }, 123);
+  const [profile] = readNativeViewportProfiles('game');
+  assert.equal(profile.timestamp, 123);
+  assert.equal(profile.callTree.children[0].name, 'submit');
+  assert.equal(profile.memory[0].certainty, 'exact');
+  assert.equal(profile.resources[0].dimensions[0], 2);
+  profile.resources[0].asset = 'mutated';
+  assert.equal(readNativeViewportProfiles('game')[0].resources[0].asset, 'Assets/a.png');
+  clearEditorProfilerSamples();
 });

@@ -167,6 +167,7 @@ import {
 import {
   clearEditorProfilerSamples,
   readEditorProfilerSamples,
+  readNativeViewportProfiles,
   summarizeEditorProfilerSamples,
   type EditorProfilerSource,
 } from '../editorProfiler';
@@ -5466,11 +5467,14 @@ class AgentBridge {
         }
         const allSamples = readEditorProfilerSamples(source as EditorProfilerSource);
         const samples = allSamples.slice(-Number(limit));
+        const nativeProfiles = readNativeViewportProfiles(source as EditorProfilerSource);
         return {
           source,
-          scope: 'editor-canvas-preview',
-          note: 'Editor Canvas preview CPU samples; not native Player GPU timing, memory, or draw-call capture.',
+          scope: 'editor-and-native-viewport',
+          note: 'WebView timing plus instrumented native editor-host/RHI call tree, memory provenance, and render-bound resources. GPU bytes are estimates; driver timing and process-wide heap sampling are not claimed.',
           summary: summarizeEditorProfilerSamples(allSamples),
+          nativeLatest: nativeProfiles.at(-1) ?? null,
+          nativeProfileCount: nativeProfiles.length,
           totalSamples: allSamples.length,
           returnedSamples: samples.length,
           truncated: samples.length < allSamples.length,

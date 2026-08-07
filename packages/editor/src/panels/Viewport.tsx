@@ -14,7 +14,11 @@ import {
   ScanLine,
 } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
-import { recordViewportProfilerFrame } from '../editorProfiler';
+import {
+  recordNativeViewportProfile,
+  recordViewportProfilerFrame,
+  type NativeViewportProfilePayload,
+} from '../editorProfiler';
 import { agentBridge } from '../agent/AgentBridge';
 import {
   GAME_RESOLUTION_PRESETS,
@@ -1167,8 +1171,10 @@ export function Viewport(props: {
         height: number;
         pngBase64: string;
         hasAuthoredCamera: boolean;
+        profile: NativeViewportProfilePayload;
       }>('render_native_game_view', { width: nativeWidth, height: nativeHeight })
         .then((result) => {
+          recordNativeViewportProfile('game', result.profile);
           const image = new Image();
           image.decoding = 'async';
           image.onload = () => {
@@ -1250,6 +1256,7 @@ export function Viewport(props: {
         height: number;
         pngBase64: string;
         hasAuthoredCamera: boolean;
+        profile: NativeViewportProfilePayload;
       }>('render_native_scene_view', {
         request: {
           width: Math.max(1, Math.round(vp.w * nativeScale)),
@@ -1261,6 +1268,7 @@ export function Viewport(props: {
           fovYDegrees: cam.fovYDeg,
         },
       }).then((result) => {
+        recordNativeViewportProfile('scene', result.profile);
         const image = new Image();
         image.decoding = 'async';
         image.onload = () => {

@@ -538,7 +538,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'build.patches', category: 'build', description: 'Read bounded signed build patch inventory', readOnly: true },
   { id: 'build.history.compare', category: 'build', description: 'Compare two exact archived build manifests', readOnly: true },
   { id: 'console.get_logs', category: 'console', description: 'Read filtered structured editor logs', readOnly: true },
-  { id: 'profiler.get_samples', category: 'profiler', description: 'Read bounded editor Canvas preview timing samples', readOnly: true },
+  { id: 'profiler.get_samples', category: 'profiler', description: 'Read WebView timing plus native call tree, memory provenance, and render resources', readOnly: true },
   { id: 'profiler.get_timeline', category: 'profiler', description: 'Read Timeline dependency, hotspot, cache, and preview evaluation profiles', readOnly: true },
   { id: 'events.get', category: 'events', description: 'Read currently buffered editor events from an exact cursor', readOnly: true },
   { id: 'events.wait', category: 'events', description: 'Wait up to 15 seconds for matching editor events without polling', readOnly: true },

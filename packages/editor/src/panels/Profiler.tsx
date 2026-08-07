@@ -2,11 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   clearEditorProfilerSamples,
   editorProfilerUiRefreshDelay,
+  readNativeViewportProfiles,
   readEditorProfilerSamples,
   subscribeEditorProfiler,
   summarizeEditorProfilerSamples,
   type EditorProfilerSample,
   type EditorProfilerSource,
+  type NativeProfilerNode,
+  type NativeViewportProfile,
 } from '../editorProfiler';
 import {
   clearTimelineProfilerSnapshots,
@@ -20,6 +23,8 @@ const FRAME_BUDGET_MS = 1000 / 60;
 const COUNT_FORMATTER = new Intl.NumberFormat();
 const PROFILER_SOURCES = ['scene', 'game', 'timeline'] as const;
 type ProfilerSource = EditorProfilerSource | 'timeline';
+const PROFILER_MODULES = ['overview', 'cpu', 'memory', 'resources'] as const;
+type ProfilerModule = typeof PROFILER_MODULES[number];
 
 function formatMs(value: number): string {
   return Number.isFinite(value) ? `${value.toFixed(value >= 10 ? 1 : 2)} ms` : '—';
@@ -27,6 +32,25 @@ function formatMs(value: number): string {
 
 function formatCount(value: number): string {
   return COUNT_FORMATTER.format(Math.max(0, Math.trunc(value)));
+}
+
+function formatBytes(value: number | null | undefined): string {
+  if (!Number.isFinite(value)) return '—';
+  const bytes = Math.max(0, Number(value));
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
+  return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+}
+
+function flattenCallTree(
+  node: NativeProfilerNode,
+  depth = 0,
+): Array<{ node: NativeProfilerNode; depth: number }> {
+  return [
+    { node, depth },
+    ...node.children.flatMap((child) => flattenCallTree(child, depth + 1)),
+  ];
 }
 
 function ProfileGraph(props: {
@@ -89,9 +113,12 @@ function Metric(props: { label: string; value: string; hint?: string; warning?: 
 export function Profiler() {
   const panelRef = useRef<HTMLDivElement>(null);
   const [source, setSource] = useState<ProfilerSource>('game');
+  const [module, setModule] = useState<ProfilerModule>('overview');
+  const [filter, setFilter] = useState('');
   const [frozen, setFrozen] = useState(false);
   const [visible, setVisible] = useState(true);
   const [samples, setSamples] = useState(() => readEditorProfilerSamples('game'));
+  const [nativeProfiles, setNativeProfiles] = useState(() => readNativeViewportProfiles('game'));
   const [timelineSnapshots, setTimelineSnapshots] = useState(readTimelineProfilerSnapshots);
 
   useEffect(() => {
@@ -113,7 +140,10 @@ export function Profiler() {
       refreshTimer = null;
       lastPublishedAt = performance.now();
       if (source === 'timeline') setTimelineSnapshots(readTimelineProfilerSnapshots());
-      else setSamples(readEditorProfilerSamples(source));
+      else {
+        setSamples(readEditorProfilerSamples(source));
+        setNativeProfiles(readNativeViewportProfiles(source));
+      }
     };
     const schedule = () => {
       const delay = editorProfilerUiRefreshDelay(
@@ -143,6 +173,22 @@ export function Profiler() {
 
   const summary = useMemo(() => summarizeEditorProfilerSamples(samples), [samples]);
   const latest = summary.latest;
+  const latestNative = nativeProfiles.at(-1) ?? null;
+  const cpuRows = useMemo(() => {
+    if (!latestNative) return [];
+    const query = filter.trim().toLowerCase();
+    return flattenCallTree(latestNative.callTree)
+      .filter(({ node }) => !query || node.name.toLowerCase().includes(query));
+  }, [filter, latestNative]);
+  const resources = useMemo(() => {
+    const query = filter.trim().toLowerCase();
+    return (latestNative?.resources ?? []).filter((resource) => (
+      !query
+      || resource.asset.toLowerCase().includes(query)
+      || resource.kind.toLowerCase().includes(query)
+      || resource.referencedBy.some((reference) => reference.toLowerCase().includes(query))
+    ));
+  }, [filter, latestNative]);
   const latestTimeline = timelineSnapshots.at(-1) ?? null;
   const timelineHotspots = useMemo(() => (
     latestTimeline?.dependency.nodes
@@ -298,7 +344,7 @@ export function Profiler() {
             the Timeline panel is inactive; this is not native Player execution timing.
           </div>
         </div>
-      )) : !latest ? (
+      )) : !latest && !latestNative ? (
         <div
           id="profiler-source-panel"
           className="profiler-empty"
@@ -315,6 +361,39 @@ export function Profiler() {
           role="tabpanel"
           aria-labelledby={`profiler-source-tab-${source}`}
         >
+          <div className="profiler-module-bar" role="tablist" aria-label="Profiler module">
+            {PROFILER_MODULES.map((value) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={module === value}
+                className={module === value ? 'active' : ''}
+                onClick={() => {
+                  setModule(value);
+                  setFilter('');
+                }}
+                key={value}
+              >{value[0].toUpperCase() + value.slice(1)}</button>
+            ))}
+          </div>
+
+          {module === 'overview' && <div className="profiler-metrics profiler-metrics-primary">
+            <Metric
+              label="Native Render"
+              value={latestNative ? formatMs(latestNative.totalMs) : '—'}
+              hint={latestNative ? `${latestNative.callTree.children.length} instrumented calls` : 'Desktop RHI sample unavailable'}
+              warning={Boolean(latestNative && latestNative.totalMs > FRAME_BUDGET_MS)}
+            />
+            <Metric
+              label="Resident Estimate"
+              value={formatBytes(latestNative?.residentMemoryEstimateBytes)}
+              hint="provenance in Memory"
+            />
+            <Metric label="Native Draw Calls" value={latestNative ? formatCount(latestNative.counts.uiDrawCalls) : '—'} />
+            <Metric label="Render Resources" value={latestNative ? formatCount(latestNative.resources.length) : '—'} />
+          </div>}
+
+          {module === 'overview' && latest && <>
           <div className="profiler-metrics profiler-metrics-primary">
             <Metric
               label="Frame"
@@ -369,9 +448,62 @@ export function Profiler() {
           </div>
 
           <div className="profiler-scope-note">
-            Editor Canvas preview CPU metrics. UI batch count uses overlap-aware authoring-preview batches;
-            it is not native Player GPU timing, memory, or draw-call capture.
+            WebView frame/paint telemetry is shown beside instrumented native editor-host and RHI work.
+            GPU bytes are explicit estimates; driver timing and process-wide heap sampling are not claimed.
           </div>
+          </>}
+
+          {module === 'cpu' && <section className="profiler-detail-section" aria-label="Native CPU call tree">
+            <header>
+              <div><strong>Native CPU Call Tree</strong><span>{latestNative ? formatMs(latestNative.totalMs) : 'No sample'}</span></div>
+              <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter function…" aria-label="Filter profiler functions" />
+            </header>
+            {latestNative ? <table className="profiler-detail-table">
+              <thead><tr><th>Function</th><th>Total</th><th>Self</th><th>Frame</th><th>Calls</th></tr></thead>
+              <tbody>{cpuRows.map(({ node, depth }, index) => <tr key={`${node.name}:${depth}:${index}`}>
+                <td title={node.name}><span style={{ paddingLeft: depth * 14 }}>{depth > 0 ? '↳ ' : ''}{node.name}</span></td>
+                <td>{formatMs(node.totalMs)}</td><td>{formatMs(node.selfMs)}</td>
+                <td>{latestNative.totalMs > 0 ? `${(node.totalMs / latestNative.totalMs * 100).toFixed(1)}%` : '—'}</td>
+                <td>{formatCount(node.calls)}</td>
+              </tr>)}</tbody>
+            </table> : <p>No native profile. Keep the {source === 'scene' ? 'Scene' : 'Game'} viewport visible.</p>}
+          </section>}
+
+          {module === 'memory' && <section className="profiler-detail-section" aria-label="Native memory provenance">
+            <header><div><strong>Memory Provenance</strong><span>exact, estimate, and lower-bound values stay separate</span></div></header>
+            {latestNative ? <>
+              <div className="profiler-metrics profiler-metrics-secondary">
+                <Metric label="CPU" value={formatBytes(latestNative.memory.filter((item) => item.domain === 'cpu').reduce((sum, item) => sum + item.bytes, 0))} />
+                <Metric label="GPU" value={formatBytes(latestNative.memory.filter((item) => item.domain === 'gpu').reduce((sum, item) => sum + item.bytes, 0))} />
+                <Metric label="Texture Estimate" value={formatBytes(latestNative.memory.find((item) => item.name === 'GPU texture residency')?.bytes)} />
+                <Metric label="Readback Exact" value={formatBytes(latestNative.memory.find((item) => item.name === 'CPU readback RGBA')?.bytes)} />
+              </div>
+              <table className="profiler-detail-table">
+                <thead><tr><th>Allocation source</th><th>Domain</th><th>Bytes</th><th>Certainty</th><th>Provenance</th></tr></thead>
+                <tbody>{latestNative.memory.map((item) => <tr key={`${item.domain}:${item.name}`}>
+                  <td>{item.name}</td><td>{item.domain.toUpperCase()}</td><td>{formatBytes(item.bytes)}</td>
+                  <td><span className={`profiler-certainty ${item.certainty}`}>{item.certainty}</span></td>
+                  <td title={item.source}>{item.source}</td>
+                </tr>)}</tbody>
+              </table>
+            </> : <p>No native memory snapshot. Keep the viewport visible.</p>}
+          </section>}
+
+          {module === 'resources' && <section className="profiler-detail-section" aria-label="Native render resources">
+            <header>
+              <div><strong>Render-bound Resources</strong><span>{latestNative ? `${resources.length}/${latestNative.resources.length}${latestNative.resourcesTruncated ? '+' : ''}` : 'No sample'}</span></div>
+              <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter asset or type…" aria-label="Filter profiler resources" />
+            </header>
+            {latestNative ? <table className="profiler-detail-table profiler-resource-table">
+              <thead><tr><th>Type</th><th>Asset</th><th>Source</th><th>GPU est.</th><th>Status</th><th>Used by</th></tr></thead>
+              <tbody>{resources.map((resource) => <tr key={`${resource.kind}:${resource.asset}`}>
+                <td>{resource.kind}</td><td title={resource.resolvedPath ?? resource.asset}>{resource.asset}</td>
+                <td>{formatBytes(resource.sourceBytes)}</td><td>{formatBytes(resource.gpuBytesEstimate)}</td>
+                <td className={resource.loaded ? 'profiler-resource-loaded' : 'profiler-resource-missing'}>{resource.loaded ? 'resident' : 'missing'}</td>
+                <td>{resource.referencedBy.join(', ')}</td>
+              </tr>)}</tbody>
+            </table> : <p>No native resource snapshot. Keep the viewport visible.</p>}
+          </section>}
         </div>
       )}
     </div>
