@@ -3068,6 +3068,11 @@ body.insp-scrubbing * {
 
 .project-tree .row:hover { background: var(--u-hover); }
 .project-tree .row.active { background: var(--u-selected); color: #fff; }
+.project-tree .row.prefab-drop-target {
+  background: #315d76;
+  color: #fff;
+  box-shadow: inset 0 0 0 1px #75b9ed;
+}
 .project-tree .row > span:last-child { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .project-folder-toggle,
 .project-folder-toggle-spacer {

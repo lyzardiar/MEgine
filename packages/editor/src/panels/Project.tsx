@@ -168,6 +168,7 @@ export function Project(props: {
   const [importing, setImporting] = useState(false);
   const [draggingFiles, setDraggingFiles] = useState(false);
   const [draggingEntities, setDraggingEntities] = useState(false);
+  const [prefabDropFolder, setPrefabDropFolder] = useState<string | null>(null);
   const [referenceReport, setReferenceReport] = useState<{
     assetName: string;
     loading: boolean;
@@ -1039,7 +1040,7 @@ export function Project(props: {
     return Number.isFinite(single) ? [single] : [];
   };
 
-  const onProjectDrop = (event: DragEvent<HTMLDivElement>) => {
+  const onProjectDrop = (event: DragEvent<HTMLDivElement>, destinationFolder = folder) => {
     if (event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
@@ -1051,11 +1052,12 @@ export function Project(props: {
     event.preventDefault();
     event.stopPropagation();
     setDraggingEntities(false);
-    void props.onCreatePrefabs(entityIds, folder)
+    setPrefabDropFolder(null);
+    void props.onCreatePrefabs(entityIds, destinationFolder)
       .then((paths) => {
         setLibTick((tick) => tick + 1);
         if (paths[0]) pingProjectAsset(paths[0]);
-        props.onLog?.(`Created ${paths.length} Prefab${paths.length === 1 ? '' : 's'} in ${folder}.`);
+        props.onLog?.(`Created ${paths.length} Prefab${paths.length === 1 ? '' : 's'} in ${destinationFolder}.`);
       })
       .catch((error) => props.onLog?.(`Prefab creation failed: ${String(error)}`, 'error'));
   };
@@ -1066,15 +1068,35 @@ export function Project(props: {
         {folderRows.map(({ path: f, depth, hasChildren }) => (
           <div
             key={f}
-            className={`row${folder === f ? ' active' : ''}`}
+            className={`row${folder === f ? ' active' : ''}${prefabDropFolder === f ? ' prefab-drop-target' : ''}`}
             role="treeitem"
             tabIndex={0}
             aria-label={f}
+            aria-description="Drop Hierarchy objects here to create Prefabs"
             aria-level={depth + 1}
             aria-expanded={hasChildren ? expandedFolders.has(f) : undefined}
             aria-selected={folder === f}
             style={{ paddingLeft: 6 + depth * 13 }}
             onClick={() => selectFolder(f)}
+            onDragEnter={(event) => {
+              if (!event.dataTransfer.types.includes('text/mengine-entity')) return;
+              event.preventDefault();
+              event.stopPropagation();
+              setPrefabDropFolder(f);
+            }}
+            onDragOver={(event) => {
+              if (!event.dataTransfer.types.includes('text/mengine-entity')) return;
+              event.preventDefault();
+              event.stopPropagation();
+              event.dataTransfer.dropEffect = 'copy';
+              setPrefabDropFolder(f);
+            }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setPrefabDropFolder((current) => current === f ? null : current);
+              }
+            }}
+            onDrop={(event) => onProjectDrop(event, f)}
             onKeyDown={(event) => {
               if (event.key !== 'Enter' && event.key !== ' ') return;
               event.preventDefault();

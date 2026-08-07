@@ -58,8 +58,10 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(hierarchy, /application\/x-mengine-entities\+json/);
   assert.match(hierarchy, /effectAllowed = 'copyMove'/);
   assert.match(project, /Create Prefab in \{folder\}/);
+  assert.match(project, /onDrop=\{\(event\) => onProjectDrop\(event, f\)\}/);
+  assert.match(project, /prefabDropFolder === f \? ' prefab-drop-target' : ''/);
   assert.match(project, /const entityIds = hierarchyEntityIds\(event\)/);
-  assert.match(project, /props\.onCreatePrefabs\(entityIds, folder\)/);
+  assert.match(project, /props\.onCreatePrefabs\(entityIds, destinationFolder\)/);
 
   assert.match(menu, /role="menubar" aria-label="Main menu"/);
   assert.match(menu, /role="menuitem"/);
