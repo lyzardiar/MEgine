@@ -733,6 +733,7 @@ mod tests {
                 speed_max: 0.0,
                 sorting_layer: "effects".into(),
                 sorting_order: -4,
+                texture: "Assets/Sprites/fire.png#spark".into(),
                 ..ParticleEmitter2D::default()
             },
         );
@@ -749,5 +750,6 @@ mod tests {
         assert_eq!(output[0].kind, WorldPrimitiveKind::TwoD);
         assert_eq!(output[0].sorting_layer, "effects");
         assert_eq!(output[0].sorting_order, -4);
+        assert_eq!(output[0].primitive.key.texture, "Assets/Sprites/fire.png#spark");
     }
 }

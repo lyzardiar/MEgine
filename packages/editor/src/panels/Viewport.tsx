@@ -193,7 +193,7 @@ import {
 } from '../rectSmartGuides';
 import type { RectResizeOptions, RectResizePlan } from '../rectResize';
 import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
-import { getSpriteImage, getSpriteSourceRect } from '../spriteDraw';
+import { getSpriteImage, getSpriteSourceRect, prepareTintedSpriteDraw } from '../spriteDraw';
 import { listSprites } from '../spriteLibrary';
 import { resolveAnimatedSpriteFrame } from '../animatedSprite';
 import {
@@ -1421,7 +1421,12 @@ export function Viewport(props: {
         stepParticleEmitter(dimension, emitter, state, simulationDelta, emitterPosition);
       }
       particleDrawByEntity.set(entity.entity, {
-        items: collectParticleDrawItems(state, emitterPosition, emitter.simulation_space),
+        items: collectParticleDrawItems(
+          state,
+          emitterPosition,
+          emitter.simulation_space,
+          emitter.texture,
+        ),
         additive: String(emitter.blend_mode).toLowerCase() === 'additive',
         twoDimensional: !!emitter2D,
         component: emitter,
@@ -1602,23 +1607,48 @@ export function Viewport(props: {
         ctx.globalCompositeOperation = trailDraw.additive ? 'lighter' : 'source-over';
         for (const segment of trailDraw.segments) {
           const center: Vec3 = [0, 0, (segment.start[2] + segment.end[2]) * 0.5];
-          const hit = drawWorldLine2D(
-            ctx,
-            cam,
-            vp,
+          const color = modulateLight2DColor(
+            segment.color,
             center,
-            [1, 1, 1],
-            [[segment.start[0], segment.start[1]], [segment.end[0], segment.end[1]]],
-            segment.width,
-            (position) => modulateLight2DColor(
-              segment.color,
-              position,
-              String(trailDraw.component.sorting_layer ?? 'default'),
-              lights2D,
-            ),
-            false,
-            false,
+            String(trailDraw.component.sorting_layer ?? 'default'),
+            lights2D,
           );
+          const prepared = segment.texture === 'white'
+            ? null
+            : prepareTintedSpriteDraw(segment.texture, color);
+          const dx = segment.end[0] - segment.start[0];
+          const dy = segment.end[1] - segment.start[1];
+          const length = Math.hypot(dx, dy);
+          const angle = Math.atan2(dy, dx);
+          const hit = prepared && length > 1e-6
+            ? drawWorldSprite(
+                ctx,
+                cam,
+                vp,
+                [(segment.start[0] + segment.end[0]) * 0.5, (segment.start[1] + segment.end[1]) * 0.5, center[2]],
+                [length * 0.5, segment.width * 0.5],
+                [1, 1, 1, color[3]],
+                false,
+                [0, 0, Math.sin(angle * 0.5), Math.cos(angle * 0.5)],
+                prepared.image,
+                false,
+                false,
+                [0.5, 0.5],
+                prepared.sourceRect,
+                false,
+              )
+            : drawWorldLine2D(
+                ctx,
+                cam,
+                vp,
+                center,
+                [1, 1, 1],
+                [[segment.start[0], segment.start[1]], [segment.end[0], segment.end[1]]],
+                segment.width,
+                () => color,
+                false,
+                false,
+              );
           if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
         }
         ctx.restore();
@@ -1651,10 +1681,32 @@ export function Viewport(props: {
               )
             : particle.color;
           const [red, green, blue, alpha] = particleColor;
-          ctx.fillStyle = `rgba(${Math.round(red * 255)},${Math.round(green * 255)},${Math.round(blue * 255)},${Math.max(0, Math.min(1, alpha))})`;
-          ctx.beginPath();
-          ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
-          ctx.fill();
+          const prepared = particle.texture === 'white'
+            ? null
+            : prepareTintedSpriteDraw(particle.texture, particleColor);
+          if (prepared) {
+            drawWorldSprite(
+              ctx,
+              cam,
+              vp,
+              particle.position,
+              [particle.size, particle.size],
+              [1, 1, 1, alpha],
+              false,
+              null,
+              prepared.image,
+              false,
+              false,
+              [0.5, 0.5],
+              prepared.sourceRect,
+              false,
+            );
+          } else {
+            ctx.fillStyle = `rgba(${Math.round(red * 255)},${Math.round(green * 255)},${Math.round(blue * 255)},${Math.max(0, Math.min(1, alpha))})`;
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
         ctx.restore();
         continue;

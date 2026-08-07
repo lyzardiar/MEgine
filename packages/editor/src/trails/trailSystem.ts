@@ -16,6 +16,7 @@ export interface TrailSegment2D {
   end: TrailVec3;
   width: number;
   color: TrailColor;
+  texture: string;
 }
 
 const MAX_TRAIL_POINTS = 2_048;
@@ -96,6 +97,7 @@ export function collectTrailSegments2D(
   const widthEnd = Math.max(0, finite(component.width_end, 0));
   const colorStart = color(component.color_start, [1, 0.8, 0.25, 1]);
   const colorEnd = color(component.color_end, [1, 0.15, 0.02, 0]);
+  const texture = String(component.texture ?? '').trim() || 'white';
   return path.slice(1).flatMap((point, index) => {
     const previous = path[index];
     if (distance(previous.position, point.position) <= 0.000001) return [];
@@ -107,6 +109,7 @@ export function collectTrailSegments2D(
       color: colorStart.map((channel, channelIndex) => (
         mix(channel, colorEnd[channelIndex], progress)
       )) as TrailColor,
+      texture,
     }];
   });
 }

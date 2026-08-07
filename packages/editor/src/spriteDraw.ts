@@ -18,6 +18,11 @@ const _alphaCache = new Map<string, {
   height: number;
   alpha: Uint8ClampedArray;
 }>();
+const _tintCache = new Map<string, {
+  image: HTMLImageElement;
+  canvas: HTMLCanvasElement;
+}>();
+const MAX_TINTED_SPRITES = 128;
 
 export function invalidateSpriteImage(sprite: string): void {
   const id = resolveSpriteTextureId(sprite);
@@ -26,6 +31,56 @@ export function invalidateSpriteImage(sprite: string): void {
   const url = spriteAssetUrl(id);
   if (url) _cache.delete(url);
   _alphaCache.clear();
+  _tintCache.clear();
+}
+
+export type PreparedSpriteDraw = {
+  image: CanvasImageSource;
+  sourceRect: [number, number, number, number] | null;
+};
+
+/**
+ * Prepare a bounded, RGB-tinted sprite source for particle and trail previews.
+ * Alpha stays on the draw call so fades do not create a canvas per frame.
+ */
+export function prepareTintedSpriteDraw(
+  sprite: string,
+  color: [number, number, number, number],
+): PreparedSpriteDraw | null {
+  const image = getSpriteImage(sprite);
+  if (!image || !image.complete || image.naturalWidth < 1 || image.naturalHeight < 1) return null;
+  const sourceRect = getSpriteSourceRect(sprite, image);
+  const rgb = color.slice(0, 3).map((channel) => (
+    Math.round(Math.max(0, Math.min(1, Number(channel) || 0)) * 15) / 15
+  )) as [number, number, number];
+  if (rgb.every((channel) => channel >= 0.999)) return { image, sourceRect };
+  if (typeof document === 'undefined') return null;
+
+  const key = `${resolveSpriteId(sprite)}:${sourceRect.join(',')}:${rgb.join(',')}`;
+  const cached = _tintCache.get(key);
+  if (cached?.image === image) {
+    _tintCache.delete(key);
+    _tintCache.set(key, cached);
+    return { image: cached.canvas, sourceRect: null };
+  }
+  const width = Math.max(1, Math.round(sourceRect[2]));
+  const height = Math.max(1, Math.round(sourceRect[3]));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  context.drawImage(image, ...sourceRect, 0, 0, width, height);
+  context.globalCompositeOperation = 'multiply';
+  context.fillStyle = `rgb(${rgb.map((channel) => Math.round(channel * 255)).join(',')})`;
+  context.fillRect(0, 0, width, height);
+  context.globalCompositeOperation = 'destination-in';
+  context.drawImage(image, ...sourceRect, 0, 0, width, height);
+  _tintCache.set(key, { image, canvas });
+  while (_tintCache.size > MAX_TINTED_SPRITES) {
+    _tintCache.delete(_tintCache.keys().next().value as string);
+  }
+  return { image: canvas, sourceRect: null };
 }
 
 export function getSpriteImage(sprite: string): HTMLImageElement | null {

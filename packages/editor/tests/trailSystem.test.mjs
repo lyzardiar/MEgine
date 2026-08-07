@@ -42,6 +42,15 @@ test('2D trail width and color fade with age, then expire', () => {
   assert.deepEqual(collectTrailSegments2D(state, trail), []);
 });
 
+test('2D trail segments preserve the authored texture with a white fallback', () => {
+  const state = createTrailState2D();
+  stepTrail2D(state, trail, 0, [0, 0, 0]);
+  stepTrail2D(state, trail, 0, [0.2, 0, 0]);
+  assert.equal(collectTrailSegments2D(state, { ...trail, texture: 'Assets/Sprites/trail.png' })[0].texture,
+    'Assets/Sprites/trail.png');
+  assert.equal(collectTrailSegments2D(state, trail)[0].texture, 'white');
+});
+
 test('disabling a 2D trail immediately clears its state', () => {
   const state = createTrailState2D();
   stepTrail2D(state, trail, 0, [0, 0, 0]);

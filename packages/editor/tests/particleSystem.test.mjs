@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  collectParticleDrawItems,
   createParticleEmitterState,
   seekParticleEmitter,
   stepParticleEmitter,
@@ -88,4 +89,12 @@ test('2D bursts and drag match the deterministic fixed-step preview contract', (
   stepParticleEmitter(2, burst, state, 0.1);
   assert.equal(state.particles.length, 6);
   assert.ok(Math.hypot(...state.particles[0].velocity) < initialSpeed);
+});
+
+test('particle draw items preserve the authored texture with a white fallback', () => {
+  const state = createParticleEmitterState();
+  seekParticleEmitter(2, emitter, state, 0.1);
+  assert.equal(collectParticleDrawItems(state, [0, 0, 0], 'world', 'Assets/Sprites/fire.png#spark')[0].texture,
+    'Assets/Sprites/fire.png#spark');
+  assert.equal(collectParticleDrawItems(state, [0, 0, 0], 'world', '')[0].texture, 'white');
 });

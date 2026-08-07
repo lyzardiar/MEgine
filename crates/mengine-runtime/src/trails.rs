@@ -167,6 +167,7 @@ mod tests {
             time: 0.5,
             sorting_layer: "effects".into(),
             sorting_order: 7,
+            texture: "Assets/Sprites/trail.png".into(),
             ..TrailRenderer2D::default()
         };
         let mut state = TrailState::default();
@@ -184,6 +185,9 @@ mod tests {
         assert_eq!(output.len(), 2);
         assert!(output.iter().all(|item| item.sorting_layer == "effects"));
         assert!(output.iter().all(|item| item.sorting_order == 7));
+        assert!(output
+            .iter()
+            .all(|item| item.primitive.key.texture == "Assets/Sprites/trail.png"));
 
         let mut stopped = component.clone();
         stopped.emitting = false;

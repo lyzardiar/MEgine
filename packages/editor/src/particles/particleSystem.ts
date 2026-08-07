@@ -26,6 +26,7 @@ export type ParticleDrawItem = {
   position: Vec3;
   size: number;
   color: Color;
+  texture: string;
 };
 
 const MAX_PARTICLES = 100_000;
@@ -289,8 +290,10 @@ export function collectParticleDrawItems(
   state: ParticleEmitterState,
   emitterPosition: Vec3,
   simulationSpace: unknown,
+  texture: unknown = 'white',
 ): ParticleDrawItem[] {
   const local = String(simulationSpace ?? 'world').toLowerCase() === 'local';
+  const sprite = String(texture ?? '').trim() || 'white';
   return state.particles.map((particle) => {
     const progress = Math.min(1, particle.age / particle.lifetime);
     return {
@@ -308,6 +311,7 @@ export function collectParticleDrawItems(
         lerp(particle.colorStart[2], particle.colorEnd[2], progress),
         lerp(particle.colorStart[3], particle.colorEnd[3], progress),
       ],
+      texture: sprite,
     };
   });
 }

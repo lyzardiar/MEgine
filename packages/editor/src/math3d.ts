@@ -518,6 +518,7 @@ export function drawWorldSprite(
   flipY = false,
   pivot: [number, number] = [0.5, 0.5],
   sourceRect?: [number, number, number, number] | null,
+  stroke = true,
 ): { x: number; y: number; r: number } | null {
   const hx = Math.abs(halfSize[0]);
   const hy = Math.abs(halfSize[1]);
@@ -580,9 +581,11 @@ export function drawWorldSprite(
     ctx.fillStyle = `rgba(${(cr * 255) | 0},${(cg * 255) | 0},${(cb * 255) | 0},${ca})`;
     ctx.fill();
   }
-  ctx.strokeStyle = selected ? 'rgba(255,224,140,0.9)' : 'rgba(0,0,0,0.35)';
-  ctx.lineWidth = selected ? 1.5 : 1;
-  ctx.stroke();
+  if (stroke || selected) {
+    ctx.strokeStyle = selected ? 'rgba(255,224,140,0.9)' : 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = selected ? 1.5 : 1;
+    ctx.stroke();
+  }
   const c = project(center, cam, viewport)!;
   if (selected) {
     ctx.save();
