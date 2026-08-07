@@ -5,8 +5,8 @@ use mengine_effekseer::{
     EffectModelInstance, EffekseerError,
 };
 use mengine_rhi::{
-    UiBatchKey, UiBatchPlan, UiBlendMode, UiPrimitive, UiShaderChannelData, UiShaderChannels,
-    UiStencilMode,
+    UiBatchKey, UiBatchPlan, UiBlendMode, UiPrimitive, UiRenderMaterial, UiShaderChannelData,
+    UiShaderChannels, UiStencilMode,
 };
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -74,12 +74,19 @@ struct CachedModel {
     result: Result<Vec<EffectModelFrame>, String>,
 }
 
+#[derive(Clone)]
+struct CachedFileMaterial {
+    key: String,
+    material: Arc<UiRenderMaterial>,
+}
+
 pub struct EffekseerWorld {
     project_root: Option<PathBuf>,
     manager: EffectManager,
     assets: HashMap<String, CachedEffect>,
     active: HashMap<Entity, ActiveEffect>,
     models: HashMap<String, CachedModel>,
+    file_materials: HashMap<(String, i32), CachedFileMaterial>,
 }
 
 impl EffekseerWorld {
@@ -90,6 +97,7 @@ impl EffekseerWorld {
             assets: HashMap::new(),
             active: HashMap::new(),
             models: HashMap::new(),
+            file_materials: HashMap::new(),
         })
     }
 
@@ -107,6 +115,7 @@ impl EffekseerWorld {
         }
         self.project_root = project_root;
         self.models.clear();
+        self.file_materials.clear();
     }
 
     pub fn restart(&mut self) {
@@ -293,8 +302,9 @@ impl EffekseerWorld {
             );
             primitives.reserve(draws.triangles.len());
             for triangle in draws.triangles {
+                let file_material = self.file_material(&triangle);
                 if let Some(primitive) =
-                    effect_triangle_primitive(&triangle, view_projection, false)
+                    effect_triangle_primitive(&triangle, view_projection, false, file_material)
                 {
                     primitives.push(primitive);
                 }
@@ -330,9 +340,13 @@ impl EffekseerWorld {
             );
             primitives.reserve(draws.triangles.len());
             for triangle in draws.triangles {
-                if let Some(primitive) =
-                    effect_triangle_primitive(&triangle, overlay_view_projection, true)
-                {
+                let file_material = self.file_material(&triangle);
+                if let Some(primitive) = effect_triangle_primitive(
+                    &triangle,
+                    overlay_view_projection,
+                    true,
+                    file_material,
+                ) {
                     primitives.push(primitive);
                 }
             }
@@ -431,6 +445,31 @@ impl EffekseerWorld {
             })
     }
 
+    fn file_material(&mut self, triangle: &EffectDrawTriangle) -> Option<CachedFileMaterial> {
+        let mask = resolve_dependency_reference(&triangle.effect, &triangle.mask_texture);
+        if mask.is_empty() {
+            return None;
+        }
+        let blend = triangle.blend;
+        Some(
+            self.file_materials
+                .entry((mask.clone(), blend))
+                .or_insert_with(|| {
+                    let mut material = UiRenderMaterial {
+                        blend: effect_blend_mode(blend),
+                        shader: Arc::from(EFFEKSEER_FILE_MATERIAL_SHADER),
+                        ..UiRenderMaterial::default()
+                    };
+                    material.custom_textures[0] = mask.clone();
+                    CachedFileMaterial {
+                        key: format!("effekseer/file/{mask}"),
+                        material: Arc::new(material),
+                    }
+                })
+                .clone(),
+        )
+    }
+
     fn resolve_path(&self, reference: &str) -> PathBuf {
         let Some(root) = self.project_root.as_deref() else {
             return PathBuf::from(reference);
@@ -439,10 +478,20 @@ impl EffekseerWorld {
     }
 }
 
+const EFFEKSEER_FILE_MATERIAL_SHADER: &str = r#"/* MENGINE_PARAMETERS
+{"textures":[{"name":"mask","type":"color","default":""}]}
+*/
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let base = mengine_ui_main_texture(input.uv0) * input.vertex_color;
+    let mask = mengine_texture_mask(input.uv0);
+    return vec4<f32>(base.rgb * mask.rgb, base.a * mask.a);
+}"#;
+
 fn effect_triangle_primitive(
     triangle: &EffectDrawTriangle,
     view_projection: glam::Mat4,
     screen_space: bool,
+    file_material: Option<CachedFileMaterial>,
 ) -> Option<UiPrimitive> {
     let mut clips = [[0.0; 4]; 4];
     let mut channel_data = UiShaderChannelData::default();
@@ -460,6 +509,15 @@ fn effect_triangle_primitive(
     channel_data.uv0[3] = channel_data.uv0[2];
     channel_data.colors[3] = channel_data.colors[2];
     let texture = resolve_dependency_reference(&triangle.effect, &triangle.texture);
+    let mut key = effect_batch_key(
+        texture,
+        triangle.blend,
+        triangle.depth_test && !screen_space,
+    );
+    let render_material = file_material.map(|file_material| {
+        key.material = file_material.key;
+        file_material.material
+    });
     Some(UiPrimitive {
         rect: [0.0; 4],
         color: [1.0; 4],
@@ -470,14 +528,10 @@ fn effect_triangle_primitive(
         uv: [0.0, 0.0, 1.0, 1.0],
         vertex_positions: None,
         shader_channel_data: Some(Arc::new(channel_data)),
-        render_material: None,
+        render_material,
         soft_clips: [None; 8],
         canvas_sorting_grid_size: None,
-        key: effect_batch_key(
-            texture,
-            triangle.blend,
-            triangle.depth_test && !screen_space,
-        ),
+        key,
     })
 }
 
@@ -525,9 +579,11 @@ fn append_model_primitives(
             blend: instance.blend,
             depth_test: instance.depth_test,
             texture: texture.clone().into(),
+            mask_texture: Arc::from(""),
             effect: "".into(),
         };
-        if let Some(primitive) = effect_triangle_primitive(&triangle, view_projection, screen_space)
+        if let Some(primitive) =
+            effect_triangle_primitive(&triangle, view_projection, screen_space, None)
         {
             output.push(primitive);
         }
@@ -544,14 +600,18 @@ fn effect_batch_key(texture: String, blend: i32, depth_test: bool) -> UiBatchKey
             texture
         },
         clip: None,
-        blend: match blend {
-            2 | 3 => UiBlendMode::Additive,
-            4 => UiBlendMode::Multiply,
-            _ => UiBlendMode::Alpha,
-        },
+        blend: effect_blend_mode(blend),
         shader_channels: UiShaderChannels::default(),
         depth_test,
         stencil: UiStencilMode::Disabled,
+    }
+}
+
+fn effect_blend_mode(blend: i32) -> UiBlendMode {
+    match blend {
+        2 | 3 => UiBlendMode::Additive,
+        4 => UiBlendMode::Multiply,
+        _ => UiBlendMode::Alpha,
     }
 }
 
@@ -790,6 +850,8 @@ mod tests {
         let mut peak_primitives = 0;
         let mut peak_untextured = 0;
         let mut draw_textures = HashSet::new();
+        let mut material_masks = HashSet::new();
+        let mut saw_diagonal_edge = false;
 
         for _ in 0..180 {
             assert!(runtime.update(&world, &hierarchy, 1.0 / 60.0).is_empty());
@@ -814,6 +876,31 @@ mod tests {
                     .map(|primitive| primitive.key.texture.clone())
                     .filter(|path| !path.is_empty()),
             );
+            for primitive in &compiled.ui.primitives {
+                if let Some(material) = primitive.render_material.as_deref() {
+                    material_masks.extend(
+                        material
+                            .custom_textures
+                            .iter()
+                            .filter(|path| !path.is_empty())
+                            .cloned(),
+                    );
+                }
+                if let Some(corners) = primitive.clip_corners {
+                    for edge in [[0, 1], [1, 2], [2, 0]] {
+                        let a = [
+                            corners[edge[0]][0] / corners[edge[0]][3],
+                            corners[edge[0]][1] / corners[edge[0]][3],
+                        ];
+                        let b = [
+                            corners[edge[1]][0] / corners[edge[1]][3],
+                            corners[edge[1]][1] / corners[edge[1]][3],
+                        ];
+                        saw_diagonal_edge |=
+                            (a[0] - b[0]).abs() > 0.0001 && (a[1] - b[1]).abs() > 0.0001;
+                    }
+                }
+            }
         }
 
         let dependencies = runtime.dependencies(effect).expect("loaded dependencies");
@@ -850,6 +937,15 @@ mod tests {
                 "unused draw texture {texture}"
             );
         }
+        assert!(
+            material_masks.contains("Assets/Effects/Textures/tx_glow02_128.png"),
+            "the dissolve material's silhouette texture must mask its opaque noise input"
+        );
+        assert!(
+            saw_diagonal_edge,
+            "rotated and directional billboards must preserve authored orientation"
+        );
+        assert!(mengine_rhi::validate_ui_shader_hook(EFFEKSEER_FILE_MATERIAL_SHADER).is_ok());
     }
 
     #[test]

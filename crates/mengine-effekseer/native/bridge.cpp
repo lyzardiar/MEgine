@@ -5,6 +5,7 @@
 #include <codecvt>
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <locale>
 #include <string>
 #include <string_view>
@@ -28,6 +29,8 @@ struct RawTriangle
     int32_t depthTest;
     const char* texture;
     int32_t textureLength;
+    const char* maskTexture;
+    int32_t maskTextureLength;
     const char* effect;
     int32_t effectLength;
 };
@@ -69,6 +72,7 @@ struct Triangle
     int32_t blend = 1;
     int32_t depthTest = 0;
     std::string_view texture;
+    std::string_view maskTexture;
     std::string_view effect;
 };
 
@@ -175,6 +179,7 @@ struct Style
     int32_t blend = 1;
     int32_t depthTest = 0;
     std::string_view texture;
+    std::string_view maskTexture;
     std::string_view effect;
 };
 
@@ -196,9 +201,9 @@ Style styleFor(State* state, Effekseer::Effect* effect, bool depthTest, Effeksee
             basic->MaterialType == Effekseer::RendererMaterialType::File &&
             basic->MaterialRenderDataPtr != nullptr)
         {
-            // MEngine's backend-neutral capture path cannot execute an authored
-            // Effekseer material yet. Use its first color input as a faithful
-            // textured fallback instead of emitting an opaque white quad.
+            // Preserve the first two authored color inputs. The backend-neutral
+            // path uses the second as an opacity/detail mask instead of showing
+            // an opaque noise texture as a rectangular particle.
             const auto& textures = basic->MaterialRenderDataPtr->MaterialTextures;
             const auto fallback = std::find_if(textures.begin(), textures.end(), [](const auto& texture) {
                 return texture.Type == 0 && texture.Index >= 0;
@@ -206,6 +211,13 @@ Style styleFor(State* state, Effekseer::Effect* effect, bool depthTest, Effeksee
             if (fallback != textures.end())
             {
                 style.texture = state->path(effect->GetColorImagePath(fallback->Index));
+                const auto mask = std::find_if(std::next(fallback), textures.end(), [](const auto& texture) {
+                    return texture.Type == 0 && texture.Index >= 0;
+                });
+                if (mask != textures.end())
+                {
+                    style.maskTexture = state->path(effect->GetColorImagePath(mask->Index));
+                }
             }
         }
     }
@@ -234,6 +246,7 @@ Effekseer::SIMD::Vec3f transformPoint(
     State* state,
     const Effekseer::SIMD::Mat43f& matrix,
     Effekseer::BillboardType billboard,
+    const Effekseer::SIMD::Vec3f& direction,
     float x,
     float y,
     float z)
@@ -243,15 +256,36 @@ Effekseer::SIMD::Vec3f transformPoint(
         return Effekseer::SIMD::Vec3f::Transform({x, y, z}, matrix);
     }
 
-    auto scale = matrix.GetScale();
-    auto translation = matrix.GetTranslation();
+    Effekseer::SIMD::Vec3f scale;
+    Effekseer::SIMD::Mat43f rotation;
+    Effekseer::SIMD::Vec3f translation;
+    matrix.GetSRT(scale, rotation, translation);
     auto right = cameraVector(state->cameraRight);
     auto up = cameraVector(state->cameraUp);
     auto front = -cameraVector(state->cameraFront);
-    if (billboard == Effekseer::BillboardType::YAxisFixed)
+    if (billboard == Effekseer::BillboardType::RotatedBillboard)
+    {
+        const float projectedLength = std::sqrt(std::max(
+            0.0f,
+            Effekseer::SIMD::Vec3f::Dot(rotation.Y, rotation.Y) -
+                rotation.Y.GetZ() * rotation.Y.GetZ()));
+        const float sine = projectedLength > 0.001f ? rotation.Y.GetX() / projectedLength : 0.0f;
+        const float cosine = projectedLength > 0.001f ? rotation.Y.GetY() / projectedLength : 1.0f;
+        const auto baseRight = right;
+        const auto baseUp = up;
+        right = baseRight * cosine + baseUp * sine;
+        up = baseUp * cosine - baseRight * sine;
+    }
+    else if (billboard == Effekseer::BillboardType::YAxisFixed)
     {
         auto matrixUp = Effekseer::SIMD::Vec3f(matrix.X.GetY(), matrix.Y.GetY(), matrix.Z.GetY());
         up = normalize(matrixUp, up);
+        right = normalize(Effekseer::SIMD::Vec3f::Cross(up, cameraVector(state->cameraFront)), right);
+        front = normalize(Effekseer::SIMD::Vec3f::Cross(right, up), front);
+    }
+    else if (billboard == Effekseer::BillboardType::DirectionalBillboard)
+    {
+        up = normalize(direction, up);
         right = normalize(Effekseer::SIMD::Vec3f::Cross(up, cameraVector(state->cameraFront)), right);
         front = normalize(Effekseer::SIMD::Vec3f::Cross(right, up), front);
     }
@@ -272,6 +306,7 @@ void emitTriangle(State* state, const Vertex& a, const Vertex& b, const Vertex& 
     triangle.blend = style.blend;
     triangle.depthTest = style.depthTest;
     triangle.texture = style.texture;
+    triangle.maskTexture = style.maskTexture;
     triangle.effect = style.effect;
     state->triangles.push_back(std::move(triangle));
 }
@@ -297,6 +332,7 @@ public:
         {
             const auto position = transformPoint(
                 state_, instance.SRTMatrix43, parameter.Billboard,
+                instance.Direction,
                 instance.Positions[i].GetX(), instance.Positions[i].GetY(), 0.0f);
             const bool right = i == 1 || i == 3;
             const bool upper = i >= 2;
@@ -408,6 +444,7 @@ public:
             const auto point = [&](float angle, float radius, float height) {
                 return transformPoint(
                     state_, instance.SRTMatrix43, parameter.Billboard,
+                    instance.Direction,
                     std::cos(angle) * radius, std::sin(angle) * radius, height);
             };
             const float u0 = instance.UV.X + instance.UV.Width * t0;
@@ -520,10 +557,10 @@ public:
         }
         const auto style = styleFor(state_, parameter.EffectPointer, parameter.ZTest, parameter.BasicParameterPtr);
         ModelInstance model;
-        const auto origin = transformPoint(state_, instance.SRTMatrix43, parameter.Billboard, 0.0f, 0.0f, 0.0f);
-        const auto x = transformPoint(state_, instance.SRTMatrix43, parameter.Billboard, 1.0f, 0.0f, 0.0f);
-        const auto y = transformPoint(state_, instance.SRTMatrix43, parameter.Billboard, 0.0f, 1.0f, 0.0f);
-        const auto z = transformPoint(state_, instance.SRTMatrix43, parameter.Billboard, 0.0f, 0.0f, 1.0f);
+        const auto origin = transformPoint(state_, instance.SRTMatrix43, parameter.Billboard, instance.Direction, 0.0f, 0.0f, 0.0f);
+        const auto x = transformPoint(state_, instance.SRTMatrix43, parameter.Billboard, instance.Direction, 1.0f, 0.0f, 0.0f);
+        const auto y = transformPoint(state_, instance.SRTMatrix43, parameter.Billboard, instance.Direction, 0.0f, 1.0f, 0.0f);
+        const auto z = transformPoint(state_, instance.SRTMatrix43, parameter.Billboard, instance.Direction, 0.0f, 0.0f, 1.0f);
         const auto store = [](const Effekseer::SIMD::Vec3f& value, float output[3]) {
             output[0] = value.GetX();
             output[1] = value.GetY();
@@ -565,6 +602,8 @@ void copyTriangle(const Triangle& input, RawTriangle& output)
     output.depthTest = input.depthTest;
     output.texture = input.texture.data();
     output.textureLength = static_cast<int32_t>(input.texture.size());
+    output.maskTexture = input.maskTexture.data();
+    output.maskTextureLength = static_cast<int32_t>(input.maskTexture.size());
     output.effect = input.effect.data();
     output.effectLength = static_cast<int32_t>(input.effect.size());
 }

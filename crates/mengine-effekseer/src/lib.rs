@@ -38,6 +38,7 @@ pub struct EffectDrawTriangle {
     pub blend: i32,
     pub depth_test: bool,
     pub texture: Arc<str>,
+    pub mask_texture: Arc<str>,
     pub effect: Arc<str>,
 }
 
@@ -256,6 +257,9 @@ impl EffectManager {
                     texture: unsafe {
                         intern_raw_string(&mut strings, raw.texture, raw.texture_length)
                     },
+                    mask_texture: unsafe {
+                        intern_raw_string(&mut strings, raw.mask_texture, raw.mask_texture_length)
+                    },
                     effect: unsafe {
                         intern_raw_string(&mut strings, raw.effect, raw.effect_length)
                     },
@@ -366,6 +370,8 @@ struct RawTriangle {
     depth_test: i32,
     texture: *const c_char,
     texture_length: i32,
+    mask_texture: *const c_char,
+    mask_texture_length: i32,
     effect: *const c_char,
     effect_length: i32,
 }
@@ -378,6 +384,8 @@ impl Default for RawTriangle {
             depth_test: 0,
             texture: std::ptr::null(),
             texture_length: 0,
+            mask_texture: std::ptr::null(),
+            mask_texture_length: 0,
             effect: std::ptr::null(),
             effect_length: 0,
         }
