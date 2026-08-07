@@ -2,12 +2,14 @@ import {
   createContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useContext,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Box,
   FoldVertical,
@@ -273,6 +275,7 @@ function CompBlock(props: {
   const panel = useContext(InspectorPanelContext);
   const [open, setOpen] = useState(props.defaultOpen ?? true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const contextMenuId = useId();
@@ -292,19 +295,48 @@ function CompBlock(props: {
   useEffect(() => {
     if (!menuOpen) return;
     const close = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+      if (menuRef.current?.contains(e.target as Node)
+        || menuButtonRef.current?.contains(e.target as Node)) return;
+      setMenuOpen(false);
+      setMenuPosition(null);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       setMenuOpen(false);
+      setMenuPosition(null);
       menuButtonRef.current?.focus({ preventScroll: true });
+    };
+    const closeOnViewportChange = () => {
+      setMenuOpen(false);
+      setMenuPosition(null);
     };
     window.addEventListener('mousedown', close);
     window.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', closeOnViewportChange);
+    window.addEventListener('scroll', closeOnViewportChange, true);
     return () => {
       window.removeEventListener('mousedown', close);
       window.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', closeOnViewportChange);
+      window.removeEventListener('scroll', closeOnViewportChange, true);
     };
+  }, [menuOpen]);
+
+  useLayoutEffect(() => {
+    if (!menuOpen) return;
+    const anchor = menuButtonRef.current?.getBoundingClientRect();
+    const menu = menuRef.current?.getBoundingClientRect();
+    if (!anchor || !menu) return;
+    const padding = 4;
+    const left = Math.max(
+      padding,
+      Math.min(anchor.right - menu.width, window.innerWidth - menu.width - padding),
+    );
+    const below = anchor.bottom;
+    const top = below + menu.height <= window.innerHeight - padding
+      ? below
+      : Math.max(padding, anchor.top - menu.height);
+    setMenuPosition({ left, top });
   }, [menuOpen]);
 
   if (!inspectorSectionMatches(panel.query, props.title, props.searchText)) return null;
@@ -323,7 +355,7 @@ function CompBlock(props: {
           <span className="comp-icon" aria-hidden>{props.title.slice(0, 1).toUpperCase()}</span>
           <span className="comp-title">{props.title}</span>
         </button>
-        <div className="comp-head-actions" ref={menuRef}>
+        <div className="comp-head-actions">
           {menuItems.length > 0 && (
             <>
               <button
@@ -337,6 +369,7 @@ function CompBlock(props: {
                 aria-controls={contextMenuId}
                 onClick={(e) => {
                   e.stopPropagation();
+                  setMenuPosition(null);
                   setMenuOpen((o) => !o);
                 }}
                 onKeyDown={(event) => {
@@ -354,10 +387,12 @@ function CompBlock(props: {
               >
                 <MoreVertical size={14} />
               </button>
-              {menuOpen && (
+              {menuOpen && createPortal(
                 <div
+                  ref={menuRef}
                   id={contextMenuId}
                   className="comp-context-menu"
+                  style={menuPosition ?? { left: 0, top: 0, visibility: 'hidden' }}
                   role="menu"
                   aria-label={`${props.title} component context menu`}
                   onKeyDown={(event) => {
@@ -368,6 +403,7 @@ function CompBlock(props: {
                       event.preventDefault();
                       event.stopPropagation();
                       setMenuOpen(false);
+                      setMenuPosition(null);
                       menuButtonRef.current?.focus({ preventScroll: true });
                     }
                   }}
@@ -383,13 +419,15 @@ function CompBlock(props: {
                         onClick={() => {
                           item.onClick();
                           setMenuOpen(false);
+                          setMenuPosition(null);
                         }}
                       >
                         {item.label}
                       </button>
                     </div>
                   ))}
-                </div>
+                </div>,
+                document.body,
               )}
             </>
           )}

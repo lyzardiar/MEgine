@@ -1266,10 +1266,8 @@ button, input, select {
 }
 
 .comp-context-menu {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  z-index: 40;
+  position: fixed;
+  z-index: 120;
   min-width: 140px;
   padding: 4px 0;
   background: var(--u-panel);
@@ -1728,7 +1726,8 @@ button, input, select {
 
 .field-row input[type='checkbox'],
 .field-row .field-bool {
-  width: auto;
+  width: 13px;
+  height: 13px;
   margin: 0;
   justify-self: start;
   align-self: center;
