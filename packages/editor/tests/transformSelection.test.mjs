@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   rotateTransformAround,
   scaleTransformAlong,
+  scaleTransformUniform,
   selectedTransformRoots,
   transformHandleOrigin,
 } from '../src/transformSelection.ts';
@@ -55,4 +56,11 @@ test('axis scaling keeps the shared pivot fixed and scales the selected axis', (
   const result = scaleTransformAlong(source, [1, 1, 0], 0, [1, 0, 0], 2);
   assert.deepEqual(result.position, [5, 4, 0]);
   assert.deepEqual(result.scale, [2, 1, 1]);
+});
+
+test('uniform scaling changes all axes and positions around the shared pivot', () => {
+  const source = transform(1, [3, 4, 2]).components.Transform;
+  const result = scaleTransformUniform(source, [1, 1, 0], 2);
+  assert.deepEqual(result.position, [5, 7, 4]);
+  assert.deepEqual(result.scale, [2, 2, 2]);
 });

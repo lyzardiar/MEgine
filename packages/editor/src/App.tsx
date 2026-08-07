@@ -2960,6 +2960,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.scaleSelectedTransformsAlong(entity, pivot, axis, axisWorld, amount);
                 refresh();
               }}
+              onGizmoScaleUniform={(entity, pivot, factor) => {
+                store.scaleSelectedTransformsUniform(entity, pivot, factor);
+                refresh();
+              }}
               onRotateWorld={(entity, pivot, axis, degrees) => {
                 store.rotateSelectedTransformsAround(entity, pivot, axis, degrees);
                 refresh();

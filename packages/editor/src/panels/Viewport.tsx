@@ -32,6 +32,7 @@ import {
   type Camera,
   type Vec3,
   add,
+  dot,
   drawGroundGrid,
   drawSolidCube,
   drawTriangleMesh,
@@ -441,6 +442,7 @@ type RectSnapDrag = {
   settings: SceneSnapSettings;
   x: SnapAccumulator;
   y: SnapAccumulator;
+  z: SnapAccumulator;
   rotate: SnapAccumulator;
   scale: SnapAccumulator;
 };
@@ -451,6 +453,7 @@ function createRectSnapDrag(active: boolean, settings: SceneSnapSettings): RectS
     settings: { ...settings },
     x: { ...EMPTY_SNAP_ACCUMULATOR },
     y: { ...EMPTY_SNAP_ACCUMULATOR },
+    z: { ...EMPTY_SNAP_ACCUMULATOR },
     rotate: { ...EMPTY_SNAP_ACCUMULATOR },
     scale: { ...EMPTY_SNAP_ACCUMULATOR },
   };
@@ -568,6 +571,7 @@ export function Viewport(props: {
     axisWorld: Vec3,
     amount: number,
   ) => void;
+  onGizmoScaleUniform: (entity: number, pivot: Vec3, factor: number) => void;
   onRotateWorld?: (entity: number, pivot: Vec3, axis: Vec3, degrees: number) => void;
   onRectTranslate?: (entity: number, dx: number, dy: number) => void;
   onRectNudge?: (dx: number, dy: number) => void;
@@ -929,6 +933,7 @@ export function Viewport(props: {
         axisWorld?: Vec3;
         lastAng?: number;
         gizmoScreen?: { x: number; y: number };
+        snap: RectSnapDrag;
       }
     | {
         type: 'rectGizmo';
@@ -3175,6 +3180,10 @@ export function Viewport(props: {
             axisWorld,
             gizmoScreen: scr ? { x: scr.x, y: scr.y } : undefined,
             lastAng,
+            snap: createRectSnapDrag(
+              snapSettingsRef.current.enabled || ev.ctrlKey || ev.metaKey,
+              snapSettingsRef.current,
+            ),
           };
           return;
         }
@@ -3660,7 +3669,17 @@ export function Viewport(props: {
         ) ? tr?.rotation as [number, number, number, number] | undefined : null;
         const basis = transformBasis(handleRotation);
         const gizmo = transformGizmoMode(propsRef.current.gizmo);
-        const screen = { dx, dy };
+        const fine = ev.shiftKey ? 0.1 : 1;
+        const screen = { dx: dx * fine, dy: dy * fine };
+        const snapped = (
+          channel: 'x' | 'y' | 'z' | 'rotate' | 'scale',
+          rawDelta: number,
+          step: number,
+        ) => {
+          const next = advanceSnap(d.snap[channel], rawDelta, step, d.snap.active);
+          d.snap[channel] = next.state;
+          return next.delta;
+        };
 
         if (gizmo === 'translate') {
           let worldDelta: Vec3 = [0, 0, 0];
@@ -3668,6 +3687,12 @@ export function Viewport(props: {
             const axisVec =
               d.part.axis === 'x' ? basis.right : d.part.axis === 'y' ? basis.up : basis.forward;
             worldDelta = worldDeltaAlongAxis(origin, axisVec, screen, cam, vp);
+            const amount = snapped(
+              d.part.axis,
+              dot(worldDelta, axisVec),
+              d.snap.settings.move,
+            );
+            worldDelta = vscale(axisVec, amount);
           } else if (d.part.kind === 'plane') {
             const [a, b] =
               d.part.plane === 'xy'
@@ -3676,6 +3701,12 @@ export function Viewport(props: {
                   ? [basis.right, basis.forward]
                   : [basis.up, basis.forward];
             worldDelta = worldDeltaOnPlane(origin, a, b, screen, cam, vp);
+            const channels: ['x' | 'y' | 'z', 'x' | 'y' | 'z'] = d.part.plane === 'xy'
+              ? ['x', 'y'] : d.part.plane === 'xz' ? ['x', 'z'] : ['y', 'z'];
+            worldDelta = add(
+              vscale(a, snapped(channels[0], dot(worldDelta, a), d.snap.settings.move)),
+              vscale(b, snapped(channels[1], dot(worldDelta, b), d.snap.settings.move)),
+            );
           } else {
             worldDelta = worldDeltaViewPlane(origin, screen, cam, vp);
           }
@@ -3684,7 +3715,7 @@ export function Viewport(props: {
           const axisVec =
             d.part.axis === 'x' ? basis.right : d.part.axis === 'y' ? basis.up : basis.forward;
           const delta = worldDeltaAlongAxis(origin, axisVec, screen, cam, vp);
-          const amount = delta[0] * axisVec[0] + delta[1] * axisVec[1] + delta[2] * axisVec[2];
+          const amount = snapped('scale', dot(delta, axisVec), d.snap.settings.scale);
           propsRef.current.onGizmoScale(
             d.entity,
             d.origin,
@@ -3692,6 +3723,9 @@ export function Viewport(props: {
             axisVec,
             amount,
           );
+        } else if (gizmo === 'scale' && d.part.kind === 'center') {
+          const amount = snapped('scale', (screen.dx - screen.dy) / 160, d.snap.settings.scale);
+          propsRef.current.onGizmoScaleUniform(d.entity, d.origin, Math.max(0.01, 1 + amount));
         } else if (gizmo === 'rotate') {
           const canvas = canvasRef.current;
           if (!canvas) return;
@@ -3711,7 +3745,7 @@ export function Viewport(props: {
               d.entity,
               d.origin,
               d.axisWorld,
-              (dAng * 180) / Math.PI,
+              snapped('rotate', (dAng * 180) / Math.PI * fine, d.snap.settings.rotate),
             );
           } else if (d.part.kind === 'center') {
             const scr =
@@ -3735,7 +3769,7 @@ export function Viewport(props: {
               d.entity,
               d.origin,
               forward,
-              (dAng * 180) / Math.PI,
+              snapped('rotate', (dAng * 180) / Math.PI * fine, d.snap.settings.rotate),
             );
           }
         }

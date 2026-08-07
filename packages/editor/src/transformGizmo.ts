@@ -1,11 +1,19 @@
-/**
- * Unity-style Scene transform gizmo (screen-space draw + hit + 1:1 drag).
- */
+/** Screen-stable Scene transform gizmo with one geometry model for draw and hit testing. */
 
 import type { Camera, Quat, Vec3 } from './math3d';
-import { add, cross, dot, lookBasis, norm, project, scale, screenPointRay, sub } from './math3d';
-import { transformBasis } from './editorGizmos';
-import type { GizmoMode } from './editorTool';
+import {
+  add,
+  cross,
+  dot,
+  lookBasis,
+  norm,
+  project,
+  scale,
+  screenPointRay,
+  sub,
+} from './math3d.ts';
+import { transformBasis } from './editorGizmos.ts';
+import type { GizmoMode } from './editorTool.ts';
 
 export type GizmoAxis = 'x' | 'y' | 'z';
 export type GizmoPlane = 'xy' | 'xz' | 'yz';
@@ -14,573 +22,462 @@ export type GizmoPart =
   | { kind: 'axis'; axis: GizmoAxis }
   | { kind: 'plane'; plane: GizmoPlane }
   | { kind: 'center' }
-  /** RectTransform size handle (Unity Rect tool). */
   | { kind: 'size'; handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' }
   | { kind: 'anchor'; target: 'min' | 'max' | 'both' };
 
-export type GizmoHit =
-  | { kind: 'axis'; axis: GizmoAxis; x0: number; y0: number; x1: number; y1: number }
-  | { kind: 'plane'; plane: GizmoPlane; cx: number; cy: number; size: number }
-  | { kind: 'center'; x: number; y: number; r: number };
-
-const AXIS_COLORS: Record<GizmoAxis, string> = {
-  x: '#e74c3c',
-  y: '#2ecc71',
-  z: '#3498db',
-};
-const PLANE_COLORS: Record<GizmoPlane, string> = {
-  xy: '#3498db', // Z normal → blue tint
-  xz: '#2ecc71', // Y
-  yz: '#e74c3c', // X
-};
-const HOVER = '#ffc107';
-const ACTIVE = '#ffe566';
-
-const AXIS_LEN = 78;
-const AXIS_GAP = 14; // leave hole near center (Unity-like)
-const SHAFT_W = 3.5;
-const HEAD_LEN = 14;
-const HEAD_W = 7;
-const PLANE_SIZE = 16;
-const PLANE_OFF = 22;
-const HIT_AXIS = 11;
-const HIT_PLANE = 2;
-const HIT_RING = 16; // px band around rotate ellipse
-const ROTATE_R = AXIS_LEN * 0.85;
-
+type Point = { x: number; y: number };
 type Vp = { x: number; y: number; w: number; h: number };
 
-function colorFor(part: GizmoPart, hover: GizmoPart | null, active: GizmoPart | null): string {
-  const same =
-    (a: GizmoPart | null, b: GizmoPart) =>
-      !!a &&
-      a.kind === b.kind &&
-      ((a.kind === 'axis' && b.kind === 'axis' && a.axis === b.axis) ||
-        (a.kind === 'plane' && b.kind === 'plane' && a.plane === b.plane) ||
-        (a.kind === 'center' && b.kind === 'center'));
+export type GizmoHit =
+  | { kind: 'axis'; axis: GizmoAxis; shape: 'segment'; start: Point; end: Point }
+  | {
+      kind: 'axis';
+      axis: GizmoAxis;
+      shape: 'ellipse';
+      center: Point;
+      radius: number;
+      u: Point;
+      v: Point;
+    }
+  | { kind: 'plane'; plane: GizmoPlane; corners: [Point, Point, Point, Point] }
+  | { kind: 'center'; shape: 'circle' | 'annulus'; center: Point; radius: number; band: number };
 
-  if (same(active, part) || same(hover, part)) {
-    return active && same(active, part) ? ACTIVE : HOVER;
-  }
-  if (part.kind === 'axis') return AXIS_COLORS[part.axis];
-  if (part.kind === 'plane') return PLANE_COLORS[part.plane];
-  return '#f0f0f0';
+const AXES: GizmoAxis[] = ['x', 'y', 'z'];
+const AXIS_COLORS: Record<GizmoAxis, string> = {
+  x: '#ef5a5a',
+  y: '#62c96b',
+  z: '#4e9dea',
+};
+const PLANE_COLORS: Record<GizmoPlane, string> = {
+  xy: AXIS_COLORS.z,
+  xz: AXIS_COLORS.y,
+  yz: AXIS_COLORS.x,
+};
+const HOVER = '#ffd15c';
+const ACTIVE = '#fff0a0';
+const AXIS_LENGTH = 82;
+const AXIS_GAP = 13;
+const ARROW_LENGTH = 14;
+const PLANE_OFFSET = 23;
+const PLANE_SIZE = 17;
+const ROTATE_RADIUS = 67;
+const HIT_AXIS = 8;
+const HIT_RING = 9;
+
+function samePart(left: GizmoPart | null, right: GizmoPart): boolean {
+  if (!left || left.kind !== right.kind) return false;
+  if (left.kind === 'axis' && right.kind === 'axis') return left.axis === right.axis;
+  if (left.kind === 'plane' && right.kind === 'plane') return left.plane === right.plane;
+  if (left.kind === 'size' && right.kind === 'size') return left.handle === right.handle;
+  if (left.kind === 'anchor' && right.kind === 'anchor') return left.target === right.target;
+  return left.kind === 'center';
 }
 
-function screenAxisTip(
-  origin: Vec3,
-  dir: Vec3,
-  cam: Camera,
-  vp: Vp,
-  o: { x: number; y: number },
-): { x: number; y: number; ang: number; visible: boolean } | null {
-  const tipW = add(origin, scale(dir, 1.2));
-  const tip = project(tipW, cam, vp);
-  if (!tip) return null;
-  const dx = tip.x - o.x;
-  const dy = tip.y - o.y;
-  const dl = Math.hypot(dx, dy);
-  if (dl < 4) return { x: o.x, y: o.y, ang: 0, visible: false }; // edge-on
+function partColor(part: GizmoPart, hover: GizmoPart | null, active: GizmoPart | null): string {
+  if (samePart(active, part)) return ACTIVE;
+  if (samePart(hover, part)) return HOVER;
+  if (part.kind === 'axis') return AXIS_COLORS[part.axis];
+  if (part.kind === 'plane') return PLANE_COLORS[part.plane];
+  return '#f3f3f3';
+}
+
+function projectedAxis(origin: Vec3, direction: Vec3, camera: Camera, viewport: Vp, center: Point) {
+  const projected = project(add(origin, direction), camera, viewport);
+  if (!projected) return null;
+  const dx = projected.x - center.x;
+  const dy = projected.y - center.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 3) return null;
+  const unit = { x: dx / length, y: dy / length };
   return {
-    x: o.x + (dx / dl) * AXIS_LEN,
-    y: o.y + (dy / dl) * AXIS_LEN,
-    ang: Math.atan2(dy, dx),
-    visible: true,
+    unit,
+    tip: { x: center.x + unit.x * AXIS_LENGTH, y: center.y + unit.y * AXIS_LENGTH },
+    angle: Math.atan2(unit.y, unit.x),
   };
 }
 
-function drawArrowHead(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  ang: number,
-  fill: string,
-) {
-  ctx.fillStyle = fill;
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x - HEAD_LEN * Math.cos(ang - 0.38), y - HEAD_LEN * Math.sin(ang - 0.38));
-  ctx.lineTo(x - HEAD_LEN * Math.cos(ang) * 0.55, y - HEAD_LEN * Math.sin(ang) * 0.55);
-  ctx.lineTo(x - HEAD_LEN * Math.cos(ang + 0.38), y - HEAD_LEN * Math.sin(ang + 0.38));
-  ctx.closePath();
-  ctx.fill();
-}
-
-function drawShaft(
-  ctx: CanvasRenderingContext2D,
-  x0: number,
-  y0: number,
-  x1: number,
-  y1: number,
+function outlinedLine(
+  context: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
   color: string,
   width: number,
 ) {
-  // subtle outline for contrast on any sky
-  ctx.strokeStyle = 'rgba(0,0,0,0.45)';
-  ctx.lineWidth = width + 2;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(x0, y0);
-  ctx.lineTo(x1, y1);
-  ctx.stroke();
-
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.beginPath();
-  ctx.moveTo(x0, y0);
-  ctx.lineTo(x1, y1);
-  ctx.stroke();
+  context.lineCap = 'round';
+  context.beginPath();
+  context.moveTo(start.x, start.y);
+  context.lineTo(end.x, end.y);
+  context.strokeStyle = 'rgba(0,0,0,0.58)';
+  context.lineWidth = width + 2;
+  context.stroke();
+  context.strokeStyle = color;
+  context.lineWidth = width;
+  context.stroke();
 }
 
-function planeCorners(
-  ox: number,
-  oy: number,
-  ax: { x: number; y: number },
-  ay: { x: number; y: number },
-): Array<{ x: number; y: number }> {
-  const ux = ax.x - ox;
-  const uy = ax.y - oy;
-  const vx = ay.x - ox;
-  const vy = ay.y - oy;
-  const ul = Math.hypot(ux, uy) || 1;
-  const vl = Math.hypot(vx, vy) || 1;
-  const s = PLANE_SIZE;
-  const o = PLANE_OFF;
-  const uxN = ux / ul;
-  const uyN = uy / ul;
-  const vxN = vx / vl;
-  const vyN = vy / vl;
-  const c0x = ox + uxN * o + vxN * o;
-  const c0y = oy + uyN * o + vyN * o;
+function arrowHead(context: CanvasRenderingContext2D, tip: Point, angle: number, color: string) {
+  context.beginPath();
+  context.moveTo(tip.x, tip.y);
+  context.lineTo(
+    tip.x - ARROW_LENGTH * Math.cos(angle - 0.42),
+    tip.y - ARROW_LENGTH * Math.sin(angle - 0.42),
+  );
+  context.lineTo(
+    tip.x - ARROW_LENGTH * Math.cos(angle + 0.42),
+    tip.y - ARROW_LENGTH * Math.sin(angle + 0.42),
+  );
+  context.closePath();
+  context.fillStyle = 'rgba(0,0,0,0.55)';
+  context.lineWidth = 3;
+  context.strokeStyle = 'rgba(0,0,0,0.55)';
+  context.stroke();
+  context.fillStyle = color;
+  context.fill();
+}
+
+function axisLabel(context: CanvasRenderingContext2D, axis: GizmoAxis, tip: Point, unit: Point) {
+  context.save();
+  context.font = '600 10px ui-monospace, Consolas, monospace';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.lineWidth = 3;
+  context.strokeStyle = 'rgba(0,0,0,0.75)';
+  context.fillStyle = AXIS_COLORS[axis];
+  const x = tip.x + unit.x * 9;
+  const y = tip.y + unit.y * 9;
+  context.strokeText(axis.toUpperCase(), x, y);
+  context.fillText(axis.toUpperCase(), x, y);
+  context.restore();
+}
+
+function planeCorners(center: Point, axisA: Point, axisB: Point): [Point, Point, Point, Point] {
+  const origin = {
+    x: center.x + (axisA.x + axisB.x) * PLANE_OFFSET,
+    y: center.y + (axisA.y + axisB.y) * PLANE_OFFSET,
+  };
   return [
-    { x: c0x, y: c0y },
-    { x: c0x + uxN * s, y: c0y + uyN * s },
-    { x: c0x + uxN * s + vxN * s, y: c0y + uyN * s + vyN * s },
-    { x: c0x + vxN * s, y: c0y + vyN * s },
+    origin,
+    { x: origin.x + axisA.x * PLANE_SIZE, y: origin.y + axisA.y * PLANE_SIZE },
+    {
+      x: origin.x + (axisA.x + axisB.x) * PLANE_SIZE,
+      y: origin.y + (axisA.y + axisB.y) * PLANE_SIZE,
+    },
+    { x: origin.x + axisB.x * PLANE_SIZE, y: origin.y + axisB.y * PLANE_SIZE },
   ];
 }
 
-function drawPlaneQuad(
-  ctx: CanvasRenderingContext2D,
-  corners: Array<{ x: number; y: number }>,
+function drawPlane(
+  context: CanvasRenderingContext2D,
+  corners: [Point, Point, Point, Point],
   color: string,
   hot: boolean,
 ) {
-  const r = parseInt(color.slice(1, 3), 16);
-  const g = parseInt(color.slice(3, 5), 16);
-  const b = parseInt(color.slice(5, 7), 16);
-  ctx.beginPath();
-  ctx.moveTo(corners[0].x, corners[0].y);
-  for (let i = 1; i < 4; i++) ctx.lineTo(corners[i].x, corners[i].y);
-  ctx.closePath();
-  ctx.fillStyle = `rgba(${r},${g},${b},${hot ? 0.65 : 0.28})`;
-  ctx.fill();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = hot ? 2 : 1.25;
-  ctx.stroke();
+  const channels = [1, 3, 5].map((index) => Number.parseInt(color.slice(index, index + 2), 16));
+  context.beginPath();
+  context.moveTo(corners[0].x, corners[0].y);
+  for (const corner of corners.slice(1)) context.lineTo(corner.x, corner.y);
+  context.closePath();
+  context.fillStyle = `rgba(${channels.join(',')},${hot ? 0.58 : 0.24})`;
+  context.fill();
+  context.strokeStyle = color;
+  context.lineWidth = hot ? 2 : 1;
+  context.stroke();
 }
 
-function pointInQuad(px: number, py: number, c: Array<{ x: number; y: number }>): boolean {
-  // barycentric via two triangles
-  const tri = (a: number, b: number, c0: number, d: number, e: number, f: number) => {
-    const v0x = c0 - a;
-    const v0y = d - b;
-    const v1x = e - a;
-    const v1y = f - b;
-    const v2x = px - a;
-    const v2y = py - b;
-    const den = v0x * v1y - v1x * v0y;
-    if (Math.abs(den) < 1e-8) return false;
-    const u = (v2x * v1y - v1x * v2y) / den;
-    const v = (v0x * v2y - v2x * v0y) / den;
-    return u >= 0 && v >= 0 && u + v <= 1;
-  };
-  return (
-    tri(c[0].x, c[0].y, c[1].x, c[1].y, c[2].x, c[2].y) ||
-    tri(c[0].x, c[0].y, c[2].x, c[2].y, c[3].x, c[3].y)
-  );
+function polygonContains(point: Point, corners: [Point, Point, Point, Point]): boolean {
+  let sign = 0;
+  for (let index = 0; index < corners.length; index += 1) {
+    const left = corners[index];
+    const right = corners[(index + 1) % corners.length];
+    const crossValue = (right.x - left.x) * (point.y - left.y)
+      - (right.y - left.y) * (point.x - left.x);
+    if (Math.abs(crossValue) < 1e-6) continue;
+    const nextSign = Math.sign(crossValue);
+    if (sign !== 0 && nextSign !== sign) return false;
+    sign = nextSign;
+  }
+  return true;
+}
+
+function drawEllipse(
+  context: CanvasRenderingContext2D,
+  center: Point,
+  radius: number,
+  u: Point,
+  v: Point,
+  color: string,
+  hot: boolean,
+) {
+  context.beginPath();
+  for (let index = 0; index <= 72; index += 1) {
+    const angle = index / 72 * Math.PI * 2;
+    const point = {
+      x: center.x + (Math.cos(angle) * u.x + Math.sin(angle) * v.x) * radius,
+      y: center.y + (Math.cos(angle) * u.y + Math.sin(angle) * v.y) * radius,
+    };
+    if (index === 0) context.moveTo(point.x, point.y);
+    else context.lineTo(point.x, point.y);
+  }
+  context.closePath();
+  context.strokeStyle = 'rgba(0,0,0,0.58)';
+  context.lineWidth = hot ? 7 : 5;
+  context.stroke();
+  context.strokeStyle = color;
+  context.lineWidth = hot ? 5 : 3;
+  context.stroke();
 }
 
 export function drawTransformGizmo(
-  ctx: CanvasRenderingContext2D,
-  cam: Camera,
-  vp: Vp,
+  context: CanvasRenderingContext2D,
+  camera: Camera,
+  viewport: Vp,
   worldOrigin: Vec3,
   rotation: Quat | null | undefined,
   mode: GizmoMode,
   hover: GizmoPart | null,
   active: GizmoPart | null,
 ): GizmoHit[] {
-  const o = project(worldOrigin, cam, vp);
-  if (!o) return [];
-
-  // 与移动/缩放同一套本地 XYZ（红右、绿上、蓝前）
+  const projectedOrigin = project(worldOrigin, camera, viewport);
+  if (!projectedOrigin) return [];
+  const center = { x: projectedOrigin.x, y: projectedOrigin.y };
   const basis = transformBasis(rotation);
-  const dirs: Record<GizmoAxis, Vec3> = {
-    x: basis.right,
-    y: basis.up,
-    z: basis.forward,
-  };
-
-  const tips: Partial<Record<GizmoAxis, { x: number; y: number; ang: number; visible: boolean }>> =
-    {};
-  for (const axis of ['x', 'y', 'z'] as GizmoAxis[]) {
-    const t = screenAxisTip(worldOrigin, dirs[axis], cam, vp, o);
-    if (t) tips[axis] = t;
-  }
-
+  const directions: Record<GizmoAxis, Vec3> = { x: basis.right, y: basis.up, z: basis.forward };
+  const projected = Object.fromEntries(
+    AXES.map((axis) => [axis, projectedAxis(worldOrigin, directions[axis], camera, viewport, center)]),
+  ) as Record<GizmoAxis, ReturnType<typeof projectedAxis>>;
   const hits: GizmoHit[] = [];
 
-  // --- Planes (draw under axes) ---
   if (mode === 'translate') {
-    const planeDefs: Array<{ plane: GizmoPlane; a: GizmoAxis; b: GizmoAxis }> = [
-      { plane: 'xy', a: 'x', b: 'y' },
-      { plane: 'xz', a: 'x', b: 'z' },
-      { plane: 'yz', a: 'y', b: 'z' },
+    const planes: Array<[GizmoPlane, GizmoAxis, GizmoAxis]> = [
+      ['xy', 'x', 'y'], ['xz', 'x', 'z'], ['yz', 'y', 'z'],
     ];
-    for (const pd of planeDefs) {
-      const ta = tips[pd.a];
-      const tb = tips[pd.b];
-      if (!ta?.visible || !tb?.visible) continue;
-      const part: GizmoPart = { kind: 'plane', plane: pd.plane };
-      const col = colorFor(part, hover, active);
-      const corners = planeCorners(o.x, o.y, ta, tb);
-      const hot =
-        (hover?.kind === 'plane' && hover.plane === pd.plane) ||
-        (active?.kind === 'plane' && active.plane === pd.plane);
-      drawPlaneQuad(ctx, corners, col, hot);
-      const cx = (corners[0].x + corners[2].x) / 2;
-      const cy = (corners[0].y + corners[2].y) / 2;
-      hits.push({ kind: 'plane', plane: pd.plane, cx, cy, size: PLANE_SIZE });
-      // store corners on hit via extending — use size + center for simple hit; better: keep corners
-      (hits[hits.length - 1] as GizmoHit & { corners?: typeof corners }).corners = corners;
+    for (const [plane, axisA, axisB] of planes) {
+      const a = projected[axisA];
+      const b = projected[axisB];
+      if (!a || !b || Math.abs(a.unit.x * b.unit.y - b.unit.x * a.unit.y) < 0.12) continue;
+      const part: GizmoPart = { kind: 'plane', plane };
+      const corners = planeCorners(center, a.unit, b.unit);
+      drawPlane(context, corners, partColor(part, hover, active), samePart(hover, part) || samePart(active, part));
+      hits.push({ kind: 'plane', plane, corners });
     }
   }
 
-  // --- Axes (translate / scale shafts; rotate 也画短轴，与移动 XYZ 对齐) ---
-  if (mode !== 'rotate') {
-    for (const axis of ['x', 'y', 'z'] as GizmoAxis[]) {
-      const tip = tips[axis];
-      if (!tip?.visible) continue;
-      const part: GizmoPart = { kind: 'axis', axis };
-      const col = colorFor(part, hover, active);
-      const dx = tip.x - o.x;
-      const dy = tip.y - o.y;
-      const dl = Math.hypot(dx, dy) || 1;
-      const nx = dx / dl;
-      const ny = dy / dl;
-      const x0 = o.x + nx * AXIS_GAP;
-      const y0 = o.y + ny * AXIS_GAP;
-      const x1 = tip.x - (mode === 'translate' ? nx * (HEAD_LEN - 2) : 0);
-      const y1 = tip.y - (mode === 'translate' ? ny * (HEAD_LEN - 2) : 0);
-
-      const hot =
-        (hover?.kind === 'axis' && hover.axis === axis) ||
-        (active?.kind === 'axis' && active.axis === axis);
-      drawShaft(ctx, x0, y0, x1, y1, col, hot ? SHAFT_W + 1.5 : SHAFT_W);
-
-      if (mode === 'translate') {
-        drawArrowHead(ctx, tip.x, tip.y, tip.ang, col);
-      } else if (mode === 'scale') {
-        const s = hot ? 7 : 6;
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.fillRect(tip.x - s - 1, tip.y - s - 1, s * 2 + 2, s * 2 + 2);
-        ctx.fillStyle = col;
-        ctx.fillRect(tip.x - s, tip.y - s, s * 2, s * 2);
-      }
-
-      hits.unshift({ kind: 'axis', axis, x0, y0, x1: tip.x, y1: tip.y });
-    }
-  } else {
-    // Rotate: 细轴指示方向（不可点，点圆环）
-    for (const axis of ['x', 'y', 'z'] as GizmoAxis[]) {
-      const tip = tips[axis];
-      if (!tip?.visible) continue;
-      const part: GizmoPart = { kind: 'axis', axis };
-      const col = colorFor(part, hover, active);
-      const dx = tip.x - o.x;
-      const dy = tip.y - o.y;
-      const dl = Math.hypot(dx, dy) || 1;
-      const nx = dx / dl;
-      const ny = dy / dl;
-      const len = ROTATE_R * 0.55;
-      drawShaft(
-        ctx,
-        o.x + nx * 6,
-        o.y + ny * 6,
-        o.x + nx * len,
-        o.y + ny * len,
-        col,
-        2,
-      );
-    }
-  }
-
-  // Rotate: three thick arcs (easier to see & grab)
   if (mode === 'rotate') {
-    const screenDir = (
-      tip: { x: number; y: number } | undefined,
-    ): { x: number; y: number } | null => {
-      if (!tip) return null;
-      const dx = tip.x - o.x;
-      const dy = tip.y - o.y;
-      const l = Math.hypot(dx, dy);
-      if (l < 3) return null;
-      return { x: dx / l, y: dy / l };
-    };
-
-    for (const axis of ['x', 'y', 'z'] as GizmoAxis[]) {
+    for (const axis of AXES) {
+      const otherAxes = AXES.filter((candidate) => candidate !== axis);
+      const first = projected[otherAxes[0]]?.unit;
+      const second = projected[otherAxes[1]]?.unit;
+      if (!first || !second || Math.abs(first.x * second.y - second.x * first.y) < 0.08) continue;
       const part: GizmoPart = { kind: 'axis', axis };
-      const col = colorFor(part, hover, active);
-      const hot =
-        (hover?.kind === 'axis' && hover.axis === axis) ||
-        (active?.kind === 'axis' && active.axis === axis);
-      const others = (['x', 'y', 'z'] as GizmoAxis[]).filter((a) => a !== axis);
-      let da = screenDir(tips[others[0]]);
-      let db = screenDir(tips[others[1]]);
-      if (!da && !db) continue;
-      if (!da && db) da = { x: -db.y, y: db.x };
-      if (!db && da) db = { x: -da.y, y: da.x };
-      const ux = da!.x;
-      const uy = da!.y;
-      const vx = db!.x;
-      const vy = db!.y;
-      if (Math.abs(ux * vy - vx * uy) < 0.02) continue;
-
-      const r = ROTATE_R;
-      ctx.beginPath();
-      for (let i = 0; i <= 64; i++) {
-        const t = (i / 64) * Math.PI * 2;
-        const px = o.x + Math.cos(t) * ux * r + Math.sin(t) * vx * r;
-        const py = o.y + Math.cos(t) * uy * r + Math.sin(t) * vy * r;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.strokeStyle = 'rgba(0,0,0,0.45)';
-      ctx.lineWidth = (hot ? 7 : 5) + 2;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-      ctx.strokeStyle = col;
-      ctx.lineWidth = hot ? 7 : 5;
-      ctx.stroke();
-
-      hits.unshift({
-        kind: 'axis',
-        axis,
-        x0: o.x - r,
-        y0: o.y,
-        x1: o.x + r,
-        y1: o.y,
-      });
-      (
-        hits[0] as GizmoHit & {
-          ring?: {
-            cx: number;
-            cy: number;
-            r: number;
-            ux: number;
-            uy: number;
-            vx: number;
-            vy: number;
-          };
-        }
-      ).ring = { cx: o.x, cy: o.y, r, ux, uy, vx, vy };
+      const color = partColor(part, hover, active);
+      drawEllipse(context, center, ROTATE_RADIUS, first, second, color, samePart(hover, part) || samePart(active, part));
+      hits.push({ kind: 'axis', axis, shape: 'ellipse', center, radius: ROTATE_RADIUS, u: first, v: second });
     }
-
-    // Outer screen-space free-rotate ring (Unity-like)
-    {
-      const r = ROTATE_R + 18;
-      const hot = hover?.kind === 'center' || active?.kind === 'center';
-      const col = hot ? HOVER : 'rgba(220,220,220,0.85)';
-      ctx.beginPath();
-      ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-      ctx.lineWidth = (hot ? 5 : 3.5) + 1.5;
-      ctx.stroke();
-      ctx.strokeStyle = col;
-      ctx.lineWidth = hot ? 5 : 3.5;
-      ctx.stroke();
-      hits.unshift({ kind: 'center', x: o.x, y: o.y, r });
-      (
-        hits[0] as GizmoHit & { screenRing?: { cx: number; cy: number; r: number } }
-      ).screenRing = { cx: o.x, cy: o.y, r };
-    }
-  }
-
-  // Center handle
-  if (mode === 'translate' || mode === 'scale') {
+    const radius = ROTATE_RADIUS + 17;
     const part: GizmoPart = { kind: 'center' };
-    const col = colorFor(part, hover, active);
-    const hot =
-      (hover?.kind === 'center') || (active?.kind === 'center');
-    const s = hot ? 6 : 5;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(o.x - s - 1, o.y - s - 1, s * 2 + 2, s * 2 + 2);
-    ctx.fillStyle = col;
-    ctx.fillRect(o.x - s, o.y - s, s * 2, s * 2);
-    ctx.strokeStyle = '#222';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(o.x - s, o.y - s, s * 2, s * 2);
-    hits.unshift({ kind: 'center', x: o.x, y: o.y, r: s + 4 });
+    context.beginPath();
+    context.arc(center.x, center.y, radius, 0, Math.PI * 2);
+    context.strokeStyle = 'rgba(0,0,0,0.58)';
+    context.lineWidth = samePart(hover, part) || samePart(active, part) ? 6 : 4;
+    context.stroke();
+    context.strokeStyle = partColor(part, hover, active);
+    context.lineWidth -= 2;
+    context.stroke();
+    hits.push({ kind: 'center', shape: 'annulus', center, radius, band: HIT_RING });
   } else {
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, 3.5, 0, Math.PI * 2);
-    ctx.fill();
+    for (const axis of AXES) {
+      const handle = projected[axis];
+      if (!handle) continue;
+      const part: GizmoPart = { kind: 'axis', axis };
+      const color = partColor(part, hover, active);
+      const hot = samePart(hover, part) || samePart(active, part);
+      const start = {
+        x: center.x + handle.unit.x * AXIS_GAP,
+        y: center.y + handle.unit.y * AXIS_GAP,
+      };
+      const end = mode === 'translate'
+        ? {
+            x: handle.tip.x - handle.unit.x * (ARROW_LENGTH - 2),
+            y: handle.tip.y - handle.unit.y * (ARROW_LENGTH - 2),
+          }
+        : handle.tip;
+      outlinedLine(context, start, end, color, hot ? 5 : 3);
+      if (mode === 'translate') arrowHead(context, handle.tip, handle.angle, color);
+      else {
+        const size = hot ? 7 : 6;
+        context.fillStyle = 'rgba(0,0,0,0.55)';
+        context.fillRect(handle.tip.x - size - 1, handle.tip.y - size - 1, size * 2 + 2, size * 2 + 2);
+        context.fillStyle = color;
+        context.fillRect(handle.tip.x - size, handle.tip.y - size, size * 2, size * 2);
+      }
+      axisLabel(context, axis, handle.tip, handle.unit);
+      hits.push({ kind: 'axis', axis, shape: 'segment', start, end: handle.tip });
+    }
+
+    const part: GizmoPart = { kind: 'center' };
+    const hot = samePart(hover, part) || samePart(active, part);
+    const radius = hot ? 8 : 7;
+    context.beginPath();
+    context.arc(center.x, center.y, radius, 0, Math.PI * 2);
+    context.fillStyle = 'rgba(0,0,0,0.72)';
+    context.fill();
+    context.lineWidth = 2;
+    context.strokeStyle = partColor(part, hover, active);
+    context.stroke();
+    hits.push({ kind: 'center', shape: 'circle', center, radius: radius + 3, band: 0 });
   }
 
   return hits;
 }
 
-type PlaneHit = GizmoHit & { corners?: Array<{ x: number; y: number }> };
-type AxisHit = GizmoHit & {
-  ring?: { cx: number; cy: number; r: number; ux: number; uy: number; vx: number; vy: number };
-};
-type CenterHit = GizmoHit & { screenRing?: { cx: number; cy: number; r: number } };
+function segmentDistance(point: Point, start: Point, end: Point): number {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared < 1e-6) return Number.POSITIVE_INFINITY;
+  const amount = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared));
+  return Math.hypot(point.x - (start.x + dx * amount), point.y - (start.y + dy * amount));
+}
+
+function ellipseDistance(point: Point, hit: Extract<GizmoHit, { shape: 'ellipse' }>): number {
+  const dx = point.x - hit.center.x;
+  const dy = point.y - hit.center.y;
+  const ax = hit.u.x * hit.radius;
+  const ay = hit.u.y * hit.radius;
+  const bx = hit.v.x * hit.radius;
+  const by = hit.v.y * hit.radius;
+  const determinant = ax * by - bx * ay;
+  if (Math.abs(determinant) < 1e-6) return Number.POSITIVE_INFINITY;
+  const u = (dx * by - bx * dy) / determinant;
+  const v = (ax * dy - dx * ay) / determinant;
+  return Math.abs(Math.hypot(u, v) - 1) * hit.radius;
+}
 
 export function hitTestTransformGizmo(hits: GizmoHit[], x: number, y: number): GizmoPart | null {
-  // 1) Colored rotate ellipses — pick nearest ring band
-  let bestRing: { part: GizmoPart; dist: number } | null = null;
-  for (const h of hits) {
-    if (h.kind !== 'axis') continue;
-    const ah = h as AxisHit;
-    if (!ah.ring) continue;
-    const { cx, cy, r, ux, uy, vx, vy } = ah.ring;
-    const dx = x - cx;
-    const dy = y - cy;
-    const Ax = ux * r;
-    const Ay = uy * r;
-    const Bx = vx * r;
-    const By = vy * r;
-    const det = Ax * By - Bx * Ay;
-    if (Math.abs(det) < 1e-6) continue;
-    const a = (dx * By - Bx * dy) / det;
-    const b = (Ax * dy - dx * Ay) / det;
-    const rad = Math.hypot(a, b);
-    // approximate pixel distance to ellipse curve
-    const dist = Math.abs(rad - 1) * r;
-    if (dist < HIT_RING && (!bestRing || dist < bestRing.dist)) {
-      bestRing = { part: { kind: 'axis', axis: h.axis }, dist };
+  const point = { x, y };
+  let bestRing: { part: GizmoPart; distance: number } | null = null;
+  for (const hit of hits) {
+    if (hit.kind !== 'axis' || hit.shape !== 'ellipse') continue;
+    const distance = ellipseDistance(point, hit);
+    if (distance <= HIT_RING && (!bestRing || distance < bestRing.distance)) {
+      bestRing = { part: { kind: 'axis', axis: hit.axis }, distance };
     }
   }
   if (bestRing) return bestRing.part;
 
-  // 2) Outer screen-space free-rotate annulus
-  for (const h of hits) {
-    if (h.kind !== 'center') continue;
-    const ch = h as CenterHit;
-    if (ch.screenRing) {
-      const d = Math.hypot(x - ch.screenRing.cx, y - ch.screenRing.cy);
-      if (Math.abs(d - ch.screenRing.r) < HIT_RING + 4) {
-        return { kind: 'center' };
-      }
-      continue;
-    }
-    if (Math.hypot(x - h.x, y - h.y) <= h.r) {
+  for (const hit of hits) {
+    if (hit.kind !== 'center') continue;
+    const distance = Math.hypot(x - hit.center.x, y - hit.center.y);
+    if (hit.shape === 'annulus' ? Math.abs(distance - hit.radius) <= hit.band : distance <= hit.radius) {
       return { kind: 'center' };
     }
   }
-
-  // 3) Translate/scale axis shafts
-  for (const h of hits) {
-    if (h.kind !== 'axis') continue;
-    const ah = h as AxisHit;
-    if (ah.ring) continue;
-    const dx = h.x1 - h.x0;
-    const dy = h.y1 - h.y0;
-    const len2 = dx * dx + dy * dy || 1;
-    const t = Math.max(0, Math.min(1, ((x - h.x0) * dx + (y - h.y0) * dy) / len2));
-    const px = h.x0 + dx * t;
-    const py = h.y0 + dy * t;
-    if (Math.hypot(x - px, y - py) < HIT_AXIS) return { kind: 'axis', axis: h.axis };
-  }
-
-  // 4) Planes
-  for (const h of hits) {
-    if (h.kind !== 'plane') continue;
-    const ph = h as PlaneHit;
-    if (ph.corners && pointInQuad(x, y, ph.corners)) {
-      return { kind: 'plane', plane: h.plane };
+  for (const hit of hits) {
+    if (hit.kind === 'axis' && hit.shape === 'segment'
+      && segmentDistance(point, hit.start, hit.end) <= HIT_AXIS) {
+      return { kind: 'axis', axis: hit.axis };
     }
-    if (Math.hypot(x - h.cx, y - h.cy) < h.size / 2 + HIT_PLANE) {
-      return { kind: 'plane', plane: h.plane };
+  }
+  for (const hit of hits) {
+    if (hit.kind === 'plane' && polygonContains(point, hit.corners)) {
+      return { kind: 'plane', plane: hit.plane };
     }
   }
   return null;
 }
 
-/** World delta for 1 screen-pixel along a unit world axis (Unity 1:1 feel). */
+function projectedBasis(
+  origin: Vec3,
+  axisA: Vec3,
+  axisB: Vec3,
+  camera: Camera,
+  viewport: Vp,
+): { a: Point; b: Point } | null {
+  const center = project(origin, camera, viewport);
+  const projectedA = project(add(origin, axisA), camera, viewport);
+  const projectedB = project(add(origin, axisB), camera, viewport);
+  if (!center || !projectedA || !projectedB) return null;
+  return {
+    a: { x: projectedA.x - center.x, y: projectedA.y - center.y },
+    b: { x: projectedB.x - center.x, y: projectedB.y - center.y },
+  };
+}
+
 export function worldDeltaAlongAxis(
   origin: Vec3,
   axis: Vec3,
   screenDelta: { dx: number; dy: number },
-  cam: Camera,
-  vp: Vp,
+  camera: Camera,
+  viewport: Vp,
 ): Vec3 {
-  const p0 = project(origin, cam, vp);
-  const p1 = project(add(origin, axis), cam, vp);
-  if (!p0 || !p1) return [0, 0, 0];
-  const sx = p1.x - p0.x;
-  const sy = p1.y - p0.y;
-  const denom = sx * sx + sy * sy;
-  if (denom < 1e-4) return [0, 0, 0]; // edge-on
-  const t = (screenDelta.dx * sx + screenDelta.dy * sy) / denom;
-  return scale(axis, t);
+  const basis = projectedBasis(origin, axis, [0, 0, 0], camera, viewport);
+  if (!basis) return [0, 0, 0];
+  const denominator = basis.a.x ** 2 + basis.a.y ** 2;
+  if (denominator < 1e-4) return [0, 0, 0];
+  const amount = (screenDelta.dx * basis.a.x + screenDelta.dy * basis.a.y) / denominator;
+  return scale(axis, amount);
 }
 
+/** Solve both projected plane axes together; independent projection double-counts oblique drags. */
 export function worldDeltaOnPlane(
   origin: Vec3,
   axisA: Vec3,
   axisB: Vec3,
   screenDelta: { dx: number; dy: number },
-  cam: Camera,
-  vp: Vp,
+  camera: Camera,
+  viewport: Vp,
 ): Vec3 {
-  const da = worldDeltaAlongAxis(origin, axisA, screenDelta, cam, vp);
-  const db = worldDeltaAlongAxis(origin, axisB, screenDelta, cam, vp);
-  return add(da, db);
+  const center = project(origin, camera, viewport);
+  const normal = norm(cross(axisA, axisB));
+  if (center && Math.hypot(...normal) > 1e-6) {
+    const startRay = screenRay(center.x, center.y, camera, viewport);
+    const endRay = screenRay(
+      center.x + screenDelta.dx,
+      center.y + screenDelta.dy,
+      camera,
+      viewport,
+    );
+    const start = intersectRayPlane(startRay.origin, startRay.dir, origin, normal);
+    const end = intersectRayPlane(endRay.origin, endRay.dir, origin, normal);
+    if (start && end) {
+      const delta = sub(end, start);
+      return add(scale(axisA, dot(delta, axisA)), scale(axisB, dot(delta, axisB)));
+    }
+  }
+  const basis = projectedBasis(origin, axisA, axisB, camera, viewport);
+  if (!basis) return [0, 0, 0];
+  const determinant = basis.a.x * basis.b.y - basis.b.x * basis.a.y;
+  if (Math.abs(determinant) < 1e-4) {
+    const lengthA = basis.a.x ** 2 + basis.a.y ** 2;
+    const lengthB = basis.b.x ** 2 + basis.b.y ** 2;
+    return lengthA >= lengthB
+      ? worldDeltaAlongAxis(origin, axisA, screenDelta, camera, viewport)
+      : worldDeltaAlongAxis(origin, axisB, screenDelta, camera, viewport);
+  }
+  const amountA = (screenDelta.dx * basis.b.y - basis.b.x * screenDelta.dy) / determinant;
+  const amountB = (basis.a.x * screenDelta.dy - screenDelta.dx * basis.a.y) / determinant;
+  return add(scale(axisA, amountA), scale(axisB, amountB));
 }
 
-/** View-plane drag (center handle): pan in camera right/up, depth-matched. */
 export function worldDeltaViewPlane(
   origin: Vec3,
   screenDelta: { dx: number; dy: number },
-  cam: Camera,
-  vp: Vp,
+  camera: Camera,
+  viewport: Vp,
 ): Vec3 {
-  const p0 = project(origin, cam, vp);
-  if (!p0) return [0, 0, 0];
-  const { right, up } = lookBasis(cam.eye, cam.target);
-  const pr = project(add(origin, right), cam, vp);
-  const pu = project(add(origin, up), cam, vp);
-  if (!pr || !pu) return [0, 0, 0];
-  const rx = pr.x - p0.x;
-  const ry = pr.y - p0.y;
-  const ux = pu.x - p0.x;
-  const uy = pu.y - p0.y;
-  const det = rx * uy - ux * ry;
-  if (Math.abs(det) < 1e-4) return [0, 0, 0];
-  const tr = (screenDelta.dx * uy - screenDelta.dy * ux) / det;
-  const tu = (rx * screenDelta.dy - ry * screenDelta.dx) / det;
-  return add(scale(right, tr), scale(up, tu));
+  const { right, up } = lookBasis(camera.eye, camera.target);
+  return worldDeltaOnPlane(origin, right, up, screenDelta, camera, viewport);
 }
 
-export function gizmoPartEquals(a: GizmoPart | null, b: GizmoPart | null): boolean {
-  if (a === b) return true;
-  if (!a || !b || a.kind !== b.kind) return false;
-  if (a.kind === 'axis' && b.kind === 'axis') return a.axis === b.axis;
-  if (a.kind === 'plane' && b.kind === 'plane') return a.plane === b.plane;
-  if (a.kind === 'size' && b.kind === 'size') return a.handle === b.handle;
-  if (a.kind === 'anchor' && b.kind === 'anchor') return a.target === b.target;
-  return a.kind === 'center';
+export function gizmoPartEquals(left: GizmoPart | null, right: GizmoPart | null): boolean {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return samePart(left, right);
 }
 
 export function cursorForGizmoPart(part: GizmoPart | null): string {
   if (!part) return 'default';
-  if (part.kind === 'center') return 'move';
-  if (part.kind === 'plane') return 'move';
-  if (part.kind === 'anchor') return 'move';
+  if (part.kind === 'center' || part.kind === 'plane' || part.kind === 'anchor') return 'move';
   return 'grab';
 }
 
@@ -589,57 +486,44 @@ export function worldAxisVec(axis: GizmoAxis): Vec3 {
 }
 
 function planeBasis(axis: Vec3): { u: Vec3; v: Vec3 } {
-  const a = norm(axis);
-  const tmp: Vec3 = Math.abs(a[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
-  const u = norm(cross(a, tmp));
-  const v = norm(cross(a, u));
-  return { u, v };
+  const normalized = norm(axis);
+  const reference: Vec3 = Math.abs(normalized[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const u = norm(cross(normalized, reference));
+  return { u, v: norm(cross(normalized, u)) };
 }
 
-/** Unproject screen pixel → world ray (matches `project` NDC). */
-export function screenRay(
-  sx: number,
-  sy: number,
-  cam: Camera,
-  vp: Vp,
-): { origin: Vec3; dir: Vec3 } {
-  return screenPointRay(sx, sy, cam, vp);
+export function screenRay(screenX: number, screenY: number, camera: Camera, viewport: Vp) {
+  return screenPointRay(screenX, screenY, camera, viewport);
 }
 
 function intersectRayPlane(
   rayOrigin: Vec3,
-  rayDir: Vec3,
+  rayDirection: Vec3,
   planeOrigin: Vec3,
   planeNormal: Vec3,
 ): Vec3 | null {
-  const n = norm(planeNormal);
-  const denom = dot(rayDir, n);
-  if (Math.abs(denom) < 1e-5) return null;
-  const t = dot(sub(planeOrigin, rayOrigin), n) / denom;
-  if (t < 0.02) return null;
-  return add(rayOrigin, scale(rayDir, t));
+  const normal = norm(planeNormal);
+  const denominator = dot(rayDirection, normal);
+  if (Math.abs(denominator) < 1e-5) return null;
+  const distance = dot(sub(planeOrigin, rayOrigin), normal) / denominator;
+  if (distance < 0.02) return null;
+  return add(rayOrigin, scale(rayDirection, distance));
 }
 
-/**
- * Angle (radians) of the mouse ray hit around `axis`, in the plane through `origin`.
- * Used so dragging the X/Y/Z ring only spins that world axis.
- */
 export function angleAroundWorldAxis(
   origin: Vec3,
   axis: Vec3,
   screenX: number,
   screenY: number,
-  cam: Camera,
-  vp: Vp,
+  camera: Camera,
+  viewport: Vp,
 ): number | null {
-  const ray = screenRay(screenX, screenY, cam, vp);
+  const ray = screenRay(screenX, screenY, camera, viewport);
   const hit = intersectRayPlane(ray.origin, ray.dir, origin, axis);
   if (!hit) return null;
-  const { u, v } = planeBasis(axis);
-  const w = sub(hit, origin);
-  const x = dot(w, u);
-  const y = dot(w, v);
-  if (Math.hypot(x, y) < 1e-8) return null;
-  return Math.atan2(y, x);
+  const basis = planeBasis(axis);
+  const relative = sub(hit, origin);
+  const x = dot(relative, basis.u);
+  const y = dot(relative, basis.v);
+  return Math.hypot(x, y) < 1e-8 ? null : Math.atan2(y, x);
 }
-

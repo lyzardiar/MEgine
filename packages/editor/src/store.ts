@@ -83,6 +83,7 @@ import type { GizmoMode } from './editorTool';
 import {
   rotateTransformAround,
   scaleTransformAlong,
+  scaleTransformUniform,
   selectedTransformRoots,
 } from './transformSelection';
 import { applyAnimationPreview, type AnimationPreviewSample } from './animationPreview';
@@ -1783,6 +1784,25 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           ...transform,
           position: worldPointToLocal(parent, nextWorld.position) as TransformData['position'],
           scale: nextScale,
+        };
+      }
+    },
+    scaleSelectedTransformsUniform(entity: number, pivot: Vec3, factor: number) {
+      if (!pivot.every(Number.isFinite) || !Number.isFinite(factor) || factor <= 0) return;
+      const current = list();
+      const ids = selectedTransformRoots(current, selectedIds, entity);
+      const world = buildWorldTransforms(current);
+      for (const id of ids) {
+        const target = find(id);
+        const transform = target?.components.Transform as TransformData | undefined;
+        const resolved = resolvedTransform(world, id);
+        const parent = parentWorldTransform(current, world, id);
+        if (!target || !transform || !resolved || !parent) continue;
+        const nextWorld = scaleTransformUniform(resolved, pivot, factor);
+        target.components.Transform = {
+          ...transform,
+          position: worldPointToLocal(parent, nextWorld.position) as TransformData['position'],
+          scale: transform.scale.map((value) => Math.max(0.01, value * factor)) as TransformData['scale'],
         };
       }
     },
