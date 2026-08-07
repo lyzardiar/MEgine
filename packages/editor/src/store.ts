@@ -42,6 +42,10 @@ import { readRectTransform } from './ui/rectLayout';
 import { applyAnchorsKeepingRect, applyPivotKeepingVisualRect } from './ui/rectTransformModel';
 import type { FigmaUiImportPlan } from './ui/figmaImport.ts';
 import {
+  createGameUiTemplate,
+  type GameUiTemplateKind,
+} from './ui/gameUiTemplates.ts';
+import {
   gameAlignedCanvasSize,
   uiEntityWorldPivot,
   type UiEnt,
@@ -606,6 +610,39 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     selectionAnchor = root;
     expanded.add(root);
     return { root, created, sourceEntities };
+  };
+
+  const spawnGameUiTemplate = (
+    kind: GameUiTemplateKind,
+    requestedParent?: number | null,
+  ): number | null => {
+    if (mode !== 'edit') return null;
+    const template = createGameUiTemplate(kind);
+    pushUndo(`Create ${template.label}`);
+    let parent = requestedParent;
+    if (parent === undefined) {
+      const selected = primarySelected();
+      let current = selected != null ? find(selected) : null;
+      while (current && !current.components.Canvas && current.parent != null) {
+        current = find(current.parent) ?? null;
+      }
+      parent = current?.components.Canvas ? current.entity : ensureUiCanvasInternal(false);
+      if (parent == null) return null;
+    }
+    const created: number[] = [];
+    for (const node of template.nodes) {
+      const nodeParent = node.parent == null ? parent : created[node.parent];
+      if (nodeParent == null) return null;
+      const id = spawnAt(node.name, structuredClone(node.components), nodeParent, false);
+      if (id == null) return null;
+      created.push(id);
+    }
+    const root = created[0] ?? null;
+    if (root == null) return null;
+    selectedIds = [root];
+    selectionAnchor = root;
+    expanded.add(root);
+    return root;
   };
 
   const spawnSpriteAsset = (
@@ -2265,8 +2302,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     spawnUiPanel(parent?: number | null) {
       return spawnUiControl('Panel', createUiPanelComponents(), parent);
     },
-    spawnUiLayoutGroup(parent?: number | null) {
-      return spawnUiControl('Layout Group', createUiLayoutGroupComponents(), parent);
+    spawnUiLayoutGroup(
+      direction: 'Horizontal' | 'Vertical' | 'Grid' = 'Vertical',
+      parent?: number | null,
+    ) {
+      return spawnUiControl(`${direction} Layout Group`, createUiLayoutGroupComponents(direction), parent);
     },
     spawnUiProgressBar(parent?: number | null) {
       return spawnUiControl('Progress Bar', createUiProgressBarComponents(), parent);
@@ -2286,6 +2326,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     spawnUiTabView(parent?: number | null) {
       return spawnUiControl('Tab View', createUiTabViewComponents(), parent);
     },
+    spawnGameUiTemplate,
     importFigmaUiPlan,
     spawnSpriteAsset,
     spawnSpriteQuad() {

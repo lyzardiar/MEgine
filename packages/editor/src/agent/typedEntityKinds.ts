@@ -36,6 +36,12 @@ export const TYPED_ENTITY_KINDS = [
   'ui_tab_view',
   'ui_panel',
   'ui_layout_group',
+  'ui_horizontal_layout',
+  'ui_vertical_layout',
+  'ui_grid_layout',
+  'ui_inventory',
+  'ui_leaderboard',
+  'ui_shop',
 ] as const;
 
 export type TypedEntityKind = (typeof TYPED_ENTITY_KINDS)[number];

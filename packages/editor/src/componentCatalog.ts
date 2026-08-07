@@ -1102,7 +1102,9 @@ export function createUiPanelComponents() {
   };
 }
 
-export function createUiLayoutGroupComponents() {
+export type UiLayoutDirection = 'Horizontal' | 'Vertical' | 'Grid';
+
+export function createUiLayoutGroupComponents(direction: UiLayoutDirection = 'Vertical') {
   return {
     RectTransform: defaultRectTransform({ size_delta: [360, 200] }),
     CanvasRenderer: { cull_transparent_mesh: true },
@@ -1117,7 +1119,7 @@ export function createUiLayoutGroupComponents() {
       raycast_padding: [0, 0, 0, 0],
     },
     LayoutGroup: {
-      direction: 'Vertical',
+      direction,
       padding: [8, 8, 8, 8],
       spacing: [6, 6],
       cell_size: [160, 36],
@@ -1131,7 +1133,7 @@ export function createUiLayoutGroupComponents() {
       use_child_scale_height: false,
       reverse_arrangement: false,
       start_corner: 'UpperLeft',
-      start_axis: 'Horizontal',
+      start_axis: direction === 'Vertical' ? 'Vertical' : 'Horizontal',
       constraint: 'FixedColumnCount',
       constraint_count: 1,
     },

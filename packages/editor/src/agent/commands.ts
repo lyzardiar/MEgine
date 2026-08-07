@@ -546,6 +546,12 @@ const KIND_SPAWNERS: Record<TypedEntityKind, (store: EditorStore) => void> = {
   ui_tab_view: (store) => store.spawnUiTabView(),
   ui_panel: (store) => store.spawnUiPanel(),
   ui_layout_group: (store) => store.spawnUiLayoutGroup(),
+  ui_horizontal_layout: (store) => store.spawnUiLayoutGroup('Horizontal'),
+  ui_vertical_layout: (store) => store.spawnUiLayoutGroup('Vertical'),
+  ui_grid_layout: (store) => store.spawnUiLayoutGroup('Grid'),
+  ui_inventory: (store) => store.spawnGameUiTemplate('inventory'),
+  ui_leaderboard: (store) => store.spawnGameUiTemplate('leaderboard'),
+  ui_shop: (store) => store.spawnGameUiTemplate('shop'),
 };
 
 export const WRITE_COMMANDS: Record<string, CommandHandler> = {
