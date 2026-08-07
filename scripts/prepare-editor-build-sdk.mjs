@@ -8,8 +8,9 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { availableParallelism } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,9 +25,27 @@ const platform = process.platform === 'win32'
   ? 'windows'
   : process.platform === 'darwin' ? 'macos' : 'linux';
 const skipBuild = process.argv.includes('--skip-build');
+const buildEditor = process.argv.includes('--build-editor');
+const buildJobs = Math.max(1, Number(process.env.MENGINE_BUILD_JOBS) || availableParallelism());
 
-function run(file, args) {
-  execFileSync(file, args, { cwd: root, stdio: 'inherit', windowsHide: true });
+function run(file, args, label) {
+  const command = process.platform === 'win32' && file.endsWith('.cmd')
+    ? process.env.ComSpec || 'cmd.exe'
+    : file;
+  const commandArgs = command === file ? args : ['/d', '/s', '/c', file, ...args];
+  console.log(`[MEngine] ${label}`);
+  return new Promise((resolvePromise, rejectPromise) => {
+    const child = spawn(command, commandArgs, {
+      cwd: root,
+      stdio: 'inherit',
+      windowsHide: true,
+    });
+    child.once('error', rejectPromise);
+    child.once('exit', (code, signal) => {
+      if (code === 0) resolvePromise();
+      else rejectPromise(new Error(`${label} failed (${signal ?? `exit ${code}`})`));
+    });
+  });
 }
 
 function requireFile(path, label) {
@@ -35,13 +54,28 @@ function requireFile(path, label) {
 }
 
 if (!skipBuild) {
-  if (process.platform === 'win32') {
-    run(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'pnpm.cmd', '--filter', '@mengine/cli', 'build']);
-  } else {
-    run('pnpm', ['--filter', '@mengine/cli', 'build']);
+  const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+  const parallelBuilds = [
+    run(pnpm, ['--filter', '@mengine/cli', 'build'], 'Building CLI'),
+    run(
+      'cargo',
+      ['build', '-p', 'mengine-runtime', '--jobs', String(buildJobs)],
+      `Building Debug runtime (${buildJobs} jobs)`,
+    ),
+  ];
+  if (buildEditor) {
+    parallelBuilds.push(run(
+      pnpm,
+      [`--workspace-concurrency=${buildJobs}`, '--filter', '@mengine/editor...', 'run', 'build'],
+      `Building editor workspace (${buildJobs} workers)`,
+    ));
   }
-  run('cargo', ['build', '-p', 'mengine-runtime']);
-  run('cargo', ['build', '-p', 'mengine-runtime', '--release']);
+  await Promise.all(parallelBuilds);
+  await run(
+    'cargo',
+    ['build', '-p', 'mengine-runtime', '--release', '--jobs', String(buildJobs)],
+    `Building Release runtime (${buildJobs} jobs)`,
+  );
 }
 
 const cliEntry = requireFile(join(cliDir, 'dist', 'cli.js'), 'MEngine CLI');

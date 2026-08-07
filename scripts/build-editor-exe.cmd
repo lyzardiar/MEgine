@@ -25,6 +25,9 @@ if errorlevel 1 goto :missing_environment
 
 if not exist "%REPO_ROOT%\node_modules\.pnpm" goto :missing_environment
 
+if not defined MENGINE_BUILD_JOBS set "MENGINE_BUILD_JOBS=%NUMBER_OF_PROCESSORS%"
+if not defined MENGINE_BUILD_JOBS set "MENGINE_BUILD_JOBS=1"
+
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VS_VCTOOLS="
 if exist "%VSWHERE%" (
@@ -32,6 +35,7 @@ if exist "%VSWHERE%" (
 )
 if not defined VS_VCTOOLS goto :missing_environment
 
+echo [MEngine] Building with !MENGINE_BUILD_JOBS! workers; independent Rust and TypeScript targets run in parallel.
 echo [MEngine] Building the Windows release executable and NSIS installer...
 call npm.cmd --prefix packages\editor run tauri:build -- --bundles nsis
 if errorlevel 1 (
