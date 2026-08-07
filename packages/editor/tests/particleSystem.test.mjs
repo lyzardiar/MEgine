@@ -71,3 +71,21 @@ test('particle seek ignores authored playing and preserves state on invalid requ
   assert.equal(seekParticleEmitter(2, emitter, state, 300.01), false);
   assert.deepEqual(state, snapshot);
 });
+
+test('2D bursts and drag match the deterministic fixed-step preview contract', () => {
+  const burst = {
+    ...emitter,
+    rate_over_time: 0,
+    burst_count: 3,
+    burst_interval: 0.1,
+    drag: 4,
+    gravity: [0, 0],
+  };
+  const state = createParticleEmitterState();
+  stepParticleEmitter(2, burst, state, 0.01);
+  assert.equal(state.particles.length, 3);
+  const initialSpeed = Math.hypot(...state.particles[0].velocity);
+  stepParticleEmitter(2, burst, state, 0.1);
+  assert.equal(state.particles.length, 6);
+  assert.ok(Math.hypot(...state.particles[0].velocity) < initialSpeed);
+});

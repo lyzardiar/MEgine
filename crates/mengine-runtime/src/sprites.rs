@@ -202,6 +202,106 @@ fn sanitize_positive_pair(value: [f32; 2], fallback: [f32; 2]) -> [f32; 2] {
     [value[0].abs().max(0.0001), value[1].abs().max(0.0001)]
 }
 
+fn project_world_ribbon_segment(
+    world_start: Vec3,
+    world_end: Vec3,
+    half_width_point: Vec3,
+    color: [f32; 4],
+    sorting_layer: &str,
+    sorting_order: i32,
+    texture: &str,
+    blend: UiBlendMode,
+    material: &str,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+) -> Option<WorldPrimitive> {
+    let midpoint = (world_start + world_end) * 0.5;
+    let start_screen = project_world_to_viewport(world_start, camera, viewport)?;
+    let end_screen = project_world_to_viewport(world_end, camera, viewport)?;
+    let midpoint_screen = project_world_to_viewport(midpoint, camera, viewport)?;
+    let normal_screen = project_world_to_viewport(half_width_point, camera, viewport)?;
+    let dx = end_screen[0] - start_screen[0];
+    let dy = end_screen[1] - start_screen[1];
+    let length = dx.hypot(dy);
+    let width = (2.0
+        * (normal_screen[0] - midpoint_screen[0]).hypot(normal_screen[1] - midpoint_screen[1]))
+    .max(0.5);
+    if !length.is_finite() || !width.is_finite() || length <= 0.0 {
+        return None;
+    }
+    Some(WorldPrimitive {
+        kind: WorldPrimitiveKind::TwoD,
+        sorting_layer: sorting_layer.into(),
+        sorting_order,
+        depth: (start_screen[2] + end_screen[2]) * 0.5,
+        world_position: Some([midpoint.x, midpoint.y]),
+        primitive: UiPrimitive {
+            rect: [
+                (start_screen[0] + end_screen[0] - length) * 0.5,
+                (start_screen[1] + end_screen[1] - width) * 0.5,
+                length,
+                width,
+            ],
+            color,
+            pivot: [0.5, 0.5],
+            rotation_radians: dy.atan2(dx),
+            depth: 0.0,
+            clip_corners: None,
+            uv: [0.0, 0.0, 1.0, 1.0],
+            vertex_positions: None,
+            shader_channel_data: Default::default(),
+            soft_clips: [None; 8],
+            canvas_sorting_grid_size: None,
+            key: UiBatchKey {
+                canvas_group: None,
+                material: material.into(),
+                texture: if texture.is_empty() { "white" } else { texture }.into(),
+                clip: None,
+                blend,
+                shader_channels: Default::default(),
+                depth_test: false,
+                stencil: Default::default(),
+            },
+            render_material: None,
+        },
+    })
+}
+
+pub(crate) fn project_world_segment(
+    world_start: Vec3,
+    world_end: Vec3,
+    width: f32,
+    color: [f32; 4],
+    sorting_layer: &str,
+    sorting_order: i32,
+    texture: &str,
+    blend: UiBlendMode,
+    material: &str,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+) -> Option<WorldPrimitive> {
+    let delta = world_end - world_start;
+    let length = delta.length();
+    if length <= 0.000001 || width <= 0.0 || color[3] <= 0.0 {
+        return None;
+    }
+    let midpoint = (world_start + world_end) * 0.5;
+    let normal = Vec3::new(-delta.y, delta.x, 0.0).normalize_or_zero();
+    project_world_ribbon_segment(
+        world_start,
+        world_end,
+        midpoint + normal * (width * 0.5),
+        color,
+        sorting_layer,
+        sorting_order,
+        texture,
+        blend,
+        material,
+        camera,
+        viewport,
+    )
+}
+
 fn project_line(
     transform: &Transform,
     line: &Line2D,
@@ -238,57 +338,19 @@ fn project_line(
             let normal = Vec3::new(-local_delta.y, local_delta.x, 0.0) / local_length;
             let normal_offset =
                 rotation * (Vec3::new(normal.x, normal.y, 0.0) * scale * (line.width * 0.5));
-            let start_screen = project_world_to_viewport(world_start, camera, viewport)?;
-            let end_screen = project_world_to_viewport(world_end, camera, viewport)?;
-            let midpoint_screen = project_world_to_viewport(midpoint, camera, viewport)?;
-            let normal_screen =
-                project_world_to_viewport(midpoint + normal_offset, camera, viewport)?;
-            let dx = end_screen[0] - start_screen[0];
-            let dy = end_screen[1] - start_screen[1];
-            let length = dx.hypot(dy);
-            let width = (2.0
-                * (normal_screen[0] - midpoint_screen[0])
-                    .hypot(normal_screen[1] - midpoint_screen[1]))
-            .max(0.5);
-            if !length.is_finite() || !width.is_finite() || length <= 0.0 {
-                return None;
-            }
-            Some(WorldPrimitive {
-                kind: WorldPrimitiveKind::TwoD,
-                sorting_layer: line.sorting_layer.clone(),
-                sorting_order: line.sorting_order,
-                depth: (start_screen[2] + end_screen[2]) * 0.5,
-                world_position: Some([midpoint.x, midpoint.y]),
-                primitive: UiPrimitive {
-                    rect: [
-                        (start_screen[0] + end_screen[0] - length) * 0.5,
-                        (start_screen[1] + end_screen[1] - width) * 0.5,
-                        length,
-                        width,
-                    ],
-                    color: line.color,
-                    pivot: [0.5, 0.5],
-                    rotation_radians: dy.atan2(dx),
-                    depth: 0.0,
-                    clip_corners: None,
-                    uv: [0.0, 0.0, 1.0, 1.0],
-                    vertex_positions: None,
-                    shader_channel_data: Default::default(),
-                    soft_clips: [None; 8],
-                    canvas_sorting_grid_size: None,
-                    key: UiBatchKey {
-                        canvas_group: None,
-                        material: "line2d/default".into(),
-                        texture: "white".into(),
-                        clip: None,
-                        blend: UiBlendMode::Alpha,
-                        shader_channels: Default::default(),
-                        depth_test: false,
-                        stencil: Default::default(),
-                    },
-                    render_material: None,
-                },
-            })
+            project_world_ribbon_segment(
+                world_start,
+                world_end,
+                midpoint + normal_offset,
+                line.color,
+                &line.sorting_layer,
+                line.sorting_order,
+                "white",
+                UiBlendMode::Alpha,
+                "line2d/default",
+                camera,
+                viewport,
+            )
         })
         .collect()
 }

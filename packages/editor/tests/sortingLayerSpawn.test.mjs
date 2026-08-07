@@ -2,12 +2,18 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { createSpriteSpawnComponents } from '../src/spriteCreation.ts';
+import {
+  createParticleEmitter2D,
+  createTrailRenderer2D,
+} from '../src/componentCatalog.ts';
 
 test('all direct 2D renderer creation paths initialize the project sorting layer', () => {
   assert.equal(
     createSpriteSpawnComponents('white').components.SpriteRenderer.sorting_layer,
     'default',
   );
+  assert.equal(createParticleEmitter2D().sorting_layer, 'default');
+  assert.equal(createTrailRenderer2D().sorting_layer, 'default');
   const source = readFileSync(new URL('../src/store.ts', import.meta.url), 'utf8');
   for (const [method, nextMethod] of [
     ['spawnAnimatedSprite2D() {', 'spawnLine2D() {'],

@@ -160,6 +160,22 @@ export interface Line2D {
   sortingOrder: number;
 }
 
+export interface TrailRenderer2D {
+  enabled: boolean;
+  emitting: boolean;
+  time: number;
+  minVertexDistance: number;
+  maxPoints: number;
+  widthStart: number;
+  widthEnd: number;
+  colorStart: [number, number, number, number];
+  colorEnd: [number, number, number, number];
+  texture: string;
+  blendMode: string;
+  sortingLayer: string;
+  sortingOrder: number;
+}
+
 export interface Grid {
   cellSize: [number, number];
   cellGap: [number, number];
@@ -312,6 +328,8 @@ export interface ParticleEmitter2D {
   duration: number;
   startDelay: number;
   rateOverTime: number;
+  burstCount: number;
+  burstInterval: number;
   maxParticles: number;
   lifetimeMin: number;
   lifetimeMax: number;
@@ -322,6 +340,7 @@ export interface ParticleEmitter2D {
   colorStart: [number, number, number, number];
   colorEnd: [number, number, number, number];
   gravity: [number, number];
+  drag: number;
   shape: string;
   shapeRadius: number;
   shapeSize: [number, number];
@@ -857,6 +876,21 @@ export type SerializedComponentMap = {
     sorting_layer: string;
     sorting_order: number;
   };
+  TrailRenderer2D: {
+    enabled: boolean;
+    emitting: boolean;
+    time: number;
+    min_vertex_distance: number;
+    max_points: number;
+    width_start: number;
+    width_end: number;
+    color_start: [number, number, number, number];
+    color_end: [number, number, number, number];
+    texture: string;
+    blend_mode: string;
+    sorting_layer: string;
+    sorting_order: number;
+  };
   Grid: {
     cell_size: [number, number];
     cell_gap: [number, number];
@@ -992,6 +1026,8 @@ export type SerializedComponentMap = {
     duration: number;
     start_delay: number;
     rate_over_time: number;
+    burst_count: number;
+    burst_interval: number;
     max_particles: number;
     lifetime_min: number;
     lifetime_max: number;
@@ -1002,6 +1038,7 @@ export type SerializedComponentMap = {
     color_start: [number, number, number, number];
     color_end: [number, number, number, number];
     gravity: [number, number];
+    drag: number;
     shape: string;
     shape_radius: number;
     shape_size: [number, number];
@@ -1377,6 +1414,7 @@ export type ComponentName =
   | 'SpriteRenderer'
   | 'AnimatedSprite2D'
   | 'Line2D'
+  | 'TrailRenderer2D'
   | 'Grid'
   | 'Tilemap'
   | 'AnimationPlayer'
@@ -1445,6 +1483,7 @@ export const COMPONENT_NAMES = [
   'SpriteRenderer',
   'AnimatedSprite2D',
   'Line2D',
+  'TrailRenderer2D',
   'Grid',
   'Tilemap',
   'AnimationPlayer',

@@ -1667,6 +1667,12 @@
       "blend_mode": {
         "type": "string"
       },
+      "burst_count": {
+        "type": "number"
+      },
+      "burst_interval": {
+        "type": "number"
+      },
       "color_end": {
         "items": {
           "type": "number"
@@ -1684,6 +1690,9 @@
           "type": "number"
         },
         "type": "array"
+      },
+      "drag": {
+        "type": "number"
       },
       "duration": {
         "type": "number"
@@ -1764,6 +1773,8 @@
       "duration",
       "start_delay",
       "rate_over_time",
+      "burst_count",
+      "burst_interval",
       "max_particles",
       "lifetime_min",
       "lifetime_max",
@@ -1774,6 +1785,7 @@
       "color_start",
       "color_end",
       "gravity",
+      "drag",
       "shape",
       "shape_radius",
       "shape_size",
@@ -2977,6 +2989,71 @@
     },
     "required": [
       "allow_switch_off"
+    ],
+    "type": "object"
+  },
+  "TrailRenderer2D": {
+    "properties": {
+      "blend_mode": {
+        "type": "string"
+      },
+      "color_end": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "color_start": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "emitting": {
+        "type": "boolean"
+      },
+      "enabled": {
+        "type": "boolean"
+      },
+      "max_points": {
+        "type": "number"
+      },
+      "min_vertex_distance": {
+        "type": "number"
+      },
+      "sorting_layer": {
+        "type": "string"
+      },
+      "sorting_order": {
+        "type": "number"
+      },
+      "texture": {
+        "type": "string"
+      },
+      "time": {
+        "type": "number"
+      },
+      "width_end": {
+        "type": "number"
+      },
+      "width_start": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "enabled",
+      "emitting",
+      "time",
+      "min_vertex_distance",
+      "max_points",
+      "width_start",
+      "width_end",
+      "color_start",
+      "color_end",
+      "texture",
+      "blend_mode",
+      "sorting_layer",
+      "sorting_order"
     ],
     "type": "object"
   },

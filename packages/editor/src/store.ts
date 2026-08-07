@@ -19,6 +19,7 @@ import {
   createComponentDefaults,
   createParticleEmitter2D,
   createParticleEmitter3D,
+  createTrailRenderer2D,
   createSpineSkeleton,
   createUiButtonComponents,
   createUiCanvasComponents,
@@ -37,6 +38,10 @@ import {
   createUiTextComponents,
   createUiToggleComponents,
 } from './componentCatalog';
+import {
+  createParticleEmitter2DPreset,
+  type Particle2DPresetKind,
+} from './particles/particlePresets';
 import { CURRENT_SCENE_VERSION, migrateSceneDocument } from './sceneMigration';
 import { readRectTransform } from './ui/rectLayout';
 import { applyAnchorsKeepingRect, applyPivotKeepingVisualRect } from './ui/rectTransformModel';
@@ -2416,6 +2421,29 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         {
           Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
           ParticleEmitter2D: createParticleEmitter2D(),
+        },
+        null,
+        true,
+      );
+    },
+    spawnParticleEmitter2DPreset(kind: Particle2DPresetKind) {
+      const preset = createParticleEmitter2DPreset(kind);
+      return spawnAt(
+        preset.name,
+        {
+          Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          ParticleEmitter2D: preset.component,
+        },
+        null,
+        true,
+      );
+    },
+    spawnTrailRenderer2D() {
+      return spawnAt(
+        'Trail 2D',
+        {
+          Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          TrailRenderer2D: createTrailRenderer2D(),
         },
         null,
         true,

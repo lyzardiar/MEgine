@@ -182,6 +182,23 @@ component Line2D {
   sorting_order: int          = 0
 }
 
+/// Unity-style world-space trail sampled from an entity's XY movement.
+component TrailRenderer2D {
+  enabled:             bool   = true
+  emitting:            bool   = true
+  time:                float  = 0.6
+  min_vertex_distance: float  = 0.08
+  max_points:          int    = 128
+  width_start:         float  = 0.2
+  width_end:           float  = 0
+  color_start:         float4 = [1, 0.8, 0.25, 1]
+  color_end:           float4 = [1, 0.15, 0.02, 0]
+  texture:             string = ""
+  blend_mode:          string = "alpha"
+  sorting_layer:       string = "default"
+  sorting_order:       int    = 0
+}
+
 /// Unity-style parent grid used by Tilemap children.
 component Grid {
   cell_size:   float2 = [1, 1]
@@ -352,6 +369,8 @@ component ParticleEmitter2D {
   duration:         float  = 5
   start_delay:      float  = 0
   rate_over_time:   float  = 20
+  burst_count:      int    = 0
+  burst_interval:   float  = 0
   max_particles:    int    = 1000
   lifetime_min:     float  = 0.8
   lifetime_max:     float  = 1.6
@@ -362,6 +381,7 @@ component ParticleEmitter2D {
   color_start:      float4 = [1, 0.75, 0.2, 1]
   color_end:        float4 = [1, 0.15, 0.02, 0]
   gravity:          float2 = [0, -0.8]
+  drag:             float  = 0
   shape:            string = "circle"
   shape_radius:     float  = 0.2
   shape_size:       float2 = [1, 1]

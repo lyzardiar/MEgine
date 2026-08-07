@@ -13,6 +13,7 @@ use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::sorting::SortingLayers;
 use mengine_runtime::textures::{RuntimeTextureCache, TextureLoadFailure};
+use mengine_runtime::trails::TrailWorld;
 use mengine_runtime::ui::UiInteractionState;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -45,6 +46,7 @@ pub struct EditorViewportRenderer {
     textures: RuntimeTextureCache,
     fonts: RuntimeFontCache,
     particles: ParticleWorld,
+    trails: TrailWorld,
     effekseer: Option<EffekseerWorld>,
     last_effect_frame: Instant,
     preview_restart: u64,
@@ -69,6 +71,7 @@ impl EditorViewportRenderer {
             textures: RuntimeTextureCache::new(Some(project_root.clone())),
             fonts: RuntimeFontCache::new(Some(project_root.clone())),
             particles: ParticleWorld::default(),
+            trails: TrailWorld::default(),
             effekseer: EffekseerWorld::new(Some(project_root.clone()))
                 .map_err(|error| log::warn!("Effekseer viewport runtime is unavailable: {error}"))
                 .ok(),
@@ -214,6 +217,7 @@ impl EditorViewportRenderer {
         let mut frame = FrameCompiler {
             materials: &mut self.materials,
             particles: &mut self.particles,
+            trails: &mut self.trails,
             textures: &mut self.textures,
             fonts: &mut self.fonts,
         }
@@ -230,7 +234,7 @@ impl EditorViewportRenderer {
             button_tints: &button_tints,
             focused_ui: None,
             sorting_layers: &self.sorting_layers,
-            delta_seconds: 0.0,
+            delta_seconds: effect_delta,
         });
 
         if let Some(effekseer) = self.effekseer.as_mut() {

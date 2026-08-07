@@ -654,6 +654,59 @@ impl Component for Line2D {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct TrailRenderer2D {
+    pub enabled: bool,
+    pub emitting: bool,
+    pub time: f32,
+    pub min_vertex_distance: f32,
+    pub max_points: i32,
+    pub width_start: f32,
+    pub width_end: f32,
+    pub color_start: [f32; 4],
+    pub color_end: [f32; 4],
+    pub texture: String,
+    pub blend_mode: String,
+    pub sorting_layer: String,
+    pub sorting_order: i32,
+}
+
+impl Default for TrailRenderer2D {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            emitting: true,
+            time: 0.6,
+            min_vertex_distance: 0.08,
+            max_points: 128,
+            width_start: 0.2,
+            width_end: 0.0,
+            color_start: [1.0, 0.8, 0.25, 1.0],
+            color_end: [1.0, 0.15, 0.02, 0.0],
+            texture: "".into(),
+            blend_mode: "alpha".into(),
+            sorting_layer: "default".into(),
+            sorting_order: 0,
+        }
+    }
+}
+
+impl Component for TrailRenderer2D {
+    fn type_name() -> &'static str {
+        "TrailRenderer2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Grid {
     pub cell_size: [f32; 2],
     pub cell_gap: [f32; 2],
@@ -1290,6 +1343,8 @@ pub struct ParticleEmitter2D {
     pub duration: f32,
     pub start_delay: f32,
     pub rate_over_time: f32,
+    pub burst_count: i32,
+    pub burst_interval: f32,
     pub max_particles: i32,
     pub lifetime_min: f32,
     pub lifetime_max: f32,
@@ -1300,6 +1355,7 @@ pub struct ParticleEmitter2D {
     pub color_start: [f32; 4],
     pub color_end: [f32; 4],
     pub gravity: [f32; 2],
+    pub drag: f32,
     pub shape: String,
     pub shape_radius: f32,
     pub shape_size: [f32; 2],
@@ -1321,6 +1377,8 @@ impl Default for ParticleEmitter2D {
             duration: 5.0,
             start_delay: 0.0,
             rate_over_time: 20.0,
+            burst_count: 0,
+            burst_interval: 0.0,
             max_particles: 1000,
             lifetime_min: 0.8,
             lifetime_max: 1.6,
@@ -1331,6 +1389,7 @@ impl Default for ParticleEmitter2D {
             color_start: [1.0, 0.75, 0.2, 1.0],
             color_end: [1.0, 0.15, 0.02, 0.0],
             gravity: [0.0, -0.8],
+            drag: 0.0,
             shape: "circle".into(),
             shape_radius: 0.2,
             shape_size: [1.0, 1.0],
@@ -2815,6 +2874,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Line2D" => serde_json::from_value::<Line2D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "TrailRenderer2D" => serde_json::from_value::<TrailRenderer2D>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "Grid" => serde_json::from_value::<Grid>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Tilemap" => serde_json::from_value::<Tilemap>(value)
@@ -2937,6 +2998,7 @@ pub mod meta {
         "SpriteRenderer",
         "AnimatedSprite2D",
         "Line2D",
+        "TrailRenderer2D",
         "Grid",
         "Tilemap",
         "AnimationPlayer",

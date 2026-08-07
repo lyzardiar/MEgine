@@ -60,6 +60,8 @@ export const AnimatedSprite2D = defineBuiltinComponent('AnimatedSprite2D');
 export type AnimatedSprite2D = BuiltinComponents['AnimatedSprite2D'];
 export const Line2D = defineBuiltinComponent('Line2D');
 export type Line2D = BuiltinComponents['Line2D'];
+export const TrailRenderer2D = defineBuiltinComponent('TrailRenderer2D');
+export type TrailRenderer2D = BuiltinComponents['TrailRenderer2D'];
 export const Grid = defineBuiltinComponent('Grid');
 export type Grid = BuiltinComponents['Grid'];
 export const Tilemap = defineBuiltinComponent('Tilemap');
@@ -181,6 +183,7 @@ export const BUILTIN_COMPONENT_TYPES = {
   SpriteRenderer,
   AnimatedSprite2D,
   Line2D,
+  TrailRenderer2D,
   Grid,
   Tilemap,
   AnimationPlayer,

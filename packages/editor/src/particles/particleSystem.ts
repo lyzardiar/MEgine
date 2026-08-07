@@ -17,6 +17,7 @@ export type ParticleEmitterState = {
   particles: Particle[];
   elapsed: number;
   emissionRemainder: number;
+  nextBurstTime: number;
   randomState: number;
   configuredSeed: number;
 };
@@ -71,6 +72,7 @@ export function createParticleEmitterState(seed = 1): ParticleEmitterState {
     particles: [],
     elapsed: 0,
     emissionRemainder: 0,
+    nextBurstTime: 0,
     randomState: normalized,
     configuredSeed: normalized,
   };
@@ -81,6 +83,7 @@ export function resetParticleEmitterState(state: ParticleEmitterState, seed = 1)
   state.particles.length = 0;
   state.elapsed = 0;
   state.emissionRemainder = 0;
+  state.nextBurstTime = 0;
   state.randomState = normalized;
   state.configuredSeed = normalized;
 }
@@ -223,11 +226,16 @@ function stepSubframe(
   emitterPosition: Vec3,
 ): void {
   const gravity = vector(component.gravity, dimension, dimension === 2 ? [0, -0.8] : [0, -0.6, 0]);
+  const drag = dimension === 2 ? Math.max(0, finite(component.drag, 0)) : 0;
+  const damping = Math.exp(-drag * dt);
   for (const particle of state.particles) {
     particle.age += dt;
     particle.velocity[0] += gravity[0] * dt;
     particle.velocity[1] += gravity[1] * dt;
     particle.velocity[2] += (gravity[2] ?? 0) * dt;
+    particle.velocity[0] *= damping;
+    particle.velocity[1] *= damping;
+    particle.velocity[2] *= damping;
     particle.position[0] += particle.velocity[0] * dt;
     particle.position[1] += particle.velocity[1] * dt;
     particle.position[2] += particle.velocity[2] * dt;
@@ -244,8 +252,23 @@ function stepSubframe(
   const maxParticles = Math.min(MAX_PARTICLES, Math.max(0, finite(component.max_particles, 1000) | 0));
   const rate = Math.max(0, finite(component.rate_over_time, 20));
   state.emissionRemainder += rate * dt;
-  const requested = Math.floor(state.emissionRemainder + 1e-5);
+  let requested = Math.floor(state.emissionRemainder + 1e-5);
   state.emissionRemainder = Math.max(0, state.emissionRemainder - requested);
+  const burstCount = dimension === 2 ? Math.max(0, finite(component.burst_count, 0) | 0) : 0;
+  const burstInterval = Math.max(0, finite(component.burst_interval, 0));
+  if (burstCount > 0 && activeTime + 1e-5 >= state.nextBurstTime) {
+    if (burstInterval > 0) {
+      const repeats = Math.min(
+        MAX_PARTICLES,
+        Math.floor(Math.max(0, activeTime - state.nextBurstTime) / burstInterval) + 1,
+      );
+      requested += burstCount * repeats;
+      state.nextBurstTime += burstInterval * repeats;
+    } else {
+      requested += burstCount;
+      state.nextBurstTime = Number.POSITIVE_INFINITY;
+    }
+  }
   const count = Math.min(requested, Math.max(0, maxParticles - state.particles.length));
   for (let index = 0; index < count; index += 1) {
     const particle = dimension === 2 ? spawn2D(component, state) : spawn3D(component, state);

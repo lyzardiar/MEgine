@@ -8,6 +8,7 @@ use crate::sorting::{sort_world_primitives, SortingLayers};
 use crate::sprites::collect_world_primitives_with_hierarchy;
 use crate::textures::{RuntimeTextureCache, TextureLoadFailure};
 use crate::timeline::RuntimeCameraOverride;
+use crate::trails::TrailWorld;
 use crate::ui::{
     append_ui_focus_ring, collect_ui_frame_for_display_with_interaction_and_fonts, RuntimeUiFrame,
     UiButtonTintTween, UiControlRegion, UiInteractionState,
@@ -104,6 +105,7 @@ pub struct FrameCompileRequest<'a> {
 pub struct FrameCompiler<'a> {
     pub materials: &'a mut RuntimeMaterialCache,
     pub particles: &'a mut ParticleWorld,
+    pub trails: &'a mut TrailWorld,
     pub textures: &'a mut RuntimeTextureCache,
     pub fonts: &'a mut RuntimeFontCache,
 }
@@ -204,8 +206,16 @@ impl FrameCompiler<'_> {
             [width, height],
             request.delta_seconds,
         );
+        let trail_primitives = self.trails.update_and_collect_world_with_hierarchy(
+            request.world,
+            request.hierarchy,
+            camera,
+            [width, height],
+            request.delta_seconds,
+        );
         if has_scene_camera {
             world_primitives.extend(particle_primitives);
+            world_primitives.extend(trail_primitives);
         }
         apply_2d_lighting(request.world, request.hierarchy, &mut world_primitives);
         world_primitives.append(&mut ui.world_primitives);

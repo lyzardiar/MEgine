@@ -27,6 +27,7 @@ struct EmitterState {
     particles: Vec<Particle>,
     elapsed: f32,
     remainder: f32,
+    next_burst_time: f32,
     random: u32,
     configured_seed: i32,
 }
@@ -36,6 +37,7 @@ impl EmitterState {
         self.particles.clear();
         self.elapsed = 0.0;
         self.remainder = 0.0;
+        self.next_burst_time = 0.0;
         self.random = if seed == 0 { 1 } else { seed as u32 };
         self.configured_seed = if seed == 0 { 1 } else { seed };
     }
@@ -99,6 +101,23 @@ impl Emitter<'_> {
         match self {
             Self::Two(value) => value.rate_over_time,
             Self::Three(value) => value.rate_over_time,
+        }
+    }
+
+    fn burst(&self) -> (usize, f32) {
+        match self {
+            Self::Two(value) => (
+                value.burst_count.max(0) as usize,
+                value.burst_interval.max(0.0),
+            ),
+            Self::Three(_) => (0, 0.0),
+        }
+    }
+
+    fn drag(&self) -> f32 {
+        match self {
+            Self::Two(value) => value.drag.max(0.0),
+            Self::Three(_) => 0.0,
         }
     }
 
@@ -350,9 +369,11 @@ fn step_emitter(state: &mut EmitterState, emitter: &Emitter<'_>, origin: Vec3, d
 
 fn step_subframe(state: &mut EmitterState, emitter: &Emitter<'_>, origin: Vec3, dt: f32) {
     let gravity = emitter.gravity();
+    let damping = (-emitter.drag() * dt).exp();
     for particle in &mut state.particles {
         particle.age += dt;
         particle.velocity += gravity * dt;
+        particle.velocity *= damping;
         particle.position += particle.velocity * dt;
     }
     state
@@ -366,8 +387,23 @@ fn step_subframe(state: &mut EmitterState, emitter: &Emitter<'_>, origin: Vec3, 
     state.remainder += emitter.rate().max(0.0) * dt;
     // Small epsilon prevents f32 substep accumulation from losing a whole
     // emission when mathematically landing on an integer boundary.
-    let requested = (state.remainder + 1.0e-5).floor() as usize;
+    let mut requested = (state.remainder + 1.0e-5).floor() as usize;
     state.remainder = (state.remainder - requested as f32).max(0.0);
+    let (burst_count, burst_interval) = emitter.burst();
+    if burst_count > 0 && active_time + 1.0e-5 >= state.next_burst_time {
+        if burst_interval > 0.0 {
+            let repeats =
+                (((active_time - state.next_burst_time).max(0.0) / burst_interval).floor()
+                    as usize)
+                    .saturating_add(1)
+                    .min(MAX_PARTICLES);
+            requested = requested.saturating_add(burst_count.saturating_mul(repeats));
+            state.next_burst_time += burst_interval * repeats as f32;
+        } else {
+            requested = requested.saturating_add(burst_count);
+            state.next_burst_time = f32::INFINITY;
+        }
+    }
     let available = emitter
         .max_particles()
         .saturating_sub(state.particles.len());
@@ -577,6 +613,31 @@ mod tests {
         let mut state = EmitterState::default();
         step_emitter(&mut state, &Emitter::Three(&emitter), Vec3::ZERO, 1.0);
         assert_eq!(state.particles.len(), 8);
+    }
+
+    #[test]
+    fn two_dimensional_bursts_repeat_deterministically_and_respect_drag() {
+        let emitter = ParticleEmitter2D {
+            rate_over_time: 0.0,
+            burst_count: 3,
+            burst_interval: 0.1,
+            lifetime_min: 10.0,
+            lifetime_max: 10.0,
+            speed_min: 2.0,
+            speed_max: 2.0,
+            drag: 4.0,
+            gravity: [0.0, 0.0],
+            shape: "point".into(),
+            spread_degrees: 0.0,
+            ..ParticleEmitter2D::default()
+        };
+        let mut state = EmitterState::default();
+        step_emitter(&mut state, &Emitter::Two(&emitter), Vec3::ZERO, 0.01);
+        assert_eq!(state.particles.len(), 3);
+        let initial_speed = state.particles[0].velocity.length();
+        step_emitter(&mut state, &Emitter::Two(&emitter), Vec3::ZERO, 0.1);
+        assert_eq!(state.particles.len(), 6);
+        assert!(state.particles[0].velocity.length() < initial_speed);
     }
 
     #[test]

@@ -116,6 +116,12 @@ import {
   type ParticleEmitterState,
 } from '../particles/particleSystem';
 import {
+  collectTrailSegments2D,
+  createTrailState2D,
+  stepTrail2D,
+  type TrailState2D,
+} from '../trails/trailSystem';
+import {
   createViewportSimulationClock,
   sampleViewportSimulationClock,
 } from '../viewportSimulationClock';
@@ -672,6 +678,7 @@ export function Viewport(props: {
   } | null>(null);
   const uiStatsRef = useRef({ elements: 0, batches: 0 });
   const particleStatesRef = useRef(new Map<number, ParticleEmitterState>());
+  const trailStatesRef = useRef(new Map<number, TrailState2D>());
   const reportedMaterialErrorsRef = useRef(new Set<string>());
   const particleTimelineStateRef = useRef(new Map<number, {
     key: string;
@@ -790,6 +797,9 @@ export function Viewport(props: {
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
     return agentBridge.registerViewportCapture(props.tab, (format, quality, maxSize = 2_048) => {
+      // Hidden WebView2 windows can throttle requestAnimationFrame. Paint on
+      // demand so an Agent capture always reflects the latest store revision.
+      paint();
       const canvas = canvasRef.current;
       if (!canvas) return null;
       try {
@@ -1220,7 +1230,7 @@ export function Viewport(props: {
     lastCameraRef.current = cam;
     if (
       !isGame
-      && !canvasWorkspaceActive
+      && !scene2DActive
       && '__TAURI_INTERNALS__' in window
       && !nativeSceneRequestRef.current.inFlight
       && now - nativeSceneRequestRef.current.lastRequestAt
@@ -1424,6 +1434,34 @@ export function Viewport(props: {
       }
     }
 
+    const liveTrailIds = new Set<number>();
+    const trailDrawByEntity = new Map<number, {
+      segments: ReturnType<typeof collectTrailSegments2D>;
+      additive: boolean;
+      component: Record<string, unknown>;
+    }>();
+    for (const entity of p.entities) {
+      if (!isActive(entity.entity)) continue;
+      const component = entity.components.TrailRenderer2D as Record<string, unknown> | undefined;
+      const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
+      if (!component || !transform) continue;
+      liveTrailIds.add(entity.entity);
+      let state = trailStatesRef.current.get(entity.entity);
+      if (!state) {
+        state = createTrailState2D();
+        trailStatesRef.current.set(entity.entity, state);
+      }
+      stepTrail2D(state, component, simulationDelta, transform.position as Vec3);
+      trailDrawByEntity.set(entity.entity, {
+        segments: collectTrailSegments2D(state, component),
+        additive: String(component.blend_mode).toLowerCase() === 'additive',
+        component,
+      });
+    }
+    for (const entityId of trailStatesRef.current.keys()) {
+      if (!liveTrailIds.has(entityId)) trailStatesRef.current.delete(entityId);
+    }
+
     const liveSpineIds = new Set<number>();
     for (const entity of p.entities) {
       if (
@@ -1474,7 +1512,7 @@ export function Viewport(props: {
           sortingOrder: number | null;
           sortingLayerOrder: number | null;
           editorGizmo: boolean;
-          renderKind: 'entity' | 'particle' | 'spine';
+          renderKind: 'entity' | 'trail' | 'particle' | 'spine';
         }> = [];
         if (pr || camComp || isLight || hasCollider || e.components.Tilemap) {
           const renderer2D = (e.components.Tilemap
@@ -1487,11 +1525,26 @@ export function Viewport(props: {
             t,
             pr,
             depth: pr?.depth ?? 0,
-            hierarchyOrder: hierarchyOrder * 3,
+            hierarchyOrder: hierarchyOrder * 4,
             sortingOrder: sorting?.order ?? null,
             sortingLayerOrder: sorting ? getSortingLayerRank(sorting.layer) : null,
             editorGizmo: !isGame && !renderer2D && !e.components.MeshRenderer && (!!camComp || isLight),
             renderKind: 'entity',
+          });
+        }
+        const trail = trailDrawByEntity.get(e.entity);
+        if (trail) {
+          const sorting = component2DSortingSettings(trail.component);
+          entries.push({
+            e,
+            t,
+            pr,
+            depth: pr?.depth ?? 0,
+            hierarchyOrder: hierarchyOrder * 4 + 1,
+            sortingOrder: sorting.order,
+            sortingLayerOrder: getSortingLayerRank(sorting.layer),
+            editorGizmo: false,
+            renderKind: 'trail',
           });
         }
         const particle = particleDrawByEntity.get(e.entity);
@@ -1504,7 +1557,7 @@ export function Viewport(props: {
             t,
             pr,
             depth: pr?.depth ?? 0,
-            hierarchyOrder: hierarchyOrder * 3 + 1,
+            hierarchyOrder: hierarchyOrder * 4 + 2,
             sortingOrder: sorting?.order ?? null,
             sortingLayerOrder: sorting ? getSortingLayerRank(sorting.layer) : null,
             editorGizmo: false,
@@ -1519,7 +1572,7 @@ export function Viewport(props: {
             t,
             pr,
             depth: pr.depth,
-            hierarchyOrder: hierarchyOrder * 3 + 2,
+            hierarchyOrder: hierarchyOrder * 4 + 3,
             sortingOrder: sorting.order,
             sortingLayerOrder: getSortingLayerRank(sorting.layer),
             editorGizmo: false,
@@ -1537,11 +1590,41 @@ export function Viewport(props: {
       sortingOrder: number | null;
       sortingLayerOrder: number | null;
       editorGizmo: boolean;
-      renderKind: 'entity' | 'particle' | 'spine';
+      renderKind: 'entity' | 'trail' | 'particle' | 'spine';
     }>;
     drawn.sort(compareWorldDrawOrder);
 
     for (const { e, t, pr, renderKind } of drawn) {
+      if (renderKind === 'trail') {
+        const trailDraw = trailDrawByEntity.get(e.entity);
+        if (!trailDraw) continue;
+        ctx.save();
+        ctx.globalCompositeOperation = trailDraw.additive ? 'lighter' : 'source-over';
+        for (const segment of trailDraw.segments) {
+          const center: Vec3 = [0, 0, (segment.start[2] + segment.end[2]) * 0.5];
+          const hit = drawWorldLine2D(
+            ctx,
+            cam,
+            vp,
+            center,
+            [1, 1, 1],
+            [[segment.start[0], segment.start[1]], [segment.end[0], segment.end[1]]],
+            segment.width,
+            (position) => modulateLight2DColor(
+              segment.color,
+              position,
+              String(trailDraw.component.sorting_layer ?? 'default'),
+              lights2D,
+            ),
+            false,
+            false,
+          );
+          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+        }
+        ctx.restore();
+        continue;
+      }
+
       if (renderKind === 'particle') {
         const particleDraw = particleDrawByEntity.get(e.entity);
         if (!particleDraw) continue;
@@ -1940,7 +2023,9 @@ export function Viewport(props: {
       if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
     }
 
-    const nativeSceneFrame = !isGame ? nativeSceneFrameRef.current : null;
+    // The web renderer owns the complete 2D authoring path (including live
+    // particles and trails). Native Scene frames are composited only in 3D.
+    const nativeSceneFrame = !isGame && !scene2DActive ? nativeSceneFrameRef.current : null;
     if (nativeSceneFrame?.image.complete) {
       ctx.drawImage(nativeSceneFrame.image, vp.x, vp.y, vp.w, vp.h);
       if (!scene2DActive && sceneGridRef.current) {

@@ -18,6 +18,7 @@ pub mod sorting;
 pub mod sprites;
 pub mod textures;
 pub mod timeline;
+pub mod trails;
 pub mod ui;
 pub mod ui_raycast;
 

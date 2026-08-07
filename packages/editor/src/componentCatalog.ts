@@ -404,6 +404,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'TrailRenderer2D',
+    label: 'Trail Renderer 2D',
+    description: 'Unity-style movement trail with lifetime, width and color fade',
+    create: () => createTrailRenderer2D(),
+  },
+  {
     type: 'Grid',
     label: 'Grid',
     description: 'Unity-style rectangular cell coordinate system for Tilemap children',
@@ -920,6 +926,8 @@ export function createParticleEmitter2D(): Record<string, unknown> {
     duration: 5,
     start_delay: 0,
     rate_over_time: 20,
+    burst_count: 0,
+    burst_interval: 0,
     max_particles: 1000,
     lifetime_min: 0.8,
     lifetime_max: 1.6,
@@ -930,6 +938,7 @@ export function createParticleEmitter2D(): Record<string, unknown> {
     color_start: [1, 0.75, 0.2, 1],
     color_end: [1, 0.15, 0.02, 0],
     gravity: [0, -0.8],
+    drag: 0,
     shape: 'circle',
     shape_radius: 0.2,
     shape_size: [1, 1],
@@ -941,6 +950,24 @@ export function createParticleEmitter2D(): Record<string, unknown> {
     sorting_layer: 'default',
     sorting_order: 0,
     seed: 1,
+  };
+}
+
+export function createTrailRenderer2D(): Record<string, unknown> {
+  return {
+    enabled: true,
+    emitting: true,
+    time: 0.6,
+    min_vertex_distance: 0.08,
+    max_points: 128,
+    width_start: 0.2,
+    width_end: 0,
+    color_start: [1, 0.8, 0.25, 1],
+    color_end: [1, 0.15, 0.02, 0],
+    texture: '',
+    blend_mode: 'alpha',
+    sorting_layer: 'default',
+    sorting_order: 0,
   };
 }
 

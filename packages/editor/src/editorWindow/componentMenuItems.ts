@@ -21,6 +21,7 @@ const COMPONENT_GROUPS: Record<string, string> = {
   SpriteRenderer: 'Rendering',
   AnimatedSprite2D: 'Rendering',
   Line2D: 'Rendering',
+  TrailRenderer2D: 'Effects',
   Grid: 'Rendering',
   Tilemap: 'Rendering',
   SpineSkeleton: 'Rendering',

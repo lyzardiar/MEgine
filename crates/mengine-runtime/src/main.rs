@@ -10,7 +10,7 @@ use mengine_core::generated::{
     AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Button, Dropdown, EffekseerEffect,
     EnvironmentLight, Image, InputField, ListView, MaterialPropertyBlock, MeshRenderer, Panel,
     ParticleEmitter2D, ParticleEmitter3D, RawImage, ScrollView, Scrollbar, Slider, SpriteRenderer,
-    TabView, Text, Tilemap, TimelineDirector, Toggle, Transform,
+    TabView, Text, Tilemap, TimelineDirector, Toggle, TrailRenderer2D, Transform,
 };
 #[cfg(test)]
 use mengine_core::generated::{Camera3D, PbrMaterial, PointLight};
@@ -53,6 +53,7 @@ use mengine_runtime::textures::RuntimeTextureCache;
 #[cfg(test)]
 use mengine_runtime::timeline::RuntimeCameraOverride;
 use mengine_runtime::timeline::{RuntimeParticleCommand, TimelineRuntime};
+use mengine_runtime::trails::TrailWorld;
 use mengine_runtime::ui::{
     next_ui_focus, set_toggle_value, update_ui_button_tints, UiButtonTintTween, UiControlKind,
     UiControlRegion, UiInteractionState,
@@ -129,6 +130,7 @@ struct App {
     last_material_pipeline_stats: Option<MaterialPipelineStats>,
     last_material_texture_stats: Option<MaterialTextureStats>,
     particles: ParticleWorld,
+    trails: TrailWorld,
     effekseer: Option<EffekseerWorld>,
     sorting_layers: SortingLayers,
     textures: RuntimeTextureCache,
@@ -199,6 +201,7 @@ impl App {
             last_material_pipeline_stats: None,
             last_material_texture_stats: None,
             particles: ParticleWorld::default(),
+            trails: TrailWorld::default(),
             effekseer,
             sorting_layers,
             textures,
@@ -520,6 +523,7 @@ impl App {
                 self.focused_ui = None;
                 self.last_ui_draw_calls = u32::MAX;
                 self.particles = ParticleWorld::default();
+                self.trails = TrailWorld::default();
                 self.animations = AnimationRuntime::new(self.args.project_root.clone());
                 self.timelines = TimelineRuntime::new(self.args.project_root.clone());
                 self.audio.clear();
@@ -1805,6 +1809,7 @@ function onTick(dt, frame) {
                     let mut frame = FrameCompiler {
                         materials: &mut self.materials,
                         particles: &mut self.particles,
+                        trails: &mut self.trails,
                         textures: &mut self.textures,
                         fonts: &mut self.fonts,
                     }
@@ -2343,6 +2348,9 @@ fn validate_world_assets(
                 project_root,
                 validated,
             )?;
+        }
+        if let Some(trail) = world.get_component::<TrailRenderer2D>(entity) {
+            validate_texture_asset(&trail.texture, "2D trail texture", project_root, validated)?;
         }
         if let Some(emitter) = world.get_component::<ParticleEmitter3D>(entity) {
             validate_texture_asset(
