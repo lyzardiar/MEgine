@@ -13,6 +13,8 @@ import { createPortal } from 'react-dom';
 import {
   Box,
   FoldVertical,
+  Lock,
+  LockOpen,
   MoreVertical,
   PanelTop,
   Search,
@@ -229,8 +231,10 @@ const InspectorPanelContext = createContext<{
 
 function InspectorToolbar(props: {
   query: string;
+  locked: boolean;
   onQuery: (query: string) => void;
   onExpand: (open: boolean) => void;
+  onToggleLock: () => void;
 }) {
   return (
     <div className="insp-toolbar">
@@ -254,6 +258,16 @@ function InspectorToolbar(props: {
       </button>
       <button type="button" title="Expand All" aria-label="Expand all Inspector components" onClick={() => props.onExpand(true)}>
         <UnfoldVertical size={14} />
+      </button>
+      <button
+        type="button"
+        className={props.locked ? 'active' : ''}
+        title={props.locked ? 'Unlock Inspector' : 'Lock Inspector'}
+        aria-label={props.locked ? 'Unlock Inspector' : 'Lock Inspector'}
+        aria-pressed={props.locked}
+        onClick={props.onToggleLock}
+      >
+        {props.locked ? <Lock size={13} /> : <LockOpen size={13} />}
       </button>
     </div>
   );
@@ -1900,11 +1914,49 @@ export function Inspector(props: {
   const [expansion, setExpansion] = useState<InspectorExpansionCommand>({ revision: 0, open: true });
   const [nameDraft, setNameDraft] = useState('');
   const [componentClipboard, setComponentClipboard] = useState<ComponentClipboard | null>(null);
+  const [lockedSelection, setLockedSelection] = useState<{
+    ids: number[];
+    primary: number;
+  } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const entitiesById = new Map([
+    ...(props.entities ?? []),
+    ...(props.entity ? [props.entity] : []),
+  ].map((entity) => [entity.entity, entity]));
+  const lockedEntities = lockedSelection
+    ? lockedSelection.ids
+      .map((id) => entitiesById.get(id))
+      .filter((entity): entity is NonNullable<typeof entity> => entity != null)
+    : [];
+  const inspectedEntity = lockedSelection
+    ? entitiesById.get(lockedSelection.primary) ?? lockedEntities[0] ?? null
+    : props.entity;
+  const inspectedIds = lockedSelection
+    ? lockedEntities.map((entity) => entity.entity)
+    : props.selectedIds ?? (props.entity ? [props.entity.entity] : []);
+  const inspectedSelectionCount = lockedSelection
+    ? lockedEntities.length
+    : props.selectionCount ?? inspectedIds.length;
+  const toggleInspectorLock = () => {
+    if (lockedSelection) {
+      setLockedSelection(null);
+      return;
+    }
+    if (!props.entity) return;
+    setLockedSelection({
+      ids: inspectedIds.length > 0 ? [...inspectedIds] : [props.entity.entity],
+      primary: props.entity.entity,
+    });
+  };
+
   useEffect(() => {
-    setNameDraft(props.entity?.name ?? (props.entity ? `Entity ${props.entity.entity}` : ''));
-  }, [props.entity?.entity, props.entity?.name]);
+    setNameDraft(inspectedEntity?.name ?? (inspectedEntity ? `Entity ${inspectedEntity.entity}` : ''));
+  }, [inspectedEntity?.entity, inspectedEntity?.name]);
+
+  useEffect(() => {
+    if (lockedSelection && lockedEntities.length === 0) setLockedSelection(null);
+  }, [lockedEntities.length, lockedSelection]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -1915,27 +1967,28 @@ export function Inspector(props: {
     return () => window.removeEventListener('mousedown', close);
   }, [menuOpen]);
 
-  if (!props.entity) {
+  if (!inspectedEntity) {
     return <div className="empty-state">Select a GameObject to inspect</div>;
   }
 
-  if ((props.selectionCount ?? 1) > 1) {
-    const byId = new Map((props.entities ?? []).map((entity) => [entity.entity, entity]));
-    const selectedEntities = (props.selectedIds ?? [])
-      .map((id) => byId.get(id))
+  if (inspectedSelectionCount > 1) {
+    const selectedEntities = inspectedIds
+      .map((id) => entitiesById.get(id))
       .filter((entity): entity is NonNullable<typeof entity> => entity != null);
     return (
       <InspectorPanelContext.Provider value={{ query: inspectorQuery, expansion }}>
         <InspectorToolbar
           query={inspectorQuery}
+          locked={lockedSelection != null}
           onQuery={setInspectorQuery}
           onExpand={(open) => setExpansion((current) => ({ revision: current.revision + 1, open }))}
+          onToggleLock={toggleInspectorLock}
         />
         {props.previewNotice && <div className="inspector-preview-notice">{props.previewNotice}</div>}
         <MultiSelectionInspector
           count={selectedEntities.length}
           entities={selectedEntities}
-          primary={props.entity}
+          primary={inspectedEntity}
           componentClipboard={componentClipboard}
           onCopyComponent={setComponentClipboard}
           tagOptions={props.tagOptions ?? [{ value: 'Untagged', label: 'Untagged' }]}
@@ -1955,7 +2008,7 @@ export function Inspector(props: {
     );
   }
 
-  const entity = props.entity;
+  const entity = inspectedEntity;
   const tag = entity.tag?.trim() || 'Untagged';
   const layer = Number.isInteger(entity.layer) ? Number(entity.layer) : 0;
   const configuredTags = props.tagOptions ?? [{ value: 'Untagged', label: 'Untagged' }];
@@ -2059,8 +2112,10 @@ export function Inspector(props: {
     <InspectorPanelContext.Provider value={{ query: inspectorQuery, expansion }}>
     <InspectorToolbar
       query={inspectorQuery}
+      locked={lockedSelection != null}
       onQuery={setInspectorQuery}
       onExpand={(open) => setExpansion((current) => ({ revision: current.revision + 1, open }))}
+      onToggleLock={toggleInspectorLock}
     />
     <InspectorGestureProvider
       begin={props.onBeginEditGesture ?? (() => {})}

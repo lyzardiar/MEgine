@@ -85,6 +85,8 @@ test('core editor navigation exposes named semantic controls', () => {
     /className="comp-toggle"\s*aria-expanded=\{expanded\}/,
   );
   assert.match(inspector, /aria-label="Search Inspector properties"/);
+  assert.match(inspector, /aria-label=\{props\.locked \? 'Unlock Inspector' : 'Lock Inspector'\}/);
+  assert.match(inspector, /aria-pressed=\{props\.locked\}/);
   assert.match(hierarchy, /aria-label="Search hierarchy"/);
   assert.match(hierarchy, /event\.key === 'ArrowRight'/);
   assert.match(inspector, /className="comp" data-agent-scope=\{props\.title\}/);

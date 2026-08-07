@@ -1020,7 +1020,7 @@ button, input, select {
   top: 0;
   z-index: 12;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px 24px;
+  grid-template-columns: minmax(0, 1fr) 24px 24px 24px;
   gap: 4px;
   align-items: center;
   padding: 5px 6px;
@@ -1044,6 +1044,12 @@ button, input, select {
 
 .insp-toolbar > button:hover,
 .insp-search > button:hover { color: #fff; background: #484848; }
+
+.insp-toolbar > button.active {
+  border-color: #4f86ad;
+  background: #315d76;
+  color: #fff;
+}
 
 .insp-search {
   min-width: 0;
