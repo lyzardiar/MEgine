@@ -30,9 +30,10 @@ Generates Rust components and TypeScript types.
 
 ## Editor
 
-- UI: `@mengine/editor` (Vite + React)  
-- Host: `mengine-editor-host` + optional Tauri shell under `packages/editor/src-tauri`  
-- Play Mode clones edit world; Stop discards play state  
+- UI: `@mengine/editor` (Vite + React)
+- Host: `mengine-editor-host` + optional Tauri shell under `packages/editor/src-tauri`
+- Play Mode clones edit world; Stop discards play state
+- Authoring guides: [Canvas Workspace](./canvas-workspace.md), [Figma UI Bridge](./figma-ui-bridge.md), [2D Effects](./2d-effects.md)
 
 ## Platforms
 

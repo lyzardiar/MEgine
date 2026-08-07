@@ -166,6 +166,28 @@ Verified boundaries and remaining work:
 7. 跨平台与发行：macOS/Linux 桌面行为、代码签名/公证、安装器签名、远程构建与完整发布治理仍不在已完成证明内。
 8. 整体编辑器：Animation/Animator、材质、粒子、音频、Prefab、构建发布、Profiler 等虽已具备大量基础与扩展能力，仍需按模块建立当前代码证据、真实运行证据和缺口表；本文件不是最终完成证明。
 
+## 2026-08-07 当前批次：Canvas 工作台、Figma 与 2D Effects
+
+完成：
+
+- 后台 Agent 新增共享的 `auto-background`、`required-background`、`discovery-only` 连接策略和 `doctor`，启动、查询、截图与验证均只操作隐藏且未聚焦的后台实例。
+- Screen Space Canvas 已具备多画板工作台、共享 Canvas Plan、七类确定性诊断、8 屏幕像素 Smart/Gap Snap、RectTransform 语义化 Inspector 和可搜索创建菜单。
+- 顶部 `Window > Figma Settings` 统一管理非敏感导入参数；Figma Frame 可经预览、revision 门禁和一次 Undo 转换为现有 MEngine UI 层级，CLI/MCP/HTTP 共用同一设置与导入协议。
+- `GameObject > UI > Templates` 新增 Inventory、Leaderboard、Shop 三套由现有布局组件组成的响应式游戏 UI 模板。
+- `ParticleEmitter2D` 新增 burst 与 drag，提供 Fire、Smoke、Spark Burst、Magic Aura、Snow 五个预设；新增 `TrailRenderer2D`，Editor 2D Scene、原生 Runtime/Player、Inspector、Agent 类型和 Behaviour token 已贯通。
+
+当前验证门禁：
+
+- Editor 全量测试 835 项通过。
+- `cargo check --workspace --all-targets`、TypeScript/Vite 生产构建和 Tauri Debug 构建通过。
+- 隐藏 WebView2 像素回归确认粒子跨帧变化和拖尾开关差异；验证期间窗口始终 `visible=false`、`focused=false`，未操作前台编辑器。
+
+已知边界：
+
+- Figma 当前是受 revision 保护的单向导入，不做双向同步、变量/设计令牌同步或基于图层名猜测交互语义。
+- Canvas 诊断不自动修复或猜测断点布局；场景仍只有一份 RectTransform 数据。
+- 基础 2D 粒子不包含曲线、碰撞、噪声、子发射器或 GPU 模拟；TrailRenderer2D 不包含圆角/拐角细分。复杂效果继续使用 Effekseer。
+
 ## 后续审核规则
 
 - 每一批先读取当前工作区与测试覆盖，再确认真实缺口；历史技术记录只作定位，不作当前完成证据。
