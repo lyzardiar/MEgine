@@ -377,7 +377,7 @@ export function Profiler() {
         <span className={`profiler-record-state${frozen ? ' frozen' : ''}`}>
           <i />{frozen ? 'Frozen' : 'Recording'}
         </span>
-        <button type="button" onClick={() => {
+        <button type="button" aria-pressed={frozen} onClick={() => {
           if (frozen) returnToLive();
           else setFrozen(true);
         }}>
@@ -536,7 +536,7 @@ export function Profiler() {
               {samples.length ? `Frame ${frameSelectionIndex + 1} / ${samples.length}` : 'No frames'}
               {latestNative && latest ? ` · native ${Math.abs(latestNative.timestamp - latest.timestamp).toFixed(0)} ms away` : ''}
             </span>
-            <button type="button" className={selectedTimestamp == null ? 'active' : ''} onClick={returnToLive}>
+            <button type="button" className={selectedTimestamp == null ? 'active' : ''} aria-pressed={selectedTimestamp == null} onClick={returnToLive}>
               Live
             </button>
           </div>

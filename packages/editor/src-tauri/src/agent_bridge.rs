@@ -2673,6 +2673,52 @@ async fn interact_editor_window_impl(
         .get("result")
         .cloned()
         .ok_or_else(|| "WebView2 UI interaction did not return a result".to_string())?;
+    if action == "hover" && result.get("ok").and_then(serde_json::Value::as_bool) == Some(true) {
+        let entering = hover_state.as_deref().unwrap_or("enter") == "enter";
+        let (x, y) = if entering {
+            (
+                result
+                    .get("clientX")
+                    .and_then(serde_json::Value::as_f64)
+                    .ok_or_else(|| "WebView2 hover did not resolve clientX".to_string())?,
+                result
+                    .get("clientY")
+                    .and_then(serde_json::Value::as_f64)
+                    .ok_or_else(|| "WebView2 hover did not resolve clientY".to_string())?,
+            )
+        } else {
+            (-1.0, -1.0)
+        };
+        validate_background_ui_interaction_window(&app, &window_label)?;
+        call_webview_devtools(
+            &app,
+            &window_label,
+            "Input.dispatchMouseEvent",
+            serde_json::json!({
+                "type": "mouseMoved",
+                "x": x,
+                "y": y,
+                "button": "none",
+                "buttons": 0,
+                "pointerType": "mouse",
+            }),
+        )
+        .await?;
+        evaluate_webview_script_with_await(
+            &app,
+            &window_label,
+            "new Promise((resolve) => { let done = false; const finish = () => { if (done) return; done = true; clearTimeout(timer); resolve(true); }; const timer = setTimeout(finish, 50); requestAnimationFrame(() => requestAnimationFrame(finish)); })".to_string(),
+            true,
+        )
+        .await?;
+        result
+            .as_object_mut()
+            .ok_or_else(|| "WebView2 UI interaction returned a non-object value".to_string())?
+            .insert(
+                "nativeHoverApplied".to_string(),
+                serde_json::Value::Bool(true),
+            );
+    }
     let stale_snapshot = result
         .get("staleSnapshot")
         .and_then(serde_json::Value::as_bool)
@@ -3626,7 +3672,8 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       actions.push('dragBy');
     }
     if (
-      typeof props.onPointerEnter === 'function'
+      actions.includes('click')
+      || typeof props.onPointerEnter === 'function'
       || typeof props.onPointerOver === 'function'
       || typeof props.onMouseEnter === 'function'
       || typeof props.onMouseOver === 'function'
@@ -5314,31 +5361,6 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   const dispatchPointer = (type, button, buttons, detail = 0) => {
     dispatchPointerAt(element, type, button, buttons, detail);
   };
-  const reactHoverEvent = (target, type, relatedTarget) => {
-    const coordinates = eventCoordinates(target);
-    return {
-      type,
-      target,
-      currentTarget: target,
-      nativeEvent: null,
-      bubbles: true,
-      cancelable: true,
-      defaultPrevented: false,
-      button: 0,
-      buttons: 0,
-      pointerId: 1,
-      pointerType: 'mouse',
-      isPrimary: true,
-      relatedTarget,
-      ...modifiers,
-      ...coordinates,
-      preventDefault() { this.defaultPrevented = true; },
-      stopPropagation() {},
-      isDefaultPrevented() { return this.defaultPrevented; },
-      isPropagationStopped() { return false; },
-      persist() {},
-    };
-  };
   const reactPropsFor = (target) => {
     for (const key of Object.keys(target)) {
       if (key.startsWith('__reactProps$')) return target[key] || {};
@@ -5746,28 +5768,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       });
     }
   } else if (action === 'hover') {
-    const reactProps = reactPropsFor(element);
     performedHoverState = requestedHoverState ?? 'enter';
     const hoverState = Symbol.for('mengine.agent.hoveredElement');
     const storedHover = window[hoverState];
     const previous = storedHover instanceof Element && storedHover.isConnected
       ? storedHover
       : null;
-    const dispatchLeave = (target, relatedTarget) => {
-      const props = reactPropsFor(target);
-      if (typeof props.onPointerOut === 'function') {
-        props.onPointerOut(reactHoverEvent(target, 'pointerout', relatedTarget));
-      }
-      if (typeof props.onPointerLeave === 'function') {
-        props.onPointerLeave(reactHoverEvent(target, 'pointerleave', relatedTarget));
-      }
-      if (typeof props.onMouseOut === 'function') {
-        props.onMouseOut(reactHoverEvent(target, 'mouseout', relatedTarget));
-      }
-      if (typeof props.onMouseLeave === 'function') {
-        props.onMouseLeave(reactHoverEvent(target, 'mouseleave', relatedTarget));
-      }
-    };
     if (performedHoverState === 'leave') {
       if (previous && previous !== element) {
         return {
@@ -5776,38 +5782,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           hoverTargetMismatch: true,
         };
       }
-      if (previous) dispatchLeave(previous, null);
       window[hoverState] = null;
       hoverStateChanged = previous !== null;
     } else {
-      if (
-        typeof reactProps.onPointerEnter !== 'function'
-        && typeof reactProps.onPointerOver !== 'function'
-        && typeof reactProps.onMouseEnter !== 'function'
-        && typeof reactProps.onMouseOver !== 'function'
-      ) {
-        return { ok: false, error: `Element ${selector} has no semantic hover interaction` };
-      }
-      if (
-        previous
-        && previous !== element
-        && !composedContains(previous, element)
-      ) {
-        dispatchLeave(previous, element);
-      }
       if (previous !== element) {
-        if (typeof reactProps.onPointerOver === 'function') {
-          reactProps.onPointerOver(reactHoverEvent(element, 'pointerover', previous));
-        }
-        if (typeof reactProps.onPointerEnter === 'function') {
-          reactProps.onPointerEnter(reactHoverEvent(element, 'pointerenter', previous));
-        }
-        if (typeof reactProps.onMouseOver === 'function') {
-          reactProps.onMouseOver(reactHoverEvent(element, 'mouseover', previous));
-        }
-        if (typeof reactProps.onMouseEnter === 'function') {
-          reactProps.onMouseEnter(reactHoverEvent(element, 'mouseenter', previous));
-        }
         window[hoverState] = element;
       }
       hoverStateChanged = previous !== element;

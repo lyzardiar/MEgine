@@ -1182,8 +1182,8 @@ export function Project(props: {
               .then(() => setLibTick((tick) => tick + 1))}
           ><RefreshCw size={13} /></button>
           <div className="project-view-toggle" role="group" aria-label="Asset view">
-            <button type="button" className={viewMode === 'grid' ? 'active' : ''} aria-label="Grid view" title="Grid view" onClick={() => setViewMode('grid')}><Grid2X2 size={13} /></button>
-            <button type="button" className={viewMode === 'list' ? 'active' : ''} aria-label="List view" title="List view" onClick={() => setViewMode('list')}><List size={13} /></button>
+            <button type="button" className={viewMode === 'grid' ? 'active' : ''} aria-label="Grid view" aria-pressed={viewMode === 'grid'} title="Grid view" onClick={() => setViewMode('grid')}><Grid2X2 size={13} /></button>
+            <button type="button" className={viewMode === 'list' ? 'active' : ''} aria-label="List view" aria-pressed={viewMode === 'list'} title="List view" onClick={() => setViewMode('list')}><List size={13} /></button>
           </div>
         </div>
         <div

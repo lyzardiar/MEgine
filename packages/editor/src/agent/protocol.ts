@@ -260,6 +260,8 @@ export interface EditorUiActionResult {
   path?: EditorUiDragPathPoint[] | null;
   hoverState?: 'enter' | 'leave' | null;
   hoverStateChanged?: boolean | null;
+  /** True when WebView2 applied a real CSS :hover state without moving the OS cursor. */
+  nativeHoverApplied?: boolean;
   scrollIntoViewChanged?: boolean | null;
   revealedRect?: EditorUiRect | null;
   valueCommitMethod?: 'change' | 'blur' | null;

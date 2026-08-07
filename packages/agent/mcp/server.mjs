@@ -4010,7 +4010,7 @@ const TOOLS = [
   ),
   execTool(
     'hover_window_ui',
-    'Enter or leave an element marked with the hover action by get_window_ui only when its editor window is hidden and unfocused. Use state leave to clear the current synthetic hover target and collapse transient UI without moving the OS cursor.',
+    'Enter or leave an element marked with the hover action by get_window_ui only when its editor window is hidden and unfocused. WebView2 applies the real CSS hover state and React pointer lifecycle without moving the OS cursor; use state leave to clear transient UI.',
     'window.ui_hover',
     {
       ...uiInteractionProperties('Exact hover-capable selector returned by get_window_ui'),

@@ -340,6 +340,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(protocol, /hoverTargetMismatch\?: boolean/);
   assert.match(protocol, /hoverState\?: 'enter' \| 'leave' \| null/);
   assert.match(protocol, /hoverStateChanged\?: boolean \| null/);
+  assert.match(protocol, /nativeHoverApplied\?: boolean/);
   assert.match(protocol, /valueCommitMethod\?: 'change' \| 'blur' \| null/);
   assert.match(protocol, /valueCommitConfirmed\?: boolean \| null/);
   assert.match(protocol, /valueHandledByReact\?: boolean \| null/);
@@ -731,6 +732,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /typeof props\.onClick !== 'function' \|\| explicitDragBy/);
   assert.match(rust, /typeof reactProps\.onClick === 'function' && !explicitDragBy/);
   assert.match(rust, /actions\.push\('hover'\)/);
+  assert.match(rust, /actions\.includes\('click'\)/);
   assert.match(rust, /new DataTransfer\(\)/);
   assert.match(rust, /new DragEvent\(type/);
   assert.match(rust, /dispatchDrag\(targetElement, 'drop'\)/);
@@ -738,9 +740,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /Object\.defineProperty\(element, name/);
   assert.match(rust, /dispatchPointerAt\(element, 'mousemove'/);
   assert.match(rust, /Symbol\.for\('mengine\.agent\.hoveredElement'\)/);
-  assert.match(rust, /!composedContains\(previous, element\)/);
-  assert.match(rust, /props\.onPointerLeave\(reactHoverEvent\(target/);
-  assert.match(rust, /reactProps\.onPointerEnter\(reactHoverEvent/);
+  assert.match(rust, /"Input\.dispatchMouseEvent"/);
+  assert.match(rust, /"type": "mouseMoved"/);
+  assert.match(rust, /"nativeHoverApplied"\.to_string\(\)/);
+  assert.doesNotMatch(interactionScript, /reactHoverEvent/);
   assert.doesNotMatch(contentScript, /targetElement|targetSelector|action === 'dragTo'/);
   assert.match(interactionScript, /let targetElement = null/);
   assert.doesNotMatch(interactionScript, /document\.querySelector\(targetSelector\)/);

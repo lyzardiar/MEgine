@@ -26,12 +26,13 @@ export function ToolBar(props: {
 }) {
   return (
     <div className="tool-bar">
-      <div className="tool-group">
+      <div className="tool-group" role="toolbar" aria-label="Scene tools">
         <span className="brand-chip">MENGINE</span>
         <button
           type="button"
           className={`tool-btn${props.gizmo === 'translate' ? ' active' : ''}`}
           aria-label="Move tool"
+          aria-pressed={props.gizmo === 'translate'}
           title="Move (W)"
           onClick={() => props.onGizmo('translate')}
         >
@@ -41,6 +42,7 @@ export function ToolBar(props: {
           type="button"
           className={`tool-btn${props.gizmo === 'rotate' ? ' active' : ''}`}
           aria-label="Rotate tool"
+          aria-pressed={props.gizmo === 'rotate'}
           title="Rotate (E)"
           onClick={() => props.onGizmo('rotate')}
         >
@@ -50,6 +52,7 @@ export function ToolBar(props: {
           type="button"
           className={`tool-btn${props.gizmo === 'scale' ? ' active' : ''}`}
           aria-label="Scale tool"
+          aria-pressed={props.gizmo === 'scale'}
           title="Scale (R)"
           onClick={() => props.onGizmo('scale')}
         >
@@ -59,6 +62,7 @@ export function ToolBar(props: {
           type="button"
           className={`tool-btn${props.gizmo === 'rect' ? ' active' : ''}`}
           aria-label="Rect tool"
+          aria-pressed={props.gizmo === 'rect'}
           title="Rect Tool (T) · Shift keep aspect · Alt resize around pivot"
           onClick={() => props.onGizmo('rect')}
         >
