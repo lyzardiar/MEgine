@@ -122,3 +122,13 @@ test('native viewport profiles retain call trees, memory provenance, and render 
   assert.equal(readNativeViewportProfiles('game')[0].resources[0].asset, 'Assets/a.png');
   clearEditorProfilerSamples();
 });
+
+test('native viewport profiles default to the frame sampler monotonic clock', () => {
+  clearEditorProfilerSamples();
+  const before = performance.now();
+  recordNativeViewportProfile('scene', { schemaVersion: 1, totalMs: 1 });
+  const after = performance.now();
+  const [profile] = readNativeViewportProfiles('scene');
+  assert.ok(profile.timestamp >= before && profile.timestamp <= after);
+  clearEditorProfilerSamples();
+});

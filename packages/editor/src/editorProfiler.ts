@@ -368,7 +368,7 @@ function appendNativeProfile(profile: NativeViewportProfile, broadcast: boolean)
 export function recordNativeViewportProfile(
   source: EditorProfilerSource,
   payload: NativeViewportProfilePayload,
-  timestamp = Date.now(),
+  timestamp = performance.now(),
 ): void {
   if (payload.schemaVersion !== 1 || !Number.isFinite(payload.totalMs)) return;
   appendNativeProfile({ ...structuredClone(payload), source, timestamp }, true);

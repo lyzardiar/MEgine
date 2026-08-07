@@ -158,6 +158,10 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(dock, /nextHorizontalTabIndex\(/);
   assert.match(dock, /event\.stopPropagation\(\)/);
   assert.match(dock, /data-agent-drag-by="true"/);
+  assert.match(
+    dock,
+    /aria-label=\{`Detach \$\{PANEL_TITLES\[active\]\}`\}[\s\S]*?data-agent-blocked-actions="click keyPress"[\s\S]*?data-agent-alternative="detach_panel"/,
+  );
   assert.match(dock, /role="tabpanel"/);
   assert.match(dock, /aria-label=\{`\$\{PANEL_TITLES\[panel\]\} panel`\}/);
   assert.match(dock, /aria-label=\{`Dock \$\{node\.panels\.map/);

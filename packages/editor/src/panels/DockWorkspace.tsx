@@ -902,6 +902,8 @@ function DockLeaf(props: {
                 ? `Save ${PANEL_TITLES[active]} before detaching it`
                 : `Open ${PANEL_TITLES[active]} as a native window`}
               aria-label={`Detach ${PANEL_TITLES[active]}`}
+              data-agent-blocked-actions="click keyPress"
+              data-agent-alternative="detach_panel"
               disabled={props.dirtyPanels.has(active)}
               onClick={() => props.onDetach(active)}
             >
