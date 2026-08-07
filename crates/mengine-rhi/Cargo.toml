@@ -16,4 +16,4 @@ half.workspace = true
 thiserror.workspace = true
 log.workspace = true
 pollster.workspace = true
-naga = { version = "24", features = ["wgsl-in"] }
+naga = { version = "24", features = ["wgsl-in", "spv-out", "hlsl-out", "msl-out"] }

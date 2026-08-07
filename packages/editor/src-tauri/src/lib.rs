@@ -4503,6 +4503,45 @@ fn validate_surface_shader(source: String) -> Result<(), String> {
     validate_surface_shader_source(&source)
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SurfaceShaderBackendArtifact {
+    backend: String,
+    language: String,
+    source: Option<String>,
+    byte_size: usize,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SurfaceShaderCompileReport {
+    domain: String,
+    entry_points: Vec<String>,
+    artifacts: Vec<SurfaceShaderBackendArtifact>,
+}
+
+#[tauri::command]
+fn compile_surface_shader_backends(source: String) -> Result<SurfaceShaderCompileReport, String> {
+    validate_surface_shader_source(&source)?;
+    let normalized = mengine_assets::parse_surface_shader(source.as_bytes())
+        .map_err(|error| error.to_string())?;
+    let report = mengine_rhi::compile_shader_backends(&normalized)?;
+    Ok(SurfaceShaderCompileReport {
+        domain: report.domain.into(),
+        entry_points: report.entry_points,
+        artifacts: report
+            .artifacts
+            .into_iter()
+            .map(|artifact| SurfaceShaderBackendArtifact {
+                backend: artifact.backend.into(),
+                language: artifact.language.into(),
+                source: artifact.source,
+                byte_size: artifact.byte_size,
+            })
+            .collect(),
+    })
+}
+
 fn normalize_sorting_layers(value: ProjectSortingLayers) -> Result<ProjectSortingLayers, String> {
     if value.version != 1 {
         return Err(format!(
@@ -6025,6 +6064,7 @@ pub fn run() {
             save_project_build_asset_settings,
             validate_project_scripts,
             validate_surface_shader,
+            compile_surface_shader_backends,
             get_project_sorting_layers,
             save_project_sorting_layers,
             get_project_sorting_layers_snapshot,
@@ -6365,6 +6405,40 @@ mod tests {
         let error = validate_surface_shader_source(&unknown_field).unwrap_err();
         assert!(error.contains("WGSL"));
         assert!(validate_surface_shader_source("fn unrelated() {}").is_err());
+    }
+
+    #[test]
+    fn surface_shader_compile_report_proves_all_player_backends() {
+        let report = compile_surface_shader_backends(
+            r#"fn mengine_lit_surface_hook(
+                surface: MEngineSurface,
+                uv: vec2<f32>,
+                world_position: vec3<f32>,
+            ) -> MEngineSurface {
+                var result = surface;
+                result.emissive = vec3<f32>(uv, world_position.z);
+                return result;
+            }"#
+            .into(),
+        )
+        .expect("surface shader should compile for every player backend");
+
+        assert_eq!(report.domain, "surface");
+        assert_eq!(report.artifacts.len(), 4);
+        assert_eq!(
+            report
+                .artifacts
+                .iter()
+                .map(|artifact| artifact.backend.as_str())
+                .collect::<Vec<_>>(),
+            ["WebGPU", "Vulkan", "Direct3D 12", "Metal"]
+        );
+        assert!(report
+            .artifacts
+            .iter()
+            .all(|artifact| artifact.byte_size > 0));
+        assert!(report.entry_points.iter().any(|entry| entry == "vs_main"));
+        assert!(report.entry_points.iter().any(|entry| entry == "fs_main"));
     }
 
     fn comparison_manifest(hash: char, files: serde_json::Value) -> serde_json::Value {

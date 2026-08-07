@@ -32,8 +32,9 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
+  compileSurfaceShaderBackendsWithRuntime,
   isDesktopEditor,
-  validateSurfaceShaderWithRuntime,
+  type SurfaceShaderCompileReport,
 } from '../transport/editorTransport';
 import type {
   EditorUndoCheckpoint,
@@ -84,6 +85,8 @@ export function SurfaceShaderEditor(props: {
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [compileReport, setCompileReport] = useState<SurfaceShaderCompileReport | null>(null);
+  const [activeTarget, setActiveTarget] = useState('WebGPU');
   const [reloadToken, setReloadToken] = useState(0);
   const [draftEpoch, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
@@ -130,6 +133,7 @@ export function SurfaceShaderEditor(props: {
     }
     loadedPath.current = props.assetPath;
     setError(null);
+    setCompileReport(null);
     if (!props.assetPath) {
       replaceSource('');
       setSavedSource('');
@@ -180,6 +184,10 @@ export function SurfaceShaderEditor(props: {
   useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
   const diagnostics = useMemo(() => surfaceShaderDiagnostics(source), [source]);
   const lines = useMemo(() => Math.max(1, source.split('\n').length - 1), [source]);
+  const isUiShader = source.replace(/\s/g, '').includes('fnmengine_ui_hook(');
+  const activeArtifact = compileReport?.artifacts.find(
+    (artifact) => artifact.backend === activeTarget,
+  ) ?? compileReport?.artifacts[0] ?? null;
 
   const reloadFromDisk = () => {
     if (!props.assetPath) return;
@@ -228,6 +236,7 @@ export function SurfaceShaderEditor(props: {
       editTransaction.current = null;
       replaceSource(snapshot);
       setError(null);
+      setCompileReport(null);
       return;
     }
     const draft = drafts.current.get(path);
@@ -261,6 +270,7 @@ export function SurfaceShaderEditor(props: {
     } else {
       recordHistory(current);
     }
+    setCompileReport(null);
     replaceSource(next);
   };
 
@@ -295,11 +305,16 @@ export function SurfaceShaderEditor(props: {
     }
   };
 
-  const validateSource = async (candidate: string): Promise<string> => {
+  const validateSource = async (candidate: string): Promise<{
+    normalized: string;
+    report: SurfaceShaderCompileReport | null;
+  }> => {
     const normalized = normalizeSurfaceShaderSource(candidate);
     validateSurfaceShaderSource(normalized);
-    if (desktop) await validateSurfaceShaderWithRuntime(normalized);
-    return normalized;
+    const report = desktop
+      ? await compileSurfaceShaderBackendsWithRuntime(normalized)
+      : null;
+    return { normalized, report };
   };
 
   const validate = async (
@@ -311,11 +326,17 @@ export function SurfaceShaderEditor(props: {
       setValidating(true);
     }
     try {
-      const normalized = await validateSource(candidate);
-      if (loadedPath.current === path) setError(null);
+      const { normalized, report } = await validateSource(candidate);
+      if (loadedPath.current === path) {
+        setError(null);
+        if (report && sourceRef.current === candidate) {
+          setCompileReport(report);
+          setActiveTarget(report.artifacts[0]?.backend ?? 'WebGPU');
+        }
+      }
       if (reportSuccess) {
         props.onLog(desktop
-          ? `${path ?? 'Surface Shader'} passed the Player Forward WGSL validator.`
+          ? `${path ?? 'Surface Shader'} compiled for WebGPU, Vulkan, Direct3D 12, and Metal.`
           : `${path ?? 'Surface Shader'} passed editor syntax checks; desktop Player validation is unavailable.`);
       }
       return normalized;
@@ -353,7 +374,7 @@ export function SurfaceShaderEditor(props: {
         suppressAssetChange.current = false;
       }
       props.onLog(desktop
-        ? `Saved ${path}; Player Forward WGSL validation passed.`
+        ? `Saved ${path}; all Player shader backends compiled.`
         : `Saved ${path}; desktop Player validation remains required before build.`);
       return true;
     } catch (reason) {
@@ -376,7 +397,7 @@ export function SurfaceShaderEditor(props: {
     try {
       for (const [path, draft] of dirtyDrafts) {
         try {
-          const normalized = await validateSource(draft.source);
+          const { normalized } = await validateSource(draft.source);
           await writeProjectAssetText(path, normalized);
           drafts.current.set(path, {
             source: normalized,
@@ -384,7 +405,7 @@ export function SurfaceShaderEditor(props: {
           });
           broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
           props.onLog(desktop
-            ? `Saved ${path}; Player Forward WGSL validation passed.`
+            ? `Saved ${path}; all Player shader backends compiled.`
             : `Saved ${path}; desktop Player validation remains required before build.`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -411,7 +432,7 @@ export function SurfaceShaderEditor(props: {
     const [draftPath, draft] = entry;
     setSaving(true);
     try {
-      const normalized = await validateSource(draft.source);
+      const { normalized } = await validateSource(draft.source);
       await writeProjectAssetText(draftPath, normalized);
       drafts.current.set(draftPath, {
         source: normalized,
@@ -420,7 +441,7 @@ export function SurfaceShaderEditor(props: {
       broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
       props.onAssetsChanged();
       props.onLog(desktop
-        ? `Saved ${draftPath}; Player Forward WGSL validation passed.`
+        ? `Saved ${draftPath}; all Player shader backends compiled.`
         : `Saved ${draftPath}; desktop Player validation remains required before build.`);
       setDraftEpoch((value) => value + 1);
     } finally {
@@ -517,9 +538,13 @@ export function SurfaceShaderEditor(props: {
         <button type="button" disabled={!dirty || saving || validating || diagnostics.length > 0} onClick={() => void save()}>{saving ? 'Saving...' : 'Save'}</button>
       </div>
       <div className="surface-shader-contract">
-        <strong>Lit Surface Hook Contract</strong>
-        <code>fn mengine_lit_surface_hook(surface: MEngineSurface, uv, world_position) -&gt; MEngineSurface</code>
-        <span>Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. An optional /* MENGINE_PARAMETERS {'{'}"parameters":[...], "keywords":[...], "textures":[...]{'}'} */ block reflects up to 16 numeric values as mengine_param_name(), 16 static switches as mengine_keyword_NAME(), and 4 color/data textures as mengine_texture_name(uv). Legacy final-color hooks remain supported. Desktop Validate/Save composes the complete Player Forward shader and runs authoritative Naga validation.</span>
+        <strong>{isUiShader ? 'UI Hook Contract' : 'Lit Surface Hook Contract'}</strong>
+        <code>{isUiShader
+          ? 'fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32>'
+          : 'fn mengine_lit_surface_hook(surface: MEngineSurface, uv, world_position) -> MEngineSurface'}</code>
+        <span>{isUiShader
+          ? 'The hook receives rect-local UV, vertex color, screen position, clip rect, four material parameters, and up to four material textures.'
+          : 'Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. MENGINE_PARAMETERS reflects up to 16 values, 16 static switches, and 4 textures.'} Desktop Validate/Save composes the complete runtime shader and cross-compiles every Player backend.</span>
       </div>
       {loading && <div className="field-hint">Loading shader...</div>}
       {(error || diagnostics.length > 0) && (
@@ -528,6 +553,29 @@ export function SurfaceShaderEditor(props: {
           {diagnostics.map((diagnostic) => <div key={diagnostic}>{diagnostic}</div>)}
         </div>
       )}
+      <div className="surface-shader-targets" aria-label="Player shader targets">
+        <span>{compileReport ? `${compileReport.domain.toUpperCase()} COMPILED` : 'VALIDATE TARGETS'}</span>
+        {['WebGPU', 'Vulkan', 'Direct3D 12', 'Metal'].map((backend) => {
+          const artifact = compileReport?.artifacts.find((item) => item.backend === backend);
+          return (
+            <button
+              type="button"
+              key={backend}
+              className={activeArtifact?.backend === backend ? 'active' : ''}
+              disabled={!artifact}
+              aria-pressed={activeArtifact?.backend === backend}
+              title={artifact
+                ? `${artifact.language}, ${artifact.byteSize.toLocaleString()} bytes`
+                : `Validate to compile ${backend}`}
+              onClick={() => setActiveTarget(backend)}
+            >
+              <i className={artifact ? 'ready' : ''} />
+              <strong>{backend}</strong>
+              <small>{artifact?.language ?? 'pending'}</small>
+            </button>
+          );
+        })}
+      </div>
       <div className="surface-shader-code">
         <div className="surface-shader-lines" ref={lineNumbers} aria-hidden="true">{Array.from({ length: lines }, (_, index) => <span key={index}>{index + 1}</span>)}</div>
         <textarea
@@ -547,6 +595,16 @@ export function SurfaceShaderEditor(props: {
           }}
         />
       </div>
+      {activeArtifact && (
+        <div className="surface-shader-output">
+          <header>
+            <strong>{activeArtifact.backend} / {activeArtifact.language}</strong>
+            <span>{activeArtifact.byteSize.toLocaleString()} bytes · {compileReport?.entryPoints.join(', ')}</span>
+          </header>
+          <pre>{activeArtifact.source
+            ?? `Binary ${activeArtifact.language} artifact generated successfully.\nSource preview is unavailable for binary targets.`}</pre>
+        </div>
+      )}
     </div>
   );
 }

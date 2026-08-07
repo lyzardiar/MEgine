@@ -11,22 +11,34 @@ import { createPortal } from 'react-dom';
 import {
   Bone,
   Box,
+  ChevronDown,
+  ChevronRight,
   FileCode2,
   FileJson2,
   Film,
   Folder,
+  Grid2X2,
   Image as ImageIcon,
   Layers3,
+  List,
   Map as MapIcon,
   Music,
   Package,
   Palette,
+  Plus,
+  RefreshCw,
   RotateCcw,
+  Search,
   Sparkles,
   Trash2,
   Type,
+  Upload,
   Workflow,
 } from 'lucide-react';
+import type {
+  AgentCreatableAssetKind,
+  AgentCreateAssetResult,
+} from '../agent/resourceTargets';
 import { listScenes, sceneFileName, type SceneMeta } from '../sceneLibrary';
 import {
   listScripts,
@@ -123,6 +135,7 @@ export function Project(props: {
   activeScene: string | null;
   sceneTick: number;
   onCreatePrefabs: (entityIds: number[], folder: string) => Promise<string[]>;
+  onCreateAsset: (kind: AgentCreatableAssetKind) => Promise<AgentCreateAssetResult>;
   onInstantiatePrefab: (path: string) => void;
   onInstantiateModel: (path: string) => void;
   onInstantiateSprite: (path: string) => void;
@@ -143,6 +156,9 @@ export function Project(props: {
   onLog?: (msg: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const [folder, setFolder] = useState('Assets/Scenes');
+  const [query, setQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [expandedFolders, setExpandedFolders] = useState(() => new Set(['Assets']));
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -236,9 +252,19 @@ export function Project(props: {
       const hitMetadata = hitTexturePath
         ? files.find((asset) => asset.relPath.toLocaleLowerCase() === hitTexturePath.toLocaleLowerCase())
         : undefined;
-      if (hit) setFolder(hit.folder);
-      else if (projectAsset) setFolder(projectAsset.folder);
-      else if (e.folder) setFolder(e.folder);
+      const revealedFolder = hit?.folder ?? projectAsset?.folder ?? e.folder;
+      if (revealedFolder) {
+        setFolder(revealedFolder);
+        setQuery('');
+        setExpandedFolders((current) => {
+          const next = new Set(current);
+          const parts = revealedFolder.split('/');
+          for (let index = 1; index <= parts.length; index += 1) {
+            next.add(parts.slice(0, index).join('/'));
+          }
+          return next;
+        });
+      }
       const key = hit
         ? projectAssetKey(
           hitMetadata,
@@ -278,8 +304,27 @@ export function Project(props: {
       ...diskFolders,
       ...projectFiles.map((asset) => asset.folder),
     ]);
+    for (const path of [...set]) {
+      const parts = path.split('/');
+      for (let index = 1; index < parts.length; index += 1) {
+        set.add(parts.slice(0, index).join('/'));
+      }
+    }
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [diskFolders, projectFiles]);
+
+  const folderRows = useMemo(() => folders
+    .filter((path) => {
+      const parts = path.split('/');
+      return parts.slice(1, -1).every((_, index) => (
+        expandedFolders.has(parts.slice(0, index + 2).join('/'))
+      ));
+    })
+    .map((path) => ({
+      path,
+      depth: path.split('/').length - 1,
+      hasChildren: folders.some((candidate) => candidate.startsWith(`${path}/`)),
+    })), [expandedFolders, folders]);
 
   const sceneAssets: AssetItem[] = scenes.map((s) => {
     const name = sceneFileName(s.name);
@@ -423,10 +468,40 @@ export function Project(props: {
     ...spriteAssets,
     ...authoringAssets,
   ];
-  const visible =
-    folder === 'Assets'
-      ? allAssets
-      : allAssets.filter((a) => a.folder === folder);
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const visible = allAssets.filter((asset) => {
+    if (normalizedQuery) {
+      return [asset.name, asset.kind, asset.assetPath, asset.folder]
+        .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery));
+    }
+    return folder === 'Assets' || asset.folder === folder;
+  });
+
+  const selectFolder = (path: string) => {
+    setFolder(path);
+    setQuery('');
+    setExpandedFolders((current) => {
+      const next = new Set(current);
+      const parts = path.split('/');
+      for (let index = 1; index <= parts.length; index += 1) {
+        next.add(parts.slice(0, index).join('/'));
+      }
+      return next;
+    });
+  };
+
+  const createAsset = async (kind: AgentCreatableAssetKind) => {
+    setCtx(null);
+    try {
+      const result = await props.onCreateAsset(kind);
+      await Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()]);
+      setLibTick((tick) => tick + 1);
+      if (result.primaryPath) pingProjectAsset(result.primaryPath);
+      props.onLog?.(`Created ${result.createdPaths.join(', ')}.`);
+    } catch (error) {
+      props.onLog?.(`Asset creation failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
+    }
+  };
 
   const beginRename = (sceneName: string) => {
     setEditing(sceneName);
@@ -567,7 +642,11 @@ export function Project(props: {
     e.stopPropagation();
     if (!a.assetPath) return;
     setSelected(a.assetKey);
-    setCtx({ x: e.clientX, y: e.clientY, asset: a });
+    setCtx({
+      x: Math.max(4, Math.min(e.clientX, window.innerWidth - 230)),
+      y: Math.max(24, Math.min(e.clientY, window.innerHeight - 320)),
+      asset: a,
+    });
   };
 
   const requestReferences = (asset: AssetItem) => {
@@ -984,37 +1063,118 @@ export function Project(props: {
   return (
     <div className="project-layout" ref={rootRef} tabIndex={0} aria-label="Project browser">
       <div className="project-tree" role="tree" aria-label="Project folders">
-        {folders.map((f) => (
+        {folderRows.map(({ path: f, depth, hasChildren }) => (
           <div
             key={f}
             className={`row${folder === f ? ' active' : ''}`}
             role="treeitem"
             tabIndex={0}
             aria-label={f}
+            aria-level={depth + 1}
+            aria-expanded={hasChildren ? expandedFolders.has(f) : undefined}
             aria-selected={folder === f}
-            onClick={() => setFolder(f)}
+            style={{ paddingLeft: 6 + depth * 13 }}
+            onClick={() => selectFolder(f)}
             onKeyDown={(event) => {
               if (event.key !== 'Enter' && event.key !== ' ') return;
               event.preventDefault();
-              setFolder(f);
+              selectFolder(f);
             }}
           >
+            {hasChildren ? (
+              <button
+                type="button"
+                className="project-folder-toggle"
+                aria-label={`${expandedFolders.has(f) ? 'Collapse' : 'Expand'} ${f}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setExpandedFolders((current) => {
+                    const next = new Set(current);
+                    if (next.has(f)) next.delete(f);
+                    else next.add(f);
+                    return next;
+                  });
+                }}
+              >{expandedFolders.has(f)
+                  ? <ChevronDown size={12} />
+                  : <ChevronRight size={12} />}</button>
+            ) : <span className="project-folder-toggle-spacer" />}
             <Folder size={13} strokeWidth={1.6} aria-hidden="true" />
-            <span>{f.replace('Assets/', '') || 'Assets'}</span>
+            <span>{f.split('/').pop()}</span>
           </div>
         ))}
       </div>
       <div className="project-content">
         <div className="project-toolbar">
-          <span className="project-folder-path" title={folder}>{folder}</span>
+          <button
+            type="button"
+            className="project-create-button"
+            title="Create asset"
+            aria-label="Create asset"
+            onClick={(event) => {
+              const bounds = event.currentTarget.getBoundingClientRect();
+              setCtx({
+                x: bounds.left,
+                y: Math.max(24, bounds.top - 292),
+                asset: null,
+              });
+            }}
+          ><Plus size={13} /> <span>Create</span></button>
+          <button
+            type="button"
+            className="project-import-button"
+            title="Import files"
+            aria-label="Import files"
+            disabled={importing}
+            data-agent-interaction="blocked"
+            data-agent-alternative="import_asset_file"
+            onClick={() => void completeImport()}
+          ><Upload size={13} /> <span>{importing ? 'Importing...' : 'Import'}</span></button>
+          <div className="project-breadcrumb" title={folder}>
+            {folder.split('/').map((part, index, parts) => {
+              const path = parts.slice(0, index + 1).join('/');
+              return (
+                <span key={path}>
+                  {index > 0 && <ChevronRight size={10} aria-hidden="true" />}
+                  <button type="button" onClick={() => selectFolder(path)}>{part}</button>
+                </span>
+              );
+            })}
+          </div>
+          <label className="project-search">
+            <Search size={12} aria-hidden="true" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search all assets"
+              aria-label="Search all project assets"
+            />
+            {query && <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>×</button>}
+          </label>
+          <button
+            type="button"
+            className="project-icon-button"
+            title="Refresh assets"
+            aria-label="Refresh assets"
+            onClick={() => void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
+              .then(() => setLibTick((tick) => tick + 1))}
+          ><RefreshCw size={13} /></button>
+          <div className="project-view-toggle" role="group" aria-label="Asset view">
+            <button type="button" className={viewMode === 'grid' ? 'active' : ''} aria-label="Grid view" title="Grid view" onClick={() => setViewMode('grid')}><Grid2X2 size={13} /></button>
+            <button type="button" className={viewMode === 'list' ? 'active' : ''} aria-label="List view" title="List view" onClick={() => setViewMode('list')}><List size={13} /></button>
+          </div>
         </div>
         <div
-          className={`project-grid${draggingFiles ? ' file-drop-active' : ''}${draggingEntities ? ' entity-drop-active' : ''}`}
+          className={`project-grid ${viewMode === 'list' ? 'list-view' : 'grid-view'}${draggingFiles ? ' file-drop-active' : ''}${draggingEntities ? ' entity-drop-active' : ''}`}
           role="region"
           aria-label={`${folder} contents`}
           onContextMenu={(event) => {
             event.preventDefault();
-            setCtx({ x: event.clientX, y: event.clientY, asset: null });
+            setCtx({
+              x: Math.max(4, Math.min(event.clientX, window.innerWidth - 230)),
+              y: Math.max(24, Math.min(event.clientY, window.innerHeight - 320)),
+              asset: null,
+            });
           }}
           onDragEnter={(event) => {
             if (event.dataTransfer.types.includes('Files')) setDraggingFiles(true);
@@ -1205,6 +1365,9 @@ export function Project(props: {
               ) : (
                 <div className="asset-name">{a.name}</div>
               )}
+              <div className="asset-detail">
+                {normalizedQuery ? a.folder : a.kind.replaceAll('-', ' ')}
+              </div>
               {isActiveScene && !isEditing && <div className="asset-badge">打开中</div>}
               {(a.metaStatus === 'invalid' || a.metaStatus === 'duplicate') && (
                 <div className="asset-meta-badge" title={a.metaError ?? 'Asset metadata needs repair'}>
@@ -1225,6 +1388,10 @@ export function Project(props: {
               <strong>Create Prefab in {folder}</strong>
             </div>
           )}
+        </div>
+        <div className="project-statusbar">
+          <span>{normalizedQuery ? 'Search results in Assets' : folder}</span>
+          <span>{visible.length} item{visible.length === 1 ? '' : 's'}{selected ? ' · 1 selected' : ''}</span>
         </div>
       </div>
 
@@ -1250,6 +1417,28 @@ export function Project(props: {
           >
             {!ctx.asset && (
               <>
+                <div className="hier-ctx-heading">Create</div>
+                {([
+                  ['material', 'Material'],
+                  ['shader', 'Surface Shader'],
+                  ['animation', 'Animation Clip'],
+                  ['animator', 'Animator Controller'],
+                  ['avatar-mask', 'Avatar Mask'],
+                  ['sprite-atlas', 'Sprite Atlas'],
+                  ['timeline', 'Timeline'],
+                ] as const).map(([kind, label]) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    role="menuitem"
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      void createAsset(kind);
+                    }}
+                  >{label}</button>
+                ))}
+                <div className="sep" role="separator" />
                 <button
                   type="button"
                   role="menuitem"

@@ -2680,7 +2680,7 @@ pub fn validate_surface_shader_hook(source: &str) -> Result<(), String> {
     compose_surface_shader(source, None).map(|_| ())
 }
 
-fn compose_surface_shader(
+pub(crate) fn compose_surface_shader(
     surface_hook: &str,
     active_keywords: Option<&[String]>,
 ) -> Result<String, String> {

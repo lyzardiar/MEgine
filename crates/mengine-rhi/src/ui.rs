@@ -1909,7 +1909,10 @@ pub fn validate_ui_shader_hook(source: &str) -> Result<(), String> {
     compose_ui_shader(source, None).map(|_| ())
 }
 
-fn compose_ui_shader(source: &str, active_keywords: Option<&[String]>) -> Result<String, String> {
+pub(crate) fn compose_ui_shader(
+    source: &str,
+    active_keywords: Option<&[String]>,
+) -> Result<String, String> {
     let hook = source.trim();
     if hook.is_empty() {
         return Err("UI shader source is empty".into());

@@ -3226,6 +3226,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 refresh();
                 return paths;
               }}
+              onCreateAsset={async (kind) => {
+                const provider = agentWorkspaceProviderRef.current;
+                if (!provider) throw new Error('Workspace asset service is not ready');
+                return provider.createAsset({ kind });
+              }}
               onInstantiatePrefab={(path) => {
                 void instantiateProjectPrefab(store, path)
                   .then(() => {

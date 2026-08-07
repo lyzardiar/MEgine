@@ -5,6 +5,7 @@ mod mesh;
 mod post_process;
 mod render_graph;
 mod renderer;
+mod shader_targets;
 mod sky;
 mod ui;
 
@@ -18,6 +19,7 @@ pub use renderer::{
     RenderMaterial, RenderObject, RenderTarget, Renderer, SpotLightData,
     SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic,
 };
+pub use shader_targets::{compile_shader_backends, ShaderBackendArtifact, ShaderCompilationReport};
 pub use ui::{
     validate_ui_shader_hook, UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect,
     UiFrameStats, UiPrimitive, UiRenderMaterial, UiShaderChannelData, UiShaderChannels, UiSoftClip,

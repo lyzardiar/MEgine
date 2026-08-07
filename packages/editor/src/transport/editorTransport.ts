@@ -717,6 +717,28 @@ export async function validateSurfaceShaderWithRuntime(source: string): Promise<
   await invoke('validate_surface_shader', { source });
 }
 
+export type SurfaceShaderBackendArtifact = {
+  backend: string;
+  language: string;
+  source: string | null;
+  byteSize: number;
+};
+
+export type SurfaceShaderCompileReport = {
+  domain: 'surface' | 'ui';
+  entryPoints: string[];
+  artifacts: SurfaceShaderBackendArtifact[];
+};
+
+export async function compileSurfaceShaderBackendsWithRuntime(
+  source: string,
+): Promise<SurfaceShaderCompileReport> {
+  if (!isDesktopEditor()) {
+    throw new Error('Cross-backend shader compilation requires the desktop editor.');
+  }
+  return invoke<SurfaceShaderCompileReport>('compile_surface_shader_backends', { source });
+}
+
 export async function getProjectSortingLayers(): Promise<ProjectSortingLayers> {
   if (isDesktopEditor()) {
     return invoke<ProjectSortingLayers>('get_project_sorting_layers');
