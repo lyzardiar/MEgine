@@ -3088,6 +3088,23 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.frameSelected();
                 refresh();
               }}
+              onInstantiatePrefab={(path, position) => {
+                void instantiateProjectPrefab(store, path, null, position)
+                  .then((entity) => {
+                    log(`Instantiated ${path} in Scene View (entity ${entity})`);
+                    refresh();
+                  })
+                  .catch((error) => log(`Prefab instantiate failed: ${String(error)}`, 'error'));
+              }}
+              onInstantiateModel={(path, position) => {
+                const entity = store.spawnModel(path, position);
+                if (entity == null) {
+                  log('Models can only be created in Edit mode', 'error');
+                  return;
+                }
+                log(`Instantiated model ${path} in Scene View (entity ${entity})`);
+                refresh();
+              }}
               onInstantiateSprite={(path, position) => {
                 requestSpriteInstantiation(path, { position });
               }}

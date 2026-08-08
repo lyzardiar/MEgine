@@ -549,6 +549,16 @@ function letterbox(
   return { x: 0, y: (panelH - h) / 2, w, h };
 }
 
+type SceneDropAssetKind = 'prefab' | 'model' | 'sprite';
+
+function sceneDropAssetKind(types: ArrayLike<string>): SceneDropAssetKind | null {
+  const values = new Set(Array.from(types));
+  if (values.has('text/mengine-prefab')) return 'prefab';
+  if (values.has('text/mengine-model')) return 'model';
+  if (values.has('text/mengine-sprite')) return 'sprite';
+  return null;
+}
+
 export function Viewport(props: {
   tab: 'scene' | 'game';
   clearColor: [number, number, number, number];
@@ -628,6 +638,8 @@ export function Viewport(props: {
   onGameResolution: (resolution: GameResolution | null) => void;
   onGameDisplay: (display: number) => void;
   onFrame: () => void;
+  onInstantiatePrefab: (path: string, position: Vec3) => void;
+  onInstantiateModel: (path: string, position: Vec3) => void;
   onInstantiateSprite: (path: string, position: Vec3) => void;
   onLog?: (message: string, level?: 'info' | 'warn' | 'error') => void;
   onUiClick?: (entity: number, onClick: unknown) => void;
@@ -1014,7 +1026,7 @@ export function Viewport(props: {
 
   const [tick, setTick] = useState(0);
   const [uiStats, setUiStats] = useState({ elements: 0, batches: 0 });
-  const [spriteDropActive, setSpriteDropActive] = useState(false);
+  const [sceneAssetDropKind, setSceneAssetDropKind] = useState<SceneDropAssetKind | null>(null);
   const [scene2D, setScene2D] = useState(
     () => readSceneViewPreferences().mode2D,
   );
@@ -5054,49 +5066,52 @@ export function Viewport(props: {
         onContextMenu={(e) => e.preventDefault()}
         onWheel={onWheel}
         onDragEnter={(event) => {
-          if (
-            props.tab !== 'scene'
-            || props.playing
-            || !Array.from(event.dataTransfer.types).includes('text/mengine-sprite')
-          ) return;
+          const kind = sceneDropAssetKind(event.dataTransfer.types);
+          if (props.tab !== 'scene' || props.playing || !kind) return;
           event.preventDefault();
           event.stopPropagation();
           event.dataTransfer.dropEffect = 'copy';
-          setSpriteDropActive(true);
+          setSceneAssetDropKind(kind);
         }}
         onDragOver={(event) => {
-          if (
-            props.tab !== 'scene'
-            || props.playing
-            || !Array.from(event.dataTransfer.types).includes('text/mengine-sprite')
-          ) return;
+          const kind = sceneDropAssetKind(event.dataTransfer.types);
+          if (props.tab !== 'scene' || props.playing || !kind) return;
           event.preventDefault();
           event.stopPropagation();
           event.dataTransfer.dropEffect = 'copy';
-          setSpriteDropActive(true);
+          setSceneAssetDropKind(kind);
         }}
         onDragLeave={(event) => {
           event.stopPropagation();
-          setSpriteDropActive(false);
+          setSceneAssetDropKind(null);
         }}
         onDrop={(event) => {
-          setSpriteDropActive(false);
+          setSceneAssetDropKind(null);
           if (props.tab !== 'scene' || props.playing) return;
-          const path = event.dataTransfer.getData('text/mengine-sprite');
+          const kind = sceneDropAssetKind(event.dataTransfer.types);
+          if (!kind) return;
+          const path = event.dataTransfer.getData(`text/mengine-${kind}`);
           if (!path) return;
           event.preventDefault();
           event.stopPropagation();
           const rect = event.currentTarget.getBoundingClientRect();
-          props.onInstantiateSprite(
-            path,
-            sceneDropWorldPoint(event.clientX - rect.left, event.clientY - rect.top),
+          const position = sceneDropWorldPoint(
+            event.clientX - rect.left,
+            event.clientY - rect.top,
           );
+          if (kind === 'prefab') props.onInstantiatePrefab(path, position);
+          else if (kind === 'model') props.onInstantiateModel(path, position);
+          else props.onInstantiateSprite(path, position);
         }}
         style={{ cursor: props.tab === 'scene' ? 'crosshair' : 'default', width: '100%', height: '100%' }}
       />
-      {props.tab === 'scene' && spriteDropActive && (
-        <div className="scene-sprite-drop-overlay" aria-hidden>
-          Drop to create SpriteRenderer
+      {props.tab === 'scene' && sceneAssetDropKind && (
+        <div className="scene-asset-drop-overlay" aria-hidden>
+          {sceneAssetDropKind === 'prefab'
+            ? 'Drop to instantiate Prefab'
+            : sceneAssetDropKind === 'model'
+              ? 'Drop to instantiate Model'
+              : 'Drop to create SpriteRenderer'}
         </div>
       )}
       {props.tab === 'scene' && marquee && (

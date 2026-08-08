@@ -43,10 +43,11 @@ export async function instantiateProjectPrefab(
   store: EditorStore,
   source: string,
   parent: number | null = null,
+  position?: [number, number, number],
 ): Promise<number> {
   const normalized = normalizeProjectAssetPath(source);
   const prefab = parsePrefabAsset(await readProjectAssetText(normalized));
-  const root = store.instantiatePrefabAsset(normalized, prefab, parent);
+  const root = store.instantiatePrefabAsset(normalized, prefab, parent, position);
   if (root == null) throw new Error('prefabs can only be instantiated in Edit mode');
   return root;
 }

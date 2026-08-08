@@ -513,6 +513,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     withUndo: boolean,
     atIndex?: number,
     instanceId = createPrefabId('instance'),
+    rootPosition?: [number, number, number],
   ): number | null => {
     if (mode !== 'edit') return null;
     if (withUndo) pushUndo('Instantiate Prefab');
@@ -524,6 +525,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         ? parent
         : (entitiesByNode.get(entry.parentNodeId) ?? parent);
       const components = structuredClone(entry.node.components);
+      if (
+        entry.parentNodeId == null
+        && rootPosition?.every(Number.isFinite)
+        && components.Transform
+        && typeof components.Transform === 'object'
+        && !Array.isArray(components.Transform)
+      ) {
+        components.Transform = {
+          ...(components.Transform as Record<string, unknown>),
+          position: [...rootPosition],
+        };
+      }
       components[PREFAB_LINK_COMPONENT] = {
         source,
         instance: instanceId,
@@ -1147,9 +1160,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       );
     },
     /** Instantiate a disk prefab as one undoable hierarchy operation. */
-    instantiatePrefabAsset(source: string, prefab: PrefabAsset, parent: number | null = null) {
+    instantiatePrefabAsset(
+      source: string,
+      prefab: PrefabAsset,
+      parent: number | null = null,
+      position?: [number, number, number],
+    ) {
       if (mode !== 'edit') return null;
-      return instantiatePrefabInternal(source, prefab, parent, true);
+      return instantiatePrefabInternal(source, prefab, parent, true, undefined, undefined, position);
     },
     getPrefabInstance(entity = primarySelected()) {
       if (entity == null) return null;
@@ -2504,12 +2522,13 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         true,
       );
     },
-    spawnModel(path: string) {
+    spawnModel(path: string, position: [number, number, number] = [0, 0, 0]) {
       const name = path.split('/').pop()?.replace(/\.(?:gltf|glb)$/i, '') || 'Model';
+      const spawnPosition = position.every(Number.isFinite) ? [...position] : [0, 0, 0];
       return spawnAt(
         name,
         {
-          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          Transform: { position: spawnPosition, rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
           MeshRenderer: { mesh: path, material: 'default' },
         },
         null,

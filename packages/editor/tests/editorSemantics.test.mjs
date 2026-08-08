@@ -63,6 +63,13 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(project, /prefabDropFolder === f \? ' prefab-drop-target' : ''/);
   assert.match(project, /const entityIds = hierarchyEntityIds\(event\)/);
   assert.match(project, /props\.onCreatePrefabs\(entityIds, destinationFolder\)/);
+  assert.match(project, /setData\('text\/mengine-model', id\)/);
+  assert.match(viewport, /values\.has\('text\/mengine-prefab'\)/);
+  assert.match(viewport, /values\.has\('text\/mengine-model'\)/);
+  assert.match(viewport, /props\.onInstantiatePrefab\(path, position\)/);
+  assert.match(viewport, /props\.onInstantiateModel\(path, position\)/);
+  assert.match(hierarchy, /data-prefab-source=\{prefabLink\?\.source\}/);
+  assert.match(hierarchy, /Prefab instance from \$\{prefabLink\.source\}/);
 
   assert.match(menu, /role="menubar" aria-label="Main menu"/);
   assert.match(menu, /role="menuitem"/);

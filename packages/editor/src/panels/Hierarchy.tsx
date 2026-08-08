@@ -22,6 +22,7 @@ import {
   Lightbulb,
   Map as MapIcon,
   Music,
+  Package,
   PanelTop,
   Plus,
   Sparkles,
@@ -43,6 +44,7 @@ import {
 } from '../editorWindow';
 import { filterHierarchyCreateItems } from '../hierarchyCreateMenu';
 import { filterHierarchyTree, hierarchyEntityMatches } from '../hierarchySearch';
+import { readPrefabLink } from '../prefabAsset';
 
 function iconFor(e: EntityRec): LucideIcon {
   const c = e.components;
@@ -652,7 +654,9 @@ export function Hierarchy(props: {
           const selected = props.selectedIds.includes(id);
           const inactive = !n.entity.active;
           const drop = dropTarget?.id === id ? dropTarget.pos : null;
-          const Icon = iconFor(n.entity);
+          const prefabLink = readPrefabLink(n.entity);
+          const prefabRoot = prefabLink?.root === true;
+          const Icon = prefabRoot ? Package : iconFor(n.entity);
           const match = matchingIds.has(id);
           return (
             <div
@@ -668,6 +672,8 @@ export function Hierarchy(props: {
                 dragId === id ? 'dragging' : '',
                 pingId === id ? 'ping' : '',
                 match ? 'search-match' : '',
+                prefabLink ? 'prefab-instance' : '',
+                prefabRoot ? 'prefab-root' : '',
                 drop === 'into' ? 'drop-into' : '',
                 drop === 'before' ? 'drop-before' : '',
                 drop === 'after' ? 'drop-after' : '',
@@ -679,9 +685,11 @@ export function Hierarchy(props: {
               data-depth={n.depth}
               data-agent-scope={`Entity ${id}`}
               data-agent-drag-by="true"
+              data-prefab-source={prefabLink?.source}
               role="treeitem"
               tabIndex={0}
               aria-label={n.entity.name ?? `Entity ${id}`}
+              aria-description={prefabLink ? `Prefab instance from ${prefabLink.source}` : undefined}
               aria-level={n.depth + 1}
               aria-expanded={n.hasChildren ? n.expanded : undefined}
               aria-selected={selected}
@@ -775,7 +783,9 @@ export function Hierarchy(props: {
                 className="hier-icon"
                 draggable={editing !== id}
                 aria-label={`Drag ${n.entity.name ?? `Entity ${id}`}`}
-                title="Drag the row to reorder; drag the icon to assign an object reference"
+                title={prefabLink
+                  ? `Prefab instance from ${prefabLink.source}; drag the row to reorder`
+                  : 'Drag the row to reorder; drag the icon to assign an object reference'}
                 onDragStart={(e) => onDragStart(e, id)}
                 onDragEnd={clearPointerDrag}
               >

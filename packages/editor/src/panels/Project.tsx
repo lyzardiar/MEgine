@@ -1294,6 +1294,7 @@ export function Project(props: {
                 const id = a.spriteId ?? a.name;
                 if (a.kind === 'sprite') e.dataTransfer.setData('text/mengine-sprite', id);
                 if (a.kind === 'prefab') e.dataTransfer.setData('text/mengine-prefab', id);
+                if (a.kind === 'model') e.dataTransfer.setData('text/mengine-model', id);
                 e.dataTransfer.setData('text/mengine-asset', id);
                 e.dataTransfer.setData('text/plain', id);
                 e.dataTransfer.effectAllowed = 'copy';
