@@ -1373,6 +1373,13 @@ export function Viewport(props: {
           orthographic: selectedCamera.projection === 'orthographic',
           orthographicSize: selectedCamera.orthographicSize ?? 5,
           fovYDegrees: selectedCamera.fovYDeg,
+          cameraEntity: selectedCamera.entity,
+          up: selectedCamera.up,
+          near: selectedCamera.near,
+          far: selectedCamera.far,
+          clearFlags: selectedCamera.clearFlags,
+          backgroundColor: selectedCamera.backgroundColor,
+          targetDisplay: selectedCamera.targetDisplay,
         },
       }).then(async (result) => {
         const image = await decodeNativeFrame(result.pngBase64);
@@ -1386,6 +1393,7 @@ export function Viewport(props: {
       }).catch((error) => {
         if (!request.reportedError) {
           console.warn('Native Camera Preview rendering is unavailable', error);
+          p.onLog?.(`Camera Preview: ${error instanceof Error ? error.message : String(error)}`, 'error');
           request.reportedError = true;
         }
       }).finally(() => {
@@ -2852,6 +2860,8 @@ export function Viewport(props: {
   // The request completion paths above repaint once more with the decoded image.
   useEffect(() => {
     paint();
+    const trailingPaint = window.setTimeout(paint, 550);
+    return () => window.clearTimeout(trailingPaint);
     // `paint` reads the latest values through refs; only authoring changes should trigger this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

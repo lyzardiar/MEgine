@@ -91,7 +91,7 @@ pub struct FrameCompileRequest<'a> {
     pub viewport: [u32; 2],
     pub scene_clear: Vec4,
     pub camera_override: Option<RuntimeCameraOverride>,
-    pub view_camera: Option<FrameCamera>,
+    pub view_camera: Option<ActiveFrameCamera>,
     pub include_ui: bool,
     pub target_display: i32,
     pub interaction: UiInteractionState,
@@ -149,12 +149,7 @@ impl FrameCompiler<'_> {
                     request.target_display,
                 )
             },
-            |frame| ActiveFrameCamera {
-                frame,
-                clear_flags: CameraClearFlags::Scene,
-                background_color: request.scene_clear.to_array(),
-                entity: None,
-            },
+            |camera| camera,
         );
         let camera = active_camera.frame;
         let has_authored_camera = active_camera.entity.is_some();

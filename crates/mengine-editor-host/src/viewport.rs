@@ -11,7 +11,10 @@ use mengine_rhi::{
 };
 use mengine_runtime::effekseer::EffekseerWorld;
 use mengine_runtime::fonts::RuntimeFontCache;
-use mengine_runtime::frame_compiler::{FrameCompileRequest, FrameCompiler};
+use mengine_runtime::frame_compiler::{
+    parse_camera_clear_flags, ActiveFrameCamera, CameraClearFlags, FrameCompileRequest,
+    FrameCompiler,
+};
 use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
@@ -121,6 +124,53 @@ pub struct EditorSceneCamera {
     pub fov_y_degrees: f32,
 }
 
+#[derive(Clone, Debug)]
+pub struct EditorCameraPreview {
+    pub eye: [f32; 3],
+    pub target: [f32; 3],
+    pub up: [f32; 3],
+    pub orthographic: bool,
+    pub orthographic_size: f32,
+    pub fov_y_degrees: f32,
+    pub near: f32,
+    pub far: f32,
+    pub clear_flags: String,
+    pub background_color: [f32; 4],
+    pub target_display: i32,
+}
+
+fn camera_preview_frame(
+    camera: &EditorCameraPreview,
+    width: u32,
+    height: u32,
+) -> ActiveFrameCamera {
+    let eye = Vec3::from_array(camera.eye);
+    let target = Vec3::from_array(camera.target);
+    let authored_up = Vec3::from_array(camera.up);
+    let up = if authored_up.is_finite() && authored_up.length_squared() > 0.000001 {
+        authored_up.normalize()
+    } else {
+        Vec3::Y
+    };
+    let aspect = width.max(1) as f32 / height.max(1) as f32;
+    let near = camera.near.max(0.001);
+    let far = camera.far.max(near + 0.001);
+    ActiveFrameCamera {
+        frame: FrameCamera {
+            view: look_at(eye, target, up),
+            proj: if camera.orthographic {
+                orthographic(camera.orthographic_size.max(0.001), aspect, near, far)
+            } else {
+                perspective(camera.fov_y_degrees.clamp(1.0, 179.0), aspect, near, far)
+            },
+            position: eye,
+        },
+        clear_flags: parse_camera_clear_flags(&camera.clear_flags),
+        background_color: camera.background_color,
+        entity: None,
+    }
+}
+
 /// Headless RHI host used by Game View and as the base pass for Scene View.
 pub struct EditorViewportRenderer {
     renderer: Renderer,
@@ -177,7 +227,25 @@ impl EditorViewportRenderer {
         width: u32,
         height: u32,
     ) -> Result<EditorViewportFrame> {
-        self.render_world(world, width, height, None, true, None)
+        self.render_world(world, width, height, None, true, None, 0)
+    }
+
+    pub fn render_camera(
+        &mut self,
+        world: &World,
+        width: u32,
+        height: u32,
+        camera: EditorCameraPreview,
+    ) -> Result<EditorViewportFrame> {
+        self.render_world(
+            world,
+            width,
+            height,
+            Some(camera_preview_frame(&camera, width, height)),
+            true,
+            None,
+            camera.target_display,
+        )
     }
 
     pub fn render_scene(
@@ -190,21 +258,26 @@ impl EditorViewportRenderer {
         let aspect = width.max(1) as f32 / height.max(1) as f32;
         let eye = Vec3::from_array(camera.eye);
         let target = Vec3::from_array(camera.target);
-        let view_camera = FrameCamera {
-            view: look_at(eye, target, Vec3::Y),
-            proj: if camera.orthographic {
-                orthographic(camera.orthographic_size.max(0.001), aspect, 0.01, 10_000.0)
-            } else {
-                perspective(
-                    camera.fov_y_degrees.clamp(1.0, 179.0),
-                    aspect,
-                    0.01,
-                    10_000.0,
-                )
+        let view_camera = ActiveFrameCamera {
+            frame: FrameCamera {
+                view: look_at(eye, target, Vec3::Y),
+                proj: if camera.orthographic {
+                    orthographic(camera.orthographic_size.max(0.001), aspect, 0.01, 10_000.0)
+                } else {
+                    perspective(
+                        camera.fov_y_degrees.clamp(1.0, 179.0),
+                        aspect,
+                        0.01,
+                        10_000.0,
+                    )
+                },
+                position: eye,
             },
-            position: eye,
+            clear_flags: CameraClearFlags::Scene,
+            background_color: world.time.clear_color.to_array(),
+            entity: None,
         };
-        self.render_world(world, width, height, Some(view_camera), false, None)
+        self.render_world(world, width, height, Some(view_camera), false, None, 0)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -268,10 +341,15 @@ impl EditorViewportRenderer {
                 yaw.cos() * pitch.cos(),
             ) * distance;
         let aspect = width.max(1) as f32 / height.max(1) as f32;
-        let camera = FrameCamera {
-            view: look_at(eye, target, Vec3::Y),
-            proj: perspective(38.0, aspect, 0.01, 100.0),
-            position: eye,
+        let camera = ActiveFrameCamera {
+            frame: FrameCamera {
+                view: look_at(eye, target, Vec3::Y),
+                proj: perspective(38.0, aspect, 0.01, 100.0),
+                position: eye,
+            },
+            clear_flags: CameraClearFlags::Scene,
+            background_color: background,
+            entity: None,
         };
         let render_material = self
             .materials
@@ -285,6 +363,7 @@ impl EditorViewportRenderer {
             Some(camera),
             false,
             Some(render_material),
+            0,
         )
     }
 
@@ -359,14 +438,16 @@ impl EditorViewportRenderer {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn render_world(
         &mut self,
         world: &World,
         width: u32,
         height: u32,
-        view_camera: Option<FrameCamera>,
+        view_camera: Option<ActiveFrameCamera>,
         include_ui: bool,
         material_override: Option<RenderMaterial>,
+        target_display: i32,
     ) -> Result<EditorViewportFrame> {
         let render_started = Instant::now();
         let mut stages = Vec::new();
@@ -417,7 +498,7 @@ impl EditorViewportRenderer {
             camera_override: None,
             view_camera,
             include_ui,
-            target_display: 0,
+            target_display,
             interaction: UiInteractionState::default(),
             button_tints: &button_tints,
             focused_ui: None,
@@ -809,6 +890,38 @@ fn log_texture_failures(failures: impl IntoIterator<Item = TextureLoadFailure>) 
             failure.key,
             failure.path.display(),
             failure.error
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn camera_preview_preserves_authored_render_settings() {
+        let camera = EditorCameraPreview {
+            eye: [3.0, 4.0, 5.0],
+            target: [3.0, 4.0, 4.0],
+            up: [0.0, 1.0, 0.0],
+            orthographic: false,
+            orthographic_size: 5.0,
+            fov_y_degrees: 35.0,
+            near: 0.2,
+            far: 500.0,
+            clear_flags: "solid_color".into(),
+            background_color: [0.8, 0.1, 0.6, 1.0],
+            target_display: 2,
+        };
+
+        let frame = camera_preview_frame(&camera, 1600, 900);
+
+        assert_eq!(frame.clear_flags, CameraClearFlags::SolidColor);
+        assert_eq!(frame.background_color, camera.background_color);
+        assert_eq!(frame.frame.position, Vec3::from_array(camera.eye));
+        assert_eq!(
+            frame.frame.proj,
+            perspective(camera.fov_y_degrees, 1600.0 / 900.0, 0.2, 500.0),
         );
     }
 }

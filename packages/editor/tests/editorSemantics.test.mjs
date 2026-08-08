@@ -27,6 +27,7 @@ test('core editor navigation exposes named semantic controls', () => {
   const buildSettings = panel('BuildSettings.tsx');
   const profiler = panel('Profiler.tsx');
   const animator = panel('Animator.tsx');
+  const native = fs.readFileSync(path.join(root, 'src-tauri', 'src', 'lib.rs'), 'utf8');
   const dialogHost = fs.readFileSync(path.join(root, 'src', 'EditorDialogHost.tsx'), 'utf8');
 
   assert.match(project, /role="tree" aria-label="Project folders"/);
@@ -151,7 +152,9 @@ test('core editor navigation exposes named semantic controls', () => {
     2,
   );
   assert.match(viewport, /gameCameraForEntity\(p\.entities, p\.selected\)/);
+  assert.match(viewport, /cameraEntity: selectedCamera\.entity/);
   assert.match(viewport, /Camera Preview · \$\{cameraName\}/);
+  assert.match(native, /request\.camera_entity[\s\S]*?viewport\.render_camera/);
   assert.match(viewport, /Rendering Scene View…/);
   assert.match(viewport, /Promise\.all\(ready\)/);
 

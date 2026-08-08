@@ -3,9 +3,9 @@ use mengine_core::snapshot::WorldSnapshot;
 use mengine_editor_host::{
     AssetDeleteSnapshot, AssetDuplicateRequest, AssetDuplicateResult, AssetRenameRequest,
     AssetRenameResult, AssetRestoreRequest, AssetRestoreResult, AssetTrashInventory,
-    AssetTrashRequest, AssetTrashResult, BuildAssetMode, EditorFailure, EditorRequest,
-    EditorResult, EditorSceneCamera, EditorViewportFrame, EditorViewportRenderer, ProjectSession,
-    ProjectSnapshot, SceneRecoveryInfo,
+    AssetTrashRequest, AssetTrashResult, BuildAssetMode, EditorCameraPreview, EditorFailure,
+    EditorRequest, EditorResult, EditorSceneCamera, EditorViewportFrame, EditorViewportRenderer,
+    ProjectSession, ProjectSnapshot, SceneRecoveryInfo,
 };
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
@@ -64,6 +64,13 @@ struct NativeSceneViewRequest {
     orthographic: bool,
     orthographic_size: f32,
     fov_y_degrees: f32,
+    camera_entity: Option<u64>,
+    up: Option<[f32; 3]>,
+    near: Option<f32>,
+    far: Option<f32>,
+    clear_flags: Option<String>,
+    background_color: Option<[f32; 4]>,
+    target_display: Option<i32>,
 }
 
 #[derive(serde::Deserialize)]
@@ -4254,10 +4261,42 @@ async fn render_native_scene_view(
                 .map_err(|error| error.to_string())?,
             );
         }
-        let frame = viewport
+        let viewport = viewport
             .as_mut()
-            .expect("Scene viewport renderer initialized above")
-            .render_scene(
+            .expect("Scene viewport renderer initialized above");
+        let frame = if request.camera_entity.is_some() {
+            viewport.render_camera(
+                &world,
+                request.width,
+                request.height,
+                EditorCameraPreview {
+                    eye: request.eye,
+                    target: request.target,
+                    up: request.up.ok_or_else(|| {
+                        "Camera Preview requires the authored up vector".to_string()
+                    })?,
+                    orthographic: request.orthographic,
+                    orthographic_size: request.orthographic_size,
+                    fov_y_degrees: request.fov_y_degrees,
+                    near: request
+                        .near
+                        .ok_or_else(|| "Camera Preview requires the near plane".to_string())?,
+                    far: request
+                        .far
+                        .ok_or_else(|| "Camera Preview requires the far plane".to_string())?,
+                    clear_flags: request.clear_flags.ok_or_else(|| {
+                        "Camera Preview requires authored clear flags".to_string()
+                    })?,
+                    background_color: request.background_color.ok_or_else(|| {
+                        "Camera Preview requires the authored background color".to_string()
+                    })?,
+                    target_display: request.target_display.ok_or_else(|| {
+                        "Camera Preview requires the authored target display".to_string()
+                    })?,
+                },
+            )
+        } else {
+            viewport.render_scene(
                 &world,
                 request.width,
                 request.height,
@@ -4269,7 +4308,8 @@ async fn render_native_scene_view(
                     fov_y_degrees: request.fov_y_degrees,
                 },
             )
-            .map_err(|error| error.to_string())?;
+        }
+        .map_err(|error| error.to_string())?;
         encode_native_viewport_frame(frame, "Scene viewport")
     })
     .await

@@ -23,6 +23,10 @@ test('decoded native frames repaint immediately when hidden WebViews suspend ani
     viewport,
     /React still commits[\s\S]*useEffect\(\(\) => \{\s+paint\(\);[\s\S]*props\.entities/,
   );
+  assert.match(
+    viewport,
+    /const trailingPaint = window\.setTimeout\(paint, 550\);\s+return \(\) => window\.clearTimeout\(trailingPaint\);/,
+  );
   assert.match(viewport, /NATIVE_CAPTURE_READY_TIMEOUT_MS = 8_000/);
   assert.match(agentBridge, /prepareMainViewportCapture\(windowLabel/);
   assert.match(agentBridge, /if \(this\.captures\.size === 0\)/);

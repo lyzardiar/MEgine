@@ -17,7 +17,7 @@ pub use project::{
 pub use session::{EditorMode, EditorSession};
 pub use undo::{EditorCommand, UndoStack};
 pub use viewport::{
-    EditorSceneCamera, EditorViewportFrame, EditorViewportMemoryCategory, EditorViewportProfile,
-    EditorViewportProfileCounts, EditorViewportProfileNode, EditorViewportRenderer,
-    EditorViewportResource,
+    EditorCameraPreview, EditorSceneCamera, EditorViewportFrame, EditorViewportMemoryCategory,
+    EditorViewportProfile, EditorViewportProfileCounts, EditorViewportProfileNode,
+    EditorViewportRenderer, EditorViewportResource,
 };
