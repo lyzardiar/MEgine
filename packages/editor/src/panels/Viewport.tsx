@@ -2383,7 +2383,8 @@ export function Viewport(props: {
       context: CanvasRenderingContext2D,
       item: UiDrawItem,
       deltaSeconds: number,
-    ) => {
+    ): boolean => {
+      let ready = true;
       if (item.spine) {
         const pivot = item.pivotScreen ?? rectPivot(item.rect, item.pivot);
         const result: SpineDrawResult = spineRuntimeRef.current
@@ -2399,6 +2400,7 @@ export function Viewport(props: {
           : spineRuntimeErrorRef.current
             ? { error: spineRuntimeErrorRef.current }
             : 'loading';
+        if (result === 'loading') ready = false;
         if (result !== 'drawn' && !isGame) {
           const message = result === 'missing'
             ? 'Spine: assign skeleton + atlas'
@@ -2450,6 +2452,7 @@ export function Viewport(props: {
         context.fillText('Effekseer UI', item.rect.x + 9, item.rect.y + 13);
         context.restore();
       }
+      return ready;
     };
 
     // Transform gizmo — 3D Transform OR RectTransform (UI)
@@ -2689,6 +2692,7 @@ export function Viewport(props: {
               offscreen.height = Math.max(1, Math.round(frame.h * dpr));
               const offscreenContext = offscreen.getContext('2d');
               if (offscreenContext) {
+                let customRenderersReady = true;
                 offscreenContext.setTransform(dpr, 0, 0, dpr, 0, 0);
                 const secondaryItems = layoutUiOverlay(
                   canvasEntities,
@@ -2701,7 +2705,8 @@ export function Viewport(props: {
                 );
                 drawUiItems(offscreenContext, secondaryItems, null, null, {
                   customDraw: (context, item) => {
-                    drawCanvasHostedRenderer(context, item, 0);
+                    customRenderersReady = drawCanvasHostedRenderer(context, item, 0)
+                      && customRenderersReady;
                   },
                 });
                 drawable = {
@@ -2712,7 +2717,11 @@ export function Viewport(props: {
                   width: frame.w,
                   height: frame.h,
                 };
-                secondaryArtboardCacheRef.current.set(frame.key, drawable);
+                // Async Spine assets must settle before this artboard becomes
+                // reusable; otherwise its first "Loading" frame sticks.
+                if (customRenderersReady) {
+                  secondaryArtboardCacheRef.current.set(frame.key, drawable);
+                }
               }
             }
             if (drawable) {

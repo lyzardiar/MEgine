@@ -103,3 +103,15 @@ test('official Spine showcase contains only licensed, loadable 4.3 exports', () 
   }
   assert.equal(skeletonCount, 80);
 });
+
+test('Spine showcase includes a Canvas-hosted UI example', () => {
+  const scene = JSON.parse(readFileSync(join(sampleRoot, 'Assets', 'Scenes', 'UI.mscene'), 'utf8'));
+  const canvas = scene.world.entities.find((entity) => entity.components.Canvas);
+  const spine = scene.world.entities.find((entity) => entity.components.SpineSkeleton);
+
+  assert.equal(canvas.components.Canvas.render_mode, 'ScreenSpaceOverlay');
+  assert.equal(spine.parent, canvas.entity);
+  assert.deepEqual(spine.components.RectTransform.size_delta, [360, 420]);
+  assert.equal(spine.components.SpineSkeleton.skeleton, 'Assets/Spine/spineboy/spineboy-pro.json');
+  assert.equal(spine.components.SpineSkeleton.atlas, 'Assets/Spine/spineboy/spineboy-pma.atlas');
+});
