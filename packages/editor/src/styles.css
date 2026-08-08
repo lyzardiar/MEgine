@@ -3312,6 +3312,11 @@ body.insp-scrubbing * {
   color: #fff;
   box-shadow: inset 0 0 0 1px #75b9ed;
 }
+.project-tree .row.asset-move-drop-target {
+  background: #4b4729;
+  color: #fff;
+  box-shadow: inset 0 0 0 1px #d1b957;
+}
 .project-tree .row > span:last-child { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .project-folder-toggle,
 .project-folder-toggle-spacer {
@@ -3457,7 +3462,8 @@ body.insp-scrubbing * {
 .project-grid.list-view .asset-meta-badge { position: absolute; right: 7px; }
 
 .project-grid.file-drop-active,
-.project-grid.entity-drop-active {
+.project-grid.entity-drop-active,
+.project-grid.asset-move-active {
   outline: 1px solid var(--u-accent);
   outline-offset: -2px;
 }
@@ -3480,6 +3486,13 @@ body.insp-scrubbing * {
 .project-prefab-drop-overlay {
   border-style: solid;
   background: rgba(28, 56, 77, 0.94);
+}
+
+.project-asset-move-overlay {
+  border-color: #d1b957;
+  border-style: solid;
+  background: rgba(66, 61, 31, 0.94);
+  color: #fff2ae;
 }
 
 .asset-card {

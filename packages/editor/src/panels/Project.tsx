@@ -75,6 +75,7 @@ import {
   applyProjectAssetRename,
   prepareProjectAssetDuplicate,
   prepareProjectAssetRename,
+  projectAssetMoveDestination,
   type AssetDuplicatePlan,
   type AssetRenamePlan,
 } from '../assetRename';
@@ -105,6 +106,8 @@ const STATIC_FOLDERS = [
   'Assets/Sprites',
 ];
 
+const PROJECT_ASSET_DRAG_TYPE = 'application/x-mengine-project-asset';
+
 type AssetItem = {
   assetKey: string;
   assetPath?: string;
@@ -129,6 +132,10 @@ function projectAssetKey(
   return asset?.metaStatus === 'ready' && asset.guid
     ? `guid:${asset.guid}${subresource}`
     : fallback;
+}
+
+function assetPathDirectory(path: string): string {
+  return path.replace(/\\/g, '/').split('/').slice(0, -1).join('/').toLocaleLowerCase();
 }
 
 export function Project(props: {
@@ -168,7 +175,9 @@ export function Project(props: {
   const [importing, setImporting] = useState(false);
   const [draggingFiles, setDraggingFiles] = useState(false);
   const [draggingEntities, setDraggingEntities] = useState(false);
+  const [draggingAsset, setDraggingAsset] = useState(false);
   const [prefabDropFolder, setPrefabDropFolder] = useState<string | null>(null);
+  const [assetMoveDropFolder, setAssetMoveDropFolder] = useState<string | null>(null);
   const [referenceReport, setReferenceReport] = useState<{
     assetName: string;
     loading: boolean;
@@ -477,6 +486,14 @@ export function Project(props: {
     }
     return folder === 'Assets' || asset.folder === folder;
   });
+  const selectedAsset = selected
+    ? allAssets.find((asset) => asset.assetKey === selected) ?? null
+    : null;
+  const assetRenameIsMove = Boolean(
+    assetRename?.asset.assetPath
+    && assetPathDirectory(assetRename.asset.assetPath)
+      !== assetPathDirectory(assetRename.destinationPath),
+  );
 
   const selectFolder = (path: string) => {
     setFolder(path);
@@ -683,19 +700,37 @@ export function Project(props: {
     && asset.metaStatus === 'ready',
   );
 
-  const requestAssetRename = (asset: AssetItem) => {
+  const requestAssetRename = (asset: AssetItem, destinationPath = asset.assetPath) => {
     if (!canRenameAsset(asset) || !asset.assetPath) return;
     renameRequest.current += 1;
     setCtx(null);
     setAssetRename({
       asset,
-      destinationPath: asset.assetPath,
+      destinationPath: destinationPath ?? asset.assetPath,
       loading: false,
       applying: false,
       plan: null,
       manualConfirmed: false,
       error: null,
     });
+  };
+
+  const requestAssetMove = (sourcePath: string, destinationFolder: string) => {
+    const asset = allAssets.find((candidate) => (
+      candidate.assetPath?.toLocaleLowerCase() === sourcePath.toLocaleLowerCase()
+    ));
+    if (!asset || !canRenameAsset(asset) || !asset.assetPath) {
+      props.onLog?.(`Cannot move ${sourcePath}; the asset is missing or its metadata is not ready.`, 'warn');
+      return;
+    }
+    try {
+      const destinationPath = projectAssetMoveDestination(asset.assetPath, destinationFolder);
+      if (destinationPath.toLocaleLowerCase() === asset.assetPath.toLocaleLowerCase()) return;
+      setSelected(asset.assetKey);
+      requestAssetRename(asset, destinationPath);
+    } catch (error) {
+      props.onLog?.(`Asset move failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
+    }
   };
 
   const closeAssetRename = () => {
@@ -759,10 +794,14 @@ export function Project(props: {
       });
       setSelected(state.asset.assetKey);
       setLibTick((tick) => tick + 1);
+      const action = assetPathDirectory(result.sourcePath) === assetPathDirectory(result.destinationPath)
+        ? 'Renamed'
+        : 'Moved';
       props.onLog?.(
-        `Renamed ${result.sourcePath} to ${result.destinationPath}; updated ${result.updatedPaths.length} dependent file${result.updatedPaths.length === 1 ? '' : 's'}.`,
+        `${action} ${result.sourcePath} to ${result.destinationPath}; updated ${result.updatedPaths.length} dependent file${result.updatedPaths.length === 1 ? '' : 's'}.`,
       );
       closeAssetRename();
+      pingProjectAsset(result.destinationPath);
     } catch (error) {
       if (renameRequest.current !== request) return;
       const message = error instanceof Error ? error.message : String(error);
@@ -1047,6 +1086,15 @@ export function Project(props: {
       void completeImport(Array.from(event.dataTransfer.files));
       return;
     }
+    const movingAsset = event.dataTransfer.getData(PROJECT_ASSET_DRAG_TYPE);
+    if (movingAsset) {
+      event.preventDefault();
+      event.stopPropagation();
+      setDraggingAsset(false);
+      setAssetMoveDropFolder(null);
+      requestAssetMove(movingAsset, destinationFolder);
+      return;
+    }
     const entityIds = hierarchyEntityIds(event);
     if (!entityIds.length) return;
     event.preventDefault();
@@ -1068,32 +1116,49 @@ export function Project(props: {
         {folderRows.map(({ path: f, depth, hasChildren }) => (
           <div
             key={f}
-            className={`row${folder === f ? ' active' : ''}${prefabDropFolder === f ? ' prefab-drop-target' : ''}`}
+            className={`row${folder === f ? ' active' : ''}${prefabDropFolder === f ? ' prefab-drop-target' : ''}${assetMoveDropFolder === f ? ' asset-move-drop-target' : ''}`}
             role="treeitem"
             tabIndex={0}
             aria-label={f}
-            aria-description="Drop Hierarchy objects here to create Prefabs"
+            aria-description="Drop Hierarchy objects to create Prefabs or Project assets to move them"
             aria-level={depth + 1}
             aria-expanded={hasChildren ? expandedFolders.has(f) : undefined}
             aria-selected={folder === f}
             style={{ paddingLeft: 6 + depth * 13 }}
             onClick={() => selectFolder(f)}
             onDragEnter={(event) => {
-              if (!event.dataTransfer.types.includes('text/mengine-entity')) return;
+              const hasEntity = event.dataTransfer.types.includes('text/mengine-entity');
+              const hasAsset = event.dataTransfer.types.includes(PROJECT_ASSET_DRAG_TYPE);
+              if (!hasEntity && !hasAsset) return;
               event.preventDefault();
               event.stopPropagation();
-              setPrefabDropFolder(f);
+              if (hasAsset) {
+                setAssetMoveDropFolder(f);
+                setPrefabDropFolder(null);
+              } else {
+                setPrefabDropFolder(f);
+                setAssetMoveDropFolder(null);
+              }
             }}
             onDragOver={(event) => {
-              if (!event.dataTransfer.types.includes('text/mengine-entity')) return;
+              const hasEntity = event.dataTransfer.types.includes('text/mengine-entity');
+              const hasAsset = event.dataTransfer.types.includes(PROJECT_ASSET_DRAG_TYPE);
+              if (!hasEntity && !hasAsset) return;
               event.preventDefault();
               event.stopPropagation();
-              event.dataTransfer.dropEffect = 'copy';
-              setPrefabDropFolder(f);
+              event.dataTransfer.dropEffect = hasAsset ? 'move' : 'copy';
+              if (hasAsset) {
+                setAssetMoveDropFolder(f);
+                setPrefabDropFolder(null);
+              } else {
+                setPrefabDropFolder(f);
+                setAssetMoveDropFolder(null);
+              }
             }}
             onDragLeave={(event) => {
               if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
                 setPrefabDropFolder((current) => current === f ? null : current);
+                setAssetMoveDropFolder((current) => current === f ? null : current);
               }
             }}
             onDrop={(event) => onProjectDrop(event, f)}
@@ -1187,7 +1252,7 @@ export function Project(props: {
           </div>
         </div>
         <div
-          className={`project-grid ${viewMode === 'list' ? 'list-view' : 'grid-view'}${draggingFiles ? ' file-drop-active' : ''}${draggingEntities ? ' entity-drop-active' : ''}`}
+          className={`project-grid ${viewMode === 'list' ? 'list-view' : 'grid-view'}${draggingFiles ? ' file-drop-active' : ''}${draggingEntities ? ' entity-drop-active' : ''}${draggingAsset ? ' asset-move-active' : ''}`}
           role="region"
           aria-label={`${folder} contents`}
           onContextMenu={(event) => {
@@ -1201,20 +1266,24 @@ export function Project(props: {
           onDragEnter={(event) => {
             if (event.dataTransfer.types.includes('Files')) setDraggingFiles(true);
             if (event.dataTransfer.types.includes('text/mengine-entity')) setDraggingEntities(true);
+            if (event.dataTransfer.types.includes(PROJECT_ASSET_DRAG_TYPE)) setDraggingAsset(true);
           }}
           onDragOver={(event) => {
             const hasFiles = event.dataTransfer.types.includes('Files');
             const hasEntities = event.dataTransfer.types.includes('text/mengine-entity');
-            if (!hasFiles && !hasEntities) return;
+            const hasAsset = event.dataTransfer.types.includes(PROJECT_ASSET_DRAG_TYPE);
+            if (!hasFiles && !hasEntities && !hasAsset) return;
             event.preventDefault();
-            event.dataTransfer.dropEffect = 'copy';
+            event.dataTransfer.dropEffect = hasAsset ? 'move' : 'copy';
             setDraggingFiles(hasFiles);
             setDraggingEntities(hasEntities);
+            setDraggingAsset(hasAsset);
           }}
           onDragLeave={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
               setDraggingFiles(false);
               setDraggingEntities(false);
+              setDraggingAsset(false);
             }
           }}
           onDrop={onProjectDrop}
@@ -1237,6 +1306,24 @@ export function Project(props: {
           {visible.map((a) => {
           const isActiveScene = a.kind === 'scene' && a.sceneName === props.activeScene;
           const isEditing = a.kind === 'scene' && a.sceneName != null && editing === a.sceneName;
+          const canMove = canRenameAsset(a);
+          const canDragContent = [
+            'sprite',
+            'spine',
+            'animation',
+            'animator-controller',
+            'avatar-mask',
+            'timeline',
+            'sprite-atlas',
+            'texture',
+            'audio',
+            'font',
+            'material',
+            'shader',
+            'model',
+            'prefab',
+          ].includes(a.kind);
+          const displayName = a.name.replace(/\.[^./]+$/, '') || a.name;
           return (
             <div
               key={a.assetKey}
@@ -1258,46 +1345,25 @@ export function Project(props: {
               aria-label={`${a.name} (${a.kind})`}
               data-agent-blocked-actions={a.kind === 'script' ? 'doubleClick keyPress' : undefined}
               data-agent-alternative={a.kind === 'script' ? 'read_asset_text' : undefined}
-              draggable={
-                a.kind === 'sprite'
-                || a.kind === 'spine'
-                || a.kind === 'animation'
-                || a.kind === 'animator-controller'
-                || a.kind === 'avatar-mask'
-                || a.kind === 'timeline'
-                || a.kind === 'sprite-atlas'
-                || a.kind === 'texture'
-                || a.kind === 'audio'
-                || a.kind === 'font'
-                || a.kind === 'material'
-                || a.kind === 'shader'
-                || a.kind === 'model'
-                || a.kind === 'prefab'
-              }
+              draggable={canMove || canDragContent}
               onDragStart={(e) => {
-                if (
-                  a.kind !== 'sprite'
-                  && a.kind !== 'spine'
-                  && a.kind !== 'animation'
-                  && a.kind !== 'animator-controller'
-                  && a.kind !== 'avatar-mask'
-                  && a.kind !== 'timeline'
-                  && a.kind !== 'sprite-atlas'
-                  && a.kind !== 'texture'
-                  && a.kind !== 'audio'
-                  && a.kind !== 'font'
-                  && a.kind !== 'material'
-                  && a.kind !== 'shader'
-                  && a.kind !== 'model'
-                  && a.kind !== 'prefab'
-                ) return;
-                const id = a.spriteId ?? a.name;
-                if (a.kind === 'sprite') e.dataTransfer.setData('text/mengine-sprite', id);
-                if (a.kind === 'prefab') e.dataTransfer.setData('text/mengine-prefab', id);
-                if (a.kind === 'model') e.dataTransfer.setData('text/mengine-model', id);
-                e.dataTransfer.setData('text/mengine-asset', id);
-                e.dataTransfer.setData('text/plain', id);
-                e.dataTransfer.effectAllowed = 'copy';
+                if (!canMove && !canDragContent) return;
+                if (canMove && a.assetPath) e.dataTransfer.setData(PROJECT_ASSET_DRAG_TYPE, a.assetPath);
+                if (canDragContent) {
+                  const id = a.spriteId ?? a.name;
+                  if (a.kind === 'sprite') e.dataTransfer.setData('text/mengine-sprite', id);
+                  if (a.kind === 'prefab') e.dataTransfer.setData('text/mengine-prefab', id);
+                  if (a.kind === 'model') e.dataTransfer.setData('text/mengine-model', id);
+                  e.dataTransfer.setData('text/mengine-asset', id);
+                  e.dataTransfer.setData('text/plain', id);
+                }
+                e.dataTransfer.effectAllowed = canMove && canDragContent
+                  ? 'copyMove'
+                  : canMove ? 'move' : 'copy';
+              }}
+              onDragEnd={() => {
+                setDraggingAsset(false);
+                setAssetMoveDropFolder(null);
               }}
               onClick={(e) => onCardClick(a, e)}
               onDoubleClick={() => onCardDoubleClick(a)}
@@ -1386,7 +1452,7 @@ export function Project(props: {
                   }}
                 />
               ) : (
-                <div className="asset-name">{a.name}</div>
+                <div className="asset-name" title={a.name}>{displayName}</div>
               )}
               <div className="asset-detail">
                 {normalizedQuery ? a.folder : a.kind.replaceAll('-', ' ')}
@@ -1411,9 +1477,17 @@ export function Project(props: {
               <strong>Create Prefab in {folder}</strong>
             </div>
           )}
+          {draggingAsset && (
+            <div className="project-drop-overlay project-asset-move-overlay" aria-hidden="true">
+              <Folder size={22} />
+              <strong>Move Asset to {folder}</strong>
+            </div>
+          )}
         </div>
         <div className="project-statusbar">
-          <span>{normalizedQuery ? 'Search results in Assets' : folder}</span>
+          <span title={selectedAsset?.assetPath ?? undefined}>
+            {selectedAsset?.assetPath ?? (normalizedQuery ? 'Search results in Assets' : folder)}
+          </span>
           <span>{visible.length} item{visible.length === 1 ? '' : 's'}{selected ? ' · 1 selected' : ''}</span>
         </div>
       </div>
@@ -1713,12 +1787,12 @@ export function Project(props: {
           >
             <header>
               <div>
-                <strong id="asset-rename-title">Rename / Move Asset</strong>
+                <strong id="asset-rename-title">{assetRenameIsMove ? 'Move Asset' : 'Rename Asset'}</strong>
                 <span>{assetRename.asset.assetPath}</span>
               </div>
               <button
                 type="button"
-                aria-label="Close asset rename"
+                aria-label={`Close asset ${assetRenameIsMove ? 'move' : 'rename'}`}
                 disabled={assetRename.applying}
                 onClick={closeAssetRename}
               >×</button>
@@ -1815,7 +1889,9 @@ export function Project(props: {
                   disabled={assetRename.loading || assetRename.applying}
                   onClick={() => void previewAssetRename()}
                 >
-                  {assetRename.loading ? 'Preparing...' : 'Save All & Preview'}
+                  {assetRename.loading
+                    ? 'Preparing...'
+                    : `Save All & Preview ${assetRenameIsMove ? 'Move' : 'Rename'}`}
                 </button>
               ) : (
                 <button
@@ -1827,7 +1903,9 @@ export function Project(props: {
                   }
                   onClick={() => void commitAssetRename()}
                 >
-                  {assetRename.applying ? 'Committing...' : 'Commit Rename'}
+                  {assetRename.applying
+                    ? 'Committing...'
+                    : `Commit ${assetRenameIsMove ? 'Move' : 'Rename'}`}
                 </button>
               )}
             </footer>

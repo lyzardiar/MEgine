@@ -63,6 +63,13 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(project, /prefabDropFolder === f \? ' prefab-drop-target' : ''/);
   assert.match(project, /const entityIds = hierarchyEntityIds\(event\)/);
   assert.match(project, /props\.onCreatePrefabs\(entityIds, destinationFolder\)/);
+  assert.match(project, /const PROJECT_ASSET_DRAG_TYPE = 'application\/x-mengine-project-asset'/);
+  assert.match(project, /setData\(PROJECT_ASSET_DRAG_TYPE, a\.assetPath\)/);
+  assert.match(project, /requestAssetMove\(movingAsset, destinationFolder\)/);
+  assert.match(project, /projectAssetMoveDestination\(asset\.assetPath, destinationFolder\)/);
+  assert.match(project, /assetMoveDropFolder === f \? ' asset-move-drop-target' : ''/);
+  assert.match(project, /assetRenameIsMove \? 'Move Asset' : 'Rename Asset'/);
+  assert.match(project, /`Commit \$\{assetRenameIsMove \? 'Move' : 'Rename'\}`/);
   assert.match(project, /setData\('text\/mengine-model', id\)/);
   assert.match(viewport, /values\.has\('text\/mengine-prefab'\)/);
   assert.match(viewport, /values\.has\('text\/mengine-model'\)/);

@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildAssetDuplicatePlan, buildAssetRenamePlan } from '../src/assetRename.ts';
+import {
+  buildAssetDuplicatePlan,
+  buildAssetRenamePlan,
+  projectAssetMoveDestination,
+} from '../src/assetRename.ts';
 
 const sourceAsset = {
   relPath: 'Assets/Textures/Hero.png',
@@ -8,6 +12,17 @@ const sourceAsset = {
   guid: '55081cc1-f44d-49fc-8ada-ee889a26ee36',
   metaStatus: 'ready',
 };
+
+test('Project folder drops preserve an asset filename and reject subresources', () => {
+  assert.equal(
+    projectAssetMoveDestination('assets\\Textures\\Hero Base.png', '/Assets/Characters/'),
+    'Assets/Characters/Hero Base.png',
+  );
+  assert.throws(
+    () => projectAssetMoveDestination('Assets/Textures/Hero.png#Idle', 'Assets/Characters'),
+    /subresources cannot be moved independently/,
+  );
+});
 
 test('asset rename preserves JSON formatting while rewriting exact and slice references', () => {
   const text = '{\n  "sprite": "Assets/Textures/Hero.png#Idle",\n  "name": "Hero"\n}\n';

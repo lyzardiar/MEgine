@@ -85,6 +85,13 @@ function samePath(left: string, right: string): boolean {
   return portable(left).toLocaleLowerCase() === portable(right).toLocaleLowerCase();
 }
 
+export function projectAssetMoveDestination(sourcePathRaw: string, destinationFolderRaw: string): string {
+  const sourcePath = normalizeProjectAssetPath(sourcePathRaw);
+  const destinationFolder = normalizeProjectAssetPath(destinationFolderRaw);
+  if (sourcePath.includes('#')) throw new Error('subresources cannot be moved independently');
+  return `${destinationFolder}/${sourcePath.slice(sourcePath.lastIndexOf('/') + 1)}`;
+}
+
 function splitReference(value: string): { path: string; fragment: string } {
   const marker = value.indexOf('#');
   return marker < 0
