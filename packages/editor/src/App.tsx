@@ -84,7 +84,13 @@ import {
 import { loadSpriteNativeSize } from './spriteDraw';
 import { spriteNativeWorldSize } from './spriteImport';
 import { combineMarqueeSelection } from './marqueeSelection';
-import { createProjectPrefabsFromEntities, instantiateProjectPrefab } from './prefabWorkflow';
+import {
+  applySelectedPrefab,
+  createProjectPrefabsFromEntities,
+  instantiateProjectPrefab,
+  revertSelectedPrefab,
+  unpackSelectedPrefab,
+} from './prefabWorkflow';
 import { exitDesktopEditor, isDesktopEditor } from './transport/editorTransport';
 import {
   checkpointDesktopScene,
@@ -3121,6 +3127,33 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 : undefined}
               selectedIds={selectedIds}
               selectionCount={selectedIds.length}
+              onPrefabApply={async (entity) => {
+                try {
+                  const path = await applySelectedPrefab(store, undefined, entity);
+                  log(`Applied ${path}`);
+                  refresh();
+                } catch (error) {
+                  log(`Prefab apply failed: ${String(error)}`, 'error');
+                }
+              }}
+              onPrefabRevert={async (entity) => {
+                try {
+                  const path = await revertSelectedPrefab(store, undefined, entity);
+                  log(`Reverted ${path}`);
+                  refresh();
+                } catch (error) {
+                  log(`Prefab revert failed: ${String(error)}`, 'error');
+                }
+              }}
+              onPrefabUnpack={async (entity) => {
+                try {
+                  const path = unpackSelectedPrefab(store, entity);
+                  log(`Unpacked ${path}`);
+                  refresh();
+                } catch (error) {
+                  log(`Prefab unpack failed: ${String(error)}`, 'error');
+                }
+              }}
               onBeginEditGesture={() => store.beginTransformGesture('Edit Inspector')}
               onEndEditGesture={() => store.endTransformGesture()}
               onRename={(entity, name) => {

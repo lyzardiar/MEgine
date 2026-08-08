@@ -95,6 +95,11 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(inspector, /aria-label="Search Inspector properties"/);
   assert.match(inspector, /aria-label=\{props\.locked \? 'Unlock Inspector' : 'Lock Inspector'\}/);
   assert.match(inspector, /aria-pressed=\{props\.locked\}/);
+  assert.match(inspector, /data-agent-scope="Prefab Instance"/);
+  assert.match(inspector, /aria-label=\{`Select prefab asset \$\{prefabLink\.source\}`\}/);
+  assert.match(inspector, /runPrefabAction\('apply', props\.onPrefabApply\)/);
+  assert.match(inspector, /runPrefabAction\('revert', props\.onPrefabRevert\)/);
+  assert.match(inspector, /runPrefabAction\('unpack', props\.onPrefabUnpack\)/);
   assert.match(hierarchy, /aria-label="Search hierarchy"/);
   assert.match(hierarchy, /event\.key === 'ArrowRight'/);
   assert.match(inspector, /className="comp" data-agent-scope=\{props\.title\}/);

@@ -1188,6 +1188,50 @@ button, input, select {
   opacity: 1;
 }
 
+.insp-prefab-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 3px;
+  min-height: 29px;
+  padding: 3px 6px;
+  border-bottom: 1px solid #1f3543;
+  background: #263945;
+}
+
+.insp-prefab-bar button {
+  min-width: 48px;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid #1b2932;
+  border-bottom-color: #52738a;
+  border-radius: 2px;
+  color: #d7eaf7;
+  background: #344d5d;
+  font-size: 10px;
+}
+
+.insp-prefab-bar button:hover:not(:disabled) { background: #40647b; }
+
+.insp-prefab-bar .insp-prefab-source {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  overflow: hidden;
+  color: #79c4f2;
+  background: transparent;
+  border-color: transparent;
+  text-align: left;
+}
+
+.insp-prefab-source span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .comp {
   border-top: 1px solid #4b4b4b;
   border-bottom: 1px solid #202020;

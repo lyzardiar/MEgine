@@ -24,7 +24,7 @@ registerMenuItem(
 registerMenuItem(
   'GameObject/Prefab/Apply',
   async (context) => {
-    const path = await applySelectedPrefab(context.store);
+    const path = await applySelectedPrefab(context.store, undefined, context.contextEntity);
     context.log(`Applied ${path}`);
     context.refresh();
   },
@@ -40,7 +40,7 @@ registerMenuItem(
 registerMenuItem(
   'GameObject/Prefab/Revert',
   async (context) => {
-    const path = await revertSelectedPrefab(context.store);
+    const path = await revertSelectedPrefab(context.store, undefined, context.contextEntity);
     context.log(`Reverted ${path}`);
     context.refresh();
   },
@@ -55,7 +55,7 @@ registerMenuItem(
 registerMenuItem(
   'GameObject/Prefab/Unpack',
   (context) => {
-    const path = unpackSelectedPrefab(context.store);
+    const path = unpackSelectedPrefab(context.store, context.contextEntity);
     context.log(`Unpacked ${path}`);
     context.refresh();
   },

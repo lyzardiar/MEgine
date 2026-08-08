@@ -15,6 +15,7 @@ test('Scene View prefab and model drops preserve one-step Undo and the drop posi
   });
   try {
     const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const { unpackSelectedPrefab } = await server.ssrLoadModule('/src/prefabWorkflow.ts');
     const store = createEditorStore();
     const initialCount = store.authoredEntities().length;
     const prefab = {
@@ -69,6 +70,36 @@ test('Scene View prefab and model drops preserve one-step Undo and the drop posi
     assert.equal(store.undoLabel, 'Create Robot');
     assert.equal(store.undo(), true);
     assert.equal(store.authoredEntities().length, initialCount);
+
+    const lockedPrefabRoot = store.instantiatePrefabAsset(
+      'Assets/Prefabs/Drop Me.prefab',
+      prefab,
+      null,
+      [2, 1, 4],
+    );
+    assert.notEqual(lockedPrefabRoot, null);
+    const other = store.createEmpty();
+    assert.notEqual(other, null);
+    assert.equal(store.selected, other);
+
+    assert.equal(unpackSelectedPrefab(store, lockedPrefabRoot), 'Assets/Prefabs/Drop Me.prefab');
+    assert.equal(
+      store.authoredEntities().find((entity) => entity.entity === lockedPrefabRoot)
+        .components.__MEnginePrefab,
+      undefined,
+    );
+    assert.equal(
+      store.authoredEntities().find((entity) => entity.entity === other)
+        .components.__MEnginePrefab,
+      undefined,
+    );
+    assert.equal(store.undoLabel, 'Unpack Prefab Instance');
+    assert.equal(store.undo(), true);
+    assert.equal(
+      store.authoredEntities().find((entity) => entity.entity === lockedPrefabRoot)
+        .components.__MEnginePrefab.root,
+      true,
+    );
   } finally {
     await server.close();
   }

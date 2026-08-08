@@ -16,6 +16,7 @@ import {
   Lock,
   LockOpen,
   MoreVertical,
+  Package,
   PanelTop,
   Search,
   UnfoldVertical,
@@ -57,6 +58,8 @@ import {
   materialPropertyTextureMap,
 } from '../materialPropertyBlock';
 import { readProjectAssetText } from '../projectAssets';
+import { pingProjectAsset } from '../pingBus';
+import { readPrefabLink } from '../prefabAsset';
 import { readRectTransform } from '../ui/rectLayout';
 import { rectLayoutDrive } from '../ui/rectLayoutDrive';
 import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
@@ -1905,6 +1908,9 @@ export function Inspector(props: {
     value: Record<string, unknown>,
   ) => void;
   onRemoveComponents?: (ids: number[], type: string) => void;
+  onPrefabApply?: (entity: number) => Promise<void>;
+  onPrefabRevert?: (entity: number) => Promise<void>;
+  onPrefabUnpack?: (entity: number) => Promise<void>;
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
 }) {
@@ -1913,6 +1919,7 @@ export function Inspector(props: {
   const [inspectorQuery, setInspectorQuery] = useState('');
   const [expansion, setExpansion] = useState<InspectorExpansionCommand>({ revision: 0, open: true });
   const [nameDraft, setNameDraft] = useState('');
+  const [prefabAction, setPrefabAction] = useState<'apply' | 'revert' | 'unpack' | null>(null);
   const [componentClipboard, setComponentClipboard] = useState<ComponentClipboard | null>(null);
   const [lockedSelection, setLockedSelection] = useState<{
     ids: number[];
@@ -2009,6 +2016,7 @@ export function Inspector(props: {
   }
 
   const entity = inspectedEntity;
+  const prefabLink = readPrefabLink(entity);
   const tag = entity.tag?.trim() || 'Untagged';
   const layer = Number.isInteger(entity.layer) ? Number(entity.layer) : 0;
   const configuredTags = props.tagOptions ?? [{ value: 'Untagged', label: 'Untagged' }];
@@ -2084,6 +2092,18 @@ export function Inspector(props: {
       return;
     }
     if (next !== current) props.onRename?.(entity.entity, next);
+  };
+  const runPrefabAction = async (
+    action: 'apply' | 'revert' | 'unpack',
+    callback: ((entity: number) => Promise<void>) | undefined,
+  ) => {
+    if (!callback || prefabAction) return;
+    setPrefabAction(action);
+    try {
+      await callback(entity.entity);
+    } finally {
+      setPrefabAction(null);
+    }
   };
 
   const extras = Object.keys(entity.components).filter(
@@ -2177,6 +2197,46 @@ export function Inspector(props: {
           </label>
         </div>
       </div>
+      {prefabLink && (
+        <div
+          className="insp-prefab-bar"
+          role="group"
+          aria-label={`Prefab instance ${prefabLink.source}`}
+          data-agent-scope="Prefab Instance"
+        >
+          <button
+            type="button"
+            className="insp-prefab-source"
+            title={prefabLink.source}
+            aria-label={`Select prefab asset ${prefabLink.source}`}
+            onClick={() => {
+              const slash = prefabLink.source.lastIndexOf('/');
+              pingProjectAsset(prefabLink.source, slash > 0 ? prefabLink.source.slice(0, slash) : undefined);
+            }}
+          >
+            <Package size={13} aria-hidden="true" />
+            <span>{prefabLink.source.split('/').at(-1)}</span>
+          </button>
+          <button
+            type="button"
+            disabled={prefabAction != null || !props.onPrefabApply}
+            aria-label={`Apply prefab ${prefabLink.source}`}
+            onClick={() => void runPrefabAction('apply', props.onPrefabApply)}
+          >{prefabAction === 'apply' ? 'Applying...' : 'Apply'}</button>
+          <button
+            type="button"
+            disabled={prefabAction != null || !props.onPrefabRevert}
+            aria-label={`Revert prefab ${prefabLink.source}`}
+            onClick={() => void runPrefabAction('revert', props.onPrefabRevert)}
+          >{prefabAction === 'revert' ? 'Reverting...' : 'Revert'}</button>
+          <button
+            type="button"
+            disabled={prefabAction != null || !props.onPrefabUnpack}
+            aria-label={`Unpack prefab ${prefabLink.source}`}
+            onClick={() => void runPrefabAction('unpack', props.onPrefabUnpack)}
+          >{prefabAction === 'unpack' ? 'Unpacking...' : 'Unpack'}</button>
+        </div>
+      )}
       {props.previewNotice && <div className="inspector-preview-notice">{props.previewNotice}</div>}
 
       {hasRect && inspectorSectionMatches(

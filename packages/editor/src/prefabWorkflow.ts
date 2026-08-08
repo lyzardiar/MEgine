@@ -100,8 +100,9 @@ export async function createProjectPrefabFromSelection(store: EditorStore): Prom
 export async function applySelectedPrefab(
   store: EditorStore,
   expectedRevision?: string,
+  entity = store.selected,
 ): Promise<string> {
-  const selected = store.selected;
+  const selected = entity;
   if (selected == null) throw new Error('select a prefab instance');
   const instance = store.getPrefabInstance(selected);
   if (!instance) throw new Error('selection is not part of a prefab instance');
@@ -111,10 +112,12 @@ export async function applySelectedPrefab(
   const captured = capturePrefabAsset(root.name ?? 'Prefab', entities, instance.root, {
     source: instance.source,
   });
+  const revision = expectedRevision
+    ?? (await readProjectAssetBytesWithRevision(instance.source)).revision;
   await writeProjectAssetText(
     instance.source,
     serializePrefabAsset(captured.asset),
-    expectedRevision,
+    revision,
   );
   store.markPrefabInstance(instance.root, instance.source, captured.nodeIds);
   await refreshProjectFiles();
@@ -124,8 +127,9 @@ export async function applySelectedPrefab(
 export async function revertSelectedPrefab(
   store: EditorStore,
   expectedRevision?: string,
+  entity = store.selected,
 ): Promise<string> {
-  const selected = store.selected;
+  const selected = entity;
   if (selected == null) throw new Error('select a prefab instance');
   const instance = store.getPrefabInstance(selected);
   if (!instance) throw new Error('selection is not part of a prefab instance');
@@ -140,8 +144,8 @@ export async function revertSelectedPrefab(
   return instance.source;
 }
 
-export function unpackSelectedPrefab(store: EditorStore): string {
-  const selected = store.selected;
+export function unpackSelectedPrefab(store: EditorStore, entity = store.selected): string {
+  const selected = entity;
   if (selected == null) throw new Error('select a prefab instance');
   const instance = store.getPrefabInstance(selected);
   if (!instance || !store.unpackPrefabInstance(selected)) {
