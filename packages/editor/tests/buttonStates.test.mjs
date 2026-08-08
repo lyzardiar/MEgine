@@ -27,4 +27,8 @@ test('shared button states preserve authored colors and expose active workbench 
   const profiler = source('Profiler.tsx');
   assert.match(profiler, /aria-pressed=\{frozen\}/);
   assert.match(profiler, /aria-pressed=\{!frozen && selectedTimestamp == null\}/);
+
+  const hierarchyControls = styles.match(/\.hier-scene-control \{([^}]*)\}/s)?.[1] ?? '';
+  assert.match(hierarchyControls, /opacity: 0;/);
+  assert.match(styles, /\.hier-row:hover \.hier-scene-control,\s*\.hier-row:focus-within \.hier-scene-control,\s*\.hier-scene-control\.active \{\s*opacity: 1;/s);
 });

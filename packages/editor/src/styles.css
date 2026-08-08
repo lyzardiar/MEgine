@@ -975,11 +975,11 @@ button, input, select {
   border-radius: 2px;
   background: transparent;
   color: #93a1ac;
-  opacity: 0.28;
+  opacity: 0;
 }
 
 .hier-row:hover .hier-scene-control,
-.hier-row.selected .hier-scene-control,
+.hier-row:focus-within .hier-scene-control,
 .hier-scene-control.active {
   opacity: 1;
 }
