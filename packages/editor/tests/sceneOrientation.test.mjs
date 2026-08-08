@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import {
   activeSceneOrientation,
   sceneOrientationCamera,
+  sceneOrientationCubeFaces,
   sceneOrientationHandles,
   sceneOrientationLabel,
 } from '../src/sceneOrientation.ts';
@@ -18,6 +19,18 @@ test('maps Unity-style Scene orientation views to the existing orbit camera', ()
   assert.deepEqual(sceneOrientationCamera('top'), { yaw: 0, pitch: 89 });
   assert.deepEqual(sceneOrientationCamera('bottom'), { yaw: 0, pitch: -89 });
   assert.deepEqual(sceneOrientationCamera('perspective'), { yaw: 35, pitch: 25 });
+});
+
+test('orientation cube follows the orbit camera instead of staying as a static icon', () => {
+  const perspective = sceneOrientationCubeFaces(35, 25);
+  assert.equal(perspective.length, 3);
+  assert.deepEqual(new Set(perspective.map((face) => face.view)), new Set(['right', 'top', 'front']));
+  assert.ok(perspective.every((face) => face.points.length === 4));
+  assert.notDeepEqual(sceneOrientationCubeFaces(35, 25), sceneOrientationCubeFaces(-35, 25));
+
+  const front = sceneOrientationCubeFaces(0, 0);
+  assert.equal(front.length, 1);
+  assert.equal(front[0].view, 'front');
 });
 
 test('projects all six axis handles with opposite endpoints and camera depth', () => {
@@ -52,5 +65,7 @@ test('Viewport exposes the compass only in 3D and routes it through the scene ca
   assert.match(viewport, /role="group" aria-label="Scene orientation"/);
   assert.match(viewport, /aria-label="Return to Perspective view"/);
   assert.match(viewport, /onClick=\{\(\) => applySceneOrientation\(handle\.view\)\}/);
+  assert.match(viewport, /sceneOrientationCubeFaces/);
+  assert.doesNotMatch(viewport, /handle\.depth < 0 \? ' rear'/);
   assert.match(viewport, /syncCamToStore\(\)/);
 });

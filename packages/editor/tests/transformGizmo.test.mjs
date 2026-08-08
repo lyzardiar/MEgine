@@ -69,14 +69,14 @@ test('typed hit geometry picks rings, center, axes, and planes predictably', () 
   const axis = { kind: 'axis', axis: 'x', shape: 'segment', start: { x: 110, y: 100 }, end: { x: 180, y: 100 } };
   const plane = {
     kind: 'plane', plane: 'xy', corners: [
-      { x: 115, y: 115 }, { x: 135, y: 115 }, { x: 135, y: 135 }, { x: 115, y: 135 },
+      { x: 110, y: 110 }, { x: 120, y: 110 }, { x: 120, y: 120 }, { x: 110, y: 120 },
     ],
   };
   const hits = [plane, axis, center, ellipse];
   assert.deepEqual(hitTestTransformGizmo(hits, 100, 75), { kind: 'axis', axis: 'z' });
   assert.deepEqual(hitTestTransformGizmo(hits, 100, 100), { kind: 'center' });
   assert.deepEqual(hitTestTransformGizmo(hits, 160, 103), { kind: 'axis', axis: 'x' });
-  assert.deepEqual(hitTestTransformGizmo(hits, 118, 118), { kind: 'plane', plane: 'xy' });
+  assert.deepEqual(hitTestTransformGizmo(hits, 112, 112), { kind: 'plane', plane: 'xy' });
 });
 
 test('gizmo parts compare by stable semantic identity', () => {
@@ -112,6 +112,23 @@ test('Unity-style gizmos stay large enough to read and hit at any camera distanc
   assert.equal(rotate.find((hit) => hit.kind === 'center')?.radius, 80);
 });
 
+test('rotation rings remain present and hittable when an axis points at the camera', () => {
+  for (const eye of [[0, 0, 8], [8, 0, 0], [0, 8, 0]]) {
+    const rings = drawTransformGizmo(
+      drawingContext(),
+      { eye, target: [0, 0, 0], fovYDeg: 60 },
+      viewport,
+      [0, 0, 0],
+      null,
+      'rotate',
+      null,
+      null,
+    ).filter((hit) => hit.kind === 'axis' && hit.shape === 'ellipse');
+    assert.equal(rings.length, 3, 'edge-on Unity-style rings become lines instead of disappearing');
+    assert.ok(rings.every((ring) => Number.isFinite(ring.u.x + ring.u.y + ring.v.x + ring.v.y)));
+  }
+});
+
 test('Move, Scale, and Rotate keep distinct Unity-style handle silhouettes', () => {
   const origin = [0, 0, 0];
   const screenOrigin = project(origin, camera, viewport);
@@ -124,6 +141,11 @@ test('Move, Scale, and Rotate keep distinct Unity-style handle silhouettes', () 
   ));
   assert.equal(moveCenterRings.length, 2, 'Move uses a circular view-plane handle');
   assert.ok(move.calls.some(([method, key, value]) => method === 'set' && key === 'globalAlpha' && value === 0.58));
+  assert.deepEqual(
+    move.calls.filter(([method]) => method === 'fillText').map(([, label]) => label).sort(),
+    ['X', 'Y', 'Z'],
+    'Move labels every visible axis explicitly',
+  );
 
   const scale = recordingContext();
   drawTransformGizmo(scale, camera, viewport, origin, null, 'scale', null, null);

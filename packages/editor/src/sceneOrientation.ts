@@ -18,6 +18,14 @@ export type SceneOrientationHandle = {
   depth: number;
 };
 
+export type SceneOrientationCubeFace = {
+  axis: 'x' | 'y' | 'z';
+  sign: 1 | -1;
+  view: Exclude<SceneOrientationView, 'perspective'>;
+  points: Array<{ x: number; y: number }>;
+  depth: number;
+};
+
 const CAMERA_PRESETS: Record<SceneOrientationView, { yaw: number; pitch: number }> = {
   right: { yaw: 90, pitch: 0 },
   left: { yaw: -90, pitch: 0 },
@@ -63,6 +71,43 @@ export function sceneOrientationHandles(
       };
     })
   ));
+}
+
+const CUBE_FACES: Array<{
+  axis: SceneOrientationCubeFace['axis'];
+  sign: 1 | -1;
+  view: SceneOrientationCubeFace['view'];
+  normal: Vec3;
+  corners: Vec3[];
+}> = [
+  { axis: 'x', sign: 1, view: 'right', normal: [1, 0, 0], corners: [[1, -1, -1], [1, 1, -1], [1, 1, 1], [1, -1, 1]] },
+  { axis: 'x', sign: -1, view: 'left', normal: [-1, 0, 0], corners: [[-1, -1, 1], [-1, 1, 1], [-1, 1, -1], [-1, -1, -1]] },
+  { axis: 'y', sign: 1, view: 'top', normal: [0, 1, 0], corners: [[-1, 1, -1], [-1, 1, 1], [1, 1, 1], [1, 1, -1]] },
+  { axis: 'y', sign: -1, view: 'bottom', normal: [0, -1, 0], corners: [[-1, -1, 1], [-1, -1, -1], [1, -1, -1], [1, -1, 1]] },
+  { axis: 'z', sign: 1, view: 'front', normal: [0, 0, 1], corners: [[-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]] },
+  { axis: 'z', sign: -1, view: 'back', normal: [0, 0, -1], corners: [[1, -1, -1], [-1, -1, -1], [-1, 1, -1], [1, 1, -1]] },
+];
+
+/** Visible faces for a camera-aligned cube, sharing the same basis as its axis arms. */
+export function sceneOrientationCubeFaces(
+  yaw: number,
+  pitch: number,
+  radius = 12,
+): SceneOrientationCubeFace[] {
+  const eye = orbitEye([0, 0, 0], yaw, pitch, 1);
+  const { right, up } = lookBasis(eye, [0, 0, 0]);
+  return CUBE_FACES
+    .filter((face) => dot(face.normal, eye) > 1e-6)
+    .map((face) => {
+      const points = face.corners.map((corner) => ({
+        x: dot(corner, right) * radius,
+        y: -dot(corner, up) * radius,
+      }));
+      const depth = face.corners.reduce((sum, corner) => sum + dot(corner, eye), 0)
+        / face.corners.length;
+      return { axis: face.axis, sign: face.sign, view: face.view, points, depth };
+    })
+    .sort((left, right) => left.depth - right.depth);
 }
 
 function angleDelta(a: number, b: number) {

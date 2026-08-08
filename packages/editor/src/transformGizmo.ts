@@ -113,6 +113,35 @@ function projectedAxis(origin: Vec3, direction: Vec3, camera: Camera, viewport: 
   };
 }
 
+function projectedRotationBasis(
+  origin: Vec3,
+  worldU: Vec3,
+  worldV: Vec3,
+  camera: Camera,
+  viewport: Vp,
+  center: Point,
+): { u: Point; v: Point } | null {
+  const cameraDistance = Math.hypot(...sub(origin, camera.eye));
+  const sampleDistance = Math.max(1, cameraDistance * 0.04);
+  const projectedU = project(add(origin, scale(worldU, sampleDistance)), camera, viewport);
+  const projectedV = project(add(origin, scale(worldV, sampleDistance)), camera, viewport);
+  if (!projectedU || !projectedV) return null;
+
+  const u = { x: projectedU.x - center.x, y: projectedU.y - center.y };
+  const v = { x: projectedV.x - center.x, y: projectedV.y - center.y };
+  const uu = u.x * u.x + u.y * u.y;
+  const vv = v.x * v.x + v.y * v.y;
+  const uv = u.x * v.x + u.y * v.y;
+  const trace = uu + vv;
+  const largestEigenvalue = (trace + Math.sqrt(Math.max(0, (uu - vv) ** 2 + 4 * uv * uv))) / 2;
+  if (largestEigenvalue < 1e-8) return null;
+  const inverseMajorRadius = 1 / Math.sqrt(largestEigenvalue);
+  return {
+    u: { x: u.x * inverseMajorRadius, y: u.y * inverseMajorRadius },
+    v: { x: v.x * inverseMajorRadius, y: v.y * inverseMajorRadius },
+  };
+}
+
 function outlinedLine(
   context: CanvasRenderingContext2D,
   start: Point,
@@ -330,6 +359,31 @@ function drawScaleCenterHandle(
   context.stroke();
 }
 
+function drawAxisLabel(
+  context: CanvasRenderingContext2D,
+  tip: Point,
+  direction: Point,
+  axis: GizmoAxis,
+  color: string,
+) {
+  const center = {
+    x: tip.x + direction.x * 12,
+    y: tip.y + direction.y * 12,
+  };
+  context.beginPath();
+  context.arc(center.x, center.y, 7, 0, Math.PI * 2);
+  context.fillStyle = 'rgba(17,17,19,0.88)';
+  context.fill();
+  context.strokeStyle = color;
+  context.lineWidth = 1;
+  context.stroke();
+  context.fillStyle = '#fff';
+  context.font = '700 9px sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(axis.toUpperCase(), center.x, center.y + 0.5);
+}
+
 function drawMoveCenterHandle(
   context: CanvasRenderingContext2D,
   center: Point,
@@ -406,23 +460,15 @@ export function drawTransformGizmo(
     const viewToCamera = norm(sub(camera.eye, worldOrigin));
     for (const axis of drawAxes) {
       const otherAxes = AXES.filter((candidate) => candidate !== axis);
-      const firstHandle = projected[otherAxes[0]];
-      const secondHandle = projected[otherAxes[1]];
-      if (!firstHandle || !secondHandle
-        || Math.abs(firstHandle.unit.x * secondHandle.unit.y
-          - secondHandle.unit.x * firstHandle.unit.y) < 0.08) continue;
-      const scaleToRadius = 1 / Math.max(
-        Math.hypot(firstHandle.screen.x, firstHandle.screen.y),
-        Math.hypot(secondHandle.screen.x, secondHandle.screen.y),
+      const ringBasis = projectedRotationBasis(
+        worldOrigin,
+        directions[otherAxes[0]],
+        directions[otherAxes[1]],
+        camera,
+        viewport,
+        center,
       );
-      const first = {
-        x: firstHandle.screen.x * scaleToRadius,
-        y: firstHandle.screen.y * scaleToRadius,
-      };
-      const second = {
-        x: secondHandle.screen.x * scaleToRadius,
-        y: secondHandle.screen.y * scaleToRadius,
-      };
+      if (!ringBasis) continue;
       const part: GizmoPart = { kind: 'axis', axis };
       const color = partColor(part, hover, active);
       context.save();
@@ -431,8 +477,8 @@ export function drawTransformGizmo(
         context,
         center,
         ROTATE_RADIUS,
-        first,
-        second,
+        ringBasis.u,
+        ringBasis.v,
         directions[otherAxes[0]],
         directions[otherAxes[1]],
         viewToCamera,
@@ -440,7 +486,15 @@ export function drawTransformGizmo(
         samePart(hover, part) || samePart(active, part),
       );
       context.restore();
-      hits.push({ kind: 'axis', axis, shape: 'ellipse', center, radius: ROTATE_RADIUS, u: first, v: second });
+      hits.push({
+        kind: 'axis',
+        axis,
+        shape: 'ellipse',
+        center,
+        radius: ROTATE_RADIUS,
+        u: ringBasis.u,
+        v: ringBasis.v,
+      });
     }
     const radius = ROTATE_RADIUS + 12;
     const part: GizmoPart = { kind: 'center' };
@@ -478,6 +532,7 @@ export function drawTransformGizmo(
       outlinedLine(context, start, end, color, hot ? 4 : 2.5);
       if (mode === 'translate') arrowHead(context, handle.tip, handle.angle, color);
       else drawScaleCap(context, handle.tip, color, hot);
+      drawAxisLabel(context, handle.tip, handle.unit, axis, color);
       context.restore();
       hits.push({ kind: 'axis', axis, shape: 'segment', start, end: handle.tip });
     }
@@ -509,17 +564,18 @@ function segmentDistance(point: Point, start: Point, end: Point): number {
 }
 
 function ellipseDistance(point: Point, hit: Extract<GizmoHit, { shape: 'ellipse' }>): number {
-  const dx = point.x - hit.center.x;
-  const dy = point.y - hit.center.y;
-  const ax = hit.u.x * hit.radius;
-  const ay = hit.u.y * hit.radius;
-  const bx = hit.v.x * hit.radius;
-  const by = hit.v.y * hit.radius;
-  const determinant = ax * by - bx * ay;
-  if (Math.abs(determinant) < 1e-6) return Number.POSITIVE_INFINITY;
-  const u = (dx * by - bx * dy) / determinant;
-  const v = (ax * dy - dx * ay) / determinant;
-  return Math.abs(Math.hypot(u, v) - 1) * hit.radius;
+  const ellipsePoint = (angle: number): Point => ({
+    x: hit.center.x + (Math.cos(angle) * hit.u.x + Math.sin(angle) * hit.v.x) * hit.radius,
+    y: hit.center.y + (Math.cos(angle) * hit.u.y + Math.sin(angle) * hit.v.y) * hit.radius,
+  });
+  let previous = ellipsePoint(0);
+  let closest = Number.POSITIVE_INFINITY;
+  for (let index = 1; index <= 96; index += 1) {
+    const next = ellipsePoint(index / 96 * Math.PI * 2);
+    closest = Math.min(closest, segmentDistance(point, previous, next));
+    previous = next;
+  }
+  return closest;
 }
 
 export function hitTestTransformGizmo(hits: GizmoHit[], x: number, y: number): GizmoPart | null {

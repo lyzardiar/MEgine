@@ -2653,8 +2653,6 @@ body.insp-scrubbing * {
 
 .scene-orientation-axis {
   position: absolute;
-  width: 22px;
-  height: 22px;
   padding: 0;
   transform: translate(-50%, -50%);
   border: 1px solid color-mix(in srgb, var(--scene-axis) 72%, #fff);
@@ -2667,7 +2665,12 @@ body.insp-scrubbing * {
   cursor: pointer;
 }
 
-.scene-orientation-axis.rear {
+.scene-orientation-axis.positive {
+  width: 22px;
+  height: 22px;
+}
+
+.scene-orientation-axis.negative {
   width: 15px;
   height: 15px;
   border-color: color-mix(in srgb, var(--scene-axis) 65%, #111);
@@ -2687,7 +2690,7 @@ body.insp-scrubbing * {
 
 .scene-orientation-center {
   position: absolute;
-  z-index: 3;
+  z-index: 32;
   top: 44px;
   left: 52px;
   width: 36px;
@@ -2713,9 +2716,9 @@ body.insp-scrubbing * {
   transition: filter 80ms ease;
 }
 
-.scene-orientation-center .cube-top { fill: #9ba2a8; }
-.scene-orientation-center .cube-left { fill: #666d73; }
-.scene-orientation-center .cube-right { fill: #7b838a; }
+.scene-orientation-center .cube-face.axis-x { fill: #796667; }
+.scene-orientation-center .cube-face.axis-y { fill: #687565; }
+.scene-orientation-center .cube-face.axis-z { fill: #657083; }
 
 .scene-orientation-center:hover polygon,
 .scene-orientation-center:focus-visible polygon {

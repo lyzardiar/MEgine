@@ -189,10 +189,12 @@ import {
 import {
   activeSceneOrientation,
   sceneOrientationCamera,
+  sceneOrientationCubeFaces,
   sceneOrientationHandles,
   sceneOrientationLabel,
   type SceneOrientationView,
 } from '../sceneOrientation';
+import { nativeSceneFrameRequestIdentity } from '../nativeSceneFrame';
 import {
   rectAxisTranslationAmount,
   rectTranslationAlongAxis,
@@ -669,6 +671,7 @@ export function Viewport(props: {
     image: HTMLImageElement;
     width: number;
     height: number;
+    key: string;
   } | null>(null);
   const nativeSceneRequestRef = useRef({
     inFlight: false,
@@ -1306,6 +1309,15 @@ export function Viewport(props: {
             ? sc.distance * Math.tan(Math.PI / 6)
             : undefined,
         };
+    const nativeSceneIdentity = !isGame && !scene2DActive
+      ? nativeSceneFrameRequestIdentity(
+          cam,
+          vp,
+          dpr,
+          p.sceneHiddenIds ?? [],
+          MAX_NATIVE_SCENE_VIEW_DIMENSION,
+        )
+      : null;
     lastCameraRef.current = cam;
     if (
       !isGame
@@ -1319,11 +1331,6 @@ export function Viewport(props: {
       const generation = ++request.generation;
       request.inFlight = true;
       request.lastRequestAt = now;
-      const nativeScale = Math.min(
-        dpr,
-        MAX_NATIVE_SCENE_VIEW_DIMENSION / Math.max(1, vp.w),
-        MAX_NATIVE_SCENE_VIEW_DIMENSION / Math.max(1, vp.h),
-      );
       request.ready = invoke<{
         width: number;
         height: number;
@@ -1332,8 +1339,8 @@ export function Viewport(props: {
         profile: NativeViewportProfilePayload;
       }>('render_native_scene_view', {
         request: {
-          width: Math.max(1, Math.round(vp.w * nativeScale)),
-          height: Math.max(1, Math.round(vp.h * nativeScale)),
+          width: nativeSceneIdentity!.width,
+          height: nativeSceneIdentity!.height,
           eye: cam.eye,
           target: cam.target,
           orthographic: cam.projection === 'orthographic',
@@ -1350,6 +1357,7 @@ export function Viewport(props: {
           image,
           width: result.width,
           height: result.height,
+          key: nativeSceneIdentity!.key,
         };
         request.reportedError = false;
         paint();
@@ -1362,6 +1370,9 @@ export function Viewport(props: {
       }).finally(() => {
         request.inFlight = false;
         request.ready = null;
+        // Hidden WebViews can throttle rAF. Repaint after releasing inFlight so
+        // a response for an older orbit immediately schedules the current one.
+        paint();
       });
     }
     if (
@@ -2218,7 +2229,11 @@ export function Viewport(props: {
 
     // The web renderer owns the complete 2D authoring path (including live
     // particles and trails). Native Scene frames are composited only in 3D.
-    const nativeSceneFrame = !isGame && !scene2DActive ? nativeSceneFrameRef.current : null;
+    const nativeSceneFrame = !isGame
+      && !scene2DActive
+      && nativeSceneFrameRef.current?.key === nativeSceneIdentity?.key
+      ? nativeSceneFrameRef.current
+      : null;
     if (nativeSceneFrame?.image.complete) {
       ctx.drawImage(nativeSceneFrame.image, vp.x, vp.y, vp.w, vp.h);
       if (!scene2DActive && sceneGridRef.current) {
@@ -4467,6 +4482,10 @@ export function Viewport(props: {
     props.sceneCamera.yaw,
     props.sceneCamera.pitch,
   );
+  const orientationCubeFaces = sceneOrientationCubeFaces(
+    props.sceneCamera.yaw,
+    props.sceneCamera.pitch,
+  );
   const activeOrientation = activeSceneOrientation(
     props.sceneCamera.yaw,
     props.sceneCamera.pitch,
@@ -4959,17 +4978,16 @@ export function Viewport(props: {
               );
             })}
           </svg>
-          {[...orientationHandles]
-            .sort((a, b) => a.depth - b.depth)
-            .map((handle) => (
+          {orientationHandles.map((handle) => (
               <button
                 type="button"
                 key={handle.view}
-                className={`scene-orientation-axis axis-${handle.axis}${handle.depth < 0 ? ' rear' : ''}${activeOrientation === handle.view ? ' active' : ''}`}
+                className={`scene-orientation-axis axis-${handle.axis} ${handle.sign > 0 ? 'positive' : 'negative'}${activeOrientation === handle.view ? ' active' : ''}`}
                 style={{
                   left: 52 + handle.x,
                   top: 44 + handle.y,
-                  zIndex: handle.depth < 0 ? 1 : 4,
+                  zIndex: Math.round(handle.depth + 32),
+                  opacity: 0.52 + Math.max(0, Math.min(1, (handle.depth / 31 + 1) / 2)) * 0.48,
                 }}
                 aria-label={`View from ${handle.sign > 0 ? '+' : '-'}${handle.axis.toUpperCase()} (${sceneOrientationLabel(
                   sceneOrientationCamera(handle.view).yaw,
@@ -4990,9 +5008,13 @@ export function Viewport(props: {
             onClick={() => applySceneOrientation('perspective')}
           >
             <svg viewBox="0 0 36 36" aria-hidden>
-              <polygon className="cube-top" points="18,2 33,10 18,18 3,10" />
-              <polygon className="cube-left" points="3,10 18,18 18,34 3,26" />
-              <polygon className="cube-right" points="18,18 33,10 33,26 18,34" />
+              {orientationCubeFaces.map((face) => (
+                <polygon
+                  key={face.view}
+                  className={`cube-face axis-${face.axis}`}
+                  points={face.points.map((point) => `${18 + point.x},${18 + point.y}`).join(' ')}
+                />
+              ))}
             </svg>
           </button>
           <span className="scene-orientation-label">
