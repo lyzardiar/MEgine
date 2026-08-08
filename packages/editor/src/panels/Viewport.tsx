@@ -565,6 +565,8 @@ export function Viewport(props: {
   entities: Ent[];
   selected: number | null;
   selectedIds?: number[];
+  sceneHiddenIds?: readonly number[];
+  isPickable?: (id: number) => boolean;
   activeInHierarchy?: (id: number) => boolean;
   simulationTime: number;
   gizmo: GizmoMode;
@@ -1162,7 +1164,7 @@ export function Viewport(props: {
   // Force paint when props change
   useEffect(() => {
     setTick((t) => t + 1);
-  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.gameDisplay, props.timelineCameraPreview, props.timelineParticlePreviews, props.simulationTime, props.playing, props.activeInHierarchy]);
+  }, [props.tab, props.entities, props.selected, props.selectedIds, props.sceneHiddenIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.gameDisplay, props.timelineCameraPreview, props.timelineParticlePreviews, props.simulationTime, props.playing, props.activeInHierarchy]);
 
   const paint = () => {
     const paintStartedAt = performance.now();
@@ -1335,6 +1337,7 @@ export function Viewport(props: {
           orthographic: cam.projection === 'orthographic',
           orthographicSize: cam.orthographicSize ?? 5,
           fovYDegrees: cam.fovYDeg,
+          hiddenEntityIds: p.sceneHiddenIds ?? [],
         },
       }).then(async (result) => {
         recordNativeViewportProfile('scene', result.profile);
@@ -1392,6 +1395,7 @@ export function Viewport(props: {
           clearFlags: selectedCamera.clearFlags,
           backgroundColor: selectedCamera.backgroundColor,
           targetDisplay: selectedCamera.targetDisplay,
+          hiddenEntityIds: [],
         },
       }).then(async (result) => {
         const image = await decodeNativeFrame(result.pngBase64);
@@ -2885,6 +2889,7 @@ export function Viewport(props: {
     props.playing,
     props.selected,
     props.selectedIds,
+    props.sceneHiddenIds,
     props.tab,
     props.timelineCameraPreview,
   ]);
@@ -2905,7 +2910,12 @@ export function Viewport(props: {
 
     // Scene: UI graphics over 3D
     if (propsRef.current.tab === 'scene') {
-      const ui = hitTestUiSelect(uiItemsRef.current, x, y);
+      const ui = hitTestUiSelect(
+        uiItemsRef.current,
+        x,
+        y,
+        (entity) => propsRef.current.isPickable?.(entity) !== false,
+      );
       if (ui) {
         const canvasInterior = ui.role === 'canvas' && scene2DRef.current;
         const edgeDistance = canvasInterior
@@ -2926,6 +2936,7 @@ export function Viewport(props: {
     let best: { h: Hit; d: number } | null = null;
     for (const h of hitsRef.current) {
       if (h.kind !== 'object') continue;
+      if (propsRef.current.isPickable?.(h.id) === false) continue;
       const d = Math.hypot(x - h.x, y - h.y);
       if (d < h.r && (!best || d < best.d)) best = { h, d };
     }
@@ -3469,7 +3480,12 @@ export function Viewport(props: {
                 ? cursorForRectGizmo(next, propsRef.current.gizmo)
                 : cursorForGizmoPart(next);
             } else if (!next) {
-              const ui = hitTestUiSelect(uiItemsRef.current, x, y);
+              const ui = hitTestUiSelect(
+                uiItemsRef.current,
+                x,
+                y,
+                (entity) => propsRef.current.isPickable?.(entity) !== false,
+              );
               canvas.style.cursor = ui ? 'pointer' : 'default';
             }
           }

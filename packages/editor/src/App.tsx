@@ -224,6 +224,8 @@ type WorkspaceSyncMessage =
       sceneName: string | null;
       sceneJson: string;
       selectedIds: number[];
+      sceneHiddenIds?: number[];
+      sceneUnpickableIds?: number[];
       logs: string[];
       dirty: boolean;
       animationAssetPath?: string | null;
@@ -743,6 +745,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         mode: store.mode,
         sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled'),
         selectedIds: store.selectedIds,
+        sceneHiddenIds: store.sceneHiddenIds,
+        sceneUnpickableIds: store.sceneUnpickableIds,
         logs: logsRef.current,
         dirty: sceneDirtyRef.current,
         ...resourceDocumentPathsRef.current,
@@ -1368,6 +1372,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         lastRemoteTimestamp.current = message.timestamp;
         store.loadRemoteSceneJson(message.sceneJson, message.mode);
         store.selectMany(message.selectedIds, 'replace');
+        store.setSceneInteractionState(
+          message.sceneHiddenIds ?? [],
+          message.sceneUnpickableIds ?? [],
+        );
         const preview = localTimelinePreview.current ?? remoteTimelinePreview.current?.preview ?? null;
         if (preview && message.mode === 'edit') store.setTimelinePreview(preview);
         const remoteFingerprint = store.sceneContentFingerprint();
@@ -2779,6 +2787,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   const treeNodes = useMemo(() => store.getVisibleFlat(), [store, snap, treeTick]);
   const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(snap.entities), [snap.entities]);
+  const sceneHiddenIds = store.sceneHiddenIds;
+  const viewportEntities = viewTab === 'scene' && sceneHiddenIds.length
+    ? snap.entities.filter((entity) => store.sceneVisible(entity.entity))
+    : snap.entities;
+  const viewportSelected = viewTab === 'scene'
+    && selected != null
+    && (!store.sceneVisible(selected) || !store.scenePickable(selected))
+    ? null
+    : selected;
+  const viewportSelectedIds = viewTab === 'scene'
+    ? selectedIds.filter((id) => store.sceneVisible(id) && store.scenePickable(id))
+    : selectedIds;
   const timelinePreviewActive = store.timelinePreviewActive();
   const authoredInspectorEntities = timelinePreviewActive
     ? store.authoredEntities()
@@ -2913,9 +2933,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <Viewport
               tab={viewTab}
               clearColor={snap.clearColor}
-              entities={snap.entities}
-              selected={selected}
-              selectedIds={selectedIds}
+              entities={viewportEntities}
+              selected={viewportSelected}
+              selectedIds={viewportSelectedIds}
+              sceneHiddenIds={sceneHiddenIds}
+              isPickable={(id) => store.scenePickable(id)}
               simulationTime={store.simulationTime}
               gizmo={gizmo}
               pivotMode={pivotMode}
@@ -2928,13 +2950,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               timelineParticlePreviews={store.timelineParticlePreviews()}
               activeInHierarchy={(id) => snapshotWorldTransforms.get(id)?.active === true}
               onPick={(id, modifiers) => {
+                if (!store.scenePickable(id)) return;
                 if (modifiers.toggle) store.selectMany([id], 'toggle', id);
                 else if (modifiers.additive) store.selectMany([id], 'add', id);
                 else store.select(id);
                 refresh();
               }}
               onMarqueeSelect={(ids, selectionMode) => {
-                const next = combineMarqueeSelection(store.selectedIds, ids, selectionMode);
+                const next = combineMarqueeSelection(
+                  store.selectedIds,
+                  ids.filter((id) => store.scenePickable(id)),
+                  selectionMode,
+                );
                 store.selectMany(next, 'replace');
                 refresh();
               }}

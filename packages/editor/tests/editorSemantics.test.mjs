@@ -70,6 +70,13 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(viewport, /props\.onInstantiateModel\(path, position\)/);
   assert.match(hierarchy, /data-prefab-source=\{prefabLink\?\.source\}/);
   assert.match(hierarchy, /Prefab instance from \$\{prefabLink\.source\}/);
+  assert.match(hierarchy, /props\.store\.setSceneVisibility\(id, !sceneVisible\)/);
+  assert.match(hierarchy, /props\.store\.setScenePickability\(id, !scenePickable\)/);
+  assert.match(hierarchy, /aria-label=\{`\$\{sceneVisible \? 'Hide' : 'Show'\} \$\{n\.entity\.name/);
+  assert.match(hierarchy, /aria-label=\{`\$\{scenePickable \? 'Disable' : 'Enable'\} Scene picking/);
+  assert.match(viewport, /hiddenEntityIds: p\.sceneHiddenIds \?\? \[\]/);
+  assert.match(viewport, /propsRef\.current\.isPickable\?\.\(h\.id\) === false/);
+  assert.match(native, /snapshot\.entities\.retain\(\|entity\| !hidden\.contains\(&entity\.entity\)\)/);
 
   assert.match(menu, /role="menubar" aria-label="Main menu"/);
   assert.match(menu, /role="menuitem"/);

@@ -208,6 +208,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let gestureUndoToken: EditorUndoToken | null = null;
   let gestureHistoryCheckpoint: EditorUndoCheckpoint | null = null;
   let expanded = new Set<number>();
+  let sceneHiddenIds = new Set<number>();
+  let sceneUnpickableIds = new Set<number>();
   let clipboard: ClipboardPayload | null = null;
   let renameRequestId: number | null = null;
   let animationPreview: { root: number; samples: AnimationPreviewSample[] } | null = null;
@@ -224,6 +226,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   const buildDefaultScene = () => {
     nextId = 1;
     expanded = new Set();
+    sceneHiddenIds = new Set();
+    sceneUnpickableIds = new Set();
     editEntities = [
     boot('Main Camera', {
       Transform: { position: [0, 1.5, 4], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
@@ -845,6 +849,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       gameDisplay = normalizeGameDisplay(data.gameDisplay);
     }
     expanded = new Set(editEntities.map((e) => e.entity));
+    sceneHiddenIds = new Set();
+    sceneUnpickableIds = new Set();
     selectedIds = restoreSceneSelection(
       editEntities.map((entity) => entity.entity),
       data.world?.selectedIds,
@@ -982,6 +988,85 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     getVisibleFlat,
     activeInHierarchy,
+    get sceneHiddenIds() {
+      return editEntities
+        .map((entity) => entity.entity)
+        .filter((id) => sceneHiddenIds.has(id));
+    },
+    get sceneUnpickableIds() {
+      return editEntities
+        .map((entity) => entity.entity)
+        .filter((id) => sceneUnpickableIds.has(id));
+    },
+    sceneVisible(id: number) {
+      let current: number | null = id;
+      const visited = new Set<number>();
+      while (current != null && !visited.has(current)) {
+        if (sceneHiddenIds.has(current)) return false;
+        visited.add(current);
+        current = find(current)?.parent ?? null;
+      }
+      return true;
+    },
+    scenePickable(id: number) {
+      let current: number | null = id;
+      const visited = new Set<number>();
+      while (current != null && !visited.has(current)) {
+        if (sceneUnpickableIds.has(current)) return false;
+        visited.add(current);
+        current = find(current)?.parent ?? null;
+      }
+      return true;
+    },
+    setSceneVisibility(id: number, visible: boolean) {
+      if (mode !== 'edit' || !find(id)) return false;
+      const affected = collectSubtreeIds(id);
+      if (visible) {
+        for (const entity of affected) sceneHiddenIds.delete(entity);
+        let parent = find(id)?.parent ?? null;
+        const visited = new Set<number>();
+        while (parent != null && !visited.has(parent)) {
+          sceneHiddenIds.delete(parent);
+          visited.add(parent);
+          parent = find(parent)?.parent ?? null;
+        }
+      } else {
+        for (const entity of affected) sceneHiddenIds.add(entity);
+      }
+      return true;
+    },
+    setScenePickability(id: number, pickable: boolean) {
+      if (mode !== 'edit' || !find(id)) return false;
+      const affected = collectSubtreeIds(id);
+      if (pickable) {
+        for (const entity of affected) sceneUnpickableIds.delete(entity);
+        let parent = find(id)?.parent ?? null;
+        const visited = new Set<number>();
+        while (parent != null && !visited.has(parent)) {
+          sceneUnpickableIds.delete(parent);
+          visited.add(parent);
+          parent = find(parent)?.parent ?? null;
+        }
+      } else {
+        for (const entity of affected) sceneUnpickableIds.add(entity);
+      }
+      return true;
+    },
+    showAllSceneObjects() {
+      const changed = sceneHiddenIds.size > 0;
+      sceneHiddenIds.clear();
+      return changed;
+    },
+    enableAllScenePicking() {
+      const changed = sceneUnpickableIds.size > 0;
+      sceneUnpickableIds.clear();
+      return changed;
+    },
+    setSceneInteractionState(hiddenIds: readonly number[], unpickableIds: readonly number[]) {
+      const existing = new Set(editEntities.map((entity) => entity.entity));
+      sceneHiddenIds = new Set(hiddenIds.filter((id) => existing.has(id)));
+      sceneUnpickableIds = new Set(unpickableIds.filter((id) => existing.has(id)));
+    },
     isExpanded(id: number) {
       return expanded.has(id);
     },

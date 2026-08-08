@@ -1441,6 +1441,10 @@ class AgentBridge {
       gizmo: store.gizmo,
       sceneCamera: store.sceneCamera,
       sceneView,
+      sceneVisibility: {
+        hiddenCount: store.sceneHiddenIds.length,
+        unpickableCount: store.sceneUnpickableIds.length,
+      },
       canvasWorkspace: {
         enabled: canvasWorkspace.enabled,
         activeKey: canvasWorkspace.activeKey,
@@ -2251,6 +2255,10 @@ class AgentBridge {
       timelinePreferences: readTimelineEditorPreferences(),
       gameResolution: store.gameResolution,
       gameDisplay: store.gameDisplay,
+      sceneVisibility: {
+        hiddenIds: store.sceneHiddenIds,
+        unpickableIds: store.sceneUnpickableIds,
+      },
     };
     const current: ObservedEditorState = {
       mode: store.mode,

@@ -431,6 +431,11 @@ export interface EditorState {
   };
   /** Persistent Scene-view editing switches shared by all project windows. */
   sceneView: SceneViewPreferences;
+  /** Session-only Hierarchy controls; they never change scene assets or Game View output. */
+  sceneVisibility: {
+    hiddenCount: number;
+    unpickableCount: number;
+  };
   /** Compact Canvas Workspace state; the full draw plan is available through view.canvas_plan. */
   canvasWorkspace: Pick<
     CanvasWorkspacePreferences,

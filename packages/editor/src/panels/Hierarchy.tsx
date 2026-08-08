@@ -15,6 +15,8 @@ import {
   ChevronDown,
   ChevronRight,
   Circle,
+  Eye,
+  EyeOff,
   FoldVertical,
   Grid3X3,
   Image,
@@ -22,6 +24,7 @@ import {
   Lightbulb,
   Map as MapIcon,
   Music,
+  MousePointer2,
   Package,
   PanelTop,
   Plus,
@@ -137,6 +140,8 @@ export function Hierarchy(props: {
     createSearch,
     selectedInUi,
   );
+  const hiddenCount = props.store.sceneHiddenIds.length;
+  const unpickableCount = props.store.sceneUnpickableIds.length;
 
   useEffect(() => {
     if (!createOpen) return;
@@ -504,6 +509,36 @@ export function Hierarchy(props: {
         />
         <button
           type="button"
+          className="hier-tool hier-scene-tool"
+          title={hiddenCount ? `Show ${hiddenCount} hidden GameObjects` : 'No hidden GameObjects'}
+          aria-label={hiddenCount ? `Show all ${hiddenCount} hidden GameObjects` : 'No hidden GameObjects'}
+          disabled={hiddenCount === 0 || props.store.mode !== 'edit'}
+          onClick={() => {
+            if (props.store.showAllSceneObjects()) props.onRefresh();
+          }}
+        >
+          <Eye size={14} />
+          {hiddenCount > 0 && <span className="hier-tool-count">{hiddenCount}</span>}
+        </button>
+        <button
+          type="button"
+          className="hier-tool hier-scene-tool"
+          title={unpickableCount
+            ? `Enable Scene picking for ${unpickableCount} GameObjects`
+            : 'All GameObjects are pickable'}
+          aria-label={unpickableCount
+            ? `Enable Scene picking for all ${unpickableCount} blocked GameObjects`
+            : 'All GameObjects are pickable'}
+          disabled={unpickableCount === 0 || props.store.mode !== 'edit'}
+          onClick={() => {
+            if (props.store.enableAllScenePicking()) props.onRefresh();
+          }}
+        >
+          <MousePointer2 size={14} />
+          {unpickableCount > 0 && <span className="hier-tool-count">{unpickableCount}</span>}
+        </button>
+        <button
+          type="button"
           className="hier-tool"
           title="Collapse All"
           aria-label="Collapse all hierarchy nodes"
@@ -658,6 +693,8 @@ export function Hierarchy(props: {
           const prefabRoot = prefabLink?.root === true;
           const Icon = prefabRoot ? Package : iconFor(n.entity);
           const match = matchingIds.has(id);
+          const sceneVisible = props.store.sceneVisible(id);
+          const scenePickable = props.store.scenePickable(id);
           return (
             <div
               key={id}
@@ -674,6 +711,8 @@ export function Hierarchy(props: {
                 match ? 'search-match' : '',
                 prefabLink ? 'prefab-instance' : '',
                 prefabRoot ? 'prefab-root' : '',
+                sceneVisible ? '' : 'scene-hidden',
+                scenePickable ? '' : 'scene-unpickable',
                 drop === 'into' ? 'drop-into' : '',
                 drop === 'before' ? 'drop-before' : '',
                 drop === 'after' ? 'drop-after' : '',
@@ -704,6 +743,10 @@ export function Hierarchy(props: {
                 } else if (event.key === 'F2') {
                   event.preventDefault();
                   beginRename(id, n.entity.name ?? '');
+                } else if (event.key === 'h' || event.key === 'H') {
+                  event.preventDefault();
+                  props.store.setSceneVisibility(id, !sceneVisible);
+                  props.onRefresh();
                 } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                   event.preventDefault();
                   const index = filtered.findIndex((candidate) => candidate.entity.entity === id);
@@ -809,6 +852,36 @@ export function Hierarchy(props: {
                 <span className="hier-name">{n.entity.name ?? `Entity ${id}`}</span>
               )}
               {match && props.filter.trim() && <span className="hier-match-badge">match</span>}
+              <button
+                type="button"
+                className={`hier-scene-control${sceneVisible ? '' : ' active'}`}
+                title={`${sceneVisible ? 'Hide' : 'Show'} in Scene View (H) · applies to descendants`}
+                aria-label={`${sceneVisible ? 'Hide' : 'Show'} ${n.entity.name ?? `Entity ${id}`} in Scene View`}
+                aria-pressed={!sceneVisible}
+                disabled={props.store.mode !== 'edit'}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  props.store.setSceneVisibility(id, !sceneVisible);
+                  props.onRefresh();
+                }}
+              >
+                {sceneVisible ? <Eye size={13} /> : <EyeOff size={13} />}
+              </button>
+              <button
+                type="button"
+                className={`hier-scene-control picking${scenePickable ? '' : ' active'}`}
+                title={`${scenePickable ? 'Disable' : 'Enable'} picking in Scene View · applies to descendants`}
+                aria-label={`${scenePickable ? 'Disable' : 'Enable'} Scene picking for ${n.entity.name ?? `Entity ${id}`}`}
+                aria-pressed={!scenePickable}
+                disabled={props.store.mode !== 'edit'}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  props.store.setScenePickability(id, !scenePickable);
+                  props.onRefresh();
+                }}
+              >
+                <MousePointer2 size={13} />
+              </button>
             </div>
           );
         })}

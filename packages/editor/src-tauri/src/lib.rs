@@ -71,6 +71,8 @@ struct NativeSceneViewRequest {
     clear_flags: Option<String>,
     background_color: Option<[f32; 4]>,
     target_display: Option<i32>,
+    #[serde(default)]
+    hidden_entity_ids: Vec<u64>,
 }
 
 #[derive(serde::Deserialize)]
@@ -4245,6 +4247,11 @@ async fn render_native_scene_view(
         )
     };
     tauri::async_runtime::spawn_blocking(move || {
+        let mut snapshot = snapshot;
+        if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
+            let hidden: HashSet<u64> = request.hidden_entity_ids.iter().copied().collect();
+            snapshot.entities.retain(|entity| !hidden.contains(&entity.entity));
+        }
         let world = world_from_snapshot(&snapshot);
         let viewport = SCENE_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
         let mut viewport = viewport.lock();

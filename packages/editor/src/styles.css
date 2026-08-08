@@ -851,6 +851,25 @@ button, input, select {
 .hier-add:hover,
 .hier-tool:hover { background: var(--u-hover); color: var(--u-text-bright); }
 
+.dock-toolbar:has(.hier-add) .search { min-width: 0; }
+
+.hier-scene-tool {
+  position: relative;
+}
+
+.hier-scene-tool:disabled { opacity: 0.35; }
+
+.hier-tool-count {
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  min-width: 8px;
+  color: #8ed0ff;
+  font-size: 8px;
+  line-height: 9px;
+  text-align: center;
+}
+
 .hier-row {
   position: relative;
   display: flex;
@@ -880,6 +899,8 @@ button, input, select {
 .hier-row.prefab-root .hier-icon { color: #55aef0; }
 .hier-row.selected.prefab-instance .hier-name,
 .hier-row.selected.prefab-root .hier-icon { color: #d9efff; }
+.hier-row.scene-hidden .hier-name,
+.hier-row.scene-hidden .hier-icon { opacity: 0.48; }
 
 .hier-icon[draggable='true'] { cursor: alias; }
 
@@ -937,8 +958,46 @@ button, input, select {
 
 .hier-name {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.hier-scene-control {
+  position: relative;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: #93a1ac;
+  opacity: 0.28;
+}
+
+.hier-row:hover .hier-scene-control,
+.hier-row.selected .hier-scene-control,
+.hier-scene-control.active {
+  opacity: 1;
+}
+
+.hier-scene-control:hover:not(:disabled) {
+  background: rgb(255 255 255 / 9%);
+  color: #e8f4fc;
+}
+
+.hier-scene-control.active { color: #72bce9; }
+
+.hier-scene-control.picking.active::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 1px;
+  background: #ee8a80;
+  transform: rotate(-45deg);
 }
 
 .hier-row.search-match .hier-name {

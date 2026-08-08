@@ -1776,7 +1776,7 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /sceneCamera: store\.sceneCamera/);
   assert.match(
     bridge,
-    /const view = \{\s+gizmo: store\.gizmo,\s+sceneCamera: store\.sceneCamera,\s+sceneView: readSceneViewPreferences\(\),\s+timelinePreferences: readTimelineEditorPreferences\(\),\s+gameResolution: store\.gameResolution,\s+gameDisplay: store\.gameDisplay,\s+\};/,
+    /const view = \{\s+gizmo: store\.gizmo,\s+sceneCamera: store\.sceneCamera,\s+sceneView: readSceneViewPreferences\(\),\s+timelinePreferences: readTimelineEditorPreferences\(\),\s+gameResolution: store\.gameResolution,\s+gameDisplay: store\.gameDisplay,\s+sceneVisibility: \{\s+hiddenIds: store\.sceneHiddenIds,\s+unpickableIds: store\.sceneUnpickableIds,\s+\},\s+\};/,
   );
   assert.match(bridge, /SCENE_VIEW_PREFERENCES_CHANGED_EVENT/);
   assert.match(bridge, /updateSceneViewPreferences\(patch\)/);

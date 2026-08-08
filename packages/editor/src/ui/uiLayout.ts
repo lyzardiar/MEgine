@@ -2921,9 +2921,15 @@ function cssColor(color: [number, number, number, number], alpha = 1): string {
   return `rgba(${(color[0] * 255) | 0},${(color[1] * 255) | 0},${(color[2] * 255) | 0},${Math.max(0, Math.min(1, color[3] * alpha))})`;
 }
 
-export function hitTestUiSelect(items: UiDrawItem[], x: number, y: number): UiDrawItem | null {
+export function hitTestUiSelect(
+  items: UiDrawItem[],
+  x: number,
+  y: number,
+  isPickable: (entity: number) => boolean = () => true,
+): UiDrawItem | null {
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
+    if (!isPickable(it.entity)) continue;
     if (it.role !== 'graphic') continue;
     if (it.clip && !pointInRect(x, y, it.clip)) continue;
     if (it.maskRegions?.some((mask) => !pointInMaskRegion(x, y, mask))) continue;
@@ -2932,6 +2938,7 @@ export function hitTestUiSelect(items: UiDrawItem[], x: number, y: number): UiDr
   }
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
+    if (!isPickable(it.entity)) continue;
     if (it.role !== 'canvas') continue;
     if (pointInUiItem(x, y, it)) return it;
   }
