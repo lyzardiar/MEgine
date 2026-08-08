@@ -55,13 +55,13 @@ const PLANE_COLORS: Record<GizmoPlane, string> = {
 };
 const HOVER = '#f5ce4b';
 const ACTIVE = '#fff0a6';
-const AXIS_LENGTH = 86;
-const AXIS_GAP = 7;
-const ARROW_LENGTH = 14;
-const ARROW_WIDTH = 11;
-const PLANE_OFFSET = 18;
-const PLANE_SIZE = 14;
-const ROTATE_RADIUS = 68;
+const AXIS_LENGTH = 104;
+const AXIS_GAP = 8;
+const ARROW_LENGTH = 18;
+const ARROW_WIDTH = 15;
+const PLANE_OFFSET = 21;
+const PLANE_SIZE = 17;
+const ROTATE_RADIUS = 74;
 const HIT_AXIS = 10;
 const HIT_RING = 9;
 
@@ -152,8 +152,8 @@ function outlinedLine(
   context.beginPath();
   context.moveTo(start.x, start.y);
   context.lineTo(end.x, end.y);
-  context.strokeStyle = 'rgba(12,12,12,0.72)';
-  context.lineWidth = width + 2;
+  context.strokeStyle = 'rgba(10,10,12,0.88)';
+  context.lineWidth = width + 3;
   context.stroke();
   context.strokeStyle = color;
   context.lineWidth = width;
@@ -328,7 +328,7 @@ function drawScaleCap(
   color: string,
   hot: boolean,
 ) {
-  const half = hot ? 7 : 6;
+  const half = hot ? 8 : 7;
   context.fillStyle = 'rgba(12,12,12,0.78)';
   context.fillRect(tip.x - half - 1.5, tip.y - half - 1.5, half * 2 + 3, half * 2 + 3);
   context.fillStyle = color;
@@ -344,7 +344,7 @@ function drawScaleCenterHandle(
   color: string,
   hot: boolean,
 ) {
-  const half = hot ? 7 : 6;
+  const half = hot ? 8 : 7;
   context.beginPath();
   context.rect(center.x - half - 1, center.y - half - 1, half * 2 + 2, half * 2 + 2);
   context.fillStyle = 'rgba(12,12,12,0.9)';
@@ -364,7 +364,7 @@ function drawMoveCenterHandle(
   color: string,
   hot: boolean,
 ) {
-  const half = hot ? 7 : 6;
+  const half = hot ? 8 : 7;
   context.fillStyle = 'rgba(12,12,12,0.78)';
   context.fillRect(center.x - half - 1.5, center.y - half - 1.5, half * 2 + 3, half * 2 + 3);
   context.fillStyle = color;
@@ -499,7 +499,7 @@ export function drawTransformGizmo(
         : handle.tip;
       context.save();
       context.globalAlpha = partOpacity(part, hover, active);
-      outlinedLine(context, start, end, color, hot ? 4.5 : 3);
+      outlinedLine(context, start, end, color, hot ? 5.5 : 4);
       if (mode === 'translate') arrowHead(context, handle.tip, handle.angle, color);
       else drawScaleCap(context, handle.tip, color, hot);
       context.restore();

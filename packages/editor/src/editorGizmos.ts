@@ -189,13 +189,16 @@ export function drawCameraGizmo(
   const near = Math.max(0.05, Number(camData.near) || 0.3);
   const far = Math.max(near + 0.05, Number(camData.far) || 50);
 
-  const { near: n, far: f } = frustumCorners(origin, basis, camData, near, far);
-
-  for (let i = 0; i < 4; i++) {
-    strokeWorldSeg(ctx, viewCam, vp, n[i], n[(i + 1) % 4], color, width);
-    strokeWorldSeg(ctx, viewCam, vp, f[i], f[(i + 1) % 4], color, width);
-    strokeWorldSeg(ctx, viewCam, vp, n[i], f[i], color, width);
-    strokeWorldSeg(ctx, viewCam, vp, origin, n[i], color, width * 0.85);
+  // Match Unity's Scene view: cameras stay selectable as compact icons, while the
+  // expensive and visually dominant frustum belongs to the selected camera only.
+  if (selected) {
+    const { near: n, far: f } = frustumCorners(origin, basis, camData, near, far);
+    for (let i = 0; i < 4; i++) {
+      strokeWorldSeg(ctx, viewCam, vp, n[i], n[(i + 1) % 4], color, width);
+      strokeWorldSeg(ctx, viewCam, vp, f[i], f[(i + 1) % 4], color, width);
+      strokeWorldSeg(ctx, viewCam, vp, n[i], f[i], color, width);
+      strokeWorldSeg(ctx, viewCam, vp, origin, n[i], color, width * 0.85);
+    }
   }
 
   // Screen-space body
@@ -220,12 +223,14 @@ export function drawCameraGizmo(
   ctx.stroke();
 
   const isOrtho = (camData.projection ?? 'perspective') === 'orthographic';
-  ctx.fillStyle = color;
-  ctx.font = 'bold 11px sans-serif';
-  ctx.fillText(isOrtho ? 'Ortho' : 'Persp', pr.x - 10, pr.y - 14);
-  ctx.font = '10px sans-serif';
-  ctx.fillStyle = selected ? '#ffe8a0' : '#a8d4ff';
-  ctx.fillText(`n ${near.toFixed(2)}  f ${far.toFixed(1)}`, pr.x - 10, pr.y + 24);
+  if (selected) {
+    ctx.fillStyle = color;
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(isOrtho ? 'Ortho' : 'Persp', pr.x - 10, pr.y - 14);
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#ffe8a0';
+    ctx.fillText(`n ${near.toFixed(2)}  f ${far.toFixed(1)}`, pr.x - 10, pr.y + 24);
+  }
   ctx.restore();
 
   return { x: pr.x, y: pr.y, r: 22 };
@@ -424,11 +429,13 @@ export function drawCamera2DGizmo(
   ];
   const color = selected ? '#ffcc66' : '#70d8ff';
   const width = selected ? 2.2 : 1.6;
-  for (let i = 0; i < corners.length; i++) {
-    strokeWorldSeg(ctx, viewCam, vp, corners[i], corners[(i + 1) % corners.length], color, width);
+  if (selected) {
+    for (let i = 0; i < corners.length; i++) {
+      strokeWorldSeg(ctx, viewCam, vp, corners[i], corners[(i + 1) % corners.length], color, width);
+    }
+    strokeWorldSeg(ctx, viewCam, vp, center, add(center, scale(basis.right, halfWidth * 0.12)), color, 1);
+    strokeWorldSeg(ctx, viewCam, vp, center, add(center, scale(basis.up, halfHeight * 0.12)), color, 1);
   }
-  strokeWorldSeg(ctx, viewCam, vp, center, add(center, scale(basis.right, halfWidth * 0.12)), color, 1);
-  strokeWorldSeg(ctx, viewCam, vp, center, add(center, scale(basis.up, halfHeight * 0.12)), color, 1);
 
   const pr = projectPoint(origin, viewCam, vp);
   if (!pr) return null;
@@ -441,8 +448,10 @@ export function drawCamera2DGizmo(
   ctx.fillStyle = color;
   ctx.font = 'bold 10px sans-serif';
   ctx.fillText('2D', pr.x - 7, pr.y + 4);
-  ctx.font = '10px sans-serif';
-  ctx.fillText(`Size ${halfHeight.toFixed(1)}`, pr.x - 12, pr.y + 25);
+  if (selected) {
+    ctx.font = '10px sans-serif';
+    ctx.fillText(`Size ${halfHeight.toFixed(1)}`, pr.x - 12, pr.y + 25);
+  }
   ctx.restore();
   return { x: pr.x, y: pr.y, r: 22 };
 }

@@ -95,7 +95,7 @@ test('Unity-style gizmos stay large enough to read and hit at any camera distanc
     assert.equal(axes.length, 3);
     assert.equal(planes.length, 3);
     for (const axis of axes) {
-      assert.ok(Math.hypot(axis.end.x - axis.start.x, axis.end.y - axis.start.y) >= 67);
+      assert.ok(Math.hypot(axis.end.x - axis.start.x, axis.end.y - axis.start.y) >= 80);
     }
     assert.equal(translate.find((hit) => hit.kind === 'center')?.radius, 10);
   }
@@ -105,11 +105,11 @@ test('Unity-style gizmos stay large enough to read and hit at any camera distanc
   );
   const rings = rotate.filter((hit) => hit.kind === 'axis' && hit.shape === 'ellipse');
   assert.equal(rings.length, 3);
-  assert.ok(rings.every((ring) => ring.radius === 68));
+  assert.ok(rings.every((ring) => ring.radius === 74));
   assert.ok(rings.some((ring) => (
     Math.abs(Math.hypot(ring.u.x, ring.u.y) - Math.hypot(ring.v.x, ring.v.y)) > 0.05
   )), '3D rotation rings preserve projected foreshortening instead of becoming tangled circles');
-  assert.equal(rotate.find((hit) => hit.kind === 'center')?.radius, 80);
+  assert.equal(rotate.find((hit) => hit.kind === 'center')?.radius, 86);
 });
 
 test('rotation rings remain present and hittable when an axis points at the camera', () => {
