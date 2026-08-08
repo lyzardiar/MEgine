@@ -207,6 +207,8 @@ function contains(container: CanvasPlanBounds, child: CanvasPlanBounds): boolean
 
 function graphicType(item: UiDrawItem): string {
   if (item.role === 'canvas') return 'Canvas';
+  if (item.spine) return 'SpineSkeleton';
+  if (item.effekseer) return 'EffekseerEffect';
   if (item.button) return 'Button';
   if (item.toggle) return 'Toggle';
   if (item.slider) return 'Slider';

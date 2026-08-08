@@ -186,6 +186,34 @@ test('CanvasRenderer can retain a zero-alpha mesh and does not cull visible alph
   assert.equal(uiTransparentMeshCulled(visible), false);
 });
 
+test('CanvasRenderer keeps Canvas-hosted Spine and Effekseer callbacks alive', () => {
+  const { item } = imageItem({ cull_transparent_mesh: true });
+  item.image = undefined;
+  item.spine = {};
+  assert.equal(uiTransparentMeshCulled(item), false);
+  item.spine = undefined;
+  item.effekseer = {};
+  assert.equal(uiTransparentMeshCulled(item), false);
+});
+
+test('custom-only Canvas pass skips built-in graphics after the native Game frame', () => {
+  const { item } = imageItem({ cull_transparent_mesh: true }, [1, 1, 1, 1]);
+  item.spine = {};
+  const document = new FakeDocument();
+  const canvas = new FakeCanvas(document, 'output');
+  let customDraws = 0;
+  drawUiItems(canvas.context, [item], null, null, {
+    customOnly: true,
+    customDraw: (context) => {
+      customDraws += 1;
+      context.strokeRect(10, 10, 20, 20);
+    },
+  });
+  assert.equal(customDraws, 1);
+  assert.equal(canvas.context.operations.some(([operation]) => operation === 'fillRect'), false);
+  assert.equal(canvas.context.operations.some(([operation]) => operation === 'strokeRect'), true);
+});
+
 test('a Graphic effect that ignores source alpha keeps transparent geometry alive', () => {
   const { item } = imageItem({ cull_transparent_mesh: true });
   item.shadow = {

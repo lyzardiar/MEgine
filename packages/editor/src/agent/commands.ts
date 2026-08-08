@@ -541,6 +541,8 @@ const KIND_SPAWNERS: Record<TypedEntityKind, (store: EditorStore) => void> = {
   ui_raw_image: (store) => store.spawnUiRawImage(),
   ui_button: (store) => store.spawnUiButton(),
   ui_text: (store) => store.spawnUiText(),
+  ui_spine: (store) => store.spawnUiSpine(),
+  ui_effekseer: (store) => store.spawnUiEffekseer(),
   ui_toggle: (store) => store.spawnUiToggle(),
   ui_slider: (store) => store.spawnUiSlider(),
   ui_scrollbar: (store) => store.spawnUiScrollbar(),

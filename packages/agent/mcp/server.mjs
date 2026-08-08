@@ -1108,6 +1108,7 @@ const PANEL_KIND_VALUES = [
   'shader',
   'spriteEditor',
   'spriteAtlas',
+  'effekseer',
   'build',
   'projectSettings',
 ];
@@ -3280,6 +3281,8 @@ const TOOLS = [
           'ui_raw_image',
           'ui_button',
           'ui_text',
+          'ui_spine',
+          'ui_effekseer',
           'ui_toggle',
           'ui_slider',
           'ui_scrollbar',

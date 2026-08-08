@@ -1,3 +1,4 @@
+use crate::ui::screen_canvas_rect_for_entity;
 use mengine_core::generated::EffekseerEffect;
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_effekseer::{
@@ -138,9 +139,14 @@ impl EffekseerWorld {
             let Some(component) = world.get_component::<EffekseerEffect>(entity) else {
                 continue;
             };
-            let Some(transform) = hierarchy.get(entity) else {
+            let screen_space = component.render_mode.eq_ignore_ascii_case("screen");
+            let canvas_rect = screen_space
+                .then(|| screen_canvas_rect_for_entity(world, entity, viewport))
+                .flatten();
+            let transform = hierarchy.get(entity);
+            if transform.is_none() && canvas_rect.is_none() {
                 continue;
-            };
+            }
             let reference = normalize_reference(&component.effect);
             if reference.is_empty() {
                 continue;
@@ -158,7 +164,9 @@ impl EffekseerWorld {
                     continue;
                 }
             };
-            let position = transform.position.to_array();
+            let position = transform
+                .map(|transform| transform.position.to_array())
+                .unwrap_or([0.0; 3]);
             let restart = self.active.get(&entity).is_none_or(|active| {
                 active.asset != reference
                     || active.effect != effect
@@ -197,9 +205,23 @@ impl EffekseerWorld {
                 }
             }
             if let Some(active) = self.active.get_mut(&entity) {
-                active.screen_space = component.render_mode.eq_ignore_ascii_case("screen");
-                active.screen_position = finite_screen_position(component.screen_position);
-                active.screen_scale = finite_positive(component.screen_scale, 0.12);
+                active.screen_space = screen_space;
+                active.screen_position = canvas_rect
+                    .map(|rect| {
+                        [
+                            (rect.x + rect.width * 0.5) / viewport[0].max(1) as f32,
+                            (rect.y + rect.height * 0.5) / viewport[1].max(1) as f32,
+                        ]
+                    })
+                    .unwrap_or_else(|| finite_screen_position(component.screen_position));
+                let authored_screen_scale = finite_positive(component.screen_scale, 0.12);
+                active.screen_scale = canvas_rect
+                    .map(|rect| {
+                        (rect.width.abs().min(rect.height.abs()) / viewport[1].max(1) as f32)
+                            * authored_screen_scale
+                    })
+                    .filter(|scale| scale.is_finite() && *scale > 0.0)
+                    .unwrap_or(authored_screen_scale);
                 active.sorting_order = component.sorting_order;
                 self.manager
                     .set_layer(active.handle, i32::from(active.screen_space));
@@ -216,6 +238,9 @@ impl EffekseerWorld {
                     self.manager
                         .set_scale(active.handle, [active.screen_scale; 3]);
                 } else {
+                    let Some(transform) = transform else {
+                        continue;
+                    };
                     let (x, y, z) = transform.rotation.to_euler(glam::EulerRot::XYZ);
                     self.manager.set_location(active.handle, position);
                     self.manager.set_rotation(active.handle, [x, y, z]);
@@ -826,6 +851,7 @@ fn finite_positive(value: f32, fallback: f32) -> f32 {
 mod tests {
     use super::*;
     use glam::{Mat4, Vec3, Vec4};
+    use mengine_core::generated::{Canvas, CanvasScaler, RectTransform};
     use mengine_rhi::{ClearColor, FrameCamera, FrameLighting, UiBatchPlan};
 
     fn sample_root() -> PathBuf {
@@ -984,9 +1010,10 @@ mod tests {
             saw_lightning_model |= compiled.ui.primitives.iter().any(|primitive| {
                 primitive.key.texture.ends_with("tx_lightning01_256.png")
                     && primitive.render_material.is_none()
-                    && primitive.shader_channel_data.as_deref().is_some_and(|channels| {
-                        channels.uv0.iter().any(|uv| uv[1] >= 0.5)
-                    })
+                    && primitive
+                        .shader_channel_data
+                        .as_deref()
+                        .is_some_and(|channels| channels.uv0.iter().any(|uv| uv[1] >= 0.5))
             });
         }
         assert!(
@@ -1113,5 +1140,54 @@ mod tests {
                 "screen effect did not bind authored texture {texture}"
             );
         }
+    }
+
+    #[test]
+    fn canvas_child_derives_screen_position_and_scale_from_rect_transform() {
+        let root = sample_root();
+        let mut world = World::new();
+        mengine_scene::load_scene(&root.join("Assets/Scenes/UI.mscene"), &mut world)
+            .expect("load Effekseer UI sample scene");
+        let entity = world
+            .iter_entities()
+            .find(|entity| world.get_component::<EffekseerEffect>(*entity).is_some())
+            .expect("sample Effekseer entity");
+        world.remove_component_by_name(entity, "Transform");
+        world.insert_component(
+            entity,
+            RectTransform {
+                anchored_position: [100.0, 50.0],
+                size_delta: [200.0, 100.0],
+                ..RectTransform::default()
+            },
+        );
+        let component = world
+            .get_component_mut::<EffekseerEffect>(entity)
+            .expect("sample Effekseer component");
+        component.screen_position = [0.1, 0.1];
+        component.screen_scale = 1.0;
+
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, CanvasScaler::default());
+        world.insert_component(
+            canvas,
+            RectTransform {
+                anchor_min: [0.0, 0.0],
+                anchor_max: [1.0, 1.0],
+                size_delta: [0.0, 0.0],
+                ..RectTransform::default()
+            },
+        );
+        world.set_parent(entity, Some(canvas));
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut runtime = EffekseerWorld::new(Some(root)).expect("Effekseer runtime");
+        assert!(runtime
+            .update(&world, &hierarchy, [1000, 500], 0.0)
+            .is_empty());
+        let active = runtime.active.get(&entity).expect("active Canvas effect");
+        assert_eq!(active.screen_position, [0.6, 0.6]);
+        assert!((active.screen_scale - 0.2).abs() < 0.000_001);
     }
 }

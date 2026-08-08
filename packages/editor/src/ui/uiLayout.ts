@@ -153,6 +153,9 @@ export type UiDrawItem = {
   maskStack?: number[];
   /** Ancestor Mask rectangles used by Unity-style ICanvasRaycastFilter. */
   maskRegions?: UiMaskRegion[];
+  /** Canvas-hosted renderers that reuse this RectTransform layout item. */
+  spine?: Record<string, unknown>;
+  effekseer?: Record<string, unknown>;
   image?: {
     material: string;
     color: [number, number, number, number];
@@ -1227,6 +1230,8 @@ export function layoutUiOverlay(
       const outline = ent.components.Outline as Record<string, unknown> | undefined;
       const btn = ent.components.Button as Record<string, unknown> | undefined;
       const authoredText = ent.components.Text as Record<string, unknown> | undefined;
+      const spine = ent.components.SpineSkeleton as Record<string, unknown> | undefined;
+      const effekseer = ent.components.EffekseerEffect as Record<string, unknown> | undefined;
       const toggle = ent.components.Toggle as Record<string, unknown> | undefined;
       const slider = ent.components.Slider as Record<string, unknown> | undefined;
       const scrollbar = ent.components.Scrollbar as Record<string, unknown> | undefined;
@@ -1268,7 +1273,9 @@ export function layoutUiOverlay(
       const hasAuthoredGraphic = authoredImage != null
         || authoredRawImage != null
         || authoredText != null
-        || authoredPanel != null;
+        || authoredPanel != null
+        || spine != null
+        || effekseer != null;
       const hasEnabledGraphic = img != null || rawImage != null || text != null || panel != null;
       const graphicSource = img ?? rawImage ?? text ?? panel;
       const graphicMaskable = graphicSource?.maskable !== false;
@@ -1435,6 +1442,8 @@ export function layoutUiOverlay(
             : undefined,
           maskStack: itemMaskStack,
           maskRegions: itemMaskRegions,
+          spine,
+          effekseer,
           image: img
             ? {
                 material: String(img.material ?? '').trim().replaceAll('\\', '/'),
@@ -2980,6 +2989,7 @@ export function uiTransparentMeshCulled(
   if (opacity <= TRANSPARENT_MESH_ALPHA_EPSILON) return true;
 
   const alphas: number[] = [];
+  if (item.spine || item.effekseer) alphas.push(1);
   if (item.image || item.rawImage) alphas.push(imageAlpha ?? 1);
   if (item.text?.text) {
     alphas.push(item.text.color[3]);
@@ -3235,7 +3245,12 @@ export function drawUiItems(
   items: UiDrawItem[],
   hoverId: number | null,
   pressId: number | null,
-  opts?: { sceneLabel?: boolean; focusId?: number | null },
+  opts?: {
+    sceneLabel?: boolean;
+    focusId?: number | null;
+    customOnly?: boolean;
+    customDraw?: (ctx: CanvasRenderingContext2D, item: UiDrawItem) => void;
+  },
 ) {
   const showLabel = !!opts?.sceneLabel;
   const batches = buildUiBatches(items);
@@ -3521,6 +3536,7 @@ export function drawUiItems(
   };
 
   for (const batch of batches) for (const sourceItem of batch.items) {
+    if (opts?.customOnly && !sourceItem.spine && !sourceItem.effekseer) continue;
     if (drawMaskedItem(sourceItem)) continue;
     const it = hideMaskGraphic(sourceItem);
     const { x, y, w, h } = it.rect;
@@ -3666,7 +3682,8 @@ export function drawUiItems(
       }
     };
 
-    if (!it.image && !it.rawImage && !it.button && !it.text && !it.toggle && !it.slider && !it.scrollbar && !it.panel && !it.progress && !it.input && !it.dropdown && !it.list && !it.scroll && !it.tabs) {
+    const hasCustomGraphic = !!opts?.customDraw && !!(it.spine || it.effekseer);
+    if (!hasCustomGraphic && !it.image && !it.rawImage && !it.button && !it.text && !it.toggle && !it.slider && !it.scrollbar && !it.panel && !it.progress && !it.input && !it.dropdown && !it.list && !it.scroll && !it.tabs) {
       if (it.selected) {
         withRot(() => {
           ctx.setLineDash([4, 3]);
@@ -3709,6 +3726,8 @@ export function drawUiItems(
 
     withRot(() => {
       ctx.filter = graphicEffectFilter(it.shadow, it.outline);
+      if (hasCustomGraphic) opts?.customDraw?.(ctx, it);
+      if (opts?.customOnly) return;
       if (it.panel) {
         ctx.fillStyle = cssColor(it.panel.color);
         ctx.fillRect(x, y, w, h);

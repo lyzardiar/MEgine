@@ -145,6 +145,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     COMMAND_PARAMS_SCHEMAS['panel.dock'].required,
     ['kind'],
   );
+  assert.ok(
+    COMMAND_PARAMS_SCHEMAS['panel.focus'].properties.kind.enum.includes('effekseer'),
+    'the background Agent must be able to activate Effekseer Preview',
+  );
   for (const command of [
     'window.ui_click',
     'window.ui_double_click',

@@ -121,6 +121,7 @@ const panelKind: AgentJsonSchema = {
     'shader',
     'spriteEditor',
     'spriteAtlas',
+    'effekseer',
     'build',
     'projectSettings',
   ],

@@ -31,12 +31,14 @@ import {
   createUiListViewComponents,
   createUiPanelComponents,
   createUiProgressBarComponents,
+  createUiEffekseerComponents,
   createUiScrollViewComponents,
   createUiScrollbarComponents,
   createUiSliderComponents,
   createUiTabViewComponents,
   createUiTextComponents,
   createUiToggleComponents,
+  createUiSpineComponents,
 } from './componentCatalog';
 import {
   createParticleEmitter2DPreset,
@@ -2417,6 +2419,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     spawnUiText(parent?: number | null) {
       return spawnUiControl('Text', createUiTextComponents(), parent);
+    },
+    spawnUiSpine(parent?: number | null) {
+      return spawnUiControl('Spine Skeleton UI', createUiSpineComponents(), parent);
+    },
+    spawnUiEffekseer(parent?: number | null) {
+      return spawnUiControl('Effekseer Effect UI', createUiEffekseerComponents(), parent);
     },
     spawnUiToggle(parent?: number | null) {
       return spawnUiControl('Toggle', createUiToggleComponents(), parent);

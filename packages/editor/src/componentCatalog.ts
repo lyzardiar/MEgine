@@ -1034,6 +1034,26 @@ export function createEffekseerEffect(): Record<string, unknown> {
   };
 }
 
+export function createUiSpineComponents(): Record<string, unknown> {
+  return {
+    RectTransform: defaultRectTransform({ size_delta: [320, 320] }),
+    SpineSkeleton: createSpineSkeleton(),
+  };
+}
+
+export function createUiEffekseerComponents(): Record<string, unknown> {
+  return {
+    RectTransform: defaultRectTransform({ size_delta: [256, 256] }),
+    EffekseerEffect: {
+      ...createEffekseerEffect(),
+      render_mode: 'screen',
+      // Canvas children derive their final scale from RectTransform. This
+      // remains a multiplier so authored screen effects can be tuned.
+      screen_scale: 1,
+    },
+  };
+}
+
 export function createUiTextComponents(text = 'Text') {
   return {
     RectTransform: defaultRectTransform({ size_delta: [200, 36] }),

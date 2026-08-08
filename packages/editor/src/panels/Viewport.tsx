@@ -1624,7 +1624,10 @@ export function Viewport(props: {
       if (
         isActive(entity.entity)
         && entity.components.SpineSkeleton
-        && resolvedTransform(worldTransforms, entity.entity)
+        && (
+          resolvedTransform(worldTransforms, entity.entity)
+          || entity.components.RectTransform
+        )
       ) {
         liveSpineIds.add(entity.entity);
       }
@@ -2373,6 +2376,79 @@ export function Viewport(props: {
 
     spineRuntimeRef.current?.retainOnly(liveSpineIds);
 
+    const drawCanvasHostedRenderer = (
+      context: CanvasRenderingContext2D,
+      item: UiDrawItem,
+      deltaSeconds: number,
+    ) => {
+      if (item.spine) {
+        const pivot = item.pivotScreen ?? rectPivot(item.rect, item.pivot);
+        const result: SpineDrawResult = spineRuntimeRef.current
+          ? spineRuntimeRef.current.drawEntity({
+              entity: item.entity,
+              component: item.spine,
+              context,
+              screenX: pivot.x,
+              screenY: pivot.y,
+              pixelsPerWorldUnit: Math.max(1, Math.min(item.rect.w, item.rect.h)),
+              deltaSeconds,
+            })
+          : spineRuntimeErrorRef.current
+            ? { error: spineRuntimeErrorRef.current }
+            : 'loading';
+        if (result !== 'drawn' && !isGame) {
+          const message = result === 'missing'
+            ? 'Spine: assign skeleton + atlas'
+            : result === 'loading'
+              ? 'Loading Spine 4.3...'
+              : result.error;
+          context.save();
+          context.fillStyle = 'rgba(24, 24, 24, 0.82)';
+          context.strokeStyle = result === 'loading' ? '#56b7d0' : '#e06c75';
+          context.lineWidth = 1;
+          context.fillRect(item.rect.x, item.rect.y, item.rect.w, item.rect.h);
+          context.strokeRect(
+            item.rect.x + 0.5,
+            item.rect.y + 0.5,
+            item.rect.w - 1,
+            item.rect.h - 1,
+          );
+          context.fillStyle = '#eee';
+          context.font = '11px system-ui, sans-serif';
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          context.fillText(
+            message.slice(0, 56),
+            item.rect.x + item.rect.w * 0.5,
+            item.rect.y + item.rect.h * 0.5,
+            Math.max(0, item.rect.w - 12),
+          );
+          context.restore();
+        }
+      }
+      if (item.effekseer && !isGame) {
+        context.save();
+        context.setLineDash([5, 4]);
+        context.strokeStyle = 'rgba(190, 105, 255, 0.92)';
+        context.lineWidth = 1.5;
+        context.strokeRect(
+          item.rect.x + 0.75,
+          item.rect.y + 0.75,
+          item.rect.w - 1.5,
+          item.rect.h - 1.5,
+        );
+        context.setLineDash([]);
+        context.fillStyle = 'rgba(35, 23, 47, 0.78)';
+        context.fillRect(item.rect.x + 4, item.rect.y + 4, 82, 18);
+        context.fillStyle = '#dda8ff';
+        context.font = '600 10px system-ui, sans-serif';
+        context.textAlign = 'left';
+        context.textBaseline = 'middle';
+        context.fillText('Effekseer UI', item.rect.x + 9, item.rect.y + 13);
+        context.restore();
+      }
+    };
+
     // Transform gizmo — 3D Transform OR RectTransform (UI)
     usingRectGizmoRef.current = false;
     rectGizmoHitsRef.current = [];
@@ -2516,7 +2592,9 @@ export function Viewport(props: {
           uiItems,
           uiHoverRef.current,
           uiPressRef.current ?? focusedInputRef.current,
-          { focusId: focusedUiRef.current },
+          {
+            focusId: focusedUiRef.current,
+          },
         );
         profilerUiPrimitives = stats.primitives;
         profilerUiBatches = stats.batches;
@@ -2614,7 +2692,11 @@ export function Viewport(props: {
                   null,
                   canvasUiTextLayoutMeasurement(offscreenContext),
                 );
-                drawUiItems(offscreenContext, secondaryItems, null, null);
+                drawUiItems(offscreenContext, secondaryItems, null, null, {
+                  customDraw: (context, item) => {
+                    drawCanvasHostedRenderer(context, item, 0);
+                  },
+                });
                 drawable = {
                   canvas: offscreen,
                   entities: p.entities,
@@ -2696,7 +2778,12 @@ export function Viewport(props: {
               );
             }
           }
-          const stats = drawUiItems(ctx, uiItems, null, null, { sceneLabel: true });
+          const stats = drawUiItems(ctx, uiItems, null, null, {
+            sceneLabel: true,
+            customDraw: (context, item) => {
+              drawCanvasHostedRenderer(context, item, simulationDelta);
+            },
+          });
           profilerUiPrimitives = stats.primitives;
           profilerUiBatches = stats.batches;
 
@@ -2802,6 +2889,12 @@ export function Viewport(props: {
       const nativeFrame = nativeGameFrameRef.current;
       if (nativeFrame?.image.complete) {
         ctx.drawImage(nativeFrame.image, vp.x, vp.y, vp.w, vp.h);
+        drawUiItems(ctx, uiItemsRef.current, null, null, {
+          customOnly: true,
+          customDraw: (context, item) => {
+            drawCanvasHostedRenderer(context, item, simulationDelta);
+          },
+        });
       } else if ('__TAURI_INTERNALS__' in window) {
         ctx.fillStyle = '#171b24';
         ctx.fillRect(vp.x, vp.y, vp.w, vp.h);

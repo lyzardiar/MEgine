@@ -7,7 +7,9 @@ import {
   componentRequirements,
   createComponentDefaults,
   createUiCanvasComponents,
+  createUiEffekseerComponents,
   createUiImageComponents,
+  createUiSpineComponents,
   createUiTextComponents,
 } from '../src/componentCatalog.ts';
 import {
@@ -260,6 +262,49 @@ test('standard Graphic factories serialize a CanvasRenderer', () => {
   assert.deepEqual(createUiTextComponents().CanvasRenderer, {
     cull_transparent_mesh: true,
   });
+});
+
+test('Canvas-hosted Spine and Effekseer factories use RectTransform-native defaults', () => {
+  const spine = createUiSpineComponents();
+  assert.deepEqual(spine.RectTransform.size_delta, [320, 320]);
+  assert.ok(spine.SpineSkeleton);
+  assert.equal(spine.Transform, undefined);
+
+  const effekseer = createUiEffekseerComponents();
+  assert.deepEqual(effekseer.RectTransform.size_delta, [256, 256]);
+  assert.equal(effekseer.EffekseerEffect.render_mode, 'screen');
+  assert.equal(effekseer.EffekseerEffect.screen_scale, 1);
+  assert.equal(effekseer.Transform, undefined);
+});
+
+test('Canvas-hosted Spine and Effekseer creation shares one implicit Canvas', async () => {
+  const server = await createServer({
+    root,
+    server: { middlewareMode: true },
+    appType: 'custom',
+    logLevel: 'silent',
+  });
+  try {
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const store = createEditorStore();
+    const spineId = store.spawnUiSpine();
+    assert.notEqual(spineId, null);
+    const spine = store.authoredEntities().find((entity) => entity.entity === spineId);
+    const canvas = store.authoredEntities().find((entity) => entity.entity === spine.parent);
+    assert.ok(canvas?.components.Canvas);
+    assert.ok(spine.components.RectTransform);
+    assert.ok(spine.components.SpineSkeleton);
+
+    store.select(canvas.entity);
+    const effekseerId = store.spawnUiEffekseer();
+    const effekseer = store.authoredEntities().find((entity) => entity.entity === effekseerId);
+    assert.equal(effekseer.parent, canvas.entity);
+    assert.ok(effekseer.components.RectTransform);
+    assert.equal(effekseer.components.EffekseerEffect.render_mode, 'screen');
+    assert.equal(store.undoLabel, 'Create Effekseer Effect UI');
+  } finally {
+    await server.close();
+  }
 });
 
 test('CanvasScaler Inspector exposes all Unity scale and match modes', () => {

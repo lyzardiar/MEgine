@@ -221,6 +221,48 @@ test('Canvas plan keeps clean edge-aligned content diagnostic-free', () => {
   assert.deepEqual(plan.diagnostics, []);
 });
 
+test('Canvas plan exposes Spine and Effekseer as RectTransform graphics', () => {
+  const entities = [
+    {
+      entity: 20,
+      name: 'Canvas',
+      parent: null,
+      components: {
+        RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }),
+        Canvas: { render_mode: 'ScreenSpaceOverlay', target_display: 0 },
+      },
+    },
+    {
+      entity: 21,
+      name: 'Hero Spine',
+      parent: 20,
+      components: {
+        RectTransform: rect({ size_delta: [320, 320] }),
+        SpineSkeleton: { skeleton: 'hero.json', atlas: 'hero.atlas' },
+      },
+    },
+    {
+      entity: 22,
+      name: 'Hit Effect',
+      parent: 20,
+      components: {
+        RectTransform: rect({ size_delta: [256, 256] }),
+        EffekseerEffect: { effect: 'hit.efkefc', render_mode: 'screen' },
+      },
+    },
+  ];
+  const plan = buildCanvasArtboardPlan(entities, 20, {
+    key: 'game',
+    label: 'Game',
+    width: 800,
+    height: 600,
+  }, 0);
+  assert.equal(plan.items.find((item) => item.entity === 21)?.graphicType, 'SpineSkeleton');
+  assert.equal(plan.items.find((item) => item.entity === 22)?.graphicType, 'EffekseerEffect');
+  assert.equal(plan.items.find((item) => item.entity === 21)?.interaction.raycastTarget, false);
+  assert.equal(plan.items.find((item) => item.entity === 22)?.interaction.raycastTarget, false);
+});
+
 test('Canvas plan paging is bounded, revisioned, and follows the selected Canvas', () => {
   const entities = diagnosticEntities();
   assert.equal(resolveCanvasPlanEntity(entities, undefined, [7]), 1);

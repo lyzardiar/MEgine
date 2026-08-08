@@ -31,6 +31,8 @@ export const TYPED_ENTITY_KINDS = [
   'ui_raw_image',
   'ui_button',
   'ui_text',
+  'ui_spine',
+  'ui_effekseer',
   'ui_toggle',
   'ui_slider',
   'ui_scrollbar',

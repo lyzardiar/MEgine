@@ -335,6 +335,32 @@ test('typed creation returns the selected authored object for composite spawns',
   assert.deepEqual(calls, [['select', 4]]);
 });
 
+test('typed creation exposes Canvas-hosted Spine and Effekseer', () => {
+  for (const [kind, method, component] of [
+    ['ui_spine', 'spawnUiSpine', 'SpineSkeleton'],
+    ['ui_effekseer', 'spawnUiEffekseer', 'EffekseerEffect'],
+  ]) {
+    const { ctx, calls, entities } = createContext();
+    ctx.store[method] = () => {
+      const entity = 3;
+      entities.push({
+        entity,
+        name: kind,
+        parent: 2,
+        siblingIndex: 0,
+        active: true,
+        components: { RectTransform: {}, [component]: {} },
+      });
+      return entity;
+    };
+    ctx.store.select = (id) => calls.push(['select', id]);
+
+    const result = run(ctx, 'entity.create_typed', { kind });
+    assert.deepEqual(result.data, { entity: 3, kind });
+    assert.deepEqual(calls, [['select', 3]]);
+  }
+});
+
 test('typed cube creation uses the root GameObject path instead of selected-child creation', () => {
   const { ctx, calls, entities } = createContext();
   ctx.store.spawnPrefab = (name) => {

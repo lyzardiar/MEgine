@@ -31,6 +31,8 @@ test('GameObject creation menus are Edit Mode only and route Agents to result-be
 
   const paths = new Set(items.map((item) => item.path));
   for (const path of [
+    'GameObject/UI/Spine Skeleton',
+    'GameObject/UI/Effekseer Effect',
     'GameObject/UI/Layout/Horizontal Layout Group',
     'GameObject/UI/Layout/Vertical Layout Group',
     'GameObject/UI/Layout/Grid Layout Group',

@@ -1457,6 +1457,36 @@ fn screen_canvas_rect(
     canvas_rect_in_root(world, entity, root_canvas, rect, scale)
 }
 
+/// Resolves one RectTransform into the same viewport-pixel rectangle used by
+/// the screen-space Canvas renderer. Non-Canvas and World Space entities are
+/// intentionally excluded so other render systems cannot mistake an authored
+/// Transform for UI layout.
+pub fn screen_canvas_rect_for_entity(
+    world: &World,
+    entity: Entity,
+    viewport: [u32; 2],
+) -> Option<UiRect> {
+    world.get_component::<RectTransform>(entity)?;
+    let root_canvas = outermost_canvas(world, entity);
+    let canvas = world.get_component::<Canvas>(root_canvas)?;
+    if !canvas.enabled
+        || (canvas.render_mode != "ScreenSpaceOverlay" && canvas.render_mode != "ScreenSpaceCamera")
+    {
+        return None;
+    }
+    let root = UiRect {
+        x: 0.0,
+        y: 0.0,
+        width: viewport[0].max(1) as f32,
+        height: viewport[1].max(1) as f32,
+    };
+    let scale = world
+        .get_component::<CanvasScaler>(root_canvas)
+        .map(|scaler| canvas_scale_factor(scaler, root.width, root.height))
+        .unwrap_or(1.0);
+    Some(screen_canvas_rect(world, entity, root_canvas, root, scale))
+}
+
 fn canvas_rect_in_root(
     world: &World,
     entity: Entity,
