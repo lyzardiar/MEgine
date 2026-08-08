@@ -128,8 +128,10 @@ impl EffekseerWorld {
         &mut self,
         world: &World,
         hierarchy: &TransformHierarchy,
+        viewport: [u32; 2],
         delta_seconds: f32,
     ) -> Vec<EffekseerLoadFailure> {
+        let screen_aspect = viewport[0].max(1) as f32 / viewport[1].max(1) as f32;
         let mut live = HashSet::new();
         let mut failures = Vec::new();
         for entity in world.iter_entities() {
@@ -202,6 +204,14 @@ impl EffekseerWorld {
                 self.manager
                     .set_layer(active.handle, i32::from(active.screen_space));
                 if active.screen_space {
+                    self.manager.set_location(
+                        active.handle,
+                        [
+                            (active.screen_position[0] * 2.0 - 1.0) * screen_aspect,
+                            1.0 - active.screen_position[1] * 2.0,
+                            active.sorting_order as f32 * 0.001,
+                        ],
+                    );
                     self.manager.set_rotation(active.handle, [0.0; 3]);
                     self.manager
                         .set_scale(active.handle, [active.screen_scale; 3]);
@@ -318,14 +328,6 @@ impl EffekseerWorld {
         }
         if self.active.values().any(|effect| effect.screen_space) {
             let aspect = viewport[0].max(1) as f32 / viewport[1].max(1) as f32;
-            for active in self.active.values().filter(|effect| effect.screen_space) {
-                let position = [
-                    (active.screen_position[0] * 2.0 - 1.0) * aspect,
-                    1.0 - active.screen_position[1] * 2.0,
-                    active.sorting_order as f32 * 0.001,
-                ];
-                self.manager.set_location(active.handle, position);
-            }
             let eye = glam::Vec3::new(0.0, 0.0, 10.0);
             let overlay_view = glam::Mat4::look_at_rh(eye, glam::Vec3::ZERO, glam::Vec3::Y);
             let overlay_projection =
@@ -854,7 +856,9 @@ mod tests {
         let mut saw_diagonal_edge = false;
 
         for _ in 0..180 {
-            assert!(runtime.update(&world, &hierarchy, 1.0 / 60.0).is_empty());
+            assert!(runtime
+                .update(&world, &hierarchy, [1280, 720], 1.0 / 60.0)
+                .is_empty());
             let mut compiled = frame();
             assert!(runtime
                 .append_to_frame(&mut compiled, [1280, 720])
@@ -952,7 +956,7 @@ mod tests {
     fn screen_mode_renders_as_depth_independent_ui_overlay() {
         let root = sample_root();
         let mut world = World::new();
-        mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world)
+        mengine_scene::load_scene(&root.join("Assets/Scenes/UI.mscene"), &mut world)
             .expect("load Effekseer sample scene");
         let entity = world
             .iter_entities()
@@ -961,32 +965,110 @@ mod tests {
         let component = world
             .get_component_mut::<EffekseerEffect>(entity)
             .expect("sample Effekseer component");
-        component.render_mode = "screen".into();
         component.screen_position = [0.25, 0.75];
-        component.screen_scale = 0.2;
-        component.sorting_order = 4;
-
         let hierarchy = TransformHierarchy::build(&world);
         let mut runtime = EffekseerWorld::new(Some(root)).expect("Effekseer runtime");
-        let mut primitives = Vec::new();
-        for _ in 0..30 {
-            assert!(runtime.update(&world, &hierarchy, 1.0 / 60.0).is_empty());
+        let mut peak_primitives = 0;
+        let mut peak_untextured = 0;
+        let mut draw_textures = HashSet::new();
+        let mut mask_textures = HashSet::new();
+        let mut saw_visible_triangle = false;
+        let mut saw_screen_position = false;
+        for _ in 0..180 {
+            assert!(runtime
+                .update(&world, &hierarchy, [1920, 1080], 1.0 / 60.0)
+                .is_empty());
             let mut compiled = frame();
             assert!(runtime
                 .append_to_frame(&mut compiled, [1920, 1080])
                 .is_empty());
-            primitives = compiled.ui.primitives;
-            if !primitives.is_empty() {
-                break;
+            peak_primitives = peak_primitives.max(compiled.ui.primitives.len());
+            peak_untextured = peak_untextured.max(
+                compiled
+                    .ui
+                    .primitives
+                    .iter()
+                    .filter(|primitive| primitive.key.texture == "white")
+                    .count(),
+            );
+            for primitive in &compiled.ui.primitives {
+                assert!(
+                    !primitive.key.depth_test,
+                    "screen effects must render independently of scene depth"
+                );
+                draw_textures.insert(primitive.key.texture.clone());
+                if let Some(material) = primitive.render_material.as_deref() {
+                    mask_textures.extend(
+                        material
+                            .custom_textures
+                            .iter()
+                            .filter(|path| !path.is_empty())
+                            .cloned(),
+                    );
+                }
+                let corners = primitive.clip_corners.expect("projected effect triangle");
+                let points: [[f32; 2]; 3] = std::array::from_fn(|index| {
+                    let corner = corners[index];
+                    [corner[0] / corner[3], corner[1] / corner[3]]
+                });
+                let area = (points[1][0] - points[0][0]) * (points[2][1] - points[0][1])
+                    - (points[1][1] - points[0][1]) * (points[2][0] - points[0][0]);
+                let channels = primitive
+                    .shader_channel_data
+                    .as_deref()
+                    .expect("effect vertex channels");
+                saw_visible_triangle |= area.abs() > 0.000001
+                    && channels.colors[..3].iter().any(|color| color[3] > 0.01);
+                if primitive.key.texture.ends_with("tx_shockring03_256.png") {
+                    let center = [
+                        (points
+                            .iter()
+                            .map(|point| point[0])
+                            .fold(f32::INFINITY, f32::min)
+                            + points
+                                .iter()
+                                .map(|point| point[0])
+                                .fold(f32::NEG_INFINITY, f32::max))
+                            * 0.5,
+                        (points
+                            .iter()
+                            .map(|point| point[1])
+                            .fold(f32::INFINITY, f32::min)
+                            + points
+                                .iter()
+                                .map(|point| point[1])
+                                .fold(f32::NEG_INFINITY, f32::max))
+                            * 0.5,
+                    ];
+                    saw_screen_position |=
+                        (center[0] + 0.5).abs() < 0.02 && (center[1] + 0.5).abs() < 0.02;
+                }
             }
         }
         assert!(
-            !primitives.is_empty(),
+            peak_primitives > 0,
             "screen effect produced no UI primitives"
         );
-        assert!(
-            primitives.iter().all(|primitive| !primitive.key.depth_test),
-            "screen effects must render independently of scene depth"
+        assert_eq!(
+            peak_untextured, 0,
+            "alpha-only particles must use their authored silhouette instead of a solid quad"
         );
+        assert!(
+            saw_visible_triangle,
+            "screen effect produced no visible triangle"
+        );
+        assert!(
+            saw_screen_position,
+            "screen position must be applied before the first evaluated frame"
+        );
+        for texture in [
+            "Assets/Effects/Textures/tx_shockring03_256.png",
+            "Assets/Effects/Textures/tx_hit01_256.png",
+        ] {
+            assert!(
+                draw_textures.contains(texture) || mask_textures.contains(texture),
+                "screen effect did not bind authored texture {texture}"
+            );
+        }
     }
 }

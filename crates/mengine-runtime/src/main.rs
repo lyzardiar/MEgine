@@ -1787,8 +1787,9 @@ function onTick(dt, frame) {
                 }
 
                 let hierarchy = TransformHierarchy::build(&self.world);
+                let ui_viewport = self.ui_viewport_size();
                 if let Some(effekseer) = self.effekseer.as_mut() {
-                    for failure in effekseer.update(&self.world, &hierarchy, dt) {
+                    for failure in effekseer.update(&self.world, &hierarchy, ui_viewport, dt) {
                         log::warn!(
                             "Effekseer effect '{}' on {:?} could not be loaded from {}: {}",
                             failure.effect,
@@ -1798,7 +1799,7 @@ function onTick(dt, frame) {
                         );
                     }
                 }
-                let interaction = self.ui_interaction_state(&hierarchy, self.ui_viewport_size());
+                let interaction = self.ui_interaction_state(&hierarchy, ui_viewport);
                 update_ui_button_tints(&self.world, interaction, dt, &mut self.ui_button_tints);
                 if let Some(r) = self.renderer.as_mut() {
                     let window_size = self

@@ -191,12 +191,28 @@ Style styleFor(State* state, Effekseer::Effect* effect, bool depthTest, Effeksee
     if (basic != nullptr)
     {
         style.blend = static_cast<int32_t>(basic->AlphaBlend);
-        const auto index = basic->TextureIndexes[static_cast<size_t>(Effekseer::RendererTextureType::Color)];
-        if (effect != nullptr && index >= 0)
+        const auto colorIndex = basic->TextureIndexes[static_cast<size_t>(Effekseer::RendererTextureType::Color)];
+        const auto alphaIndex = basic->TextureIndexes[static_cast<size_t>(Effekseer::RendererTextureType::Alpha)];
+        if (effect != nullptr && colorIndex >= 0)
         {
-            style.texture = state->path(effect->GetColorImagePath(index));
+            style.texture = state->path(effect->GetColorImagePath(colorIndex));
         }
-        else if (
+        if (effect != nullptr && alphaIndex >= 0)
+        {
+            const auto alphaTexture = state->path(effect->GetColorImagePath(alphaIndex));
+            if (style.texture.empty())
+            {
+                // Effekseer permits an alpha-only particle. Sampling that image
+                // directly preserves its silhouette instead of drawing a solid quad.
+                style.texture = alphaTexture;
+            }
+            else
+            {
+                style.maskTexture = alphaTexture;
+            }
+        }
+        if (
+            style.texture.empty() &&
             effect != nullptr &&
             basic->MaterialType == Effekseer::RendererMaterialType::File &&
             basic->MaterialRenderDataPtr != nullptr)

@@ -388,7 +388,9 @@ impl EditorViewportRenderer {
         self.last_effect_frame = now;
         let stage_started = Instant::now();
         if let Some(effekseer) = self.effekseer.as_mut() {
-            for failure in effekseer.update(world, &hierarchy, effect_delta) {
+            for failure in
+                effekseer.update(world, &hierarchy, [size.width, size.height], effect_delta)
+            {
                 log::warn!(
                     "viewport Effekseer effect '{}' could not be loaded from {}: {}",
                     failure.effect,

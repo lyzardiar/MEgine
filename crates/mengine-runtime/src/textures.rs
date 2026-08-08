@@ -9,6 +9,9 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 use std::time::SystemTime;
 
+const UI_MATERIAL_TEXTURE_GRACE_FRAMES: u64 = 120;
+const MAX_CACHED_UI_MATERIAL_TEXTURES: usize = 128;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextureLoadFailure {
     pub key: String,
@@ -22,6 +25,8 @@ pub struct RuntimeTextureCache {
     attempted_ui: HashMap<String, FileStamp>,
     attempted_material: HashMap<String, FileStamp>,
     attempted_ui_material: HashMap<String, FileStamp>,
+    ui_material_last_used: HashMap<String, u64>,
+    ui_material_epoch: u64,
     attempted_environment: HashMap<String, FileStamp>,
     sprite_regions: HashMap<String, CachedSpriteRegion>,
     alpha_sprites: HashMap<String, CachedAlphaSprite>,
@@ -79,6 +84,8 @@ impl RuntimeTextureCache {
             attempted_ui: HashMap::new(),
             attempted_material: HashMap::new(),
             attempted_ui_material: HashMap::new(),
+            ui_material_last_used: HashMap::new(),
+            ui_material_epoch: 0,
             attempted_environment: HashMap::new(),
             sprite_regions: HashMap::new(),
             alpha_sprites: HashMap::new(),
@@ -93,6 +100,8 @@ impl RuntimeTextureCache {
         self.attempted_ui.clear();
         self.attempted_material.clear();
         self.attempted_ui_material.clear();
+        self.ui_material_last_used.clear();
+        self.ui_material_epoch = 0;
         self.attempted_environment.clear();
         self.sprite_regions.clear();
         self.alpha_sprites.clear();
@@ -103,6 +112,8 @@ impl RuntimeTextureCache {
         self.attempted_material
             .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
         self.attempted_ui_material
+            .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
+        self.ui_material_last_used
             .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
         self.attempted_environment.remove(key);
         self.sprite_regions.clear();
@@ -356,18 +367,13 @@ impl RuntimeTextureCache {
         let Some(root) = self.project_root.as_deref() else {
             return Vec::new();
         };
+        self.ui_material_epoch = self.ui_material_epoch.wrapping_add(1);
         let mut failures = Vec::new();
         let references = ui_material_texture_references(plan);
-        let stale_attempts =
-            stale_material_texture_attempts(&self.attempted_ui_material, &references);
-        for attempt in stale_attempts {
-            self.attempted_ui_material.remove(&attempt);
-            if let Some((srgb, key)) = split_material_texture_attempt(&attempt) {
-                renderer.remove_ui_material_texture_variant(key, srgb);
-            }
-        }
         for (key, srgb) in references {
             let attempt = material_texture_attempt_key(&key, srgb);
+            self.ui_material_last_used
+                .insert(attempt.clone(), self.ui_material_epoch);
             let Some(path) = resolve_project_asset_path(root, &key) else {
                 renderer.remove_ui_material_texture_variant(&key, srgb);
                 if should_attempt(
@@ -412,6 +418,17 @@ impl RuntimeTextureCache {
                         error: error.to_string(),
                     });
                 }
+            }
+        }
+        for attempt in ui_material_texture_evictions(
+            &self.attempted_ui_material,
+            &self.ui_material_last_used,
+            self.ui_material_epoch,
+        ) {
+            self.attempted_ui_material.remove(&attempt);
+            self.ui_material_last_used.remove(&attempt);
+            if let Some((srgb, key)) = split_material_texture_attempt(&attempt) {
+                renderer.remove_ui_material_texture_variant(key, srgb);
             }
         }
         failures
@@ -544,6 +561,42 @@ fn stale_material_texture_attempts(
         .collect::<Vec<_>>();
     stale.sort();
     stale
+}
+
+fn ui_material_texture_evictions(
+    attempted: &HashMap<String, FileStamp>,
+    last_used: &HashMap<String, u64>,
+    epoch: u64,
+) -> Vec<String> {
+    let mut evictions = attempted
+        .keys()
+        .filter(|attempt| {
+            epoch.saturating_sub(last_used.get(*attempt).copied().unwrap_or(0))
+                > UI_MATERIAL_TEXTURE_GRACE_FRAMES
+        })
+        .cloned()
+        .collect::<HashSet<_>>();
+    if attempted.len().saturating_sub(evictions.len()) > MAX_CACHED_UI_MATERIAL_TEXTURES {
+        let mut oldest = attempted
+            .keys()
+            .filter(|attempt| !evictions.contains(*attempt))
+            .filter_map(|attempt| {
+                let used = last_used.get(attempt).copied().unwrap_or(0);
+                (used != epoch).then_some((attempt.clone(), used))
+            })
+            .collect::<Vec<_>>();
+        oldest.sort_by(|left, right| left.1.cmp(&right.1).then(left.0.cmp(&right.0)));
+        oldest.truncate(
+            attempted
+                .len()
+                .saturating_sub(evictions.len())
+                .saturating_sub(MAX_CACHED_UI_MATERIAL_TEXTURES),
+        );
+        evictions.extend(oldest.into_iter().map(|(attempt, _)| attempt));
+    }
+    let mut evictions = evictions.into_iter().collect::<Vec<_>>();
+    evictions.sort();
+    evictions
 }
 
 fn split_material_texture_attempt(attempt: &str) -> Option<(bool, &str)> {
@@ -742,6 +795,54 @@ mod tests {
                 ("Assets/UI/detail.png".into(), true),
                 ("Assets/UI/mask.png".into(), false),
             ]
+        );
+    }
+
+    #[test]
+    fn sparse_ui_material_textures_stay_warm_but_the_cache_is_bounded() {
+        let first = material_texture_attempt_key("Assets/UI/first.png", false);
+        let attempted = HashMap::from([(first.clone(), FileStamp::default())]);
+        let last_used = HashMap::from([(first.clone(), 7)]);
+        assert!(ui_material_texture_evictions(
+            &attempted,
+            &last_used,
+            7 + UI_MATERIAL_TEXTURE_GRACE_FRAMES,
+        )
+        .is_empty());
+        assert_eq!(
+            ui_material_texture_evictions(
+                &attempted,
+                &last_used,
+                8 + UI_MATERIAL_TEXTURE_GRACE_FRAMES,
+            ),
+            vec![first]
+        );
+
+        let attempted = (0..MAX_CACHED_UI_MATERIAL_TEXTURES + 2)
+            .map(|index| {
+                (
+                    format!("linear\0Assets/UI/{index}.png"),
+                    FileStamp::default(),
+                )
+            })
+            .collect::<HashMap<_, _>>();
+        let last_used = attempted
+            .keys()
+            .map(|key| {
+                (
+                    key.clone(),
+                    MAX_CACHED_UI_MATERIAL_TEXTURES as u64 + 1,
+                )
+            })
+            .collect::<HashMap<_, _>>();
+        assert_eq!(
+            ui_material_texture_evictions(
+                &attempted,
+                &last_used,
+                MAX_CACHED_UI_MATERIAL_TEXTURES as u64 + 2,
+            )
+            .len(),
+            2
         );
     }
 

@@ -10,6 +10,9 @@ use wgpu::util::DeviceExt;
 
 use crate::renderer::{MaterialFilter, MaterialWrap};
 
+const UI_MATERIAL_CACHE_GRACE_FRAMES: u64 = 120;
+const MAX_CACHED_UI_MATERIALS: usize = 128;
+
 #[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum UiTextureError {
     #[error("texture dimensions must be greater than zero")]
@@ -790,8 +793,10 @@ impl From<&UiRenderMaterial> for UiMaterialTextureSetKey {
 pub(crate) struct UiRenderer {
     pipelines: HashMap<UiPipelineKey, wgpu::RenderPipeline>,
     custom_pipelines: HashMap<UiMaterialPipelineKey, wgpu::RenderPipeline>,
+    custom_pipeline_last_used: HashMap<UiMaterialPipelineKey, u64>,
     error_pipelines: HashMap<UiPipelineKey, wgpu::RenderPipeline>,
     rejected_shaders: HashMap<u64, String>,
+    rejected_shader_last_used: HashMap<u64, u64>,
     pipeline_layout: wgpu::PipelineLayout,
     format: wgpu::TextureFormat,
     vertex_buffer: wgpu::Buffer,
@@ -813,7 +818,10 @@ pub(crate) struct UiRenderer {
     material_color_textures: HashMap<String, UiTextureGpu>,
     material_data_textures: HashMap<String, UiTextureGpu>,
     material_samplers: HashMap<UiMaterialSamplerKey, wgpu::Sampler>,
+    material_sampler_last_used: HashMap<UiMaterialSamplerKey, u64>,
     material_texture_sets: HashMap<UiMaterialTextureSetKey, wgpu::BindGroup>,
+    material_texture_set_last_used: HashMap<UiMaterialTextureSetKey, u64>,
+    material_cache_epoch: u64,
     fallback_material_texture_set: wgpu::BindGroup,
     supports_anisotropy: bool,
     viewport: [u32; 2],
@@ -824,6 +832,50 @@ struct UiTextureGpu {
     _texture: wgpu::Texture,
     view: wgpu::TextureView,
     bind_group: wgpu::BindGroup,
+}
+
+fn prune_ui_material_cache<K, V>(
+    values: &mut HashMap<K, V>,
+    last_used: &mut HashMap<K, u64>,
+    epoch: u64,
+) where
+    K: Clone + Eq + Hash,
+{
+    let mut evictions = values
+        .keys()
+        .filter_map(|key| {
+            let used = last_used.get(key).copied().unwrap_or(0);
+            (epoch.saturating_sub(used) > UI_MATERIAL_CACHE_GRACE_FRAMES)
+                .then_some((key.clone(), used))
+        })
+        .collect::<Vec<_>>();
+    if values.len().saturating_sub(evictions.len()) > MAX_CACHED_UI_MATERIALS {
+        let already_evicting = evictions
+            .iter()
+            .map(|(key, _)| key.clone())
+            .collect::<HashSet<_>>();
+        let mut oldest = values
+            .keys()
+            .filter(|key| !already_evicting.contains(key))
+            .filter_map(|key| {
+                let used = last_used.get(key).copied().unwrap_or(0);
+                (used != epoch).then_some((key.clone(), used))
+            })
+            .collect::<Vec<_>>();
+        oldest.sort_by_key(|(_, used)| *used);
+        oldest.truncate(
+            values
+                .len()
+                .saturating_sub(evictions.len())
+                .saturating_sub(MAX_CACHED_UI_MATERIALS),
+        );
+        evictions.extend(oldest);
+    }
+    for (key, _) in evictions {
+        values.remove(&key);
+        last_used.remove(&key);
+    }
+    last_used.retain(|key, _| values.contains_key(key));
 }
 
 impl UiRenderer {
@@ -1045,8 +1097,10 @@ impl UiRenderer {
         Self {
             pipelines,
             custom_pipelines: HashMap::new(),
+            custom_pipeline_last_used: HashMap::new(),
             error_pipelines: HashMap::new(),
             rejected_shaders: HashMap::new(),
+            rejected_shader_last_used: HashMap::new(),
             pipeline_layout,
             format,
             vertex_buffer,
@@ -1068,7 +1122,10 @@ impl UiRenderer {
             material_color_textures: HashMap::new(),
             material_data_textures: HashMap::new(),
             material_samplers: HashMap::new(),
+            material_sampler_last_used: HashMap::new(),
             material_texture_sets: HashMap::new(),
+            material_texture_set_last_used: HashMap::new(),
+            material_cache_epoch: 0,
             fallback_material_texture_set,
             supports_anisotropy,
             viewport: [width.max(1), height.max(1)],
@@ -1156,6 +1213,7 @@ impl UiRenderer {
     }
 
     pub fn prepare(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, plan: &UiBatchPlan) {
+        self.material_cache_epoch = self.material_cache_epoch.wrapping_add(1);
         let mut recreate_bind_group = false;
         if plan.primitives.len() > self.instance_capacity {
             self.instance_capacity = plan.primitives.len().next_power_of_two();
@@ -1224,10 +1282,6 @@ impl UiRenderer {
                 queue.write_buffer(&self.material_buffer, 0, bytemuck::cast_slice(&materials));
             }
         }
-        let mut live_pipelines = HashSet::new();
-        let mut live_shader_fingerprints = HashSet::new();
-        let mut live_texture_sets = HashSet::new();
-        let mut live_samplers = HashSet::new();
         for batch in &plan.batches {
             let material = plan.primitives[batch.start as usize]
                 .render_material
@@ -1236,15 +1290,21 @@ impl UiRenderer {
             if let Some(material) = material {
                 if !material.is_error && !self.material_has_missing_textures(&material) {
                     let texture_set = UiMaterialTextureSetKey::from(material.as_ref());
-                    live_samplers.insert(texture_set.sampler);
-                    live_texture_sets.insert(texture_set);
+                    self.material_sampler_last_used
+                        .insert(texture_set.sampler, self.material_cache_epoch);
+                    self.material_texture_set_last_used
+                        .insert(texture_set, self.material_cache_epoch);
                     let fingerprint = ui_shader_fingerprint(&material.shader, &material.keywords);
                     if fingerprint != 0 {
-                        live_shader_fingerprints.insert(fingerprint);
-                        live_pipelines.insert(UiMaterialPipelineKey {
-                            state: ui_pipeline_state(&batch.key),
-                            shader_fingerprint: fingerprint,
-                        });
+                        self.rejected_shader_last_used
+                            .insert(fingerprint, self.material_cache_epoch);
+                        self.custom_pipeline_last_used.insert(
+                            UiMaterialPipelineKey {
+                                state: ui_pipeline_state(&batch.key),
+                                shader_fingerprint: fingerprint,
+                            },
+                            self.material_cache_epoch,
+                        );
                     }
                 }
                 if !material.is_error {
@@ -1253,14 +1313,26 @@ impl UiRenderer {
                 self.ensure_material_pipeline(device, batch, &material);
             }
         }
-        self.custom_pipelines
-            .retain(|key, _| live_pipelines.contains(key));
-        self.rejected_shaders
-            .retain(|fingerprint, _| live_shader_fingerprints.contains(fingerprint));
-        self.material_texture_sets
-            .retain(|key, _| live_texture_sets.contains(key));
-        self.material_samplers
-            .retain(|key, _| live_samplers.contains(key));
+        prune_ui_material_cache(
+            &mut self.custom_pipelines,
+            &mut self.custom_pipeline_last_used,
+            self.material_cache_epoch,
+        );
+        prune_ui_material_cache(
+            &mut self.rejected_shaders,
+            &mut self.rejected_shader_last_used,
+            self.material_cache_epoch,
+        );
+        prune_ui_material_cache(
+            &mut self.material_texture_sets,
+            &mut self.material_texture_set_last_used,
+            self.material_cache_epoch,
+        );
+        prune_ui_material_cache(
+            &mut self.material_samplers,
+            &mut self.material_sampler_last_used,
+            self.material_cache_epoch,
+        );
         self.write_uniform(queue);
         self.stats = UiFrameStats {
             primitives: plan.primitives.len() as u32,
@@ -2660,6 +2732,11 @@ mod tests {
         let error = pollster::block_on(device.pop_error_scope());
         assert!(error.is_none(), "UI stencil validation error: {error:?}");
         renderer.prepare(&device, &queue, &UiBatchPlan::default());
+        assert_eq!(renderer.custom_pipelines.len(), 1);
+        assert_eq!(renderer.material_texture_sets.len(), 1);
+        for _ in 0..UI_MATERIAL_CACHE_GRACE_FRAMES {
+            renderer.prepare(&device, &queue, &UiBatchPlan::default());
+        }
         assert!(renderer.custom_pipelines.is_empty());
         assert!(renderer.material_texture_sets.is_empty());
     }
