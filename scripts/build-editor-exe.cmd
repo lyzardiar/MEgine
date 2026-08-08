@@ -27,6 +27,10 @@ if not exist "%REPO_ROOT%\node_modules\.pnpm" goto :missing_environment
 
 if not defined MENGINE_BUILD_JOBS set "MENGINE_BUILD_JOBS=%NUMBER_OF_PROCESSORS%"
 if not defined MENGINE_BUILD_JOBS set "MENGINE_BUILD_JOBS=1"
+if not defined CARGO_BUILD_JOBS set "CARGO_BUILD_JOBS=!MENGINE_BUILD_JOBS!"
+if not defined CARGO_INCREMENTAL set "CARGO_INCREMENTAL=1"
+if not defined CARGO_PROFILE_RELEASE_LTO set "CARGO_PROFILE_RELEASE_LTO=thin"
+if not defined CARGO_PROFILE_RELEASE_CODEGEN_UNITS set "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16"
 
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VS_VCTOOLS="
@@ -36,6 +40,7 @@ if exist "%VSWHERE%" (
 if not defined VS_VCTOOLS goto :missing_environment
 
 echo [MEngine] Building with !MENGINE_BUILD_JOBS! workers; independent Rust and TypeScript targets run in parallel.
+echo [MEngine] Release packaging: !CARGO_PROFILE_RELEASE_LTO! LTO, !CARGO_PROFILE_RELEASE_CODEGEN_UNITS! codegen units, incremental=!CARGO_INCREMENTAL!.
 echo [MEngine] Building the Windows release executable and NSIS installer...
 call npm.cmd --prefix packages\editor run tauri:build -- --bundles nsis
 if errorlevel 1 (
