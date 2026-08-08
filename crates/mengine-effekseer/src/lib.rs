@@ -54,6 +54,7 @@ pub struct EffectModelInstance {
     pub blend: i32,
     pub depth_test: bool,
     pub texture: Arc<str>,
+    pub mask_texture: Arc<str>,
     pub model: Arc<str>,
     pub effect: Arc<str>,
 }
@@ -283,6 +284,9 @@ impl EffectManager {
                     texture: unsafe {
                         intern_raw_string(&mut strings, raw.texture, raw.texture_length)
                     },
+                    mask_texture: unsafe {
+                        intern_raw_string(&mut strings, raw.mask_texture, raw.mask_texture_length)
+                    },
                     model: unsafe { intern_raw_string(&mut strings, raw.model, raw.model_length) },
                     effect: unsafe {
                         intern_raw_string(&mut strings, raw.effect, raw.effect_length)
@@ -406,6 +410,8 @@ struct RawModelInstance {
     depth_test: i32,
     texture: *const c_char,
     texture_length: i32,
+    mask_texture: *const c_char,
+    mask_texture_length: i32,
     model: *const c_char,
     model_length: i32,
     effect: *const c_char,
@@ -426,6 +432,8 @@ impl Default for RawModelInstance {
             depth_test: 0,
             texture: std::ptr::null(),
             texture_length: 0,
+            mask_texture: std::ptr::null(),
+            mask_texture_length: 0,
             model: std::ptr::null(),
             model_length: 0,
             effect: std::ptr::null(),

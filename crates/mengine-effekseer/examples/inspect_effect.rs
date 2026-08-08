@@ -62,6 +62,7 @@ fn main() -> ExitCode {
     let mut peak_triangles = 0;
     let mut peak_models = 0;
     let mut draw_textures = BTreeSet::new();
+    let mut draw_masks = BTreeSet::new();
     let mut draw_models = BTreeSet::new();
     for _ in 0..180 {
         manager.update_seconds(1.0 / 60.0);
@@ -80,6 +81,13 @@ fn main() -> ExitCode {
                 .chain(draw.models.iter().map(|model| model.texture.clone()))
                 .filter(|path| !path.is_empty()),
         );
+        draw_masks.extend(
+            draw.triangles
+                .iter()
+                .map(|triangle| triangle.mask_texture.clone())
+                .chain(draw.models.iter().map(|model| model.mask_texture.clone()))
+                .filter(|path| !path.is_empty()),
+        );
         draw_models.extend(
             draw.models
                 .iter()
@@ -92,6 +100,9 @@ fn main() -> ExitCode {
     }
     for texture in draw_textures {
         println!("DrawTexture\t{texture}");
+    }
+    for texture in draw_masks {
+        println!("DrawMask\t{texture}");
     }
     for model in draw_models {
         println!("DrawModel\t{model}");

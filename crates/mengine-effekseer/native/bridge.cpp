@@ -48,6 +48,8 @@ struct RawModelInstance
     int32_t depthTest;
     const char* texture;
     int32_t textureLength;
+    const char* maskTexture;
+    int32_t maskTextureLength;
     const char* model;
     int32_t modelLength;
     const char* effect;
@@ -88,6 +90,7 @@ struct ModelInstance
     int32_t blend = 1;
     int32_t depthTest = 0;
     std::string_view texture;
+    std::string_view maskTexture;
     std::string_view model;
     std::string_view effect;
 };
@@ -217,22 +220,27 @@ Style styleFor(State* state, Effekseer::Effect* effect, bool depthTest, Effeksee
             basic->MaterialType == Effekseer::RendererMaterialType::File &&
             basic->MaterialRenderDataPtr != nullptr)
         {
-            // Preserve the first two authored color inputs. The backend-neutral
-            // path uses the second as an opacity/detail mask instead of showing
-            // an opaque noise texture as a rectangular particle.
+            // Effekseer materials commonly put motion/dissolve noise first and
+            // the visible silhouette second. Preserve that silhouette as the
+            // deterministic fallback until the generic material graph is
+            // compiled natively. Treating motion noise as an alpha mask makes
+            // effects such as the official lightning samples nearly invisible.
             const auto& textures = basic->MaterialRenderDataPtr->MaterialTextures;
-            const auto fallback = std::find_if(textures.begin(), textures.end(), [](const auto& texture) {
+            const auto first = std::find_if(textures.begin(), textures.end(), [](const auto& texture) {
                 return texture.Type == 0 && texture.Index >= 0;
             });
-            if (fallback != textures.end())
+            if (first != textures.end())
             {
-                style.texture = state->path(effect->GetColorImagePath(fallback->Index));
-                const auto mask = std::find_if(std::next(fallback), textures.end(), [](const auto& texture) {
+                const auto second = std::find_if(std::next(first), textures.end(), [](const auto& texture) {
                     return texture.Type == 0 && texture.Index >= 0;
                 });
-                if (mask != textures.end())
+                if (second != textures.end())
                 {
-                    style.maskTexture = state->path(effect->GetColorImagePath(mask->Index));
+                    style.texture = state->path(effect->GetColorImagePath(second->Index));
+                }
+                else
+                {
+                    style.texture = state->path(effect->GetColorImagePath(first->Index));
                 }
             }
         }
@@ -592,6 +600,7 @@ public:
         model.blend = style.blend;
         model.depthTest = style.depthTest;
         model.texture = style.texture;
+        model.maskTexture = style.maskTexture;
         model.model = state_->path(parameter.EffectPointer->GetModelPath(parameter.ModelIndex));
         model.effect = style.effect;
         state_->models.push_back(std::move(model));
@@ -637,6 +646,8 @@ void copyModel(const ModelInstance& input, RawModelInstance& output)
     output.depthTest = input.depthTest;
     output.texture = input.texture.data();
     output.textureLength = static_cast<int32_t>(input.texture.size());
+    output.maskTexture = input.maskTexture.data();
+    output.maskTextureLength = static_cast<int32_t>(input.maskTexture.size());
     output.model = input.model.data();
     output.modelLength = static_cast<int32_t>(input.model.size());
     output.effect = input.effect.data();

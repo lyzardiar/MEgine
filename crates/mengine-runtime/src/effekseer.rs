@@ -312,7 +312,8 @@ impl EffekseerWorld {
             );
             primitives.reserve(draws.triangles.len());
             for triangle in draws.triangles {
-                let file_material = self.file_material(&triangle);
+                let file_material =
+                    self.file_material(&triangle.effect, &triangle.mask_texture, triangle.blend);
                 if let Some(primitive) =
                     effect_triangle_primitive(&triangle, view_projection, false, file_material)
                 {
@@ -342,7 +343,8 @@ impl EffekseerWorld {
             );
             primitives.reserve(draws.triangles.len());
             for triangle in draws.triangles {
-                let file_material = self.file_material(&triangle);
+                let file_material =
+                    self.file_material(&triangle.effect, &triangle.mask_texture, triangle.blend);
                 if let Some(primitive) = effect_triangle_primitive(
                     &triangle,
                     overlay_view_projection,
@@ -376,6 +378,7 @@ impl EffekseerWorld {
                 self.models
                     .insert(reference.clone(), CachedModel { stamp, result });
             }
+            let file_material = self.file_material(&model.effect, &model.mask_texture, model.blend);
             match self.models.get(&reference).map(|cached| &cached.result) {
                 Some(Ok(frames)) => append_model_primitives(
                     &mut primitives,
@@ -383,6 +386,7 @@ impl EffekseerWorld {
                     frames,
                     projection,
                     screen_space,
+                    file_material,
                 ),
                 Some(Err(error)) => failures.push(EffekseerRenderFailure {
                     asset: reference,
@@ -447,12 +451,16 @@ impl EffekseerWorld {
             })
     }
 
-    fn file_material(&mut self, triangle: &EffectDrawTriangle) -> Option<CachedFileMaterial> {
-        let mask = resolve_dependency_reference(&triangle.effect, &triangle.mask_texture);
+    fn file_material(
+        &mut self,
+        effect: &str,
+        mask_texture: &str,
+        blend: i32,
+    ) -> Option<CachedFileMaterial> {
+        let mask = resolve_dependency_reference(effect, mask_texture);
         if mask.is_empty() {
             return None;
         }
-        let blend = triangle.blend;
         Some(
             self.file_materials
                 .entry((mask.clone(), blend))
@@ -543,6 +551,7 @@ fn append_model_primitives(
     frames: &[EffectModelFrame],
     view_projection: glam::Mat4,
     screen_space: bool,
+    file_material: Option<CachedFileMaterial>,
 ) {
     let Some(frame) = frames.get(instance.time.rem_euclid(frames.len().max(1) as i32) as usize)
     else {
@@ -581,12 +590,15 @@ fn append_model_primitives(
             blend: instance.blend,
             depth_test: instance.depth_test,
             texture: texture.clone().into(),
-            mask_texture: Arc::from(""),
+            mask_texture: instance.mask_texture.clone(),
             effect: "".into(),
         };
-        if let Some(primitive) =
-            effect_triangle_primitive(&triangle, view_projection, screen_space, None)
-        {
+        if let Some(primitive) = effect_triangle_primitive(
+            &triangle,
+            view_projection,
+            screen_space,
+            file_material.clone(),
+        ) {
             output.push(primitive);
         }
     }
@@ -669,7 +681,12 @@ fn parse_efkmodel(bytes: &[u8]) -> Result<Vec<EffectModelFrame>, String> {
         for _ in 0..vertex_count {
             let position = cursor.vec3()?;
             cursor.skip(12 * 3)?;
-            let uv = cursor.vec2()?;
+            let mut uv = cursor.vec2()?;
+            // .efkmodel stores V from the lower texture edge, while MEngine's
+            // decoded UI textures use a top-left origin. Native Effekseer
+            // sprites already arrive converted through the renderer bridge;
+            // models are parsed here and need the matching flip explicitly.
+            uv[1] = 1.0 - uv[1];
             if version >= 6 {
                 cursor.skip(8)?;
             }
@@ -852,7 +869,6 @@ mod tests {
         let mut peak_primitives = 0;
         let mut peak_untextured = 0;
         let mut draw_textures = HashSet::new();
-        let mut material_masks = HashSet::new();
         let mut saw_diagonal_edge = false;
 
         for _ in 0..180 {
@@ -881,15 +897,6 @@ mod tests {
                     .filter(|path| !path.is_empty()),
             );
             for primitive in &compiled.ui.primitives {
-                if let Some(material) = primitive.render_material.as_deref() {
-                    material_masks.extend(
-                        material
-                            .custom_textures
-                            .iter()
-                            .filter(|path| !path.is_empty())
-                            .cloned(),
-                    );
-                }
                 if let Some(corners) = primitive.clip_corners {
                     for edge in [[0, 1], [1, 2], [2, 0]] {
                         let a = [
@@ -942,14 +949,50 @@ mod tests {
             );
         }
         assert!(
-            material_masks.contains("Assets/Effects/Textures/tx_glow02_128.png"),
-            "the dissolve material's silhouette texture must mask its opaque noise input"
-        );
-        assert!(
             saw_diagonal_edge,
             "rotated and directional billboards must preserve authored orientation"
         );
         assert!(mengine_rhi::validate_ui_shader_hook(EFFEKSEER_FILE_MATERIAL_SHADER).is_ok());
+    }
+
+    #[test]
+    fn official_lightning_sample_keeps_model_silhouettes_out_of_the_noise_channel() {
+        let root = sample_root();
+        let mut world = World::new();
+        mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world)
+            .expect("load Effekseer sample scene");
+        let entity = world
+            .iter_entities()
+            .find(|entity| world.get_component::<EffekseerEffect>(*entity).is_some())
+            .expect("sample Effekseer entity");
+        world
+            .get_component_mut::<EffekseerEffect>(entity)
+            .expect("sample Effekseer component")
+            .effect = "Assets/Effects/ef_lightning01.efkefc".into();
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut runtime = EffekseerWorld::new(Some(root)).expect("Effekseer runtime");
+        let mut saw_lightning_model = false;
+        for _ in 0..180 {
+            assert!(runtime
+                .update(&world, &hierarchy, [1280, 720], 1.0 / 60.0)
+                .is_empty());
+            let mut compiled = frame();
+            assert!(runtime
+                .append_to_frame(&mut compiled, [1280, 720])
+                .is_empty());
+            saw_lightning_model |= compiled.ui.primitives.iter().any(|primitive| {
+                primitive.key.texture.ends_with("tx_lightning01_256.png")
+                    && primitive.render_material.is_none()
+                    && primitive.shader_channel_data.as_deref().is_some_and(|channels| {
+                        channels.uv0.iter().any(|uv| uv[1] >= 0.5)
+                    })
+            });
+        }
+        assert!(
+            saw_lightning_model,
+            "custom-material lightning models must draw the authored bolt silhouette without turning motion noise into opacity"
+        );
     }
 
     #[test]
