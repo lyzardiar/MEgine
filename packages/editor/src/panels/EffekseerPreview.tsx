@@ -29,6 +29,8 @@ type NativeViewportFrame = {
 
 type CameraPreset = 'front' | 'quarter' | 'top';
 type RenderMode = 'world' | 'screen';
+const PLAYING_FRAME_INTERVAL_MS = 16;
+const IDLE_FRAME_INTERVAL_MS = 250;
 
 const CAMERA_PRESETS: Record<CameraPreset, { yaw: number; pitch: number }> = {
   front: { yaw: 180, pitch: 0 },
@@ -112,6 +114,8 @@ export function EffekseerPreview(props: {
     let cancelled = false;
     const render = () => {
       if (cancelled || request.inFlight) return;
+      const stage = stageRef.current;
+      if (!stage || stage.clientWidth < 2 || stage.clientHeight < 2) return;
       request.inFlight = true;
       void invoke<NativeViewportFrame>('render_effekseer_preview', {
         request: {
@@ -142,7 +146,12 @@ export function EffekseerPreview(props: {
       });
     };
     render();
-    const timer = window.setInterval(render, playing ? 80 : 300);
+    // The native request is back-pressured by `inFlight`: a slow frame is
+    // skipped instead of queued, while inexpensive previews can reach 60 FPS.
+    const timer = window.setInterval(
+      render,
+      playing ? PLAYING_FRAME_INTERVAL_MS : IDLE_FRAME_INTERVAL_MS,
+    );
     return () => {
       cancelled = true;
       window.clearInterval(timer);
