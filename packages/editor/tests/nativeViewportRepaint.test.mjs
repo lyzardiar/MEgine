@@ -38,3 +38,14 @@ test('decoded native frames cross a task boundary when hidden WebViews suspend a
     /await this\.prepareMainViewportCapture\(windowLabel\);\s+return invoke<ScreenshotResult>/,
   );
 });
+
+test('native Game frames remain behind JS-backed world Spine and Canvas renderers', () => {
+  assert.match(
+    viewport,
+    /if \(renderKind === 'spine'\)[\s\S]*?if \(isGame && '__TAURI_INTERNALS__' in window\) continue;/,
+  );
+  assert.match(
+    viewport,
+    /ctx\.drawImage\(nativeFrame\.image, vp\.x, vp\.y, vp\.w, vp\.h\);[\s\S]*?renderKind !== 'spine'[\s\S]*?spineRuntimeRef\.current\?\.drawEntity\([\s\S]*?drawUiItems\(/,
+  );
+});

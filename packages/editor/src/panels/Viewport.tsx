@@ -1873,6 +1873,9 @@ export function Viewport(props: {
       if (renderKind === 'spine') {
         const component = e.components.SpineSkeleton as Record<string, unknown> | undefined;
         if (!component || !pr) continue;
+        // The native Game frame is composited later. Draw Spine after that
+        // frame so the native image does not cover the JS Spine renderer.
+        if (isGame && '__TAURI_INTERNALS__' in window) continue;
         const origin = t.position as Vec3;
         const unit = project([origin[0] + 1, origin[1], origin[2]], cam, vp);
         const transformScale = Math.max(0.0001, Math.abs(t.scale[0] ?? 1));
@@ -2905,6 +2908,26 @@ export function Viewport(props: {
       const nativeFrame = nativeGameFrameRef.current;
       if (nativeFrame?.image.complete) {
         ctx.drawImage(nativeFrame.image, vp.x, vp.y, vp.w, vp.h);
+        for (const { e, t, pr, renderKind } of drawn) {
+          if (renderKind !== 'spine' || !pr) continue;
+          const component = e.components.SpineSkeleton as Record<string, unknown> | undefined;
+          if (!component) continue;
+          const origin = t.position as Vec3;
+          const unit = project([origin[0] + 1, origin[1], origin[2]], cam, vp);
+          const transformScale = Math.max(0.0001, Math.abs(t.scale[0] ?? 1));
+          const pixelsPerWorldUnit = (unit
+            ? Math.max(1, Math.hypot(unit.x - pr.x, unit.y - pr.y))
+            : 64) * transformScale;
+          spineRuntimeRef.current?.drawEntity({
+            entity: e.entity,
+            component,
+            context: ctx,
+            screenX: pr.x,
+            screenY: pr.y,
+            pixelsPerWorldUnit,
+            deltaSeconds: simulationDelta,
+          });
+        }
         drawUiItems(ctx, uiItemsRef.current, null, null, {
           customOnly: true,
           customDraw: (context, item) => {
