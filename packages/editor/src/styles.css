@@ -6910,10 +6910,11 @@ body.insp-scrubbing * {
 
 .material-preview {
   display: flex;
-  width: 100%;
+  width: auto;
+  max-width: 360px;
   min-width: 0;
-  min-height: 220px;
-  flex: 1 1 190px;
+  min-height: 0;
+  flex: 1 1 280px;
   align-items: center;
   justify-content: stretch;
   flex-direction: column;
@@ -6928,8 +6929,9 @@ body.insp-scrubbing * {
 .material-preview-frame {
   position: relative;
   width: 100%;
-  min-height: 180px;
-  flex: 1;
+  min-height: 0;
+  flex: 0 0 auto;
+  aspect-ratio: 1;
   overflow: hidden;
   border: 1px solid #17181a;
   background: #13151a;

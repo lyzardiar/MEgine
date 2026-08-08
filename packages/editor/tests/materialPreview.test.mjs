@@ -144,10 +144,13 @@ test('material editors use the native RHI preview command instead of a CSS spher
     'utf8',
   );
   const nativeHost = fs.readFileSync(path.join(editorRoot, 'src-tauri', 'src', 'lib.rs'), 'utf8');
+  const styles = fs.readFileSync(path.join(editorRoot, 'src', 'styles.css'), 'utf8');
   assert.match(preview, /invoke<NativeViewportFrame>\('render_material_preview'/);
   assert.match(material, /<NativeMaterialPreview/);
   assert.match(instance, /<NativeMaterialPreview/);
   assert.doesNotMatch(`${material}\n${instance}`, /material-preview-sphere/);
   assert.match(nativeHost, /async fn render_material_preview/);
   assert.match(nativeHost, /render_material_preview,/);
+  assert.match(styles, /\.material-preview\s*\{[\s\S]*?max-width:\s*360px;[\s\S]*?flex:\s*1 1 280px;/);
+  assert.match(styles, /\.material-preview-frame\s*\{[\s\S]*?aspect-ratio:\s*1;/);
 });
