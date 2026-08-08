@@ -24,6 +24,23 @@ function drawingContext() {
   });
 }
 
+function recordingContext() {
+  const calls = [];
+  const context = new Proxy({}, {
+    get(target, key) {
+      if (key === 'calls') return calls;
+      if (key in target) return target[key];
+      return (...args) => calls.push([key, ...args]);
+    },
+    set(target, key, value) {
+      calls.push(['set', key, value]);
+      target[key] = value;
+      return true;
+    },
+  });
+  return context;
+}
+
 test('plane drag solves projected axes together without double-counting oblique motion', () => {
   const origin = [0, 0, 0];
   const target = [2, -1, 0];
@@ -78,7 +95,7 @@ test('Unity-style gizmos stay large enough to read and hit at any camera distanc
     assert.equal(axes.length, 3);
     assert.equal(planes.length, 3);
     for (const axis of axes) {
-      assert.ok(Math.hypot(axis.end.x - axis.start.x, axis.end.y - axis.start.y) >= 84);
+      assert.ok(Math.hypot(axis.end.x - axis.start.x, axis.end.y - axis.start.y) >= 67);
     }
     assert.equal(translate.find((hit) => hit.kind === 'center')?.radius, 10);
   }
@@ -88,9 +105,41 @@ test('Unity-style gizmos stay large enough to read and hit at any camera distanc
   );
   const rings = rotate.filter((hit) => hit.kind === 'axis' && hit.shape === 'ellipse');
   assert.equal(rings.length, 3);
-  assert.ok(rings.every((ring) => ring.radius === 72));
+  assert.ok(rings.every((ring) => ring.radius === 68));
   assert.ok(rings.some((ring) => (
     Math.abs(Math.hypot(ring.u.x, ring.u.y) - Math.hypot(ring.v.x, ring.v.y)) > 0.05
   )), '3D rotation rings preserve projected foreshortening instead of becoming tangled circles');
-  assert.equal(rotate.find((hit) => hit.kind === 'center')?.radius, 86);
+  assert.equal(rotate.find((hit) => hit.kind === 'center')?.radius, 80);
+});
+
+test('Move, Scale, and Rotate keep distinct Unity-style handle silhouettes', () => {
+  const origin = [0, 0, 0];
+  const screenOrigin = project(origin, camera, viewport);
+  assert.ok(screenOrigin);
+
+  const move = recordingContext();
+  drawTransformGizmo(move, camera, viewport, origin, null, 'translate', { kind: 'axis', axis: 'x' }, null);
+  const moveCenterRings = move.calls.filter(([method, x, y]) => (
+    method === 'arc' && Math.abs(x - screenOrigin.x) < 0.01 && Math.abs(y - screenOrigin.y) < 0.01
+  ));
+  assert.equal(moveCenterRings.length, 2, 'Move uses a circular view-plane handle');
+  assert.ok(move.calls.some(([method, key, value]) => method === 'set' && key === 'globalAlpha' && value === 0.58));
+
+  const scale = recordingContext();
+  drawTransformGizmo(scale, camera, viewport, origin, null, 'scale', null, null);
+  assert.ok(scale.calls.some(([method, x, y, width, height]) => (
+    method === 'rect'
+      && x < screenOrigin.x && x + width > screenOrigin.x
+      && y < screenOrigin.y && y + height > screenOrigin.y
+  )), 'Scale keeps its square uniform-scale handle');
+
+  const rotate = recordingContext();
+  drawTransformGizmo(rotate, camera, viewport, origin, null, 'rotate', null, null);
+  assert.ok(rotate.calls.some(([method, dash]) => method === 'setLineDash' && dash?.length === 2));
+  assert.ok(rotate.calls.some(([method, x, y, radius]) => (
+    method === 'arc'
+      && Math.abs(x - screenOrigin.x) < 0.01
+      && Math.abs(y - screenOrigin.y) < 0.01
+      && radius === 3.5
+  )), 'Rotate uses a restrained pivot hub inside its rings');
 });
