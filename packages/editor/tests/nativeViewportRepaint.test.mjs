@@ -5,7 +5,7 @@ import test from 'node:test';
 const viewport = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8');
 const agentBridge = readFileSync(new URL('../src/agent/AgentBridge.ts', import.meta.url), 'utf8');
 
-test('decoded native frames repaint immediately when hidden WebViews suspend animation frames', () => {
+test('decoded native frames cross a task boundary when hidden WebViews suspend animation frames', () => {
   for (const frameRef of [
     'nativeGameFrameRef.current',
     'nativeSceneFrameRef.current',
@@ -16,8 +16,10 @@ test('decoded native frames repaint immediately when hidden WebViews suspend ani
     const completion = viewport.slice(assignment, assignment + 500);
     const completed = completion.indexOf('request.reportedError = false;');
     const repainted = completion.indexOf('paint();');
+    const deferred = completion.indexOf('if (firstFrame) window.setTimeout(paint, 0);');
     assert.notEqual(completed, -1, `${frameRef} must mark the request successful`);
     assert.ok(repainted > completed, `${frameRef} must repaint after committing the frame`);
+    assert.ok(deferred > repainted, `${frameRef} must defer one first-frame repaint for WebView composition`);
   }
   assert.match(
     viewport,

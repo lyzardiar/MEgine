@@ -1244,6 +1244,7 @@ export function Viewport(props: {
         .then(async (result) => {
           recordNativeViewportProfile('game', result.profile);
           const image = await decodeNativeFrame(result.pngBase64);
+          const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
             image,
             width: result.width,
@@ -1254,6 +1255,7 @@ export function Viewport(props: {
           // Hidden WebViews may suspend requestAnimationFrame. Commit the decoded frame
           // immediately so first-open output never waits for a click or resize event.
           paint();
+          if (firstFrame) window.setTimeout(paint, 0);
         })
         .catch((error) => {
           if (!request.reportedError) {
@@ -1343,6 +1345,7 @@ export function Viewport(props: {
         recordNativeViewportProfile('scene', result.profile);
         const image = await decodeNativeFrame(result.pngBase64);
         if (request.generation !== generation) return;
+        const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {
           image,
           width: result.width,
@@ -1350,6 +1353,7 @@ export function Viewport(props: {
         };
         request.reportedError = false;
         paint();
+        if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
         if (!request.reportedError) {
           console.warn('Native Scene View rendering is unavailable', error);
@@ -1400,12 +1404,14 @@ export function Viewport(props: {
       }).then(async (result) => {
         const image = await decodeNativeFrame(result.pngBase64);
         if (request.generation !== generation) return;
+        const firstFrame = nativeCameraPreviewFrameRef.current == null;
         nativeCameraPreviewFrameRef.current = {
           image,
           entity: selectedCamera.entity,
         };
         request.reportedError = false;
         paint();
+        if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
         if (!request.reportedError) {
           console.warn('Native Camera Preview rendering is unavailable', error);
