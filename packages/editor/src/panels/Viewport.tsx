@@ -30,6 +30,7 @@ import {
 } from '../gameResolution';
 import {
   type Camera,
+  type Quat,
   type Vec3,
   add,
   dot,
@@ -996,6 +997,8 @@ export function Viewport(props: {
         origin: Vec3;
         /** frozen world axis for single-axis rotate (same as translate arrow) */
         axisWorld?: Vec3;
+        /** local handle basis captured at pointer-down so rotate rings do not chase the object */
+        handleRotation?: Quat | null;
         lastAng?: number;
         gizmoScreen?: { x: number; y: number };
         snap: RectSnapDrag;
@@ -2473,8 +2476,12 @@ export function Viewport(props: {
           p.selected,
           p.pivotMode,
         ) ?? (t.position as Vec3);
+        const gizmoDrag = dragRef.current?.type === 'gizmo'
+          && dragRef.current.entity === p.selected
+          ? dragRef.current
+          : null;
         const handleRotation = usesLocalHandleAxes(p.gizmo, p.handleOrientation)
-          ? (t.rotation as [number, number, number, number])
+          ? (gizmoDrag?.handleRotation ?? (t.rotation as Quat))
           : null;
         const gh = drawTransformGizmo(
           ctx,
@@ -3510,6 +3517,7 @@ export function Viewport(props: {
             entity: propsRef.current.selected,
             origin,
             axisWorld,
+            handleRotation: handleRotation ? [...handleRotation] as Quat : null,
             gizmoScreen: scr ? { x: scr.x, y: scr.y } : undefined,
             lastAng,
             snap: createRectSnapDrag(
@@ -4003,7 +4011,7 @@ export function Viewport(props: {
         const handleRotation = usesLocalHandleAxes(
           propsRef.current.gizmo,
           propsRef.current.handleOrientation,
-        ) ? tr?.rotation as [number, number, number, number] | undefined : null;
+        ) ? (d.handleRotation ?? tr?.rotation as Quat | undefined) : null;
         const basis = transformBasis(handleRotation);
         const gizmo = transformGizmoMode(propsRef.current.gizmo);
         const fine = ev.shiftKey ? 0.1 : 1;

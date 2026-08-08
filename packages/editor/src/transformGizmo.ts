@@ -85,7 +85,6 @@ function partColor(part: GizmoPart, hover: GizmoPart | null, active: GizmoPart |
 function partOpacity(part: GizmoPart, hover: GizmoPart | null, active: GizmoPart | null): number {
   if (samePart(active, part) || samePart(hover, part)) return 1;
   if (active) return 0.24;
-  if (hover) return 0.58;
   return 1;
 }
 
@@ -359,49 +358,20 @@ function drawScaleCenterHandle(
   context.stroke();
 }
 
-function drawAxisLabel(
-  context: CanvasRenderingContext2D,
-  tip: Point,
-  direction: Point,
-  axis: GizmoAxis,
-  color: string,
-) {
-  const center = {
-    x: tip.x + direction.x * 12,
-    y: tip.y + direction.y * 12,
-  };
-  context.beginPath();
-  context.arc(center.x, center.y, 7, 0, Math.PI * 2);
-  context.fillStyle = 'rgba(17,17,19,0.88)';
-  context.fill();
-  context.strokeStyle = color;
-  context.lineWidth = 1;
-  context.stroke();
-  context.fillStyle = '#fff';
-  context.font = '700 9px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(axis.toUpperCase(), center.x, center.y + 0.5);
-}
-
 function drawMoveCenterHandle(
   context: CanvasRenderingContext2D,
   center: Point,
   color: string,
   hot: boolean,
 ) {
-  const radius = hot ? 7 : 5.5;
-  context.beginPath();
-  context.arc(center.x, center.y, radius + 2, 0, Math.PI * 2);
+  const half = hot ? 7 : 6;
   context.fillStyle = 'rgba(12,12,12,0.78)';
-  context.fill();
-  context.beginPath();
-  context.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  context.fillRect(center.x - half - 1.5, center.y - half - 1.5, half * 2 + 3, half * 2 + 3);
   context.fillStyle = color;
-  context.fill();
+  context.fillRect(center.x - half, center.y - half, half * 2, half * 2);
   context.strokeStyle = 'rgba(255,255,255,0.42)';
   context.lineWidth = 1;
-  context.stroke();
+  context.strokeRect(center.x - half + 0.5, center.y - half + 0.5, half * 2 - 1, half * 2 - 1);
 }
 
 function drawRotationHub(context: CanvasRenderingContext2D, center: Point) {
@@ -529,10 +499,9 @@ export function drawTransformGizmo(
         : handle.tip;
       context.save();
       context.globalAlpha = partOpacity(part, hover, active);
-      outlinedLine(context, start, end, color, hot ? 4 : 2.5);
+      outlinedLine(context, start, end, color, hot ? 4.5 : 3);
       if (mode === 'translate') arrowHead(context, handle.tip, handle.angle, color);
       else drawScaleCap(context, handle.tip, color, hot);
-      drawAxisLabel(context, handle.tip, handle.unit, axis, color);
       context.restore();
       hits.push({ kind: 'axis', axis, shape: 'segment', start, end: handle.tip });
     }

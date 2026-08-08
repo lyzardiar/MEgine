@@ -139,13 +139,14 @@ test('Move, Scale, and Rotate keep distinct Unity-style handle silhouettes', () 
   const moveCenterRings = move.calls.filter(([method, x, y]) => (
     method === 'arc' && Math.abs(x - screenOrigin.x) < 0.01 && Math.abs(y - screenOrigin.y) < 0.01
   ));
-  assert.equal(moveCenterRings.length, 2, 'Move uses a circular view-plane handle');
-  assert.ok(move.calls.some(([method, key, value]) => method === 'set' && key === 'globalAlpha' && value === 0.58));
-  assert.deepEqual(
-    move.calls.filter(([method]) => method === 'fillText').map(([, label]) => label).sort(),
-    ['X', 'Y', 'Z'],
-    'Move labels every visible axis explicitly',
-  );
+  assert.equal(moveCenterRings.length, 0, 'Move uses Unity-style square screen-plane handle');
+  assert.ok(move.calls.some(([method, x, y, width, height]) => (
+    method === 'fillRect'
+      && x < screenOrigin.x && x + width > screenOrigin.x
+      && y < screenOrigin.y && y + height > screenOrigin.y
+  )));
+  assert.deepEqual(move.calls.filter(([method]) => method === 'fillText'), [], 'axis colors carry meaning without floating labels');
+  assert.ok(move.calls.some(([method, key, value]) => method === 'set' && key === 'globalAlpha' && value === 1));
 
   const scale = recordingContext();
   drawTransformGizmo(scale, camera, viewport, origin, null, 'scale', null, null);
