@@ -9,11 +9,15 @@ const source = (name) => fs.readFileSync(path.join(root, 'src', 'panels', name),
 
 test('shared button states preserve authored colors and expose active workbench modes', () => {
   const styles = fs.readFileSync(path.join(root, 'src', 'styles.css'), 'utf8');
+  const base = styles.match(/button \{([^}]*)\}/s)?.[1] ?? '';
   const hover = styles.match(/button:hover:not\(:disabled\) \{([^}]*)\}/s)?.[1] ?? '';
   const active = styles.match(/button:active:not\(:disabled\) \{([^}]*)\}/s)?.[1] ?? '';
-  assert.match(hover, /filter: brightness\(1\.12\)/);
-  assert.doesNotMatch(hover, /background:|border-color:/);
-  assert.match(active, /filter: brightness\(0\.88\)/);
+  assert.match(base, /background: #3b3b3b/);
+  assert.doesNotMatch(base, /linear-gradient/);
+  assert.doesNotMatch(hover, /filter:/);
+  assert.match(hover, /box-shadow: inset 0 0 0 999px/);
+  assert.match(hover, /border-color:/);
+  assert.doesNotMatch(active, /filter:/);
   assert.doesNotMatch(active, /background:/);
 
   const toolbar = source('ToolBar.tsx');
@@ -23,6 +27,10 @@ test('shared button states preserve authored colors and expose active workbench 
   const project = source('Project.tsx');
   assert.match(project, /aria-pressed=\{viewMode === 'grid'\}/);
   assert.match(project, /aria-pressed=\{viewMode === 'list'\}/);
+  assert.match(project, /Drag Hierarchy objects here to create Prefabs/);
+
+  const hierarchy = source('Hierarchy.tsx');
+  assert.match(hierarchy, /drag the icon to Project to create a Prefab/);
 
   const profiler = source('Profiler.tsx');
   assert.match(profiler, /aria-pressed=\{frozen\}/);

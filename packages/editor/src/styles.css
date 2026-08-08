@@ -74,24 +74,27 @@ button {
   min-width: 0;
   border: 1px solid #505050;
   border-radius: 2px;
-  background: linear-gradient(to bottom, #444, #363636);
+  background: #3b3b3b;
   color: var(--u-text);
   line-height: 1.2;
   vertical-align: middle;
 }
 
 button:hover:not(:disabled) {
-  filter: brightness(1.12);
+  border-color: #686868;
+  box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.07);
+  color: var(--u-text-bright);
 }
 
 button:active:not(:disabled) {
-  filter: brightness(0.88);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  border-color: #454545;
+  box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.18);
 }
 
 button[aria-pressed='true'] {
+  border-color: #4c7da0;
   background: #2d465c;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  color: #fff;
 }
 
 button:disabled {
@@ -3595,6 +3598,12 @@ body.insp-scrubbing * {
   font-size: 9px;
 }
 .project-statusbar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-status-hint {
+  margin-left: auto;
+  color: #93a7b4;
+  text-align: center;
+}
+.project-status-count { flex: 0 0 auto; }
 
 .hier-ctx-heading {
   padding: 5px 10px 3px;
@@ -7110,6 +7119,19 @@ body.insp-scrubbing * {
 .profiler-source-tabs {
   display: flex;
   margin-right: auto;
+}
+
+.profiler-source-tabs button {
+  border-color: #515151;
+  background: #333;
+  color: #bfc5ca;
+}
+
+.profiler-source-tabs button:hover:not(:disabled) {
+  border-color: #676767;
+  background: #3f3f3f;
+  box-shadow: none;
+  color: #fff;
 }
 
 .profiler-source-tabs button + button { border-left: 0; }

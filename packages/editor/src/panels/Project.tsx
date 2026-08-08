@@ -1488,7 +1488,10 @@ export function Project(props: {
           <span title={selectedAsset?.assetPath ?? undefined}>
             {selectedAsset?.assetPath ?? (normalizedQuery ? 'Search results in Assets' : folder)}
           </span>
-          <span>{visible.length} item{visible.length === 1 ? '' : 's'}{selected ? ' · 1 selected' : ''}</span>
+          <span className="project-status-hint" title="Drag a Hierarchy object into this panel to create a Prefab">
+            Drag Hierarchy objects here to create Prefabs
+          </span>
+          <span className="project-status-count">{visible.length} item{visible.length === 1 ? '' : 's'}{selected ? ' · 1 selected' : ''}</span>
         </div>
       </div>
 

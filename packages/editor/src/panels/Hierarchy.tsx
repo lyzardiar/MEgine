@@ -827,8 +827,8 @@ export function Hierarchy(props: {
                 draggable={editing !== id}
                 aria-label={`Drag ${n.entity.name ?? `Entity ${id}`}`}
                 title={prefabLink
-                  ? `Prefab instance from ${prefabLink.source}; drag the row to reorder`
-                  : 'Drag the row to reorder; drag the icon to assign an object reference'}
+                  ? `Prefab instance from ${prefabLink.source}; drag the icon to Project to create another Prefab`
+                  : 'Drag the row to reorder; drag the icon to Project to create a Prefab or onto an object field to assign it'}
                 onDragStart={(e) => onDragStart(e, id)}
                 onDragEnd={clearPointerDrag}
               >
