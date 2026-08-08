@@ -4,6 +4,7 @@
   "language": "typescript",
   "mainScene": "Assets/Scenes/Main.mscene",
   "buildScenes": [
-    "Assets/Scenes/Main.mscene"
+    "Assets/Scenes/Main.mscene",
+    "Assets/Scenes/UI.mscene"
   ]
 }

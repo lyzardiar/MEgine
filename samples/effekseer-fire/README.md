@@ -2,13 +2,17 @@
 
 Open this directory as an MEngine project, then enter Play mode.
 `Assets/Scenes/Main.mscene` shows a 3D world-space effect, while
-`Assets/Scenes/UI.mscene` shows a depth-independent 2D/UI overlay through the
-same editor/player RHI path.
+`Assets/Scenes/UI.mscene` shows a depth-independent 2D/UI overlay as a direct
+child of a screen-space Canvas through the same editor/player RHI path. Its
+`RectTransform` controls placement and size, while `screen_scale` remains an
+optional authored multiplier.
 
 Open the Effekseer panel and select any effect in the asset list to switch the
 preview. Its `3D` and `2D / UI` buttons preview the same asset in both render
-modes. On an `EffekseerEffect` component, use `render_mode = screen` with the
-normalized `screen_position`, `screen_scale`, and `sorting_order` fields for UI.
+modes. In any project, use `GameObject > UI > Effekseer Effect` (or the
+Hierarchy `+` menu while a Canvas is selected), assign an `.efkefc` asset, and
+lay it out with RectTransform. Root-level screen effects can still use the
+normalized `screen_position`, `screen_scale`, and `sorting_order` fields.
 
 From the repository root it can also be run with:
 

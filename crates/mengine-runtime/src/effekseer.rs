@@ -851,7 +851,7 @@ fn finite_positive(value: f32, fallback: f32) -> f32 {
 mod tests {
     use super::*;
     use glam::{Mat4, Vec3, Vec4};
-    use mengine_core::generated::{Canvas, CanvasScaler, RectTransform};
+    use mengine_core::generated::{Canvas, CanvasScaler, RectTransform, Transform};
     use mengine_rhi::{ClearColor, FrameCamera, FrameLighting, UiBatchPlan};
 
     fn sample_root() -> PathBuf {
@@ -1032,6 +1032,10 @@ mod tests {
             .iter_entities()
             .find(|entity| world.get_component::<EffekseerEffect>(*entity).is_some())
             .expect("sample Effekseer entity");
+        // Exercise the root-level screen_position fallback independently from
+        // the Canvas-hosted sample, whose RectTransform intentionally wins.
+        world.set_parent(entity, None);
+        world.insert_component(entity, Transform::default());
         let component = world
             .get_component_mut::<EffekseerEffect>(entity)
             .expect("sample Effekseer component");
