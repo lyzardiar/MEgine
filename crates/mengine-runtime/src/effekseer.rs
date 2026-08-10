@@ -6,8 +6,8 @@ use mengine_effekseer::{
     EffectModelInstance, EffekseerError,
 };
 use mengine_rhi::{
-    UiBatchKey, UiBatchPlan, UiBlendMode, UiPrimitive, UiRenderMaterial, UiShaderChannelData,
-    UiShaderChannels, UiStencilMode,
+    MaterialFilter, MaterialWrap, UiBatchKey, UiBatchPlan, UiBlendMode, UiPrimitive,
+    UiRenderMaterial, UiShaderChannelData, UiShaderChannels, UiStencilMode,
 };
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -88,6 +88,7 @@ pub struct EffekseerWorld {
     active: HashMap<Entity, ActiveEffect>,
     models: HashMap<String, CachedModel>,
     file_materials: HashMap<(String, i32), CachedFileMaterial>,
+    model_materials: HashMap<(String, String, i32, i32, i32), CachedFileMaterial>,
 }
 
 impl EffekseerWorld {
@@ -99,6 +100,7 @@ impl EffekseerWorld {
             active: HashMap::new(),
             models: HashMap::new(),
             file_materials: HashMap::new(),
+            model_materials: HashMap::new(),
         })
     }
 
@@ -117,6 +119,7 @@ impl EffekseerWorld {
         self.project_root = project_root;
         self.models.clear();
         self.file_materials.clear();
+        self.model_materials.clear();
     }
 
     pub fn restart(&mut self) {
@@ -403,7 +406,7 @@ impl EffekseerWorld {
                 self.models
                     .insert(reference.clone(), CachedModel { stamp, result });
             }
-            let file_material = self.file_material(&model.effect, &model.mask_texture, model.blend);
+            let model_material = self.model_material(&model);
             match self.models.get(&reference).map(|cached| &cached.result) {
                 Some(Ok(frames)) => append_model_primitives(
                     &mut primitives,
@@ -411,7 +414,7 @@ impl EffekseerWorld {
                     frames,
                     projection,
                     screen_space,
-                    file_material,
+                    model_material,
                 ),
                 Some(Err(error)) => failures.push(EffekseerRenderFailure {
                     asset: reference,
@@ -505,6 +508,44 @@ impl EffekseerWorld {
         )
     }
 
+    fn model_material(&mut self, model: &EffectModelInstance) -> CachedFileMaterial {
+        let texture = resolve_dependency_reference(&model.effect, &model.texture);
+        let mask = resolve_dependency_reference(&model.effect, &model.mask_texture);
+        let cache_key = (
+            texture.clone(),
+            mask.clone(),
+            model.blend,
+            model.texture_filter,
+            model.texture_wrap,
+        );
+        self.model_materials
+            .entry(cache_key)
+            .or_insert_with(|| {
+                let filter = effect_texture_filter(model.texture_filter);
+                let mut material = UiRenderMaterial {
+                    blend: effect_blend_mode(model.blend),
+                    shader: Arc::from(EFFEKSEER_MODEL_MATERIAL_SHADER),
+                    wrap_u: effect_texture_wrap(model.texture_wrap),
+                    wrap_v: effect_texture_wrap(model.texture_wrap),
+                    filter,
+                    mipmap_filter: filter,
+                    ..UiRenderMaterial::default()
+                };
+                material.custom_textures[0] = texture.clone();
+                material.custom_textures[1] = mask.clone();
+                material.custom_texture_srgb[0] = true;
+                material.custom_texture_srgb[1] = true;
+                CachedFileMaterial {
+                    key: format!(
+                        "effekseer/model/{texture}/{mask}/{}/{}/{}",
+                        model.blend, model.texture_filter, model.texture_wrap
+                    ),
+                    material: Arc::new(material),
+                }
+            })
+            .clone()
+    }
+
     fn resolve_path(&self, reference: &str) -> PathBuf {
         let Some(root) = self.project_root.as_deref() else {
             return PathBuf::from(reference);
@@ -518,6 +559,15 @@ const EFFEKSEER_FILE_MATERIAL_SHADER: &str = r#"/* MENGINE_PARAMETERS
 */
 fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
     let base = mengine_ui_main_texture(input.uv0) * input.vertex_color;
+    let mask = mengine_texture_mask(input.uv0);
+    return vec4<f32>(base.rgb * mask.rgb, base.a * mask.a);
+}"#;
+
+const EFFEKSEER_MODEL_MATERIAL_SHADER: &str = r#"/* MENGINE_PARAMETERS
+{"textures":[{"name":"base","type":"color","default":""},{"name":"mask","type":"color","default":""}]}
+*/
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let base = mengine_texture_base(input.uv0) * input.vertex_color;
     let mask = mengine_texture_mask(input.uv0);
     return vec4<f32>(base.rgb * mask.rgb, base.a * mask.a);
 }"#;
@@ -576,7 +626,7 @@ fn append_model_primitives(
     frames: &[EffectModelFrame],
     view_projection: glam::Mat4,
     screen_space: bool,
-    file_material: Option<CachedFileMaterial>,
+    model_material: CachedFileMaterial,
 ) {
     let Some(frame) = frames.get(instance.time.rem_euclid(frames.len().max(1) as i32) as usize)
     else {
@@ -586,7 +636,6 @@ fn append_model_primitives(
     let axis_x = glam::Vec3::from_array(instance.axis_x) * instance.magnification;
     let axis_y = glam::Vec3::from_array(instance.axis_y) * instance.magnification;
     let axis_z = glam::Vec3::from_array(instance.axis_z) * instance.magnification;
-    let texture = resolve_dependency_reference(&instance.effect, &instance.texture);
     for face in &frame.faces {
         let Some(vertices) = face
             .iter()
@@ -604,7 +653,7 @@ fn append_model_primitives(
                     + axis_y * position.y
                     + axis_z * position.z)
                     .to_array(),
-                uv: vertex.uv,
+                uv: effect_model_uv(vertex.uv, instance.uv),
                 color: std::array::from_fn(|channel| {
                     vertex.color[channel] * instance.color[channel]
                 }),
@@ -614,7 +663,7 @@ fn append_model_primitives(
             vertices: converted,
             blend: instance.blend,
             depth_test: instance.depth_test,
-            texture: texture.clone().into(),
+            texture: "white".into(),
             mask_texture: instance.mask_texture.clone(),
             effect: "".into(),
         };
@@ -622,11 +671,18 @@ fn append_model_primitives(
             &triangle,
             view_projection,
             screen_space,
-            file_material.clone(),
+            Some(model_material.clone()),
         ) {
             output.push(primitive);
         }
     }
+}
+
+fn effect_model_uv(model_uv: [f32; 2], instance_uv: [f32; 4]) -> [f32; 2] {
+    [
+        model_uv[0] * instance_uv[2] + instance_uv[0],
+        model_uv[1] * instance_uv[3] + (1.0 - instance_uv[1] - instance_uv[3]),
+    ]
 }
 
 fn effect_batch_key(texture: String, blend: i32, depth_test: bool) -> UiBatchKey {
@@ -651,6 +707,22 @@ fn effect_blend_mode(blend: i32) -> UiBlendMode {
         2 | 3 => UiBlendMode::Additive,
         4 => UiBlendMode::Multiply,
         _ => UiBlendMode::Alpha,
+    }
+}
+
+fn effect_texture_filter(filter: i32) -> MaterialFilter {
+    if filter == 0 {
+        MaterialFilter::Nearest
+    } else {
+        MaterialFilter::Linear
+    }
+}
+
+fn effect_texture_wrap(wrap: i32) -> MaterialWrap {
+    match wrap {
+        1 => MaterialWrap::Clamp,
+        2 => MaterialWrap::Mirror,
+        _ => MaterialWrap::Repeat,
     }
 }
 
@@ -1008,8 +1080,13 @@ mod tests {
                 .append_to_frame(&mut compiled, [1280, 720])
                 .is_empty());
             saw_lightning_model |= compiled.ui.primitives.iter().any(|primitive| {
-                primitive.key.texture.ends_with("tx_lightning01_256.png")
-                    && primitive.render_material.is_none()
+                primitive.key.texture == "white"
+                    && primitive
+                        .render_material
+                        .as_deref()
+                        .is_some_and(|material| {
+                            material.custom_textures[0].ends_with("tx_lightning01_256.png")
+                        })
                     && primitive
                         .shader_channel_data
                         .as_deref()
@@ -1020,6 +1097,63 @@ mod tests {
             saw_lightning_model,
             "custom-material lightning models must draw the authored bolt silhouette without turning motion noise into opacity"
         );
+    }
+
+    #[test]
+    fn official_ice_model_preserves_authored_repeat_sampling() {
+        let root = sample_root();
+        let mut world = World::new();
+        mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world)
+            .expect("load Effekseer sample scene");
+        let entity = world
+            .iter_entities()
+            .find(|entity| world.get_component::<EffekseerEffect>(*entity).is_some())
+            .expect("sample Effekseer entity");
+        world
+            .get_component_mut::<EffekseerEffect>(entity)
+            .expect("sample Effekseer component")
+            .effect = "Assets/Effects/ef_ice02.efkefc".into();
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut runtime = EffekseerWorld::new(Some(root)).expect("Effekseer runtime");
+        let mut saw_repeating_ice_model = false;
+        for _ in 0..180 {
+            assert!(runtime
+                .update(&world, &hierarchy, [1280, 720], 1.0 / 60.0)
+                .is_empty());
+            let mut compiled = frame();
+            assert!(runtime
+                .append_to_frame(&mut compiled, [1280, 720])
+                .is_empty());
+            saw_repeating_ice_model |= compiled.ui.primitives.iter().any(|primitive| {
+                primitive
+                    .render_material
+                    .as_deref()
+                    .is_some_and(|material| {
+                        material.custom_textures[0].ends_with("tx_ice01_256.png")
+                            && material.wrap_u == MaterialWrap::Repeat
+                            && material.wrap_v == MaterialWrap::Repeat
+                    })
+                    && primitive
+                        .shader_channel_data
+                        .as_deref()
+                        .is_some_and(|channels| {
+                            channels.uv0.iter().any(|uv| !(0.0..=1.0).contains(&uv[0]))
+                        })
+            });
+        }
+        assert!(
+            saw_repeating_ice_model,
+            "model UVs outside 0..1 must use the authored repeat sampler instead of stretching edge texels"
+        );
+        assert!(mengine_rhi::validate_ui_shader_hook(EFFEKSEER_MODEL_MATERIAL_SHADER).is_ok());
+    }
+
+    #[test]
+    fn model_uv_applies_authored_instance_rect_after_vertical_flip() {
+        let uv = effect_model_uv([0.75, 0.25], [0.1, 0.2, 0.5, 0.25]);
+        assert!((uv[0] - 0.475).abs() < f32::EPSILON);
+        assert!((uv[1] - 0.6125).abs() < f32::EPSILON);
     }
 
     #[test]

@@ -46,6 +46,9 @@ struct RawModelInstance
     float magnification;
     int32_t blend;
     int32_t depthTest;
+    int32_t textureFilter;
+    int32_t textureWrap;
+    float uv[4];
     const char* texture;
     int32_t textureLength;
     const char* maskTexture;
@@ -89,6 +92,9 @@ struct ModelInstance
     float magnification = 1.0f;
     int32_t blend = 1;
     int32_t depthTest = 0;
+    int32_t textureFilter = 1;
+    int32_t textureWrap = 0;
+    float uv[4] = {0.0f, 0.0f, 1.0f, 1.0f};
     std::string_view texture;
     std::string_view maskTexture;
     std::string_view model;
@@ -181,6 +187,8 @@ struct Style
 {
     int32_t blend = 1;
     int32_t depthTest = 0;
+    int32_t textureFilter = 1;
+    int32_t textureWrap = 0;
     std::string_view texture;
     std::string_view maskTexture;
     std::string_view effect;
@@ -194,6 +202,10 @@ Style styleFor(State* state, Effekseer::Effect* effect, bool depthTest, Effeksee
     if (basic != nullptr)
     {
         style.blend = static_cast<int32_t>(basic->AlphaBlend);
+        style.textureFilter = static_cast<int32_t>(
+            basic->TextureFilters[static_cast<size_t>(Effekseer::RendererTextureType::Color)]);
+        style.textureWrap = static_cast<int32_t>(
+            basic->TextureWraps[static_cast<size_t>(Effekseer::RendererTextureType::Color)]);
         const auto colorIndex = basic->TextureIndexes[static_cast<size_t>(Effekseer::RendererTextureType::Color)];
         const auto alphaIndex = basic->TextureIndexes[static_cast<size_t>(Effekseer::RendererTextureType::Alpha)];
         if (effect != nullptr && colorIndex >= 0)
@@ -599,6 +611,12 @@ public:
         model.magnification = parameter.Magnification * parameter.Maginification;
         model.blend = style.blend;
         model.depthTest = style.depthTest;
+        model.textureFilter = style.textureFilter;
+        model.textureWrap = style.textureWrap;
+        model.uv[0] = instance.UV.X;
+        model.uv[1] = instance.UV.Y;
+        model.uv[2] = instance.UV.Width;
+        model.uv[3] = instance.UV.Height;
         model.texture = style.texture;
         model.maskTexture = style.maskTexture;
         model.model = state_->path(parameter.EffectPointer->GetModelPath(parameter.ModelIndex));
@@ -644,6 +662,9 @@ void copyModel(const ModelInstance& input, RawModelInstance& output)
     output.magnification = input.magnification;
     output.blend = input.blend;
     output.depthTest = input.depthTest;
+    output.textureFilter = input.textureFilter;
+    output.textureWrap = input.textureWrap;
+    std::copy(std::begin(input.uv), std::end(input.uv), output.uv);
     output.texture = input.texture.data();
     output.textureLength = static_cast<int32_t>(input.texture.size());
     output.maskTexture = input.maskTexture.data();
