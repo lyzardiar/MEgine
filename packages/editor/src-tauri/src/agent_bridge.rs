@@ -19,6 +19,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
 use parking_lot::Mutex;
@@ -38,6 +39,8 @@ const MAX_BRIDGE_INBOUND_MESSAGE_BYTES: usize = 64 * 1024 * 1024;
 const MAX_BRIDGE_OUTBOUND_MESSAGES: usize = 64;
 const MAX_BRIDGE_OUTBOUND_QUEUED_BYTES: usize = 128 * 1024 * 1024;
 const BRIDGE_RATE_LIMIT_RETRY_AFTER_MS: usize = 250;
+const BACKGROUND_IDLE_CHECK_INTERVAL: Duration = Duration::from_secs(5);
+const BACKGROUND_IDLE_EXIT_AFTER: Duration = Duration::from_secs(120);
 const DANGEROUS_AGENT_COMMANDS: &[&str] = &[
     "scene.delete",
     "asset.trash",
@@ -280,6 +283,11 @@ impl BridgeHub {
 
     pub fn token(&self) -> &str {
         &self.token
+    }
+
+    fn is_idle(&self) -> bool {
+        let clients = self.clients.lock();
+        clients.entries.is_empty() && clients.in_flight_requests == 0
     }
 
     fn authorize_request(&self, message: &str) -> DangerousOperationAuthorization {
@@ -674,12 +682,15 @@ fn cancellation_request_id_from_message(message: &str) -> Option<serde_json::Val
 }
 
 /// Start the WebSocket server on the Tauri async runtime.
-pub fn spawn_bridge_server(app: AppHandle, hub: Arc<BridgeHub>) {
+pub fn spawn_bridge_server(app: AppHandle, hub: Arc<BridgeHub>, background: bool) {
     tauri::async_runtime::spawn(async move {
         let listener = match TcpListener::bind("127.0.0.1:0").await {
             Ok(listener) => listener,
             Err(error) => {
                 log::error!("AgentBridge failed to bind localhost socket: {error}");
+                if background {
+                    app.exit(1);
+                }
                 return;
             }
         };
@@ -687,34 +698,60 @@ pub fn spawn_bridge_server(app: AppHandle, hub: Arc<BridgeHub>) {
             Ok(addr) => addr.port(),
             Err(error) => {
                 log::error!("AgentBridge could not determine local port: {error}");
+                if background {
+                    app.exit(1);
+                }
                 return;
             }
         };
         write_discovery_file(&app, port, hub.token());
         log::info!("AgentBridge listening on 127.0.0.1:{port}");
         let connection_slots = Arc::new(Semaphore::new(MAX_BRIDGE_CLIENTS));
+        let mut idle_since = tokio::time::Instant::now();
+        let mut idle_check = tokio::time::interval(BACKGROUND_IDLE_CHECK_INTERVAL);
+        idle_check.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
         loop {
-            match listener.accept().await {
-                Ok((stream, _peer)) => {
-                    let Ok(connection_slot) = Arc::clone(&connection_slots).try_acquire_owned()
-                    else {
-                        log::warn!(
-                            "AgentBridge rejected a connection because {MAX_BRIDGE_CLIENTS} connection tasks are already active"
-                        );
-                        continue;
-                    };
-                    let app = app.clone();
-                    let hub = hub.clone();
-                    tokio::spawn(async move {
-                        let _connection_slot = connection_slot;
-                        if let Err(error) = handle_connection(app, hub, stream).await {
-                            log::warn!("AgentBridge connection closed: {error}");
+            tokio::select! {
+                biased;
+                result = listener.accept() => match result {
+                    Ok((stream, _peer)) => {
+                        let Ok(connection_slot) = Arc::clone(&connection_slots).try_acquire_owned()
+                        else {
+                            log::warn!(
+                                "AgentBridge rejected a connection because {MAX_BRIDGE_CLIENTS} connection tasks are already active"
+                            );
+                            continue;
+                        };
+                        idle_since = tokio::time::Instant::now();
+                        let app = app.clone();
+                        let hub = hub.clone();
+                        tokio::spawn(async move {
+                            let _connection_slot = connection_slot;
+                            if let Err(error) = handle_connection(app, hub, stream).await {
+                                log::warn!("AgentBridge connection closed: {error}");
+                            }
+                        });
+                    }
+                    Err(error) => {
+                        log::warn!("AgentBridge accept error: {error}");
+                    }
+                },
+                _ = idle_check.tick(), if background => {
+                    let no_connection_tasks =
+                        connection_slots.available_permits() == MAX_BRIDGE_CLIENTS;
+                    if hub.is_idle() && no_connection_tasks {
+                        if idle_since.elapsed() >= BACKGROUND_IDLE_EXIT_AFTER {
+                            log::info!(
+                                "Background AgentBridge was idle for {} seconds; exiting editor",
+                                BACKGROUND_IDLE_EXIT_AFTER.as_secs()
+                            );
+                            app.exit(0);
+                            return;
                         }
-                    });
-                }
-                Err(error) => {
-                    log::warn!("AgentBridge accept error: {error}");
+                    } else {
+                        idle_since = tokio::time::Instant::now();
+                    }
                 }
             }
         }
@@ -1209,6 +1246,19 @@ mod transport_tests {
             r#"{"jsonrpc":"2.0","id":2,"result":{}}"#.to_string()
         ));
         assert_eq!(hub.clients.lock().in_flight_requests, 0);
+    }
+
+    #[test]
+    fn bridge_is_idle_only_without_connected_clients() {
+        let hub = BridgeHub::new("token".to_string());
+        assert!(hub.is_idle());
+
+        let (client, _receiver, _disconnect) = test_client();
+        assert!(hub.register("client-a".to_string(), client));
+        assert!(!hub.is_idle());
+
+        hub.unregister("client-a");
+        assert!(hub.is_idle());
     }
 
     #[test]

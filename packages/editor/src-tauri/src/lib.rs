@@ -6229,7 +6229,11 @@ pub fn run() {
             }
         })
         .setup(move |app| {
-            spawn_bridge_server(app.handle().clone(), bridge_hub_for_setup.clone());
+            spawn_bridge_server(
+                app.handle().clone(),
+                bridge_hub_for_setup.clone(),
+                background,
+            );
             if let Some(main) = app.get_webview_window("main") {
                 if background {
                     main.hide()?;
