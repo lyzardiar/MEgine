@@ -41,6 +41,7 @@ import type {
   EditorUndoService,
   EditorUndoToken,
 } from '../editorUndoService';
+import { ShaderCodeEditor } from './ShaderCodeEditor.tsx';
 
 function uniqueSurfaceShaderPath(baseName = 'New Surface Shader'): string {
   const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
@@ -183,7 +184,7 @@ export function SurfaceShaderEditor(props: {
   }, [props.onDocumentsChange, workspaceDocuments]);
   useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
   const diagnostics = useMemo(() => surfaceShaderDiagnostics(source), [source]);
-  const lines = useMemo(() => Math.max(1, source.split('\n').length - 1), [source]);
+  const lines = useMemo(() => Math.max(1, source.split('\n').length), [source]);
   const isUiShader = source.replace(/\s/g, '').includes('fnmengine_ui_hook(');
   const activeArtifact = compileReport?.artifacts.find(
     (artifact) => artifact.backend === activeTarget,
@@ -578,21 +579,14 @@ export function SurfaceShaderEditor(props: {
       </div>
       <div className="surface-shader-code">
         <div className="surface-shader-lines" ref={lineNumbers} aria-hidden="true">{Array.from({ length: lines }, (_, index) => <span key={index}>{index + 1}</span>)}</div>
-        <textarea
-          aria-label="Surface Shader source"
+        <ShaderCodeEditor
           value={source}
           disabled={saving || validating}
-          spellCheck={false}
           onFocus={beginEdit}
           onBlur={endEdit}
-          onChange={(event) => updateSource(event.target.value)}
-          onScroll={(event) => { if (lineNumbers.current) lineNumbers.current.scrollTop = event.currentTarget.scrollTop; }}
-          onKeyDown={(event) => {
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-              event.preventDefault();
-              void save();
-            }
-          }}
+          onChange={updateSource}
+          onSave={() => void save()}
+          onScroll={(top) => { if (lineNumbers.current) lineNumbers.current.scrollTop = top; }}
         />
       </div>
       {activeArtifact && (
