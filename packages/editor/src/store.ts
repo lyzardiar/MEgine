@@ -48,6 +48,7 @@ import { CURRENT_SCENE_VERSION, migrateSceneDocument } from './sceneMigration';
 import { readRectTransform } from './ui/rectLayout';
 import { applyAnchorsKeepingRect, applyPivotKeepingVisualRect } from './ui/rectTransformModel';
 import type { FigmaUiImportPlan } from './ui/figmaImport.ts';
+import type { EffekseerCompositionPlan } from './effekseerComposition.ts';
 import {
   createGameUiTemplate,
   type GameUiTemplateKind,
@@ -2425,6 +2426,30 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     spawnUiEffekseer(parent?: number | null) {
       return spawnUiControl('Effekseer Effect UI', createUiEffekseerComponents(), parent);
+    },
+    composeEffekseer(plan: EffekseerCompositionPlan, requestedParent?: number) {
+      if (mode !== 'edit' || plan.layers.length === 0) return null;
+      pushUndo(`Compose Effekseer: ${plan.name}`);
+      let parent: number | null | undefined = requestedParent;
+      if (plan.mode === 'screen' && parent === undefined) {
+        const selected = primarySelected();
+        const selectedEntity = selected != null ? find(selected) : null;
+        parent = selectedEntity && (selectedEntity.components.Canvas || selectedEntity.components.RectTransform)
+          ? selected
+          : ensureUiCanvasInternal(false);
+      }
+      const root = spawnAt(plan.name, structuredClone(plan.rootComponents), parent ?? null, false);
+      if (root == null) return null;
+      const created = [root];
+      for (const layer of plan.layers) {
+        const id = spawnAt(layer.name, structuredClone(layer.components), root, false);
+        if (id == null) return null;
+        created.push(id);
+      }
+      selectedIds = [root];
+      selectionAnchor = root;
+      expanded.add(root);
+      return { root, created };
     },
     spawnUiToggle(parent?: number | null) {
       return spawnUiControl('Toggle', createUiToggleComponents(), parent);

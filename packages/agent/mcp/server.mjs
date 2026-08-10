@@ -1493,6 +1493,28 @@ const TOOLS = [
     handler: async (args) => textContent(await bridgeQuery('view.canvas_plan', args)),
   },
   {
+    name: 'get_effekseer_catalog',
+    description:
+      'Search every indexed .efk/.efkefc asset through project-authored purpose groups, semantic tags, prompt hints, and ready-to-compose layer presets. Use compose_effekseer_effect with the returned exact paths.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        search: { type: 'string', maxLength: 128, description: 'Free-text intent or asset search' },
+        group: { type: 'string', maxLength: 64, description: 'Exact logical purpose group' },
+        tags: {
+          type: 'array',
+          maxItems: 16,
+          uniqueItems: true,
+          items: { type: 'string', minLength: 1, maxLength: 64 },
+          description: 'Required semantic tags',
+        },
+        includePresets: { type: 'boolean', description: 'Include composition presets; default true' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('effekseer.catalog', args)),
+  },
+  {
     name: 'get_figma_settings',
     description:
       'Read the non-secret defaults shared by Figma preview and import: asset folder, node limit, PNG export scale, and stable component mappings.',
@@ -3305,6 +3327,47 @@ const TOOLS = [
       },
     },
     ['kind'],
+  ),
+  execTool(
+    'compose_effekseer_effect',
+    'Create a bounded multi-layer Effekseer hierarchy in world space or under Canvas as one Undo transaction. Resolve exact assets and optional layer recipes with get_effekseer_catalog first, then capture a screenshot and iterate.',
+    'effekseer.compose',
+    {
+      name: { type: 'string', minLength: 1, maxLength: 80, description: 'Composition root name' },
+      mode: { type: 'string', enum: ['world', 'screen'], description: 'World or Canvas-hosted composition' },
+      parent: { ...ENTITY_ID_SCHEMA, description: 'Optional existing parent entity' },
+      layers: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 16,
+        items: {
+          type: 'object',
+          required: ['effect'],
+          additionalProperties: false,
+          properties: {
+            effect: {
+              type: 'string',
+              pattern: '^Assets/.+\\.efk(?:efc)?$',
+              maxLength: 512,
+              description: 'Exact effect path returned by get_effekseer_catalog',
+            },
+            name: { type: 'string', maxLength: 80 },
+            position: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'number' } },
+            rotation: { type: 'array', minItems: 4, maxItems: 4, items: { type: 'number' } },
+            scale: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'number' } },
+            anchoredPosition: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' } },
+            size: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' } },
+            speed: { type: 'number', minimum: 0.05, maximum: 8 },
+            startFrame: { type: 'integer', minimum: 0, maximum: 100000 },
+            prewarm: { type: 'boolean' },
+            looping: { type: 'boolean' },
+            screenScale: { type: 'number', minimum: 0.001, maximum: 100 },
+            sortingOrder: { type: 'integer', minimum: -32768, maximum: 32767 },
+          },
+        },
+      },
+    },
+    ['name', 'mode', 'layers'],
   ),
   execTool(
     'delete_entities',

@@ -166,6 +166,21 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       },
     ],
   }),
+  'effekseer.catalog': objectSchema({
+    search: { ...stringValue('Free-text search across id, label, path, group, summary, and tags'), maxLength: 128 },
+    group: { ...stringValue('Exact logical purpose group'), maxLength: 64 },
+    tags: {
+      type: 'array',
+      maxItems: 16,
+      uniqueItems: true,
+      items: { type: 'string', minLength: 1, maxLength: 64 },
+      description: 'Required semantic tags; every tag must match',
+    },
+    includePresets: {
+      type: 'boolean',
+      description: 'Include prompt-oriented composition presets; default true',
+    },
+  }),
   'figma.import_plan': FIGMA_IMPORT_PLAN_PARAMS_SCHEMA,
   'figma.settings': emptySchema,
   'view.window_screenshot': objectSchema({
@@ -507,6 +522,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'entity.get_component', category: 'entity', description: 'Read one exact component value from an entity', readOnly: true },
   { id: 'view.screenshot', category: 'view', description: 'Capture a Scene or Game viewport without activating a window', readOnly: true },
   { id: 'view.canvas_plan', category: 'view', description: 'Read a revision-safe paged semantic Canvas plan and deterministic layout diagnostics', readOnly: true },
+  { id: 'effekseer.catalog', category: 'effekseer', description: 'Search indexed Effekseer assets by purpose, tags, prompt hints, and structured composition presets', readOnly: true },
   { id: 'figma.import_plan', category: 'figma', description: 'Preview deterministic Figma-to-game-UI mapping without mutating the scene', readOnly: true },
   { id: 'figma.settings', category: 'figma', description: 'Read non-secret defaults used by every Figma UI bridge adapter', readOnly: true },
   { id: 'view.window_screenshot', category: 'window', description: 'Capture a complete editor window without activating it', readOnly: true },

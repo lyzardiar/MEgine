@@ -30,6 +30,13 @@ test('Effekseer showcase contains the complete pinned public effect set', () => 
     .sort();
   assert.deepEqual(effects, [...expectedEffects].sort());
   assert.match(readFileSync(join(sampleRoot, 'ASSET_LICENSE.md'), 'utf8'), /CC0/i);
+  const catalog = JSON.parse(readFileSync(
+    join(sampleRoot, 'Assets', 'Effects', 'Combat.meffect'),
+    'utf8',
+  ));
+  assert.equal(catalog.version, 1);
+  assert.equal(catalog.effects.length, expectedEffects.length);
+  assert.ok(catalog.presets.length >= 5);
 });
 
 test('Effekseer UI sample is hosted by Canvas and shipped in build scenes', () => {

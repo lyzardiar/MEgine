@@ -113,7 +113,7 @@ type AssetItem = {
   assetPath?: string;
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'effekseer-effect' | 'font' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'effekseer-effect' | 'effekseer-catalog' | 'font' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
   icon: ReactNode;
   sceneName?: string;
@@ -421,6 +421,8 @@ export function Project(props: {
         ? 'font'
       : asset.kind === 'effekseer-effect'
         ? 'effekseer-effect'
+      : asset.kind === 'effekseer-catalog'
+        ? 'effekseer-catalog'
       : asset.kind === 'material'
         ? 'material'
         : asset.kind === 'shader'
@@ -453,7 +455,7 @@ export function Project(props: {
         ? <Music size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'font'
         ? <Type size={24} strokeWidth={1.4} aria-hidden="true" />
-        : kind === 'effekseer-effect'
+        : kind === 'effekseer-effect' || kind === 'effekseer-catalog'
         ? <Sparkles size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'animation'
         ? <Film size={24} strokeWidth={1.4} aria-hidden="true" />

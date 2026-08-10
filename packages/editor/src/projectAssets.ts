@@ -26,6 +26,7 @@ export type ProjectFileAsset = {
     | 'spine-binary'
     | 'spine-atlas'
     | 'effekseer-effect'
+    | 'effekseer-catalog'
     | 'scene'
     | 'script'
     | 'sprite-import';
@@ -273,6 +274,7 @@ export function isProjectTextAssetPath(relativePath: string): boolean {
     '.mat',
     '.minst',
     '.mshader',
+    '.meffect',
     '.matlas',
     '.gltf',
     '.atlas',

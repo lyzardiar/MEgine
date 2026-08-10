@@ -33,6 +33,8 @@ import {
   type AgentJsonSchema,
 } from './commandSchemas.ts';
 import { TYPED_ENTITY_KINDS, type TypedEntityKind } from './typedEntityKinds.ts';
+import { listProjectFiles } from '../projectAssets.ts';
+import { buildEffekseerCompositionPlan } from '../effekseerComposition.ts';
 
 export interface CommandContext {
   store: EditorStore;
@@ -656,6 +658,46 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     }
     ctx.store.select(id);
     return { ok: true, data: { entity: id, kind } };
+  },
+  'effekseer.compose': (ctx, args) => {
+    requireEditMode(ctx);
+    const parent = args.parent === undefined ? undefined : entityId(args, 'parent');
+    if (parent !== undefined) {
+      const entity = requireEntity(ctx, parent);
+      if (args.mode === 'screen' && !entity.components.Canvas && !entity.components.RectTransform) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `Screen-space Effekseer parent ${parent} must have Canvas or RectTransform`,
+        );
+      }
+    }
+    const availableEffects = new Set(
+      listProjectFiles()
+        .filter((asset) => asset.kind === 'effekseer-effect')
+        .map((asset) => asset.relPath),
+    );
+    let plan;
+    try {
+      plan = buildEffekseerCompositionPlan(args, availableEffects);
+    } catch (reason) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        reason instanceof Error ? reason.message : String(reason),
+      );
+    }
+    const composed = ctx.store.composeEffekseer(plan, parent);
+    if (!composed) throw new BridgeError('INTERNAL', 'The editor did not compose the Effekseer effect');
+    ctx.store.select(composed.root);
+    return {
+      ok: true,
+      data: {
+        name: plan.name,
+        mode: plan.mode,
+        root: composed.root,
+        created: composed.created,
+        layerCount: plan.layers.length,
+      },
+    };
   },
   'figma.import_ui': (ctx, args) => {
     requireEditMode(ctx);
@@ -1302,6 +1344,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'selection.reveal', category: 'selection', description: 'Select an entity and expand its ancestors (ping)', readOnly: false },
   { id: 'entity.create', category: 'entity', description: 'Create a GameObject with optional components and parent', readOnly: false },
   { id: 'entity.create_typed', category: 'entity', description: 'Create any built-in GameObject kind with composite parent handling', readOnly: false },
+  { id: 'effekseer.compose', category: 'effekseer', description: 'Compose indexed Effekseer assets into one world or Canvas hierarchy and one Undo transaction', readOnly: false },
   { id: 'figma.import_ui', category: 'figma', description: 'Import a revision-guarded Figma UI plan as one scene Undo transaction', readOnly: false },
   { id: 'figma.settings.set', category: 'figma', description: 'Set non-secret Figma bridge defaults without changing the scene', readOnly: false },
   { id: 'entity.delete', category: 'entity', description: 'Delete the given (or currently selected) entities', readOnly: false },

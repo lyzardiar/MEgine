@@ -22,6 +22,7 @@ const JSON_KINDS = new Set<ProjectFileAsset['kind']>([
   'sprite-import',
   'spine-json',
   'model',
+  'effekseer-catalog',
 ]);
 
 const TEXT_KINDS = new Set<ProjectFileAsset['kind']>([

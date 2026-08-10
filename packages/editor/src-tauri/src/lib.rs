@@ -3677,6 +3677,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("model")
     } else if lower.ends_with(".efkefc") || lower.ends_with(".efk") {
         Some("effekseer-effect")
+    } else if lower.ends_with(".meffect") {
+        Some("effekseer-catalog")
     } else if lower.ends_with(".ttf") || lower.ends_with(".otf") {
         Some("font")
     } else if [
@@ -6260,6 +6262,10 @@ mod tests {
         assert_eq!(importable_asset_extension("Interface.TTF"), Some(".ttf"));
         assert_eq!(importable_asset_extension("Display.otf"), Some(".otf"));
         assert_eq!(project_asset_kind("Interface.ttf"), Some("font"));
+        assert_eq!(
+            project_asset_kind("Combat.meffect"),
+            Some("effekseer-catalog")
+        );
         let root = std::env::temp_dir().join(format!(
             "mengine-project-font-{}-{}",
             std::process::id(),

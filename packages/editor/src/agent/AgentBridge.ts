@@ -133,6 +133,7 @@ import {
   readFigmaBridgePreferences,
   updateFigmaBridgePreferences,
 } from '../figmaSettings.ts';
+import { buildEffekseerCatalog } from '../effekseerCatalog.ts';
 import {
   initializeSceneViewPreferencesEvents,
   readSceneViewPreferences,
@@ -2758,6 +2759,54 @@ class AgentBridge {
     };
   }
 
+  async getEffekseerCatalog(params: Record<string, unknown> = {}): Promise<unknown> {
+    const files = await refreshProjectFiles();
+    const effects = files
+      .filter((asset) => asset.kind === 'effekseer-effect')
+      .map((asset) => asset.relPath);
+    const catalogAssets = files
+      .filter((asset) => asset.kind === 'effekseer-catalog')
+      .sort((left, right) => left.relPath.localeCompare(right.relPath));
+    const documents = [];
+    for (const asset of catalogAssets) {
+      try {
+        const read = await this.readAssetText(asset.relPath, 512 * 1024);
+        documents.push({ path: read.path, revision: read.revision, contents: read.contents });
+      } catch (reason) {
+        documents.push({
+          path: asset.relPath,
+          revision: asset.revision,
+          contents: JSON.stringify({
+            version: 0,
+            readError: reason instanceof Error ? reason.message : String(reason),
+          }),
+        });
+      }
+    }
+    const catalog = buildEffekseerCatalog(effects, documents, {
+      search: typeof params.search === 'string' ? params.search : undefined,
+      group: typeof params.group === 'string' ? params.group : undefined,
+      tags: Array.isArray(params.tags)
+        ? params.tags.filter((tag): tag is string => typeof tag === 'string')
+        : undefined,
+    });
+    return {
+      ...catalog,
+      effectCount: catalog.effects.length,
+      presetCount: params.includePresets === false ? 0 : catalog.presets.length,
+      presets: params.includePresets === false ? [] : catalog.presets,
+      workflow: {
+        nextCommand: 'effekseer.compose',
+        steps: [
+          'Search this catalog by purpose, tags, or prompt vocabulary',
+          'Choose one preset or author a bounded layers array from matching effects',
+          'Execute effekseer.compose in world or screen mode',
+          'Capture Scene/Game output and revise layer transforms, scale, speed, or ordering',
+        ],
+      },
+    };
+  }
+
   async listSpriteAssets(params: Record<string, unknown> = {}): Promise<{
     spriteRevision: string;
     total: number;
@@ -5332,6 +5381,8 @@ class AgentBridge {
         );
       case 'view.canvas_plan':
         return this.getCanvasPlan(params);
+      case 'effekseer.catalog':
+        return this.getEffekseerCatalog(params);
       case 'figma.import_plan':
         return this.getFigmaImportPlan(params);
       case 'figma.settings':
