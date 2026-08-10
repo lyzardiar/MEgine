@@ -119,7 +119,9 @@
       "tags": ["hit", "sparks", "streak", "contact", "multi-hit", "ui"],
       "summary": "Secondary streak and spark layer for heavier impacts and repeated attacks.",
       "modes": ["world", "screen"],
-      "suggestedScale": 0.8
+      "suggestedScale": 0.8,
+      "renderStatus": "experimental",
+      "limitations": ["Current custom-material approximation can expose rectangular streak geometry in some frames."]
     },
     {
       "id": "wind_slash",
@@ -129,7 +131,9 @@
       "tags": ["wind", "green", "teal", "slash", "blade", "arc"],
       "summary": "Clean wind slash for sword waves, fast melee arcs, and directional cuts.",
       "modes": ["world", "screen"],
-      "suggestedScale": 1.0
+      "suggestedScale": 1.0,
+      "renderStatus": "experimental",
+      "limitations": ["The authored mt_slash01 custom material is approximated and can render dark ribbon edges."]
     },
     {
       "id": "wind_blade",
@@ -139,7 +143,9 @@
       "tags": ["wind", "green", "teal", "large", "blade", "sweep"],
       "summary": "Broad teal motion suited to the large blade-wave silhouettes in the reference image.",
       "modes": ["world", "screen"],
-      "suggestedScale": 1.2
+      "suggestedScale": 1.2,
+      "renderStatus": "experimental",
+      "limitations": ["The authored mt_wind02 custom material is approximated and can render opaque dark geometry."]
     },
     {
       "id": "wind_vortex",
@@ -149,7 +155,9 @@
       "tags": ["wind", "green", "teal", "vortex", "field", "motion"],
       "summary": "Rotational wind body for vortices, sustained blade storms, and ambient motion.",
       "modes": ["world", "screen"],
-      "suggestedScale": 1.0
+      "suggestedScale": 1.0,
+      "renderStatus": "experimental",
+      "limitations": ["The authored wind custom material is approximated and can render opaque rings."]
     }
   ],
   "presets": [
@@ -171,6 +179,8 @@
       "summary": "Three offset wind layers form the oversized teal blade waves from the reference.",
       "promptHints": ["青色剑气", "翡翠刀光", "jade blade", "teal sword wave", "multi slash"],
       "mode": "world",
+      "renderStatus": "experimental",
+      "limitations": ["Uses wind custom materials that are indexed for iteration but not recommended for shipping screenshots."],
       "layers": [
         { "name": "Main Jade Blade", "effect": "Assets/Effects/ef_wind02.efkefc", "position": [0.0, 0.25, 0.0], "scale": [1.6, 2.2, 1.6], "speed": 0.75, "prewarm": true },
         { "name": "Cross Blade", "effect": "Assets/Effects/ef_wind01.efkefc", "position": [0.4, 0.5, -0.15], "rotation": [0.0, 0.0, 0.382683, 0.92388], "scale": [1.35, 1.35, 1.35], "speed": 1.1 },
@@ -183,6 +193,8 @@
       "summary": "White holy energy, fast slash motion, and two hit layers create readable repeated contact.",
       "promptHints": ["白紫连斩", "多段命中", "arcane slash", "multi hit", "combo finisher"],
       "mode": "world",
+      "renderStatus": "experimental",
+      "limitations": ["The wind slash and secondary hit streak use custom-material approximations."],
       "layers": [
         { "name": "Arcane Body", "effect": "Assets/Effects/ef_holy01.efkefc", "scale": [0.9, 0.9, 0.9], "speed": 1.15 },
         { "name": "Arcane Slash", "effect": "Assets/Effects/ef_wind01.efkefc", "rotation": [0.0, 0.0, -0.258819, 0.965926], "scale": [1.1, 1.1, 1.1], "speed": 1.4 },
@@ -208,8 +220,7 @@
       "promptHints": ["命中反馈", "暴击闪光", "hit confirm", "damage number", "HUD impact"],
       "mode": "screen",
       "layers": [
-        { "name": "UI Hit Core", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "size": [240, 240], "screenScale": 0.35, "sortingOrder": 30 },
-        { "name": "UI Hit Sparks", "effect": "Assets/Effects/ef_parts_hit02.efkefc", "size": [320, 320], "screenScale": 0.3, "sortingOrder": 31, "startFrame": 3 }
+        { "name": "UI Hit Core", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "size": [240, 240], "screenScale": 0.35, "sortingOrder": 30 }
       ]
     }
   ]

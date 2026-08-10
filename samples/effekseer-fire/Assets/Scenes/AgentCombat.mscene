@@ -1,0 +1,595 @@
+{
+  "version": 3,
+  "name": "AgentCombat",
+  "world": {
+    "entities": [
+      {
+        "entity": 34359738370,
+        "name": "Guard Glow",
+        "parent": 30064771077,
+        "sibling_index": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_holy01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.0,
+            "start_frame": 5
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.6499999761581421,
+              0.6499999761581421,
+              0.6499999761581421
+            ]
+          },
+          "Name": {
+            "value": "Guard Glow"
+          }
+        }
+      },
+      {
+        "entity": 30064771075,
+        "name": "Ice Contact",
+        "parent": 30064771077,
+        "sibling_index": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929
+            ]
+          },
+          "Name": {
+            "value": "Ice Contact"
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.100000023841858,
+            "start_frame": 0
+          }
+        }
+      },
+      {
+        "entity": 30064771076,
+        "name": "Cyan Guard Arc",
+        "parent": 30064771077,
+        "sibling_index": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.399999976158142,
+              1.0,
+              1.399999976158142
+            ]
+          },
+          "Name": {
+            "value": "Cyan Guard Arc"
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": true,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 0.8999999761581421,
+            "start_frame": 0
+          }
+        }
+      },
+      {
+        "entity": 30064771077,
+        "name": "Cyan Blade Guard",
+        "parent": null,
+        "sibling_index": 4,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Cyan Blade Guard"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.15000000596046448,
+              0.15000000596046448,
+              0.15000000596046448
+            ]
+          }
+        }
+      },
+      {
+        "entity": 30064771078,
+        "name": "Hit Core",
+        "parent": 30064771080,
+        "sibling_index": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.8500000238418579,
+              0.8500000238418579,
+              0.8500000238418579
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.0,
+            "start_frame": 2
+          },
+          "Name": {
+            "value": "Hit Core"
+          }
+        }
+      },
+      {
+        "entity": 30064771079,
+        "name": "Arcane Body",
+        "parent": 30064771080,
+        "sibling_index": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_holy01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 1.149999976158142,
+            "start_frame": 0
+          },
+          "Name": {
+            "value": "Arcane Body"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.8999999761581421,
+              0.8999999761581421,
+              0.8999999761581421
+            ]
+          }
+        }
+      },
+      {
+        "entity": 30064771080,
+        "name": "Holy Impact",
+        "parent": null,
+        "sibling_index": 3,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              2.200000047683716,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.3199999928474426,
+              0.3199999928474426,
+              0.3199999928474426
+            ]
+          },
+          "Name": {
+            "value": "Holy Impact"
+          }
+        }
+      },
+      {
+        "entity": 30064771081,
+        "name": "Thunder Contact",
+        "parent": 30064771084,
+        "sibling_index": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.149999976158142,
+            "start_frame": 0
+          },
+          "Name": {
+            "value": "Thunder Contact"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.100000023841858,
+              1.100000023841858,
+              1.100000023841858
+            ]
+          }
+        }
+      },
+      {
+        "entity": 30064771082,
+        "name": "Thunder Branches",
+        "parent": 30064771084,
+        "sibling_index": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.2000000476837158,
+            "start_frame": 4
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          "Name": {
+            "value": "Thunder Branches"
+          }
+        }
+      },
+      {
+        "entity": 30064771083,
+        "name": "Thunder Column",
+        "parent": 30064771084,
+        "sibling_index": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": true,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 0.8999999761581421,
+            "start_frame": 0
+          },
+          "Name": {
+            "value": "Thunder Column"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.25,
+              1.75,
+              1.25
+            ]
+          }
+        }
+      },
+      {
+        "entity": 30064771084,
+        "name": "Crimson Thunder Column",
+        "parent": null,
+        "sibling_index": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Crimson Thunder Column"
+          },
+          "Transform": {
+            "position": [
+              -2.200000047683716,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.20000000298023224,
+              0.20000000298023224,
+              0.20000000298023224
+            ]
+          }
+        }
+      },
+      {
+        "entity": 30064771085,
+        "name": "Directional Light",
+        "parent": null,
+        "sibling_index": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Directional Light"
+          },
+          "Transform": {
+            "position": [
+              2.0,
+              4.0,
+              1.0
+            ],
+            "rotation": [
+              -0.38269999623298645,
+              0.0,
+              0.0,
+              0.9239000082015991
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          "DirectionalLight": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              1.0,
+              0.949999988079071,
+              1.0
+            ],
+            "intensity": 1.0,
+            "shadow_bias": 0.001500000013038516,
+            "shadow_distance": 30.0,
+            "shadow_normal_bias": 0.019999999552965164,
+            "shadow_strength": 1.0
+          }
+        }
+      },
+      {
+        "entity": 30064771086,
+        "name": "Main Camera",
+        "parent": null,
+        "sibling_index": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Camera3D": {
+            "aspect": 1.7777777910232544,
+            "background_color": [
+              0.10000000149011612,
+              0.10000000149011612,
+              0.14000000059604645,
+              1.0
+            ],
+            "clear_flags": "scene",
+            "far": 50.0,
+            "fov_y_degrees": 60.0,
+            "near": 0.30000001192092896,
+            "orthographic_size": 5.0,
+            "primary": true,
+            "projection": "perspective",
+            "target_display": 0
+          },
+          "Name": {
+            "value": "Main Camera"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              1.2000000476837158,
+              7.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          "AudioListener": {
+            "primary": true
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.015,
+      0.02,
+      0.035,
+      1.0
+    ],
+    "selected": null
+  }
+}

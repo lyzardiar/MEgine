@@ -5,6 +5,7 @@
   "mainScene": "Assets/Scenes/Main.mscene",
   "buildScenes": [
     "Assets/Scenes/Main.mscene",
-    "Assets/Scenes/UI.mscene"
+    "Assets/Scenes/UI.mscene",
+    "Assets/Scenes/AgentCombat.mscene"
   ]
 }

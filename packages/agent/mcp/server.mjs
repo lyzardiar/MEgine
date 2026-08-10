@@ -1510,6 +1510,11 @@ const TOOLS = [
           description: 'Required semantic tags',
         },
         includePresets: { type: 'boolean', description: 'Include composition presets; default true' },
+        renderStatus: {
+          type: 'string',
+          enum: ['verified', 'experimental'],
+          description: 'Optional background-render verification status',
+        },
       },
     },
     handler: async (args) => textContent(await bridgeQuery('effekseer.catalog', args)),

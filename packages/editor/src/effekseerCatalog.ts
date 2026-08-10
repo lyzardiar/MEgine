@@ -7,6 +7,8 @@ export type EffekseerCatalogEffect = {
   summary: string;
   modes: Array<'world' | 'screen'>;
   suggestedScale: number;
+  renderStatus: 'verified' | 'experimental';
+  limitations: string[];
 };
 
 export type EffekseerCatalogPresetLayer = {
@@ -32,6 +34,8 @@ export type EffekseerCatalogPreset = {
   promptHints: string[];
   mode: 'world' | 'screen';
   layers: EffekseerCatalogPresetLayer[];
+  renderStatus: 'verified' | 'experimental';
+  limitations: string[];
 };
 
 export type EffekseerCatalogDocument = {
@@ -106,7 +110,12 @@ function catalogHash(parts: string[]): string {
 export function buildEffekseerCatalog(
   effectPaths: readonly string[],
   documents: readonly EffekseerCatalogDocument[],
-  filter: { search?: string; group?: string; tags?: readonly string[] } = {},
+  filter: {
+    search?: string;
+    group?: string;
+    tags?: readonly string[];
+    renderStatus?: 'verified' | 'experimental';
+  } = {},
 ): EffekseerCatalog {
   const paths = [...new Set(effectPaths.map((path) => path.replace(/\\/g, '/')))].sort();
   const available = new Set(paths.map((path) => path.toLocaleLowerCase()));
@@ -152,6 +161,8 @@ export function buildEffekseerCatalog(
         suggestedScale: typeof raw.suggestedScale === 'number' && Number.isFinite(raw.suggestedScale) && raw.suggestedScale > 0
           ? Math.min(100, raw.suggestedScale)
           : 1,
+        renderStatus: raw.renderStatus === 'experimental' ? 'experimental' : 'verified',
+        limitations: strings(raw.limitations, 12),
       });
     }
     const rawPresets = Array.isArray(root.presets) ? root.presets : [];
@@ -175,6 +186,8 @@ export function buildEffekseerCatalog(
         promptHints: strings(raw.promptHints, 24),
         mode,
         layers,
+        renderStatus: raw.renderStatus === 'experimental' ? 'experimental' : 'verified',
+        limitations: strings(raw.limitations, 12),
       });
     }
   }
@@ -191,6 +204,8 @@ export function buildEffekseerCatalog(
       summary: 'Indexed Effekseer asset without catalog metadata.',
       modes: ['world', 'screen'],
       suggestedScale: 1,
+      renderStatus: 'experimental',
+      limitations: ['No .meffect metadata or background screenshot verification is available.'],
     });
   }
 
@@ -199,11 +214,21 @@ export function buildEffekseerCatalog(
   const tags = (filter.tags ?? []).map((tag) => tag.trim().toLocaleLowerCase()).filter(Boolean);
   const allEffects = [...effects.values()].sort((left, right) => left.id.localeCompare(right.id));
   const filteredEffects = allEffects.filter((effect) => {
-    const words = [effect.id, effect.label, effect.effect, effect.group, effect.summary, ...effect.tags]
+    const words = [
+      effect.id,
+      effect.label,
+      effect.effect,
+      effect.group,
+      effect.summary,
+      effect.renderStatus,
+      ...effect.tags,
+      ...effect.limitations,
+    ]
       .join(' ')
       .toLocaleLowerCase();
     return (!search || words.includes(search))
       && (!group || effect.group.toLocaleLowerCase() === group)
+      && (!filter.renderStatus || effect.renderStatus === filter.renderStatus)
       && tags.every((tag) => effect.tags.some((candidate) => candidate.toLocaleLowerCase() === tag));
   });
   const groupCounts = new Map<string, number>();

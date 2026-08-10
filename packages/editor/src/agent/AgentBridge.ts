@@ -2789,6 +2789,9 @@ class AgentBridge {
       tags: Array.isArray(params.tags)
         ? params.tags.filter((tag): tag is string => typeof tag === 'string')
         : undefined,
+      renderStatus: params.renderStatus === 'verified' || params.renderStatus === 'experimental'
+        ? params.renderStatus
+        : undefined,
     });
     return {
       ...catalog,
@@ -2803,6 +2806,7 @@ class AgentBridge {
           'Execute effekseer.compose in world or screen mode',
           'Capture Scene/Game output and revise layer transforms, scale, speed, or ordering',
         ],
+        recommendation: 'Prefer renderStatus=verified. Experimental entries are indexed but have known custom-material approximation artifacts.',
       },
     };
   }

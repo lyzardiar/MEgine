@@ -22,6 +22,10 @@ test('Effekseer semantic catalog covers every pinned binary with purpose metadat
   assert.deepEqual(catalog.diagnostics, []);
   assert.equal(catalog.effects.length, 15);
   assert.ok(catalog.effects.every((effect) => effect.group !== 'unclassified'));
+  assert.deepEqual(
+    catalog.effects.filter((effect) => effect.renderStatus === 'experimental').map((effect) => effect.id),
+    ['hit_sparks', 'wind_blade', 'wind_slash', 'wind_vortex'],
+  );
   assert.ok(catalog.groups.some((group) => group.id === 'directional-strike' && group.count >= 4));
   assert.match(catalog.catalogRevision, /^effekseer-catalog-v1-[0-9a-f]{16}$/);
 });
@@ -34,6 +38,16 @@ test('Effekseer catalog filters by prompt vocabulary, purpose, and semantic tags
     tags: ['cyan', 'shield'],
   });
   assert.deepEqual(cyanArc.effects.map((effect) => effect.id), ['ice_arc']);
+
+  const experimental = buildEffekseerCatalog(effectPaths, [document], {
+    renderStatus: 'experimental',
+  });
+  assert.deepEqual(experimental.effects.map((effect) => effect.id), [
+    'hit_sparks',
+    'wind_blade',
+    'wind_slash',
+    'wind_vortex',
+  ]);
 });
 
 test('Effekseer catalog ships bounded prompt-oriented combat recipes', () => {
@@ -46,6 +60,10 @@ test('Effekseer catalog ships bounded prompt-oriented combat recipes', () => {
     'ui_hit_confirm',
   ]);
   assert.ok(catalog.presets.every((preset) => preset.layers.length > 0 && preset.layers.length <= 16));
+  assert.deepEqual(
+    catalog.presets.filter((preset) => preset.renderStatus === 'experimental').map((preset) => preset.id),
+    ['arcane_multi_hit', 'jade_blade_storm'],
+  );
 });
 
 test('uncatalogued Effekseer binaries remain discoverable and invalid recipes are diagnosed', () => {
@@ -54,5 +72,6 @@ test('uncatalogued Effekseer binaries remain discoverable and invalid recipes ar
     [{ path: 'Assets/Effects/Bad.meffect', revision: 'bad', contents: '{"version":2}' }],
   );
   assert.equal(catalog.effects[0].group, 'unclassified');
+  assert.equal(catalog.effects[0].renderStatus, 'experimental');
   assert.match(catalog.diagnostics.join(' '), /version must be 1/);
 });

@@ -51,6 +51,22 @@ test('Effekseer UI sample is hosted by Canvas and shipped in build scenes', () =
   assert.equal(effect.components.EffekseerEffect.render_mode, 'screen');
   assert.equal(effect.components.EffekseerEffect.screen_scale, 0.25);
   assert.ok(project.buildScenes.includes('Assets/Scenes/UI.mscene'));
+  assert.ok(project.buildScenes.includes('Assets/Scenes/AgentCombat.mscene'));
+});
+
+test('Agent-generated combat showcase contains only background-verified effect layers', () => {
+  const scene = JSON.parse(readFileSync(
+    join(sampleRoot, 'Assets', 'Scenes', 'AgentCombat.mscene'),
+    'utf8',
+  ));
+  const references = scene.world.entities
+    .map((entity) => entity.components.EffekseerEffect?.effect)
+    .filter(Boolean);
+  assert.ok(references.length >= 7);
+  assert.ok(references.every((effect) => !effect.includes('ef_wind')));
+  assert.ok(!references.includes('Assets/Effects/ef_parts_hit02.efkefc'));
+  assert.equal(scene.world.frame, 0);
+  assert.deepEqual(scene.world.clear_color, [0.015, 0.02, 0.035, 1]);
 });
 
 test('Spine UI sample is included in its showcase build scenes', () => {

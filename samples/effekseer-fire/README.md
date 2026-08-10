@@ -38,6 +38,13 @@ storm, arcane multi-hit, cyan UI guard arc, and compact UI hit confirmation.
 They are decomposed from the combat reference into reusable layers rather than
 one unmaintainable full-screen effect.
 
+Every catalog effect and preset also exposes `renderStatus` and `limitations`.
+Agents should prefer `verified`; `experimental` keeps useful authored assets
+discoverable while clearly reporting current custom Effekseer Material
+approximation artifacts (notably wind ribbons and the secondary hit streak).
+`Assets/Scenes/AgentCombat.mscene` was generated through the Agent workflow and
+contains only the layers that passed hidden Game-view screenshot inspection.
+
 From the repository root it can also be run with:
 
 ```powershell

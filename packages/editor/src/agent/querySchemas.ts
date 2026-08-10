@@ -180,6 +180,11 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       type: 'boolean',
       description: 'Include prompt-oriented composition presets; default true',
     },
+    renderStatus: {
+      type: 'string',
+      enum: ['verified', 'experimental'],
+      description: 'Optional background-render verification status',
+    },
   }),
   'figma.import_plan': FIGMA_IMPORT_PLAN_PARAMS_SCHEMA,
   'figma.settings': emptySchema,
