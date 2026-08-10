@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "name": "Jade Blade Loop",
+  "duration": 3.5714286,
+  "frame_rate": 60,
+  "wrap_mode": "ping_pong",
+  "tracks": [
+    {
+      "target": ".",
+      "component": "Transform",
+      "property": "position.x",
+      "interpolation": "linear",
+      "keyframes": [
+        { "time": 0, "value": 0.3 },
+        { "time": 3.5714286, "value": 1.7 }
+      ]
+    },
+    {
+      "target": ".",
+      "component": "Transform",
+      "property": "position.y",
+      "interpolation": "linear",
+      "keyframes": [
+        { "time": 0, "value": 1.15 },
+        { "time": 3.5714286, "value": 1.35 }
+      ]
+    }
+  ]
+}

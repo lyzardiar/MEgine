@@ -54,16 +54,21 @@ test('Effekseer catalog ships bounded prompt-oriented combat recipes', () => {
   const catalog = buildEffekseerCatalog(effectPaths, [document]);
   assert.deepEqual(catalog.presets.map((preset) => preset.id), [
     'arcane_multi_hit',
+    'chain_lightning_barrage',
     'crimson_thunder_column',
     'cyan_guard_arc_ui',
+    'frost_nova',
+    'holy_ascension',
+    'inferno_domain',
+    'inferno_impact',
     'jade_blade_storm',
     'ui_hit_confirm',
   ]);
   assert.ok(catalog.presets.every((preset) => preset.layers.length > 0 && preset.layers.length <= 16));
-  assert.deepEqual(
-    catalog.presets.filter((preset) => preset.renderStatus === 'experimental').map((preset) => preset.id),
-    ['arcane_multi_hit', 'jade_blade_storm'],
-  );
+  assert.ok(catalog.presets.every((preset) => preset.renderStatus === 'verified'));
+  assert.ok(catalog.presets.every((preset) => preset.layers.every((layer) => (
+    !layer.effect.includes('ef_wind') && !layer.effect.includes('ef_parts_hit02')
+  ))));
 });
 
 test('uncatalogued Effekseer binaries remain discoverable and invalid recipes are diagnosed', () => {

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "name": "Chain Lightning Loop",
+  "duration": 3.125,
+  "frame_rate": 60,
+  "wrap_mode": "ping_pong",
+  "tracks": [
+    {
+      "target": ".",
+      "component": "Transform",
+      "property": "position.x",
+      "interpolation": "linear",
+      "keyframes": [
+        { "time": 0, "value": -1.65 },
+        { "time": 3.125, "value": -0.35 }
+      ]
+    },
+    {
+      "target": ".",
+      "component": "Transform",
+      "property": "position.y",
+      "interpolation": "linear",
+      "keyframes": [
+        { "time": 0, "value": 1.25 },
+        { "time": 3.125, "value": 1.25 }
+      ]
+    }
+  ]
+}

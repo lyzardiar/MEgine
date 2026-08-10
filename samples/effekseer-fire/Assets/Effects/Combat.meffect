@@ -162,44 +162,108 @@
   ],
   "presets": [
     {
+      "id": "arcane_multi_hit",
+      "label": "Arcane Multi-hit",
+      "summary": "Staggered violet lightning, holy light, and neutral hit cores create a readable multi-hit finisher.",
+      "promptHints": ["白紫连斩", "多段命中", "arcane slash", "multi hit", "combo finisher"],
+      "mode": "world",
+      "layers": [
+        { "name": "Arcane Body", "effect": "Assets/Effects/ef_holy01.efkefc", "scale": [0.75, 0.75, 0.75], "speed": 1.1 },
+        { "name": "Left Arc", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [-0.32, 0.1, 0.0], "rotation": [0.0, 0.0, -0.382683, 0.92388], "scale": [0.85, 0.85, 0.85], "speed": 1.35, "startFrame": 2 },
+        { "name": "Right Arc", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [0.32, 0.1, 0.0], "rotation": [0.0, 0.0, 0.382683, 0.92388], "scale": [0.85, 0.85, 0.85], "speed": 1.35, "startFrame": 7 },
+        { "name": "First Contact", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "position": [-0.22, 0.0, 0.1], "scale": [0.65, 0.65, 0.65], "startFrame": 3 },
+        { "name": "Second Contact", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "position": [0.24, 0.18, 0.1], "scale": [0.55, 0.55, 0.55], "startFrame": 9 }
+      ]
+    },
+    {
+      "id": "chain_lightning_barrage",
+      "label": "Chain Lightning Barrage",
+      "summary": "Three angled bolts and an electric impact form the scattered lightning barrage visible above clustered enemies.",
+      "promptHints": ["连锁闪电", "雷电弹幕", "chain lightning", "lightning barrage", "群体雷击"],
+      "mode": "world",
+      "layers": [
+        { "name": "Left Bolt", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [-0.55, 0.25, 0.0], "rotation": [0.0, 0.0, -0.21644, 0.976296], "scale": [0.8, 0.8, 0.8], "speed": 1.2 },
+        { "name": "Center Bolt", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [0.0, 0.45, 0.0], "scale": [0.95, 0.95, 0.95], "speed": 1.0, "startFrame": 5 },
+        { "name": "Right Bolt", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [0.55, 0.2, 0.0], "rotation": [0.0, 0.0, 0.21644, 0.976296], "scale": [0.8, 0.8, 0.8], "speed": 1.25, "startFrame": 10 },
+        { "name": "Electric Burst", "effect": "Assets/Effects/ef_lightning03.efkefc", "scale": [1.0, 1.0, 1.0], "startFrame": 4 },
+        { "name": "Contact Core", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.6, 0.6, 0.6], "startFrame": 8 }
+      ]
+    },
+    {
       "id": "crimson_thunder_column",
       "label": "Crimson Thunder Column",
-      "summary": "Layered vertical lightning, a fast bolt, and a contact core for a high-value skill strike.",
+      "summary": "A tall lightning body, branching bolt, electric impact, and warm ground burst form the reference's high-value vertical strike.",
       "promptHints": ["红色雷柱", "闪电劈落", "vertical lightning", "energy column", "boss skill"],
       "mode": "world",
       "layers": [
-        { "name": "Thunder Column", "effect": "Assets/Effects/ef_lightning01.efkefc", "scale": [1.25, 1.75, 1.25], "speed": 0.9, "prewarm": true },
-        { "name": "Thunder Branches", "effect": "Assets/Effects/ef_lightning02.efkefc", "scale": [1.5, 1.5, 1.5], "speed": 1.2, "startFrame": 4 },
-        { "name": "Thunder Contact", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [1.1, 1.1, 1.1], "speed": 1.15 }
+        { "name": "Thunder Column", "effect": "Assets/Effects/ef_lightning01.efkefc", "scale": [1.15, 1.7, 1.15], "speed": 0.85, "prewarm": true },
+        { "name": "Thunder Branches", "effect": "Assets/Effects/ef_lightning02.efkefc", "scale": [1.35, 1.35, 1.35], "speed": 1.2, "startFrame": 4 },
+        { "name": "Electric Contact", "effect": "Assets/Effects/ef_lightning03.efkefc", "scale": [0.9, 0.9, 0.9], "startFrame": 7 },
+        { "name": "Warm Ground Burst", "effect": "Assets/Effects/ef_fire02.efkefc", "scale": [0.65, 0.65, 0.65], "speed": 1.15, "startFrame": 6 },
+        { "name": "Thunder Contact", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.7, 0.7, 0.7], "startFrame": 8 }
+      ]
+    },
+    {
+      "id": "frost_nova",
+      "label": "Frost Nova",
+      "summary": "An ice field, mirrored shards, and a sweeping arc create a compact crowd-control burst.",
+      "promptHints": ["冰霜新星", "冻结爆发", "frost nova", "ice burst", "范围控制"],
+      "mode": "world",
+      "layers": [
+        { "name": "Frozen Field", "effect": "Assets/Effects/ef_ice03.efkefc", "scale": [1.1, 1.1, 1.1], "speed": 0.85, "prewarm": true },
+        { "name": "Left Shard", "effect": "Assets/Effects/ef_ice01.efkefc", "position": [-0.35, 0.05, 0.0], "scale": [0.7, 0.7, 0.7], "startFrame": 2 },
+        { "name": "Right Shard", "effect": "Assets/Effects/ef_ice01.efkefc", "position": [0.35, 0.05, 0.0], "scale": [0.7, 0.7, 0.7], "startFrame": 8 },
+        { "name": "Nova Arc", "effect": "Assets/Effects/ef_ice02.efkefc", "rotation": [0.0, 0.0, 0.707107, 0.707107], "scale": [0.85, 0.85, 0.85], "speed": 1.15, "startFrame": 5 }
+      ]
+    },
+    {
+      "id": "holy_ascension",
+      "label": "Holy Ascension",
+      "summary": "Layered holy blooms and a compact electric crown create a white-gold ultimate or recovery effect.",
+      "promptHints": ["圣光升腾", "白色大招", "holy ascension", "healing ultimate", "神圣爆发"],
+      "mode": "world",
+      "layers": [
+        { "name": "Holy Core", "effect": "Assets/Effects/ef_holy01.efkefc", "scale": [0.95, 0.95, 0.95], "speed": 0.9, "prewarm": true },
+        { "name": "Left Bloom", "effect": "Assets/Effects/ef_holy01.efkefc", "position": [-0.38, 0.15, 0.0], "scale": [0.5, 0.5, 0.5], "speed": 1.15, "startFrame": 8 },
+        { "name": "Right Bloom", "effect": "Assets/Effects/ef_holy01.efkefc", "position": [0.38, 0.15, 0.0], "scale": [0.5, 0.5, 0.5], "speed": 1.15, "startFrame": 15 },
+        { "name": "Radiant Crown", "effect": "Assets/Effects/ef_lightning03.efkefc", "position": [0.0, 0.45, 0.0], "scale": [0.65, 0.65, 0.65], "startFrame": 5 }
+      ]
+    },
+    {
+      "id": "inferno_domain",
+      "label": "Inferno Domain",
+      "summary": "A sustained flame body with staggered side bursts creates burning ground for area damage.",
+      "promptHints": ["烈焰领域", "持续火场", "inferno domain", "burning ground", "范围伤害"],
+      "mode": "world",
+      "layers": [
+        { "name": "Flame Body", "effect": "Assets/Effects/ef_fire01.efkefc", "scale": [1.1, 1.1, 1.1], "speed": 0.8, "prewarm": true },
+        { "name": "Left Flame", "effect": "Assets/Effects/ef_fire02.efkefc", "position": [-0.45, 0.0, 0.0], "scale": [0.55, 0.55, 0.55], "startFrame": 5 },
+        { "name": "Right Flame", "effect": "Assets/Effects/ef_fire02.efkefc", "position": [0.45, 0.0, 0.0], "scale": [0.55, 0.55, 0.55], "startFrame": 13 }
+      ]
+    },
+    {
+      "id": "inferno_impact",
+      "label": "Inferno Impact",
+      "summary": "A directional fire strike collapses into a broad burst and bright contact core for a heavy finisher.",
+      "promptHints": ["火焰斩击", "烈火爆点", "inferno impact", "fire finisher", "爆炸命中"],
+      "mode": "world",
+      "layers": [
+        { "name": "Fire Strike", "effect": "Assets/Effects/ef_fire03.efkefc", "rotation": [0.0, 0.0, -0.173648, 0.984808], "scale": [1.05, 1.05, 1.05], "speed": 1.1 },
+        { "name": "Fire Burst", "effect": "Assets/Effects/ef_fire02.efkefc", "scale": [1.15, 1.15, 1.15], "speed": 1.0, "startFrame": 5 },
+        { "name": "Impact Core", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.75, 0.75, 0.75], "startFrame": 7 }
       ]
     },
     {
       "id": "jade_blade_storm",
       "label": "Jade Blade Storm",
-      "summary": "Three offset wind layers form the oversized teal blade waves from the reference.",
+      "summary": "Three staggered cyan ice arcs replace the unsupported wind material while preserving the reference's oversized blade-wave rhythm.",
       "promptHints": ["青色剑气", "翡翠刀光", "jade blade", "teal sword wave", "multi slash"],
       "mode": "world",
-      "renderStatus": "experimental",
-      "limitations": ["Uses wind custom materials that are indexed for iteration but not recommended for shipping screenshots."],
       "layers": [
-        { "name": "Main Jade Blade", "effect": "Assets/Effects/ef_wind02.efkefc", "position": [0.0, 0.25, 0.0], "scale": [1.6, 2.2, 1.6], "speed": 0.75, "prewarm": true },
-        { "name": "Cross Blade", "effect": "Assets/Effects/ef_wind01.efkefc", "position": [0.4, 0.5, -0.15], "rotation": [0.0, 0.0, 0.382683, 0.92388], "scale": [1.35, 1.35, 1.35], "speed": 1.1 },
-        { "name": "Blade Vortex", "effect": "Assets/Effects/ef_wind03.efkefc", "position": [-0.35, 0.15, 0.1], "scale": [1.25, 1.25, 1.25], "speed": 0.9 }
-      ]
-    },
-    {
-      "id": "arcane_multi_hit",
-      "label": "Arcane Multi-hit",
-      "summary": "White holy energy, fast slash motion, and two hit layers create readable repeated contact.",
-      "promptHints": ["白紫连斩", "多段命中", "arcane slash", "multi hit", "combo finisher"],
-      "mode": "world",
-      "renderStatus": "experimental",
-      "limitations": ["The wind slash and secondary hit streak use custom-material approximations."],
-      "layers": [
-        { "name": "Arcane Body", "effect": "Assets/Effects/ef_holy01.efkefc", "scale": [0.9, 0.9, 0.9], "speed": 1.15 },
-        { "name": "Arcane Slash", "effect": "Assets/Effects/ef_wind01.efkefc", "rotation": [0.0, 0.0, -0.258819, 0.965926], "scale": [1.1, 1.1, 1.1], "speed": 1.4 },
-        { "name": "Hit Core", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.85, 0.85, 0.85], "startFrame": 2 },
-        { "name": "Hit Streaks", "effect": "Assets/Effects/ef_parts_hit02.efkefc", "scale": [1.15, 1.15, 1.15], "startFrame": 5 }
+        { "name": "Left Jade Blade", "effect": "Assets/Effects/ef_ice02.efkefc", "position": [-0.55, 0.1, 0.0], "rotation": [0.0, 0.0, -0.21644, 0.976296], "scale": [1.15, 1.35, 1.15], "speed": 0.85, "prewarm": true },
+        { "name": "Center Jade Blade", "effect": "Assets/Effects/ef_ice02.efkefc", "position": [0.0, 0.35, 0.0], "scale": [1.35, 1.55, 1.35], "speed": 0.75, "startFrame": 5 },
+        { "name": "Right Jade Blade", "effect": "Assets/Effects/ef_ice02.efkefc", "position": [0.55, 0.05, 0.0], "rotation": [0.0, 0.0, 0.21644, 0.976296], "scale": [1.15, 1.35, 1.15], "speed": 0.9, "startFrame": 10 },
+        { "name": "Blade Contact", "effect": "Assets/Effects/ef_ice01.efkefc", "scale": [0.6, 0.6, 0.6], "startFrame": 6 }
       ]
     },
     {

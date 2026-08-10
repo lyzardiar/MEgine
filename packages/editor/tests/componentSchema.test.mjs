@@ -17,6 +17,10 @@ const behaviour = fs.readFileSync(
   path.join(root, 'src', 'behaviours', 'AutoRotate.ts'),
   'utf8',
 );
+const loopMotion = fs.readFileSync(
+  path.join(root, 'src', 'behaviours', 'LoopMotion.ts'),
+  'utf8',
+);
 
 test('component discovery merges real Inspector and Behaviour authoring metadata', () => {
   assert.match(schema, /BUILTIN_INSPECTOR_FIELDS/);
@@ -37,4 +41,8 @@ test('source metadata includes conditional built-ins and invokable Behaviour met
   assert.match(behaviour, /@Range\(0, 720\)/);
   assert.match(behaviour, /@Button\('Reset Angle'\)/);
   assert.match(behaviour, /@ContextMenu\('Zero Rotation Rate'\)/);
+  assert.match(loopMotion, /@RegisterBehaviour\('LoopMotion'/);
+  assert.match(loopMotion, /@SerializeField\(\{ type: 'vec3' \}\)[\s\S]*start:/);
+  assert.match(loopMotion, /@SerializeField\(\{ type: 'vec3' \}\)[\s\S]*end:/);
+  assert.match(loopMotion, /cycle <= 0\.5/);
 });

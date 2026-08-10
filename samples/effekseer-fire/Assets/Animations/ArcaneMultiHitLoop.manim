@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "name": "Arcane Multi-hit Loop",
+  "duration": 2.631579,
+  "frame_rate": 60,
+  "wrap_mode": "ping_pong",
+  "tracks": [
+    {
+      "target": ".",
+      "component": "Transform",
+      "property": "position.x",
+      "interpolation": "linear",
+      "keyframes": [
+        { "time": 0, "value": 2.45 },
+        { "time": 2.631579, "value": 3.55 }
+      ]
+    },
+    {
+      "target": ".",
+      "component": "Transform",
+      "property": "position.y",
+      "interpolation": "linear",
+      "keyframes": [
+        { "time": 0, "value": 1.05 },
+        { "time": 2.631579, "value": 1.45 }
+      ]
+    }
+  ]
+}

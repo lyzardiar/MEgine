@@ -1,0 +1,2039 @@
+{
+  "version": 3,
+  "name": "CombatSeries",
+  "world": {
+    "entities": [
+      {
+        "entity": 42949672960,
+        "name": "Right Jade Blade",
+        "parent": 34359738371,
+        "sibling_index": 42,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 0.8999999761581421,
+            "start_frame": 10
+          },
+          "Transform": {
+            "position": [
+              0.550000011920929,
+              0.05000000074505806,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.21644000709056854,
+              0.9762960076332092
+            ],
+            "scale": [
+              1.149999976158142,
+              1.350000023841858,
+              1.149999976158142
+            ]
+          },
+          "Name": {
+            "value": "Right Jade Blade"
+          }
+        }
+      },
+      {
+        "entity": 42949672961,
+        "name": "Center Jade Blade",
+        "parent": 34359738371,
+        "sibling_index": 41,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 0.75,
+            "start_frame": 5
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.3499999940395355,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.350000023841858,
+              1.5499999523162842,
+              1.350000023841858
+            ]
+          },
+          "Name": {
+            "value": "Center Jade Blade"
+          }
+        }
+      },
+      {
+        "entity": 34359738370,
+        "name": "Left Jade Blade",
+        "parent": 34359738371,
+        "sibling_index": 40,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Left Jade Blade"
+          },
+          "Transform": {
+            "position": [
+              -0.550000011920929,
+              0.10000000149011612,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              -0.21644000709056854,
+              0.9762960076332092
+            ],
+            "scale": [
+              1.149999976158142,
+              1.350000023841858,
+              1.149999976158142
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": true,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 0.8500000238418579,
+            "start_frame": 0
+          }
+        }
+      },
+      {
+        "entity": 34359738371,
+        "name": "Jade Blade Storm",
+        "parent": null,
+        "sibling_index": 39,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "LoopMotion": {
+            "end": [
+              1.7,
+              1.35,
+              0
+            ],
+            "frequency": 0.14,
+            "phase": 0.25,
+            "start": [
+              0.3,
+              1.15,
+              0
+            ]
+          },
+          "AnimationPlayer": {
+            "clip": "Assets/Animations/JadeBladeLoop.manim",
+            "play_on_awake": true,
+            "playing": true,
+            "speed": 1.0,
+            "time": 1.7857142686843872
+          },
+          "Name": {
+            "value": "Jade Blade Storm"
+          },
+          "Transform": {
+            "position": [
+              1.0,
+              1.25,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.03999999910593033,
+              0.03999999910593033,
+              0.03999999910593033
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738372,
+        "name": "Contact Core",
+        "parent": 34359738377,
+        "sibling_index": 38,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 4,
+            "speed": 1.0,
+            "start_frame": 8
+          },
+          "Name": {
+            "value": "Contact Core"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6000000238418579
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738373,
+        "name": "Electric Burst",
+        "parent": 34359738377,
+        "sibling_index": 37,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Electric Burst"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning03.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 3,
+            "speed": 1.0,
+            "start_frame": 4
+          }
+        }
+      },
+      {
+        "entity": 34359738374,
+        "name": "Right Bolt",
+        "parent": 34359738377,
+        "sibling_index": 36,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.550000011920929,
+              0.20000000298023224,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.21644000709056854,
+              0.9762960076332092
+            ],
+            "scale": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929
+            ]
+          },
+          "Name": {
+            "value": "Right Bolt"
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.25,
+            "start_frame": 10
+          }
+        }
+      },
+      {
+        "entity": 34359738375,
+        "name": "Center Bolt",
+        "parent": 34359738377,
+        "sibling_index": 35,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.44999998807907104,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.949999988079071,
+              0.949999988079071,
+              0.949999988079071
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.0,
+            "start_frame": 5
+          },
+          "Name": {
+            "value": "Center Bolt"
+          }
+        }
+      },
+      {
+        "entity": 34359738376,
+        "name": "Left Bolt",
+        "parent": 34359738377,
+        "sibling_index": 34,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 1.2000000476837158,
+            "start_frame": 0
+          },
+          "Name": {
+            "value": "Left Bolt"
+          },
+          "Transform": {
+            "position": [
+              -0.550000011920929,
+              0.25,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              -0.21644000709056854,
+              0.9762960076332092
+            ],
+            "scale": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738377,
+        "name": "Chain Lightning Barrage",
+        "parent": null,
+        "sibling_index": 33,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              -1.0,
+              1.25,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.05000000074505806,
+              0.05000000074505806,
+              0.05000000074505806
+            ]
+          },
+          "Name": {
+            "value": "Chain Lightning Barrage"
+          },
+          "LoopMotion": {
+            "end": [
+              -0.35,
+              1.25,
+              0
+            ],
+            "frequency": 0.16,
+            "phase": 0,
+            "start": [
+              -1.65,
+              1.25,
+              0
+            ]
+          },
+          "AnimationPlayer": {
+            "clip": "Assets/Animations/ChainLightningLoop.manim",
+            "play_on_awake": true,
+            "playing": true,
+            "speed": 1.0,
+            "time": 0.0
+          }
+        }
+      },
+      {
+        "entity": 34359738378,
+        "name": "Thunder Contact",
+        "parent": 34359738383,
+        "sibling_index": 32,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.699999988079071,
+              0.699999988079071,
+              0.699999988079071
+            ]
+          },
+          "Name": {
+            "value": "Thunder Contact"
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 4,
+            "speed": 1.0,
+            "start_frame": 8
+          }
+        }
+      },
+      {
+        "entity": 34359738379,
+        "name": "Warm Ground Burst",
+        "parent": 34359738383,
+        "sibling_index": 31,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_fire02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 3,
+            "speed": 1.149999976158142,
+            "start_frame": 6
+          },
+          "Name": {
+            "value": "Warm Ground Burst"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.11999999731779099,
+              0.11999999731779099,
+              0.11999999731779099
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738380,
+        "name": "Electric Contact",
+        "parent": 34359738383,
+        "sibling_index": 30,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Electric Contact"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.8999999761581421,
+              0.8999999761581421,
+              0.8999999761581421
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning03.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.0,
+            "start_frame": 7
+          }
+        }
+      },
+      {
+        "entity": 34359738381,
+        "name": "Thunder Branches",
+        "parent": 34359738383,
+        "sibling_index": 29,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.350000023841858,
+              1.350000023841858,
+              1.350000023841858
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.2000000476837158,
+            "start_frame": 4
+          },
+          "Name": {
+            "value": "Thunder Branches"
+          }
+        }
+      },
+      {
+        "entity": 34359738382,
+        "name": "Thunder Column",
+        "parent": 34359738383,
+        "sibling_index": 28,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.149999976158142,
+              1.7000000476837158,
+              1.149999976158142
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": true,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 0.8500000238418579,
+            "start_frame": 0
+          },
+          "Name": {
+            "value": "Thunder Column"
+          }
+        }
+      },
+      {
+        "entity": 34359738383,
+        "name": "Crimson Thunder Column",
+        "parent": null,
+        "sibling_index": 27,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              -3.0,
+              1.25,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.012000000104308128,
+              0.012000000104308128,
+              0.012000000104308128
+            ]
+          },
+          "Name": {
+            "value": "Crimson Thunder Column"
+          }
+        }
+      },
+      {
+        "entity": 34359738384,
+        "name": "Directional Light",
+        "parent": null,
+        "sibling_index": 26,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              2.0,
+              4.0,
+              1.0
+            ],
+            "rotation": [
+              -0.38269999623298645,
+              0.0,
+              0.0,
+              0.9239000082015991
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          "Name": {
+            "value": "Directional Light"
+          },
+          "DirectionalLight": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              1.0,
+              0.949999988079071,
+              1.0
+            ],
+            "intensity": 1.0,
+            "shadow_bias": 0.001500000013038516,
+            "shadow_distance": 30.0,
+            "shadow_normal_bias": 0.019999999552965164,
+            "shadow_strength": 1.0
+          }
+        }
+      },
+      {
+        "entity": 34359738385,
+        "name": "Main Camera",
+        "parent": null,
+        "sibling_index": 25,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Main Camera"
+          },
+          "AudioListener": {
+            "primary": true
+          },
+          "Camera3D": {
+            "aspect": 1.7777777910232544,
+            "background_color": [
+              0.014999999664723873,
+              0.019999999552965164,
+              0.03500000014901161,
+              1.0
+            ],
+            "clear_flags": "scene",
+            "far": 50.0,
+            "fov_y_degrees": 60.0,
+            "near": 0.30000001192092896,
+            "orthographic_size": 3.4000000953674316,
+            "primary": true,
+            "projection": "orthographic",
+            "target_display": 0
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.15000000596046448,
+              8.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738386,
+        "name": "Blade Contact",
+        "parent": 34359738371,
+        "sibling_index": 24,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6000000238418579
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 3,
+            "speed": 1.0,
+            "start_frame": 6
+          },
+          "Name": {
+            "value": "Blade Contact"
+          }
+        }
+      },
+      {
+        "entity": 34359738387,
+        "name": "Arcane Multi-hit",
+        "parent": null,
+        "sibling_index": 23,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "LoopMotion": {
+            "end": [
+              3.55,
+              1.45,
+              0
+            ],
+            "frequency": 0.19,
+            "phase": 0.5,
+            "start": [
+              2.45,
+              1.05,
+              0
+            ]
+          },
+          "Name": {
+            "value": "Arcane Multi-hit"
+          },
+          "Transform": {
+            "position": [
+              3.0,
+              1.25,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.012000000104308128,
+              0.012000000104308128,
+              0.012000000104308128
+            ]
+          },
+          "AnimationPlayer": {
+            "clip": "Assets/Animations/ArcaneMultiHitLoop.manim",
+            "play_on_awake": true,
+            "playing": true,
+            "speed": 1.0,
+            "time": 2.6315789222717285
+          }
+        }
+      },
+      {
+        "entity": 34359738388,
+        "name": "Arcane Body",
+        "parent": 34359738387,
+        "sibling_index": 22,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_holy01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 1.100000023841858,
+            "start_frame": 0
+          },
+          "Name": {
+            "value": "Arcane Body"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.75,
+              0.75,
+              0.75
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738389,
+        "name": "Left Arc",
+        "parent": 34359738387,
+        "sibling_index": 21,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.3199999928474426,
+              0.10000000149011612,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              -0.38268300890922546,
+              0.9238799810409546
+            ],
+            "scale": [
+              0.8500000238418579,
+              0.8500000238418579,
+              0.8500000238418579
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.350000023841858,
+            "start_frame": 2
+          },
+          "Name": {
+            "value": "Left Arc"
+          }
+        }
+      },
+      {
+        "entity": 34359738390,
+        "name": "Right Arc",
+        "parent": 34359738387,
+        "sibling_index": 20,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.350000023841858,
+            "start_frame": 7
+          },
+          "Name": {
+            "value": "Right Arc"
+          },
+          "Transform": {
+            "position": [
+              0.3199999928474426,
+              0.10000000149011612,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.38268300890922546,
+              0.9238799810409546
+            ],
+            "scale": [
+              0.8500000238418579,
+              0.8500000238418579,
+              0.8500000238418579
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738391,
+        "name": "First Contact",
+        "parent": 34359738387,
+        "sibling_index": 19,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "First Contact"
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 3,
+            "speed": 1.0,
+            "start_frame": 3
+          },
+          "Transform": {
+            "position": [
+              -0.2199999988079071,
+              0.0,
+              0.10000000149011612
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.6499999761581421,
+              0.6499999761581421,
+              0.6499999761581421
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738392,
+        "name": "Second Contact",
+        "parent": 34359738387,
+        "sibling_index": 18,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.23999999463558197,
+              0.18000000715255737,
+              0.10000000149011612
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.550000011920929,
+              0.550000011920929,
+              0.550000011920929
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 4,
+            "speed": 1.0,
+            "start_frame": 9
+          },
+          "Name": {
+            "value": "Second Contact"
+          }
+        }
+      },
+      {
+        "entity": 34359738393,
+        "name": "Inferno Impact",
+        "parent": null,
+        "sibling_index": 17,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "LoopMotion": {
+            "end": [
+              -2.45,
+              -1.2,
+              0
+            ],
+            "frequency": 0.18,
+            "phase": 0.75,
+            "start": [
+              -3.55,
+              -1.4,
+              0
+            ]
+          },
+          "AnimationPlayer": {
+            "clip": "Assets/Animations/InfernoImpactLoop.manim",
+            "play_on_awake": true,
+            "playing": true,
+            "speed": 1.0,
+            "time": 4.166666507720947
+          },
+          "Name": {
+            "value": "Inferno Impact"
+          },
+          "Transform": {
+            "position": [
+              -3.0,
+              -1.2999999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.0003000000142492354,
+              0.0003000000142492354,
+              0.0003000000142492354
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738394,
+        "name": "Fire Strike",
+        "parent": 34359738393,
+        "sibling_index": 16,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              -0.17364799976348877,
+              0.9848080277442932
+            ],
+            "scale": [
+              1.0499999523162842,
+              1.0499999523162842,
+              1.0499999523162842
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_fire03.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 1.100000023841858,
+            "start_frame": 0
+          },
+          "Name": {
+            "value": "Fire Strike"
+          }
+        }
+      },
+      {
+        "entity": 34359738395,
+        "name": "Fire Burst",
+        "parent": 34359738393,
+        "sibling_index": 15,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_fire02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.0,
+            "start_frame": 5
+          },
+          "Name": {
+            "value": "Fire Burst"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.149999976158142,
+              1.149999976158142,
+              1.149999976158142
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738396,
+        "name": "Impact Core",
+        "parent": 34359738393,
+        "sibling_index": 14,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.0,
+            "start_frame": 7
+          },
+          "Name": {
+            "value": "Impact Core"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.75,
+              0.75,
+              0.75
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738397,
+        "name": "Inferno Domain",
+        "parent": null,
+        "sibling_index": 13,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Inferno Domain"
+          },
+          "Transform": {
+            "position": [
+              -1.0,
+              -1.2999999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.0003000000142492354,
+              0.0003000000142492354,
+              0.0003000000142492354
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738398,
+        "name": "Flame Body",
+        "parent": 34359738397,
+        "sibling_index": 12,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Flame Body"
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_fire01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": true,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 0.800000011920929,
+            "start_frame": 0
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.100000023841858,
+              1.100000023841858,
+              1.100000023841858
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738399,
+        "name": "Left Flame",
+        "parent": 34359738397,
+        "sibling_index": 11,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_fire02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.0,
+            "start_frame": 5
+          },
+          "Name": {
+            "value": "Left Flame"
+          },
+          "Transform": {
+            "position": [
+              -0.44999998807907104,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.550000011920929,
+              0.550000011920929,
+              0.550000011920929
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738400,
+        "name": "Right Flame",
+        "parent": 34359738397,
+        "sibling_index": 10,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Right Flame"
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_fire02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.0,
+            "start_frame": 13
+          },
+          "Transform": {
+            "position": [
+              0.44999998807907104,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.550000011920929,
+              0.550000011920929,
+              0.550000011920929
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738401,
+        "name": "Frost Nova",
+        "parent": null,
+        "sibling_index": 9,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              1.0,
+              -1.2999999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.019999999552965164,
+              0.019999999552965164,
+              0.019999999552965164
+            ]
+          },
+          "Name": {
+            "value": "Frost Nova"
+          }
+        }
+      },
+      {
+        "entity": 34359738402,
+        "name": "Frozen Field",
+        "parent": 34359738401,
+        "sibling_index": 8,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice03.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": true,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 0.8500000238418579,
+            "start_frame": 0
+          },
+          "Name": {
+            "value": "Frozen Field"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.100000023841858,
+              1.100000023841858,
+              1.100000023841858
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738403,
+        "name": "Left Shard",
+        "parent": 34359738401,
+        "sibling_index": 7,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.3499999940395355,
+              0.05000000074505806,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.699999988079071,
+              0.699999988079071,
+              0.699999988079071
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.0,
+            "start_frame": 2
+          },
+          "Name": {
+            "value": "Left Shard"
+          }
+        }
+      },
+      {
+        "entity": 34359738404,
+        "name": "Right Shard",
+        "parent": 34359738401,
+        "sibling_index": 6,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.0,
+            "start_frame": 8
+          },
+          "Transform": {
+            "position": [
+              0.3499999940395355,
+              0.05000000074505806,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.699999988079071,
+              0.699999988079071,
+              0.699999988079071
+            ]
+          },
+          "Name": {
+            "value": "Right Shard"
+          }
+        }
+      },
+      {
+        "entity": 34359738405,
+        "name": "Nova Arc",
+        "parent": 34359738401,
+        "sibling_index": 5,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Nova Arc"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.7071070075035095,
+              0.7071070075035095
+            ],
+            "scale": [
+              0.8500000238418579,
+              0.8500000238418579,
+              0.8500000238418579
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_ice02.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 3,
+            "speed": 1.149999976158142,
+            "start_frame": 5
+          }
+        }
+      },
+      {
+        "entity": 34359738406,
+        "name": "Holy Ascension",
+        "parent": null,
+        "sibling_index": 4,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Holy Ascension"
+          },
+          "Transform": {
+            "position": [
+              3.0,
+              -1.2999999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.006000000052154064,
+              0.006000000052154064,
+              0.006000000052154064
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738407,
+        "name": "Holy Core",
+        "parent": 34359738406,
+        "sibling_index": 3,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Holy Core"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.949999988079071,
+              0.949999988079071,
+              0.949999988079071
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_holy01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": true,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 0,
+            "speed": 0.8999999761581421,
+            "start_frame": 0
+          }
+        }
+      },
+      {
+        "entity": 34359738408,
+        "name": "Left Bloom",
+        "parent": 34359738406,
+        "sibling_index": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Left Bloom"
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_holy01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 1,
+            "speed": 1.149999976158142,
+            "start_frame": 8
+          },
+          "Transform": {
+            "position": [
+              -0.3799999952316284,
+              0.15000000596046448,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              0.5
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34359738409,
+        "name": "Right Bloom",
+        "parent": 34359738406,
+        "sibling_index": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Transform": {
+            "position": [
+              0.3799999952316284,
+              0.15000000596046448,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              0.5
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_holy01.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 2,
+            "speed": 1.149999976158142,
+            "start_frame": 15
+          },
+          "Name": {
+            "value": "Right Bloom"
+          }
+        }
+      },
+      {
+        "entity": 34359738410,
+        "name": "Radiant Crown",
+        "parent": 34359738406,
+        "sibling_index": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "Name": {
+            "value": "Radiant Crown"
+          },
+          "Transform": {
+            "position": [
+              0.0,
+              0.44999998807907104,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.6499999761581421,
+              0.6499999761581421,
+              0.6499999761581421
+            ]
+          },
+          "EffekseerEffect": {
+            "auto_destroy": false,
+            "effect": "Assets/Effects/ef_lightning03.efkefc",
+            "looping": true,
+            "playing": true,
+            "prewarm": false,
+            "render_mode": "world",
+            "screen_position": [
+              0.5,
+              0.5
+            ],
+            "screen_scale": 0.11999999731779099,
+            "sorting_order": 3,
+            "speed": 1.0,
+            "start_frame": 5
+          }
+        }
+      }
+    ],
+    "frame": 18446,
+    "sim_frame": 0,
+    "clear_color": [
+      0.015,
+      0.02,
+      0.035,
+      1.0
+    ],
+    "selected": 34359738410
+  }
+}

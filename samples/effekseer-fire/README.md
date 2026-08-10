@@ -33,17 +33,27 @@ An Agent creates effects through one deterministic loop:
 4. Capture Scene/Game output, then iterate scale, offsets, speed, start frame,
    and sorting. The Agent never edits or invents the compiled `.efkefc` format.
 
-The first prompt-oriented presets cover a crimson thunder column, jade blade
-storm, arcane multi-hit, cyan UI guard arc, and compact UI hit confirmation.
-They are decomposed from the combat reference into reusable layers rather than
-one unmaintainable full-screen effect.
+The prompt-oriented presets cover ten reusable combat purposes: crimson
+thunder, chain lightning, jade blade waves, arcane multi-hit, inferno impact,
+inferno domain, frost nova, holy ascension, a cyan UI guard arc, and compact UI
+hit confirmation. They are decomposed from the combat reference into reusable
+layers rather than one unmaintainable full-screen effect.
 
 Every catalog effect and preset also exposes `renderStatus` and `limitations`.
-Agents should prefer `verified`; `experimental` keeps useful authored assets
-discoverable while clearly reporting current custom Effekseer Material
-approximation artifacts (notably wind ribbons and the secondary hit streak).
-`Assets/Scenes/AgentCombat.mscene` was generated through the Agent workflow and
-contains only the layers that passed hidden Game-view screenshot inspection.
+Agents should prefer `verified`; the wind ribbons and secondary hit streak
+remain discoverable as individual assets but are intentionally excluded from
+the verified recipes. `Assets/Scenes/AgentCombat.mscene` and
+`Assets/Scenes/CombatSeries.mscene` were generated through the Agent workflow.
+The latter arranges all eight world-space recipes in one dark showcase scene.
+
+Enter Play mode in `CombatSeries` to see chain lightning, jade blade waves,
+arcane multi-hit, and inferno impact move continuously between authored path
+endpoints. Their reusable `LoopMotion` Behaviour uses a constant-speed
+ping-pong path, so trail- and projectile-sensitive particles are evaluated
+while moving instead of being judged from a stationary frame. Edit `Start`,
+`End`, `Frequency`, and `Phase` in the Inspector to tune each preview; the
+authored Transform is restored when Play mode stops. Matching `.manim` clips in
+`Assets/Animations` drive the same paths in a packaged Player.
 
 From the repository root it can also be run with:
 
