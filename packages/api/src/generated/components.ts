@@ -474,10 +474,21 @@ export interface LayoutElement {
   ignoreLayout: boolean;
   minWidth: number;
   minHeight: number;
+  maxWidth: number;
+  maxHeight: number;
   preferredWidth: number;
   preferredHeight: number;
   flexibleWidth: number;
   flexibleHeight: number;
+  baseline: number;
+  horizontalAlign: string;
+  verticalAlign: string;
+  gridColumn: number;
+  gridRow: number;
+  gridColumnSpan: number;
+  gridRowSpan: number;
+  gridHorizontalAlign: string;
+  gridVerticalAlign: string;
 }
 
 export interface Image {
@@ -629,6 +640,11 @@ export interface LayoutGroup {
   direction: string;
   padding: [number, number, number, number];
   spacing: [number, number];
+  wrap: boolean;
+  counterSpacing: number;
+  mainAxisDistribution: string;
+  counterAxisDistribution: string;
+  counterAxisAlignment: string;
   cellSize: [number, number];
   childAlignment: string;
   childControlWidth: boolean;
@@ -639,10 +655,15 @@ export interface LayoutGroup {
   useChildScaleWidth: boolean;
   useChildScaleHeight: boolean;
   reverseArrangement: boolean;
+  reverseZOrder: boolean;
   startCorner: string;
   startAxis: string;
   constraint: string;
   constraintCount: number;
+  gridColumns: number;
+  gridRows: number;
+  gridFitWidth: boolean;
+  gridFitHeight: boolean;
 }
 
 export interface RectMask2D {
@@ -1165,10 +1186,21 @@ export type SerializedComponentMap = {
     ignore_layout: boolean;
     min_width: number;
     min_height: number;
+    max_width: number;
+    max_height: number;
     preferred_width: number;
     preferred_height: number;
     flexible_width: number;
     flexible_height: number;
+    baseline: number;
+    horizontal_align: string;
+    vertical_align: string;
+    grid_column: number;
+    grid_row: number;
+    grid_column_span: number;
+    grid_row_span: number;
+    grid_horizontal_align: string;
+    grid_vertical_align: string;
   };
   Image: {
     enabled: boolean;
@@ -1307,6 +1339,11 @@ export type SerializedComponentMap = {
     direction: string;
     padding: [number, number, number, number];
     spacing: [number, number];
+    wrap: boolean;
+    counter_spacing: number;
+    main_axis_distribution: string;
+    counter_axis_distribution: string;
+    counter_axis_alignment: string;
     cell_size: [number, number];
     child_alignment: string;
     child_control_width: boolean;
@@ -1317,10 +1354,15 @@ export type SerializedComponentMap = {
     use_child_scale_width: boolean;
     use_child_scale_height: boolean;
     reverse_arrangement: boolean;
+    reverse_z_order: boolean;
     start_corner: string;
     start_axis: string;
     constraint: string;
     constraint_count: number;
+    grid_columns: number;
+    grid_rows: number;
+    grid_fit_width: boolean;
+    grid_fit_height: boolean;
   };
   RectMask2D: {
     enabled: boolean;

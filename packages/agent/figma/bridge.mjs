@@ -1,16 +1,19 @@
+// Author: MiYu
+
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import { setTimeout as sleep } from 'node:timers/promises';
 
 const FIGMA_API_ROOT = 'https://api.figma.com/v1';
 const MAX_FIGMA_RESPONSE_BYTES = 32 * 1024 * 1024;
 const MAX_FIGMA_ASSET_BYTES = 16 * 1024 * 1024;
 const MAX_FIGMA_ASSET_TOTAL_BYTES = 64 * 1024 * 1024;
-const MAX_FIGMA_ASSETS = 64;
 const MAX_FIGMA_NODES = 1_000;
 const MAX_FIGMA_DEPTH = 64;
 const REQUEST_TIMEOUT_MS = 30_000;
+const FIGMA_PREVIEW_CACHE_DIR = path.join(os.tmpdir(), 'mengine-figma-preview');
 const COMPONENT_KINDS = new Set([
   'button',
   'toggle',
@@ -123,7 +126,7 @@ export function normalizeFigmaRequest(value, { write = false, defaults = {} } = 
     'componentMappings',
     'maxNodes',
     ...(write
-      ? ['parent', 'assetFolder', 'imageScale', 'requestId', 'expectedSceneRevision', 'screenshot']
+      ? ['parent', 'assetFolder', 'imageScale', 'requestId', 'expectedSceneRevision', 'screenshot', 'usePreviewCache']
       : []),
   ]);
   for (const key of Object.keys(value)) {
@@ -164,6 +167,9 @@ export function normalizeFigmaRequest(value, { write = false, defaults = {} } = 
   if (value.screenshot !== undefined && typeof value.screenshot !== 'boolean') {
     throw new FigmaBridgeError('INVALID_ARGS', 'screenshot must be a boolean');
   }
+  if (value.usePreviewCache !== undefined && typeof value.usePreviewCache !== 'boolean') {
+    throw new FigmaBridgeError('INVALID_ARGS', 'usePreviewCache must be a boolean');
+  }
   const imageScale = value.imageScale ?? defaults.imageScale ?? 1;
   if (![1, 2, 3, 4].includes(imageScale)) {
     throw new FigmaBridgeError('INVALID_ARGS', 'imageScale must be 1, 2, 3, or 4');
@@ -178,6 +184,7 @@ export function normalizeFigmaRequest(value, { write = false, defaults = {} } = 
       ? {}
       : { expectedSceneRevision: value.expectedSceneRevision }),
     screenshot: Boolean(value.screenshot),
+    usePreviewCache: Boolean(value.usePreviewCache),
   };
 }
 
@@ -195,6 +202,17 @@ function tokenFromEnvironment(env) {
 function combinedSignal(signal) {
   const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
+}
+
+function retryAfterText(seconds) {
+  if (seconds >= 86_400) {
+    const days = Math.floor(seconds / 86_400);
+    const hours = Math.ceil((seconds % 86_400) / 3_600);
+    return hours ? `${days}d ${hours}h` : `${days}d`;
+  }
+  if (seconds >= 3_600) return `${Math.ceil(seconds / 3_600)}h`;
+  if (seconds >= 60) return `${Math.ceil(seconds / 60)}m`;
+  return `${seconds}s`;
 }
 
 async function readBoundedResponse(response, limit, label) {
@@ -226,42 +244,73 @@ async function readBoundedResponse(response, limit, label) {
 }
 
 async function figmaJson(endpoint, { token, fetchImpl, signal }) {
-  let response;
-  try {
-    response = await fetchImpl(endpoint, {
-      headers: { 'X-Figma-Token': token },
-      signal: combinedSignal(signal),
-    });
-  } catch (error) {
-    throw new FigmaBridgeError(
-      error?.name === 'AbortError' || error?.name === 'TimeoutError'
-        ? 'FIGMA_TIMEOUT'
-        : 'FIGMA_CONNECTION',
-      `Figma request failed: ${error?.message || String(error)}`,
-    );
-  }
-  const bytes = await readBoundedResponse(response, MAX_FIGMA_RESPONSE_BYTES, 'Figma response');
-  let payload;
-  try {
-    payload = JSON.parse(Buffer.from(bytes).toString('utf8'));
-  } catch {
-    throw new FigmaBridgeError('FIGMA_RESPONSE_INVALID', 'Figma returned invalid JSON');
-  }
-  if (!response.ok) {
+  for (let attempt = 0; ; attempt += 1) {
+    let response;
+    try {
+      response = await fetchImpl(endpoint, {
+        headers: { 'X-Figma-Token': token },
+        signal: combinedSignal(signal),
+      });
+    } catch (error) {
+      throw new FigmaBridgeError(
+        error?.name === 'AbortError' || error?.name === 'TimeoutError'
+          ? 'FIGMA_TIMEOUT'
+          : 'FIGMA_CONNECTION',
+        `Figma request failed: ${error?.message || String(error)}`,
+      );
+    }
+    const bytes = await readBoundedResponse(response, MAX_FIGMA_RESPONSE_BYTES, 'Figma response');
+    let payload;
+    try {
+      payload = JSON.parse(Buffer.from(bytes).toString('utf8'));
+    } catch {
+      throw new FigmaBridgeError('FIGMA_RESPONSE_INVALID', 'Figma returned invalid JSON');
+    }
+    if (response.ok) return payload;
+    if (response.status === 429) {
+      const rawRetryAfter = Number(response.headers.get('retry-after'));
+      const retryAfterSeconds = Number.isSafeInteger(rawRetryAfter) && rawRetryAfter >= 0
+        ? rawRetryAfter
+        : null;
+      const planTier = response.headers.get('x-figma-plan-tier');
+      const rateLimitType = response.headers.get('x-figma-rate-limit-type');
+      const rawUpgradeLink = response.headers.get('x-figma-upgrade-link');
+      let upgradeLink = null;
+      try {
+        const upgrade = new URL(rawUpgradeLink);
+        if (upgrade.protocol === 'https:' && ['figma.com', 'www.figma.com'].includes(upgrade.hostname)) {
+          upgradeLink = upgrade.toString();
+        }
+      } catch { /* absent or untrusted upgrade link */ }
+      if (attempt === 0 && retryAfterSeconds !== null && retryAfterSeconds <= 10) {
+        await sleep(retryAfterSeconds * 1_000, undefined, signal ? { signal } : undefined);
+        continue;
+      }
+      const details = [
+        retryAfterSeconds === null
+          ? 'Try again later.'
+          : `Retry after ${retryAfterText(retryAfterSeconds)}.`,
+        planTier ? `Plan: ${planTier}.` : '',
+        rateLimitType ? `Rate limit: ${rateLimitType}.` : '',
+        upgradeLink ? `Upgrade: ${upgradeLink}` : '',
+      ].filter(Boolean).join(' ');
+      throw new FigmaBridgeError(
+        'RATE_LIMITED',
+        `Figma rate limit reached. ${details}`,
+        { status: 429, retryAfterSeconds, planTier, rateLimitType, upgradeLink },
+      );
+    }
     const message = typeof payload?.message === 'string'
       ? payload.message.slice(0, 512)
       : `Figma returned HTTP ${response.status}`;
     throw new FigmaBridgeError(
       response.status === 403
         ? 'FIGMA_PERMISSION_DENIED'
-        : response.status === 404
-          ? 'FIGMA_NOT_FOUND'
-          : response.status === 429 ? 'RATE_LIMITED' : 'FIGMA_API_ERROR',
+        : response.status === 404 ? 'FIGMA_NOT_FOUND' : 'FIGMA_API_ERROR',
       message,
       { status: response.status },
     );
   }
-  return payload;
 }
 
 function findNode(node, wantedId) {
@@ -305,7 +354,7 @@ function visiblePaints(paints) {
 
 function rasterizationReason(node) {
   const children = Array.isArray(node.children) ? node.children : [];
-  if (children.length > 0 || node.type === 'TEXT') return null;
+  if (children.length > 0) return null;
   const geometricTypes = new Set([
     'VECTOR',
     'BOOLEAN_OPERATION',
@@ -323,7 +372,7 @@ function rasterizationReason(node) {
   if (number(node.cornerRadius) > 0 || Array.isArray(node.rectangleCornerRadii)) {
     return 'rounded geometry';
   }
-  if (!['RECTANGLE', 'FRAME', 'GROUP', 'SECTION'].includes(node.type)) {
+  if (!['RECTANGLE', 'FRAME', 'GROUP', 'SECTION', 'TEXT'].includes(node.type)) {
     return `unsupported ${String(node.type).toLocaleLowerCase()} visual`;
   }
   return null;
@@ -339,6 +388,15 @@ function normalizeBounds(value) {
     width: Math.max(0, width),
     height: Math.max(0, height),
   };
+}
+
+function normalizeNodeBounds(node) {
+  const layoutBounds = normalizeBounds(node.absoluteBoundingBox);
+  if (layoutBounds && layoutBounds.width > 0 && layoutBounds.height > 0) return layoutBounds;
+  const renderBounds = normalizeBounds(node.absoluteRenderBounds);
+  return renderBounds && renderBounds.width > 0 && renderBounds.height > 0
+    ? renderBounds
+    : layoutBounds;
 }
 
 function normalizeTextStyle(value) {
@@ -365,10 +423,25 @@ function normalizeLayout(node) {
   const mode = ['NONE', 'HORIZONTAL', 'VERTICAL', 'GRID'].includes(node.layoutMode)
     ? node.layoutMode
     : 'NONE';
+  const explicitHorizontal = ['FIXED', 'HUG', 'FILL'].includes(node.layoutSizingHorizontal)
+    ? node.layoutSizingHorizontal
+    : undefined;
+  const explicitVertical = ['FIXED', 'HUG', 'FILL'].includes(node.layoutSizingVertical)
+    ? node.layoutSizingVertical
+    : undefined;
+  const legacySizing = (axis) => {
+    if (!['HORIZONTAL', 'VERTICAL'].includes(mode)) return undefined;
+    const primary = mode === axis;
+    const value = primary ? node.primaryAxisSizingMode : node.counterAxisSizingMode;
+    return value === 'AUTO' ? 'HUG' : value === 'FIXED' ? 'FIXED' : undefined;
+  };
   return {
     mode,
     wrap: node.layoutWrap === 'WRAP' ? 'WRAP' : 'NO_WRAP',
     itemSpacing: number(node.itemSpacing),
+    ...(Number.isFinite(node.counterAxisSpacing)
+      ? { counterAxisSpacing: number(node.counterAxisSpacing) }
+      : {}),
     paddingLeft: Math.max(0, number(node.paddingLeft)),
     paddingRight: Math.max(0, number(node.paddingRight)),
     paddingTop: Math.max(0, number(node.paddingTop)),
@@ -379,11 +452,56 @@ function normalizeLayout(node) {
     ...(['MIN', 'CENTER', 'MAX', 'BASELINE'].includes(node.counterAxisAlignItems)
       ? { counterAlign: node.counterAxisAlignItems }
       : {}),
-    ...(['FIXED', 'HUG', 'FILL'].includes(node.layoutSizingHorizontal)
-      ? { sizingHorizontal: node.layoutSizingHorizontal }
+    ...(['AUTO', 'SPACE_BETWEEN'].includes(node.counterAxisAlignContent)
+      ? { counterAlignContent: node.counterAxisAlignContent }
       : {}),
-    ...(['FIXED', 'HUG', 'FILL'].includes(node.layoutSizingVertical)
-      ? { sizingVertical: node.layoutSizingVertical }
+    ...((explicitHorizontal ?? legacySizing('HORIZONTAL'))
+      ? { sizingHorizontal: explicitHorizontal ?? legacySizing('HORIZONTAL') }
+      : {}),
+    ...((explicitVertical ?? legacySizing('VERTICAL'))
+      ? { sizingVertical: explicitVertical ?? legacySizing('VERTICAL') }
+      : {}),
+    ...(['AUTO', 'ABSOLUTE'].includes(node.layoutPositioning)
+      ? { positioning: node.layoutPositioning }
+      : {}),
+    ...(Number.isFinite(node.layoutGrow) ? { grow: Math.max(0, number(node.layoutGrow)) } : {}),
+    ...(['INHERIT', 'MIN', 'CENTER', 'MAX', 'STRETCH'].includes(node.layoutAlign)
+      ? { align: node.layoutAlign }
+      : {}),
+    ...(Number.isFinite(node.minWidth) ? { minWidth: Math.max(0, number(node.minWidth)) } : {}),
+    ...(Number.isFinite(node.maxWidth) ? { maxWidth: Math.max(0, number(node.maxWidth)) } : {}),
+    ...(Number.isFinite(node.minHeight) ? { minHeight: Math.max(0, number(node.minHeight)) } : {}),
+    ...(Number.isFinite(node.maxHeight) ? { maxHeight: Math.max(0, number(node.maxHeight)) } : {}),
+    itemReverseZIndex: node.itemReverseZIndex === true,
+    strokesIncluded: node.strokesIncludedInLayout === true,
+    ...(Number.isFinite(node.gridRowCount)
+      ? { gridRowCount: Math.max(0, Math.trunc(number(node.gridRowCount))) }
+      : {}),
+    ...(Number.isFinite(node.gridColumnCount)
+      ? { gridColumnCount: Math.max(0, Math.trunc(number(node.gridColumnCount))) }
+      : {}),
+    ...(Number.isFinite(node.gridRowGap) ? { gridRowGap: number(node.gridRowGap) } : {}),
+    ...(Number.isFinite(node.gridColumnGap) ? { gridColumnGap: number(node.gridColumnGap) } : {}),
+    ...(['MANUAL', 'ROW_AUTO_FLOW'].includes(node.gridItemsPositioning)
+      ? { gridItemsPositioning: node.gridItemsPositioning }
+      : {}),
+    ...(['AUTO', 'MIN', 'CENTER', 'MAX'].includes(node.gridChildHorizontalAlign)
+      ? { gridChildHorizontalAlign: node.gridChildHorizontalAlign }
+      : {}),
+    ...(['AUTO', 'MIN', 'CENTER', 'MAX'].includes(node.gridChildVerticalAlign)
+      ? { gridChildVerticalAlign: node.gridChildVerticalAlign }
+      : {}),
+    ...(Number.isFinite(node.gridRowSpan)
+      ? { gridRowSpan: Math.max(1, Math.trunc(number(node.gridRowSpan, 1))) }
+      : {}),
+    ...(Number.isFinite(node.gridColumnSpan)
+      ? { gridColumnSpan: Math.max(1, Math.trunc(number(node.gridColumnSpan, 1))) }
+      : {}),
+    ...(Number.isFinite(node.gridColumnAnchorIndex)
+      ? { gridColumn: Math.max(0, Math.trunc(number(node.gridColumnAnchorIndex))) }
+      : {}),
+    ...(Number.isFinite(node.gridRowAnchorIndex)
+      ? { gridRow: Math.max(0, Math.trunc(number(node.gridRowAnchorIndex))) }
       : {}),
   };
 }
@@ -403,6 +521,7 @@ function normalizeConstraints(value) {
 function normalizeNode(node, parentId) {
   const opacity = Math.min(1, Math.max(0, number(node.opacity, 1)));
   const reason = rasterizationReason(node);
+  const bounds = normalizeNodeBounds(node);
   return {
     id: String(node.id),
     parentId,
@@ -413,7 +532,7 @@ function normalizeNode(node, parentId) {
     opacity,
     rotation: number(node.rotation),
     clipsContent: node.clipsContent === true,
-    ...(normalizeBounds(node.absoluteBoundingBox) ? { bounds: normalizeBounds(node.absoluteBoundingBox) } : {}),
+    ...(bounds ? { bounds } : {}),
     ...(firstSolid(node.fills, 1) ? { fillColor: firstSolid(node.fills, 1) } : {}),
     ...(firstSolid(node.strokes, 1) ? { strokeColor: firstSolid(node.strokes, 1) } : {}),
     strokeWeight: Math.max(0, number(node.strokeWeight)),
@@ -428,7 +547,7 @@ function normalizeNode(node, parentId) {
 }
 
 export function normalizeFigmaSelection(payload, fileKey, nodeId, maxNodes = MAX_FIGMA_NODES) {
-  const root = findNode(payload?.document, nodeId);
+  const root = payload?.nodes?.[nodeId]?.document ?? findNode(payload?.document, nodeId);
   if (!root) {
     throw new FigmaBridgeError('FIGMA_NODE_NOT_FOUND', `Figma node ${nodeId} is not in the file response`);
   }
@@ -470,10 +589,63 @@ export async function loadFigmaSource(
   } = {},
 ) {
   const token = tokenFromEnvironment(env);
-  const endpoint = new URL(`${FIGMA_API_ROOT}/files/${encodeURIComponent(request.fileKey)}`);
+  const endpoint = new URL(`${FIGMA_API_ROOT}/files/${encodeURIComponent(request.fileKey)}/nodes`);
   endpoint.searchParams.set('ids', request.nodeId);
+  endpoint.searchParams.set('plugin_data', 'shared');
   const payload = await figmaJson(endpoint, { token, fetchImpl, signal });
   return normalizeFigmaSelection(payload, request.fileKey, request.nodeId, request.maxNodes);
+}
+
+function previewCachePath(request, token, cacheDir) {
+  const signature = JSON.stringify([
+    request.fileKey,
+    request.nodeId,
+    request.maxNodes,
+  ]);
+  const digest = createHash('sha256')
+    .update(token)
+    .update('\0')
+    .update(signature)
+    .digest('hex');
+  return path.join(cacheDir, `${digest}.json`);
+}
+
+function resolvedPreviewCacheDir(fetchImpl, override) {
+  if (override !== undefined) return override;
+  return fetchImpl === globalThis.fetch ? FIGMA_PREVIEW_CACHE_DIR : null;
+}
+
+function writePreviewSource(request, token, source, cacheDir) {
+  if (!cacheDir) return;
+  fs.mkdirSync(cacheDir, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(
+    previewCachePath(request, token, cacheDir),
+    JSON.stringify(source),
+    { mode: 0o600 },
+  );
+}
+
+function readPreviewSource(request, token, cacheDir) {
+  if (!cacheDir) return null;
+  const cachePath = previewCachePath(request, token, cacheDir);
+  try {
+    const bytes = fs.readFileSync(cachePath);
+    if (bytes.byteLength > MAX_FIGMA_RESPONSE_BYTES) return null;
+    const source = JSON.parse(bytes.toString('utf8'));
+    return plainObject(source)
+      && source.fileKey === request.fileKey
+      && source.rootId === request.nodeId
+      && Array.isArray(source.nodes)
+      ? source
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function removePreviewSource(request, token, cacheDir) {
+  if (!cacheDir) return;
+  try { fs.unlinkSync(previewCachePath(request, token, cacheDir)); } catch { /* absent */ }
 }
 
 function planArgs(source, request, assetPaths) {
@@ -492,13 +664,20 @@ export async function previewFigmaUi(
     env = process.env,
     fetchImpl = globalThis.fetch,
     signal,
+    previewCacheDir,
   },
 ) {
-  tokenFromEnvironment(env);
+  const token = tokenFromEnvironment(env);
   const defaults = await query('figma.settings', {}, { signal });
   const request = normalizeFigmaRequest(rawRequest, { defaults });
   const source = await loadFigmaSource(request, { env, fetchImpl, signal });
   const plan = await query('figma.import_plan', planArgs(source, request), { signal });
+  writePreviewSource(
+    request,
+    token,
+    source,
+    resolvedPreviewCacheDir(fetchImpl, previewCacheDir),
+  );
   return {
     figma: {
       fileName: source.fileName,
@@ -516,12 +695,6 @@ export async function previewFigmaUi(
 }
 
 async function exportedImageUrls(request, assets, { env, fetchImpl, signal }) {
-  if (assets.length > MAX_FIGMA_ASSETS) {
-    throw new FigmaBridgeError(
-      'FIGMA_ASSET_LIMIT',
-      `The import requires ${assets.length} raster assets; the limit is ${MAX_FIGMA_ASSETS}`,
-    );
-  }
   const token = tokenFromEnvironment(env);
   const urls = {};
   for (let offset = 0; offset < assets.length; offset += 50) {
@@ -613,15 +786,21 @@ async function importRasterAssets(request, source, plan, operations) {
   const { query, execute, env, fetchImpl, signal } = operations;
   const assetPaths = {};
   if (plan.assets.length === 0) return assetPaths;
-  const urls = await exportedImageUrls(request, plan.assets, { env, fetchImpl, signal });
-  let totalBytes = 0;
+  const missing = [];
   for (const asset of plan.assets) {
     const destination = destinationPath(request, source, asset);
     const existing = await existingAsset(destination, query, signal);
-    if (existing) {
-      assetPaths[asset.nodeId] = existing;
-      continue;
-    }
+    if (existing) assetPaths[asset.nodeId] = existing;
+    else missing.push({ asset, destination });
+  }
+  if (missing.length === 0) return assetPaths;
+  const urls = await exportedImageUrls(
+    request,
+    missing.map(({ asset }) => asset),
+    { env, fetchImpl, signal },
+  );
+  let totalBytes = 0;
+  for (const { asset, destination } of missing) {
     const bytes = await downloadPng(urls[asset.nodeId], { fetchImpl, signal });
     totalBytes += bytes.byteLength;
     if (totalBytes > MAX_FIGMA_ASSET_TOTAL_BYTES) {
@@ -658,12 +837,22 @@ export async function importFigmaUi(
     env = process.env,
     fetchImpl = globalThis.fetch,
     signal,
+    previewCacheDir,
   },
 ) {
-  tokenFromEnvironment(env);
+  const token = tokenFromEnvironment(env);
   const defaults = await query('figma.settings', {}, { signal });
   const request = normalizeFigmaRequest(rawRequest, { write: true, defaults });
-  const source = await loadFigmaSource(request, { env, fetchImpl, signal });
+  const cacheDir = resolvedPreviewCacheDir(fetchImpl, previewCacheDir);
+  const source = request.usePreviewCache
+    ? readPreviewSource(request, token, cacheDir)
+    : await loadFigmaSource(request, { env, fetchImpl, signal });
+  if (!source) {
+    throw new FigmaBridgeError(
+      'FIGMA_PREVIEW_EXPIRED',
+      'The Figma preview snapshot is unavailable; preview this frame again before importing',
+    );
+  }
   const plan = await query('figma.import_plan', planArgs(source, request), { signal });
   if (!plan?.readyToImport) {
     throw new FigmaBridgeError(
@@ -690,6 +879,7 @@ export async function importFigmaUi(
     screenshot: request.screenshot,
     signal,
   });
+  if (request.usePreviewCache) removePreviewSource(request, token, cacheDir);
   return {
     figma: {
       fileName: source.fileName,

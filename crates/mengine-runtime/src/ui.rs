@@ -1,3 +1,5 @@
+// Author: MiYu
+
 use crate::sorting::{SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use crate::ui_raycast::{ray_plane, BlockingObjects, WorldRay};
 use glam::{Mat4, Quat, Vec3};
@@ -1985,7 +1987,12 @@ fn walk(
             rect_transform.pivot,
             horizontal_fit,
             "Unconstrained",
-            measure_layout_content(layout, &layout_metrics, scale),
+            measure_layout_content(
+                layout,
+                &layout_metrics,
+                scale,
+                Some([rect.width, rect.height]),
+            ),
         );
         let layout_metrics = layout_children_metrics_for_rect(
             world,
@@ -2000,7 +2007,12 @@ fn walk(
             rect_transform.pivot,
             "Unconstrained",
             vertical_fit,
-            measure_layout_content(layout, &layout_metrics, scale),
+            measure_layout_content(
+                layout,
+                &layout_metrics,
+                scale,
+                Some([rect.width, rect.height]),
+            ),
         );
     }
     if let Some(fitter) = world.get_component::<AspectRatioFitter>(entity) {
@@ -3305,6 +3317,9 @@ fn walk(
             [group.child_control_width, group.child_control_height]
         }
     });
+    if layout.is_some_and(|group| group.reverse_z_order) {
+        children.reverse();
+    }
     for child in children {
         let forced = layout_children
             .iter()
@@ -3365,10 +3380,21 @@ struct LayoutChildMetrics {
     height: f32,
     min_width: Option<f32>,
     min_height: Option<f32>,
+    max_width: Option<f32>,
+    max_height: Option<f32>,
     preferred_width: Option<f32>,
     preferred_height: Option<f32>,
     flexible_width: Option<f32>,
     flexible_height: Option<f32>,
+    baseline: Option<f32>,
+    horizontal_align: u8,
+    vertical_align: u8,
+    grid_column: Option<usize>,
+    grid_row: Option<usize>,
+    grid_column_span: usize,
+    grid_row_span: usize,
+    grid_horizontal_align: u8,
+    grid_vertical_align: u8,
     scale_width: f32,
     scale_height: f32,
 }
@@ -3498,6 +3524,13 @@ fn layout_child_metrics(
         .map(|size| size[1])
         .reduce(f32::max);
     let optional = |value: f32| (value.is_finite() && value >= 0.0).then_some(value);
+    let grid_align = |value: &str| match value {
+        "Min" => 1,
+        "Center" => 2,
+        "Max" => 3,
+        "Stretch" => 4,
+        _ => 0,
+    };
     LayoutChildMetrics {
         width: rect.size_delta[0].max(0.0),
         height: rect.size_delta[1].max(0.0),
@@ -3507,6 +3540,8 @@ fn layout_child_metrics(
         min_height: element
             .and_then(|value| optional(value.min_height))
             .or(nested_content.map(|content| content.min_height)),
+        max_width: element.and_then(|value| optional(value.max_width)),
+        max_height: element.and_then(|value| optional(value.max_height)),
         preferred_width: element
             .and_then(|value| optional(value.preferred_width))
             .or(nested_content.map(|content| content.preferred_width))
@@ -3521,6 +3556,29 @@ fn layout_child_metrics(
         flexible_height: element
             .and_then(|value| optional(value.flexible_height))
             .or(nested_content.map(|content| content.flexible_height)),
+        baseline: element.and_then(|value| optional(value.baseline)),
+        horizontal_align: element
+            .map(|value| grid_align(&value.horizontal_align))
+            .unwrap_or(0),
+        vertical_align: element
+            .map(|value| grid_align(&value.vertical_align))
+            .unwrap_or(0),
+        grid_column: element
+            .and_then(|value| (value.grid_column >= 0).then_some(value.grid_column as usize)),
+        grid_row: element
+            .and_then(|value| (value.grid_row >= 0).then_some(value.grid_row as usize)),
+        grid_column_span: element
+            .map(|value| value.grid_column_span.max(1) as usize)
+            .unwrap_or(1),
+        grid_row_span: element
+            .map(|value| value.grid_row_span.max(1) as usize)
+            .unwrap_or(1),
+        grid_horizontal_align: element
+            .map(|value| grid_align(&value.grid_horizontal_align))
+            .unwrap_or(0),
+        grid_vertical_align: element
+            .map(|value| grid_align(&value.grid_vertical_align))
+            .unwrap_or(0),
         scale_width: rect.local_scale[0].abs(),
         scale_height: rect.local_scale[1].abs(),
     }
@@ -3537,7 +3595,7 @@ fn child_axis_sizes(
     child: LayoutChildMetrics,
     axis: usize,
     scale: f32,
-) -> (f32, f32, f32) {
+) -> (f32, f32, f32, f32) {
     let control = if axis == 0 {
         group.child_control_width
     } else {
@@ -3569,6 +3627,11 @@ fn child_axis_sizes(
     } else {
         child.flexible_height
     };
+    let raw_max = if axis == 0 {
+        child.max_width
+    } else {
+        child.max_height
+    };
     let child_scale = if use_scale {
         layout_finite_non_negative(
             Some(if axis == 0 {
@@ -3586,19 +3649,44 @@ fn child_axis_sizes(
     } else {
         layout_finite_non_negative(Some(authored), 0.0)
     };
+    let scaled_min = min * scale * child_scale;
+    let max = if control {
+        raw_max
+            .filter(|value| value.is_finite() && *value >= 0.0)
+            .map(|value| (value * scale * child_scale).max(scaled_min))
+            .unwrap_or(f32::INFINITY)
+    } else {
+        f32::INFINITY
+    };
     let preferred = if control {
         min.max(layout_finite_non_negative(raw_preferred, fallback))
     } else {
         min
     };
     (
-        min * scale * child_scale,
-        preferred * scale * child_scale,
+        scaled_min,
+        (preferred * scale * child_scale).min(max),
         layout_finite_non_negative(raw_flexible, 0.0),
+        max,
     )
 }
 
 fn preferred_grid_dimensions(group: &LayoutGroup, count: usize) -> (usize, usize) {
+    let authored_columns = group.grid_columns.max(0) as usize;
+    let authored_rows = group.grid_rows.max(0) as usize;
+    if authored_columns > 0 || authored_rows > 0 {
+        let columns = if authored_columns > 0 {
+            authored_columns
+        } else {
+            count.div_ceil(authored_rows.max(1)).max(1)
+        };
+        let rows = if authored_rows > 0 {
+            authored_rows
+        } else {
+            count.div_ceil(columns.max(1)).max(1)
+        };
+        return (columns, rows);
+    }
     let constraint_count = group.constraint_count.max(1) as usize;
     match group.constraint.as_str() {
         "FixedRowCount" => {
@@ -3618,7 +3706,7 @@ fn preferred_grid_dimensions(group: &LayoutGroup, count: usize) -> (usize, usize
 
 fn combined_layout_flexible(
     group: &LayoutGroup,
-    sizes: &[(f32, f32, f32)],
+    sizes: &[(f32, f32, f32, f32)],
     axis: usize,
     main_axis: bool,
 ) -> f32 {
@@ -3665,6 +3753,7 @@ fn measure_layout_content(
     group: &LayoutGroup,
     children: &[LayoutChildMetrics],
     scale: f32,
+    available: Option<[f32; 2]>,
 ) -> ContentSize {
     let count = children.len();
     let left = (group.padding[0] * scale).max(0.0);
@@ -3673,8 +3762,8 @@ fn measure_layout_content(
     let bottom = (group.padding[3] * scale).max(0.0);
     let cell_width = (group.cell_size[0] * scale).max(0.0);
     let cell_height = (group.cell_size[1] * scale).max(0.0);
-    let spacing_x = (group.spacing[0] * scale).max(0.0);
-    let spacing_y = (group.spacing[1] * scale).max(0.0);
+    let spacing_x = group.spacing[0] * scale;
+    let spacing_y = group.spacing[1] * scale;
     let min_width = left + right;
     let min_height = top + bottom;
     if count == 0 {
@@ -3686,6 +3775,104 @@ fn measure_layout_content(
             flexible_width: 0.0,
             flexible_height: 0.0,
         };
+    }
+    if group.wrap && group.direction != "Grid" {
+        if let Some(available) = available {
+            let horizontal = group.direction == "Horizontal";
+            let main_axis = if horizontal { 0 } else { 1 };
+            let cross_axis = if horizontal { 1 } else { 0 };
+            let padding_main = if horizontal {
+                left + right
+            } else {
+                top + bottom
+            };
+            let main_available = (available[main_axis] - padding_main).max(0.0);
+            let main_spacing = if horizontal { spacing_x } else { spacing_y };
+            let counter_spacing =
+                if group.counter_spacing.is_finite() && group.counter_spacing >= 0.0 {
+                    group.counter_spacing * scale
+                } else if horizontal {
+                    spacing_y
+                } else {
+                    spacing_x
+                };
+            let mut tracks: Vec<Vec<LayoutChildMetrics>> = vec![Vec::new()];
+            let mut used = 0.0;
+            for child in children.iter().copied() {
+                let preferred = child_axis_sizes(group, child, main_axis, scale).1;
+                let track = tracks.last_mut().expect("layout track exists");
+                let next = if track.is_empty() {
+                    preferred
+                } else {
+                    used + main_spacing + preferred
+                };
+                if !track.is_empty() && next > main_available + 0.0001 {
+                    tracks.push(vec![child]);
+                    used = preferred;
+                } else {
+                    track.push(child);
+                    used = next;
+                }
+            }
+            let preferred_main = tracks
+                .iter()
+                .map(|track| {
+                    track
+                        .iter()
+                        .enumerate()
+                        .map(|(index, child)| {
+                            child_axis_sizes(group, *child, main_axis, scale).1
+                                + if index == 0 { 0.0 } else { main_spacing }
+                        })
+                        .sum::<f32>()
+                })
+                .fold(0.0, f32::max);
+            let preferred_cross = tracks
+                .iter()
+                .map(|track| {
+                    track
+                        .iter()
+                        .map(|child| child_axis_sizes(group, *child, cross_axis, scale).1)
+                        .fold(0.0, f32::max)
+                })
+                .sum::<f32>()
+                + counter_spacing * tracks.len().saturating_sub(1) as f32;
+            let min_main = children
+                .iter()
+                .map(|child| child_axis_sizes(group, *child, main_axis, scale).0)
+                .fold(0.0, f32::max);
+            let min_cross = children
+                .iter()
+                .map(|child| child_axis_sizes(group, *child, cross_axis, scale).0)
+                .fold(0.0, f32::max);
+            let widths: Vec<_> = children
+                .iter()
+                .map(|child| child_axis_sizes(group, *child, 0, scale))
+                .collect();
+            let heights: Vec<_> = children
+                .iter()
+                .map(|child| child_axis_sizes(group, *child, 1, scale))
+                .collect();
+            return if horizontal {
+                ContentSize {
+                    min_width: min_width + min_main,
+                    min_height: min_height + min_cross,
+                    preferred_width: min_width + preferred_main,
+                    preferred_height: min_height + preferred_cross,
+                    flexible_width: combined_layout_flexible(group, &widths, 0, true),
+                    flexible_height: combined_layout_flexible(group, &heights, 1, false),
+                }
+            } else {
+                ContentSize {
+                    min_width: min_width + min_cross,
+                    min_height: min_height + min_main,
+                    preferred_width: min_width + preferred_cross,
+                    preferred_height: min_height + preferred_main,
+                    flexible_width: combined_layout_flexible(group, &widths, 0, false),
+                    flexible_height: combined_layout_flexible(group, &heights, 1, true),
+                }
+            };
+        }
     }
     let (
         measured_min_width,
@@ -4012,7 +4199,7 @@ fn alignment_factors(alignment: &str) -> (f32, f32) {
 fn layout_axis_sizes(
     available: f32,
     spacing: f32,
-    sizes: &[(f32, f32, f32)],
+    sizes: &[(f32, f32, f32, f32)],
     force_expand: bool,
 ) -> Vec<f32> {
     if sizes.is_empty() {
@@ -4046,20 +4233,27 @@ fn layout_axis_sizes(
             }
         })
         .collect();
-    let total_flexible: f32 = flexible.iter().sum();
-    let surplus = usable - total_preferred;
-    sizes
-        .iter()
-        .enumerate()
-        .map(|(index, value)| {
-            value.1
-                + if total_flexible > 0.0 {
-                    surplus * flexible[index] / total_flexible
-                } else {
-                    0.0
-                }
-        })
-        .collect()
+    let mut result: Vec<f32> = sizes.iter().map(|value| value.1).collect();
+    let mut remaining = usable - total_preferred;
+    let mut active: Vec<usize> = (0..sizes.len())
+        .filter(|index| flexible[*index] > 0.0 && result[*index] < sizes[*index].3)
+        .collect();
+    while remaining > 0.0001 && !active.is_empty() {
+        let total_flexible: f32 = active.iter().map(|index| flexible[*index]).sum();
+        let mut consumed = 0.0;
+        for index in active.iter().copied() {
+            let room = sizes[index].3 - result[index];
+            let addition = room.min(remaining * flexible[index] / total_flexible);
+            result[index] += addition;
+            consumed += addition;
+        }
+        if consumed <= 0.0001 {
+            break;
+        }
+        remaining -= consumed;
+        active.retain(|index| result[*index] + 0.0001 < sizes[*index].3);
+    }
+    result
 }
 
 fn grid_dimensions(
@@ -4071,6 +4265,21 @@ fn grid_dimensions(
     spacing_x: f32,
     spacing_y: f32,
 ) -> (usize, usize) {
+    let authored_columns = group.grid_columns.max(0) as usize;
+    let authored_rows = group.grid_rows.max(0) as usize;
+    if authored_columns > 0 || authored_rows > 0 {
+        let columns = if authored_columns > 0 {
+            authored_columns
+        } else {
+            count.div_ceil(authored_rows.max(1)).max(1)
+        };
+        let rows = if authored_rows > 0 {
+            authored_rows
+        } else {
+            count.div_ceil(columns.max(1)).max(1)
+        };
+        return (columns, rows);
+    }
     let constraint_count = group.constraint_count.max(1) as usize;
     match group.constraint.as_str() {
         "FixedRowCount" => {
@@ -4118,17 +4327,35 @@ fn layout_child_rects(
     let spacing_y = group.spacing[1] * scale;
     let (align_x, align_y) = alignment_factors(&group.child_alignment);
     if group.direction == "Grid" {
-        let cell_width = (group.cell_size[0] * scale).max(0.0);
-        let cell_height = (group.cell_size[1] * scale).max(0.0);
-        let (columns, rows) = grid_dimensions(
+        let (mut columns, mut rows) = grid_dimensions(
             content,
             group,
             children.len(),
-            cell_width,
-            cell_height,
+            (group.cell_size[0] * scale).max(0.0),
+            (group.cell_size[1] * scale).max(0.0),
             spacing_x,
             spacing_y,
         );
+        for child in children {
+            if let Some(column) = child.grid_column {
+                columns = columns.max(column + child.grid_column_span.max(1));
+            }
+            if let Some(row) = child.grid_row {
+                rows = rows.max(row + child.grid_row_span.max(1));
+            }
+        }
+        let cell_width = if group.grid_fit_width {
+            ((content.width - spacing_x * columns.saturating_sub(1) as f32) / columns.max(1) as f32)
+                .max(0.0)
+        } else {
+            (group.cell_size[0] * scale).max(0.0)
+        };
+        let cell_height = if group.grid_fit_height {
+            ((content.height - spacing_y * rows.saturating_sub(1) as f32) / rows.max(1) as f32)
+                .max(0.0)
+        } else {
+            (group.cell_size[1] * scale).max(0.0)
+        };
         let grid_width = cell_width * columns as f32 + spacing_x * columns.saturating_sub(1) as f32;
         let grid_height = cell_height * rows as f32 + spacing_y * rows.saturating_sub(1) as f32;
         let origin_x = content.x + (content.width - grid_width) * align_x;
@@ -4138,27 +4365,68 @@ fn layout_child_rects(
         let bottom_to_top = group.start_corner.starts_with("Lower");
         return (0..children.len())
             .map(|index| {
-                let mut column = if horizontal {
-                    index % columns
-                } else {
-                    index / rows
-                };
-                let mut row = if horizontal {
-                    index / columns
-                } else {
-                    index % rows
-                };
-                if right_to_left {
-                    column = columns - 1 - column;
+                let child = children[index];
+                let explicit_column = child.grid_column.is_some();
+                let explicit_row = child.grid_row.is_some();
+                let mut column = child.grid_column.unwrap_or_else(|| {
+                    if horizontal {
+                        index % columns
+                    } else {
+                        index / rows
+                    }
+                });
+                let mut row = child.grid_row.unwrap_or_else(|| {
+                    if horizontal {
+                        index / columns
+                    } else {
+                        index % rows
+                    }
+                });
+                let column_span = child.grid_column_span.max(1).min(columns - column);
+                let row_span = child.grid_row_span.max(1).min(rows - row);
+                if !explicit_column && right_to_left {
+                    column = columns - column - column_span;
                 }
-                if bottom_to_top {
-                    row = rows - 1 - row;
+                if !explicit_row && bottom_to_top {
+                    row = rows - row - row_span;
                 }
-                UiRect {
+                let area = UiRect {
                     x: origin_x + column as f32 * (cell_width + spacing_x),
                     y: origin_y + row as f32 * (cell_height + spacing_y),
-                    width: cell_width,
-                    height: cell_height,
+                    width: cell_width * column_span as f32
+                        + spacing_x * column_span.saturating_sub(1) as f32,
+                    height: cell_height * row_span as f32
+                        + spacing_y * row_span.saturating_sub(1) as f32,
+                };
+                let width = child_axis_sizes(group, child, 0, scale);
+                let height = child_axis_sizes(group, child, 1, scale);
+                let resolved_width = if child.grid_horizontal_align == 4 || width.2 > 0.0 {
+                    area.width.min(width.3)
+                } else {
+                    area.width.min(width.1)
+                };
+                let resolved_height = if child.grid_vertical_align == 4 || height.2 > 0.0 {
+                    area.height.min(height.3)
+                } else {
+                    area.height.min(height.1)
+                };
+                let child_align_x = match child.grid_horizontal_align {
+                    2 => 0.5,
+                    3 => 1.0,
+                    0 => align_x,
+                    _ => 0.0,
+                };
+                let child_align_y = match child.grid_vertical_align {
+                    2 => 0.5,
+                    3 => 1.0,
+                    0 => align_y,
+                    _ => 0.0,
+                };
+                UiRect {
+                    x: area.x + (area.width - resolved_width) * child_align_x,
+                    y: area.y + (area.height - resolved_height) * child_align_y,
+                    width: resolved_width,
+                    height: resolved_height,
                 }
             })
             .collect();
@@ -4173,10 +4441,6 @@ fn layout_child_rects(
     } else {
         content.height
     };
-    let main_metrics: Vec<_> = children
-        .iter()
-        .map(|child| child_axis_sizes(group, *child, main_axis, scale))
-        .collect();
     let control_main = if horizontal {
         group.child_control_width
     } else {
@@ -4189,61 +4453,176 @@ fn layout_child_rects(
         } else {
             group.child_force_expand_height
         };
-    let main_sizes = layout_axis_sizes(main_available, main_spacing, &main_metrics, expand_main);
-    let used_main: f32 =
-        main_sizes.iter().sum::<f32>() + main_spacing * children.len().saturating_sub(1) as f32;
     let main_alignment = if horizontal { align_x } else { align_y };
-    let mut cursor = if horizontal { content.x } else { content.y }
-        + (main_available - used_main) * main_alignment;
     let mut result = vec![content; children.len()];
     let mut order: Vec<usize> = (0..children.len()).collect();
     if group.reverse_arrangement {
         order.reverse();
     }
+    let mut tracks: Vec<Vec<usize>> = vec![Vec::new()];
+    let mut track_preferred = 0.0;
     for child_index in order {
-        let main_size = main_sizes[child_index];
-        let cross_metric = child_axis_sizes(group, children[child_index], cross_axis, scale);
-        let control_cross = if horizontal {
-            group.child_control_height
+        let preferred = child_axis_sizes(group, children[child_index], main_axis, scale).1;
+        let track = tracks.last_mut().expect("layout track exists");
+        let next = if track.is_empty() {
+            preferred
         } else {
-            group.child_control_width
+            track_preferred + main_spacing + preferred
         };
-        let expand_cross = group.child_force_expand
-            && control_cross
-            && if horizontal {
-                group.child_force_expand_height
+        if group.wrap && !track.is_empty() && next > main_available + 0.0001 {
+            tracks.push(vec![child_index]);
+            track_preferred = preferred;
+        } else {
+            track.push(child_index);
+            track_preferred = next;
+        }
+    }
+    let cross_available = if horizontal {
+        content.height
+    } else {
+        content.width
+    };
+    let baseline_alignment = group.counter_axis_alignment == "Baseline" && horizontal;
+    let baseline = |child: LayoutChildMetrics, preferred: f32| {
+        child
+            .baseline
+            .filter(|value| value.is_finite() && *value >= 0.0)
+            .map(|value| value * scale)
+            .unwrap_or(preferred * 0.8)
+            .min(preferred)
+    };
+    let track_cross_sizes: Vec<f32> = tracks
+        .iter()
+        .map(|track| {
+            if !group.wrap {
+                return cross_available;
+            }
+            if baseline_alignment {
+                let ascent = track
+                    .iter()
+                    .map(|index| {
+                        let metric = child_axis_sizes(group, children[*index], cross_axis, scale);
+                        baseline(children[*index], metric.1)
+                    })
+                    .fold(0.0, f32::max);
+                let descent = track
+                    .iter()
+                    .map(|index| {
+                        let metric = child_axis_sizes(group, children[*index], cross_axis, scale);
+                        metric.1 - baseline(children[*index], metric.1)
+                    })
+                    .fold(0.0, f32::max);
+                return (ascent + descent).min(cross_available);
+            }
+            track
+                .iter()
+                .map(|index| child_axis_sizes(group, children[*index], cross_axis, scale).1)
+                .fold(0.0, f32::max)
+                .min(cross_available)
+        })
+        .collect();
+    let mut counter_spacing = if group.counter_spacing.is_finite() && group.counter_spacing >= 0.0 {
+        group.counter_spacing * scale
+    } else if horizontal {
+        spacing_y
+    } else {
+        spacing_x
+    };
+    let used_cross = track_cross_sizes.iter().sum::<f32>()
+        + counter_spacing * tracks.len().saturating_sub(1) as f32;
+    if group.counter_axis_distribution == "SpaceBetween"
+        && tracks.len() > 1
+        && used_cross < cross_available
+    {
+        counter_spacing += (cross_available - used_cross) / tracks.len().saturating_sub(1) as f32;
+    }
+    let mut track_cursor = if horizontal { content.y } else { content.x };
+    for (track_index, track) in tracks.iter().enumerate() {
+        let metrics: Vec<_> = track
+            .iter()
+            .map(|index| child_axis_sizes(group, children[*index], main_axis, scale))
+            .collect();
+        let main_sizes = layout_axis_sizes(main_available, main_spacing, &metrics, expand_main);
+        let mut effective_spacing = main_spacing;
+        let mut used_main = main_sizes.iter().sum::<f32>()
+            + effective_spacing * track.len().saturating_sub(1) as f32;
+        if group.main_axis_distribution == "SpaceBetween"
+            && track.len() > 1
+            && used_main < main_available
+        {
+            effective_spacing +=
+                (main_available - used_main) / track.len().saturating_sub(1) as f32;
+            used_main = main_available;
+        }
+        let mut cursor = if horizontal { content.x } else { content.y }
+            + (main_available - used_main) * main_alignment;
+        let track_cross = track_cross_sizes[track_index];
+        let track_baseline = if baseline_alignment {
+            track
+                .iter()
+                .map(|index| {
+                    let metric = child_axis_sizes(group, children[*index], cross_axis, scale);
+                    baseline(children[*index], metric.1)
+                })
+                .fold(0.0, f32::max)
+        } else {
+            0.0
+        };
+        for (item, child_index) in track.iter().copied().enumerate() {
+            let metric = child_axis_sizes(group, children[child_index], cross_axis, scale);
+            let control_cross = if horizontal {
+                group.child_control_height
             } else {
-                group.child_force_expand_width
+                group.child_control_width
             };
-        let cross_available = if horizontal {
-            content.height
-        } else {
-            content.width
-        };
-        let cross_size = if expand_cross {
-            cross_available
-        } else {
-            cross_metric.1.min(cross_available)
-        };
-        let cross_alignment = if horizontal { align_y } else { align_x };
-        let cross_start = if horizontal { content.y } else { content.x }
-            + (cross_available - cross_size) * cross_alignment;
-        result[child_index] = if horizontal {
-            UiRect {
-                x: cursor,
-                y: cross_start,
-                width: main_size,
-                height: cross_size,
-            }
-        } else {
-            UiRect {
-                x: cross_start,
-                y: cursor,
-                width: cross_size,
-                height: main_size,
-            }
-        };
-        cursor += main_size + main_spacing;
+            let force_expand_cross = group.child_force_expand
+                && if horizontal {
+                    group.child_force_expand_height
+                } else {
+                    group.child_force_expand_width
+                };
+            let child_axis_alignment = if horizontal {
+                children[child_index].vertical_align
+            } else {
+                children[child_index].horizontal_align
+            };
+            let expand_cross = control_cross
+                && (child_axis_alignment == 4 || force_expand_cross || metric.2 > 0.0);
+            let cross_size = if expand_cross {
+                track_cross.min(metric.3)
+            } else {
+                metric.1.min(track_cross)
+            };
+            let default_cross_alignment = if horizontal { align_y } else { align_x };
+            let cross_alignment = match child_axis_alignment {
+                1 => 0.0,
+                2 => 0.5,
+                3 => 1.0,
+                _ => default_cross_alignment,
+            };
+            let cross_start = if baseline_alignment && child_axis_alignment == 0 {
+                track_cursor + track_baseline - baseline(children[child_index], cross_size)
+            } else {
+                track_cursor + (track_cross - cross_size) * cross_alignment
+            };
+            result[child_index] = if horizontal {
+                UiRect {
+                    x: cursor,
+                    y: cross_start,
+                    width: main_sizes[item],
+                    height: cross_size,
+                }
+            } else {
+                UiRect {
+                    x: cross_start,
+                    y: cursor,
+                    width: cross_size,
+                    height: main_sizes[item],
+                }
+            };
+            cursor += main_sizes[item] + effective_spacing;
+        }
+        track_cursor += track_cross + counter_spacing;
     }
     result
 }
@@ -4339,7 +4718,19 @@ fn layout_child_metrics_recursive(
                 resolving,
             )
         };
-        measure_layout_content(group, &metrics, 1.0)
+        let rect = world
+            .get_component::<RectTransform>(entity)
+            .cloned()
+            .unwrap_or_default();
+        measure_layout_content(
+            group,
+            &metrics,
+            1.0,
+            Some([
+                measured_width.unwrap_or(rect.size_delta[0]).max(0.0),
+                rect.size_delta[1].max(0.0),
+            ]),
+        )
     });
     let metrics =
         layout_child_metrics(world, entity, measured_width, font_resolver, nested_content);
@@ -9885,7 +10276,8 @@ mod tests {
             child_force_expand: true,
             ..Default::default()
         };
-        let content = measure_layout_content(&group, &[LayoutChildMetrics::default(); 3], 1.0);
+        let content =
+            measure_layout_content(&group, &[LayoutChildMetrics::default(); 3], 1.0, None);
         assert_eq!(content.preferred_width, 226.0);
         assert_eq!(content.preferred_height, 88.0);
         assert_eq!(
@@ -9976,6 +10368,198 @@ mod tests {
         assert_eq!((rects[0].x, rects[0].y), (185.0, 105.0));
         assert_eq!((rects[1].x, rects[1].y), (185.0, 55.0));
         assert_eq!((rects[2].x, rects[2].y), (125.0, 105.0));
+    }
+
+    #[test]
+    fn figma_layout_distribution_wrap_baseline_and_grid_spans_match_editor() {
+        let space_between = LayoutGroup {
+            direction: "Horizontal".into(),
+            padding: [0.0; 4],
+            spacing: [10.0, 0.0],
+            cell_size: [50.0, 20.0],
+            child_alignment: "UpperLeft".into(),
+            child_force_expand: false,
+            child_force_expand_width: false,
+            child_force_expand_height: false,
+            main_axis_distribution: "SpaceBetween".into(),
+            ..Default::default()
+        };
+        let fixed = LayoutChildMetrics {
+            preferred_width: Some(50.0),
+            preferred_height: Some(20.0),
+            ..Default::default()
+        };
+        let rects = layout_child_rects(
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 300.0,
+                height: 40.0,
+            },
+            &space_between,
+            &[fixed; 2],
+            1.0,
+        );
+        assert_eq!((rects[0].x, rects[0].width), (0.0, 50.0));
+        assert_eq!((rects[1].x, rects[1].width), (250.0, 50.0));
+
+        let wrapped = LayoutGroup {
+            wrap: true,
+            counter_spacing: 5.0,
+            counter_axis_distribution: "SpaceBetween".into(),
+            ..space_between.clone()
+        };
+        let wrapped_child = LayoutChildMetrics {
+            preferred_width: Some(60.0),
+            preferred_height: Some(20.0),
+            ..Default::default()
+        };
+        let rects = layout_child_rects(
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 130.0,
+                height: 100.0,
+            },
+            &wrapped,
+            &[wrapped_child; 3],
+            1.0,
+        );
+        assert_eq!((rects[0].x, rects[0].y), (0.0, 0.0));
+        assert_eq!((rects[1].x, rects[1].y), (70.0, 0.0));
+        assert_eq!((rects[2].x, rects[2].y), (0.0, 80.0));
+        let measured =
+            measure_layout_content(&wrapped, &[wrapped_child; 3], 1.0, Some([130.0, 100.0]));
+        assert_eq!(measured.preferred_width, 130.0);
+        assert_eq!(measured.preferred_height, 45.0);
+
+        let baseline_group = LayoutGroup {
+            counter_axis_alignment: "Baseline".into(),
+            main_axis_distribution: "Packed".into(),
+            spacing: [0.0, 0.0],
+            ..space_between
+        };
+        let baseline_children = [
+            LayoutChildMetrics {
+                preferred_width: Some(50.0),
+                preferred_height: Some(20.0),
+                baseline: Some(15.0),
+                ..Default::default()
+            },
+            LayoutChildMetrics {
+                preferred_width: Some(50.0),
+                preferred_height: Some(30.0),
+                baseline: Some(20.0),
+                ..Default::default()
+            },
+        ];
+        let rects = layout_child_rects(
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 120.0,
+                height: 40.0,
+            },
+            &baseline_group,
+            &baseline_children,
+            1.0,
+        );
+        assert_eq!((rects[0].y, rects[0].height), (5.0, 20.0));
+        assert_eq!((rects[1].y, rects[1].height), (0.0, 30.0));
+
+        let aligned_children = [
+            LayoutChildMetrics {
+                preferred_width: Some(20.0),
+                preferred_height: Some(10.0),
+                vertical_align: 3,
+                ..Default::default()
+            },
+            LayoutChildMetrics {
+                preferred_width: Some(20.0),
+                preferred_height: Some(10.0),
+                vertical_align: 4,
+                ..Default::default()
+            },
+        ];
+        let rects = layout_child_rects(
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 100.0,
+                height: 40.0,
+            },
+            &baseline_group,
+            &aligned_children,
+            1.0,
+        );
+        assert_eq!((rects[0].y, rects[0].height), (30.0, 10.0));
+        assert_eq!((rects[1].y, rects[1].height), (0.0, 40.0));
+
+        let grid = LayoutGroup {
+            direction: "Grid".into(),
+            padding: [0.0; 4],
+            spacing: [0.0; 2],
+            grid_columns: 2,
+            grid_rows: 2,
+            grid_fit_width: true,
+            grid_fit_height: true,
+            child_alignment: "UpperLeft".into(),
+            ..Default::default()
+        };
+        let grid_children = [
+            LayoutChildMetrics {
+                preferred_width: Some(40.0),
+                preferred_height: Some(20.0),
+                flexible_width: Some(1.0),
+                grid_column: Some(0),
+                grid_row: Some(0),
+                grid_column_span: 2,
+                grid_row_span: 1,
+                grid_horizontal_align: 4,
+                grid_vertical_align: 2,
+                ..Default::default()
+            },
+            LayoutChildMetrics {
+                preferred_width: Some(40.0),
+                preferred_height: Some(20.0),
+                grid_column: Some(1),
+                grid_row: Some(1),
+                grid_column_span: 1,
+                grid_row_span: 1,
+                grid_horizontal_align: 3,
+                grid_vertical_align: 3,
+                ..Default::default()
+            },
+        ];
+        let rects = layout_child_rects(
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 200.0,
+                height: 100.0,
+            },
+            &grid,
+            &grid_children,
+            1.0,
+        );
+        assert_eq!(
+            rects[0],
+            UiRect {
+                x: 0.0,
+                y: 15.0,
+                width: 200.0,
+                height: 20.0
+            }
+        );
+        assert_eq!(
+            rects[1],
+            UiRect {
+                x: 160.0,
+                y: 80.0,
+                width: 40.0,
+                height: 20.0
+            }
+        );
     }
 
     #[test]

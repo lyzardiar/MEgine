@@ -1,6 +1,8 @@
+<!-- Author: MiYu -->
+
 # Figma UI Bridge
 
-MEngine 可以把一个选中的 Figma Frame 直接转换为游戏 UI。桥接沿用现有 Canvas、RectTransform、LayoutGroup、Text、Selectable 和 Undo，不在运行时引入 Figma SDK 或第二套布局模型。
+MEngine 可以把一个选中的 Figma Frame 直接转换为游戏 UI。桥接沿用现有 Canvas、RectTransform、LayoutGroup、LayoutElement、Text、RawImage、Selectable 和 Undo，不在运行时引入 Figma SDK 或第二套布局模型。
 
 ## 数据与安全边界
 
@@ -14,7 +16,7 @@ Figma 文件读取和图片导出均需要 `file_content:read`。官方接口说
 
 ## 使用方式
 
-编辑器顶部菜单选择 `Window > Figma Settings`，可以统一设置：
+编辑器顶部菜单选择 `Window > Figma Import`，可以粘贴带 `node-id` 的 Frame URL、预览诊断并导入当前场景，也可以统一设置：
 
 - PNG 资源目录。
 - 单次导入节点上限。
@@ -60,10 +62,12 @@ Agent 也可通过 `get_figma_settings` / `set_figma_settings` 读取或修改�
 | Figma | MEngine |
 |---|---|
 | Frame、Group、Section | RectTransform 容器；有纯色背景时使用 Panel |
-| Auto Layout Horizontal/Vertical | LayoutGroup、padding、spacing、alignment |
-| Fixed / Hug / Fill | RectTransform、ContentSizeFitter、LayoutElement |
+| Auto Layout Horizontal/Vertical | LayoutGroup、padding、负/正 spacing、alignment、Space Between、Wrap 和 baseline |
+| Figma Grid | Grid LayoutGroup、行列、gap、显式 cell、row/column span 和单元格 alignment |
+| Fixed / Hug / Fill | RectTransform、ContentSizeFitter、LayoutElement 的 preferred/flexible/min/max |
+| Absolute Auto Layout child | LayoutElement.ignore_layout，并保留约束化 RectTransform |
 | Constraints | 对应 Left/Right/Center/Stretch/Scale anchors 与 offsets |
-| Text | Text 内容、字号、字重、颜色、对齐和行高 |
+| Text | 可编辑 Text，保留内容、字号、字重、颜色、对齐和行高；项目字体通过资产绑定 |
 | 纯色 Rectangle | Image |
 | Vector、Ellipse、渐变、图片填充、效果 | 导出的 RawImage PNG |
 | `clipsContent` | RectMask2D |
@@ -73,12 +77,12 @@ Figma Instance 不会仅凭图层名称猜测 Button、Toggle 等交互语义。
 
 ## 有界行为与诊断
 
-- 每次最多归一化 1,000 个可见节点、导出 64 个 PNG。
+- 每次最多归一化 1,000 个可见节点、导出 128 个 PNG。
 - 单个 PNG 最大 16 MiB，总 PNG 最大 64 MiB；Figma JSON 最大 32 MiB。
 - 图片导出按文件版本和节点 ID 使用稳定项目路径；已存在的同版本资源直接复用。
-- `WRAP` 与 Figma Grid 首版分别报告 `UNSUPPORTED_AUTO_LAYOUT_WRAP`、`UNSUPPORTED_GRID_LAYOUT`，不会猜测重排。
+- Auto Layout 与 Grid 进入 Editor/Runtime 共用的原生布局求解链；Figma 计算边界只作为初始尺寸与视觉校验基线。
 - 圆角裁剪当前用 RectMask2D 近似并报告 `UNSUPPORTED_CORNER_CLIP`。
-- Figma 字体家族不会被当作项目资源路径猜测；Text 会保留可确定的字号、字重和排版，并报告 `FONT_REQUIRES_PROJECT_ASSET` 供用户绑定对应字体资产。
+- Figma 字体家族不会被当作项目资源路径猜测；文字保持为 MEngine Text，并报告 `FONT_REQUIRES_PROJECT_ASSET` 供项目绑定匹配字体。渐变、效果等非原生文字视觉仍可作为单个复杂视觉资源导出。
 - 场景或映射在预览后变化会产生 `STALE_REVISION`，不会混合两版计划。
 - Figma 429、权限、缺失节点、响应过大和 PNG 渲染失败都返回可操作的结构化错误。
 

@@ -1,3 +1,5 @@
+//! Author: MiYu
+//!
 //! AgentBridge transport — a localhost-only WebSocket server that lets external
 //! AI agents (via the MCP adapter, CLI, or a direct authenticated WS client)
 //! drive and observe the editor.
@@ -910,7 +912,7 @@ fn extract_token(query: &str) -> Option<String> {
     })
 }
 
-fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
+pub(crate) fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
     if let Some(path) = std::env::var_os("MENGINE_AGENT_BRIDGE_FILE") {
         return Some(PathBuf::from(path));
     }

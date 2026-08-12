@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
@@ -194,6 +196,215 @@ test('positive flexible size fills only that child on a layout cross axis', () =
     ],
   );
   assert.deepEqual(horizontal.map((rect) => rect.h), [50, 160]);
+});
+
+test('space-between distributes free space without stretching children', () => {
+  const rects = layoutGroupChildRects(
+    { x: 0, y: 0, w: 300, h: 40 },
+    {
+      ...base,
+      direction: 'Horizontal',
+      padding: [0, 0, 0, 0],
+      spacing: [10, 0],
+      mainAxisDistribution: 'SpaceBetween',
+      childAlignment: 'UpperLeft',
+      childControlWidth: true,
+      childControlHeight: true,
+      childForceExpandWidth: false,
+      childForceExpandHeight: false,
+    },
+    [
+      { width: 50, height: 20, preferredWidth: 50, preferredHeight: 20 },
+      { width: 50, height: 20, preferredWidth: 50, preferredHeight: 20 },
+    ],
+  );
+  assert.deepEqual(rects, [
+    { x: 0, y: 0, w: 50, h: 20 },
+    { x: 250, y: 0, w: 50, h: 20 },
+  ]);
+});
+
+test('wrapped tracks use counter spacing, space-between, and text baselines', () => {
+  const wrapped = layoutGroupChildRects(
+    { x: 0, y: 0, w: 130, h: 100 },
+    {
+      ...base,
+      direction: 'Horizontal',
+      padding: [0, 0, 0, 0],
+      spacing: [10, 5],
+      wrap: true,
+      counterSpacing: 5,
+      counterAxisDistribution: 'SpaceBetween',
+      childAlignment: 'UpperLeft',
+      childControlWidth: true,
+      childControlHeight: true,
+      childForceExpandWidth: false,
+      childForceExpandHeight: false,
+    },
+    Array.from({ length: 3 }, () => ({
+      width: 60,
+      height: 20,
+      preferredWidth: 60,
+      preferredHeight: 20,
+    })),
+  );
+  assert.deepEqual(wrapped, [
+    { x: 0, y: 0, w: 60, h: 20 },
+    { x: 70, y: 0, w: 60, h: 20 },
+    { x: 0, y: 80, w: 60, h: 20 },
+  ]);
+  assert.deepEqual(
+    measureLayoutContent(
+      {
+        ...base,
+        direction: 'Horizontal',
+        padding: [0, 0, 0, 0],
+        spacing: [10, 5],
+        wrap: true,
+        counterSpacing: 5,
+        childControlWidth: true,
+        childControlHeight: true,
+        childForceExpandWidth: false,
+        childForceExpandHeight: false,
+      },
+      Array.from({ length: 3 }, () => ({
+        width: 60,
+        height: 20,
+        preferredWidth: 60,
+        preferredHeight: 20,
+      })),
+      1,
+      [130, 100],
+    ),
+    {
+      minWidth: 0,
+      minHeight: 0,
+      preferredWidth: 130,
+      preferredHeight: 45,
+      flexibleWidth: 0,
+      flexibleHeight: 0,
+    },
+  );
+
+  const baseline = layoutGroupChildRects(
+    { x: 0, y: 0, w: 120, h: 40 },
+    {
+      ...base,
+      direction: 'Horizontal',
+      padding: [0, 0, 0, 0],
+      spacing: [0, 0],
+      counterAxisAlignment: 'Baseline',
+      childAlignment: 'UpperLeft',
+      childControlWidth: true,
+      childControlHeight: true,
+      childForceExpandWidth: false,
+      childForceExpandHeight: false,
+    },
+    [
+      { width: 50, height: 20, preferredWidth: 50, preferredHeight: 20, baseline: 15 },
+      { width: 50, height: 30, preferredWidth: 50, preferredHeight: 30, baseline: 20 },
+    ],
+  );
+  assert.deepEqual(baseline.map((rect) => ({ y: rect.y, h: rect.h })), [
+    { y: 5, h: 20 },
+    { y: 0, h: 30 },
+  ]);
+});
+
+test('children override the parent cross-axis alignment without changing main-axis sizing', () => {
+  const rects = layoutGroupChildRects(
+    { x: 0, y: 0, w: 100, h: 40 },
+    {
+      ...base,
+      direction: 'Horizontal',
+      padding: [0, 0, 0, 0],
+      spacing: [0, 0],
+      childAlignment: 'UpperLeft',
+      childControlWidth: true,
+      childControlHeight: true,
+      childForceExpandWidth: false,
+      childForceExpandHeight: false,
+    },
+    [
+      { width: 20, height: 10, preferredWidth: 20, preferredHeight: 10, verticalAlign: 'Max' },
+      { width: 20, height: 10, preferredWidth: 20, preferredHeight: 10, verticalAlign: 'Stretch' },
+    ],
+  );
+  assert.deepEqual(rects, [
+    { x: 0, y: 30, w: 20, h: 10 },
+    { x: 20, y: 0, w: 20, h: 40 },
+  ]);
+});
+
+test('grid children keep explicit cells, spans, alignment, and stretch', () => {
+  const rects = layoutGroupChildRects(
+    { x: 0, y: 0, w: 200, h: 100 },
+    {
+      ...base,
+      direction: 'Grid',
+      padding: [0, 0, 0, 0],
+      spacing: [0, 0],
+      cellSize: [10, 10],
+      gridColumns: 2,
+      gridRows: 2,
+      gridFitWidth: true,
+      gridFitHeight: true,
+      childAlignment: 'UpperLeft',
+    },
+    [
+      {
+        width: 40,
+        height: 20,
+        preferredWidth: 40,
+        preferredHeight: 20,
+        flexibleWidth: 1,
+        gridColumn: 0,
+        gridRow: 0,
+        gridColumnSpan: 2,
+        gridHorizontalAlign: 'Stretch',
+        gridVerticalAlign: 'Center',
+      },
+      {
+        width: 40,
+        height: 20,
+        preferredWidth: 40,
+        preferredHeight: 20,
+        gridColumn: 1,
+        gridRow: 1,
+        gridHorizontalAlign: 'Max',
+        gridVerticalAlign: 'Max',
+      },
+    ],
+  );
+  assert.deepEqual(rects, [
+    { x: 0, y: 15, w: 200, h: 20 },
+    { x: 160, y: 80, w: 40, h: 20 },
+  ]);
+});
+
+test('maximum sizes cap flexible layout growth', () => {
+  const rects = layoutGroupChildRects(
+    { x: 0, y: 0, w: 300, h: 40 },
+    {
+      ...base,
+      direction: 'Horizontal',
+      padding: [0, 0, 0, 0],
+      spacing: [0, 0],
+      childAlignment: 'UpperCenter',
+      childControlWidth: true,
+      childControlHeight: true,
+      childForceExpandWidth: false,
+      childForceExpandHeight: false,
+    },
+    [
+      { width: 50, height: 20, preferredWidth: 50, flexibleWidth: 1, maxWidth: 80 },
+      { width: 50, height: 20, preferredWidth: 50, flexibleWidth: 1, maxWidth: 80 },
+    ],
+  );
+  assert.deepEqual(rects.map((rect) => ({ x: rect.x, w: rect.w })), [
+    { x: 70, w: 80 },
+    { x: 150, w: 80 },
+  ]);
 });
 
 test('empty content fits to padding only', () => {

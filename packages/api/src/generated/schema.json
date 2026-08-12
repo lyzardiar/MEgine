@@ -1153,14 +1153,44 @@
   },
   "LayoutElement": {
     "properties": {
+      "baseline": {
+        "type": "number"
+      },
       "flexible_height": {
         "type": "number"
       },
       "flexible_width": {
         "type": "number"
       },
+      "grid_column": {
+        "type": "number"
+      },
+      "grid_column_span": {
+        "type": "number"
+      },
+      "grid_horizontal_align": {
+        "type": "string"
+      },
+      "grid_row": {
+        "type": "number"
+      },
+      "grid_row_span": {
+        "type": "number"
+      },
+      "grid_vertical_align": {
+        "type": "string"
+      },
+      "horizontal_align": {
+        "type": "string"
+      },
       "ignore_layout": {
         "type": "boolean"
+      },
+      "max_height": {
+        "type": "number"
+      },
+      "max_width": {
+        "type": "number"
       },
       "min_height": {
         "type": "number"
@@ -1173,16 +1203,30 @@
       },
       "preferred_width": {
         "type": "number"
+      },
+      "vertical_align": {
+        "type": "string"
       }
     },
     "required": [
       "ignore_layout",
       "min_width",
       "min_height",
+      "max_width",
+      "max_height",
       "preferred_width",
       "preferred_height",
       "flexible_width",
-      "flexible_height"
+      "flexible_height",
+      "baseline",
+      "horizontal_align",
+      "vertical_align",
+      "grid_column",
+      "grid_row",
+      "grid_column_span",
+      "grid_row_span",
+      "grid_horizontal_align",
+      "grid_vertical_align"
     ],
     "type": "object"
   },
@@ -1218,7 +1262,31 @@
       "constraint_count": {
         "type": "number"
       },
+      "counter_axis_alignment": {
+        "type": "string"
+      },
+      "counter_axis_distribution": {
+        "type": "string"
+      },
+      "counter_spacing": {
+        "type": "number"
+      },
       "direction": {
+        "type": "string"
+      },
+      "grid_columns": {
+        "type": "number"
+      },
+      "grid_fit_height": {
+        "type": "boolean"
+      },
+      "grid_fit_width": {
+        "type": "boolean"
+      },
+      "grid_rows": {
+        "type": "number"
+      },
+      "main_axis_distribution": {
         "type": "string"
       },
       "padding": {
@@ -1228,6 +1296,9 @@
         "type": "array"
       },
       "reverse_arrangement": {
+        "type": "boolean"
+      },
+      "reverse_z_order": {
         "type": "boolean"
       },
       "spacing": {
@@ -1247,12 +1318,20 @@
       },
       "use_child_scale_width": {
         "type": "boolean"
+      },
+      "wrap": {
+        "type": "boolean"
       }
     },
     "required": [
       "direction",
       "padding",
       "spacing",
+      "wrap",
+      "counter_spacing",
+      "main_axis_distribution",
+      "counter_axis_distribution",
+      "counter_axis_alignment",
       "cell_size",
       "child_alignment",
       "child_control_width",
@@ -1263,10 +1342,15 @@
       "use_child_scale_width",
       "use_child_scale_height",
       "reverse_arrangement",
+      "reverse_z_order",
       "start_corner",
       "start_axis",
       "constraint",
-      "constraint_count"
+      "constraint_count",
+      "grid_columns",
+      "grid_rows",
+      "grid_fit_width",
+      "grid_fit_height"
     ],
     "type": "object"
   },

@@ -1,3 +1,5 @@
+/* Author: MiYu */
+
 .figma-settings {
   box-sizing: border-box;
   height: 100%;
@@ -97,6 +99,95 @@
   font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
+.figma-import-url {
+  display: block;
+  margin-top: 12px;
+  color: var(--u-text-bright, #f2f4f8);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.figma-import-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.figma-import-preview {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #3c4350;
+  border-radius: 4px;
+  background: #11141a;
+}
+
+.figma-import-preview > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.figma-import-preview > div:first-child span {
+  color: var(--u-muted, #a5abb7);
+  font-size: 11px;
+}
+
+.figma-import-preview dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(90px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.figma-import-preview dl > div {
+  padding: 8px;
+  border-radius: 4px;
+  background: #1b2028;
+}
+
+.figma-import-preview dt {
+  color: var(--u-muted, #a5abb7);
+  font-size: 10px;
+}
+
+.figma-import-preview dd {
+  margin: 2px 0 0;
+  color: var(--u-text-bright, #f2f4f8);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.figma-import-diagnostics {
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.figma-import-diagnostics li {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) 1fr;
+  gap: 8px;
+  padding: 7px 9px;
+  border-left: 3px solid #6682a5;
+  background: #1b2028;
+  font-size: 11px;
+}
+
+.figma-import-diagnostics li[data-severity="warning"] {
+  border-left-color: #c59a4c;
+}
+
+.figma-import-diagnostics li[data-severity="error"] {
+  border-left-color: #cf6464;
+}
+
 .figma-settings-grid {
   display: grid;
   grid-template-columns: minmax(220px, 2fr) minmax(110px, 1fr) minmax(150px, 1fr);
@@ -188,7 +279,8 @@
 
 @media (max-width: 700px) {
   .figma-settings-grid,
-  .figma-settings-mapping {
+  .figma-settings-mapping,
+  .figma-import-preview dl {
     grid-template-columns: 1fr;
   }
 }

@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,6 +15,9 @@ const server = await createServer({
   server: { middlewareMode: true },
 });
 const { normalizeFigmaBridgePreferences } = await server.ssrLoadModule('/src/figmaSettings.ts');
+const { validFigmaFrameUrl } = await server.ssrLoadModule(
+  '/src/editorWindow/windows/FigmaSettingsWindow.tsx',
+);
 test.after(() => server.close());
 
 test('Figma settings normalize bounded import defaults without accepting secrets or traversal', () => {
@@ -43,7 +48,15 @@ test('Figma settings normalize bounded import defaults without accepting secrets
   });
 });
 
-test('Figma settings are a registered top-menu window and never render a token input', () => {
+test('Figma frame links require one selected node', () => {
+  assert.equal(validFigmaFrameUrl(
+    'https://www.figma.com/design/AbCdEf/Game?node-id=12-34',
+  ), true);
+  assert.equal(validFigmaFrameUrl('https://www.figma.com/design/AbCdEf/Game'), false);
+  assert.equal(validFigmaFrameUrl('https://example.com/design/AbCdEf/Game?node-id=12-34'), false);
+});
+
+test('Figma import is a registered top-menu window and never renders a token input', () => {
   const source = fs.readFileSync(
     path.join(editorRoot, 'src', 'editorWindow', 'windows', 'FigmaSettingsWindow.tsx'),
     'utf8',
@@ -52,10 +65,12 @@ test('Figma settings are a registered top-menu window and never render a token i
     path.join(editorRoot, 'src', 'editorWindow', 'index.ts'),
     'utf8',
   );
-  assert.match(source, /registerMenuItem\('Window\/Figma Settings'/u);
+  assert.match(source, /registerMenuItem\('Window\/Figma Import'/u);
   assert.match(source, /registerEditorWindowType\('EditorWindow\.FigmaSettingsWindow'/u);
   assert.match(source, /requiresProject: false/u);
   assert.doesNotMatch(source, /type=["']password["']/u);
   assert.match(source, /FIGMA_ACCESS_TOKEN/u);
+  assert.match(source, /preview_figma_ui/u);
+  assert.match(source, /import_figma_ui/u);
   assert.match(index, /windows\/FigmaSettingsWindow/u);
 });

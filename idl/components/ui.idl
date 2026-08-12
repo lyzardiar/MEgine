@@ -1,3 +1,5 @@
+/// Author: MiYu
+
 /// Unity-like uGUI components. SpriteRenderer stays world-space (core.idl).
 
 component Canvas {
@@ -83,10 +85,25 @@ component LayoutElement {
   ignore_layout:    bool  = false
   min_width:        float = -1
   min_height:       float = -1
+  max_width:        float = -1
+  max_height:       float = -1
   preferred_width:  float = -1
   preferred_height: float = -1
   flexible_width:   float = -1
   flexible_height:  float = -1
+  /// Distance from the child's top edge to its first text baseline; negative uses the preferred-height fallback.
+  baseline:          float = -1
+  /// Optional per-child axis alignment: "Auto" | "Min" | "Center" | "Max" | "Stretch".
+  horizontal_align:  string = "Auto"
+  vertical_align:    string = "Auto"
+  /// Grid-only zero-based placement; negative values use automatic row-major flow.
+  grid_column:       int   = -1
+  grid_row:          int   = -1
+  grid_column_span:  int   = 1
+  grid_row_span:     int   = 1
+  /// Grid-only: "Auto" | "Min" | "Center" | "Max" | "Stretch"
+  grid_horizontal_align: string = "Auto"
+  grid_vertical_align:   string = "Auto"
 }
 
 component Image {
@@ -288,6 +305,16 @@ component LayoutGroup {
   direction:                 string = "Vertical"
   padding:                   float4 = [8, 8, 8, 8]
   spacing:                   float2 = [6, 6]
+  /// Horizontal/Vertical only: wrap children into additional tracks.
+  wrap:                      bool   = false
+  /// Space between wrapped rows/columns. A negative value reuses the matching item spacing.
+  counter_spacing:           float  = -1
+  /// "Packed" | "SpaceBetween"
+  main_axis_distribution:    string = "Packed"
+  /// Wrapped tracks: "Packed" | "SpaceBetween"
+  counter_axis_distribution: string = "Packed"
+  /// "Auto" | "Baseline"; the normal nine-way child_alignment handles other values.
+  counter_axis_alignment:    string = "Auto"
   cell_size:                 float2 = [120, 32]
   /// "UpperLeft" | "UpperCenter" | "UpperRight" | "MiddleLeft" | "MiddleCenter" | "MiddleRight" | "LowerLeft" | "LowerCenter" | "LowerRight"
   child_alignment:           string = "UpperLeft"
@@ -300,6 +327,8 @@ component LayoutGroup {
   use_child_scale_width:     bool   = false
   use_child_scale_height:    bool   = false
   reverse_arrangement:       bool   = false
+  /// Reverse only visual stacking while preserving layout order.
+  reverse_z_order:           bool   = false
   /// Grid only: "UpperLeft" | "UpperRight" | "LowerLeft" | "LowerRight"
   start_corner:              string = "UpperLeft"
   /// Grid only: "Horizontal" | "Vertical"
@@ -307,6 +336,12 @@ component LayoutGroup {
   /// Grid only: "Flexible" | "FixedColumnCount" | "FixedRowCount"
   constraint:                string = "FixedColumnCount"
   constraint_count:          int    = 1
+  /// Grid dimensions. Zero derives the missing dimension from the child count.
+  grid_columns:              int    = 0
+  grid_rows:                 int    = 0
+  /// Stretch grid tracks to the available content width/height.
+  grid_fit_width:            bool   = false
+  grid_fit_height:           bool   = false
 }
 
 /// Rectangular child clipping. Padding order is left, bottom, right, top.

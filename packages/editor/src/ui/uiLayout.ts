@@ -1,3 +1,5 @@
+// Author: MiYu
+
 /** Build screen-space / Scene-world rects for UI trees (Canvas Overlay). */
 
 import {
@@ -450,6 +452,17 @@ function layoutMetrics(group: Record<string, unknown>): LayoutMetrics {
     direction: String(group.direction ?? 'Vertical'),
     padding: number4(group.padding, [8, 8, 8, 8]),
     spacing: number2(group.spacing, [6, 6]),
+    wrap: group.wrap === true,
+    counterSpacing: number(group.counter_spacing ?? group.counterSpacing, -1),
+    mainAxisDistribution: String(
+      group.main_axis_distribution ?? group.mainAxisDistribution ?? 'Packed',
+    ),
+    counterAxisDistribution: String(
+      group.counter_axis_distribution ?? group.counterAxisDistribution ?? 'Packed',
+    ),
+    counterAxisAlignment: String(
+      group.counter_axis_alignment ?? group.counterAxisAlignment ?? 'Auto',
+    ),
     cellSize: number2(group.cell_size ?? group.cellSize, [120, 32]),
     childAlignment: String(group.child_alignment ?? group.childAlignment ?? 'UpperLeft'),
     childControlWidth: group.child_control_width !== false && group.childControlWidth !== false,
@@ -473,6 +486,10 @@ function layoutMetrics(group: Record<string, unknown>): LayoutMetrics {
       1,
       Math.trunc(number(group.constraint_count ?? group.constraintCount, 1)),
     ),
+    gridColumns: Math.max(0, Math.trunc(number(group.grid_columns ?? group.gridColumns, 0))),
+    gridRows: Math.max(0, Math.trunc(number(group.grid_rows ?? group.gridRows, 0))),
+    gridFitWidth: group.grid_fit_width === true || group.gridFitWidth === true,
+    gridFitHeight: group.grid_fit_height === true || group.gridFitHeight === true,
   };
 }
 
@@ -642,11 +659,17 @@ function layoutChildMetrics(
     const value = number(element?.[snake] ?? element?.[camel], -1);
     return value >= 0 ? value : undefined;
   };
+  const optionalInteger = (snake: string, camel: string) => {
+    const value = number(element?.[snake] ?? element?.[camel], -1);
+    return Number.isFinite(value) ? Math.trunc(value) : undefined;
+  };
   return {
     width: Math.max(0, rt.size_delta[0]),
     height: Math.max(0, rt.size_delta[1]),
     minWidth: optionalSize('min_width', 'minWidth') ?? nestedContent?.minWidth,
     minHeight: optionalSize('min_height', 'minHeight') ?? nestedContent?.minHeight,
+    maxWidth: optionalSize('max_width', 'maxWidth'),
+    maxHeight: optionalSize('max_height', 'maxHeight'),
     preferredWidth: optionalSize('preferred_width', 'preferredWidth')
       ?? nestedContent?.preferredWidth
       ?? implicitWidth,
@@ -657,6 +680,19 @@ function layoutChildMetrics(
       ?? nestedContent?.flexibleWidth,
     flexibleHeight: optionalSize('flexible_height', 'flexibleHeight')
       ?? nestedContent?.flexibleHeight,
+    baseline: optionalSize('baseline', 'baseline'),
+    horizontalAlign: String(element?.horizontal_align ?? element?.horizontalAlign ?? 'Auto'),
+    verticalAlign: String(element?.vertical_align ?? element?.verticalAlign ?? 'Auto'),
+    gridColumn: optionalInteger('grid_column', 'gridColumn'),
+    gridRow: optionalInteger('grid_row', 'gridRow'),
+    gridColumnSpan: optionalInteger('grid_column_span', 'gridColumnSpan'),
+    gridRowSpan: optionalInteger('grid_row_span', 'gridRowSpan'),
+    gridHorizontalAlign: String(
+      element?.grid_horizontal_align ?? element?.gridHorizontalAlign ?? 'Auto',
+    ),
+    gridVerticalAlign: String(
+      element?.grid_vertical_align ?? element?.gridVerticalAlign ?? 'Auto',
+    ),
     scaleWidth: Math.abs(rt.local_scale[0]),
     scaleHeight: Math.abs(rt.local_scale[1]),
   };
@@ -1090,7 +1126,11 @@ export function layoutUiOverlay(
             nextResolving,
           ));
         }
-        nestedContent = measureLayoutContent(nestedLayout, nestedMetrics);
+        const nestedRt = readRectTransform(entity.components.RectTransform);
+        nestedContent = measureLayoutContent(nestedLayout, nestedMetrics, 1, [
+          Math.max(0, measuredWidth ?? nestedRt.size_delta[0]),
+          Math.max(0, nestedRt.size_delta[1]),
+        ]);
       }
       const measured = layoutChildMetrics(
         entity,
@@ -1191,6 +1231,7 @@ export function layoutUiOverlay(
           resolvedLayout,
           layoutChildren.map((child) => metricsForLayoutChild(child)),
           scale,
+          [rect.w, rect.h],
         );
         rect = applyContentSize(
           rect,
@@ -1204,11 +1245,12 @@ export function layoutUiOverlay(
           rt.pivot,
           'Unconstrained',
           verticalFit,
-          measureLayoutContent(
-            resolvedLayout,
-            metricsForLayoutChildren(rect, resolvedLayout, layoutChildren),
-            scale,
-          ),
+            measureLayoutContent(
+              resolvedLayout,
+              metricsForLayoutChildren(rect, resolvedLayout, layoutChildren),
+              scale,
+              [rect.w, rect.h],
+            ),
         );
       }
       const aspect = ent.components.AspectRatioFitter as Record<string, unknown> | undefined;
@@ -1836,7 +1878,11 @@ export function layoutUiOverlay(
         child.entity,
         { rect: forcedRects[index], controlled },
       ]));
-      children.forEach((child) => {
+      const renderChildren = layout
+        && (layout.reverse_z_order === true || layout.reverseZOrder === true)
+        ? [...children].reverse()
+        : children;
+      renderChildren.forEach((child) => {
         const forced = forcedByEntity.get(child.entity);
         walk(
           child,

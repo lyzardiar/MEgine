@@ -1,3 +1,5 @@
+<!-- Author: MiYu -->
+
 # MEngine 编辑器自主审计状态
 
 更新日期：2026-08-02
@@ -172,7 +174,7 @@ Verified boundaries and remaining work:
 
 - 后台 Agent 新增共享的 `auto-background`、`required-background`、`discovery-only` 连接策略和 `doctor`，启动、查询、截图与验证均只操作隐藏且未聚焦的后台实例。
 - Screen Space Canvas 已具备多画板工作台、共享 Canvas Plan、七类确定性诊断、8 屏幕像素 Smart/Gap Snap、RectTransform 语义化 Inspector 和可搜索创建菜单。
-- 顶部 `Window > Figma Settings` 统一管理非敏感导入参数；Figma Frame 可经预览、revision 门禁和一次 Undo 转换为现有 MEngine UI 层级，CLI/MCP/HTTP 共用同一设置与导入协议。
+- 顶部 `Window > Figma Import` 可完成 Frame URL 预览、诊断和导入，并统一管理非敏感导入参数；Figma Frame 经 revision 门禁和一次 Undo 转换为现有 MEngine UI 层级，CLI/MCP/HTTP 共用同一设置与导入协议。
 - `GameObject > UI > Templates` 新增 Inventory、Leaderboard、Shop 三套由现有布局组件组成的响应式游戏 UI 模板。
 - `ParticleEmitter2D` 新增 burst 与 drag，提供 Fire、Smoke、Spark Burst、Magic Aura、Snow 五个预设；新增 `TrailRenderer2D`，Editor 2D Scene、原生 Runtime/Player、Inspector、Agent 类型和 Behaviour token 已贯通。
 - Profiler 已接入原生 Editor Host/RHI 调用树、带来源与确定性的内存分类、实际渲染资源表，并通过 Agent `profiler.get_samples.nativeLatest` 有界读取。

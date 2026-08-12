@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import type { AgentJsonSchema } from './commandSchemas.ts';
 import { FIGMA_COMPONENT_KINDS, FIGMA_IMPORT_MAX_NODES } from '../ui/figmaImport.ts';
 
@@ -48,14 +50,36 @@ const layout: AgentJsonSchema = {
     mode: { type: 'string', enum: ['NONE', 'HORIZONTAL', 'VERTICAL', 'GRID'] },
     wrap: { type: 'string', enum: ['NO_WRAP', 'WRAP'] },
     itemSpacing: { type: 'number', minimum: -10_000, maximum: 10_000 },
+    counterAxisSpacing: { type: 'number', minimum: -10_000, maximum: 10_000 },
     paddingLeft: { type: 'number', minimum: 0, maximum: 100_000 },
     paddingRight: { type: 'number', minimum: 0, maximum: 100_000 },
     paddingTop: { type: 'number', minimum: 0, maximum: 100_000 },
     paddingBottom: { type: 'number', minimum: 0, maximum: 100_000 },
     primaryAlign: { type: 'string', enum: ['MIN', 'CENTER', 'MAX', 'SPACE_BETWEEN'] },
     counterAlign: { type: 'string', enum: ['MIN', 'CENTER', 'MAX', 'BASELINE'] },
+    counterAlignContent: { type: 'string', enum: ['AUTO', 'SPACE_BETWEEN'] },
     sizingHorizontal: { type: 'string', enum: ['FIXED', 'HUG', 'FILL'] },
     sizingVertical: { type: 'string', enum: ['FIXED', 'HUG', 'FILL'] },
+    positioning: { type: 'string', enum: ['AUTO', 'ABSOLUTE'] },
+    grow: { type: 'number', minimum: 0, maximum: 1_000 },
+    align: { type: 'string', enum: ['INHERIT', 'MIN', 'CENTER', 'MAX', 'STRETCH'] },
+    minWidth: { type: 'number', minimum: 0, maximum: 100_000 },
+    maxWidth: { type: 'number', minimum: 0, maximum: 100_000 },
+    minHeight: { type: 'number', minimum: 0, maximum: 100_000 },
+    maxHeight: { type: 'number', minimum: 0, maximum: 100_000 },
+    itemReverseZIndex: { type: 'boolean' },
+    strokesIncluded: { type: 'boolean' },
+    gridRowCount: { type: 'integer', minimum: 0, maximum: FIGMA_IMPORT_MAX_NODES },
+    gridColumnCount: { type: 'integer', minimum: 0, maximum: FIGMA_IMPORT_MAX_NODES },
+    gridRowGap: { type: 'number', minimum: -10_000, maximum: 10_000 },
+    gridColumnGap: { type: 'number', minimum: -10_000, maximum: 10_000 },
+    gridItemsPositioning: { type: 'string', enum: ['MANUAL', 'ROW_AUTO_FLOW'] },
+    gridChildHorizontalAlign: { type: 'string', enum: ['AUTO', 'MIN', 'CENTER', 'MAX'] },
+    gridChildVerticalAlign: { type: 'string', enum: ['AUTO', 'MIN', 'CENTER', 'MAX'] },
+    gridRowSpan: { type: 'integer', minimum: 1, maximum: FIGMA_IMPORT_MAX_NODES },
+    gridColumnSpan: { type: 'integer', minimum: 1, maximum: FIGMA_IMPORT_MAX_NODES },
+    gridColumn: { type: 'integer', minimum: 0, maximum: FIGMA_IMPORT_MAX_NODES - 1 },
+    gridRow: { type: 'integer', minimum: 0, maximum: FIGMA_IMPORT_MAX_NODES - 1 },
   },
   additionalProperties: false,
 };
@@ -187,7 +211,7 @@ export const FIGMA_IMPORT_COMMAND_PARAMS_SCHEMA: AgentJsonSchema = {
     },
     assetPaths: {
       type: 'object',
-      maxProperties: 256,
+      maxProperties: FIGMA_IMPORT_MAX_NODES,
       additionalProperties: {
         type: 'string',
         minLength: 12,

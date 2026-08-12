@@ -1,3 +1,5 @@
+// Author: MiYu
+
 /**
  * Inspector metadata for engine-owned components.
  *
@@ -847,13 +849,54 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   LayoutElement: {
     min_width: { min: -1, step: 1 },
     min_height: { min: -1, step: 1 },
+    max_width: { min: -1, step: 1 },
+    max_height: { min: -1, step: 1 },
     preferred_width: { min: -1, step: 1 },
     preferred_height: { min: -1, step: 1 },
     flexible_width: { min: -1, step: 0.1 },
     flexible_height: { min: -1, step: 0.1 },
+    baseline: { min: -1, step: 1 },
+    horizontal_align: {
+      kind: 'enum',
+      options: options('Auto', 'Min', 'Center', 'Max', 'Stretch'),
+    },
+    vertical_align: {
+      kind: 'enum',
+      options: options('Auto', 'Min', 'Center', 'Max', 'Stretch'),
+    },
+    grid_column: { min: -1, step: 1 },
+    grid_row: { min: -1, step: 1 },
+    grid_column_span: { min: 1, step: 1 },
+    grid_row_span: { min: 1, step: 1 },
+    grid_horizontal_align: {
+      kind: 'enum',
+      options: options('Auto', 'Min', 'Center', 'Max', 'Stretch'),
+    },
+    grid_vertical_align: {
+      kind: 'enum',
+      options: options('Auto', 'Min', 'Center', 'Max', 'Stretch'),
+    },
   },
   LayoutGroup: {
     direction: { kind: 'enum', options: options('Horizontal', 'Vertical', 'Grid') },
+    main_axis_distribution: {
+      kind: 'enum',
+      options: options('Packed', 'SpaceBetween'),
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
+    counter_axis_distribution: {
+      kind: 'enum',
+      options: options('Packed', 'SpaceBetween'),
+      visibleWhen: [
+        { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+        { field: 'wrap', equals: true },
+      ],
+    },
+    counter_axis_alignment: {
+      kind: 'enum',
+      options: options('Auto', 'Baseline'),
+      visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
+    },
     child_alignment: {
       kind: 'enum',
       options: options(
@@ -893,6 +936,8 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     reverse_arrangement: {
       visibleWhen: { field: 'direction', equals: ['Horizontal', 'Vertical'] },
     },
+    grid_columns: { min: 0, step: 1, visibleWhen: { field: 'direction', equals: 'Grid' } },
+    grid_rows: { min: 0, step: 1, visibleWhen: { field: 'direction', equals: 'Grid' } },
     start_corner: {
       kind: 'enum',
       options: options('UpperLeft', 'UpperRight', 'LowerLeft', 'LowerRight'),

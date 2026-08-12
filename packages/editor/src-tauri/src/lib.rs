@@ -1,3 +1,5 @@
+// Author: MiYu
+
 use base64::Engine as _;
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_editor_host::{
@@ -23,8 +25,8 @@ mod agent_bridge;
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
     capture_editor_window, capture_editor_window_element, cleanup_bridge_discovery,
-    inspect_editor_window, interact_editor_window, read_editor_ui_content, spawn_bridge_server,
-    BridgeHub,
+    discovery_file_path, inspect_editor_window, interact_editor_window, read_editor_ui_content,
+    spawn_bridge_server, BridgeHub,
 };
 
 pub(crate) const EDITOR_IDENTIFIER: &str = "com.mengine.editor";
@@ -4029,6 +4031,91 @@ fn get_agent_adapter_info(app: tauri::AppHandle) -> Result<AgentAdapterInfo, Str
     load_workspace_agent_adapters(&workspace)
 }
 
+fn validate_figma_agent_request(
+    operation: &str,
+    url: &str,
+    args: &serde_json::Value,
+) -> Result<(), String> {
+    if !matches!(operation, "figma-preview" | "figma-import") {
+        return Err("Figma operation must be figma-preview or figma-import".into());
+    }
+    if url.is_empty() || url.len() > 2048 {
+        return Err("Figma URL must contain between 1 and 2048 characters".into());
+    }
+    if !args.is_object() {
+        return Err("Figma arguments must be a JSON object".into());
+    }
+    Ok(())
+}
+
+fn figma_agent_failure(output: &std::process::Output) -> String {
+    if let Ok(payload) = serde_json::from_slice::<serde_json::Value>(&output.stderr) {
+        if let Some(message) = payload
+            .pointer("/error/message")
+            .and_then(|value| value.as_str())
+        {
+            let code = payload
+                .pointer("/error/code")
+                .and_then(|value| value.as_str())
+                .unwrap_or("FIGMA_AGENT_ERROR");
+            return format!("{code}: {message}");
+        }
+    }
+    command_failure("MEngine Figma Agent", output)
+}
+
+#[tauri::command]
+async fn run_figma_agent_operation(
+    app: tauri::AppHandle,
+    operation: String,
+    url: String,
+    args: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    validate_figma_agent_request(&operation, &url, &args)?;
+    if std::env::var("FIGMA_ACCESS_TOKEN")
+        .ok()
+        .is_none_or(|token| token.trim().len() < 8)
+    {
+        return Err(
+            "FIGMA_ACCESS_TOKEN is not available to this editor process; restart MEngine after setting it"
+                .into(),
+        );
+    }
+    let discovery_file = discovery_file_path(&app)
+        .ok_or_else(|| "MEngine AgentBridge discovery file is unavailable".to_string())?;
+    let adapter = get_agent_adapter_info(app)?.cli;
+    let args_json = serde_json::to_string(&args).map_err(|error| error.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut command = Command::new(&adapter.command);
+        command
+            .args(&adapter.args)
+            .arg(operation)
+            .arg(url)
+            .arg("--args")
+            .arg(args_json)
+            .arg("--discovery-file")
+            .arg(discovery_file)
+            .arg("--editor-mode")
+            .arg("discovery-only")
+            .arg("--compact");
+        for (key, value) in adapter.env {
+            command.env(key, value);
+        }
+        command.env("MENGINE_AGENT_EDITOR_MODE", "discovery-only");
+        hide_child_process_window(&mut command);
+        let output = command
+            .output()
+            .map_err(|error| format!("cannot start MEngine Figma Agent: {error}"))?;
+        if !output.status.success() {
+            return Err(figma_agent_failure(&output));
+        }
+        serde_json::from_slice(&output.stdout)
+            .map_err(|error| format!("MEngine Figma Agent returned invalid JSON: {error}"))
+    })
+    .await
+    .map_err(|error| format!("MEngine Figma Agent task failed: {error}"))?
+}
+
 fn activate_project<F>(
     state: &AppState,
     create_session: F,
@@ -4252,7 +4339,9 @@ async fn render_native_scene_view(
         let mut snapshot = snapshot;
         if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
             let hidden: HashSet<u64> = request.hidden_entity_ids.iter().copied().collect();
-            snapshot.entities.retain(|entity| !hidden.contains(&entity.entity));
+            snapshot
+                .entities
+                .retain(|entity| !hidden.contains(&entity.entity));
         }
         let world = world_from_snapshot(&snapshot);
         let viewport = SCENE_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
@@ -6158,6 +6247,7 @@ pub fn run() {
             close_project,
             get_editor_instance_id,
             get_agent_adapter_info,
+            run_figma_agent_operation,
             is_primary_pointer_down,
             list_recent_projects,
             remove_recent_project,
@@ -7476,6 +7566,30 @@ mod tests {
             .unwrap_err()
             .contains("unsafe Node runtime path"));
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn figma_agent_request_accepts_only_bounded_ui_operations() {
+        let args = serde_json::json!({ "maxNodes": 500 });
+        assert!(validate_figma_agent_request(
+            "figma-preview",
+            "https://www.figma.com/design/AbCdEf/Game?node-id=12-34",
+            &args,
+        )
+        .is_ok());
+        assert!(validate_figma_agent_request(
+            "execute",
+            "https://www.figma.com/design/AbCdEf/Game?node-id=12-34",
+            &args,
+        )
+        .is_err());
+        assert!(validate_figma_agent_request("figma-import", "", &args).is_err());
+        assert!(validate_figma_agent_request(
+            "figma-import",
+            "https://www.figma.com/design/AbCdEf/Game?node-id=12-34",
+            &serde_json::json!([]),
+        )
+        .is_err());
     }
 
     #[test]

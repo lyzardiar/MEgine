@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import {
   createUiButtonComponents,
   createUiDropdownComponents,
@@ -53,14 +55,36 @@ export interface FigmaImportLayout {
   mode?: 'NONE' | 'HORIZONTAL' | 'VERTICAL' | 'GRID';
   wrap?: 'NO_WRAP' | 'WRAP';
   itemSpacing?: number;
+  counterAxisSpacing?: number;
   paddingLeft?: number;
   paddingRight?: number;
   paddingTop?: number;
   paddingBottom?: number;
   primaryAlign?: 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN';
   counterAlign?: 'MIN' | 'CENTER' | 'MAX' | 'BASELINE';
+  counterAlignContent?: 'AUTO' | 'SPACE_BETWEEN';
   sizingHorizontal?: 'FIXED' | 'HUG' | 'FILL';
   sizingVertical?: 'FIXED' | 'HUG' | 'FILL';
+  positioning?: 'AUTO' | 'ABSOLUTE';
+  grow?: number;
+  align?: 'INHERIT' | 'MIN' | 'CENTER' | 'MAX' | 'STRETCH';
+  minWidth?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  itemReverseZIndex?: boolean;
+  strokesIncluded?: boolean;
+  gridRowCount?: number;
+  gridColumnCount?: number;
+  gridRowGap?: number;
+  gridColumnGap?: number;
+  gridItemsPositioning?: 'MANUAL' | 'ROW_AUTO_FLOW';
+  gridChildHorizontalAlign?: 'AUTO' | 'MIN' | 'CENTER' | 'MAX';
+  gridChildVerticalAlign?: 'AUTO' | 'MIN' | 'CENTER' | 'MAX';
+  gridRowSpan?: number;
+  gridColumnSpan?: number;
+  gridColumn?: number;
+  gridRow?: number;
 }
 
 export interface FigmaImportConstraints {
@@ -115,8 +139,6 @@ export interface FigmaImportDiagnostic {
     | 'INVALID_HIERARCHY'
     | 'FONT_REQUIRES_PROJECT_ASSET'
     | 'UNMAPPED_COMPONENT'
-    | 'UNSUPPORTED_AUTO_LAYOUT_WRAP'
-    | 'UNSUPPORTED_GRID_LAYOUT'
     | 'UNSUPPORTED_CORNER_CLIP'
     | 'TRUNCATED_NODE_LIMIT';
   severity: 'info' | 'warning' | 'error';
@@ -278,8 +300,8 @@ function constrainedRect(
 }
 
 function childAlignment(layout: FigmaImportLayout): string {
-  const primary = layout.primaryAlign ?? 'MIN';
-  const counter = layout.counterAlign ?? 'MIN';
+  const primary = layout.primaryAlign === 'SPACE_BETWEEN' ? 'MIN' : layout.primaryAlign ?? 'MIN';
+  const counter = layout.counterAlign === 'BASELINE' ? 'MIN' : layout.counterAlign ?? 'MIN';
   const vertical = layout.mode === 'VERTICAL';
   const horizontalPart = (vertical ? counter : primary) === 'CENTER'
     ? 'Center'
@@ -293,51 +315,74 @@ function childAlignment(layout: FigmaImportLayout): string {
 function applyLayout(
   components: Record<string, unknown>,
   node: FigmaImportNode,
-  diagnostics: FigmaImportDiagnostic[],
 ) {
   const layout = node.layout;
   if (!layout || !layout.mode || layout.mode === 'NONE') return;
-  if (layout.mode === 'GRID') {
-    diagnostics.push({
-      code: 'UNSUPPORTED_GRID_LAYOUT',
-      severity: 'warning',
-      nodeId: node.id,
-      message: 'Figma Grid auto layout is kept as fixed RectTransforms in this import.',
-    });
-    return;
-  }
-  if (layout.wrap === 'WRAP') {
-    diagnostics.push({
-      code: 'UNSUPPORTED_AUTO_LAYOUT_WRAP',
-      severity: 'warning',
-      nodeId: node.id,
-      message: 'Figma wrapping has no exact LayoutGroup equivalent; children remain in one row or column.',
-    });
-  }
-  const primarySpaceBetween = layout.primaryAlign === 'SPACE_BETWEEN';
+  const columns = Math.max(0, Math.trunc(finite(layout.gridColumnCount)));
+  const rows = Math.max(0, Math.trunc(finite(layout.gridRowCount)));
+  const columnGap = finite(layout.gridColumnGap, finite(layout.itemSpacing));
+  const rowGap = finite(layout.gridRowGap, finite(layout.itemSpacing));
+  const layoutStroke = layout.strokesIncluded ? nonNegative(node.strokeWeight) : 0;
+  const contentWidth = Math.max(
+    0,
+    finite(node.bounds?.width)
+      - nonNegative(layout.paddingLeft)
+      - nonNegative(layout.paddingRight)
+      - layoutStroke * 2,
+  );
+  const contentHeight = Math.max(
+    0,
+    finite(node.bounds?.height)
+      - nonNegative(layout.paddingTop)
+      - nonNegative(layout.paddingBottom)
+      - layoutStroke * 2,
+  );
   components.LayoutGroup = {
-    direction: layout.mode === 'HORIZONTAL' ? 'Horizontal' : 'Vertical',
+    direction: layout.mode === 'GRID'
+      ? 'Grid'
+      : layout.mode === 'HORIZONTAL' ? 'Horizontal' : 'Vertical',
     padding: [
-      nonNegative(layout.paddingLeft),
-      nonNegative(layout.paddingTop),
-      nonNegative(layout.paddingRight),
-      nonNegative(layout.paddingBottom),
+      nonNegative(layout.paddingLeft) + layoutStroke,
+      nonNegative(layout.paddingTop) + layoutStroke,
+      nonNegative(layout.paddingRight) + layoutStroke,
+      nonNegative(layout.paddingBottom) + layoutStroke,
     ],
-    spacing: [nonNegative(layout.itemSpacing), nonNegative(layout.itemSpacing)],
-    cell_size: [100, 100],
+    spacing: layout.mode === 'GRID'
+      ? [columnGap, rowGap]
+      : [finite(layout.itemSpacing), finite(layout.itemSpacing)],
+    wrap: layout.wrap === 'WRAP',
+    counter_spacing: layout.counterAxisSpacing == null
+      ? finite(layout.itemSpacing)
+      : finite(layout.counterAxisSpacing),
+    main_axis_distribution: layout.primaryAlign === 'SPACE_BETWEEN'
+      ? 'SpaceBetween'
+      : 'Packed',
+    counter_axis_distribution: layout.counterAlignContent === 'SPACE_BETWEEN'
+      ? 'SpaceBetween'
+      : 'Packed',
+    counter_axis_alignment: layout.counterAlign === 'BASELINE' ? 'Baseline' : 'Auto',
+    cell_size: [
+      columns > 0 ? Math.max(0, (contentWidth - columnGap * Math.max(0, columns - 1)) / columns) : 100,
+      rows > 0 ? Math.max(0, (contentHeight - rowGap * Math.max(0, rows - 1)) / rows) : 100,
+    ],
     child_alignment: childAlignment(layout),
     child_control_width: true,
     child_control_height: true,
-    child_force_expand: primarySpaceBetween,
-    child_force_expand_width: primarySpaceBetween && layout.mode === 'HORIZONTAL',
-    child_force_expand_height: primarySpaceBetween && layout.mode === 'VERTICAL',
+    child_force_expand: false,
+    child_force_expand_width: false,
+    child_force_expand_height: false,
     use_child_scale_width: false,
     use_child_scale_height: false,
     reverse_arrangement: false,
+    reverse_z_order: layout.itemReverseZIndex === true,
     start_corner: 'UpperLeft',
-    start_axis: layout.mode === 'HORIZONTAL' ? 'Horizontal' : 'Vertical',
-    constraint: 'Flexible',
-    constraint_count: 1,
+    start_axis: 'Horizontal',
+    constraint: columns > 0 ? 'FixedColumnCount' : rows > 0 ? 'FixedRowCount' : 'Flexible',
+    constraint_count: columns || rows || 1,
+    grid_columns: columns,
+    grid_rows: rows,
+    grid_fit_width: layout.mode === 'GRID',
+    grid_fit_height: layout.mode === 'GRID',
   };
   const horizontalFit = layout.sizingHorizontal === 'HUG' ? 'PreferredSize' : 'Unconstrained';
   const verticalFit = layout.sizingVertical === 'HUG' ? 'PreferredSize' : 'Unconstrained';
@@ -347,6 +392,63 @@ function applyLayout(
       vertical_fit: verticalFit,
     };
   }
+}
+
+function gridAlignment(value: string | undefined): string {
+  return value === 'MIN'
+    ? 'Min'
+    : value === 'CENTER'
+      ? 'Center'
+      : value === 'MAX' ? 'Max' : value === 'STRETCH' ? 'Stretch' : 'Auto';
+}
+
+function layoutElement(
+  node: FigmaImportNode,
+  parent: FigmaImportNode | undefined,
+): Record<string, unknown> | null {
+  const layout = node.layout;
+  if (!layout) return null;
+  const horizontal = layout.sizingHorizontal;
+  const vertical = layout.sizingVertical;
+  const parentHorizontal = parent?.layout?.mode === 'HORIZONTAL';
+  const parentVertical = parent?.layout?.mode === 'VERTICAL';
+  const stretchCross = layout.align === 'STRETCH';
+  const grow = finite(layout.grow);
+  const leafRaster = node.type !== 'TEXT'
+    && node.requiresRasterization
+    && node.layout?.mode === 'NONE';
+  const lineHeight = finite(node.textStyle?.lineHeightPx, finite(node.textStyle?.fontSize, 16));
+  const fontSize = finite(node.textStyle?.fontSize, lineHeight);
+  return {
+    ignore_layout: layout.positioning === 'ABSOLUTE',
+    min_width: layout.minWidth ?? -1,
+    min_height: layout.minHeight ?? -1,
+    max_width: layout.maxWidth ?? -1,
+    max_height: layout.maxHeight ?? -1,
+    preferred_width: horizontal === 'FIXED' || (horizontal === 'HUG' && leafRaster)
+      ? node.bounds?.width ?? -1
+      : -1,
+    preferred_height: vertical === 'FIXED' || (vertical === 'HUG' && leafRaster)
+      ? node.bounds?.height ?? -1
+      : -1,
+    flexible_width: horizontal === 'FILL' || (parentHorizontal && grow > 0) || (parentVertical && stretchCross)
+      ? Math.max(1, finite(layout.grow, 1))
+      : -1,
+    flexible_height: vertical === 'FILL' || (parentVertical && grow > 0) || (parentHorizontal && stretchCross)
+      ? Math.max(1, finite(layout.grow, 1))
+      : -1,
+    baseline: node.type === 'TEXT'
+      ? Math.max(0, (lineHeight - fontSize) / 2 + fontSize * 0.8)
+      : -1,
+    horizontal_align: parentVertical ? gridAlignment(layout.align) : 'Auto',
+    vertical_align: parentHorizontal ? gridAlignment(layout.align) : 'Auto',
+    grid_column: layout.gridColumn ?? -1,
+    grid_row: layout.gridRow ?? -1,
+    grid_column_span: Math.max(1, Math.trunc(layout.gridColumnSpan ?? 1)),
+    grid_row_span: Math.max(1, Math.trunc(layout.gridRowSpan ?? 1)),
+    grid_horizontal_align: gridAlignment(layout.gridChildHorizontalAlign),
+    grid_vertical_align: gridAlignment(layout.gridChildVerticalAlign),
+  };
 }
 
 function mappedComponents(kind: FigmaComponentKind, text: string): Record<string, unknown> {
@@ -469,21 +571,6 @@ function baseComponents(
   return { kind, components };
 }
 
-function layoutElement(node: FigmaImportNode): Record<string, unknown> | null {
-  const horizontal = node.layout?.sizingHorizontal;
-  const vertical = node.layout?.sizingVertical;
-  if (!horizontal && !vertical) return null;
-  return {
-    ignore_layout: false,
-    min_width: -1,
-    min_height: -1,
-    preferred_width: horizontal === 'FIXED' ? node.bounds?.width ?? -1 : -1,
-    preferred_height: vertical === 'FIXED' ? node.bounds?.height ?? -1 : -1,
-    flexible_width: horizontal === 'FILL' ? 1 : -1,
-    flexible_height: vertical === 'FILL' ? 1 : -1,
-  };
-}
-
 export function buildFigmaUiImportPlan(
   source: FigmaImportSource,
   options: FigmaImportOptions = {},
@@ -556,12 +643,12 @@ export function buildFigmaUiImportPlan(
   const included = new Set(ordered.map((node) => node.id));
   const planNodes: FigmaUiPlanNode[] = [];
   for (const node of ordered) {
-    if (!node.bounds || node.bounds.width <= 0 || node.bounds.height <= 0) {
+    if (!node.bounds) {
       diagnostics.push({
         code: 'MISSING_BOUNDS',
         severity: 'error',
         nodeId: node.id,
-        message: `"${node.name}" has no positive render bounds.`,
+        message: `"${node.name}" has no render bounds.`,
       });
       continue;
     }
@@ -593,7 +680,7 @@ export function buildFigmaUiImportPlan(
       });
     }
     const assetPath = options.assetPaths?.[node.id];
-    if (node.requiresRasterization) {
+    if (node.requiresRasterization && node.type !== 'TEXT') {
       assets.push({
         nodeId: node.id,
         name: node.name,
@@ -615,9 +702,10 @@ export function buildFigmaUiImportPlan(
       node.parentId == null ? undefined : inputById.get(node.parentId),
       node.id === source.rootId,
     );
-    const element = layoutElement(node);
+    const parentNode = node.parentId == null ? undefined : inputById.get(node.parentId);
+    const element = layoutElement(node, parentNode);
     if (element) result.components.LayoutElement = element;
-    applyLayout(result.components, node, diagnostics);
+    applyLayout(result.components, node);
     const parentSourceNodeId = node.id === source.rootId
       ? null
       : (node.parentId && included.has(node.parentId) ? node.parentId : source.rootId);

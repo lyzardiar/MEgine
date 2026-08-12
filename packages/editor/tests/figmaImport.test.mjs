@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -91,7 +93,7 @@ function source() {
   };
 }
 
-test('Figma import maps auto layout, text, stable component ids, and raster assets', () => {
+test('Figma import preserves responsive layout, text, stable component ids, and raster assets', () => {
   const plan = buildFigmaUiImportPlan(source(), {
     componentMappings: { '9:9': 'button' },
   });
@@ -105,6 +107,7 @@ test('Figma import maps auto layout, text, stable component ids, and raster asse
   const root = plan.nodes[0];
   assert.equal(root.components.LayoutGroup.direction, 'Vertical');
   assert.deepEqual(root.components.LayoutGroup.padding, [24, 20, 28, 32]);
+  assert.equal(root.components.ContentSizeFitter, undefined);
   assert.deepEqual(root.components.RectTransform.size_delta, [400, 800]);
 
   const text = plan.nodes.find((node) => node.sourceNodeId === '1:2');
@@ -114,10 +117,127 @@ test('Figma import maps auto layout, text, stable component ids, and raster asse
   assert.deepEqual(text.components.RectTransform.anchor_min, [0, 1]);
   assert.deepEqual(text.components.RectTransform.anchor_max, [1, 1]);
   assert.equal(text.components.LayoutElement.flexible_width, 1);
+  assert.equal(text.components.LayoutElement.preferred_height, 48);
 
   const button = plan.nodes.find((node) => node.sourceNodeId === '1:3');
   assert.equal(button.kind, 'button');
   assert.equal(button.components.Button.label, 'Play');
+});
+
+test('legacy raster flags do not turn editable Figma text into PNG assets', () => {
+  const input = source();
+  input.nodes[1].requiresRasterization = true;
+  input.nodes[1].rasterizeReason = 'Figma text rendering';
+  const plan = buildFigmaUiImportPlan(input, {
+    assetPaths: { '1:2': 'Assets/Figma/HUD/1-2.png', '1:5': 'Assets/Figma/HUD/1-5.png' },
+  });
+  const text = plan.nodes.find((node) => node.sourceNodeId === '1:2');
+  assert.equal(text.kind, 'text');
+  assert.equal(text.components.Text.text, 'Start Game');
+  assert.equal(text.components.RawImage, undefined);
+  assert.deepEqual(plan.assets.map((asset) => asset.nodeId), ['1:5']);
+});
+
+test('Figma wrap, distribution, baseline, absolute children, and grid stay native', () => {
+  const input = source();
+  input.nodes[0].layout = {
+    ...input.nodes[0].layout,
+    wrap: 'WRAP',
+    primaryAlign: 'SPACE_BETWEEN',
+    counterAlign: 'BASELINE',
+    counterAlignContent: 'SPACE_BETWEEN',
+    counterAxisSpacing: 18,
+    sizingVertical: 'HUG',
+    itemReverseZIndex: true,
+    strokesIncluded: true,
+  };
+  input.nodes[0].strokeWeight = 2;
+  input.nodes[1].layout = {
+    ...input.nodes[1].layout,
+    positioning: 'ABSOLUTE',
+    minWidth: 120,
+    maxWidth: 360,
+  };
+  input.nodes[2].layout = {
+    ...input.nodes[2].layout,
+    sizingHorizontal: 'FIXED',
+    sizingVertical: 'FIXED',
+    grow: 1,
+    align: 'MAX',
+  };
+  input.nodes.push(
+    {
+      id: '1:6',
+      parentId: '1:1',
+      name: 'Inventory Grid',
+      type: 'FRAME',
+      bounds: { x: 124, y: 500, width: 352, height: 220 },
+      layout: {
+        mode: 'GRID',
+        sizingHorizontal: 'FILL',
+        sizingVertical: 'FIXED',
+        gridColumnCount: 3,
+        gridRowCount: 2,
+        gridColumnGap: 8,
+        gridRowGap: 12,
+      },
+    },
+    {
+      id: '1:7',
+      parentId: '1:6',
+      name: 'Spanning Cell',
+      type: 'RECTANGLE',
+      bounds: { x: 124, y: 500, width: 232, height: 104 },
+      fillColor: [0.2, 0.3, 0.4, 1],
+      layout: {
+        mode: 'NONE',
+        gridColumn: 0,
+        gridRow: 0,
+        gridColumnSpan: 2,
+        gridRowSpan: 1,
+        gridChildHorizontalAlign: 'MAX',
+        gridChildVerticalAlign: 'CENTER',
+      },
+    },
+  );
+
+  const plan = buildFigmaUiImportPlan(input, { componentMappings: { '9:9': 'button' } });
+  const root = plan.nodes.find((node) => node.sourceNodeId === '1:1');
+  assert.equal(root.components.LayoutGroup.wrap, true);
+  assert.equal(root.components.LayoutGroup.main_axis_distribution, 'SpaceBetween');
+  assert.equal(root.components.LayoutGroup.counter_axis_distribution, 'SpaceBetween');
+  assert.equal(root.components.LayoutGroup.counter_axis_alignment, 'Baseline');
+  assert.equal(root.components.LayoutGroup.counter_spacing, 18);
+  assert.equal(root.components.LayoutGroup.reverse_z_order, true);
+  assert.deepEqual(root.components.LayoutGroup.padding, [26, 22, 30, 34]);
+  assert.equal(root.components.ContentSizeFitter.vertical_fit, 'PreferredSize');
+
+  const absolute = plan.nodes.find((node) => node.sourceNodeId === '1:2');
+  assert.equal(absolute.components.LayoutElement.ignore_layout, true);
+  assert.equal(absolute.components.LayoutElement.min_width, 120);
+  assert.equal(absolute.components.LayoutElement.max_width, 360);
+
+  const growing = plan.nodes.find((node) => node.sourceNodeId === '1:3');
+  assert.equal(growing.components.LayoutElement.flexible_width, -1);
+  assert.equal(growing.components.LayoutElement.flexible_height, 1);
+  assert.equal(growing.components.LayoutElement.horizontal_align, 'Max');
+  assert.equal(growing.components.LayoutElement.vertical_align, 'Auto');
+
+  const grid = plan.nodes.find((node) => node.sourceNodeId === '1:6');
+  assert.equal(grid.components.LayoutGroup.direction, 'Grid');
+  assert.deepEqual(grid.components.LayoutGroup.spacing, [8, 12]);
+  assert.equal(grid.components.LayoutGroup.grid_columns, 3);
+  assert.equal(grid.components.LayoutGroup.grid_rows, 2);
+  assert.equal(grid.components.LayoutGroup.grid_fit_width, true);
+  assert.equal(grid.components.LayoutGroup.grid_fit_height, true);
+
+  const spanning = plan.nodes.find((node) => node.sourceNodeId === '1:7');
+  assert.equal(spanning.components.LayoutElement.grid_column, 0);
+  assert.equal(spanning.components.LayoutElement.grid_row, 0);
+  assert.equal(spanning.components.LayoutElement.grid_column_span, 2);
+  assert.equal(spanning.components.LayoutElement.grid_horizontal_align, 'Max');
+  assert.equal(spanning.components.LayoutElement.grid_vertical_align, 'Center');
+  assert.equal(plan.diagnostics.some((entry) => entry.code.startsWith('UNSUPPORTED_')), false);
 });
 
 test('unmapped instances remain editable visual hierarchies and report the missing semantic mapping', () => {
@@ -126,6 +246,36 @@ test('unmapped instances remain editable visual hierarchies and report the missi
   assert.ok(plan.diagnostics.some((entry) => (
     entry.code === 'UNMAPPED_COMPONENT' && entry.nodeId === '1:3'
   )));
+});
+
+test('zero-sized Figma nodes keep their native RectTransform and child hierarchy', () => {
+  const input = source();
+  input.nodes.push(
+    {
+      id: '1:6',
+      parentId: '1:1',
+      name: 'Zero-sized container',
+      type: 'GROUP',
+      bounds: { x: 200, y: 300, width: 0, height: 0 },
+      layout: { mode: 'NONE' },
+    },
+    {
+      id: '1:7',
+      parentId: '1:6',
+      name: 'Visible child',
+      type: 'RECTANGLE',
+      bounds: { x: 200, y: 300, width: 32, height: 24 },
+      layout: { mode: 'NONE' },
+    },
+  );
+
+  const plan = buildFigmaUiImportPlan(input);
+  const container = plan.nodes.find((node) => node.sourceNodeId === '1:6');
+  const child = plan.nodes.find((node) => node.sourceNodeId === '1:7');
+  assert.equal(plan.readyToImport, true);
+  assert.deepEqual(container.components.RectTransform.size_delta, [0, 0]);
+  assert.equal(child.parentSourceNodeId, '1:6');
+  assert.equal(plan.diagnostics.some((entry) => entry.code === 'MISSING_BOUNDS'), false);
 });
 
 test('landed asset paths remove preview-only requirements without changing the plan revision', () => {

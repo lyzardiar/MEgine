@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import { getBehaviour, listBehaviours } from '@mengine/behaviour';
 import { defaultRectTransform, stretchRectTransform } from './ui/rectLayout.ts';
 import { createGridComponent, createTilemapComponent } from './tilemapModel.ts';
@@ -668,10 +670,21 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       ignore_layout: false,
       min_width: -1,
       min_height: -1,
+      max_width: -1,
+      max_height: -1,
       preferred_width: -1,
       preferred_height: -1,
       flexible_width: -1,
       flexible_height: -1,
+      baseline: -1,
+      horizontal_align: 'Auto',
+      vertical_align: 'Auto',
+      grid_column: -1,
+      grid_row: -1,
+      grid_column_span: 1,
+      grid_row_span: 1,
+      grid_horizontal_align: 'Auto',
+      grid_vertical_align: 'Auto',
     }),
   },
   {
@@ -1173,6 +1186,11 @@ export function createUiLayoutGroupComponents(direction: UiLayoutDirection = 'Ve
       direction,
       padding: [8, 8, 8, 8],
       spacing: [6, 6],
+      wrap: false,
+      counter_spacing: -1,
+      main_axis_distribution: 'Packed',
+      counter_axis_distribution: 'Packed',
+      counter_axis_alignment: 'Auto',
       cell_size: [160, 36],
       child_alignment: 'UpperLeft',
       child_control_width: true,
@@ -1183,10 +1201,15 @@ export function createUiLayoutGroupComponents(direction: UiLayoutDirection = 'Ve
       use_child_scale_width: false,
       use_child_scale_height: false,
       reverse_arrangement: false,
+      reverse_z_order: false,
       start_corner: 'UpperLeft',
       start_axis: direction === 'Vertical' ? 'Vertical' : 'Horizontal',
       constraint: 'FixedColumnCount',
       constraint_count: 1,
+      grid_columns: 0,
+      grid_rows: 0,
+      grid_fit_width: false,
+      grid_fit_height: false,
     },
   };
 }

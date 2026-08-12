@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -25,6 +27,41 @@ const figmaSource = {
     name: 'HUD Frame',
     type: 'FRAME',
     bounds: { x: 0, y: 0, width: 320, height: 640 },
+    layout: {
+      mode: 'GRID',
+      wrap: 'WRAP',
+      itemSpacing: -2,
+      counterAxisSpacing: 12,
+      paddingLeft: 8,
+      paddingRight: 8,
+      paddingTop: 6,
+      paddingBottom: 6,
+      primaryAlign: 'SPACE_BETWEEN',
+      counterAlign: 'BASELINE',
+      counterAlignContent: 'SPACE_BETWEEN',
+      sizingHorizontal: 'FILL',
+      sizingVertical: 'HUG',
+      positioning: 'ABSOLUTE',
+      grow: 1,
+      align: 'STRETCH',
+      minWidth: 100,
+      maxWidth: 400,
+      minHeight: 40,
+      maxHeight: 800,
+      itemReverseZIndex: true,
+      strokesIncluded: true,
+      gridRowCount: 2,
+      gridColumnCount: 3,
+      gridRowGap: 12,
+      gridColumnGap: 8,
+      gridItemsPositioning: 'MANUAL',
+      gridChildHorizontalAlign: 'MAX',
+      gridChildVerticalAlign: 'CENTER',
+      gridRowSpan: 2,
+      gridColumnSpan: 2,
+      gridColumn: 1,
+      gridRow: 0,
+    },
   }],
 };
 

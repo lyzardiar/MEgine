@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -418,6 +420,19 @@ export async function getAgentAdapterInfo(): Promise<AgentAdapterInfo> {
     };
   }
   return invoke<AgentAdapterInfo>('get_agent_adapter_info');
+}
+
+export type FigmaAgentOperation = 'figma-preview' | 'figma-import';
+
+export async function runFigmaAgentOperation(
+  operation: FigmaAgentOperation,
+  url: string,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  if (!isDesktopEditor()) {
+    throw new Error('Figma import is available in the desktop editor only.');
+  }
+  return invoke('run_figma_agent_operation', { operation, url, args });
 }
 
 export async function isPrimaryPointerDown(): Promise<boolean> {
