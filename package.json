@@ -13,7 +13,8 @@
     "build:editor:desktop": "npm.cmd --prefix packages/editor run tauri:build",
     "build:editor:desktop:debug": "npm.cmd --prefix packages/editor run tauri:build:debug",
     "sample:cube": "npm.cmd run build:samples && cargo run -p mengine-runtime -- --sample spinning-cube",
-    "sample:effekseer": "cargo run -p mengine-runtime -- --scene samples/effekseer-fire/Assets/Scenes/Main.mscene"
+    "sample:effekseer": "cargo run -p mengine-runtime -- --scene samples/effekseer-fire/Assets/Scenes/Main.mscene",
+    "sample:survivors": "npm.cmd run build:samples && cargo run -p mengine-runtime -- --project-root samples/eclipse-survivors --scene Assets/Scenes/Login.mscene --script samples/eclipse-survivors/Assets/Scripts/Main.js --title \"Eclipse Survivors\""
   },
   "engines": {
     "node": ">=20"

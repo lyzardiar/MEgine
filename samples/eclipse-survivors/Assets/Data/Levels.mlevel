@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "kind": "level-library",
+  "levels": [
+    {
+      "id": "eclipse_garden",
+      "name": "Eclipse Garden",
+      "description": "A forgiving ruined garden with steady pressure and a single Guardian.",
+      "duration": 180,
+      "background": "Assets/Art/Generated/eclipse-citadel.png",
+      "accent": "#47dfff",
+      "recommendedPower": 0,
+      "waves": [
+        {
+          "start": 0,
+          "duration": 45,
+          "enemy": "wisp",
+          "count": 32,
+          "hp": 22,
+          "speed": 1.25,
+          "damage": 7
+        },
+        {
+          "start": 35,
+          "duration": 60,
+          "enemy": "thorn_crawler",
+          "count": 26,
+          "hp": 40,
+          "speed": 1.55,
+          "damage": 10
+        },
+        {
+          "start": 85,
+          "duration": 70,
+          "enemy": "ember_cultist",
+          "count": 24,
+          "hp": 70,
+          "speed": 1,
+          "damage": 14
+        },
+        {
+          "start": 130,
+          "duration": 45,
+          "enemy": "wisp",
+          "count": 54,
+          "hp": 48,
+          "speed": 1.75,
+          "damage": 11
+        }
+      ],
+      "boss": {
+        "enemy": "void_guardian",
+        "spawnAt": 165,
+        "hp": 1150,
+        "speed": 0.78,
+        "damage": 24
+      }
+    },
+    {
+      "id": "astral_archive",
+      "name": "Astral Archive",
+      "description": "Faster swarms overlap in the collapsed archive. Requires a tuned loadout.",
+      "duration": 240,
+      "background": "Assets/Art/Generated/eclipse-citadel.png",
+      "accent": "#b966ff",
+      "recommendedPower": 4,
+      "waves": [
+        {
+          "start": 0,
+          "duration": 55,
+          "enemy": "thorn_crawler",
+          "count": 46,
+          "hp": 52,
+          "speed": 1.7,
+          "damage": 11
+        },
+        {
+          "start": 35,
+          "duration": 80,
+          "enemy": "wisp",
+          "count": 72,
+          "hp": 46,
+          "speed": 2,
+          "damage": 10
+        },
+        {
+          "start": 90,
+          "duration": 85,
+          "enemy": "ember_cultist",
+          "count": 48,
+          "hp": 105,
+          "speed": 1.2,
+          "damage": 18
+        },
+        {
+          "start": 150,
+          "duration": 80,
+          "enemy": "thorn_crawler",
+          "count": 82,
+          "hp": 95,
+          "speed": 2.05,
+          "damage": 16
+        }
+      ],
+      "boss": {
+        "enemy": "void_guardian",
+        "spawnAt": 220,
+        "hp": 2200,
+        "speed": 0.92,
+        "damage": 32
+      }
+    },
+    {
+      "id": "sunken_observatory",
+      "name": "Sunken Observatory",
+      "description": "Endless pressure from all enemy families beneath the final eclipse.",
+      "duration": 300,
+      "background": "Assets/Art/Generated/eclipse-citadel.png",
+      "accent": "#ffb24d",
+      "recommendedPower": 8,
+      "waves": [
+        {
+          "start": 0,
+          "duration": 80,
+          "enemy": "ember_cultist",
+          "count": 55,
+          "hp": 105,
+          "speed": 1.25,
+          "damage": 17
+        },
+        {
+          "start": 40,
+          "duration": 110,
+          "enemy": "wisp",
+          "count": 110,
+          "hp": 72,
+          "speed": 2.2,
+          "damage": 13
+        },
+        {
+          "start": 110,
+          "duration": 110,
+          "enemy": "thorn_crawler",
+          "count": 105,
+          "hp": 132,
+          "speed": 2.1,
+          "damage": 20
+        },
+        {
+          "start": 180,
+          "duration": 110,
+          "enemy": "ember_cultist",
+          "count": 78,
+          "hp": 205,
+          "speed": 1.45,
+          "damage": 26
+        },
+        {
+          "start": 225,
+          "duration": 70,
+          "enemy": "wisp",
+          "count": 150,
+          "hp": 105,
+          "speed": 2.65,
+          "damage": 19
+        }
+      ],
+      "boss": {
+        "enemy": "void_guardian",
+        "spawnAt": 275,
+        "hp": 4200,
+        "speed": 1.05,
+        "damage": 42
+      }
+    }
+  ]
+}

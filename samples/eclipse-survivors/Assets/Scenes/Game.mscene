@@ -1,0 +1,1211 @@
+{
+  "version": 3,
+  "name": "Game",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 5,
+            "primary": true,
+            "target_display": 0,
+            "clear_flags": "solid_color",
+            "background_color": [
+              0.018,
+              0.021,
+              0.05,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Arena Background",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -2
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Art/Generated/eclipse-citadel.png",
+            "color": [
+              0.26,
+              0.31,
+              0.53,
+              1
+            ],
+            "size": [
+              17.78,
+              10
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "sorting_layer": "default",
+            "sorting_order": -100
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Player",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Art/Generated/eclipse-warden.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1.15,
+              1.15
+            ],
+            "pivot": [
+              0.5,
+              0.46
+            ],
+            "sorting_layer": "default",
+            "sorting_order": 50
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Canvas",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay",
+            "sorting_order": 0,
+            "plane_distance": 100
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1280,
+              720
+            ],
+            "match_width_or_height": 0.5,
+            "scale_factor": 1
+          },
+          "GraphicRaycaster": {
+            "enabled": true,
+            "ignore_reversed_graphics": true,
+            "blocking_objects": "None",
+            "blocking_mask": -1
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "HUD Top",
+        "parent": 4,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -323.3333333333333
+            ],
+            "size_delta": [
+              1280,
+              73.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.015,
+              0.02,
+              0.065,
+              0.88
+            ],
+            "border_color": [
+              0.25,
+              0.6,
+              0.85,
+              0.45
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "HUD Stage",
+        "parent": 4,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -483.3333333333333,
+              -323.3333333333333
+            ],
+            "size_delta": [
+              286.66666666666663,
+              46.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "ECLIPSE GARDEN",
+            "color": [
+              0.82,
+              0.76,
+              1,
+              1
+            ],
+            "font_size": 14.666666666666666,
+            "font_style": "Normal",
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "HUD Timer",
+        "parent": 4,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -323.3333333333333
+            ],
+            "size_delta": [
+              186.66666666666666,
+              46.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "03:00",
+            "color": [
+              0.94,
+              0.97,
+              1,
+              1
+            ],
+            "font_size": 21.333333333333332,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "HUD Stats",
+        "parent": 4,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              420,
+              -323.3333333333333
+            ],
+            "size_delta": [
+              220,
+              46.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "LV 1  •  0 KILLS  •  0 GOLD",
+            "color": [
+              0.55,
+              0.86,
+              1,
+              1
+            ],
+            "font_size": 9.333333333333332,
+            "font_style": "Normal",
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Health Bar",
+        "parent": 4,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -426.66666666666663,
+              320
+            ],
+            "size_delta": [
+              286.66666666666663,
+              18.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "ProgressBar": {
+            "min_value": 0,
+            "max_value": 100,
+            "value": 100,
+            "direction": "LeftToRight",
+            "background_color": [
+              0.12,
+              0.04,
+              0.09,
+              0.92
+            ],
+            "fill_color": [
+              0.91,
+              0.16,
+              0.35,
+              1
+            ],
+            "text_color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "show_label": true,
+            "font_size": 8.666666666666666
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Experience Bar",
+        "parent": 4,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              337.3333333333333
+            ],
+            "size_delta": [
+              533.3333333333333,
+              13.333333333333332
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "ProgressBar": {
+            "min_value": 0,
+            "max_value": 10,
+            "value": 0,
+            "direction": "LeftToRight",
+            "background_color": [
+              0.035,
+              0.05,
+              0.12,
+              0.94
+            ],
+            "fill_color": [
+              0.22,
+              0.74,
+              0.97,
+              1
+            ],
+            "text_color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "show_label": false,
+            "font_size": 8
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Skill Tray",
+        "parent": 4,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              406.66666666666663,
+              283.3333333333333
+            ],
+            "size_delta": [
+              380,
+              80
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.015,
+              0.02,
+              0.065,
+              0.88
+            ],
+            "border_color": [
+              0.38,
+              0.28,
+              0.7,
+              0.5
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "HUD Skills",
+        "parent": 4,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              406.66666666666663,
+              283.3333333333333
+            ],
+            "size_delta": [
+              346.66666666666663,
+              60
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "ASTRAL BOLT  LV 1",
+            "color": [
+              0.8,
+              0.83,
+              1,
+              1
+            ],
+            "font_size": 10.666666666666666,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Run Toast",
+        "parent": 4,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -216.66666666666666
+            ],
+            "size_delta": [
+              600,
+              46.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "THE ECLIPSE RISES",
+            "color": [
+              0.55,
+              0.9,
+              1,
+              1
+            ],
+            "font_size": 16,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Controls Hint",
+        "parent": 4,
+        "siblingIndex": 14,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -466.66666666666663,
+              283.3333333333333
+            ],
+            "size_delta": [
+              300,
+              43.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "WASD  MOVE  •  ATTACKS ARE AUTOMATIC",
+            "color": [
+              0.55,
+              0.63,
+              0.78,
+              1
+            ],
+            "font_size": 8.666666666666666,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Pause Button",
+        "parent": 4,
+        "siblingIndex": 15,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              576.6666666666666,
+              -323.3333333333333
+            ],
+            "size_delta": [
+              60,
+              29.333333333333332
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.08,
+              0.12,
+              0.24,
+              0.95
+            ],
+            "highlighted_color": [
+              0.28,
+              0.58,
+              0.82,
+              1
+            ],
+            "pressed_color": [
+              0.168,
+              0.348,
+              0.49199999999999994,
+              1
+            ],
+            "selected_color": [
+              0.28,
+              0.58,
+              0.82,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "II",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "pause"
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Pause Overlay",
+        "parent": 4,
+        "siblingIndex": 16,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              426.66666666666663,
+              280
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.025,
+              0.035,
+              0.1,
+              0.96
+            ],
+            "border_color": [
+              0.45,
+              0.3,
+              0.8,
+              0.8
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Pause Title",
+        "parent": 16,
+        "siblingIndex": 17,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -73.33333333333333
+            ],
+            "size_delta": [
+              346.66666666666663,
+              53.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "RUN PAUSED",
+            "color": [
+              0.9,
+              0.84,
+              1,
+              1
+            ],
+            "font_size": 22.666666666666664,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Pause Summary",
+        "parent": 16,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -16.666666666666664
+            ],
+            "size_delta": [
+              346.66666666666663,
+              53.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "Take a breath beneath the eclipse.",
+            "color": [
+              0.65,
+              0.72,
+              0.87,
+              1
+            ],
+            "font_size": 10.666666666666666,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Resume Button",
+        "parent": 16,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              46.666666666666664
+            ],
+            "size_delta": [
+              240,
+              38.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.11,
+              0.24,
+              0.39,
+              0.98
+            ],
+            "highlighted_color": [
+              0.17,
+              0.67,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.10200000000000001,
+              0.402,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.17,
+              0.67,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "RESUME",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "resume"
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Abandon Button",
+        "parent": 16,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              96.66666666666666
+            ],
+            "size_delta": [
+              240,
+              32
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.27,
+              0.08,
+              0.17,
+              1
+            ],
+            "highlighted_color": [
+              0.7,
+              0.18,
+              0.38,
+              1
+            ],
+            "pressed_color": [
+              0.42,
+              0.108,
+              0.22799999999999998,
+              1
+            ],
+            "selected_color": [
+              0.7,
+              0.18,
+              0.38,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "ABANDON RUN",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "abandon"
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.018,
+      0.021,
+      0.05,
+      1
+    ],
+    "selected": 3
+  },
+  "gameResolution": {
+    "width": 1280,
+    "height": 720
+  }
+}

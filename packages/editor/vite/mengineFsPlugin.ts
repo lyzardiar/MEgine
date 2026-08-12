@@ -1,3 +1,4 @@
+// Author: MiYu
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -149,7 +150,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     pixelsPerUnit?: number;
   };
   type ProjectFileAsset = TextureAsset & {
-    kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'material' | 'shader' | 'model' | 'prefab' | 'sprite-atlas' | 'texture' | 'spine-json' | 'spine-binary' | 'spine-atlas' | 'scene' | 'script' | 'sprite-import';
+    kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'material' | 'shader' | 'model' | 'prefab' | 'sprite-atlas' | 'texture' | 'spine-json' | 'spine-binary' | 'spine-atlas' | 'gameplay-data' | 'scene' | 'script' | 'sprite-import';
     revision: string;
     size: number;
     guid: string | null;
@@ -384,6 +385,8 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
             ? 'avatar-mask'
           : lower.endsWith('.mtimeline')
             ? 'timeline'
+          : /\.(mskill|mlevel|mgame)$/.test(lower)
+            ? 'gameplay-data'
             : /\.(wav|ogg|mp3|flac)$/.test(lower)
               ? 'audio'
             : lower.endsWith('.mmat') || lower.endsWith('.mat') || lower.endsWith('.minst')
@@ -1187,7 +1190,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
   const referenceTextExtensions = new Set([
     '.json', '.mscene', '.prefab', '.manim', '.mcontroller', '.mavatar',
-    '.mtimeline', '.mmat', '.mat', '.minst', '.mshader', '.matlas', '.gltf',
+    '.mtimeline', '.mmat', '.mat', '.minst', '.mshader', '.matlas', '.mskill', '.mlevel', '.mgame', '.gltf',
     '.atlas', '.ts', '.tsx', '.js', '.jsx',
   ]);
 

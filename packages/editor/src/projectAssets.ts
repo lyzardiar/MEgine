@@ -1,3 +1,4 @@
+// Author: MiYu
 import { invoke } from '@tauri-apps/api/core';
 import { isDesktopEditor } from './transport/editorTransport.ts';
 
@@ -27,6 +28,7 @@ export type ProjectFileAsset = {
     | 'spine-atlas'
     | 'effekseer-effect'
     | 'effekseer-catalog'
+    | 'gameplay-data'
     | 'scene'
     | 'script'
     | 'sprite-import';
@@ -276,6 +278,9 @@ export function isProjectTextAssetPath(relativePath: string): boolean {
     '.mshader',
     '.meffect',
     '.matlas',
+    '.mskill',
+    '.mlevel',
+    '.mgame',
     '.gltf',
     '.atlas',
     '.ts',

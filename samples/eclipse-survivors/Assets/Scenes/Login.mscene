@@ -1,0 +1,799 @@
+{
+  "version": 3,
+  "name": "Login",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 5,
+            "primary": true,
+            "target_display": 0,
+            "clear_flags": "solid_color",
+            "background_color": [
+              0.018,
+              0.021,
+              0.05,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Canvas",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay",
+            "sorting_order": 0,
+            "plane_distance": 100
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1280,
+              720
+            ],
+            "match_width_or_height": 0.5,
+            "scale_factor": 1
+          },
+          "GraphicRaycaster": {
+            "enabled": true,
+            "ignore_reversed_graphics": true,
+            "blocking_objects": "None",
+            "blocking_mask": -1
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Login Background",
+        "parent": 2,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              1280,
+              720
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/eclipse-citadel.png",
+            "color": [
+              0.64,
+              0.7,
+              0.92,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Login Vignette",
+        "parent": 2,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              1280,
+              720
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.015,
+              0.02,
+              0.06,
+              0.35
+            ],
+            "border_color": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Login Card",
+        "parent": 2,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              6.666666666666666
+            ],
+            "size_delta": [
+              373.3333333333333,
+              460
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.025,
+              0.035,
+              0.09,
+              0.94
+            ],
+            "border_color": [
+              0.33,
+              0.73,
+              0.95,
+              0.65
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Login Eyebrow",
+        "parent": 2,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -180
+            ],
+            "size_delta": [
+              313.3333333333333,
+              21.333333333333332
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "A MENGINE ORIGINAL SAMPLE",
+            "color": [
+              0.31,
+              0.83,
+              1,
+              1
+            ],
+            "font_size": 10,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Login Title",
+        "parent": 2,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -126.66666666666666
+            ],
+            "size_delta": [
+              333.3333333333333,
+              73.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "ECLIPSE\nSURVIVORS",
+            "color": [
+              0.92,
+              0.86,
+              1,
+              1
+            ],
+            "font_size": 32,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Login Subtitle",
+        "parent": 2,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -63.33333333333333
+            ],
+            "size_delta": [
+              286.66666666666663,
+              36
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "Hold the line beneath a dying sun.",
+            "color": [
+              0.68,
+              0.73,
+              0.88,
+              1
+            ],
+            "font_size": 13.333333333333332,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Profile Name Input",
+        "parent": 2,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              10
+            ],
+            "size_delta": [
+              273.3333333333333,
+              38.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "InputField": {
+            "text": "",
+            "placeholder": "Enter your Warden name",
+            "text_color": [
+              0.93,
+              0.97,
+              1,
+              1
+            ],
+            "placeholder_color": [
+              0.48,
+              0.55,
+              0.7,
+              1
+            ],
+            "background_color": [
+              0.035,
+              0.055,
+              0.13,
+              1
+            ],
+            "caret_color": [
+              0.3,
+              0.85,
+              1,
+              1
+            ],
+            "font_size": 13.333333333333332,
+            "interactable": true,
+            "multiline": false,
+            "character_limit": 18,
+            "on_submit": "login"
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Continue Button",
+        "parent": 2,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              66.66666666666666
+            ],
+            "size_delta": [
+              273.3333333333333,
+              40
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.11,
+              0.24,
+              0.39,
+              0.98
+            ],
+            "highlighted_color": [
+              0.17,
+              0.67,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.10200000000000001,
+              0.402,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.17,
+              0.67,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "ENTER THE ECLIPSE",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "continue"
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Login Hint",
+        "parent": 2,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              117.33333333333333
+            ],
+            "size_delta": [
+              286.66666666666663,
+              38.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "Press Enter after typing, or continue as a guest.\nProfile and progression save locally.",
+            "color": [
+              0.53,
+              0.6,
+              0.75,
+              1
+            ],
+            "font_size": 9.333333333333332,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Reset Profile Button",
+        "parent": 2,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              170
+            ],
+            "size_delta": [
+              133.33333333333331,
+              26.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.2,
+              0.08,
+              0.14,
+              0.8
+            ],
+            "highlighted_color": [
+              0.62,
+              0.18,
+              0.3,
+              1
+            ],
+            "pressed_color": [
+              0.372,
+              0.108,
+              0.18,
+              1
+            ],
+            "selected_color": [
+              0.62,
+              0.18,
+              0.3,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "RESET PROFILE",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "reset-profile"
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Login Status",
+        "parent": 2,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              206.66666666666666
+            ],
+            "size_delta": [
+              286.66666666666663,
+              24
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "",
+            "color": [
+              0.98,
+              0.68,
+              0.8,
+              1
+            ],
+            "font_size": 9.333333333333332,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.018,
+      0.021,
+      0.05,
+      1
+    ],
+    "selected": 10
+  },
+  "gameResolution": {
+    "width": 1280,
+    "height": 720
+  }
+}

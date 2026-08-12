@@ -1,3 +1,4 @@
+// Author: MiYu
 import {
   useEffect,
   useMemo,
@@ -30,6 +31,7 @@ import {
   RotateCcw,
   Search,
   Sparkles,
+  Swords,
   Trash2,
   Type,
   Upload,
@@ -100,6 +102,7 @@ const STATIC_FOLDERS = [
   'Assets/Fonts',
   'Assets/Prefabs',
   'Assets/Scripts',
+  'Assets/Data',
   'Assets/Materials',
   'Assets/Shaders',
   'Assets/Models',
@@ -113,7 +116,7 @@ type AssetItem = {
   assetPath?: string;
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'effekseer-effect' | 'effekseer-catalog' | 'font' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'effekseer-effect' | 'effekseer-catalog' | 'font' | 'gameplay-data' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
   icon: ReactNode;
   sceneName?: string;
@@ -155,6 +158,7 @@ export function Project(props: {
   onOpenSprite: (path: string) => void;
   onOpenSpriteAtlas: (path: string) => void;
   onOpenEffekseer: (path: string) => void;
+  onOpenGameplayData: (path: string) => void;
   onRenameScene: (oldName: string, newName: string) => boolean | Promise<boolean>;
   onDeleteScene: (name: string) => boolean | Promise<boolean>;
   onPrepareAssetTransaction: () => boolean | Promise<boolean>;
@@ -423,6 +427,8 @@ export function Project(props: {
         ? 'effekseer-effect'
       : asset.kind === 'effekseer-catalog'
         ? 'effekseer-catalog'
+      : asset.kind === 'gameplay-data'
+        ? 'gameplay-data'
       : asset.kind === 'material'
         ? 'material'
         : asset.kind === 'shader'
@@ -457,6 +463,8 @@ export function Project(props: {
         ? <Type size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'effekseer-effect' || kind === 'effekseer-catalog'
         ? <Sparkles size={24} strokeWidth={1.4} aria-hidden="true" />
+        : kind === 'gameplay-data'
+        ? <Swords size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'animation'
         ? <Film size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'material'
@@ -645,6 +653,10 @@ export function Project(props: {
     }
     if (a.kind === 'effekseer-effect' && a.spriteId) {
       props.onOpenEffekseer(a.spriteId);
+      return;
+    }
+    if (a.kind === 'gameplay-data' && a.spriteId) {
+      props.onOpenGameplayData(a.spriteId);
       return;
     }
     if (a.kind === 'prefab' && a.spriteId) {

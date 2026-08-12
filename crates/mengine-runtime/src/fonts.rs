@@ -1,5 +1,10 @@
+// Author: MiYu
+
 use crate::textures::resolve_project_asset_path;
-use crate::ui::{UiFontGlyphMetrics, UiFontGlyphTexture, UiFontResolver};
+use crate::ui::{
+    builtin_bitmap_glyph_bounds, builtin_bitmap_glyph_metrics, rasterize_builtin_bitmap_glyph,
+    UiFontGlyphMetrics, UiFontGlyphTexture, UiFontResolver,
+};
 use ab_glyph::{point, Font, FontArc, ScaleFont};
 use mengine_rhi::Renderer;
 use sha2::{Digest, Sha256};
@@ -11,6 +16,8 @@ const MAX_FONT_BYTES: u64 = 64 * 1024 * 1024;
 const ATLAS_SIZE: u32 = 1024;
 const MAX_ATLAS_PAGES: usize = 32;
 const GLYPH_PADDING: u32 = 1;
+const BUILTIN_FONT_KEY: &str = "mengine://builtin-bitmap";
+const BUILTIN_FONT_REVISION: &str = "builtin-bitmap-v3";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FontLoadFailure {
@@ -423,6 +430,63 @@ impl RuntimeFontCache {
     fn total_atlas_pages(&self) -> usize {
         self.atlases.values().map(Vec::len).sum()
     }
+
+    fn is_builtin_font(reference: &str) -> bool {
+        reference.trim().is_empty() || reference == BUILTIN_FONT_KEY
+    }
+
+    fn resolve_builtin_glyph_texture(
+        &mut self,
+        character: char,
+        font_size: f32,
+        font_style: &str,
+    ) -> Option<UiFontGlyphTexture> {
+        let atlas_key = AtlasKey {
+            font: BUILTIN_FONT_KEY.into(),
+            revision: BUILTIN_FONT_REVISION.into(),
+            layout_size: 7,
+            raster_size: 7,
+            style: style_key(font_style),
+        };
+        let layout_bounds = builtin_bitmap_glyph_bounds(font_size, font_style);
+        if let Some(glyph) = self
+            .atlases
+            .get(&atlas_key)
+            .and_then(|pages| pages.iter().find_map(|page| page.glyphs.get(&character)))
+        {
+            let mut glyph = glyph.clone();
+            glyph.bounds = layout_bounds;
+            return Some(glyph);
+        }
+        let (width, height, alpha) = rasterize_builtin_bitmap_glyph(character, font_style)?;
+        let base_bounds = builtin_bitmap_glyph_bounds(7.0, font_style);
+        if let Some(glyph) = self.atlases.get_mut(&atlas_key).and_then(|pages| {
+            pages
+                .iter_mut()
+                .find_map(|page| page.insert(character, width, height, &alpha, base_bounds))
+        }) {
+            let mut glyph = glyph;
+            glyph.bounds = layout_bounds;
+            return Some(glyph);
+        }
+        if self.total_atlas_pages() >= MAX_ATLAS_PAGES {
+            self.report_failure(
+                BUILTIN_FONT_KEY,
+                self.project_root.clone().unwrap_or_default(),
+                format!("dynamic font atlas budget exhausted at {MAX_ATLAS_PAGES} pages"),
+            );
+            return None;
+        }
+        let page_index = self.atlases.get(&atlas_key).map_or(0, Vec::len);
+        let mut page = FontAtlasPage::new(format!(
+            "mengine-font://builtin-{}/{page_index}",
+            style_key(font_style)
+        ));
+        let mut glyph = page.insert(character, width, height, &alpha, base_bounds)?;
+        self.atlases.entry(atlas_key).or_default().push(page);
+        glyph.bounds = layout_bounds;
+        Some(glyph)
+    }
 }
 
 impl UiFontResolver for RuntimeFontCache {
@@ -433,6 +497,11 @@ impl UiFontResolver for RuntimeFontCache {
         font_size: f32,
         font_style: &str,
     ) -> Option<UiFontGlyphMetrics> {
+        if Self::is_builtin_font(reference) {
+            return Some(builtin_bitmap_glyph_metrics(
+                character, font_size, font_style,
+            ));
+        }
         let (_, _, font) = self.font(reference)?;
         let geometry = Self::geometry(&font, character, font_size, font_style);
         Some(UiFontGlyphMetrics {
@@ -451,6 +520,9 @@ impl UiFontResolver for RuntimeFontCache {
         font_size: f32,
         _font_style: &str,
     ) -> Option<f32> {
+        if Self::is_builtin_font(reference) {
+            return Some(0.0);
+        }
         let (_, _, font) = self.font(reference)?;
         let scaled = font.as_scaled(quantized_size(font_size) as f32);
         Some(scaled.kern(scaled.glyph_id(left), scaled.glyph_id(right)))
@@ -464,6 +536,9 @@ impl UiFontResolver for RuntimeFontCache {
         font_style: &str,
         raster_scale: f32,
     ) -> Option<UiFontGlyphTexture> {
+        if Self::is_builtin_font(reference) {
+            return self.resolve_builtin_glyph_texture(character, font_size, font_style);
+        }
         let (font_key, revision, font) = self.font(reference)?;
         let layout_size = quantized_size(font_size);
         let raster_size = quantized_raster_size(font_size, raster_scale);
@@ -584,6 +659,24 @@ fn load_font_file(path: &Path) -> Result<(String, FontArc), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn builtin_bitmap_font_reuses_one_atlas_glyph_quad() {
+        let mut cache = RuntimeFontCache::new(None);
+        let metrics = cache.measure_glyph("", 'A', 28.0, "Normal").unwrap();
+        assert!((metrics.advance - 24.0).abs() < 0.001);
+        let first = cache
+            .resolve_glyph_texture("", 'A', 28.0, "Normal", 1.0)
+            .unwrap();
+        let second = cache
+            .resolve_glyph_texture("", 'A', 42.0, "Normal", 1.0)
+            .unwrap();
+        assert_eq!(first.key, second.key);
+        assert_eq!(first.uv, second.uv);
+        assert!(second.bounds[2] > first.bounds[2]);
+        assert_eq!(cache.atlases.len(), 1);
+        assert_eq!(cache.total_atlas_pages(), 1);
+    }
 
     #[test]
     fn font_paths_are_confined_and_invalid_data_fails_softly_once() {

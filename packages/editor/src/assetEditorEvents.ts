@@ -1,3 +1,4 @@
+// Author: MiYu
 import { createEditorBroadcastChannel } from './editorInstance.ts';
 import type { ProjectAssetChange } from './projectAssets.ts';
 
@@ -8,6 +9,7 @@ export const OPEN_MATERIAL_EVENT = 'mengine:open-material';
 export const OPEN_SURFACE_SHADER_EVENT = 'mengine:open-surface-shader';
 export const OPEN_SPRITE_EDITOR_EVENT = 'mengine:open-sprite-editor';
 export const OPEN_SPRITE_ATLAS_EVENT = 'mengine:open-sprite-atlas';
+export const OPEN_GAMEPLAY_DATA_EVENT = 'mengine:open-gameplay-data';
 export const PROJECT_ASSETS_CHANGED_EVENT = 'mengine:project-assets-changed';
 export const PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT = 'mengine:project-assets-external-change';
 
@@ -172,4 +174,8 @@ export function openSpriteAsset(path: string): void {
 
 export function openSpriteAtlasAsset(path: string): void {
   openAsset(OPEN_SPRITE_ATLAS_EVENT, 'spriteAtlas', path);
+}
+
+export function openGameplayDataAsset(path: string): void {
+  openAsset(OPEN_GAMEPLAY_DATA_EVENT, 'gameplayData', path);
 }

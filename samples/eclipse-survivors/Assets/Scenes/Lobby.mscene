@@ -1,0 +1,1629 @@
+{
+  "version": 3,
+  "name": "Lobby",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 5,
+            "primary": true,
+            "target_display": 0,
+            "clear_flags": "solid_color",
+            "background_color": [
+              0.018,
+              0.021,
+              0.05,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Canvas",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay",
+            "sorting_order": 0,
+            "plane_distance": 100
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1280,
+              720
+            ],
+            "match_width_or_height": 0.5,
+            "scale_factor": 1
+          },
+          "GraphicRaycaster": {
+            "enabled": true,
+            "ignore_reversed_graphics": true,
+            "blocking_objects": "None",
+            "blocking_mask": -1
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Lobby Background",
+        "parent": 2,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              1280,
+              720
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/eclipse-citadel.png",
+            "color": [
+              0.42,
+              0.5,
+              0.72,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Lobby Shade",
+        "parent": 2,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              1280,
+              720
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.01,
+              0.015,
+              0.05,
+              0.55
+            ],
+            "border_color": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Lobby Brand",
+        "parent": 2,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -490,
+              -306.66666666666663
+            ],
+            "size_delta": [
+              260,
+              46.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "ECLIPSE SURVIVORS",
+            "color": [
+              0.83,
+              0.75,
+              1,
+              1
+            ],
+            "font_size": 20.666666666666664,
+            "font_style": "Normal",
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Profile Summary",
+        "parent": 2,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              423.3333333333333,
+              -308
+            ],
+            "size_delta": [
+              346.66666666666663,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "WARDEN",
+            "color": [
+              0.67,
+              0.9,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "font_style": "Normal",
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Warden Panel",
+        "parent": 2,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -413.3333333333333,
+              23.333333333333332
+            ],
+            "size_delta": [
+              346.66666666666663,
+              546.6666666666666
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.025,
+              0.035,
+              0.085,
+              0.94
+            ],
+            "border_color": [
+              0.28,
+              0.68,
+              0.88,
+              0.5
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Warden Portrait",
+        "parent": 2,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -413.3333333333333,
+              -80
+            ],
+            "size_delta": [
+              286.66666666666663,
+              373.3333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/eclipse-warden.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Warden Stats",
+        "parent": 2,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -413.3333333333333,
+              196.66666666666666
+            ],
+            "size_delta": [
+              286.66666666666663,
+              96.66666666666666
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "POWER 0",
+            "color": [
+              0.75,
+              0.85,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Equipment Panel",
+        "parent": 2,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -43.33333333333333,
+              -106.66666666666666
+            ],
+            "size_delta": [
+              346.66666666666663,
+              286.66666666666663
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.025,
+              0.035,
+              0.085,
+              0.94
+            ],
+            "border_color": [
+              0.47,
+              0.31,
+              0.78,
+              0.65
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Equipment Header",
+        "parent": 2,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -43.33333333333333,
+              -230
+            ],
+            "size_delta": [
+              300,
+              33.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "EQUIPMENT LOADOUT",
+            "color": [
+              0.85,
+              0.78,
+              1,
+              1
+            ],
+            "font_size": 15.333333333333332,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Gear Moonstaff",
+        "parent": 2,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -120,
+              -163.33333333333331
+            ],
+            "size_delta": [
+              136.66666666666666,
+              49.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.12,
+              0.11,
+              0.27,
+              1
+            ],
+            "highlighted_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "pressed_color": [
+              0.27,
+              0.18,
+              0.51,
+              1
+            ],
+            "selected_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "MOONSTEEL STAFF",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "equip:moonstaff"
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Gear Mantle",
+        "parent": 2,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              33.33333333333333,
+              -163.33333333333331
+            ],
+            "size_delta": [
+              136.66666666666666,
+              49.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.12,
+              0.11,
+              0.27,
+              1
+            ],
+            "highlighted_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "pressed_color": [
+              0.27,
+              0.18,
+              0.51,
+              1
+            ],
+            "selected_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "STARWEAVE MANTLE",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "equip:mantle"
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Gear Boots",
+        "parent": 2,
+        "siblingIndex": 14,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -120,
+              -96.66666666666666
+            ],
+            "size_delta": [
+              136.66666666666666,
+              49.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.12,
+              0.11,
+              0.27,
+              1
+            ],
+            "highlighted_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "pressed_color": [
+              0.27,
+              0.18,
+              0.51,
+              1
+            ],
+            "selected_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "OBSIDIAN BOOTS",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "equip:boots"
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Gear Sunring",
+        "parent": 2,
+        "siblingIndex": 15,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              33.33333333333333,
+              -96.66666666666666
+            ],
+            "size_delta": [
+              136.66666666666666,
+              49.33333333333333
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.12,
+              0.11,
+              0.27,
+              1
+            ],
+            "highlighted_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "pressed_color": [
+              0.27,
+              0.18,
+              0.51,
+              1
+            ],
+            "selected_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "SUNSHARD RING",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "equip:sunring"
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Equipment Detail",
+        "parent": 2,
+        "siblingIndex": 16,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -43.33333333333333,
+              -16.666666666666664
+            ],
+            "size_delta": [
+              300,
+              60
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "Select gear to equip.",
+            "color": [
+              0.62,
+              0.7,
+              0.84,
+              1
+            ],
+            "font_size": 9.333333333333332,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Level Panel",
+        "parent": 2,
+        "siblingIndex": 17,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              373.3333333333333,
+              -76.66666666666666
+            ],
+            "size_delta": [
+              433.3333333333333,
+              346.66666666666663
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.025,
+              0.035,
+              0.085,
+              0.94
+            ],
+            "border_color": [
+              0.47,
+              0.31,
+              0.78,
+              0.65
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Level Header",
+        "parent": 2,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              373.3333333333333,
+              -220
+            ],
+            "size_delta": [
+              380,
+              34.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "SELECT AN EXPEDITION",
+            "color": [
+              0.85,
+              0.78,
+              1,
+              1
+            ],
+            "font_size": 15.333333333333332,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Level Eclipse Garden",
+        "parent": 2,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              373.3333333333333,
+              -160
+            ],
+            "size_delta": [
+              373.3333333333333,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.11,
+              0.24,
+              0.39,
+              0.98
+            ],
+            "highlighted_color": [
+              0.17,
+              0.67,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.10200000000000001,
+              0.402,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.17,
+              0.67,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "I  ECLIPSE GARDEN",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "level:eclipse_garden"
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Level Astral Archive",
+        "parent": 2,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              373.3333333333333,
+              -93.33333333333333
+            ],
+            "size_delta": [
+              373.3333333333333,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.14,
+              0.12,
+              0.28,
+              1
+            ],
+            "highlighted_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "pressed_color": [
+              0.27,
+              0.18,
+              0.51,
+              1
+            ],
+            "selected_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "II  ASTRAL ARCHIVE",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "level:astral_archive"
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Level Sunken Observatory",
+        "parent": 2,
+        "siblingIndex": 21,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              373.3333333333333,
+              -26.666666666666664
+            ],
+            "size_delta": [
+              373.3333333333333,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.14,
+              0.12,
+              0.28,
+              1
+            ],
+            "highlighted_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "pressed_color": [
+              0.27,
+              0.18,
+              0.51,
+              1
+            ],
+            "selected_color": [
+              0.45,
+              0.3,
+              0.85,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "III  SUNKEN OBSERVATORY",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "level:sunken_observatory"
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Level Detail",
+        "parent": 2,
+        "siblingIndex": 22,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              373.3333333333333,
+              66.66666666666666
+            ],
+            "size_delta": [
+              373.3333333333333,
+              86.66666666666666
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "Survive the eclipse.",
+            "color": [
+              0.64,
+              0.73,
+              0.89,
+              1
+            ],
+            "font_size": 10,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Start Run Button",
+        "parent": 2,
+        "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              373.3333333333333,
+              166.66666666666666
+            ],
+            "size_delta": [
+              373.3333333333333,
+              46.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.12,
+              0.38,
+              0.47,
+              1
+            ],
+            "highlighted_color": [
+              0.2,
+              0.8,
+              0.93,
+              1
+            ],
+            "pressed_color": [
+              0.12,
+              0.48,
+              0.558,
+              1
+            ],
+            "selected_color": [
+              0.2,
+              0.8,
+              0.93,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "BEGIN EXPEDITION",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "start-run"
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Logout Button",
+        "parent": 2,
+        "siblingIndex": 24,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              540,
+              296.66666666666663
+            ],
+            "size_delta": [
+              106.66666666666666,
+              26.666666666666664
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.15,
+              0.08,
+              0.15,
+              0.85
+            ],
+            "highlighted_color": [
+              0.55,
+              0.17,
+              0.36,
+              1
+            ],
+            "pressed_color": [
+              0.33,
+              0.10200000000000001,
+              0.216,
+              1
+            ],
+            "selected_color": [
+              0.55,
+              0.17,
+              0.36,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "LOG OUT",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font_size": 12,
+            "on_click": "logout"
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Lobby Toast",
+        "parent": 2,
+        "siblingIndex": 25,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              120,
+              293.3333333333333
+            ],
+            "size_delta": [
+              546.6666666666666,
+              32
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "",
+            "color": [
+              0.45,
+              0.9,
+              1,
+              1
+            ],
+            "font_size": 10.666666666666666,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.018,
+      0.021,
+      0.05,
+      1
+    ],
+    "selected": 23
+  },
+  "gameResolution": {
+    "width": 1280,
+    "height": 720
+  }
+}

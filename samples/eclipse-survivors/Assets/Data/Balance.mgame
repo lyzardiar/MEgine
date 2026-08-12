@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "kind": "game-balance",
+  "player": {
+    "baseHealth": 100,
+    "moveSpeed": 4.2,
+    "pickupRadius": 1.2
+  },
+  "progression": {
+    "experienceBase": 9,
+    "experienceGrowth": 1.34,
+    "goldPerKill": 0.12
+  },
+  "equipment": [
+    {
+      "id": "moonstaff",
+      "name": "Moonsteel Staff",
+      "description": "+22% attack power",
+      "power": 2,
+      "modifiers": {
+        "damage": 1.22
+      }
+    },
+    {
+      "id": "mantle",
+      "name": "Starweave Mantle",
+      "description": "+28 max health",
+      "power": 2,
+      "modifiers": {
+        "health": 28
+      }
+    },
+    {
+      "id": "boots",
+      "name": "Obsidian Boots",
+      "description": "+16% move speed",
+      "power": 2,
+      "modifiers": {
+        "speed": 1.16
+      }
+    },
+    {
+      "id": "sunring",
+      "name": "Sunshard Ring",
+      "description": "-15% skill cooldown",
+      "power": 3,
+      "modifiers": {
+        "cooldown": 0.85
+      }
+    }
+  ]
+}

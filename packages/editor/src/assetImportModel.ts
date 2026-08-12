@@ -1,3 +1,4 @@
+// Author: MiYu
 export const ASSET_IMPORT_MAX_BYTES = 64 * 1024 * 1024;
 export const ASSET_IMPORT_ACCEPT = [
   '.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tga', '.tif', '.tiff', '.hdr', '.exr',
@@ -6,6 +7,7 @@ export const ASSET_IMPORT_ACCEPT = [
   '.ttf', '.otf',
   '.atlas', '.skel', '.json',
   '.mmat', '.mat', '.minst', '.mshader', '.prefab', '.matlas', '.manim', '.mcontroller', '.mavatar', '.mtimeline',
+  '.mskill', '.mlevel', '.mgame',
 ].join(',');
 
 const SUPPORTED_EXTENSIONS = new Set(ASSET_IMPORT_ACCEPT.split(','));

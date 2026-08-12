@@ -2281,6 +2281,7 @@ fn walk(
             "Center",
             "Middle",
             clip,
+            font_resolver,
         );
         if button.interactable
             && state.interactable
@@ -2312,57 +2313,32 @@ fn walk(
 
     if let Some(text) = text {
         let material_start = primitives.len();
-        if !text.font.trim().is_empty() {
-            if let Some(resolver) = font_resolver.as_deref_mut() {
-                push_text_styled_rich_with_font(
-                    primitives,
-                    rect,
-                    &text.text,
-                    multiply_alpha(text.color, state.alpha),
-                    multiply_alpha(text.outline_color, state.alpha),
-                    (text.outline_width * scale).max(0.0),
-                    &text.font,
-                    text.font_size * scale,
-                    &text.font_style,
-                    text.align_by_geometry,
-                    text.support_rich_text,
-                    text.resize_text_for_best_fit,
-                    text.resize_text_min_size as f32,
-                    text.resize_text_max_size as f32,
-                    scale,
-                    &text.alignment,
-                    &text.vertical_align,
-                    text.line_spacing,
-                    &text.horizontal_overflow,
-                    &text.vertical_overflow,
-                    clip,
-                    font_raster_scale,
-                    resolver,
-                );
-            } else {
-                push_text_styled_rich(
-                    primitives,
-                    rect,
-                    &text.text,
-                    multiply_alpha(text.color, state.alpha),
-                    multiply_alpha(text.outline_color, state.alpha),
-                    (text.outline_width * scale).max(0.0),
-                    text.font_size * scale,
-                    &text.font_style,
-                    text.align_by_geometry,
-                    text.support_rich_text,
-                    text.resize_text_for_best_fit,
-                    text.resize_text_min_size as f32,
-                    text.resize_text_max_size as f32,
-                    scale,
-                    &text.alignment,
-                    &text.vertical_align,
-                    text.line_spacing,
-                    &text.horizontal_overflow,
-                    &text.vertical_overflow,
-                    clip,
-                );
-            }
+        if let Some(resolver) = font_resolver.as_deref_mut() {
+            push_text_styled_rich_with_font(
+                primitives,
+                rect,
+                &text.text,
+                multiply_alpha(text.color, state.alpha),
+                multiply_alpha(text.outline_color, state.alpha),
+                (text.outline_width * scale).max(0.0),
+                &text.font,
+                text.font_size * scale,
+                &text.font_style,
+                text.align_by_geometry,
+                text.support_rich_text,
+                text.resize_text_for_best_fit,
+                text.resize_text_min_size as f32,
+                text.resize_text_max_size as f32,
+                scale,
+                &text.alignment,
+                &text.vertical_align,
+                text.line_spacing,
+                &text.horizontal_overflow,
+                &text.vertical_overflow,
+                clip,
+                font_raster_scale,
+                resolver,
+            );
         } else {
             push_text_styled_rich(
                 primitives,
@@ -2444,6 +2420,7 @@ fn walk(
             "Left",
             "Middle",
             clip,
+            font_resolver,
         );
         if toggle.interactable
             && state.interactable
@@ -2728,6 +2705,7 @@ fn walk(
                 "Center",
                 "Middle",
                 clip,
+                font_resolver,
             );
         }
     }
@@ -2759,6 +2737,7 @@ fn walk(
             "Left",
             "Middle",
             clip,
+            font_resolver,
         );
         if enabled && receives_graphic_raycast && state.accepts_raycasts() {
             controls.push(control_region(
@@ -2800,6 +2779,7 @@ fn walk(
             "Left",
             "Middle",
             clip,
+            font_resolver,
         );
         push_text(
             primitives,
@@ -2814,6 +2794,7 @@ fn walk(
             "Center",
             "Middle",
             clip,
+            font_resolver,
         );
         if enabled && receives_graphic_raycast && state.accepts_raycasts() {
             controls.push(control_region(
@@ -2858,6 +2839,7 @@ fn walk(
                     "Left",
                     "Middle",
                     clip,
+                    font_resolver,
                 );
                 if enabled && receives_graphic_raycast && state.accepts_raycasts() {
                     controls.push(control_region(
@@ -2929,6 +2911,7 @@ fn walk(
                 "Left",
                 "Middle",
                 child_clip,
+                font_resolver,
             );
             if enabled && receives_graphic_raycast && state.accepts_raycasts() {
                 controls.push(control_region(
@@ -3044,6 +3027,7 @@ fn walk(
                 "Center",
                 "Middle",
                 clip,
+                font_resolver,
             );
             if tab_view.interactable
                 && state.interactable
@@ -3436,31 +3420,18 @@ fn text_intrinsic_preferred_size(
     if !text.enabled || text.text.is_empty() {
         return None;
     }
-    let unwrapped = if !text.font.trim().is_empty() {
-        if let Some(resolver) = font_resolver.as_mut() {
-            intrinsic_text_layout(text, 16_777_216.0, "Overflow", Some(&mut **resolver))
-        } else {
-            intrinsic_text_layout(text, 16_777_216.0, "Overflow", None)
-        }
+    let unwrapped = if let Some(resolver) = font_resolver.as_mut() {
+        intrinsic_text_layout(text, 16_777_216.0, "Overflow", Some(&mut **resolver))
     } else {
         intrinsic_text_layout(text, 16_777_216.0, "Overflow", None)
     };
-    let wrapped = if !text.font.trim().is_empty() {
-        if let Some(resolver) = font_resolver.as_mut() {
-            intrinsic_text_layout(
-                text,
-                authored_width.max(1.0),
-                &text.horizontal_overflow,
-                Some(&mut **resolver),
-            )
-        } else {
-            intrinsic_text_layout(
-                text,
-                authored_width.max(1.0),
-                &text.horizontal_overflow,
-                None,
-            )
-        }
+    let wrapped = if let Some(resolver) = font_resolver.as_mut() {
+        intrinsic_text_layout(
+            text,
+            authored_width.max(1.0),
+            &text.horizontal_overflow,
+            Some(&mut **resolver),
+        )
     } else {
         intrinsic_text_layout(
             text,
@@ -5909,27 +5880,56 @@ fn push_text(
     alignment: &str,
     vertical_align: &str,
     clip: UiClipRect,
+    font_resolver: &mut Option<&mut dyn UiFontResolver>,
 ) {
-    push_text_styled(
-        primitives,
-        rect,
-        text,
-        color,
-        [0.0, 0.0, 0.0, 0.0],
-        0.0,
-        font_size,
-        "Normal",
-        false,
-        10.0,
-        40.0,
-        1.0,
-        alignment,
-        vertical_align,
-        1.0,
-        "Overflow",
-        "Overflow",
-        clip,
-    );
+    if let Some(resolver) = font_resolver.as_mut() {
+        push_text_styled_rich_internal(
+            primitives,
+            rect,
+            text,
+            color,
+            [0.0, 0.0, 0.0, 0.0],
+            0.0,
+            font_size,
+            "Normal",
+            false,
+            false,
+            false,
+            10.0,
+            40.0,
+            1.0,
+            alignment,
+            vertical_align,
+            1.0,
+            "Overflow",
+            "Overflow",
+            clip,
+            "",
+            1.0,
+            &mut **resolver,
+        );
+    } else {
+        push_text_styled(
+            primitives,
+            rect,
+            text,
+            color,
+            [0.0, 0.0, 0.0, 0.0],
+            0.0,
+            font_size,
+            "Normal",
+            false,
+            10.0,
+            40.0,
+            1.0,
+            alignment,
+            vertical_align,
+            1.0,
+            "Overflow",
+            "Overflow",
+            clip,
+        );
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -6245,6 +6245,66 @@ fn measure_bitmap_text_glyph(
     }
 }
 
+pub(crate) fn builtin_bitmap_glyph_metrics(
+    character: char,
+    font_size: f32,
+    font_style: &str,
+) -> UiFontGlyphMetrics {
+    let glyph = measure_bitmap_text_glyph(character, font_size, font_style.into(), None);
+    UiFontGlyphMetrics {
+        advance: glyph.advance,
+        metric_width: glyph.metric_width,
+        line_height: glyph.line_height,
+        geometry: glyph.geometry,
+    }
+}
+
+pub(crate) fn builtin_bitmap_glyph_bounds(font_size: f32, font_style: &str) -> [f32; 4] {
+    let font_size = if font_size.is_finite() {
+        font_size.clamp(1.0, 512.0)
+    } else {
+        16.0
+    };
+    let scale = (font_size.max(7.0) / 7.0).max(1.0);
+    let (bold, italic) = bitmap_font_style(font_style);
+    let bold_width = if bold { scale * 0.5 } else { 0.0 };
+    let italic_width = if italic { scale * 1.5 } else { 0.0 };
+    [
+        0.0,
+        0.0,
+        5.0 * scale + bold_width + italic_width,
+        7.0 * scale,
+    ]
+}
+
+pub(crate) fn rasterize_builtin_bitmap_glyph(
+    character: char,
+    font_style: &str,
+) -> Option<(u32, u32, Vec<u8>)> {
+    let rows = glyph_rows(character);
+    if rows.iter().all(|row| *row == 0) {
+        return None;
+    }
+    let (bold, italic) = bitmap_font_style(font_style);
+    let width = 5 + usize::from(bold) + usize::from(italic) * 2;
+    let height = 7;
+    let mut alpha = vec![0; width * height];
+    for (row_index, row) in rows.iter().copied().enumerate() {
+        let italic_offset = if italic { (6 - row_index) / 3 } else { 0 };
+        for column in 0..5 {
+            if row & (1 << (4 - column)) == 0 {
+                continue;
+            }
+            let x = column + italic_offset;
+            alpha[row_index * width + x] = 255;
+            if bold && x + 1 < width {
+                alpha[row_index * width + x + 1] = 255;
+            }
+        }
+    }
+    Some((width as u32, height as u32, alpha))
+}
+
 fn parse_bitmap_rich_text(
     value: &str,
     enabled: bool,
@@ -6525,9 +6585,6 @@ fn apply_font_metrics(
     font: &str,
     resolver: &mut dyn UiFontResolver,
 ) {
-    if font.trim().is_empty() {
-        return;
-    }
     for glyph in glyphs.iter_mut() {
         if matches!(glyph.character, '\n' | '\r') {
             continue;
@@ -7543,9 +7600,21 @@ fn glyph_rows(character: char) -> [u8; 7] {
             0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110,
         ],
         ' ' => [0; 7],
+        '+' => [0, 0b00100, 0b00100, 0b11111, 0b00100, 0b00100, 0],
         '-' => [0, 0, 0, 0b11111, 0, 0, 0],
+        '—' => [0, 0, 0, 0b11111, 0, 0, 0],
         '.' => [0, 0, 0, 0, 0, 0b01100, 0b01100],
+        ',' => [0, 0, 0, 0, 0, 0b01100, 0b01000],
         ':' => [0, 0b01100, 0b01100, 0, 0b01100, 0b01100, 0],
+        '/' => [
+            0b00001, 0b00010, 0b00010, 0b00100, 0b01000, 0b01000, 0b10000,
+        ],
+        '|' => [0b00100; 7],
+        '%' => [0b11001, 0b11010, 0b00100, 0b01000, 0b10110, 0b00110, 0],
+        '•' => [0, 0, 0b00100, 0b01110, 0b00100, 0, 0],
+        '◆' => [
+            0b00100, 0b01110, 0b11111, 0b11111, 0b11111, 0b01110, 0b00100,
+        ],
         _ => [
             0b11111, 0b10001, 0b00110, 0b00100, 0b00110, 0b10001, 0b11111,
         ],
@@ -7555,6 +7624,16 @@ fn glyph_rows(character: char) -> [u8; 7] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn builtin_bitmap_font_covers_common_game_ui_punctuation() {
+        assert_eq!(glyph_rows('%')[0], 0b11001);
+        assert_eq!(glyph_rows('+')[3], 0b11111);
+        assert_eq!(glyph_rows(',')[6], 0b01000);
+        assert_eq!(glyph_rows('•')[3], 0b01110);
+        assert_eq!(glyph_rows('◆')[2], 0b11111);
+        assert_eq!(glyph_rows('—')[3], 0b11111);
+    }
 
     #[test]
     fn canvas_scaler_matches_unity_screen_modes() {

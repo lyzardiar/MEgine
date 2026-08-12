@@ -1,3 +1,4 @@
+// Author: MiYu
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -52,6 +53,8 @@ import {
   openSpriteAsset,
   OPEN_SPRITE_ATLAS_EVENT,
   openSpriteAtlasAsset,
+  OPEN_GAMEPLAY_DATA_EVENT,
+  openGameplayDataAsset,
   type ProjectAssetLifecycleDetail,
 } from './assetEditorEvents';
 import {
@@ -160,6 +163,7 @@ const BuildSettings = lazy(async () => ({ default: (await import('./panels/Build
 const Profiler = lazy(async () => ({ default: (await import('./panels/Profiler')).Profiler }));
 const ProjectSettings = lazy(async () => ({ default: (await import('./panels/ProjectSettings')).ProjectSettings }));
 const EffekseerPreview = lazy(async () => ({ default: (await import('./panels/EffekseerPreview')).EffekseerPreview }));
+const GameplayDataEditor = lazy(async () => ({ default: (await import('./panels/GameplayDataEditor')).GameplayDataEditor }));
 
 function isTypingTarget(el: EventTarget | null) {
   if (!(el instanceof HTMLElement)) return false;
@@ -278,6 +282,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [animationAssetPath, setAnimationAssetPath] = useState<string | null>(null);
   const [timelineAssetPath, setTimelineAssetPath] = useState<string | null>(null);
   const [effekseerPreviewPath, setEffekseerPreviewPath] = useState<string | null>(null);
+  const [gameplayDataPath, setGameplayDataPath] = useState<string | null>(null);
+  const [gameplayDataDirty, setGameplayDataDirty] = useState(false);
   const [sequencerDirty, setSequencerDirty] = useState(false);
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [buildSettingsDirty, setBuildSettingsDirty] = useState(false);
@@ -327,6 +333,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     || animatorDirty
     || spriteDirty
     || spriteAtlasDirty
+    || gameplayDataDirty
     || projectSettingsDirty
     || buildSettingsDirty;
   const hasUnsavedChanges = resourceDirty || (!props.detachedPanel && sceneDirty);
@@ -337,11 +344,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (animatorDirty) dirty.add('animator');
     if (spriteDirty) dirty.add('spriteEditor');
     if (spriteAtlasDirty) dirty.add('spriteAtlas');
+    if (gameplayDataDirty) dirty.add('gameplayData');
     if (animationDirty || sequencerDirty) dirty.add('timeline');
     if (projectSettingsDirty) dirty.add('projectSettings');
     if (buildSettingsDirty) dirty.add('build');
     return dirty;
-  }, [animationDirty, animatorDirty, buildSettingsDirty, materialDirty, projectSettingsDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
+  }, [animationDirty, animatorDirty, buildSettingsDirty, gameplayDataDirty, materialDirty, projectSettingsDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
   const [logs, setLogs] = useState<string[]>(
     () => logService.getEntries().map(formatConsoleLog),
   );
@@ -869,6 +877,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         )) return;
       setSpriteAtlasPath(path);
     };
+    const openGameplayData = async (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (typeof path !== 'string' || !path) return;
+      if (gameplayDataDirty && path !== gameplayDataPath
+        && !await confirmEditor(
+          'Gameplay data has unsaved changes. Discard them and open another asset?',
+          { title: 'Unsaved Gameplay Data', confirmLabel: 'Discard and Open' },
+        )) return;
+      setGameplayDataPath(path);
+    };
     const assetsChanged = (event: Event) => {
       const detail = (event as CustomEvent<
         (ProjectAssetLifecycleDetail & { remote?: boolean }) | undefined
@@ -888,6 +906,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         setAnimatorPath(remap);
         setSpritePath(remap);
         setSpriteAtlasPath(remap);
+        setGameplayDataPath(remap);
         setAnimationAssetPath(remap);
         setTimelineAssetPath(remap);
         for (const scope of [
@@ -918,6 +937,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     window.addEventListener(OPEN_ANIMATION_CLIP_EVENT, openAnimation);
     window.addEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
     window.addEventListener(OPEN_SPRITE_ATLAS_EVENT, openSpriteAtlas);
+    window.addEventListener(OPEN_GAMEPLAY_DATA_EVENT, openGameplayData);
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     return () => {
       window.removeEventListener(OPEN_MATERIAL_EVENT, openMaterial);
@@ -927,9 +947,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       window.removeEventListener(OPEN_ANIMATION_CLIP_EVENT, openAnimation);
       window.removeEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
       window.removeEventListener(OPEN_SPRITE_ATLAS_EVENT, openSpriteAtlas);
+      window.removeEventListener(OPEN_GAMEPLAY_DATA_EVENT, openGameplayData);
       window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     };
-  }, [spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath]);
+  }, [gameplayDataDirty, gameplayDataPath, spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath]);
 
   useEffect(() => {
     const onExternalChange = async (event: Event) => {
@@ -3338,6 +3359,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   detail: { panel: 'effekseer', activateWindow: true },
                 }));
               }}
+              onOpenGameplayData={(path) => openGameplayDataAsset(path)}
               onRenameScene={async (oldName, newName) => {
                 try {
                   const next = await renameScene(oldName, newName);
@@ -3423,6 +3445,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 setAnimatorPath(remap);
                 setSpritePath(remap);
                 setSpriteAtlasPath(remap);
+                setGameplayDataPath(remap);
                 setAnimationAssetPath(remap);
                 setTimelineAssetPath(remap);
                 for (const scope of [
@@ -3460,6 +3483,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 setAnimatorPath(closeDeleted);
                 setSpritePath(closeDeleted);
                 setSpriteAtlasPath(closeDeleted);
+                setGameplayDataPath(closeDeleted);
                 setAnimationAssetPath(closeDeleted);
                 setTimelineAssetPath(closeDeleted);
                 for (const scope of [
@@ -3711,6 +3735,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <EffekseerPreview
               selectedPath={effekseerPreviewPath}
               onSelectPath={setEffekseerPreviewPath}
+            />
+          ),
+          gameplayData: (
+            <GameplayDataEditor
+              assetPath={gameplayDataPath}
+              onDirtyChange={setGameplayDataDirty}
+              onLog={log}
             />
           ),
           build: (

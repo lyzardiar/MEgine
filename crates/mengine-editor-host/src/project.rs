@@ -1,3 +1,5 @@
+// Author: MiYu
+
 use crate::{EditorCommand, EditorSession};
 use mengine_core::command::WorldCommand;
 use mengine_core::snapshot::WorldSnapshot;
@@ -2935,20 +2937,52 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
     write_new_synced(&root.join(".gitignore"), b".mengine/\n")?;
     write_new_synced(
         &root.join("Assets/Scripts/Main.ts"),
-        b"let elapsed = 0;\nlet loadedSceneName = '';\n\nfunction onSceneLoaded(scene: EngineSceneInfo) {\n  loadedSceneName = scene.name;\n}\n\nfunction onTick(dt: number, _frame: number) {\n  elapsed += dt;\n}\n",
+        b"// Author: MiYu\n\nlet elapsed = 0;\nlet loadedSceneName = '';\n\nfunction onSceneLoaded(scene: EngineSceneInfo) {\n  loadedSceneName = scene.name;\n}\n\nfunction onTick(dt: number, _frame: number) {\n  elapsed += dt;\n}\n",
     )?;
     write_new_synced(
         &root.join("Assets/Scripts/mengine.d.ts"),
-        br#"interface EngineSceneInfo {
+        br#"// Author: MiYu
+interface EngineSceneInfo {
   readonly name: string;
   readonly path: string;
   readonly buildIndex: number | null;
   readonly buildSceneCount: number;
 }
 
+interface EnginePointerSnapshot {
+  readonly x: number;
+  readonly y: number;
+  readonly deltaX: number;
+  readonly deltaY: number;
+  readonly left: boolean;
+  readonly right: boolean;
+  readonly inside: boolean;
+}
+
+interface EngineInputSnapshot {
+  readonly held: readonly string[];
+  readonly pressed: readonly string[];
+  readonly pointer: EnginePointerSnapshot;
+}
+
+interface EngineEntityInfo {
+  readonly id: string;
+  readonly name: string;
+}
+
 interface EngineApi {
   setClearColor(r: number, g: number, b: number, a?: number): void;
-  pushCommandJson(json: string): void;
+  pushCommandJson(json: string): boolean;
+  findEntity(name: string): string | null;
+  findEntities(prefix: string): string[];
+  isKeyHeld(key: string): boolean;
+  isKeyPressed(key: string): boolean;
+  spawnEntity(name: string, components: Record<string, unknown>): boolean;
+  setComponent(entity: number | string, component: string, value: Record<string, unknown>): boolean;
+  removeComponent(entity: number | string, component: string): boolean;
+  destroyEntity(entity: number | string): boolean;
+  save(): boolean;
+  clearSave(): boolean;
   loadScene(scene: string | number): boolean;
   reloadScene(): boolean;
   instantiatePrefab(path: string, parent?: number | string): boolean;
@@ -2967,7 +3001,11 @@ interface EngineApi {
   pauseAudio(entity: number | string): boolean;
   stopAudio(entity: number | string): boolean;
   seekAudio(entity: number | string, time: number): boolean;
-  scene: EngineSceneInfo | null;
+  readonly scene: EngineSceneInfo | null;
+  readonly input: EngineInputSnapshot;
+  readonly entities: readonly EngineEntityInfo[];
+  readonly data: Readonly<Record<string, unknown>>;
+  storage: Record<string, unknown>;
 }
 
 interface PhysicsCollisionInfo {
@@ -2993,6 +3031,14 @@ interface EngineTimelineSignalInfo {
   readonly payload: unknown;
 }
 
+interface EngineUiActionInfo {
+  readonly entity: string;
+  readonly name: string;
+  readonly action: 'click' | 'submit' | 'valueChanged' | 'selectionChanged';
+  readonly value: unknown;
+  readonly callback: unknown;
+}
+
 declare const engine: EngineApi;
 declare function onTick(dt: number, frame: number): void;
 declare function onSceneLoaded(scene: EngineSceneInfo): void;
@@ -3006,6 +3052,7 @@ declare function onTriggerEnter2D(event: PhysicsCollisionInfo): void;
 declare function onTriggerExit2D(event: PhysicsCollisionInfo): void;
 declare function onAnimationEvent(event: EngineAnimationEventInfo): void;
 declare function onTimelineSignal(event: EngineTimelineSignalInfo): void;
+declare function onUiAction(event: EngineUiActionInfo): void;
 "#,
     )?;
 

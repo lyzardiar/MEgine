@@ -3634,6 +3634,9 @@ const IMPORTABLE_ASSET_EXTENSIONS: &[&str] = &[
     ".mcontroller",
     ".mavatar",
     ".mtimeline",
+    ".mskill",
+    ".mlevel",
+    ".mgame",
 ];
 
 fn importable_asset_extension(name: &str) -> Option<&'static str> {
@@ -3663,6 +3666,9 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("avatar-mask")
     } else if lower.ends_with(".mtimeline") {
         Some("timeline")
+    } else if lower.ends_with(".mskill") || lower.ends_with(".mlevel") || lower.ends_with(".mgame")
+    {
+        Some("gameplay-data")
     } else if lower.ends_with(".wav")
         || lower.ends_with(".ogg")
         || lower.ends_with(".mp3")

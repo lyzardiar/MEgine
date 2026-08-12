@@ -1,3 +1,5 @@
+// Author: MiYu
+
 use crate::ScriptError;
 use boa_engine::{Context, JsArgs, JsValue, NativeFunction, Source};
 use mengine_core::command::{CommandBuffer, WorldCommand};
@@ -100,6 +102,18 @@ pub struct ScriptTimelineSignal {
     pub payload: Option<JsonValue>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct ScriptUiEvent {
+    pub entity: u64,
+    pub name: String,
+    pub action: String,
+    pub value: JsonValue,
+    pub callback: JsonValue,
+}
+
+const MAX_SCRIPT_STORAGE_BYTES: usize = 1024 * 1024;
+const MAX_SCRIPT_DATA_BYTES: usize = 8 * 1024 * 1024;
+
 fn pending_runtime_requests() -> &'static Mutex<Vec<ScriptRuntimeRequest>> {
     static CELL: std::sync::OnceLock<Mutex<Vec<ScriptRuntimeRequest>>> = std::sync::OnceLock::new();
     CELL.get_or_init(|| Mutex::new(Vec::new()))
@@ -183,6 +197,106 @@ impl ScriptHost {
         self.eval(&format!(
             "engine.scene = {scene}; if (typeof onSceneLoaded === 'function') {{ onSceneLoaded(engine.scene); }}"
         ))
+    }
+
+    /// Publishes a bounded gameplay view before `onTick` and delivers queued UI actions.
+    /// Entity ids stay strings so scripts never lose generation/index precision.
+    pub fn notify_gameplay_frame(
+        &mut self,
+        world: &World,
+        input: JsonValue,
+        ui_events: &[ScriptUiEvent],
+    ) -> Result<(), ScriptError> {
+        let entities = JsonValue::Array(
+            world
+                .iter_entities()
+                .filter_map(|entity| {
+                    world.entity_name(entity).map(|name| {
+                        serde_json::json!({
+                            "id": entity.to_u64().to_string(),
+                            "name": name,
+                        })
+                    })
+                })
+                .collect(),
+        );
+        let events = JsonValue::Array(
+            ui_events
+                .iter()
+                .map(|event| {
+                    serde_json::json!({
+                        "entity": event.entity.to_string(),
+                        "name": event.name,
+                        "action": event.action,
+                        "value": event.value,
+                        "callback": event.callback,
+                    })
+                })
+                .collect(),
+        );
+        self.eval(&format!(
+            "engine.input = {input}; engine.entities = {entities};\
+             for (const event of {events}) {{ if (typeof onUiAction === 'function') onUiAction(event); }}"
+        ))
+    }
+
+    pub fn set_storage_json(&mut self, json: &str) -> Result<(), ScriptError> {
+        if json.len() > MAX_SCRIPT_STORAGE_BYTES {
+            return Err(ScriptError::Other("script storage exceeds 1 MiB".into()));
+        }
+        let value: JsonValue = serde_json::from_str(json)
+            .map_err(|error| ScriptError::Other(format!("invalid script storage JSON: {error}")))?;
+        if !value.is_object() {
+            return Err(ScriptError::Other(
+                "script storage root must be a JSON object".into(),
+            ));
+        }
+        self.eval(&format!(
+            "engine.storage = {value}; engine.__saveRequested = false;"
+        ))
+    }
+
+    /// Publishes read-only, editor-authored gameplay data collected by the Player.
+    pub fn set_data_assets_json(&mut self, json: &str) -> Result<(), ScriptError> {
+        if json.len() > MAX_SCRIPT_DATA_BYTES {
+            return Err(ScriptError::Other("script data assets exceed 8 MiB".into()));
+        }
+        let value: JsonValue = serde_json::from_str(json)
+            .map_err(|error| ScriptError::Other(format!("invalid script data JSON: {error}")))?;
+        if !value.is_object() {
+            return Err(ScriptError::Other(
+                "script data root must be a JSON object".into(),
+            ));
+        }
+        self.eval(&format!("engine.data = Object.freeze({value});"))
+    }
+
+    pub fn take_storage_json(&mut self) -> Result<Option<String>, ScriptError> {
+        let value = self
+            .context
+            .eval(Source::from_bytes(
+                b"engine.__saveRequested ? JSON.stringify(engine.storage) : ''",
+            ))
+            .map_err(|error| ScriptError::Js(format!("{error}")))?;
+        let json = value
+            .to_string(&mut self.context)
+            .map_err(|error| ScriptError::Js(format!("{error}")))?
+            .to_std_string_escaped();
+        self.eval("engine.__saveRequested = false;")?;
+        if json.is_empty() {
+            return Ok(None);
+        }
+        if json.len() > MAX_SCRIPT_STORAGE_BYTES {
+            return Err(ScriptError::Other("script storage exceeds 1 MiB".into()));
+        }
+        let value: JsonValue = serde_json::from_str(&json)
+            .map_err(|error| ScriptError::Other(format!("invalid script storage JSON: {error}")))?;
+        if !value.is_object() {
+            return Err(ScriptError::Other(
+                "script storage root must be a JSON object".into(),
+            ));
+        }
+        Ok(Some(json))
     }
 
     /// Delivers fixed-step collision transitions to the project's global script hooks.
@@ -364,12 +478,17 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             .get_or_undefined(0)
             .to_string(ctx)?
             .to_std_string_escaped();
-        if let Ok(cmd) = serde_json::from_str::<WorldCommand>(&s) {
-            if let Ok(mut buf) = pending().lock() {
-                buf.push(cmd);
-            }
+        if s.len() > 256 * 1024 {
+            return Ok(JsValue::new(false));
         }
-        Ok(JsValue::undefined())
+        let Ok(cmd) = serde_json::from_str::<WorldCommand>(&s) else {
+            return Ok(JsValue::new(false));
+        };
+        if let Ok(mut buf) = pending().lock() {
+            buf.push(cmd);
+            return Ok(JsValue::new(true));
+        }
+        Ok(JsValue::new(false))
     });
 
     let load_scene = NativeFunction::from_copy_closure(|_this, args, ctx| {
@@ -648,7 +767,49 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
 
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playTimeline: null, pauseTimeline: null, stopTimeline: null, seekTimeline: null, playAudio: null, pauseAudio: null, stopAudio: null, seekAudio: null, scene: null };",
+            br#"var engine = {
+  setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null,
+  instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null,
+  playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null,
+  playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null,
+  playTimeline: null, pauseTimeline: null, stopTimeline: null, seekTimeline: null,
+  playAudio: null, pauseAudio: null, stopAudio: null, seekAudio: null,
+  scene: null, input: { held: [], pressed: [], pointer: { x: 0, y: 0, inside: false } },
+  entities: [], data: Object.freeze({}), storage: {}, __saveRequested: false
+};
+engine.findEntity = function(name) {
+  var match = engine.entities.find(function(entity) { return entity.name === name; });
+  return match ? match.id : null;
+};
+engine.findEntities = function(prefix) {
+  return engine.entities.filter(function(entity) { return entity.name.indexOf(prefix) === 0; }).map(function(entity) { return entity.id; });
+};
+engine.isKeyHeld = function(key) { return engine.input.held.indexOf(key) >= 0; };
+engine.isKeyPressed = function(key) { return engine.input.pressed.indexOf(key) >= 0; };
+engine.spawnEntity = function(name, components) {
+  return engine.pushCommandJson(JSON.stringify({ op: 'spawn', name: name, components: components || {} }));
+};
+engine.setComponent = function(entity, component, value) {
+  var id = Number(entity);
+  if (!Number.isSafeInteger(id) || id < 0) return false;
+  return engine.pushCommandJson(JSON.stringify({ op: 'setComponent', entity: id, component: component, value: value }));
+};
+engine.removeComponent = function(entity, component) {
+  var id = Number(entity);
+  if (!Number.isSafeInteger(id) || id < 0) return false;
+  return engine.pushCommandJson(JSON.stringify({ op: 'removeComponent', entity: id, component: component }));
+};
+engine.destroyEntity = function(entity) {
+  var id = Number(entity);
+  if (!Number.isSafeInteger(id) || id < 0) return false;
+  return engine.pushCommandJson(JSON.stringify({ op: 'despawn', entity: id }));
+};
+engine.save = function() {
+  if (!engine.storage || typeof engine.storage !== 'object' || Array.isArray(engine.storage)) return false;
+  engine.__saveRequested = true;
+  return true;
+};
+engine.clearSave = function() { engine.storage = {}; engine.__saveRequested = true; return true; };"#,
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -1068,5 +1229,117 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn gameplay_frame_exposes_input_named_entities_and_ui_actions() {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Player".into()),
+            components: serde_json::json!({}),
+        });
+        let player = world.commit()[0];
+        let mut host = ScriptHost::new().unwrap();
+        host.eval("var actions = []; function onUiAction(event) { actions.push(event); }")
+            .unwrap();
+        host.notify_gameplay_frame(
+            &world,
+            serde_json::json!({
+                "held": ["W"],
+                "pressed": ["Space"],
+                "pointer": { "x": 12, "y": 34, "inside": true }
+            }),
+            &[ScriptUiEvent {
+                entity: player.to_u64(),
+                name: "LoginButton".into(),
+                action: "click".into(),
+                value: JsonValue::Null,
+                callback: serde_json::json!("login"),
+            }],
+        )
+        .unwrap();
+        host.eval(&format!(
+            r#"
+            if (engine.findEntity('Player') !== '{}') throw new Error('named entity missing');
+            if (engine.findEntities('Pla').length !== 1) throw new Error('prefix query missing');
+            if (!engine.isKeyHeld('W') || !engine.isKeyPressed('Space')) throw new Error('input missing');
+            if (engine.input.pointer.x !== 12 || !engine.input.pointer.inside) throw new Error('pointer missing');
+            if (actions.length !== 1 || actions[0].callback !== 'login' || actions[0].entity !== '{}') throw new Error('UI action missing');
+            "#,
+            player.to_u64(),
+            player.to_u64(),
+        ))
+        .unwrap();
+    }
+
+    #[test]
+    fn gameplay_helpers_apply_bounded_world_commands() {
+        let _guard = request_test_guard();
+        let mut world = World::new();
+        let mut host = ScriptHost::new().unwrap();
+        host.eval(
+            r#"
+            if (!engine.spawnEntity('Enemy', { Transform: { position: [1, 2, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] } })) throw new Error('spawn rejected');
+            "#,
+        )
+        .unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        let enemy = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Enemy"))
+            .unwrap();
+        host.eval(&format!(
+            "if (!engine.setComponent('{}', 'Transform', {{ position: [3, 4, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] }})) throw new Error('set rejected');",
+            enemy.to_u64()
+        ))
+        .unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        assert_eq!(
+            world.component_value(enemy, "Transform").unwrap()["position"],
+            serde_json::json!([3.0, 4.0, 0.0])
+        );
+        host.eval(&format!(
+            "if (!engine.destroyEntity('{}')) throw new Error('destroy rejected');",
+            enemy.to_u64()
+        ))
+        .unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(!world.is_alive(enemy));
+    }
+
+    #[test]
+    fn script_storage_requires_an_explicit_bounded_object_save() {
+        let mut host = ScriptHost::new().unwrap();
+        host.set_storage_json(r#"{"profile":{"name":"Mira"}}"#)
+            .unwrap();
+        host.eval(
+            r#"
+            if (engine.storage.profile.name !== 'Mira') throw new Error('storage missing');
+            engine.storage.profile.gold = 42;
+            if (!engine.save()) throw new Error('save rejected');
+            "#,
+        )
+        .unwrap();
+        let saved = host.take_storage_json().unwrap().unwrap();
+        let value: JsonValue = serde_json::from_str(&saved).unwrap();
+        assert_eq!(value["profile"]["gold"], 42);
+        assert!(host.take_storage_json().unwrap().is_none());
+        assert!(host.set_storage_json("[]").is_err());
+    }
+
+    #[test]
+    fn editor_authored_data_assets_are_exposed_by_portable_path() {
+        let mut host = ScriptHost::new().unwrap();
+        host.set_data_assets_json(r#"{"Assets/Data/Skills.mskill":{"skills":[{"id":"nova"}]}}"#)
+            .unwrap();
+        host.eval(
+            r#"
+            if (engine.data['Assets/Data/Skills.mskill'].skills[0].id !== 'nova') {
+              throw new Error('data asset missing');
+            }
+            "#,
+        )
+        .unwrap();
+        assert!(host.set_data_assets_json("[]").is_err());
     }
 }

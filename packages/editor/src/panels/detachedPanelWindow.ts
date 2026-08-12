@@ -1,3 +1,4 @@
+// Author: MiYu
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { isDesktopEditor, isPrimaryPointerDown } from '../transport/editorTransport';
@@ -18,6 +19,7 @@ export const CORE_PANEL_IDS = [
   'spriteEditor',
   'spriteAtlas',
   'effekseer',
+  'gameplayData',
   'build',
   'projectSettings',
 ] as const;
@@ -39,6 +41,7 @@ export const PANEL_TITLES: Record<CorePanelId, string> = {
   spriteEditor: 'Sprite Editor',
   spriteAtlas: 'Sprite Atlas',
   effekseer: 'Effekseer Preview',
+  gameplayData: 'Gameplay Data',
   build: 'Build Settings',
   projectSettings: 'Project Settings',
 };

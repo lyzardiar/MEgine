@@ -1,0 +1,53 @@
+/* Author: MiYu */
+
+.gameplay-data-editor { height: 100%; min-height: 0; display: flex; color: var(--text, #dce5ef); background: #10131a; }
+.gameplay-data-rail { width: 64px; flex: 0 0 64px; padding: 10px 6px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid #272d39; background: #0b0e14; }
+.gameplay-data-rail button { min-height: 55px; display: grid; place-items: center; gap: 3px; border: 1px solid transparent; border-radius: 8px; color: #7c899d; background: transparent; font: inherit; cursor: pointer; }
+.gameplay-data-rail button span { font-size: 10px; }
+.gameplay-data-rail button:hover { color: #d9e6f6; background: #181d27; }
+.gameplay-data-rail button.active { color: #9eeaff; border-color: #27556b; background: linear-gradient(145deg, #172b36, #151b27); box-shadow: inset 3px 0 #43cbed; }
+.gameplay-data-workspace { min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; }
+.gameplay-data-header { height: 50px; flex: 0 0 50px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid #272d39; background: #151924; }
+.gameplay-data-header > div { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.gameplay-data-header strong { font-size: 13px; }
+.gameplay-data-header span { overflow: hidden; text-overflow: ellipsis; color: #7f8ca0; font-size: 10px; white-space: nowrap; }
+.gameplay-data-header button, .gameplay-data-list-actions button, .gameplay-data-section h3 button { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 0 9px; border: 1px solid #343c4d; border-radius: 5px; color: #c8d3e0; background: #202633; font: inherit; font-size: 11px; cursor: pointer; }
+.gameplay-data-header button.primary { border-color: #247b96; color: #e5fbff; background: #17627b; }
+.gameplay-data-header button:disabled, .gameplay-data-list-actions button:disabled { opacity: .45; cursor: default; }
+.gameplay-data-content { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(180px, 235px) minmax(360px, 1fr); }
+.gameplay-data-list { min-height: 0; display: flex; flex-direction: column; border-right: 1px solid #272d39; background: #121620; }
+.gameplay-data-list-title { padding: 10px 12px; display: flex; justify-content: space-between; color: #8b99ad; font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.gameplay-data-list-items { min-height: 0; flex: 1; overflow: auto; padding: 0 6px; }
+.gameplay-data-list-items > button { width: 100%; margin: 2px 0; padding: 8px 9px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; border: 1px solid transparent; border-radius: 6px; color: #cbd5e2; background: transparent; text-align: left; cursor: pointer; }
+.gameplay-data-list-items > button:hover { background: #1a202c; }
+.gameplay-data-list-items > button.active { border-color: #2c6072; background: #172b35; }
+.gameplay-data-list-items strong { font-size: 12px; }
+.gameplay-data-list-items span { color: #68cce6; font: 10px ui-monospace, monospace; }
+.gameplay-data-list-items small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: #78869a; white-space: nowrap; }
+.gameplay-data-list-actions { display: flex; gap: 5px; padding: 8px; border-top: 1px solid #272d39; }
+.gameplay-data-list-actions button { flex: 1; justify-content: center; }
+.gameplay-data-inspector { min-height: 0; overflow: auto; padding: 14px; background: radial-gradient(circle at 100% 0, #17202e 0, #10131a 32%); }
+.gameplay-data-section { max-width: 920px; margin: 0 auto 14px; border: 1px solid #293140; border-radius: 8px; background: #151a24; box-shadow: 0 8px 24px #05070b33; }
+.gameplay-data-section h3 { min-height: 34px; margin: 0; padding: 0 11px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #293140; color: #b8c6d8; font-size: 11px; letter-spacing: .04em; }
+.gameplay-data-section h3 button { min-height: 24px; }
+.gameplay-data-fields { padding: 11px; display: grid; grid-template-columns: repeat(2, minmax(150px, 1fr)); gap: 10px; }
+.gameplay-data-field { min-width: 0; display: flex; flex-direction: column; gap: 4px; color: #8390a3; font-size: 10px; }
+.gameplay-data-field.wide { grid-column: 1 / -1; }
+.gameplay-data-field input, .gameplay-data-field select, .gameplay-data-field textarea { min-width: 0; height: 29px; box-sizing: border-box; padding: 5px 7px; border: 1px solid #31394a; border-radius: 4px; outline: none; color: #dce5ef; background: #0f131b; font: 11px inherit; }
+.gameplay-data-field input:focus, .gameplay-data-field select:focus, .gameplay-data-field textarea:focus { border-color: #37a6c5; box-shadow: 0 0 0 2px #37a6c522; }
+.gameplay-data-field textarea { height: 58px; resize: vertical; }
+.gameplay-data-field input[type="color"] { padding: 3px; }
+.gameplay-wave-list { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+.gameplay-wave { padding: 8px; display: grid; grid-template-columns: 78px minmax(120px, 1.5fr) repeat(6, minmax(65px, 1fr)); gap: 7px; align-items: end; border: 1px solid #283143; border-radius: 6px; background: #111620; }
+.gameplay-wave-index { height: 29px; display: flex; align-items: center; gap: 2px; }
+.gameplay-wave-index strong { width: 21px; color: #5dd7f4; }
+.gameplay-wave-index button { width: 17px; height: 22px; padding: 0; display: grid; place-items: center; border: 0; color: #8c9caf; background: transparent; cursor: pointer; }
+.gameplay-wave-index button:hover:not(:disabled) { color: #fff; background: #273142; }
+.gameplay-wave-index button:disabled { opacity: .25; }
+.gameplay-data-error { padding: 7px 11px; border-bottom: 1px solid #6b2f3d; color: #ffc2cc; background: #4a1e29; font-size: 11px; }
+.gameplay-data-loading, .gameplay-data-empty { min-height: 0; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #758298; }
+.gameplay-data-empty strong { color: #d5e2ef; font-size: 14px; }
+.gameplay-data-empty span { max-width: 360px; text-align: center; font-size: 11px; }
+.gameplay-data-editor .spin { animation: gameplay-data-spin .8s linear infinite; }
+@keyframes gameplay-data-spin { to { transform: rotate(360deg); } }
+@media (max-width: 850px) { .gameplay-data-content { grid-template-columns: 180px 1fr; } .gameplay-wave { grid-template-columns: repeat(3, minmax(70px, 1fr)); } }

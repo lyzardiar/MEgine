@@ -1,3 +1,5 @@
+//! Author: MiYu
+//!
 //! MEngine PC runtime / sample player.
 
 use anyhow::{bail, Context, Result};
@@ -17,7 +19,7 @@ use mengine_core::generated::{Camera3D, PbrMaterial, PointLight};
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_effekseer::{DependencyKind, EffectManager};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
-use mengine_platform::InputState;
+use mengine_platform::{InputState, KeyCode};
 #[cfg(test)]
 use mengine_rhi::{look_at, orthographic, perspective, FrameCamera, FrameLighting};
 use mengine_rhi::{
@@ -61,19 +63,22 @@ use mengine_runtime::ui::{
 use mengine_runtime::ui_raycast::{raycast_blocking_colliders, viewport_world_ray};
 use mengine_scene::load_scene;
 use mengine_script::{
-    ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal,
+    ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal, ScriptUiEvent,
 };
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, Ime, KeyEvent, MouseButton, MouseScrollDelta, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode as WinitKey, ModifiersState, PhysicalKey};
 use winit::window::{Window, WindowId};
+
+const PLAYER_GAME_FRAME_INTERVAL: Duration = Duration::from_micros(16_667);
+const PLAYER_MENU_FRAME_INTERVAL: Duration = Duration::from_micros(33_333);
+const PLAYER_BACKGROUND_FRAME_INTERVAL: Duration = Duration::from_millis(100);
 
 #[derive(Parser, Debug)]
 #[command(name = "mengine-runtime")]
@@ -115,15 +120,18 @@ struct App {
     script: Option<ScriptHost>,
     input: InputState,
     last: Instant,
+    next_redraw_at: Instant,
     cube: Option<mengine_core::Entity>,
     angle: f32,
     cursor: [f32; 2],
     cursor_inside: bool,
+    window_focused: bool,
     ui_controls: Vec<UiControlRegion>,
     active_slider: Option<Entity>,
     active_ui_press: Option<Entity>,
     focused_input: Option<Entity>,
     focused_ui: Option<Entity>,
+    pending_ui_events: Vec<ScriptUiEvent>,
     ui_button_tints: HashMap<Entity, UiButtonTintTween>,
     modifiers: ModifiersState,
     last_ui_draw_calls: u32,
@@ -144,6 +152,187 @@ struct App {
     physics_2d: PhysicsWorld2D,
     scenes: SceneManager,
     loaded_scene: Option<LoadedScene>,
+    script_storage_path: PathBuf,
+}
+
+fn script_storage_path(args: &Args) -> PathBuf {
+    let project_name = args
+        .title
+        .as_deref()
+        .or_else(|| {
+            args.project_root
+                .as_deref()
+                .and_then(Path::file_name)
+                .and_then(|name| name.to_str())
+        })
+        .unwrap_or("MEngineProject");
+    let safe_name: String = project_name
+        .chars()
+        .filter_map(|character| {
+            if character.is_alphanumeric() || matches!(character, '-' | '_') {
+                Some(character)
+            } else if character.is_whitespace() {
+                Some('_')
+            } else {
+                None
+            }
+        })
+        .take(64)
+        .collect();
+    let safe_name = if safe_name.is_empty() {
+        "MEngineProject"
+    } else {
+        &safe_name
+    };
+    let data_root = std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("XDG_DATA_HOME").map(PathBuf::from))
+        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share")))
+        .or_else(|| args.project_root.clone())
+        .unwrap_or_else(|| PathBuf::from("."));
+    data_root
+        .join("MEngine")
+        .join("Saves")
+        .join(format!("{safe_name}.json"))
+}
+
+fn read_script_storage(path: &Path) -> String {
+    let Ok(json) = std::fs::read_to_string(path) else {
+        return "{}".into();
+    };
+    if json.len() <= 1024 * 1024
+        && serde_json::from_str::<serde_json::Value>(&json).is_ok_and(|value| value.is_object())
+    {
+        json
+    } else {
+        log::warn!("ignoring invalid script storage at {}", path.display());
+        "{}".into()
+    }
+}
+
+fn write_script_storage(path: &Path, json: &str) -> Result<()> {
+    if json.len() > 1024 * 1024 || !serde_json::from_str::<serde_json::Value>(json)?.is_object() {
+        bail!("script storage must be a JSON object no larger than 1 MiB");
+    }
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("cannot create save directory {}", parent.display()))?;
+    }
+    std::fs::write(path, json)
+        .with_context(|| format!("cannot write script storage {}", path.display()))
+}
+
+fn read_script_data_assets(project_root: Option<&Path>) -> Result<String> {
+    const MAX_ASSETS: usize = 256;
+    const MAX_BYTES: usize = 8 * 1024 * 1024;
+
+    fn visit(
+        directory: &Path,
+        project_root: &Path,
+        depth: usize,
+        count: &mut usize,
+        total_bytes: &mut usize,
+        data: &mut serde_json::Map<String, serde_json::Value>,
+    ) -> Result<()> {
+        if depth > 8 {
+            bail!("script data directory nesting exceeds 8 levels");
+        }
+        let mut entries = std::fs::read_dir(directory)
+            .with_context(|| format!("cannot read script data directory {}", directory.display()))?
+            .collect::<std::io::Result<Vec<_>>>()?;
+        entries.sort_by_key(|entry| entry.file_name());
+        for entry in entries {
+            let file_type = entry.file_type()?;
+            if file_type.is_symlink() {
+                continue;
+            }
+            let path = entry.path();
+            if file_type.is_dir() {
+                visit(&path, project_root, depth + 1, count, total_bytes, data)?;
+                continue;
+            }
+            let extension = path
+                .extension()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default()
+                .to_ascii_lowercase();
+            if !matches!(extension.as_str(), "mskill" | "mlevel" | "mgame") {
+                continue;
+            }
+            *count += 1;
+            if *count > MAX_ASSETS {
+                bail!("script data contains more than {MAX_ASSETS} assets");
+            }
+            let bytes = std::fs::read(&path)
+                .with_context(|| format!("cannot read script data asset {}", path.display()))?;
+            *total_bytes += bytes.len();
+            if *total_bytes > MAX_BYTES {
+                bail!("script data assets exceed 8 MiB");
+            }
+            let value: serde_json::Value = serde_json::from_slice(&bytes)
+                .with_context(|| format!("invalid script data asset {}", path.display()))?;
+            let key = path
+                .strip_prefix(project_root)
+                .unwrap_or(&path)
+                .to_string_lossy()
+                .replace('\\', "/");
+            data.insert(key, value);
+        }
+        Ok(())
+    }
+
+    let Some(project_root) = project_root else {
+        return Ok("{}".into());
+    };
+    let directory = project_root.join("Assets/Data");
+    if !directory.is_dir() {
+        return Ok("{}".into());
+    }
+    let mut count = 0;
+    let mut total_bytes = 0;
+    let mut data = serde_json::Map::new();
+    visit(
+        &directory,
+        project_root,
+        0,
+        &mut count,
+        &mut total_bytes,
+        &mut data,
+    )?;
+    Ok(serde_json::Value::Object(data).to_string())
+}
+
+fn script_input_json(input: &InputState, cursor: [f32; 2], inside: bool) -> serde_json::Value {
+    let keys = [
+        (KeyCode::W, "W"),
+        (KeyCode::A, "A"),
+        (KeyCode::S, "S"),
+        (KeyCode::D, "D"),
+        (KeyCode::Space, "Space"),
+        (KeyCode::Escape, "Escape"),
+        (KeyCode::F5, "F5"),
+    ];
+    let held = keys
+        .iter()
+        .filter_map(|(key, name)| input.is_down(*key).then_some(*name))
+        .collect::<Vec<_>>();
+    let pressed = keys
+        .iter()
+        .filter_map(|(key, name)| input.just_pressed(*key).then_some(*name))
+        .collect::<Vec<_>>();
+    json!({
+        "held": held,
+        "pressed": pressed,
+        "pointer": {
+            "x": cursor[0],
+            "y": cursor[1],
+            "deltaX": input.pointer.delta_x,
+            "deltaY": input.pointer.delta_y,
+            "left": input.pointer.left,
+            "right": input.pointer.right,
+            "inside": inside,
+        },
+    })
 }
 
 impl App {
@@ -178,6 +367,7 @@ impl App {
             args.build_scenes.clone(),
             args.packaged,
         );
+        let script_storage_path = script_storage_path(&args);
         Self {
             args,
             window: None,
@@ -186,15 +376,18 @@ impl App {
             script: None,
             input: InputState::default(),
             last: Instant::now(),
+            next_redraw_at: Instant::now(),
             cube: None,
             angle: 0.0,
             cursor: [0.0, 0.0],
             cursor_inside: false,
+            window_focused: true,
             ui_controls: Vec::new(),
             active_slider: None,
             active_ui_press: None,
             focused_input: None,
             focused_ui: None,
+            pending_ui_events: Vec::new(),
             ui_button_tints: HashMap::new(),
             modifiers: ModifiersState::empty(),
             last_ui_draw_calls: u32::MAX,
@@ -215,6 +408,7 @@ impl App {
             physics_2d: PhysicsWorld2D::default(),
             scenes,
             loaded_scene: None,
+            script_storage_path,
         }
     }
 
@@ -521,6 +715,7 @@ impl App {
                 self.active_slider = None;
                 self.focused_input = None;
                 self.focused_ui = None;
+                self.pending_ui_events.clear();
                 self.last_ui_draw_calls = u32::MAX;
                 self.particles = ParticleWorld::default();
                 self.trails = TrailWorld::default();
@@ -964,6 +1159,26 @@ impl App {
         }
     }
 
+    fn queue_ui_action(
+        &mut self,
+        entity: Entity,
+        action: &str,
+        value: serde_json::Value,
+        callback: serde_json::Value,
+    ) {
+        self.pending_ui_events.push(ScriptUiEvent {
+            entity: entity.to_u64(),
+            name: self
+                .world
+                .entity_name(entity)
+                .unwrap_or_default()
+                .to_string(),
+            action: action.to_string(),
+            value,
+            callback,
+        });
+    }
+
     fn update_active_slider(&mut self) {
         let Some(entity) = self.active_slider else {
             return;
@@ -980,8 +1195,20 @@ impl App {
         if let Some(value) = region.range_value_at(self.cursor[0], self.cursor[1]) {
             if let Some(slider) = self.world.get_component_mut::<Slider>(entity) {
                 slider.value = value;
+                self.queue_ui_action(
+                    entity,
+                    "valueChanged",
+                    json!(value),
+                    serde_json::Value::Null,
+                );
             } else if let Some(scrollbar) = self.world.get_component_mut::<Scrollbar>(entity) {
                 scrollbar.value = value;
+                self.queue_ui_action(
+                    entity,
+                    "valueChanged",
+                    json!(value),
+                    serde_json::Value::Null,
+                );
             }
         }
     }
@@ -1027,6 +1254,12 @@ impl App {
                     control.entity,
                     control.callback
                 );
+                self.queue_ui_action(
+                    control.entity,
+                    "click",
+                    serde_json::Value::Null,
+                    control.callback.clone(),
+                );
             }
             UiControlKind::Toggle { is_on } => {
                 if set_toggle_value(&mut self.world, control.entity, !is_on) {
@@ -1035,6 +1268,12 @@ impl App {
                         .get_component::<Toggle>(control.entity)
                         .is_some_and(|toggle| toggle.is_on);
                     log::info!("UI Toggle {:?} = {}", control.entity, value);
+                    self.queue_ui_action(
+                        control.entity,
+                        "valueChanged",
+                        json!(value),
+                        control.callback.clone(),
+                    );
                 }
             }
             UiControlKind::Slider { .. } => {
@@ -1058,6 +1297,12 @@ impl App {
                         dropdown.selected_index = index;
                         dropdown.expanded = false;
                         log::info!("UI Dropdown {:?} selected {}", control.entity, index);
+                        self.queue_ui_action(
+                            control.entity,
+                            "selectionChanged",
+                            json!(index),
+                            control.callback.clone(),
+                        );
                     } else {
                         dropdown.expanded = !dropdown.expanded;
                     }
@@ -1067,6 +1312,12 @@ impl App {
                 if let Some(list) = self.world.get_component_mut::<ListView>(control.entity) {
                     list.selected_index = index;
                     log::info!("UI ListView {:?} selected {}", control.entity, index);
+                    self.queue_ui_action(
+                        control.entity,
+                        "selectionChanged",
+                        json!(index),
+                        control.callback.clone(),
+                    );
                 }
             }
             UiControlKind::ScrollView => {}
@@ -1074,6 +1325,12 @@ impl App {
                 if let Some(tab) = self.world.get_component_mut::<TabView>(control.entity) {
                     tab.selected_index = index;
                     log::info!("UI TabView {:?} selected {}", control.entity, index);
+                    self.queue_ui_action(
+                        control.entity,
+                        "selectionChanged",
+                        json!(index),
+                        control.callback.clone(),
+                    );
                 }
             }
         }
@@ -1094,7 +1351,9 @@ impl App {
         if let Some(control) = self.ui_controls.iter().find(|control| {
             control.entity == entity && matches!(control.kind, UiControlKind::Button)
         }) {
-            log::info!("UI Button {:?} clicked: {}", entity, control.callback);
+            let callback = control.callback.clone();
+            log::info!("UI Button {:?} clicked: {}", entity, callback);
+            self.queue_ui_action(entity, "click", serde_json::Value::Null, callback);
             return true;
         }
         if let Some(is_on) = self
@@ -1102,7 +1361,16 @@ impl App {
             .get_component::<Toggle>(entity)
             .map(|toggle| toggle.is_on)
         {
-            return set_toggle_value(&mut self.world, entity, !is_on);
+            let changed = set_toggle_value(&mut self.world, entity, !is_on);
+            if changed {
+                self.queue_ui_action(
+                    entity,
+                    "valueChanged",
+                    json!(!is_on),
+                    serde_json::Value::Null,
+                );
+            }
+            return changed;
         }
         if self.world.get_component::<InputField>(entity).is_some() {
             self.focused_input = Some(entity);
@@ -1247,8 +1515,11 @@ impl App {
                 }
                 return true;
             }
-            log::info!("UI InputField {:?} submitted: {}", entity, input.text);
+            let text = input.text.clone();
+            let callback = input.on_submit.clone();
+            log::info!("UI InputField {:?} submitted: {}", entity, text);
             self.focused_input = None;
+            self.queue_ui_action(entity, "submit", json!(text), callback);
             true
         } else {
             self.focused_input = None;
@@ -1417,6 +1688,18 @@ impl ApplicationHandler for App {
 
         let mut script = ScriptHost::new().ok();
         if let Some(ref mut s) = script {
+            match read_script_data_assets(self.args.project_root.as_deref()) {
+                Ok(data) => {
+                    if let Err(error) = s.set_data_assets_json(&data) {
+                        log::warn!("script data assets could not be initialized: {error}");
+                    }
+                }
+                Err(error) => log::error!("script data assets were rejected: {error:#}"),
+            }
+            let storage = read_script_storage(&self.script_storage_path);
+            if let Err(error) = s.set_storage_json(&storage) {
+                log::warn!("script storage could not be initialized: {error}");
+            }
             let default_script = r#"
 var t = 0.0;
 function onTick(dt, frame) {
@@ -1545,23 +1828,37 @@ function onTick(dt, frame) {
                     ElementState::Pressed => self.input.key_down(key),
                     ElementState::Released => self.input.key_up(key),
                 }
-                if key == mengine_platform::KeyCode::Escape && state == ElementState::Pressed {
+                if key == mengine_platform::KeyCode::Escape
+                    && state == ElementState::Pressed
+                    && self.args.script.is_none()
+                {
                     event_loop.exit();
                 }
             }
             WindowEvent::ModifiersChanged(modifiers) => self.modifiers = modifiers.state(),
             WindowEvent::Ime(Ime::Commit(text)) => self.edit_focused_input(&text),
             WindowEvent::CursorMoved { position, .. } => {
-                self.cursor = [position.x as f32, position.y as f32];
+                let next = [position.x as f32, position.y as f32];
+                self.input.pointer.delta_x += next[0] - self.cursor[0];
+                self.input.pointer.delta_y += next[1] - self.cursor[1];
+                self.cursor = next;
+                self.input.pointer.x = next[0];
+                self.input.pointer.y = next[1];
                 self.cursor_inside = true;
                 self.update_active_slider();
             }
             WindowEvent::CursorEntered { .. } => self.cursor_inside = true,
             WindowEvent::CursorLeft { .. } => self.cursor_inside = false,
-            WindowEvent::Focused(false) => {
-                self.cursor_inside = false;
-                self.active_slider = None;
-                self.active_ui_press = None;
+            WindowEvent::Focused(focused) => {
+                self.window_focused = focused;
+                self.next_redraw_at = Instant::now();
+                if !focused {
+                    self.cursor_inside = false;
+                    self.active_slider = None;
+                    self.active_ui_press = None;
+                    self.input.pointer.left = false;
+                    self.input.pointer.right = false;
+                }
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 let (delta_x, delta_y) = match delta {
@@ -1576,17 +1873,32 @@ function onTick(dt, frame) {
                 button: MouseButton::Left,
                 state: ElementState::Pressed,
                 ..
-            } => self.press_ui(),
+            } => {
+                self.input.pointer.left = true;
+                self.press_ui();
+            }
             WindowEvent::MouseInput {
                 button: MouseButton::Left,
                 state: ElementState::Released,
                 ..
             } => {
+                self.input.pointer.left = false;
                 self.active_slider = None;
                 self.active_ui_press = None;
             }
+            WindowEvent::MouseInput {
+                button: MouseButton::Right,
+                state,
+                ..
+            } => self.input.pointer.right = state == ElementState::Pressed,
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
+                let frame_interval = self.player_frame_interval();
+                if now < self.next_redraw_at {
+                    event_loop.set_control_flow(ControlFlow::WaitUntil(self.next_redraw_at));
+                    return;
+                }
+                self.next_redraw_at = now + frame_interval;
                 let dt = (now - self.last).as_secs_f32();
                 self.last = now;
                 self.input.begin_frame(self.world.time.frame);
@@ -1748,6 +2060,10 @@ function onTick(dt, frame) {
                     );
                 }
 
+                let input_snapshot =
+                    script_input_json(&self.input, self.cursor, self.cursor_inside);
+                let ui_events = std::mem::take(&mut self.pending_ui_events);
+                let mut storage_update = None;
                 let runtime_requests = if let Some(script) = self.script.as_mut() {
                     if let Err(error) = script.notify_animation_events(&animation_events) {
                         log::error!("animation event callback failed: {error}");
@@ -1775,13 +2091,27 @@ function onTick(dt, frame) {
                     {
                         log::error!("2D trigger callback failed: {error}");
                     }
+                    if let Err(error) =
+                        script.notify_gameplay_frame(&self.world, input_snapshot, &ui_events)
+                    {
+                        log::error!("gameplay frame callback failed: {error}");
+                    }
                     if let Err(error) = script.tick(&mut self.world, dt) {
                         log::error!("script tick failed: {error}");
+                    }
+                    match script.take_storage_json() {
+                        Ok(value) => storage_update = value,
+                        Err(error) => log::error!("script storage serialization failed: {error}"),
                     }
                     script.take_runtime_requests()
                 } else {
                     Vec::new()
                 };
+                if let Some(json) = storage_update {
+                    if let Err(error) = write_script_storage(&self.script_storage_path, &json) {
+                        log::error!("script storage save failed: {error:#}");
+                    }
+                }
                 for request in runtime_requests {
                     self.apply_runtime_request(request);
                 }
@@ -1937,19 +2267,38 @@ function onTick(dt, frame) {
                         self.last_ui_draw_calls = stats.draw_calls;
                     }
                 }
-
-                if let Some(w) = &self.window {
-                    w.request_redraw();
-                }
             }
             _ => {}
         }
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        event_loop.set_control_flow(ControlFlow::Poll);
-        if let Some(w) = &self.window {
-            w.request_redraw();
+        let frame_interval = self.player_frame_interval();
+        let now = Instant::now();
+        let wake_at = if now >= self.next_redraw_at {
+            if let Some(window) = &self.window {
+                window.request_redraw();
+            }
+            now + frame_interval
+        } else {
+            self.next_redraw_at
+        };
+        event_loop.set_control_flow(ControlFlow::WaitUntil(wake_at));
+    }
+}
+
+impl App {
+    fn player_frame_interval(&self) -> Duration {
+        if !self.window_focused {
+            PLAYER_BACKGROUND_FRAME_INTERVAL
+        } else if self
+            .loaded_scene
+            .as_ref()
+            .is_some_and(|scene| scene.name.eq_ignore_ascii_case("Game"))
+        {
+            PLAYER_GAME_FRAME_INTERVAL
+        } else {
+            PLAYER_MENU_FRAME_INTERVAL
         }
     }
 }

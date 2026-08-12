@@ -1,3 +1,4 @@
+// Author: MiYu
 import {
   cloneElement,
   isValidElement,
@@ -27,6 +28,7 @@ import {
   Settings2,
   SlidersHorizontal,
   Sparkles,
+  Swords,
   SquareTerminal,
 } from 'lucide-react';
 import {
@@ -68,6 +70,7 @@ const PANEL_ICONS: Record<PanelKind, typeof Box> = {
   spriteEditor: Image,
   spriteAtlas: Images,
   effekseer: Sparkles,
+  gameplayData: Swords,
   build: Hammer,
   projectSettings: Settings2,
 };
@@ -81,6 +84,7 @@ const PANEL_TAB_LABELS: Record<PanelKind, string> = {
   spriteEditor: 'Sprite',
   spriteAtlas: 'Atlas',
   effekseer: 'Effekseer',
+  gameplayData: 'Gameplay',
 };
 
 export type DockGroup = {
@@ -208,7 +212,7 @@ function defaultTree(): DockNode {
         b: leaf(['inspector', 'material', 'shader', 'build', 'projectSettings']),
       },
     },
-    b: leaf(['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer']),
+    b: leaf(['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer', 'gameplayData']),
   };
 }
 
