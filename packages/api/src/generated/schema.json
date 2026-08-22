@@ -369,6 +369,9 @@
       "fade_duration": {
         "type": "number"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -440,6 +443,7 @@
       "disabled_sprite",
       "label",
       "text_color",
+      "font",
       "font_size",
       "on_click"
     ],
@@ -769,6 +773,9 @@
       "expanded": {
         "type": "boolean"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -815,6 +822,7 @@
       "item_color",
       "selected_color",
       "text_color",
+      "font",
       "font_size",
       "on_value_changed"
     ],
@@ -1090,6 +1098,9 @@
       "character_limit": {
         "type": "number"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -1131,6 +1142,7 @@
       "placeholder_color",
       "background_color",
       "caret_color",
+      "font",
       "font_size",
       "interactable",
       "multiline",
@@ -1445,6 +1457,9 @@
         },
         "type": "array"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -1502,6 +1517,7 @@
       "item_color",
       "selected_color",
       "text_color",
+      "font",
       "font_size",
       "on_value_changed"
     ],
@@ -2109,6 +2125,9 @@
         },
         "type": "array"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -2140,6 +2159,7 @@
       "fill_color",
       "text_color",
       "show_label",
+      "font",
       "font_size"
     ],
     "type": "object"
@@ -2791,6 +2811,9 @@
         },
         "type": "array"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -2840,6 +2863,7 @@
       "tab_color",
       "selected_color",
       "text_color",
+      "font",
       "font_size",
       "on_value_changed"
     ],
@@ -3051,6 +3075,9 @@
         },
         "type": "array"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -3079,6 +3106,7 @@
       "label",
       "color",
       "text_color",
+      "font",
       "font_size",
       "on_value_changed"
     ],

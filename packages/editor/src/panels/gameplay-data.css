@@ -27,8 +27,14 @@
 .gameplay-data-list-actions { display: flex; gap: 5px; padding: 8px; border-top: 1px solid #272d39; }
 .gameplay-data-list-actions button { flex: 1; justify-content: center; }
 .gameplay-data-inspector { min-height: 0; overflow: auto; padding: 14px; background: radial-gradient(circle at 100% 0, #17202e 0, #10131a 32%); }
+.gameplay-summary { max-width: 920px; min-height: 56px; box-sizing: border-box; margin: 0 auto 12px; padding: 10px 14px; display: flex; align-items: center; gap: 11px; border: 1px solid #315164; border-radius: 8px; background: linear-gradient(135deg, #193343, #191d31); }
+.gameplay-summary > div { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.gameplay-summary strong { color: #eafaff; font-size: 14px; }
+.gameplay-summary span { overflow: hidden; color: #8fa3ba; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.gameplay-summary b { flex: 0 0 auto; font-size: 12px; }
 .gameplay-data-section { max-width: 920px; margin: 0 auto 14px; border: 1px solid #293140; border-radius: 8px; background: #151a24; box-shadow: 0 8px 24px #05070b33; }
 .gameplay-data-section h3 { min-height: 34px; margin: 0; padding: 0 11px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #293140; color: #b8c6d8; font-size: 11px; letter-spacing: .04em; }
+.gameplay-data-section h3 > span { display: inline-flex; align-items: center; gap: 5px; }
 .gameplay-data-section h3 button { min-height: 24px; }
 .gameplay-data-fields { padding: 11px; display: grid; grid-template-columns: repeat(2, minmax(150px, 1fr)); gap: 10px; }
 .gameplay-data-field { min-width: 0; display: flex; flex-direction: column; gap: 4px; color: #8390a3; font-size: 10px; }
@@ -38,6 +44,9 @@
 .gameplay-data-field textarea { height: 58px; resize: vertical; }
 .gameplay-data-field input[type="color"] { padding: 3px; }
 .gameplay-wave-list { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+.gameplay-timeline { height: 32px; position: relative; margin: 10px 12px 2px; overflow: hidden; border: 1px solid #324052; border-radius: 5px; background: repeating-linear-gradient(90deg, #101722, #101722 calc(10% - 1px), #263344 10%); }
+.gameplay-timeline span { min-width: 8px; height: 20px; position: absolute; top: 5px; display: grid; place-items: center; overflow: hidden; border-radius: 3px; color: #fff; font-size: 9px; opacity: .88; }
+.gameplay-timeline i { width: 2px; height: 100%; position: absolute; top: 0; z-index: 2; background: #ffb84f; box-shadow: 0 0 8px #ffb84f; }
 .gameplay-wave { padding: 8px; display: grid; grid-template-columns: 78px minmax(120px, 1.5fr) repeat(6, minmax(65px, 1fr)); gap: 7px; align-items: end; border: 1px solid #283143; border-radius: 6px; background: #111620; }
 .gameplay-wave-index { height: 29px; display: flex; align-items: center; gap: 2px; }
 .gameplay-wave-index strong { width: 21px; color: #5dd7f4; }
@@ -48,6 +57,7 @@
 .gameplay-data-loading, .gameplay-data-empty { min-height: 0; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #758298; }
 .gameplay-data-empty strong { color: #d5e2ef; font-size: 14px; }
 .gameplay-data-empty span { max-width: 360px; text-align: center; font-size: 11px; }
+.gameplay-validation { max-width: 920px; box-sizing: border-box; margin: 0 auto 14px; padding: 9px 11px; display: flex; align-items: center; gap: 7px; border: 1px solid #285345; border-radius: 6px; color: #a7e8ce; background: #123029; font-size: 11px; }
 .gameplay-data-editor .spin { animation: gameplay-data-spin .8s linear infinite; }
 @keyframes gameplay-data-spin { to { transform: rotate(360deg); } }
 @media (max-width: 850px) { .gameplay-data-content { grid-template-columns: 180px 1fr; } .gameplay-wave { grid-template-columns: repeat(3, minmax(70px, 1fr)); } }

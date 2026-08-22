@@ -84,8 +84,8 @@
           "CanvasScaler": {
             "ui_scale_mode": "ScaleWithScreenSize",
             "reference_resolution": [
-              1280,
-              720
+              1920,
+              1080
             ],
             "match_width_or_height": 0.5,
             "scale_factor": 1
@@ -123,8 +123,8 @@
               0
             ],
             "size_delta": [
-              1280,
-              720
+              1920,
+              1080
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -171,8 +171,8 @@
               0
             ],
             "size_delta": [
-              1280,
-              720
+              1920,
+              1080
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -220,11 +220,11 @@
             ],
             "anchored_position": [
               0,
-              6.666666666666666
+              10
             ],
             "size_delta": [
-              373.3333333333333,
-              460
+              560,
+              690
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -272,11 +272,11 @@
             ],
             "anchored_position": [
               0,
-              -180
+              -270
             ],
             "size_delta": [
-              313.3333333333333,
-              21.333333333333332
+              470,
+              32
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -285,14 +285,15 @@
             ]
           },
           "Text": {
-            "text": "A MENGINE ORIGINAL SAMPLE",
+            "text": "MENGINE 原创割草游戏",
             "color": [
               0.31,
               0.83,
               1,
               1
             ],
-            "font_size": 10,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -332,11 +333,11 @@
             ],
             "anchored_position": [
               0,
-              -126.66666666666666
+              -190
             ],
             "size_delta": [
-              333.3333333333333,
-              73.33333333333333
+              500,
+              110
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -345,14 +346,15 @@
             ]
           },
           "Text": {
-            "text": "ECLIPSE\nSURVIVORS",
+            "text": "蚀月幸存者",
             "color": [
               0.92,
               0.86,
               1,
               1
             ],
-            "font_size": 32,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 48,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -392,11 +394,11 @@
             ],
             "anchored_position": [
               0,
-              -63.33333333333333
+              -95
             ],
             "size_delta": [
-              286.66666666666663,
-              36
+              430,
+              54
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -405,14 +407,15 @@
             ]
           },
           "Text": {
-            "text": "Hold the line beneath a dying sun.",
+            "text": "在垂死的太阳下守住最后防线",
             "color": [
               0.68,
               0.73,
               0.88,
               1
             ],
-            "font_size": 13.333333333333332,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 20,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -452,11 +455,11 @@
             ],
             "anchored_position": [
               0,
-              10
+              15
             ],
             "size_delta": [
-              273.3333333333333,
-              38.666666666666664
+              410,
+              58
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -466,7 +469,7 @@
           },
           "InputField": {
             "text": "",
-            "placeholder": "Enter your Warden name",
+            "placeholder": "输入守望者名字",
             "text_color": [
               0.93,
               0.97,
@@ -491,7 +494,8 @@
               1,
               1
             ],
-            "font_size": 13.333333333333332,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 20,
             "interactable": true,
             "multiline": false,
             "character_limit": 18,
@@ -521,11 +525,11 @@
             ],
             "anchored_position": [
               0,
-              66.66666666666666
+              100
             ],
             "size_delta": [
-              273.3333333333333,
-              40
+              410,
+              60
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -568,14 +572,15 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "ENTER THE ECLIPSE",
+            "label": "进入蚀月",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "on_click": "continue"
           }
         }
@@ -602,11 +607,11 @@
             ],
             "anchored_position": [
               0,
-              117.33333333333333
+              176
             ],
             "size_delta": [
-              286.66666666666663,
-              38.666666666666664
+              430,
+              58
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -615,14 +620,15 @@
             ]
           },
           "Text": {
-            "text": "Press Enter after typing, or continue as a guest.\nProfile and progression save locally.",
+            "text": "输入后按回车，或直接以游客身份继续。\n档案与成长进度保存在本地。",
             "color": [
               0.53,
               0.6,
               0.75,
               1
             ],
-            "font_size": 9.333333333333332,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 14,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -662,11 +668,11 @@
             ],
             "anchored_position": [
               0,
-              170
+              255
             ],
             "size_delta": [
-              133.33333333333331,
-              26.666666666666664
+              200,
+              40
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -709,14 +715,15 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "RESET PROFILE",
+            "label": "重置档案",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "on_click": "reset-profile"
           }
         }
@@ -743,11 +750,11 @@
             ],
             "anchored_position": [
               0,
-              206.66666666666666
+              310
             ],
             "size_delta": [
-              286.66666666666663,
-              24
+              430,
+              36
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -763,7 +770,8 @@
               0.8,
               1
             ],
-            "font_size": 9.333333333333332,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 14,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",

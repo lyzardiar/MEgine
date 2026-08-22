@@ -84,7 +84,7 @@ const PANEL_TAB_LABELS: Record<PanelKind, string> = {
   spriteEditor: 'Sprite',
   spriteAtlas: 'Atlas',
   effekseer: 'Effekseer',
-  gameplayData: 'Gameplay',
+  gameplayData: '技能 / 关卡',
 };
 
 export type DockGroup = {

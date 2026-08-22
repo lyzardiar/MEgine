@@ -13,7 +13,10 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 const MAX_FONT_BYTES: u64 = 64 * 1024 * 1024;
-const ATLAS_SIZE: u32 = 1024;
+// UI fonts are split by typeface, size and style. A 1024 page reserves 4 MiB
+// on both CPU and GPU even for a handful of menu glyphs; 512 keeps CJK crisp
+// while cutting that per-page footprint to one quarter.
+const ATLAS_SIZE: u32 = 512;
 const MAX_ATLAS_PAGES: usize = 32;
 const GLYPH_PADDING: u32 = 1;
 const BUILTIN_FONT_KEY: &str = "mengine://builtin-bitmap";
@@ -794,8 +797,18 @@ mod tests {
         assert_eq!(quantized_raster_size(24.0, 2.0), 48);
         assert_eq!(quantized_raster_size(24.0, f32::NAN), 24);
         assert_eq!(quantized_raster_size(24.0, -1.0), 24);
-        assert_eq!(quantized_raster_size(512.0, 64.0), 1022);
+        assert_eq!(quantized_raster_size(512.0, 64.0), 510);
         assert_eq!(style_key("BoldAndItalic"), 3);
         assert_eq!(style_key("unknown"), 0);
+    }
+
+    #[test]
+    fn dynamic_font_pages_use_the_bounded_cjk_atlas_size() {
+        let mut page = FontAtlasPage::new("mengine-font://bounded".into());
+        assert_eq!(ATLAS_SIZE, 512);
+        assert_eq!(page.pixels.len(), 512 * 512 * 4);
+        assert!(page
+            .insert('月', 48, 48, &vec![255; 48 * 48], [0.0, 0.0, 48.0, 48.0])
+            .is_some());
     }
 }

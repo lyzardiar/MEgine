@@ -1,7 +1,7 @@
 // Author: MiYu
 
 export type GameplayDataKind = 'skill-library' | 'level-library' | 'game-balance';
-export type SkillPattern = 'nearest' | 'radial' | 'orbit' | 'aura';
+export type SkillPattern = 'nearest' | 'radial' | 'orbit' | 'aura' | 'chain' | 'meteor' | 'boomerang' | 'pulse';
 
 export type SkillDefinition = {
   id: string;
@@ -17,6 +17,9 @@ export type SkillDefinition = {
   maxLevel: number;
   color: string;
   upgrades: number[];
+  castEffect: string;
+  impactEffect: string;
+  effectScale: number;
 };
 
 export type SkillLibraryAsset = {
@@ -92,8 +95,8 @@ function integer(value: unknown, fallback: number, minimum = 0): number {
 function defaultSkill(index: number): SkillDefinition {
   return {
     id: `skill_${index + 1}`,
-    name: `New Skill ${index + 1}`,
-    description: 'Describe how this skill changes the run.',
+    name: `新技能 ${index + 1}`,
+    description: '请描述这个技能如何改变战局。',
     icon: '',
     pattern: 'nearest',
     damage: 12,
@@ -104,6 +107,9 @@ function defaultSkill(index: number): SkillDefinition {
     maxLevel: 5,
     color: '#7ee7ff',
     upgrades: [1, 1.25, 1.55, 1.9, 2.3],
+    castEffect: '',
+    impactEffect: '',
+    effectScale: 1,
   };
 }
 
@@ -116,7 +122,7 @@ function normalizeSkill(value: unknown, index: number): SkillDefinition {
     name: text(source.name, `Skill ${index + 1}`).trim(),
     description: text(source.description),
     icon: text(source.icon),
-    pattern: ['nearest', 'radial', 'orbit', 'aura'].includes(pattern)
+    pattern: ['nearest', 'radial', 'orbit', 'aura', 'chain', 'meteor', 'boomerang', 'pulse'].includes(pattern)
       ? pattern as SkillPattern
       : 'nearest',
     damage: finite(source.damage, 12),
@@ -126,6 +132,9 @@ function normalizeSkill(value: unknown, index: number): SkillDefinition {
     count: integer(source.count, 1, 1),
     maxLevel: integer(source.maxLevel, 5, 1),
     color: text(source.color, '#7ee7ff'),
+    castEffect: text(source.castEffect),
+    impactEffect: text(source.impactEffect),
+    effectScale: finite(source.effectScale, 1, 0.05),
     upgrades: Array.isArray(source.upgrades)
       ? source.upgrades.map((entry) => finite(entry, 1, 0.01))
       : [1, 1.25, 1.55, 1.9, 2.3],
@@ -152,8 +161,8 @@ function normalizeWave(value: unknown, index: number): LevelWave {
 function defaultLevel(index: number): LevelDefinition {
   return {
     id: `level_${index + 1}`,
-    name: `New Level ${index + 1}`,
-    description: 'A new survival arena.',
+    name: `新关卡 ${index + 1}`,
+    description: '请描述这个生存远征关卡。',
     duration: 300,
     background: '',
     accent: '#a978ff',

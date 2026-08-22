@@ -189,6 +189,8 @@ component Button {
   disabled_sprite:    string = ""
   label:           string = "Button"
   text_color:      float4 = [1, 1, 1, 1]
+  /// Font asset used by the button label. Empty uses the built-in fallback.
+  font:            string = ""
   font_size:       float  = 16
   /// Unity-style persistent call descriptor
   on_click:        object
@@ -240,6 +242,8 @@ component Toggle {
   label:            string = "Toggle"
   color:            float4 = [0.2, 0.45, 0.85, 1]
   text_color:       float4 = [1, 1, 1, 1]
+  /// Font asset used by the toggle label. Empty uses the built-in fallback.
+  font:             string = ""
   font_size:        float  = 16
   on_value_changed: object
 }
@@ -367,6 +371,8 @@ component ProgressBar {
   fill_color:       float4 = [0.2, 0.65, 0.95, 1]
   text_color:       float4 = [1, 1, 1, 1]
   show_label:       bool   = true
+  /// Font asset used by the percentage label. Empty uses the built-in fallback.
+  font:             string = ""
   font_size:        float  = 14
 }
 
@@ -377,6 +383,8 @@ component InputField {
   placeholder_color: float4 = [0.55, 0.58, 0.64, 1]
   background_color: float4 = [0.08, 0.09, 0.12, 1]
   caret_color:      float4 = [0.3, 0.7, 1, 1]
+  /// Font asset used by entered text and placeholder text. Empty uses the built-in fallback.
+  font:             string = ""
   font_size:        float  = 16
   interactable:     bool   = true
   multiline:        bool   = false
@@ -394,6 +402,8 @@ component Dropdown {
   item_color:       float4 = [0.16, 0.18, 0.23, 1]
   selected_color:   float4 = [0.2, 0.48, 0.85, 1]
   text_color:       float4 = [1, 1, 1, 1]
+  /// Font asset used by the selected value and option rows. Empty uses the built-in fallback.
+  font:             string = ""
   font_size:        float  = 16
   on_value_changed: object
 }
@@ -409,6 +419,8 @@ component ListView {
   item_color:       float4 = [0.14, 0.16, 0.2, 1]
   selected_color:   float4 = [0.2, 0.48, 0.85, 1]
   text_color:       float4 = [1, 1, 1, 1]
+  /// Font asset used by item labels. Empty uses the built-in fallback.
+  font:             string = ""
   font_size:        float  = 15
   on_value_changed: object
 }
@@ -432,6 +444,8 @@ component TabView {
   tab_color:        float4 = [0.15, 0.17, 0.21, 1]
   selected_color:   float4 = [0.2, 0.48, 0.85, 1]
   text_color:       float4 = [1, 1, 1, 1]
+  /// Font asset used by tab labels. Empty uses the built-in fallback.
+  font:             string = ""
   font_size:        float  = 15
   on_value_changed: object
 }

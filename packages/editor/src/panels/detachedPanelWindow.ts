@@ -41,7 +41,7 @@ export const PANEL_TITLES: Record<CorePanelId, string> = {
   spriteEditor: 'Sprite Editor',
   spriteAtlas: 'Sprite Atlas',
   effekseer: 'Effekseer Preview',
-  gameplayData: 'Gameplay Data',
+  gameplayData: '技能 / 关卡编辑器',
   build: 'Build Settings',
   projectSettings: 'Project Settings',
 };

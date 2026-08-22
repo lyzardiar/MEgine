@@ -1,29 +1,33 @@
 <!-- Author: MiYu -->
 
-# Eclipse Survivors
+# 蚀月幸存者
 
-An original, complete survivor-roguelite sample built entirely with MEngine.
+一个完全使用 MEngine 制作的中文幸存者类游戏样例。
 
-## Included
+## 已完成内容
 
-- Local profile login and persistent progression.
-- Four-slot equipment loadout with real runtime modifiers.
-- Four data-driven auto-cast skills with upgrades and distinct attack patterns.
-- Three filled expeditions, overlapping wave groups, bosses, victory and defeat flows.
-- Experience, health, gold, kills, pause/retry, difficulty gates, and saved completion history.
-- Generated original key art, character, enemies, equipment, skills, and pickups.
-- Integrated MEngine Gameplay Data editor for `.mskill`, `.mlevel`, and `.mgame` assets.
+- 本地登录、游客档案、持久化金币、击败数、最佳时间和关卡完成记录。
+- 12 格背包、四个分类装备栏、稀有度与属性详情；同槽替换和卸下回包均有完整交互。
+- 8 个数据驱动技能，覆盖定向飞弹、环形弹幕、实体环绕月刃、范围光环、瞬时雷链、陨星轰炸、往返回旋与冰霜脉冲。
+- 每个技能可独立配置 Effekseer 施法效果、命中效果和缩放；`SurvivorSkills.meffect` 提供 8 套专用预设，特效实体有同屏上限并会在播放结束后自动回收。
+- 每次升级暂停战斗并提供技能三选一，可获得新技能或强化已有技能。
+- 3 个完整关卡、21 组重叠怪潮、7 类普通敌人、动画敌人和最终 Boss。
+- 主角待机、跑动、攻击动画；敌人拥有四帧循环动画和差异化移动节奏。所有帧按透明包围盒统一视觉中心和脚底基线，避免切帧跳动。
+- 中文矢量字体覆盖文本、按钮、输入框和进度条，不再使用像素字体。
+- 游戏内显示等级、击败数、场上敌人数与帧率，并对高密度战斗做 30Hz 视觉同步节流。
 
-## Play
+## 运行游戏
 
 ```powershell
 npm.cmd run sample:survivors
 ```
 
-Type a Warden name and press Enter, or continue as a guest. Use `WASD` to move; skills fire automatically. Press `Escape` to pause.
+输入守望者名字后按回车，也可以直接以游客身份继续。使用 `WASD` 移动，技能会自动释放，按 `Escape` 暂停。
 
-## Authoring
+## 编辑技能与关卡
 
-Open this directory as an MEngine project. Double-click `Assets/Data/Skills.mskill` or `Assets/Data/Levels.mlevel` in Project. The Gameplay panel provides left-side Skills and Levels tools, validated fields, wave ordering, boss setup, dirty-state tracking, and save support.
+在 MEngine 中打开本目录后，可以直接点击顶部工具栏的“技能编辑器”或“关卡编辑器”。也可以在项目窗口双击 `Assets/Data/Skills.mskill` 或 `Assets/Data/Levels.mlevel`。
 
-Run `node Tools/generate-project.mjs` to deterministically regenerate scenes, data, import settings, and metadata without touching `Main.ts` or the original generated art.
+技能编辑器支持 8 种攻击模式、伤害、冷却、范围、数量、升级倍率、图标，以及 Effekseer 施法/命中特效路径和缩放。首局自带定向飞弹、实体环绕月刃和范围陨击，其他机制通过三选一获得。关卡编辑器支持波次增删排序、可视时间轴、数量与属性配置以及 Boss 设置，带保存状态和数据校验。
+
+运行 `node Tools/generate-project.mjs` 可确定性重建场景、玩法数据、Sprite 切片和导入元数据，不会覆盖 `Main.ts` 或生成美术原图。运行 `Tools/normalize-sprite-atlases.ps1` 可从原始生成图重建锚点稳定的动画图集。

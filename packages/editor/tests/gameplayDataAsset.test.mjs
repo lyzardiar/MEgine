@@ -27,11 +27,38 @@ test('gameplay skill assets normalize and round-trip', () => {
     maxLevel: 5,
     color: '#7ee7ff',
     upgrades: [1, 1.25, 1.55, 1.9, 2.3],
+    castEffect: '',
+    impactEffect: '',
+    effectScale: 1,
   });
   assert.deepEqual(
     parseGameplayDataAsset(serializeGameplayDataAsset(parsed), 'Skills.mskill'),
     parsed,
   );
+});
+
+test('gameplay skill assets preserve advanced survivor attack patterns', () => {
+  for (const pattern of ['chain', 'meteor', 'boomerang', 'pulse']) {
+    const parsed = parseGameplayDataAsset(JSON.stringify({
+      skills: [{ id: `skill_${pattern}`, name: pattern, pattern }],
+    }), 'Assets/Data/Skills.mskill');
+    assert.equal(parsed.kind, 'skill-library');
+    assert.equal(parsed.skills[0].pattern, pattern);
+  }
+});
+
+test('gameplay skill assets preserve Effekseer bindings', () => {
+  const parsed = parseGameplayDataAsset(JSON.stringify({
+    skills: [{
+      id: 'lightning', name: '雷链', pattern: 'chain',
+      castEffect: 'Assets/Effects/ef_lightning02.efkefc',
+      impactEffect: 'Assets/Effects/ef_lightning03.efkefc', effectScale: 1.4,
+    }],
+  }), 'Assets/Data/Skills.mskill');
+  assert.equal(parsed.kind, 'skill-library');
+  assert.equal(parsed.skills[0].castEffect, 'Assets/Effects/ef_lightning02.efkefc');
+  assert.equal(parsed.skills[0].impactEffect, 'Assets/Effects/ef_lightning03.efkefc');
+  assert.equal(parsed.skills[0].effectScale, 1.4);
 });
 
 test('gameplay data rejects duplicate ids and an out-of-bounds boss', () => {

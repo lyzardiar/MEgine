@@ -4,8 +4,8 @@
   "levels": [
     {
       "id": "eclipse_garden",
-      "name": "Eclipse Garden",
-      "description": "A forgiving ruined garden with steady pressure and a single Guardian.",
+      "name": "蚀月庭院",
+      "description": "适合初次远征的废墟庭院。怪潮会从稀疏迅速增长到满屏压境。",
       "duration": 180,
       "background": "Assets/Art/Generated/eclipse-citadel.png",
       "accent": "#47dfff",
@@ -13,53 +13,80 @@
       "waves": [
         {
           "start": 0,
-          "duration": 45,
+          "duration": 38,
           "enemy": "wisp",
-          "count": 32,
+          "count": 150,
+          "hp": 18,
+          "speed": 1.3,
+          "damage": 5
+        },
+        {
+          "start": 14,
+          "duration": 52,
+          "enemy": "shadow_bat",
+          "count": 170,
           "hp": 22,
-          "speed": 1.25,
+          "speed": 1.9,
+          "damage": 5
+        },
+        {
+          "start": 34,
+          "duration": 58,
+          "enemy": "astral_slime",
+          "count": 130,
+          "hp": 42,
+          "speed": 1.05,
           "damage": 7
         },
         {
-          "start": 35,
-          "duration": 60,
+          "start": 58,
+          "duration": 62,
           "enemy": "thorn_crawler",
-          "count": 26,
-          "hp": 40,
+          "count": 160,
+          "hp": 52,
           "speed": 1.55,
-          "damage": 10
+          "damage": 8
         },
         {
-          "start": 85,
-          "duration": 70,
+          "start": 90,
+          "duration": 64,
+          "enemy": "rift_hound",
+          "count": 180,
+          "hp": 58,
+          "speed": 2.15,
+          "damage": 9
+        },
+        {
+          "start": 118,
+          "duration": 54,
           "enemy": "ember_cultist",
-          "count": 24,
-          "hp": 70,
-          "speed": 1,
-          "damage": 14
+          "count": 125,
+          "hp": 88,
+          "speed": 1.18,
+          "damage": 11
         },
         {
-          "start": 130,
-          "duration": 45,
-          "enemy": "wisp",
-          "count": 54,
-          "hp": 48,
-          "speed": 1.75,
-          "damage": 11
+          "start": 145,
+          "duration": 32,
+          "enemy": "moon_knight",
+          "count": 70,
+          "hp": 165,
+          "speed": 0.92,
+          "damage": 14
         }
       ],
       "boss": {
         "enemy": "void_guardian",
         "spawnAt": 165,
-        "hp": 1150,
+        "hp": 1500,
         "speed": 0.78,
-        "damage": 24
+        "damage": 22
       }
     },
     {
       "id": "astral_archive",
-      "name": "Astral Archive",
-      "description": "Faster swarms overlap in the collapsed archive. Requires a tuned loadout.",
+      "name": "星界书库",
+      "description": "高速怪群交替夹击，重甲月骑士会在弹幕中强行推进。",
       "duration": 240,
       "background": "Assets/Art/Generated/eclipse-citadel.png",
       "accent": "#b966ff",
@@ -67,53 +94,80 @@
       "waves": [
         {
           "start": 0,
-          "duration": 55,
-          "enemy": "thorn_crawler",
-          "count": 46,
-          "hp": 52,
-          "speed": 1.7,
-          "damage": 11
+          "duration": 62,
+          "enemy": "shadow_bat",
+          "count": 260,
+          "hp": 38,
+          "speed": 2.2,
+          "damage": 7
         },
         {
-          "start": 35,
-          "duration": 80,
-          "enemy": "wisp",
-          "count": 72,
-          "hp": 46,
-          "speed": 2,
+          "start": 25,
+          "duration": 78,
+          "enemy": "rift_hound",
+          "count": 230,
+          "hp": 65,
+          "speed": 2.45,
           "damage": 10
         },
         {
-          "start": 90,
+          "start": 50,
           "duration": 85,
-          "enemy": "ember_cultist",
-          "count": 48,
-          "hp": 105,
-          "speed": 1.2,
-          "damage": 18
+          "enemy": "astral_slime",
+          "count": 220,
+          "hp": 78,
+          "speed": 1.22,
+          "damage": 10
         },
         {
-          "start": 150,
-          "duration": 80,
+          "start": 82,
+          "duration": 88,
           "enemy": "thorn_crawler",
-          "count": 82,
+          "count": 250,
           "hp": 95,
-          "speed": 2.05,
+          "speed": 1.85,
+          "damage": 13
+        },
+        {
+          "start": 118,
+          "duration": 92,
+          "enemy": "ember_cultist",
+          "count": 190,
+          "hp": 135,
+          "speed": 1.35,
           "damage": 16
+        },
+        {
+          "start": 155,
+          "duration": 75,
+          "enemy": "moon_knight",
+          "count": 130,
+          "hp": 260,
+          "speed": 1.02,
+          "damage": 20
+        },
+        {
+          "start": 190,
+          "duration": 42,
+          "enemy": "wisp",
+          "count": 300,
+          "hp": 82,
+          "speed": 2.7,
+          "damage": 12
         }
       ],
       "boss": {
         "enemy": "void_guardian",
         "spawnAt": 220,
-        "hp": 2200,
+        "hp": 3000,
         "speed": 0.92,
-        "damage": 32
+        "damage": 30
       }
     },
     {
       "id": "sunken_observatory",
-      "name": "Sunken Observatory",
-      "description": "Endless pressure from all enemy families beneath the final eclipse.",
+      "name": "沉没观星台",
+      "description": "所有怪物族群同时涌入的终局远征，必须构筑完整技能组合。",
       "duration": 300,
       "background": "Assets/Art/Generated/eclipse-citadel.png",
       "accent": "#ffb24d",
@@ -121,56 +175,83 @@
       "waves": [
         {
           "start": 0,
-          "duration": 80,
-          "enemy": "ember_cultist",
-          "count": 55,
-          "hp": 105,
-          "speed": 1.25,
-          "damage": 17
+          "duration": 85,
+          "enemy": "rift_hound",
+          "count": 330,
+          "hp": 80,
+          "speed": 2.55,
+          "damage": 12
         },
         {
-          "start": 40,
-          "duration": 110,
-          "enemy": "wisp",
-          "count": 110,
-          "hp": 72,
-          "speed": 2.2,
-          "damage": 13
+          "start": 24,
+          "duration": 105,
+          "enemy": "shadow_bat",
+          "count": 390,
+          "hp": 58,
+          "speed": 2.75,
+          "damage": 10
         },
         {
-          "start": 110,
-          "duration": 110,
+          "start": 58,
+          "duration": 120,
+          "enemy": "astral_slime",
+          "count": 320,
+          "hp": 130,
+          "speed": 1.4,
+          "damage": 15
+        },
+        {
+          "start": 92,
+          "duration": 120,
           "enemy": "thorn_crawler",
-          "count": 105,
-          "hp": 132,
-          "speed": 2.1,
-          "damage": 20
+          "count": 350,
+          "hp": 155,
+          "speed": 2.05,
+          "damage": 18
         },
         {
-          "start": 180,
-          "duration": 110,
+          "start": 128,
+          "duration": 132,
           "enemy": "ember_cultist",
-          "count": 78,
-          "hp": 205,
-          "speed": 1.45,
-          "damage": 26
+          "count": 280,
+          "hp": 220,
+          "speed": 1.48,
+          "damage": 22
         },
         {
-          "start": 225,
-          "duration": 70,
+          "start": 165,
+          "duration": 120,
+          "enemy": "moon_knight",
+          "count": 210,
+          "hp": 390,
+          "speed": 1.14,
+          "damage": 27
+        },
+        {
+          "start": 210,
+          "duration": 80,
           "enemy": "wisp",
-          "count": 150,
+          "count": 520,
+          "hp": 120,
+          "speed": 3.05,
+          "damage": 16
+        },
+        {
+          "start": 245,
+          "duration": 48,
+          "enemy": "shadow_bat",
+          "count": 420,
           "hp": 105,
-          "speed": 2.65,
-          "damage": 19
+          "speed": 3.2,
+          "damage": 17
         }
       ],
       "boss": {
         "enemy": "void_guardian",
         "spawnAt": 275,
-        "hp": 4200,
+        "hp": 5400,
         "speed": 1.05,
-        "damage": 42
+        "damage": 38
       }
     }
   ]

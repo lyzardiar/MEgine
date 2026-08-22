@@ -2914,6 +2914,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           log(`Advanced paused Play Mode to frame ${store.snapshot().frame}`);
           refresh();
         }}
+        onOpenSkillEditor={() => openGameplayDataAsset('Assets/Data/Skills.mskill')}
+        onOpenLevelEditor={() => openGameplayDataAsset('Assets/Data/Levels.mlevel')}
       />
 
       <DockWorkspace

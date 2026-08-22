@@ -2,11 +2,12 @@
 /** Eclipse Survivors: a complete data-driven survivor roguelite sample. */
 
 type Vec2 = { x: number; y: number };
-type SkillPattern = 'nearest' | 'radial' | 'orbit' | 'aura';
+type SkillPattern = 'nearest' | 'radial' | 'orbit' | 'aura' | 'chain' | 'meteor' | 'boomerang' | 'pulse';
 type SkillDefinition = {
   id: string; name: string; description: string; icon: string; pattern: SkillPattern;
   damage: number; cooldown: number; projectileSpeed: number; range: number; count: number;
   maxLevel: number; color: string; upgrades: number[];
+  castEffect?: string; impactEffect?: string; effectScale?: number;
 };
 type WaveDefinition = {
   start: number; duration: number; enemy: string; count: number; hp: number; speed: number; damage: number;
@@ -17,9 +18,11 @@ type LevelDefinition = {
   boss: { enemy: string; spawnAt: number; hp: number; speed: number; damage: number };
 };
 type EquipmentDefinition = {
-  id: string; name: string; description: string; power: number;
+  id: string; name: string; description: string; power: number; slot: EquipmentSlot;
+  rarity: '普通' | '稀有' | '史诗' | '传说'; icon: string;
   modifiers: { damage?: number; health?: number; speed?: number; cooldown?: number };
 };
+type EquipmentSlot = 'weapon' | 'armor' | 'boots' | 'accessory';
 type BalanceDefinition = {
   player: { baseHealth: number; moveSpeed: number; pickupRadius: number };
   progression: { experienceBase: number; experienceGrowth: number; goldPerKill: number };
@@ -33,29 +36,38 @@ type SaveData = { version: 1; profile: Profile | null };
 type EnemyState = {
   name: string; id: string | null; kind: string; position: Vec2; hp: number; maxHp: number;
   speed: number; damage: number; radius: number; boss: boolean; hitCooldown: number;
+  slowTime: number; phase: number;
 };
 type ProjectileState = {
   name: string; id: string | null; position: Vec2; velocity: Vec2; damage: number;
-  radius: number; life: number; pierce: number; visualOnly: boolean;
+  origin: Vec2; radius: number; life: number; duration: number; pierce: number; visualOnly: boolean;
+  motion: 'linear' | 'boomerang' | 'orbit'; orbitIndex: number; orbitCount: number; orbitRadius: number;
+  spin: number; impactEffect: string; effectScale: number; hitEnemies: string[];
 };
+type EffectState = { name: string; bornAt: number; ttl: number };
 type GemState = { name: string; id: string | null; position: Vec2; value: number; life: number };
 type RunState = {
   level: LevelDefinition; elapsed: number; paused: boolean; ended: boolean; victory: boolean;
   player: Vec2; health: number; maxHealth: number; moveSpeed: number; damageMultiplier: number;
   cooldownMultiplier: number; xp: number; xpNext: number; playerLevel: number; kills: number; gold: number;
   skills: Record<string, number>; skillTimers: Record<string, number>; spawnedByWave: number[];
-  bossSpawned: boolean; enemies: EnemyState[]; projectiles: ProjectileState[]; gems: GemState[];
-  hudTimer: number; toast: string; toastTime: number;
+  bossSpawned: boolean; enemies: EnemyState[]; projectiles: ProjectileState[]; gems: GemState[]; effects: EffectState[];
+  hudTimer: number; toast: string; toastTime: number; choosingSkill: boolean;
+  choices: string[]; pendingLevels: number; playerAttackTime: number; playerAnimation: string; playerFacingLeft: boolean;
+  fps: number; visualAccumulator: number; syncVisuals: boolean;
 };
 
 const ART = 'Assets/Art/Generated';
 const SKILLS_PATH = 'Assets/Data/Skills.mskill';
 const LEVELS_PATH = 'Assets/Data/Levels.mlevel';
 const BALANCE_PATH = 'Assets/Data/Balance.mgame';
+const UI_FONT = 'Assets/Fonts/NotoSansSC.ttf';
 const TAU = Math.PI * 2;
-const UI_SCALE = 2 / 3;
-const ENEMY_LIMIT = 48;
-const GENERATED_LIMIT = 96;
+const UI_SCALE = 1;
+const ENEMY_LIMIT = 140;
+const GENERATED_LIMIT = 240;
+const EFFECT_LIMIT = 18;
+const EQUIPMENT_SLOTS: EquipmentSlot[] = ['weapon', 'armor', 'boots', 'accessory'];
 
 const skills = ((engine.data[SKILLS_PATH] as { skills?: SkillDefinition[] } | undefined)?.skills ?? []);
 const levels = ((engine.data[LEVELS_PATH] as { levels?: LevelDefinition[] } | undefined)?.levels ?? []);
@@ -67,6 +79,7 @@ const balance = (engine.data[BALANCE_PATH] as BalanceDefinition | undefined) ?? 
 
 let saveData = normalizeSave(engine.storage);
 let selectedLevelId = levels[0]?.id ?? 'eclipse_garden';
+let selectedEquipmentId = balance.equipment[0]?.id ?? '';
 let currentScene = '';
 let sceneNeedsRefresh = true;
 let run: RunState | null = null;
@@ -108,7 +121,7 @@ function persist(): void {
 
 function newProfile(name: string): Profile {
   return {
-    name: name.trim().slice(0, 18) || 'Guest Warden',
+    name: name.trim().slice(0, 18) || '游客守望者',
     gold: 0,
     totalKills: 0,
     bestTime: 0,
@@ -152,7 +165,7 @@ function rectTransform(position: Vec2, size: Vec2): Record<string, unknown> {
 
 function textComponent(value: string, fontSize = 16, tint = '#dceaff', alignment = 'Center'): Record<string, unknown> {
   return {
-    text: value, color: color(tint), font_size: fontSize * UI_SCALE, font_style: 'Normal',
+    text: value, color: color(tint), font: UI_FONT, font_size: fontSize * UI_SCALE, font_style: 'Normal',
     alignment, vertical_align: 'Middle', support_rich_text: true,
     horizontal_overflow: 'Wrap', vertical_overflow: 'Overflow', raycast_target: false,
     outline_color: [0.01, 0.02, 0.06, 0.9], outline_width: 0,
@@ -166,7 +179,7 @@ function buttonComponent(label: string, callback: string, active = false, fontSi
     highlighted_color: color(active ? '#39bce5' : '#2d6d9a'),
     pressed_color: color('#153a5a'), selected_color: color('#2d91ba'),
     disabled_color: [0.15, 0.16, 0.2, 0.5], color_multiplier: 1, fade_duration: 0.08,
-    label, text_color: [0.94, 0.98, 1, 1], font_size: fontSize * UI_SCALE, on_click: callback,
+    label, text_color: [0.94, 0.98, 1, 1], font: UI_FONT, font_size: fontSize * UI_SCALE, on_click: callback,
   };
 }
 
@@ -187,7 +200,7 @@ function setProgress(name: string, value: number, maximum: number, fill: string,
   setNamed(name, 'ProgressBar', {
     min_value: 0, max_value: Math.max(1, maximum), value: Math.max(0, value), direction: 'LeftToRight',
     background_color: [0.035, 0.045, 0.1, 0.94], fill_color: color(fill),
-    text_color: [1, 1, 1, 1], show_label: showLabel, font_size: 13 * UI_SCALE,
+    text_color: [1, 1, 1, 1], show_label: showLabel, font: UI_FONT, font_size: 13 * UI_SCALE,
   });
 }
 
@@ -199,12 +212,52 @@ function equipmentPower(profile: Profile): number {
   return profile.equipped.reduce((sum, id) => sum + (balance.equipment.find((item) => item.id === id)?.power ?? 0), 0);
 }
 
+function equipmentSlotName(slot: EquipmentSlot): string {
+  return slot === 'weapon' ? '武器' : slot === 'armor' ? '护甲' : slot === 'boots' ? '战靴' : '饰品';
+}
+
+function equipmentRarityColor(rarity: EquipmentDefinition['rarity']): string {
+  return rarity === '传说' ? '#ffc75a' : rarity === '史诗' ? '#d78cff' : rarity === '稀有' ? '#65c9ff' : '#b9c8d8';
+}
+
+function refreshEquipmentUi(profile: Profile): void {
+  const available = balance.equipment.filter((item) => profile.unlockedEquipment.includes(item.id));
+  if (!available.some((item) => item.id === selectedEquipmentId)) selectedEquipmentId = available[0]?.id ?? '';
+
+  EQUIPMENT_SLOTS.forEach((slot) => {
+    const item = balance.equipment.find((candidate) => candidate.slot === slot && profile.equipped.includes(candidate.id));
+    const suffix = slot === 'weapon' ? 'Weapon' : slot === 'armor' ? 'Armor' : slot === 'boots' ? 'Boots' : 'Accessory';
+    setButton(`Equipped ${suffix}`, item ? `${equipmentSlotName(slot)}\n${item.name}` : `${equipmentSlotName(slot)}\n未装备`, `unequip-slot:${slot}`, Boolean(item), 12);
+    setNamed(`Equipped ${suffix} Icon`, 'Image', {
+      sprite: item?.icon ?? '', color: item ? [1, 1, 1, 1] : [0.22, 0.28, 0.4, 0.3],
+      image_type: 'Simple', preserve_aspect: true, raycast_target: false,
+    });
+  });
+
+  for (let index = 0; index < 12; index += 1) {
+    const item = available[index];
+    const selected = item?.id === selectedEquipmentId;
+    const equipped = item ? profile.equipped.includes(item.id) : false;
+    setButton(`Inventory Item ${index + 1}`, item ? `${selected ? '◆ ' : ''}${item.name}\n${item.rarity}${equipped ? ' · 已装备' : ''}` : '空背包格', item ? `inventory:${item.id}` : '', selected, 11);
+    setNamed(`Inventory Icon ${index + 1}`, 'Image', {
+      sprite: item?.icon ?? '', color: item ? [1, 1, 1, 1] : [0.14, 0.17, 0.25, 0.22],
+      image_type: 'Simple', preserve_aspect: true, raycast_target: false,
+    });
+  }
+
+  const selected = balance.equipment.find((item) => item.id === selectedEquipmentId);
+  if (!selected) return;
+  const equipped = profile.equipped.includes(selected.id);
+  setText('Equipment Detail', `${selected.name}  ·  ${selected.rarity} ${equipmentSlotName(selected.slot)}  ·  战力 +${selected.power}\n${selected.description}`, 12, equipmentRarityColor(selected.rarity), 'Left');
+  setButton('Equip Selected Button', equipped ? '已装备 · 点击卸下' : `装备到${equipmentSlotName(selected.slot)}栏`, equipped ? `unequip:${selected.id}` : 'equip-selected', equipped, 13);
+}
+
 function refreshLogin(): void {
   const profile = saveData.profile;
   setText('Login Status', profile
-    ? `Welcome back, ${profile.name}. ${Math.floor(profile.gold)} astral gold awaits.`
-    : 'Create a local Warden profile to begin.', 14, profile ? '#71e8ff' : '#f1a9c4');
-  setButton('Continue Button', profile ? `CONTINUE AS ${profile.name.toLocaleUpperCase()}` : 'CONTINUE AS GUEST', 'continue', Boolean(profile));
+    ? `欢迎回来，${profile.name}。你拥有 ${Math.floor(profile.gold)} 星辉金币。`
+    : '创建本地守望者档案，开始挑战蚀月。', 14, profile ? '#71e8ff' : '#f1a9c4');
+  setButton('Continue Button', profile ? `以 ${profile.name} 的身份继续` : '以游客身份继续', 'continue', Boolean(profile));
 }
 
 function refreshLobby(message = ''): void {
@@ -214,25 +267,20 @@ function refreshLobby(message = ''): void {
     return;
   }
   const power = equipmentPower(profile);
-  setText('Profile Summary', `${profile.name.toLocaleUpperCase()}   •   ${Math.floor(profile.gold)} GOLD   •   ${profile.totalKills} KILLS`, 15, '#7ce9ff', 'Right');
-  setText('Warden Stats', `WARDEN ${profile.name.toLocaleUpperCase()}\nPOWER ${power}   •   BEST ${formatTime(profile.bestTime)}\n${profile.completedLevels.length}/3 EXPEDITIONS CLEARED`, 14, '#c4d9ff');
-  for (const item of balance.equipment) {
-    const active = profile.equipped.includes(item.id);
-    const buttonName = item.id === 'moonstaff' ? 'Gear Moonstaff'
-      : item.id === 'mantle' ? 'Gear Mantle' : item.id === 'boots' ? 'Gear Boots' : 'Gear Sunring';
-    setButton(buttonName, `${active ? '◆ ' : ''}${item.name.toLocaleUpperCase()}\n${item.description}`, `equip:${item.id}`, active, 13);
-  }
+  setText('Profile Summary', `${profile.name}  ·  ${Math.floor(profile.gold)} 金币  ·  累计击败 ${profile.totalKills}`, 15, '#7ce9ff', 'Right');
+  setText('Warden Stats', `守望者  ${profile.name}\n战力 ${power}  ·  最佳 ${formatTime(profile.bestTime)}\n已完成 ${profile.completedLevels.length}/${levels.length} 个关卡`, 14, '#c4d9ff');
+  refreshEquipmentUi(profile);
   for (const level of levels) {
     const active = level.id === selectedLevelId;
     const buttonName = level.id === 'eclipse_garden' ? 'Level Eclipse Garden'
       : level.id === 'astral_archive' ? 'Level Astral Archive' : 'Level Sunken Observatory';
-    setButton(buttonName, `${active ? '◆ ' : ''}${level.name.toLocaleUpperCase()}   •   ${formatTime(level.duration)}`, `level:${level.id}`, active);
+    setButton(buttonName, `${active ? '◆ ' : ''}${level.name}  ·  ${formatTime(level.duration)}`, `level:${level.id}`, active);
   }
   const selected = levels.find((level) => level.id === selectedLevelId) ?? levels[0];
   if (selected) {
     const locked = power < selected.recommendedPower;
-    setText('Level Detail', `${selected.description}\n${selected.waves.length} WAVE GROUPS   •   BOSS AT ${formatTime(selected.boss.spawnAt)}\n${locked ? `REQUIRES POWER ${selected.recommendedPower} — EQUIP MORE GEAR` : `READY • RECOMMENDED POWER ${selected.recommendedPower}`}`, 15, locked ? '#ff8ba5' : selected.accent);
-    setButton('Start Run Button', locked ? `POWER ${selected.recommendedPower} REQUIRED` : 'BEGIN EXPEDITION', 'start-run', !locked);
+    setText('Level Detail', `${selected.description}\n${selected.waves.length} 组怪物潮  ·  Boss 于 ${formatTime(selected.boss.spawnAt)} 出现\n${locked ? `需要战力 ${selected.recommendedPower} · 请装备更多道具` : `准备就绪 · 推荐战力 ${selected.recommendedPower}`}`, 15, locked ? '#ff8ba5' : selected.accent);
+    setButton('Start Run Button', locked ? `需要战力 ${selected.recommendedPower}` : '开始远征', 'start-run', !locked);
   }
   setText('Lobby Toast', message, 16, '#67e5ff');
 }
@@ -243,7 +291,7 @@ function beginRun(): void {
   if (!profile || !level) return;
   const power = equipmentPower(profile);
   if (power < level.recommendedPower) {
-    refreshLobby(`Equip more gear: ${level.name} requires power ${level.recommendedPower}.`);
+    refreshLobby(`战力不足：${level.name} 需要 ${level.recommendedPower} 点战力。`);
     return;
   }
   engine.loadScene('Game');
@@ -272,12 +320,16 @@ function initializeRun(): void {
     level, elapsed: 0, paused: false, ended: false, victory: false,
     player: { x: 0, y: 0 }, health: maxHealth, maxHealth, moveSpeed, damageMultiplier,
     cooldownMultiplier, xp: 0, xpNext: balance.progression.experienceBase, playerLevel: 1,
-    kills: 0, gold: 0, skills: { astral_bolt: 1 }, skillTimers: {},
+    kills: 0, gold: 0,
+    skills: { astral_bolt: 1, crescent_orbit: 1, meteor_shower: 1 },
+    skillTimers: {},
     spawnedByWave: level.waves.map(() => 0), bossSpawned: false,
-    enemies: [], projectiles: [], gems: [], hudTimer: 0, toast: 'THE ECLIPSE RISES', toastTime: 3.5,
+    enemies: [], projectiles: [], gems: [], effects: [], hudTimer: 0, toast: '蚀月升起，守住阵线！', toastTime: 3.5,
+    choosingSkill: false, choices: [], pendingLevels: 0, playerAttackTime: 0, playerAnimation: 'idle', playerFacingLeft: false,
+    fps: 60, visualAccumulator: 0, syncVisuals: true,
   };
   showPauseOverlay(false);
-  setText('HUD Stage', level.name.toLocaleUpperCase(), 22, level.accent, 'Left');
+  setText('HUD Stage', level.name, 22, level.accent, 'Left');
   setText('Run Toast', run.toast, 24, '#77ecff');
   updateHud(true);
 }
@@ -292,8 +344,21 @@ function nextName(prefix: string): string {
   return `${prefix}_${serial}`;
 }
 
-function enemySprite(kind: string): string {
-  return `${ART}/enemies-atlas.png#${kind}`;
+function enemyFrames(kind: string): string[] {
+  const animated = ['shadow_bat', 'moon_knight', 'astral_slime', 'rift_hound'];
+  if (animated.includes(kind)) {
+    return [0, 1, 2, 3].map((frame) => `${ART}/enemies-aligned-atlas.png#${kind}_${frame}`);
+  }
+  const fallback = `${ART}/enemies-atlas.png#${kind}`;
+  return [fallback, fallback];
+}
+
+function enemySize(kind: string, boss: boolean): number {
+  if (boss) return 1.7;
+  if (kind === 'wisp' || kind === 'shadow_bat') return 0.68;
+  if (kind === 'astral_slime') return 0.8;
+  if (kind === 'thorn_crawler' || kind === 'rift_hound') return 0.88;
+  return 1;
 }
 
 function spawnEnemy(kind: string, hp: number, speed: number, damage: number, boss = false): void {
@@ -305,30 +370,17 @@ function spawnEnemy(kind: string, hp: number, speed: number, damage: number, bos
       : edge === 2 ? { x: along * 7.6, y: -4.8 }
         : { x: along * 7.6, y: 4.8 };
   const name = nextName(boss ? 'Boss' : 'Enemy');
-  const size = boss ? 1.7 : kind === 'wisp' ? 0.72 : kind === 'thorn_crawler' ? 0.9 : 1.0;
+  const size = enemySize(kind, boss);
   engine.spawnEntity(name, {
     Transform: transform(position, 1),
-    SpriteRenderer: {
-      sprite: enemySprite(kind), color: [1, 1, 1, 1], size: [size, size], pivot: [0.5, 0.5],
+    AnimatedSprite2D: {
+      frames: enemyFrames(kind), fps: kind === 'shadow_bat' ? 11 : kind === 'rift_hound' ? 9 : 7,
+      playing: true, looped: true, frame: Math.floor(random() * 4), color: [1, 1, 1, 1],
+      size: [size, size], pivot: [0.5, 0.5], flip_x: false, flip_y: false,
       sorting_layer: 'default', sorting_order: boss ? 45 : 25,
     },
   });
-  run.enemies.push({ name, id: null, kind, position, hp, maxHp: hp, speed, damage, radius: size * 0.38, boss, hitCooldown: 0 });
-}
-
-function spawnProjectile(angle: number, damage: number, speed: number, range: number, icon: string, tint: string, pierce = 0, visualOnly = false): void {
-  if (!run || run.projectiles.length + run.gems.length >= GENERATED_LIMIT) return;
-  const name = nextName('Projectile');
-  const position = { ...run.player };
-  const velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
-  engine.spawnEntity(name, {
-    Transform: transform(position, 1, angle),
-    SpriteRenderer: {
-      sprite: icon, color: color(tint), size: [0.36, 0.36], pivot: [0.5, 0.5],
-      sorting_layer: 'default', sorting_order: 60,
-    },
-  });
-  run.projectiles.push({ name, id: null, position, velocity, damage, radius: 0.22, life: Math.max(0.16, range / Math.max(0.1, speed)), pierce, visualOnly });
+  run.enemies.push({ name, id: null, kind, position, hp, maxHp: hp, speed, damage, radius: size * 0.38, boss, hitCooldown: 0, slowTime: 0, phase: random() * TAU });
 }
 
 function spawnGem(position: Vec2, value: number): void {
@@ -371,6 +423,15 @@ function nearestEnemy(): EnemyState | null {
   return best;
 }
 
+function nearestEnemies(limit: number, range: number): EnemyState[] {
+  if (!run) return [];
+  const maximum = range * range;
+  return run.enemies
+    .filter((enemy) => enemy.hp > 0 && distanceSquared(enemy.position, run!.player) <= maximum)
+    .sort((left, right) => distanceSquared(left.position, run!.player) - distanceSquared(right.position, run!.player))
+    .slice(0, limit);
+}
+
 function damageEnemy(enemy: EnemyState, damage: number): void {
   if (!run || enemy.hp <= 0) return;
   enemy.hp -= damage;
@@ -380,37 +441,139 @@ function damageEnemy(enemy: EnemyState, damage: number): void {
   run.gold += enemy.boss ? 25 : balance.progression.goldPerKill;
   spawnGem(enemy.position, enemy.boss ? 20 : 1);
   if (enemy.boss) {
-    run.toast = 'VOID GUARDIAN DEFEATED';
+    run.toast = '虚空守卫已被击败！';
     run.toastTime = 3;
   }
 }
 
+function spawnEffect(effect: string | undefined, position: Vec2, scale = 1, angle = 0, speed = 1): void {
+  if (!effect || !run || run.effects.length >= EFFECT_LIMIT) return;
+  const name = nextName('Effect');
+  engine.spawnEntity(name, {
+    Transform: transform(position, scale, angle),
+    EffekseerEffect: {
+      effect, playing: true, looping: false, speed, start_frame: 0, prewarm: false,
+      auto_destroy: true, render_mode: 'world', screen_position: [0.5, 0.5], screen_scale: 0.12,
+      sorting_order: 70,
+    },
+  });
+  run.effects.push({ name, bornAt: run.elapsed, ttl: 2.4 / Math.max(0.2, speed) });
+}
+
+function cleanupEffects(): void {
+  if (!run) return;
+  const survivors: EffectState[] = [];
+  for (const effect of run.effects) {
+    if (run.elapsed - effect.bornAt <= effect.ttl) {
+      survivors.push(effect);
+      continue;
+    }
+    const id = entityId(effect.name);
+    if (id) engine.destroyEntity(id);
+  }
+  run.effects = survivors;
+}
+
+function projectileSprite(pattern: SkillPattern): string {
+  if (pattern === 'boomerang') return `${ART}/skills-v2-atlas.png#moon_boomerang`;
+  if (pattern === 'meteor') return `${ART}/skills-v2-atlas.png#meteor_shower`;
+  return `${ART}/icons-atlas.png#astral_bolt`;
+}
+
+function spawnProjectile(
+  angle: number,
+  damage: number,
+  speed: number,
+  range: number,
+  icon: string,
+  tint: string,
+  pierce = 0,
+  visualOnly = false,
+  motion: ProjectileState['motion'] = 'linear',
+  impactEffect = '',
+  effectScale = 1,
+  orbitIndex = 0,
+  orbitCount = 1,
+): void {
+  if (!run || run.projectiles.length + run.gems.length >= GENERATED_LIMIT) return;
+  const name = nextName('Projectile');
+  const position = { ...run.player };
+  const velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
+  const duration = motion === 'orbit' ? Math.max(0.5, range / Math.max(0.1, speed)) : Math.max(0.16, range / Math.max(0.1, speed));
+  const size: [number, number] = motion === 'boomerang' || motion === 'orbit' ? [0.48, 0.48] : [0.62, 0.28];
+  engine.spawnEntity(name, {
+    Transform: transform(position, 1, angle),
+    SpriteRenderer: {
+      sprite: icon, color: color(tint), size, pivot: [0.5, 0.5],
+      sorting_layer: 'default', sorting_order: 60,
+    },
+  });
+  run.projectiles.push({
+    name, id: null, position, origin: { ...position }, velocity, damage, radius: motion === 'orbit' ? 0.3 : 0.22,
+    life: duration, duration, pierce, visualOnly, motion, orbitIndex, orbitCount, orbitRadius: range,
+    spin: motion === 'boomerang' ? 13 : 0, impactEffect, effectScale, hitEnemies: [],
+  });
+}
+
 function fireSkill(skill: SkillDefinition, skillLevel: number): void {
   if (!run) return;
+  run.playerAttackTime = 0.42;
   const multiplier = skill.upgrades[Math.min(skillLevel - 1, skill.upgrades.length - 1)] ?? 1;
   const damage = skill.damage * multiplier * run.damageMultiplier;
+  const effectScale = skill.effectScale ?? 1;
   if (skill.pattern === 'nearest') {
     const target = nearestEnemy();
     const baseAngle = target ? Math.atan2(target.position.y - run.player.y, target.position.x - run.player.x) : 0;
+    spawnEffect(skill.castEffect, run.player, effectScale * 0.55, baseAngle, 1.35);
     for (let index = 0; index < skill.count + Math.floor((skillLevel - 1) / 2); index += 1) {
       const spread = (index - (skill.count - 1) * 0.5) * 0.13;
-      spawnProjectile(baseAngle + spread, damage, skill.projectileSpeed, skill.range, skill.icon, skill.color, skillLevel >= 5 ? 1 : 0);
+      spawnProjectile(baseAngle + spread, damage, skill.projectileSpeed, skill.range, projectileSprite(skill.pattern), skill.color, skillLevel >= 5 ? 1 : 0, false, 'linear', skill.impactEffect ?? '', effectScale);
     }
   } else if (skill.pattern === 'radial') {
+    spawnEffect(skill.castEffect, run.player, effectScale * (1 + skillLevel * 0.05), 0, 1.2);
     const count = skill.count + skillLevel - 1;
     for (let index = 0; index < count; index += 1) {
-      spawnProjectile((index / count) * TAU + run.elapsed * 0.2, damage, skill.projectileSpeed, skill.range, skill.icon, skill.color, skillLevel >= 4 ? 1 : 0);
+      spawnProjectile((index / count) * TAU + run.elapsed * 0.2, damage, skill.projectileSpeed, skill.range, projectileSprite(skill.pattern), skill.color, skillLevel >= 4 ? 1 : 0, false, 'linear', skill.impactEffect ?? '', effectScale);
+    }
+  } else if (skill.pattern === 'chain') {
+    const targets = nearestEnemies(skill.count + skillLevel, skill.range + skillLevel * 0.4);
+    targets.forEach((enemy, index) => {
+      damageEnemy(enemy, damage * Math.max(0.55, 1 - index * 0.08));
+      spawnEffect(index === 0 ? skill.castEffect : skill.impactEffect, enemy.position, effectScale * (1 - index * 0.04), index * 0.4, 1.25);
+    });
+  } else if (skill.pattern === 'meteor') {
+    const targets = nearestEnemies(skill.count + Math.floor(skillLevel / 2), skill.range);
+    for (const enemy of targets) {
+      const radius = 0.8 + skillLevel * 0.08;
+      for (const candidate of run.enemies) {
+        if (distanceSquared(candidate.position, enemy.position) <= radius * radius) damageEnemy(candidate, damage);
+      }
+      spawnEffect(skill.castEffect, enemy.position, effectScale * (1 + skillLevel * 0.04), random() * TAU, 1.15);
+    }
+  } else if (skill.pattern === 'boomerang') {
+    const target = nearestEnemy();
+    const baseAngle = target ? Math.atan2(target.position.y - run.player.y, target.position.x - run.player.x) : run.elapsed;
+    const count = skill.count + Math.floor((skillLevel - 1) / 2);
+    spawnEffect(skill.castEffect, run.player, effectScale * 0.7, baseAngle, 1.2);
+    for (let index = 0; index < count; index += 1) {
+      const spread = (index - (count - 1) * 0.5) * 0.42;
+      spawnProjectile(baseAngle + spread, damage, skill.projectileSpeed, skill.range, projectileSprite(skill.pattern), skill.color, 99, false, 'boomerang', skill.impactEffect ?? '', effectScale);
+    }
+  } else if (skill.pattern === 'orbit') {
+    const count = skill.count + Math.floor((skillLevel - 1) / 2);
+    spawnEffect(skill.castEffect, run.player, effectScale, 0, 1.1);
+    for (let index = 0; index < count; index += 1) {
+      spawnProjectile(0, damage, Math.max(0.8, skill.projectileSpeed), skill.range, `${ART}/skills-v2-atlas.png#moon_boomerang`, skill.color, 99, false, 'orbit', skill.impactEffect ?? '', effectScale, index, count);
     }
   } else {
     const radius = skill.range + skillLevel * 0.16;
     for (const enemy of run.enemies) {
-      if (distanceSquared(enemy.position, run.player) <= radius * radius) damageEnemy(enemy, damage);
+      if (distanceSquared(enemy.position, run.player) <= radius * radius) {
+        damageEnemy(enemy, damage);
+        if (skill.pattern === 'pulse') enemy.slowTime = Math.max(enemy.slowTime, 1.4 + skillLevel * 0.12);
+      }
     }
-    const count = skill.pattern === 'orbit' ? skill.count : 1;
-    for (let index = 0; index < count; index += 1) {
-      const angle = run.elapsed * (skill.pattern === 'orbit' ? 4 : 0.4) + (index / count) * TAU;
-      spawnProjectile(angle, 0, skill.pattern === 'orbit' ? 3.2 : 1.4, radius * 0.9, skill.icon, skill.color, 99, true);
-    }
+    spawnEffect(skill.castEffect, run.player, effectScale * (1 + skillLevel * 0.08), run.elapsed * 0.2, skill.pattern === 'pulse' ? 1.45 : 0.9);
   }
 }
 
@@ -435,7 +598,7 @@ function updateWaves(): void {
     if (run!.elapsed < wave.start || run!.elapsed > wave.start + wave.duration) return;
     const progress = Math.min(1, (run!.elapsed - wave.start) / wave.duration);
     const target = Math.floor(progress * wave.count);
-    let allowance = 4;
+    let allowance = 12;
     while (run!.spawnedByWave[index] < target && allowance > 0 && run!.enemies.length < ENEMY_LIMIT) {
       spawnEnemy(wave.enemy, wave.hp, wave.speed, wave.damage);
       run!.spawnedByWave[index] += 1;
@@ -446,7 +609,7 @@ function updateWaves(): void {
     const boss = run.level.boss;
     spawnEnemy(boss.enemy, boss.hp, boss.speed, boss.damage, true);
     run.bossSpawned = true;
-    run.toast = 'VOID GUARDIAN APPROACHES';
+    run.toast = '虚空守卫正在逼近！';
     run.toastTime = 4;
   }
 }
@@ -463,7 +626,26 @@ function updatePlayer(dt: number): void {
     run.player.y = Math.max(-4.05, Math.min(4.05, run.player.y + y * run.moveSpeed * dt));
   }
   const id = entityId('Player');
-  if (id) engine.setComponent(id, 'Transform', transform(run.player, 1, x < 0 ? 0.03 : -0.03));
+  run.playerAttackTime = Math.max(0, run.playerAttackTime - dt);
+  const animation = run.playerAttackTime > 0 ? 'attack' : length > 0 ? 'run' : 'idle';
+  const facingLeft = x < 0 ? true : x > 0 ? false : run.playerFacingLeft;
+  if (id) {
+    engine.setComponent(id, 'Transform', transform(run.player, 1 + Math.sin(run.elapsed * 7) * 0.018, x < 0 ? 0.03 : -0.03));
+    if (animation !== run.playerAnimation || facingLeft !== run.playerFacingLeft) {
+      const frames = animation === 'attack'
+        ? [`${ART}/eclipse-warden-aligned.png#attack_0`, `${ART}/eclipse-warden-aligned.png#attack_1`]
+        : animation === 'run'
+          ? [`${ART}/eclipse-warden-aligned.png#run_0`, `${ART}/eclipse-warden-aligned.png#run_1`]
+          : [`${ART}/eclipse-warden-aligned.png#idle_0`, `${ART}/eclipse-warden-aligned.png#idle_1`];
+      engine.setComponent(id, 'AnimatedSprite2D', {
+        frames, fps: animation === 'attack' ? 9 : animation === 'run' ? 7 : 2.5,
+        playing: true, looped: true, frame: 0, color: [1, 1, 1, 1], size: [1.26, 1.26],
+        pivot: [0.5, 0.47], flip_x: facingLeft, flip_y: false, sorting_layer: 'default', sorting_order: 50,
+      });
+      run.playerAnimation = animation;
+      run.playerFacingLeft = facingLeft;
+    }
+  }
 }
 
 function updateEnemies(dt: number): void {
@@ -474,16 +656,20 @@ function updateEnemies(dt: number): void {
     const dy = run.player.y - enemy.position.y;
     const length = Math.max(0.001, Math.hypot(dx, dy));
     const sway = enemy.boss ? Math.sin(run.elapsed * 1.7) * 0.12 : 0;
-    enemy.position.x += ((dx / length) - (dy / length) * sway) * enemy.speed * dt;
-    enemy.position.y += ((dy / length) + (dx / length) * sway) * enemy.speed * dt;
+    enemy.slowTime = Math.max(0, enemy.slowTime - dt);
+    const slow = enemy.slowTime > 0 ? 0.56 : 1;
+    const kindSway = enemy.kind === 'shadow_bat' ? Math.sin(run.elapsed * 6 + enemy.phase) * 0.24
+      : enemy.kind === 'rift_hound' ? Math.sin(run.elapsed * 3 + enemy.phase) * 0.08 : sway;
+    enemy.position.x += ((dx / length) - (dy / length) * kindSway) * enemy.speed * slow * dt;
+    enemy.position.y += ((dy / length) + (dx / length) * kindSway) * enemy.speed * slow * dt;
     enemy.hitCooldown -= dt;
     if (length < enemy.radius + 0.42 && enemy.hitCooldown <= 0) {
       run.health -= enemy.damage;
       enemy.hitCooldown = enemy.boss ? 0.75 : 1.05;
-      run.toast = `-${Math.round(enemy.damage)} HEALTH`;
+      run.toast = `受到 ${Math.round(enemy.damage)} 点伤害`;
       run.toastTime = 0.8;
     }
-    if (enemy.id) engine.setComponent(enemy.id, 'Transform', transform(enemy.position, 1, Math.atan2(dy, dx) * 0.04));
+    if (run.syncVisuals && enemy.id) engine.setComponent(enemy.id, 'Transform', transform(enemy.position, 1 + Math.sin(run.elapsed * 8 + enemy.phase) * 0.025, Math.atan2(dy, dx) * 0.04));
   }
   run.enemies = run.enemies.filter((enemy) => enemy.hp > 0);
 }
@@ -493,15 +679,39 @@ function updateProjectiles(dt: number): void {
   const survivors: ProjectileState[] = [];
   for (const projectile of run.projectiles) {
     projectile.life -= dt;
-    projectile.position.x += projectile.velocity.x * dt;
-    projectile.position.y += projectile.velocity.y * dt;
+    if (projectile.motion === 'boomerang') {
+      const progress = 1 - projectile.life / projectile.duration;
+      const direction = progress < 0.5 ? 1 : -1;
+      projectile.velocity.x = direction > 0
+        ? projectile.velocity.x
+        : (run.player.x - projectile.position.x) / Math.max(0.05, projectile.life);
+      projectile.velocity.y = direction > 0
+        ? projectile.velocity.y
+        : (run.player.y - projectile.position.y) / Math.max(0.05, projectile.life);
+      projectile.position.x += projectile.velocity.x * dt;
+      projectile.position.y += projectile.velocity.y * dt;
+      if (progress >= 0.5) projectile.hitEnemies = [];
+    } else if (projectile.motion === 'orbit') {
+      const orbitAngle = run.elapsed * 4.2 + (projectile.orbitIndex / projectile.orbitCount) * TAU;
+      const previous = { ...projectile.position };
+      projectile.position.x = run.player.x + Math.cos(orbitAngle) * projectile.orbitRadius;
+      projectile.position.y = run.player.y + Math.sin(orbitAngle) * projectile.orbitRadius * 0.62;
+      projectile.velocity.x = (projectile.position.x - previous.x) / Math.max(dt, 0.001);
+      projectile.velocity.y = (projectile.position.y - previous.y) / Math.max(dt, 0.001);
+    } else {
+      projectile.position.x += projectile.velocity.x * dt;
+      projectile.position.y += projectile.velocity.y * dt;
+    }
     let destroyed = projectile.life <= 0;
     if (!destroyed && !projectile.visualOnly) {
       for (const enemy of run.enemies) {
         if (enemy.hp <= 0) continue;
+        if (projectile.hitEnemies.includes(enemy.name)) continue;
         const radius = enemy.radius + projectile.radius;
         if (distanceSquared(projectile.position, enemy.position) > radius * radius) continue;
         damageEnemy(enemy, projectile.damage);
+        projectile.hitEnemies.push(enemy.name);
+        spawnEffect(projectile.impactEffect, enemy.position, projectile.effectScale * 0.38, Math.atan2(projectile.velocity.y, projectile.velocity.x), 1.35);
         projectile.pierce -= 1;
         if (projectile.pierce < 0) {
           destroyed = true;
@@ -512,7 +722,15 @@ function updateProjectiles(dt: number): void {
     if (destroyed) {
       if (projectile.id) engine.destroyEntity(projectile.id);
     } else {
-      if (projectile.id) engine.setComponent(projectile.id, 'Transform', transform(projectile.position, 1, Math.atan2(projectile.velocity.y, projectile.velocity.x)));
+      if (run.syncVisuals && projectile.id) {
+        const velocityAngle = Math.atan2(projectile.velocity.y, projectile.velocity.x);
+        const rotation = projectile.motion === 'boomerang'
+          ? run.elapsed * projectile.spin
+          : projectile.motion === 'orbit'
+            ? velocityAngle + Math.PI * 0.5
+            : velocityAngle;
+        engine.setComponent(projectile.id, 'Transform', transform(projectile.position, 1, rotation));
+      }
       survivors.push(projectile);
     }
   }
@@ -539,10 +757,64 @@ function updateGems(dt: number): void {
       if (gem.id) engine.destroyEntity(gem.id);
       continue;
     }
-    if (gem.id) engine.setComponent(gem.id, 'Transform', transform(gem.position, 1 + Math.sin(run.elapsed * 5 + gem.value) * 0.08));
+    if (run.syncVisuals && gem.id) engine.setComponent(gem.id, 'Transform', transform(gem.position, 1 + Math.sin(run.elapsed * 5 + gem.value) * 0.08));
     survivors.push(gem);
   }
   run.gems = survivors;
+}
+
+function buildSkillChoices(): string[] {
+  if (!run) return [];
+  const pool = skills.filter((skill) => (run!.skills[skill.id] ?? 0) < skill.maxLevel);
+  const result: string[] = [];
+  while (pool.length > 0 && result.length < 3) {
+    const index = Math.floor(random() * pool.length);
+    result.push(pool.splice(index, 1)[0].id);
+  }
+  return result;
+}
+
+function openSkillChoice(): void {
+  if (!run) return;
+  run.choices = buildSkillChoices();
+  if (run.choices.length === 0) {
+    run.pendingLevels = 0;
+    run.toast = '所有技能均已满级！';
+    run.toastTime = 2.5;
+    return;
+  }
+  run.choosingSkill = true;
+  setNamed('Skill Choice Overlay', 'RectTransform', rectTransform({ x: 0, y: 0 }, { x: 1140, y: 620 }));
+  setText('Choice Title', `等级提升 · Lv.${run.playerLevel}`, 31, '#bff7ff');
+  setText('Choice Subtitle', '从三项能力中选择一项，战斗将暂停', 15, '#93a9c7');
+  const buttonNames = ['Choice Button 1', 'Choice Button 2', 'Choice Button 3'];
+  const iconNames = ['Choice Icon 1', 'Choice Icon 2', 'Choice Icon 3'];
+  for (let index = 0; index < 3; index += 1) {
+    const definition = skills.find((skill) => skill.id === run!.choices[index]);
+    if (!definition) {
+      setButton(buttonNames[index], '暂无可选技能', `choose-skill:${index}`);
+      continue;
+    }
+    const current = run.skills[definition.id] ?? 0;
+    setButton(buttonNames[index], `${current > 0 ? '升级' : '新技能'} · ${definition.name}\nLv.${current} → Lv.${current + 1}\n${definition.description}`, `choose-skill:${index}`, false, 15);
+    setNamed(iconNames[index], 'Image', { sprite: definition.icon, color: [1, 1, 1, 1], image_type: 'Simple', preserve_aspect: true, raycast_target: false });
+  }
+}
+
+function chooseSkill(index: number): void {
+  if (!run || !run.choosingSkill) return;
+  const id = run.choices[index];
+  const definition = skills.find((skill) => skill.id === id);
+  if (!definition) return;
+  const current = run.skills[id] ?? 0;
+  run.skills[id] = Math.min(definition.maxLevel, current + 1);
+  run.skillTimers[id] = 0;
+  run.pendingLevels = Math.max(0, run.pendingLevels - 1);
+  run.choosingSkill = false;
+  run.toast = `${current === 0 ? '获得' : '升级'} ${definition.name} · Lv.${run.skills[id]}`;
+  run.toastTime = 2.4;
+  setNamed('Skill Choice Overlay', 'RectTransform', rectTransform({ x: 0, y: -1600 }, { x: 1140, y: 620 }));
+  if (run.pendingLevels > 0) openSkillChoice();
 }
 
 function updateProgression(): void {
@@ -551,22 +823,10 @@ function updateProgression(): void {
     run.xp -= run.xpNext;
     run.playerLevel += 1;
     run.xpNext = Math.ceil(balance.progression.experienceBase * Math.pow(balance.progression.experienceGrowth, run.playerLevel - 1));
-    const unlock = run.playerLevel === 2 ? 'eclipse_nova'
-      : run.playerLevel === 4 ? 'crescent_orbit'
-        : run.playerLevel === 6 ? 'gravity_well' : null;
-    if (unlock && !run.skills[unlock]) {
-      run.skills[unlock] = 1;
-      run.toast = `NEW SKILL • ${skills.find((skill) => skill.id === unlock)?.name.toLocaleUpperCase() ?? unlock}`;
-    } else {
-      const ids = Object.keys(run.skills);
-      const upgrade = ids[(run.playerLevel - 1) % ids.length];
-      const definition = skills.find((skill) => skill.id === upgrade);
-      run.skills[upgrade] = Math.min(definition?.maxLevel ?? 6, run.skills[upgrade] + 1);
-      run.toast = `${definition?.name.toLocaleUpperCase() ?? upgrade} • LEVEL ${run.skills[upgrade]}`;
-    }
+    run.pendingLevels += 1;
     run.health = Math.min(run.maxHealth, run.health + run.maxHealth * 0.14);
-    run.toastTime = 2.8;
   }
+  if (run.pendingLevels > 0 && !run.choosingSkill) openSkillChoice();
 }
 
 function updateHud(force = false): void {
@@ -575,11 +835,11 @@ function updateHud(force = false): void {
   run.hudTimer = 0.2;
   const remaining = Math.max(0, run.level.duration - run.elapsed);
   setText('HUD Timer', formatTime(remaining), 32, remaining < 20 ? '#ff7b9c' : '#f2f7ff');
-  setText('HUD Stats', `LV ${run.playerLevel}   •   ${run.kills} KILLS   •   ${Math.floor(run.gold)} GOLD`, 14, '#76e7ff', 'Right');
+  setText('HUD Stats', `等级 ${run.playerLevel}  ·  击败 ${run.kills}  ·  敌人 ${run.enemies.length}  ·  ${Math.round(run.fps)} 帧`, 14, '#76e7ff', 'Right');
   setText('HUD Skills', Object.keys(run.skills).map((id) => {
     const skill = skills.find((candidate) => candidate.id === id);
-    return `${skill?.name.toLocaleUpperCase() ?? id}  LV ${run!.skills[id]}`;
-  }).join('   ◆   '), 15, '#d3c8ff');
+    return `${skill?.name ?? id} Lv.${run!.skills[id]}`;
+  }).join('  ◆  '), 15, '#d3c8ff');
   setProgress('Health Bar', run.health, run.maxHealth, '#e8325a', true);
   setProgress('Experience Bar', run.xp, run.xpNext, '#36c9f4', false);
   setText('Run Toast', run.toastTime > 0 ? run.toast : '', 24, run.health < run.maxHealth * 0.25 ? '#ff7894' : '#71e9ff');
@@ -599,29 +859,33 @@ function finishRun(victory: boolean): void {
     persist();
   }
   showPauseOverlay(true);
-  setText('Pause Title', victory ? 'ECLIPSE CONQUERED' : 'WARDEN FALLEN', 34, victory ? '#7ff4ff' : '#ff789b');
-  setText('Pause Summary', `${run.level.name}\n${formatTime(run.elapsed)} SURVIVED   •   ${run.kills} KILLS   •   ${Math.floor(run.gold)} GOLD`, 16, '#c8d7f2');
-  setButton('Resume Button', 'RETURN TO SANCTUM', 'return-lobby', true);
-  setButton('Abandon Button', 'RETRY EXPEDITION', 'retry-run');
+  setText('Pause Title', victory ? '蚀月已被征服' : '守望者陨落', 34, victory ? '#7ff4ff' : '#ff789b');
+  setText('Pause Summary', `${run.level.name}\n生存 ${formatTime(run.elapsed)}  ·  击败 ${run.kills}  ·  获得 ${Math.floor(run.gold)} 金币`, 16, '#c8d7f2');
+  setButton('Resume Button', '返回圣所', 'return-lobby', true);
+  setButton('Abandon Button', '再次挑战', 'retry-run');
 }
 
 function togglePause(paused: boolean): void {
-  if (!run || run.ended) return;
+  if (!run || run.ended || run.choosingSkill) return;
   run.paused = paused;
   showPauseOverlay(paused);
   if (paused) {
-    setText('Pause Title', 'RUN PAUSED', 34, '#e2d8ff');
-    setText('Pause Summary', `${run.level.name}\n${formatTime(run.elapsed)} SURVIVED   •   ${run.kills} KILLS`, 16, '#b9c9e5');
-    setButton('Resume Button', 'RESUME', 'resume', true);
-    setButton('Abandon Button', 'ABANDON RUN', 'abandon');
+    setText('Pause Title', '战斗暂停', 34, '#e2d8ff');
+    setText('Pause Summary', `${run.level.name}\n已生存 ${formatTime(run.elapsed)}  ·  击败 ${run.kills}`, 16, '#b9c9e5');
+    setButton('Resume Button', '继续战斗', 'resume', true);
+    setButton('Abandon Button', '放弃本局', 'abandon');
   }
 }
 
 function updateRun(dt: number): void {
   if (!run) return;
   if (engine.isKeyPressed('Escape')) togglePause(!run.paused);
-  if (run.paused) return;
+  if (run.paused || run.choosingSkill) return;
   const step = Math.min(dt, 0.05);
+  run.fps += ((1 / Math.max(0.001, dt)) - run.fps) * Math.min(1, dt * 4);
+  run.visualAccumulator += step;
+  run.syncVisuals = run.visualAccumulator >= 1 / 30;
+  if (run.syncVisuals) run.visualAccumulator %= 1 / 30;
   run.elapsed += step;
   run.hudTimer -= step;
   run.toastTime -= step;
@@ -632,6 +896,7 @@ function updateRun(dt: number): void {
   updateEnemies(step);
   updateProjectiles(step);
   updateGems(step);
+  cleanupEffects();
   updateProgression();
   updateHud();
   if (run.health <= 0) finishRun(false);
@@ -649,7 +914,7 @@ function formatTime(seconds: number): string {
 function enterProfile(name: string): void {
   const trimmed = name.trim();
   if (!trimmed) {
-    setText('Login Status', 'Enter at least one character for your Warden name.', 14, '#ff789b');
+    setText('Login Status', '守望者名字至少需要一个字符。', 14, '#ff789b');
     return;
   }
   if (!saveData.profile) saveData.profile = newProfile(trimmed);
@@ -665,7 +930,7 @@ function onUiAction(event: EngineUiActionInfo): void {
     return;
   }
   if (callback === 'continue') {
-    if (!saveData.profile) saveData.profile = newProfile('Guest Warden');
+    if (!saveData.profile) saveData.profile = newProfile('游客守望者');
     persist();
     engine.loadScene('Lobby');
     return;
@@ -680,12 +945,30 @@ function onUiAction(event: EngineUiActionInfo): void {
     engine.loadScene('Login');
     return;
   }
-  if (callback.startsWith('equip:') && saveData.profile) {
-    const id = callback.slice('equip:'.length);
-    const equipped = saveData.profile.equipped;
-    saveData.profile.equipped = equipped.includes(id) ? equipped.filter((entry) => entry !== id) : [...equipped, id];
+  if (callback.startsWith('inventory:') && saveData.profile) {
+    selectedEquipmentId = callback.slice('inventory:'.length);
+    refreshLobby();
+    return;
+  }
+  if (callback === 'equip-selected' && saveData.profile) {
+    const item = balance.equipment.find((candidate) => candidate.id === selectedEquipmentId);
+    if (!item) return;
+    saveData.profile.equipped = [
+      ...saveData.profile.equipped.filter((id) => balance.equipment.find((candidate) => candidate.id === id)?.slot !== item.slot),
+      item.id,
+    ];
     persist();
-    refreshLobby(`${balance.equipment.find((item) => item.id === id)?.name ?? id} loadout updated.`);
+    refreshLobby(`${item.name} 已装备到${equipmentSlotName(item.slot)}栏。`);
+    return;
+  }
+  if ((callback.startsWith('unequip:') || callback.startsWith('unequip-slot:')) && saveData.profile) {
+    const directId = callback.startsWith('unequip:') ? callback.slice('unequip:'.length) : '';
+    const slot = callback.startsWith('unequip-slot:') ? callback.slice('unequip-slot:'.length) as EquipmentSlot : null;
+    const removed = balance.equipment.find((item) => directId ? item.id === directId : item.slot === slot && saveData.profile!.equipped.includes(item.id));
+    if (!removed) return;
+    saveData.profile.equipped = saveData.profile.equipped.filter((id) => id !== removed.id);
+    persist();
+    refreshLobby(`${removed.name} 已放回背包。`);
     return;
   }
   if (callback.startsWith('level:')) {
@@ -695,6 +978,10 @@ function onUiAction(event: EngineUiActionInfo): void {
   }
   if (callback === 'start-run') {
     beginRun();
+    return;
+  }
+  if (callback.startsWith('choose-skill:')) {
+    chooseSkill(Number(callback.slice('choose-skill:'.length)));
     return;
   }
   if (callback === 'pause') togglePause(true);

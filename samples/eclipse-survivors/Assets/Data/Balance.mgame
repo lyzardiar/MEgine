@@ -2,50 +2,163 @@
   "version": 1,
   "kind": "game-balance",
   "player": {
-    "baseHealth": 100,
-    "moveSpeed": 4.2,
-    "pickupRadius": 1.2
+    "baseHealth": 120,
+    "moveSpeed": 4.45,
+    "pickupRadius": 1.65
   },
   "progression": {
-    "experienceBase": 9,
-    "experienceGrowth": 1.34,
-    "goldPerKill": 0.12
+    "experienceBase": 5,
+    "experienceGrowth": 1.23,
+    "goldPerKill": 0.08
   },
   "equipment": [
     {
       "id": "moonstaff",
-      "name": "Moonsteel Staff",
-      "description": "+22% attack power",
+      "name": "月钢法杖",
+      "description": "攻击伤害 +22%",
       "power": 2,
+      "slot": "weapon",
+      "rarity": "稀有",
+      "icon": "Assets/Art/Generated/icons-atlas.png#moonstaff",
       "modifiers": {
         "damage": 1.22
       }
     },
     {
+      "id": "star_scepter",
+      "name": "星痕权杖",
+      "description": "攻击伤害 +38%",
+      "power": 4,
+      "slot": "weapon",
+      "rarity": "史诗",
+      "icon": "Assets/Art/Generated/icons-atlas.png#moonstaff",
+      "modifiers": {
+        "damage": 1.38
+      }
+    },
+    {
+      "id": "eclipse_blade",
+      "name": "蚀月长刃",
+      "description": "攻击伤害 +52%，冷却 -6%",
+      "power": 6,
+      "slot": "weapon",
+      "rarity": "传说",
+      "icon": "Assets/Art/Generated/skills-v2-atlas.png#moon_boomerang",
+      "modifiers": {
+        "damage": 1.52,
+        "cooldown": 0.94
+      }
+    },
+    {
       "id": "mantle",
-      "name": "Starweave Mantle",
-      "description": "+28 max health",
+      "name": "星织披风",
+      "description": "最大生命 +28",
       "power": 2,
+      "slot": "armor",
+      "rarity": "稀有",
+      "icon": "Assets/Art/Generated/icons-atlas.png#mantle",
       "modifiers": {
         "health": 28
       }
     },
     {
+      "id": "void_plate",
+      "name": "虚空板甲",
+      "description": "最大生命 +55",
+      "power": 4,
+      "slot": "armor",
+      "rarity": "史诗",
+      "icon": "Assets/Art/Generated/icons-atlas.png#mantle",
+      "modifiers": {
+        "health": 55
+      }
+    },
+    {
+      "id": "solar_aegis",
+      "name": "日冕圣铠",
+      "description": "最大生命 +85，伤害 +8%",
+      "power": 6,
+      "slot": "armor",
+      "rarity": "传说",
+      "icon": "Assets/Art/Generated/icons-atlas.png#mantle",
+      "modifiers": {
+        "health": 85,
+        "damage": 1.08
+      }
+    },
+    {
       "id": "boots",
-      "name": "Obsidian Boots",
-      "description": "+16% move speed",
+      "name": "黑曜战靴",
+      "description": "移动速度 +16%",
       "power": 2,
+      "slot": "boots",
+      "rarity": "稀有",
+      "icon": "Assets/Art/Generated/icons-atlas.png#boots",
       "modifiers": {
         "speed": 1.16
       }
     },
     {
+      "id": "rift_greaves",
+      "name": "裂隙胫甲",
+      "description": "移动速度 +24%",
+      "power": 4,
+      "slot": "boots",
+      "rarity": "史诗",
+      "icon": "Assets/Art/Generated/icons-atlas.png#boots",
+      "modifiers": {
+        "speed": 1.24
+      }
+    },
+    {
+      "id": "comet_steps",
+      "name": "彗星行者",
+      "description": "移动速度 +32%，冷却 -5%",
+      "power": 6,
+      "slot": "boots",
+      "rarity": "传说",
+      "icon": "Assets/Art/Generated/icons-atlas.png#boots",
+      "modifiers": {
+        "speed": 1.32,
+        "cooldown": 0.95
+      }
+    },
+    {
       "id": "sunring",
-      "name": "Sunshard Ring",
-      "description": "-15% skill cooldown",
+      "name": "日辉指环",
+      "description": "技能冷却 -15%",
       "power": 3,
+      "slot": "accessory",
+      "rarity": "稀有",
+      "icon": "Assets/Art/Generated/icons-atlas.png#sunring",
       "modifiers": {
         "cooldown": 0.85
+      }
+    },
+    {
+      "id": "frost_amulet",
+      "name": "霜星护符",
+      "description": "冷却 -21%，生命 +18",
+      "power": 5,
+      "slot": "accessory",
+      "rarity": "史诗",
+      "icon": "Assets/Art/Generated/skills-v2-atlas.png#frost_pulse",
+      "modifiers": {
+        "cooldown": 0.79,
+        "health": 18
+      }
+    },
+    {
+      "id": "gravity_relic",
+      "name": "引力遗物",
+      "description": "冷却 -27%，伤害 +12%",
+      "power": 7,
+      "slot": "accessory",
+      "rarity": "传说",
+      "icon": "Assets/Art/Generated/icons-atlas.png#gravity_well",
+      "modifiers": {
+        "cooldown": 0.73,
+        "damage": 1.12
       }
     }
   ]

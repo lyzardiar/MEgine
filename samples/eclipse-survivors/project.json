@@ -1,5 +1,5 @@
 {
-  "name": "Eclipse Survivors",
+  "name": "蚀月幸存者",
   "version": 1,
   "language": "typescript",
   "mainScene": "Assets/Scenes/Login.mscene",

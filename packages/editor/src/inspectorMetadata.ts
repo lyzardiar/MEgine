@@ -692,6 +692,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     pressed_sprite: { ...sprite, label: 'Pressed Sprite', noneValue: '', visibleWhen: { field: 'transition', equals: 'SpriteSwap' } },
     selected_sprite: { ...sprite, label: 'Selected Sprite', noneValue: '', visibleWhen: { field: 'transition', equals: 'SpriteSwap' } },
     disabled_sprite: { ...sprite, label: 'Disabled Sprite', noneValue: '', visibleWhen: { field: 'transition', equals: 'SpriteSwap' } },
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     font_size: { min: 1, step: 1 },
     on_click: event,
   },
@@ -818,6 +819,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
   },
   Toggle: {
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     font_size: { min: 1, step: 1 },
     on_value_changed: event,
   },
@@ -971,10 +973,12 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   ProgressBar: {
     direction: { kind: 'enum', options: direction },
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     font_size: { min: 1, step: 1 },
   },
   InputField: {
     text: { kind: 'multiline' },
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     font_size: { min: 1, step: 1 },
     character_limit: { min: 0, step: 1 },
     on_value_changed: event,
@@ -983,6 +987,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   Dropdown: {
     options: { kind: 'string-list' },
     selected_index: { min: 0, step: 1 },
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     font_size: { min: 1, step: 1 },
     on_value_changed: event,
   },
@@ -990,6 +995,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     items: { kind: 'string-list' },
     selected_index: { min: -1, step: 1 },
     item_height: { min: 1, step: 1 },
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     font_size: { min: 1, step: 1 },
     on_value_changed: event,
   },
@@ -998,6 +1004,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     on_value_changed: event,
   },
   TabView: {
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     tabs: { kind: 'string-list' },
     selected_index: { min: 0, step: 1 },
     tab_height: { min: 1, step: 1 },

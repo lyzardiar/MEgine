@@ -1,0 +1,91 @@
+{
+  "_author": "MiYu",
+  "version": 1,
+  "effects": [],
+  "presets": [
+    {
+      "id": "survivor_astral_bolt",
+      "label": "星芒飞弹",
+      "summary": "小型施法闪光与命中星屑，保持高速连射时的画面可读性。",
+      "promptHints": ["星芒飞弹", "定向射击", "高速连射"],
+      "mode": "world",
+      "layers": [
+        { "name": "施法星屑", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.1, 0.1, 0.1], "speed": 1.35 }
+      ]
+    },
+    {
+      "id": "survivor_eclipse_nova",
+      "label": "蚀月新星",
+      "summary": "神圣光环承托十向弹幕，用于近身解围。",
+      "promptHints": ["环形弹幕", "神圣爆发", "蚀月新星"],
+      "mode": "world",
+      "layers": [
+        { "name": "新星核心", "effect": "Assets/Effects/ef_holy01.efkefc", "scale": [0.14, 0.14, 0.14], "speed": 1.2 }
+      ]
+    },
+    {
+      "id": "survivor_crescent_orbit",
+      "label": "月刃环绕",
+      "summary": "冰弧召唤闪光配合真正绕角色运动的实体月刃。",
+      "promptHints": ["环绕月刃", "冰弧", "持续切割"],
+      "mode": "world",
+      "layers": [
+        { "name": "月刃召唤", "effect": "Assets/Effects/ef_ice02.efkefc", "scale": [0.08, 0.08, 0.08], "speed": 1.1 },
+        { "name": "召唤星屑", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.04, 0.04, 0.04], "startFrame": 4 }
+      ]
+    },
+    {
+      "id": "survivor_gravity_well",
+      "label": "引力深井",
+      "summary": "周期性神圣脉冲表现没有弹道的近身范围伤害。",
+      "promptHints": ["引力场", "范围伤害", "脉冲"],
+      "mode": "world",
+      "layers": [
+        { "name": "引力脉冲", "effect": "Assets/Effects/ef_holy01.efkefc", "scale": [0.12, 0.12, 0.12], "speed": 0.9 }
+      ]
+    },
+    {
+      "id": "survivor_chain_lightning",
+      "label": "跃迁雷链",
+      "summary": "在多个目标位置分段触发雷击和电弧命中，不生成飞行子弹。",
+      "promptHints": ["连锁闪电", "目标跳跃", "瞬时雷击"],
+      "mode": "world",
+      "layers": [
+        { "name": "雷击", "effect": "Assets/Effects/ef_lightning02.efkefc", "scale": [0.055, 0.055, 0.055], "speed": 1.25 },
+        { "name": "电弧命中", "effect": "Assets/Effects/ef_lightning03.efkefc", "scale": [0.05, 0.05, 0.05], "startFrame": 3 }
+      ]
+    },
+    {
+      "id": "survivor_meteor_shower",
+      "label": "星陨轰击",
+      "summary": "在怪群中心直接触发烈焰打击并造成范围伤害。",
+      "promptHints": ["陨石", "范围爆炸", "怪群轰击"],
+      "mode": "world",
+      "layers": [
+        { "name": "烈焰陨击", "effect": "Assets/Effects/ef_fire03.efkefc", "scale": [0.055, 0.055, 0.055], "speed": 1.15 },
+        { "name": "落点爆焰", "effect": "Assets/Effects/ef_fire02.efkefc", "scale": [0.045, 0.045, 0.045], "startFrame": 4 }
+      ]
+    },
+    {
+      "id": "survivor_moon_boomerang",
+      "label": "双月回旋",
+      "summary": "冰弧召唤与可双程命中的旋转月牙组成往返攻击。",
+      "promptHints": ["回旋镖", "双程命中", "月牙旋转"],
+      "mode": "world",
+      "layers": [
+        { "name": "回旋召唤", "effect": "Assets/Effects/ef_ice02.efkefc", "scale": [0.065, 0.065, 0.065], "speed": 1.2 }
+      ]
+    },
+    {
+      "id": "survivor_frost_pulse",
+      "label": "霜环脉冲",
+      "summary": "冰霜地场表现瞬时冻结和减速，不依赖普通飞行弹道。",
+      "promptHints": ["冰霜新星", "冻结", "减速场"],
+      "mode": "world",
+      "layers": [
+        { "name": "冻结场", "effect": "Assets/Effects/ef_ice03.efkefc", "scale": [0.08, 0.08, 0.08], "speed": 1.45 },
+        { "name": "冻结命中", "effect": "Assets/Effects/ef_ice01.efkefc", "scale": [0.045, 0.045, 0.045], "startFrame": 4 }
+      ]
+    }
+  ]
+}

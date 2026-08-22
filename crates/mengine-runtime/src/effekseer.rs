@@ -1,3 +1,5 @@
+// Author: MiYu
+
 use crate::ui::screen_canvas_rect_for_entity;
 use mengine_core::generated::EffekseerEffect;
 use mengine_core::{Entity, TransformHierarchy, World};
@@ -130,7 +132,7 @@ impl EffekseerWorld {
 
     pub fn update(
         &mut self,
-        world: &World,
+        world: &mut World,
         hierarchy: &TransformHierarchy,
         viewport: [u32; 2],
         delta_seconds: f32,
@@ -295,6 +297,8 @@ impl EffekseerWorld {
                     self.active
                         .insert(entity, ActiveEffect { handle, ..previous });
                 }
+            } else if component.auto_destroy {
+                world.despawn(entity);
             }
         }
         failures
@@ -950,6 +954,43 @@ mod tests {
     }
 
     #[test]
+    fn one_shot_effect_auto_destroys_its_entity_after_playback() {
+        let root = sample_root();
+        let mut world = World::new();
+        world.commands.push(mengine_core::WorldCommand::Spawn {
+            name: Some("OneShot".into()),
+            components: serde_json::json!({
+                "Transform": Transform::default(),
+                "EffekseerEffect": {
+                    "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+                    "playing": true,
+                    "looping": false,
+                    "speed": 8.0,
+                    "start_frame": 0,
+                    "prewarm": false,
+                    "auto_destroy": true,
+                    "render_mode": "world",
+                    "screen_position": [0.5, 0.5],
+                    "screen_scale": 0.12,
+                    "sorting_order": 0
+                }
+            }),
+        });
+        let entity = world.commit()[0];
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut runtime = EffekseerWorld::new(Some(root)).expect("Effekseer runtime");
+        for _ in 0..240 {
+            assert!(runtime
+                .update(&mut world, &hierarchy, [1280, 720], 1.0 / 60.0)
+                .is_empty());
+            if !world.is_alive(entity) {
+                break;
+            }
+        }
+        assert!(!world.is_alive(entity));
+    }
+
+    #[test]
     fn official_fire_sample_loads_dependencies_and_emits_render_primitives() {
         let root = sample_root();
         let effect = "Assets/Effects/ef_fire01.efkefc";
@@ -971,7 +1012,7 @@ mod tests {
 
         for _ in 0..180 {
             assert!(runtime
-                .update(&world, &hierarchy, [1280, 720], 1.0 / 60.0)
+                .update(&mut world, &hierarchy, [1280, 720], 1.0 / 60.0)
                 .is_empty());
             let mut compiled = frame();
             assert!(runtime
@@ -1073,7 +1114,7 @@ mod tests {
         let mut saw_lightning_model = false;
         for _ in 0..180 {
             assert!(runtime
-                .update(&world, &hierarchy, [1280, 720], 1.0 / 60.0)
+                .update(&mut world, &hierarchy, [1280, 720], 1.0 / 60.0)
                 .is_empty());
             let mut compiled = frame();
             assert!(runtime
@@ -1119,7 +1160,7 @@ mod tests {
         let mut saw_repeating_ice_model = false;
         for _ in 0..180 {
             assert!(runtime
-                .update(&world, &hierarchy, [1280, 720], 1.0 / 60.0)
+                .update(&mut world, &hierarchy, [1280, 720], 1.0 / 60.0)
                 .is_empty());
             let mut compiled = frame();
             assert!(runtime
@@ -1184,7 +1225,7 @@ mod tests {
         let mut saw_screen_position = false;
         for _ in 0..180 {
             assert!(runtime
-                .update(&world, &hierarchy, [1920, 1080], 1.0 / 60.0)
+                .update(&mut world, &hierarchy, [1920, 1080], 1.0 / 60.0)
                 .is_empty());
             let mut compiled = frame();
             assert!(runtime
@@ -1322,7 +1363,7 @@ mod tests {
         let hierarchy = TransformHierarchy::build(&world);
         let mut runtime = EffekseerWorld::new(Some(root)).expect("Effekseer runtime");
         assert!(runtime
-            .update(&world, &hierarchy, [1000, 500], 0.0)
+            .update(&mut world, &hierarchy, [1000, 500], 0.0)
             .is_empty());
         let active = runtime.active.get(&entity).expect("active Canvas effect");
         assert_eq!(active.screen_position, [0.6, 0.6]);

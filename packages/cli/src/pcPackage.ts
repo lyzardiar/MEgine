@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import {
   chmodSync,
   copyFileSync,
@@ -1280,7 +1282,9 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('SpineSkeleton'), 'atlas'), from, 'Spine atlas');
     enqueue(stringValue(component('Image'), 'sprite'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
-    enqueue(stringValue(component('Text'), 'font'), from, 'UI font');
+    for (const name of [
+      'Text', 'Button', 'Toggle', 'ProgressBar', 'InputField', 'Dropdown', 'ListView', 'TabView',
+    ]) enqueue(stringValue(component(name), 'font'), from, 'UI font');
     for (const name of ['Image', 'RawImage', 'Text', 'Panel']) {
       enqueueMaterial(stringValue(component(name), 'material'), from, 'ui');
     }

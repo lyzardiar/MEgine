@@ -642,6 +642,26 @@ button, input, select {
   background: var(--u-hover);
 }
 
+.gameplay-tool-btn {
+  height: 24px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #356b7d;
+  border-radius: 3px;
+  color: #c9f6ff;
+  background: linear-gradient(to bottom, #245469, #193b4b);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.gameplay-tool-btn:hover {
+  border-color: #5cc9e8;
+  color: #fff;
+  background: linear-gradient(to bottom, #317088, #225166);
+}
+
 .play-btn {
   width: 30px;
   height: 24px;
@@ -9618,6 +9638,8 @@ body.ew-dragging {
    Unity native control skin — de-webify pass
    Appended at EOF; wins over earlier rules via the cascade.
    ════════════════════════════════════════════════════════════ */
+
+/* Author: MiYu */
 
 :root {
   --u-caret: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><path d='M0 0l4 5 4-5z' fill='%23a8a8a8'/></svg>");

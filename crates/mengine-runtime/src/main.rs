@@ -11,8 +11,8 @@ use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
     AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Button, Dropdown, EffekseerEffect,
     EnvironmentLight, Image, InputField, ListView, MaterialPropertyBlock, MeshRenderer, Panel,
-    ParticleEmitter2D, ParticleEmitter3D, RawImage, ScrollView, Scrollbar, Slider, SpriteRenderer,
-    TabView, Text, Tilemap, TimelineDirector, Toggle, TrailRenderer2D, Transform,
+    ParticleEmitter2D, ParticleEmitter3D, ProgressBar, RawImage, ScrollView, Scrollbar, Slider,
+    SpriteRenderer, TabView, Text, Tilemap, TimelineDirector, Toggle, TrailRenderer2D, Transform,
 };
 #[cfg(test)]
 use mengine_core::generated::{Camera3D, PbrMaterial, PointLight};
@@ -2119,7 +2119,7 @@ function onTick(dt, frame) {
                 let hierarchy = TransformHierarchy::build(&self.world);
                 let ui_viewport = self.ui_viewport_size();
                 if let Some(effekseer) = self.effekseer.as_mut() {
-                    for failure in effekseer.update(&self.world, &hierarchy, ui_viewport, dt) {
+                    for failure in effekseer.update(&mut self.world, &hierarchy, ui_viewport, dt) {
                         log::warn!(
                             "Effekseer effect '{}' on {:?} could not be loaded from {}: {}",
                             failure.effect,
@@ -2674,6 +2674,7 @@ fn validate_world_assets(
             )?;
         }
         if let Some(button) = world.get_component::<Button>(entity) {
+            validate_font_asset(&button.font, project_root, validated)?;
             for sprite in [
                 &button.highlighted_sprite,
                 &button.pressed_sprite,
@@ -2682,6 +2683,24 @@ fn validate_world_assets(
             ] {
                 validate_texture_asset(sprite, "UI Button SpriteState", project_root, validated)?;
             }
+        }
+        if let Some(toggle) = world.get_component::<Toggle>(entity) {
+            validate_font_asset(&toggle.font, project_root, validated)?;
+        }
+        if let Some(progress) = world.get_component::<ProgressBar>(entity) {
+            validate_font_asset(&progress.font, project_root, validated)?;
+        }
+        if let Some(input) = world.get_component::<InputField>(entity) {
+            validate_font_asset(&input.font, project_root, validated)?;
+        }
+        if let Some(dropdown) = world.get_component::<Dropdown>(entity) {
+            validate_font_asset(&dropdown.font, project_root, validated)?;
+        }
+        if let Some(list) = world.get_component::<ListView>(entity) {
+            validate_font_asset(&list.font, project_root, validated)?;
+        }
+        if let Some(tabs) = world.get_component::<TabView>(entity) {
+            validate_font_asset(&tabs.font, project_root, validated)?;
         }
         if let Some(renderer) = world.get_component::<AnimatedSprite2D>(entity) {
             for frame in &renderer.frames {

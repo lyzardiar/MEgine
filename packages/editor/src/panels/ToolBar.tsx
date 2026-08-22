@@ -1,12 +1,16 @@
+// Author: MiYu
+
 import type { EditorMode, GizmoMode } from '../store';
 import type { ToolHandleOrientation, ToolPivotMode } from '../editorTool';
 import {
+  Map,
   Move,
   Pause,
   Play,
   RotateCw,
   Scan,
   Scaling,
+  Sparkles,
   Square,
   StepForward,
 } from 'lucide-react';
@@ -23,6 +27,8 @@ export function ToolBar(props: {
   onPause: () => void;
   onStop: () => void;
   onStep: () => void;
+  onOpenSkillEditor: () => void;
+  onOpenLevelEditor: () => void;
 }) {
   return (
     <div className="tool-bar">
@@ -135,6 +141,22 @@ export function ToolBar(props: {
       </div>
 
       <div className="tool-group right">
+        <button
+          type="button"
+          className="gameplay-tool-btn"
+          title="打开技能编辑器"
+          onClick={props.onOpenSkillEditor}
+        >
+          <Sparkles size={14} aria-hidden="true" />技能编辑器
+        </button>
+        <button
+          type="button"
+          className="gameplay-tool-btn"
+          title="打开关卡编辑器"
+          onClick={props.onOpenLevelEditor}
+        >
+          <Map size={14} aria-hidden="true" />关卡编辑器
+        </button>
         <span style={{ color: 'var(--u-muted)' }}>
           {props.mode === 'edit' ? 'Scene' : props.mode === 'play' ? 'Playing…' : 'Paused'}
         </span>

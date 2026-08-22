@@ -1,3 +1,5 @@
+// Author: MiYu
+
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash, generateKeyPairSync } from 'node:crypto';
@@ -930,7 +932,7 @@ test('buildPcPackage referenced mode copies the validated closure and always-inc
   }
 });
 
-test('referenced builds include validated Text fonts and reject corrupt sfnt data', {
+test('referenced builds include validated UI control fonts and reject corrupt sfnt data', {
   skip: installedFont == null ? 'no system TrueType font is available' : false,
 }, () => {
   const paths = fixture('text-font');
@@ -946,11 +948,22 @@ test('referenced builds include validated Text fonts and reject corrupt sfnt dat
         entities: [{
           entity: 1,
           components: { Text: { text: 'Agent UI', font: 'Assets/Fonts/Interface.ttf' } },
+        }, {
+          entity: 2,
+          components: { Button: { label: '继续', font: 'Assets/Fonts/Controls.ttf' } },
+        }, {
+          entity: 3,
+          components: { InputField: { placeholder: '输入名字', font: 'Assets/Fonts/Interface.ttf' } },
+        }, {
+          entity: 4,
+          components: { ProgressBar: { show_label: true, font: 'Assets/Fonts/Interface.ttf' } },
         }],
       },
     }));
     const fontPath = join(paths.project, 'Assets', 'Fonts', 'Interface.ttf');
     writeFileSync(fontPath, readFileSync(installedFont));
+    const controlFontPath = join(paths.project, 'Assets', 'Fonts', 'Controls.ttf');
+    writeFileSync(controlFontPath, readFileSync(installedFont));
 
     const manifest = buildPcPackage({
       projectDir: paths.project,
@@ -962,6 +975,12 @@ test('referenced builds include validated Text fonts and reject corrupt sfnt dat
     const packaged = manifest.files.find((file) => file.path === 'Assets/Fonts/Interface.ttf');
     assert.equal(packaged?.category, 'font');
     assert.deepEqual(packaged?.includedBy, [{
+      kind: 'UI font',
+      from: 'Assets/Scenes/Main.mscene',
+    }]);
+    const packagedControl = manifest.files.find((file) => file.path === 'Assets/Fonts/Controls.ttf');
+    assert.equal(packagedControl?.category, 'font');
+    assert.deepEqual(packagedControl?.includedBy, [{
       kind: 'UI font',
       from: 'Assets/Scenes/Main.mscene',
     }]);

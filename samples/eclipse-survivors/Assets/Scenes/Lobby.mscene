@@ -84,8 +84,8 @@
           "CanvasScaler": {
             "ui_scale_mode": "ScaleWithScreenSize",
             "reference_resolution": [
-              1280,
-              720
+              1920,
+              1080
             ],
             "match_width_or_height": 0.5,
             "scale_factor": 1
@@ -123,8 +123,8 @@
               0
             ],
             "size_delta": [
-              1280,
-              720
+              1920,
+              1080
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -171,8 +171,8 @@
               0
             ],
             "size_delta": [
-              1280,
-              720
+              1920,
+              1080
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -219,12 +219,12 @@
               0.5
             ],
             "anchored_position": [
-              -490,
-              -306.66666666666663
+              -735,
+              -460
             ],
             "size_delta": [
-              260,
-              46.666666666666664
+              390,
+              70
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -233,14 +233,15 @@
             ]
           },
           "Text": {
-            "text": "ECLIPSE SURVIVORS",
+            "text": "蚀月幸存者",
             "color": [
               0.83,
               0.75,
               1,
               1
             ],
-            "font_size": 20.666666666666664,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 31,
             "font_style": "Normal",
             "alignment": "Left",
             "vertical_align": "Middle",
@@ -279,12 +280,12 @@
               0.5
             ],
             "anchored_position": [
-              423.3333333333333,
-              -308
+              635,
+              -462
             ],
             "size_delta": [
-              346.66666666666663,
-              48
+              520,
+              72
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -293,14 +294,15 @@
             ]
           },
           "Text": {
-            "text": "WARDEN",
+            "text": "守望者档案",
             "color": [
               0.67,
               0.9,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "font_style": "Normal",
             "alignment": "Right",
             "vertical_align": "Middle",
@@ -339,12 +341,12 @@
               0.5
             ],
             "anchored_position": [
-              -413.3333333333333,
-              23.333333333333332
+              -790,
+              -30
             ],
             "size_delta": [
-              346.66666666666663,
-              546.6666666666666
+              270,
+              720
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -391,12 +393,12 @@
               0.5
             ],
             "anchored_position": [
-              -413.3333333333333,
-              -80
+              -790,
+              -95
             ],
             "size_delta": [
-              286.66666666666663,
-              373.3333333333333
+              235,
+              435
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -439,12 +441,12 @@
               0.5
             ],
             "anchored_position": [
-              -413.3333333333333,
-              196.66666666666666
+              -790,
+              245
             ],
             "size_delta": [
-              286.66666666666663,
-              96.66666666666666
+              235,
+              120
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -453,14 +455,15 @@
             ]
           },
           "Text": {
-            "text": "POWER 0",
+            "text": "战力 0",
             "color": [
               0.75,
               0.85,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 14,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -499,12 +502,12 @@
               0.5
             ],
             "anchored_position": [
-              -43.33333333333333,
-              -106.66666666666666
+              -430,
+              -130
             ],
             "size_delta": [
-              346.66666666666663,
-              286.66666666666663
+              300,
+              520
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -517,7 +520,7 @@
               0.025,
               0.035,
               0.085,
-              0.94
+              0.96
             ],
             "border_color": [
               0.47,
@@ -551,12 +554,12 @@
               0.5
             ],
             "anchored_position": [
-              -43.33333333333333,
-              -230
+              -430,
+              -355
             ],
             "size_delta": [
-              300,
-              33.33333333333333
+              260,
+              44
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -565,14 +568,15 @@
             ]
           },
           "Text": {
-            "text": "EQUIPMENT LOADOUT",
+            "text": "装备栏",
             "color": [
               0.85,
               0.78,
               1,
               1
             ],
-            "font_size": 15.333333333333332,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 22,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -592,7 +596,7 @@
       },
       {
         "entity": 12,
-        "name": "Gear Moonstaff",
+        "name": "Equipped Weapon",
         "parent": 2,
         "siblingIndex": 12,
         "active": true,
@@ -611,12 +615,12 @@
               0.5
             ],
             "anchored_position": [
-              -120,
-              -163.33333333333331
+              -500,
+              -245
             ],
             "size_delta": [
-              136.66666666666666,
-              49.33333333333333
+              124,
+              140
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -628,27 +632,27 @@
             "interactable": true,
             "transition": "ColorTint",
             "normal_color": [
-              0.12,
-              0.11,
-              0.27,
+              0.09,
+              0.08,
+              0.2,
               1
             ],
             "highlighted_color": [
-              0.45,
-              0.3,
-              0.85,
+              0.5,
+              0.34,
+              0.9,
               1
             ],
             "pressed_color": [
-              0.27,
-              0.18,
-              0.51,
+              0.3,
+              0.20400000000000001,
+              0.54,
               1
             ],
             "selected_color": [
-              0.45,
-              0.3,
-              0.85,
+              0.5,
+              0.34,
+              0.9,
               1
             ],
             "disabled_color": [
@@ -659,21 +663,22 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "MOONSTEEL STAFF",
+            "label": "未装备",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
-            "on_click": "equip:moonstaff"
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "unequip-slot:weapon"
           }
         }
       },
       {
         "entity": 13,
-        "name": "Gear Mantle",
+        "name": "Equipped Weapon Icon",
         "parent": 2,
         "siblingIndex": 13,
         "active": true,
@@ -692,12 +697,12 @@
               0.5
             ],
             "anchored_position": [
-              33.33333333333333,
-              -163.33333333333331
+              -500,
+              -263
             ],
             "size_delta": [
-              136.66666666666666,
-              49.33333333333333
+              58,
+              58
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -705,56 +710,23 @@
               1
             ]
           },
-          "Button": {
-            "interactable": true,
-            "transition": "ColorTint",
-            "normal_color": [
-              0.12,
-              0.11,
-              0.27,
-              1
-            ],
-            "highlighted_color": [
-              0.45,
-              0.3,
-              0.85,
-              1
-            ],
-            "pressed_color": [
-              0.27,
-              0.18,
-              0.51,
-              1
-            ],
-            "selected_color": [
-              0.45,
-              0.3,
-              0.85,
-              1
-            ],
-            "disabled_color": [
-              0.15,
-              0.16,
-              0.2,
-              0.5
-            ],
-            "color_multiplier": 1,
-            "fade_duration": 0.08,
-            "label": "STARWEAVE MANTLE",
-            "text_color": [
-              0.94,
-              0.98,
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#moonstaff",
+            "color": [
+              1,
+              1,
               1,
               1
             ],
-            "font_size": 12,
-            "on_click": "equip:mantle"
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
           }
         }
       },
       {
         "entity": 14,
-        "name": "Gear Boots",
+        "name": "Equipped Armor",
         "parent": 2,
         "siblingIndex": 14,
         "active": true,
@@ -773,12 +745,12 @@
               0.5
             ],
             "anchored_position": [
-              -120,
-              -96.66666666666666
+              -360,
+              -245
             ],
             "size_delta": [
-              136.66666666666666,
-              49.33333333333333
+              124,
+              140
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -790,27 +762,27 @@
             "interactable": true,
             "transition": "ColorTint",
             "normal_color": [
-              0.12,
-              0.11,
-              0.27,
+              0.09,
+              0.08,
+              0.2,
               1
             ],
             "highlighted_color": [
-              0.45,
-              0.3,
-              0.85,
+              0.5,
+              0.34,
+              0.9,
               1
             ],
             "pressed_color": [
-              0.27,
-              0.18,
-              0.51,
+              0.3,
+              0.20400000000000001,
+              0.54,
               1
             ],
             "selected_color": [
-              0.45,
-              0.3,
-              0.85,
+              0.5,
+              0.34,
+              0.9,
               1
             ],
             "disabled_color": [
@@ -821,21 +793,22 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "OBSIDIAN BOOTS",
+            "label": "未装备",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
-            "on_click": "equip:boots"
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "unequip-slot:armor"
           }
         }
       },
       {
         "entity": 15,
-        "name": "Gear Sunring",
+        "name": "Equipped Armor Icon",
         "parent": 2,
         "siblingIndex": 15,
         "active": true,
@@ -854,12 +827,12 @@
               0.5
             ],
             "anchored_position": [
-              33.33333333333333,
-              -96.66666666666666
+              -360,
+              -263
             ],
             "size_delta": [
-              136.66666666666666,
-              49.33333333333333
+              58,
+              58
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -867,56 +840,23 @@
               1
             ]
           },
-          "Button": {
-            "interactable": true,
-            "transition": "ColorTint",
-            "normal_color": [
-              0.12,
-              0.11,
-              0.27,
-              1
-            ],
-            "highlighted_color": [
-              0.45,
-              0.3,
-              0.85,
-              1
-            ],
-            "pressed_color": [
-              0.27,
-              0.18,
-              0.51,
-              1
-            ],
-            "selected_color": [
-              0.45,
-              0.3,
-              0.85,
-              1
-            ],
-            "disabled_color": [
-              0.15,
-              0.16,
-              0.2,
-              0.5
-            ],
-            "color_multiplier": 1,
-            "fade_duration": 0.08,
-            "label": "SUNSHARD RING",
-            "text_color": [
-              0.94,
-              0.98,
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#mantle",
+            "color": [
+              1,
+              1,
               1,
               1
             ],
-            "font_size": 12,
-            "on_click": "equip:sunring"
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
           }
         }
       },
       {
         "entity": 16,
-        "name": "Equipment Detail",
+        "name": "Equipped Boots",
         "parent": 2,
         "siblingIndex": 16,
         "active": true,
@@ -935,12 +875,12 @@
               0.5
             ],
             "anchored_position": [
-              -43.33333333333333,
-              -16.666666666666664
+              -500,
+              -85
             ],
             "size_delta": [
-              300,
-              60
+              124,
+              140
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -948,35 +888,57 @@
               1
             ]
           },
-          "Text": {
-            "text": "Select gear to equip.",
-            "color": [
-              0.62,
-              0.7,
-              0.84,
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.09,
+              0.08,
+              0.2,
               1
             ],
-            "font_size": 9.333333333333332,
-            "font_style": "Normal",
-            "alignment": "Center",
-            "vertical_align": "Middle",
-            "support_rich_text": true,
-            "horizontal_overflow": "Wrap",
-            "vertical_overflow": "Overflow",
-            "raycast_target": false,
-            "outline_color": [
-              0.01,
-              0.02,
-              0.06,
-              0.9
+            "highlighted_color": [
+              0.5,
+              0.34,
+              0.9,
+              1
             ],
-            "outline_width": 0
+            "pressed_color": [
+              0.3,
+              0.20400000000000001,
+              0.54,
+              1
+            ],
+            "selected_color": [
+              0.5,
+              0.34,
+              0.9,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "未装备",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "unequip-slot:boots"
           }
         }
       },
       {
         "entity": 17,
-        "name": "Level Panel",
+        "name": "Equipped Boots Icon",
         "parent": 2,
         "siblingIndex": 17,
         "active": true,
@@ -995,12 +957,2006 @@
               0.5
             ],
             "anchored_position": [
-              373.3333333333333,
-              -76.66666666666666
+              -500,
+              -103
             ],
             "size_delta": [
-              433.3333333333333,
-              346.66666666666663
+              58,
+              58
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#boots",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Equipped Accessory",
+        "parent": 2,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -360,
+              -85
+            ],
+            "size_delta": [
+              124,
+              140
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.09,
+              0.08,
+              0.2,
+              1
+            ],
+            "highlighted_color": [
+              0.5,
+              0.34,
+              0.9,
+              1
+            ],
+            "pressed_color": [
+              0.3,
+              0.20400000000000001,
+              0.54,
+              1
+            ],
+            "selected_color": [
+              0.5,
+              0.34,
+              0.9,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "未装备",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "unequip-slot:accessory"
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Equipped Accessory Icon",
+        "parent": 2,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -360,
+              -103
+            ],
+            "size_delta": [
+              58,
+              58
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#sunring",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Equipment Detail",
+        "parent": 2,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -430,
+              80
+            ],
+            "size_delta": [
+              260,
+              90
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "从背包选择装备",
+            "color": [
+              0.62,
+              0.7,
+              0.84,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 12,
+            "font_style": "Normal",
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Equip Selected Button",
+        "parent": 2,
+        "siblingIndex": 21,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -430,
+              165
+            ],
+            "size_delta": [
+              250,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.12,
+              0.31,
+              0.4,
+              1
+            ],
+            "highlighted_color": [
+              0.2,
+              0.8,
+              0.93,
+              1
+            ],
+            "pressed_color": [
+              0.12,
+              0.48,
+              0.558,
+              1
+            ],
+            "selected_color": [
+              0.2,
+              0.8,
+              0.93,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "装备所选道具",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "equip-selected"
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Inventory Panel",
+        "parent": 2,
+        "siblingIndex": 22,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              -65
+            ],
+            "size_delta": [
+              390,
+              650
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.025,
+              0.035,
+              0.085,
+              0.96
+            ],
+            "border_color": [
+              0.28,
+              0.68,
+              0.88,
+              0.55
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Inventory Header",
+        "parent": 2,
+        "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              -350
+            ],
+            "size_delta": [
+              340,
+              50
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "守望者背包 · 12 格",
+            "color": [
+              0.68,
+              0.92,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 22,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Inventory Item 1",
+        "parent": 2,
+        "siblingIndex": 24,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -190,
+              -245
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Inventory Icon 1",
+        "parent": 2,
+        "siblingIndex": 25,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -190,
+              -263
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Inventory Item 2",
+        "parent": 2,
+        "siblingIndex": 26,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              -245
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Inventory Icon 2",
+        "parent": 2,
+        "siblingIndex": 27,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              -263
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Inventory Item 3",
+        "parent": 2,
+        "siblingIndex": 28,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              50,
+              -245
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Inventory Icon 3",
+        "parent": 2,
+        "siblingIndex": 29,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              50,
+              -263
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "Inventory Item 4",
+        "parent": 2,
+        "siblingIndex": 30,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -190,
+              -115
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "Inventory Icon 4",
+        "parent": 2,
+        "siblingIndex": 31,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -190,
+              -133
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Inventory Item 5",
+        "parent": 2,
+        "siblingIndex": 32,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              -115
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "Inventory Icon 5",
+        "parent": 2,
+        "siblingIndex": 33,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              -133
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "Inventory Item 6",
+        "parent": 2,
+        "siblingIndex": 34,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              50,
+              -115
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "Inventory Icon 6",
+        "parent": 2,
+        "siblingIndex": 35,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              50,
+              -133
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Inventory Item 7",
+        "parent": 2,
+        "siblingIndex": 36,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -190,
+              15
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "Inventory Icon 7",
+        "parent": 2,
+        "siblingIndex": 37,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -190,
+              -3
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "Inventory Item 8",
+        "parent": 2,
+        "siblingIndex": 38,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              15
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "Inventory Icon 8",
+        "parent": 2,
+        "siblingIndex": 39,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              -3
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Inventory Item 9",
+        "parent": 2,
+        "siblingIndex": 40,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              50,
+              15
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "Inventory Icon 9",
+        "parent": 2,
+        "siblingIndex": 41,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              50,
+              -3
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "Inventory Item 10",
+        "parent": 2,
+        "siblingIndex": 42,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -190,
+              145
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "Inventory Icon 10",
+        "parent": 2,
+        "siblingIndex": 43,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -190,
+              127
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "Inventory Item 11",
+        "parent": 2,
+        "siblingIndex": 44,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              145
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "Inventory Icon 11",
+        "parent": 2,
+        "siblingIndex": 45,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70,
+              127
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "Inventory Item 12",
+        "parent": 2,
+        "siblingIndex": 46,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              50,
+              145
+            ],
+            "size_delta": [
+              106,
+              116
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.06,
+              0.1,
+              0.18,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.39,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.65,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "背包格",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": ""
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "Inventory Icon 12",
+        "parent": 2,
+        "siblingIndex": 47,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              50,
+              127
+            ],
+            "size_delta": [
+              48,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/icons-atlas.png#chest",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "Level Panel",
+        "parent": 2,
+        "siblingIndex": 48,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              570,
+              -100
+            ],
+            "size_delta": [
+              560,
+              570
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1027,10 +2983,10 @@
         }
       },
       {
-        "entity": 18,
+        "entity": 49,
         "name": "Level Header",
         "parent": 2,
-        "siblingIndex": 18,
+        "siblingIndex": 49,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1047,12 +3003,12 @@
               0.5
             ],
             "anchored_position": [
-              373.3333333333333,
-              -220
+              570,
+              -335
             ],
             "size_delta": [
-              380,
-              34.666666666666664
+              490,
+              52
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1061,14 +3017,15 @@
             ]
           },
           "Text": {
-            "text": "SELECT AN EXPEDITION",
+            "text": "选择远征关卡",
             "color": [
               0.85,
               0.78,
               1,
               1
             ],
-            "font_size": 15.333333333333332,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 23,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -1087,10 +3044,10 @@
         }
       },
       {
-        "entity": 19,
+        "entity": 50,
         "name": "Level Eclipse Garden",
         "parent": 2,
-        "siblingIndex": 19,
+        "siblingIndex": 50,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1107,12 +3064,12 @@
               0.5
             ],
             "anchored_position": [
-              373.3333333333333,
-              -160
+              570,
+              -245
             ],
             "size_delta": [
-              373.3333333333333,
-              48
+              490,
+              68
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1155,23 +3112,24 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "I  ECLIPSE GARDEN",
+            "label": "第一章  蚀月庭院",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "on_click": "level:eclipse_garden"
           }
         }
       },
       {
-        "entity": 20,
+        "entity": 51,
         "name": "Level Astral Archive",
         "parent": 2,
-        "siblingIndex": 20,
+        "siblingIndex": 51,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1188,12 +3146,12 @@
               0.5
             ],
             "anchored_position": [
-              373.3333333333333,
-              -93.33333333333333
+              570,
+              -155
             ],
             "size_delta": [
-              373.3333333333333,
-              48
+              490,
+              68
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1236,23 +3194,24 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "II  ASTRAL ARCHIVE",
+            "label": "第二章  星界书库",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "on_click": "level:astral_archive"
           }
         }
       },
       {
-        "entity": 21,
+        "entity": 52,
         "name": "Level Sunken Observatory",
         "parent": 2,
-        "siblingIndex": 21,
+        "siblingIndex": 52,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1269,12 +3228,12 @@
               0.5
             ],
             "anchored_position": [
-              373.3333333333333,
-              -26.666666666666664
+              570,
+              -65
             ],
             "size_delta": [
-              373.3333333333333,
-              48
+              490,
+              68
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1317,23 +3276,24 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "III  SUNKEN OBSERVATORY",
+            "label": "第三章  沉没观星台",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "on_click": "level:sunken_observatory"
           }
         }
       },
       {
-        "entity": 22,
+        "entity": 53,
         "name": "Level Detail",
         "parent": 2,
-        "siblingIndex": 22,
+        "siblingIndex": 53,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1350,12 +3310,12 @@
               0.5
             ],
             "anchored_position": [
-              373.3333333333333,
-              66.66666666666666
+              570,
+              70
             ],
             "size_delta": [
-              373.3333333333333,
-              86.66666666666666
+              490,
+              130
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1364,14 +3324,15 @@
             ]
           },
           "Text": {
-            "text": "Survive the eclipse.",
+            "text": "在蚀月中坚持到最后",
             "color": [
               0.64,
               0.73,
               0.89,
               1
             ],
-            "font_size": 10,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 14,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -1390,10 +3351,10 @@
         }
       },
       {
-        "entity": 23,
+        "entity": 54,
         "name": "Start Run Button",
         "parent": 2,
-        "siblingIndex": 23,
+        "siblingIndex": 54,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1410,12 +3371,12 @@
               0.5
             ],
             "anchored_position": [
-              373.3333333333333,
-              166.66666666666666
+              570,
+              215
             ],
             "size_delta": [
-              373.3333333333333,
-              46.666666666666664
+              490,
+              65
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1458,23 +3419,24 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "BEGIN EXPEDITION",
+            "label": "开始远征",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "on_click": "start-run"
           }
         }
       },
       {
-        "entity": 24,
+        "entity": 55,
         "name": "Logout Button",
         "parent": 2,
-        "siblingIndex": 24,
+        "siblingIndex": 55,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1491,12 +3453,12 @@
               0.5
             ],
             "anchored_position": [
-              540,
-              296.66666666666663
+              825,
+              445
             ],
             "size_delta": [
-              106.66666666666666,
-              26.666666666666664
+              150,
+              40
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1539,23 +3501,24 @@
             ],
             "color_multiplier": 1,
             "fade_duration": 0.08,
-            "label": "LOG OUT",
+            "label": "退出登录",
             "text_color": [
               0.94,
               0.98,
               1,
               1
             ],
-            "font_size": 12,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "on_click": "logout"
           }
         }
       },
       {
-        "entity": 25,
+        "entity": 56,
         "name": "Lobby Toast",
         "parent": 2,
-        "siblingIndex": 25,
+        "siblingIndex": 56,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1572,12 +3535,12 @@
               0.5
             ],
             "anchored_position": [
-              120,
-              293.3333333333333
+              350,
+              440
             ],
             "size_delta": [
-              546.6666666666666,
-              32
+              760,
+              48
             ],
             "local_rotation": 0,
             "local_scale": [
@@ -1593,7 +3556,8 @@
               1,
               1
             ],
-            "font_size": 10.666666666666666,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 16,
             "font_style": "Normal",
             "alignment": "Center",
             "vertical_align": "Middle",
