@@ -6396,7 +6396,7 @@ function panelWindowsMatchLayout(
   return sameStrings(layoutWindowLabels, nativeWindowLabels);
 }
 
-function isDefaultPanelLayout(layout: PanelLayoutSnapshot): boolean {
+export function isDefaultPanelLayout(layout: PanelLayoutSnapshot): boolean {
   const expectedDockedPanels = [...CORE_PANEL_IDS].sort();
   const expectedActivePanels = ['hierarchy', 'inspector', 'project', 'scene'];
   if (
@@ -6409,29 +6409,29 @@ function isDefaultPanelLayout(layout: PanelLayoutSnapshot): boolean {
   const root = layout.tree;
   if (
     root.kind !== 'split'
-    || root.direction !== 'vertical'
-    || root.ratio !== 0.68
+    || root.direction !== 'horizontal'
+    || root.ratio !== 0.76
     || root.first.kind !== 'split'
-    || root.first.direction !== 'horizontal'
-    || root.first.ratio !== 0.22
+    || root.first.direction !== 'vertical'
+    || root.first.ratio !== 0.7
   ) {
     return false;
   }
-  const middle = root.first.second;
+  const top = root.first.first;
   return (
-    defaultTabs(root.first.first, ['hierarchy'], 'hierarchy')
-    && middle.kind === 'split'
-    && middle.direction === 'horizontal'
-    && middle.ratio === 0.7
-    && defaultTabs(middle.first, ['scene', 'game'], 'scene')
+    top.kind === 'split'
+    && top.direction === 'horizontal'
+    && top.ratio === 0.22
+    && defaultTabs(top.first, ['hierarchy'], 'hierarchy')
+    && defaultTabs(top.second, ['scene', 'game'], 'scene')
     && defaultTabs(
-      middle.second,
+      root.second,
       ['inspector', 'material', 'shader', 'build', 'projectSettings'],
       'inspector',
     )
     && defaultTabs(
-      root.second,
-      ['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas'],
+      root.first.second,
+      ['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer'],
       'project',
     )
   );

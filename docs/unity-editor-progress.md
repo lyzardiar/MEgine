@@ -28,6 +28,14 @@
 
 本地验证产物：`tmp/editor-batch2-tests.log`、`tmp/editor-batch2-desktop.log`、`tmp/editor-transform-native.png`、`tmp/editor-ui-reparent.png`。
 
+## 2026-09-25：Unity 默认工作区
+
+- Inspector 贯穿右侧全高；左上 Hierarchy、中央 Scene/Game、左下 Project/Console 保持可拖动停靠。
+- 新工作区使用此布局。现有自定义布局保持不变，可通过 `Window > Layout > Reset Default Layout` 切换。
+- Agent 布局重置校验与默认结构对齐，并包含 Effekseer 面板；回归测试直接对实际默认树验证，避免漏项导致重置超时。
+
+验证：Editor 全量 **926/926**，TypeScript/Vite 及嵌入最新前端的 Tauri Debug 构建通过；原生 `panel.reset_layout` 成功，16 个面板全部在位，Inspector 与 Project 底边对齐。截图 `tmp/editor-unity-layout.png`，`backgroundSafe=true`。Windows 可执行文件位于 `target/debug/mengine-editor-tauri.exe`；本批未制作发布安装包。
+
 ## 后续审计重点
 
 - Scene/Hierarchy：跨 Canvas/World Space 重设父级、多选变换极端尺度与旋转父级，以及各自的 Undo/Redo。

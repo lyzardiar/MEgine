@@ -187,28 +187,28 @@ function leaf(panels: PanelKind[], id?: string): LeafNode {
   };
 }
 
-function defaultTree(): DockNode {
+export function defaultTree(): DockNode {
   return {
     kind: 'split',
     id: nextId('root'),
-    dir: 'v',
-    ratio: 0.68,
+    dir: 'h',
+    ratio: 0.76,
     a: {
       kind: 'split',
       id: nextId('row'),
-      dir: 'h',
-      ratio: 0.22,
-      a: leaf(['hierarchy']),
-      b: {
+      dir: 'v',
+      ratio: 0.7,
+      a: {
         kind: 'split',
         id: nextId('row'),
         dir: 'h',
-        ratio: 0.7,
-        a: leaf(['scene', 'game']),
-        b: leaf(['inspector', 'material', 'shader', 'build', 'projectSettings']),
+        ratio: 0.22,
+        a: leaf(['hierarchy']),
+        b: leaf(['scene', 'game']),
       },
+      b: leaf(['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer']),
     },
-    b: leaf(['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas', 'effekseer']),
+    b: leaf(['inspector', 'material', 'shader', 'build', 'projectSettings']),
   };
 }
 
@@ -239,7 +239,7 @@ function collectActivePanels(n: DockNode, out: Set<PanelKind> = new Set()): Set<
   return out;
 }
 
-function describeDockNode(node: DockNode): DockLayoutNode {
+export function describeDockNode(node: DockNode): DockLayoutNode {
   if (node.kind === 'tabs') {
     return {
       kind: 'tabs',
