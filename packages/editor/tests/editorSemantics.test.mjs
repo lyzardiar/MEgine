@@ -83,7 +83,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(hierarchy, /aria-label=\{`\$\{scenePickable \? 'Disable' : 'Enable'\} Scene picking/);
   assert.match(viewport, /hiddenEntityIds: p\.sceneHiddenIds \?\? \[\]/);
   assert.match(viewport, /propsRef\.current\.isPickable\?\.\(h\.id\) === false/);
-  assert.match(native, /snapshot\.entities\.retain\(\|entity\| !hidden\.contains\(&entity\.entity\)\)/);
+  assert.match(native, /snapshot\s*\.entities\s*\.retain\(\|entity\| !hidden\.contains\(&entity\.entity\)\)/);
 
   assert.match(menu, /role="menubar" aria-label="Main menu"/);
   assert.match(menu, /role="menuitem"/);

@@ -7,7 +7,6 @@ import {
   RotateCw,
   Scan,
   Scaling,
-  Square,
   StepForward,
 } from 'lucide-react';
 
@@ -21,11 +20,10 @@ export function ToolBar(props: {
   onHandleOrientation: (orientation: ToolHandleOrientation) => void;
   onPlay: () => void;
   onPause: () => void;
-  onStop: () => void;
   onStep: () => void;
 }) {
   return (
-    <div className="tool-bar">
+    <div className={`tool-bar${props.mode !== 'edit' ? ' is-playing' : ''}`}>
       <div className="tool-group" role="toolbar" aria-label="Scene tools">
         <span className="brand-chip">MENGINE</span>
         <button
@@ -89,14 +87,13 @@ export function ToolBar(props: {
         </button>
       </div>
 
-      <div className="tool-group center">
+      <div className="tool-group center" role="toolbar" aria-label="Play controls">
         <button
           type="button"
           className={`play-btn${props.mode !== 'edit' ? ' on' : ''}`}
-          aria-label="Enter Play Mode"
+          aria-label={props.mode === 'edit' ? 'Enter Play Mode' : 'Exit Play Mode'}
           aria-pressed={props.mode !== 'edit'}
-          title="Enter Play Mode"
-          disabled={props.mode !== 'edit'}
+          title={`${props.mode === 'edit' ? 'Play' : 'Stop'} (Ctrl+P)`}
           onClick={props.onPlay}
         >
           <Play size={14} fill="currentColor" aria-hidden="true" />
@@ -106,7 +103,7 @@ export function ToolBar(props: {
           className={`play-btn${props.mode === 'pause' ? ' on' : ''}`}
           aria-label={props.mode === 'pause' ? 'Resume Play Mode' : 'Pause Play Mode'}
           aria-pressed={props.mode === 'pause'}
-          title={props.mode === 'pause' ? 'Resume Play Mode' : 'Pause Play Mode'}
+          title={`${props.mode === 'pause' ? 'Resume' : 'Pause'} (Ctrl+Shift+P)`}
           disabled={props.mode === 'edit'}
           onClick={props.onPause}
         >
@@ -115,19 +112,9 @@ export function ToolBar(props: {
         <button
           type="button"
           className="play-btn"
-          aria-label="Exit Play Mode"
-          title="Exit Play Mode"
-          disabled={props.mode === 'edit'}
-          onClick={props.onStop}
-        >
-          <Square size={12} fill="currentColor" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="play-btn"
           aria-label="Step one frame"
-          title="Step one frame"
-          disabled={props.mode !== 'pause'}
+          title="Step one frame (Ctrl+Alt+P)"
+          disabled={props.mode === 'edit'}
           onClick={props.onStep}
         >
           <StepForward size={14} fill="currentColor" aria-hidden="true" />

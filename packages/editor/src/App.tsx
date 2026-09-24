@@ -7,6 +7,7 @@ import {
   type GizmoMode,
 } from './store';
 import { createEditorUndoService } from './editorUndoService';
+import { applyPlaybackAction, playbackShortcut, type PlaybackAction } from './editorPlayback';
 import {
   legacyGameResolution,
   normalizeGameDisplay,
@@ -1060,6 +1061,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     broadcastScene();
   };
   logRef.current = (message) => log(message);
+
+  const playback = (action: PlaybackAction) => {
+    if (!applyPlaybackAction(store, action)) return;
+    if (action === 'toggle') setViewTab(store.mode === 'edit' ? 'scene' : 'game');
+    log(action === 'step' ? `Advanced paused Play Mode to frame ${store.snapshot().frame}` : store.mode === 'edit' ? 'Exited Play Mode → Scene' : store.mode === 'pause' ? 'Paused' : 'Playing');
+    refresh();
+  };
 
   useEffect(() => {
     if (props.detachedPanel || !isDesktopEditor() || !recoveryReady.current) return;
@@ -2668,6 +2676,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         return;
       }
       if (isTypingTarget(e.target)) return;
+      const playbackAction = playbackShortcut(e);
+      if (playbackAction) {
+        e.preventDefault();
+        playback(playbackAction);
+        return;
+      }
       if (ctrl && e.shiftKey && e.key.toLowerCase() === 'b') {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'build' }));
@@ -2720,6 +2734,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         refresh();
         return;
       }
+      if (ctrl || e.altKey || e.isComposing) return;
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         if (store.deleteSelection()) {
@@ -2868,31 +2883,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         onHandleOrientation={(next) => {
           updateSceneViewPreferences({ handleOrientation: next });
         }}
-        onPlay={() => {
-          if (store.mode !== 'edit') return;
-          store.play();
-          setViewTab('game');
-          log('Entered Play Mode → Game');
-          refresh();
-        }}
-        onPause={() => {
-          if (store.mode === 'edit') return;
-          store.pause();
-          log(store.mode === 'pause' ? 'Paused' : 'Resumed');
-          refresh();
-        }}
-        onStop={() => {
-          if (store.mode === 'edit') return;
-          store.stop();
-          setViewTab('scene');
-          log('Exited Play Mode → Scene');
-          refresh();
-        }}
-        onStep={() => {
-          if (!store.step(1 / 60)) return;
-          log(`Advanced paused Play Mode to frame ${store.snapshot().frame}`);
-          refresh();
-        }}
+        onPlay={() => playback('toggle')}
+        onPause={() => playback('pause')}
+        onStep={() => playback('step')}
       />
 
       <DockWorkspace

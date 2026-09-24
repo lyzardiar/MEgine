@@ -93,7 +93,8 @@ export class LogService {
       result = result.filter((e) => e.time >= query.since!);
     }
     if (typeof query.limit === 'number' && query.limit >= 0) {
-      result = result.slice(-query.limit);
+      const limit = Math.floor(query.limit);
+      result = limit === 0 ? [] : result.slice(-limit);
     }
     return result.map((e) => ({ ...e }));
   }

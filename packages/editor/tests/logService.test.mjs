@@ -36,6 +36,9 @@ test('structured logs filter, cap, clone, and notify deterministically', () => {
   assert.equal(entries.length, 300);
   assert.equal(entries[0].message, 'entry 5');
   assert.equal(service.getEntries({ limit: 2 })[0].message, 'entry 303');
+  assert.deepEqual(service.getEntries({ limit: 0 }), []);
+  assert.deepEqual(service.getEntries({ limit: 0.5 }), []);
+  assert.equal(service.getEntries({ limit: 1.5 }).length, 1);
 
   service.clear();
   unsubscribe();
