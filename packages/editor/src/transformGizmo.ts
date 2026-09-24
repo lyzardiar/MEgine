@@ -658,9 +658,11 @@ export function worldDeltaViewPlane(
   screenDelta: { dx: number; dy: number },
   camera: Camera,
   viewport: Vp,
+  snap?: (axis: 'x' | 'y', delta: number) => number,
 ): Vec3 {
   const { right, up } = lookBasis(camera.eye, camera.target);
-  return worldDeltaOnPlane(origin, right, up, screenDelta, camera, viewport);
+  const delta = worldDeltaOnPlane(origin, right, up, screenDelta, camera, viewport);
+  return snap ? add(scale(right, snap('x', dot(delta, right))), scale(up, snap('y', dot(delta, up)))) : delta;
 }
 
 export function gizmoPartEquals(left: GizmoPart | null, right: GizmoPart | null): boolean {

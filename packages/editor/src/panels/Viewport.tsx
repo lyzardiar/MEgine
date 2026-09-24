@@ -136,6 +136,7 @@ import type { SpineCanvasRuntime, SpineDrawResult } from '../spine/spineCanvasRu
 import {
   EMPTY_SNAP_ACCUMULATOR,
   advanceSnap,
+  accumulatedScaleFactor,
   type SceneSnapSettings,
   type SnapAccumulator,
 } from '../sceneSnap';
@@ -4085,7 +4086,7 @@ export function Viewport(props: {
               vscale(b, snapped(channels[1], dot(worldDelta, b), d.snap.settings.move)),
             );
           } else {
-            worldDelta = worldDeltaViewPlane(origin, screen, cam, vp);
+            worldDelta = worldDeltaViewPlane(origin, screen, cam, vp, (axis, delta) => snapped(axis, delta, d.snap.settings.move));
           }
           propsRef.current.onTranslate(d.entity, worldDelta);
         } else if (gizmo === 'scale' && d.part.kind === 'axis') {
@@ -4101,8 +4102,9 @@ export function Viewport(props: {
             amount,
           );
         } else if (gizmo === 'scale' && d.part.kind === 'center') {
-          const amount = snapped('scale', (screen.dx - screen.dy) / 160, d.snap.settings.scale);
-          propsRef.current.onGizmoScaleUniform(d.entity, d.origin, Math.max(0.01, 1 + amount));
+          const previous = d.snap.scale.applied;
+          snapped('scale', (screen.dx - screen.dy) / 160, d.snap.settings.scale);
+          propsRef.current.onGizmoScaleUniform(d.entity, d.origin, accumulatedScaleFactor(previous, d.snap.scale.applied));
         } else if (gizmo === 'rotate') {
           const canvas = canvasRef.current;
           if (!canvas) return;

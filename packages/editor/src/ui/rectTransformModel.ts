@@ -1,4 +1,4 @@
-import type { Vec2 } from './rectLayout';
+import type { Rect, Vec2 } from './rectLayout';
 
 export type RectTransformValue = {
   anchor_min: Vec2;
@@ -17,6 +17,23 @@ export type AnchorPreset = {
   anchorMax: Vec2;
   pivot: Vec2;
 };
+
+/** Preserve the rendered rectangle when changing parents within a screen-space Canvas. Author: MiYu. */
+export function reparentRectKeepingVisualRect(value: RectTransformValue, rect: Rect, parent: Rect, scale: number): RectTransformValue {
+  const span: Vec2 = [value.anchor_max[0] - value.anchor_min[0], value.anchor_max[1] - value.anchor_min[1]];
+  const anchor: Vec2 = [value.anchor_min[0] + span[0] * value.pivot[0], value.anchor_min[1] + span[1] * value.pivot[1]];
+  return {
+    ...value,
+    anchored_position: [
+      (rect.x + rect.w * value.pivot[0] - parent.x - parent.w * anchor[0]) / scale,
+      (parent.y + parent.h * (1 - anchor[1]) - rect.y - rect.h * (1 - value.pivot[1])) / scale,
+    ],
+    size_delta: [
+      value.local_scale[0] === 0 ? value.size_delta[0] : (rect.w / Math.abs(value.local_scale[0]) - parent.w * span[0]) / scale,
+      value.local_scale[1] === 0 ? value.size_delta[1] : (rect.h / Math.abs(value.local_scale[1]) - parent.h * span[1]) / scale,
+    ],
+  };
+}
 
 const horizontal = [
   { key: 'left', label: 'Left', min: 0, max: 0, pivot: 0 },

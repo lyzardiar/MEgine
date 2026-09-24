@@ -1,16 +1,39 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { project } from '../src/math3d.ts';
+import { add, dot, lookBasis, project } from '../src/math3d.ts';
+import { advanceSnap, EMPTY_SNAP_ACCUMULATOR } from '../src/sceneSnap.ts';
 import {
   drawTransformGizmo,
   gizmoPartEquals,
   hitTestTransformGizmo,
   worldDeltaOnPlane,
+  worldDeltaViewPlane,
 } from '../src/transformGizmo.ts';
 
 const viewport = { x: 0, y: 0, w: 800, h: 600 };
 const camera = { eye: [3, 4, 7], target: [0, 0, 0], fovYDeg: 60 };
+
+test('center translation accumulates snapped movement in the camera plane', () => {
+  const state = { x: EMPTY_SNAP_ACCUMULATOR, y: EMPTY_SNAP_ACCUMULATOR };
+  const basis = lookBasis(camera.eye, camera.target);
+  let total = [0, 0, 0];
+  for (let event = 0; event < 50; event++) {
+    const delta = worldDeltaViewPlane([0, 0, 0], { dx: 5, dy: -3 }, camera, viewport, (axis, raw) => {
+      const next = advanceSnap(state[axis], raw, 1, true);
+      state[axis] = next.state;
+      return next.delta;
+    });
+    total = add(total, delta);
+    for (const axis of [basis.right, basis.up]) {
+      const component = dot(delta, axis);
+      assert.ok(Math.abs(component - Math.round(component)) < 1e-8);
+    }
+  }
+  assert.ok(Math.hypot(...total) > 0);
+  assert.ok(Math.abs(dot(total, basis.right) - state.x.applied) < 1e-8);
+  assert.ok(Math.abs(dot(total, basis.up) - state.y.applied) < 1e-8);
+});
 
 function drawingContext() {
   return new Proxy({}, {

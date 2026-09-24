@@ -1969,6 +1969,28 @@ export function layoutUiOverlay(
   return out;
 }
 
+/** Authoring rectangles in one fixed Game-resolution space, including non-graphic selected nodes. */
+export function captureUiRectLayouts(entities: UiEnt[], ids: Set<number>, size: { w: number; h: number }) {
+  const result = new Map<number, { rect: Rect; parent: Rect; canvas: number; scale: number; driven: boolean }>();
+  if (!ids.size) return result;
+  const items = layoutUiOverlay(entities, { x: 0, y: 0, ...size }, ids, undefined, undefined, null);
+  const byId = new Map(entities.map((entity) => [entity.entity, entity]));
+  for (const item of items) {
+    if (!ids.has(item.entity) || !item.anchorParentRect) continue;
+    const entity = byId.get(item.entity);
+    if (!entity) continue;
+    const canvas = outermostCanvas(entities, entity);
+    result.set(item.entity, {
+      rect: item.rect,
+      parent: item.anchorParentRect,
+      canvas: canvas.entity,
+      scale: canvasDisplayScaleFactor(canvas.components.CanvasScaler, size.w, size.h),
+      driven: !!byId.get(entity.parent ?? -1)?.components.LayoutGroup && participatesInLayout(entity),
+    });
+  }
+  return result;
+}
+
 function isReversedScreenQuad(corners: Array<{ x: number; y: number }>): boolean {
   if (corners.length !== 4) return false;
   let twiceArea = 0;

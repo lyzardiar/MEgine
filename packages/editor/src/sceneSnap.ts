@@ -19,6 +19,11 @@ export const DEFAULT_SCENE_SNAP: SceneSnapSettings = {
 
 export const EMPTY_SNAP_ACCUMULATOR: SnapAccumulator = { raw: 0, applied: 0 };
 
+/** Convert accumulated linear scale offsets to a ratio for the current transform. Author: MiYu. */
+export function accumulatedScaleFactor(previous: number, next: number): number {
+  return Math.max(0.01, 1 + next) / Math.max(0.01, 1 + previous);
+}
+
 function positive(value: unknown, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;

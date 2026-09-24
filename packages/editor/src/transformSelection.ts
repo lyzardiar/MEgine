@@ -123,10 +123,10 @@ export function scaleTransformUniform(
   pivot: Vec3,
   factor: number,
 ): TransformData {
-  const safeFactor = Math.max(0.01, Number.isFinite(factor) ? factor : 1);
+  const safeFactor = Number.isFinite(factor) && factor > 0 ? factor : 1;
   return {
     ...transform,
     position: add(pivot, vecScale(sub(transform.position, pivot), safeFactor)) as TransformData['position'],
-    scale: transform.scale.map((value) => Math.max(0.01, value * safeFactor)) as TransformData['scale'],
+    scale: transform.scale.map((value) => value * safeFactor) as TransformData['scale'],
   };
 }

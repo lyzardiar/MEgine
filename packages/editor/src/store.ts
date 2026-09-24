@@ -46,7 +46,7 @@ import {
 } from './particles/particlePresets';
 import { CURRENT_SCENE_VERSION, migrateSceneDocument } from './sceneMigration';
 import { readRectTransform } from './ui/rectLayout';
-import { applyAnchorsKeepingRect, applyPivotKeepingVisualRect } from './ui/rectTransformModel';
+import { applyAnchorsKeepingRect, applyPivotKeepingVisualRect, reparentRectKeepingVisualRect } from './ui/rectTransformModel';
 import type { FigmaUiImportPlan } from './ui/figmaImport.ts';
 import type { EffekseerCompositionPlan } from './effekseerComposition.ts';
 import {
@@ -55,6 +55,7 @@ import {
 } from './ui/gameUiTemplates.ts';
 import {
   gameAlignedCanvasSize,
+  captureUiRectLayouts,
   uiEntityWorldPivot,
   type UiEnt,
 } from './ui/uiLayout';
@@ -1188,6 +1189,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (!plan) return false;
 
       if (withUndo) pushUndo('Reparent GameObject');
+      const rectIds = new Set(plan.roots.filter((id) => {
+        const entity = find(id);
+        return entity?.components.RectTransform && (entity.parent ?? null) !== plan.parent;
+      }));
+      const canvasSize = sceneCanvasLogicalSize(gameResolution, { w: 800, h: 600 });
+      const beforeRects = captureUiRectLayouts(current, rectIds, canvasSize);
       const before = buildWorldTransforms(current);
       const preservedWorld = new Map(
         plan.roots.flatMap((id) => {
@@ -1214,6 +1221,15 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         const entity = find(id);
         if (entity) entity.siblingIndex = index;
       });
+      if (beforeRects.size) {
+        const afterRects = captureUiRectLayouts(current, rectIds, canvasSize);
+        for (const [id, beforeRect] of beforeRects) {
+          const afterRect = afterRects.get(id);
+          const entity = find(id);
+          if (!entity?.components.RectTransform || !afterRect || afterRect.driven || afterRect.canvas !== beforeRect.canvas) continue;
+          entity.components.RectTransform = reparentRectKeepingVisualRect(readRectTransform(entity.components.RectTransform), beforeRect.rect, afterRect.parent, afterRect.scale);
+        }
+      }
       for (const oldParent of plan.oldParents) {
         if (oldParent !== parent) reindexSiblings(oldParent);
       }
@@ -1908,7 +1924,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         target.components.Transform = {
           ...transform,
           position: worldPointToLocal(parent, nextWorld.position) as TransformData['position'],
-          scale: transform.scale.map((value) => Math.max(0.01, value * factor)) as TransformData['scale'],
+          scale: transform.scale.map((value) => value * factor) as TransformData['scale'],
         };
       }
     },

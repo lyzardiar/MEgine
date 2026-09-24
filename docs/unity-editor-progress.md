@@ -15,9 +15,22 @@
 
 本地验证产物：`tmp/editor-batch1-tests.log`、`tmp/editor-desktop-build.log`、`tmp/editor-console-detail.png`。这些临时产物不纳入版本控制。
 
+## 2026-09-25：2D/3D 场景变换
+
+- 同一屏幕空间 Canvas 内拖换 UI 父节点时保留渲染位置和尺寸，同时保留 anchors、pivot、旋转与镜像比例；覆盖子层级、拉伸锚点、CanvasScaler、Undo/Redo 和 Play 副本。
+- 新父节点的 LayoutGroup 继续管理参与布局的子项；`LayoutElement.ignore_layout` 子项保持自己的矩形。移出 LayoutGroup 时保留当前显示矩形。
+- 3D 中心移动按相机视平面吸附，慢速小位移会累计。
+- 均匀缩放以手势累计比例计算，单次手势最小相对比例为 1%；多选对象保留相对大小、镜像和位置比例，往返拖动可恢复。
+
+验证：Editor 全量 925/925，生产构建和嵌入最新前端的 Tauri Debug 构建通过。原生窗口实际拖动：两段缩放得到 `[1.2, 1.2, 1.2]`；中心移动为 `0.5`；Undo 恢复原 Transform。Hierarchy 将 Child 从 A 拖入 B 后，Canvas bounds 均为 `{x:650, y:445, width:240, height:150}`；Undo/Redo 正确。所有截图均 `backgroundSafe=true`。
+
+边界：本批 UI 保矩形针对同一 Screen Space Canvas；跨 Canvas、World Space Canvas 和不同投影平面仍需独立设计与验证。布局驱动组件依然按自身规则求解。
+
+本地验证产物：`tmp/editor-batch2-tests.log`、`tmp/editor-batch2-desktop.log`、`tmp/editor-transform-native.png`、`tmp/editor-ui-reparent.png`。
+
 ## 后续审计重点
 
-- Scene/Hierarchy：UI 重设父级的位置与尺寸、3D 中心移动吸附、连续均匀缩放，以及各自的 Undo/Redo。
+- Scene/Hierarchy：跨 Canvas/World Space 重设父级、多选变换极端尺度与旋转父级，以及各自的 Undo/Redo。
 - 2D：Sprite/Tilemap、碰撞与动画的编辑器到 Player 一致性，真实项目存取与构建闭环。
 - 3D：相机、材质、光照、拾取与变换一致性；大场景与扩展面板的响应时间及资源回收。
 - UI：继续检查 Unity 风格面板布局、缩窄窗口、键盘操作与持久化；通过像素和行为证据逐项验收。
