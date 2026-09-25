@@ -157,10 +157,19 @@ fn migrate_legacy_canvas_raycasters(snapshot: &mut WorldSnapshot) {
 }
 
 pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
-    // Clear alive entities
+    apply_snapshot_inner(world, snap, false);
+}
+
+/// Reconciles editor changes with a running world without reallocating surviving entities.
+pub fn reconcile_snapshot(world: &mut World, snap: &WorldSnapshot) {
+    apply_snapshot_inner(world, snap, true);
+}
+
+fn apply_snapshot_inner(world: &mut World, snap: &WorldSnapshot, preserve_entities: bool) {
+    let incoming: std::collections::HashSet<_> = snap.entities.iter().map(|entity| entity.entity).collect();
     let existing: Vec<_> = world.iter_entities().collect();
-    for e in existing {
-        world.despawn(e);
+    for entity in existing {
+        if !preserve_entities || !incoming.contains(&entity.to_u64()) { world.despawn(entity); }
     }
     world.time.clear_color = glam::Vec4::new(
         snap.clear_color[0],
@@ -172,33 +181,20 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
     world.time.sim_frame = snap.sim_frame;
     world.selected = None;
 
-    use mengine_core::command::WorldCommand;
-    use serde_json::json;
-
+    let mut entity_map = HashMap::new();
+    // Reserve surviving identifiers before spawning into freed slots.
     for ent in &snap.entities {
-        let mut components = serde_json::Map::new();
-        for (k, v) in &ent.components {
-            components.insert(k.clone(), v.clone());
-        }
-        if let Some(name) = &ent.name {
-            components.insert("Name".into(), json!({ "value": name }));
-        }
-        world.commands.push(WorldCommand::Spawn {
-            name: ent.name.clone(),
-            components: serde_json::Value::Object(components),
-        });
+        let entity = mengine_core::Entity::from_u64(ent.entity);
+        if preserve_entities && world.is_alive(entity) { entity_map.insert(ent.entity, entity); }
     }
-    // `commit` returns entities in Spawn command order. Do not rebuild this list
-    // with `iter_entities`: clearing a populated world fills the free list and
-    // subsequent spawns reuse slots in reverse order, so slot iteration no longer
-    // matches the snapshot order.
-    let spawned = world.commit();
-    let entity_map: HashMap<u64, _> = snap
-        .entities
-        .iter()
-        .zip(spawned.iter().copied())
-        .map(|(snapshot, spawned)| (snapshot.entity, spawned))
-        .collect();
+    for ent in &snap.entities {
+        let child = *entity_map.entry(ent.entity).or_insert_with(|| world.spawn_empty());
+        let old: Vec<_> = world.serialized_components(child).into_iter().flat_map(|values| values.keys().cloned()).collect();
+        for name in &old {
+            if !ent.components.contains_key(name) && !matches!(name.as_str(), "Parent" | "Children") { world.remove_component_by_name(child, name); }
+        }
+        if let Some(name) = &ent.name { world.set_component_value(child, "Name", serde_json::json!({"value":name})); }
+    }
 
     for ent in &snap.entities {
         let Some(&child) = entity_map.get(&ent.entity) else {
@@ -206,9 +202,7 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
         };
         world.set_editor_state(child, ent.sibling_index, ent.active);
         world.set_entity_metadata(child, ent.tag.clone(), ent.layer);
-        if let Some(parent) = ent.parent.and_then(|id| entity_map.get(&id)).copied() {
-            world.set_parent(child, Some(parent));
-        }
+        world.set_parent(child, ent.parent.and_then(|id| entity_map.get(&id)).copied());
         let mut components = serde_json::Value::Object(
             ent.components
                 .iter()

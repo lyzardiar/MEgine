@@ -14,6 +14,7 @@ pub mod particles;
 pub mod player_config;
 pub mod prefabs;
 pub mod scenes;
+pub mod script_requests;
 pub mod sorting;
 pub mod sprites;
 pub mod textures;

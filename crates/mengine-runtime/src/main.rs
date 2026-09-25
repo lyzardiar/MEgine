@@ -46,8 +46,7 @@ use mengine_runtime::materials::{
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
-use mengine_runtime::prefabs::instantiate_project_prefab;
-use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
+use mengine_runtime::scenes::{LoadedScene, SceneManager};
 use mengine_runtime::sorting::SortingLayers;
 use mengine_runtime::textures::RuntimeTextureCache;
 #[cfg(test)]
@@ -61,7 +60,7 @@ use mengine_runtime::ui::{
 use mengine_runtime::ui_raycast::{raycast_blocking_colliders, viewport_world_ray};
 use mengine_scene::load_scene;
 use mengine_script::{
-    ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal,
+    ScriptAnimationEvent, ScriptHost, ScriptInput, ScriptRuntimeRequest, ScriptTimelineSignal,
 };
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
@@ -113,6 +112,7 @@ struct App {
     renderer: Option<Renderer>,
     world: World,
     script: Option<ScriptHost>,
+    script_input: ScriptInput,
     input: InputState,
     last: Instant,
     cube: Option<mengine_core::Entity>,
@@ -184,6 +184,7 @@ impl App {
             renderer: None,
             world: World::new(),
             script: None,
+            script_input: ScriptInput::default(),
             input: InputState::default(),
             last: Instant::now(),
             cube: None,
@@ -264,254 +265,10 @@ impl App {
     }
 
     fn apply_runtime_request(&mut self, request: ScriptRuntimeRequest) {
-        match &request {
-            ScriptRuntimeRequest::SetAnimatorParameter {
-                entity,
-                name,
-                value,
-            } => {
-                let entity = Entity::from_u64(*entity);
-                let Some(animator) = self.world.get_component_mut::<Animator>(entity) else {
-                    log::warn!(
-                        "script tried to set Animator parameter on missing entity {entity:?}"
-                    );
-                    return;
-                };
-                let mut parameters =
-                    serde_json::from_str::<serde_json::Value>(&animator.parameters_json)
-                        .ok()
-                        .and_then(|value| value.as_object().cloned())
-                        .unwrap_or_default();
-                parameters.insert(name.clone(), value.clone());
-                animator.parameters_json = serde_json::Value::Object(parameters).to_string();
-                return;
-            }
-            ScriptRuntimeRequest::PlayAnimatorState { entity, state } => {
-                let entity = Entity::from_u64(*entity);
-                let Some(animator) = self.world.get_component_mut::<Animator>(entity) else {
-                    log::warn!("script tried to play Animator state on missing entity {entity:?}");
-                    return;
-                };
-                animator.current_state = state.clone();
-                animator.playing = true;
-                return;
-            }
-            ScriptRuntimeRequest::SetAnimatorLayerWeight {
-                entity,
-                layer,
-                weight,
-            } => {
-                let entity = Entity::from_u64(*entity);
-                let Some(animator) = self.world.get_component_mut::<Animator>(entity) else {
-                    log::warn!(
-                        "script tried to set Animator layer weight on missing entity {entity:?}"
-                    );
-                    return;
-                };
-                let mut weights =
-                    serde_json::from_str::<serde_json::Value>(&animator.layer_weights_json)
-                        .ok()
-                        .and_then(|value| value.as_object().cloned())
-                        .unwrap_or_default();
-                weights.insert(layer.clone(), serde_json::json!(weight.clamp(0.0, 1.0)));
-                animator.layer_weights_json = serde_json::Value::Object(weights).to_string();
-                return;
-            }
-            ScriptRuntimeRequest::PlayAnimatorLayerState {
-                entity,
-                layer,
-                state,
-            } => {
-                let entity = Entity::from_u64(*entity);
-                if self.world.get_component::<Animator>(entity).is_none() {
-                    log::warn!(
-                        "script tried to play Animator layer state on missing entity {entity:?}"
-                    );
-                    return;
-                }
-                self.animations
-                    .play_animator_layer_state(entity, layer, state);
-                return;
-            }
-            ScriptRuntimeRequest::PlayAnimation { entity, restart } => {
-                let entity = Entity::from_u64(*entity);
-                if *restart {
-                    self.animations.reset_player(entity);
-                }
-                let Some(player) = self.world.get_component_mut::<AnimationPlayer>(entity) else {
-                    log::warn!("script tried to play AnimationPlayer on missing entity {entity:?}");
-                    return;
-                };
-                if *restart {
-                    player.time = 0.0;
-                }
-                player.playing = true;
-                return;
-            }
-            ScriptRuntimeRequest::PauseAnimation { entity } => {
-                let entity = Entity::from_u64(*entity);
-                if let Some(player) = self.world.get_component_mut::<AnimationPlayer>(entity) {
-                    player.playing = false;
-                } else {
-                    log::warn!(
-                        "script tried to pause AnimationPlayer on missing entity {entity:?}"
-                    );
-                }
-                return;
-            }
-            ScriptRuntimeRequest::StopAnimation { entity } => {
-                let entity = Entity::from_u64(*entity);
-                self.animations.reset_player(entity);
-                if let Some(player) = self.world.get_component_mut::<AnimationPlayer>(entity) {
-                    player.playing = false;
-                    player.time = 0.0;
-                } else {
-                    log::warn!("script tried to stop AnimationPlayer on missing entity {entity:?}");
-                }
-                return;
-            }
-            ScriptRuntimeRequest::SeekAnimation { entity, time } => {
-                let entity = Entity::from_u64(*entity);
-                if let Some(player) = self.world.get_component_mut::<AnimationPlayer>(entity) {
-                    player.time = *time;
-                } else {
-                    log::warn!("script tried to seek AnimationPlayer on missing entity {entity:?}");
-                }
-                return;
-            }
-            ScriptRuntimeRequest::PlayTimeline { entity, restart } => {
-                let entity = Entity::from_u64(*entity);
-                if *restart {
-                    self.timelines.reset_director(entity);
-                }
-                let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity)
-                else {
-                    log::warn!(
-                        "script tried to play TimelineDirector on missing entity {entity:?}"
-                    );
-                    return;
-                };
-                if *restart {
-                    director.time = 0.0;
-                }
-                director.playing = true;
-                return;
-            }
-            ScriptRuntimeRequest::PauseTimeline { entity } => {
-                let entity = Entity::from_u64(*entity);
-                if let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity) {
-                    director.playing = false;
-                } else {
-                    log::warn!(
-                        "script tried to pause TimelineDirector on missing entity {entity:?}"
-                    );
-                }
-                return;
-            }
-            ScriptRuntimeRequest::StopTimeline { entity } => {
-                let entity = Entity::from_u64(*entity);
-                self.timelines.reset_director(entity);
-                if let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity) {
-                    director.playing = false;
-                    director.time = 0.0;
-                } else {
-                    log::warn!(
-                        "script tried to stop TimelineDirector on missing entity {entity:?}"
-                    );
-                }
-                return;
-            }
-            ScriptRuntimeRequest::SeekTimeline { entity, time } => {
-                let entity = Entity::from_u64(*entity);
-                if let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity) {
-                    director.time = *time;
-                    self.timelines.seek_director(entity);
-                } else {
-                    log::warn!(
-                        "script tried to seek TimelineDirector on missing entity {entity:?}"
-                    );
-                }
-                return;
-            }
-            ScriptRuntimeRequest::PlayAudio { entity } => {
-                let entity = Entity::from_u64(*entity);
-                if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
-                    source.playing = true;
-                } else {
-                    log::warn!("script tried to play AudioSource on missing entity {entity:?}");
-                }
-                return;
-            }
-            ScriptRuntimeRequest::PauseAudio { entity } => {
-                let entity = Entity::from_u64(*entity);
-                if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
-                    source.playing = false;
-                } else {
-                    log::warn!("script tried to pause AudioSource on missing entity {entity:?}");
-                }
-                return;
-            }
-            ScriptRuntimeRequest::StopAudio { entity } => {
-                let entity = Entity::from_u64(*entity);
-                self.audio.stop_source(entity);
-                if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
-                    source.playing = false;
-                    source.time = 0.0;
-                } else {
-                    log::warn!("script tried to stop AudioSource on missing entity {entity:?}");
-                }
-                return;
-            }
-            ScriptRuntimeRequest::SeekAudio { entity, time } => {
-                let entity = Entity::from_u64(*entity);
-                self.audio.seek_source(entity, *time);
-                if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
-                    source.time = *time;
-                } else {
-                    log::warn!("script tried to seek AudioSource on missing entity {entity:?}");
-                }
-                return;
-            }
-            ScriptRuntimeRequest::InstantiatePrefab { path, parent } => {
-                match instantiate_project_prefab(
-                    self.args.project_root.as_deref(),
-                    path,
-                    *parent,
-                    &mut self.world,
-                ) {
-                    Ok(instance) => log::info!(
-                        "instantiated prefab '{path}' as entity {} ({} nodes)",
-                        instance.root,
-                        instance.entities.len()
-                    ),
-                    Err(error) => log::error!("failed to instantiate prefab '{path}': {error}"),
-                }
-                return;
-            }
-            _ => {}
-        }
-        let selector = match request {
-            ScriptRuntimeRequest::LoadSceneByIndex(index) => SceneSelector::Index(index),
-            ScriptRuntimeRequest::LoadScene(reference) => SceneSelector::PathOrName(reference),
-            ScriptRuntimeRequest::ReloadScene => SceneSelector::Reload,
-            ScriptRuntimeRequest::SetAnimatorParameter { .. }
-            | ScriptRuntimeRequest::SetAnimatorLayerWeight { .. }
-            | ScriptRuntimeRequest::InstantiatePrefab { .. }
-            | ScriptRuntimeRequest::PlayAnimatorState { .. }
-            | ScriptRuntimeRequest::PlayAnimatorLayerState { .. }
-            | ScriptRuntimeRequest::PlayAnimation { .. }
-            | ScriptRuntimeRequest::PauseAnimation { .. }
-            | ScriptRuntimeRequest::StopAnimation { .. }
-            | ScriptRuntimeRequest::SeekAnimation { .. }
-            | ScriptRuntimeRequest::PlayTimeline { .. }
-            | ScriptRuntimeRequest::PauseTimeline { .. }
-            | ScriptRuntimeRequest::StopTimeline { .. }
-            | ScriptRuntimeRequest::SeekTimeline { .. }
-            | ScriptRuntimeRequest::PlayAudio { .. }
-            | ScriptRuntimeRequest::PauseAudio { .. }
-            | ScriptRuntimeRequest::StopAudio { .. }
-            | ScriptRuntimeRequest::SeekAudio { .. } => unreachable!(),
-        };
+        let Some(selector) = (mengine_runtime::script_requests::ScriptRequestContext {
+            world: &mut self.world, project_root: self.args.project_root.as_deref(),
+            animations: &mut self.animations, timelines: &mut self.timelines, audio: &mut self.audio,
+        }).apply(request) else { return; };
         match self.scenes.load(selector, &mut self.world) {
             Ok(loaded) => {
                 self.args.scene = Some(loaded.path.clone());
@@ -534,6 +291,7 @@ impl App {
                     window.set_ime_allowed(false);
                 }
                 if let Some(script) = self.script.as_mut() {
+                    if let Err(error) = script.sync_world(&self.world) { log::error!("script snapshot failed: {error}"); }
                     let path = loaded.path.to_string_lossy().replace('\\', "/");
                     if let Err(error) = script.notify_scene_loaded(
                         &loaded.name,
@@ -1417,6 +1175,7 @@ impl ApplicationHandler for App {
 
         let mut script = ScriptHost::new().ok();
         if let Some(ref mut s) = script {
+            if let Err(error) = s.sync_world(&self.world) { log::error!("script snapshot failed: {error}"); }
             let default_script = r#"
 var t = 0.0;
 function onTick(dt, frame) {
@@ -1531,6 +1290,7 @@ function onTick(dt, frame) {
                         _ => {}
                     }
                 }
+                self.script_input.key(format!("{code:?}"), state == ElementState::Pressed);
                 let key = match code {
                     WinitKey::KeyW => mengine_platform::KeyCode::W,
                     WinitKey::KeyA => mengine_platform::KeyCode::A,
@@ -1559,6 +1319,7 @@ function onTick(dt, frame) {
             WindowEvent::CursorEntered { .. } => self.cursor_inside = true,
             WindowEvent::CursorLeft { .. } => self.cursor_inside = false,
             WindowEvent::Focused(false) => {
+                self.script_input.release_all();
                 self.cursor_inside = false;
                 self.active_slider = None;
                 self.active_ui_press = None;
@@ -1576,14 +1337,22 @@ function onTick(dt, frame) {
                 button: MouseButton::Left,
                 state: ElementState::Pressed,
                 ..
-            } => self.press_ui(),
+            } => {
+                self.script_input.button(0, true);
+                self.press_ui();
+            }
             WindowEvent::MouseInput {
                 button: MouseButton::Left,
                 state: ElementState::Released,
                 ..
             } => {
+                self.script_input.button(0, false);
                 self.active_slider = None;
                 self.active_ui_press = None;
+            }
+            WindowEvent::MouseInput { button, state, .. } => {
+                let button = match button { MouseButton::Middle => Some(1), MouseButton::Right => Some(2), _ => None };
+                if let Some(button) = button { self.script_input.button(button, state == ElementState::Pressed); }
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
@@ -1748,7 +1517,13 @@ function onTick(dt, frame) {
                     );
                 }
 
+                self.script_input.pointer = self.cursor;
+                self.script_input.viewport = self.ui_viewport_size();
                 let runtime_requests = if let Some(script) = self.script.as_mut() {
+                    if let Err(error) = script.sync_world(&self.world) { log::error!("script snapshot failed: {error}"); }
+                    if let Err(error) = script.set_input(&self.script_input) {
+                        log::error!("script input failed: {error}");
+                    }
                     if let Err(error) = script.notify_animation_events(&animation_events) {
                         log::error!("animation event callback failed: {error}");
                     }
@@ -1782,6 +1557,7 @@ function onTick(dt, frame) {
                 } else {
                     Vec::new()
                 };
+                self.script_input.finish_frame();
                 for request in runtime_requests {
                     self.apply_runtime_request(request);
                 }

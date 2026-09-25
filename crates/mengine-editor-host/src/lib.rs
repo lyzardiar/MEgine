@@ -2,11 +2,13 @@
 
 mod gizmo;
 mod project;
+mod play_runtime;
 mod session;
 mod undo;
 mod viewport;
 
 pub use gizmo::{GizmoMode, GizmoState};
+pub use play_runtime::{EditorPlayRuntime, PlayProject, ScriptInput};
 pub use project::{
     AssetDeleteSnapshot, AssetDuplicateRequest, AssetDuplicateResult, AssetManifestReference,
     AssetRenameRequest, AssetRenameResult, AssetRenameUpdate, AssetRestoreRequest,

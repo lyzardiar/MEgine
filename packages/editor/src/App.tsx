@@ -8,6 +8,7 @@ import {
 } from './store';
 import { createEditorUndoService } from './editorUndoService';
 import { applyPlaybackAction, playbackShortcut, type PlaybackAction } from './editorPlayback';
+import { createNativePlayRuntime } from './playRuntime';
 import {
   legacyGameResolution,
   normalizeGameDisplay,
@@ -1062,11 +1063,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
   logRef.current = (message) => log(message);
 
-  const playback = (action: PlaybackAction) => {
-    if (!applyPlaybackAction(store, action)) return;
-    if (action === 'toggle') setViewTab(store.mode === 'edit' ? 'scene' : 'game');
-    log(action === 'step' ? `Advanced paused Play Mode to frame ${store.snapshot().frame}` : store.mode === 'edit' ? 'Exited Play Mode → Scene' : store.mode === 'pause' ? 'Paused' : 'Playing');
-    refresh();
+  const playback = async (action: PlaybackAction) => {
+    try {
+      if (action !== 'toggle') await store.waitForPlayRuntime();
+      if (!applyPlaybackAction(store, action)) return;
+      if (store.mode !== 'edit') await store.waitForPlayRuntime();
+      if (action === 'toggle') setViewTab(store.mode === 'edit' ? 'scene' : 'game');
+      log(action === 'step' ? `Advanced paused Play Mode to frame ${store.snapshot().frame}` : store.mode === 'edit' ? 'Exited Play Mode → Scene' : store.mode === 'pause' ? 'Paused' : 'Playing');
+      refresh();
+    } catch (error) { log(`Play Mode failed: ${String(error)}`, 'error'); refresh(); }
   };
 
   useEffect(() => {
@@ -2640,10 +2645,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, []);
 
   useEffect(() => {
+    if (props.detachedPanel || !isDesktopEditor()) return;
+    store.setPlayRuntime(createNativePlayRuntime((error) => { log(`Play Mode failed: ${String(error)}`, 'error'); refreshRef.current(); }));
+    return () => { store.stop(); store.setPlayRuntime(null); };
+  }, [props.detachedPanel, store]);
+
+  useEffect(() => {
+    let lastTick = performance.now();
     const id = setInterval(() => {
-      // Edit 模式不要每帧 refresh，否则整树 60fps 重绘会卡死
-      if (store.mode !== 'play') return;
-      store.tick(1 / 60);
+      const now = performance.now();
+      if (store.mode !== 'play') { lastTick = now; return; }
+      if (store.playBusy) return;
+      store.tick(Math.min((now - lastTick) / 1000, 0.25));
+      lastTick = now;
       refresh(!props.detachedPanel);
     }, 1000 / 60);
     return () => clearInterval(id);
@@ -2936,6 +2950,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               pivotMode={pivotMode}
               handleOrientation={handleOrientation}
               playing={mode !== 'edit'}
+              onPlayInput={(input) => store.setPlayInput(input)}
               sceneCamera={store.sceneCamera}
               gameResolution={gameResolution}
               gameDisplay={gameDisplay}

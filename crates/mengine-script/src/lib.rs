@@ -2,8 +2,10 @@
 //! scripts only talk to `engine.*` and emit CommandBuffer entries.
 
 mod bridge;
+mod input;
 
 pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal};
+pub use input::ScriptInput;
 
 use thiserror::Error;
 

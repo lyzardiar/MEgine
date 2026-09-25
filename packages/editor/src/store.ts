@@ -1,4 +1,5 @@
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
+import { emptyPlayInput, type PlayInput, type PlayRuntimeDriver } from './playRuntime';
 import {
   createBehaviourRunner,
   getBehaviour,
@@ -219,6 +220,41 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let animationPreview: { root: number; samples: AnimationPreviewSample[] } | null = null;
   let timelinePreview: TimelineScenePreview | null = null;
   const behaviourRunner = createBehaviourRunner();
+  let playRuntime: PlayRuntimeDriver | null = null;
+  let playPending: Promise<void> = Promise.resolve();
+  let playBusy = false;
+  let playGeneration = 0;
+  let playError: unknown = null;
+  let playInput = emptyPlayInput();
+  let playClearColor: [number, number, number, number] | null = null;
+
+  const trackPlayOperation = (operation: Promise<void>, generation: number) => {
+    playBusy = true;
+    playPending = operation.catch((error) => {
+      if (generation !== playGeneration) return;
+      playError = error;
+      mode = 'edit';
+      behaviourRunner.unmount();
+      playEntities = null;
+      playClearColor = null;
+      playRuntime?.stop();
+      playRuntime?.onError(error);
+    }).finally(() => { if (generation === playGeneration) playBusy = false; });
+  };
+
+  const runPlayFrame = (dt: number) => {
+    if (!playRuntime || !playEntities) return;
+    const generation = playGeneration;
+    const input = structuredClone(playInput);
+    playInput.pressedKeys = []; playInput.releasedKeys = [];
+    playInput.pressedButtons = []; playInput.releasedButtons = [];
+    const snapshot = { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: playClearColor ?? clearColor, selected: primarySelected() };
+    trackPlayOperation(playRuntime.step(snapshot, input, dt).then((result) => {
+      if (generation !== playGeneration || mode === 'edit') return;
+      playEntities = result.entities.map(normalizeEntity);
+      playClearColor = result.clearColor;
+    }), generation);
+  };
 
   const boot = (name: string, components: Record<string, unknown>, siblingIndex: number): EntityRec => {
     const id = nextId++;
@@ -948,7 +984,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         frame,
         simFrame: frame,
         simulationTime: playSpin,
-        clearColor,
+        clearColor: playClearColor ?? clearColor,
         selected: primarySelected(),
         selectedIds: [...selectedIds],
       };
@@ -1493,9 +1529,27 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       playEntities = structuredClone(editEntities);
       mode = 'play';
       playSpin = 0;
-      behaviourRunner.mount(playEntities);
+      if (!playRuntime) behaviourRunner.mount(playEntities);
+      playInput = emptyPlayInput();
+      playError = null;
+      const generation = ++playGeneration;
+      if (playRuntime) trackPlayOperation(playRuntime.start(this.snapshot()).then(result => {
+        if (generation === playGeneration && mode !== 'edit') {
+          if (result) {
+            playEntities = result.entities.map(normalizeEntity);
+            playClearColor = result.clearColor;
+          }
+          if (playEntities) behaviourRunner.mount(playEntities);
+        }
+      }), generation);
     },
     stop() {
+      playGeneration++;
+      playRuntime?.stop();
+      playBusy = false;
+      playError = null;
+      playInput = emptyPlayInput();
+      playClearColor = null;
       behaviourRunner.unmount();
       playEntities = null;
       mode = 'edit';
@@ -1515,19 +1569,39 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return undoService.redo();
     },
     tick(dt: number) {
+      if (playBusy) return;
       frame++;
       if (mode !== 'play') return;
       playSpin += dt;
       const src = playEntities ?? editEntities;
       behaviourRunner.tick(src, dt);
+      runPlayFrame(dt);
     },
     step(dt = 1 / 60) {
-      if (mode !== 'pause' || !Number.isFinite(dt) || dt <= 0) return false;
+      if (playBusy || mode !== 'pause' || !Number.isFinite(dt) || dt <= 0) return false;
       frame++;
       playSpin += dt;
       const src = playEntities ?? editEntities;
       behaviourRunner.tick(src, dt);
+      runPlayFrame(dt);
       return true;
+    },
+    setPlayRuntime(driver: PlayRuntimeDriver | null) { playRuntime = driver; },
+    async waitForPlayRuntime() { await playPending; if (playError) throw playError; },
+    get playBusy() { return playBusy; },
+    setPlayInput(input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>>) {
+      if (mode === 'edit') return;
+      for (const [field, pressed, released] of [['keys', 'pressedKeys', 'releasedKeys'], ['buttons', 'pressedButtons', 'releasedButtons']] as const) {
+        const values = input[field];
+        if (!values) continue;
+        const before = playInput[field] as (string | number)[];
+        const after = [...new Set<string | number>(values)];
+        (playInput[pressed] as (string | number)[]).push(...after.filter(value => !before.includes(value)));
+        (playInput[released] as (string | number)[]).push(...before.filter(value => !after.includes(value)));
+        (playInput[field] as (string | number)[]) = after;
+      }
+      if (input.pointer) playInput.pointer = [...input.pointer];
+      if (input.viewport) playInput.viewport = [...input.viewport];
     },
     addComponent(entity: number, type: string, value: Record<string, unknown>) {
       return this.addComponents([entity], type, value) > 0;

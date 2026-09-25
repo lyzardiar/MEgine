@@ -37,6 +37,7 @@ struct AppState {
     project: Mutex<Option<ProjectSession>>,
     active_build: Arc<Mutex<Option<ActiveBuild>>>,
     next_build_id: AtomicU64,
+    play_runtime: Arc<mengine_editor_host::EditorPlayRuntime>,
 }
 
 static VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
@@ -4145,6 +4146,7 @@ where
         .map_err(|error| error.failure(Some(session.current_revision())))?
         .unwrap_or_else(|| session.snapshot());
     *project = Some(session);
+    state.play_runtime.stop();
     Ok(snapshot)
 }
 
@@ -4218,6 +4220,7 @@ fn close_project(
         .discard_scene_recovery()
         .map_err(|error| format!("could not discard scene recovery before closing: {error}"))?;
     let session = project.take().ok_or_else(|| no_project().message)?;
+    state.play_runtime.stop();
     drop(session);
     Ok(CloseProjectResult { closed_windows })
 }
@@ -4281,9 +4284,47 @@ fn world_from_snapshot(snapshot: &WorldSnapshot) -> mengine_core::World {
 }
 
 #[tauri::command]
+async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let (project, build_scenes) = state.project.lock().as_ref().map(|session| (session.snapshot(), session.build_scenes())).ok_or_else(|| no_project().message)?;
+    let generation = state.play_runtime.begin();
+    let project_root = project.project_root.clone();
+    let bundled_sdk = app.path().resolve("build-sdk", BaseDirectory::Resource).ok().filter(|path| path.join("sdk.json").is_file());
+    let source = tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        let output = history_patch_command(bundled_sdk, "release")?.arg("compile-play-script").arg(project_root).output().map_err(|error| error.to_string())?;
+        if !output.status.success() { return Err(command_failure("Play script compilation", &output)); }
+        if output.stdout.len() > 16 * 1024 * 1024 { return Err("Play script exceeds 16 MiB".into()); }
+        let result: serde_json::Value = serde_json::from_slice(&output.stdout).map_err(|error| error.to_string())?;
+        result.get("source").and_then(serde_json::Value::as_str).map(str::to_owned).ok_or_else(|| "Play compiler did not return script source".into())
+    }).await.map_err(|error| error.to_string())??;
+    if state.play_runtime.generation() != generation || !state.project.lock().as_ref().is_some_and(|session| session.snapshot().project_id == project.project_id) {
+        return Err("Play initialization was superseded".into());
+    }
+    let runtime = state.play_runtime.clone();
+    let name = project.scene_path.as_deref().and_then(|path| Path::new(path).file_stem()).and_then(|stem| stem.to_str()).unwrap_or("Untitled").to_owned();
+    let snapshot = tauri::async_runtime::spawn_blocking(move || runtime.start(generation, source, snapshot, mengine_editor_host::PlayProject { root: Some(PathBuf::from(project.project_root)), scene: PathBuf::from(project.scene_path.unwrap_or_default()), name, build_scenes: build_scenes.into_iter().map(PathBuf::from).collect() })).await.map_err(|error| error.to_string())??;
+    if state.play_runtime.generation() != generation { return Err("Play initialization was superseded".into()); }
+    Ok(serde_json::json!({ "sessionId": generation, "snapshot": snapshot }))
+}
+
+#[tauri::command]
+async fn step_editor_play(session_id: u64, snapshot: WorldSnapshot, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<WorldSnapshot, String> {
+    if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
+    let runtime = state.play_runtime.clone();
+    let result = tauri::async_runtime::spawn_blocking(move || runtime.step(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
+    if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
+    Ok(result)
+}
+
+#[tauri::command]
+fn stop_editor_play(state: State<'_, AppState>) {
+    state.play_runtime.stop();
+}
+
+#[tauri::command]
 async fn render_native_game_view(
     width: u32,
     height: u32,
+    snapshot: Option<WorldSnapshot>,
     state: State<'_, AppState>,
 ) -> Result<NativeViewportFrame, String> {
     let (project_root, snapshot) = {
@@ -4293,7 +4334,7 @@ async fn render_native_game_view(
             .ok_or_else(|| "no MEngine project is open".to_string())?;
         (
             session.project_root().to_owned(),
-            WorldSnapshot::from_world(session.active_world()),
+            snapshot.unwrap_or_else(|| WorldSnapshot::from_world(session.active_world())),
         )
     };
     tauri::async_runtime::spawn_blocking(move || {
@@ -4323,6 +4364,7 @@ async fn render_native_game_view(
 #[tauri::command]
 async fn render_native_scene_view(
     request: NativeSceneViewRequest,
+    snapshot: Option<WorldSnapshot>,
     state: State<'_, AppState>,
 ) -> Result<NativeViewportFrame, String> {
     let (project_root, snapshot) = {
@@ -4332,7 +4374,7 @@ async fn render_native_scene_view(
             .ok_or_else(|| "no MEngine project is open".to_string())?;
         (
             session.project_root().to_owned(),
-            WorldSnapshot::from_world(session.active_world()),
+            snapshot.unwrap_or_else(|| WorldSnapshot::from_world(session.active_world())),
         )
     };
     tauri::async_runtime::spawn_blocking(move || {
@@ -6239,6 +6281,7 @@ pub fn run() {
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
             next_build_id: AtomicU64::new(1),
+            play_runtime: Arc::new(mengine_editor_host::EditorPlayRuntime::default()),
         })
         .manage(bridge_hub.clone())
         .invoke_handler(tauri::generate_handler![
@@ -6252,6 +6295,9 @@ pub fn run() {
             list_recent_projects,
             remove_recent_project,
             get_project_snapshot,
+            start_editor_play,
+            step_editor_play,
+            stop_editor_play,
             render_native_game_view,
             render_native_scene_view,
             render_effekseer_preview,
@@ -6434,6 +6480,7 @@ mod tests {
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
             next_build_id: AtomicU64::new(1),
+            play_runtime: Arc::new(mengine_editor_host::EditorPlayRuntime::default()),
         }
     }
 
@@ -6518,6 +6565,7 @@ mod tests {
             project: Mutex::new(Some(session)),
             active_build: Arc::new(Mutex::new(None)),
             next_build_id: AtomicU64::new(1),
+            play_runtime: Arc::new(mengine_editor_host::EditorPlayRuntime::default()),
         };
         let mut create_called = false;
 

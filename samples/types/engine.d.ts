@@ -1,5 +1,9 @@
 /** Global engine bridge injected by mengine-script host. */
 interface EngineApi {
+  /** Current simulation world, refreshed before onTick. Change it through pushCommandJson. */
+  snapshot: { entities: Array<{ entity: number; name: string | null; parent: number | null; components: Record<string, any> }>; frame: number; clear_color: number[] };
+  /** Physical key codes (KeyA, ArrowLeft, Space); pointer pixels are relative to the Game content. */
+  input: { keys: string[]; pressedKeys: string[]; releasedKeys: string[]; pointer: [number, number]; viewport: [number, number]; buttons: number[]; pressedButtons: number[]; releasedButtons: number[] };
   setClearColor(r: number, g: number, b: number, a?: number): void;
   pushCommandJson(json: string): void;
   loadScene(scene: string | number): boolean;

@@ -14,6 +14,7 @@ import {
   ScanLine,
 } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
+import type { PlayInput } from '../playRuntime';
 import {
   recordNativeViewportProfile,
   recordViewportProfilerFrame,
@@ -578,6 +579,7 @@ export function Viewport(props: {
   pivotMode: ToolPivotMode;
   handleOrientation: ToolHandleOrientation;
   playing: boolean;
+  onPlayInput?: (input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>>) => void;
   sceneCamera: SceneCamera;
   gameResolution: GameResolution | null;
   gameDisplay: number;
@@ -763,6 +765,15 @@ export function Viewport(props: {
   const hoverGizmoRef = useRef<GizmoPart | null>(null);
   const activeGizmoRef = useRef<GizmoPart | null>(null);
   const lastVpRef = useRef({ x: 0, y: 0, w: 1, h: 1 });
+  const playKeysRef = useRef(new Set<string>());
+
+  const sendPlayPointer = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (props.tab !== 'game' || !props.playing) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const vp = lastVpRef.current;
+    const buttons = [0, 1, 2].filter((button) => (event.buttons & [1, 4, 2][button]) !== 0);
+    props.onPlayInput?.({ pointer: [event.clientX - rect.left - vp.x, event.clientY - rect.top - vp.y], viewport: [Math.round(vp.w), Math.round(vp.h)], buttons });
+  };
   const lastCameraRef = useRef<Camera>({ eye: [0, 0, 10], target: [0, 0, 0], fovYDeg: 60 });
   const propsRef = useRef(props);
   propsRef.current = props;
@@ -860,6 +871,15 @@ export function Viewport(props: {
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
     return agentBridge.registerViewportCapture(props.tab, async (format, quality, maxSize = 2_048) => {
+      const nativeRequests = propsRef.current.tab === 'game'
+        ? [nativeGameRequestRef.current]
+        : [nativeSceneRequestRef.current, nativeCameraPreviewRequestRef.current];
+      const pending = nativeRequests.filter(request => request.inFlight && request.ready).map(request => request.ready!);
+      if (pending.length) {
+        await Promise.race([Promise.all(pending), new Promise<void>(resolve => window.setTimeout(resolve, NATIVE_CAPTURE_READY_TIMEOUT_MS))]);
+        if (nativeRequests.some(request => request.inFlight)) return null;
+      }
+      for (const request of nativeRequests) request.lastRequestAt = -Infinity;
       // Hidden WebView2 windows can throttle requestAnimationFrame. Paint on
       // demand so an Agent capture always reflects the latest store revision.
       paint();
@@ -873,6 +893,7 @@ export function Viewport(props: {
             Promise.all(ready),
             new Promise<void>((resolve) => window.setTimeout(resolve, NATIVE_CAPTURE_READY_TIMEOUT_MS)),
           ]);
+          if (nativeRequests.some(request => request.inFlight)) return null;
           paint();
         }
       }
@@ -1248,7 +1269,7 @@ export function Viewport(props: {
         pngBase64: string;
         hasAuthoredCamera: boolean;
         profile: NativeViewportProfilePayload;
-      }>('render_native_game_view', { width: nativeWidth, height: nativeHeight })
+      }>('render_native_game_view', { width: nativeWidth, height: nativeHeight, snapshot: { entities: p.entities, clearColor: p.clearColor } })
         .then(async (result) => {
           recordNativeViewportProfile('game', result.profile);
           const image = await decodeNativeFrame(result.pngBase64);
@@ -1343,6 +1364,7 @@ export function Viewport(props: {
         hasAuthoredCamera: boolean;
         profile: NativeViewportProfilePayload;
       }>('render_native_scene_view', {
+        snapshot: { entities: p.entities, clearColor: p.clearColor },
         request: {
           width: nativeSceneIdentity!.width,
           height: nativeSceneIdentity!.height,
@@ -1400,6 +1422,7 @@ export function Viewport(props: {
         height: number;
         pngBase64: string;
       }>('render_native_scene_view', {
+        snapshot: { entities: p.entities, clearColor: p.clearColor },
         request: {
           width: previewWidth,
           height: previewHeight,
@@ -5215,8 +5238,24 @@ export function Viewport(props: {
         aria-label={props.tab === 'scene' ? 'Scene viewport' : 'Game viewport'}
         onMouseDown={(event) => {
           event.currentTarget.focus({ preventScroll: true });
+          sendPlayPointer(event);
           onPointerDown(event);
         }}
+        onMouseMove={sendPlayPointer}
+        onMouseUp={sendPlayPointer}
+        onMouseLeave={() => { if (props.tab === 'game') props.onPlayInput?.({ buttons: [] }); }}
+        onKeyDown={(event) => {
+          if (props.tab !== 'game' || !props.playing || event.ctrlKey || event.metaKey || event.altKey) return;
+          event.preventDefault();
+          event.stopPropagation();
+          playKeysRef.current.add(event.code || (event.key.length === 1 ? `Key${event.key.toUpperCase()}` : event.key));
+          props.onPlayInput?.({ keys: [...playKeysRef.current] });
+        }}
+        onKeyUp={(event) => {
+          playKeysRef.current.delete(event.code || (event.key.length === 1 ? `Key${event.key.toUpperCase()}` : event.key));
+          if (props.tab === 'game') props.onPlayInput?.({ keys: [...playKeysRef.current] });
+        }}
+        onBlur={() => { playKeysRef.current.clear(); if (props.tab === 'game') props.onPlayInput?.({ keys: [], buttons: [] }); }}
         onContextMenu={(e) => e.preventDefault()}
         onWheel={onWheel}
         onDragEnter={(event) => {

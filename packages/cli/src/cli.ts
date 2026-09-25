@@ -17,6 +17,7 @@ import {
   buildPcPackage,
   createPcPatchPackage,
   hostBuildPlatform,
+  compileProjectPlayScript,
   validateProjectTypeScript,
   verifyPcBuildDirectory,
   verifyPcPatchDirectory,
@@ -37,6 +38,8 @@ const ENGINE_TYPES = `interface EngineSceneInfo {
 }
 
 interface EngineApi {
+  snapshot: { entities: Array<{ entity: number; name: string | null; parent: number | null; components: Record<string, any> }>; frame: number; clear_color: number[] };
+  input: { keys: string[]; pressedKeys: string[]; releasedKeys: string[]; pointer: [number, number]; viewport: [number, number]; buttons: number[]; pressedButtons: number[]; releasedButtons: number[] };
   setClearColor(r: number, g: number, b: number, a?: number): void;
   pushCommandJson(json: string): void;
   loadScene(scene: string | number): boolean;
@@ -553,6 +556,10 @@ try {
       break;
     case 'validate-scripts':
       validateScripts(rest);
+      break;
+    case 'compile-play-script':
+      if (rest.length !== 1) throw new Error('compile-play-script requires one project directory');
+      console.log(JSON.stringify(compileProjectPlayScript(resolve(rest[0]))));
       break;
     case 'create-patch':
       createPatch(rest);

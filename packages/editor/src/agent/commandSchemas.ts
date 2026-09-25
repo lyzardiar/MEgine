@@ -773,9 +773,15 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       { required: ['localScale'] },
     ],
   }),
-  'playback.play': emptySchema,
+  'playback.play': objectSchema({ paused: { type: 'boolean', description: 'Start paused before the first simulation frame for deterministic stepping' } }),
   'playback.pause': emptySchema,
   'playback.stop': emptySchema,
+  'playback.input': objectSchema({
+    keys: { type: 'array', maxItems: 128, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9]{0,39}$' }, description: 'Complete held KeyboardEvent.code set, e.g. KeyA, ArrowLeft, Space; [] releases all' },
+    buttons: { type: 'array', maxItems: 3, uniqueItems: true, items: { type: 'integer', minimum: 0, maximum: 2 }, description: 'Held pointer buttons: 0 left, 1 middle, 2 right; [] releases all' },
+    pointer: finiteTuple(2, 'Game content coordinates in pixels from the top-left'),
+    viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Width and height of the Game content in pixels' },
+  }),
   'playback.step': objectSchema({
     deltaTime: {
       type: 'number',

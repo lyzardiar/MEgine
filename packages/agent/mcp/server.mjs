@@ -3830,7 +3830,13 @@ const TOOLS = [
       ],
     },
   ),
-  execTool('play', 'Enter play mode.', 'playback.play', {}, []),
+  execTool('play', 'Enter play mode; optionally start paused before the first simulation frame.', 'playback.play', { paused: { type: 'boolean', description: 'Start paused before the first simulation frame for deterministic stepping' } }, []),
+  execTool('set_game_input', 'Set held project-game keys and pointer buttons. Pause and step frames for deterministic input.', 'playback.input', {
+    keys: { type: 'array', maxItems: 128, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9]{0,39}$' }, description: 'Complete held KeyboardEvent.code set; [] releases all' },
+    buttons: { type: 'array', maxItems: 3, uniqueItems: true, items: { type: 'integer', minimum: 0, maximum: 2 }, description: 'Held pointer buttons: 0 left, 1 middle, 2 right' },
+    pointer: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' }, description: 'Game content coordinates in pixels from the top-left' },
+    viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Game content width and height in pixels' },
+  }, []),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}, []),
   execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}, []),
   execTool(

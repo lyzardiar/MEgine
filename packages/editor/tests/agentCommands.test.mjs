@@ -45,6 +45,7 @@ function createContext() {
   const calls = [];
   const store = {
     mode: 'edit',
+    waitForPlayRuntime: async () => {},
     gizmo: 'translate',
     sceneCamera: { yaw: 35, pitch: 25, distance: 8, pivot: [0, 0.5, 0] },
     selected: 1,
@@ -946,23 +947,26 @@ test('panel commands reject unknown ids and expose background-safe activation', 
   ]);
 });
 
-test('single-frame playback steps are bounded and require paused Play Mode', () => {
+test('single-frame playback steps are bounded and require paused Play Mode', async () => {
   const { ctx, calls } = createContext();
 
-  assertBridgeError(
-    () => run(ctx, 'playback.step'),
-    'READONLY',
-  );
+  await assert.rejects(() => run(ctx, 'playback.step'), { code: 'READONLY' });
   ctx.store.mode = 'pause';
-  assertBridgeError(
-    () => run(ctx, 'playback.step', { deltaTime: 2 }),
-    'INVALID_ARGS',
-  );
-  const result = run(ctx, 'playback.step', { deltaTime: 1 / 30 });
+  await assert.rejects(() => run(ctx, 'playback.step', { deltaTime: 2 }), { code: 'INVALID_ARGS' });
+  const result = await run(ctx, 'playback.step', { deltaTime: 1 / 30 });
   assert.deepEqual(calls, [['step', 1 / 30]]);
   assert.deepEqual(result.data, {
     mode: 'pause',
     frame: undefined,
     deltaTime: 1 / 30,
   });
+});
+
+test('play can initialize paused before waiting for the native script host', async () => {
+  const { ctx } = createContext();
+  ctx.store.play = () => { ctx.store.mode = 'play'; };
+  ctx.store.pause = () => { ctx.store.mode = 'pause'; };
+  ctx.store.waitForPlayRuntime = async () => { assert.equal(ctx.store.mode, 'pause'); };
+  assert.deepEqual((await run(ctx, 'playback.play', { paused: true })).data, { mode: 'pause' });
+  await assert.rejects(() => run(ctx, 'playback.play', { paused: 'true' }), { code: 'INVALID_ARGS' });
 });

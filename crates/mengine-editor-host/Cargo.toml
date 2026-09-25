@@ -11,6 +11,7 @@ mengine-rhi.workspace = true
 mengine-assets.workspace = true
 mengine-scene.workspace = true
 mengine-script.workspace = true
+mengine-physics.workspace = true
 mengine-platform.workspace = true
 mengine-runtime = { path = "../mengine-runtime" }
 serde.workspace = true

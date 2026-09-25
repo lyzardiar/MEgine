@@ -62,6 +62,14 @@ impl SceneManager {
         self.current.as_deref()
     }
 
+    /// Registers the editor's in-memory scene without replacing its unsaved contents.
+    pub fn set_current(&mut self, scene: &Path, name: String) -> LoadedScene {
+        let relative = self.project_root.as_deref().and_then(|root| scene.strip_prefix(root).ok()).unwrap_or(scene);
+        let path = normalize_path(relative);
+        self.current = Some(path.clone());
+        LoadedScene { name, build_index: self.build_scenes.iter().position(|entry| entry == &path), path, build_scene_count: self.build_scenes.len() }
+    }
+
     pub fn load_initial(
         &mut self,
         scene: &Path,

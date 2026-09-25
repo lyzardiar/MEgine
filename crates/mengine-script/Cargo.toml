@@ -8,6 +8,7 @@ description = "MEngine JS script host (Boa) and TS bridge"
 [dependencies]
 mengine-core.workspace = true
 boa_engine.workspace = true
+boa_gc = "0.20"
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

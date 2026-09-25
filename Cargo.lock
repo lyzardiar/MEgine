@@ -3350,6 +3350,7 @@ dependencies = [
  "log",
  "mengine-assets",
  "mengine-core",
+ "mengine-physics",
  "mengine-platform",
  "mengine-rhi",
  "mengine-runtime",
@@ -3515,6 +3516,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "boa_engine",
+ "boa_gc",
  "log",
  "mengine-core",
  "serde",

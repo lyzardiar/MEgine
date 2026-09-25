@@ -1,13 +1,21 @@
-use crate::ScriptError;
+use crate::{ScriptError, ScriptInput};
+use boa_engine::{Finalize, JsData, Trace};
 use boa_engine::{Context, JsArgs, JsValue, NativeFunction, Source};
 use mengine_core::command::{CommandBuffer, WorldCommand};
 use mengine_core::World;
 use serde_json::Value as JsonValue;
 use std::sync::Mutex;
 
-fn pending() -> &'static Mutex<CommandBuffer> {
-    static CELL: std::sync::OnceLock<Mutex<CommandBuffer>> = std::sync::OnceLock::new();
-    CELL.get_or_init(|| Mutex::new(CommandBuffer::new()))
+#[derive(Trace, Finalize, JsData)]
+struct ScriptQueues {
+    #[unsafe_ignore_trace]
+    commands: Mutex<CommandBuffer>,
+    #[unsafe_ignore_trace]
+    requests: Mutex<Vec<ScriptRuntimeRequest>>,
+}
+
+fn pending(context: &Context) -> &Mutex<CommandBuffer> {
+    &context.get_data::<ScriptQueues>().expect("script queues installed").commands
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -100,13 +108,12 @@ pub struct ScriptTimelineSignal {
     pub payload: Option<JsonValue>,
 }
 
-fn pending_runtime_requests() -> &'static Mutex<Vec<ScriptRuntimeRequest>> {
-    static CELL: std::sync::OnceLock<Mutex<Vec<ScriptRuntimeRequest>>> = std::sync::OnceLock::new();
-    CELL.get_or_init(|| Mutex::new(Vec::new()))
+fn pending_runtime_requests(context: &Context) -> &Mutex<Vec<ScriptRuntimeRequest>> {
+    &context.get_data::<ScriptQueues>().expect("script queues installed").requests
 }
 
-fn queue_runtime_request(request: ScriptRuntimeRequest) -> boa_engine::JsResult<JsValue> {
-    if let Ok(mut requests) = pending_runtime_requests().lock() {
+fn queue_runtime_request(ctx: &Context, request: ScriptRuntimeRequest) -> boa_engine::JsResult<JsValue> {
+    if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
         requests.push(request);
         Ok(JsValue::new(true))
     } else {
@@ -122,8 +129,12 @@ pub struct ScriptHost {
 impl ScriptHost {
     pub fn new() -> Result<Self, ScriptError> {
         let mut context = Context::default();
+        context.insert_data(ScriptQueues { commands: Mutex::new(CommandBuffer::new()), requests: Mutex::new(Vec::new()) });
+        context.runtime_limits_mut().set_loop_iteration_limit(1_000_000);
         register_engine(&mut context)?;
-        Ok(Self { context })
+        let mut host = Self { context };
+        host.set_input(&ScriptInput::default())?;
+        Ok(host)
     }
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
@@ -139,13 +150,19 @@ impl ScriptHost {
     }
 
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
+        self.sync_world(world)?;
         let code = format!(
             "if (typeof onTick === 'function') {{ onTick({dt}, {}); }}",
             world.time.frame
         );
-        let _ = self.context.eval(Source::from_bytes(code.as_bytes()));
+        let result = self.context.eval(Source::from_bytes(code.as_bytes()));
+        if let Err(error) = result {
+            pending(&self.context).lock().unwrap().drain();
+            pending_runtime_requests(&self.context).lock().unwrap().clear();
+            return Err(ScriptError::Js(error.to_string()));
+        }
 
-        if let Ok(mut buf) = pending().lock() {
+        if let Ok(mut buf) = pending(&self.context).lock() {
             for cmd in buf.drain() {
                 world.commands.push(cmd);
             }
@@ -154,14 +171,23 @@ impl ScriptHost {
         Ok(())
     }
 
+    pub fn sync_world(&mut self, world: &World) -> Result<(), ScriptError> {
+        self.inject_snapshot_json(&serde_json::to_string(&mengine_core::snapshot::WorldSnapshot::from_world(world)).map_err(|error| ScriptError::Other(error.to_string()))?)
+    }
+
     pub fn inject_snapshot_json(&mut self, json: &str) -> Result<(), ScriptError> {
-        let escaped = json.replace('\\', "\\\\").replace('\'', "\\'");
-        let code = format!("var lastSnapshot = '{escaped}';");
-        self.eval(&code)
+        let snapshot: JsonValue = serde_json::from_str(json).map_err(|error| ScriptError::Other(error.to_string()))?;
+        let encoded = serde_json::to_string(json).map_err(|error| ScriptError::Other(error.to_string()))?;
+        self.eval(&format!("engine.snapshot = {snapshot}; var lastSnapshot = {encoded};"))
+    }
+
+    pub fn set_input(&mut self, input: &ScriptInput) -> Result<(), ScriptError> {
+        let value = serde_json::to_string(input).map_err(|error| ScriptError::Other(error.to_string()))?;
+        self.eval(&format!("engine.input = {value};"))
     }
 
     pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> {
-        pending_runtime_requests()
+        pending_runtime_requests(&self.context)
             .lock()
             .map(|mut requests| std::mem::take(&mut *requests))
             .unwrap_or_default()
@@ -348,12 +374,12 @@ impl Default for ScriptHost {
 }
 
 fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
-    let set_clear = NativeFunction::from_copy_closure(|_this, args, _ctx| {
+    let set_clear = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let r = args.get_or_undefined(0).as_number().unwrap_or(0.0) as f32;
         let g = args.get_or_undefined(1).as_number().unwrap_or(0.0) as f32;
         let b = args.get_or_undefined(2).as_number().unwrap_or(0.0) as f32;
         let a = args.get_or_undefined(3).as_number().unwrap_or(1.0) as f32;
-        if let Ok(mut buf) = pending().lock() {
+        if let Ok(mut buf) = pending(ctx).lock() {
             buf.set_clear_color(r, g, b, a);
         }
         Ok(JsValue::undefined())
@@ -365,7 +391,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             .to_string(ctx)?
             .to_std_string_escaped();
         if let Ok(cmd) = serde_json::from_str::<WorldCommand>(&s) {
-            if let Ok(mut buf) = pending().lock() {
+            if let Ok(mut buf) = pending(ctx).lock() {
                 buf.push(cmd);
             }
         }
@@ -386,7 +412,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             }
             ScriptRuntimeRequest::LoadScene(reference)
         };
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
+        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
             requests.push(request);
             Ok(JsValue::new(true))
         } else {
@@ -394,8 +420,8 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         }
     });
 
-    let reload_scene = NativeFunction::from_copy_closure(|_this, _args, _ctx| {
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
+    let reload_scene = NativeFunction::from_copy_closure(|_this, _args, ctx| {
+        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
             requests.push(ScriptRuntimeRequest::ReloadScene);
             Ok(JsValue::new(true))
         } else {
@@ -427,7 +453,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         } else {
             return Ok(JsValue::new(false));
         };
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
+        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
             requests.push(ScriptRuntimeRequest::SetAnimatorParameter {
                 entity,
                 name,
@@ -450,7 +476,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if name.trim().is_empty() {
             return Ok(JsValue::new(false));
         }
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
+        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
             requests.push(ScriptRuntimeRequest::SetAnimatorParameter {
                 entity,
                 name,
@@ -473,7 +499,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if state.trim().is_empty() {
             return Ok(JsValue::new(false));
         }
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
+        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
             requests.push(ScriptRuntimeRequest::PlayAnimatorState { entity, state });
             Ok(JsValue::new(true))
         } else {
@@ -495,7 +521,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if layer.trim().is_empty() || !weight.is_finite() || !(0.0..=1.0).contains(&weight) {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::SetAnimatorLayerWeight {
+        queue_runtime_request(ctx, ScriptRuntimeRequest::SetAnimatorLayerWeight {
             entity,
             layer,
             weight: weight as f32,
@@ -517,7 +543,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if layer.trim().is_empty() || state.trim().is_empty() {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::PlayAnimatorLayerState {
+        queue_runtime_request(ctx, ScriptRuntimeRequest::PlayAnimatorLayerState {
             entity,
             layer,
             state,
@@ -529,19 +555,19 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             return Ok(JsValue::new(false));
         };
         let restart = args.get_or_undefined(1).as_boolean().unwrap_or(false);
-        queue_runtime_request(ScriptRuntimeRequest::PlayAnimation { entity, restart })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::PlayAnimation { entity, restart })
     });
     let pause_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::PauseAnimation { entity })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::PauseAnimation { entity })
     });
     let stop_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::StopAnimation { entity })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::StopAnimation { entity })
     });
     let seek_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
@@ -553,7 +579,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::SeekAnimation {
+        queue_runtime_request(ctx, ScriptRuntimeRequest::SeekAnimation {
             entity,
             time: time as f32,
         })
@@ -564,19 +590,19 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             return Ok(JsValue::new(false));
         };
         let restart = args.get_or_undefined(1).as_boolean().unwrap_or(false);
-        queue_runtime_request(ScriptRuntimeRequest::PlayTimeline { entity, restart })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::PlayTimeline { entity, restart })
     });
     let pause_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::PauseTimeline { entity })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::PauseTimeline { entity })
     });
     let stop_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::StopTimeline { entity })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::StopTimeline { entity })
     });
     let seek_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
@@ -588,7 +614,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::SeekTimeline {
+        queue_runtime_request(ctx, ScriptRuntimeRequest::SeekTimeline {
             entity,
             time: time as f32,
         })
@@ -598,19 +624,19 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::PlayAudio { entity })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::PlayAudio { entity })
     });
     let pause_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::PauseAudio { entity })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::PauseAudio { entity })
     });
     let stop_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::StopAudio { entity })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::StopAudio { entity })
     });
     let seek_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
@@ -622,7 +648,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::SeekAudio {
+        queue_runtime_request(ctx, ScriptRuntimeRequest::SeekAudio {
             entity,
             time: time as f32,
         })
@@ -643,7 +669,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             };
             Some(parent)
         };
-        queue_runtime_request(ScriptRuntimeRequest::InstantiatePrefab { path, parent })
+        queue_runtime_request(ctx, ScriptRuntimeRequest::InstantiatePrefab { path, parent })
     });
 
     context
@@ -822,6 +848,49 @@ mod tests {
     fn request_test_guard() -> std::sync::MutexGuard<'static, ()> {
         static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
         LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    #[test]
+    fn hosts_keep_commands_and_runtime_requests_in_their_own_contexts() {
+        let mut first = ScriptHost::new().unwrap();
+        let mut second = ScriptHost::new().unwrap();
+        first.eval("engine.setClearColor(1, 0, 0, 1); engine.loadScene('First');").unwrap();
+        second.eval("engine.setClearColor(0, 1, 0, 1); engine.loadScene('Second');").unwrap();
+        let mut first_world = World::new();
+        let mut second_world = World::new();
+        second.tick(&mut second_world, 0.016).unwrap();
+        first.tick(&mut first_world, 0.016).unwrap();
+        assert_eq!(first_world.time.clear_color.x, 1.0);
+        assert_eq!(first_world.time.clear_color.y, 0.0);
+        assert_eq!(second_world.time.clear_color.y, 1.0);
+        assert_eq!(first.take_runtime_requests(), vec![ScriptRuntimeRequest::LoadScene("First".into())]);
+        assert_eq!(second.take_runtime_requests(), vec![ScriptRuntimeRequest::LoadScene("Second".into())]);
+    }
+
+    #[test]
+    fn script_reads_world_and_input_edges_and_reports_failed_ticks() {
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        let mut input = ScriptInput::default();
+        input.key("KeyD".into(), true);
+        input.key("KeyD".into(), true);
+        input.pointer = [120.0, 60.0];
+        input.viewport = [800, 600];
+        input.button(0, true);
+        host.set_input(&input).unwrap();
+        host.eval("function onTick() { if (engine.snapshot.entities.length !== 0 || engine.input.keys[0] !== 'KeyD' || engine.input.pressedKeys.length !== 1 || engine.input.pressedButtons[0] !== 0 || engine.input.pointer[0] !== 120) throw new Error('frame input missing'); }").unwrap();
+        host.tick(&mut world, 1.0 / 60.0).unwrap();
+        input.finish_frame();
+        assert_eq!(input.keys.len(), 1);
+        assert!(input.pressed_keys.is_empty());
+        input.release_all();
+        assert!(input.keys.is_empty());
+        assert!(input.released_keys.contains("KeyD"));
+        host.eval("function onTick() { engine.setClearColor(1, 0, 0, 1); engine.reloadScene(); throw new Error('sample failed'); }").unwrap();
+        let before = world.time.clear_color;
+        assert!(host.tick(&mut world, 0.016).unwrap_err().to_string().contains("sample failed"));
+        assert_eq!(world.time.clear_color, before);
+        assert!(host.take_runtime_requests().is_empty());
     }
 
     #[test]

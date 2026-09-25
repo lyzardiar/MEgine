@@ -3410,6 +3410,21 @@ export function validateProjectTypeScript(projectDir: string): ProjectTypeScript
   };
 }
 
+/** Compile the same script program used by PC Build, without writing authored project files. */
+export function compileProjectPlayScript(projectDir: string): { startupScript: string | null; source: string } {
+  const root = resolve(projectDir);
+  const { startupScript } = readGameProject(root);
+  if (!startupScript) return { startupScript: null, source: '' };
+  const compilation = createProjectTypeScriptProgram(root, startupScript, join(root, 'Library', 'PlayMode', 'Main.js'));
+  if (!compilation) return { startupScript, source: readFileSync(resolveProjectPath(root, startupScript, 'startupScript'), 'utf8') };
+  const errors = ts.getPreEmitDiagnostics(compilation.program).filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error);
+  if (errors.length) throw new Error(`TypeScript compilation failed:\n${formatTypeScriptDiagnostics(errors)}`);
+  let source = '';
+  const emitted = compilation.program.emit(undefined, (path, text) => { if (/\.js$/i.test(path)) source = text; });
+  if (emitted.emitSkipped) throw new Error(`TypeScript emit failed:\n${formatTypeScriptDiagnostics(emitted.diagnostics)}`);
+  return { startupScript, source };
+}
+
 function compileProjectTypeScript(
   projectDir: string,
   stageDir: string,

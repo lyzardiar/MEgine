@@ -5296,7 +5296,7 @@ class AgentBridge {
       focusPanel: (kind) => this.focusPanel(kind),
       resetPanelLayout: () => this.resetPanelLayout(),
     };
-    const result = handler(ctx, args);
+    const result = await handler(ctx, args);
     if (commandId === 'panel.focus') {
       const panel = requiredString(args, 'kind');
       const focused = await this.waitForPanelFocused(panel);

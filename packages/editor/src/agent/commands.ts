@@ -59,7 +59,7 @@ export interface CommandResult {
   screenshotError?: string;
 }
 
-type CommandHandler = (ctx: CommandContext, args: Record<string, unknown>) => CommandResult;
+type CommandHandler = (ctx: CommandContext, args: Record<string, unknown>) => CommandResult | Promise<CommandResult>;
 
 function requireEditMode(ctx: CommandContext): void {
   if (ctx.store.mode !== 'edit') {
@@ -1174,8 +1174,11 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
   },
 
   // ── Playback / history / view ──────────────────────────────────────────
-  'playback.play': (ctx) => {
+  'playback.play': async (ctx, args) => {
+    const paused = args.paused === undefined ? false : bool(args, 'paused');
     ctx.store.play();
+    if (paused && ctx.store.mode === 'play') ctx.store.pause();
+    await ctx.store.waitForPlayRuntime();
     return { ok: true, data: { mode: ctx.store.mode } };
   },
   'playback.pause': (ctx) => {
@@ -1186,7 +1189,17 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.stop();
     return { ok: true, data: { mode: ctx.store.mode } };
   },
-  'playback.step': (ctx, args) => {
+  'playback.input': (ctx, args) => {
+    if (ctx.store.mode === 'edit') throw new BridgeError('READONLY', 'Game input requires Play Mode');
+    const keys = args.keys as string[] | undefined;
+    const buttons = args.buttons as number[] | undefined;
+    const pointer = args.pointer as [number, number] | undefined;
+    const viewport = args.viewport as [number, number] | undefined;
+    ctx.store.setPlayInput({ keys, buttons, pointer, viewport });
+    return { ok: true, data: { mode: ctx.store.mode, queued: true } };
+  },
+  'playback.step': async (ctx, args) => {
+    await ctx.store.waitForPlayRuntime();
     if (ctx.store.mode !== 'pause') {
       throw new BridgeError('READONLY', 'Single-frame stepping requires paused Play Mode');
     }
@@ -1205,6 +1218,7 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     if (!ctx.store.step(deltaTime)) {
       throw new BridgeError('READONLY', 'Single-frame stepping requires paused Play Mode');
     }
+    await ctx.store.waitForPlayRuntime();
     return {
       ok: true,
       data: {
@@ -1374,6 +1388,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'playback.pause', category: 'playback', description: 'Toggle pause', readOnly: false },
   { id: 'playback.stop', category: 'playback', description: 'Stop playback and return to edit mode', readOnly: false },
   { id: 'playback.step', category: 'playback', description: 'Advance paused Play Mode by one deterministic step', readOnly: false },
+  { id: 'playback.input', category: 'playback', description: 'Set held physical keys and pointer buttons for the project script; use paused playback.step for deterministic input', readOnly: false },
   { id: 'history.undo', category: 'history', description: 'Undo the last edit', readOnly: false },
   { id: 'history.redo', category: 'history', description: 'Redo the last undone edit', readOnly: false },
   { id: 'gizmo.set', category: 'view', description: 'Set the active transform gizmo (translate/rotate/scale/rect)', readOnly: false },

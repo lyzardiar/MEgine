@@ -1,6 +1,6 @@
 # Runtime scripting
 
-MEngine 的 PC Player 使用 Boa 执行项目配置中的启动 JavaScript。脚本只通过全局
+MEngine 的 PC Player 和桌面编辑器 Play Mode 使用 Boa 执行项目配置中的启动脚本。脚本只通过全局
 `engine` 桥接器提交受控请求，场景和 World 的实际修改发生在帧边界。
 
 ## 生命周期
@@ -43,3 +43,27 @@ engine.reloadScene();                             // 原子重载当前场景
 `mengine.d.ts`。PC Build 会对 Scripts 目录执行严格 TypeScript 检查，将启动脚本
 路径改写为对应的 `.js` 后写入 Player 配置。存在类型错误时构建失败且不会发布半成品；
 源码 `.ts` 和声明 `.d.ts` 不会进入最终 Player 内容。
+
+## Editor Play 与输入
+
+桌面编辑器 Play 会在内存中严格编译 `startupScript`，编译失败会在 Console 中显示原因。
+停止播放恢复编辑前的场景；运行中的场景切换、物理和脚本修改不会写回源场景。
+Editor 和 Player 共用场景解析以及 Prefab、Animator、Animation、Timeline、Audio 请求处理。
+Editor 的 Timeline 粒子 seek 和相机 override 尚未接入视口；运行时 UI 控件事件也仍需单独验收。
+
+`engine.snapshot` 在每帧脚本及物理事件前更新。通过 `engine.pushCommandJson` 提交修改，
+不要把修改 snapshot 对象当成修改引擎世界。每个脚本宿主的命令队列彼此隔离。
+
+```ts
+function onTick(dt: number): void {
+  const input = engine.input;
+  const horizontal = Number(input.keys.includes('KeyD')) - Number(input.keys.includes('KeyA'));
+  if (input.pressedKeys.includes('Space')) { /* 本次按下边沿，只出现一帧 */ }
+  // input.pointer: Game 内容区左上角起算的像素坐标；viewport: 内容区尺寸。
+  // buttons / pressedButtons / releasedButtons: 0 左键，1 中键，2 右键。
+}
+```
+
+键盘采用物理按键代码，例如 `KeyA`、`ArrowLeft` 和 `Space`。失焦释放输入。
+Agent 可调用 `playback.input`（MCP `set_game_input`）设置 held 状态，结合 `playback.pause`
+和 `playback.step` 做可重复的交互验收。`playback.play {paused:true}` 在首帧前暂停，避免初始化后自动推进。Play 和 Step 的返回值会等待脚本完成，截图会等待新帧。

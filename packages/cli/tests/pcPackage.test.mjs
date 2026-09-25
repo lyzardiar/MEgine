@@ -23,6 +23,7 @@ import {
   buildArtifactHash,
   buildContentHash,
   buildPcPackage,
+  compileProjectPlayScript,
   createPcPatchPackage,
   publishStagedBuild,
   validateProjectTypeScript,
@@ -2655,6 +2656,23 @@ test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript',
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
+});
+
+test('Play compiler returns the PC script program in memory and rejects type errors', () => {
+  const paths = fixture('typescript-play');
+  try {
+    const project = JSON.parse(readFileSync(join(paths.project, 'project.json'), 'utf8'));
+    project.startupScript = 'Assets/Scripts/Main.ts';
+    writeFileSync(join(paths.project, 'project.json'), JSON.stringify(project));
+    const script = join(paths.project, 'Assets/Scripts/Main.ts');
+    writeFileSync(script, 'const value: number = 7; function onTick() { return value; }');
+    const result = compileProjectPlayScript(paths.project);
+    assert.equal(result.startupScript, project.startupScript);
+    assert.match(result.source, /const value = 7/);
+    assert.ok(!existsSync(join(paths.project, 'Library/PlayMode/Main.js')));
+    writeFileSync(script, 'const value: number = "invalid";');
+    assert.throws(() => compileProjectPlayScript(paths.project), /TypeScript compilation failed/);
+  } finally { rmSync(paths.root, { recursive: true, force: true }); }
 });
 
 test('validateProjectTypeScript returns revisioned structured diagnostics without emitting files', () => {
