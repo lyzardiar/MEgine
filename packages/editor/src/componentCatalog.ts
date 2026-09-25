@@ -250,6 +250,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     create: () => ({ enabled: true, anchor: [0, 0], target: [0, 0], max_force: 1000, frequency: 5, damping_ratio: 0.7 }),
   },
   {
+    type: 'SpriteBatch2D',
+    label: 'Sprite Batch 2D',
+    description: '共享贴图和材质的动态精灵批次，实例为 [X, Y, 角度弧度, 缩放]，最多 8192 个',
+    create: () => ({ sprite: 'white', material: '', size: [1, 1], color: [1, 1, 1, 1], instances: [], colors: [], sorting_layer: 'default', sorting_order: 0 }),
+  },
+  {
     type: 'SpriteRenderer',
     label: 'Sprite Renderer',
     description: '世界空间贴图面片（非 UI）',

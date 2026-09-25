@@ -2823,6 +2823,67 @@
     ],
     "type": "object"
   },
+  "SpriteBatch2D": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "colors": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "instances": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "material": {
+        "type": "string"
+      },
+      "size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "sorting_layer": {
+        "type": "string"
+      },
+      "sorting_order": {
+        "type": "number"
+      },
+      "sprite": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "sprite",
+      "material",
+      "size",
+      "color",
+      "instances",
+      "colors",
+      "sorting_layer",
+      "sorting_order"
+    ],
+    "type": "object"
+  },
   "SpriteRenderer": {
     "properties": {
       "color": {

@@ -1,0 +1,41 @@
+{
+  "elapsedMs": 52873,
+  "flight": {
+    "armor": 5,
+    "bombs": 1,
+    "bossPhases": 5,
+    "bullets": 0,
+    "chain": 2,
+    "cores": 132,
+    "damageTaken": 1,
+    "enemies": [],
+    "energy": 100,
+    "graze": 16,
+    "invincible": 0,
+    "kills": 56,
+    "lasers": [],
+    "level": 3,
+    "mode": "victory",
+    "muted": false,
+    "novas": 4,
+    "overdrive": 0,
+    "peak": 478,
+    "px": 0.06429978208660994,
+    "py": -7.536300145275584,
+    "score": 85384,
+    "shots": 45,
+    "stage": 3,
+    "stageTime": 51.68333333333104,
+    "threats": [],
+    "time": 109.00833333336617
+  },
+  "passed": true,
+  "path": "EditorPlayRuntime / Boa / native World / input-only replay",
+  "phasePeaks": {
+    "boss-3-0": 170,
+    "boss-3-1": 290,
+    "boss-4-0": 318,
+    "boss-4-1": 189,
+    "boss-4-2": 475
+  }
+}

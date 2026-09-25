@@ -50,6 +50,14 @@ Asset Store 包与 PaddleGameSO 不作为本次 MIT 示例源码的一部分。�
 
 本次同时修复无 Transform 的全局 EnvironmentLight 被忽略的问题，并覆盖失活环境光不生效的回归测试。上述能力在实际样例内交付；DOTween、Cinemachine、Input System 等通用工具仍按各自验收要求推进。
 
+## 2026-09-26：纵向弹幕射击
+
+[Astral Thunder / 雷霆战机](../samples/thunder-fighter/README.md) 交付两段关卡、两名 Boss 与五种弹幕阶段，包含武器升级、追踪导弹、擦弹充能、Nova、Overdrive、暂停和结算。星云与发光弹幕使用原生自定义着色器，六舰图集为项目生成资源。
+
+引擎新增 `SpriteBatch2D`：每个实例保存局部 X/Y、弧度和尺寸倍数，可提供平行颜色数组；支持父级变换、图集、材质、MaterialPropertyBlock、排序、编辑器预览和 Player 依赖收集。单组件处理前 8192 个实例，忽略非有限或非正尺寸；样例限制 900 发敌弹。复用现有精灵投影与材质合批路径。
+
+真实 Boa / 原生 World 输入回放约 109 秒通关，覆盖五种 Boss 阶段、受伤、擦弹与四次 Nova，峰值 478 发敌弹。Agent 实况验证出击、移动、Nova、暂停、继续、重开及 Stop 场景恢复；原生 Game 截图检查各弹幕阶段和图集切片。独立 Player 的桌面操作与音频听感尚未通过验收，未宣称达到 60 FPS。
+
 ## 3D 参考
 
 Fantasy Kingdom、Megacity Metro、Boss Room、Battle Royale 用于游戏循环与场景规模；Time Ghost、Enemies、The Heretic、Book of the Dead、Adam、The Blacksmith 用于渲染和动画能力对照。按可运行场景逐项推进，并区分资源复用、功能实现与设备性能验收。

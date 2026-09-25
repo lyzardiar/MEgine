@@ -9,7 +9,7 @@ use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
     AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Button, Dropdown, EffekseerEffect,
     EnvironmentLight, Image, InputField, ListView, MaterialPropertyBlock, MeshRenderer, Panel,
-    ParticleEmitter2D, ParticleEmitter3D, RawImage, ScrollView, Scrollbar, Slider, SpriteRenderer,
+    ParticleEmitter2D, ParticleEmitter3D, RawImage, ScrollView, Scrollbar, Slider, SpriteBatch2D, SpriteRenderer,
     TabView, Text, Tilemap, TimelineDirector, Toggle, TrailRenderer2D, Transform,
 };
 #[cfg(test)]
@@ -2057,7 +2057,7 @@ fn validate_world_assets(
             }
             validate_environment_texture_asset(texture, project_root, validated)?;
         }
-        let sprite_material = world.get_component::<AnimatedSprite2D>(entity).map(|value| &value.material).or_else(|| world.get_component::<SpriteRenderer>(entity).map(|value| &value.material));
+        let sprite_material = world.get_component::<SpriteBatch2D>(entity).map(|value| &value.material).or_else(|| world.get_component::<AnimatedSprite2D>(entity).map(|value| &value.material)).or_else(|| world.get_component::<SpriteRenderer>(entity).map(|value| &value.material));
         if let Some(material) = sprite_material {
             validate_ui_material_asset(material, project_root, validated, &mut material_cache)?;
             if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
@@ -2071,6 +2071,7 @@ fn validate_world_assets(
         if let Some(renderer) = world.get_component::<SpriteRenderer>(entity) {
             validate_texture_asset(&renderer.sprite, "sprite", project_root, validated)?;
         }
+        if let Some(batch) = world.get_component::<SpriteBatch2D>(entity) { validate_texture_asset(&batch.sprite, "sprite batch", project_root, validated)?; }
         if let Some(image) = world.get_component::<Image>(entity) {
             validate_ui_material_asset(
                 &image.material,

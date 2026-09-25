@@ -1,0 +1,23 @@
+{
+  "version": 10,
+  "name": "Arena",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Arena.mshader",
+  "surface": "transparent",
+  "blend_mode": "alpha",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "custom_parameters": {
+    "clock": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "filter": "linear"
+}

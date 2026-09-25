@@ -1240,7 +1240,7 @@ function scanBuildAssetDependencies(
         throw new Error(`invalid MaterialPropertyBlock in ${from}: duplicate custom texture name`);
       }
       if (parameters.length > 0 || textures.length > 0) {
-        const renderers = [meshRenderer, component('AnimatedSprite2D') ?? component('SpriteRenderer')].filter(Boolean);
+        const renderers = [meshRenderer, component('SpriteBatch2D') ?? component('AnimatedSprite2D') ?? component('SpriteRenderer')].filter(Boolean);
         for (const renderer of renderers.length ? renderers : [null]) {
           materialPropertyBlockBindings.push({
             source: from,
@@ -1257,6 +1257,7 @@ function scanBuildAssetDependencies(
       'environment texture',
     );
     enqueue(stringValue(component('SpriteRenderer'), 'sprite'), from, 'texture', ['white']);
+    enqueue(stringValue(component('SpriteBatch2D'), 'sprite'), from, 'sprite batch texture', ['white']);
     const frames = component('AnimatedSprite2D')?.frames;
     if (Array.isArray(frames)) {
       for (const frame of frames) if (typeof frame === 'string') enqueue(frame, from, 'texture', ['white']);
@@ -1284,7 +1285,7 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('Image'), 'sprite'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('Text'), 'font'), from, 'UI font');
-    for (const name of ['Image', 'RawImage', 'Text', 'Panel', 'SpriteRenderer', 'AnimatedSprite2D']) {
+    for (const name of ['Image', 'RawImage', 'Text', 'Panel', 'SpriteRenderer', 'SpriteBatch2D', 'AnimatedSprite2D']) {
       enqueueMaterial(stringValue(component(name), 'material'), from, 'ui');
     }
   };

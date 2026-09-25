@@ -1,0 +1,6 @@
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let p=(input.uv0-vec2<f32>(0.5))*2.0;
+    let d=abs(p.x)*0.8+pow(abs(p.y),2.0)*0.5;
+    let core=exp(-d*d*100.0);
+    return vec4<f32>(mix(input.vertex_color.rgb,vec3<f32>(1.0),core),exp(-d*d*10.0)*smoothstep(1.0,0.75,abs(p.y))*input.vertex_color.a);
+}

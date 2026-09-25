@@ -160,6 +160,19 @@ component SpriteRenderer {
   sorting_order: int = 0
 }
 
+/// Bounded dynamic sprite batch. Each instance is [local X, local Y, radians, size multiplier].
+/// Up to 8192 finite, positive-size instances are rendered; missing colors use color.
+component SpriteBatch2D {
+  sprite:        string       = "white"
+  material:      string       = ""
+  size:          float2       = [1, 1]
+  color:         float4       = [1, 1, 1, 1]
+  instances:     float4_array = []
+  colors:        float4_array = []
+  sorting_layer: string       = "default"
+  sorting_order: int          = 0
+}
+
 /// Godot-style world-space animated sprite using an ordered texture frame list.
 component AnimatedSprite2D {
   frames:        string_array = []

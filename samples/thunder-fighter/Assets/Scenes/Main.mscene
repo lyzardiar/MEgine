@@ -1,0 +1,2776 @@
+{
+  "version": 1,
+  "name": "Astral Thunder / Ion Front",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              20
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 9
+          },
+          "EnvironmentLight": {
+            "background_enabled": false,
+            "tone_mapping": false
+          },
+          "AudioListener": {
+            "primary": true
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Nebula",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "white",
+            "size": [
+              40,
+              22
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": -100,
+            "material": "Assets/Materials/Nebula.mmat"
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Arena",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "white",
+            "size": [
+              11.7,
+              17
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": -90,
+            "material": "Assets/Materials/Arena.mmat"
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Enemy bullets",
+        "parent": null,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Orb.mmat",
+            "size": [
+              0.34,
+              0.34
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 25
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Needle bullets",
+        "parent": null,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Needle.mmat",
+            "size": [
+              0.22,
+              0.57
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 26
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Player fire",
+        "parent": null,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Needle.mmat",
+            "size": [
+              0.13,
+              0.75
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 15
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Missiles",
+        "parent": null,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Needle.mmat",
+            "size": [
+              0.18,
+              0.58
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 16
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Sparks",
+        "parent": null,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Needle.mmat",
+            "size": [
+              0.15,
+              0.55
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 36
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Glow",
+        "parent": null,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Glow.mmat",
+            "size": [
+              1,
+              1
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 12
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Shockwaves",
+        "parent": null,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Ring.mmat",
+            "size": [
+              1,
+              1
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 38
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Lasers",
+        "parent": null,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Beam.mmat",
+            "size": [
+              0.55,
+              18
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 20
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Laser warnings",
+        "parent": null,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Beam.mmat",
+            "size": [
+              0.045,
+              18
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 19
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Pickups",
+        "parent": null,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Diamond.mmat",
+            "size": [
+              0.3,
+              0.3
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 17
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Stars",
+        "parent": null,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "white",
+            "material": "Assets/Materials/Glow.mmat",
+            "size": [
+              0.05,
+              0.11
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": -80
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Fleet 0",
+        "parent": null,
+        "siblingIndex": 14,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "Assets/Art/fleet.png#needle",
+            "size": [
+              1,
+              1
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 10
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Fleet 1",
+        "parent": null,
+        "siblingIndex": 15,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "Assets/Art/fleet.png#gunship",
+            "size": [
+              1,
+              1
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 10
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Fleet 2",
+        "parent": null,
+        "siblingIndex": 16,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "Assets/Art/fleet.png#sentinel",
+            "size": [
+              1,
+              1
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 10
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Fleet 3",
+        "parent": null,
+        "siblingIndex": 17,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "Assets/Art/fleet.png#dreadnought",
+            "size": [
+              1,
+              1
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 10
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Fleet 4",
+        "parent": null,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteBatch2D": {
+            "sprite": "Assets/Art/fleet.png#crown",
+            "size": [
+              1,
+              1
+            ],
+            "instances": [],
+            "colors": [],
+            "sorting_order": 10
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Player",
+        "parent": null,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Art/fleet.png#interceptor",
+            "size": [
+              1.1,
+              1.1
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 18,
+            "material": ""
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Hit point",
+        "parent": null,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "white",
+            "size": [
+              0.14,
+              0.14
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 42,
+            "material": "Assets/Materials/Orb.mmat"
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Flight HUD",
+        "parent": null,
+        "siblingIndex": 21,
+        "active": true,
+        "components": {
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay"
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1280,
+              720
+            ],
+            "screen_match_mode": "MatchWidthOrHeight",
+            "match_width_or_height": 0.5
+          },
+          "GraphicRaycaster": {
+            "enabled": true
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Left rail",
+        "parent": 22,
+        "siblingIndex": 22,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -441,
+              0
+            ],
+            "size_delta": [
+              398,
+              720
+            ]
+          },
+          "Image": {
+            "color": [
+              0.006,
+              0.012,
+              0.033,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Right rail",
+        "parent": 22,
+        "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              441,
+              0
+            ],
+            "size_delta": [
+              398,
+              720
+            ]
+          },
+          "Image": {
+            "color": [
+              0.006,
+              0.012,
+              0.033,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Left edge",
+        "parent": 22,
+        "siblingIndex": 24,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -241,
+              0
+            ],
+            "size_delta": [
+              2,
+              680
+            ]
+          },
+          "Image": {
+            "color": [
+              0.1,
+              0.5,
+              0.65,
+              0.7
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Right edge",
+        "parent": 22,
+        "siblingIndex": 25,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              241,
+              0
+            ],
+            "size_delta": [
+              2,
+              680
+            ]
+          },
+          "Image": {
+            "color": [
+              0.4,
+              0.12,
+              0.55,
+              0.7
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Eyebrow",
+        "parent": 22,
+        "siblingIndex": 26,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              -307
+            ],
+            "size_delta": [
+              308,
+              25
+            ]
+          },
+          "Text": {
+            "text": "MENGINE / FLIGHT DIVISION",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Title",
+        "parent": 22,
+        "siblingIndex": 27,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -429,
+              -209
+            ],
+            "size_delta": [
+              336,
+              165
+            ]
+          },
+          "Text": {
+            "text": "ASTRAL\nTHUNDER",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 53,
+            "color": [
+              0.88,
+              0.94,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Tagline",
+        "parent": 22,
+        "siblingIndex": 28,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -441,
+              -104
+            ],
+            "size_delta": [
+              310,
+              26
+            ]
+          },
+          "Text": {
+            "text": "DANCE THROUGH THE STORM",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "color": [
+              0.35,
+              0.47,
+              0.62,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "Divider",
+        "parent": 22,
+        "siblingIndex": 29,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              -70
+            ],
+            "size_delta": [
+              308,
+              1
+            ]
+          },
+          "Image": {
+            "color": [
+              0.14,
+              0.23,
+              0.35,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "Stage",
+        "parent": 22,
+        "siblingIndex": 30,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -441,
+              -40
+            ],
+            "size_delta": [
+              308,
+              30
+            ]
+          },
+          "Text": {
+            "text": "01 / ION FRONT",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 21,
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Score label",
+        "parent": 22,
+        "siblingIndex": 31,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              9
+            ],
+            "size_delta": [
+              308,
+              25
+            ]
+          },
+          "Text": {
+            "text": "SCORE",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 12,
+            "color": [
+              0.35,
+              0.47,
+              0.62,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "Score",
+        "parent": 22,
+        "siblingIndex": 32,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -441,
+              47
+            ],
+            "size_delta": [
+              308,
+              48
+            ]
+          },
+          "Text": {
+            "text": "00000000",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 34,
+            "color": [
+              0.88,
+              0.94,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "Chain",
+        "parent": 22,
+        "siblingIndex": 33,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -441,
+              92
+            ],
+            "size_delta": [
+              308,
+              30
+            ]
+          },
+          "Text": {
+            "text": "CHAIN  x1      GRAZE  000",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 15,
+            "color": [
+              1,
+              0.66,
+              0.25,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "Armor",
+        "parent": 22,
+        "siblingIndex": 34,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              140
+            ],
+            "size_delta": [
+              308,
+              28
+            ]
+          },
+          "Text": {
+            "text": "ARMOR  5 / 5",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 17,
+            "color": [
+              0.88,
+              0.94,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Armor rail",
+        "parent": 22,
+        "siblingIndex": 35,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              167
+            ],
+            "size_delta": [
+              308,
+              5
+            ]
+          },
+          "Image": {
+            "color": [
+              0.12,
+              0.18,
+              0.27,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "Armor fill",
+        "parent": 22,
+        "siblingIndex": 36,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              167
+            ],
+            "size_delta": [
+              308,
+              5
+            ]
+          },
+          "Image": {
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "Drive label",
+        "parent": 22,
+        "siblingIndex": 37,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              214
+            ],
+            "size_delta": [
+              308,
+              25
+            ]
+          },
+          "Text": {
+            "text": "OVERDRIVE / E",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "Drive rail",
+        "parent": 22,
+        "siblingIndex": 38,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              240
+            ],
+            "size_delta": [
+              308,
+              5
+            ]
+          },
+          "Image": {
+            "color": [
+              0.12,
+              0.18,
+              0.27,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Drive fill",
+        "parent": 22,
+        "siblingIndex": 39,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -442,
+              240
+            ],
+            "size_delta": [
+              308,
+              5
+            ]
+          },
+          "Image": {
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "Bombs",
+        "parent": 22,
+        "siblingIndex": 40,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -441,
+              293
+            ],
+            "size_delta": [
+              308,
+              30
+            ]
+          },
+          "Text": {
+            "text": "NOVA  3 / 3",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 21,
+            "color": [
+              1,
+              0.66,
+              0.25,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "Protocol",
+        "parent": 22,
+        "siblingIndex": 41,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              440,
+              -298
+            ],
+            "size_delta": [
+              300,
+              24
+            ]
+          },
+          "Text": {
+            "text": "PILOT PROTOCOL",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "Briefing",
+        "parent": 22,
+        "siblingIndex": 42,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              440,
+              -236
+            ],
+            "size_delta": [
+              300,
+              88
+            ]
+          },
+          "Text": {
+            "text": "THREAD THE NEEDLE.\nBREAK THE CROWN.",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 25,
+            "color": [
+              0.88,
+              0.94,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "Objectives",
+        "parent": 22,
+        "siblingIndex": 43,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              440,
+              -141
+            ],
+            "size_delta": [
+              300,
+              85
+            ]
+          },
+          "Text": {
+            "text": "01  Clear the drone screen\n02  Break the dreadnought\n03  Silence the Astral Crown",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 17,
+            "color": [
+              0.35,
+              0.47,
+              0.62,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "Right divider",
+        "parent": 22,
+        "siblingIndex": 44,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              440,
+              -76
+            ],
+            "size_delta": [
+              300,
+              1
+            ]
+          },
+          "Image": {
+            "color": [
+              0.14,
+              0.23,
+              0.35,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "Weapon",
+        "parent": 22,
+        "siblingIndex": 45,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              440,
+              -32
+            ],
+            "size_delta": [
+              300,
+              33
+            ]
+          },
+          "Text": {
+            "text": "PULSE ARRAY / MK I",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 20,
+            "color": [
+              1,
+              0.66,
+              0.25,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "Weapon copy",
+        "parent": 22,
+        "siblingIndex": 46,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              440,
+              32
+            ],
+            "size_delta": [
+              300,
+              87
+            ]
+          },
+          "Text": {
+            "text": "Auto fire is engaged.\nCollect blue cores to upgrade.\nGraze bullets to charge Overdrive.",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 15,
+            "color": [
+              0.35,
+              0.47,
+              0.62,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "Controls",
+        "parent": 22,
+        "siblingIndex": 47,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              440,
+              195
+            ],
+            "size_delta": [
+              300,
+              179
+            ]
+          },
+          "Text": {
+            "text": "WASD / ARROWS     Move\nSHIFT                      Precision flight\nSPACE                     Nova burst\nE                              Overdrive\nESC / P                   Pause\nR / M                      Restart / Mute",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 16,
+            "color": [
+              0.88,
+              0.94,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 49,
+        "name": "Render count",
+        "parent": 22,
+        "siblingIndex": 48,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              440,
+              314
+            ],
+            "size_delta": [
+              300,
+              25
+            ]
+          },
+          "Text": {
+            "text": "00 HOSTILES / 000 BULLETS",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 12,
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 50,
+        "name": "Sector",
+        "parent": 22,
+        "siblingIndex": 49,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -330
+            ],
+            "size_delta": [
+              450,
+              30
+            ]
+          },
+          "Text": {
+            "text": "ION FRONT / 01",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 14,
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 51,
+        "name": "Boss name",
+        "parent": 22,
+        "siblingIndex": 50,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -288
+            ],
+            "size_delta": [
+              420,
+              26
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 16,
+            "color": [
+              1,
+              0.22,
+              0.5,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 52,
+        "name": "Boss rail",
+        "parent": 22,
+        "siblingIndex": 51,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -265
+            ],
+            "size_delta": [
+              408,
+              4
+            ]
+          },
+          "Image": {
+            "color": [
+              0.08,
+              0.12,
+              0.2,
+              0.85
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 53,
+        "name": "Boss fill",
+        "parent": 22,
+        "siblingIndex": 52,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -265
+            ],
+            "size_delta": [
+              408,
+              4
+            ]
+          },
+          "Image": {
+            "color": [
+              1,
+              0.22,
+              0.5,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 54,
+        "name": "Announcement",
+        "parent": 22,
+        "siblingIndex": 53,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -140
+            ],
+            "size_delta": [
+              445,
+              95
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 29,
+            "color": [
+              1,
+              0.66,
+              0.25,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 55,
+        "name": "Status",
+        "parent": 22,
+        "siblingIndex": 54,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              300
+            ],
+            "size_delta": [
+              440,
+              28
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 15,
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 56,
+        "name": "Menu shade",
+        "parent": 22,
+        "siblingIndex": 55,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              16
+            ],
+            "size_delta": [
+              448,
+              228
+            ]
+          },
+          "Image": {
+            "color": [
+              0.006,
+              0.012,
+              0.033,
+              0.9
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 57,
+        "name": "Menu accent",
+        "parent": 22,
+        "siblingIndex": 56,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -97
+            ],
+            "size_delta": [
+              448,
+              2
+            ]
+          },
+          "Image": {
+            "color": [
+              0.17,
+              0.84,
+              1,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 58,
+        "name": "Menu title",
+        "parent": 22,
+        "siblingIndex": 57,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -50
+            ],
+            "size_delta": [
+              424,
+              65
+            ]
+          },
+          "Text": {
+            "text": "READY, PILOT?",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 35,
+            "color": [
+              0.88,
+              0.94,
+              1,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 59,
+        "name": "Menu copy",
+        "parent": 22,
+        "siblingIndex": 58,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              7
+            ],
+            "size_delta": [
+              424,
+              43
+            ]
+          },
+          "Text": {
+            "text": "A storm of light. A single clear path.",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 16,
+            "color": [
+              0.35,
+              0.47,
+              0.62,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 60,
+        "name": "Menu button",
+        "parent": 22,
+        "siblingIndex": 59,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              72
+            ],
+            "size_delta": [
+              330,
+              46
+            ]
+          },
+          "Image": {
+            "color": [
+              0.06,
+              0.51,
+              0.69,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 61,
+        "name": "Menu action",
+        "parent": 22,
+        "siblingIndex": 60,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              72
+            ],
+            "size_delta": [
+              324,
+              35
+            ]
+          },
+          "Text": {
+            "text": "ENTER / LAUNCH",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 20,
+            "color": [
+              0.88,
+              0.94,
+              1,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 62,
+        "name": "Menu footer",
+        "parent": 22,
+        "siblingIndex": 61,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              116
+            ],
+            "size_delta": [
+              420,
+              26
+            ]
+          },
+          "Text": {
+            "text": "5 ARMOR  /  3 NOVAS  /  AUTO FIRE",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 12,
+            "color": [
+              0.35,
+              0.47,
+              0.62,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 63,
+        "name": "Flight telemetry",
+        "parent": null,
+        "siblingIndex": 62,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 64,
+        "name": "Audio mixer",
+        "parent": null,
+        "siblingIndex": 63,
+        "active": true,
+        "components": {
+          "AudioMixer": {
+            "master_volume": 0.65,
+            "music_volume": 0.6
+          }
+        }
+      },
+      {
+        "entity": 65,
+        "name": "Music",
+        "parent": null,
+        "siblingIndex": 64,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/orbit.wav",
+            "volume": 0.22,
+            "looped": true,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 66,
+        "name": "Shot sound",
+        "parent": null,
+        "siblingIndex": 65,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/shot.wav",
+            "volume": 0.055,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 67,
+        "name": "Hit sound",
+        "parent": null,
+        "siblingIndex": 66,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/hit.wav",
+            "volume": 0.25,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 68,
+        "name": "Explosion sound",
+        "parent": null,
+        "siblingIndex": 67,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/explosion.wav",
+            "volume": 0.38,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 69,
+        "name": "Nova sound",
+        "parent": null,
+        "siblingIndex": 68,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/nova.wav",
+            "volume": 0.45,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 70,
+        "name": "Pickup sound",
+        "parent": null,
+        "siblingIndex": 69,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/pickup.wav",
+            "volume": 0.22,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 71,
+        "name": "Victory sound",
+        "parent": null,
+        "siblingIndex": 70,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/victory.wav",
+            "volume": 0.4,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.003,
+      0.006,
+      0.018,
+      1
+    ],
+    "selected": 1
+  }
+}

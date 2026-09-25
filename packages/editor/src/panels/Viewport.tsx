@@ -43,6 +43,8 @@ import {
   lookBasis,
   orbitEye,
   project,
+  quatMul,
+  quatRotateVec,
   scale as vscale,
 } from '../math3d';
 import { clearModelPreview, modelPreview } from '../modelPreview';
@@ -2155,6 +2157,23 @@ export function Viewport(props: {
             t.rotation as [number, number, number, number] | undefined,
           );
           if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          continue;
+        }
+        const batch = e.components.SpriteBatch2D as { sprite?: string; size?: number[]; color?: number[]; instances?: number[][]; colors?: number[][]; sorting_layer?: string } | undefined;
+        if (batch) {
+          const sprite = String(batch.sprite ?? 'white'), image = getSpriteImage(sprite);
+          const ready = image?.complete && image.naturalWidth > 0 ? image : null;
+          const rotation = t.rotation as Quat;
+          for (const [index, instance] of (batch.instances ?? []).slice(0, 8192).entries()) {
+            if (instance.length !== 4 || !instance.every(Number.isFinite) || instance[3] <= 0) continue;
+            const position = add(t.position as Vec3, quatRotateVec(rotation, [instance[0] * t.scale[0], instance[1] * t.scale[1], 0]));
+            const rot = quatMul(rotation, [0, 0, Math.sin(instance[2] / 2), Math.cos(instance[2] / 2)]);
+            const half: [number, number] = [Math.abs((batch.size?.[0] ?? 1) * t.scale[0] * instance[3]) / 2, Math.abs((batch.size?.[1] ?? 1) * t.scale[1] * instance[3]) / 2];
+            const instanceColor = batch.colors?.[index];
+            const color = modulateLight2DColor(instanceColor?.length === 4 && instanceColor.every(Number.isFinite) ? instanceColor : batch.color ?? [1, 1, 1, 1], position, batch.sorting_layer ?? 'default', lights2D);
+            const hit = drawWorldSprite(ctx, cam, vp, position, half, color, selected, rot, ready, false, false, [0.5, 0.5], ready ? getSpriteSourceRect(sprite, ready) : null);
+            if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          }
           continue;
         }
         const staticSprite = e.components.SpriteRenderer as

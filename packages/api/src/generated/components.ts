@@ -138,6 +138,17 @@ export interface SpriteRenderer {
   sortingOrder: number;
 }
 
+export interface SpriteBatch2D {
+  sprite: string;
+  material: string;
+  size: [number, number];
+  color: [number, number, number, number];
+  instances: [number, number, number, number][];
+  colors: [number, number, number, number][];
+  sortingLayer: string;
+  sortingOrder: number;
+}
+
 export interface AnimatedSprite2D {
   frames: string[];
   material: string;
@@ -910,6 +921,16 @@ export type SerializedComponentMap = {
     sorting_layer: string;
     sorting_order: number;
   };
+  SpriteBatch2D: {
+    sprite: string;
+    material: string;
+    size: [number, number];
+    color: [number, number, number, number];
+    instances: [number, number, number, number][];
+    colors: [number, number, number, number][];
+    sorting_layer: string;
+    sorting_order: number;
+  };
   AnimatedSprite2D: {
     frames: string[];
     material: string;
@@ -1517,6 +1538,7 @@ export type ComponentName =
   | 'PbrMaterial'
   | 'MaterialPropertyBlock'
   | 'SpriteRenderer'
+  | 'SpriteBatch2D'
   | 'AnimatedSprite2D'
   | 'Line2D'
   | 'TrailRenderer2D'
@@ -1589,6 +1611,7 @@ export const COMPONENT_NAMES = [
   'PbrMaterial',
   'MaterialPropertyBlock',
   'SpriteRenderer',
+  'SpriteBatch2D',
   'AnimatedSprite2D',
   'Line2D',
   'TrailRenderer2D',

@@ -1876,7 +1876,7 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
   }
 });
 
-for (const componentType of ['Image', 'SpriteRenderer', 'AnimatedSprite2D']) test(`buildPcPackage collects ${componentType} materials and enforces the UI Shader domain`, () => {
+for (const componentType of ['Image', 'SpriteRenderer', 'SpriteBatch2D', 'AnimatedSprite2D']) test(`buildPcPackage collects ${componentType} materials and enforces the UI Shader domain`, () => {
   const paths = fixture('custom-ui-shader');
   try {
     const projectPath = join(paths.project, 'project.json');
@@ -1888,7 +1888,7 @@ for (const componentType of ['Image', 'SpriteRenderer', 'AnimatedSprite2D']) tes
         [componentType]: {
           enabled: true,
           material: 'Assets/Materials/GlowUi.mmat',
-          sprite: 'white',
+          sprite: 'Assets/Textures/bullet.png',
           frames: ['white'],
         },
         ...(componentType === 'Image' ? {} : { MaterialPropertyBlock: { custom_parameter_names: ['strength'], custom_parameter_values: [[.5, 0, 0, 0]] } }),
@@ -1905,6 +1905,7 @@ for (const componentType of ['Image', 'SpriteRenderer', 'AnimatedSprite2D']) tes
       custom_textures: { detail: 'Assets/Textures/ui-detail.png' },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'ui-detail.png'), 'ui-detail');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'bullet.png'), 'bullet');
     const uiShader = `
       /* MENGINE_PARAMETERS
       {"parameters":[{"name":"strength","type":"float","default":1}],"textures":[{"name":"detail","type":"color","default":""}]}
@@ -1926,6 +1927,7 @@ for (const componentType of ['Image', 'SpriteRenderer', 'AnimatedSprite2D']) tes
     assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'GlowUi.mmat')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Shaders', 'GlowUi.mshader')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Textures', 'ui-detail.png')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Textures', 'bullet.png')), componentType !== 'AnimatedSprite2D');
     assert.deepEqual(manifest.surfaceShaderVariants, [{
       shader: 'Assets/Shaders/GlowUi.mshader',
       domain: 'ui',

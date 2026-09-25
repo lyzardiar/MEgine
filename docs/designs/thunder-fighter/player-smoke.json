@@ -1,0 +1,12 @@
+{
+  "executable": "G:\\work\\github\\MEgine\\samples\\thunder-fighter\\Builds\\windows-x64-release\\Astral Thunder.exe",
+  "pid": 104984,
+  "aliveAfter8Seconds": true,
+  "exitCode": null,
+  "inputAccepted": false,
+  "audioAuditioned": false,
+  "warnings": [
+    "No default audio output device",
+    "GPU downlevel flags warning; process remained running"
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "passed": true,
+  "flight": {
+    "mode": "victory",
+    "time": 109.00833333336615,
+    "stage": 3,
+    "stageTime": 51.68333333333104,
+    "px": 0.06429978208660994,
+    "py": -7.536300145275584,
+    "armor": 5,
+    "bombs": 1,
+    "energy": 100,
+    "level": 3,
+    "cores": 132,
+    "score": 85384,
+    "kills": 56,
+    "graze": 16,
+    "chain": 2,
+    "peak": 478,
+    "damageTaken": 1,
+    "novas": 4,
+    "bossPhases": 5,
+    "overdrive": 0,
+    "invincible": 0,
+    "bullets": 0,
+    "shots": 45,
+    "enemies": [],
+    "lasers": [],
+    "threats": [],
+    "muted": false
+  },
+  "milestones": [
+    {
+      "t": 0.11666666666666665,
+      "stage": 0,
+      "armor": 5,
+      "bullets": 0,
+      "kills": 0
+    },
+    {
+      "t": 10.116666666666733,
+      "stage": 0,
+      "armor": 5,
+      "bullets": 3,
+      "kills": 14
+    },
+    {
+      "t": 20.116666666666166,
+      "stage": 0,
+      "armor": 5,
+      "bullets": 6,
+      "kills": 28
+    },
+    {
+      "t": 30.116666666665598,
+      "stage": 1,
+      "armor": 5,
+      "bullets": 0,
+      "kills": 40
+    },
+    {
+      "t": 40.11666666666503,
+      "stage": 1,
+      "armor": 5,
+      "bullets": 255,
+      "kills": 40
+    },
+    {
+      "t": 50.116666666664464,
+      "stage": 2,
+      "armor": 5,
+      "bullets": 0,
+      "kills": 43
+    },
+    {
+      "t": 60.116666666663896,
+      "stage": 3,
+      "armor": 5,
+      "bullets": 36,
+      "kills": 55
+    },
+    {
+      "t": 70.11666666666854,
+      "stage": 3,
+      "armor": 5,
+      "bullets": 107,
+      "kills": 55
+    },
+    {
+      "t": 80.1166666666765,
+      "stage": 3,
+      "armor": 5,
+      "bullets": 183,
+      "kills": 55
+    },
+    {
+      "t": 90.11666666668445,
+      "stage": 3,
+      "armor": 5,
+      "bullets": 420,
+      "kills": 55
+    },
+    {
+      "t": 100.11666666669241,
+      "stage": 3,
+      "armor": 4,
+      "bullets": 426,
+      "kills": 55
+    }
+  ],
+  "elapsedMs": 2093
+}

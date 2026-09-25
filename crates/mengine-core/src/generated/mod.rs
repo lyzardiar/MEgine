@@ -568,6 +568,49 @@ impl Component for SpriteRenderer {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct SpriteBatch2D {
+    pub sprite: String,
+    pub material: String,
+    pub size: [f32; 2],
+    pub color: [f32; 4],
+    pub instances: Vec<[f32; 4]>,
+    pub colors: Vec<[f32; 4]>,
+    pub sorting_layer: String,
+    pub sorting_order: i32,
+}
+
+impl Default for SpriteBatch2D {
+    fn default() -> Self {
+        Self {
+            sprite: "white".into(),
+            material: "".into(),
+            size: [1.0, 1.0],
+            color: [1.0, 1.0, 1.0, 1.0],
+            instances: Vec::new(),
+            colors: Vec::new(),
+            sorting_layer: "default".into(),
+            sorting_order: 0,
+        }
+    }
+}
+
+impl Component for SpriteBatch2D {
+    fn type_name() -> &'static str {
+        "SpriteBatch2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AnimatedSprite2D {
     pub frames: Vec<String>,
     pub material: String,
@@ -3041,6 +3084,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "SpriteRenderer" => serde_json::from_value::<SpriteRenderer>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "SpriteBatch2D" => serde_json::from_value::<SpriteBatch2D>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "AnimatedSprite2D" => serde_json::from_value::<AnimatedSprite2D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Line2D" => serde_json::from_value::<Line2D>(value)
@@ -3173,6 +3218,7 @@ pub mod meta {
         "PbrMaterial",
         "MaterialPropertyBlock",
         "SpriteRenderer",
+        "SpriteBatch2D",
         "AnimatedSprite2D",
         "Line2D",
         "TrailRenderer2D",

@@ -56,6 +56,8 @@ export const MaterialPropertyBlock = defineBuiltinComponent('MaterialPropertyBlo
 export type MaterialPropertyBlock = BuiltinComponents['MaterialPropertyBlock'];
 export const SpriteRenderer = defineBuiltinComponent('SpriteRenderer');
 export type SpriteRenderer = BuiltinComponents['SpriteRenderer'];
+export const SpriteBatch2D = defineBuiltinComponent('SpriteBatch2D');
+export type SpriteBatch2D = BuiltinComponents['SpriteBatch2D'];
 export const AnimatedSprite2D = defineBuiltinComponent('AnimatedSprite2D');
 export type AnimatedSprite2D = BuiltinComponents['AnimatedSprite2D'];
 export const Line2D = defineBuiltinComponent('Line2D');
@@ -187,6 +189,7 @@ export const BUILTIN_COMPONENT_TYPES = {
   PbrMaterial,
   MaterialPropertyBlock,
   SpriteRenderer,
+  SpriteBatch2D,
   AnimatedSprite2D,
   Line2D,
   TrailRenderer2D,

@@ -1,7 +1,7 @@
 use crate::materials::{apply_ui_material_property_block, RuntimeMaterialCache};
 use crate::sorting::{sort_world_primitives, SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use glam::{Quat, Vec3};
-use mengine_core::generated::{AnimatedSprite2D, Grid, Line2D, MaterialPropertyBlock, SpriteRenderer, Tilemap, Transform};
+use mengine_core::generated::{AnimatedSprite2D, Grid, Line2D, MaterialPropertyBlock, SpriteBatch2D, SpriteRenderer, Tilemap, Transform};
 use mengine_core::{Entity, Parent, TransformHierarchy, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive, UiShaderChannelData, UiShaderChannels};
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -57,6 +57,28 @@ pub fn collect_world_primitives_with_materials(world: &World, hierarchy: &Transf
         }
         if let Some(line) = world.get_component::<Line2D>(entity) {
             sprites.extend(project_line(&transform, line, camera, viewport));
+            continue;
+        }
+        if let Some(batch) = world.get_component::<SpriteBatch2D>(entity) {
+            let material = materials.as_deref_mut().filter(|_| !batch.material.trim().is_empty()).map(|cache| {
+                let mut resolved = Arc::clone(resolved_materials.entry(batch.material.clone()).or_insert_with(|| Arc::new(cache.resolve_ui(&batch.material).unwrap_or_else(mengine_rhi::UiRenderMaterial::error))));
+                if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) { apply_ui_material_property_block(Arc::make_mut(&mut resolved), block); }
+                resolved
+            });
+            let parent_rotation = safe_rotation(transform.rotation);
+            let mut sprite = SpriteRenderer { sprite: batch.sprite.clone(), material: batch.material.clone(), sorting_layer: batch.sorting_layer.clone(), sorting_order: batch.sorting_order, ..Default::default() };
+            for (index, instance) in batch.instances.iter().take(8192).enumerate() {
+                if !instance.iter().all(|v| v.is_finite()) || instance[3] <= 0.0 { continue; }
+                let local = Vec3::new(instance[0], instance[1], 0.0) * Vec3::from(transform.scale);
+                let position = Vec3::from(transform.position) + parent_rotation * local;
+                let instance_transform = Transform { position: position.to_array(), rotation: (parent_rotation * Quat::from_rotation_z(instance[2])).to_array(), scale: transform.scale };
+                sprite.size = [batch.size[0] * instance[3], batch.size[1] * instance[3]];
+                sprite.color = batch.colors.get(index).copied().filter(|c| c.iter().all(|v| v.is_finite())).unwrap_or(batch.color);
+                if let Some(mut projected) = project_sprite(&instance_transform, &sprite, camera, viewport) {
+                    if let Some(material) = &material { projected.primitive.key.blend = material.blend; projected.primitive.render_material = Some(Arc::clone(material)); }
+                    sprites.push(projected);
+                }
+            }
             continue;
         }
         let animated = world.get_component::<AnimatedSprite2D>(entity);
@@ -572,6 +594,49 @@ mod tests {
         assert!(corner.abs_diff_eq(expected, 0.0001));
         assert_eq!(streams.uv0[0], [1.0, 0.0, 0.0, 0.0]);
         assert_eq!(streams.tangents[0][3], -1.0);
+    }
+
+    #[test]
+    fn batch_projects_local_instances_with_colors_and_ignores_invalid_entries() {
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform { position: [1.0, 0.0, 0.0], ..Default::default() });
+        world.insert_component(entity, SpriteBatch2D { sprite: "bullet.png".into(), sorting_order: 12, instances: vec![[1.0, 2.0, 0.0, 0.5], [-1.0, 0.0, 1.0, 1.0], [0.0, 0.0, f32::NAN, 1.0], [0.0, 0.0, 0.0, -1.0]], colors: vec![[1.0, 0.0, 1.0, 0.7]], ..Default::default() });
+        let result = collect_world_primitives_with_hierarchy(&world, &TransformHierarchy::build(&world), camera(), [200, 100]);
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].world_position, Some([2.0, 2.0]));
+        assert_eq!(result[0].sorting_order, 12);
+        assert_eq!(result[0].primitive.color, [1.0, 0.0, 1.0, 0.7]);
+        assert!((result[0].primitive.rect[2] - 5.0).abs() < 0.001);
+        assert!((result[1].primitive.rotation_radians + 1.0).abs() < 0.001);
+        assert_eq!(result[1].primitive.color, [1.0; 4]);
+        world.set_editor_state(entity, 0, false);
+        assert!(collect_world_sprites(&world, camera(), [200, 100]).is_empty());
+    }
+
+    #[test]
+    fn batch_instances_inherit_parent_rotation_scale_and_activity() {
+        let mut world = World::new();
+        let parent = world.spawn_empty();
+        world.insert_component(parent, Transform { position: [1.0, 1.0, 0.0], rotation: Quat::from_rotation_z(std::f32::consts::FRAC_PI_2).to_array(), scale: [2.0; 3] });
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Parent { entity: parent });
+        world.insert_component(entity, Transform { position: [1.0, 0.0, 0.0], ..Default::default() });
+        world.insert_component(entity, SpriteBatch2D { instances: vec![[1.0, 0.0, 0.0, 0.5]], ..Default::default() });
+        let result = collect_world_primitives_with_hierarchy(&world, &TransformHierarchy::build(&world), camera(), [200, 100]);
+        let position = result[0].world_position.unwrap();
+        assert!((position[0] - 1.0).abs() < 0.001 && (position[1] - 5.0).abs() < 0.001);
+        assert!((result[0].primitive.rect[2] - 10.0).abs() < 0.001);
+        world.set_editor_state(parent, 0, false);
+        assert!(collect_world_sprites(&world, camera(), [200, 100]).is_empty());
+    }
+
+    #[test]
+    fn batch_bounds_render_work() {
+        let mut world = World::new(); let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(entity, SpriteBatch2D { instances: vec![[0.0, 0.0, 0.0, 1.0]; 8300], ..Default::default() });
+        assert_eq!(collect_world_sprites(&world, camera(), [200, 100]).len(), 8192);
     }
 
     #[test]

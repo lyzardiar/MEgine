@@ -25,6 +25,10 @@ npm run sample:cube
 
 - [Pelican Road Rage / 鹈鹕暴力摩托](pelican-road-rage/README.md)：六人海岸竞速、翼击战斗、漂移氮气、连续曲面角色、夕阳海面、三个跟随镜头；含实机截图、完整比赛验证和 Windows Player 构建入口。
 
+## 原创 2D 游戏
+
+- [Astral Thunder / 雷霆战机](thunder-fighter/README.md)：两段关卡、两名 Boss、五种弹幕阶段、擦弹充能、Nova 清屏、武器升级和追踪导弹；含原生截图、完整通关验证与 Windows Player 构建入口。
+
 ## Unity 官方示例移植
 
 - [Brick](unity-brick/README.md)：128 块砖、2D 物理碰撞、挡板输入、落底重开，保留官方 MIT 贴图和场景配色。

@@ -1,0 +1,16 @@
+{
+  "version": 10,
+  "name": "Ring",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Ring.mshader",
+  "surface": "transparent",
+  "blend_mode": "additive",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "custom_parameters": {},
+  "filter": "linear"
+}

@@ -1,0 +1,16 @@
+{
+  "version": 10,
+  "name": "Needle",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Needle.mshader",
+  "surface": "transparent",
+  "blend_mode": "additive",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "custom_parameters": {},
+  "filter": "linear"
+}

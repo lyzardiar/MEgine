@@ -1,0 +1,16 @@
+{
+  "version": 10,
+  "name": "Beam",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Beam.mshader",
+  "surface": "transparent",
+  "blend_mode": "additive",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "custom_parameters": {},
+  "filter": "linear"
+}

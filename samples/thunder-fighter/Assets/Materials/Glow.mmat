@@ -1,0 +1,16 @@
+{
+  "version": 10,
+  "name": "Glow",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Glow.mshader",
+  "surface": "transparent",
+  "blend_mode": "additive",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "custom_parameters": {},
+  "filter": "linear"
+}

@@ -22,6 +22,7 @@ const COMPONENT_GROUPS: Record<string, string> = {
   PbrMaterial: 'Rendering',
   MaterialPropertyBlock: 'Rendering',
   SpriteRenderer: 'Rendering',
+  SpriteBatch2D: 'Rendering',
   AnimatedSprite2D: 'Rendering',
   Line2D: 'Rendering',
   TrailRenderer2D: 'Effects',
