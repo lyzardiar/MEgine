@@ -525,9 +525,7 @@ pub fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameL
     };
     let mut environment_found = false;
     for entity in world.iter_entities() {
-        let Some(transform) = hierarchy.get(entity) else {
-            continue;
-        };
+        if !hierarchy.is_active(entity) { continue; }
         if !environment_found {
             if let Some(environment) = world.get_component::<EnvironmentLight>(entity) {
                 frame.environment = EnvironmentLightData {
@@ -546,6 +544,7 @@ pub fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameL
                 environment_found = true;
             }
         }
+        let Some(transform) = hierarchy.get(entity) else { continue; };
         let direction = transform.rotation * -Vec3::Z;
         if frame.directional.is_none() {
             if let Some(light) = world.get_component::<DirectionalLight>(entity) {
@@ -627,5 +626,23 @@ fn safe_rotation(value: [f32; 4]) -> Quat {
         rotation.normalize()
     } else {
         Quat::IDENTITY
+    }
+}
+
+#[cfg(test)]
+mod lighting_tests {
+    use super::*;
+
+    #[test]
+    fn scene_environment_does_not_require_a_spatial_transform() {
+        let mut world = World::new();
+        let environment = world.spawn_empty();
+        world.insert_component(environment, EnvironmentLight { sky_color: [0.4, 0.1, 0.2, 1.0], background_enabled: true, ..Default::default() });
+        let lighting = collect_lighting(&world, &TransformHierarchy::build(&world));
+        assert_eq!(lighting.environment.sky_color, [0.4, 0.1, 0.2]);
+        assert!(lighting.environment.background_enabled);
+        world.set_editor_state(environment, 0, false);
+        let lighting = collect_lighting(&world, &TransformHierarchy::build(&world));
+        assert_eq!(lighting.environment.sky_color, EnvironmentLightData::default().sky_color);
     }
 }

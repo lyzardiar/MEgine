@@ -1,6 +1,6 @@
 use crate::{ScriptError, ScriptInput};
 use boa_engine::{Finalize, JsData, Trace};
-use boa_engine::{Context, JsArgs, JsValue, NativeFunction, Source};
+use boa_engine::{js_string, Context, JsArgs, JsValue, NativeFunction, Source};
 use mengine_core::command::{CommandBuffer, WorldCommand};
 use mengine_core::World;
 use serde_json::Value as JsonValue;
@@ -177,8 +177,15 @@ impl ScriptHost {
 
     pub fn inject_snapshot_json(&mut self, json: &str) -> Result<(), ScriptError> {
         let snapshot: JsonValue = serde_json::from_str(json).map_err(|error| ScriptError::Other(error.to_string()))?;
-        let encoded = serde_json::to_string(json).map_err(|error| ScriptError::Other(error.to_string()))?;
-        self.eval(&format!("engine.snapshot = {snapshot}; var lastSnapshot = {encoded};"))
+        // Snapshots are data. Building values directly avoids parsing and compiling the
+        // entire scene as a new JavaScript program on every simulation frame.
+        let value = JsValue::from_json(&snapshot, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        let global = self.context.global_object();
+        let engine = global.get(js_string!("engine"), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        let object = engine.as_object().ok_or_else(|| ScriptError::Other("engine bridge is missing".into()))?;
+        object.set(js_string!("snapshot"), value, true, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        global.set(js_string!("lastSnapshot"), js_string!(json), true, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        Ok(())
     }
 
     pub fn set_input(&mut self, input: &ScriptInput) -> Result<(), ScriptError> {
@@ -844,6 +851,17 @@ fn js_entity_id(value: &JsValue, context: &mut Context) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn snapshots_preserve_data_without_evaluating_scene_text() {
+        let mut host = ScriptHost::new().unwrap();
+        let data = serde_json::json!({"entities":[{"name":"quoted\"\\\n角色", "components":{"Text":{"text":"'; throw new Error('not code'); //"}}}], "frame":42});
+        let encoded = data.to_string();
+        host.inject_snapshot_json(&encoded).unwrap();
+        host.eval("if (engine.snapshot.frame !== 42 || engine.snapshot.entities[0].name !== JSON.parse(lastSnapshot).entities[0].name) throw new Error('snapshot mismatch');").unwrap();
+        host.inject_snapshot_json("{\"entities\":[],\"frame\":43}").unwrap();
+        host.eval("if (engine.snapshot.frame !== 43 || engine.snapshot.entities.length !== 0 || JSON.parse(lastSnapshot).frame !== 43) throw new Error('stale snapshot');").unwrap();
+    }
 
     fn request_test_guard() -> std::sync::MutexGuard<'static, ()> {
         static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());

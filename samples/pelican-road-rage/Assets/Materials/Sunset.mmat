@@ -1,0 +1,1 @@
+{"version":8,"name":"Sunset atmosphere","shader":"custom","custom_shader":"Assets/Shaders/Sunset.mshader","base_color":[0,0,0,1],"double_sided":true}

@@ -1,0 +1,12 @@
+fn road_grain(p: vec2<f32>) -> f32 {
+    return fract(sin(dot(p,vec2<f32>(127.1,311.7)))*43758.5453);
+}
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s=surface;
+    let grain=road_grain(floor(world_position.xz*44.0));
+    let weathering=sin(world_position.z*0.09+sin(world_position.x*0.4))*0.5+0.5;
+    s.base_color=vec3<f32>(0.025,0.037,0.045)*(0.84+grain*0.32);
+    s.roughness=0.38+grain*0.15+weathering*0.13;
+    s.metallic=0.04;
+    return s;
+}

@@ -138,7 +138,7 @@ impl PlaySession {
         self.timelines.take_particle_commands();
         let events = self.animations.take_events().into_iter().map(|event| ScriptAnimationEvent { entity: event.entity.to_u64(), function: event.function, time: event.time, parameter: event.parameter.and_then(|value| serde_json::to_value(value).ok()), state: event.state, weight: event.weight }).collect::<Vec<_>>();
         let signals = self.timelines.take_signals().into_iter().map(|event| ScriptTimelineSignal { entity: event.entity.to_u64(), track: event.track, signal: event.signal, time: event.time, payload: event.payload }).collect::<Vec<_>>();
-        self.script.sync_world(world).map_err(|error| error.to_string())?;
+        if !events.is_empty() || !signals.is_empty() { self.script.sync_world(world).map_err(|error| error.to_string())?; }
         self.script.notify_animation_events(&events).map_err(|error| error.to_string())?;
         self.script.notify_timeline_signals(&signals).map_err(|error| error.to_string())?;
         self.script.tick(world, dt).map_err(|error| error.to_string())?;
@@ -166,6 +166,26 @@ impl PlaySession {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[ignore = "manual sample performance measurement; requires MENGINE_SAMPLE_ROOT"]
+    fn measure_sample_script_frames() {
+        let root = PathBuf::from(std::env::var("MENGINE_SAMPLE_ROOT").expect("sample root"));
+        let value: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+        let snapshot: WorldSnapshot = serde_json::from_value(value["world"].clone()).unwrap();
+        let source = std::fs::read_to_string(root.join("Assets/Scripts/Main.js")).unwrap();
+        let runtime = EditorPlayRuntime::default();
+        let mut snapshot = runtime.start(runtime.begin(), source, snapshot, PlayProject { root: Some(root), name: "Sample performance".into(), ..Default::default() }).unwrap();
+        let start = std::time::Instant::now();
+        for frame in 0..60 {
+            let mut input = ScriptInput::default();
+            if frame == 1 { input.key("Enter".into(), true); }
+            input.keys.insert("KeyW".into());
+            snapshot = runtime.step(runtime.generation(), snapshot, input, 0.1).unwrap();
+        }
+        println!("60 sample frames in {:?}; {:.2} ms/frame (debug CPU simulation, excludes rendering)", start.elapsed(), start.elapsed().as_secs_f64() * 1000.0 / 60.0);
+        runtime.stop();
+    }
 
     #[test]
     fn worker_executes_scripts_and_input_without_modifying_authored_snapshot() {

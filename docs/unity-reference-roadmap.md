@@ -34,6 +34,22 @@ Asset Store 包与 PaddleGameSO 不作为本次 MIT 示例源码的一部分。�
 
 这些是功能对照方向，尚未作为对应工具的完整复刻交付。现有原生物理、2D 材质、脚本、批量 Agent 步进和样例验收脚本可作为基础。
 
+## 2026-09-25：海岸竞速垂直切片
+
+[Pelican Road Rage](../samples/pelican-road-rage/README.md) 提供可运行的原创 3D 游戏：2.7 km 赛道、六名对手、近身攻击与击倒、漂移、氮气、拾取、暂停、重开与结算。美术采用连续曲面鹈鹕、分件摩托、起伏海面与夕阳着色器；保留生成器、源材质和原生截图。
+
+| 对照方向 | 本次已实现 | 后续范围 |
+| --- | --- | --- |
+| Cinemachine | 三种带阻尼的跟随 / 侧视镜头、速度 FOV、受击抖动 | 可复用虚拟相机组件、遮挡避让、边界、轨道和镜头编辑工具 |
+| Input System | 原生键鼠输入驱动完整比赛，Agent 可注入物理键并暂停步进 | 动作资产、重绑定、手柄与多设备验收 |
+| URP / VFX | 原生 PBR、方向光阴影、海面 / 天空 / 路面自定义着色器、命中粒子 | 屏幕空间反射、接触阴影、泡沫、后处理与 GPU 性能分析 |
+| UI / 游戏流程 | 标题、仪表、连击、暂停和结果界面 | 通用运行时 Button 事件桥、编辑器与 Player 的 RectTransform 坐标一致性 |
+| Agent / 脚本效率 | Game 截图直接取得指定分辨率原生像素；场景快照直接构造 Boa 值；避免无事件帧重复注入 | 多步原生批处理、脚本快照增量化与帧预算分析 |
+
+验证包括 Node 输入逻辑、真实 Boa / 原生 World 完整比赛，以及原生编辑器 Agent 交互截图。独立 Player 已构建、校验并启动；桌面自动化窗口捕获失败，Player 窗口内的操作与音频听感仍待人工确认。debug 脚本帧约 47 ms，未宣称达到 60 FPS。
+
+本次同时修复无 Transform 的全局 EnvironmentLight 被忽略的问题，并覆盖失活环境光不生效的回归测试。上述能力在实际样例内交付；DOTween、Cinemachine、Input System 等通用工具仍按各自验收要求推进。
+
 ## 3D 参考
 
 Fantasy Kingdom、Megacity Metro、Boss Room、Battle Royale 用于游戏循环与场景规模；Time Ghost、Enemies、The Heretic、Book of the Dead、Adam、The Blacksmith 用于渲染和动画能力对照。按可运行场景逐项推进，并区分资源复用、功能实现与设备性能验收。

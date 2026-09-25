@@ -1,0 +1,11 @@
+{
+  "version": 8,
+  "name": "Sunset / rolling ocean",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Ocean.mshader",
+  "custom_parameters": { "clock": [0, 0, 0, 0] },
+  "base_color": [0.02, 0.16, 0.19, 1],
+  "metallic": 0.15,
+  "roughness": 0.15,
+  "double_sided": true
+}

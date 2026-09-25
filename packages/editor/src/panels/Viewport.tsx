@@ -873,6 +873,25 @@ export function Viewport(props: {
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
     return agentBridge.registerViewportCapture(props.tab, async (format, quality, maxSize = 2_048) => {
+      if (propsRef.current.tab === 'game' && '__TAURI_INTERNALS__' in window) {
+        const p = propsRef.current;
+        const sourceWidth = p.gameResolution?.width ?? canvasRef.current?.width ?? 1280;
+        const sourceHeight = p.gameResolution?.height ?? canvasRef.current?.height ?? 720;
+        const scale = Math.min(1, maxSize / Math.max(sourceWidth, sourceHeight));
+        const width = Math.max(1, Math.round(sourceWidth * scale));
+        const height = Math.max(1, Math.round(sourceHeight * scale));
+        // Render the current world at the requested output size. The Game View's
+        // display label and letterbox are editor chrome, not game pixels.
+        const frame = await invoke<{ pngBase64: string }>('render_native_game_view', { width, height, snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } });
+        let dataUrl = `data:image/png;base64,${frame.pngBase64}`;
+        if (format === 'image/jpeg') {
+          const image = await decodeNativeFrame(frame.pngBase64);
+          const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+          const context = canvas.getContext('2d'); if (!context) return null;
+          context.drawImage(image, 0, 0); dataUrl = canvas.toDataURL(format, quality);
+        }
+        return { dataUrl, width, height, mime: format, sourceWidth, sourceHeight, scale, capturedAt: Date.now() };
+      }
       const nativeRequests = propsRef.current.tab === 'game'
         ? [nativeGameRequestRef.current]
         : [nativeSceneRequestRef.current, nativeCameraPreviewRequestRef.current];

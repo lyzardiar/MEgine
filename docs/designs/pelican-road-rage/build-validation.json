@@ -1,0 +1,22 @@
+{
+  "packageValidation": true,
+  "contentHash": "7bb34b55b81982ccc75dcc19765f6f45114f7829c34af1ade7ba2e7b70dc2b0d",
+  "files": 55,
+  "entities": 257,
+  "runtimeAssets": 49,
+  "player": "samples/pelican-road-rage/Builds/windows-x64-release/Pelican Road Rage.exe",
+  "tests": {
+    "runtimeLibrary": 204,
+    "scriptHost": 9,
+    "editorPlayRuntime": 5,
+    "nativeFullRace": 1
+  },
+  "desktopSmoke": {
+    "launch": "passed",
+    "inputAndAudio": "pending",
+    "captureErrors": [
+      "GetCursorPos: 0x80070005",
+      "SetIsBorderRequired: 0x80004002"
+    ]
+  }
+}

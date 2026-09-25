@@ -21,6 +21,10 @@ npm run sample:cube
 
 不要手写维护 `.js`；以 `.ts` 为准。
 
+## 原创 3D 游戏
+
+- [Pelican Road Rage / 鹈鹕暴力摩托](pelican-road-rage/README.md)：六人海岸竞速、翼击战斗、漂移氮气、连续曲面角色、夕阳海面、三个跟随镜头；含实机截图、完整比赛验证和 Windows Player 构建入口。
+
 ## Unity 官方示例移植
 
 - [Brick](unity-brick/README.md)：128 块砖、2D 物理碰撞、挡板输入、落底重开，保留官方 MIT 贴图和场景配色。

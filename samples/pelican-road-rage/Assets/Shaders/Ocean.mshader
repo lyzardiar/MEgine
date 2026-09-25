@@ -1,0 +1,40 @@
+/* MENGINE_PARAMETERS
+{"parameters":[{"name":"clock","type":"vector4","default":[0,0,0,0]}]}
+*/
+fn sea_height(p: vec2<f32>, t: f32) -> f32 {
+    return 0.30*sin(dot(p,vec2<f32>(0.14,0.19))-t*0.75)
+        + 0.17*sin(dot(p,vec2<f32>(0.29,-0.11))-t*1.1)
+        + 0.045*sin(dot(p,vec2<f32>(1.7,1.3))-t*1.8)
+        + 0.026*sin(dot(p,vec2<f32>(3.1,-2.7))+t*2.2);
+}
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s=surface;
+    let t=mengine_param_clock().x;
+    let p=world_position.xz;
+    let e=0.075;
+    let dx=(sea_height(p+vec2<f32>(e,0.0),t)-sea_height(p-vec2<f32>(e,0.0),t))/(2.0*e);
+    let dz=(sea_height(p+vec2<f32>(0.0,e),t)-sea_height(p-vec2<f32>(0.0,e),t))/(2.0*e);
+    let local=p-object.model[3].xz;
+    let a=cos(local.x*0.14+local.y*0.19);
+    let b=cos(local.x*0.29-local.y*0.11);
+    let c=cos(local.x*0.6+local.y*0.43);
+    // Evaluate the same height-field slope per pixel, so the highlight is not
+    // broken into triangles by interpolation across the ocean's large far cells.
+    s.normal=normalize(vec3<f32>(-0.147*a-0.1392*b-0.072*c-dx*0.6,1.0,-0.1995*a+0.0528*b-0.0516*c-dz*0.6));
+    return s;
+}
+
+// Match the visible sunset dome instead of the hemisphere used for diffuse fill.
+fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {
+    let v=normalize(frame.camera_position.xyz-world_position);
+    let n=normalize(world_normal);
+    let r=reflect(-v,n);
+    let fresnel=0.06+0.94*pow(1.0-clamp(dot(n,v),0.0,1.0),4.0);
+    let sky=mix(vec3<f32>(0.32,0.065,0.095),vec3<f32>(0.018,0.022,0.055),smoothstep(-0.04,0.3,r.y));
+    let sun=normalize(vec3<f32>(-0.9,0.13,-0.36));
+    let alignment=max(dot(r,sun),0.0);
+    let glint=pow(alignment,420.0)*3.5+pow(alignment,32.0)*0.11;
+    let crest=smoothstep(-0.2,0.8,world_position.y)*0.4;
+    let water=mix(vec3<f32>(0.006,0.045,0.06),vec3<f32>(0.015,0.18,0.19),crest);
+    return vec4<f32>(mix(water,sky,fresnel)+vec3<f32>(1.0,0.73,0.52)*glint,1.0);
+}
