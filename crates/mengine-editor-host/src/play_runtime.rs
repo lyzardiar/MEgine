@@ -111,7 +111,10 @@ impl PlaySession {
 
     fn step(&mut self, snapshot: WorldSnapshot, input: ScriptInput, dt: f32) -> Result<WorldSnapshot, String> {
         let world = &mut self.world;
+        let elapsed = world.time.elapsed + f64::from(dt);
         mengine_scene::reconcile_snapshot(world, &snapshot);
+        world.time.elapsed = elapsed;
+        world.time.delta = dt;
         self.script.set_input(&input).map_err(|error| error.to_string())?;
         // Bound substeps so Agent stepping and realtime Play use the same collision solver.
         let steps = (dt / (1.0 / 60.0)).ceil().max(1.0) as u32;
@@ -192,6 +195,7 @@ mod tests {
         let authored = runtime.start(runtime.begin(), String::new(), authored.clone(), PlayProject { name: "Physics".into(), ..Default::default() }).unwrap();
         let advanced = runtime.step(runtime.generation(), authored.clone(), ScriptInput::default(), 0.5).unwrap();
         assert!(advanced.entities[0].components["Transform"]["position"][1].as_f64().unwrap() < 4.0);
+        assert_eq!(advanced.elapsed, 0.5);
         assert_eq!(authored.entities[0].components["Transform"]["position"][1].as_f64(), Some(5.0));
         runtime.stop();
         let authored = runtime.start(runtime.begin(), String::new(), authored.clone(), PlayProject { name: "Physics".into(), ..Default::default() }).unwrap();

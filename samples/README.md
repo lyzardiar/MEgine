@@ -24,4 +24,5 @@ npm run sample:cube
 ## Unity 官方示例移植
 
 - [Brick](unity-brick/README.md)：128 块砖、2D 物理碰撞、挡板输入、落底重开，保留官方 MIT 贴图和场景配色。
+- [Animated Tile](unity-animated-tile/README.md)：官方瀑布切片、8 个动画单元格，支持暂停/单步与重新播放。
 - [来源与验收进度](../docs/unity-samples-progress.md)。

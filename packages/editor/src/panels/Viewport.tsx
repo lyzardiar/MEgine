@@ -1269,7 +1269,7 @@ export function Viewport(props: {
         pngBase64: string;
         hasAuthoredCamera: boolean;
         profile: NativeViewportProfilePayload;
-      }>('render_native_game_view', { width: nativeWidth, height: nativeHeight, snapshot: { entities: p.entities, clearColor: p.clearColor } })
+      }>('render_native_game_view', { width: nativeWidth, height: nativeHeight, snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } })
         .then(async (result) => {
           recordNativeViewportProfile('game', result.profile);
           const image = await decodeNativeFrame(result.pngBase64);
@@ -1364,7 +1364,7 @@ export function Viewport(props: {
         hasAuthoredCamera: boolean;
         profile: NativeViewportProfilePayload;
       }>('render_native_scene_view', {
-        snapshot: { entities: p.entities, clearColor: p.clearColor },
+        snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime },
         request: {
           width: nativeSceneIdentity!.width,
           height: nativeSceneIdentity!.height,
@@ -1422,7 +1422,7 @@ export function Viewport(props: {
         height: number;
         pngBase64: string;
       }>('render_native_scene_view', {
-        snapshot: { entities: p.entities, clearColor: p.clearColor },
+        snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime },
         request: {
           width: previewWidth,
           height: previewHeight,

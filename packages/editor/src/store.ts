@@ -253,6 +253,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (generation !== playGeneration || mode === 'edit') return;
       playEntities = result.entities.map(normalizeEntity);
       playClearColor = result.clearColor;
+      playSpin = result.simulationTime ?? playSpin;
     }), generation);
   };
 
@@ -1538,6 +1539,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           if (result) {
             playEntities = result.entities.map(normalizeEntity);
             playClearColor = result.clearColor;
+            playSpin = result.simulationTime ?? playSpin;
           }
           if (playEntities) behaviourRunner.mount(playEntities);
         }

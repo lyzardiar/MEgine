@@ -51,7 +51,7 @@ engine.reloadScene();                             // 原子重载当前场景
 Editor 和 Player 共用场景解析以及 Prefab、Animator、Animation、Timeline、Audio 请求处理。
 Editor 的 Timeline 粒子 seek 和相机 override 尚未接入视口；运行时 UI 控件事件也仍需单独验收。
 
-`engine.snapshot` 在每帧脚本及物理事件前更新。通过 `engine.pushCommandJson` 提交修改，
+`engine.snapshot` 在每帧脚本及物理事件前更新，`elapsed` 是当前场景的模拟秒数。暂停冻结该时间，场景重载归零；原生序列帧动画使用同一时钟。通过 `engine.pushCommandJson` 提交修改，
 不要把修改 snapshot 对象当成修改引擎世界。每个脚本宿主的命令队列彼此隔离。
 
 ```ts

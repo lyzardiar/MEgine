@@ -26,6 +26,7 @@ test('project runtime applies completed frames, consumes input edges, restores a
         if (inputs.length === 3) await new Promise(resolve => { release = resolve; });
         snapshot.entities[0].name = 'Runtime only';
         snapshot.clearColor = [1, 0, 0, 1];
+        snapshot.simulationTime = 0.25;
         return snapshot;
       },
     });
@@ -36,6 +37,7 @@ test('project runtime applies completed frames, consumes input edges, restores a
     assert.equal(store.step(), true); await store.waitForPlayRuntime();
     assert.equal(store.snapshot().entities[0].name, 'Runtime only');
     assert.deepEqual(store.snapshot().clearColor, [1, 0, 0, 1]);
+    assert.equal(store.snapshot().simulationTime, 0.25);
     assert.deepEqual(inputs[0].pressedKeys, ['KeyD']);
     store.step(); await store.waitForPlayRuntime();
     assert.deepEqual(inputs[1].pressedKeys, []);

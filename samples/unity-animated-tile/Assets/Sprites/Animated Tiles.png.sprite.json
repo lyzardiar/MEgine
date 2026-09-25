@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "mode": "multiple",
+  "pixels_per_unit": 64,
+  "slices": [
+    {
+      "name": "WaterfallTiles_0",
+      "rect": [
+        4,
+        4,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_1",
+      "rect": [
+        72,
+        4,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_2",
+      "rect": [
+        140,
+        4,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_3",
+      "rect": [
+        208,
+        4,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_4",
+      "rect": [
+        276,
+        4,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_5",
+      "rect": [
+        4,
+        72,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_6",
+      "rect": [
+        72,
+        72,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_7",
+      "rect": [
+        140,
+        72,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_8",
+      "rect": [
+        208,
+        72,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "WaterfallTiles_9",
+      "rect": [
+        276,
+        72,
+        64,
+        64
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    }
+  ]
+}

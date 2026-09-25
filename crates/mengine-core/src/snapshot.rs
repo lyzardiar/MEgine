@@ -37,6 +37,8 @@ pub struct WorldSnapshot {
     pub frame: u64,
     #[serde(alias = "simFrame")]
     pub sim_frame: u64,
+    #[serde(alias = "simulationTime")]
+    pub elapsed: f64,
     #[serde(alias = "clearColor")]
     pub clear_color: [f32; 4],
     pub selected: Option<u64>,
@@ -48,6 +50,7 @@ impl Default for WorldSnapshot {
             entities: Vec::new(),
             frame: 0,
             sim_frame: 0,
+            elapsed: 0.0,
             clear_color: [0.1, 0.1, 0.14, 1.0],
             selected: None,
         }
@@ -86,6 +89,7 @@ impl WorldSnapshot {
             entities,
             frame: world.time.frame,
             sim_frame: world.time.sim_frame,
+            elapsed: world.time.elapsed,
             clear_color: [cc.x, cc.y, cc.z, cc.w],
             selected: world.selected.map(|e| e.to_u64()),
         }

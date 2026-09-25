@@ -179,6 +179,7 @@ fn apply_snapshot_inner(world: &mut World, snap: &WorldSnapshot, preserve_entiti
     );
     world.time.frame = snap.frame;
     world.time.sim_frame = snap.sim_frame;
+    world.time.elapsed = if snap.elapsed.is_finite() { snap.elapsed.max(0.0) } else { 0.0 };
     world.selected = None;
 
     let mut entity_map = HashMap::new();

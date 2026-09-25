@@ -38,7 +38,7 @@ const ENGINE_TYPES = `interface EngineSceneInfo {
 }
 
 interface EngineApi {
-  snapshot: { entities: Array<{ entity: number; name: string | null; parent: number | null; components: Record<string, any> }>; frame: number; clear_color: number[] };
+  snapshot: { entities: Array<{ entity: number; name: string | null; parent: number | null; components: Record<string, any> }>; frame: number; elapsed: number; clear_color: number[] };
   input: { keys: string[]; pressedKeys: string[]; releasedKeys: string[]; pointer: [number, number]; viewport: [number, number]; buttons: number[]; pressedButtons: number[]; releasedButtons: number[] };
   setClearColor(r: number, g: number, b: number, a?: number): void;
   pushCommandJson(json: string): void;

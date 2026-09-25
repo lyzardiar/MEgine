@@ -21,6 +21,7 @@ export type HostWorldSnapshot = {
   entities: HostEntitySnapshot[];
   frame: number;
   sim_frame: number;
+  elapsed?: number;
   clear_color: [number, number, number, number];
   selected?: number | null;
 };
@@ -455,6 +456,7 @@ export function toWorldSnapshotView(snapshot: HostWorldSnapshot): WorldSnapshotV
     })),
     frame: snapshot.frame,
     simFrame: snapshot.sim_frame,
+    ...(snapshot.elapsed === undefined ? {} : { simulationTime: snapshot.elapsed }),
     clearColor: snapshot.clear_color,
     selected: snapshot.selected,
     selectedIds: snapshot.selected == null ? [] : [snapshot.selected],

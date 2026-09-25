@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scene": "Assets/Tilemap/Tiles/Animated Tile/Animated Tile.unity",
+  "license": "MIT",
+  "adaptations": [
+    "Animated tiles use AnimatedSprite2D, with source cell positions, frame sequences and speeds.",
+    "Texture retained byte-for-byte; sprite rectangles translated from bottom-left to top-left origin."
+  ]
+}

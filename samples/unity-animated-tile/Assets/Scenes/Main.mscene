@@ -1,0 +1,345 @@
+{
+  "version": 3,
+  "name": "Animated Tile",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 5
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Animated Tile -1 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_5",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_6",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_7",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_8",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_9"
+            ],
+            "fps": 10,
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Animated Tile 0 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_5",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_6",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_7",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_8",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_9"
+            ],
+            "fps": 10,
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Animated Tile -1 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_0",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_1",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_2",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_3",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_4"
+            ],
+            "fps": 10,
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Animated Tile 0 0",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_0",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_1",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_2",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_3",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_4"
+            ],
+            "fps": 10,
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Animated Tile -1 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_0",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_1",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_2",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_3",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_4"
+            ],
+            "fps": 10,
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Animated Tile 0 1",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_0",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_1",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_2",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_3",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_4"
+            ],
+            "fps": 10,
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Animated Tile -1 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_0",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_1",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_2",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_3",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_4"
+            ],
+            "fps": 10,
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Animated Tile 0 2",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_0",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_1",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_2",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_3",
+              "Assets/Sprites/Animated Tiles.png#WaterfallTiles_4"
+            ],
+            "fps": 10,
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0.19215687,
+      0.3019608,
+      0.4745098,
+      1
+    ]
+  }
+}

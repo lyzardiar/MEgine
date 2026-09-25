@@ -31,6 +31,7 @@ export interface WorldSnapshotView {
   }>;
   frame: number;
   simFrame: number;
+  simulationTime?: number;
   clearColor: [number, number, number, number];
   selected?: number | null;
 }
