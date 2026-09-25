@@ -1,4 +1,5 @@
 import {
+  Fragment,
   createContext,
   useEffect,
   useId,
@@ -12,6 +13,9 @@ import {
 import { createPortal } from 'react-dom';
 import {
   Box,
+  ChevronDown,
+  ChevronRight,
+  Plus,
   FoldVertical,
   Lock,
   LockOpen,
@@ -75,6 +79,7 @@ import {
   type SurfaceShaderParameter,
   type SurfaceShaderTexture,
 } from '../surfaceShader';
+import { ComponentIcon } from './ComponentIcon';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
 import {
@@ -368,8 +373,8 @@ function CompBlock(props: {
           aria-expanded={expanded}
           onClick={() => setOpen(!open)}
         >
-          <span className="comp-foldout" aria-hidden>{expanded ? '▾' : '▸'}</span>
-          <span className="comp-icon" aria-hidden>{props.title.slice(0, 1).toUpperCase()}</span>
+          <span className="comp-foldout" aria-hidden>{expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
+          <span className="comp-icon" aria-hidden><ComponentIcon name={props.title} /></span>
           <span className="comp-title">{props.title}</span>
         </button>
         <div className="comp-head-actions">
@@ -803,7 +808,7 @@ function MaterialPropertyBlockEditor(props: {
           );
           const components = surfaceShaderParameterComponents(parameter.type);
           return (
-            <div className={`mpb-custom-binding${overridden ? '' : ' inherited'}`} key={parameter.name}>
+            <div className={`mpb-custom-binding${overridden ? '' : ' inherited'}`} key={parameter.name} data-agent-scope={`Surface Shader ${parameter.label}`}>
               <label className="mpb-override-toggle">
                 <input
                   type="checkbox"
@@ -904,7 +909,7 @@ function GenericCompEditor(props: {
     ? (createComponentDefaults(props.componentType) ?? {})
     : {};
   const viewData = { ...defaults, ...props.data };
-  const entries = Object.entries(viewData);
+  const entries = Object.entries(viewData).filter(([key]) => isInspectorFieldVisible(getBuiltinInspectorField(props.componentType, key), viewData, props.contextComponents));
   if (!entries.length) {
     return <div className="field-hint">No fields</div>;
   }
@@ -912,7 +917,6 @@ function GenericCompEditor(props: {
     <>
       {entries.map(([key, val]) => {
         const meta = getBuiltinInspectorField(props.componentType, key);
-        if (!isInspectorFieldVisible(meta, viewData, props.contextComponents)) return null;
         const label = meta?.label ?? inspectorLabel(key);
         const semanticLabel = props.componentType
           ? `${getComponentCatalog().find((entry) => entry.type === props.componentType)?.label
@@ -1166,6 +1170,14 @@ function GenericCompEditor(props: {
         return (
           <JsonValueField key={key} label={label} value={val} onChange={setValue} />
         );
+      }).map((field, index) => {
+        const [key] = entries[index];
+        const meta = getBuiltinInspectorField(props.componentType, key);
+        const previousSection = index > 0 ? getBuiltinInspectorField(props.componentType, entries[index - 1][0])?.section : undefined;
+        return <Fragment key={key}>
+          {meta?.section && meta.section !== previousSection && <div className="insp-section-title">{meta.section}</div>}
+          {field}
+        </Fragment>;
       })}
     </>
   );
@@ -1509,6 +1521,7 @@ function MultiSelectionInspector(props: {
     .filter((type) => (
       type !== 'Transform'
       && type !== 'RectTransform'
+      && type !== 'Name'
       && !type.startsWith('__')
       && props.entities.every((entity) => entity.components[type] != null)
     ));
@@ -1810,7 +1823,7 @@ function MultiSelectionInspector(props: {
               setComponentMenuOpen((open) => !open);
             }}
           >
-            Add Component
+            <Plus size={14} aria-hidden="true" /> Add Component
           </button>
           {componentMenuOpen && (
             <div className="add-comp-menu">
@@ -2107,7 +2120,7 @@ export function Inspector(props: {
   };
 
   const extras = Object.keys(entity.components).filter(
-    (k) => k !== 'Transform' && k !== 'RectTransform' && !k.startsWith('__'),
+    (k) => k !== 'Transform' && k !== 'RectTransform' && k !== 'Name' && !k.startsWith('__'),
   );
   const orderedExtras = hasRect
     ? [...extras].sort((left, right) => (
@@ -2473,7 +2486,7 @@ export function Inspector(props: {
             setMenuOpen((open) => !open);
           }}
         >
-          Add Component
+          <Plus size={14} aria-hidden="true" /> Add Component
         </button>
         {menuOpen && (
           <div className="add-comp-menu">

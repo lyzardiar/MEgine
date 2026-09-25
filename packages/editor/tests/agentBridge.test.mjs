@@ -1181,6 +1181,8 @@ test('the main AgentBridge transport is available before a project is opened', (
     2,
   );
   assert.match(bridge, /await this\.waitForEditorBootAfter\(editorBootGeneration\)/);
+  assert.match(bridge, /reason: 'dialog', activeDialog, windowLabel: 'main', nextQuery: 'project.state'/);
+  assert.match(bridge, /Resolve it with dialog.respond, then query project.state; do not reopen the project/);
   assert.match(bridge, /this\.store != null && this\.editorBootReady/);
   assert.match(app, /markEditorBootReady\(store\)/);
   assert.match(bridge, /recentRevision: string/);
@@ -1299,6 +1301,7 @@ test('Inspector controls expose context-specific Agent semantic names', () => {
     path.join(root, 'src', 'panels', 'Inspector.tsx'),
     'utf8',
   );
+  assert.ok(inspector.includes('data-agent-scope={`Surface Shader ${parameter.label}`}'));
 
   assert.match(
     inspector,

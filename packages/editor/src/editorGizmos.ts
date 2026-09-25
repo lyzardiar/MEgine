@@ -184,7 +184,7 @@ export function drawCameraGizmo(
   ];
   const basis = transformBasis(transform.rotation);
   const color = selected ? '#ffcc66' : '#6ec8ff';
-  const width = selected ? 2.2 : 1.6;
+  const width = selected ? 1.2 : 1;
 
   const near = Math.max(0.05, Number(camData.near) || 0.3);
   const far = Math.max(near + 0.05, Number(camData.far) || 50);
@@ -310,11 +310,11 @@ export function drawBoxColliderGizmo(
       }
     }
   }
-  const color = collider.is_trigger ? '#ffd76a' : '#72f2a8';
+  const color = collider.is_trigger ? '#ffd76a' : '#87b797';
   for (let a = 0; a < corners.length; a++) {
     for (let b = a + 1; b < corners.length; b++) {
       const differingAxes = ((a ^ b) & 1 ? 1 : 0) + ((a ^ b) & 2 ? 1 : 0) + ((a ^ b) & 4 ? 1 : 0);
-      if (differingAxes === 1) strokeWorldSeg(ctx, viewCam, vp, corners[a], corners[b], color, 2);
+      if (differingAxes === 1) strokeWorldSeg(ctx, viewCam, vp, corners[a], corners[b], color, 1);
     }
   }
 }
@@ -331,7 +331,7 @@ export function drawSphereColliderGizmo(
   const authoredRadius = Number(collider.radius);
   const radius = Math.max(0.001, Math.abs(Number.isFinite(authoredRadius) ? authoredRadius : 0.5)
     * Math.max(Math.abs(scale3[0]), Math.abs(scale3[1]), Math.abs(scale3[2])));
-  const color = collider.is_trigger ? '#ffd76a' : '#72f2a8';
+  const color = collider.is_trigger ? '#ffd76a' : '#87b797';
   const circles: Array<[Vec3, Vec3]> = [[right, up], [right, localZ], [up, localZ]];
   for (const [axisA, axisB] of circles) {
     let previous = add(origin, scale(axisA, radius));
@@ -341,7 +341,7 @@ export function drawSphereColliderGizmo(
         origin,
         add(scale(axisA, Math.cos(angle) * radius), scale(axisB, Math.sin(angle) * radius)),
       );
-      strokeWorldSeg(ctx, viewCam, vp, previous, current, color, 1.8);
+      strokeWorldSeg(ctx, viewCam, vp, previous, current, color, 1);
       previous = current;
     }
   }
@@ -368,9 +368,9 @@ export function drawBoxCollider2DGizmo(
     add(add(origin, scale(right, half[0])), scale(up, half[1])),
     add(add(origin, scale(right, -half[0])), scale(up, half[1])),
   ];
-  const color = collider.is_trigger ? '#ffd76a' : '#68f5d0';
+  const color = collider.is_trigger ? '#ffd76a' : '#87b7ab';
   for (let i = 0; i < corners.length; i++) {
-    strokeWorldSeg(ctx, viewCam, vp, corners[i], corners[(i + 1) % corners.length], color, 2);
+    strokeWorldSeg(ctx, viewCam, vp, corners[i], corners[(i + 1) % corners.length], color, 1);
   }
 }
 
@@ -390,7 +390,7 @@ export function drawCircleCollider2DGizmo(
     Math.abs(Number.isFinite(authoredRadius) ? authoredRadius : 0.5)
       * Math.max(Math.abs(scale3[0]), Math.abs(scale3[1])),
   );
-  const color = collider.is_trigger ? '#ffd76a' : '#68f5d0';
+  const color = collider.is_trigger ? '#ffd76a' : '#87b7ab';
   let previous = add(origin, scale(right, radius));
   for (let i = 1; i <= 40; i++) {
     const angle = (i / 40) * Math.PI * 2;
@@ -398,7 +398,7 @@ export function drawCircleCollider2DGizmo(
       origin,
       add(scale(right, Math.cos(angle) * radius), scale(up, Math.sin(angle) * radius)),
     );
-    strokeWorldSeg(ctx, viewCam, vp, previous, current, color, 2);
+    strokeWorldSeg(ctx, viewCam, vp, previous, current, color, 1);
     previous = current;
   }
 }
@@ -428,7 +428,7 @@ export function drawCamera2DGizmo(
     add(add(center, scale(basis.right, -halfWidth)), scale(basis.up, +halfHeight)),
   ];
   const color = selected ? '#ffcc66' : '#70d8ff';
-  const width = selected ? 2.2 : 1.6;
+  const width = selected ? 1.2 : 1;
   if (selected) {
     for (let i = 0; i < corners.length; i++) {
       strokeWorldSeg(ctx, viewCam, vp, corners[i], corners[(i + 1) % corners.length], color, width);
@@ -469,62 +469,37 @@ export function drawDirectionalLightGizmo(
     Number(transform.position[2]) || 0,
   ];
   const { forward, right, up } = transformBasis(transform.rotation);
-  const color = selected ? '#ffe08a' : '#ffd060';
-  const width = selected ? 2.4 : 1.8;
-  const len = selected ? 3.2 : 2.6;
-
-  const tip = add(origin, scale(forward, len));
-
-  // World-space direction + parallel rays
-  strokeWorldSeg(ctx, viewCam, vp, origin, tip, color, width);
-  const head = 0.4;
-  strokeWorldSeg(ctx, viewCam, vp, tip, add(tip, add(scale(forward, -head), scale(right, head * 0.5))), color, width);
-  strokeWorldSeg(ctx, viewCam, vp, tip, add(tip, add(scale(forward, -head), scale(right, -head * 0.5))), color, width);
-  strokeWorldSeg(ctx, viewCam, vp, tip, add(tip, add(scale(forward, -head), scale(up, head * 0.5))), color, width);
-  strokeWorldSeg(ctx, viewCam, vp, tip, add(tip, add(scale(forward, -head), scale(up, -head * 0.5))), color, width);
-
-  for (const o of [scale(right, 0.4), scale(right, -0.4), scale(up, 0.4), scale(up, -0.4)]) {
-    const a = add(origin, o);
-    strokeWorldSeg(ctx, viewCam, vp, a, add(a, scale(forward, len * 0.85)), color, Math.max(1.2, width - 0.5));
-  }
-
+  const color = selected ? '#f0d48b' : '#c6be97';
   const pr = projectPoint(origin, viewCam, vp);
   if (!pr) return null;
 
-  // Screen-space fallback arrow (always visible when icon is)
-  const tipP = projectPoint(tip, viewCam, vp);
-  if (tipP) {
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = width + 0.5;
-    ctx.beginPath();
-    ctx.moveTo(pr.x, pr.y);
-    ctx.lineTo(tipP.x, tipP.y);
-    ctx.stroke();
-    const ang = Math.atan2(tipP.y - pr.y, tipP.x - pr.x);
-    ctx.beginPath();
-    ctx.moveTo(tipP.x, tipP.y);
-    ctx.lineTo(tipP.x - 14 * Math.cos(ang - 0.4), tipP.y - 14 * Math.sin(ang - 0.4));
-    ctx.lineTo(tipP.x - 14 * Math.cos(ang + 0.4), tipP.y - 14 * Math.sin(ang + 0.4));
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+  // Unselected lights stay compact; direction rays are selection feedback.
+  if (selected) {
+    const length = 2;
+    for (const offset of [scale(right, -0.3), scale(right, 0.3), scale(up, 0)]) {
+      const start = add(origin, offset);
+      const tip = add(start, scale(forward, length));
+      strokeWorldSeg(ctx, viewCam, vp, start, tip, color, 1);
+      strokeWorldSeg(ctx, viewCam, vp, tip, add(tip, add(scale(forward, -0.2), scale(right, 0.1))), color, 1);
+      strokeWorldSeg(ctx, viewCam, vp, tip, add(tip, add(scale(forward, -0.2), scale(right, -0.1))), color, 1);
+    }
   }
 
   // Sun disc + rays
   ctx.save();
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.arc(pr.x, pr.y, selected ? 9 : 7, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#fff3c0';
+  ctx.arc(pr.x, pr.y, 5, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.strokeStyle = color;
   ctx.lineWidth = 1.5;
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2;
     ctx.beginPath();
-    ctx.moveTo(pr.x + Math.cos(a) * 11, pr.y + Math.sin(a) * 11);
-    ctx.lineTo(pr.x + Math.cos(a) * 16, pr.y + Math.sin(a) * 16);
+    ctx.moveTo(pr.x + Math.cos(a) * 8, pr.y + Math.sin(a) * 8);
+    ctx.lineTo(pr.x + Math.cos(a) * 12, pr.y + Math.sin(a) * 12);
     ctx.stroke();
   }
   ctx.restore();
@@ -548,7 +523,7 @@ export function drawPointLightGizmo(
   const color = selected ? '#ffe08a' : '#ffbd66';
   const radius = Math.min(Math.max(Number(range) || 1, 0.2), 20);
   const axisRadius = Math.min(radius, selected ? 1.5 : 0.9);
-  for (const axis of [
+  if (selected) for (const axis of [
     [1, 0, 0],
     [0, 1, 0],
     [0, 0, 1],
@@ -599,10 +574,10 @@ export function drawSpotLightGizmo(
       add(center, add(scale(right, Math.cos(angle) * ringRadius), scale(up, Math.sin(angle) * ringRadius))),
     );
   }
-  for (let i = 0; i < ring.length; i++) {
+  if (selected) for (let i = 0; i < ring.length; i++) {
     strokeWorldSeg(ctx, viewCam, vp, ring[i], ring[(i + 1) % ring.length], color, selected ? 2 : 1.3);
   }
-  for (const index of [0, 3, 6, 9]) {
+  if (selected) for (const index of [0, 3, 6, 9]) {
     strokeWorldSeg(ctx, viewCam, vp, origin, ring[index], color, selected ? 2 : 1.3);
   }
   const pr = projectPoint(origin, viewCam, vp);

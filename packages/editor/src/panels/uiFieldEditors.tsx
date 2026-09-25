@@ -17,6 +17,8 @@ import {
   refreshProjectFiles,
   type ProjectFileAsset,
 } from '../projectAssets';
+import { Box } from 'lucide-react';
+import { ComponentIcon } from './ComponentIcon';
 import { ObjectPicker } from './ObjectPicker';
 import { parseSerializedEntityReference } from '../entityReferences';
 
@@ -364,7 +366,7 @@ export function NamedReferenceField(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div className={`object-slot named-reference${props.value ? ' filled' : ''}`}>
-        <div className="object-slot-thumb" aria-hidden>◆</div>
+        <div className="object-slot-thumb" aria-hidden><ComponentIcon name={props.referenceType} /></div>
         <button
           type="button"
           className="object-slot-name-btn"
@@ -449,6 +451,9 @@ export function ProjectAssetSlot(props: {
       (asset) => accepted.has(asset.kind) && (props.accept?.(asset) ?? true),
     );
   }, [props.accept, props.assetKinds, revision]);
+  const fallbackLabel = props.noneValue
+    ? `${props.noneValue[0].toUpperCase()}${props.noneValue.slice(1)} (${props.referenceType})`
+    : `None (${props.referenceType})`;
   const hasValue = Boolean(props.value) && props.value !== props.noneValue;
   const selected = hasValue
     ? assets.find((asset) => asset.id === props.value)
@@ -487,17 +492,17 @@ export function ProjectAssetSlot(props: {
         }}
         onDrop={applyDrop}
       >
-        <div className="object-slot-thumb" aria-hidden>◇</div>
+        <div className="object-slot-thumb" aria-hidden><ComponentIcon name={props.referenceType} /></div>
         <button
           type="button"
           className="object-slot-name-btn"
-          aria-label={`${props.label}: ${selected?.name ?? (hasValue ? props.value : `None (${props.referenceType})`)}`}
-          title="Ping in Project"
+          aria-label={`${props.label}: ${selected?.name ?? (hasValue ? props.value : fallbackLabel)}`}
+          title={hasValue ? 'Ping in Project' : props.noneValue ? 'Built-in asset' : 'No asset assigned'}
           onClick={() => {
             if (hasValue) pingProjectAsset(props.value, selected?.folder);
           }}
         >
-          {selected?.name ?? (hasValue ? props.value : `None (${props.referenceType})`)}
+          {selected?.name ?? (hasValue ? props.value : fallbackLabel)}
         </button>
         <button
           ref={pickerBtnRef}
@@ -535,7 +540,7 @@ export function ProjectAssetSlot(props: {
           }))}
           current={hasValue ? props.value : null}
           allowNone={props.allowNone}
-          noneLabel={`None (${props.referenceType})`}
+          noneLabel={fallbackLabel}
           anchorRect={anchor}
           onPick={(id) => props.onChange(id ?? props.noneValue ?? '')}
           onClose={() => setPickerOpen(false)}
@@ -799,7 +804,7 @@ export function EntityReferenceField(props: {
         }}
         onDrop={bindDrop}
       >
-        <div className="object-slot-thumb" aria-hidden>●</div>
+        <div className="object-slot-thumb" aria-hidden><Box size={13} /></div>
         <button
           type="button"
           className="object-slot-name-btn"

@@ -73,6 +73,28 @@ export function sceneOrientationHandles(
   ));
 }
 
+/** Project solid axis tips with the same orthographic basis as the navigation cube. */
+export function sceneOrientationCones(yaw: number, pitch: number) {
+  const eye = orbitEye([0, 0, 0], yaw, pitch, 1);
+  const { right, up } = lookBasis(eye, [0, 0, 0]);
+  const projectPoint = (world: Vec3) => ({ x: dot(world, right), y: -dot(world, up) });
+  return AXES.flatMap(({ axis, direction, positive, negative }, axisIndex) => ([1, -1] as const).map((sign) => {
+    const tip = direction.map((value) => value * sign * 34) as Vec3;
+    const base = direction.map((value) => value * sign * 17) as Vec3;
+    const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => {
+      const corner = [...base] as Vec3;
+      corner[(axisIndex + 1) % 3] += a * 4.5;
+      corner[(axisIndex + 2) % 3] += b * 4.5;
+      return corner;
+    });
+    const faces = corners.map((corner, index) => {
+      const next = corners[(index + 1) % corners.length];
+      return { points: [tip, corner, next].map(projectPoint), depth: (dot(corner, eye) + dot(next, eye)) / 2 };
+    }).sort((a, b) => a.depth - b.depth);
+    return { axis, sign, view: sign === 1 ? positive : negative, depth: dot(direction, eye) * sign, faces };
+  })).sort((a, b) => a.depth - b.depth);
+}
+
 const CUBE_FACES: Array<{
   axis: SceneOrientationCubeFace['axis'];
   sign: 1 | -1;

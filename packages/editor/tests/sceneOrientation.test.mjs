@@ -7,6 +7,7 @@ import {
   activeSceneOrientation,
   sceneOrientationCamera,
   sceneOrientationCubeFaces,
+  sceneOrientationCones,
   sceneOrientationHandles,
   sceneOrientationLabel,
 } from '../src/sceneOrientation.ts';
@@ -48,6 +49,23 @@ test('projects all six axis handles with opposite endpoints and camera depth', (
   assert.ok(handles.find((handle) => handle.view === 'right').x > 0);
   assert.ok(handles.find((handle) => handle.view === 'top').y < 0);
   assert.ok(handles.find((handle) => handle.view === 'front').depth > 0);
+});
+
+test('navigation cones align with selectable axes across perspective and cardinal views', () => {
+  for (const [yaw, pitch] of [[35, 25], [0, 0], [90, 0], [0, 89], [-145, -25]]) {
+    const handles = sceneOrientationHandles(yaw, pitch, 34);
+    const cones = sceneOrientationCones(yaw, pitch);
+    assert.equal(cones.length, 6);
+    assert.equal(new Set(cones.map((cone) => cone.view)).size, 6);
+    for (const [index, cone] of cones.entries()) {
+      if (index > 0) assert.ok(cones[index - 1].depth <= cone.depth);
+      const handle = handles.find((item) => item.view === cone.view);
+      for (const face of cone.faces) {
+        assert.ok(face.points.every((point) => Number.isFinite(point.x + point.y)));
+        assert.ok(Math.hypot(face.points[0].x - handle.x, face.points[0].y - handle.y) < 1e-8);
+      }
+    }
+  }
 });
 
 test('recognizes snapped views across wrapped yaw while leaving free orbit as Perspective', () => {

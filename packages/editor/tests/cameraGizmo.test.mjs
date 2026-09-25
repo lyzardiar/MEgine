@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { drawCamera2DGizmo, drawCameraGizmo } from '../src/editorGizmos.ts';
+import { drawCamera2DGizmo, drawCameraGizmo, drawDirectionalLightGizmo, drawPointLightGizmo, drawSpotLightGizmo } from '../src/editorGizmos.ts';
 
 const viewport = { x: 0, y: 0, w: 800, h: 600 };
 const sceneCamera = { eye: [6, 5, 8], target: [0, 0, 0], fovYDeg: 60 };
@@ -22,6 +22,22 @@ function recordingContext() {
     },
   });
 }
+
+test('unselected lights retain pick targets while direction and volume lines require selection', () => {
+  const lights = [
+    (ctx, selected) => drawDirectionalLightGizmo(ctx, sceneCamera, viewport, transform, selected),
+    (ctx, selected) => drawPointLightGizmo(ctx, sceneCamera, viewport, transform, 5, selected),
+    (ctx, selected) => drawSpotLightGizmo(ctx, sceneCamera, viewport, transform, 5, 40, selected),
+  ];
+  for (const draw of lights) {
+    const compact = recordingContext();
+    const selected = recordingContext();
+    assert.ok(draw(compact, false).r >= 18);
+    assert.ok(draw(selected, true).r >= 18);
+    const lines = (ctx) => ctx.calls.filter(([method]) => method === 'lineTo').length;
+    assert.ok(lines(selected) > lines(compact));
+  }
+});
 
 test('unselected 3D cameras keep a selectable icon without flooding Scene with a frustum', () => {
   const compact = recordingContext();

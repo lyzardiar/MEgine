@@ -10,7 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 test('default Unity layout and Agent reset validation agree on all panels', async () => {
   const server = await createServer({ root, server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
   try {
-    const { defaultTree, describeDockNode } = await server.ssrLoadModule('/src/panels/DockWorkspace.tsx');
+    const { defaultTree, describeDockNode, resizeDockSplit } = await server.ssrLoadModule('/src/panels/DockWorkspace.tsx');
     const { isDefaultPanelLayout } = await server.ssrLoadModule('/src/agent/AgentBridge.ts');
     const { CORE_PANEL_IDS } = await server.ssrLoadModule('/src/panels/detachedPanelWindow.ts');
     const tree = describeDockNode(defaultTree());
@@ -29,6 +29,14 @@ test('default Unity layout and Agent reset validation agree on all panels', asyn
     const resized = structuredClone(layout);
     resized.tree.ratio = 0.5;
     assert.equal(isDefaultPanelLayout(resized), false);
+    const original = defaultTree();
+    let dragged = original;
+    for (let index = 0; index < 10; index++) dragged = resizeDockSplit(dragged, original.id, -0.01);
+    assert.ok(Math.abs(dragged.ratio - (original.ratio - 0.1)) < 1e-9);
+    assert.equal(resizeDockSplit(dragged, original.id, 2).ratio, 0.85);
+    assert.equal(resizeDockSplit(dragged, original.id, -2).ratio, 0.15);
+    assert.equal(dragged.a, original.a);
+    assert.equal(dragged.b, original.b);
   } finally {
     await server.close();
   }

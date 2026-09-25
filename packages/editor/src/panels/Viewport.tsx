@@ -192,6 +192,7 @@ import {
   activeSceneOrientation,
   sceneOrientationCamera,
   sceneOrientationCubeFaces,
+  sceneOrientationCones,
   sceneOrientationHandles,
   sceneOrientationLabel,
   type SceneOrientationView,
@@ -4617,10 +4618,8 @@ export function Viewport(props: {
     props.sceneCamera.yaw,
     props.sceneCamera.pitch,
   );
-  const orientationCubeFaces = sceneOrientationCubeFaces(
-    props.sceneCamera.yaw,
-    props.sceneCamera.pitch,
-  );
+  const orientationCubeFaces = sceneOrientationCubeFaces(props.sceneCamera.yaw, props.sceneCamera.pitch, 8);
+  const orientationCones = sceneOrientationCones(props.sceneCamera.yaw, props.sceneCamera.pitch);
   const activeOrientation = activeSceneOrientation(
     props.sceneCamera.yaw,
     props.sceneCamera.pitch,
@@ -5094,24 +5093,13 @@ export function Viewport(props: {
       {props.tab === 'scene' && !scene2D && (
         <div className="scene-orientation-gizmo" role="group" aria-label="Scene orientation">
           <svg className="scene-orientation-lines" viewBox="0 0 104 88" aria-hidden>
-            {(['x', 'y', 'z'] as const).map((axis) => {
-              const negative = orientationHandles.find(
-                (handle) => handle.axis === axis && handle.sign === -1,
-              )!;
-              const positive = orientationHandles.find(
-                (handle) => handle.axis === axis && handle.sign === 1,
-              )!;
-              return (
-                <line
-                  key={axis}
-                  className={`axis-${axis}`}
-                  x1={52 + negative.x}
-                  y1={44 + negative.y}
-                  x2={52 + positive.x}
-                  y2={44 + positive.y}
-                />
-              );
-            })}
+            {[false, true].map((front) => <g key={String(front)}>
+              {front && orientationCubeFaces.map((face) => <polygon key={face.view} className={`cube-face axis-${face.axis}`} points={face.points.map((p) => `${52 + p.x},${44 + p.y}`).join(' ')} />)}
+              {orientationCones.filter((cone) => (cone.depth > 0) === front).map((cone) => <g key={cone.view} className={`orientation-cone axis-${cone.axis}${activeOrientation === cone.view ? ' active' : ''}`} opacity={cone.sign > 0 ? 1 : 0.5}>
+                {cone.faces.map((face, index) => <polygon key={index} points={face.points.map((p) => `${52 + p.x},${44 + p.y}`).join(' ')} style={{ filter: `brightness(${0.72 + index * 0.13})` }} />)}
+              </g>)}
+            </g>)}
+            {orientationHandles.filter((handle) => handle.sign > 0).map((handle) => <text key={handle.axis} className={`axis-label axis-${handle.axis}`} x={52 + handle.x * 1.42} y={47 + handle.y * 1.42}>{handle.axis.toUpperCase()}</text>)}
           </svg>
           {orientationHandles.map((handle) => (
               <button
@@ -5119,10 +5107,9 @@ export function Viewport(props: {
                 key={handle.view}
                 className={`scene-orientation-axis axis-${handle.axis} ${handle.sign > 0 ? 'positive' : 'negative'}${activeOrientation === handle.view ? ' active' : ''}`}
                 style={{
-                  left: 52 + handle.x,
-                  top: 44 + handle.y,
-                  zIndex: Math.round(handle.depth + 32),
-                  opacity: 0.52 + Math.max(0, Math.min(1, (handle.depth / 31 + 1) / 2)) * 0.48,
+                  left: 52 + handle.x * (handle.sign > 0 ? 1.16 : 1),
+                  top: 44 + handle.y * (handle.sign > 0 ? 1.16 : 1),
+                  zIndex: Math.round(handle.depth * 10 + 32),
                 }}
                 aria-label={`View from ${handle.sign > 0 ? '+' : '-'}${handle.axis.toUpperCase()} (${sceneOrientationLabel(
                   sceneOrientationCamera(handle.view).yaw,
@@ -5131,9 +5118,7 @@ export function Viewport(props: {
                 aria-pressed={activeOrientation === handle.view}
                 title={`Snap to ${handle.view} view`}
                 onClick={() => applySceneOrientation(handle.view)}
-              >
-                {handle.sign > 0 ? handle.axis.toUpperCase() : ''}
-              </button>
+              />
             ))}
           <button
             type="button"
@@ -5141,17 +5126,7 @@ export function Viewport(props: {
             aria-label="Return to Perspective view"
             title="Return to Perspective view"
             onClick={() => applySceneOrientation('perspective')}
-          >
-            <svg viewBox="0 0 36 36" aria-hidden>
-              {orientationCubeFaces.map((face) => (
-                <polygon
-                  key={face.view}
-                  className={`cube-face axis-${face.axis}`}
-                  points={face.points.map((point) => `${18 + point.x},${18 + point.y}`).join(' ')}
-                />
-              ))}
-            </svg>
-          </button>
+          />
           <span className="scene-orientation-label">
             {sceneOrientationLabel(props.sceneCamera.yaw, props.sceneCamera.pitch)}
           </span>

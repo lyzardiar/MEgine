@@ -1340,7 +1340,7 @@ const TOOLS = [
   },
   execTool(
     'open_project',
-    'Open a validated MEngine project path without a dialog while the editor is on the welcome page. Project switching is blocked once a project is open.',
+    'Open a validated MEngine project path while the editor is on the welcome page. Project switching is blocked once a project is open. If scene recovery blocks loading, NOT_READY includes reason=dialog and activeDialog. Resolve it with respond_to_dialog, then poll get_project_state; do not call open_project again.',
     'project.open',
     {
       root: { type: 'string', description: 'Absolute path to a directory containing project.json' },

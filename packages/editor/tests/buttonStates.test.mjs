@@ -12,7 +12,7 @@ test('shared button states preserve authored colors and expose active workbench 
   const base = styles.match(/button \{([^}]*)\}/s)?.[1] ?? '';
   const hover = styles.match(/button:hover:not\(:disabled\) \{([^}]*)\}/s)?.[1] ?? '';
   const active = styles.match(/button:active:not\(:disabled\) \{([^}]*)\}/s)?.[1] ?? '';
-  assert.match(base, /background: #3b3b3b/);
+  assert.match(base, /background: var\(--u-control\)/);
   assert.doesNotMatch(base, /linear-gradient/);
   assert.doesNotMatch(hover, /filter:/);
   assert.match(hover, /box-shadow: inset 0 0 0 999px/);

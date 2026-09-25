@@ -174,7 +174,7 @@ test('Move, Scale, and Rotate keep distinct Unity-style handle silhouettes', () 
   const scale = recordingContext();
   drawTransformGizmo(scale, camera, viewport, origin, null, 'scale', null, null);
   assert.ok(scale.calls.some(([method, x, y, width, height]) => (
-    method === 'rect'
+    (method === 'rect' || method === 'fillRect')
       && x < screenOrigin.x && x + width > screenOrigin.x
       && y < screenOrigin.y && y + height > screenOrigin.y
   )), 'Scale keeps its square uniform-scale handle');

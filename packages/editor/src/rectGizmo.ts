@@ -19,7 +19,7 @@ export type RectGizmoHit =
 
 const AXIS_LEN = 56;
 const AXIS_GAP = 10;
-const SHAFT_W = 3;
+const SHAFT_W = 1.5;
 const HEAD_LEN = 11;
 const HIT_AXIS = 10;
 const HIT_CENTER = 9;
@@ -28,7 +28,7 @@ const HIT_SIZE = 8;
 const SIZE_BOX = 7;
 const ROTATE_R = AXIS_LEN * 0.9;
 
-const COL = { x: '#e74c3c', y: '#2ecc71', center: '#f0f0f0', ring: '#88c0ff', size: '#9ad0ff' };
+const COL = { x: '#e95b5b', y: '#8bc85b', center: '#f0f0f0', ring: '#88c0ff', size: '#9ad0ff' };
 const HOVER = '#ffc107';
 const ACTIVE = '#ffe566';
 
@@ -306,7 +306,7 @@ export function drawRectGizmo(
     const part: GizmoPart = { kind: 'center' };
     const col = colorOf(part, hover, active, '#66c7ff');
     ctx.strokeStyle = '#151515';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(ox, oy, 7, 0, Math.PI * 2);
     ctx.moveTo(ox - 12, oy);
@@ -366,7 +366,7 @@ export function drawRectGizmo(
     const part: GizmoPart = { kind: 'center' };
     const col = colorOf(part, hover, active, COL.ring);
     ctx.strokeStyle = col;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.arc(ox, oy, ROTATE_R, 0, Math.PI * 2);
     ctx.stroke();

@@ -521,6 +521,14 @@ class AgentBridge {
       !this.editorBootReady
       || this.editorBootGeneration <= generation
     ) {
+      const activeDialog = getEditorDialogForWindow('main');
+      if (activeDialog) {
+        throw new BridgeError(
+          'NOT_READY',
+          `Project loading is waiting for dialog "${activeDialog.title}". Resolve it with dialog.respond, then query project.state; do not reopen the project.`,
+          { reason: 'dialog', activeDialog, windowLabel: 'main', nextQuery: 'project.state' },
+        );
+      }
       if (Date.now() >= deadline) {
         throw new BridgeError(
           'NOT_READY',

@@ -54,6 +54,7 @@
 }
 
 .dock-splitter {
+  position: relative;
   flex-shrink: 0;
   background: #202020;
   z-index: 6;
@@ -167,6 +168,9 @@ body.dock-resizing-y {
   touch-action: none;
   user-select: none;
 }
+
+.dock-splitter::after { content: ''; position: absolute; inset: -2px; }
+.dock-splitter:focus-visible { outline: 1px solid var(--u-focus); outline-offset: -1px; background: var(--u-selected); }
 
 .dock-panel-slot {
   display: flex;

@@ -57,8 +57,8 @@ const HOVER = '#f5ce4b';
 const ACTIVE = '#fff0a6';
 const AXIS_LENGTH = 104;
 const AXIS_GAP = 8;
-const ARROW_LENGTH = 18;
-const ARROW_WIDTH = 15;
+const ARROW_LENGTH = 14;
+const ARROW_WIDTH = 9;
 const PLANE_OFFSET = 21;
 const PLANE_SIZE = 17;
 const ROTATE_RADIUS = 74;
@@ -152,8 +152,8 @@ function outlinedLine(
   context.beginPath();
   context.moveTo(start.x, start.y);
   context.lineTo(end.x, end.y);
-  context.strokeStyle = 'rgba(10,10,12,0.88)';
-  context.lineWidth = width + 3;
+  context.strokeStyle = 'rgba(10,10,12,0.25)';
+  context.lineWidth = width + 1;
   context.stroke();
   context.strokeStyle = color;
   context.lineWidth = width;
@@ -172,21 +172,19 @@ function arrowHead(context: CanvasRenderingContext2D, tip: Point, angle: number,
   context.lineTo(base.x + normal.x * ARROW_WIDTH * 0.5, base.y + normal.y * ARROW_WIDTH * 0.5);
   context.lineTo(base.x - normal.x * ARROW_WIDTH * 0.5, base.y - normal.y * ARROW_WIDTH * 0.5);
   context.closePath();
-  context.lineWidth = 1.5;
-  context.strokeStyle = 'rgba(12,12,12,0.78)';
+  context.lineWidth = 0.5;
+  context.strokeStyle = 'rgba(12,12,12,0.25)';
   context.stroke();
   context.fillStyle = color;
   context.fill();
 
   context.beginPath();
-  context.moveTo(tip.x - direction.x * 2, tip.y - direction.y * 2);
-  context.lineTo(
-    base.x + normal.x * ARROW_WIDTH * 0.34,
-    base.y + normal.y * ARROW_WIDTH * 0.34,
-  );
-  context.strokeStyle = 'rgba(255,255,255,0.34)';
-  context.lineWidth = 0.8;
-  context.stroke();
+  context.moveTo(tip.x, tip.y);
+  context.lineTo(base.x, base.y);
+  context.lineTo(base.x - normal.x * ARROW_WIDTH * 0.5, base.y - normal.y * ARROW_WIDTH * 0.5);
+  context.closePath();
+  context.fillStyle = 'rgba(0,0,0,0.16)';
+  context.fill();
 }
 
 function planeCorners(center: Point, axisA: Point, axisB: Point): [Point, Point, Point, Point] {
@@ -218,9 +216,6 @@ function drawPlane(
   context.closePath();
   context.fillStyle = `rgba(${channels.join(',')},${hot ? 0.5 : 0.18})`;
   context.fill();
-  context.strokeStyle = 'rgba(12,12,12,0.55)';
-  context.lineWidth = hot ? 3 : 2.5;
-  context.stroke();
   context.strokeStyle = color;
   context.lineWidth = hot ? 2 : 1;
   context.stroke();
@@ -293,14 +288,10 @@ function drawRotationRing(
   strokeEllipse(context, center, radius, u, v, () => true);
 
   context.setLineDash([]);
-  context.globalAlpha = hot ? 0.7 : 0.44;
-  context.strokeStyle = 'rgba(12,12,12,0.76)';
-  context.lineWidth = hot ? 5 : 4;
-  strokeEllipse(context, center, radius, u, v, front);
 
   context.globalAlpha = 1;
   context.strokeStyle = color;
-  context.lineWidth = hot ? 3 : 2;
+  context.lineWidth = hot ? 2.5 : 1.5;
   strokeEllipse(context, center, radius, u, v, front);
   context.restore();
 }
@@ -314,64 +305,30 @@ function drawViewRotationRing(
 ) {
   context.beginPath();
   context.arc(center.x, center.y, radius, 0, Math.PI * 2);
-  context.strokeStyle = 'rgba(12,12,12,0.68)';
-  context.lineWidth = hot ? 4.5 : 3.5;
-  context.stroke();
   context.strokeStyle = color;
   context.lineWidth = hot ? 2.5 : 1.25;
   context.stroke();
 }
 
-function drawScaleCap(
-  context: CanvasRenderingContext2D,
-  tip: Point,
-  color: string,
-  hot: boolean,
-) {
-  const half = hot ? 8 : 7;
-  context.fillStyle = 'rgba(12,12,12,0.78)';
-  context.fillRect(tip.x - half - 1.5, tip.y - half - 1.5, half * 2 + 3, half * 2 + 3);
+function drawScaleCap(context: CanvasRenderingContext2D, tip: Point, color: string, hot: boolean) {
+  const half = hot ? 5 : 4;
   context.fillStyle = color;
   context.fillRect(tip.x - half, tip.y - half, half * 2, half * 2);
-  context.strokeStyle = 'rgba(255,255,255,0.3)';
-  context.lineWidth = 1;
-  context.strokeRect(tip.x - half + 0.5, tip.y - half + 0.5, half * 2 - 1, half * 2 - 1);
+  context.fillStyle = 'rgba(255,255,255,0.22)';
+  context.fillRect(tip.x - half, tip.y - half, half * 2, 2);
 }
 
-function drawScaleCenterHandle(
-  context: CanvasRenderingContext2D,
-  center: Point,
-  color: string,
-  hot: boolean,
-) {
-  const half = hot ? 8 : 7;
-  context.beginPath();
-  context.rect(center.x - half - 1, center.y - half - 1, half * 2 + 2, half * 2 + 2);
-  context.fillStyle = 'rgba(12,12,12,0.9)';
-  context.fill();
-  context.beginPath();
-  context.rect(center.x - half, center.y - half, half * 2, half * 2);
-  context.fillStyle = color;
-  context.fill();
-  context.strokeStyle = 'rgba(255,255,255,0.28)';
-  context.lineWidth = 1;
-  context.stroke();
+function drawScaleCenterHandle(context: CanvasRenderingContext2D, center: Point, color: string, hot: boolean) {
+  drawScaleCap(context, center, color, hot);
 }
 
-function drawMoveCenterHandle(
-  context: CanvasRenderingContext2D,
-  center: Point,
-  color: string,
-  hot: boolean,
-) {
-  const half = hot ? 8 : 7;
-  context.fillStyle = 'rgba(12,12,12,0.78)';
-  context.fillRect(center.x - half - 1.5, center.y - half - 1.5, half * 2 + 3, half * 2 + 3);
-  context.fillStyle = color;
+function drawMoveCenterHandle(context: CanvasRenderingContext2D, center: Point, color: string, hot: boolean) {
+  const half = hot ? 5 : 4;
+  context.fillStyle = 'rgba(40,40,40,0.55)';
   context.fillRect(center.x - half, center.y - half, half * 2, half * 2);
-  context.strokeStyle = 'rgba(255,255,255,0.42)';
+  context.strokeStyle = color;
   context.lineWidth = 1;
-  context.strokeRect(center.x - half + 0.5, center.y - half + 0.5, half * 2 - 1, half * 2 - 1);
+  context.strokeRect(center.x - half, center.y - half, half * 2, half * 2);
 }
 
 function drawRotationHub(context: CanvasRenderingContext2D, center: Point) {
@@ -499,7 +456,7 @@ export function drawTransformGizmo(
         : handle.tip;
       context.save();
       context.globalAlpha = partOpacity(part, hover, active);
-      outlinedLine(context, start, end, color, hot ? 5.5 : 4);
+      outlinedLine(context, start, end, color, hot ? 2.5 : 1.5);
       if (mode === 'translate') arrowHead(context, handle.tip, handle.angle, color);
       else drawScaleCap(context, handle.tip, color, hot);
       context.restore();

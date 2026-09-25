@@ -42,3 +42,17 @@
 - 2D：Sprite/Tilemap、碰撞与动画的编辑器到 Player 一致性，真实项目存取与构建闭环。
 - 3D：相机、材质、光照、拾取与变换一致性；大场景与扩展面板的响应时间及资源回收。
 - UI：继续检查 Unity 风格面板布局、缩窄窗口、键盘操作与持久化；通过像素和行为证据逐项验收。
+
+## 2026-09-25：编辑器 UI 基础重构与 Agent 操作
+
+- Shell、停靠栏、Inspector、Project 和 Console 共用中性色阶、字号与控件尺寸。组件标题和资源槽使用统一矢量图标。
+- Inspector 对齐 Transform 与普通属性标签列，XYZ 使用轻量颜色标识；小于 280px 时向量字段换行。名称统一在对象标题编辑，Effekseer 依照 Playback / Rendering 分组并按模式展示字段，内置资源显示 Cube / Default。
+- 重绘移动、旋转、缩放手柄及六向立体导航器。相机和灯光未选中时显示紧凑图标，选中时显示辅助线；碰撞体使用细线框。
+- 分隔条扩大鼠标命中范围，支持方向键及 Shift 加速，并累计快速拖动产生的位移。Agent 可通过 separator 语义操作。
+- Surface Shader 参数使用独立语义 scope。项目加载等待恢复对话框时，Agent 返回 `NOT_READY` 与 `reason: dialog`、对话框信息及后续查询，不再等待固定超时。
+
+验证：Editor 全量 **929/929**，TypeScript/Vite 生产构建、嵌入前端的 Windows Debug 预览构建通过。原生窗口验证属性编辑和 Undo、模式切换、组件菜单、方向导航、分隔条键盘/拖动、216px Inspector、2D 重设父级与 Undo/Redo、3D 均匀缩放 `[1.2, 1.2, 1.2]` 和移动吸附 `0.5`。项目恢复对话框的结构化返回已在原生窗口复现验证。截图均 `backgroundSafe=true`。
+
+设计规范与原生截图：[Editor UI](designs/unity-editor_design_system.md)。本地日志：`tmp/editor-redesign-tests.log`、`tmp/editor-redesign-build.log`、`tmp/editor-redesign-preview-build.log`、`tmp/editor-ui-acceptance.json`、`tmp/editor-ui-transform.log`、`tmp/editor-ui-rect.log`、`tmp/editor-boot-recovery.json`。
+
+独立预览程序：`target/debug/mengine-editor-ui-qa.exe`。构建使用同一 `src/main.rs` 与 `tauri/custom-protocol`；临时二进制目标名称在构建后恢复，未改变 Cargo 配置。已有运行窗口占用 `mengine-editor-tauri.exe`，本轮没有关闭该窗口或替换它的程序。此批验收覆盖编辑器外观和操作，不代表完整 Unity 2D/3D 功能或大型项目性能验收。

@@ -19,6 +19,7 @@ export type InspectorVisibilityCondition = {
 
 export type InspectorFieldMeta = {
   label?: string;
+  section?: string;
   hidden?: boolean;
   kind?:
     | 'enum'
@@ -734,18 +735,17 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     texture: { ...sprite, noneValue: '' },
   },
   EffekseerEffect: {
-    effect: {
-      kind: 'project-asset',
-      assetKinds: ['effekseer-effect'],
-      referenceType: 'Effekseer Effect',
-      allowNone: true,
-    },
-    speed: { min: 0, step: 0.1 },
-    start_frame: { min: 0, step: 1 },
-    render_mode: { label: 'Render Mode', kind: 'enum', options: options('world', 'screen') },
-    screen_position: { label: 'Screen Position' },
-    screen_scale: { label: 'Screen Scale', min: 0.001, step: 0.01 },
-    sorting_order: { label: 'Sorting Order', step: 1 },
+    effect: { kind: 'project-asset', assetKinds: ['effekseer-effect'], referenceType: 'Effekseer Effect', allowNone: true },
+    playing: { label: 'Playing', section: 'Playback' },
+    looping: { label: 'Loop', section: 'Playback' },
+    speed: { min: 0, step: 0.1, section: 'Playback' },
+    start_frame: { min: 0, step: 1, section: 'Playback' },
+    prewarm: { section: 'Playback' },
+    auto_destroy: { section: 'Playback' },
+    render_mode: { label: 'Render Mode', kind: 'enum', options: options('world', 'screen'), section: 'Rendering' },
+    screen_position: { label: 'Screen Position', section: 'Rendering', visibleWhen: { field: 'render_mode', equals: 'screen' } },
+    screen_scale: { label: 'Screen Scale', min: 0.001, step: 0.01, section: 'Rendering', visibleWhen: { field: 'render_mode', equals: 'screen' } },
+    sorting_order: { label: 'Sorting Order', step: 1, section: 'Rendering' },
   },
   SpineSkeleton: {
     skeleton: {

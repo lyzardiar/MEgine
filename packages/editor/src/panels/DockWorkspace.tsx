@@ -109,6 +109,12 @@ type SplitNode = {
 
 type DockNode = LeafNode | SplitNode;
 
+export function resizeDockSplit(node: DockNode, splitId: string, deltaRatio: number): DockNode {
+  if (node.kind === 'tabs') return node;
+  if (node.id === splitId) return { ...node, ratio: Math.min(0.85, Math.max(0.15, node.ratio + deltaRatio)) };
+  return { ...node, a: resizeDockSplit(node.a, splitId, deltaRatio), b: resizeDockSplit(node.b, splitId, deltaRatio) };
+}
+
 type DragPayload = { panel: PanelKind; fromId: string };
 type DropTarget = { leafId: string; zone: DropZone };
 
@@ -670,6 +676,7 @@ function saveTree(tree: DockNode) {
 function Splitter(props: {
   direction: 'horizontal' | 'vertical';
   label: string;
+  ratio: number;
   onDrag: (delta: number) => void;
 }) {
   const dragging = useRef(false);
@@ -701,8 +708,24 @@ function Splitter(props: {
   return (
     <div
       className={`dock-splitter ${props.direction}`}
+      role="separator"
+      tabIndex={0}
       aria-label={props.label}
+      aria-orientation={props.direction === 'horizontal' ? 'vertical' : 'horizontal'}
+      aria-valuemin={15}
+      aria-valuemax={85}
+      aria-valuenow={Math.round(props.ratio * 100)}
+      data-agent-drag-by="true"
+      onKeyDown={(event) => {
+        const backwards = props.direction === 'horizontal' ? 'ArrowLeft' : 'ArrowUp';
+        const forwards = props.direction === 'horizontal' ? 'ArrowRight' : 'ArrowDown';
+        if (event.key !== backwards && event.key !== forwards) return;
+        event.preventDefault();
+        event.stopPropagation();
+        props.onDrag((event.key === backwards ? -1 : 1) * (event.shiftKey ? 32 : 8));
+      }}
       onMouseDown={(e) => {
+        if (e.button !== 0) return;
         e.preventDefault();
         dragging.current = true;
         last.current = props.direction === 'horizontal' ? e.clientX : e.clientY;
@@ -950,7 +973,7 @@ function DockNodeView(props: {
   onDragEnd: () => void;
   onDragOver: (target: DropTarget | null) => void;
   onDrop: (target: DropTarget, payload?: DragPayload | null) => void;
-  onRatio: (splitId: string, ratio: number) => void;
+  onResize: (splitId: string, deltaRatio: number) => void;
   onDetach: (panel: PanelKind, position?: { x: number; y: number }) => void;
 }) {
   const { node } = props;
@@ -993,6 +1016,7 @@ function DockNodeView(props: {
       </div>
       <Splitter
         direction={horizontal ? 'horizontal' : 'vertical'}
+        ratio={node.ratio}
         label={`Resize dock split between ${
           [...collectPanels(node.a)].map((panel) => PANEL_TITLES[panel]).join(', ')
         } and ${
@@ -1003,8 +1027,7 @@ function DockNodeView(props: {
           if (!box) return;
           const size = horizontal ? box.clientWidth : box.clientHeight;
           if (size <= 0) return;
-          const next = Math.min(0.85, Math.max(0.15, node.ratio + delta / size));
-          props.onRatio(node.id, next);
+          props.onResize(node.id, delta / size);
         }}
       />
       <div
@@ -1275,15 +1298,8 @@ export function DockWorkspace(props: {
     return () => window.removeEventListener('mengine:focus-panel', onFocus);
   }, []);
 
-  const setRatio = useCallback((splitId: string, ratio: number) => {
-    setTree((prev) => {
-      const walk = (n: DockNode): DockNode => {
-        if (n.kind === 'tabs') return n;
-        if (n.id === splitId) return { ...n, ratio };
-        return { ...n, a: walk(n.a), b: walk(n.b) };
-      };
-      return walk(prev);
-    });
+  const resizeSplit = useCallback((splitId: string, deltaRatio: number) => {
+    setTree((prev) => resizeDockSplit(prev, splitId, deltaRatio));
   }, []);
 
   const endDrag = () => {
@@ -1425,7 +1441,7 @@ export function DockWorkspace(props: {
         onDragEnd={endDrag}
         onDragOver={setDropTarget}
         onDrop={onDrop}
-        onRatio={setRatio}
+        onResize={resizeSplit}
         onDetach={(panel, position) => void detach(panel, position)}
       />
 
