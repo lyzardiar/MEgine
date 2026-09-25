@@ -1,9 +1,11 @@
+use crate::materials::{apply_ui_material_property_block, RuntimeMaterialCache};
 use crate::sorting::{sort_world_primitives, SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use glam::{Quat, Vec3};
-use mengine_core::generated::{AnimatedSprite2D, Grid, Line2D, SpriteRenderer, Tilemap, Transform};
+use mengine_core::generated::{AnimatedSprite2D, Grid, Line2D, MaterialPropertyBlock, SpriteRenderer, Tilemap, Transform};
 use mengine_core::{Entity, Parent, TransformHierarchy, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::sync::Arc;
 
 const MAX_TILEMAP_TILES: usize = 100_000;
 
@@ -33,6 +35,11 @@ pub fn collect_world_primitives_with_hierarchy(
     camera: FrameCamera,
     viewport: [u32; 2],
 ) -> Vec<WorldPrimitive> {
+    collect_world_primitives_with_materials(world, hierarchy, camera, viewport, None)
+}
+
+pub fn collect_world_primitives_with_materials(world: &World, hierarchy: &TransformHierarchy, camera: FrameCamera, viewport: [u32; 2], mut materials: Option<&mut RuntimeMaterialCache>) -> Vec<WorldPrimitive> {
+    let mut resolved_materials = HashMap::new();
     let mut sprites = Vec::new();
     for entity in world.iter_entities() {
         let Some(transform) = hierarchy.get(entity).map(|value| value.to_transform()) else {
@@ -58,6 +65,7 @@ pub fn collect_world_primitives_with_hierarchy(
         let sprite = if let Some(animation) = animated {
             resolved = SpriteRenderer {
                 sprite: resolve_animated_frame(animation, world.time.elapsed).into(),
+                material: animation.material.clone(),
                 color: animation.color,
                 size: animation.size,
                 pivot: animation.pivot,
@@ -72,7 +80,18 @@ pub fn collect_world_primitives_with_hierarchy(
         } else {
             continue;
         };
-        if let Some(projected) = project_sprite(&transform, sprite, camera, viewport) {
+        if let Some(mut projected) = project_sprite(&transform, sprite, camera, viewport) {
+            if let Some(cache) = materials.as_deref_mut() {
+                if !sprite.material.trim().is_empty() {
+                    let material = resolved_materials.entry(sprite.material.clone()).or_insert_with(|| Arc::new(cache.resolve_ui(&sprite.material).unwrap_or_else(mengine_rhi::UiRenderMaterial::error)));
+                    let mut resolved = Arc::clone(material);
+                    if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
+                        apply_ui_material_property_block(Arc::make_mut(&mut resolved), block);
+                    }
+                    projected.primitive.key.blend = resolved.blend;
+                    projected.primitive.render_material = Some(resolved);
+                }
+            }
             sprites.push(projected);
         }
     }
@@ -150,6 +169,7 @@ fn project_tilemap(
                     scale: transform.scale,
                 },
                 &SpriteRenderer {
+                    material: String::new(),
                     sprite: if sprite.is_empty() { "white" } else { sprite }.into(),
                     color: tilemap.color,
                     size: cell_size,
@@ -450,7 +470,7 @@ fn project_sprite(
             canvas_sorting_grid_size: None,
             key: UiBatchKey {
                 canvas_group: None,
-                material: "sprite/default".into(),
+                material: if sprite.material.trim().is_empty() { "sprite/default".into() } else { sprite.material.trim().into() },
                 texture: if sprite.sprite.is_empty() {
                     "white".into()
                 } else {
@@ -512,6 +532,7 @@ mod tests {
             ..Default::default()
         };
         let sprite = SpriteRenderer {
+            material: "Assets/Materials/Sprite.mmat".into(),
             sprite: "Assets/Sprites/hero.png".into(),
             color: [0.25, 0.5, 1.0, 0.8],
             size: [2.0, 2.0],

@@ -9,6 +9,7 @@ export type EnvironmentLightComponent = {
   background_enabled: boolean;
   background_intensity: number;
   exposure: number;
+  tone_mapping: boolean;
 };
 
 /** Shared authoring defaults used by Add Component and GameObject creation. */
@@ -24,5 +25,6 @@ export function createEnvironmentLightComponent(): EnvironmentLightComponent {
     background_enabled: true,
     background_intensity: 1,
     exposure: 0,
+    tone_mapping: true,
   };
 }

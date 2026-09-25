@@ -328,6 +328,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   SpriteRenderer: {
     sprite,
+    material: materialAsset,
     pivot: { min: 0, max: 1, step: 0.01 },
     flip_x: { label: 'Flip X' },
     flip_y: { label: 'Flip Y' },
@@ -335,6 +336,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   AnimatedSprite2D: {
     frames: { kind: 'sprite-list' },
+    material: materialAsset,
     pivot: { min: 0, max: 1, step: 0.01 },
     fps: { min: 0, step: 0.1 },
     frame: { min: 0, step: 1 },

@@ -128,6 +128,7 @@ export interface MaterialPropertyBlock {
 
 export interface SpriteRenderer {
   sprite: string;
+  material: string;
   color: [number, number, number, number];
   size: [number, number];
   pivot: [number, number];
@@ -139,6 +140,7 @@ export interface SpriteRenderer {
 
 export interface AnimatedSprite2D {
   frames: string[];
+  material: string;
   fps: number;
   playing: boolean;
   looped: boolean;
@@ -873,6 +875,7 @@ export type SerializedComponentMap = {
   };
   SpriteRenderer: {
     sprite: string;
+    material: string;
     color: [number, number, number, number];
     size: [number, number];
     pivot: [number, number];
@@ -883,6 +886,7 @@ export type SerializedComponentMap = {
   };
   AnimatedSprite2D: {
     frames: string[];
+    material: string;
     fps: number;
     playing: boolean;
     looped: boolean;

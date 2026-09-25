@@ -5,7 +5,7 @@ use crate::lighting2d::apply_2d_lighting;
 use crate::materials::{apply_material_property_block, resolve_ui_materials, RuntimeMaterialCache};
 use crate::particles::ParticleWorld;
 use crate::sorting::{sort_world_primitives, SortingLayers};
-use crate::sprites::collect_world_primitives_with_hierarchy;
+use crate::sprites::collect_world_primitives_with_materials;
 use crate::textures::{RuntimeTextureCache, TextureLoadFailure};
 use crate::timeline::RuntimeCameraOverride;
 use crate::trails::TrailWorld;
@@ -185,11 +185,12 @@ impl FrameCompiler<'_> {
         append_ui_focus_ring(&mut ui.plan, &ui.controls, request.focused_ui);
 
         let mut world_primitives = if has_scene_camera {
-            collect_world_primitives_with_hierarchy(
+            collect_world_primitives_with_materials(
                 request.world,
                 request.hierarchy,
                 camera,
                 [width, height],
+                Some(self.materials),
             )
         } else {
             Vec::new()

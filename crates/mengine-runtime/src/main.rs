@@ -2057,6 +2057,17 @@ fn validate_world_assets(
             }
             validate_environment_texture_asset(texture, project_root, validated)?;
         }
+        let sprite_material = world.get_component::<AnimatedSprite2D>(entity).map(|value| &value.material).or_else(|| world.get_component::<SpriteRenderer>(entity).map(|value| &value.material));
+        if let Some(material) = sprite_material {
+            validate_ui_material_asset(material, project_root, validated, &mut material_cache)?;
+            if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
+                let resolved = material_cache.resolve_ui(material).unwrap_or_default();
+                mengine_runtime::materials::validate_ui_material_property_block(block, &resolved).map_err(|error| anyhow::anyhow!("invalid sprite MaterialPropertyBlock on entity {}: {error}", entity.to_u64()))?;
+                for texture in &block.custom_texture_values {
+                    validate_texture_asset(texture, "sprite MaterialPropertyBlock texture", project_root, validated)?;
+                }
+            }
+        }
         if let Some(renderer) = world.get_component::<SpriteRenderer>(entity) {
             validate_texture_asset(&renderer.sprite, "sprite", project_root, validated)?;
         }

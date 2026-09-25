@@ -525,6 +525,7 @@ impl Component for MaterialPropertyBlock {
 #[serde(default)]
 pub struct SpriteRenderer {
     pub sprite: String,
+    pub material: String,
     pub color: [f32; 4],
     pub size: [f32; 2],
     pub pivot: [f32; 2],
@@ -538,6 +539,7 @@ impl Default for SpriteRenderer {
     fn default() -> Self {
         Self {
             sprite: "white".into(),
+            material: "".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             size: [1.0, 1.0],
             pivot: [0.5, 0.5],
@@ -568,6 +570,7 @@ impl Component for SpriteRenderer {
 #[serde(default)]
 pub struct AnimatedSprite2D {
     pub frames: Vec<String>,
+    pub material: String,
     pub fps: f32,
     pub playing: bool,
     pub looped: bool,
@@ -585,6 +588,7 @@ impl Default for AnimatedSprite2D {
     fn default() -> Self {
         Self {
             frames: Vec::new(),
+            material: "".into(),
             fps: 12.0,
             playing: true,
             looped: true,

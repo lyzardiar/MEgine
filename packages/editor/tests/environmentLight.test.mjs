@@ -16,6 +16,7 @@ test('environment light exposes stable HDR authoring defaults', () => {
     background_enabled: true,
     background_intensity: 1,
     exposure: 0,
+    tone_mapping: true,
   });
 });
 

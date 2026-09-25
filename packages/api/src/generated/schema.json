@@ -28,6 +28,9 @@
       "looped": {
         "type": "boolean"
       },
+      "material": {
+        "type": "string"
+      },
       "pivot": {
         "items": {
           "type": "number"
@@ -52,6 +55,7 @@
     },
     "required": [
       "frames",
+      "material",
       "fps",
       "playing",
       "looped",
@@ -2753,6 +2757,9 @@
       "flip_y": {
         "type": "boolean"
       },
+      "material": {
+        "type": "string"
+      },
       "pivot": {
         "items": {
           "type": "number"
@@ -2777,6 +2784,7 @@
     },
     "required": [
       "sprite",
+      "material",
       "color",
       "size",
       "pivot",

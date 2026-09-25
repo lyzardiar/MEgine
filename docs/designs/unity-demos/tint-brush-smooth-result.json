@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "sourceCells": 64,
+  "tintPixels": {
+    "samples": 7,
+    "maximumChannelError": 3
+  },
+  "changedSprites": 9,
+  "blendHalf": true,
+  "blendZero": true,
+  "pick": true,
+  "eraseWhite": true,
+  "undo": true,
+  "stableEntityIds": true,
+  "resetExact": true,
+  "stopRestoresAuthored": true,
+  "gammaBackgroundVerified": true
+}

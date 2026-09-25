@@ -144,6 +144,8 @@ component MaterialPropertyBlock {
 
 component SpriteRenderer {
   sprite: string = "white"
+  /// Optional material using the 2D mengine_ui_hook shader contract
+  material: string = ""
   color:  float4 = [1, 1, 1, 1]
   /// World-space quad size (meters-ish)
   size:   float2 = [1, 1]
@@ -161,6 +163,7 @@ component SpriteRenderer {
 /// Godot-style world-space animated sprite using an ordered texture frame list.
 component AnimatedSprite2D {
   frames:        string_array = []
+  material:      string       = ""
   fps:           float        = 12
   playing:       bool         = true
   looped:        bool         = true

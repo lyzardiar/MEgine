@@ -236,6 +236,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     description: '世界空间贴图面片（非 UI）',
     create: () => ({
       sprite: 'white',
+      material: '',
       color: [1, 1, 1, 1],
       size: [1, 1],
       pivot: [0.5, 0.5],
@@ -379,6 +380,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     description: 'Godot-style ordered sprite frame animation in world space',
     create: () => ({
       frames: [],
+      material: '',
       fps: 12,
       playing: true,
       looped: true,

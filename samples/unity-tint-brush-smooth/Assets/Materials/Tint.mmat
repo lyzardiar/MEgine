@@ -1,0 +1,16 @@
+{
+  "version": 10,
+  "name": "World tint",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Tint.mshader",
+  "surface": "transparent",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "wrap_u": "clamp",
+  "wrap_v": "clamp",
+  "filter": "linear"
+}

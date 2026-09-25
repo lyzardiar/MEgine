@@ -1,0 +1,2 @@
+/** Authored Unity tint data in the source Gamma color space. */
+const tintData = {"title":"Tint Brush","smooth":false,"cameraSize":5,"cells":[{"x":-1,"y":-1,"sprite":"Assets/Sprites/Brick.png"},{"x":0,"y":-1,"sprite":"Assets/Sprites/Brick.png"},{"x":-1,"y":0,"sprite":"Assets/Sprites/Brick.png"},{"x":0,"y":0,"sprite":"Assets/Sprites/Brick.png"}],"tints":{"-1,-1":[0,0,1,1],"0,-1":[0,1,0,1],"-1,0":[1,1,1,1],"0,0":[1,0,0,1]}};

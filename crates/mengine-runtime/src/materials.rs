@@ -32,7 +32,7 @@ pub fn resolve_ui_materials(primitives: &mut [UiPrimitive], cache: &mut RuntimeM
     let mut resolved = HashMap::<String, Arc<UiRenderMaterial>>::new();
     for primitive in primitives {
         let key = primitive.key.material.clone();
-        if !is_material_path(&key) {
+        if primitive.render_material.is_some() || !is_material_path(&key) {
             continue;
         }
         let material = Arc::clone(resolved.entry(key.clone()).or_insert_with(|| {
@@ -221,7 +221,9 @@ impl RuntimeMaterialCache {
                 shader: Arc::clone(&shader.source),
                 keywords: bindings.keywords,
                 custom_parameters: bindings.parameters,
+                custom_parameter_bindings: bindings.parameter_bindings,
                 custom_textures: bindings.textures,
+                custom_texture_names: bindings.texture_names,
                 custom_texture_srgb: bindings.texture_srgb,
                 wrap_u: render_wrap(material.wrap_u),
                 wrap_v: render_wrap(material.wrap_v),
@@ -744,25 +746,37 @@ pub fn apply_material_property_block(
     if block.override_emissive_strength {
         material.emissive_strength = finite_or(block.emissive_strength, 1.0).max(0.0);
     }
+    apply_custom_property_block(block, &mut material.custom_parameters, &material.custom_parameter_bindings, &mut material.custom_textures, &material.custom_texture_names);
+    material
+}
+
+
+pub fn apply_ui_material_property_block(material: &mut UiRenderMaterial, block: &MaterialPropertyBlock) {
+    if block.override_base_color {
+        material.base_color = sanitize_color4(block.base_color);
+    }
+    apply_custom_property_block(block, &mut material.custom_parameters, &material.custom_parameter_bindings, &mut material.custom_textures, &material.custom_texture_names);
+}
+
+fn apply_custom_property_block(block: &MaterialPropertyBlock, parameters: &mut [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS], parameter_bindings: &[SurfaceShaderParameterBinding], textures: &mut [String; MAX_SURFACE_SHADER_TEXTURES], texture_names: &[String]) {
     for (name, authored) in block
         .custom_parameter_names
         .iter()
         .zip(&block.custom_parameter_values)
     {
         let name = name.trim();
-        let Some(index) = material
-            .custom_parameter_bindings
+        let Some(index) = parameter_bindings
             .iter()
             .position(|declared| declared.name == name)
         else {
             continue;
         };
-        let binding = &material.custom_parameter_bindings[index];
+        let binding = &parameter_bindings[index];
         let components = usize::from(binding.components).min(4);
         for (component, authored_value) in authored.iter().take(components).enumerate() {
             let mut value = finite_or(
                 *authored_value,
-                material.custom_parameters[index][component],
+                parameters[index][component],
             );
             if let Some(minimum) = binding.min {
                 value = value.max(minimum);
@@ -770,7 +784,7 @@ pub fn apply_material_property_block(
             if let Some(maximum) = binding.max {
                 value = value.min(maximum);
             }
-            material.custom_parameters[index][component] = value;
+            parameters[index][component] = value;
         }
     }
     for (name, path) in block
@@ -779,24 +793,27 @@ pub fn apply_material_property_block(
         .zip(&block.custom_texture_values)
     {
         let name = name.trim();
-        let Some(index) = material
-            .custom_texture_names
+        let Some(index) = texture_names
             .iter()
             .position(|declared| declared == name)
         else {
             continue;
         };
         if let Ok(path) = normalize_property_block_texture_path(path) {
-            material.custom_textures[index] = path;
+            textures[index] = path;
         }
     }
-    material
 }
 
-pub fn validate_material_property_block(
-    block: &MaterialPropertyBlock,
-    material: &RenderMaterial,
-) -> Result<(), String> {
+pub fn validate_material_property_block(block: &MaterialPropertyBlock, material: &RenderMaterial) -> Result<(), String> {
+    validate_custom_property_block(block, &material.custom_parameter_bindings, &material.custom_texture_names)
+}
+
+pub fn validate_ui_material_property_block(block: &MaterialPropertyBlock, material: &UiRenderMaterial) -> Result<(), String> {
+    validate_custom_property_block(block, &material.custom_parameter_bindings, &material.custom_texture_names)
+}
+
+fn validate_custom_property_block(block: &MaterialPropertyBlock, parameter_bindings: &[SurfaceShaderParameterBinding], texture_names: &[String]) -> Result<(), String> {
     if block.custom_parameter_names.len() != block.custom_parameter_values.len() {
         return Err("custom parameter names and values must have equal lengths".into());
     }
@@ -816,8 +833,7 @@ pub fn validate_material_property_block(
                 "MaterialPropertyBlock contains invalid or duplicate custom parameter '{name}'"
             ));
         }
-        if !material
-            .custom_parameter_bindings
+        if !parameter_bindings
             .iter()
             .any(|declared| declared.name == *name)
         {
@@ -850,8 +866,7 @@ pub fn validate_material_property_block(
                 "MaterialPropertyBlock contains invalid or duplicate custom texture '{name}'"
             ));
         }
-        if !material
-            .custom_texture_names
+        if !texture_names
             .iter()
             .any(|declared| declared == name)
         {
@@ -1367,6 +1382,11 @@ mod tests {
     }
 
     #[test]
+    fn tint_brush_shader_compiles_with_reflected_parameters() {
+        validate_ui_shader_hook(include_str!("../../../scripts/templates/unity-tint-smooth.mshader")).unwrap();
+    }
+
+    #[test]
     fn ui_materials_resolve_reflection_and_reject_forward_use() {
         let root = std::env::temp_dir().join(format!("mengine-ui-material-{}", Uuid::new_v4()));
         let materials = root.join("Assets/Materials");
@@ -1413,6 +1433,24 @@ fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
             primitives[0].render_material.as_ref().unwrap(),
             primitives[1].render_material.as_ref().unwrap(),
         ));
+
+        let block = MaterialPropertyBlock { custom_parameter_names: vec!["strength".into()], custom_parameter_values: vec![[3.0, 0.0, 0.0, 0.0]], ..Default::default() };
+        assert!(validate_ui_material_property_block(&block, &ui).is_ok());
+        let mut world = mengine_core::World::new();
+        for strength in [3.0, 4.0] {
+            let entity = world.spawn_empty();
+            world.insert_component(entity, mengine_core::generated::Transform::default());
+            world.insert_component(entity, mengine_core::generated::SpriteRenderer { material: material_key.into(), ..Default::default() });
+            world.insert_component(entity, MaterialPropertyBlock { custom_parameter_values: vec![[strength, 0.0, 0.0, 0.0]], ..block.clone() });
+        }
+        let camera = mengine_rhi::FrameCamera { view: mengine_rhi::look_at(glam::Vec3::new(0.0, 0.0, 10.0), glam::Vec3::ZERO, glam::Vec3::Y), proj: mengine_rhi::orthographic(5.0, 1.0, 0.01, 100.0), position: glam::Vec3::new(0.0, 0.0, 10.0) };
+        let hierarchy = mengine_core::TransformHierarchy::build(&world);
+        let mut sprites = crate::sprites::collect_world_primitives_with_materials(&world, &hierarchy, camera, [100, 100], Some(&mut cache)).into_iter().map(|value| value.primitive).collect::<Vec<_>>();
+        resolve_ui_materials(&mut sprites, &mut cache);
+        let mut strengths = sprites.iter().map(|value| value.render_material.as_ref().unwrap().custom_parameters[0][0] as i32).collect::<Vec<_>>();
+        strengths.sort();
+        assert_eq!(strengths, [3, 4]);
+        assert_eq!(cache.resolve_ui(material_key).unwrap().custom_parameters[0][0], 2.0, "entity overrides must not mutate the shared material");
 
         let forward = cache.resolve(material_key).unwrap();
         assert!(

@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scene": "Assets/Tilemap/Brushes/Tint Brush/TintBrushExample.unity",
+  "license": "MIT",
+  "sourceCells": 4,
+  "tintProperties": 4,
+  "adaptations": [
+    "Original cells, Brick sprite, camera and tint data are retained.",
+    "The editor-only brush is playable with paint, white erase, color pick, blend, undo and reset.",
+    "Sprite materials and per-entity MaterialPropertyBlock share the runtime shader and reflection paths. ACES is disabled for source Gamma scenes."
+  ]
+}

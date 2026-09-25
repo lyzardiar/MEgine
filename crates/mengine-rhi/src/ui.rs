@@ -8,7 +8,7 @@ use std::sync::Arc;
 use thiserror::Error;
 use wgpu::util::DeviceExt;
 
-use crate::renderer::{MaterialFilter, MaterialWrap};
+use crate::renderer::{MaterialFilter, MaterialWrap, SurfaceShaderParameterBinding};
 
 const UI_MATERIAL_CACHE_GRACE_FRAMES: u64 = 120;
 const MAX_CACHED_UI_MATERIALS: usize = 128;
@@ -39,7 +39,9 @@ pub struct UiRenderMaterial {
     pub shader: Arc<str>,
     pub keywords: Vec<String>,
     pub custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+    pub custom_parameter_bindings: Arc<[SurfaceShaderParameterBinding]>,
     pub custom_textures: [String; MAX_SURFACE_SHADER_TEXTURES],
+    pub custom_texture_names: Arc<[String]>,
     pub custom_texture_srgb: [bool; MAX_SURFACE_SHADER_TEXTURES],
     pub wrap_u: MaterialWrap,
     pub wrap_v: MaterialWrap,
@@ -57,7 +59,9 @@ impl Default for UiRenderMaterial {
             shader: Arc::from(""),
             keywords: Vec::new(),
             custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+            custom_parameter_bindings: Arc::from(Vec::new()),
             custom_textures: std::array::from_fn(|_| String::new()),
+            custom_texture_names: Arc::from(Vec::new()),
             custom_texture_srgb: [false; MAX_SURFACE_SHADER_TEXTURES],
             wrap_u: MaterialWrap::Clamp,
             wrap_v: MaterialWrap::Clamp,
@@ -301,7 +305,7 @@ impl UiBatchPlan {
         for (index, primitive) in primitives.iter().enumerate() {
             let index = index as u32;
             if let Some(tail) = batches.last_mut() {
-                if tail.key == primitive.key {
+                if tail.key == primitive.key && same_ui_material_bindings(primitives[tail.start as usize].render_material.as_ref(), primitive.render_material.as_ref()) {
                     tail.end = index + 1;
                     continue;
                 }
@@ -320,6 +324,15 @@ impl UiBatchPlan {
 
     pub fn is_empty(&self) -> bool {
         self.primitives.is_empty()
+    }
+}
+
+// Per-instance colors and parameters batch together; textures and pipeline state cannot.
+fn same_ui_material_bindings(left: Option<&Arc<UiRenderMaterial>>, right: Option<&Arc<UiRenderMaterial>>) -> bool {
+    match (left, right) {
+        (None, None) => true,
+        (Some(a), Some(b)) => Arc::ptr_eq(a, b) || (a.shader == b.shader && a.keywords == b.keywords && a.is_error == b.is_error && a.custom_textures == b.custom_textures && a.custom_texture_srgb == b.custom_texture_srgb && a.wrap_u == b.wrap_u && a.wrap_v == b.wrap_v && a.filter == b.filter && a.mipmap_filter == b.mipmap_filter && a.anisotropy == b.anisotropy),
+        _ => false,
     }
 }
 
@@ -2456,6 +2469,19 @@ mod tests {
         assert_eq!(plan.batches[0].key.canvas_group, Some(1));
         assert_eq!(plan.batches[1].key.canvas_group, Some(2));
         assert_eq!(plan.batches[2].key.canvas_group, Some(1));
+    }
+
+    #[test]
+    fn resolved_material_textures_split_batches_but_parameters_do_not() {
+        let mut first = UiPrimitive::solid([0.0; 4], [1.0; 4]);
+        first.render_material = Some(Arc::new(UiRenderMaterial::default()));
+        let mut parameters = first.clone();
+        Arc::make_mut(parameters.render_material.as_mut().unwrap()).custom_parameters[0] = [0.5; 4];
+        let mut texture = first.clone();
+        Arc::make_mut(texture.render_material.as_mut().unwrap()).custom_textures[0] = "other.png".into();
+        let plan = UiBatchPlan::build(vec![first, parameters, texture]);
+        assert_eq!(plan.batches.len(), 2);
+        assert_eq!(plan.batches[0].end, 2);
     }
 
     #[test]

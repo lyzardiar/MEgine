@@ -1876,17 +1876,22 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
   }
 });
 
-test('buildPcPackage collects UI Graphic materials and enforces the UI Shader domain', () => {
+for (const componentType of ['Image', 'SpriteRenderer', 'AnimatedSprite2D']) test(`buildPcPackage collects ${componentType} materials and enforces the UI Shader domain`, () => {
   const paths = fixture('custom-ui-shader');
   try {
+    const projectPath = join(paths.project, 'project.json');
+    const project = JSON.parse(readFileSync(projectPath, 'utf8'));
+    writeFileSync(projectPath, JSON.stringify({ ...project, assetMode: 'referenced' }));
     mkdirSync(join(paths.project, 'Assets', 'Shaders'), { recursive: true });
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
       world: { entities: [{ components: {
-        Image: {
+        [componentType]: {
           enabled: true,
           material: 'Assets/Materials/GlowUi.mmat',
           sprite: 'white',
+          frames: ['white'],
         },
+        ...(componentType === 'Image' ? {} : { MaterialPropertyBlock: { custom_parameter_names: ['strength'], custom_parameter_values: [[.5, 0, 0, 0]] } }),
       } }] },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Materials', 'GlowUi.mmat'), JSON.stringify({
@@ -1902,7 +1907,7 @@ test('buildPcPackage collects UI Graphic materials and enforces the UI Shader do
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'ui-detail.png'), 'ui-detail');
     const uiShader = `
       /* MENGINE_PARAMETERS
-      {"textures":[{"name":"detail","type":"color","default":""}]}
+      {"parameters":[{"name":"strength","type":"float","default":1}],"textures":[{"name":"detail","type":"color","default":""}]}
       */
       fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
         return mengine_ui_main_texture(input.uv0)
@@ -1930,9 +1935,25 @@ test('buildPcPackage collects UI Graphic materials and enforces the UI Shader do
       depthWrite: false,
     }]);
 
+    if (componentType !== 'Image') {
+      writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Mesh.mshader'), `
+        /* MENGINE_PARAMETERS {"parameters":[{"name":"meshOnly","type":"float","default":1}]} */
+        fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface { return surface; }
+      `);
+      writeFileSync(join(paths.project, 'Assets', 'Materials', 'Mesh.mmat'), JSON.stringify({ version: 10, shader: 'custom', custom_shader: 'Assets/Shaders/Mesh.mshader' }));
+      const scenePath = join(paths.project, 'Assets', 'Scenes', 'Main.mscene');
+      const sourceScene = readFileSync(scenePath, 'utf8');
+      const mixed = JSON.parse(sourceScene);
+      mixed.world.entities[0].components.MeshRenderer = { mesh: 'cube', material: 'Assets/Materials/Mesh.mmat' };
+      mixed.world.entities[0].components.MaterialPropertyBlock.custom_parameter_names = ['meshOnly'];
+      writeFileSync(scenePath, JSON.stringify(mixed));
+      assert.throws(() => buildPcPackage({ projectDir: paths.project, outputDir: join(paths.root, 'MixedRenderer'), runtimePath: paths.runtime, engineVersion: 'test-engine' }), /MaterialPropertyBlock.*parameter 'meshOnly' is not declared/i);
+      writeFileSync(scenePath, sourceScene);
+    }
+
     writeFileSync(shaderPath, `
       /* MENGINE_PARAMETERS
-      {"textures":[{"name":"detail","type":"color","default":""}]}
+      {"parameters":[{"name":"strength","type":"float","default":1}],"textures":[{"name":"detail","type":"color","default":""}]}
       */
       fn mengine_lit_surface_hook(
         surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>

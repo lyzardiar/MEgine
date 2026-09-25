@@ -60,6 +60,8 @@ test('official Effekseer sample packages its real effect dependency closure', ()
     assert.deepEqual(manifest.project.buildScenes, [
       'Assets/Scenes/Main.mscene',
       'Assets/Scenes/UI.mscene',
+      'Assets/Scenes/AgentCombat.mscene',
+      'Assets/Scenes/CombatSeries.mscene',
     ]);
     for (const dependency of [
       'Assets/Effects/ef_fire01.efkefc',

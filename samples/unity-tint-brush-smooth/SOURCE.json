@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scene": "Assets/Tilemap/Brushes/Tint Brush Smooth/Tint Brush Smooth.unity",
+  "license": "MIT",
+  "sourceCells": 64,
+  "tintProperties": 40,
+  "adaptations": [
+    "Original cells, Brick sprite, camera and tint data are retained.",
+    "The editor-only brush is playable with paint, white erase, color pick, blend, undo and reset.",
+    "Smooth tint uses nine neighboring Gamma color samples per sprite and fragment bilinear interpolation, including ARGB32 quantization. This is equivalent to sampling the source 1-texel-per-cell tint map over this fixed rectangular grid.",
+    "Sprite materials and per-entity MaterialPropertyBlock share the runtime shader and reflection paths. ACES is disabled for source Gamma scenes."
+  ]
+}

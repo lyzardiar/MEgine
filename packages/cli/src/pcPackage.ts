@@ -1240,12 +1240,15 @@ function scanBuildAssetDependencies(
         throw new Error(`invalid MaterialPropertyBlock in ${from}: duplicate custom texture name`);
       }
       if (parameters.length > 0 || textures.length > 0) {
-        materialPropertyBlockBindings.push({
-          source: from,
-          material: stringValue(meshRenderer, 'material').replaceAll('\\', '/').toLowerCase(),
-          parameters,
-          textures,
-        });
+        const renderers = [meshRenderer, component('AnimatedSprite2D') ?? component('SpriteRenderer')].filter(Boolean);
+        for (const renderer of renderers.length ? renderers : [null]) {
+          materialPropertyBlockBindings.push({
+            source: from,
+            material: stringValue(renderer, 'material').replaceAll('\\', '/').toLowerCase(),
+            parameters,
+            textures,
+          });
+        }
       }
     }
     enqueue(
@@ -1281,7 +1284,7 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('Image'), 'sprite'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('Text'), 'font'), from, 'UI font');
-    for (const name of ['Image', 'RawImage', 'Text', 'Panel']) {
+    for (const name of ['Image', 'RawImage', 'Text', 'Panel', 'SpriteRenderer', 'AnimatedSprite2D']) {
       enqueueMaterial(stringValue(component(name), 'material'), from, 'ui');
     }
   };

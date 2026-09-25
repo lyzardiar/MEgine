@@ -2457,6 +2457,8 @@ export function Inspector(props: {
                 data={data}
                 materialPath={String(
                   (entity.components.MeshRenderer as Record<string, unknown> | undefined)?.material
+                    ?? (entity.components.AnimatedSprite2D as Record<string, unknown> | undefined)?.material
+                    ?? (entity.components.SpriteRenderer as Record<string, unknown> | undefined)?.material
                     ?? 'default',
                 )}
                 entities={props.entities ?? [entity]}

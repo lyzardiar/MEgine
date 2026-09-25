@@ -1,0 +1,203 @@
+{
+  "version": 3,
+  "name": "Tint Brush",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ]
+          },
+          "Camera2D": {
+            "size": 5
+          },
+          "EnvironmentLight": {
+            "background_enabled": false,
+            "tone_mapping": false
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Tile -1 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -0.5,
+              0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              0,
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Tile 0 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -0.5,
+              0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Tile -1 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              0.5,
+              0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Tile 0 0",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              0.5,
+              0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Controls",
+        "components": {
+          "Canvas": {},
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              960,
+              540
+            ]
+          },
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "parent": 6,
+        "name": "Brush Controls",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              16,
+              40
+            ],
+            "size_delta": [
+              260,
+              180
+            ]
+          },
+          "Text": {
+            "text": "Tint Brush\n1/2/3/4/5: color\nLeft: paint    Right: white\nMiddle: pick color\nB: blend 100% / 50% / 0%\nZ: undo    R: reset\nH: show / hide controls",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 18,
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0.03071344589670157,
+      0.0742135762071233,
+      0.1912016793422798,
+      1
+    ]
+  }
+}
