@@ -1,0 +1,16 @@
+{
+  "version": 10,
+  "name": "Point sampled tiled sprite",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Sprite.mshader",
+  "surface": "transparent",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "wrap_u": "repeat",
+  "wrap_v": "repeat",
+  "filter": "nearest"
+}

@@ -1,0 +1,3493 @@
+{
+  "version": 3,
+  "name": "PhysicsMaterial2D_Friction",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ]
+          },
+          "Camera2D": {
+            "size": 3
+          },
+          "EnvironmentLight": {
+            "background_enabled": false,
+            "tone_mapping": false
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Crate 308851410:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              0.40000000000000036,
+              0.20000000000000007,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.8,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Crate 1781263941:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              0.40000000000000036,
+              1.4,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.7,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Crate 355122405:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.6,
+              1.4,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Crate 1316067412:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.6,
+              0.20000000000000007,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.3,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Crate 218221355:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.6,
+              2.6,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.1,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Crate 520304822:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.6,
+              -1.0,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.4,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Crate 58710852:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              0.40000000000000036,
+              -2.1999999999999997,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 1,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Crate 183977749:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              0.40000000000000036,
+              -1.0,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.9,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Crate 108030969:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.6,
+              -2.1999999999999997,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.5,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Crate 1943821956:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              0.40000000000000036,
+              2.6,
+              0
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": false,
+            "ccd": true,
+            "velocity": [
+              3,
+              0
+            ],
+            "angular_velocity": 0
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.6,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Ledge2 101300992:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              0.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "GrassLedgeLeft 101300992:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.53,
+              0.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "GrassLedgeMiddle 101300992:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.66,
+              0.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "GrassLedgeRight 101300992:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.79,
+              0.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Ledge5 247099291:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              -2.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "GrassLedgeLeft 247099291:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.53,
+              -2.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "GrassLedgeMiddle 247099291:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.66,
+              -2.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "GrassLedgeRight 247099291:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.79,
+              -2.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Ledge3 325775542:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              -0.3999999999999999,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "GrassLedgeLeft 325775542:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.53,
+              -0.3999999999999999,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "GrassLedgeMiddle 325775542:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.66,
+              -0.3999999999999999,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "GrassLedgeRight 325775542:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.79,
+              -0.3999999999999999,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Ledge10 521947376:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              5.0,
+              -2.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "GrassLedgeLeft 521947376:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              0.46999999999999975,
+              -2.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "GrassLedgeMiddle 521947376:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              2.34,
+              -2.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "GrassLedgeRight 521947376:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              4.21,
+              -2.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Ledge7 611682042:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              5.0,
+              0.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "GrassLedgeLeft 611682042:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              0.46999999999999975,
+              0.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "GrassLedgeMiddle 611682042:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              2.34,
+              0.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "GrassLedgeRight 611682042:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              4.21,
+              0.8,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Ledge6 857530905:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              5.0,
+              2.0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "GrassLedgeLeft 857530905:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              0.46999999999999975,
+              2.0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "GrassLedgeMiddle 857530905:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              2.34,
+              2.0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "GrassLedgeRight 857530905:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              4.21,
+              2.0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Ledge9 1086893603:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              5.0,
+              -1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "GrassLedgeLeft 1086893603:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              0.46999999999999975,
+              -1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "GrassLedgeMiddle 1086893603:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              2.34,
+              -1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "GrassLedgeRight 1086893603:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              4.21,
+              -1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Ledge4 1264258405:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              -1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "GrassLedgeLeft 1264258405:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.53,
+              -1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "GrassLedgeMiddle 1264258405:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.66,
+              -1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "GrassLedgeRight 1264258405:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.79,
+              -1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "Ledge8 1351750228:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              5.0,
+              -0.3999999999999999,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "GrassLedgeLeft 1351750228:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              0.46999999999999975,
+              -0.3999999999999999,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "GrassLedgeMiddle 1351750228:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              2.34,
+              -0.3999999999999999,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "GrassLedgeRight 1351750228:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              4.21,
+              -0.3999999999999999,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "Ledge1 1434336702:1563923424470800",
+        "components": {
+          "Transform": {
+            "position": [
+              0.0,
+              2.0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "BoxCollider2D": {
+            "offset": [
+              -2.66,
+              0.15
+            ],
+            "is_trigger": false,
+            "friction": 0.2,
+            "bounciness": 0,
+            "size": [
+              4.45,
+              0.4
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 49,
+        "name": "GrassLedgeLeft 1434336702:1706488546437572",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.53,
+              2.0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfLeft.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 50,
+        "name": "GrassLedgeMiddle 1434336702:1038613864066224",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.66,
+              2.0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              3.040105,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                4.343007142857143,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 51,
+        "name": "GrassLedgeRight 1434336702:1458182006216024",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.79,
+              2.0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassHalfRight.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 8
+          }
+        }
+      },
+      {
+        "entity": 52,
+        "name": "Labels",
+        "components": {
+          "Canvas": {},
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              960,
+              540
+            ]
+          },
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "entity": 53,
+        "parent": 52,
+        "name": "Label s:116044244",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              412.79999999999995,
+              357.3
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.9",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 54,
+        "parent": 52,
+        "name": "Label s:155919602",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              532.5,
+              9.0
+            ],
+            "size_delta": [
+              420,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Objects with lower Friction should travel further.",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Right",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 55,
+        "parent": 52,
+        "name": "Label s:238940626",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              -37.19999999999999,
+              141.29999999999998
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.2",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 56,
+        "parent": 52,
+        "name": "Label s:244402766",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              943.5,
+              360.0
+            ],
+            "size_delta": [
+              420,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Left-Mouse: Drag Object",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 57,
+        "parent": 52,
+        "name": "Label s:609275126",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              412.79999999999995,
+              141.29999999999998
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.7",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 58,
+        "parent": 52,
+        "name": "Label s:1024518277",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              412.79999999999995,
+              465.29999999999995
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 1.0",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 59,
+        "parent": 52,
+        "name": "Label s:1157111981",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              412.79999999999995,
+              249.29999999999998
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.8",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 60,
+        "parent": 52,
+        "name": "Label s:1523444594",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              -37.19999999999999,
+              33.30000000000001
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.1",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 61,
+        "parent": 52,
+        "name": "Label s:1664110844",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              412.79999999999995,
+              33.30000000000001
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.6",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 62,
+        "parent": 52,
+        "name": "Label s:1815535316",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              -37.19999999999999,
+              249.29999999999998
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.3",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 63,
+        "parent": 52,
+        "name": "Label s:1860487556",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              -37.19999999999999,
+              465.29999999999995
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.5",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 64,
+        "parent": 52,
+        "name": "Label s:1968360473",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              -37.19999999999999,
+              357.3
+            ],
+            "size_delta": [
+              210,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Friction = 0.4",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 65,
+        "parent": 52,
+        "name": "Playback Controls",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              350,
+              514
+            ],
+            "size_delta": [
+              320,
+              24
+            ]
+          },
+          "Text": {
+            "text": "R: restart    H: show / hide labels",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0,
+      0,
+      0,
+      1
+    ]
+  }
+}

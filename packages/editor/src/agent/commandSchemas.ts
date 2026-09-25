@@ -783,6 +783,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Width and height of the Game content in pixels' },
   }),
   'playback.step': objectSchema({
+    steps: { type: 'integer', minimum: 1, maximum: 600, description: 'Number of sequential deterministic steps; default 1. Held input continues; press/release edges are consumed once.' },
     deltaTime: {
       type: 'number',
       exclusiveMinimum: 0,

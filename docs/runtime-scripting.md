@@ -66,7 +66,7 @@ function onTick(dt: number): void {
 
 键盘采用物理按键代码，例如 `KeyA`、`ArrowLeft` 和 `Space`。失焦释放输入。
 Agent 可调用 `playback.input`（MCP `set_game_input`）设置 held 状态，结合 `playback.pause`
-和 `playback.step` 做可重复的交互验收。`playback.play {paused:true}` 在首帧前暂停，避免初始化后自动推进。Play 和 Step 的返回值会等待脚本完成，截图会等待新帧。
+和 `playback.step` 做可重复的交互验收。`playback.play {paused:true}` 在首帧前暂停，避免初始化后自动推进。`playback.step {deltaTime:0.02, steps:100}` 顺序执行 100 帧；`steps` 默认为 1，范围为 1–600。按住的输入保持，按下/释放边沿仅在首帧消费；用户停止播放会中断剩余步数。Play 和 Step 的返回值会等待脚本完成，截图会等待新帧。批量步进的 MCP 超时为 5 分钟。
 
 ## 色调映射
 

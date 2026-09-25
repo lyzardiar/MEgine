@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "sourceDynamicBodies": 10,
+  "sourceSpawners": 0,
+  "settledBodies": 10,
+  "reboundHeights": [
+    0,
+    0,
+    0.09668354988098127,
+    0.3026150941848753,
+    0.5872724533081053,
+    0.9521252393722532,
+    1.395701992511749,
+    1.9194749176502226,
+    2.5219717651605604,
+    3.204666185379028
+  ],
+  "stableEntityIds": true,
+  "reset": true,
+  "stopRestoresAuthored": true,
+  "restartExact": true
+}

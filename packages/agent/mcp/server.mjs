@@ -532,7 +532,7 @@ function rpcOnce(
       cleanup();
       if (activeConnection?.socket === socket) activeConnection = null;
       try {
-        socket.close(1011, 'AgentBridge request timed out');
+        socket.close(4000, 'AgentBridge request timed out');
       } catch {
         // The timeout error below remains authoritative even if the socket
         // implementation is already closing.
@@ -673,7 +673,7 @@ function bridgeExecuteParams(command, args = {}, options = {}) {
 }
 
 async function bridgeExecute(command, args = {}, options = {}) {
-  const longRunning = command === 'build.verify';
+  const longRunning = command === 'build.verify' || (command === 'playback.step' && args.steps > 1);
   return await rpc(
     'execute',
     bridgeExecuteParams(command, args, options),
@@ -3841,9 +3841,10 @@ const TOOLS = [
   execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}, []),
   execTool(
     'step',
-    'Advance paused Play Mode by one deterministic simulation step while remaining paused.',
+    'Advance paused Play Mode by 1–600 deterministic simulation steps while remaining paused. Held input continues; press/release edges are consumed once.',
     'playback.step',
     {
+      steps: { type: 'integer', minimum: 1, maximum: 600, description: 'Number of steps; default 1' },
       deltaTime: {
         type: 'number',
         exclusiveMinimum: 0,

@@ -312,6 +312,23 @@ export interface CircleCollider2D {
   bounciness: number;
 }
 
+export interface EdgeCollider2D {
+  points: [number, number][];
+  offset: [number, number];
+  isTrigger: boolean;
+  friction: number;
+  bounciness: number;
+}
+
+export interface TargetJoint2D {
+  enabled: boolean;
+  anchor: [number, number];
+  target: [number, number];
+  maxForce: number;
+  frequency: number;
+  dampingRatio: number;
+}
+
 export interface Layer {
   value: number;
 }
@@ -1041,6 +1058,21 @@ export type SerializedComponentMap = {
     friction: number;
     bounciness: number;
   };
+  EdgeCollider2D: {
+    points: [number, number][];
+    offset: [number, number];
+    is_trigger: boolean;
+    friction: number;
+    bounciness: number;
+  };
+  TargetJoint2D: {
+    enabled: boolean;
+    anchor: [number, number];
+    target: [number, number];
+    max_force: number;
+    frequency: number;
+    damping_ratio: number;
+  };
   Layer: {
     value: number;
   };
@@ -1485,6 +1517,8 @@ export type ComponentName =
   | 'Rigidbody2D'
   | 'BoxCollider2D'
   | 'CircleCollider2D'
+  | 'EdgeCollider2D'
+  | 'TargetJoint2D'
   | 'Layer'
   | 'EditorOnly'
   | 'AutoRotate'
@@ -1554,6 +1588,8 @@ export const COMPONENT_NAMES = [
   'Rigidbody2D',
   'BoxCollider2D',
   'CircleCollider2D',
+  'EdgeCollider2D',
+  'TargetJoint2D',
   'Layer',
   'EditorOnly',
   'AutoRotate',

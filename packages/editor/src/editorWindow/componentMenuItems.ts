@@ -15,6 +15,8 @@ const COMPONENT_GROUPS: Record<string, string> = {
   Rigidbody2D: 'Physics 2D',
   BoxCollider2D: 'Physics 2D',
   CircleCollider2D: 'Physics 2D',
+  EdgeCollider2D: 'Physics 2D',
+  TargetJoint2D: 'Physics 2D',
   MeshRenderer: 'Rendering',
   PbrMaterial: 'Rendering',
   MaterialPropertyBlock: 'Rendering',

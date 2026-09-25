@@ -90,6 +90,10 @@ export const BoxCollider2D = defineBuiltinComponent('BoxCollider2D');
 export type BoxCollider2D = BuiltinComponents['BoxCollider2D'];
 export const CircleCollider2D = defineBuiltinComponent('CircleCollider2D');
 export type CircleCollider2D = BuiltinComponents['CircleCollider2D'];
+export const EdgeCollider2D = defineBuiltinComponent('EdgeCollider2D');
+export type EdgeCollider2D = BuiltinComponents['EdgeCollider2D'];
+export const TargetJoint2D = defineBuiltinComponent('TargetJoint2D');
+export type TargetJoint2D = BuiltinComponents['TargetJoint2D'];
 export const Layer = defineBuiltinComponent('Layer');
 export type Layer = BuiltinComponents['Layer'];
 export const EditorOnly = defineBuiltinComponent('EditorOnly');
@@ -198,6 +202,8 @@ export const BUILTIN_COMPONENT_TYPES = {
   Rigidbody2D,
   BoxCollider2D,
   CircleCollider2D,
+  EdgeCollider2D,
+  TargetJoint2D,
   Layer,
   EditorOnly,
   AutoRotate,

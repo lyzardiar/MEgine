@@ -57,6 +57,8 @@ import {
   drawBoxCollider2DGizmo,
   drawBoxColliderGizmo,
   drawCircleCollider2DGizmo,
+  drawEdgeCollider2DGizmo,
+  drawTargetJoint2DGizmo,
   drawDirectionalLightGizmo,
   drawPointLightGizmo,
   drawSphereColliderGizmo,
@@ -1690,7 +1692,9 @@ export function Viewport(props: {
           !!e.components.BoxCollider3D ||
           !!e.components.SphereCollider3D ||
           !!e.components.BoxCollider2D ||
-          !!e.components.CircleCollider2D;
+          !!e.components.CircleCollider2D ||
+          !!e.components.EdgeCollider2D ||
+          !!e.components.TargetJoint2D;
         const entries: Array<{
           e: Ent;
           t: TransformData;
@@ -2402,6 +2406,8 @@ export function Viewport(props: {
         if (sphere) drawSphereColliderGizmo(ctx, cam, vp, t, sphere);
         if (box2D) drawBoxCollider2DGizmo(ctx, cam, vp, t, box2D);
         if (circle2D) drawCircleCollider2DGizmo(ctx, cam, vp, t, circle2D);
+        if (e.components.EdgeCollider2D) drawEdgeCollider2DGizmo(ctx, cam, vp, t, e.components.EdgeCollider2D as { points?: number[][]; offset?: number[]; is_trigger?: boolean });
+        if (e.components.TargetJoint2D) drawTargetJoint2DGizmo(ctx, cam, vp, t, e.components.TargetJoint2D as { enabled?: boolean; anchor?: number[]; target?: number[] });
       }
     }
 

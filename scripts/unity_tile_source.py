@@ -42,11 +42,11 @@ def gamma_scene(world):
 
 
 class UnityTiles:
-    def __init__(self, source, output):
+    def __init__(self, source, output, commit=COMMIT):
         self.source, self.output = Path(source).resolve(), Path(output)
         revision = subprocess.check_output(["git", "-C", str(self.source), "rev-parse", "HEAD"], text=True).strip()
-        if revision != COMMIT:
-            raise ValueError(f"Expected Unity 2d-techdemos commit {COMMIT}")
+        if revision != commit:
+            raise ValueError(f"Expected Unity source commit {commit}")
         for folder in ["Assets/Scenes", "Assets/Scripts", "Assets/Sprites"]:
             (self.output / folder).mkdir(parents=True, exist_ok=True)
         self.paths, self.imported = {}, {}

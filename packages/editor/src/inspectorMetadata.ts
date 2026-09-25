@@ -326,6 +326,18 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     friction: { min: 0, step: 0.01 },
     bounciness: { min: 0, max: 1, step: 0.01 },
   },
+  EdgeCollider2D: {
+    points: { kind: 'vector2-list' },
+    friction: { min: 0, step: 0.01 },
+    bounciness: { min: 0, max: 1, step: 0.01 },
+  },
+  TargetJoint2D: {
+    anchor: { label: 'Local Anchor', step: 0.01 },
+    target: { label: 'World Target', step: 0.01 },
+    max_force: { label: 'Max Force', min: 0, step: 10 },
+    frequency: { label: 'Frequency (Hz)', min: 0, max: 60, step: 0.1 },
+    damping_ratio: { label: 'Damping Ratio', min: 0, max: 1, step: 0.01 },
+  },
   SpriteRenderer: {
     sprite,
     material: materialAsset,

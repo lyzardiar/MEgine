@@ -1,0 +1,1372 @@
+{
+  "version": 3,
+  "name": "PhysicsMaterial2D_Bounce",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ]
+          },
+          "Camera2D": {
+            "size": 3
+          },
+          "EnvironmentLight": {
+            "background_enabled": false,
+            "tone_mapping": false
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Ground s:130082706",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -3,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "EdgeCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0,
+            "points": [
+              [
+                -5.4,
+                0.35
+              ],
+              [
+                5.4,
+                0.35
+              ]
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              12,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                17.142857142857142,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 9
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Crate2 147580322:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.1,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.1,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Crate9 426849871:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              3.2,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.8,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Crate6 731812171:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.5,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Crate5 1003297081:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.3999999999999999,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.4,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Crate1 1119761114:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.0,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Crate8 1315986519:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              2.3,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.7,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Crate10 1376091529:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              4.1,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.9,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Crate7 1385060262:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              1.4000000000000004,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.6,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Crate3 1459626688:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.2,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.2,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Crate4 2006153459:1033520549217764",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.2999999999999998,
+              1.6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 1,
+            "gravity_scale": 1,
+            "linear_damping": 0,
+            "angular_damping": 0.05,
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0,
+            "bounciness": 0.3,
+            "size": [
+              0.7,
+              0.7
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/boxAlt.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              0.7,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                1.0,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 0
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Labels",
+        "components": {
+          "Canvas": {},
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              960,
+              540
+            ]
+          },
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "parent": 13,
+        "name": "Label s:4232673",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              325.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.3",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "parent": 13,
+        "name": "Label s:209291886",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              649.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.7",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "parent": 13,
+        "name": "Label s:524240964",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              568.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.6",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "parent": 13,
+        "name": "Label s:919970638",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              730.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.8",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "parent": 13,
+        "name": "Label s:1076514160",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              406.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.4",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "parent": 13,
+        "name": "Label s:1289448502",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              163.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.1",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "parent": 13,
+        "name": "Label s:1408686471",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              82.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.0",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "parent": 13,
+        "name": "Label s:1464768969",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              270.0,
+              4.5
+            ],
+            "size_delta": [
+              420,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Objects with lower Bounce should bounce less.\nBounce = 0 should not Bounce.",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "parent": 13,
+        "name": "Label s:1543395986",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              487.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.5",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "parent": 13,
+        "name": "Label s:1633987637",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              811.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.9",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "parent": 13,
+        "name": "Label s:1700298949",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              244.0,
+              35.0
+            ],
+            "size_delta": [
+              76,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Bounce\n0.2",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "parent": 13,
+        "name": "Playback Controls",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              350,
+              514
+            ],
+            "size_delta": [
+              320,
+              24
+            ]
+          },
+          "Text": {
+            "text": "R: restart    H: show / hide labels",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0,
+      0,
+      0,
+      1
+    ]
+  }
+}

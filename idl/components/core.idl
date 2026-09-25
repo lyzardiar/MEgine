@@ -353,6 +353,25 @@ component CircleCollider2D {
   bounciness:  float  = 0
 }
 
+/// Open local-space polyline; adjacent points form two-sided collision edges.
+component EdgeCollider2D {
+  points:      float2_array = []
+  offset:      float2 = [0, 0]
+  is_trigger:  bool   = false
+  friction:    float  = 0.5
+  bounciness:  float  = 0
+}
+
+/// Spring-damped constraint from this dynamic body's local anchor to a world target.
+component TargetJoint2D {
+  enabled:       bool   = true
+  anchor:        float2 = [0, 0]
+  target:        float2 = [0, 0]
+  max_force:     float  = 1000
+  frequency:     float  = 5
+  damping_ratio: float  = 0.7
+}
+
 component Layer {
   value: int = 0
 }

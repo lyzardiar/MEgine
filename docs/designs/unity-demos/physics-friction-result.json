@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "sourceDynamicBodies": 10,
+  "sourceSpawners": 0,
+  "settledBodies": 10,
+  "slideDistances": [
+    3.190575957298279,
+    2.2450034618377686,
+    1.8275322914123535,
+    1.5795230865478516,
+    1.410804271697998,
+    1.2867232263088226,
+    1.190576285123825,
+    1.113370031118393,
+    1.0496277511119843,
+    0.9957160651683807
+  ],
+  "nativeDragAndRelease": true,
+  "stableEntityIds": true,
+  "reset": true,
+  "stopRestoresAuthored": true,
+  "restartExact": true
+}

@@ -403,6 +403,27 @@ export function drawCircleCollider2DGizmo(
   }
 }
 
+export function drawEdgeCollider2DGizmo(ctx: CanvasRenderingContext2D, viewCam: Camera, vp: Vp, transform: TransformLike, collider: { points?: number[][]; offset?: number[]; is_trigger?: boolean }) {
+  const { origin, right, up, scale3 } = colliderOrigin(transform, collider.offset);
+  const points = (collider.points ?? []).slice(0, 4096);
+  if (points.some(point => !Number.isFinite(point[0]) || !Number.isFinite(point[1]))) return;
+  const world = points.map(point => add(origin, add(scale(right, point[0] * scale3[0]), scale(up, point[1] * scale3[1]))));
+  for (let i = 1; i < world.length; i++) strokeWorldSeg(ctx, viewCam, vp, world[i - 1], world[i], collider.is_trigger ? '#ffd76a' : '#87b7ab', 1);
+}
+
+export function drawTargetJoint2DGizmo(ctx: CanvasRenderingContext2D, viewCam: Camera, vp: Vp, transform: TransformLike, joint: { enabled?: boolean; anchor?: number[]; target?: number[] }) {
+  if (joint.enabled === false || !joint.target || joint.target.length < 2 || !joint.target.every(Number.isFinite)) return;
+  const { origin } = colliderOrigin(transform, joint.anchor);
+  const target: Vec3 = [joint.target[0], joint.target[1], transform.position[2]];
+  ctx.save();
+  ctx.setLineDash([3, 3]);
+  strokeWorldSeg(ctx, viewCam, vp, origin, target, '#70c7d4', 1);
+  ctx.setLineDash([]);
+  strokeWorldSeg(ctx, viewCam, vp, add(target, [-0.08, 0, 0]), add(target, [0.08, 0, 0]), '#70c7d4', 1);
+  strokeWorldSeg(ctx, viewCam, vp, add(target, [0, -0.08, 0]), add(target, [0, 0.08, 0]), '#70c7d4', 1);
+  ctx.restore();
+}
+
 export function drawCamera2DGizmo(
   ctx: CanvasRenderingContext2D,
   viewCam: Camera,

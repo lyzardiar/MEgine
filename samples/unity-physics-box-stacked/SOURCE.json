@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/Unity-Technologies/PhysicsExamples2D",
+  "commit": "873d60529b7e4735bdc8821048e728e42d3a0fad",
+  "branch": "archive/2019",
+  "scene": "Assets/Scenes/Colliders/BoxCollider2D_Stacked.unity",
+  "license": "Unlicense; Kenney Platformer Art CC0",
+  "sourceDynamicBodies": 0,
+  "sourceSpawners": 9,
+  "adaptations": [
+    "Prefab overrides, removed components and transform parent chains are applied before import.",
+    "Authored collider materials are flattened to friction/bounciness fields. Rapier2D uses geometric-mean friction and maximum restitution; solver trajectories can differ from Unity Box2D.",
+    "Open EdgeCollider2D bounds and TargetJoint2D dragging run in the native physics solver. Joint total force is conservatively split between two world-axis motors.",
+    "TextMesh content and world placement are mapped to a readable Roboto overlay; crate labels follow their simulated body. R/H controls are additions.",
+    "Stacked scenes retain nine spawners, immediate spawn plus one per second up to five each, scale one and no lifetime. Random colors use a repeatable PRNG for reset verification.",
+    "Tiled sprites use repeating UVs with their source dimensions. Source Gamma numeric colors are decoded and tone mapping is disabled."
+  ]
+}

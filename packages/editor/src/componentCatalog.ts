@@ -231,6 +231,19 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'EdgeCollider2D',
+    label: 'Edge Collider 2D',
+    description: 'Open local-space polyline collider or trigger on the XY plane',
+    create: () => ({ points: [[-0.5, 0], [0.5, 0]], offset: [0, 0], is_trigger: false, friction: 0.5, bounciness: 0 }),
+  },
+  {
+    type: 'TargetJoint2D',
+    label: 'Target Joint 2D',
+    description: 'Spring-damped drag from a local anchor to a world-space target',
+    requires: ['Rigidbody2D'],
+    create: () => ({ enabled: true, anchor: [0, 0], target: [0, 0], max_force: 1000, frequency: 5, damping_ratio: 0.7 }),
+  },
+  {
     type: 'SpriteRenderer',
     label: 'Sprite Renderer',
     description: '世界空间贴图面片（非 UI）',

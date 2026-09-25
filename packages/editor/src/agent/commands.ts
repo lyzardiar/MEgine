@@ -1204,6 +1204,10 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
       throw new BridgeError('READONLY', 'Single-frame stepping requires paused Play Mode');
     }
     const deltaTime = args.deltaTime ?? 1 / 60;
+    const steps = args.steps ?? 1;
+    if (typeof steps !== 'number' || !Number.isInteger(steps) || steps < 1 || steps > 600) {
+      throw new BridgeError('INVALID_ARGS', '"steps" must be an integer between 1 and 600');
+    }
     if (
       typeof deltaTime !== 'number'
       || !Number.isFinite(deltaTime)
@@ -1215,16 +1219,19 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
         '"deltaTime" must be a finite number greater than 0 and at most 1 second',
       );
     }
-    if (!ctx.store.step(deltaTime)) {
-      throw new BridgeError('READONLY', 'Single-frame stepping requires paused Play Mode');
+    for (let index = 0; index < steps; index++) {
+      if (ctx.store.mode !== 'pause' || !ctx.store.step(deltaTime)) {
+        throw new BridgeError('READONLY', `Playback stepping requires paused Play Mode; completed ${index} of ${steps} steps`);
+      }
+      await ctx.store.waitForPlayRuntime();
     }
-    await ctx.store.waitForPlayRuntime();
     return {
       ok: true,
       data: {
         mode: ctx.store.mode,
         frame: ctx.store.snapshot().frame,
         deltaTime,
+        steps,
       },
     };
   },
@@ -1387,7 +1394,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'playback.play', category: 'playback', description: 'Enter play mode', readOnly: false },
   { id: 'playback.pause', category: 'playback', description: 'Toggle pause', readOnly: false },
   { id: 'playback.stop', category: 'playback', description: 'Stop playback and return to edit mode', readOnly: false },
-  { id: 'playback.step', category: 'playback', description: 'Advance paused Play Mode by one deterministic step', readOnly: false },
+  { id: 'playback.step', category: 'playback', description: 'Advance paused Play Mode by 1–600 deterministic steps', readOnly: false },
   { id: 'playback.input', category: 'playback', description: 'Set held physical keys and pointer buttons for the project script; use paused playback.step for deterministic input', readOnly: false },
   { id: 'history.undo', category: 'history', description: 'Undo the last edit', readOnly: false },
   { id: 'history.redo', category: 'history', description: 'Redo the last undone edit', readOnly: false },

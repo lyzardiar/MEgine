@@ -1,0 +1,14 @@
+/* MENGINE_PARAMETERS
+{"parameters":[{"name":"tiling","type":"vector4","default":[1,1,0,0]}]}
+*/
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let tiling = mengine_param_tiling(input.instance_index);
+    if tiling.z > 2.0 {
+        let point = input.uv0 - vec2<f32>(0.5);
+        let step = 6.28318530718 / tiling.z;
+        let angle = fract(atan2(point.x, point.y) / step) * step - step * 0.5;
+        let edge = 0.5 * cos(step * 0.5) / cos(angle);
+        if length(point) > edge { discard; }
+    }
+    return mengine_ui_main_texture(input.uv0 * tiling.xy) * input.vertex_color;
+}

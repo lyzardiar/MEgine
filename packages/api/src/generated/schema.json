@@ -824,6 +824,44 @@
     ],
     "type": "object"
   },
+  "EdgeCollider2D": {
+    "properties": {
+      "bounciness": {
+        "type": "number"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "offset": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "points": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "points",
+      "offset",
+      "is_trigger",
+      "friction",
+      "bounciness"
+    ],
+    "type": "object"
+  },
   "EditorOnly": {
     "properties": {},
     "type": "object"
@@ -2854,6 +2892,43 @@
       "text_color",
       "font_size",
       "on_value_changed"
+    ],
+    "type": "object"
+  },
+  "TargetJoint2D": {
+    "properties": {
+      "anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "damping_ratio": {
+        "type": "number"
+      },
+      "enabled": {
+        "type": "boolean"
+      },
+      "frequency": {
+        "type": "number"
+      },
+      "max_force": {
+        "type": "number"
+      },
+      "target": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "enabled",
+      "anchor",
+      "target",
+      "max_force",
+      "frequency",
+      "damping_ratio"
     ],
     "type": "object"
   },

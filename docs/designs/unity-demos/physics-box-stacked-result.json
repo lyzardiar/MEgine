@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "sourceDynamicBodies": 0,
+  "sourceSpawners": 9,
+  "settledBodies": 45,
+  "maximumSettledSpeed": 0,
+  "nativeDragAndRelease": true,
+  "stableEntityIds": true,
+  "reset": true,
+  "stopRestoresAuthored": true,
+  "restartExact": true
+}

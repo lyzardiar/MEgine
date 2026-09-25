@@ -1,0 +1,257 @@
+{
+  "version": 3,
+  "name": "BoxCollider2D_Stacked",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ]
+          },
+          "Camera2D": {
+            "size": 3
+          },
+          "EnvironmentLight": {
+            "background_enabled": false,
+            "tone_mapping": false
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Ground s:130082706",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -3,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ]
+          },
+          "EdgeCollider2D": {
+            "offset": [
+              0,
+              0
+            ],
+            "is_trigger": false,
+            "friction": 0.4,
+            "bounciness": 0,
+            "points": [
+              [
+                -5.4,
+                20
+              ],
+              [
+                -5.4,
+                0.35
+              ],
+              [
+                5.4,
+                0.35
+              ],
+              [
+                5.4,
+                20
+              ]
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/grassMid.png",
+            "material": "Assets/Materials/Sprite.mmat",
+            "size": [
+              12,
+              0.7
+            ],
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "sorting_order": 0,
+            "flip_x": false,
+            "flip_y": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "tiling"
+            ],
+            "custom_parameter_values": [
+              [
+                17.142857142857142,
+                1.0,
+                0,
+                0
+              ]
+            ]
+          },
+          "Layer": {
+            "value": 9
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Labels",
+        "components": {
+          "Canvas": {},
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              960,
+              540
+            ]
+          },
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "parent": 3,
+        "name": "Label s:43042112",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              537.0,
+              4.5
+            ],
+            "size_delta": [
+              420,
+              55
+            ]
+          },
+          "Text": {
+            "text": "All BoxCollider2D should stay stacked and eventually sleep.\n",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Right",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "parent": 3,
+        "name": "Label s:986197327",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              7.5,
+              4.5
+            ],
+            "size_delta": [
+              420,
+              55
+            ]
+          },
+          "Text": {
+            "text": "Left-Mouse: Drag Object",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "parent": 3,
+        "name": "Playback Controls",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              350,
+              514
+            ],
+            "size_delta": [
+              320,
+              24
+            ]
+          },
+          "Text": {
+            "text": "R: restart    H: show / hide labels",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 13,
+            "alignment": "Center",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0,
+      0,
+      0,
+      1
+    ]
+  }
+}

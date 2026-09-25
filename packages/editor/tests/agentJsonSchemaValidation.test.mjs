@@ -33,6 +33,7 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     ['transform.set', { entity: 1, position: [1, 2, 3] }],
     ['rect.set', { entity: 1, pivot: [0.5, 0.5], sizeDelta: [100, 40] }],
     ['playback.step', { deltaTime: 1 / 60 }],
+    ['playback.step', { deltaTime: .02, steps: 600 }],
     ['window.ui_press_key', {
       selector: '#dialog-input',
       key: 'Enter',
@@ -137,6 +138,8 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['rect.set', { entity: 1 }],
     ['rect.set', { entity: 1, anchorMin: [0, 2] }],
     ['playback.step', { deltaTime: 0 }],
+    ['playback.step', { steps: 601 }],
+    ['playback.step', { steps: 1.5 }],
     ['window.ui_press_key', {
       selector: '#dialog-input',
       key: 'AB',

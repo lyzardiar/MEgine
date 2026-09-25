@@ -325,6 +325,8 @@ test('MCP bridge timeout closes the socket so native request slots are released'
       sent.push(JSON.parse(message));
     },
     close(code, reason) {
+      // WHATWG WebSocket only accepts 1000 or application codes 3000–4999.
+      if (code !== 1000 && (code < 3000 || code > 4999)) throw new DOMException('Invalid close code', 'InvalidAccessError');
       closed.push({ code, reason });
       this.readyState = WebSocket.CLOSING;
     },
@@ -346,7 +348,7 @@ test('MCP bridge timeout closes the socket so native request slots are released'
   );
   assert.equal(sent.length, 1);
   assert.deepEqual(closed, [{
-    code: 1011,
+    code: 4000,
     reason: 'AgentBridge request timed out',
   }]);
 });

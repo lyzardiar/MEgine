@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { drawCamera2DGizmo, drawCameraGizmo, drawDirectionalLightGizmo, drawPointLightGizmo, drawSpotLightGizmo } from '../src/editorGizmos.ts';
+import { drawCamera2DGizmo, drawCameraGizmo, drawDirectionalLightGizmo, drawPointLightGizmo, drawSpotLightGizmo, drawEdgeCollider2DGizmo, drawTargetJoint2DGizmo } from '../src/editorGizmos.ts';
 
 const viewport = { x: 0, y: 0, w: 800, h: 600 };
 const sceneCamera = { eye: [6, 5, 8], target: [0, 0, 0], fovYDeg: 60 };
@@ -22,6 +22,18 @@ function recordingContext() {
     },
   });
 }
+
+test('planar edge gizmos remain open and target joints show their world anchor', () => {
+  const edge = recordingContext();
+  drawEdgeCollider2DGizmo(edge, sceneCamera, viewport, transform, { points: [[-1, 1], [-1, 0], [1, 0], [1, 1]] });
+  assert.equal(edge.calls.filter(([method]) => method === 'stroke').length, 3);
+  const joint = recordingContext();
+  drawTargetJoint2DGizmo(joint, sceneCamera, viewport, transform, { anchor: [.5, 0], target: [2, 1] });
+  assert.equal(joint.calls.filter(([method]) => method === 'stroke').length, 3);
+  const disabled = recordingContext();
+  drawTargetJoint2DGizmo(disabled, sceneCamera, viewport, transform, { enabled: false, target: [2, 1] });
+  assert.equal(disabled.calls.length, 0);
+});
 
 test('unselected lights retain pick targets while direction and volume lines require selection', () => {
   const lights = [

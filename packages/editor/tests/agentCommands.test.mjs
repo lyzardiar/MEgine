@@ -947,19 +947,30 @@ test('panel commands reject unknown ids and expose background-safe activation', 
   ]);
 });
 
-test('single-frame playback steps are bounded and require paused Play Mode', async () => {
+test('playback steps are bounded and require paused Play Mode', async () => {
   const { ctx, calls } = createContext();
 
   await assert.rejects(() => run(ctx, 'playback.step'), { code: 'READONLY' });
   ctx.store.mode = 'pause';
   await assert.rejects(() => run(ctx, 'playback.step', { deltaTime: 2 }), { code: 'INVALID_ARGS' });
+  await assert.rejects(() => run(ctx, 'playback.step', { steps: 0 }), { code: 'INVALID_ARGS' });
+  await assert.rejects(() => run(ctx, 'playback.step', { steps: 601 }), { code: 'INVALID_ARGS' });
   const result = await run(ctx, 'playback.step', { deltaTime: 1 / 30 });
   assert.deepEqual(calls, [['step', 1 / 30]]);
   assert.deepEqual(result.data, {
     mode: 'pause',
     frame: undefined,
     deltaTime: 1 / 30,
+    steps: 1,
   });
+  calls.length = 0;
+  const batch = await run(ctx, 'playback.step', { deltaTime: .02, steps: 3 });
+  assert.equal(batch.data.steps, 3);
+  assert.deepEqual(calls, [['step', .02], ['step', .02], ['step', .02]]);
+  calls.length = 0;
+  ctx.store.waitForPlayRuntime = async () => { if (calls.length === 1) ctx.store.mode = 'edit'; };
+  await assert.rejects(() => run(ctx, 'playback.step', { steps: 3 }), { code: 'READONLY' });
+  assert.equal(calls.length, 1);
 });
 
 test('play can initialize paused before waiting for the native script host', async () => {

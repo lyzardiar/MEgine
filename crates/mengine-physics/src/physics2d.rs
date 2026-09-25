@@ -1,11 +1,11 @@
 use super::{body_kind, pair_transitions, BodyKind, CollisionPair, PhysicsStepEvents};
 use glam::{Quat, Vec3};
-use mengine_core::generated::{BoxCollider2D, CircleCollider2D, Rigidbody2D, Transform};
+use mengine_core::generated::{BoxCollider2D, CircleCollider2D, EdgeCollider2D, Rigidbody2D, TargetJoint2D, Transform};
 use mengine_core::{Entity, TransformHierarchy, World};
 use rapier2d::prelude::PhysicsWorld as RapierWorld;
 use rapier2d::prelude::{
     ColliderBuilder, ColliderHandle, Pose, RigidBodyBuilder, RigidBodyHandle, RigidBodyType,
-    Rotation, Vec2,
+    CoefficientCombineRule, GenericJointBuilder, ImpulseJointHandle, JointAxesMask, JointAxis, MotorModel, Rotation, Vec2,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -21,6 +21,7 @@ struct BodySignature2D {
     scale: [f32; 2],
     box_collider: Option<BoxColliderSignature2D>,
     circle_collider: Option<CircleColliderSignature2D>,
+    edge_collider: Option<EdgeColliderSignature2D>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -47,6 +48,15 @@ struct BodyDefinition2D {
     signature: BodySignature2D,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct EdgeColliderSignature2D {
+    points: Vec<[f32; 2]>,
+    offset: [f32; 2],
+    is_trigger: bool,
+    friction: f32,
+    bounciness: f32,
+}
+
 struct BodyEntry2D {
     handle: RigidBodyHandle,
     signature: BodySignature2D,
@@ -59,6 +69,8 @@ pub struct PhysicsWorld2D {
     bodies: HashMap<Entity, BodyEntry2D>,
     active_collision_pairs: HashSet<CollisionPair>,
     active_trigger_pairs: HashSet<CollisionPair>,
+    target_ground: Option<RigidBodyHandle>,
+    target_joints: HashMap<Entity, ImpulseJointHandle>,
 }
 
 impl Default for PhysicsWorld2D {
@@ -74,6 +86,8 @@ impl PhysicsWorld2D {
             bodies: HashMap::new(),
             active_collision_pairs: HashSet::new(),
             active_trigger_pairs: HashSet::new(),
+            target_ground: None,
+            target_joints: HashMap::new(),
         }
     }
 
@@ -109,6 +123,7 @@ impl PhysicsWorld2D {
             self.sync_body_input(*entity, definition);
         }
 
+        self.sync_target_joints(world);
         self.rapier.integration_parameters.dt = finite_or(dt, 1.0 / 60.0).clamp(0.0001, 0.1);
         self.rapier.step();
         self.write_back(world, &hierarchy);
@@ -127,6 +142,46 @@ impl PhysicsWorld2D {
         }
     }
 
+    fn sync_target_joints(&mut self, world: &World) {
+        let mut active = HashSet::new();
+        for (&entity, entry) in &self.bodies {
+            let Some(joint) = world.get_component::<TargetJoint2D>(entity).filter(|joint| joint.enabled) else { continue };
+            if entry.signature.kind != BodyKind::Dynamic { continue; }
+            let ground = *self.target_ground.get_or_insert_with(|| self.rapier.insert_body(RigidBodyBuilder::fixed()));
+            let target = finite_vec2(joint.target, [0.0; 2]);
+            let anchor = finite_vec2(joint.anchor, [0.0; 2]);
+            let scale = entry.signature.scale;
+            let omega = finite_or(joint.frequency, 5.0).clamp(0.0, 60.0) * std::f32::consts::TAU;
+            let stiffness = entry.signature.mass * omega * omega;
+            let damping = 2.0 * entry.signature.mass * omega * finite_or(joint.damping_ratio, 0.7).clamp(0.0, 1.0);
+            // Divide the vector force budget between the orthogonal solver motors.
+            let force = finite_or(joint.max_force, 1000.0).max(0.0) * std::f32::consts::FRAC_1_SQRT_2;
+            let mut data = GenericJointBuilder::new(JointAxesMask::empty())
+                .local_anchor1(Vec2::new(target[0], target[1]))
+                .local_anchor2(Vec2::from_array(finite_vec2([anchor[0] * scale[0], anchor[1] * scale[1]], [0.0; 2])))
+                .motor_position(JointAxis::LinX, 0.0, stiffness, damping)
+                .motor_position(JointAxis::LinY, 0.0, stiffness, damping)
+                .motor_model(JointAxis::LinX, MotorModel::ForceBased)
+                .motor_model(JointAxis::LinY, MotorModel::ForceBased)
+                .motor_max_force(JointAxis::LinX, force)
+                .motor_max_force(JointAxis::LinY, force).build();
+            if let Some(existing) = self.target_joints.get(&entity).and_then(|handle| self.rapier.impulse_joints.get_mut(*handle, false)) {
+                for (motor, previous) in data.motors.iter_mut().zip(&existing.data.motors) { motor.impulse = previous.impulse; }
+                if existing.data != data {
+                    existing.data = data;
+                    if let Some(body) = self.rapier.bodies.get_mut(entry.handle) { body.wake_up(true); }
+                }
+            } else {
+                let handle = self.rapier.insert_impulse_joint(ground, entry.handle, data);
+                self.target_joints.insert(entity, handle);
+            }
+            active.insert(entity);
+        }
+        self.target_joints.retain(|entity, handle| {
+            if active.contains(entity) { true } else { self.rapier.remove_impulse_joint(*handle); false }
+        });
+    }
+
     fn remove_body(&mut self, entity: Entity) {
         if let Some(entry) = self.bodies.remove(&entity) {
             self.rapier.remove_body(entry.handle);
@@ -136,6 +191,11 @@ impl PhysicsWorld2D {
     fn insert_body(&mut self, entity: Entity, definition: &BodyDefinition2D) {
         let rigid_body = definition.rigid_body.as_ref();
         let kind = definition.signature.kind;
+        let scale = definition.signature.scale;
+        let box_area = definition.signature.box_collider.as_ref().map_or(0.0, |collider| finite_or(collider.size[0] * scale[0], 1.0).abs().max(0.001) * finite_or(collider.size[1] * scale[1], 1.0).abs().max(0.001));
+        let circle_area = definition.signature.circle_collider.as_ref().map_or(0.0, |collider| std::f32::consts::PI * finite_or(collider.radius * scale[0].abs().max(scale[1].abs()), 0.5).max(0.001).powi(2));
+        let area = box_area + circle_area;
+        let density = if kind == BodyKind::Dynamic && area.is_finite() && area > 0.0 { definition.signature.mass / area } else { 0.0 };
         let body_type = match kind {
             BodyKind::Dynamic => RigidBodyType::Dynamic,
             BodyKind::Fixed => RigidBodyType::Fixed,
@@ -158,7 +218,7 @@ impl PhysicsWorld2D {
             .angular_damping(definition.signature.angular_damping)
             .ccd_enabled(definition.signature.ccd)
             .user_data(entity.to_u64() as u128);
-        if kind == BodyKind::Dynamic {
+        if kind == BodyKind::Dynamic && density == 0.0 {
             builder = builder.additional_mass(definition.signature.mass);
         }
         if definition.signature.freeze_rotation {
@@ -169,8 +229,8 @@ impl PhysicsWorld2D {
         if let Some(collider) = definition.signature.box_collider.as_ref() {
             let scale = definition.signature.scale;
             let half = [
-                (collider.size[0] * scale[0]).abs().max(0.001) * 0.5,
-                (collider.size[1] * scale[1]).abs().max(0.001) * 0.5,
+                finite_or(collider.size[0] * scale[0], 1.0).abs().max(0.001) * 0.5,
+                finite_or(collider.size[1] * scale[1], 1.0).abs().max(0.001) * 0.5,
             ];
             let offset = [collider.offset[0] * scale[0], collider.offset[1] * scale[1]];
             self.rapier.insert_collider(
@@ -181,13 +241,13 @@ impl PhysicsWorld2D {
                     collider.friction,
                     collider.bounciness,
                     entity,
-                ),
+                ).density(density),
                 Some(handle),
             );
         }
         if let Some(collider) = definition.signature.circle_collider.as_ref() {
             let scale = definition.signature.scale;
-            let radius = collider.radius * scale[0].abs().max(scale[1].abs());
+            let radius = finite_or(collider.radius * scale[0].abs().max(scale[1].abs()), 0.5);
             let offset = [collider.offset[0] * scale[0], collider.offset[1] * scale[1]];
             self.rapier.insert_collider(
                 configure_collider(
@@ -197,9 +257,17 @@ impl PhysicsWorld2D {
                     collider.friction,
                     collider.bounciness,
                     entity,
-                ),
+                ).density(density),
                 Some(handle),
             );
+        }
+        if let Some(collider) = definition.signature.edge_collider.as_ref() {
+            let scale = definition.signature.scale;
+            let mut points: Vec<_> = collider.points.iter().map(|p| Vec2::from_array(finite_vec2([p[0] * scale[0], p[1] * scale[1]], [0.0; 2]))).collect();
+            points.dedup();
+            if points.len() >= 2 {
+                self.rapier.insert_collider(configure_collider(ColliderBuilder::polyline(points, None), [collider.offset[0] * scale[0], collider.offset[1] * scale[1]], collider.is_trigger, collider.friction, collider.bounciness, entity), Some(handle));
+            }
         }
         self.bodies.insert(
             entity,
@@ -359,7 +427,8 @@ fn collect_definitions(
             let rigid_body = world.get_component::<Rigidbody2D>(entity).cloned();
             let box_collider = world.get_component::<BoxCollider2D>(entity).cloned();
             let circle_collider = world.get_component::<CircleCollider2D>(entity).cloned();
-            if rigid_body.is_none() && box_collider.is_none() && circle_collider.is_none() {
+            let edge_collider = world.get_component::<EdgeCollider2D>(entity).cloned().and_then(normalize_edge_collider);
+            if rigid_body.is_none() && box_collider.is_none() && circle_collider.is_none() && edge_collider.is_none() {
                 return None;
             }
             let kind = rigid_body
@@ -384,6 +453,7 @@ fn collect_definitions(
                 scale: finite_vec2([transform.scale[0], transform.scale[1]], [1.0; 2]),
                 box_collider: box_collider.map(normalize_box_collider),
                 circle_collider: circle_collider.map(normalize_circle_collider),
+                edge_collider,
             };
             Some((
                 entity,
@@ -417,6 +487,14 @@ fn normalize_circle_collider(value: CircleCollider2D) -> CircleColliderSignature
     }
 }
 
+fn normalize_edge_collider(value: EdgeCollider2D) -> Option<EdgeColliderSignature2D> {
+    if value.points.len() > 4096 || value.points.iter().flatten().any(|value| !value.is_finite()) { return None; }
+    let mut points: Vec<_> = value.points.into_iter().map(|point| finite_vec2(point, [0.0; 2])).collect();
+    points.dedup_by(|a, b| (a[0] - b[0]).hypot(a[1] - b[1]) < 0.00001);
+    if points.len() < 2 { return None; }
+    Some(EdgeColliderSignature2D { points, offset: finite_vec2(value.offset, [0.0; 2]), is_trigger: value.is_trigger, friction: finite_or(value.friction, 0.5).max(0.0), bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0) })
+}
+
 fn configure_collider(
     builder: ColliderBuilder,
     offset: [f32; 2],
@@ -426,10 +504,12 @@ fn configure_collider(
     entity: Entity,
 ) -> ColliderBuilder {
     builder
-        .translation(Vec2::new(offset[0], offset[1]))
+        .translation(Vec2::from_array(finite_vec2(offset, [0.0; 2])))
         .sensor(is_trigger)
-        .friction(friction)
+        .friction(friction.sqrt())
+        .friction_combine_rule(CoefficientCombineRule::Multiply)
         .restitution(bounciness)
+        .restitution_combine_rule(CoefficientCombineRule::Max)
         .density(0.0)
         .user_data(entity.to_u64() as u128)
 }
@@ -458,7 +538,8 @@ fn planar_angle(rotation: [f32; 4]) -> f32 {
 
 fn finite_or(value: f32, fallback: f32) -> f32 {
     if value.is_finite() {
-        value
+        // Keep authored scalar values and scaled geometry within a useful f32 physics range.
+        value.clamp(-1.0e6, 1.0e6)
     } else {
         fallback
     }
@@ -610,6 +691,92 @@ mod tests {
         let frozen_rotation = world.get_component::<Transform>(frozen).unwrap().rotation;
         assert!(planar_angle(spinning_rotation).abs() > 0.2);
         assert!(planar_angle(frozen_rotation).abs() < 0.001);
+    }
+
+    #[test]
+    fn shape_mass_preserves_authored_total_and_allows_off_center_rotation() {
+        let mut world = World::new();
+        let entity = spawn_body(&mut world, [0.0; 3], Some(Rigidbody2D { mass: 12.0, gravity_scale: 0.0, ..Default::default() }), Some(BoxCollider2D { size: [4.0, 1.0], ..Default::default() }), None);
+        let mut physics = PhysicsWorld2D::new();
+        physics.step(&mut world, 1.0 / 60.0);
+        let body = physics.rapier.bodies.get_mut(physics.bodies[&entity].handle).unwrap();
+        assert!((body.mass() - 12.0).abs() < 0.0001);
+        body.apply_impulse_at_point(Vec2::new(0.0, 4.0), Vec2::new(2.0, 0.0), true);
+        assert!(body.angvel() > 0.1, "off-center impulses must rotate an unlocked body");
+    }
+
+    #[test]
+    fn edge_polyline_supports_collision_trigger_and_invalid_input() {
+        let mut world = World::new();
+        let ground = spawn_body(&mut world, [0.0; 3], None, None, None);
+        world.insert_component(ground, EdgeCollider2D { points: vec![[-3.0, 2.0], [-3.0, 0.0], [3.0, 0.0], [3.0, 2.0]], ..Default::default() });
+        let ball = spawn_body(&mut world, [0.0, 2.0, 7.0], Some(Rigidbody2D::default()), None, Some(CircleCollider2D::default()));
+        let mut physics = PhysicsWorld2D::new();
+        for _ in 0..240 { physics.step(&mut world, 1.0 / 60.0); }
+        assert!((world.get_component::<Transform>(ball).unwrap().position[1] - 0.5).abs() < 0.04);
+        world.get_component_mut::<EdgeCollider2D>(ground).unwrap().is_trigger = true;
+        let mut triggered = false;
+        for _ in 0..120 { triggered |= !physics.step(&mut world, 1.0 / 60.0).trigger_started.is_empty(); }
+        assert!(triggered);
+        assert!(world.get_component::<Transform>(ball).unwrap().position[1] < -2.0);
+        world.get_component_mut::<EdgeCollider2D>(ground).unwrap().points = vec![[f32::NAN, 0.0], [0.0, 0.0]];
+        physics.step(&mut world, 1.0 / 60.0);
+        assert_eq!(physics.collider_count(), 1);
+    }
+
+    #[test]
+    fn target_joint_tracks_rebuilds_releases_and_bounds_force() {
+        let mut world = World::new();
+        let entity = spawn_body(&mut world, [0.0; 3], Some(Rigidbody2D { gravity_scale: 0.0, linear_damping: 0.0, ..Default::default() }), Some(BoxCollider2D::default()), None);
+        world.insert_component(entity, TargetJoint2D { target: [2.0, 3.0], damping_ratio: 1.0, ..Default::default() });
+        let mut physics = PhysicsWorld2D::new();
+        for _ in 0..120 { physics.step(&mut world, 1.0 / 60.0); }
+        let position = world.get_component::<Transform>(entity).unwrap().position;
+        assert!((position[0] - 2.0).hypot(position[1] - 3.0) < 0.02, "{position:?}");
+        physics.rapier.bodies.get_mut(physics.bodies[&entity].handle).unwrap().sleep();
+        physics.rapier.impulse_joints.get_mut(physics.target_joints[&entity], false).unwrap().data.motors[0].impulse = 0.25;
+        physics.sync_target_joints(&world);
+        assert!(physics.rapier.bodies.get(physics.bodies[&entity].handle).unwrap().is_sleeping(), "unchanged joint parameters must preserve sleep and cached solver impulses");
+        world.get_component_mut::<BoxCollider2D>(entity).unwrap().size = [2.0, 1.0];
+        world.get_component_mut::<TargetJoint2D>(entity).unwrap().target = [-1.0, 2.0];
+        for _ in 0..120 { physics.step(&mut world, 1.0 / 60.0); }
+        assert_eq!(physics.target_joints.len(), 1);
+        assert!((world.get_component::<Transform>(entity).unwrap().position[0] + 1.0).abs() < 0.02);
+        world.get_component_mut::<TargetJoint2D>(entity).unwrap().enabled = false;
+        world.get_component_mut::<Rigidbody2D>(entity).unwrap().velocity = [1.0, 0.0];
+        for _ in 0..60 { physics.step(&mut world, 1.0 / 60.0); }
+        assert!(physics.target_joints.is_empty());
+        assert!(world.get_component::<Transform>(entity).unwrap().position[0] > -0.02);
+        world.get_component_mut::<Rigidbody2D>(entity).unwrap().velocity = [0.0; 2];
+        world.insert_component(entity, TargetJoint2D { target: [100.0, 100.0], max_force: 1.0, ..Default::default() });
+        physics.step(&mut world, 0.1);
+        let velocity = world.get_component::<Rigidbody2D>(entity).unwrap().velocity;
+        assert!(velocity[0].hypot(velocity[1]) <= 0.101, "force budget must be bounded: {velocity:?}");
+        world.despawn(entity);
+        physics.step(&mut world, 1.0 / 60.0);
+        assert!(physics.target_joints.is_empty());
+        assert_eq!(physics.collider_count(), 0);
+    }
+
+    #[test]
+    fn target_anchor_rotates_body_and_extreme_inputs_remain_finite() {
+        let mut world = World::new();
+        let entity = spawn_body(&mut world, [0.0; 3], Some(Rigidbody2D { gravity_scale: 0.0, ..Default::default() }), Some(BoxCollider2D::default()), None);
+        world.insert_component(entity, TargetJoint2D { anchor: [0.5, 0.0], target: [0.5, 2.0], ..Default::default() });
+        let mut physics = PhysicsWorld2D::new();
+        physics.step(&mut world, 1.0 / 60.0);
+        assert!(world.get_component::<Rigidbody2D>(entity).unwrap().angular_velocity.abs() > 1.0);
+        world.get_component_mut::<Transform>(entity).unwrap().scale = [f32::MAX, f32::MAX, 1.0];
+        world.get_component_mut::<Rigidbody2D>(entity).unwrap().mass = f32::MAX;
+        world.get_component_mut::<TargetJoint2D>(entity).unwrap().anchor = [f32::MAX; 2];
+        world.insert_component(entity, EdgeCollider2D { points: vec![[-f32::MAX, 0.0], [f32::MAX, 0.0]], ..Default::default() });
+        for _ in 0..4 { physics.step(&mut world, 1.0 / 60.0); }
+        assert!(world.get_component::<Transform>(entity).unwrap().position.iter().all(|value| value.is_finite()));
+        let body = physics.rapier.bodies.get(physics.bodies[&entity].handle).unwrap();
+        assert!(body.mass().is_finite() && body.linvel().is_finite() && body.angvel().is_finite());
+        let joint = &physics.rapier.impulse_joints.get(physics.target_joints[&entity]).unwrap().data;
+        assert!(joint.local_anchor2().is_finite());
+        assert!(joint.motors.iter().all(|motor| motor.stiffness.is_finite() && motor.damping.is_finite()));
     }
 
     #[test]
