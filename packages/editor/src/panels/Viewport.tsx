@@ -1693,6 +1693,7 @@ export function Viewport(props: {
           !!e.components.SphereCollider3D ||
           !!e.components.BoxCollider2D ||
           !!e.components.CircleCollider2D ||
+          !!e.components.PolygonCollider2D ||
           !!e.components.EdgeCollider2D ||
           !!e.components.TargetJoint2D;
         const entries: Array<{
@@ -2407,6 +2408,7 @@ export function Viewport(props: {
         if (box2D) drawBoxCollider2DGizmo(ctx, cam, vp, t, box2D);
         if (circle2D) drawCircleCollider2DGizmo(ctx, cam, vp, t, circle2D);
         if (e.components.EdgeCollider2D) drawEdgeCollider2DGizmo(ctx, cam, vp, t, e.components.EdgeCollider2D as { points?: number[][]; offset?: number[]; is_trigger?: boolean });
+        if (e.components.PolygonCollider2D) { const c = e.components.PolygonCollider2D as { points?: number[][]; offset?: number[]; is_trigger?: boolean }; drawEdgeCollider2DGizmo(ctx, cam, vp, t, { ...c, points: c.points?.length ? [...c.points, c.points[0]] : [] }); }
         if (e.components.TargetJoint2D) drawTargetJoint2DGizmo(ctx, cam, vp, t, e.components.TargetJoint2D as { enabled?: boolean; anchor?: number[]; target?: number[] });
       }
     }

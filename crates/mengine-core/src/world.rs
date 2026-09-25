@@ -447,6 +447,7 @@ fn canonical_component_name(component: &str) -> &str {
         "BoxCollider2D" | "boxCollider2D" | "boxCollider2d" => "BoxCollider2D",
         "CircleCollider2D" | "circleCollider2D" | "circleCollider2d" => "CircleCollider2D",
         "EdgeCollider2D" | "edgeCollider2D" | "edgeCollider2d" => "EdgeCollider2D",
+        "PolygonCollider2D" | "polygonCollider2D" | "polygonCollider2d" => "PolygonCollider2D",
         "TargetJoint2D" | "targetJoint2D" | "targetJoint2d" => "TargetJoint2D",
         "Canvas" | "canvas" => "Canvas",
         "CanvasScaler" | "canvasScaler" => "CanvasScaler",

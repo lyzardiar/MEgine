@@ -234,7 +234,13 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'EdgeCollider2D',
     label: 'Edge Collider 2D',
     description: 'Open local-space polyline collider or trigger on the XY plane',
-    create: () => ({ points: [[-0.5, 0], [0.5, 0]], offset: [0, 0], is_trigger: false, friction: 0.5, bounciness: 0 }),
+    create: () => ({ points: [[-0.5, 0], [0.5, 0]], edge_radius: 0, offset: [0, 0], is_trigger: false, friction: 0.5, bounciness: 0 }),
+  },
+  {
+    type: 'PolygonCollider2D',
+    label: 'Polygon Collider 2D',
+    description: 'Filled simple polygon collider on the XY plane',
+    create: () => ({ points: [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]], offset: [0, 0], is_trigger: false, friction: 0.5, bounciness: 0 }),
   },
   {
     type: 'TargetJoint2D',

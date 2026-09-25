@@ -356,10 +356,20 @@ component CircleCollider2D {
 /// Open local-space polyline; adjacent points form two-sided collision edges.
 component EdgeCollider2D {
   points:      float2_array = []
+  edge_radius: float = 0
   offset:      float2 = [0, 0]
   is_trigger:  bool   = false
   friction:    float  = 0.5
   bounciness:  float  = 0
+}
+
+/// Filled simple polygon in local XY space; concave outlines are decomposed by Rapier.
+component PolygonCollider2D {
+  points:      float2_array = []
+  offset:      float2 = [0, 0]
+  is_trigger:  bool = false
+  friction:    float = 0.5
+  bounciness:  float = 0
 }
 
 /// Spring-damped constraint from this dynamic body's local anchor to a world target.

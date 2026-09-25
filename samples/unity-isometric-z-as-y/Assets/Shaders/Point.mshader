@@ -1,0 +1,1 @@
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> { return mengine_ui_main_texture(input.uv0) * input.vertex_color; }

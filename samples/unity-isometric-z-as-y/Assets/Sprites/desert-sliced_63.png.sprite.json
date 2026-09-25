@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "mode": "multiple",
+  "pixels_per_unit": 64,
+  "slices": [
+    {
+      "name": "desert-sliced_63",
+      "rect": [
+        0,
+        0,
+        64,
+        128
+      ],
+      "pivot": [
+        0.5167336,
+        0.1101071
+      ]
+    }
+  ]
+}

@@ -314,6 +314,15 @@ export interface CircleCollider2D {
 
 export interface EdgeCollider2D {
   points: [number, number][];
+  edgeRadius: number;
+  offset: [number, number];
+  isTrigger: boolean;
+  friction: number;
+  bounciness: number;
+}
+
+export interface PolygonCollider2D {
+  points: [number, number][];
   offset: [number, number];
   isTrigger: boolean;
   friction: number;
@@ -1060,6 +1069,14 @@ export type SerializedComponentMap = {
   };
   EdgeCollider2D: {
     points: [number, number][];
+    edge_radius: number;
+    offset: [number, number];
+    is_trigger: boolean;
+    friction: number;
+    bounciness: number;
+  };
+  PolygonCollider2D: {
+    points: [number, number][];
     offset: [number, number];
     is_trigger: boolean;
     friction: number;
@@ -1518,6 +1535,7 @@ export type ComponentName =
   | 'BoxCollider2D'
   | 'CircleCollider2D'
   | 'EdgeCollider2D'
+  | 'PolygonCollider2D'
   | 'TargetJoint2D'
   | 'Layer'
   | 'EditorOnly'
@@ -1589,6 +1607,7 @@ export const COMPONENT_NAMES = [
   'BoxCollider2D',
   'CircleCollider2D',
   'EdgeCollider2D',
+  'PolygonCollider2D',
   'TargetJoint2D',
   'Layer',
   'EditorOnly',

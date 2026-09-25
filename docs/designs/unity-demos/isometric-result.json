@@ -1,0 +1,77 @@
+{
+  "passed": true,
+  "sourceGroundCells": 284,
+  "sourceHeightTriggers": 6,
+  "sourceAnimationClips": 16,
+  "cameraFollow": true,
+  "heightTransitions": [
+    {
+      "height": 4,
+      "position": [
+        -0.9448476433753967,
+        -0.5517464876174927,
+        4
+      ],
+      "edgeOutlines": 5,
+      "upperPolygons": 0
+    },
+    {
+      "height": 6,
+      "position": [
+        0.9325605630874634,
+        0.843681812286377,
+        6
+      ],
+      "edgeOutlines": 0,
+      "upperPolygons": 31
+    },
+    {
+      "height": 4,
+      "position": [
+        0.02746635675430298,
+        -0.38141462206840515,
+        4
+      ],
+      "edgeOutlines": 5,
+      "upperPolygons": 0
+    },
+    {
+      "height": 2,
+      "position": [
+        0.07691159844398499,
+        -1.9184906482696533,
+        2
+      ],
+      "edgeOutlines": 4,
+      "upperPolygons": 0
+    },
+    {
+      "height": 4,
+      "position": [
+        2.8552703857421875,
+        -1.4880069494247437,
+        4
+      ],
+      "edgeOutlines": 5,
+      "upperPolygons": 0
+    },
+    {
+      "height": 2,
+      "position": [
+        1.8797392845153809,
+        -2.482760190963745,
+        2
+      ],
+      "edgeOutlines": 4,
+      "upperPolygons": 0
+    }
+  ],
+  "wallDisplacement": 0.11427994101706712,
+  "nativeCollision": true,
+  "eightDirectionsAndMirrors": true,
+  "animationAdvances": true,
+  "resetExact": true,
+  "stopRestoresAuthored": true,
+  "restartExact": true,
+  "overviewCameraOverride": true
+}

@@ -1273,6 +1273,7 @@ impl Component for CircleCollider2D {
 #[serde(default)]
 pub struct EdgeCollider2D {
     pub points: Vec<[f32; 2]>,
+    pub edge_radius: f32,
     pub offset: [f32; 2],
     pub is_trigger: bool,
     pub friction: f32,
@@ -1283,6 +1284,7 @@ impl Default for EdgeCollider2D {
     fn default() -> Self {
         Self {
             points: Vec::new(),
+            edge_radius: 0.0,
             offset: [0.0, 0.0],
             is_trigger: false,
             friction: 0.5,
@@ -1294,6 +1296,43 @@ impl Default for EdgeCollider2D {
 impl Component for EdgeCollider2D {
     fn type_name() -> &'static str {
         "EdgeCollider2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PolygonCollider2D {
+    pub points: Vec<[f32; 2]>,
+    pub offset: [f32; 2],
+    pub is_trigger: bool,
+    pub friction: f32,
+    pub bounciness: f32,
+}
+
+impl Default for PolygonCollider2D {
+    fn default() -> Self {
+        Self {
+            points: Vec::new(),
+            offset: [0.0, 0.0],
+            is_trigger: false,
+            friction: 0.5,
+            bounciness: 0.0,
+        }
+    }
+}
+
+impl Component for PolygonCollider2D {
+    fn type_name() -> &'static str {
+        "PolygonCollider2D"
     }
     fn as_any(&self) -> &dyn std::any::Any {
         self
@@ -3038,6 +3077,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "EdgeCollider2D" => serde_json::from_value::<EdgeCollider2D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "PolygonCollider2D" => serde_json::from_value::<PolygonCollider2D>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "TargetJoint2D" => serde_json::from_value::<TargetJoint2D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Layer" => serde_json::from_value::<Layer>(value)
@@ -3150,6 +3191,7 @@ pub mod meta {
         "BoxCollider2D",
         "CircleCollider2D",
         "EdgeCollider2D",
+        "PolygonCollider2D",
         "TargetJoint2D",
         "Layer",
         "EditorOnly",

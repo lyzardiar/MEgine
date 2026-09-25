@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scene": "Assets/Tilemap/IsometricZAsY/Scenes/Scene_Biome_Desert_ZAsY.unity",
+  "license": "MIT",
+  "groundCells": 284,
+  "colliderCells": [
+    92,
+    45,
+    25
+  ],
+  "triggers": 6,
+  "animations": 16,
+  "adaptations": [
+    "Source sprite pixels, PPU, pivots, prefab transforms and animation frames are preserved. Cached per-cell sprites preserve the authored map.",
+    "Base/Level1 use the serialized source composite outlines and 0.05 edge radius. Level2 uses native Unity 2022.3.47f1c1 shapes generated from the source tile sprite physics outlines; the source project targets Unity 6.",
+    "Rapier2D solves filled polygon, circle and rounded-edge collisions. Trigger exit switches the source collider groups and height while preserving player XY.",
+    "SortingGroup order and camera custom axis (0,.5,-.25) are mapped to SpriteRenderer sorting_order. Input is WASD/arrows; R reloads. Movement speed is 2 units/s; run animation is 12 FPS.",
+    "The source SmoothDamp camera expression is reproduced, including its per-update velocity and maximum-speed arguments. Pixel Perfect component resolution scaling is not reproduced."
+  ]
+}

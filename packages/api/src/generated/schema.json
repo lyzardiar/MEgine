@@ -829,6 +829,9 @@
       "bounciness": {
         "type": "number"
       },
+      "edge_radius": {
+        "type": "number"
+      },
       "friction": {
         "type": "number"
       },
@@ -855,6 +858,7 @@
     },
     "required": [
       "points",
+      "edge_radius",
       "offset",
       "is_trigger",
       "friction",
@@ -2135,6 +2139,44 @@
       "color",
       "intensity",
       "range"
+    ],
+    "type": "object"
+  },
+  "PolygonCollider2D": {
+    "properties": {
+      "bounciness": {
+        "type": "number"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "offset": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "points": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "points",
+      "offset",
+      "is_trigger",
+      "friction",
+      "bounciness"
     ],
     "type": "object"
   },

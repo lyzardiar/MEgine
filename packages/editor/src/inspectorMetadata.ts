@@ -327,6 +327,12 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     bounciness: { min: 0, max: 1, step: 0.01 },
   },
   EdgeCollider2D: {
+    edge_radius: { min: 0, step: 0.01 },
+    points: { kind: 'vector2-list' },
+    friction: { min: 0, step: 0.01 },
+    bounciness: { min: 0, max: 1, step: 0.01 },
+  },
+  PolygonCollider2D: {
     points: { kind: 'vector2-list' },
     friction: { min: 0, step: 0.01 },
     bounciness: { min: 0, max: 1, step: 0.01 },

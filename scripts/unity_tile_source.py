@@ -70,12 +70,16 @@ class UnityTiles:
                 raise ValueError(f"Duplicate source texture filename: {path.name}")
             shutil.copyfile(path, destination)
             with Image.open(path) as image:
-                height = image.height
+                width, height = image.size
             slices, names = [], {}
-            for item in meta["spriteSheet"]["sprites"]:
+            items = meta["spriteSheet"]["sprites"]
+            if not items:
+                items = [dict(internalID=21300000, name=path.stem, rect=dict(x=0, y=0, width=width, height=height), alignment=meta["alignment"], pivot=meta["spritePivot"])]
+            pivots = [[.5,.5], [0,1], [.5,1], [1,1], [0,.5], [1,.5], [0,0], [.5,0], [1,0]]
+            for item in items:
                 rect, name = item["rect"], item["name"]
                 names[item["internalID"]] = name
-                slices.append(dict(name=name, rect=[rect["x"], height - rect["y"] - rect["height"], rect["width"], rect["height"]], pivot=[0.5, 0.5]))
+                slices.append(dict(name=name, rect=[rect["x"], height - rect["y"] - rect["height"], rect["width"], rect["height"]], pivot=([item["pivot"][k] for k in "xy"] if item["alignment"] == 9 else pivots[item["alignment"]])))
             write_json(Path(str(destination) + ".sprite.json"), dict(version=1, mode="multiple", pixels_per_unit=meta["spritePixelsToUnits"], slices=slices))
             self.imported[guid] = (path.name, names)
         filename, names = self.imported[guid]

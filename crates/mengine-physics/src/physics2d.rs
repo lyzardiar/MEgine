@@ -1,11 +1,11 @@
 use super::{body_kind, pair_transitions, BodyKind, CollisionPair, PhysicsStepEvents};
 use glam::{Quat, Vec3};
-use mengine_core::generated::{BoxCollider2D, CircleCollider2D, EdgeCollider2D, Rigidbody2D, TargetJoint2D, Transform};
+use mengine_core::generated::{BoxCollider2D, CircleCollider2D, EdgeCollider2D, PolygonCollider2D, Rigidbody2D, TargetJoint2D, Transform};
 use mengine_core::{Entity, TransformHierarchy, World};
 use rapier2d::prelude::PhysicsWorld as RapierWorld;
 use rapier2d::prelude::{
     ColliderBuilder, ColliderHandle, Pose, RigidBodyBuilder, RigidBodyHandle, RigidBodyType,
-    CoefficientCombineRule, GenericJointBuilder, ImpulseJointHandle, JointAxesMask, JointAxis, MotorModel, Rotation, Vec2,
+    CoefficientCombineRule, GenericJointBuilder, ImpulseJointHandle, JointAxesMask, JointAxis, MotorModel, Rotation, SharedShape, Vec2,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -21,7 +21,8 @@ struct BodySignature2D {
     scale: [f32; 2],
     box_collider: Option<BoxColliderSignature2D>,
     circle_collider: Option<CircleColliderSignature2D>,
-    edge_collider: Option<EdgeColliderSignature2D>,
+    edge_collider: Option<PathColliderSignature2D>,
+    polygon_collider: Option<PathColliderSignature2D>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -49,8 +50,9 @@ struct BodyDefinition2D {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct EdgeColliderSignature2D {
+struct PathColliderSignature2D {
     points: Vec<[f32; 2]>,
+    radius: f32,
     offset: [f32; 2],
     is_trigger: bool,
     friction: f32,
@@ -194,7 +196,9 @@ impl PhysicsWorld2D {
         let scale = definition.signature.scale;
         let box_area = definition.signature.box_collider.as_ref().map_or(0.0, |collider| finite_or(collider.size[0] * scale[0], 1.0).abs().max(0.001) * finite_or(collider.size[1] * scale[1], 1.0).abs().max(0.001));
         let circle_area = definition.signature.circle_collider.as_ref().map_or(0.0, |collider| std::f32::consts::PI * finite_or(collider.radius * scale[0].abs().max(scale[1].abs()), 0.5).max(0.001).powi(2));
-        let area = box_area + circle_area;
+        let polygon = definition.signature.polygon_collider.as_ref().and_then(|c| polygon_builder(c, scale));
+        let polygon_area = polygon.as_ref().map_or(0.0, |builder| builder.shape.mass_properties(1.0).mass());
+        let area = box_area + circle_area + polygon_area;
         let density = if kind == BodyKind::Dynamic && area.is_finite() && area > 0.0 { definition.signature.mass / area } else { 0.0 };
         let body_type = match kind {
             BodyKind::Dynamic => RigidBodyType::Dynamic,
@@ -266,8 +270,13 @@ impl PhysicsWorld2D {
             let mut points: Vec<_> = collider.points.iter().map(|p| Vec2::from_array(finite_vec2([p[0] * scale[0], p[1] * scale[1]], [0.0; 2]))).collect();
             points.dedup();
             if points.len() >= 2 {
-                self.rapier.insert_collider(configure_collider(ColliderBuilder::polyline(points, None), [collider.offset[0] * scale[0], collider.offset[1] * scale[1]], collider.is_trigger, collider.friction, collider.bounciness, entity), Some(handle));
+                let radius = finite_or(collider.radius * scale[0].abs().max(scale[1].abs()), 0.0).max(0.0);
+                let builder = if radius > 0.0 { ColliderBuilder::compound(points.windows(2).map(|p| (Pose::IDENTITY, SharedShape::capsule(p[0], p[1], radius))).collect()) } else { ColliderBuilder::polyline(points, None) };
+                self.rapier.insert_collider(configure_collider(builder, [collider.offset[0] * scale[0], collider.offset[1] * scale[1]], collider.is_trigger, collider.friction, collider.bounciness, entity), Some(handle));
             }
+        }
+        if let (Some(collider), Some(builder)) = (&definition.signature.polygon_collider, polygon) {
+            self.rapier.insert_collider(configure_collider(builder, [collider.offset[0] * scale[0], collider.offset[1] * scale[1]], collider.is_trigger, collider.friction, collider.bounciness, entity).density(density), Some(handle));
         }
         self.bodies.insert(
             entity,
@@ -428,7 +437,8 @@ fn collect_definitions(
             let box_collider = world.get_component::<BoxCollider2D>(entity).cloned();
             let circle_collider = world.get_component::<CircleCollider2D>(entity).cloned();
             let edge_collider = world.get_component::<EdgeCollider2D>(entity).cloned().and_then(normalize_edge_collider);
-            if rigid_body.is_none() && box_collider.is_none() && circle_collider.is_none() && edge_collider.is_none() {
+            let polygon_collider = world.get_component::<PolygonCollider2D>(entity).cloned().and_then(normalize_polygon_collider);
+            if rigid_body.is_none() && box_collider.is_none() && circle_collider.is_none() && edge_collider.is_none() && polygon_collider.is_none() {
                 return None;
             }
             let kind = rigid_body
@@ -454,6 +464,7 @@ fn collect_definitions(
                 box_collider: box_collider.map(normalize_box_collider),
                 circle_collider: circle_collider.map(normalize_circle_collider),
                 edge_collider,
+                polygon_collider,
             };
             Some((
                 entity,
@@ -487,12 +498,37 @@ fn normalize_circle_collider(value: CircleCollider2D) -> CircleColliderSignature
     }
 }
 
-fn normalize_edge_collider(value: EdgeCollider2D) -> Option<EdgeColliderSignature2D> {
+fn normalize_edge_collider(value: EdgeCollider2D) -> Option<PathColliderSignature2D> {
     if value.points.len() > 4096 || value.points.iter().flatten().any(|value| !value.is_finite()) { return None; }
     let mut points: Vec<_> = value.points.into_iter().map(|point| finite_vec2(point, [0.0; 2])).collect();
     points.dedup_by(|a, b| (a[0] - b[0]).hypot(a[1] - b[1]) < 0.00001);
     if points.len() < 2 { return None; }
-    Some(EdgeColliderSignature2D { points, offset: finite_vec2(value.offset, [0.0; 2]), is_trigger: value.is_trigger, friction: finite_or(value.friction, 0.5).max(0.0), bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0) })
+    Some(PathColliderSignature2D { points, radius: finite_or(value.edge_radius, 0.0).max(0.0), offset: finite_vec2(value.offset, [0.0; 2]), is_trigger: value.is_trigger, friction: finite_or(value.friction, 0.5).max(0.0), bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0) })
+}
+
+fn normalize_polygon_collider(value: PolygonCollider2D) -> Option<PathColliderSignature2D> {
+    if value.points.len() > 256 { return None; }
+    let mut result = normalize_edge_collider(EdgeCollider2D { points: value.points, offset: value.offset, is_trigger: value.is_trigger, friction: value.friction, bounciness: value.bounciness, ..Default::default() })?;
+    if result.points.first() == result.points.last() { result.points.pop(); }
+    (result.points.len() >= 3).then_some(result)
+}
+
+fn polygon_builder(collider: &PathColliderSignature2D, scale: [f32; 2]) -> Option<ColliderBuilder> {
+    let points: Vec<_> = collider.points.iter().map(|p| Vec2::from_array(finite_vec2([p[0] * scale[0], p[1] * scale[1]], [0.0; 2]))).collect();
+    let indices: Vec<_> = (0..points.len()).map(|i| [i as u32, ((i + 1) % points.len()) as u32]).collect();
+    let cross = |a: Vec2, b: Vec2| a.x * b.y - a.y * b.x;
+    let area: f32 = indices.iter().map(|e| cross(points[e[0] as usize], points[e[1] as usize])).sum();
+    if !area.is_finite() || area.abs() < 0.000001 { return None; }
+    for (i, edge) in indices.iter().enumerate() {
+        let a = points[edge[0] as usize]; let b = points[edge[1] as usize];
+        if (b - a).length_squared() < 1.0e-10 { return None; }
+        for other in indices.iter().skip(i + 1) {
+            if edge.iter().any(|v| other.contains(v)) { continue; }
+            let c = points[other[0] as usize]; let d = points[other[1] as usize];
+            if a.x.min(b.x) <= c.x.max(d.x) && c.x.min(d.x) <= a.x.max(b.x) && a.y.min(b.y) <= c.y.max(d.y) && c.y.min(d.y) <= a.y.max(b.y) && cross(b - a, c - a) * cross(b - a, d - a) <= 0.0 && cross(d - c, a - c) * cross(d - c, b - c) <= 0.0 { return None; }
+        }
+    }
+    Some(ColliderBuilder::convex_decomposition(&points, &indices))
 }
 
 fn configure_collider(
@@ -555,6 +591,36 @@ fn finite_vec2(value: [f32; 2], fallback: [f32; 2]) -> [f32; 2] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn polygon_preserves_concavity_mass_and_rejects_crossed_edges() {
+        let polygon = PolygonCollider2D { points: vec![[0.0, 0.0], [3.0, 0.0], [3.0, 1.0], [1.0, 1.0], [1.0, 3.0], [0.0, 3.0]], ..Default::default() };
+        let signature = normalize_polygon_collider(polygon.clone()).unwrap();
+        let builder = polygon_builder(&signature, [1.0; 2]).unwrap();
+        assert!(builder.shape.contains_local_point(Vec2::new(0.5, 2.0)));
+        assert!(!builder.shape.contains_local_point(Vec2::new(2.0, 2.0)), "concave notch must remain empty");
+        assert!(polygon_builder(&signature, [0.0, 1.0]).is_none());
+        let crossed = normalize_polygon_collider(PolygonCollider2D { points: vec![[0.0, 0.0], [2.0, 2.0], [0.0, 2.0], [2.0, 0.0]], ..Default::default() }).unwrap();
+        assert!(polygon_builder(&crossed, [1.0; 2]).is_none());
+        let mut world = World::new();
+        let entity = spawn_body(&mut world, [0.0; 3], Some(Rigidbody2D { mass: 5.0, ..Default::default() }), None, None);
+        world.insert_component(entity, polygon);
+        let mut physics = PhysicsWorld2D::new(); physics.step(&mut world, 0.02);
+        let body = physics.rapier.bodies.get(physics.bodies[&entity].handle).unwrap();
+        assert!((body.mass() - 5.0).abs() < 0.001);
+        assert!(body.mass_properties().local_mprops.inv_principal_inertia > 0.0);
+    }
+
+    #[test]
+    fn rounded_edge_supports_its_authored_collision_radius() {
+        let mut world = World::new();
+        let ground = spawn_body(&mut world, [0.0; 3], None, None, None);
+        world.insert_component(ground, EdgeCollider2D { points: vec![[-3.0, 0.0], [3.0, 0.0]], edge_radius: 0.2, ..Default::default() });
+        let ball = spawn_body(&mut world, [0.0, 2.0, 0.0], Some(Rigidbody2D::default()), None, Some(CircleCollider2D::default()));
+        let mut physics = PhysicsWorld2D::new();
+        for _ in 0..180 { physics.step(&mut world, 0.02); }
+        assert!((world.get_component::<Transform>(ball).unwrap().position[1] - 0.7).abs() < 0.025);
+    }
 
     fn spawn_body(
         world: &mut World,
