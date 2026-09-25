@@ -1,5 +1,6 @@
 {
   "passed": true,
+  "gammaBackgroundVerified": true,
   "initialBricks": 128,
   "remainingBricks": 126,
   "stableEntityId": true,

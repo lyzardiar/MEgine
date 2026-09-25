@@ -1,5 +1,6 @@
 {
   "passed": true,
+  "gammaBackgroundVerified": true,
   "sourceCells": 64,
   "tileAssets": 2,
   "paint": true,

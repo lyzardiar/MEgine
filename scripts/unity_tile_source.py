@@ -23,6 +23,24 @@ def write_json(path, value):
     Path(path).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
 
+def linear_color(color):
+    """Decode Unity Gamma numeric RGB for MEngine's linear render attachments."""
+    return [value if value in (0, 1) else value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4 for value in color[:3]] + [color[3]]
+
+
+def gamma_scene(world):
+    """Convert a freshly imported Gamma scene; source textures remain sRGB assets."""
+    world["clear_color"] = linear_color(world["clear_color"])
+    for entity in world["entities"]:
+        components = entity["components"]
+        if "Camera2D" in components:
+            components["EnvironmentLight"] = dict(background_enabled=False, tone_mapping=False)
+        for name in ["SpriteRenderer", "AnimatedSprite2D", "Text", "Image"]:
+            if name in components and "color" in components[name]:
+                components[name]["color"] = linear_color(components[name]["color"])
+    return world
+
+
 class UnityTiles:
     def __init__(self, source, output):
         self.source, self.output = Path(source).resolve(), Path(output)

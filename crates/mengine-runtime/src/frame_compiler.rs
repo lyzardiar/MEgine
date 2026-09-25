@@ -540,6 +540,7 @@ pub fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameL
                     background_enabled: environment.background_enabled,
                     background_intensity: environment.background_intensity,
                     exposure: environment.exposure,
+                    tone_mapping: environment.tone_mapping,
                 };
                 environment_found = true;
             }

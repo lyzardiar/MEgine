@@ -55,6 +55,8 @@ component EnvironmentLight {
   background_intensity: float = 1
   /// Photographic exposure compensation in stops (EV).
   exposure:           float  = 0
+  /// Apply ACES to the HDR scene before presentation. Disable for authored LDR colors.
+  tone_mapping:       bool   = true
 }
 
 component PointLight {

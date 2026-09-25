@@ -4,6 +4,7 @@
   "scene": "Assets/Tilemap/PaletteSwap/PaletteSwap.unity",
   "license": "MIT",
   "adaptations": [
+    "Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.",
     "26 editable Sprite entities preserve the authored layout and initial palette B.",
     "Palette positions map terrain, weighted random, brick, ladder and animated ocean tiles.",
     "Rule and terrain outputs are resolved during import for the fixed source layout; ocean retains source animation speed.",

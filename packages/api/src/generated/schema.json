@@ -918,6 +918,9 @@
       },
       "texture": {
         "type": "string"
+      },
+      "tone_mapping": {
+        "type": "boolean"
       }
     },
     "required": [
@@ -930,7 +933,8 @@
       "rotation_degrees",
       "background_enabled",
       "background_intensity",
-      "exposure"
+      "exposure",
+      "tone_mapping"
     ],
     "type": "object"
   },

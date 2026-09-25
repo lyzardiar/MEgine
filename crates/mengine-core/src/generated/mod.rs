@@ -192,6 +192,7 @@ pub struct EnvironmentLight {
     pub background_enabled: bool,
     pub background_intensity: f32,
     pub exposure: f32,
+    pub tone_mapping: bool,
 }
 
 impl Default for EnvironmentLight {
@@ -207,6 +208,7 @@ impl Default for EnvironmentLight {
             background_enabled: true,
             background_intensity: 1.0,
             exposure: 0.0,
+            tone_mapping: true,
         }
     }
 }

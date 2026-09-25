@@ -5,6 +5,7 @@
   "license": "MIT",
   "adaptations": [
     "Animated tiles use AnimatedSprite2D, with source cell positions, frame sequences and speeds.",
-    "Texture retained byte-for-byte; sprite rectangles translated from bottom-left to top-left origin."
+    "Texture retained byte-for-byte; sprite rectangles translated from bottom-left to top-left origin.",
+    "Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling."
   ]
 }

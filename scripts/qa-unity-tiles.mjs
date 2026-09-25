@@ -1,3 +1,4 @@
+import { assertUnityGammaCapture } from './assert-unity-capture.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
@@ -15,6 +16,7 @@ const output = fileURLToPath(new URL('../docs/designs/unity-demos/', import.meta
 const capture = async (name) => {
   const shot = await query('view.screenshot', { target: 'game' });
   fs.writeFileSync(`${output}/${name}.png`, Buffer.from(shot.dataUrl.split(',')[1], 'base64'));
+  assertUnityGammaCapture(`${output}/${name}.png`);
   return shot.dataUrl;
 };
 const press = async (key) => {
@@ -85,7 +87,7 @@ try {
     // A GPU readback can differ by one quantization step at a viewport edge.
     assert.ok(resetPixels.maximum <= 1 && resetPixels.changed <= Math.max(2, resetPixels.pixels * 0.0001), `Reset image changed: ${JSON.stringify(resetPixels)}`);
     await execute('playback.stop'); assert.deepEqual((await query('scene.snapshot')).entities, authored.entities);
-    const result = { passed: true, sourceCells: data.cells.length, tileAssets: data.tiles.length, paint: true, erase: true, coordinateStableRandom: true, tileSelection: data.tiles.length > 1, undo: true, changedNeighbors, preservedExistingEntityIds: true, resetPixels, stopRestoresAuthored: true };
+    const result = { passed: true, gammaBackgroundVerified: true, sourceCells: data.cells.length, tileAssets: data.tiles.length, paint: true, erase: true, coordinateStableRandom: true, tileSelection: data.tiles.length > 1, undo: true, changedNeighbors, preservedExistingEntityIds: true, resetPixels, stopRestoresAuthored: true };
     fs.writeFileSync(`${output}/${slug}-result.json`, JSON.stringify(result, null, 2));
     console.log(`PASS: ${slug}, ${data.cells.length} source cells, brush/erase/undo/reset, ${changedNeighbors} adjoining tiles refreshed`);
   }

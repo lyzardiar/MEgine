@@ -1,3 +1,4 @@
+import { assertUnityGammaCapture } from './assert-unity-capture.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
@@ -6,13 +7,13 @@ process.env.MENGINE_AGENT_EDITOR_MODE='auto-background';
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(command,args={})=>{const result=await bridgeExecute(command,args,{requestId:crypto.randomUUID()});assert.ok(result.ok,result.error?.message);return result.data;};
 const output=fileURLToPath(new URL('../docs/designs/unity-demos/',import.meta.url));
-const capture=async(name)=>{const shot=await query('view.screenshot',{target:'game'});fs.writeFileSync(output+'/'+name+'.png',Buffer.from(shot.dataUrl.split(',')[1],'base64'));};
+const capture=async(name)=>{const shot=await query('view.screenshot',{target:'game'});fs.writeFileSync(output+'/'+name+'.png',Buffer.from(shot.dataUrl.split(',')[1],'base64'));assertUnityGammaCapture(output+'/'+name+'.png');};
 const root=fileURLToPath(new URL('../samples/unity-destructible/',import.meta.url));
 const dataText=fs.readFileSync(root+'Assets/Scripts/Data.ts','utf8');
 const data=JSON.parse(dataText.slice(dataText.indexOf('= ')+2).trim().replace(/;$/,''));
 const borders=data.cells.filter(cell=>cell.tile==='Border').map(cell=>cell.name);
 try {
- if ((await query('project.state')).project) { await execute('project.close'); await new Promise(resolve => setTimeout(resolve, 600)); }
+ if ((await query('project.state')).project) { await execute('playback.stop'); await execute('project.close'); await new Promise(resolve => setTimeout(resolve, 600)); }
  await execute('project.open',{root});
  const authored=await query('scene.snapshot');assert.equal(authored.entities.length,560);
  await execute('playback.play',{paused:true});await execute('panel.focus',{kind:'game'});
@@ -35,6 +36,6 @@ try {
  await execute('playback.input',{keys:['KeyR']});await execute('playback.step',{deltaTime:0.016});
  assert.equal((await query('scene.snapshot')).entities.length,560);
  await execute('playback.stop');assert.deepEqual((await query('scene.snapshot')).entities,authored.entities);
- fs.writeFileSync(output+'/destructible-result.json',JSON.stringify({passed:true,sourceCells:559,originalForeground:235,remainingForeground:remaining.length,preservedBorders:borders.length,burnedFloorCells:burned,explosionCount:9,heldClickDoesNotRepeat:true,effectsExpire:true,restartRestores:true,stopRestoresAuthored:true},null,2));
+ fs.writeFileSync(output+'/destructible-result.json',JSON.stringify({passed:true,gammaBackgroundVerified:true,sourceCells:559,originalForeground:235,remainingForeground:remaining.length,preservedBorders:borders.length,burnedFloorCells:burned,explosionCount:9,heldClickDoesNotRepeat:true,effectsExpire:true,restartRestores:true,stopRestoresAuthored:true},null,2));
  console.log('PASS:',remaining.length,'foreground cells,',borders.length,'borders preserved,',burned,'burned floor cells; effects expire and restart restores');
 }catch(error){console.error(error.code,error.message);process.exitCode=1;}finally{closeBridgeConnection();}

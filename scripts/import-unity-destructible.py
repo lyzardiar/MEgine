@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 import sys
 
-from unity_tile_source import COMMIT, UnityTiles, documents, write_json
+from unity_tile_source import COMMIT, UnityTiles, documents, gamma_scene, write_json
 
 
 def main():
@@ -81,11 +81,11 @@ def main():
         angle = -turns * math.pi / 2
         components["Transform"]["rotation"] = [0, 0, math.sin(angle / 2), math.cos(angle / 2)]
     (output / "Assets/Scripts/Data.ts").write_text("/** Data converted from the official Unity MIT scene and tile assets. */\nconst sourceData = " + json.dumps(data, separators=(",", ":")) + ";\n", encoding="utf-8")
-    write_json(output / "Assets/Scenes/Main.mscene", dict(version=3, name="Destructible", world=dict(entities=entities, clear_color=[0.19215687, 0.3019608, 0.4745098, 1])))
+    write_json(output / "Assets/Scenes/Main.mscene", dict(version=3, name="Destructible", world=gamma_scene(dict(entities=entities, clear_color=[0.19215687, 0.3019608, 0.4745098, 1]))))
     write_json(output / "project.json", dict(name="Unity Destructible", version=1, language="typescript", mainScene="Assets/Scenes/Main.mscene", buildScenes=["Assets/Scenes/Main.mscene"], startupScript="Assets/Scripts/Main.ts", assetMode="all"))
     shutil.copyfile(output.parent / "types/engine.d.ts", output / "Assets/Scripts/mengine.d.ts")
     shutil.copyfile(source / "LICENSE.md", output / "UNITY-LICENSE.md")
-    write_json(output / "SOURCE.json", dict(repository="https://github.com/Unity-Technologies/2d-techdemos", commit=COMMIT, scene=relative, license="MIT", adaptations=["Editable Sprite entities represent the source tile cells.", "Destructible cells evaluate the source neighbor rules to form connected terrain.", "TypeScript implements cross-shaped explosions, indestructible borders, neighbor rules and damage decals.", "Official explosion sprite keyframes retain their source timings."]))
+    write_json(output / "SOURCE.json", dict(repository="https://github.com/Unity-Technologies/2d-techdemos", commit=COMMIT, scene=relative, license="MIT", adaptations=["Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.", "Editable Sprite entities represent the source tile cells.", "Destructible cells evaluate the source neighbor rules to form connected terrain.", "TypeScript implements cross-shaped explosions, indestructible borders, neighbor rules and damage decals.", "Official explosion sprite keyframes retain their source timings."]))
     print(f"Imported {len(cells)} cells and {len(imported)} sprite sheets into {output}")
 
 

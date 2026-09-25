@@ -67,3 +67,11 @@ function onTick(dt: number): void {
 键盘采用物理按键代码，例如 `KeyA`、`ArrowLeft` 和 `Space`。失焦释放输入。
 Agent 可调用 `playback.input`（MCP `set_game_input`）设置 held 状态，结合 `playback.pause`
 和 `playback.step` 做可重复的交互验收。`playback.play {paused:true}` 在首帧前暂停，避免初始化后自动推进。Play 和 Step 的返回值会等待脚本完成，截图会等待新帧。
+
+## 色调映射
+
+`EnvironmentLight.tone_mapping` 控制 HDR 场景的 ACES 色调映射，默认 `true` 保持既有场景行为。
+关闭时仍应用 `exposure`，随后由输出附件编码为 sRGB；Sprite/UI 在后处理之后绘制。
+来源为 Gamma 的 2D 场景需要在导入时将数值 RGB 解码到线性空间，同时关闭 ACES。
+纹理继续使用 sRGB 采样，不再次转换像素。官方 2D 示例在相机实体上保存该 EnvironmentLight 设置，
+并禁用环境背景，使场景背景颜色直接输出。原生截图验证背景为源颜色 `(49,77,121)`。

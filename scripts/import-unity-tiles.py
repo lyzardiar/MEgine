@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 import sys
 
-from unity_tile_source import COMMIT, UnityTiles, documents, write_json
+from unity_tile_source import COMMIT, UnityTiles, documents, gamma_scene, linear_color, write_json
 
 DEMOS = {"Random Tile": "random", "Weighted Random Tile": "weighted", "Terrain Tile": "terrain", "Pipeline Tile": "pipeline"}
 
@@ -46,8 +46,10 @@ def main():
         controls = f"{title}\n{tiles[0]['name']}\n\nLeft mouse: paint\nRight mouse: erase\n" + ("1 / 2: choose tile\n" if len(tiles) > 1 else "") + "Z: undo    R: reset"
         entities.append(dict(entity=canvas + 1, parent=canvas, name="Brush Controls", components=dict(RectTransform=dict(anchor_min=[0, 0], anchor_max=[0, 0], pivot=[0, 0], anchored_position=[16, 40], size_delta=[225, 230]), Text=dict(text=controls, font="Assets/Fonts/Roboto-Regular.ttf", font_size=18, alignment="Left", vertical_align="Top", raycast_target=False))))
         data = dict(title=title, kind=kind, cameraSize=camera["orthographic size"], cameraPosition=camera_position, cells=cells, tiles=tiles)
+        for tile in tiles:
+            tile["color"] = linear_color(tile["color"])
         (output / "Assets/Scripts/Data.ts").write_text("/** Official MIT tile assets and authored cells. */\nconst tileData = " + json.dumps(data, separators=(",", ":")) + ";\n", encoding="utf-8")
-        write_json(output / "Assets/Scenes/Main.mscene", dict(version=3, name=title, world=dict(entities=entities, clear_color=[camera["m_BackGroundColor"][key] for key in "rgb"] + [1])))
+        write_json(output / "Assets/Scenes/Main.mscene", dict(version=3, name=title, world=gamma_scene(dict(entities=entities, clear_color=[camera["m_BackGroundColor"][key] for key in "rgb"] + [1]))))
         write_json(output / "project.json", dict(name="Unity " + title, version=1, language="typescript", mainScene="Assets/Scenes/Main.mscene", buildScenes=["Assets/Scenes/Main.mscene"], startupScript="Assets/Scripts/Main.ts", assetMode="all"))
         shutil.copyfile(repo / "scripts/templates/unity-tile-painter.ts", output / "Assets/Scripts/Main.ts")
         shutil.copyfile(repo / "samples/types/engine.d.ts", output / "Assets/Scripts/mengine.d.ts")
@@ -55,7 +57,7 @@ def main():
         (output / "Assets/Fonts").mkdir(exist_ok=True)
         for filename in ["Roboto-Regular.ttf", "LICENSE.txt"]:
             shutil.copyfile(repo / "samples/unity-palette-swap/Assets/Fonts" / filename, output / "Assets/Fonts" / filename)
-        write_json(output / "SOURCE.json", dict(repository="https://github.com/Unity-Technologies/2d-techdemos", commit=COMMIT, scene=relative, license="MIT", sourceCells=len(cells), adaptations=["Independent editable Sprite entities preserve the authored tile layout, selected sprites, rotations and colors.", "A runtime brush demonstrates painting, erasing, tile selection, 64-cell undo history and reset; the source scene has no runtime input.", "Terrain and pipe neighbors update when the brush edits a cell. Random tiles retain source sprite lists and weights, with a deterministic coordinate hash for new cells.", "Runtime brush changes are temporary; R or Stop restores the source scene. Roboto controls use Apache 2.0."]))
+        write_json(output / "SOURCE.json", dict(repository="https://github.com/Unity-Technologies/2d-techdemos", commit=COMMIT, scene=relative, license="MIT", sourceCells=len(cells), adaptations=["Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.", "Independent editable Sprite entities preserve the authored tile layout, selected sprites, rotations and colors.", "A runtime brush demonstrates painting, erasing, tile selection, 64-cell undo history and reset; the source scene has no runtime input.", "Terrain and pipe neighbors update when the brush edits a cell. Random tiles retain source sprite lists and weights, with a deterministic coordinate hash for new cells.", "Runtime brush changes are temporary; R or Stop restores the source scene. Roboto controls use Apache 2.0."]))
         readme = f"""# {title}
 
 来自 Unity Technologies [2d-techdemos](https://github.com/Unity-Technologies/2d-techdemos/tree/{COMMIT}/Assets/Tilemap/Tiles/{title.replace(' ', '%20')})，保留官方 {len(cells)} 个单元格、纹理、切片、颜色、方向和初始布局。

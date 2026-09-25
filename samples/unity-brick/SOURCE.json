@@ -14,6 +14,7 @@
     "Each destructible tile is an editable sprite with a collider.",
     "Paddle uses a kinematic box; source uses a constrained dynamic polygon.",
     "MEngine camera faces -Z; camera Z is mirrored.",
-    "R restarts the scene."
+    "R restarts the scene.",
+    "Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling."
   ]
 }

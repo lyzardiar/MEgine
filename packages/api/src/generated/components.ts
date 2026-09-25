@@ -50,6 +50,7 @@ export interface EnvironmentLight {
   backgroundEnabled: boolean;
   backgroundIntensity: number;
   exposure: number;
+  toneMapping: boolean;
 }
 
 export interface PointLight {
@@ -802,6 +803,7 @@ export type SerializedComponentMap = {
     background_enabled: boolean;
     background_intensity: number;
     exposure: number;
+    tone_mapping: boolean;
   };
   PointLight: {
     color: [number, number, number, number];

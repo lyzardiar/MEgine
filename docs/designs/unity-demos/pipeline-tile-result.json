@@ -1,5 +1,6 @@
 {
   "passed": true,
+  "gammaBackgroundVerified": true,
   "sourceCells": 34,
   "tileAssets": 1,
   "paint": true,
@@ -10,8 +11,8 @@
   "changedNeighbors": 3,
   "preservedExistingEntityIds": true,
   "resetPixels": {
-    "changed": 1,
-    "maximum": 1,
+    "changed": 0,
+    "maximum": 0,
     "pixels": 432650
   },
   "stopRestoresAuthored": true

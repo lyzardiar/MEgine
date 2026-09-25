@@ -5,6 +5,7 @@
   "license": "MIT",
   "sourceCells": 24,
   "adaptations": [
+    "Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.",
     "Independent editable Sprite entities preserve the authored tile layout, selected sprites, rotations and colors.",
     "A runtime brush demonstrates painting, erasing, tile selection, 64-cell undo history and reset; the source scene has no runtime input.",
     "Terrain and pipe neighbors update when the brush edits a cell. Random tiles retain source sprite lists and weights, with a deterministic coordinate hash for new cells.",

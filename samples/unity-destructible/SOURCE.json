@@ -4,6 +4,7 @@
   "scene": "Assets/Tilemap/Destructible/Destructible.unity",
   "license": "MIT",
   "adaptations": [
+    "Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.",
     "Editable Sprite entities represent the source tile cells.",
     "Destructible cells evaluate the source neighbor rules to form connected terrain.",
     "TypeScript implements cross-shaped explosions, indestructible borders, neighbor rules and damage decals.",

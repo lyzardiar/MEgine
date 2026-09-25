@@ -9,9 +9,9 @@ struct ToneMappingUniforms {
 }
 
 impl ToneMappingUniforms {
-    fn new(exposure: f32) -> Self {
+    fn new(exposure: f32, tone_mapping: bool) -> Self {
         Self {
-            params: [sanitize_exposure(exposure), 0.0, 0.0, 0.0],
+            params: [sanitize_exposure(exposure), if tone_mapping { 1.0 } else { 0.0 }, 0.0, 0.0],
         }
     }
 }
@@ -136,11 +136,11 @@ impl HdrPostProcess {
         self.tone_mapping_bind_group = tone_mapping_bind_group;
     }
 
-    pub(crate) fn write_exposure(&self, queue: &wgpu::Queue, exposure: f32) {
+    pub(crate) fn write_settings(&self, queue: &wgpu::Queue, exposure: f32, tone_mapping: bool) {
         queue.write_buffer(
             &self.tone_mapping_uniform,
             0,
-            bytemuck::bytes_of(&ToneMappingUniforms::new(exposure)),
+            bytemuck::bytes_of(&ToneMappingUniforms::new(exposure, tone_mapping)),
         );
     }
 
@@ -242,6 +242,9 @@ fn fs_main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
     );
     let hdr = textureLoad(hdr_color, coordinate, 0);
     let exposed = max(hdr.rgb, vec3<f32>(0.0)) * exp2(settings.params.x);
+    if settings.params.y < 0.5 {
+        return vec4<f32>(exposed, clamp(hdr.a, 0.0, 1.0));
+    }
     return vec4<f32>(aces_fitted(exposed), clamp(hdr.a, 0.0, 1.0));
 }
 "#;
@@ -257,6 +260,8 @@ mod tests {
         assert_eq!(sanitize_exposure(-20.0), -16.0);
         assert_eq!(sanitize_exposure(20.0), 16.0);
         assert_eq!(sanitize_exposure(1.25), 1.25);
+        assert_eq!(ToneMappingUniforms::new(1.25, true).params, [1.25, 1.0, 0.0, 0.0]);
+        assert_eq!(ToneMappingUniforms::new(1.25, false).params, [1.25, 0.0, 0.0, 0.0]);
     }
 
     #[test]

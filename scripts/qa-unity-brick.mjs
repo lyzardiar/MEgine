@@ -1,3 +1,4 @@
+import { assertUnityGammaCapture } from './assert-unity-capture.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 if (!process.env.MENGINE_EDITOR_CONFIG_DIR || !process.env.MENGINE_EDITOR_EXECUTABLE) throw new Error('Set MENGINE_EDITOR_CONFIG_DIR to an isolated QA directory and MENGINE_EDITOR_EXECUTABLE to the editor executable.');
@@ -9,7 +10,7 @@ fs.mkdirSync(output,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(command,args={})=>{const r=await bridgeExecute(command,args,{requestId:crypto.randomUUID()});assert.equal(r.ok,true,r.error?.message);return r.data;};
 try {
- if ((await query('project.state')).project) { await execute('project.close'); await new Promise(resolve => setTimeout(resolve, 600)); }
+ if ((await query('project.state')).project) { await execute('playback.stop'); await execute('project.close'); await new Promise(resolve => setTimeout(resolve, 600)); }
  await execute('project.open',{root:fileURLToPath(new URL('samples/unity-brick/',root))});
  console.log('Brick opened');
  const authored=await query('scene.snapshot');
@@ -27,6 +28,7 @@ try {
  const live=await query('scene.snapshot');const count=live.entities.filter(e=>e.name?.startsWith('Brick ')).length;assert.ok(count<128);assert.equal((await query('entity.get',{name:'Top wall'})).entity,wallId);
  await execute('panel.focus',{kind:'game'});
  const shot=await query('view.screenshot',{target:'game'});fs.writeFileSync(output+'/brick-game.png',Buffer.from(shot.dataUrl.split(',')[1],'base64'));
+ assertUnityGammaCapture(output+'/brick-game.png');
  const full=await query('view.window_screenshot');fs.writeFileSync(output+'/brick-editor.png',Buffer.from(full.dataUrl.split(',')[1],'base64'));
  await execute('playback.input',{keys:['ArrowLeft']});
  let restarted=false;
@@ -39,6 +41,6 @@ try {
  await execute('playback.play',{paused:true});await execute('playback.step',{deltaTime:0.1});
  assert.equal((await query('entity.get',{name:'Paddle'})).components.Transform.position[0],8);
  await execute('playback.stop');
- fs.writeFileSync(output+'/brick-result.json',JSON.stringify({passed:true,initialBricks:128,remainingBricks:count,stableEntityId:true,lossReload:true,manualRestart:true,stopRestoresAuthored:true,restartClearsInput:true},null,2));
+ fs.writeFileSync(output+'/brick-result.json',JSON.stringify({passed:true,gammaBackgroundVerified:true,initialBricks:128,remainingBricks:count,stableEntityId:true,lossReload:true,manualRestart:true,stopRestoresAuthored:true,restartClearsInput:true},null,2));
  console.log('PASS: movement, collision destruction, stable IDs, loss reload, R restart, stop restoration, clean restart');
 }catch(error){console.error(error.code,error.message);process.exitCode=1;}finally{closeBridgeConnection();}

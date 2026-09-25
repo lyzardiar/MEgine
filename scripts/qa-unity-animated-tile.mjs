@@ -1,3 +1,4 @@
+import { assertUnityGammaCapture } from './assert-unity-capture.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
@@ -6,9 +7,9 @@ process.env.MENGINE_AGENT_EDITOR_MODE='auto-background';
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(command,args={})=>{const result=await bridgeExecute(command,args,{requestId:crypto.randomUUID()});assert.ok(result.ok,result.error?.message);return result.data;};
 const output=fileURLToPath(new URL('../docs/designs/unity-demos/',import.meta.url));
-const capture=async(name)=>{const shot=await query('view.screenshot',{target:'game'});fs.writeFileSync(output+'/'+name+'.png',Buffer.from(shot.dataUrl.split(',')[1],'base64'));return shot.dataUrl;};
+const capture=async(name)=>{const shot=await query('view.screenshot',{target:'game'});fs.writeFileSync(output+'/'+name+'.png',Buffer.from(shot.dataUrl.split(',')[1],'base64'));assertUnityGammaCapture(output+'/'+name+'.png');return shot.dataUrl;};
 try {
- if ((await query('project.state')).project) { await execute('project.close'); await new Promise(resolve => setTimeout(resolve, 600)); }
+ if ((await query('project.state')).project) { await execute('playback.stop'); await execute('project.close'); await new Promise(resolve => setTimeout(resolve, 600)); }
  await execute('project.open',{root:fileURLToPath(new URL('../samples/unity-animated-tile/',import.meta.url))});
  const authored=await query('scene.snapshot');
  assert.equal(authored.entities.filter(e=>e.components.AnimatedSprite2D).length,8);
@@ -25,6 +26,6 @@ try {
  assert.equal((await query('scene.snapshot')).simulationTime,0);
  const restarted=await capture('animated-tile-restarted');assert.equal(restarted,first);
  await execute('playback.stop');assert.deepEqual((await query('scene.snapshot')).entities,authored.entities);
- fs.writeFileSync(output+'/animated-tile-result.json',JSON.stringify({passed:true,animatedTiles:8,spriteSlices:10,frameAdvance:true,pauseFrozen:true,restartAtFirstFrame:true,stopRestoresAuthored:true},null,2));
+ fs.writeFileSync(output+'/animated-tile-result.json',JSON.stringify({passed:true,gammaBackgroundVerified:true,animatedTiles:8,spriteSlices:10,frameAdvance:true,pauseFrozen:true,restartAtFirstFrame:true,stopRestoresAuthored:true},null,2));
  console.log('PASS: 8 animated tiles, frame advance, pause freeze, restart frame, authored restoration');
 }catch(error){console.error(error.code,error.message);process.exitCode=1;}finally{closeBridgeConnection();}

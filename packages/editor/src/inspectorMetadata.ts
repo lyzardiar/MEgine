@@ -196,6 +196,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       visibleWhen: { field: 'background_enabled', equals: true },
     },
     exposure: { label: 'Exposure (EV)', min: -16, max: 16, step: 0.1 },
+    tone_mapping: { label: 'ACES Tone Mapping' },
   },
   PointLight: {
     intensity: { min: 0, step: 0.1 },

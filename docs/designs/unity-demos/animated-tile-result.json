@@ -1,5 +1,6 @@
 {
   "passed": true,
+  "gammaBackgroundVerified": true,
   "animatedTiles": 8,
   "spriteSlices": 10,
   "frameAdvance": true,

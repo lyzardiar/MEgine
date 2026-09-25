@@ -27,6 +27,10 @@
           },
           "Camera2D": {
             "size": 5
+          },
+          "EnvironmentLight": {
+            "background_enabled": false,
+            "tone_mapping": false
           }
         }
       },
@@ -1059,9 +1063,9 @@
       }
     ],
     "clear_color": [
-      0.19215687,
-      0.3019608,
-      0.4745098,
+      0.03071344589670157,
+      0.0742135762071233,
+      0.1912016793422798,
       1
     ]
   }

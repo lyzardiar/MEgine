@@ -1,3 +1,4 @@
+import { assertUnityGammaCapture } from './assert-unity-capture.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +15,7 @@ const output = fileURLToPath(new URL('../docs/designs/unity-demos/', import.meta
 const capture = async (name) => {
   const shot = await query('view.screenshot', { target: 'game' });
   fs.writeFileSync(`${output}/${name}.png`, Buffer.from(shot.dataUrl.split(',')[1], 'base64'));
+  assertUnityGammaCapture(`${output}/${name}.png`);
   return shot.dataUrl;
 };
 const root = fileURLToPath(new URL('../samples/unity-palette-swap/', import.meta.url));
@@ -80,7 +82,7 @@ try {
   await checkPalette('ABC'.indexOf(label.slice(8, 9)));
   await press('KeyR'); initial = await query('scene.snapshot'); await checkPalette(1);
   await execute('playback.stop'); assert.deepEqual((await query('scene.snapshot')).entities, authored.entities);
-  fs.writeFileSync(`${output}/palette-swap-result.json`, JSON.stringify({ passed: true, sourceCells: 26, palettes: 3, animatedTiles, originalAndAliasControls: true, wraparound: true, heldKeyDoesNotRepeat: true, stableEntityIds: true, oceanAnimation: true, pauseFrozen: true, returnToInitialPixels: true, randomPalette: true, restartRestores: true, stopRestoresAuthored: true }, null, 2));
+  fs.writeFileSync(`${output}/palette-swap-result.json`, JSON.stringify({ passed: true, gammaBackgroundVerified: true, sourceCells: 26, palettes: 3, animatedTiles, originalAndAliasControls: true, wraparound: true, heldKeyDoesNotRepeat: true, stableEntityIds: true, oceanAnimation: true, pauseFrozen: true, returnToInitialPixels: true, randomPalette: true, restartRestores: true, stopRestoresAuthored: true }, null, 2));
   console.log(`PASS: 26 cells, 3 palettes, ${animatedTiles} ocean animations, wraparound, stable IDs, pause and reset`);
 } catch (error) { console.error(error.stack); process.exitCode = 1; } finally {
   try { await execute('playback.stop'); } catch { /* The bridge may already have disconnected. */ }

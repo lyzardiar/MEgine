@@ -6,7 +6,7 @@ import random
 import shutil
 import sys
 
-from unity_tile_source import COMMIT, UnityTiles, documents, write_json
+from unity_tile_source import COMMIT, UnityTiles, documents, gamma_scene, linear_color, write_json
 
 
 def main():
@@ -77,12 +77,16 @@ def main():
     entities.append(dict(entity=canvas, name="Controls", components=dict(Canvas={}, CanvasScaler=dict(ui_scale_mode="ScaleWithScreenSize", reference_resolution=[960, 540]), RectTransform=dict(anchor_min=[0, 0], anchor_max=[1, 1], size_delta=[0, 0]))))
     entities.append(dict(entity=canvas + 1, parent=canvas, name="Palette Controls", components=dict(RectTransform=dict(anchor_min=[0, 0], anchor_max=[0, 0], pivot=[0, 0], anchored_position=[16, 40], size_delta=[500, 80]), Text=dict(text="Palette B\n1 / Left: previous    2 / Right: next\nSpace: random    R: reset", font="Assets/Fonts/Roboto-Regular.ttf", font_size=18, alignment="Left", vertical_align="Top", raycast_target=False))))
     data = dict(cells=cells, palettes=visuals)
+    world = gamma_scene(dict(entities=entities, clear_color=[0.19215687, 0.3019608, 0.4745098, 1]))
+    for palette in visuals:
+        for visual in palette:
+            visual["color"] = linear_color(visual["color"])
     (output / "Assets/Scripts/Data.ts").write_text("/** Converted from Unity Technologies 2d-techdemos (MIT). */\nconst paletteData = " + json.dumps(data, separators=(",", ":")) + ";\n", encoding="utf-8")
-    write_json(output / "Assets/Scenes/Main.mscene", dict(version=3, name="Palette Swap", world=dict(entities=entities, clear_color=[0.19215687, 0.3019608, 0.4745098, 1])))
+    write_json(output / "Assets/Scenes/Main.mscene", dict(version=3, name="Palette Swap", world=world))
     write_json(output / "project.json", dict(name="Unity Palette Swap", version=1, language="typescript", mainScene="Assets/Scenes/Main.mscene", buildScenes=["Assets/Scenes/Main.mscene"], startupScript="Assets/Scripts/Main.ts", assetMode="all"))
     shutil.copyfile(output.parent / "types/engine.d.ts", output / "Assets/Scripts/mengine.d.ts")
     shutil.copyfile(source.source / "LICENSE.md", output / "UNITY-LICENSE.md")
-    write_json(output / "SOURCE.json", dict(repository="https://github.com/Unity-Technologies/2d-techdemos", commit=COMMIT, scene=relative, license="MIT", adaptations=["26 editable Sprite entities preserve the authored layout and initial palette B.", "Palette positions map terrain, weighted random, brick, ladder and animated ocean tiles.", "Rule and terrain outputs are resolved during import for the fixed source layout; ocean retains source animation speed.", "Weighted selections outside the authored initial palette use a deterministic per-cell seed instead of Unity's random sequence.", "Original 1/2/Space controls are retained, with Left/Right aliases and R to reset; a Canvas text label replaces UI Toolkit."]))
+    write_json(output / "SOURCE.json", dict(repository="https://github.com/Unity-Technologies/2d-techdemos", commit=COMMIT, scene=relative, license="MIT", adaptations=["Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.", "26 editable Sprite entities preserve the authored layout and initial palette B.", "Palette positions map terrain, weighted random, brick, ladder and animated ocean tiles.", "Rule and terrain outputs are resolved during import for the fixed source layout; ocean retains source animation speed.", "Weighted selections outside the authored initial palette use a deterministic per-cell seed instead of Unity's random sequence.", "Original 1/2/Space controls are retained, with Left/Right aliases and R to reset; a Canvas text label replaces UI Toolkit."]))
     print(f"Imported {len(cells)} cells, 3 palettes and {len(source.imported)} sprite sheets")
 
 

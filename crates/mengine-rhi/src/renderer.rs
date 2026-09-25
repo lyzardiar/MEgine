@@ -305,6 +305,7 @@ pub struct EnvironmentLightData {
     pub background_intensity: f32,
     /// Exposure compensation in photographic stops (EV).
     pub exposure: f32,
+    pub tone_mapping: bool,
 }
 
 impl Default for EnvironmentLightData {
@@ -322,6 +323,7 @@ impl Default for EnvironmentLightData {
             background_enabled: false,
             background_intensity: 1.0,
             exposure: 0.0,
+            tone_mapping: true,
         }
     }
 }
@@ -1441,7 +1443,7 @@ impl Renderer {
         self.queue
             .write_buffer(&self.shadow_uniform_buf, 0, bytemuck::bytes_of(&shadow));
         self.post_process
-            .write_exposure(&self.queue, lighting.environment.exposure);
+            .write_settings(&self.queue, lighting.environment.exposure, lighting.environment.tone_mapping);
         if !objects.is_empty() {
             let mut packed = vec![0_u8; self.object_stride as usize * objects.len()];
             for (index, object) in objects.iter().enumerate() {

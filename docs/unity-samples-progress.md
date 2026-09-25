@@ -20,6 +20,7 @@
 - Destructible：559 个单元格、官方图集与爆炸关键帧；一次十字爆破使前景 235 → 228，保留全部 128 个 Border，24 个地面单元更新，远处 Sprite 不变。按住鼠标不重复触发、特效结束回收、R 重开与停止恢复通过。证据 `docs/designs/unity-demos/destructible-*`；复验 `scripts/qa-unity-destructible.mjs`。
 - Palette Swap：26 个原始单元格、3 套调色板、原始 1/2/Space 和左右键控制；12 个海面动画实例保持 1.5 FPS。首尾循环、稳定实体 ID、图块颜色、按住不连发、暂停冻结、返回初始像素、R 与停止恢复通过。证据 `docs/designs/unity-demos/palette-swap-*`；复验 `scripts/qa-unity-palette-swap.mjs`。
 - Random Tile / Weighted Random Tile / Terrain Tile / Pipeline Tile：保留原始 12/24/64/34 个单元格，增加可操作画笔、擦除、类型选择、撤销和重开。原生 Agent 验收通过；地形/管道删除后分别有 1/3 个邻格自动更新。独立规则检查匹配全部源图块，随机权重分布检查通过。证据 `docs/designs/unity-demos/*-tile-*`，复验 `scripts/qa-unity-tiles.mjs`。
+- 颜色：原生后处理支持 `EnvironmentLight.tone_mapping=false`，默认仍启用 ACES。八个 Gamma 来源项目在线性渲染前转换数值颜色；原生截图采样背景为 (49,77,121)，与源颜色相符。每个 QA 入口均检查背景颜色。
 - Editor Play 已接通项目启动脚本、物理和输入，Agent 已验证单步、按下边沿、停止恢复与重新运行。场景切换和公开运行请求复用 Player 处理。Timeline 粒子 seek、相机 override 与运行时 UI 控件事件仍需接通/验收。
 
 ## 下一步

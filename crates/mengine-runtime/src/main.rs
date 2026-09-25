@@ -3622,6 +3622,8 @@ mod tests {
 
     #[test]
     fn world_lights_feed_all_supported_runtime_light_types() {
+        assert!(serde_json::from_value::<mengine_core::generated::EnvironmentLight>(json!({})).unwrap().tone_mapping);
+        assert!(mengine_rhi::EnvironmentLightData::default().tone_mapping);
         let mut world = World::new();
         for components in [
             json!({
@@ -3634,7 +3636,8 @@ mod tests {
                     "rotation_degrees": 45,
                     "background_enabled": true,
                     "background_intensity": 1.75,
-                    "exposure": 1.25
+                    "exposure": 1.25,
+                    "tone_mapping": false
                 }
             }),
             json!({
@@ -3666,6 +3669,7 @@ mod tests {
         assert!(lights.environment.background_enabled);
         assert_eq!(lights.environment.background_intensity, 1.75);
         assert_eq!(lights.environment.exposure, 1.25);
+        assert!(!lights.environment.tone_mapping);
         assert_eq!(lights.directional.unwrap().intensity, 2.0);
         assert_eq!(lights.points[0].range, 7.0);
         assert_eq!(lights.spots[0].outer_angle_degrees, 55.0);
