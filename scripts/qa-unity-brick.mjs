@@ -9,6 +9,7 @@ fs.mkdirSync(output,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(command,args={})=>{const r=await bridgeExecute(command,args,{requestId:crypto.randomUUID()});assert.equal(r.ok,true,r.error?.message);return r.data;};
 try {
+ if ((await query('project.state')).project) { await execute('project.close'); await new Promise(resolve => setTimeout(resolve, 600)); }
  await execute('project.open',{root:fileURLToPath(new URL('samples/unity-brick/',root))});
  console.log('Brick opened');
  const authored=await query('scene.snapshot');

@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scene": "Assets/Tilemap/Destructible/Destructible.unity",
+  "license": "MIT",
+  "adaptations": [
+    "Editable Sprite entities represent the source tile cells.",
+    "Destructible cells evaluate the source neighbor rules to form connected terrain.",
+    "TypeScript implements cross-shaped explosions, indestructible borders, neighbor rules and damage decals.",
+    "Official explosion sprite keyframes retain their source timings."
+  ]
+}

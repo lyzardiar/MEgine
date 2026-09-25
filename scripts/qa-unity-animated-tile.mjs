@@ -8,6 +8,7 @@ const execute=async(command,args={})=>{const result=await bridgeExecute(command,
 const output=fileURLToPath(new URL('../docs/designs/unity-demos/',import.meta.url));
 const capture=async(name)=>{const shot=await query('view.screenshot',{target:'game'});fs.writeFileSync(output+'/'+name+'.png',Buffer.from(shot.dataUrl.split(',')[1],'base64'));return shot.dataUrl;};
 try {
+ if ((await query('project.state')).project) { await execute('project.close'); await new Promise(resolve => setTimeout(resolve, 600)); }
  await execute('project.open',{root:fileURLToPath(new URL('../samples/unity-animated-tile/',import.meta.url))});
  const authored=await query('scene.snapshot');
  assert.equal(authored.entities.filter(e=>e.components.AnimatedSprite2D).length,8);

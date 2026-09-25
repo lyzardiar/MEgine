@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "sourceCells": 559,
+  "originalForeground": 235,
+  "remainingForeground": 228,
+  "preservedBorders": 128,
+  "burnedFloorCells": 24,
+  "explosionCount": 9,
+  "heldClickDoesNotRepeat": true,
+  "effectsExpire": true,
+  "restartRestores": true,
+  "stopRestoresAuthored": true
+}
