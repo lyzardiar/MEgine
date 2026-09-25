@@ -14,8 +14,9 @@
 
 - 标题栏：统一 29px 高度、靠左的内容宽度标签、固定分离窗口按钮、窄窗口标签选择器；移除按面板宽度拉伸当前标签并隐藏其他标题的行为。Windows 窗口使用深色主题。
 - 原生编辑器截图已核对；标签实测宽度 67–92px，不再拉满面板。构建、键盘导航和 Agent 快照检查通过。
-- 源码已拉取，20 项移植尚未完成，截图尚未交付。
-- 已确认运行缺口：Editor Play 仅执行内置 Behaviour，未执行 `startupScript`；Player 脚本没有正式的输入状态 API。必须补通运行链路后再验收互动样例。
+- Brick 已移植并通过原生 Agent 验收：128 → 126 块砖、挡板移动、实体 ID 稳定、落底重开、R 重开、停止恢复、再次播放清空输入。其余 19 项尚未完成。
+- Brick 实际运行截图：`docs/designs/unity-demos/brick-game.png`，编辑器全窗：`brick-editor.png`，结果：`brick-result.json`。复验入口：`scripts/qa-unity-brick.mjs`（使用独立 QA 配置目录）。
+- Editor Play 已接通项目启动脚本、物理和输入，Agent 已验证单步、按下边沿、停止恢复与重新运行。场景切换和公开运行请求复用 Player 处理。Timeline 粒子 seek、相机 override 与运行时 UI 控件事件仍需接通/验收。
 
 ## 下一步
 
@@ -24,3 +25,11 @@
 3. 每项验证交互/模拟、停止后恢复、再次运行及 Agent 操作，保存真实截图与验收记录。
 
 本地研究/QA：`tmp/unity-official-sources/`、`tmp/unity-title-qa.mjs`、`tmp/unity-dock-titles.png`。这些工作文件不作为完成交付。
+
+## 补充参考
+
+用户提供的 [Unity 英文目录](https://unity.com/demos)、[中文目录](https://unity.com/cn/demos)
+和 [第三方工具清单](https://www.cnblogs.com/puwen/p/18721845) 纳入后续移植依据。
+Happy Harvest、Gem Hunter Match、Dragon Crashers 和 QuizU 用于完整玩法与视觉参考；
+其 Asset Store 资源复用许可需逐项核实。3D showcase 和 DOTween、Cinemachine、Addressables、
+UI Toolkit 等工具作为扩展项目单独跟踪，不计入 20 个 2D Demo。

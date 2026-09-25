@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "initialBricks": 128,
+  "remainingBricks": 126,
+  "stableEntityId": true,
+  "lossReload": true,
+  "manualRestart": true,
+  "stopRestoresAuthored": true,
+  "restartClearsInput": true
+}

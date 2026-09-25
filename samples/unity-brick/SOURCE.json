@@ -1,0 +1,19 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scene": "Assets/Tilemap/Brick/Brick.unity",
+  "license": "MIT",
+  "imported": {
+    "bricks": 128,
+    "textures": [
+      "Brick.png",
+      "Ball.png"
+    ]
+  },
+  "adaptations": [
+    "Each destructible tile is an editable sprite with a collider.",
+    "Paddle uses a kinematic box; source uses a constrained dynamic polygon.",
+    "MEngine camera faces -Z; camera Z is mirrored.",
+    "R restarts the scene."
+  ]
+}

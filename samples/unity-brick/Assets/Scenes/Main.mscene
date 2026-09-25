@@ -1,0 +1,6431 @@
+{
+  "version": 3,
+  "name": "Brick",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "sibling_index": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8,
+              8,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 8,
+            "primary": true
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Paddle",
+        "parent": null,
+        "sibling_index": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8,
+              0.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              3,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Ball.png",
+            "size": [
+              1,
+              1
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "kinematic",
+            "gravity_scale": 0,
+            "linear_damping": 0,
+            "freeze_rotation": true
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Ball",
+        "parent": null,
+        "sibling_index": 2,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8,
+              10,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              0.5,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Ball.png",
+            "size": [
+              1,
+              1
+            ]
+          },
+          "Rigidbody2D": {
+            "body_type": "dynamic",
+            "mass": 0.25,
+            "gravity_scale": 0,
+            "linear_damping": 0,
+            "angular_damping": 0,
+            "velocity": [
+              1.5,
+              -15
+            ],
+            "freeze_rotation": true,
+            "ccd": true
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Left wall",
+        "parent": null,
+        "sibling_index": 3,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              7,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              20
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Right wall",
+        "parent": null,
+        "sibling_index": 4,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              7,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              20
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Top wall",
+        "parent": null,
+        "sibling_index": 5,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8,
+              17.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              18,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Game End",
+        "parent": null,
+        "sibling_index": 6,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8,
+              -6,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              32,
+              6
+            ],
+            "is_trigger": true
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Brick 0 8",
+        "parent": null,
+        "sibling_index": 7,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Brick 1 8",
+        "parent": null,
+        "sibling_index": 8,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Brick 2 8",
+        "parent": null,
+        "sibling_index": 9,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Brick 3 8",
+        "parent": null,
+        "sibling_index": 10,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Brick 4 8",
+        "parent": null,
+        "sibling_index": 11,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Brick 5 8",
+        "parent": null,
+        "sibling_index": 12,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Brick 6 8",
+        "parent": null,
+        "sibling_index": 13,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Brick 7 8",
+        "parent": null,
+        "sibling_index": 14,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Brick 8 8",
+        "parent": null,
+        "sibling_index": 15,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Brick 9 8",
+        "parent": null,
+        "sibling_index": 16,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Brick 10 8",
+        "parent": null,
+        "sibling_index": 17,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Brick 11 8",
+        "parent": null,
+        "sibling_index": 18,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              11.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Brick 12 8",
+        "parent": null,
+        "sibling_index": 19,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Brick 13 8",
+        "parent": null,
+        "sibling_index": 20,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              13.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Brick 14 8",
+        "parent": null,
+        "sibling_index": 21,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Brick 15 8",
+        "parent": null,
+        "sibling_index": 22,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              12.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Brick 0 9",
+        "parent": null,
+        "sibling_index": 23,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Brick 1 9",
+        "parent": null,
+        "sibling_index": 24,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Brick 2 9",
+        "parent": null,
+        "sibling_index": 25,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Brick 3 9",
+        "parent": null,
+        "sibling_index": 26,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Brick 4 9",
+        "parent": null,
+        "sibling_index": 27,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Brick 5 9",
+        "parent": null,
+        "sibling_index": 28,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "Brick 6 9",
+        "parent": null,
+        "sibling_index": 29,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "Brick 7 9",
+        "parent": null,
+        "sibling_index": 30,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Brick 8 9",
+        "parent": null,
+        "sibling_index": 31,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "Brick 9 9",
+        "parent": null,
+        "sibling_index": 32,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "Brick 10 9",
+        "parent": null,
+        "sibling_index": 33,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "Brick 11 9",
+        "parent": null,
+        "sibling_index": 34,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              11.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Brick 12 9",
+        "parent": null,
+        "sibling_index": 35,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "Brick 13 9",
+        "parent": null,
+        "sibling_index": 36,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              13.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "Brick 14 9",
+        "parent": null,
+        "sibling_index": 37,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "Brick 15 9",
+        "parent": null,
+        "sibling_index": 38,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              12.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.034482475,
+              0,
+              1,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Brick 0 10",
+        "parent": null,
+        "sibling_index": 39,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "Brick 1 10",
+        "parent": null,
+        "sibling_index": 40,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "Brick 2 10",
+        "parent": null,
+        "sibling_index": 41,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "Brick 3 10",
+        "parent": null,
+        "sibling_index": 42,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "Brick 4 10",
+        "parent": null,
+        "sibling_index": 43,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "Brick 5 10",
+        "parent": null,
+        "sibling_index": 44,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "Brick 6 10",
+        "parent": null,
+        "sibling_index": 45,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "Brick 7 10",
+        "parent": null,
+        "sibling_index": 46,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "Brick 8 10",
+        "parent": null,
+        "sibling_index": 47,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 49,
+        "name": "Brick 9 10",
+        "parent": null,
+        "sibling_index": 48,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 50,
+        "name": "Brick 10 10",
+        "parent": null,
+        "sibling_index": 49,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 51,
+        "name": "Brick 11 10",
+        "parent": null,
+        "sibling_index": 50,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              11.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 52,
+        "name": "Brick 12 10",
+        "parent": null,
+        "sibling_index": 51,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 53,
+        "name": "Brick 13 10",
+        "parent": null,
+        "sibling_index": 52,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              13.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 54,
+        "name": "Brick 14 10",
+        "parent": null,
+        "sibling_index": 53,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 55,
+        "name": "Brick 15 10",
+        "parent": null,
+        "sibling_index": 54,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              13.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 56,
+        "name": "Brick 0 11",
+        "parent": null,
+        "sibling_index": 55,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 57,
+        "name": "Brick 1 11",
+        "parent": null,
+        "sibling_index": 56,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 58,
+        "name": "Brick 2 11",
+        "parent": null,
+        "sibling_index": 57,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 59,
+        "name": "Brick 3 11",
+        "parent": null,
+        "sibling_index": 58,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 60,
+        "name": "Brick 4 11",
+        "parent": null,
+        "sibling_index": 59,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 61,
+        "name": "Brick 5 11",
+        "parent": null,
+        "sibling_index": 60,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 62,
+        "name": "Brick 6 11",
+        "parent": null,
+        "sibling_index": 61,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 63,
+        "name": "Brick 7 11",
+        "parent": null,
+        "sibling_index": 62,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 64,
+        "name": "Brick 8 11",
+        "parent": null,
+        "sibling_index": 63,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 65,
+        "name": "Brick 9 11",
+        "parent": null,
+        "sibling_index": 64,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 66,
+        "name": "Brick 10 11",
+        "parent": null,
+        "sibling_index": 65,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 67,
+        "name": "Brick 11 11",
+        "parent": null,
+        "sibling_index": 66,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              11.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 68,
+        "name": "Brick 12 11",
+        "parent": null,
+        "sibling_index": 67,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 69,
+        "name": "Brick 13 11",
+        "parent": null,
+        "sibling_index": 68,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              13.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 70,
+        "name": "Brick 14 11",
+        "parent": null,
+        "sibling_index": 69,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 71,
+        "name": "Brick 15 11",
+        "parent": null,
+        "sibling_index": 70,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              13.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0,
+              1,
+              0.17241383,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 72,
+        "name": "Brick 0 12",
+        "parent": null,
+        "sibling_index": 71,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 73,
+        "name": "Brick 1 12",
+        "parent": null,
+        "sibling_index": 72,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 74,
+        "name": "Brick 2 12",
+        "parent": null,
+        "sibling_index": 73,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 75,
+        "name": "Brick 3 12",
+        "parent": null,
+        "sibling_index": 74,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 76,
+        "name": "Brick 4 12",
+        "parent": null,
+        "sibling_index": 75,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 77,
+        "name": "Brick 5 12",
+        "parent": null,
+        "sibling_index": 76,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 78,
+        "name": "Brick 6 12",
+        "parent": null,
+        "sibling_index": 77,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 79,
+        "name": "Brick 7 12",
+        "parent": null,
+        "sibling_index": 78,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 80,
+        "name": "Brick 8 12",
+        "parent": null,
+        "sibling_index": 79,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 81,
+        "name": "Brick 9 12",
+        "parent": null,
+        "sibling_index": 80,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 82,
+        "name": "Brick 10 12",
+        "parent": null,
+        "sibling_index": 81,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 83,
+        "name": "Brick 11 12",
+        "parent": null,
+        "sibling_index": 82,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              11.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 84,
+        "name": "Brick 12 12",
+        "parent": null,
+        "sibling_index": 83,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 85,
+        "name": "Brick 13 12",
+        "parent": null,
+        "sibling_index": 84,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              13.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 86,
+        "name": "Brick 14 12",
+        "parent": null,
+        "sibling_index": 85,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 87,
+        "name": "Brick 15 12",
+        "parent": null,
+        "sibling_index": 86,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              14.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 88,
+        "name": "Brick 0 13",
+        "parent": null,
+        "sibling_index": 87,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 89,
+        "name": "Brick 1 13",
+        "parent": null,
+        "sibling_index": 88,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 90,
+        "name": "Brick 2 13",
+        "parent": null,
+        "sibling_index": 89,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 91,
+        "name": "Brick 3 13",
+        "parent": null,
+        "sibling_index": 90,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 92,
+        "name": "Brick 4 13",
+        "parent": null,
+        "sibling_index": 91,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 93,
+        "name": "Brick 5 13",
+        "parent": null,
+        "sibling_index": 92,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 94,
+        "name": "Brick 6 13",
+        "parent": null,
+        "sibling_index": 93,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 95,
+        "name": "Brick 7 13",
+        "parent": null,
+        "sibling_index": 94,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 96,
+        "name": "Brick 8 13",
+        "parent": null,
+        "sibling_index": 95,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 97,
+        "name": "Brick 9 13",
+        "parent": null,
+        "sibling_index": 96,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 98,
+        "name": "Brick 10 13",
+        "parent": null,
+        "sibling_index": 97,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 99,
+        "name": "Brick 11 13",
+        "parent": null,
+        "sibling_index": 98,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              11.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 100,
+        "name": "Brick 12 13",
+        "parent": null,
+        "sibling_index": 99,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 101,
+        "name": "Brick 13 13",
+        "parent": null,
+        "sibling_index": 100,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              13.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 102,
+        "name": "Brick 14 13",
+        "parent": null,
+        "sibling_index": 101,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 103,
+        "name": "Brick 15 13",
+        "parent": null,
+        "sibling_index": 102,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              14.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 104,
+        "name": "Brick 0 14",
+        "parent": null,
+        "sibling_index": 103,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 105,
+        "name": "Brick 1 14",
+        "parent": null,
+        "sibling_index": 104,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 106,
+        "name": "Brick 2 14",
+        "parent": null,
+        "sibling_index": 105,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 107,
+        "name": "Brick 3 14",
+        "parent": null,
+        "sibling_index": 106,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 108,
+        "name": "Brick 4 14",
+        "parent": null,
+        "sibling_index": 107,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 109,
+        "name": "Brick 5 14",
+        "parent": null,
+        "sibling_index": 108,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 110,
+        "name": "Brick 6 14",
+        "parent": null,
+        "sibling_index": 109,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 111,
+        "name": "Brick 7 14",
+        "parent": null,
+        "sibling_index": 110,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 112,
+        "name": "Brick 8 14",
+        "parent": null,
+        "sibling_index": 111,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 113,
+        "name": "Brick 9 14",
+        "parent": null,
+        "sibling_index": 112,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 114,
+        "name": "Brick 10 14",
+        "parent": null,
+        "sibling_index": 113,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 115,
+        "name": "Brick 11 14",
+        "parent": null,
+        "sibling_index": 114,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              11.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 116,
+        "name": "Brick 12 14",
+        "parent": null,
+        "sibling_index": 115,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 117,
+        "name": "Brick 13 14",
+        "parent": null,
+        "sibling_index": 116,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              13.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 118,
+        "name": "Brick 14 14",
+        "parent": null,
+        "sibling_index": 117,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 119,
+        "name": "Brick 15 14",
+        "parent": null,
+        "sibling_index": 118,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              15.25,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 120,
+        "name": "Brick 0 15",
+        "parent": null,
+        "sibling_index": 119,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 121,
+        "name": "Brick 1 15",
+        "parent": null,
+        "sibling_index": 120,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 122,
+        "name": "Brick 2 15",
+        "parent": null,
+        "sibling_index": 121,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 123,
+        "name": "Brick 3 15",
+        "parent": null,
+        "sibling_index": 122,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 124,
+        "name": "Brick 4 15",
+        "parent": null,
+        "sibling_index": 123,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 125,
+        "name": "Brick 5 15",
+        "parent": null,
+        "sibling_index": 124,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 126,
+        "name": "Brick 6 15",
+        "parent": null,
+        "sibling_index": 125,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 127,
+        "name": "Brick 7 15",
+        "parent": null,
+        "sibling_index": 126,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 128,
+        "name": "Brick 8 15",
+        "parent": null,
+        "sibling_index": 127,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 129,
+        "name": "Brick 9 15",
+        "parent": null,
+        "sibling_index": 128,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 130,
+        "name": "Brick 10 15",
+        "parent": null,
+        "sibling_index": 129,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 131,
+        "name": "Brick 11 15",
+        "parent": null,
+        "sibling_index": 130,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              11.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 132,
+        "name": "Brick 12 15",
+        "parent": null,
+        "sibling_index": 131,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 133,
+        "name": "Brick 13 15",
+        "parent": null,
+        "sibling_index": 132,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              13.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 134,
+        "name": "Brick 14 15",
+        "parent": null,
+        "sibling_index": 133,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      },
+      {
+        "entity": 135,
+        "name": "Brick 15 15",
+        "parent": null,
+        "sibling_index": 134,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              15.75,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              0.5,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "size": [
+              1,
+              1
+            ],
+            "color": [
+              0.94482756,
+              1,
+              0,
+              1
+            ]
+          },
+          "BoxCollider2D": {
+            "size": [
+              1,
+              1
+            ],
+            "friction": 0,
+            "bounciness": 1
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0.19215687,
+      0.3019608,
+      0.4745098,
+      1
+    ]
+  }
+}
