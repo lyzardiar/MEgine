@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import ts from '../packages/editor/node_modules/typescript/lib/typescript.js';
 
-for (const slug of ['terrain-tile', 'pipeline-tile', 'random-tile', 'weighted-random-tile']) {
+for (const slug of ['terrain-tile', 'pipeline-tile', 'random-tile', 'weighted-random-tile', 'auto-tile']) {
   test(`${slug} reproduces all authored tile outputs`, () => {
     const scripts = new URL(`../samples/unity-${slug}/Assets/Scripts/`, import.meta.url);
     const source = fs.readFileSync(new URL('Data.ts', scripts), 'utf8') + fs.readFileSync(new URL('Main.ts', scripts), 'utf8');

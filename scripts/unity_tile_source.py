@@ -14,7 +14,7 @@ COMMIT = "6593d544df2ea598e51f5cf1d7165d5ed42ceba7"
 def documents(path):
     source = Path(path).read_text(encoding="utf-8-sig")
     # Packed little-endian neighbors are strings, never YAML octal integers.
-    source = re.sub(r'(?m)^(\s*m_Neighbors: )([0-9a-f]+)$', r'\1"\2"', source)
+    source = re.sub(r'(?m)^(\s*(?:m_Neighbors|keyData): )([0-9a-f]+)$', r'\1"\2"', source)
     blocks = re.split(r'^--- !u!(\d+) &(-?\d+)(?: stripped)?\s*$', source, flags=re.M)
     return {int(blocks[i + 1]): yaml.safe_load(blocks[i + 2]) for i in range(1, len(blocks), 3)}
 

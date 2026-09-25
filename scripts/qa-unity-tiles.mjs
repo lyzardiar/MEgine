@@ -27,7 +27,7 @@ const press = async (key) => {
 };
 const tiles = snapshot => snapshot.entities.filter(entity => entity.name?.startsWith('Tile '));
 try {
-  const available = ['random-tile', 'weighted-random-tile', 'terrain-tile', 'pipeline-tile'];
+  const available = ['random-tile', 'weighted-random-tile', 'terrain-tile', 'pipeline-tile', 'auto-tile'];
   const requested = process.argv.slice(2);
   assert.ok(requested.every(slug => available.includes(slug)), 'Unknown tile demo');
   for (const slug of requested.length ? requested : available) {
@@ -40,10 +40,14 @@ try {
     assert.equal(tiles(authored).length, data.cells.length);
     await execute('playback.play', { paused: true }); await execute('panel.focus', { kind: 'game' });
     const initial = await query('scene.snapshot');
+    if (data.kind === 'auto') {
+      await press('KeyH');
+      assert.equal((await query('scene.snapshot')).entities.find(entity => entity.name === 'Brush Controls').components.Text.enabled, false);
+    }
     await capture(`${slug}-initial`);
     const paint = async (x, y, button = 0) => {
-      const pointer = [400 + (x + 0.5 - data.cameraPosition[0]) / (data.cameraSize * 2) * 600, 300 - (y + 0.5 - data.cameraPosition[1]) / (data.cameraSize * 2) * 600];
-      await execute('playback.input', { keys: [], buttons: [button], pointer, viewport: [800, 600] });
+      const pointer = [800 + (x + 0.5 - data.cameraPosition[0]) / (data.cameraSize * 2) * 900, 450 - (y + 0.5 - data.cameraPosition[1]) / (data.cameraSize * 2) * 900];
+      await execute('playback.input', { keys: [], buttons: [button], pointer, viewport: [1600, 900] });
       await execute('playback.step', { deltaTime: 0.016 });
       await execute('playback.input', { buttons: [] });
       return query('scene.snapshot');
@@ -59,15 +63,15 @@ try {
     assert.equal(tiles(await paint(x, y)).length, data.cells.length + 1, 'painting same tile must not duplicate it');
     const erased = await paint(x, y, 2); assert.equal(tiles(erased).length, data.cells.length);
     const repainted = await paint(x, y); assert.equal(repainted.entities.find(entity => entity.name === name).components.SpriteRenderer.sprite, sprite);
-    if (data.tiles.length > 1) {
-      await press('Digit2');
+    for (let index = 1; index < data.tiles.length; index++) {
+      await press(`Digit${index + 1}`);
       const selected = await paint(x, y);
-      assert.ok(data.tiles[1].sprites.includes(selected.entities.find(entity => entity.name === name).components.SpriteRenderer.sprite));
+      assert.ok(data.tiles[index].sprites.includes(selected.entities.find(entity => entity.name === name).components.SpriteRenderer.sprite));
       await press('KeyZ');
       assert.equal((await query('scene.snapshot')).entities.find(entity => entity.name === name).components.SpriteRenderer.sprite, sprite);
     }
     let changedNeighbors = 0;
-    if (data.kind === 'terrain' || data.kind === 'pipeline') {
+    if (['terrain', 'pipeline', 'auto'].includes(data.kind)) {
       const source = data.cells.find(cell => data.cells.some(other => other.tile === cell.tile && Math.abs(other.x - cell.x) + Math.abs(other.y - cell.y) === 1));
       const before = await query('scene.snapshot');
       const after = await paint(source.x, source.y, 2);
@@ -82,6 +86,7 @@ try {
     }
     await capture(`${slug}-painted`);
     await press('KeyR'); assert.equal(tiles(await query('scene.snapshot')).length, data.cells.length);
+    if (data.kind === 'auto') await press('KeyH');
     await capture(`${slug}-reset`);
     const resetPixels = JSON.parse(execFileSync('python', ['-c', 'from PIL import Image,ImageChops; import sys,json; a=Image.open(sys.argv[1]).convert("RGBA"); b=Image.open(sys.argv[2]).convert("RGBA"); assert a.size==b.size; d=ImageChops.difference(a,b); print(json.dumps(dict(changed=sum(any(p) for p in d.getdata()),maximum=max(v[1] for v in d.getextrema()),pixels=a.width*a.height)))', `${output}/${slug}-initial.png`, `${output}/${slug}-reset.png`], { encoding: 'utf8' }));
     // A GPU readback can differ by one quantization step at a viewport edge.

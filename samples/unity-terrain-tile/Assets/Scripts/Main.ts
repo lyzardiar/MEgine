@@ -3,18 +3,25 @@ type PaintCell = { x: number; y: number; tile: number };
 const paintCells = new Map<string, PaintCell>();
 const paintUndo: PaintCell[][] = [];
 let selectedTile = 0;
+let controlsVisible = true;
 const cellKey = (x: number, y: number): string => `${x},${y}`;
 const cellName = (x: number, y: number): string => `Tile ${x} ${y}`;
 const terrainMasks = [0, 1, 5, 7, 17, 21, 23, 29, 31, 85, 87, 95, 119, 127, 255];
 
 function onSceneLoaded(): void {
-  paintCells.clear(); paintUndo.length = 0; selectedTile = 0;
+  paintCells.clear(); paintUndo.length = 0; selectedTile = 0; controlsVisible = true;
   for (const cell of tileData.cells) paintCells.set(cellKey(cell.x, cell.y), { ...cell });
 }
 
 function tileVisual(cell: PaintCell): { sprite: string; rotation: number[] } {
   const tile = tileData.tiles[cell.tile];
   let index = 0, turns = 0;
+  if (tileData.kind === 'auto') {
+    let mask = 0;
+    for (let y = -1; y <= 1; y++) for (let x = -1; x <= 1; x++) if (paintCells.get(cellKey(cell.x + x, cell.y + y))?.tile === cell.tile) mask |= 1 << ((y + 1) * 3 + x + 1);
+    for (const [diagonal, sides] of [[1,10],[4,34],[64,136],[256,160]]) if ((mask & sides) !== sides) mask &= ~diagonal;
+    return { sprite: (tile.lookup as Record<string, string>)[String(mask)] ?? tile.defaultSprite, rotation: [0, 0, 0, 1] };
+  }
   if (tileData.kind === 'terrain' || tileData.kind === 'pipeline') {
     const offsets = tileData.kind === 'terrain' ? [[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]] : [[0,1],[1,0],[0,-1],[-1,0]];
     let mask = 0;
@@ -62,10 +69,16 @@ function refreshPaint(): void {
 function onTick(): void {
   const input = engine.input;
   if (input.pressedKeys.includes('KeyR')) { engine.reloadScene(); return; }
+  if (input.pressedKeys.includes('KeyH')) {
+    controlsVisible = !controlsVisible;
+    const label = engine.snapshot.entities.find(entity => entity.name === 'Brush Controls');
+    if (label) engine.pushCommandJson(JSON.stringify({ op: 'setComponent', entity: label.entity, component: 'Text', value: { ...label.components.Text, enabled: controlsVisible } }));
+  }
   for (let i = 0; i < tileData.tiles.length; i++) if (input.pressedKeys.includes(`Digit${i + 1}`)) {
     selectedTile = i;
     const label = engine.snapshot.entities.find(entity => entity.name === 'Brush Controls');
-    if (label) engine.pushCommandJson(JSON.stringify({ op: 'setComponent', entity: label.entity, component: 'Text', value: { ...label.components.Text, text: `${tileData.title}\n${tileData.tiles[i].name}\n\nLeft mouse: paint\nRight mouse: erase\n${tileData.tiles.length > 1 ? '1 / 2: choose tile\n' : ''}Z: undo    R: reset` } }));
+    const choices = tileData.tiles.map((_, index) => index + 1).join(' / ');
+    if (label) engine.pushCommandJson(JSON.stringify({ op: 'setComponent', entity: label.entity, component: 'Text', value: { ...label.components.Text, enabled: controlsVisible, text: `${tileData.title}\n${tileData.tiles[i].name}\n\nLeft mouse: paint\nRight mouse: erase\n${tileData.tiles.length > 1 ? choices + ': choose tile\n' : ''}Z: undo    R: reset\nH: show / hide controls` } }));
   }
   if (input.pressedKeys.includes('KeyZ') && paintUndo.length) {
     paintCells.clear();
@@ -74,7 +87,7 @@ function onTick(): void {
   }
   if (!input.buttons.includes(0) && !input.buttons.includes(2)) return;
   const [width, height] = input.viewport, [px, py] = input.pointer;
-  if (width <= 0 || height <= 0 || px < 0 || py < 0 || px >= width || py >= height || (px < 241 * width / 960 && py < 270 * width / 960)) return;
+  if (width <= 0 || height <= 0 || px < 0 || py < 0 || px >= width || py >= height || (controlsVisible && px < 241 * width / 960 && py < 270 * width / 960)) return;
   const x = Math.floor((px / width - 0.5) * tileData.cameraSize * 2 * width / height + tileData.cameraPosition[0]);
   const y = Math.floor((0.5 - py / height) * tileData.cameraSize * 2 + tileData.cameraPosition[1]);
   const key = cellKey(x, y), erase = input.buttons.includes(2);

@@ -1348,7 +1348,7 @@
             ]
           },
           "Text": {
-            "text": "Pipeline Tile\nPipes\n\nLeft mouse: paint\nRight mouse: erase\nZ: undo    R: reset",
+            "text": "Pipeline Tile\nPipes\n\nLeft mouse: paint\nRight mouse: erase\nZ: undo    R: reset\nH: show / hide controls",
             "font": "Assets/Fonts/Roboto-Regular.ttf",
             "font_size": 18,
             "alignment": "Left",

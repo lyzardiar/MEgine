@@ -1,0 +1,6030 @@
+{
+  "version": 3,
+  "name": "Auto Tile",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 5
+          },
+          "EnvironmentLight": {
+            "background_enabled": false,
+            "tone_mapping": false
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Tile -8 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Tile -7 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Tile -6 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Tile -5 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_16",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Tile -4 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Tile -3 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Tile -2 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Tile -1 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Tile 0 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Tile 1 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_21",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Tile 2 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Tile 3 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Tile 4 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_22",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Tile 5 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_24",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Tile 6 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Tile 7 -5",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              -4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Tile -8 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Tile -7 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_16",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Tile -6 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Tile -5 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_33",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Tile -4 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_2",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Tile -3 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_24",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Tile -2 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_6",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Tile -1 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Tile 0 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_27",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Tile 1 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Tile 2 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_24",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Tile 3 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "Tile 4 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_12",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "Tile 5 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Tile 6 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "Tile 7 -4",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              -3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "Tile -8 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "Tile -7 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Tile -6 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_10",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "Tile -5 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "Tile -4 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "Tile -3 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Tile -2 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "Tile -1 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_6",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "Tile 0 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "Tile 1 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "Tile 2 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "Tile 3 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "Tile 4 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_6",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "Tile 5 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "Tile 6 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 49,
+        "name": "Tile 7 -3",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              -2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 50,
+        "name": "Tile -8 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 51,
+        "name": "Tile -7 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 52,
+        "name": "Tile -6 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_10",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 53,
+        "name": "Tile -5 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 54,
+        "name": "Tile -4 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 55,
+        "name": "Tile -3 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_16",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 56,
+        "name": "Tile -2 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 57,
+        "name": "Tile -1 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 58,
+        "name": "Tile 0 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_6",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 59,
+        "name": "Tile 1 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 60,
+        "name": "Tile 2 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 61,
+        "name": "Tile 3 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 62,
+        "name": "Tile 4 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 63,
+        "name": "Tile 5 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_6",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 64,
+        "name": "Tile 6 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 65,
+        "name": "Tile 7 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 66,
+        "name": "Tile -8 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 67,
+        "name": "Tile -7 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 68,
+        "name": "Tile -6 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_10",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 69,
+        "name": "Tile -5 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 70,
+        "name": "Tile -4 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 71,
+        "name": "Tile -3 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 72,
+        "name": "Tile -2 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_9",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 73,
+        "name": "Tile -1 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_10",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 74,
+        "name": "Tile 0 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 75,
+        "name": "Tile 1 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_6",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 76,
+        "name": "Tile 2 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 77,
+        "name": "Tile 3 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 78,
+        "name": "Tile 4 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 79,
+        "name": "Tile 5 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_16",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 80,
+        "name": "Tile 6 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_29",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 81,
+        "name": "Tile 7 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_27",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 82,
+        "name": "Tile -8 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 83,
+        "name": "Tile -7 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 84,
+        "name": "Tile -6 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_10",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 85,
+        "name": "Tile -5 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 86,
+        "name": "Tile -4 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 87,
+        "name": "Tile -3 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 88,
+        "name": "Tile -2 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_9",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 89,
+        "name": "Tile -1 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_10",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 90,
+        "name": "Tile 0 0",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 91,
+        "name": "Tile 1 0",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_16",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 92,
+        "name": "Tile 2 0",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_29",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 93,
+        "name": "Tile 3 0",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 94,
+        "name": "Tile 4 0",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 95,
+        "name": "Tile 5 0",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 96,
+        "name": "Tile 6 0",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_38",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 97,
+        "name": "Tile 7 0",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 98,
+        "name": "Tile -8 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 99,
+        "name": "Tile -7 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 100,
+        "name": "Tile -6 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_10",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 101,
+        "name": "Tile -5 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 102,
+        "name": "Tile -4 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 103,
+        "name": "Tile -3 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 104,
+        "name": "Tile -2 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_1",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 105,
+        "name": "Tile -1 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_2",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 106,
+        "name": "Tile 0 1",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 107,
+        "name": "Tile 1 1",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 108,
+        "name": "Tile 2 1",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_2",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 109,
+        "name": "Tile 3 1",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 110,
+        "name": "Tile 4 1",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_4",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 111,
+        "name": "Tile 5 1",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 112,
+        "name": "Tile 6 1",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 113,
+        "name": "Tile 7 1",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_27",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 114,
+        "name": "Tile -8 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 115,
+        "name": "Tile -7 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 116,
+        "name": "Tile -6 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_2",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 117,
+        "name": "Tile -5 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 118,
+        "name": "Tile -4 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_5",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 119,
+        "name": "Tile -3 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 120,
+        "name": "Tile -2 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 121,
+        "name": "Tile -1 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 122,
+        "name": "Tile 0 2",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 123,
+        "name": "Tile 1 2",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 124,
+        "name": "Tile 2 2",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 125,
+        "name": "Tile 3 2",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_5",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 126,
+        "name": "Tile 4 2",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 127,
+        "name": "Tile 5 2",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_22",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 128,
+        "name": "Tile 6 2",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_4",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 129,
+        "name": "Tile 7 2",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 130,
+        "name": "Tile -8 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_24",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 131,
+        "name": "Tile -7 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 132,
+        "name": "Tile -6 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 133,
+        "name": "Tile -5 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_6",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 134,
+        "name": "Tile -4 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_16",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 135,
+        "name": "Tile -3 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 136,
+        "name": "Tile -2 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 137,
+        "name": "Tile -1 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_18",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 138,
+        "name": "Tile 0 3",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_11",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 139,
+        "name": "Tile 1 3",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 140,
+        "name": "Tile 2 3",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_16",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 141,
+        "name": "Tile 3 3",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_18",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 142,
+        "name": "Tile 4 3",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_27",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 143,
+        "name": "Tile 5 3",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_4",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 144,
+        "name": "Tile 6 3",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 145,
+        "name": "Tile 7 3",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 146,
+        "name": "Tile -8 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -7.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_24",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 147,
+        "name": "Tile -7 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -6.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 148,
+        "name": "Tile -6 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -5.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 149,
+        "name": "Tile -5 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -4.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 150,
+        "name": "Tile -4 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_33",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 151,
+        "name": "Tile -3 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_1",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 152,
+        "name": "Tile -2 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_1",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 153,
+        "name": "Tile -1 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_2",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 154,
+        "name": "Tile 0 4",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Stone_walkway.png#stone_walkway_tiles_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 155,
+        "name": "Tile 1 4",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 156,
+        "name": "Tile 2 4",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 157,
+        "name": "Tile 3 4",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_32",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 158,
+        "name": "Tile 4 4",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_25",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 159,
+        "name": "Tile 5 4",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Dirt.png#dirt_tiles_v1_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 160,
+        "name": "Tile 6 4",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_24",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 161,
+        "name": "Tile 7 4",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Sprite_Tiles_Grass_darker_tiles.png#grass_darker_tiles_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 162,
+        "name": "Controls",
+        "components": {
+          "Canvas": {},
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              960,
+              540
+            ]
+          },
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "entity": 163,
+        "parent": 162,
+        "name": "Brush Controls",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              16,
+              40
+            ],
+            "size_delta": [
+              225,
+              230
+            ]
+          },
+          "Text": {
+            "text": "Auto Tile\nAutoTile_Grass\n\nLeft mouse: paint\nRight mouse: erase\n1 / 2 / 3: choose tile\nZ: undo    R: reset\nH: show / hide controls",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 18,
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0.03071344589670157,
+      0.0742135762071233,
+      0.1912016793422798,
+      1
+    ]
+  }
+}

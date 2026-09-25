@@ -534,7 +534,7 @@
             ]
           },
           "Text": {
-            "text": "Random Tile\nRandomTempleGrassTile\n\nLeft mouse: paint\nRight mouse: erase\n1 / 2: choose tile\nZ: undo    R: reset",
+            "text": "Random Tile\nRandomTempleGrassTile\n\nLeft mouse: paint\nRight mouse: erase\n1 / 2: choose tile\nZ: undo    R: reset\nH: show / hide controls",
             "font": "Assets/Fonts/Roboto-Regular.ttf",
             "font_size": 18,
             "alignment": "Left",

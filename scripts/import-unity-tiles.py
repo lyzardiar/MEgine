@@ -1,4 +1,4 @@
-"""Import four official tile demos with a playable brush (PyYAML/Pillow)."""
+"""Import official tile demos with a playable brush (PyYAML/Pillow)."""
 import json
 import math
 from pathlib import Path
@@ -7,7 +7,7 @@ import sys
 
 from unity_tile_source import COMMIT, UnityTiles, documents, gamma_scene, linear_color, write_json
 
-DEMOS = {"Random Tile": "random", "Weighted Random Tile": "weighted", "Terrain Tile": "terrain", "Pipeline Tile": "pipeline"}
+DEMOS = {"Random Tile": "random", "Weighted Random Tile": "weighted", "Terrain Tile": "terrain", "Pipeline Tile": "pipeline", "Auto Tile": "auto"}
 
 
 def main():
@@ -25,9 +25,23 @@ def main():
         tiles = []
         for entry in tilemap["m_TileAssetArray"]:
             tile = source.asset(entry["m_Data"]["guid"])
-            weighted = tile.get("Sprites") or [dict(Sprite=sprite, Weight=1) for sprite in tile["m_Sprites"]]
+            lookup = {}
+            if kind == "auto":
+                assert tile["m_MaskType"] == 1 and not tile["m_Random"]
+                dictionary = tile["m_AutoTileDictionary"]
+                packed = bytes.fromhex(dictionary["keyData"])
+                masks = [int.from_bytes(packed[i:i + 4], "little") for i in range(0, len(packed), 4)]
+                assert len(masks) == len(dictionary["valueData"])
+                weighted = []
+                for mask, entry in zip(masks, dictionary["valueData"]):
+                    assert len(entry["spriteList"]) == 1
+                    reference = entry["spriteList"][0]
+                    weighted.append(dict(Sprite=reference, Weight=1))
+                    lookup[str(mask)] = source.sprite(reference)
+            else:
+                weighted = tile.get("Sprites") or [dict(Sprite=sprite, Weight=1) for sprite in tile["m_Sprites"]]
             color = tile.get("m_Color", dict(r=1, g=1, b=1, a=1))
-            tiles.append(dict(name=tile["m_Name"], sprites=[source.sprite(item["Sprite"]) for item in weighted], weights=[item["Weight"] for item in weighted], color=[color[key] for key in "rgba"]))
+            tiles.append(dict(name=tile["m_Name"], sprites=[source.sprite(item["Sprite"]) for item in weighted], weights=[item["Weight"] for item in weighted], color=[color[key] for key in "rgba"], lookup=lookup, defaultSprite=source.sprite(tile["m_DefaultSprite"]) if kind == "auto" else ""))
         entities = [dict(entity=1, name="Main Camera", components=dict(Transform=dict(position=camera_position + [10], rotation=[0, 0, 0, 1], scale=[1, 1, 1]), Camera2D=dict(size=camera["orthographic size"])))]
         cells = []
         for cell in tilemap["m_Tiles"]:
@@ -43,7 +57,8 @@ def main():
             entities.append(dict(entity=len(entities) + 1, name=f"Tile {x} {y}", components=dict(Transform=dict(position=[x + 0.5, y + 0.5, 0], rotation=rotation, scale=[1, 1, 1]), SpriteRenderer=dict(sprite=sprite, color=rgba, size=[1, 1]))))
         canvas = len(entities) + 1
         entities.append(dict(entity=canvas, name="Controls", components=dict(Canvas={}, CanvasScaler=dict(ui_scale_mode="ScaleWithScreenSize", reference_resolution=[960, 540]), RectTransform=dict(anchor_min=[0, 0], anchor_max=[1, 1], size_delta=[0, 0]))))
-        controls = f"{title}\n{tiles[0]['name']}\n\nLeft mouse: paint\nRight mouse: erase\n" + ("1 / 2: choose tile\n" if len(tiles) > 1 else "") + "Z: undo    R: reset"
+        choices = ' / '.join(str(i + 1) for i in range(len(tiles)))
+        controls = f"{title}\n{tiles[0]['name']}\n\nLeft mouse: paint\nRight mouse: erase\n" + (f"{choices}: choose tile\n" if len(tiles) > 1 else "") + "Z: undo    R: reset\nH: show / hide controls"
         entities.append(dict(entity=canvas + 1, parent=canvas, name="Brush Controls", components=dict(RectTransform=dict(anchor_min=[0, 0], anchor_max=[0, 0], pivot=[0, 0], anchored_position=[16, 40], size_delta=[225, 230]), Text=dict(text=controls, font="Assets/Fonts/Roboto-Regular.ttf", font_size=18, alignment="Left", vertical_align="Top", raycast_target=False))))
         data = dict(title=title, kind=kind, cameraSize=camera["orthographic size"], cameraPosition=camera_position, cells=cells, tiles=tiles)
         for tile in tiles:
@@ -57,12 +72,12 @@ def main():
         (output / "Assets/Fonts").mkdir(exist_ok=True)
         for filename in ["Roboto-Regular.ttf", "LICENSE.txt"]:
             shutil.copyfile(repo / "samples/unity-palette-swap/Assets/Fonts" / filename, output / "Assets/Fonts" / filename)
-        write_json(output / "SOURCE.json", dict(repository="https://github.com/Unity-Technologies/2d-techdemos", commit=COMMIT, scene=relative, license="MIT", sourceCells=len(cells), adaptations=["Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.", "Independent editable Sprite entities preserve the authored tile layout, selected sprites, rotations and colors.", "A runtime brush demonstrates painting, erasing, tile selection, 64-cell undo history and reset; the source scene has no runtime input.", "Terrain and pipe neighbors update when the brush edits a cell. Random tiles retain source sprite lists and weights, with a deterministic coordinate hash for new cells.", "Runtime brush changes are temporary; R or Stop restores the source scene. Roboto controls use Apache 2.0."]))
+        write_json(output / "SOURCE.json", dict(repository="https://github.com/Unity-Technologies/2d-techdemos", commit=COMMIT, scene=relative, license="MIT", sourceCells=len(cells), adaptations=["Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.", "Independent editable Sprite entities preserve the authored tile layout, selected sprites, rotations and colors.", "A runtime brush demonstrates painting, erasing, tile selection, 64-cell undo history and reset; the source scene has no runtime input.", "Terrain, pipe and Auto Tile neighbors update when the brush edits a cell. Random tiles retain source sprite lists and weights, with a deterministic coordinate hash for new cells.", "Runtime brush changes are temporary; R or Stop restores the source scene. Roboto controls use Apache 2.0."]))
         readme = f"""# {title}
 
 来自 Unity Technologies [2d-techdemos](https://github.com/Unity-Technologies/2d-techdemos/tree/{COMMIT}/Assets/Tilemap/Tiles/{title.replace(' ', '%20')})，保留官方 {len(cells)} 个单元格、纹理、切片、颜色、方向和初始布局。
 
-在 MEngine 打开本目录并播放。左键绘制，右键擦除，数字键 1/2 选择图块，Z 撤销（最多 64 个单元格操作），R 恢复官方初始布局。地形/管道会根据同类型邻居更新连接；随机图块按坐标固定，保留源 Sprite 列表和权重。新增随机单元格使用 MEngine 的确定性哈希，不依赖 Unity 随机数实现。原场景为图块功能展示，没有运行时输入；这里增加可操作画笔，运行时修改不写回场景。
+在 MEngine 打开本目录并播放。左键绘制，右键擦除，数字键 {choices} 选择图块，Z 撤销（最多 64 个单元格操作），R 恢复官方初始布局，H 显示/隐藏提示。地形、管道和 Auto Tile 会根据同类型邻居更新连接；随机图块按坐标固定，保留源 Sprite 列表和权重。新增随机单元格使用 MEngine 的确定性哈希，不依赖 Unity 随机数实现。原场景为图块功能展示，没有运行时输入；这里增加可操作画笔，运行时修改不写回场景。
 
 场景和贴图 MIT 许可证见 `UNITY-LICENSE.md`；Roboto 字体来源和 Apache 2.0 许可证与 `unity-palette-swap` 相同，许可证随项目放在 `Assets/Fonts/LICENSE.txt`。完整来源见 `SOURCE.json`。
 
