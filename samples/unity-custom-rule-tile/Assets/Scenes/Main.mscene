@@ -1,0 +1,8842 @@
+{
+  "version": 3,
+  "name": "Custom Rule Tile",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              5,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 10
+          },
+          "EnvironmentLight": {
+            "background_enabled": false,
+            "tone_mapping": false
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Tile -2 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_35",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Tile -1 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Tile 0 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Tile 1 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Tile 2 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_35",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Tile 3 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Tile 4 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Tile 5 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Tile 6 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_48",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Tile 7 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Tile 8 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Tile 9 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Tile 10 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_48",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Tile 15 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Tile 16 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Tile 17 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Tile 18 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Tile 19 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Tile 20 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Tile -2 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Tile -1 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Tile 0 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Tile 1 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Tile 2 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Tile 3 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Tile 4 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Tile 5 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Tile 6 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "Tile 7 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "Tile 8 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Tile 9 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "Tile 10 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "Tile 15 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "Tile 16 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Tile 17 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "Tile 18 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "Tile 19 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "Tile 20 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Tile -2 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "Tile -1 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "Tile 0 0",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "Tile 1 0",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "Tile 2 0",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "Tile 3 0",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "Tile 4 0",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "Tile 5 0",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "Tile 6 0",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_21",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 49,
+        "name": "Tile 7 0",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 50,
+        "name": "Tile 8 0",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_21",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 51,
+        "name": "Tile 9 0",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 52,
+        "name": "Tile 10 0",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 53,
+        "name": "Tile 16 0",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 54,
+        "name": "Tile 17 0",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 55,
+        "name": "Tile 18 0",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 56,
+        "name": "Tile 19 0",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 57,
+        "name": "Tile -2 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 58,
+        "name": "Tile -1 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 59,
+        "name": "Tile 0 1",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 60,
+        "name": "Tile 1 1",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 61,
+        "name": "Tile 2 1",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 62,
+        "name": "Tile 3 1",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 63,
+        "name": "Tile 4 1",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 64,
+        "name": "Tile 5 1",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 65,
+        "name": "Tile 6 1",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 66,
+        "name": "Tile 7 1",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 67,
+        "name": "Tile 8 1",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 68,
+        "name": "Tile 9 1",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 69,
+        "name": "Tile 10 1",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 70,
+        "name": "Tile 15 1",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 71,
+        "name": "Tile 16 1",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 72,
+        "name": "Tile 17 1",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 73,
+        "name": "Tile 18 1",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 74,
+        "name": "Tile 19 1",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 75,
+        "name": "Tile 20 1",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 76,
+        "name": "Tile -2 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_35",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 77,
+        "name": "Tile -1 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 78,
+        "name": "Tile 0 2",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 79,
+        "name": "Tile 1 2",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 80,
+        "name": "Tile 2 2",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_35",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 81,
+        "name": "Tile 3 2",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 82,
+        "name": "Tile 4 2",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 83,
+        "name": "Tile 5 2",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 84,
+        "name": "Tile 6 2",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_48",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 85,
+        "name": "Tile 7 2",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 86,
+        "name": "Tile 8 2",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_21",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 87,
+        "name": "Tile 9 2",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 88,
+        "name": "Tile 10 2",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_48",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 89,
+        "name": "Tile 15 2",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 90,
+        "name": "Tile 16 2",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 91,
+        "name": "Tile 17 2",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 92,
+        "name": "Tile 18 2",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 93,
+        "name": "Tile 19 2",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 94,
+        "name": "Tile 20 2",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 95,
+        "name": "Tile -2 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 96,
+        "name": "Tile -1 3",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 97,
+        "name": "Tile 0 3",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 98,
+        "name": "Tile 1 3",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 99,
+        "name": "Tile 2 3",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 100,
+        "name": "Tile 6 3",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 101,
+        "name": "Tile 7 3",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 102,
+        "name": "Tile 8 3",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 103,
+        "name": "Tile 9 3",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 104,
+        "name": "Tile 10 3",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 105,
+        "name": "Tile 15 3",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 106,
+        "name": "Tile 16 3",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 107,
+        "name": "Tile 19 3",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 108,
+        "name": "Tile 20 3",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              3.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 109,
+        "name": "Tile -2 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 110,
+        "name": "Tile -1 4",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 111,
+        "name": "Tile 0 4",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 112,
+        "name": "Tile 1 4",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 113,
+        "name": "Tile 2 4",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 114,
+        "name": "Tile 6 4",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 115,
+        "name": "Tile 7 4",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 116,
+        "name": "Tile 8 4",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 117,
+        "name": "Tile 9 4",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 118,
+        "name": "Tile 10 4",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 119,
+        "name": "Tile 15 4",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 120,
+        "name": "Tile 16 4",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 121,
+        "name": "Tile 17 4",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 122,
+        "name": "Tile 18 4",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 123,
+        "name": "Tile 19 4",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 124,
+        "name": "Tile 20 4",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              4.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 125,
+        "name": "Tile -2 5",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 126,
+        "name": "Tile -1 5",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 127,
+        "name": "Tile 0 5",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 128,
+        "name": "Tile 1 5",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 129,
+        "name": "Tile 2 5",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 130,
+        "name": "Tile 6 5",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 131,
+        "name": "Tile 7 5",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 132,
+        "name": "Tile 8 5",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 133,
+        "name": "Tile 9 5",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 134,
+        "name": "Tile 10 5",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 135,
+        "name": "Tile 15 5",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 136,
+        "name": "Tile 16 5",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 137,
+        "name": "Tile 17 5",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 138,
+        "name": "Tile 18 5",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 139,
+        "name": "Tile 19 5",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 140,
+        "name": "Tile 20 5",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              5.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 141,
+        "name": "Tile -2 6",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_48",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 142,
+        "name": "Tile -1 6",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 143,
+        "name": "Tile 0 6",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_21",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 144,
+        "name": "Tile 1 6",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 145,
+        "name": "Tile 2 6",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_48",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 146,
+        "name": "Tile 3 6",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 147,
+        "name": "Tile 4 6",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 148,
+        "name": "Tile 5 6",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 149,
+        "name": "Tile 6 6",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_35",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 150,
+        "name": "Tile 7 6",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 151,
+        "name": "Tile 8 6",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 152,
+        "name": "Tile 9 6",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 153,
+        "name": "Tile 10 6",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_35",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 154,
+        "name": "Tile 15 6",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 155,
+        "name": "Tile 16 6",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 156,
+        "name": "Tile 19 6",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 157,
+        "name": "Tile 20 6",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              6.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 158,
+        "name": "Tile -2 7",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 159,
+        "name": "Tile -1 7",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 160,
+        "name": "Tile 0 7",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 161,
+        "name": "Tile 1 7",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 162,
+        "name": "Tile 2 7",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 163,
+        "name": "Tile 3 7",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 164,
+        "name": "Tile 4 7",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 165,
+        "name": "Tile 5 7",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 166,
+        "name": "Tile 6 7",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 167,
+        "name": "Tile 7 7",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 168,
+        "name": "Tile 8 7",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 169,
+        "name": "Tile 9 7",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 170,
+        "name": "Tile 10 7",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 171,
+        "name": "Tile 15 7",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 172,
+        "name": "Tile 16 7",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 173,
+        "name": "Tile 17 7",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 174,
+        "name": "Tile 18 7",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 175,
+        "name": "Tile 19 7",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 176,
+        "name": "Tile 20 7",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              7.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 177,
+        "name": "Tile -2 8",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 178,
+        "name": "Tile -1 8",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 179,
+        "name": "Tile 0 8",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_21",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 180,
+        "name": "Tile 1 8",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 181,
+        "name": "Tile 2 8",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_21",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 182,
+        "name": "Tile 3 8",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 183,
+        "name": "Tile 4 8",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 184,
+        "name": "Tile 5 8",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 185,
+        "name": "Tile 6 8",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 186,
+        "name": "Tile 7 8",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 187,
+        "name": "Tile 8 8",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_40",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 188,
+        "name": "Tile 9 8",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 189,
+        "name": "Tile 10 8",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 190,
+        "name": "Tile 15 8",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 191,
+        "name": "Tile 16 8",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 192,
+        "name": "Tile 17 8",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 193,
+        "name": "Tile 18 8",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 194,
+        "name": "Tile 19 8",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 195,
+        "name": "Tile 20 8",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              8.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 196,
+        "name": "Tile -2 9",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 197,
+        "name": "Tile -1 9",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 198,
+        "name": "Tile 0 9",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 199,
+        "name": "Tile 1 9",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 200,
+        "name": "Tile 2 9",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 201,
+        "name": "Tile 3 9",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 202,
+        "name": "Tile 4 9",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 203,
+        "name": "Tile 5 9",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 204,
+        "name": "Tile 6 9",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 205,
+        "name": "Tile 7 9",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 206,
+        "name": "Tile 8 9",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 207,
+        "name": "Tile 9 9",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 208,
+        "name": "Tile 10 9",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 209,
+        "name": "Tile 16 9",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 210,
+        "name": "Tile 17 9",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 211,
+        "name": "Tile 18 9",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 212,
+        "name": "Tile 19 9",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              9.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 213,
+        "name": "Tile -2 10",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_48",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 214,
+        "name": "Tile -1 10",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 215,
+        "name": "Tile 0 10",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_26",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 216,
+        "name": "Tile 1 10",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_50",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 217,
+        "name": "Tile 2 10",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_48",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 218,
+        "name": "Tile 3 10",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_57",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 219,
+        "name": "Tile 4 10",
+        "components": {
+          "Transform": {
+            "position": [
+              4.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_20",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 220,
+        "name": "Tile 5 10",
+        "components": {
+          "Transform": {
+            "position": [
+              5.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_51",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 221,
+        "name": "Tile 6 10",
+        "components": {
+          "Transform": {
+            "position": [
+              6.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_35",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 222,
+        "name": "Tile 7 10",
+        "components": {
+          "Transform": {
+            "position": [
+              7.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 223,
+        "name": "Tile 8 10",
+        "components": {
+          "Transform": {
+            "position": [
+              8.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_19",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 224,
+        "name": "Tile 9 10",
+        "components": {
+          "Transform": {
+            "position": [
+              9.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_17",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 225,
+        "name": "Tile 10 10",
+        "components": {
+          "Transform": {
+            "position": [
+              10.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/topdowntanksredux.png#topdowntanksredux_35",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 226,
+        "name": "Tile 15 10",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 227,
+        "name": "Tile 16 10",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 228,
+        "name": "Tile 17 10",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 229,
+        "name": "Tile 18 10",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_14",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 230,
+        "name": "Tile 19 10",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_13",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 231,
+        "name": "Tile 20 10",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              10.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 232,
+        "name": "Tile 15 11",
+        "components": {
+          "Transform": {
+            "position": [
+              15.5,
+              11.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 233,
+        "name": "Tile 16 11",
+        "components": {
+          "Transform": {
+            "position": [
+              16.5,
+              11.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 234,
+        "name": "Tile 17 11",
+        "components": {
+          "Transform": {
+            "position": [
+              17.5,
+              11.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeon.png#dungeon_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 235,
+        "name": "Tile 18 11",
+        "components": {
+          "Transform": {
+            "position": [
+              18.5,
+              11.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 236,
+        "name": "Tile 19 11",
+        "components": {
+          "Transform": {
+            "position": [
+              19.5,
+              11.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_8",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 237,
+        "name": "Tile 20 11",
+        "components": {
+          "Transform": {
+            "position": [
+              20.5,
+              11.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/dungeonblue.png#dungeonblue_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 238,
+        "name": "Controls",
+        "components": {
+          "Canvas": {},
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              960,
+              540
+            ]
+          },
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "entity": 239,
+        "parent": 238,
+        "name": "Brush Controls",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              16,
+              40
+            ],
+            "size_delta": [
+              225,
+              230
+            ]
+          },
+          "Text": {
+            "text": "Custom Rule Tile\nCustomGrassRoadTile\n\nLeft mouse: paint\nRight mouse: erase\n1 / 2 / 3 / 4 / 5 / 6 / 7: choose tile\nZ: undo    R: reset\nH: show / hide controls",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 18,
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0.03071344589670157,
+      0.0742135762071233,
+      0.1912016793422798,
+      1
+    ]
+  }
+}

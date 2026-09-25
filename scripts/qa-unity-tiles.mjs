@@ -27,7 +27,7 @@ const press = async (key) => {
 };
 const tiles = snapshot => snapshot.entities.filter(entity => entity.name?.startsWith('Tile '));
 try {
-  const available = ['random-tile', 'weighted-random-tile', 'terrain-tile', 'pipeline-tile', 'auto-tile'];
+  const available = ['random-tile', 'weighted-random-tile', 'terrain-tile', 'pipeline-tile', 'auto-tile', 'custom-rule-tile'];
   const requested = process.argv.slice(2);
   assert.ok(requested.every(slug => available.includes(slug)), 'Unknown tile demo');
   for (const slug of requested.length ? requested : available) {
@@ -40,7 +40,8 @@ try {
     assert.equal(tiles(authored).length, data.cells.length);
     await execute('playback.play', { paused: true }); await execute('panel.focus', { kind: 'game' });
     const initial = await query('scene.snapshot');
-    if (data.kind === 'auto') {
+    const hideControls = ['auto', 'custom'].includes(data.kind);
+    if (hideControls) {
       await press('KeyH');
       assert.equal((await query('scene.snapshot')).entities.find(entity => entity.name === 'Brush Controls').components.Text.enabled, false);
     }
@@ -71,7 +72,7 @@ try {
       assert.equal((await query('scene.snapshot')).entities.find(entity => entity.name === name).components.SpriteRenderer.sprite, sprite);
     }
     let changedNeighbors = 0;
-    if (['terrain', 'pipeline', 'auto'].includes(data.kind)) {
+    if (['terrain', 'pipeline', 'auto', 'custom'].includes(data.kind)) {
       const source = data.cells.find(cell => data.cells.some(other => other.tile === cell.tile && Math.abs(other.x - cell.x) + Math.abs(other.y - cell.y) === 1));
       const before = await query('scene.snapshot');
       const after = await paint(source.x, source.y, 2);
@@ -86,7 +87,7 @@ try {
     }
     await capture(`${slug}-painted`);
     await press('KeyR'); assert.equal(tiles(await query('scene.snapshot')).length, data.cells.length);
-    if (data.kind === 'auto') await press('KeyH');
+    if (hideControls) await press('KeyH');
     await capture(`${slug}-reset`);
     const resetPixels = JSON.parse(execFileSync('python', ['-c', 'from PIL import Image,ImageChops; import sys,json; a=Image.open(sys.argv[1]).convert("RGBA"); b=Image.open(sys.argv[2]).convert("RGBA"); assert a.size==b.size; d=ImageChops.difference(a,b); print(json.dumps(dict(changed=sum(any(p) for p in d.getdata()),maximum=max(v[1] for v in d.getextrema()),pixels=a.width*a.height)))', `${output}/${slug}-initial.png`, `${output}/${slug}-reset.png`], { encoding: 'utf8' }));
     // A GPU readback can differ by one quantization step at a viewport edge.

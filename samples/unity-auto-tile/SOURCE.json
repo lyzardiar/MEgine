@@ -8,7 +8,7 @@
     "Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.",
     "Independent editable Sprite entities preserve the authored tile layout, selected sprites, rotations and colors.",
     "A runtime brush demonstrates painting, erasing, tile selection, 64-cell undo history and reset; the source scene has no runtime input.",
-    "Terrain, pipe and Auto Tile neighbors update when the brush edits a cell. Random tiles retain source sprite lists and weights, with a deterministic coordinate hash for new cells.",
+    "Terrain, pipe and Auto Tile neighbors update when the brush edits a cell. Custom rules match terrain groups or tile classes and rotate the source outputs. Random tiles retain source sprite lists and weights, with a deterministic coordinate hash for new cells.",
     "Runtime brush changes are temporary; R or Stop restores the source scene. Roboto controls use Apache 2.0."
   ]
 }

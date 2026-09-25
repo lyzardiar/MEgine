@@ -7,6 +7,18 @@ let controlsVisible = true;
 const cellKey = (x: number, y: number): string => `${x},${y}`;
 const cellName = (x: number, y: number): string => `Tile ${x} ${y}`;
 const terrainMasks = [0, 1, 5, 7, 17, 21, 23, 29, 31, 85, 87, 95, 119, 127, 255];
+type NeighborRule = { neighbors: number[]; positions: number[][]; rotate: boolean; sprite: string };
+
+function neighborMatches(condition: number, tileIndex: number, otherIndex: number | undefined): boolean {
+  if (condition === 0) return true;
+  const tile = tileData.tiles[tileIndex], other = otherIndex === undefined ? undefined : tileData.tiles[otherIndex];
+  if (tile.family === 'terrain' && (condition === 3 || condition === 4)) return other?.family === 'terrain' && (condition === 3 ? tile.group === other.group : tile.group !== other.group);
+  if (tile.family === 'type') {
+    if (condition === 3) return other?.family === 'type';
+    if (condition === 2) return other?.family !== 'type';
+  }
+  return condition === 1 ? tileIndex === otherIndex : condition === 2 && tileIndex !== otherIndex;
+}
 
 function onSceneLoaded(): void {
   paintCells.clear(); paintUndo.length = 0; selectedTile = 0; controlsVisible = true;
@@ -16,6 +28,23 @@ function onSceneLoaded(): void {
 function tileVisual(cell: PaintCell): { sprite: string; rotation: number[] } {
   const tile = tileData.tiles[cell.tile];
   let index = 0, turns = 0;
+  if (tileData.kind === 'custom') {
+    if (!tile.family) {
+      const original = tileData.cells.find(value => value.x === cell.x && value.y === cell.y && value.tile === cell.tile);
+      return { sprite: tile.defaultSprite, rotation: original?.rotation ?? [0, 0, 0, 1] };
+    }
+    for (const rule of tile.rules as NeighborRule[]) for (let turn = 0; turn < (rule.rotate ? 4 : 1); turn++) {
+      if (rule.neighbors.every((condition, index) => {
+        let [x, y] = rule.positions[index];
+        for (let i = 0; i < turn; i++) [x, y] = [y, -x];
+        return neighborMatches(condition, cell.tile, paintCells.get(cellKey(cell.x + x, cell.y + y))?.tile);
+      })) {
+        const angle = -turn * Math.PI / 2;
+        return { sprite: rule.sprite, rotation: [0, 0, Math.sin(angle / 2), Math.cos(angle / 2)] };
+      }
+    }
+    return { sprite: tile.defaultSprite, rotation: [0, 0, 0, 1] };
+  }
   if (tileData.kind === 'auto') {
     let mask = 0;
     for (let y = -1; y <= 1; y++) for (let x = -1; x <= 1; x++) if (paintCells.get(cellKey(cell.x + x, cell.y + y))?.tile === cell.tile) mask |= 1 << ((y + 1) * 3 + x + 1);

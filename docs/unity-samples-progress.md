@@ -14,14 +14,15 @@
 
 - 标题栏：统一 29px 高度、靠左的内容宽度标签、固定分离窗口按钮、窄窗口标签选择器；移除按面板宽度拉伸当前标签并隐藏其他标题的行为。Windows 窗口使用深色主题。
 - 原生编辑器截图已核对；标签实测宽度 67–92px，不再拉满面板。构建、键盘导航和 Agent 快照检查通过。
-- Brick 已移植并通过原生 Agent 验收：128 → 126 块砖、挡板移动、实体 ID 稳定、落底重开、R 重开、停止恢复、再次播放清空输入。Animated Tile、Destructible、Palette Swap 也已完成，Random Tile、Weighted Random Tile、Terrain Tile、Pipeline Tile 也已完成，Auto Tile 也已完成，合计 9/20；其余 11 项尚未完成。
+- Brick 已移植并通过原生 Agent 验收：128 → 126 块砖、挡板移动、实体 ID 稳定、落底重开、R 重开、停止恢复、再次播放清空输入。Animated Tile、Destructible、Palette Swap 也已完成，Random Tile、Weighted Random Tile、Terrain Tile、Pipeline Tile 也已完成，Auto Tile、Custom Rule Tile 也已完成，合计 10/20；其余 10 项尚未完成。
 - Brick 实际运行截图：`docs/designs/unity-demos/brick-game.png`，编辑器全窗：`brick-editor.png`，结果：`brick-result.json`。复验入口：`scripts/qa-unity-brick.mjs`（使用独立 QA 配置目录）。
 - Animated Tile：保留 8 个单元格、10 个官方 Sprite 切片及 10 FPS 帧序列；原生截图验证换帧、暂停冻结、重开首帧与停止恢复。证据 `docs/designs/unity-demos/animated-tile-*`，复验 `scripts/qa-unity-animated-tile.mjs`。
 - Destructible：559 个单元格、官方图集与爆炸关键帧；一次十字爆破使前景 235 → 228，保留全部 128 个 Border，24 个地面单元更新，远处 Sprite 不变。按住鼠标不重复触发、特效结束回收、R 重开与停止恢复通过。证据 `docs/designs/unity-demos/destructible-*`；复验 `scripts/qa-unity-destructible.mjs`。
 - Palette Swap：26 个原始单元格、3 套调色板、原始 1/2/Space 和左右键控制；12 个海面动画实例保持 1.5 FPS。首尾循环、稳定实体 ID、图块颜色、按住不连发、暂停冻结、返回初始像素、R 与停止恢复通过。证据 `docs/designs/unity-demos/palette-swap-*`；复验 `scripts/qa-unity-palette-swap.mjs`。
 - Random Tile / Weighted Random Tile / Terrain Tile / Pipeline Tile：保留原始 12/24/64/34 个单元格，增加可操作画笔、擦除、类型选择、撤销和重开。原生 Agent 验收通过；地形/管道删除后分别有 1/3 个邻格自动更新。独立规则检查匹配全部源图块，随机权重分布检查通过。证据 `docs/designs/unity-demos/*-tile-*`，复验 `scripts/qa-unity-tiles.mjs`。
 - Auto Tile：160 个原始单元格，草地、石路、泥地三套图集及各 48 项邻接映射；绘制、擦除、三类选择、撤销、重开、提示隐藏与颜色检查通过。全部 160 个源 Sprite 和旋转逐格匹配；擦除后 2 个邻格更新。截图 `docs/designs/unity-demos/auto-tile-*`。
-- 颜色：原生后处理支持 `EnvironmentLight.tone_mapping=false`，默认仍启用 ACES。九个 Gamma 来源项目在线性渲染前转换数值颜色；原生截图采样背景为 (49,77,121)，与源颜色相符。每个 QA 入口均检查背景颜色。
+- Custom Rule Tile：236 个原始单元格、7 类图块，按地形分组/自定义类型匹配邻居、保留规则旋转和手动旋转。全部源 Sprite 与旋转逐格匹配；原生画笔、擦除、类型选择、撤销、重开、停止恢复通过，重开截图无像素差异。截图 `docs/designs/unity-demos/custom-rule-tile-*`。
+- 颜色：原生后处理支持 `EnvironmentLight.tone_mapping=false`，默认仍启用 ACES。十个 Gamma 来源项目在线性渲染前转换数值颜色；原生截图采样背景为 (49,77,121)，与源颜色相符。每个 QA 入口均检查背景颜色。
 - Editor Play 已接通项目启动脚本、物理和输入，Agent 已验证单步、按下边沿、停止恢复与重新运行。场景切换和公开运行请求复用 Player 处理。Timeline 粒子 seek、相机 override 与运行时 UI 控件事件仍需接通/验收。
 
 ## 下一步
