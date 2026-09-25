@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "sourceCells": 64,
+  "tileAssets": 2,
+  "paint": true,
+  "erase": true,
+  "coordinateStableRandom": true,
+  "tileSelection": true,
+  "undo": true,
+  "changedNeighbors": 1,
+  "preservedExistingEntityIds": true,
+  "resetPixels": {
+    "changed": 0,
+    "maximum": 0,
+    "pixels": 432650
+  },
+  "stopRestoresAuthored": true
+}
