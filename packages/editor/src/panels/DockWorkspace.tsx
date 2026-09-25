@@ -13,6 +13,7 @@ import { cursorPosition, getCurrentWindow } from '@tauri-apps/api/window';
 import {
   Box,
   Clapperboard,
+  ChevronDown,
   Clock3,
   ExternalLink,
   FileCode,
@@ -770,6 +771,7 @@ function DockLeaf(props: {
   const isDropHere = props.drop?.leafId === node.id;
   const zone = isDropHere ? props.drop!.zone : null;
   const frameRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
   const pointerDrag = useRef<{
     pointerId: number;
     panel: PanelKind;
@@ -781,6 +783,7 @@ function DockLeaf(props: {
 
   useEffect(() => {
     if (!active) return;
+    tabsRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     setMountedPanels((current) => {
       if (current.has(active)) return current;
       return new Set([...current, active]);
@@ -810,7 +813,8 @@ function DockLeaf(props: {
       }}
     >
       <div className={`dock${isDropHere ? ' dock-drop-target' : ''}`}>
-        <div className="dock-tabs" role="tablist" aria-label="Dock panels">
+        <div className="dock-header">
+        <div ref={tabsRef} className="dock-tabs" role="tablist" aria-label="Dock panels">
           {node.panels.map((kind) => {
             const dirty = props.dirtyPanels.has(kind);
             const tabId = `dock-tab-${node.id}-${kind}`;
@@ -917,6 +921,15 @@ function DockLeaf(props: {
               </button>
             );
           })}
+        </div>
+          {node.panels.length > 1 && (
+            <label className="dock-panel-switcher" title="Select dock panel">
+              <ChevronDown size={12} aria-hidden />
+              <select aria-label="Select dock panel" value={active ?? ''} onChange={(event) => props.onActivate(node.id, event.target.value as PanelKind)}>
+                {node.panels.map((kind) => <option key={kind} value={kind}>{PANEL_TITLES[kind]}</option>)}
+              </select>
+            </label>
+          )}
           {active && (
             <button
               type="button"

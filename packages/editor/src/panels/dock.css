@@ -216,6 +216,39 @@ body.dock-resizing-y {
   font-size: 14px;
 }
 
+.dock-panel-switcher {
+  position: relative;
+  display: flex;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--u-muted);
+}
+
+.dock-panel-switcher select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+}
+
+.dock-panel-switcher option { color: var(--u-text); background: var(--u-panel); }
+.dock-panel-switcher svg { pointer-events: none; }
+
+.dock-panel-switcher:focus-within,
+.dock-panel-switcher:hover {
+  color: var(--u-text-bright);
+  background: var(--u-panel);
+}
+
+.dock-panel-switcher + .dock-popout { margin-left: 0; }
+
 .dock-popout:hover {
   background: var(--u-selected);
   color: #fff;
