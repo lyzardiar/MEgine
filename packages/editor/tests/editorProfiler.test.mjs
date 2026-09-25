@@ -11,6 +11,7 @@ import {
   readNativeViewportProfiles,
   recordNativeViewportProfile,
   summarizeEditorProfilerSamples,
+  summarizeNativeViewportProfiles,
 } from '../src/editorProfiler.ts';
 
 function frame(timestamp, overrides = {}) {
@@ -29,6 +30,18 @@ function frame(timestamp, overrides = {}) {
     ...overrides,
   };
 }
+
+test('native presentation summary retains correct cadence after history reaches its limit', () => {
+  clearEditorProfilerSamples();
+  for (let index = 0; index < 300; index++) recordNativeViewportProfile('game', { schemaVersion: 1, totalMs: 4, transportMs: 10 }, index * 20);
+  const profiles = readNativeViewportProfiles('game');
+  assert.equal(profiles.length, 240);
+  assert.deepEqual(summarizeNativeViewportProfiles(profiles), { intervals: 240, averagePresentIntervalMs: 20, p95PresentIntervalMs: 20, presentedFps: 50, averageRequestMs: 10, averageRenderMs: 4 });
+  clearEditorProfilerSamples();
+  recordNativeViewportProfile('game', { schemaVersion: 1, totalMs: 4 }, 9000);
+  assert.equal(summarizeNativeViewportProfiles(readNativeViewportProfiles('game')).intervals, 0);
+  clearEditorProfilerSamples();
+});
 
 test('editor profiler sampler aggregates bounded frame windows and preserves latest counters', () => {
   const sample = createEditorProfilerSampler(100);
@@ -80,8 +93,9 @@ test('editor profiler summary separates sustained p95 cost from isolated peaks',
   assert.equal(summary.peakPaintMs, 30);
 });
 
-test('editor profiler UI coalesces only background updates into stable snapshot windows', () => {
-  assert.equal(editorProfilerUiRefreshDelay(1_000, 1_010, true), 0);
+test('editor profiler UI coalesces focused and background updates without dropping captured samples', () => {
+  assert.equal(editorProfilerUiRefreshDelay(1_000, 1_010, true), 240);
+  assert.equal(editorProfilerUiRefreshDelay(1_000, 1_250, true), 0);
   assert.equal(editorProfilerUiRefreshDelay(Number.NEGATIVE_INFINITY, 1_000, false), 0);
   assert.equal(
     editorProfilerUiRefreshDelay(1_000, 1_250, false),

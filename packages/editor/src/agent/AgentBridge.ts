@@ -170,6 +170,7 @@ import {
   readEditorProfilerSamples,
   readNativeViewportProfiles,
   summarizeEditorProfilerSamples,
+  summarizeNativeViewportProfiles,
   type EditorProfilerSource,
 } from '../editorProfiler';
 import {
@@ -2231,7 +2232,6 @@ class AgentBridge {
     if (!store) return;
     const sceneName = this.sceneMeta?.sceneName() ?? null;
     const dirty = this.sceneMeta?.dirty() ?? false;
-    const snapshot = store.snapshot();
     const now = Date.now();
     const shouldObserveScene = (
       forceScene
@@ -2239,11 +2239,12 @@ class AgentBridge {
       || this.sceneChanges.revision === 0
       || now - this.lastPlaySceneObservationAt >= 100
     );
+    const snapshot = shouldObserveScene ? store.snapshot() : null;
     const sceneDelta = shouldObserveScene
       ? this.sceneChanges.observe(
         sceneName,
-        snapshot.entities as unknown as SceneEntityView[],
-        { clearColor: snapshot.clearColor },
+        snapshot!.entities as unknown as SceneEntityView[],
+        { clearColor: snapshot!.clearColor },
       )
       : null;
     if (shouldObserveScene && store.mode === 'play') {
@@ -5570,6 +5571,7 @@ class AgentBridge {
           summary: summarizeEditorProfilerSamples(allSamples),
           nativeLatest: nativeProfiles.at(-1) ?? null,
           nativeProfileCount: nativeProfiles.length,
+          nativeSummary: summarizeNativeViewportProfiles(nativeProfiles),
           totalSamples: allSamples.length,
           returnedSamples: samples.length,
           truncated: samples.length < allSamples.length,

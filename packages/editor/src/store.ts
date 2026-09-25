@@ -990,6 +990,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         selectedIds: [...selectedIds],
       };
     },
+    /** Read-only live data for viewport presentation; public snapshots remain isolated copies. */
+    playViewportSnapshot(): WorldSnapshotView | null {
+      return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected() } : null;
+    },
     authoredEntities() {
       return structuredClone(editEntities);
     },

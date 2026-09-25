@@ -10,7 +10,7 @@ use crate::textures::{RuntimeTextureCache, TextureLoadFailure};
 use crate::timeline::RuntimeCameraOverride;
 use crate::trails::TrailWorld;
 use crate::ui::{
-    append_ui_focus_ring, collect_ui_frame_for_display_with_interaction_and_fonts, RuntimeUiFrame,
+    append_ui_focus_ring, collect_ui_primitives, RuntimeUiFrame,
     UiButtonTintTween, UiControlRegion, UiInteractionState,
 };
 use glam::{Quat, Vec3, Vec4};
@@ -164,17 +164,17 @@ impl FrameCompiler<'_> {
 
         self.fonts.begin_frame();
         let mut ui = if request.include_ui {
-            collect_ui_frame_for_display_with_interaction_and_fonts(
+            collect_ui_primitives(
                 request.world,
                 request.hierarchy,
                 width,
                 height,
                 has_scene_camera.then_some(camera),
-                request.sorting_layers,
-                request.target_display,
+                Some(request.sorting_layers),
+                request.target_display.clamp(0, 7),
                 request.interaction,
-                request.button_tints,
-                self.fonts,
+                Some(request.button_tints),
+                Some(self.fonts),
             )
         } else {
             RuntimeUiFrame::default()
@@ -222,7 +222,7 @@ impl FrameCompiler<'_> {
                 .map(|value| value.primitive)
                 .collect::<Vec<_>>();
             primitives.extend(std::mem::take(&mut ui.plan.primitives));
-            ui.plan = UiBatchPlan::build(primitives);
+            ui.plan.primitives = primitives;
         }
         texture_failures.extend(
             self.textures

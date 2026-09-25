@@ -10,11 +10,10 @@ export function editorProfilerUiRefreshDelay(
   focused: boolean,
   backgroundIntervalMs = EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS,
 ): number {
-  if (focused) return 0;
   if (!Number.isFinite(lastPublishedAt) || !Number.isFinite(now) || now < lastPublishedAt) {
     return 0;
   }
-  const interval = Number.isFinite(backgroundIntervalMs)
+  const interval = focused ? EDITOR_PROFILER_SAMPLE_INTERVAL_MS : Number.isFinite(backgroundIntervalMs)
     ? Math.max(0, backgroundIntervalMs)
     : EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS;
   return Math.max(0, interval - (now - lastPublishedAt));
@@ -72,6 +71,9 @@ export type NativeViewportProfile = {
   timestamp: number;
   totalMs: number;
   callTree: NativeProfilerNode;
+  /** Full request, native rendering, binary transfer and Canvas upload wall time. */
+  transportMs?: number;
+  presentIntervalMs?: number;
   memory: NativeProfilerMemoryCategory[];
   residentMemoryEstimateBytes: number;
   resources: NativeProfilerResource[];
@@ -262,6 +264,21 @@ export function summarizeEditorProfilerSamples(
     averagePaintMs: paintValues.reduce((sum, value) => sum + value, 0) / paintValues.length,
     p95PaintMs: percentile(paintValues, 0.95),
     peakPaintMs: Math.max(...samples.map((sample) => sample.paintMaxMs)),
+  };
+}
+
+/** Completed native frames, independent of WebView paints and bounded history length. */
+export function summarizeNativeViewportProfiles(profiles: readonly NativeViewportProfile[]) {
+  const intervals = profiles.map(profile => profile.presentIntervalMs ?? 0).filter(value => Number.isFinite(value) && value > 0);
+  const averagePresentIntervalMs = intervals.length ? intervals.reduce((sum, value) => sum + value, 0) / intervals.length : 0;
+  const requests = profiles.map(profile => profile.transportMs ?? 0).filter(value => Number.isFinite(value) && value > 0);
+  return {
+    intervals: intervals.length,
+    averagePresentIntervalMs,
+    p95PresentIntervalMs: percentile(intervals, 0.95),
+    presentedFps: averagePresentIntervalMs > 0 ? 1000 / averagePresentIntervalMs : 0,
+    averageRequestMs: requests.length ? requests.reduce((sum, value) => sum + value, 0) / requests.length : 0,
+    averageRenderMs: profiles.length ? profiles.reduce((sum, value) => sum + value.totalMs, 0) / profiles.length : 0,
   };
 }
 
@@ -507,7 +524,9 @@ export function recordNativeViewportProfile(
   timestamp = performance.now(),
 ): void {
   if (payload.schemaVersion !== 1 || !Number.isFinite(payload.totalMs)) return;
-  appendNativeProfile({ ...structuredClone(payload), source, timestamp }, true);
+  let previous: NativeViewportProfile | undefined;
+  for (let index = nativeProfiles.length - 1; index >= 0; index--) { if (nativeProfiles[index].source === source) { previous = nativeProfiles[index]; break; } }
+  appendNativeProfile({ ...payload, source, timestamp, presentIntervalMs: previous ? timestamp - previous.timestamp : undefined }, true);
 }
 
 export function readNativeViewportProfiles(

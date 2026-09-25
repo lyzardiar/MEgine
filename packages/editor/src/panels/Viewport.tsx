@@ -18,7 +18,6 @@ import type { PlayInput } from '../playRuntime';
 import {
   recordNativeViewportProfile,
   recordViewportProfilerFrame,
-  type NativeViewportProfilePayload,
 } from '../editorProfiler';
 import { agentBridge } from '../agent/AgentBridge';
 import {
@@ -48,6 +47,7 @@ import {
   scale as vscale,
 } from '../math3d';
 import { clearModelPreview, modelPreview } from '../modelPreview';
+import { nativeGamePreviewSize, uploadNativeViewportFrame } from '../nativeViewportFrame';
 import {
   clearMaterialPreviews,
   materialAssetPreviewState,
@@ -573,6 +573,7 @@ export function Viewport(props: {
   tab: 'scene' | 'game';
   clearColor: [number, number, number, number];
   entities: Ent[];
+  runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number } | null;
   selected: number | null;
   selectedIds?: number[];
   sceneHiddenIds?: readonly number[];
@@ -665,7 +666,7 @@ export function Viewport(props: {
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nativeGameFrameRef = useRef<{
-    image: HTMLImageElement;
+    image: HTMLImageElement | HTMLCanvasElement;
     width: number;
     height: number;
     hasAuthoredCamera: boolean;
@@ -677,7 +678,7 @@ export function Viewport(props: {
     ready: null as Promise<void> | null,
   });
   const nativeSceneFrameRef = useRef<{
-    image: HTMLImageElement;
+    image: HTMLImageElement | HTMLCanvasElement;
     width: number;
     height: number;
     key: string;
@@ -690,7 +691,7 @@ export function Viewport(props: {
     ready: null as Promise<void> | null,
   });
   const nativeCameraPreviewFrameRef = useRef<{
-    image: HTMLImageElement;
+    image: HTMLImageElement | HTMLCanvasElement;
     entity: number;
   } | null>(null);
   const nativeCameraPreviewRequestRef = useRef({
@@ -781,6 +782,12 @@ export function Viewport(props: {
   const lastCameraRef = useRef<Camera>({ eye: [0, 0, 10], target: [0, 0, 0], fovYDeg: 60 });
   const propsRef = useRef(props);
   propsRef.current = props;
+  const currentViewportProps = () => {
+    const p = propsRef.current, live = p.runtimeSnapshot?.();
+    if (!live) return p;
+    const hidden = p.tab === 'scene' ? p.sceneHiddenIds ?? [] : [];
+    return { ...p, entities: hidden.length ? live.entities.filter(entity => !hidden.includes(entity.entity)) : live.entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
+  };
 
   const closeGameInput = (focusCanvas = false) => {
     focusedInputRef.current = null;
@@ -876,7 +883,7 @@ export function Viewport(props: {
   useEffect(() => {
     return agentBridge.registerViewportCapture(props.tab, async (format, quality, maxSize = 2_048) => {
       if (propsRef.current.tab === 'game' && '__TAURI_INTERNALS__' in window) {
-        const p = propsRef.current;
+        const p = currentViewportProps();
         const sourceWidth = p.gameResolution?.width ?? canvasRef.current?.width ?? 1280;
         const sourceHeight = p.gameResolution?.height ?? canvasRef.current?.height ?? 720;
         const scale = Math.min(1, maxSize / Math.max(sourceWidth, sourceHeight));
@@ -1205,7 +1212,7 @@ export function Viewport(props: {
   useEffect(() => {
     let raf = 0;
     const frame = () => {
-      paint();
+      paint(true);
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -1213,18 +1220,13 @@ export function Viewport(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Force paint when props change
-  useEffect(() => {
-    setTick((t) => t + 1);
-  }, [props.tab, props.entities, props.selected, props.selectedIds, props.sceneHiddenIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.gameDisplay, props.timelineCameraPreview, props.timelineParticlePreviews, props.simulationTime, props.playing, props.activeInHierarchy]);
-
-  const paint = () => {
+  const paint = (animationFrame = false) => {
     const paintStartedAt = performance.now();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const p = propsRef.current;
+    const p = currentViewportProps();
     const sc = liveCam.current;
     const now = paintStartedAt;
     const rect = canvas.getBoundingClientRect();
@@ -1235,7 +1237,7 @@ export function Viewport(props: {
     const frameIntervalMs = lastProfilerFrameRef.current > 0
       ? now - lastProfilerFrameRef.current
       : 0;
-    lastProfilerFrameRef.current = now;
+    if (animationFrame) lastProfilerFrameRef.current = now;
     const simulationClock = sampleViewportSimulationClock(
       simulationClockRef.current,
       p.playing,
@@ -1279,23 +1281,19 @@ export function Viewport(props: {
       isGame
       && '__TAURI_INTERNALS__' in window
       && !nativeGameRequestRef.current.inFlight
-      && now - nativeGameRequestRef.current.lastRequestAt >= (p.playing ? 100 : 300)
+      && now - nativeGameRequestRef.current.lastRequestAt >= (p.playing ? 1000 / 60 : 300)
     ) {
       const request = nativeGameRequestRef.current;
       request.inFlight = true;
       request.lastRequestAt = now;
-      const nativeWidth = p.gameResolution?.width ?? Math.max(1, Math.round(vp.w * dpr));
-      const nativeHeight = p.gameResolution?.height ?? Math.max(1, Math.round(vp.h * dpr));
-      request.ready = invoke<{
-        width: number;
-        height: number;
-        pngBase64: string;
-        hasAuthoredCamera: boolean;
-        profile: NativeViewportProfilePayload;
-      }>('render_native_game_view', { width: nativeWidth, height: nativeHeight, snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } })
-        .then(async (result) => {
-          recordNativeViewportProfile('game', result.profile);
-          const image = await decodeNativeFrame(result.pngBase64);
+      // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.
+      const fixedPixelCanvas = p.entities.some(entity => entity.components.Canvas && (entity.components.Canvas as Record<string, unknown>).render_mode !== 'WorldSpace' && (entity.components.CanvasScaler as Record<string, unknown> | undefined)?.ui_scale_mode !== 'ScaleWithScreenSize' && (p.activeInHierarchy?.(entity.entity) ?? true));
+      const { width: nativeWidth, height: nativeHeight } = nativeGamePreviewSize(p.gameResolution?.width ?? vp.w * dpr, p.gameResolution?.height ?? vp.h * dpr, vp.w * dpr, vp.h * dpr, fixedPixelCanvas);
+      request.ready = invoke<ArrayBuffer>('render_native_game_view', { raw: true, width: nativeWidth, height: nativeHeight, snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } })
+        .then((buffer) => {
+          const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
+          recordNativeViewportProfile('game', { ...result.profile, transportMs: performance.now() - now });
+          const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
             image,
@@ -1306,7 +1304,7 @@ export function Viewport(props: {
           request.reportedError = false;
           // Hidden WebViews may suspend requestAnimationFrame. Commit the decoded frame
           // immediately so first-open output never waits for a click or resize event.
-          paint();
+          if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
           if (firstFrame) window.setTimeout(paint, 0);
         })
         .catch((error) => {
@@ -1374,19 +1372,14 @@ export function Viewport(props: {
       && '__TAURI_INTERNALS__' in window
       && !nativeSceneRequestRef.current.inFlight
       && now - nativeSceneRequestRef.current.lastRequestAt
-        >= (draggingRef.current ? 50 : p.playing ? 80 : 200)
+        >= (draggingRef.current || p.playing ? 1000 / 60 : 200)
     ) {
       const request = nativeSceneRequestRef.current;
       const generation = ++request.generation;
       request.inFlight = true;
       request.lastRequestAt = now;
-      request.ready = invoke<{
-        width: number;
-        height: number;
-        pngBase64: string;
-        hasAuthoredCamera: boolean;
-        profile: NativeViewportProfilePayload;
-      }>('render_native_scene_view', {
+      request.ready = invoke<ArrayBuffer>('render_native_scene_view', {
+        raw: true,
         snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime },
         request: {
           width: nativeSceneIdentity!.width,
@@ -1398,10 +1391,11 @@ export function Viewport(props: {
           fovYDegrees: cam.fovYDeg,
           hiddenEntityIds: p.sceneHiddenIds ?? [],
         },
-      }).then(async (result) => {
-        recordNativeViewportProfile('scene', result.profile);
-        const image = await decodeNativeFrame(result.pngBase64);
+      }).then((buffer) => {
         if (request.generation !== generation) return;
+        const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
+        recordNativeViewportProfile('scene', { ...result.profile, transportMs: performance.now() - now });
+        const image = result.image;
         const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {
           image,
@@ -1410,7 +1404,7 @@ export function Viewport(props: {
           key: nativeSceneIdentity!.key,
         };
         request.reportedError = false;
-        paint();
+        if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
         if (!request.reportedError) {
@@ -1422,7 +1416,7 @@ export function Viewport(props: {
         request.ready = null;
         // Hidden WebViews can throttle rAF. Repaint after releasing inFlight so
         // a response for an older orbit immediately schedules the current one.
-        paint();
+        if (performance.now() - lastProfilerFrameRef.current > 100) paint();
       });
     }
     if (
@@ -1440,11 +1434,8 @@ export function Viewport(props: {
         : 16 / 9;
       const previewWidth = 320;
       const previewHeight = Math.max(120, Math.round(previewWidth / Math.max(0.5, Math.min(2.5, aspect))));
-      request.ready = invoke<{
-        width: number;
-        height: number;
-        pngBase64: string;
-      }>('render_native_scene_view', {
+      request.ready = invoke<ArrayBuffer>('render_native_scene_view', {
+        raw: true,
         snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime },
         request: {
           width: previewWidth,
@@ -1463,16 +1454,16 @@ export function Viewport(props: {
           targetDisplay: selectedCamera.targetDisplay,
           hiddenEntityIds: [],
         },
-      }).then(async (result) => {
-        const image = await decodeNativeFrame(result.pngBase64);
+      }).then((buffer) => {
         if (request.generation !== generation) return;
+        const { image } = uploadNativeViewportFrame(buffer, nativeCameraPreviewFrameRef.current?.image);
         const firstFrame = nativeCameraPreviewFrameRef.current == null;
         nativeCameraPreviewFrameRef.current = {
           image,
           entity: selectedCamera.entity,
         };
         request.reportedError = false;
-        paint();
+        if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
         if (!request.reportedError) {
@@ -2311,7 +2302,7 @@ export function Viewport(props: {
       && nativeSceneFrameRef.current?.key === nativeSceneIdentity?.key
       ? nativeSceneFrameRef.current
       : null;
-    if (nativeSceneFrame?.image.complete) {
+    if (nativeSceneFrame?.image) {
       ctx.drawImage(nativeSceneFrame.image, vp.x, vp.y, vp.w, vp.h);
       if (!scene2DActive && sceneGridRef.current) {
         drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
@@ -2977,7 +2968,7 @@ export function Viewport(props: {
 
     if (isGame) {
       const nativeFrame = nativeGameFrameRef.current;
-      if (nativeFrame?.image.complete) {
+      if (nativeFrame?.image) {
         ctx.drawImage(nativeFrame.image, vp.x, vp.y, vp.w, vp.h);
         for (const { e, t, pr, renderKind } of drawn) {
           if (renderKind !== 'spine' || !pr) continue;
@@ -3032,7 +3023,7 @@ export function Viewport(props: {
       const resolutionLabel = p.gameResolution
         ? `${p.gameResolution.width} × ${p.gameResolution.height}`
         : 'Free Aspect';
-      const label = `${resolutionLabel}${orientationLabel}  ${vp.w | 0}×${vp.h | 0}`;
+      const label = `${resolutionLabel}${orientationLabel}  Preview ${nativeGameFrameRef.current?.width ?? (vp.w | 0)}×${nativeGameFrameRef.current?.height ?? (vp.h | 0)}`;
       ctx.fillText(`Display ${p.gameDisplay + 1} · ${label}`, vp.x + 14, vp.y + 22);
     }
 
@@ -3063,7 +3054,7 @@ export function Viewport(props: {
         ?? `Camera ${selectedCamera.entity}`;
       ctx.fillText(`Camera Preview · ${cameraName}`, x + 8, y + headerHeight / 2, panelWidth - 16);
       if (
-        frame?.image.complete
+        frame?.image
         && frame.entity === selectedCamera.entity
       ) {
         ctx.drawImage(frame.image, x + 1, y + headerHeight, panelWidth - 2, imageHeight - 1);
@@ -3078,7 +3069,7 @@ export function Viewport(props: {
     }
 
     ctx.restore();
-    recordViewportProfilerFrame({
+    if (animationFrame) recordViewportProfilerFrame({
       source: p.tab,
       timestamp: now,
       frameIntervalMs,
@@ -3099,7 +3090,7 @@ export function Viewport(props: {
   // project and selection updates, so use those commits to start the native request explicitly.
   // The request completion paths above repaint once more with the decoded image.
   useEffect(() => {
-    paint();
+    if (performance.now() - lastProfilerFrameRef.current > 100) paint();
     const trailingPaint = window.setTimeout(paint, 550);
     return () => window.clearTimeout(trailingPaint);
     // `paint` reads the latest values through refs; only authoring changes should trigger this.

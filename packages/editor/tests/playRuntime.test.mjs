@@ -17,6 +17,7 @@ test('project runtime applies completed frames, consumes input edges, restores a
     const store = createEditorStore();
     store.addComponent(store.snapshot().entities[0].entity, 'PlayLifecycleProbe', {});
     const authored = store.snapshot();
+    assert.equal(store.playViewportSnapshot(), null);
     let release;
     let inputs = [];
     store.setPlayRuntime({
@@ -38,12 +39,19 @@ test('project runtime applies completed frames, consumes input edges, restores a
     assert.equal(store.snapshot().entities[0].name, 'Runtime only');
     assert.deepEqual(store.snapshot().clearColor, [1, 0, 0, 1]);
     assert.equal(store.snapshot().simulationTime, 0.25);
+    const live = store.playViewportSnapshot();
+    assert.equal(live.entities[0].name, 'Runtime only');
+    assert.equal(live.simulationTime, 0.25);
+    const copy = store.snapshot();
+    copy.entities[0].name = 'Must stay isolated';
+    assert.equal(live.entities[0].name, 'Runtime only');
     assert.deepEqual(inputs[0].pressedKeys, ['KeyD']);
     store.step(); await store.waitForPlayRuntime();
     assert.deepEqual(inputs[1].pressedKeys, []);
     assert.deepEqual(inputs[1].keys, ['KeyD']);
     store.step(); store.stop(); release(); await store.waitForPlayRuntime();
     assert.equal(store.mode, 'edit');
+    assert.equal(store.playViewportSnapshot(), null);
     assert.deepEqual(calls, ['enable', 'disable']);
     assert.deepEqual(store.snapshot().entities, authored.entities);
     assert.deepEqual(store.snapshot().clearColor, authored.clearColor);

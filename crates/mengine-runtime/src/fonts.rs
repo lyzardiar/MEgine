@@ -139,6 +139,8 @@ pub struct RuntimeFontCache {
     fonts: HashMap<String, CachedFont>,
     checked_fonts: HashSet<String>,
     atlases: HashMap<AtlasKey, Vec<FontAtlasPage>>,
+    glyph_metrics: HashMap<(String, u16, u8, char), UiFontGlyphMetrics>,
+    kerning: HashMap<(String, u16, char, char), f32>,
     retired_textures: Vec<String>,
     failures: Vec<FontLoadFailure>,
     reported_failures: HashSet<String>,
@@ -159,6 +161,8 @@ impl RuntimeFontCache {
         self.retire_all_atlases();
         self.project_root = project_root;
         self.fonts.clear();
+        self.glyph_metrics.clear();
+        self.kerning.clear();
         self.checked_fonts.clear();
         self.reported_failures.clear();
     }
@@ -286,6 +290,8 @@ impl RuntimeFontCache {
                 .get(&key)
                 .is_none_or(|cached| cached.stamp != stamp);
             if stale {
+                self.glyph_metrics.retain(|(font, _, _, _), _| font != &key);
+                self.kerning.retain(|(font, _, _, _), _| font != &key);
                 self.retire_font_atlases(&key);
                 self.reported_failures
                     .retain(|identity| !identity.starts_with(&format!("{key}\0")));
@@ -433,14 +439,19 @@ impl UiFontResolver for RuntimeFontCache {
         font_size: f32,
         font_style: &str,
     ) -> Option<UiFontGlyphMetrics> {
-        let (_, _, font) = self.font(reference)?;
+        let (key, _, font) = self.font(reference)?;
+        let key = (key, quantized_size(font_size), style_key(font_style), character);
+        if let Some(metrics) = self.glyph_metrics.get(&key) { return Some(metrics.clone()); }
         let geometry = Self::geometry(&font, character, font_size, font_style);
-        Some(UiFontGlyphMetrics {
+        let metrics = UiFontGlyphMetrics {
             advance: geometry.advance,
             metric_width: geometry.metric_width,
             line_height: geometry.line_height,
             geometry: geometry.geometry,
-        })
+        };
+        if self.glyph_metrics.len() >= 16_384 { self.glyph_metrics.clear(); }
+        self.glyph_metrics.insert(key, metrics.clone());
+        Some(metrics)
     }
 
     fn measure_pair_kerning(
@@ -451,9 +462,14 @@ impl UiFontResolver for RuntimeFontCache {
         font_size: f32,
         _font_style: &str,
     ) -> Option<f32> {
-        let (_, _, font) = self.font(reference)?;
+        let (font_key, _, font) = self.font(reference)?;
+        let key = (font_key, quantized_size(font_size), left, right);
+        if let Some(value) = self.kerning.get(&key) { return Some(*value); }
         let scaled = font.as_scaled(quantized_size(font_size) as f32);
-        Some(scaled.kern(scaled.glyph_id(left), scaled.glyph_id(right)))
+        let value = scaled.kern(scaled.glyph_id(left), scaled.glyph_id(right));
+        if self.kerning.len() >= 16_384 { self.kerning.clear(); }
+        self.kerning.insert(key, value);
+        Some(value)
     }
 
     fn resolve_glyph_texture(
@@ -649,10 +665,14 @@ mod tests {
             .measure_glyph("Assets/Fonts/Test.ttf", 'I', 24.0, "Normal")
             .unwrap();
         assert!(wide.advance > narrow.advance);
+        assert_eq!(cache.measure_glyph("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal"), Some(wide.clone()));
+        assert_eq!(cache.glyph_metrics.len(), 2);
         assert!(wide.line_height > 0.0);
         let kerning = cache
             .measure_pair_kerning("Assets/Fonts/Test.ttf", 'A', 'V', 24.0, "Normal")
             .unwrap();
+        assert_eq!(cache.measure_pair_kerning("Assets/Fonts/Test.ttf", 'A', 'V', 24.0, "Normal"), Some(kerning));
+        assert_eq!(cache.kerning.len(), 1);
         assert!(
             kerning < 0.0,
             "expected the installed AV pair to tighten, got {kerning}"
@@ -690,6 +710,11 @@ mod tests {
             .measure_glyph("Assets/Fonts/Test.ttf", 'A', 24.0, "Normal")
             .is_some());
         assert_eq!(cache.checked_fonts.len(), 1);
+        std::fs::write(root.join("Assets/Fonts/Test.ttf"), b"changed invalid font").unwrap();
+        cache.begin_frame();
+        assert!(cache.measure_glyph("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal").is_none());
+        assert!(cache.glyph_metrics.is_empty());
+        assert!(cache.kerning.is_empty());
         let _ = std::fs::remove_dir_all(root);
     }
 

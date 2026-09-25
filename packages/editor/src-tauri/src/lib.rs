@@ -4283,6 +4283,18 @@ fn world_from_snapshot(snapshot: &WorldSnapshot) -> mengine_core::World {
     world
 }
 
+fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str) -> Result<tauri::ipc::Response, String> {
+    if !raw {
+        return serde_json::to_string(&encode_native_viewport_frame(frame, label)?).map(tauri::ipc::Response::new).map_err(|error| error.to_string());
+    }
+    let metadata = serde_json::to_vec(&serde_json::json!({"hasAuthoredCamera":frame.has_authored_camera,"profile":frame.profile})).map_err(|error| error.to_string())?;
+    let mut bytes = Vec::with_capacity(16 + metadata.len() + frame.rgba.len());
+    for value in [0x3146474d_u32, frame.width, frame.height, metadata.len() as u32] { bytes.extend_from_slice(&value.to_le_bytes()); }
+    bytes.extend_from_slice(&metadata);
+    bytes.extend_from_slice(&frame.rgba);
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
 #[tauri::command]
 async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let (project, build_scenes) = state.project.lock().as_ref().map(|session| (session.snapshot(), session.build_scenes())).ok_or_else(|| no_project().message)?;
@@ -4325,8 +4337,9 @@ async fn render_native_game_view(
     width: u32,
     height: u32,
     snapshot: Option<WorldSnapshot>,
+    raw: Option<bool>,
     state: State<'_, AppState>,
-) -> Result<NativeViewportFrame, String> {
+) -> Result<tauri::ipc::Response, String> {
     let (project_root, snapshot) = {
         let project = state.project.lock();
         let session = project
@@ -4355,7 +4368,8 @@ async fn render_native_game_view(
             .expect("viewport renderer initialized above")
             .render_game(&world, width, height)
             .map_err(|error| error.to_string())?;
-        encode_native_viewport_frame(frame, "viewport")
+        drop(viewport);
+        native_viewport_response(frame, raw.unwrap_or(false), "viewport")
     })
     .await
     .map_err(|error| format!("Game viewport worker failed: {error}"))?
@@ -4365,8 +4379,9 @@ async fn render_native_game_view(
 async fn render_native_scene_view(
     request: NativeSceneViewRequest,
     snapshot: Option<WorldSnapshot>,
+    raw: Option<bool>,
     state: State<'_, AppState>,
-) -> Result<NativeViewportFrame, String> {
+) -> Result<tauri::ipc::Response, String> {
     let (project_root, snapshot) = {
         let project = state.project.lock();
         let session = project
@@ -4387,12 +4402,12 @@ async fn render_native_scene_view(
         }
         let world = world_from_snapshot(&snapshot);
         let viewport = SCENE_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
-        let mut viewport = viewport.lock();
-        if viewport
+        let mut viewport_guard = viewport.lock();
+        if viewport_guard
             .as_ref()
             .is_none_or(|renderer| renderer.project_root() != project_root)
         {
-            *viewport = Some(
+            *viewport_guard = Some(
                 pollster::block_on(EditorViewportRenderer::new(
                     project_root,
                     request.width,
@@ -4401,7 +4416,7 @@ async fn render_native_scene_view(
                 .map_err(|error| error.to_string())?,
             );
         }
-        let viewport = viewport
+        let viewport = viewport_guard
             .as_mut()
             .expect("Scene viewport renderer initialized above");
         let frame = if request.camera_entity.is_some() {
@@ -4450,7 +4465,8 @@ async fn render_native_scene_view(
             )
         }
         .map_err(|error| error.to_string())?;
-        encode_native_viewport_frame(frame, "Scene viewport")
+        drop(viewport_guard);
+        native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport")
     })
     .await
     .map_err(|error| format!("Scene viewport worker failed: {error}"))?

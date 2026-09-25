@@ -1107,6 +1107,25 @@ fn collect_ui_frame_internal(
     target_display: i32,
     interaction: UiInteractionState,
     button_tints: Option<&HashMap<Entity, UiButtonTintTween>>,
+    font_resolver: Option<&mut dyn UiFontResolver>,
+) -> RuntimeUiFrame {
+    let mut frame = collect_ui_primitives(world, hierarchy, width, height, active_camera, sorting_layers, target_display, interaction, button_tints, font_resolver);
+    frame.plan = UiBatchPlan::build(frame.plan.primitives);
+    frame
+}
+
+/// FrameCompiler batches once after merging world primitives and resolving materials.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn collect_ui_primitives(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    width: u32,
+    height: u32,
+    active_camera: Option<FrameCamera>,
+    sorting_layers: Option<&SortingLayers>,
+    target_display: i32,
+    interaction: UiInteractionState,
+    button_tints: Option<&HashMap<Entity, UiButtonTintTween>>,
     mut font_resolver: Option<&mut dyn UiFontResolver>,
 ) -> RuntimeUiFrame {
     let root = UiRect {
@@ -1309,7 +1328,7 @@ fn collect_ui_frame_internal(
     }
 
     RuntimeUiFrame {
-        plan: UiBatchPlan::build(primitives),
+        plan: UiBatchPlan { primitives, batches: Vec::new() },
         world_primitives,
         controls,
     }

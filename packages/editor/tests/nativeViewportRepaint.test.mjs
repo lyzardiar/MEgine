@@ -13,7 +13,7 @@ test('decoded native frames cross a task boundary when hidden WebViews suspend a
   ]) {
     const assignment = viewport.indexOf(`${frameRef} = {`);
     assert.notEqual(assignment, -1, `${frameRef} assignment must exist`);
-    const completion = viewport.slice(assignment, assignment + 500);
+    const completion = viewport.slice(assignment, assignment + 850);
     const completed = completion.indexOf('request.reportedError = false;');
     const repainted = completion.indexOf('paint();');
     const deferred = completion.indexOf('if (firstFrame) window.setTimeout(paint, 0);');
@@ -23,7 +23,7 @@ test('decoded native frames cross a task boundary when hidden WebViews suspend a
   }
   assert.match(
     viewport,
-    /React still commits[\s\S]*useEffect\(\(\) => \{\s+paint\(\);[\s\S]*props\.entities/,
+    /React still commits[\s\S]*useEffect\(\(\) => \{\s+if \(performance\.now\(\) - lastProfilerFrameRef\.current > 100\) paint\(\);[\s\S]*props\.entities/,
   );
   assert.match(
     viewport,

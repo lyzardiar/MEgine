@@ -642,18 +642,19 @@ export function Profiler() {
               warning={Boolean(latestNative && latestNative.totalMs > FRAME_BUDGET_MS)}
             />
             <Metric
-              label="Resident Estimate"
-              value={formatBytes(latestNative?.residentMemoryEstimateBytes)}
-              hint="provenance in Memory"
+              label="Presented Frame"
+              value={latestNative?.presentIntervalMs ? formatMs(latestNative.presentIntervalMs) : '—'}
+              hint={latestNative?.presentIntervalMs ? `${(1000 / latestNative.presentIntervalMs).toFixed(1)} FPS · request ${formatMs(latestNative.transportMs ?? 0)}` : 'Completed native frames'}
             />
             <Metric label="Native Draw Calls" value={latestNative ? formatCount(latestNative.counts.uiDrawCalls) : '—'} />
+            <Metric label="Resident Estimate" value={formatBytes(latestNative?.residentMemoryEstimateBytes)} hint="provenance in Memory" />
             <Metric label="Render Resources" value={latestNative ? formatCount(latestNative.resources.length) : '—'} />
           </div>}
 
           {module === 'overview' && latest && <>
           <div className="profiler-metrics profiler-metrics-primary">
             <Metric
-              label="Frame"
+              label="WebView Frame"
               value={formatMs(latest.frameMs)}
               hint={`${fps.toFixed(1)} FPS · p95 ${formatMs(summary.p95FrameMs)}`}
               warning={summary.p95FrameMs > FRAME_BUDGET_MS}
@@ -684,7 +685,7 @@ export function Profiler() {
               peakField="frameMaxMs"
               color="#55b8d0"
               budget={FRAME_BUDGET_MS}
-              label="Frame Interval"
+              label="WebView rAF Interval"
               selectedTimestamp={latest?.timestamp ?? null}
               onSelect={selectSample}
             />

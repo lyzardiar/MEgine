@@ -739,6 +739,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (!channel || !syncReady.current || applyingRemote.current || !booted.current) return;
     const send = () => {
       syncTimer.current = null;
+      if (!immediate && !props.detachedPanel && ![...remoteDirtyPeers.current.values()].some(peer => peer.timestamp >= Date.now() - 5_000)) return;
       channel.postMessage({
         type: 'scene-state',
         sender: syncSender.current,
@@ -2652,15 +2653,24 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => {
     let lastTick = performance.now();
+    let lastPanelRefresh = 0;
+    let disposed = false;
     const id = setInterval(() => {
       const now = performance.now();
       if (store.mode !== 'play') { lastTick = now; return; }
       if (store.playBusy) return;
       store.tick(Math.min((now - lastTick) / 1000, 0.25));
       lastTick = now;
-      refresh(!props.detachedPanel);
+      // Viewports read completed Play frames directly. Inspector and hierarchy refresh
+      // at 10 Hz; detached windows receive completed frames through the 33 ms broadcast.
+      void store.waitForPlayRuntime().then(() => {
+        if (!disposed && !props.detachedPanel) broadcastScene();
+        if (disposed || performance.now() - lastPanelRefresh < 100) return;
+        lastPanelRefresh = performance.now();
+        refresh(!props.detachedPanel);
+      }).catch(() => {});
     }, 1000 / 60);
-    return () => clearInterval(id);
+    return () => { disposed = true; clearInterval(id); };
   }, [props.detachedPanel, store]);
 
   useEffect(() => {
@@ -2941,6 +2951,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               tab={viewTab}
               clearColor={snap.clearColor}
               entities={viewportEntities}
+              runtimeSnapshot={store.playViewportSnapshot}
               selected={viewportSelected}
               selectedIds={viewportSelectedIds}
               sceneHiddenIds={sceneHiddenIds}
@@ -2956,7 +2967,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               gameDisplay={gameDisplay}
               timelineCameraPreview={store.timelineCameraPreview()}
               timelineParticlePreviews={store.timelineParticlePreviews()}
-              activeInHierarchy={(id) => snapshotWorldTransforms.get(id)?.active === true}
+              activeInHierarchy={mode !== 'edit' ? store.activeInHierarchy : (id) => snapshotWorldTransforms.get(id)?.active === true}
               onPick={(id, modifiers) => {
                 if (!store.scenePickable(id)) return;
                 if (modifiers.toggle) store.selectMany([id], 'toggle', id);
