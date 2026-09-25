@@ -55,8 +55,8 @@ class UnityTiles:
             if match:
                 self.paths[match[1]] = Path(str(path)[:-5])
 
-    def asset(self, guid):
-        return next(iter(documents(self.paths[guid]).values()))["MonoBehaviour"]
+    def asset(self, guid, file_id=11400000):
+        return documents(self.paths[guid])[file_id]["MonoBehaviour"]
 
     def sprite(self, reference):
         if reference["fileID"] == 0:

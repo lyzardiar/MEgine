@@ -27,7 +27,7 @@ const press = async (key) => {
 };
 const tiles = snapshot => snapshot.entities.filter(entity => entity.name?.startsWith('Tile '));
 try {
-  const available = ['random-tile', 'weighted-random-tile', 'terrain-tile', 'pipeline-tile', 'auto-tile', 'custom-rule-tile'];
+  const available = ['random-tile', 'weighted-random-tile', 'terrain-tile', 'pipeline-tile', 'auto-tile', 'custom-rule-tile', 'rule-override-tile'];
   const requested = process.argv.slice(2);
   assert.ok(requested.every(slug => available.includes(slug)), 'Unknown tile demo');
   for (const slug of requested.length ? requested : available) {
@@ -40,7 +40,7 @@ try {
     assert.equal(tiles(authored).length, data.cells.length);
     await execute('playback.play', { paused: true }); await execute('panel.focus', { kind: 'game' });
     const initial = await query('scene.snapshot');
-    const hideControls = ['auto', 'custom'].includes(data.kind);
+    const hideControls = ['auto', 'custom', 'override'].includes(data.kind);
     if (hideControls) {
       await press('KeyH');
       assert.equal((await query('scene.snapshot')).entities.find(entity => entity.name === 'Brush Controls').components.Text.enabled, false);
@@ -72,7 +72,7 @@ try {
       assert.equal((await query('scene.snapshot')).entities.find(entity => entity.name === name).components.SpriteRenderer.sprite, sprite);
     }
     let changedNeighbors = 0;
-    if (['terrain', 'pipeline', 'auto', 'custom'].includes(data.kind)) {
+    if (['terrain', 'pipeline', 'auto', 'custom', 'override'].includes(data.kind)) {
       const source = data.cells.find(cell => data.cells.some(other => other.tile === cell.tile && Math.abs(other.x - cell.x) + Math.abs(other.y - cell.y) === 1));
       const before = await query('scene.snapshot');
       const after = await paint(source.x, source.y, 2);

@@ -1,9 +1,9 @@
 {
   "repository": "https://github.com/Unity-Technologies/2d-techdemos",
   "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
-  "scene": "Assets/Tilemap/Rule Tiles/Custom Rule Tile/Custom Rule Tile.unity",
+  "scene": "Assets/Tilemap/Rule Tiles/Rule Override Tile/Rule Override Tile.unity",
   "license": "MIT",
-  "sourceCells": 236,
+  "sourceCells": 49,
   "adaptations": [
     "Unity Gamma numeric colors are decoded to linear and ACES is disabled; source textures retain sRGB sampling.",
     "Independent editable Sprite entities preserve the authored tile layout, selected sprites, rotations and colors.",

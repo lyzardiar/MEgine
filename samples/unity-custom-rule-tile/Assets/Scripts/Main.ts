@@ -12,6 +12,10 @@ type NeighborRule = { neighbors: number[]; positions: number[][]; rotate: boolea
 function neighborMatches(condition: number, tileIndex: number, otherIndex: number | undefined): boolean {
   if (condition === 0) return true;
   const tile = tileData.tiles[tileIndex], other = otherIndex === undefined ? undefined : tileData.tiles[otherIndex];
+  if (tile.family === 'sibling' && (condition === 1 || condition === 2)) {
+    const same = other?.family === 'sibling' && tile.group === other.group;
+    return condition === 1 ? same : !same;
+  }
   if (tile.family === 'terrain' && (condition === 3 || condition === 4)) return other?.family === 'terrain' && (condition === 3 ? tile.group === other.group : tile.group !== other.group);
   if (tile.family === 'type') {
     if (condition === 3) return other?.family === 'type';
@@ -28,7 +32,7 @@ function onSceneLoaded(): void {
 function tileVisual(cell: PaintCell): { sprite: string; rotation: number[] } {
   const tile = tileData.tiles[cell.tile];
   let index = 0, turns = 0;
-  if (tileData.kind === 'custom') {
+  if (tileData.kind === 'custom' || tileData.kind === 'override') {
     if (!tile.family) {
       const original = tileData.cells.find(value => value.x === cell.x && value.y === cell.y && value.tile === cell.tile);
       return { sprite: tile.defaultSprite, rotation: original?.rotation ?? [0, 0, 0, 1] };
