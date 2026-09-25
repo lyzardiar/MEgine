@@ -2,66 +2,18 @@
 import json
 import math
 from pathlib import Path
-import re
 import shutil
-import subprocess
 import sys
 
-from PIL import Image
-import yaml
-
-COMMIT = "6593d544df2ea598e51f5cf1d7165d5ed42ceba7"
-
-
-def documents(path):
-    source = Path(path).read_text(encoding="utf-8-sig")
-    # Unity stores packed little-endian integers here; YAML must not parse them as octal.
-    source = re.sub(r'(?m)^(\s*m_Neighbors: )([0-9a-f]+)$', r'\1"\2"', source)
-    blocks = re.split(r'^--- !u!(\d+) &(-?\d+)(?: stripped)?\s*$', source, flags=re.M)
-    return {int(blocks[i + 1]): yaml.safe_load(blocks[i + 2]) for i in range(1, len(blocks), 3)}
-
-
-def write_json(path, value):
-    path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+from unity_tile_source import COMMIT, UnityTiles, documents, write_json
 
 
 def main():
     source = Path(sys.argv[1]).resolve()
-    if subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip() != COMMIT:
-        raise ValueError(f"Expected Unity 2d-techdemos commit {COMMIT}")
     output = Path(__file__).resolve().parents[1] / "samples/unity-destructible"
-    for folder in ["Assets/Scenes", "Assets/Scripts", "Assets/Sprites"]:
-        (output / folder).mkdir(parents=True, exist_ok=True)
-    paths = {}
-    for path in (source / "Assets").rglob("*.meta"):
-        match = re.search(r"^guid: (\w+)", path.read_text(encoding="utf-8-sig"), re.M)
-        if match:
-            paths[match[1]] = Path(str(path)[:-5])
-    imported = {}
-
-    def sprite(reference):
-        if reference["fileID"] == 0:
-            return ""
-        guid = reference["guid"]
-        if guid not in imported:
-            path = paths[guid]
-            meta = yaml.safe_load(Path(str(path) + ".meta").read_text(encoding="utf-8-sig"))["TextureImporter"]
-            destination = output / "Assets/Sprites" / path.name
-            shutil.copyfile(path, destination)
-            height = Image.open(path).height
-            slices, names = [], {}
-            for item in meta["spriteSheet"]["sprites"]:
-                rect = item["rect"]
-                name = item["name"]
-                names[item["internalID"]] = name
-                slices.append(dict(name=name, rect=[rect["x"], height - rect["y"] - rect["height"], rect["width"], rect["height"]], pivot=[0.5, 0.5]))
-            write_json(Path(str(destination) + ".sprite.json"), dict(version=1, mode="multiple", pixels_per_unit=meta["spritePixelsToUnits"], slices=slices))
-            imported[guid] = (path.name, names)
-        filename, names = imported[guid]
-        return "Assets/Sprites/" + filename + ("#" + names[reference["fileID"]] if names else "")
-
-    def asset(guid):
-        return next(iter(documents(paths[guid]).values()))["MonoBehaviour"]
+    importer = UnityTiles(source, output)
+    sprite, asset = importer.sprite, importer.asset
+    paths, imported = importer.paths, importer.imported
 
     def rules(guid):
         value = asset(guid)

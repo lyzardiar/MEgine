@@ -1,0 +1,1068 @@
+{
+  "version": 3,
+  "name": "Palette Swap",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 5
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Tile -4 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Tile -3 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_6",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Tile -2 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_4",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Tile -1 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_4",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Tile 0 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_4",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Tile 1 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_4",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Tile 2 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_7",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Tile 3 -2",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Tile -4 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Tile -3 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Tile 2 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              -0.7071067601131216,
+              0.7071068022599728
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Tile 3 -1",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              -0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.999999999999999,
+              4.3711389902282486e-08
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Terrain Tiles.png#PBrick_3",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Tile -1 0",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Tile 0 0",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              0.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/Brick.png",
+            "color": [
+              1,
+              0,
+              0,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Tile -4 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Tile -3 1",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_1",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Tile 2 1",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_1",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Tile 3 1",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              1.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Tile -4 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -3.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Tile -3 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -2.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Tile -2 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -1.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_2",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Tile -1 2",
+        "components": {
+          "Transform": {
+            "position": [
+              -0.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Tile 0 2",
+        "components": {
+          "Transform": {
+            "position": [
+              0.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_1",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Tile 1 2",
+        "components": {
+          "Transform": {
+            "position": [
+              1.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_1",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Tile 2 2",
+        "components": {
+          "Transform": {
+            "position": [
+              2.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_1",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Tile 3 2",
+        "components": {
+          "Transform": {
+            "position": [
+              3.5,
+              2.5,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Sprites/TempleStoneBasic.png#TempleStoneBasic_0",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Controls",
+        "components": {
+          "Canvas": {},
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              960,
+              540
+            ]
+          },
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "parent": 28,
+        "name": "Palette Controls",
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0,
+              0
+            ],
+            "anchored_position": [
+              16,
+              40
+            ],
+            "size_delta": [
+              500,
+              80
+            ]
+          },
+          "Text": {
+            "text": "Palette B\n1 / Left: previous    2 / Right: next\nSpace: random    R: reset",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 18,
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "clear_color": [
+      0.19215687,
+      0.3019608,
+      0.4745098,
+      1
+    ]
+  }
+}

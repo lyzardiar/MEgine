@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scene": "Assets/Tilemap/PaletteSwap/PaletteSwap.unity",
+  "license": "MIT",
+  "adaptations": [
+    "26 editable Sprite entities preserve the authored layout and initial palette B.",
+    "Palette positions map terrain, weighted random, brick, ladder and animated ocean tiles.",
+    "Rule and terrain outputs are resolved during import for the fixed source layout; ocean retains source animation speed.",
+    "Weighted selections outside the authored initial palette use a deterministic per-cell seed instead of Unity's random sequence.",
+    "Original 1/2/Space controls are retained, with Left/Right aliases and R to reset; a Canvas text label replaces UI Toolkit."
+  ]
+}

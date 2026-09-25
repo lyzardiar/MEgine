@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "sourceCells": 26,
+  "palettes": 3,
+  "animatedTiles": 12,
+  "originalAndAliasControls": true,
+  "wraparound": true,
+  "heldKeyDoesNotRepeat": true,
+  "stableEntityIds": true,
+  "oceanAnimation": true,
+  "pauseFrozen": true,
+  "returnToInitialPixels": true,
+  "randomPalette": true,
+  "restartRestores": true,
+  "stopRestoresAuthored": true
+}
