@@ -1,0 +1,35 @@
+/* MENGINE_PARAMETERS
+{"parameters":[{"name":"blue_position","type":"vector4","default":[-2.5,4.5,0,100]},{"name":"blue_color","type":"vector4","default":[0,0.66896534,1,0.94]},{"name":"orange_position","type":"vector4","default":[5,-1.5,0,100]},{"name":"orange_color","type":"vector4","default":[1,0.5586207,0,0.4]},{"name":"lighting","type":"vector4","default":[1,0,0,1]},{"name":"ambient","type":"vector4","default":[0.212,0.227,0.259,1]}],"textures":[{"name":"normal","type":"data","default":"Assets/Sprites/normalmap.png"}]}
+*/
+fn normal_decode(color: vec3<f32>) -> vec3<f32> {
+    return select(pow((color + vec3<f32>(0.055)) / 1.055, vec3<f32>(2.4)), color / 12.92, color <= vec3<f32>(0.04045));
+}
+fn normal_encode(color: vec3<f32>) -> vec3<f32> {
+    return select(1.055 * pow(max(color, vec3<f32>(0.0)), vec3<f32>(1.0 / 2.4)) - vec3<f32>(0.055), color * 12.92, color <= vec3<f32>(0.0031308));
+}
+fn normal_light(position: vec3<f32>, normal: vec3<f32>, light: vec4<f32>, color: vec4<f32>, options: vec4<f32>) -> vec3<f32> {
+    let offset = vec3<f32>(light.xy - position.xy, light.z + options.z - position.z);
+    let distance = length(offset.xy);
+    let radius = max(light.w, 0.001);
+    var attenuation = max(0.0, 1.0 - distance * distance / (radius * radius)) / (1.0 + 25.0 * distance * distance / (radius * radius));
+    if options.y > 0.5 {
+        attenuation = pow(clamp((radius - distance) / max(radius - 3.0, 0.001), 0.0, 1.0), 0.5);
+    }
+    let diffuse = select(1.0, max(dot(normal, offset / max(length(offset), 0.0001)), 0.0), options.x > 0.5);
+    return color.rgb * color.a * attenuation * diffuse;
+}
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let i = input.instance_index;
+    let texel = mengine_ui_main_texture(input.uv0);
+    let tangent_normal = normalize(mengine_texture_normal(input.uv0).xyz * 2.0 - vec3<f32>(1.0));
+    let tangent = normalize(input.tangent.xyz);
+    let basis_normal = normalize(input.normal);
+    let bitangent = cross(basis_normal, tangent) * input.tangent.w;
+    let normal = normalize(tangent * tangent_normal.x + bitangent * tangent_normal.y + basis_normal * tangent_normal.z);
+    let options = mengine_param_lighting(i);
+    let lighting = mengine_param_ambient(i).rgb
+        + normal_light(input.uv1.xyz, normal, mengine_param_blue_position(i), mengine_param_blue_color(i), options)
+        + normal_light(input.uv1.xyz, normal, mengine_param_orange_position(i), mengine_param_orange_color(i), options);
+    let gamma = normal_encode(texel.rgb) * lighting;
+    return vec4<f32>(normal_decode(clamp(gamma, vec3<f32>(0.0), vec3<f32>(1.0))), texel.a) * input.vertex_color;
+}

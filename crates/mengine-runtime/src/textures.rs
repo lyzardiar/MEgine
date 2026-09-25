@@ -227,6 +227,12 @@ impl RuntimeTextureCache {
             match &cached.result {
                 Ok(region) => {
                     primitive.uv = compose_uv(region.uv, primitive.uv);
+                    if let Some(channels) = primitive.shader_channel_data.as_mut() {
+                        for uv in &mut Arc::make_mut(channels).uv0 {
+                            uv[0] = region.uv[0] + uv[0] * region.uv[2];
+                            uv[1] = region.uv[1] + uv[1] * region.uv[3];
+                        }
+                    }
                     primitive.key.texture = region.texture.clone();
                 }
                 Err(error) if !cached.reported => {
@@ -903,11 +909,20 @@ mod tests {
         let mut primitive = UiPrimitive::solid([0.0; 4], [1.0; 4]);
         primitive.key.texture = "Assets/Sprites/sheet.png#Right".into();
         primitive.uv = [1.0, 0.0, -1.0, 1.0];
+        let mut channels = mengine_rhi::UiShaderChannelData::default();
+        channels.uv0[0] = [1.0, 0.0, 0.0, 0.0];
+        channels.uv0[1] = [0.0, 0.0, 0.0, 0.0];
+        channels.uv1[0] = [2.0, 3.0, 4.0, 1.0];
+        primitive.shader_channel_data = Some(Arc::new(channels));
         let mut cache = RuntimeTextureCache::new(Some(root.clone()));
         let failures = cache.resolve_sprite_regions(std::slice::from_mut(&mut primitive));
         assert!(failures.is_empty());
         assert_eq!(primitive.key.texture, "Assets/Sprites/sheet.png");
         assert_eq!(primitive.uv, [1.0, 0.0, -0.5, 1.0]);
+        let streams = primitive.shader_channel_data.as_ref().unwrap();
+        assert_eq!(streams.uv0[0], [1.0, 0.0, 0.0, 0.0]);
+        assert_eq!(streams.uv0[1], [0.5, 0.0, 0.0, 0.0]);
+        assert_eq!(streams.uv1[0], [2.0, 3.0, 4.0, 1.0]);
 
         std::fs::remove_dir_all(root).unwrap();
     }

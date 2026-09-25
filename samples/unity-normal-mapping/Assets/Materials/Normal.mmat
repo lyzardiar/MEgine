@@ -1,0 +1,19 @@
+{
+  "version": 10,
+  "name": "Normal mapped sprite",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Normal.mshader",
+  "custom_textures": {
+    "normal": "Assets/Sprites/normalmap.png"
+  },
+  "surface": "transparent",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "wrap_u": "clamp",
+  "wrap_v": "clamp",
+  "filter": "nearest"
+}

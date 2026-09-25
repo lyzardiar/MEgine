@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "sourceCells": 16,
+  "variants": 2,
+  "builtin": {
+    "samples": 395,
+    "blackOutlineSamples": 5,
+    "maximumChannelError": 1
+  },
+  "flat": {
+    "samples": 395,
+    "blackOutlineSamples": 5,
+    "maximumChannelError": 3
+  },
+  "moved": {
+    "samples": 395,
+    "blackOutlineSamples": 5,
+    "maximumChannelError": 3
+  },
+  "urp": {
+    "samples": 395,
+    "blackOutlineSamples": 5,
+    "maximumChannelError": 2
+  },
+  "urpNormal": {
+    "samples": 395,
+    "blackOutlineSamples": 5,
+    "maximumChannelError": 1
+  },
+  "flipY": {
+    "samples": 395,
+    "blackOutlineSamples": 4,
+    "maximumChannelError": 1
+  },
+  "linearNormalTexture": true,
+  "stableEntityIds": true,
+  "resetExact": true,
+  "sceneRoundTrip": true,
+  "stopRestoresAuthored": true
+}

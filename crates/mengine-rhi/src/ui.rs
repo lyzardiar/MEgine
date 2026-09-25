@@ -2096,6 +2096,8 @@ pub(crate) fn compose_ui_shader(
             "{UI_HOOK_BEGIN}\n{parameter_helpers}\n{keyword_helpers}\n{texture_helpers}\n{hook}\n{UI_HOOK_END}"
         ),
     );
+    // Custom materials own sampling for both their main sprite and auxiliary textures.
+    composed = composed.replace("textureSample(ui_texture, ui_sampler, uv)", "textureSample(ui_texture, ui_material_sampler, uv)");
     let module = naga::front::wgsl::parse_str(&composed)
         .map_err(|error| format!("WGSL parse failed: {error}"))?;
     naga::valid::Validator::new(
@@ -2531,6 +2533,9 @@ mod tests {
                 * detail * (mengine_param_strength(input.instance_index) * normal_factor * keyword_factor);
         }"#;
         assert!(validate_ui_shader_hook(source).is_ok());
+        let composed = compose_ui_shader(source, None).unwrap();
+        assert!(composed.contains("textureSample(ui_texture, ui_material_sampler, uv)"));
+        assert!(UI_WGSL.contains("textureSample(ui_texture, ui_sampler, uv)"));
         assert!(validate_ui_shader_hook(
             "fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface { return surface; }"
         )

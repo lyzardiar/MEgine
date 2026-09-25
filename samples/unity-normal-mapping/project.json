@@ -1,0 +1,12 @@
+{
+  "name": "Unity Normal Mapping",
+  "version": 1,
+  "language": "typescript",
+  "mainScene": "Assets/Scenes/Built-in.mscene",
+  "buildScenes": [
+    "Assets/Scenes/Built-in.mscene",
+    "Assets/Scenes/URP.mscene"
+  ],
+  "startupScript": "Assets/Scripts/Main.ts",
+  "assetMode": "all"
+}

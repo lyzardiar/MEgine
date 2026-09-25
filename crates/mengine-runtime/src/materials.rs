@@ -1382,8 +1382,9 @@ mod tests {
     }
 
     #[test]
-    fn tint_brush_shader_compiles_with_reflected_parameters() {
+    fn sample_sprite_material_shaders_compile_with_reflected_parameters() {
         validate_ui_shader_hook(include_str!("../../../scripts/templates/unity-tint-smooth.mshader")).unwrap();
+        validate_ui_shader_hook(include_str!("../../../scripts/templates/unity-normal-mapping.mshader")).unwrap();
     }
 
     #[test]

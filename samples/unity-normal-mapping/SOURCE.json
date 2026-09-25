@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scenes": [
+    "Assets/Tilemap/Normal Mapping (Built-in)/Scene/normalmapping.unity",
+    "Assets/Tilemap/Normal Mapping (URP)/Scene/normalmapping.unity"
+  ],
+  "license": "MIT",
+  "sourceCells": 16,
+  "adaptations": [
+    "Both variants retain all source cells, sprite/normal atlases, camera and authored lights; count as one logical demo.",
+    "Built-in is adapted to per-pixel Lambert diffuse plus source flat ambient and analytic point attenuation. Unity Standard BRDF/specular and baked attenuation lookup are not reproduced.",
+    "URP retains its authored disabled normal lighting, inner/outer radius 3/7 and falloff .5; N enables optional normal response at source normal-map distance 3. No shadow occluders are authored in this scene.",
+    "Main sprite uses nearest sampling; normal atlas is sampled as linear data. Sprite uv1 supplies live world position and its tangent frame accounts for rotation and flips.",
+    "Light transforms drive per-sprite MaterialPropertyBlock parameters. This custom shader owns its two lights independently of the engine Light2D component.",
+    "Runtime light dragging, normal toggle and pipeline switching extend the source static demonstration. Numeric colors follow source Gamma; ACES is disabled."
+  ]
+}

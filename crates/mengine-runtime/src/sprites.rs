@@ -3,7 +3,7 @@ use crate::sorting::{sort_world_primitives, SortingLayers, WorldPrimitive, World
 use glam::{Quat, Vec3};
 use mengine_core::generated::{AnimatedSprite2D, Grid, Line2D, MaterialPropertyBlock, SpriteRenderer, Tilemap, Transform};
 use mengine_core::{Entity, Parent, TransformHierarchy, World};
-use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
+use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive, UiShaderChannelData, UiShaderChannels};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 
@@ -445,6 +445,19 @@ fn project_sprite(
     {
         return None;
     }
+    let channels = (!sprite.material.trim().is_empty()).then(|| {
+        let mut data = UiShaderChannelData::default();
+        let tangent = rotation * Vec3::X * if sprite.flip_x { -1.0 } else { 1.0 };
+        let normal = rotation * Vec3::Z;
+        for (index, [x, y]) in [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]].into_iter().enumerate() {
+            let local = Vec3::new((x - pivot[0]) * half_width * 2.0, (1.0 - y - pivot[1]) * half_height * 2.0, 0.0);
+            data.uv1[index] = (position + rotation * local).extend(1.0).to_array();
+            data.uv0[index] = [if sprite.flip_x { 1.0 - x } else { x }, if sprite.flip_y { 1.0 - y } else { y }, 0.0, 0.0];
+            data.normals[index] = normal.extend(0.0).to_array();
+            data.tangents[index] = tangent.extend(if sprite.flip_x ^ sprite.flip_y { -1.0 } else { 1.0 }).to_array();
+        }
+        Arc::new(data)
+    });
     Some(WorldPrimitive {
         kind: WorldPrimitiveKind::TwoD,
         sorting_layer: sprite.sorting_layer.clone(),
@@ -465,7 +478,7 @@ fn project_sprite(
                 if sprite.flip_y { -1.0 } else { 1.0 },
             ],
             vertex_positions: None,
-            shader_channel_data: Default::default(),
+            shader_channel_data: channels.clone(),
             soft_clips: [None; 8],
             canvas_sorting_grid_size: None,
             key: UiBatchKey {
@@ -478,7 +491,7 @@ fn project_sprite(
                 },
                 clip: None,
                 blend: UiBlendMode::Alpha,
-                shader_channels: Default::default(),
+                shader_channels: if channels.is_some() { UiShaderChannels::for_canvas(1 | 8 | 16, "WorldSpace") } else { UiShaderChannels::default() },
                 depth_test: false,
                 stencil: Default::default(),
             },
@@ -553,6 +566,12 @@ mod tests {
         assert_eq!(projected.primitive.color, sprite.color);
         assert_eq!(projected.primitive.key.texture, sprite.sprite);
         assert_eq!(projected.primitive.uv, [1.0, 0.0, -1.0, 1.0]);
+        let streams = projected.primitive.shader_channel_data.as_ref().unwrap();
+        let corner = Vec3::from_array(streams.uv1[0][..3].try_into().unwrap());
+        let expected = safe_rotation(transform.rotation) * Vec3::new(-1.0, 0.5, 0.0);
+        assert!(corner.abs_diff_eq(expected, 0.0001));
+        assert_eq!(streams.uv0[0], [1.0, 0.0, 0.0, 0.0]);
+        assert_eq!(streams.tangents[0][3], -1.0);
     }
 
     #[test]

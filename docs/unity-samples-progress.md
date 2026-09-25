@@ -14,7 +14,7 @@
 
 - 标题栏：统一 29px 高度、靠左的内容宽度标签、固定分离窗口按钮、窄窗口标签选择器；移除按面板宽度拉伸当前标签并隐藏其他标题的行为。Windows 窗口使用深色主题。
 - 原生编辑器截图已核对；标签实测宽度 67–92px，不再拉满面板。构建、键盘导航和 Agent 快照检查通过。
-- Brick 已移植并通过原生 Agent 验收：128 → 126 块砖、挡板移动、实体 ID 稳定、落底重开、R 重开、停止恢复、再次播放清空输入。Animated Tile、Destructible、Palette Swap 也已完成，Random Tile、Weighted Random Tile、Terrain Tile、Pipeline Tile 也已完成，Auto Tile、Custom Rule Tile、Rule Override Tile、Tint Brush、Tint Brush Smooth 也已完成，Hexagonal 也已完成，合计 14/20；其余 6 项尚未完成。
+- Brick 已移植并通过原生 Agent 验收：128 → 126 块砖、挡板移动、实体 ID 稳定、落底重开、R 重开、停止恢复、再次播放清空输入。Animated Tile、Destructible、Palette Swap 也已完成，Random Tile、Weighted Random Tile、Terrain Tile、Pipeline Tile 也已完成，Auto Tile、Custom Rule Tile、Rule Override Tile、Tint Brush、Tint Brush Smooth 也已完成，Hexagonal 也已完成，Normal Mapping 也已完成，合计 15/20；其余 5 项尚未完成。
 - Brick 实际运行截图：`docs/designs/unity-demos/brick-game.png`，编辑器全窗：`brick-editor.png`，结果：`brick-result.json`。复验入口：`scripts/qa-unity-brick.mjs`（使用独立 QA 配置目录）。
 - Animated Tile：保留 8 个单元格、10 个官方 Sprite 切片及 10 FPS 帧序列；原生截图验证换帧、暂停冻结、重开首帧与停止恢复。证据 `docs/designs/unity-demos/animated-tile-*`，复验 `scripts/qa-unity-animated-tile.mjs`。
 - Destructible：559 个单元格、官方图集与爆炸关键帧；一次十字爆破使前景 235 → 228，保留全部 128 个 Border，24 个地面单元更新，远处 Sprite 不变。按住鼠标不重复触发、特效结束回收、R 重开与停止恢复通过。证据 `docs/designs/unity-demos/destructible-*`；复验 `scripts/qa-unity-destructible.mjs`。
@@ -25,8 +25,9 @@
 - Rule Override Tile：49 个源单元格、4 类图块，保留 Terrain/TerrainSlope 与 Poles/Clothesline 两组互联和覆盖 Sprite。逐格输出一致；原生绘制、擦除、选择、撤销、重开与停止恢复通过，擦除后 2 个邻格刷新。截图 `docs/designs/unity-demos/rule-override-tile-*`。
 - Tint Brush / Tint Brush Smooth：保留 4/64 格、4/40 组源颜色。普通逐格染色与 Smooth 连续双线性渐变均可绘制、取色、擦除、撤销及重开；支持 100%/50%/0% 混合。原生颜色采样分别 4/7 点通过，最大误差 0/3 个通道量化值；Smooth 一次编辑更新 9 个邻接精灵，重开像素完全一致。截图 `docs/designs/unity-demos/tint-brush-*`、`tint-brush-smooth-*`，复验 `scripts/qa-unity-tint.mjs`。
 - Hexagonal：400 个海洋格、96 个陆地格、38 条海岸规则；全部源 Sprite 和 28 个镜像逐格一致，坐标经独立 Unity Grid 实测核对。原生奇偶行绘制、六边形拾取、擦除、撤销与停止恢复通过；一次擦除更新 4 个相邻海岸，重开像素完全一致。截图 `docs/designs/unity-demos/hexagonal-*`，复验 `scripts/qa-unity-hexagonal.mjs`。
+- Normal Mapping：Built-in / URP 两个场景合计一个示例，各保留 16 格、四个 Sprite 切片、法线图集和两盏源灯光。支持逐像素法线响应、灯光拖动及场景切换；URP 初始法线关闭遵循源场景。六组原生截图各检查 395 个像素点，最大误差 3/255（对本移植的独立 CPU 光照参考）；重开与场景往返像素完全一致。Built-in 使用 Lambert 与解析衰减，未复现完整 Unity Standard BRDF。截图 `docs/designs/unity-demos/normal-mapping-*`，复验 `scripts/qa-unity-normal-mapping.mjs`。
 - Sprite 材质：SpriteRenderer / AnimatedSprite2D 支持自定义 2D shader 材质和逐对象 MaterialPropertyBlock，Inspector、原生渲染、参数反射和 PC 打包均贯通。参数差异仍可合批，自定义纹理差异拆分批次。
-- 颜色：原生后处理支持 `EnvironmentLight.tone_mapping=false`，默认仍启用 ACES。十四个 Gamma 来源项目在线性渲染前转换数值颜色；原生截图采样背景为 (49,77,121)，与源颜色相符。每个 QA 入口均检查背景颜色。
+- 颜色：原生后处理支持 `EnvironmentLight.tone_mapping=false`，默认仍启用 ACES。十五个 Gamma 来源项目在线性渲染前转换数值颜色；原生截图采样背景为 (49,77,121)，与源颜色相符。每个 QA 入口均检查背景颜色。
 - Editor Play 已接通项目启动脚本、物理和输入，Agent 已验证单步、按下边沿、停止恢复与重新运行。场景切换和公开运行请求复用 Player 处理。Timeline 粒子 seek、相机 override 与运行时 UI 控件事件仍需接通/验收。
 
 ## 下一步
