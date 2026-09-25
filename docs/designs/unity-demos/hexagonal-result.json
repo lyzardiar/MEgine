@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "oceanCells": 400,
+  "landCells": 96,
+  "sourceMirrors": 28,
+  "rules": 38,
+  "oddAndEvenPicking": true,
+  "polygonEdgePicking": true,
+  "changedNeighbors": 4,
+  "oceanPreserved": true,
+  "stableRemainingEntityIds": true,
+  "undo": true,
+  "resetExact": true,
+  "stopRestoresAuthored": true
+}

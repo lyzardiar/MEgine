@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/Unity-Technologies/2d-techdemos",
+  "commit": "6593d544df2ea598e51f5cf1d7165d5ed42ceba7",
+  "scene": "Assets/Tilemap/Hexagonal/Scenes/Hexagonal.unity",
+  "license": "MIT",
+  "sourceCells": 496,
+  "adaptations": [
+    "400 Ocean and 96 Land cells retain original sprites, horizontal mirrors, dimensions and layer order. Explicit BottomLeft cell order keeps overlapping transparent edges deterministic after reload.",
+    "38 ordered Land rules use the point-top odd-row offset and MirrorX neighbor mapping; runtime edits refresh connected coasts.",
+    "Camera frames the complete map instead of the source origin-centered camera. Hex coordinates were checked with Unity 2022.3.47f1c1 Grid.CellToLocal in an isolated probe project.",
+    "Left paints Land on existing Ocean cells, right removes Land, Z undoes 64 edits, R resets and H hides controls; the source is an editor-only tile composition.",
+    "Gamma numeric colors are decoded and ACES is disabled."
+  ]
+}

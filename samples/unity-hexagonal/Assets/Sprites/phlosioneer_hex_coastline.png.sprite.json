@@ -1,0 +1,852 @@
+{
+  "version": 1,
+  "mode": "multiple",
+  "pixels_per_unit": 60,
+  "slices": [
+    {
+      "name": "phlosioneer_hex_coastline_0",
+      "rect": [
+        0,
+        0,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_1",
+      "rect": [
+        61,
+        0,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_2",
+      "rect": [
+        122,
+        0,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_11",
+      "rect": [
+        0,
+        69,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_12",
+      "rect": [
+        61,
+        69,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_13",
+      "rect": [
+        122,
+        69,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_14",
+      "rect": [
+        183,
+        69,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_15",
+      "rect": [
+        244,
+        69,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_16",
+      "rect": [
+        305,
+        69,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_21",
+      "rect": [
+        0,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_22",
+      "rect": [
+        61,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_23",
+      "rect": [
+        122,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_24",
+      "rect": [
+        183,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_25",
+      "rect": [
+        244,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_26",
+      "rect": [
+        305,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_27",
+      "rect": [
+        366,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_28",
+      "rect": [
+        427,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_29",
+      "rect": [
+        488,
+        138,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_31",
+      "rect": [
+        61,
+        207,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_32",
+      "rect": [
+        122,
+        207,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_33",
+      "rect": [
+        183,
+        207,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_34",
+      "rect": [
+        244,
+        207,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_35",
+      "rect": [
+        305,
+        207,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_36",
+      "rect": [
+        366,
+        207,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_38",
+      "rect": [
+        0,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_39",
+      "rect": [
+        61,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_40",
+      "rect": [
+        122,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_41",
+      "rect": [
+        183,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_42",
+      "rect": [
+        244,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_43",
+      "rect": [
+        305,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_44",
+      "rect": [
+        366,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_45",
+      "rect": [
+        427,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_46",
+      "rect": [
+        488,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_47",
+      "rect": [
+        549,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_48",
+      "rect": [
+        610,
+        276,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_50",
+      "rect": [
+        61,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_51",
+      "rect": [
+        122,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_52",
+      "rect": [
+        183,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_53",
+      "rect": [
+        244,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_54",
+      "rect": [
+        305,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_55",
+      "rect": [
+        366,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_56",
+      "rect": [
+        427,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_57",
+      "rect": [
+        488,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_58",
+      "rect": [
+        549,
+        345,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_60",
+      "rect": [
+        0,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_61",
+      "rect": [
+        61,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_62",
+      "rect": [
+        122,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_63",
+      "rect": [
+        183,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_64",
+      "rect": [
+        244,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_65",
+      "rect": [
+        305,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_66",
+      "rect": [
+        366,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_67",
+      "rect": [
+        427,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_68",
+      "rect": [
+        488,
+        414,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_70",
+      "rect": [
+        61,
+        483,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_71",
+      "rect": [
+        122,
+        483,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_72",
+      "rect": [
+        183,
+        483,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_73",
+      "rect": [
+        244,
+        483,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_74",
+      "rect": [
+        305,
+        483,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_75",
+      "rect": [
+        366,
+        483,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_77",
+      "rect": [
+        0,
+        552,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_78",
+      "rect": [
+        61,
+        552,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_79",
+      "rect": [
+        122,
+        552,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_80",
+      "rect": [
+        183,
+        552,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_81",
+      "rect": [
+        244,
+        552,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "phlosioneer_hex_coastline_82",
+      "rect": [
+        305,
+        552,
+        60,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    }
+  ]
+}
