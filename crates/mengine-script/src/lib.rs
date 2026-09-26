@@ -3,6 +3,7 @@
 
 mod bridge;
 mod input;
+mod network;
 
 pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal};
 pub use input::ScriptInput;

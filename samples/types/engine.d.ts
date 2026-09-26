@@ -3,7 +3,9 @@ interface EngineApi {
   /** Current simulation world, refreshed before onTick. Change it through pushCommandJson. */
   snapshot: { entities: Array<{ entity: number; name: string | null; parent: number | null; components: Record<string, any> }>; frame: number; elapsed: number; clear_color: number[] };
   /** Physical key codes (KeyA, ArrowLeft, Space); pointer pixels are relative to the Game content. */
-  input: { keys: string[]; pressedKeys: string[]; releasedKeys: string[]; pointer: [number, number]; viewport: [number, number]; buttons: number[]; pressedButtons: number[]; releasedButtons: number[] };
+  input: { keys: string[]; pressedKeys: string[]; releasedKeys: string[]; pointer: [number, number]; pointerDelta: [number, number]; pointerLocked: boolean; viewport: [number, number]; buttons: number[]; pressedButtons: number[]; releasedButtons: number[] };
+  /** One bounded TCP JSON-lines connection per ScriptHost. IP:port or localhost:port. */
+  network: { connect(address: string): boolean; send(message: unknown): boolean; poll(): Array<{ type: 'connected' | 'message' | 'closed'; data?: any; error?: string | null }>; close(): void };
   setClearColor(r: number, g: number, b: number, a?: number): void;
   pushCommandJson(json: string): void;
   setSpriteBatchData(entity: number | string | bigint, instances: number[][], colors?: number[][]): boolean;

@@ -116,6 +116,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
   },
   Camera3D: {
+    capture_pointer: { label: 'Capture Mouse on Click' },
     target_display: { label: 'Target Display', kind: 'display' },
     projection: { kind: 'enum', options: options('perspective', 'orthographic') },
     fov_y_degrees: {

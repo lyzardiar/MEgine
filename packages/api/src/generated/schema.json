@@ -490,6 +490,9 @@
         },
         "type": "array"
       },
+      "capture_pointer": {
+        "type": "boolean"
+      },
       "clear_flags": {
         "type": "string"
       },
@@ -520,6 +523,7 @@
       "near",
       "far",
       "primary",
+      "capture_pointer",
       "target_display",
       "projection",
       "orthographic_size",

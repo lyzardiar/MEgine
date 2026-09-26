@@ -19,6 +19,8 @@ component Camera3D {
   near:              float  = 0.1
   far:               float  = 1000
   primary:           bool   = true
+  /// Capture relative mouse motion when the Game view is clicked; Escape releases it.
+  capture_pointer:   bool   = false
   /// Zero-based output display index (Display 1 through Display 8).
   target_display:    int    = 0
   /// "perspective" | "orthographic"

@@ -3,7 +3,7 @@ use mengine_assets::{load_gltf_mesh_data, MeshData};
 use mengine_rhi::{RenderObject, Renderer, Vertex};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
+use std::time::{Duration, Instant, SystemTime};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MeshLoadFailure {
@@ -22,6 +22,7 @@ struct FileStamp {
 pub struct RuntimeMeshCache {
     project_root: Option<PathBuf>,
     attempted: HashMap<String, FileStamp>,
+    last_poll: Option<Instant>,
 }
 
 impl RuntimeMeshCache {
@@ -29,6 +30,7 @@ impl RuntimeMeshCache {
         Self {
             project_root,
             attempted: HashMap::new(),
+            last_poll: None,
         }
     }
 
@@ -38,6 +40,7 @@ impl RuntimeMeshCache {
         }
         self.project_root = project_root;
         self.attempted.clear();
+        self.last_poll = None;
     }
 
     pub fn invalidate(&mut self, key: &str) {
@@ -53,6 +56,8 @@ impl RuntimeMeshCache {
             return Vec::new();
         };
         let mut failures = Vec::new();
+        let poll = self.last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
+        if poll { self.last_poll = Some(Instant::now()); }
         let mut frame_keys = HashSet::new();
         for object in objects {
             let key = object.mesh_key.trim();
@@ -63,6 +68,7 @@ impl RuntimeMeshCache {
             if !frame_keys.insert(key.to_owned()) {
                 continue;
             }
+            if !poll && self.attempted.contains_key(key) { continue; }
             let Some(path) = resolve_project_asset_path(root, key) else {
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) {
                     failures.push(MeshLoadFailure {

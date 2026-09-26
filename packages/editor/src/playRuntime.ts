@@ -4,11 +4,11 @@ import { toWorldSnapshotView, type HostWorldSnapshot } from './transport/editorT
 
 export type PlayInput = {
   keys: string[]; pressedKeys: string[]; releasedKeys: string[];
-  pointer: [number, number]; viewport: [number, number];
+  pointer: [number, number]; pointerDelta?: [number, number]; pointerLocked?: boolean; viewport: [number, number];
   buttons: number[]; pressedButtons: number[]; releasedButtons: number[];
 };
 
-export const emptyPlayInput = (): PlayInput => ({ keys: [], pressedKeys: [], releasedKeys: [], pointer: [0, 0], viewport: [1, 1], buttons: [], pressedButtons: [], releasedButtons: [] });
+export const emptyPlayInput = (): PlayInput => ({ keys: [], pressedKeys: [], releasedKeys: [], pointer: [0, 0], pointerDelta: [0, 0], pointerLocked: false, viewport: [1, 1], buttons: [], pressedButtons: [], releasedButtons: [] });
 
 export type PlayRuntimeDriver = {
   readonly retainsWorld?: boolean;

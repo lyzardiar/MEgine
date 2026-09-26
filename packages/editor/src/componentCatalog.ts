@@ -35,6 +35,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       near: 0.3,
       far: 50,
       primary: false,
+      capture_pointer: false,
       target_display: 0,
       projection: 'perspective',
       orthographic_size: 5,

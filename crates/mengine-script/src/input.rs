@@ -10,6 +10,8 @@ pub struct ScriptInput {
     pub pressed_keys: BTreeSet<String>,
     pub released_keys: BTreeSet<String>,
     pub pointer: [f32; 2],
+    pub pointer_delta: [f32; 2],
+    pub pointer_locked: bool,
     pub viewport: [u32; 2],
     pub buttons: BTreeSet<u8>,
     pub pressed_buttons: BTreeSet<u8>,
@@ -30,6 +32,7 @@ impl ScriptInput {
     }
 
     pub fn finish_frame(&mut self) {
+        self.pointer_delta = [0.0; 2];
         self.pressed_keys.clear();
         self.released_keys.clear();
         self.pressed_buttons.clear();
@@ -37,6 +40,8 @@ impl ScriptInput {
     }
 
     pub fn release_all(&mut self) {
+        self.pointer_delta = [0.0; 2];
+        self.pointer_locked = false;
         self.released_keys.append(&mut self.keys);
         self.released_buttons.append(&mut self.buttons);
     }

@@ -587,7 +587,7 @@ export function Viewport(props: {
   pivotMode: ToolPivotMode;
   handleOrientation: ToolHandleOrientation;
   playing: boolean;
-  onPlayInput?: (input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>>) => void;
+  onPlayInput?: (input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'viewport' | 'buttons'>>) => void;
   sceneCamera: SceneCamera;
   gameResolution: GameResolution | null;
   gameDisplay: number;
@@ -782,8 +782,14 @@ export function Viewport(props: {
     const rect = event.currentTarget.getBoundingClientRect();
     const vp = lastVpRef.current;
     const buttons = [0, 1, 2].filter((button) => (event.buttons & [1, 4, 2][button]) !== 0);
-    props.onPlayInput?.({ pointer: [event.clientX - rect.left - vp.x, event.clientY - rect.top - vp.y], viewport: [Math.round(vp.w), Math.round(vp.h)], buttons });
+    props.onPlayInput?.({ pointer: [event.clientX - rect.left - vp.x, event.clientY - rect.top - vp.y], viewport: [Math.round(vp.w), Math.round(vp.h)], buttons, pointerLocked: document.pointerLockElement === event.currentTarget, pointerDelta: event.type === 'mousemove' && document.pointerLockElement === event.currentTarget ? [event.movementX, event.movementY] : [0, 0] });
   };
+  useEffect(() => {
+    const changed = () => { propsRef.current.onPlayInput?.({ pointerLocked: document.pointerLockElement != null, pointerDelta: [0, 0], buttons: [] }); };
+    document.addEventListener('pointerlockchange', changed);
+    return () => { document.removeEventListener('pointerlockchange', changed); };
+  }, []);
+  useEffect(() => { if ((!props.playing || props.tab !== 'game') && document.pointerLockElement === canvasRef.current) document.exitPointerLock(); }, [props.playing, props.tab]);
   const lastCameraRef = useRef<Camera>({ eye: [0, 0, 10], target: [0, 0, 0], fovYDeg: 60 });
   const propsRef = useRef(props);
   propsRef.current = props;
@@ -1339,6 +1345,7 @@ export function Viewport(props: {
     const gameCamera = isGame
       ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay)
       : null;
+    if (isGame && document.pointerLockElement === canvasRef.current && !(p.entities.find(entity => entity.entity === gameCamera?.entity)?.components.Camera3D as Camera3DData | undefined)?.capture_pointer) document.exitPointerLock();
     const selectedCamera = !isGame && p.selected != null
       ? gameCameraForEntity(p.entities, p.selected)
       : null;
@@ -5284,6 +5291,10 @@ export function Viewport(props: {
         aria-label={props.tab === 'scene' ? 'Scene viewport' : 'Game viewport'}
         onMouseDown={(event) => {
           event.currentTarget.focus({ preventScroll: true });
+          if (props.tab === 'game' && props.playing && event.button === 0 && document.pointerLockElement !== event.currentTarget) {
+            const p = currentViewportProps(), camera = timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay);
+            if ((p.entities.find(entity => entity.entity === camera?.entity)?.components.Camera3D as Camera3DData | undefined)?.capture_pointer) void event.currentTarget.requestPointerLock()?.catch(() => {});
+          }
           sendPlayPointer(event);
           onPointerDown(event);
         }}

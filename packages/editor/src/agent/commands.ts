@@ -1209,7 +1209,9 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     const buttons = args.buttons as number[] | undefined;
     const pointer = args.pointer as [number, number] | undefined;
     const viewport = args.viewport as [number, number] | undefined;
-    ctx.store.setPlayInput({ keys, buttons, pointer, viewport });
+    const pointerDelta = args.pointerDelta as [number, number] | undefined;
+    const pointerLocked = args.pointerLocked as boolean | undefined;
+    ctx.store.setPlayInput({ keys, buttons, pointer, viewport, pointerDelta, pointerLocked });
     return { ok: true, data: { mode: ctx.store.mode, queued: true } };
   },
   'playback.step': async (ctx, args) => {

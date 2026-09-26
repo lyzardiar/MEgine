@@ -73,10 +73,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 use winit::application::ApplicationHandler;
-use winit::event::{ElementState, Ime, KeyEvent, MouseButton, MouseScrollDelta, WindowEvent};
+use winit::event::{DeviceEvent, DeviceId, ElementState, Ime, KeyEvent, MouseButton, MouseScrollDelta, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode as WinitKey, ModifiersState, PhysicalKey};
-use winit::window::{Window, WindowId};
+use winit::window::{CursorGrabMode, Window, WindowId};
 
 #[derive(Parser, Debug)]
 #[command(name = "mengine-runtime")]
@@ -266,6 +266,17 @@ impl App {
             report.error_fallbacks
         );
         self.last_material_pipeline_stats = Some(renderer.material_pipeline_stats());
+    }
+
+    fn release_pointer(&mut self) {
+        self.script_input.pointer_locked = false; self.script_input.pointer_delta = [0.0; 2];
+        if let Some(window) = &self.window { let _ = window.set_cursor_grab(CursorGrabMode::None); window.set_cursor_visible(true); }
+    }
+
+    fn pointer_capture_requested(&self) -> bool {
+        let hierarchy = TransformHierarchy::build(&self.world);
+        mengine_runtime::frame_compiler::find_camera(&self.world, &hierarchy, 1.0, self.timelines.camera_override()).entity
+            .and_then(|entity| self.world.get_component::<mengine_core::generated::Camera3D>(entity)).is_some_and(|camera| camera.capture_pointer)
     }
 
     fn apply_runtime_request(&mut self, request: ScriptRuntimeRequest) {
@@ -1239,6 +1250,15 @@ function onTick(dt, frame) {
         self.last = Instant::now();
     }
 
+    fn device_event(&mut self, _: &ActiveEventLoop, _: DeviceId, event: DeviceEvent) {
+        if self.script_input.pointer_locked {
+            if let DeviceEvent::MouseMotion { delta } = event {
+                self.script_input.pointer_delta[0] += delta.0 as f32;
+                self.script_input.pointer_delta[1] += delta.1 as f32;
+            }
+        }
+    }
+
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
@@ -1294,6 +1314,7 @@ function onTick(dt, frame) {
                         _ => {}
                     }
                 }
+                if code == WinitKey::Escape && state == ElementState::Pressed { self.release_pointer(); }
                 self.script_input.key(format!("{code:?}"), state == ElementState::Pressed);
                 let key = match code {
                     WinitKey::KeyW => mengine_platform::KeyCode::W,
@@ -1323,6 +1344,7 @@ function onTick(dt, frame) {
             WindowEvent::CursorEntered { .. } => self.cursor_inside = true,
             WindowEvent::CursorLeft { .. } => self.cursor_inside = false,
             WindowEvent::Focused(false) => {
+                self.release_pointer();
                 self.script_input.release_all();
                 self.cursor_inside = false;
                 self.active_slider = None;
@@ -1342,6 +1364,13 @@ function onTick(dt, frame) {
                 state: ElementState::Pressed,
                 ..
             } => {
+                if self.pointer_capture_requested() {
+                    if let Some(window) = &self.window {
+                        if window.set_cursor_grab(CursorGrabMode::Locked).or_else(|_| window.set_cursor_grab(CursorGrabMode::Confined)).is_ok() {
+                            window.set_cursor_visible(false); self.script_input.pointer_locked = true;
+                        }
+                    }
+                }
                 self.script_input.button(0, true);
                 self.press_ui();
             }
@@ -1562,6 +1591,7 @@ function onTick(dt, frame) {
                     Vec::new()
                 };
                 self.script_input.finish_frame();
+                if self.script_input.pointer_locked && !self.pointer_capture_requested() { self.release_pointer(); }
                 for request in runtime_requests {
                     self.apply_runtime_request(request);
                 }

@@ -253,7 +253,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     const generation = playGeneration;
     const input = structuredClone(playInput);
     playInput.pressedKeys = []; playInput.releasedKeys = [];
-    playInput.pressedButtons = []; playInput.releasedButtons = [];
+    playInput.pressedButtons = []; playInput.releasedButtons = []; playInput.pointerDelta = [0, 0];
     const snapshot = playRuntime.retainsWorld && playFingerprint() === playSyncedFingerprint ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: playClearColor ?? clearColor, selected: primarySelected() };
     trackPlayOperation(playRuntime.step(snapshot, input, dt).then((result) => {
       if (generation !== playGeneration || mode === 'edit') return;
@@ -1615,7 +1615,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     setPlayRuntime(driver: PlayRuntimeDriver | null) { playRuntime = driver; },
     async waitForPlayRuntime() { await playPending; if (playError) throw playError; },
     get playBusy() { return playBusy; },
-    setPlayInput(input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>>) {
+    setPlayInput(input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'viewport' | 'buttons'>>) {
       if (mode === 'edit') return;
       for (const [field, pressed, released] of [['keys', 'pressedKeys', 'releasedKeys'], ['buttons', 'pressedButtons', 'releasedButtons']] as const) {
         const values = input[field];
@@ -1626,6 +1626,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         (playInput[released] as (string | number)[]).push(...before.filter(value => !after.includes(value)));
         (playInput[field] as (string | number)[]) = after;
       }
+      if (input.pointerDelta) playInput.pointerDelta = [0, 1].map(i => (playInput.pointerDelta?.[i] ?? 0) + input.pointerDelta![i]) as [number, number];
+      if (input.pointerLocked !== undefined) playInput.pointerLocked = input.pointerLocked;
       if (input.pointer) playInput.pointer = [...input.pointer];
       if (input.viewport) playInput.viewport = [...input.viewport];
     },

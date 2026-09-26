@@ -3846,6 +3846,8 @@ const TOOLS = [
     keys: { type: 'array', maxItems: 128, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9]{0,39}$' }, description: 'Complete held KeyboardEvent.code set; [] releases all' },
     buttons: { type: 'array', maxItems: 3, uniqueItems: true, items: { type: 'integer', minimum: 0, maximum: 2 }, description: 'Held pointer buttons: 0 left, 1 middle, 2 right' },
     pointer: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' }, description: 'Game content coordinates in pixels from the top-left' },
+    pointerDelta: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' }, description: 'Relative mouse motion accumulated for the next simulation frame' },
+    pointerLocked: { type: 'boolean', description: 'Whether relative mouse capture is active' },
     viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Game content width and height in pixels' },
   }, []),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}, []),

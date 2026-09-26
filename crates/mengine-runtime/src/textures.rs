@@ -7,7 +7,7 @@ use mengine_rhi::{FrameLighting, RenderObject, Renderer, UiBatchPlan, UiPrimitiv
 use std::collections::{HashMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, OnceLock};
-use std::time::SystemTime;
+use std::time::{Duration, Instant, SystemTime};
 
 const UI_MATERIAL_TEXTURE_GRACE_FRAMES: u64 = 120;
 const MAX_CACHED_UI_MATERIAL_TEXTURES: usize = 128;
@@ -24,6 +24,7 @@ pub struct RuntimeTextureCache {
     project_root: Option<PathBuf>,
     attempted_ui: HashMap<String, FileStamp>,
     attempted_material: HashMap<String, FileStamp>,
+    material_last_poll: Option<Instant>,
     attempted_ui_material: HashMap<String, FileStamp>,
     ui_material_last_used: HashMap<String, u64>,
     ui_material_epoch: u64,
@@ -83,6 +84,7 @@ impl RuntimeTextureCache {
             project_root,
             attempted_ui: HashMap::new(),
             attempted_material: HashMap::new(),
+            material_last_poll: None,
             attempted_ui_material: HashMap::new(),
             ui_material_last_used: HashMap::new(),
             ui_material_epoch: 0,
@@ -99,6 +101,7 @@ impl RuntimeTextureCache {
         self.project_root = project_root;
         self.attempted_ui.clear();
         self.attempted_material.clear();
+        self.material_last_poll = None;
         self.attempted_ui_material.clear();
         self.ui_material_last_used.clear();
         self.ui_material_epoch = 0;
@@ -315,6 +318,8 @@ impl RuntimeTextureCache {
         };
         let mut failures = Vec::new();
         let references = material_texture_references(objects);
+        let poll = self.material_last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
+        if poll { self.material_last_poll = Some(Instant::now()); }
         let stale_attempts = stale_material_texture_attempts(&self.attempted_material, &references);
         for attempt in stale_attempts {
             self.attempted_material.remove(&attempt);
@@ -324,6 +329,7 @@ impl RuntimeTextureCache {
         }
         for (key, srgb) in references {
             let attempt = material_texture_attempt_key(&key, srgb);
+            if !poll && self.attempted_material.contains_key(&attempt) { continue; }
             let Some(path) = resolve_project_asset_path(root, &key) else {
                 renderer.remove_material_texture_variant(&key, srgb);
                 if should_attempt(&mut self.attempted_material, &attempt, FileStamp::default()) {

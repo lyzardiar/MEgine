@@ -1,8 +1,14 @@
 // Public script API shared by the editor and standalone player.
-((command, request, revision, snapshot, spriteBatch) => {
+((command, request, revision, snapshot, spriteBatch, network) => {
   let valueRevision = -1, value, jsonRevision = -1, json;
   const api = {
     scene: null,
+    network: Object.freeze({
+      connect: address => JSON.parse(network('connect', String(address))),
+      send: message => JSON.parse(network('send', JSON.stringify(message))),
+      poll: () => JSON.parse(network('poll', '')),
+      close: () => { network('close', ''); },
+    }),
     pushCommandJson: json => command(String(json)),
     setSpriteBatchData: (entity, instances, colors = []) => spriteBatch(String(entity), instances, colors),
     setClearColor(r, g, b, a = 1) {
@@ -38,10 +44,11 @@
   delete globalThis.__mengineRevision;
   delete globalThis.__mengineSnapshot;
   delete globalThis.__mengineSpriteBatch;
+  delete globalThis.__mengineNetwork;
   const restoreSnapshot = () => {
     Object.defineProperty(globalThis.engine, 'snapshot', snapshotProperty);
     Object.defineProperty(globalThis, 'lastSnapshot', jsonProperty);
   };
   restoreSnapshot();
   return restoreSnapshot;
-})(__mengineCommand, __mengineRequest, __mengineRevision, __mengineSnapshot, __mengineSpriteBatch);
+})(__mengineCommand, __mengineRequest, __mengineRevision, __mengineSnapshot, __mengineSpriteBatch, __mengineNetwork);

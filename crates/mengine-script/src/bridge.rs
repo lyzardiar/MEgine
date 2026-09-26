@@ -153,8 +153,20 @@ impl ScriptHost {
         let commands = Rc::new(RefCell::new(CommandBuffer::new()));
         let requests = Rc::new(RefCell::new(Vec::new()));
         let snapshot = Rc::new(RefCell::new(ScriptSnapshot::default()));
+        let network = Rc::new(RefCell::new(crate::network::ScriptNetwork::default()));
         let restore_snapshot = context.with(|ctx| {
             let install = || -> rquickjs::Result<Persistent<Function<'static>>> {
+                let client = network.clone();
+                ctx.globals().set("__mengineNetwork", Function::new(ctx.clone(), move |operation: String, value: String| -> String {
+                    let mut client = client.borrow_mut();
+                    match operation.as_str() {
+                        "connect" => client.connect(&value).to_string(),
+                        "send" => client.send(&value).to_string(),
+                        "poll" => client.poll(),
+                        "close" => { client.close(); "true".into() },
+                        _ => "false".into(),
+                    }
+                })?)?;
                 let pending = commands.clone();
                 ctx.globals().set("__mengineCommand", Function::new(ctx.clone(), move |json: String| {
                     if let Some(command) = parse_command(&json) { pending.borrow_mut().push(command); }

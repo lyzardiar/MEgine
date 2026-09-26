@@ -21,6 +21,7 @@ export interface Camera3D {
   near: number;
   far: number;
   primary: boolean;
+  capturePointer: boolean;
   targetDisplay: number;
   projection: string;
   orthographicSize: number;
@@ -815,6 +816,7 @@ export type SerializedComponentMap = {
     near: number;
     far: number;
     primary: boolean;
+    capture_pointer: boolean;
     target_display: number;
     projection: string;
     orthographic_size: number;

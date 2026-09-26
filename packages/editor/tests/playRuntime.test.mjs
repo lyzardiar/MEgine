@@ -79,6 +79,8 @@ test('project runtime applies completed frames, consumes input edges, restores a
     assert.deepEqual(calls, ['enable']);
     assert.equal(store.snapshot().entities[0].entity, 99);
     store.setPlayInput({ keys: ['KeyD'], buttons: [0], pointer: [10, 20], viewport: [800, 600] });
+    store.setPlayInput({ pointerDelta: [4, -2], pointerLocked: true });
+    store.setPlayInput({ pointerDelta: [3, 1] });
     assert.equal(store.step(), true); await store.waitForPlayRuntime();
     assert.equal(store.snapshot().entities[0].name, 'Runtime only');
     assert.deepEqual(store.snapshot().clearColor, [1, 0, 0, 1]);
@@ -90,8 +92,11 @@ test('project runtime applies completed frames, consumes input edges, restores a
     copy.entities[0].name = 'Must stay isolated';
     assert.equal(live.entities[0].name, 'Runtime only');
     assert.deepEqual(inputs[0].pressedKeys, ['KeyD']);
+    assert.deepEqual(inputs[0].pointerDelta, [7, -1]);
+    assert.equal(inputs[0].pointerLocked, true);
     store.step(); await store.waitForPlayRuntime();
     assert.deepEqual(inputs[1].pressedKeys, []);
+    assert.deepEqual(inputs[1].pointerDelta, [0, 0]);
     assert.deepEqual(inputs[1].keys, ['KeyD']);
     store.step(); store.stop(); release(); await store.waitForPlayRuntime();
     assert.equal(store.mode, 'edit');
