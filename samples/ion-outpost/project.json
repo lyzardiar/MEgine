@@ -1,0 +1,11 @@
+{
+  "name": "Ion Outpost",
+  "version": 1,
+  "language": "javascript",
+  "mainScene": "Assets/Scenes/Main.mscene",
+  "buildScenes": [
+    "Assets/Scenes/Main.mscene"
+  ],
+  "startupScript": "Assets/Scripts/Main.js",
+  "assetMode": "all"
+}

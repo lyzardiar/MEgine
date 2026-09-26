@@ -1,0 +1,2 @@
+# Preserve the original upstream license files byte for byte.
+Licenses/*.txt -text -whitespace

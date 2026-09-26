@@ -1,0 +1,1 @@
+{"version": 8, "name": "machine_wireless", "shader": "pbr", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/machine_wireless.png", "roughness": 0.68, "metallic": 0.18}

@@ -1,0 +1,1 @@
+{"version": 8, "name": "terrain", "shader": "pbr", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/terrain.png", "roughness": 0.68, "metallic": 0.18}

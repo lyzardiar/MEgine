@@ -1,0 +1,8359 @@
+{
+  "version": 1,
+  "name": "Ion Outpost / Dustline",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "FPS Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -19,
+              12,
+              25
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              -0.12079889785040993,
+              -0.24547363123563762,
+              -0.030845022658507384,
+              0.9613526445708216
+            ]
+          },
+          "Camera3D": {
+            "fov_y_degrees": 72,
+            "near": 0.035,
+            "far": 260,
+            "primary": true,
+            "clear_flags": "skybox",
+            "capture_pointer": false
+          },
+          "AudioListener": {
+            "primary": true
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Late afternoon sun",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              -0.39073608833508117,
+              -0.290902671688253,
+              -0.13165764820210243,
+              0.8633465170759234
+            ]
+          },
+          "DirectionalLight": {
+            "color": [
+              1,
+              0.82,
+              0.62,
+              1
+            ],
+            "intensity": 2.25,
+            "cast_shadows": true,
+            "shadow_distance": 65,
+            "shadow_strength": 0.8,
+            "shadow_bias": 0.001
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Desert atmosphere",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "EnvironmentLight": {
+            "sky_color": [
+              0.035,
+              0.2,
+              0.33,
+              1
+            ],
+            "equator_color": [
+              0.18,
+              0.44,
+              0.55,
+              1
+            ],
+            "ground_color": [
+              0.1,
+              0.08,
+              0.055,
+              1
+            ],
+            "diffuse_intensity": 0.7,
+            "specular_intensity": 0.65,
+            "background_enabled": true,
+            "tone_mapping": true,
+            "exposure": 0.05
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Sandy basin",
+        "parent": null,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -0.3,
+              0
+            ],
+            "scale": [
+              210,
+              0.55,
+              210
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.33,
+              0.235,
+              0.16,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Outpost foundation",
+        "parent": null,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -0.09,
+              0
+            ],
+            "scale": [
+              44,
+              0.16,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.3,
+              0.32,
+              0.32,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Deck seam X -20",
+        "parent": null,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -20,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Deck seam Z -20",
+        "parent": null,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              -20
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Deck seam X -16",
+        "parent": null,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -16,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Deck seam Z -16",
+        "parent": null,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              -16
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Deck seam X -12",
+        "parent": null,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -12,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Deck seam Z -12",
+        "parent": null,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              -12
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Deck seam X -8",
+        "parent": null,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -8,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Deck seam Z -8",
+        "parent": null,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              -8
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Deck seam X -4",
+        "parent": null,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Deck seam Z -4",
+        "parent": null,
+        "siblingIndex": 14,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              -4
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Deck seam X 0",
+        "parent": null,
+        "siblingIndex": 15,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Deck seam Z 0",
+        "parent": null,
+        "siblingIndex": 16,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              0
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Deck seam X 4",
+        "parent": null,
+        "siblingIndex": 17,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Deck seam Z 4",
+        "parent": null,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              4
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Deck seam X 8",
+        "parent": null,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Deck seam Z 8",
+        "parent": null,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              8
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Deck seam X 12",
+        "parent": null,
+        "siblingIndex": 21,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Deck seam Z 12",
+        "parent": null,
+        "siblingIndex": 22,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              12
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Deck seam X 16",
+        "parent": null,
+        "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              16,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Deck seam Z 16",
+        "parent": null,
+        "siblingIndex": 24,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              16
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Deck seam X 20",
+        "parent": null,
+        "siblingIndex": 25,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              20,
+              0.003,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.006,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Deck seam Z 20",
+        "parent": null,
+        "siblingIndex": 26,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.003,
+              20
+            ],
+            "scale": [
+              44,
+              0.006,
+              0.025
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.12,
+              0.17,
+              0.19,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Boundary E/W -1",
+        "parent": null,
+        "siblingIndex": 27,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -22.15,
+              0.7,
+              0
+            ],
+            "scale": [
+              0.3,
+              1.4,
+              44.6
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.19,
+              0.24,
+              0.26,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Boundary N/S -1",
+        "parent": null,
+        "siblingIndex": 28,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.7,
+              -22.15
+            ],
+            "scale": [
+              44.6,
+              1.4,
+              0.3
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.19,
+              0.24,
+              0.26,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "Perimeter cyan X -1",
+        "parent": null,
+        "siblingIndex": 29,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -21.91,
+              0.95,
+              0
+            ],
+            "scale": [
+              0.045,
+              0.07,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.03,
+              0.5,
+              0.6,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.02,
+              0.6,
+              0.8,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "Perimeter cyan Z -1",
+        "parent": null,
+        "siblingIndex": 30,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.95,
+              -21.91
+            ],
+            "scale": [
+              44,
+              0.07,
+              0.045
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.03,
+              0.5,
+              0.6,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.02,
+              0.6,
+              0.8,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Boundary E/W 1",
+        "parent": null,
+        "siblingIndex": 31,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              22.15,
+              0.7,
+              0
+            ],
+            "scale": [
+              0.3,
+              1.4,
+              44.6
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.19,
+              0.24,
+              0.26,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "Boundary N/S 1",
+        "parent": null,
+        "siblingIndex": 32,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.7,
+              22.15
+            ],
+            "scale": [
+              44.6,
+              1.4,
+              0.3
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.19,
+              0.24,
+              0.26,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "Perimeter cyan X 1",
+        "parent": null,
+        "siblingIndex": 33,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              21.91,
+              0.95,
+              0
+            ],
+            "scale": [
+              0.045,
+              0.07,
+              44
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.03,
+              0.5,
+              0.6,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.02,
+              0.6,
+              0.8,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "Perimeter cyan Z 1",
+        "parent": null,
+        "siblingIndex": 34,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.95,
+              21.91
+            ],
+            "scale": [
+              44,
+              0.07,
+              0.045
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.03,
+              0.5,
+              0.6,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.02,
+              0.6,
+              0.8,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Cover 0",
+        "parent": null,
+        "siblingIndex": 35,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              -7
+            ],
+            "scale": [
+              7.279238882782416,
+              5.9459459459459465,
+              2.5
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+            "material": "Assets/Materials/crate-wide.mmat"
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "Cover 1",
+        "parent": null,
+        "siblingIndex": 36,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7,
+              0,
+              7
+            ],
+            "scale": [
+              7.279238882782416,
+              5.9459459459459465,
+              2.5
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+            "material": "Assets/Materials/crate-wide.mmat"
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "Cover 2",
+        "parent": null,
+        "siblingIndex": 37,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              7
+            ],
+            "scale": [
+              7.279238882782416,
+              5.9459459459459465,
+              2.5
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+            "material": "Assets/Materials/crate-wide.mmat"
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "Cover 3",
+        "parent": null,
+        "siblingIndex": 38,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              7,
+              0,
+              -7
+            ],
+            "scale": [
+              7.279238882782416,
+              5.9459459459459465,
+              2.5
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+            "material": "Assets/Materials/crate-wide.mmat"
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Cover 4",
+        "parent": null,
+        "siblingIndex": 39,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              3.4,
+              5.270763514018035,
+              2.6153846153846154
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/machine_generatorLarge-machine_generatorLarge.glb",
+            "material": "Assets/Materials/machine_generatorLarge.mmat"
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "Reactor ion core",
+        "parent": null,
+        "siblingIndex": 40,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              3.4,
+              0
+            ],
+            "scale": [
+              1.6,
+              0.25,
+              1.6
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.06,
+              0.6,
+              0.85,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.08,
+              1.8,
+              2.5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "Cover 5",
+        "parent": null,
+        "siblingIndex": 41,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -15,
+              0,
+              0
+            ],
+            "scale": [
+              5.4594291620868125,
+              3.243243243243243,
+              3.3333333333333335
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+            "material": "Assets/Materials/crate-wide.mmat"
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "Cover 6",
+        "parent": null,
+        "siblingIndex": 42,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              15,
+              0,
+              0
+            ],
+            "scale": [
+              5.4594291620868125,
+              3.243243243243243,
+              3.3333333333333335
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+            "material": "Assets/Materials/crate-wide.mmat"
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "Cover 7",
+        "parent": null,
+        "siblingIndex": 43,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -15
+            ],
+            "scale": [
+              7.279238882782416,
+              3.243243243243243,
+              1.6666666666666667
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+            "material": "Assets/Materials/crate-wide.mmat"
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "Cover 8",
+        "parent": null,
+        "siblingIndex": 44,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              15
+            ],
+            "scale": [
+              7.279238882782416,
+              3.243243243243243,
+              1.6666666666666667
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+            "material": "Assets/Materials/crate-wide.mmat"
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "Cover 9",
+        "parent": null,
+        "siblingIndex": 45,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -17,
+              0,
+              -12
+            ],
+            "scale": [
+              4.363636363636363,
+              5.142857142857143,
+              4.834713241070888
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/barrels-barrels.glb",
+            "material": "Assets/Materials/barrels.mmat"
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "Cover 10",
+        "parent": null,
+        "siblingIndex": 46,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              17,
+              0,
+              12
+            ],
+            "scale": [
+              4.363636363636363,
+              5.142857142857143,
+              4.834713241070888
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/barrels-barrels.glb",
+            "material": "Assets/Materials/barrels.mmat"
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "North hangar",
+        "parent": null,
+        "siblingIndex": 47,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -12,
+              0,
+              -30
+            ],
+            "scale": [
+              4,
+              4,
+              4
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/hangar_roundA-hangar_roundA.glb",
+            "material": "Assets/Materials/hangar_roundA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 49,
+        "name": "East hangar",
+        "parent": null,
+        "siblingIndex": 48,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              32,
+              0,
+              8
+            ],
+            "scale": [
+              5,
+              5,
+              5
+            ],
+            "rotation": [
+              0,
+              0.7071067811865475,
+              0,
+              0.7071067811865476
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/hangar_smallA-hangar_smallA.glb",
+            "material": "Assets/Materials/hangar_smallA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 50,
+        "name": "Long range antenna",
+        "parent": null,
+        "siblingIndex": 49,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              8,
+              0,
+              -30
+            ],
+            "scale": [
+              6,
+              6,
+              6
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/satelliteDish-satelliteDish.glb",
+            "material": "Assets/Materials/satelliteDish.mmat"
+          }
+        }
+      },
+      {
+        "entity": 51,
+        "name": "Uplink",
+        "parent": null,
+        "siblingIndex": 50,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -28,
+              0,
+              -7
+            ],
+            "scale": [
+              7,
+              7,
+              7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/machine_wireless-machine_wireless.glb",
+            "material": "Assets/Materials/machine_wireless.mmat"
+          }
+        }
+      },
+      {
+        "entity": 52,
+        "name": "Survey rover",
+        "parent": null,
+        "siblingIndex": 51,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -30,
+              0,
+              16
+            ],
+            "scale": [
+              4,
+              4,
+              4
+            ],
+            "rotation": [
+              0,
+              -0.29552020666133955,
+              0,
+              0.955336489125606
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rover-rover.glb",
+            "material": "Assets/Materials/rover.mmat"
+          }
+        }
+      },
+      {
+        "entity": 53,
+        "name": "Patrol skimmer",
+        "parent": null,
+        "siblingIndex": 52,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              24,
+              1,
+              -28
+            ],
+            "scale": [
+              4,
+              4,
+              4
+            ],
+            "rotation": [
+              0,
+              0.3894183423086505,
+              0,
+              0.9210609940028851
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/craft_speederA-craft_speederA.glb",
+            "material": "Assets/Materials/craft_speederA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 54,
+        "name": "Canyon 0",
+        "parent": null,
+        "siblingIndex": 53,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              47,
+              -0.5,
+              0
+            ],
+            "scale": [
+              7,
+              4.2,
+              7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 55,
+        "name": "Canyon 1",
+        "parent": null,
+        "siblingIndex": 54,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              53.6210351700003,
+              -0.5,
+              12.238651367597292
+            ],
+            "scale": [
+              10,
+              8.5,
+              10
+            ],
+            "rotation": [
+              0,
+              0.11196447610330786,
+              0,
+              0.9937122098932426
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 56,
+        "name": "Canyon 2",
+        "parent": null,
+        "siblingIndex": 55,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              56.761038677852405,
+              -0.5,
+              27.33467556440616
+            ],
+            "scale": [
+              13,
+              14.3,
+              13
+            ],
+            "rotation": [
+              0,
+              0.2225209339563144,
+              0,
+              0.9749279121818236
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 57,
+        "name": "Canyon 3",
+        "parent": null,
+        "siblingIndex": 56,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              55.510035255230115,
+              -0.5,
+              44.26777593197008
+            ],
+            "scale": [
+              16,
+              9.6,
+              16
+            ],
+            "rotation": [
+              0,
+              0.33027906195516704,
+              0,
+              0.9438833303083676
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 58,
+        "name": "Canyon 4",
+        "parent": null,
+        "siblingIndex": 57,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              29.304020687360477,
+              -0.5,
+              36.7460796759974
+            ],
+            "scale": [
+              19,
+              16.15,
+              19
+            ],
+            "rotation": [
+              0,
+              0.4338837391175581,
+              0,
+              0.9009688679024191
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 59,
+        "name": "Canyon 5",
+        "parent": null,
+        "siblingIndex": 58,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              23.8636056514657,
+              -0.5,
+              49.55328773463305
+            ],
+            "scale": [
+              7,
+              7.700000000000001,
+              7
+            ],
+            "rotation": [
+              0,
+              0.5320320765153366,
+              0,
+              0.8467241992282842
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 60,
+        "name": "Canyon 6",
+        "parent": null,
+        "siblingIndex": 59,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.01881883924781,
+              -0.5,
+              61.420458467454885
+            ],
+            "scale": [
+              10,
+              6,
+              10
+            ],
+            "rotation": [
+              0,
+              0.6234898018587335,
+              0,
+              0.7818314824680298
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 61,
+        "name": "Canyon 7",
+        "parent": null,
+        "siblingIndex": 60,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4.347496136973104e-15,
+              -0.5,
+              71
+            ],
+            "scale": [
+              13,
+              11.049999999999999,
+              13
+            ],
+            "rotation": [
+              0,
+              0.7071067811865475,
+              0,
+              0.7071067811865476
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 62,
+        "name": "Canyon 8",
+        "parent": null,
+        "siblingIndex": 61,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -10.458483895946774,
+              -0.5,
+              45.82161187254571
+            ],
+            "scale": [
+              16,
+              17.6,
+              16
+            ],
+            "rotation": [
+              0,
+              0.7818314824680298,
+              0,
+              0.6234898018587336
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 63,
+        "name": "Canyon 9",
+        "parent": null,
+        "siblingIndex": 62,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -23.863605651465694,
+              -0.5,
+              49.55328773463305
+            ],
+            "scale": [
+              19,
+              11.4,
+              19
+            ],
+            "rotation": [
+              0,
+              0.8467241992282841,
+              0,
+              0.5320320765153366
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 64,
+        "name": "Canyon 10",
+        "parent": null,
+        "siblingIndex": 63,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -39.27985751710021,
+              -0.5,
+              49.255383395485886
+            ],
+            "scale": [
+              7,
+              5.95,
+              7
+            ],
+            "rotation": [
+              0,
+              0.9009688679024191,
+              0,
+              0.4338837391175582
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 65,
+        "name": "Canyon 11",
+        "parent": null,
+        "siblingIndex": 64,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -55.51003525523009,
+              -0.5,
+              44.26777593197011
+            ],
+            "scale": [
+              10,
+              11,
+              10
+            ],
+            "rotation": [
+              0,
+              0.9438833303083675,
+              0,
+              0.3302790619551673
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 66,
+        "name": "Canyon 12",
+        "parent": null,
+        "siblingIndex": 65,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -42.34553679141369,
+              -0.5,
+              20.392535738525236
+            ],
+            "scale": [
+              13,
+              7.8,
+              13
+            ],
+            "rotation": [
+              0,
+              0.9749279121818236,
+              0,
+              0.22252093395631445
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 67,
+        "name": "Canyon 13",
+        "parent": null,
+        "siblingIndex": 66,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -53.621035170000305,
+              -0.5,
+              12.238651367597274
+            ],
+            "scale": [
+              16,
+              13.6,
+              16
+            ],
+            "rotation": [
+              0,
+              0.9937122098932426,
+              0,
+              0.11196447610330769
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 68,
+        "name": "Canyon 14",
+        "parent": null,
+        "siblingIndex": 67,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -63,
+              -0.5,
+              7.715274834628325e-15
+            ],
+            "scale": [
+              19,
+              20.900000000000002,
+              19
+            ],
+            "rotation": [
+              0,
+              1,
+              0,
+              6.123233995736766e-17
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 69,
+        "name": "Canyon 15",
+        "parent": null,
+        "siblingIndex": 68,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -69.21988176490949,
+              -0.5,
+              -15.798986310898282
+            ],
+            "scale": [
+              7,
+              4.2,
+              7
+            ],
+            "rotation": [
+              0,
+              0.9937122098932426,
+              0,
+              -0.11196447610330758
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 70,
+        "name": "Canyon 16",
+        "parent": null,
+        "siblingIndex": 69,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -42.3455367914137,
+              -0.5,
+              -20.392535738525225
+            ],
+            "scale": [
+              10,
+              8.5,
+              10
+            ],
+            "rotation": [
+              0,
+              0.9749279121818236,
+              0,
+              -0.22252093395631434
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 71,
+        "name": "Canyon 17",
+        "parent": null,
+        "siblingIndex": 70,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -43.00073153574163,
+              -0.5,
+              -34.29193910223036
+            ],
+            "scale": [
+              13,
+              14.3,
+              13
+            ],
+            "rotation": [
+              0,
+              0.9438833303083675,
+              0,
+              -0.3302790619551672
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 72,
+        "name": "Canyon 18",
+        "parent": null,
+        "siblingIndex": 71,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -39.279857517100226,
+              -0.5,
+              -49.25538339548587
+            ],
+            "scale": [
+              16,
+              9.6,
+              16
+            ],
+            "rotation": [
+              0,
+              0.9009688679024191,
+              0,
+              -0.43388373911755806
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 73,
+        "name": "Canyon 19",
+        "parent": null,
+        "siblingIndex": 72,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -30.805745477346637,
+              -0.5,
+              -63.96878962107175
+            ],
+            "scale": [
+              19,
+              16.15,
+              19
+            ],
+            "rotation": [
+              0,
+              0.8467241992282842,
+              0,
+              -0.5320320765153365
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 74,
+        "name": "Canyon 20",
+        "parent": null,
+        "siblingIndex": 73,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -10.458483895946786,
+              -0.5,
+              -45.82161187254571
+            ],
+            "scale": [
+              7,
+              7.700000000000001,
+              7
+            ],
+            "rotation": [
+              0,
+              0.7818314824680299,
+              0,
+              -0.6234898018587335
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 75,
+        "name": "Canyon 21",
+        "parent": null,
+        "siblingIndex": 74,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1.0103336092965664e-14,
+              -0.5,
+              -55
+            ],
+            "scale": [
+              10,
+              6,
+              10
+            ],
+            "rotation": [
+              0,
+              0.7071067811865476,
+              0,
+              -0.7071067811865475
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 76,
+        "name": "Canyon 22",
+        "parent": null,
+        "siblingIndex": 75,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              14.018818839247741,
+              -0.5,
+              -61.4204584674549
+            ],
+            "scale": [
+              13,
+              11.049999999999999,
+              13
+            ],
+            "rotation": [
+              0,
+              0.6234898018587339,
+              0,
+              -0.7818314824680295
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 77,
+        "name": "Canyon 23",
+        "parent": null,
+        "siblingIndex": 76,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              30.805745477346616,
+              -0.5,
+              -63.968789621071764
+            ],
+            "scale": [
+              16,
+              17.6,
+              16
+            ],
+            "rotation": [
+              0,
+              0.5320320765153367,
+              0,
+              -0.8467241992282841
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 78,
+        "name": "Canyon 24",
+        "parent": null,
+        "siblingIndex": 77,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              29.30402068736047,
+              -0.5,
+              -36.74607967599741
+            ],
+            "scale": [
+              19,
+              11.4,
+              19
+            ],
+            "rotation": [
+              0,
+              0.43388373911755823,
+              0,
+              -0.900968867902419
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 79,
+        "name": "Canyon 25",
+        "parent": null,
+        "siblingIndex": 78,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              43.000731535741636,
+              -0.5,
+              -34.29193910223035
+            ],
+            "scale": [
+              7,
+              5.95,
+              7
+            ],
+            "rotation": [
+              0,
+              0.3302790619551672,
+              0,
+              -0.9438833303083676
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 80,
+        "name": "Canyon 26",
+        "parent": null,
+        "siblingIndex": 79,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              56.76103867785242,
+              -0.5,
+              -27.334675564406123
+            ],
+            "scale": [
+              10,
+              11,
+              10
+            ],
+            "rotation": [
+              0,
+              0.2225209339563141,
+              0,
+              -0.9749279121818237
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+            "material": "Assets/Materials/rock_largeB.mmat"
+          }
+        }
+      },
+      {
+        "entity": 81,
+        "name": "Canyon 27",
+        "parent": null,
+        "siblingIndex": 80,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              69.21988176490947,
+              -0.5,
+              -15.79898631089834
+            ],
+            "scale": [
+              13,
+              7.8,
+              13
+            ],
+            "rotation": [
+              0,
+              0.11196447610330798,
+              0,
+              -0.9937122098932426
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+            "material": "Assets/Materials/rock_largeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 82,
+        "name": "Crystal deposit 0",
+        "parent": null,
+        "siblingIndex": 81,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              31,
+              0,
+              0
+            ],
+            "scale": [
+              2.8,
+              2.8,
+              2.8
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 83,
+        "name": "Crystal deposit 1",
+        "parent": null,
+        "siblingIndex": 82,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -22.85920518177861,
+              0,
+              20.93935859708568
+            ],
+            "scale": [
+              2.8,
+              2.8,
+              2.8
+            ],
+            "rotation": [
+              0,
+              0.479425538604203,
+              0,
+              0.8775825618903728
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 84,
+        "name": "Crystal deposit 2",
+        "parent": null,
+        "siblingIndex": 83,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2.7124684866228383,
+              0,
+              -30.88110287391106
+            ],
+            "scale": [
+              2.8,
+              2.8,
+              2.8
+            ],
+            "rotation": [
+              0,
+              0.8414709848078965,
+              0,
+              0.5403023058681398
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 85,
+        "name": "Crystal deposit 3",
+        "parent": null,
+        "siblingIndex": 84,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              18.85889075049991,
+              0,
+              24.603703779323734
+            ],
+            "scale": [
+              2.8,
+              2.8,
+              2.8
+            ],
+            "rotation": [
+              0,
+              0.9974949866040544,
+              0,
+              0.0707372016677029
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 86,
+        "name": "Crystal deposit 4",
+        "parent": null,
+        "siblingIndex": 85,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -30.525323529617935,
+              0,
+              -5.404130217912369
+            ],
+            "scale": [
+              2.8,
+              2.8,
+              2.8
+            ],
+            "rotation": [
+              0,
+              0.9092974268256817,
+              0,
+              -0.4161468365471424
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 87,
+        "name": "Crystal deposit 5",
+        "parent": null,
+        "siblingIndex": 86,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              26.159472720707257,
+              0,
+              -16.633760458013484
+            ],
+            "scale": [
+              2.8,
+              2.8,
+              2.8
+            ],
+            "rotation": [
+              0,
+              0.5984721441039564,
+              0,
+              -0.8011436155469337
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 88,
+        "name": "Crystal deposit 6",
+        "parent": null,
+        "siblingIndex": 87,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -8.054338042626378,
+              0,
+              29.935391073027617
+            ],
+            "scale": [
+              2.8,
+              2.8,
+              2.8
+            ],
+            "rotation": [
+              0,
+              0.1411200080598672,
+              0,
+              -0.9899924966004454
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 89,
+        "name": "Crystal deposit 7",
+        "parent": null,
+        "siblingIndex": 88,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -14.281036209752239,
+              0,
+              -27.514578041026642
+            ],
+            "scale": [
+              2.8,
+              2.8,
+              2.8
+            ],
+            "rotation": [
+              0,
+              -0.35078322768961984,
+              0,
+              -0.9364566872907963
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 90,
+        "name": "Actor 0",
+        "parent": null,
+        "siblingIndex": 89,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 91,
+        "name": "Actor 0/armLeft",
+        "parent": 90,
+        "siblingIndex": 90,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 92,
+        "name": "Actor 0/armRight",
+        "parent": 90,
+        "siblingIndex": 91,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 93,
+        "name": "Actor 0/body",
+        "parent": 90,
+        "siblingIndex": 92,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-body.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 94,
+        "name": "Actor 0/head",
+        "parent": 90,
+        "siblingIndex": 93,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.126965,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-head.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 95,
+        "name": "Actor 0/legLeft",
+        "parent": 90,
+        "siblingIndex": 94,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 96,
+        "name": "Actor 0/legRight",
+        "parent": 90,
+        "siblingIndex": 95,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 97,
+        "name": "Actor 0 weapon",
+        "parent": null,
+        "siblingIndex": 96,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.7,
+              0.7,
+              0.7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 98,
+        "name": "Actor 1",
+        "parent": null,
+        "siblingIndex": 97,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 99,
+        "name": "Actor 1/armLeft",
+        "parent": 98,
+        "siblingIndex": 98,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 100,
+        "name": "Actor 1/armRight",
+        "parent": 98,
+        "siblingIndex": 99,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 101,
+        "name": "Actor 1/body",
+        "parent": 98,
+        "siblingIndex": 100,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-body.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 102,
+        "name": "Actor 1/head",
+        "parent": 98,
+        "siblingIndex": 101,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.126965,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-head.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 103,
+        "name": "Actor 1/legLeft",
+        "parent": 98,
+        "siblingIndex": 102,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 104,
+        "name": "Actor 1/legRight",
+        "parent": 98,
+        "siblingIndex": 103,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 105,
+        "name": "Actor 1 weapon",
+        "parent": null,
+        "siblingIndex": 104,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.7,
+              0.7,
+              0.7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 106,
+        "name": "Actor 2",
+        "parent": null,
+        "siblingIndex": 105,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 107,
+        "name": "Actor 2/armLeft",
+        "parent": 106,
+        "siblingIndex": 106,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 108,
+        "name": "Actor 2/armRight",
+        "parent": 106,
+        "siblingIndex": 107,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 109,
+        "name": "Actor 2/body",
+        "parent": 106,
+        "siblingIndex": 108,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-body.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 110,
+        "name": "Actor 2/head",
+        "parent": 106,
+        "siblingIndex": 109,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.126965,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-head.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 111,
+        "name": "Actor 2/legLeft",
+        "parent": 106,
+        "siblingIndex": 110,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 112,
+        "name": "Actor 2/legRight",
+        "parent": 106,
+        "siblingIndex": 111,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 113,
+        "name": "Actor 2 weapon",
+        "parent": null,
+        "siblingIndex": 112,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.7,
+              0.7,
+              0.7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 114,
+        "name": "Actor 3",
+        "parent": null,
+        "siblingIndex": 113,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 115,
+        "name": "Actor 3/armLeft",
+        "parent": 114,
+        "siblingIndex": 114,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 116,
+        "name": "Actor 3/armRight",
+        "parent": 114,
+        "siblingIndex": 115,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 117,
+        "name": "Actor 3/body",
+        "parent": 114,
+        "siblingIndex": 116,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-body.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 118,
+        "name": "Actor 3/head",
+        "parent": 114,
+        "siblingIndex": 117,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.126965,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-head.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 119,
+        "name": "Actor 3/legLeft",
+        "parent": 114,
+        "siblingIndex": 118,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 120,
+        "name": "Actor 3/legRight",
+        "parent": 114,
+        "siblingIndex": 119,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 121,
+        "name": "Actor 3 weapon",
+        "parent": null,
+        "siblingIndex": 120,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.7,
+              0.7,
+              0.7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 122,
+        "name": "Actor 4",
+        "parent": null,
+        "siblingIndex": 121,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 123,
+        "name": "Actor 4/armLeft",
+        "parent": 122,
+        "siblingIndex": 122,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 124,
+        "name": "Actor 4/armRight",
+        "parent": 122,
+        "siblingIndex": 123,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 125,
+        "name": "Actor 4/body",
+        "parent": 122,
+        "siblingIndex": 124,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-body.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 126,
+        "name": "Actor 4/head",
+        "parent": 122,
+        "siblingIndex": 125,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.126965,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-head.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 127,
+        "name": "Actor 4/legLeft",
+        "parent": 122,
+        "siblingIndex": 126,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 128,
+        "name": "Actor 4/legRight",
+        "parent": 122,
+        "siblingIndex": 127,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 129,
+        "name": "Actor 4 weapon",
+        "parent": null,
+        "siblingIndex": 128,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.7,
+              0.7,
+              0.7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 130,
+        "name": "Actor 5",
+        "parent": null,
+        "siblingIndex": 129,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 131,
+        "name": "Actor 5/armLeft",
+        "parent": 130,
+        "siblingIndex": 130,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 132,
+        "name": "Actor 5/armRight",
+        "parent": 130,
+        "siblingIndex": 131,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 133,
+        "name": "Actor 5/body",
+        "parent": 130,
+        "siblingIndex": 132,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-body.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 134,
+        "name": "Actor 5/head",
+        "parent": 130,
+        "siblingIndex": 133,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.126965,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-head.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 135,
+        "name": "Actor 5/legLeft",
+        "parent": 130,
+        "siblingIndex": 134,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 136,
+        "name": "Actor 5/legRight",
+        "parent": 130,
+        "siblingIndex": 135,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 137,
+        "name": "Actor 5 weapon",
+        "parent": null,
+        "siblingIndex": 136,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.7,
+              0.7,
+              0.7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 138,
+        "name": "Actor 6",
+        "parent": null,
+        "siblingIndex": 137,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 139,
+        "name": "Actor 6/armLeft",
+        "parent": 138,
+        "siblingIndex": 138,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 140,
+        "name": "Actor 6/armRight",
+        "parent": 138,
+        "siblingIndex": 139,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 141,
+        "name": "Actor 6/body",
+        "parent": 138,
+        "siblingIndex": 140,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-body.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 142,
+        "name": "Actor 6/head",
+        "parent": 138,
+        "siblingIndex": 141,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.126965,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-head.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 143,
+        "name": "Actor 6/legLeft",
+        "parent": 138,
+        "siblingIndex": 142,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 144,
+        "name": "Actor 6/legRight",
+        "parent": 138,
+        "siblingIndex": 143,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 145,
+        "name": "Actor 6 weapon",
+        "parent": null,
+        "siblingIndex": 144,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.7,
+              0.7,
+              0.7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 146,
+        "name": "Actor 7",
+        "parent": null,
+        "siblingIndex": 145,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 147,
+        "name": "Actor 7/armLeft",
+        "parent": 146,
+        "siblingIndex": 146,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 148,
+        "name": "Actor 7/armRight",
+        "parent": 146,
+        "siblingIndex": 147,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              1.103641,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-armRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 149,
+        "name": "Actor 7/body",
+        "parent": 146,
+        "siblingIndex": 148,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-body.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 150,
+        "name": "Actor 7/head",
+        "parent": 146,
+        "siblingIndex": 149,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.126965,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-head.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 151,
+        "name": "Actor 7/legLeft",
+        "parent": 146,
+        "siblingIndex": 150,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legLeft.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 152,
+        "name": "Actor 7/legRight",
+        "parent": 146,
+        "siblingIndex": 151,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.303208,
+              0.520548,
+              -0.081633
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/astronautA-legRight.glb",
+            "material": "Assets/Materials/astronautA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 153,
+        "name": "Actor 7 weapon",
+        "parent": null,
+        "siblingIndex": 152,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.7,
+              0.7,
+              0.7
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 154,
+        "name": "View carbine",
+        "parent": 1,
+        "siblingIndex": 153,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.25,
+              -0.28,
+              -0.64
+            ],
+            "scale": [
+              0.58,
+              0.58,
+              0.58
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+            "material": "Assets/Materials/blaster-f.mmat"
+          }
+        }
+      },
+      {
+        "entity": 155,
+        "name": "View scatter",
+        "parent": 1,
+        "siblingIndex": 154,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/blaster-n-blaster-n.glb",
+            "material": "Assets/Materials/blaster-n.mmat"
+          }
+        }
+      },
+      {
+        "entity": 156,
+        "name": "Muzzle lamp",
+        "parent": 1,
+        "siblingIndex": 155,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.23,
+              -0.08,
+              -1.05
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "PointLight": {
+            "color": [
+              0.12,
+              0.8,
+              1,
+              1
+            ],
+            "intensity": 0,
+            "range": 4
+          }
+        }
+      },
+      {
+        "entity": 157,
+        "name": "Tracer 0",
+        "parent": null,
+        "siblingIndex": 156,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 158,
+        "name": "Tracer 1",
+        "parent": null,
+        "siblingIndex": 157,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 159,
+        "name": "Tracer 2",
+        "parent": null,
+        "siblingIndex": 158,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 160,
+        "name": "Tracer 3",
+        "parent": null,
+        "siblingIndex": 159,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 161,
+        "name": "Tracer 4",
+        "parent": null,
+        "siblingIndex": 160,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 162,
+        "name": "Tracer 5",
+        "parent": null,
+        "siblingIndex": 161,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 163,
+        "name": "Tracer 6",
+        "parent": null,
+        "siblingIndex": 162,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 164,
+        "name": "Tracer 7",
+        "parent": null,
+        "siblingIndex": 163,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 165,
+        "name": "Tracer 8",
+        "parent": null,
+        "siblingIndex": 164,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 166,
+        "name": "Tracer 9",
+        "parent": null,
+        "siblingIndex": 165,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 167,
+        "name": "Tracer 10",
+        "parent": null,
+        "siblingIndex": 166,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 168,
+        "name": "Tracer 11",
+        "parent": null,
+        "siblingIndex": 167,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 169,
+        "name": "Tracer 12",
+        "parent": null,
+        "siblingIndex": 168,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 170,
+        "name": "Tracer 13",
+        "parent": null,
+        "siblingIndex": 169,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 171,
+        "name": "Tracer 14",
+        "parent": null,
+        "siblingIndex": 170,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 172,
+        "name": "Tracer 15",
+        "parent": null,
+        "siblingIndex": 171,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 173,
+        "name": "Tracer 16",
+        "parent": null,
+        "siblingIndex": 172,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 174,
+        "name": "Tracer 17",
+        "parent": null,
+        "siblingIndex": 173,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 175,
+        "name": "Tracer 18",
+        "parent": null,
+        "siblingIndex": 174,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 176,
+        "name": "Tracer 19",
+        "parent": null,
+        "siblingIndex": 175,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.025,
+              0.025,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.1,
+              0.8,
+              1,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.1,
+              3,
+              5,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 177,
+        "name": "Pickup 0",
+        "parent": null,
+        "siblingIndex": 176,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -12,
+              0.25,
+              12
+            ],
+            "scale": [
+              0.9,
+              0.9,
+              0.9
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 178,
+        "name": "Pickup pad 0",
+        "parent": null,
+        "siblingIndex": 177,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -12,
+              0.03,
+              12
+            ],
+            "scale": [
+              1.8,
+              0.06,
+              1.8
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.03,
+              0.4,
+              0.5,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.03,
+              0.3,
+              0.4,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 179,
+        "name": "Pickup 1",
+        "parent": null,
+        "siblingIndex": 178,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12,
+              0.25,
+              -12
+            ],
+            "scale": [
+              0.9,
+              0.9,
+              0.9
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 180,
+        "name": "Pickup pad 1",
+        "parent": null,
+        "siblingIndex": 179,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12,
+              0.03,
+              -12
+            ],
+            "scale": [
+              1.8,
+              0.06,
+              1.8
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.03,
+              0.4,
+              0.5,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.03,
+              0.3,
+              0.4,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 181,
+        "name": "Pickup 2",
+        "parent": null,
+        "siblingIndex": 180,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -12,
+              0.25,
+              -12
+            ],
+            "scale": [
+              0.9,
+              0.9,
+              0.9
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 182,
+        "name": "Pickup pad 2",
+        "parent": null,
+        "siblingIndex": 181,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -12,
+              0.03,
+              -12
+            ],
+            "scale": [
+              1.8,
+              0.06,
+              1.8
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.03,
+              0.4,
+              0.5,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.03,
+              0.3,
+              0.4,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 183,
+        "name": "Pickup 3",
+        "parent": null,
+        "siblingIndex": 182,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12,
+              0.25,
+              12
+            ],
+            "scale": [
+              0.9,
+              0.9,
+              0.9
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+            "material": "Assets/Materials/rock_crystalsLargeA.mmat"
+          }
+        }
+      },
+      {
+        "entity": 184,
+        "name": "Pickup pad 3",
+        "parent": null,
+        "siblingIndex": 183,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              12,
+              0.03,
+              12
+            ],
+            "scale": [
+              1.8,
+              0.06,
+              1.8
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.03,
+              0.4,
+              0.5,
+              1
+            ],
+            "metallic": 0.12,
+            "roughness": 0.8,
+            "emission": [
+              0.03,
+              0.3,
+              0.4,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 185,
+        "name": "Interface",
+        "parent": null,
+        "siblingIndex": 184,
+        "active": true,
+        "components": {
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay"
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1280,
+              720
+            ],
+            "match_width_or_height": 0.5
+          }
+        }
+      },
+      {
+        "entity": 186,
+        "name": "Menu shade",
+        "parent": 185,
+        "siblingIndex": 185,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -338,
+              0
+            ],
+            "size_delta": [
+              604,
+              720
+            ]
+          },
+          "Image": {
+            "color": [
+              0.012,
+              0.031,
+              0.045,
+              0.92
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 187,
+        "name": "Menu rule",
+        "parent": 185,
+        "siblingIndex": 186,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -578,
+              -260
+            ],
+            "size_delta": [
+              4,
+              34
+            ]
+          },
+          "Image": {
+            "color": [
+              0.12,
+              0.85,
+              0.91,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 188,
+        "name": "Menu eyebrow",
+        "parent": 185,
+        "siblingIndex": 187,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -334,
+              -260
+            ],
+            "size_delta": [
+              440,
+              30
+            ]
+          },
+          "Text": {
+            "text": "ORBITAL FRONTIER  /  SECTOR 07",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 16,
+            "color": [
+              0.12,
+              0.85,
+              0.91,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 189,
+        "name": "Menu title",
+        "parent": 185,
+        "siblingIndex": 188,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -330,
+              -155
+            ],
+            "size_delta": [
+              450,
+              180
+            ]
+          },
+          "Text": {
+            "text": "ION\nOUTPOST",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 78,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 190,
+        "name": "Menu tagline",
+        "parent": 185,
+        "siblingIndex": 189,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -330,
+              -32
+            ],
+            "size_delta": [
+              450,
+              36
+            ]
+          },
+          "Text": {
+            "text": "A signal. A frontier. No second chances.",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 18,
+            "color": [
+              0.48,
+              0.64,
+              0.7,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 191,
+        "name": "Menu content",
+        "parent": 185,
+        "siblingIndex": 190,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -330,
+              105
+            ],
+            "size_delta": [
+              450,
+              235
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 23,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 192,
+        "name": "Menu status",
+        "parent": 185,
+        "siblingIndex": 191,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -330,
+              244
+            ],
+            "size_delta": [
+              450,
+              45
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 17,
+            "color": [
+              1,
+              0.65,
+              0.23,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 193,
+        "name": "Menu footer",
+        "parent": 185,
+        "siblingIndex": 192,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -330,
+              307
+            ],
+            "size_delta": [
+              450,
+              82
+            ]
+          },
+          "Text": {
+            "text": "WASD move   /   MOUSE aim\nLMB fire   /   RMB aim down sights\nSHIFT sprint   /   SPACE jump   /   R reload\n1 / 2 weapons   /   TAB scores   /   ESC release",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 14,
+            "color": [
+              0.48,
+              0.64,
+              0.7,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 194,
+        "name": "Location label",
+        "parent": 185,
+        "siblingIndex": 193,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              320,
+              300
+            ],
+            "size_delta": [
+              530,
+              30
+            ]
+          },
+          "Text": {
+            "text": "DUSTLINE RESEARCH STATION",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 20,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 195,
+        "name": "Location sublabel",
+        "parent": 185,
+        "siblingIndex": 194,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              320,
+              329
+            ],
+            "size_delta": [
+              530,
+              24
+            ]
+          },
+          "Text": {
+            "text": "CC0 FIELD KIT  /  KENNEY  /  MENGINE",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 12,
+            "color": [
+              0.12,
+              0.85,
+              0.91,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 196,
+        "name": "HUD header",
+        "parent": 185,
+        "siblingIndex": 195,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -320
+            ],
+            "size_delta": [
+              1200,
+              50
+            ]
+          },
+          "Image": {
+            "color": [
+              0.012,
+              0.031,
+              0.045,
+              0.92
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 197,
+        "name": "HUD brand",
+        "parent": 185,
+        "siblingIndex": 196,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -468,
+              -321
+            ],
+            "size_delta": [
+              230,
+              36
+            ]
+          },
+          "Text": {
+            "text": "ION / OUTPOST",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 22,
+            "color": [
+              0.12,
+              0.85,
+              0.91,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 198,
+        "name": "HUD clock",
+        "parent": 185,
+        "siblingIndex": 197,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -321
+            ],
+            "size_delta": [
+              180,
+              36
+            ]
+          },
+          "Text": {
+            "text": "03:00",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 28,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 199,
+        "name": "HUD network",
+        "parent": 185,
+        "siblingIndex": 198,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              442,
+              -321
+            ],
+            "size_delta": [
+              280,
+              32
+            ]
+          },
+          "Text": {
+            "text": "OFFLINE  /  60 HZ",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 16,
+            "color": [
+              0.48,
+              0.64,
+              0.7,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 200,
+        "name": "Vitals panel",
+        "parent": 185,
+        "siblingIndex": 199,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -455,
+              296
+            ],
+            "size_delta": [
+              290,
+              82
+            ]
+          },
+          "Image": {
+            "color": [
+              0.012,
+              0.031,
+              0.045,
+              0.92
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 201,
+        "name": "Health",
+        "parent": 185,
+        "siblingIndex": 200,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -514,
+              284
+            ],
+            "size_delta": [
+              100,
+              48
+            ]
+          },
+          "Text": {
+            "text": "100",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 38,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 202,
+        "name": "Shield",
+        "parent": 185,
+        "siblingIndex": 201,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -397,
+              289
+            ],
+            "size_delta": [
+              130,
+              38
+            ]
+          },
+          "Text": {
+            "text": "SHIELD  40",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 15,
+            "color": [
+              0.12,
+              0.85,
+              0.91,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 203,
+        "name": "Health rail",
+        "parent": 185,
+        "siblingIndex": 202,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -455,
+              326
+            ],
+            "size_delta": [
+              252,
+              5
+            ]
+          },
+          "Image": {
+            "color": [
+              0.1,
+              0.2,
+              0.25,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 204,
+        "name": "Health fill",
+        "parent": 185,
+        "siblingIndex": 203,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -455,
+              326
+            ],
+            "size_delta": [
+              252,
+              5
+            ]
+          },
+          "Image": {
+            "color": [
+              0.12,
+              0.85,
+              0.91,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 205,
+        "name": "Ammo panel",
+        "parent": 185,
+        "siblingIndex": 204,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              459,
+              296
+            ],
+            "size_delta": [
+              280,
+              82
+            ]
+          },
+          "Image": {
+            "color": [
+              0.012,
+              0.031,
+              0.045,
+              0.92
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 206,
+        "name": "Ammo",
+        "parent": 185,
+        "siblingIndex": 205,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              460,
+              282
+            ],
+            "size_delta": [
+              236,
+              44
+            ]
+          },
+          "Text": {
+            "text": "24 / 24",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 35,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 207,
+        "name": "Weapon",
+        "parent": 185,
+        "siblingIndex": 206,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              460,
+              320
+            ],
+            "size_delta": [
+              236,
+              20
+            ]
+          },
+          "Text": {
+            "text": "PULSE CARBINE",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 12,
+            "color": [
+              0.12,
+              0.85,
+              0.91,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 208,
+        "name": "Hint",
+        "parent": 185,
+        "siblingIndex": 207,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              316
+            ],
+            "size_delta": [
+              570,
+              36
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 15,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 209,
+        "name": "Kill feed",
+        "parent": 185,
+        "siblingIndex": 208,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              418,
+              -208
+            ],
+            "size_delta": [
+              340,
+              135
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 15,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 210,
+        "name": "Cross left",
+        "parent": 185,
+        "siblingIndex": 209,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -10,
+              0
+            ],
+            "size_delta": [
+              7,
+              2
+            ]
+          },
+          "Image": {
+            "color": [
+              0.8,
+              1,
+              1,
+              0.9
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 211,
+        "name": "Cross right",
+        "parent": 185,
+        "siblingIndex": 210,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              10,
+              0
+            ],
+            "size_delta": [
+              7,
+              2
+            ]
+          },
+          "Image": {
+            "color": [
+              0.8,
+              1,
+              1,
+              0.9
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 212,
+        "name": "Cross top",
+        "parent": 185,
+        "siblingIndex": 211,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -10
+            ],
+            "size_delta": [
+              2,
+              7
+            ]
+          },
+          "Image": {
+            "color": [
+              0.8,
+              1,
+              1,
+              0.9
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 213,
+        "name": "Cross bottom",
+        "parent": 185,
+        "siblingIndex": 212,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              10
+            ],
+            "size_delta": [
+              2,
+              7
+            ]
+          },
+          "Image": {
+            "color": [
+              0.8,
+              1,
+              1,
+              0.9
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 214,
+        "name": "Hit marker",
+        "parent": 185,
+        "siblingIndex": 213,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              80,
+              70
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 33,
+            "color": [
+              1,
+              0.65,
+              0.23,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 215,
+        "name": "Center notice",
+        "parent": 185,
+        "siblingIndex": 214,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              85
+            ],
+            "size_delta": [
+              700,
+              150
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 30,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 216,
+        "name": "Damage border",
+        "parent": 185,
+        "siblingIndex": 215,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -283
+            ],
+            "size_delta": [
+              1200,
+              6
+            ]
+          },
+          "Image": {
+            "color": [
+              1,
+              0.1,
+              0.04,
+              0
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 217,
+        "name": "Score shade",
+        "parent": 185,
+        "siblingIndex": 216,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              750,
+              460
+            ]
+          },
+          "Image": {
+            "color": [
+              0.012,
+              0.031,
+              0.045,
+              0.92
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 218,
+        "name": "Score title",
+        "parent": 185,
+        "siblingIndex": 217,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -184
+            ],
+            "size_delta": [
+              660,
+              45
+            ]
+          },
+          "Text": {
+            "text": "SCOREBOARD",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 30,
+            "color": [
+              0.12,
+              0.85,
+              0.91,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 219,
+        "name": "Score rows",
+        "parent": 185,
+        "siblingIndex": 218,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              18
+            ],
+            "size_delta": [
+              660,
+              320
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 22,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 220,
+        "name": "Score footer",
+        "parent": 185,
+        "siblingIndex": 219,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              207
+            ],
+            "size_delta": [
+              660,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 15,
+            "color": [
+              0.48,
+              0.64,
+              0.7,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 221,
+        "name": "FPS telemetry",
+        "parent": 185,
+        "siblingIndex": 220,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              5000,
+              5000
+            ],
+            "size_delta": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "{}",
+            "font": "Assets/Fonts/Roboto-Regular.ttf",
+            "font_size": 1,
+            "color": [
+              0.89,
+              0.94,
+              0.96,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 222,
+        "name": "Sound shot",
+        "parent": null,
+        "siblingIndex": 221,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/shot.wav",
+            "volume": 0.26,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 223,
+        "name": "Sound scatter",
+        "parent": null,
+        "siblingIndex": 222,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/scatter.wav",
+            "volume": 0.38,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 224,
+        "name": "Sound hit",
+        "parent": null,
+        "siblingIndex": 223,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/hit.wav",
+            "volume": 0.38,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 225,
+        "name": "Sound kill",
+        "parent": null,
+        "siblingIndex": 224,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/kill.wav",
+            "volume": 0.38,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 226,
+        "name": "Sound reload",
+        "parent": null,
+        "siblingIndex": 225,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/reload.wav",
+            "volume": 0.38,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 227,
+        "name": "Sound pickup",
+        "parent": null,
+        "siblingIndex": 226,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/pickup.wav",
+            "volume": 0.38,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "entity": 228,
+        "name": "Sound hurt",
+        "parent": null,
+        "siblingIndex": 227,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/hurt.wav",
+            "volume": 0.38,
+            "looped": false,
+            "play_on_awake": false,
+            "playing": false
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.23,
+      0.39,
+      0.46,
+      1
+    ],
+    "selected": 1
+  }
+}

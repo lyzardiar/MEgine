@@ -1,0 +1,136 @@
+[
+  {
+    "author": "Kenney",
+    "page": "https://kenney.nl/assets/space-kit",
+    "download": "https://kenney.nl/media/pages/assets/space-kit/20874c75ac-1677698978/kenney_space-kit.zip",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "archiveSha256": "d5d7cdf2635ed5a43a9187deaf409b6f47484e402321128341d3c3698e9ef4d9",
+    "files": [
+      {
+        "path": "SourceAssets/space-kit/astronautA.glb",
+        "sha256": "9db62dd9790beadc1b8e45cf9623e99ade21751bb23f16dfe1b8cfb05a54f3b5"
+      },
+      {
+        "path": "SourceAssets/space-kit/astronautB.glb",
+        "sha256": "6fa5b3e11cb3d117b28a0794b261ad9107f16ca6ce886b288493e22493d74d2d"
+      },
+      {
+        "path": "SourceAssets/space-kit/alien.glb",
+        "sha256": "c041e8ed0eff82f0b25b944a8107f1268ddbec9c2c93afedc4ee0e8b047d983d"
+      },
+      {
+        "path": "SourceAssets/space-kit/hangar_roundA.glb",
+        "sha256": "cf64a33cc795f897971990433c46097d43529ae3ef0dce8ba719761c54dd6a3d"
+      },
+      {
+        "path": "SourceAssets/space-kit/hangar_smallA.glb",
+        "sha256": "66cc1f91e0db1dd2c7ec79fa8cf3f3adf703291679c33c293ebd19da45bd53f7"
+      },
+      {
+        "path": "SourceAssets/space-kit/machine_generatorLarge.glb",
+        "sha256": "bbfa33a2e7c7eff7d9ee12f64255249b7e2f5d4b2ada2d681aa35cf38ba599bc"
+      },
+      {
+        "path": "SourceAssets/space-kit/machine_wireless.glb",
+        "sha256": "9d49e70d51515bc38628fb0d6e43f4eda7f9cd5326882fd02e8815e61f2259d7"
+      },
+      {
+        "path": "SourceAssets/space-kit/barrels.glb",
+        "sha256": "5eefdb7cb192863ac6b6709293e196ae97e7cceb29c6ab754850a738f3b2379b"
+      },
+      {
+        "path": "SourceAssets/space-kit/barrel.glb",
+        "sha256": "8a95781be23b35ebb39ad90278affc03140c75d4d055027e98be0313de084451"
+      },
+      {
+        "path": "SourceAssets/space-kit/satelliteDish.glb",
+        "sha256": "db27a561b66fabda45a6ce2bcf41d650852e89e15bb9f63b68133ad1293aed8b"
+      },
+      {
+        "path": "SourceAssets/space-kit/rock_largeA.glb",
+        "sha256": "13b2bf393fcd7ca8c73d8a2a731da0be6c2c2b4e67ef0ae826e816c0d8733f2f"
+      },
+      {
+        "path": "SourceAssets/space-kit/rock_largeB.glb",
+        "sha256": "9ad6aafcbdf3a813d3ab5ca59d6d6eb41d8cb38d07897b2c4d24c3206f33c759"
+      },
+      {
+        "path": "SourceAssets/space-kit/rock_crystalsLargeA.glb",
+        "sha256": "cfe8f339f6be4a321e5f3822237002b6a70f9c5d03596a7c347adabd5247fbd9"
+      },
+      {
+        "path": "SourceAssets/space-kit/rock.glb",
+        "sha256": "dbc02af619e176d10676ceb0e788d0bf8838731bef0d50972f11c7bf5d1f4922"
+      },
+      {
+        "path": "SourceAssets/space-kit/craft_speederA.glb",
+        "sha256": "dc48652fa5c59088a5e3902abce7598199f32e0dcb8c91bac25e17bb8ce15876"
+      },
+      {
+        "path": "SourceAssets/space-kit/rover.glb",
+        "sha256": "9784549775017e540ab84e6fc0eb8a1902dbeff9ba4285cecb97c086d2937fa5"
+      },
+      {
+        "path": "SourceAssets/space-kit/gate_simple.glb",
+        "sha256": "9ed530a12b9bfc2da091dc1725010c9c54debf99ec261320119e2db2dc8d5cff"
+      },
+      {
+        "path": "SourceAssets/space-kit/terrain.glb",
+        "sha256": "c0daef0a3c92cf52b6d5a3f64288e50e41d3008397ae25b46ab55dd3e1630288"
+      },
+      {
+        "path": "SourceAssets/space-kit/turret_double.glb",
+        "sha256": "a707823a86f895f6418df2340f2e231d7d88be6c2069d3245433299cec1f9f9c"
+      },
+      {
+        "path": "SourceAssets/space-kit/platform_small.glb",
+        "sha256": "c4aebdfe660289a0e004f5ec20eaba3ade043ed5bd889f11465680926f8c5368"
+      }
+    ]
+  },
+  {
+    "author": "Kenney",
+    "page": "https://kenney.nl/assets/blaster-kit",
+    "download": "https://kenney.nl/media/pages/assets/blaster-kit/261d80a716-1753959510/kenney_blaster-kit_2.1.zip",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "archiveSha256": "91e3093e95427d59625e7e2ce2d0399b861600160fd0b4ada7714796b67cea8c",
+    "files": [
+      {
+        "path": "SourceAssets/blaster-kit/blaster-f.glb",
+        "sha256": "ea389c88b7d90ede2763e1f2b5834b9fbaaaa56b8a51ebdf21f61ec46d716320"
+      },
+      {
+        "path": "SourceAssets/blaster-kit/blaster-n.glb",
+        "sha256": "e3faa048f8a90fe57fe838a7f86609bd91815358a1ac3a8dd26432f8010590f6"
+      },
+      {
+        "path": "SourceAssets/blaster-kit/crate-medium.glb",
+        "sha256": "187c32592fedaecbbb84152102bbf536f733cbc0c2cfee60828fb18a4803619c"
+      },
+      {
+        "path": "SourceAssets/blaster-kit/crate-wide.glb",
+        "sha256": "0a17a51b274d238c09ade21674b70742bd5f1703f7b0e8974b6d0b2b92a58c8b"
+      }
+    ]
+  },
+  {
+    "author": "Kenney",
+    "page": "https://kenney.nl/assets/blocky-characters",
+    "download": "https://kenney.nl/media/pages/assets/blocky-characters/8369c0cf30-1749547469/kenney_blocky-characters_20.zip",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "archiveSha256": "5e123859aa0c1598342b600c6db197024a1d63eb9ec531398b310725f589887e",
+    "files": [
+      {
+        "path": "SourceAssets/blocky-characters/character-a.glb",
+        "sha256": "8ee5dae167ec589863f6bba222467eb90ace8be357a4c5abfcab289290181616"
+      },
+      {
+        "path": "SourceAssets/blocky-characters/character-f.glb",
+        "sha256": "04223c1c6cdce5da6fe9c9729a24e1aa9c765dec93af952379112f7da24a828a"
+      }
+    ]
+  }
+]

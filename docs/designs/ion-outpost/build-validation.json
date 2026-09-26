@@ -1,0 +1,59 @@
+{
+  "packageValidation": {
+    "passed": true,
+    "files": 117,
+    "bytes": 22075394,
+    "scenes": 1,
+    "runtimeAssets": 58,
+    "script": true,
+    "contentHash": "0a69fab9e94f9e1d2cdbbd1b0cf3dc4601be669601cae2317b6970366c0dcd1f",
+    "signed": false
+  },
+  "playerSha256": "c629a117679eb52c6fb3f46c1e56d69b3d0f99f407e74095a3b26b9db1d1069b",
+  "sdkRuntimeCopies": [
+    {
+      "editorProfile": "debug",
+      "runtimeProfile": "debug",
+      "sha256": "50e5d96932fecac6958ed83696c492912afcd0dc6250036b0297d8aa6ff9c180"
+    },
+    {
+      "editorProfile": "debug",
+      "runtimeProfile": "release",
+      "sha256": "c629a117679eb52c6fb3f46c1e56d69b3d0f99f407e74095a3b26b9db1d1069b"
+    },
+    {
+      "editorProfile": "release",
+      "runtimeProfile": "debug",
+      "sha256": "50e5d96932fecac6958ed83696c492912afcd0dc6250036b0297d8aa6ff9c180"
+    },
+    {
+      "editorProfile": "release",
+      "runtimeProfile": "release",
+      "sha256": "c629a117679eb52c6fb3f46c1e56d69b3d0f99f407e74095a3b26b9db1d1069b"
+    }
+  ],
+  "editorTests": {
+    "passed": 943,
+    "failed": 0
+  },
+  "rustTests": {
+    "passed": 292,
+    "failed": 0,
+    "ignored": 3
+  },
+  "nativeCampaign": {
+    "passed": true,
+    "scope": "QuickJS EditorPlayRuntime: input, combat, pause, complete match, rematch"
+  },
+  "desktopAutomation": {
+    "passed": false,
+    "error": "GetCursorPos failed: Access denied (0x80070005)",
+    "attempts": 2
+  },
+  "playerSmoke": {
+    "processStarted": true,
+    "rendererInitialized": true,
+    "ownedProcessStopped": true,
+    "defaultAudioOutputAvailable": false
+  }
+}

@@ -66,6 +66,14 @@ Asset Store 包与 PaddleGameSO 不作为本次 MIT 示例源码的一部分。�
 
 ## 3D 参考
 
+### 2026-09-26：Ion Outpost 联机 FPS
+
+[Ion Outpost](../samples/ion-outpost/README.md) 将 26 个实际下载的 CC0 角色、怪物、武器和场景模型接入原生 3D 样例，保留原件、许可、下载地址与校验值。包括双武器、掩体遮挡、爆头、换弹、复活、护盾补给、计分和机器人网格寻路。
+
+联机采用 60 Hz 服务端权威模拟、逐帧输入记录、20 Hz 快照、本地预测与确认后重放、远端插值；房间支持创建、浏览、准备、开局、加入、房主移交和令牌重连。两个独立原生编辑器进程通过真实 TCP 服务端完成同房间对局与重连验收。该样例覆盖 Mirror / FishNet 对照方向中的基础能力，未将其记为对应工具的完整复刻；公网中继、认证和弱网验收尚未交付。
+
+引擎增加 `engine.network` 有界异步 TCP 接口，以及 `Camera3D.capture_pointer`、相对鼠标位移和 Agent 输入通道。原生 Player 与 Game 视图点击捕获、Escape 释放鼠标；模型和 3D 材质贴图采用 250 ms 变更检查，显式失效和首次加载立即处理。[原生截图及验证证据](designs/ion-outpost/README.md)。
+
 Fantasy Kingdom、Megacity Metro、Boss Room、Battle Royale 用于游戏循环与场景规模；Time Ghost、Enemies、The Heretic、Book of the Dead、Adam、The Blacksmith 用于渲染和动画能力对照。按可运行场景逐项推进，并区分资源复用、功能实现与设备性能验收。
 
 第三方文章中的 `Unity-Technologies/2d-game-kit` 链接未核实为有效仓库；`2d-extras` 是 Tilemap 工具集，不能作为 Roguelike 游戏示例计数。

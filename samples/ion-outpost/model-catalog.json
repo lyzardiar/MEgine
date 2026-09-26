@@ -1,0 +1,721 @@
+{
+  "astronautA": {
+    "material": "Assets/Materials/astronautA.mmat",
+    "size": [
+      1.126965,
+      1.85,
+      0.769683
+    ],
+    "parts": [
+      {
+        "name": "armLeft",
+        "mesh": "Assets/Models/astronautA-armLeft.glb",
+        "pivot": [
+          -0.303208,
+          1.103641,
+          -0.081633
+        ]
+      },
+      {
+        "name": "armRight",
+        "mesh": "Assets/Models/astronautA-armRight.glb",
+        "pivot": [
+          0.303208,
+          1.103641,
+          -0.081633
+        ]
+      },
+      {
+        "name": "body",
+        "mesh": "Assets/Models/astronautA-body.glb",
+        "pivot": [
+          -0.0,
+          0.520548,
+          -0.081633
+        ]
+      },
+      {
+        "name": "head",
+        "mesh": "Assets/Models/astronautA-head.glb",
+        "pivot": [
+          -0.0,
+          1.126965,
+          -0.081633
+        ]
+      },
+      {
+        "name": "legLeft",
+        "mesh": "Assets/Models/astronautA-legLeft.glb",
+        "pivot": [
+          -0.303208,
+          0.520548,
+          -0.081633
+        ]
+      },
+      {
+        "name": "legRight",
+        "mesh": "Assets/Models/astronautA-legRight.glb",
+        "pivot": [
+          0.303208,
+          0.520548,
+          -0.081633
+        ]
+      }
+    ]
+  },
+  "astronautB": {
+    "material": "Assets/Materials/astronautB.mmat",
+    "size": [
+      1.126965,
+      1.85,
+      0.769683
+    ],
+    "parts": [
+      {
+        "name": "armLeft",
+        "mesh": "Assets/Models/astronautB-armLeft.glb",
+        "pivot": [
+          -0.303208,
+          1.103641,
+          -0.081633
+        ]
+      },
+      {
+        "name": "armRight",
+        "mesh": "Assets/Models/astronautB-armRight.glb",
+        "pivot": [
+          0.303208,
+          1.103641,
+          -0.081633
+        ]
+      },
+      {
+        "name": "body",
+        "mesh": "Assets/Models/astronautB-body.glb",
+        "pivot": [
+          -0.0,
+          0.520548,
+          -0.081633
+        ]
+      },
+      {
+        "name": "head",
+        "mesh": "Assets/Models/astronautB-head.glb",
+        "pivot": [
+          -0.0,
+          1.126965,
+          -0.081633
+        ]
+      },
+      {
+        "name": "legLeft",
+        "mesh": "Assets/Models/astronautB-legLeft.glb",
+        "pivot": [
+          -0.303208,
+          0.520548,
+          -0.081633
+        ]
+      },
+      {
+        "name": "legRight",
+        "mesh": "Assets/Models/astronautB-legRight.glb",
+        "pivot": [
+          0.303208,
+          0.520548,
+          -0.081633
+        ]
+      }
+    ]
+  },
+  "alien": {
+    "material": "Assets/Materials/alien.mmat",
+    "size": [
+      1.060137,
+      1.85,
+      0.724041
+    ],
+    "parts": [
+      {
+        "name": "armLeft",
+        "mesh": "Assets/Models/alien-armLeft.glb",
+        "pivot": [
+          -0.285229,
+          1.038196,
+          -0.076792
+        ]
+      },
+      {
+        "name": "armRight",
+        "mesh": "Assets/Models/alien-armRight.glb",
+        "pivot": [
+          0.285228,
+          1.038196,
+          -0.076792
+        ]
+      },
+      {
+        "name": "body",
+        "mesh": "Assets/Models/alien-body.glb",
+        "pivot": [
+          -0.0,
+          0.48968,
+          -0.076792
+        ]
+      },
+      {
+        "name": "head",
+        "mesh": "Assets/Models/alien-head.glb",
+        "pivot": [
+          -0.0,
+          1.060137,
+          -0.076792
+        ]
+      },
+      {
+        "name": "legLeft",
+        "mesh": "Assets/Models/alien-legLeft.glb",
+        "pivot": [
+          -0.285229,
+          0.48968,
+          -0.076792
+        ]
+      },
+      {
+        "name": "legRight",
+        "mesh": "Assets/Models/alien-legRight.glb",
+        "pivot": [
+          0.285228,
+          0.48968,
+          -0.076792
+        ]
+      }
+    ]
+  },
+  "hangar_roundA": {
+    "material": "Assets/Materials/hangar_roundA.mmat",
+    "size": [
+      3.271244,
+      1.5,
+      2.83298
+    ],
+    "parts": [
+      {
+        "name": "hangar_roundA",
+        "mesh": "Assets/Models/hangar_roundA-hangar_roundA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "hangar_smallA": {
+    "material": "Assets/Materials/hangar_smallA.mmat",
+    "size": [
+      2.0,
+      1.0,
+      2.0
+    ],
+    "parts": [
+      {
+        "name": "hangar_smallA",
+        "mesh": "Assets/Models/hangar_smallA-hangar_smallA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "machine_generatorLarge": {
+    "material": "Assets/Materials/machine_generatorLarge.mmat",
+    "size": [
+      1.0,
+      0.683013,
+      1.3
+    ],
+    "parts": [
+      {
+        "name": "machine_generatorLarge",
+        "mesh": "Assets/Models/machine_generatorLarge-machine_generatorLarge.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "machine_wireless": {
+    "material": "Assets/Materials/machine_wireless.mmat",
+    "size": [
+      0.75,
+      0.6,
+      0.5
+    ],
+    "parts": [
+      {
+        "name": "machine_wireless",
+        "mesh": "Assets/Models/machine_wireless-machine_wireless.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "barrels": {
+    "material": "Assets/Materials/barrels.mmat",
+    "size": [
+      0.55,
+      0.35,
+      0.49641
+    ],
+    "parts": [
+      {
+        "name": "barrels",
+        "mesh": "Assets/Models/barrels-barrels.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "barrel": {
+    "material": "Assets/Materials/barrel.mmat",
+    "size": [
+      0.2,
+      0.25,
+      0.173205
+    ],
+    "parts": [
+      {
+        "name": "barrel",
+        "mesh": "Assets/Models/barrel-barrel.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "satelliteDish": {
+    "material": "Assets/Materials/satelliteDish.mmat",
+    "size": [
+      0.688378,
+      0.616465,
+      0.566465
+    ],
+    "parts": [
+      {
+        "name": "satelliteDish",
+        "mesh": "Assets/Models/satelliteDish-satelliteDish.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock_largeA": {
+    "material": "Assets/Materials/rock_largeA.mmat",
+    "size": [
+      0.919282,
+      0.5,
+      0.833855
+    ],
+    "parts": [
+      {
+        "name": "rock_largeA",
+        "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock_largeB": {
+    "material": "Assets/Materials/rock_largeB.mmat",
+    "size": [
+      0.927845,
+      0.5,
+      0.939339
+    ],
+    "parts": [
+      {
+        "name": "rock_largeB",
+        "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock_crystalsLargeA": {
+    "material": "Assets/Materials/rock_crystalsLargeA.mmat",
+    "size": [
+      0.833855,
+      0.541,
+      0.919282
+    ],
+    "parts": [
+      {
+        "name": "rock_crystalsLargeA",
+        "mesh": "Assets/Models/rock_crystalsLargeA-rock_crystalsLargeA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock": {
+    "material": "Assets/Materials/rock.mmat",
+    "size": [
+      0.801483,
+      0.3,
+      0.850941
+    ],
+    "parts": [
+      {
+        "name": "rock",
+        "mesh": "Assets/Models/rock-rock.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "craft_speederA": {
+    "material": "Assets/Materials/craft_speederA.mmat",
+    "size": [
+      2.0,
+      0.8,
+      2.1
+    ],
+    "parts": [
+      {
+        "name": "craft_speederA",
+        "mesh": "Assets/Models/craft_speederA-craft_speederA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rover": {
+    "material": "Assets/Materials/rover.mmat",
+    "size": [
+      0.3,
+      0.385264,
+      0.35
+    ],
+    "parts": [
+      {
+        "name": "rover",
+        "mesh": "Assets/Models/rover-rover.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "gate_simple": {
+    "material": "Assets/Materials/gate_simple.mmat",
+    "size": [
+      1.0,
+      1.08,
+      0.5
+    ],
+    "parts": [
+      {
+        "name": "gate_simple",
+        "mesh": "Assets/Models/gate_simple-gate_simple.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "terrain": {
+    "material": "Assets/Materials/terrain.mmat",
+    "size": [
+      1.0,
+      0.0,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "terrain",
+        "mesh": "Assets/Models/terrain-terrain.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "turret_double": {
+    "material": "Assets/Materials/turret_double.mmat",
+    "size": [
+      0.9,
+      0.7,
+      0.6
+    ],
+    "parts": [
+      {
+        "name": "turret_double",
+        "mesh": "Assets/Models/turret_double-turret_double.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "platform_small": {
+    "material": "Assets/Materials/platform_small.mmat",
+    "size": [
+      1.0,
+      0.1,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "platform_small",
+        "mesh": "Assets/Models/platform_small-platform_small.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "blaster-f": {
+    "material": "Assets/Materials/blaster-f.mmat",
+    "size": [
+      0.17,
+      0.445,
+      1.31
+    ],
+    "parts": [
+      {
+        "name": "blaster-f",
+        "mesh": "Assets/Models/blaster-f-blaster-f.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "blaster-n": {
+    "material": "Assets/Materials/blaster-n.mmat",
+    "size": [
+      0.17,
+      0.33,
+      0.6401
+    ],
+    "parts": [
+      {
+        "name": "blaster-n",
+        "mesh": "Assets/Models/blaster-n-blaster-n.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "crate-medium": {
+    "material": "Assets/Materials/crate-medium.mmat",
+    "size": [
+      0.549508,
+      0.37,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "crate-medium",
+        "mesh": "Assets/Models/crate-medium-crate-medium.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "crate-wide": {
+    "material": "Assets/Materials/crate-wide.mmat",
+    "size": [
+      0.549508,
+      0.37,
+      1.2
+    ],
+    "parts": [
+      {
+        "name": "crate-wide",
+        "mesh": "Assets/Models/crate-wide-crate-wide.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "character-a": {
+    "material": "Assets/Materials/character-a.mmat",
+    "size": [
+      1.096296,
+      1.85,
+      0.548148
+    ],
+    "parts": [
+      {
+        "name": "leg-left",
+        "mesh": "Assets/Models/character-a-leg-left.glb",
+        "pivot": [
+          0.137037,
+          0.685185,
+          0.0
+        ]
+      },
+      {
+        "name": "leg-right",
+        "mesh": "Assets/Models/character-a-leg-right.glb",
+        "pivot": [
+          -0.137037,
+          0.685185,
+          0.0
+        ]
+      },
+      {
+        "name": "torso",
+        "mesh": "Assets/Models/character-a-torso.glb",
+        "pivot": [
+          0.0,
+          0.47963,
+          0.0
+        ]
+      },
+      {
+        "name": "arm-left",
+        "mesh": "Assets/Models/character-a-arm-left.glb",
+        "pivot": [
+          0.274074,
+          1.233333,
+          -0.068519
+        ]
+      },
+      {
+        "name": "arm-right",
+        "mesh": "Assets/Models/character-a-arm-right.glb",
+        "pivot": [
+          -0.274074,
+          1.233333,
+          -0.068519
+        ]
+      },
+      {
+        "name": "head",
+        "mesh": "Assets/Models/character-a-head.glb",
+        "pivot": [
+          0.0,
+          1.301852,
+          0.0
+        ]
+      }
+    ]
+  },
+  "character-f": {
+    "material": "Assets/Materials/character-f.mmat",
+    "size": [
+      1.096296,
+      1.85,
+      0.548148
+    ],
+    "parts": [
+      {
+        "name": "leg-left",
+        "mesh": "Assets/Models/character-f-leg-left.glb",
+        "pivot": [
+          0.137037,
+          0.685185,
+          0.0
+        ]
+      },
+      {
+        "name": "leg-right",
+        "mesh": "Assets/Models/character-f-leg-right.glb",
+        "pivot": [
+          -0.137037,
+          0.685185,
+          0.0
+        ]
+      },
+      {
+        "name": "torso",
+        "mesh": "Assets/Models/character-f-torso.glb",
+        "pivot": [
+          0.0,
+          0.47963,
+          0.0
+        ]
+      },
+      {
+        "name": "arm-left",
+        "mesh": "Assets/Models/character-f-arm-left.glb",
+        "pivot": [
+          0.274074,
+          1.233333,
+          -0.068519
+        ]
+      },
+      {
+        "name": "arm-right",
+        "mesh": "Assets/Models/character-f-arm-right.glb",
+        "pivot": [
+          -0.274074,
+          1.233333,
+          -0.068519
+        ]
+      },
+      {
+        "name": "head",
+        "mesh": "Assets/Models/character-f-head.glb",
+        "pivot": [
+          0.0,
+          1.301852,
+          0.0
+        ]
+      }
+    ]
+  }
+}

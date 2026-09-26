@@ -1,6 +1,6 @@
 # Samples
 
-游戏脚本用 **TypeScript** 编写，运行时执行编译后的 JS（Boa / 未来 QuickJS）。
+游戏脚本使用 TypeScript 或 JavaScript，原生编辑器与 Player 通过 QuickJS-NG 执行。
 
 ```bash
 # 从仓库根目录
@@ -19,9 +19,11 @@ npm run sample:cube
 | `spinning-cube/Assets/Scripts/mengine.d.ts` | 标准工程内的脚本 API 类型声明 |
 | `types/engine.d.ts` | `engine` / `onTick` 全局类型 |
 
-不要手写维护 `.js`；以 `.ts` 为准。
+TypeScript 示例以 `.ts` 为源码；包含独立生成器的示例按各自 README 重建脚本与场景。
 
 ## 原创 3D 游戏
+
+- [Ion Outpost / 离子前哨](ion-outpost/README.md)：CC0 真实角色、怪物与场景资产，双武器 FPS、机器人、房间、60 Hz 权威帧同步、预测校正、断线重连；含多进程原生验收与 Windows Player。
 
 - [Pelican Road Rage / 鹈鹕暴力摩托](pelican-road-rage/README.md)：六人海岸竞速、翼击战斗、漂移氮气、连续曲面角色、夕阳海面、三个跟随镜头；含实机截图、完整比赛验证和 Windows Player 构建入口。
 

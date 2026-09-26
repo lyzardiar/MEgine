@@ -1,0 +1,1 @@
+{"version": 8, "name": "rock_largeA", "shader": "pbr", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/rock_largeA.png", "roughness": 0.68, "metallic": 0.18}
