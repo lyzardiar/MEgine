@@ -73,6 +73,12 @@ export type NativeViewportProfile = {
   callTree: NativeProfilerNode;
   /** Full request, native rendering, binary transfer and Canvas upload wall time. */
   transportMs?: number;
+  commandMs?: number;
+  simulationMs?: number;
+  simulationRequestMs?: number;
+  resourceSampleAgeMs?: number;
+  uploadMs?: number;
+  nativeTransport?: 'shared-buffer' | 'binary-ipc';
   presentIntervalMs?: number;
   memory: NativeProfilerMemoryCategory[];
   residentMemoryEstimateBytes: number;
@@ -272,6 +278,8 @@ export function summarizeNativeViewportProfiles(profiles: readonly NativeViewpor
   const intervals = profiles.map(profile => profile.presentIntervalMs ?? 0).filter(value => Number.isFinite(value) && value > 0);
   const averagePresentIntervalMs = intervals.length ? intervals.reduce((sum, value) => sum + value, 0) / intervals.length : 0;
   const requests = profiles.map(profile => profile.transportMs ?? 0).filter(value => Number.isFinite(value) && value > 0);
+  const simulations = profiles.map(profile => profile.simulationMs).filter((value): value is number => value != null && Number.isFinite(value));
+  const simulationRequests = profiles.map(profile => profile.simulationRequestMs).filter((value): value is number => value != null && Number.isFinite(value));
   return {
     intervals: intervals.length,
     averagePresentIntervalMs,
@@ -279,6 +287,8 @@ export function summarizeNativeViewportProfiles(profiles: readonly NativeViewpor
     presentedFps: averagePresentIntervalMs > 0 ? 1000 / averagePresentIntervalMs : 0,
     averageRequestMs: requests.length ? requests.reduce((sum, value) => sum + value, 0) / requests.length : 0,
     averageRenderMs: profiles.length ? profiles.reduce((sum, value) => sum + value.totalMs, 0) / profiles.length : 0,
+    averageSimulationMs: simulations.length ? simulations.reduce((sum, value) => sum + value, 0) / simulations.length : null,
+    averageSimulationRequestMs: simulationRequests.length ? simulationRequests.reduce((sum, value) => sum + value, 0) / simulationRequests.length : null,
   };
 }
 
@@ -531,10 +541,11 @@ export function recordNativeViewportProfile(
 
 export function readNativeViewportProfiles(
   source?: EditorProfilerSource,
+  copy = true,
 ): NativeViewportProfile[] {
-  return nativeProfiles
-    .filter((profile) => !source || profile.source === source)
-    .map((profile) => structuredClone(profile));
+  const profiles = nativeProfiles.filter((profile) => !source || profile.source === source);
+  // Recorded entries are never mutated; the internal Profiler can retain them across UI refreshes.
+  return copy ? profiles.map((profile) => structuredClone(profile)) : profiles;
 }
 
 export function readEditorProfilerSamples(

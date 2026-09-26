@@ -1,5 +1,5 @@
 import { getComponentCatalog } from '../componentCatalog.ts';
-import { registerMenuItem, type MenuItemContext } from './registry.ts';
+import { registerMenuItem } from './registry.ts';
 
 const COMPONENT_GROUPS: Record<string, string> = {
   Camera3D: 'Camera',
@@ -67,12 +67,6 @@ const COMPONENT_GROUPS: Record<string, string> = {
   ParticleEmitter3D: 'Effects',
 };
 
-function targetEntity(context: MenuItemContext) {
-  const entityId = context.contextEntity ?? context.store.selected;
-  if (entityId == null) return null;
-  return context.store.snapshot().entities.find((entity) => entity.entity === entityId) ?? null;
-}
-
 const catalog = getComponentCatalog();
 const duplicateLabels = new Set(
   catalog
@@ -91,9 +85,8 @@ catalog.forEach((entry, index) => {
   registerMenuItem(
     path,
     (context) => {
-      const entity = targetEntity(context);
-      if (!entity) return;
-      if (!context.store.addComponent(entity.entity, entry.type, entry.create())) return;
+      const entity = context.contextEntity ?? context.store.selected;
+      if (entity == null || !context.store.addComponent(entity, entry.type, entry.create())) return;
       context.log(`Added ${entry.type}`);
       context.refresh();
     },
@@ -101,11 +94,8 @@ catalog.forEach((entry, index) => {
       priority: 100 + index,
       agentInvokable: false,
       agentAlternative: 'add_component',
-      validate: (context) => {
-        const entity = targetEntity(context);
-        return context.store.mode === 'edit' && entity != null
-          && entity.components[entry.type] == null;
-      },
+      validate: (context) => context.store.mode === 'edit'
+        && context.store.canAddComponent(context.contextEntity ?? context.store.selected, entry.type),
     },
   );
 });

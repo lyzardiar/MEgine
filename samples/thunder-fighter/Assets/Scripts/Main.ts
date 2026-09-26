@@ -19,7 +19,7 @@ function random(): number { randomState ^= randomState << 13; randomState ^= ran
 function set(name:string, component:string, value:any):void {
   if (!entities[name]) return;
   const key=name+'/'+component, data=JSON.stringify(value); if(sent[key]===data)return; sent[key]=data;
-  engine.pushCommandJson(JSON.stringify({op:'setComponent',entity:entities[name].entity,component,value}));
+  engine.pushCommandJson(`{"op":"setComponent","entity":${entities[name].entity},"component":${JSON.stringify(component)},"value":${data}}`);
 }
 function label(name:string,text:string):void { set(name,'Text',{...authored[name].Text,text}); }
 function show(name:string,visible:boolean):void { const r=authored[name].RectTransform; set(name,'RectTransform',{...r,anchored_position:visible?r.anchored_position:[12000,12000]}); }

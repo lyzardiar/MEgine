@@ -276,7 +276,7 @@ export function Profiler() {
   const [collapsedMemoryNodes, setCollapsedMemoryNodes] = useState<Set<string>>(() => new Set());
   const [visible, setVisible] = useState(true);
   const [samples, setSamples] = useState(() => readEditorProfilerSamples('game'));
-  const [nativeProfiles, setNativeProfiles] = useState(() => readNativeViewportProfiles('game'));
+  const [nativeProfiles, setNativeProfiles] = useState(() => readNativeViewportProfiles('game', false));
   const [timelineSnapshots, setTimelineSnapshots] = useState(readTimelineProfilerSnapshots);
 
   useEffect(() => {
@@ -306,7 +306,7 @@ export function Profiler() {
       if (source === 'timeline') setTimelineSnapshots(readTimelineProfilerSnapshots());
       else {
         setSamples(readEditorProfilerSamples(source));
-        setNativeProfiles(readNativeViewportProfiles(source));
+        setNativeProfiles(readNativeViewportProfiles(source, false));
       }
     };
     const schedule = () => {
@@ -646,6 +646,7 @@ export function Profiler() {
               value={latestNative?.presentIntervalMs ? formatMs(latestNative.presentIntervalMs) : '—'}
               hint={latestNative?.presentIntervalMs ? `${(1000 / latestNative.presentIntervalMs).toFixed(1)} FPS · request ${formatMs(latestNative.transportMs ?? 0)}` : 'Completed native frames'}
             />
+            <Metric label="Simulation" value={latestNative?.simulationMs != null ? formatMs(latestNative.simulationMs) : '—'} hint="Native world update, script and snapshot export" />
             <Metric label="Native Draw Calls" value={latestNative ? formatCount(latestNative.counts.uiDrawCalls) : '—'} />
             <Metric label="Resident Estimate" value={formatBytes(latestNative?.residentMemoryEstimateBytes)} hint="provenance in Memory" />
             <Metric label="Render Resources" value={latestNative ? formatCount(latestNative.resources.length) : '—'} />
@@ -793,7 +794,7 @@ export function Profiler() {
 
           {module === 'resources' && <section className="profiler-detail-section" aria-label="Native render resources">
             <header>
-              <div><strong>Render-bound Resources</strong><span>{latestNative ? `${resources.length}/${latestNative.resources.length}${latestNative.resourcesTruncated ? '+' : ''}` : 'No sample'}</span></div>
+              <div><strong>Render-bound Resources</strong><span>{latestNative ? `${resources.length}/${latestNative.resources.length}${latestNative.resourcesTruncated ? '+' : ''} · sample age ${(latestNative.resourceSampleAgeMs ?? 0).toFixed(0)} ms` : 'No sample'}</span></div>
               <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter asset or type…" aria-label="Filter profiler resources" />
             </header>
             {latestNative ? <table className="profiler-detail-table profiler-resource-table">

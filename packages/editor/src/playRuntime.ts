@@ -11,8 +11,10 @@ export type PlayInput = {
 export const emptyPlayInput = (): PlayInput => ({ keys: [], pressedKeys: [], releasedKeys: [], pointer: [0, 0], viewport: [1, 1], buttons: [], pressedButtons: [], releasedButtons: [] });
 
 export type PlayRuntimeDriver = {
+  readonly retainsWorld?: boolean;
+  readonly sessionId?: number | null;
   start(snapshot: WorldSnapshotView): Promise<WorldSnapshotView | void>;
-  step(snapshot: WorldSnapshotView, input: PlayInput, dt: number): Promise<WorldSnapshotView>;
+  step(snapshot: WorldSnapshotView | undefined, input: PlayInput, dt: number): Promise<WorldSnapshotView>;
   stop(): void;
   onError(error: unknown): void;
 };
@@ -21,6 +23,8 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
   let sessionId: number | null = null;
   let generation = 0;
   return {
+    retainsWorld: true,
+    get sessionId() { return sessionId; },
     async start(snapshot) {
       const current = ++generation;
       const result = await invoke<{ sessionId: number; snapshot: HostWorldSnapshot }>('start_editor_play', { snapshot });

@@ -14,6 +14,35 @@ struct ScriptQueues {
     requests: Mutex<Vec<ScriptRuntimeRequest>>,
 }
 
+// Script snapshots stay as native data until a script reads either public view.
+#[derive(Trace, Finalize, JsData)]
+struct ScriptSnapshot {
+    #[unsafe_ignore_trace]
+    source: std::rc::Rc<JsonValue>,
+    #[unsafe_ignore_trace]
+    raw_json: Option<String>,
+    value: boa_gc::GcRefCell<Option<JsValue>>,
+    json_value: boa_gc::GcRefCell<Option<JsValue>>,
+}
+
+fn read_snapshot(_this: &JsValue, _args: &[JsValue], context: &mut Context) -> boa_engine::JsResult<JsValue> {
+    let state = context.get_data::<ScriptSnapshot>().expect("snapshot installed");
+    if let Some(value) = state.value.borrow().as_ref() { return Ok(value.clone()); }
+    let source = state.source.clone();
+    let value = JsValue::from_json(&source, context)?;
+    *context.get_data::<ScriptSnapshot>().unwrap().value.borrow_mut() = Some(value.clone());
+    Ok(value)
+}
+
+fn read_snapshot_json(_this: &JsValue, _args: &[JsValue], context: &mut Context) -> boa_engine::JsResult<JsValue> {
+    let state = context.get_data::<ScriptSnapshot>().expect("snapshot installed");
+    if let Some(value) = state.json_value.borrow().as_ref() { return Ok(value.clone()); }
+    let json = state.raw_json.clone().unwrap_or_else(|| serde_json::to_string(state.source.as_ref()).expect("JSON snapshot serializes"));
+    let value = JsValue::from(js_string!(json));
+    *state.json_value.borrow_mut() = Some(value.clone());
+    Ok(value)
+}
+
 fn pending(context: &Context) -> &Mutex<CommandBuffer> {
     &context.get_data::<ScriptQueues>().expect("script queues installed").commands
 }
@@ -124,6 +153,7 @@ fn queue_runtime_request(ctx: &Context, request: ScriptRuntimeRequest) -> boa_en
 /// Embeds a JS engine and exposes `engine` global for tick scripts.
 pub struct ScriptHost {
     context: Context,
+    tick_callback: Option<boa_engine::object::JsObject>,
 }
 
 impl ScriptHost {
@@ -132,12 +162,13 @@ impl ScriptHost {
         context.insert_data(ScriptQueues { commands: Mutex::new(CommandBuffer::new()), requests: Mutex::new(Vec::new()) });
         context.runtime_limits_mut().set_loop_iteration_limit(1_000_000);
         register_engine(&mut context)?;
-        let mut host = Self { context };
+        let mut host = Self { context, tick_callback: None };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
+        self.tick_callback = None;
         self.context
             .eval(Source::from_bytes(source.as_bytes()))
             .map(|_| ())
@@ -151,11 +182,11 @@ impl ScriptHost {
 
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
         self.sync_world(world)?;
-        let code = format!(
-            "if (typeof onTick === 'function') {{ onTick({dt}, {}); }}",
-            world.time.frame
-        );
-        let result = self.context.eval(Source::from_bytes(code.as_bytes()));
+        if self.tick_callback.is_none() {
+            self.tick_callback = Some(self.context.eval(Source::from_bytes("(function(dt, frame) { if (typeof onTick === 'function') onTick(dt, frame); })"))
+                .map_err(|error| ScriptError::Js(error.to_string()))?.as_object().expect("tick dispatcher is a function").clone());
+        }
+        let result = self.tick_callback.as_ref().unwrap().call(&JsValue::undefined(), &[JsValue::from(dt), JsValue::from(world.time.frame as f64)], &mut self.context);
         if let Err(error) = result {
             pending(&self.context).lock().unwrap().drain();
             pending_runtime_requests(&self.context).lock().unwrap().clear();
@@ -172,25 +203,44 @@ impl ScriptHost {
     }
 
     pub fn sync_world(&mut self, world: &World) -> Result<(), ScriptError> {
-        self.inject_snapshot_json(&serde_json::to_string(&mengine_core::snapshot::WorldSnapshot::from_world(world)).map_err(|error| ScriptError::Other(error.to_string()))?)
+        let snapshot = mengine_core::snapshot::WorldSnapshot::from_world(world);
+        let value = serde_json::to_value(&snapshot).map_err(|error| ScriptError::Other(error.to_string()))?;
+        self.inject_snapshot_value(value, None)
     }
 
     pub fn inject_snapshot_json(&mut self, json: &str) -> Result<(), ScriptError> {
         let snapshot: JsonValue = serde_json::from_str(json).map_err(|error| ScriptError::Other(error.to_string()))?;
-        // Snapshots are data. Building values directly avoids parsing and compiling the
-        // entire scene as a new JavaScript program on every simulation frame.
-        let value = JsValue::from_json(&snapshot, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        self.inject_snapshot_value(snapshot, Some(json.to_owned()))
+    }
+
+    fn inject_snapshot_value(&mut self, source: JsonValue, raw_json: Option<String>) -> Result<(), ScriptError> {
+        use boa_engine::property::PropertyDescriptor;
         let global = self.context.global_object();
         let engine = global.get(js_string!("engine"), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
         let object = engine.as_object().ok_or_else(|| ScriptError::Other("engine bridge is missing".into()))?;
-        object.set(js_string!("snapshot"), value, true, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
-        global.set(js_string!("lastSnapshot"), js_string!(json), true, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        self.context.insert_data(ScriptSnapshot { source: std::rc::Rc::new(source), raw_json, value: Default::default(), json_value: Default::default() });
+        let get = NativeFunction::from_fn_ptr(read_snapshot).to_js_function(self.context.realm());
+        let set = NativeFunction::from_copy_closure(|_, args, ctx| {
+            *ctx.get_data::<ScriptSnapshot>().unwrap().value.borrow_mut() = Some(args.get_or_undefined(0).clone());
+            Ok(JsValue::undefined())
+        }).to_js_function(self.context.realm());
+        object.define_property_or_throw(js_string!("snapshot"), PropertyDescriptor::builder().get(get).set(set).enumerable(true).configurable(true), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        let get = NativeFunction::from_fn_ptr(read_snapshot_json).to_js_function(self.context.realm());
+        let set = NativeFunction::from_copy_closure(|_, args, ctx| {
+            *ctx.get_data::<ScriptSnapshot>().unwrap().json_value.borrow_mut() = Some(args.get_or_undefined(0).clone());
+            Ok(JsValue::undefined())
+        }).to_js_function(self.context.realm());
+        global.define_property_or_throw(js_string!("lastSnapshot"), PropertyDescriptor::builder().get(get).set(set).enumerable(true).configurable(true), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
         Ok(())
     }
 
     pub fn set_input(&mut self, input: &ScriptInput) -> Result<(), ScriptError> {
-        let value = serde_json::to_string(input).map_err(|error| ScriptError::Other(error.to_string()))?;
-        self.eval(&format!("engine.input = {value};"))
+        let value = serde_json::to_value(input).map_err(|error| ScriptError::Other(error.to_string()))?;
+        let value = JsValue::from_json(&value, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        let engine = self.context.global_object().get(js_string!("engine"), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        let object = engine.as_object().ok_or_else(|| ScriptError::Other("engine bridge is missing".into()))?;
+        object.set(js_string!("input"), value, true, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
+        Ok(())
     }
 
     pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> {
@@ -851,6 +901,44 @@ fn js_entity_id(value: &JsValue, context: &mut Context) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cached_tick_dispatch_preserves_lexical_hooks_input_and_fresh_snapshots() {
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        host.eval("let onTick = (dt, frame) => { if (frame !== engine.snapshot.frame || frame !== JSON.parse(lastSnapshot).frame) throw Error('stale clock'); if (!engine.input.keys.includes('quoted\\\"')) throw Error('input mismatch'); engine.setClearColor(frame, dt, 0, 1); }; ").unwrap();
+        let mut input = ScriptInput::default();
+        input.key("quoted\"".into(), true);
+        host.set_input(&input).unwrap();
+        for frame in 1..=3 {
+            world.time.frame = frame;
+            host.tick(&mut world, 0.125).unwrap();
+            assert_eq!(world.time.clear_color.x, frame as f32);
+            assert_eq!(world.time.clear_color.y, 0.125);
+        }
+        host.eval("onTick = () => { engine.setClearColor(9,9,9,1); throw Error('failed'); };").unwrap();
+        assert!(host.tick(&mut world, 0.125).is_err());
+        host.eval("onTick = undefined;").unwrap();
+        host.tick(&mut world, 0.125).unwrap();
+        assert_eq!(world.time.clear_color.x, 3.0);
+    }
+
+    #[test]
+    fn snapshot_conversion_is_lazy_and_frame_values_remain_isolated() {
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        host.eval("function onTick() {};").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        let state = host.context.get_data::<ScriptSnapshot>().unwrap();
+        assert!(state.value.borrow().is_none());
+        assert!(state.json_value.borrow().is_none());
+        host.eval("const previous = engine.snapshot; if (previous !== engine.snapshot) throw Error('unstable snapshot'); previous.frame = 999; lastSnapshot = 'local';").unwrap();
+        world.time.frame = 2;
+        host.tick(&mut world, 0.016).unwrap();
+        host.eval("if (engine.snapshot === previous || engine.snapshot.frame !== 2 || previous.frame !== 999 || JSON.parse(lastSnapshot).frame !== 2) throw Error('frame isolation'); engine.snapshot = {frame: 9}; if(engine.snapshot.frame !== 9) throw Error('assignment');").unwrap();
+        host.sync_world(&world).unwrap();
+        host.eval("if(engine.snapshot.frame !== 2) throw Error('next frame must replace assignment');").unwrap();
+    }
 
     #[test]
     fn snapshots_preserve_data_without_evaluating_scene_text() {

@@ -47,7 +47,8 @@ import {
   scale as vscale,
 } from '../math3d';
 import { clearModelPreview, modelPreview } from '../modelPreview';
-import { nativeGamePreviewSize, uploadNativeViewportFrame } from '../nativeViewportFrame';
+import { nativeGamePreviewSize, requiresBrowserViewportSnapshot, uploadNativeViewportFrame } from '../nativeViewportFrame';
+import { releaseNativeViewportFrame, requestNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
   materialAssetPreviewState,
@@ -573,7 +574,9 @@ export function Viewport(props: {
   tab: 'scene' | 'game';
   clearColor: [number, number, number, number];
   entities: Ent[];
-  runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number } | null;
+  nativeSessionId?: number;
+  simulationRequestMs?: number;
+  runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number; nativeSessionId?: number; simulationRequestMs?: number } | null;
   selected: number | null;
   selectedIds?: number[];
   sceneHiddenIds?: readonly number[];
@@ -670,6 +673,8 @@ export function Viewport(props: {
     width: number;
     height: number;
     hasAuthoredCamera: boolean;
+    uiPrimitives: number;
+    uiBatches: number;
   } | null>(null);
   const nativeGameRequestRef = useRef({
     inFlight: false,
@@ -786,8 +791,12 @@ export function Viewport(props: {
     const p = propsRef.current, live = p.runtimeSnapshot?.();
     if (!live) return p;
     const hidden = p.tab === 'scene' ? p.sceneHiddenIds ?? [] : [];
-    return { ...p, entities: hidden.length ? live.entities.filter(entity => !hidden.includes(entity.entity)) : live.entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
+    return { ...p, nativeSessionId: live.nativeSessionId, simulationRequestMs: live.simulationRequestMs, entities: hidden.length ? live.entities.filter(entity => !hidden.includes(entity.entity)) : live.entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
   };
+
+  const nativeWorldArgs = (p: ReturnType<typeof currentViewportProps>) => p.nativeSessionId != null && !requiresBrowserViewportSnapshot(p.entities)
+    ? { playSessionId: p.nativeSessionId }
+    : { snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } };
 
   const closeGameInput = (focusCanvas = false) => {
     focusedInputRef.current = null;
@@ -891,7 +900,7 @@ export function Viewport(props: {
         const height = Math.max(1, Math.round(sourceHeight * scale));
         // Render the current world at the requested output size. The Game View's
         // display label and letterbox are editor chrome, not game pixels.
-        const frame = await invoke<{ pngBase64: string }>('render_native_game_view', { width, height, snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } });
+        const frame = await invoke<{ pngBase64: string }>('render_native_game_view', { width, height, ...nativeWorldArgs(p) });
         let dataUrl = `data:image/png;base64,${frame.pngBase64}`;
         if (format === 'image/jpeg') {
           const image = await decodeNativeFrame(frame.pngBase64);
@@ -1258,6 +1267,7 @@ export function Viewport(props: {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const isGame = p.tab === 'game';
+    const nativeGameReady = isGame && nativeGameFrameRef.current != null;
     let profilerUiPrimitives = 0;
     let profilerUiBatches = 0;
     hitsRef.current = [];
@@ -1281,7 +1291,7 @@ export function Viewport(props: {
       isGame
       && '__TAURI_INTERNALS__' in window
       && !nativeGameRequestRef.current.inFlight
-      && now - nativeGameRequestRef.current.lastRequestAt >= (p.playing ? 1000 / 60 : 300)
+      && (p.playing || now - nativeGameRequestRef.current.lastRequestAt >= 300)
     ) {
       const request = nativeGameRequestRef.current;
       request.inFlight = true;
@@ -1289,10 +1299,10 @@ export function Viewport(props: {
       // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.
       const fixedPixelCanvas = p.entities.some(entity => entity.components.Canvas && (entity.components.Canvas as Record<string, unknown>).render_mode !== 'WorldSpace' && (entity.components.CanvasScaler as Record<string, unknown> | undefined)?.ui_scale_mode !== 'ScaleWithScreenSize' && (p.activeInHierarchy?.(entity.entity) ?? true));
       const { width: nativeWidth, height: nativeHeight } = nativeGamePreviewSize(p.gameResolution?.width ?? vp.w * dpr, p.gameResolution?.height ?? vp.h * dpr, vp.w * dpr, vp.h * dpr, fixedPixelCanvas);
-      request.ready = invoke<ArrayBuffer>('render_native_game_view', { raw: true, width: nativeWidth, height: nativeHeight, snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } })
+      request.ready = requestNativeViewportFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight, ...nativeWorldArgs(p) })
         .then((buffer) => {
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
-          recordNativeViewportProfile('game', { ...result.profile, transportMs: performance.now() - now });
+          recordNativeViewportProfile('game', { ...result.profile, simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
           const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
@@ -1300,6 +1310,8 @@ export function Viewport(props: {
             width: result.width,
             height: result.height,
             hasAuthoredCamera: result.hasAuthoredCamera,
+            uiPrimitives: result.profile.counts.uiPrimitives,
+            uiBatches: result.profile.counts.uiBatches,
           };
           request.reportedError = false;
           // Hidden WebViews may suspend requestAnimationFrame. Commit the decoded frame
@@ -1371,16 +1383,14 @@ export function Viewport(props: {
       && !scene2DActive
       && '__TAURI_INTERNALS__' in window
       && !nativeSceneRequestRef.current.inFlight
-      && now - nativeSceneRequestRef.current.lastRequestAt
-        >= (draggingRef.current || p.playing ? 1000 / 60 : 200)
+      && (draggingRef.current || p.playing || now - nativeSceneRequestRef.current.lastRequestAt >= 200)
     ) {
       const request = nativeSceneRequestRef.current;
       const generation = ++request.generation;
       request.inFlight = true;
       request.lastRequestAt = now;
-      request.ready = invoke<ArrayBuffer>('render_native_scene_view', {
-        raw: true,
-        snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime },
+      request.ready = requestNativeViewportFrame('render_native_scene_view', {
+        ...nativeWorldArgs(p),
         request: {
           width: nativeSceneIdentity!.width,
           height: nativeSceneIdentity!.height,
@@ -1392,9 +1402,9 @@ export function Viewport(props: {
           hiddenEntityIds: p.sceneHiddenIds ?? [],
         },
       }).then((buffer) => {
-        if (request.generation !== generation) return;
+        if (request.generation !== generation) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
-        recordNativeViewportProfile('scene', { ...result.profile, transportMs: performance.now() - now });
+        recordNativeViewportProfile('scene', { ...result.profile, simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
         const image = result.image;
         const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {
@@ -1434,9 +1444,8 @@ export function Viewport(props: {
         : 16 / 9;
       const previewWidth = 320;
       const previewHeight = Math.max(120, Math.round(previewWidth / Math.max(0.5, Math.min(2.5, aspect))));
-      request.ready = invoke<ArrayBuffer>('render_native_scene_view', {
-        raw: true,
-        snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime },
+      request.ready = requestNativeViewportFrame('render_native_scene_view', {
+        ...nativeWorldArgs(p),
         request: {
           width: previewWidth,
           height: previewHeight,
@@ -1455,7 +1464,7 @@ export function Viewport(props: {
           hiddenEntityIds: [],
         },
       }).then((buffer) => {
-        if (request.generation !== generation) return;
+        if (request.generation !== generation) { releaseNativeViewportFrame(buffer); return; }
         const { image } = uploadNativeViewportFrame(buffer, nativeCameraPreviewFrameRef.current?.image);
         const firstFrame = nativeCameraPreviewFrameRef.current == null;
         nativeCameraPreviewFrameRef.current = {
@@ -1519,8 +1528,8 @@ export function Viewport(props: {
       if (!scene2DActive) drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
     }
 
-    const worldTransforms = buildWorldTransforms(p.entities);
-    const lights2D = prepareLight2DLights(p.entities.flatMap<Light2DInstance>((entity) => {
+    const worldTransforms = buildWorldTransforms(nativeGameReady && !p.entities.some(entity => entity.components.SpineSkeleton) ? [] : p.entities);
+    const lights2D = prepareLight2DLights((nativeGameReady ? [] : p.entities).flatMap<Light2DInstance>((entity) => {
       if (!isActive(entity.entity)) return [];
       const component = entity.components.Light2D as Light2DComponent | undefined;
       const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
@@ -1548,7 +1557,7 @@ export function Viewport(props: {
     const timelineParticleByEntity = new Map(
       (p.timelineParticlePreviews ?? []).map((preview) => [preview.target, preview]),
     );
-    for (const entity of p.entities) {
+    for (const entity of nativeGameReady ? [] : p.entities) {
       if (!isActive(entity.entity)) continue;
       const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
       if (!transform) continue;
@@ -1639,7 +1648,7 @@ export function Viewport(props: {
       additive: boolean;
       component: Record<string, unknown>;
     }>();
-    for (const entity of p.entities) {
+    for (const entity of nativeGameReady ? [] : p.entities) {
       if (!isActive(entity.entity)) continue;
       const component = entity.components.TrailRenderer2D as Record<string, unknown> | undefined;
       const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
@@ -1688,7 +1697,7 @@ export function Viewport(props: {
 
     const drawn = (isGame && !gameCamera ? [] : p.entities
       .flatMap((e, hierarchyOrder) => {
-        if (!isActive(e.entity)) return null;
+        if (!isActive(e.entity) || (nativeGameReady && !e.components.SpineSkeleton)) return null;
         const t = resolvedTransform(worldTransforms, e.entity) ?? undefined;
         if (!t) return null;
         const pr = project(t.position as Vec3, cam, vp);
@@ -1719,7 +1728,7 @@ export function Viewport(props: {
           editorGizmo: boolean;
           renderKind: 'entity' | 'trail' | 'particle' | 'spine';
         }> = [];
-        if (pr || camComp || isLight || hasCollider || e.components.Tilemap) {
+        if (!nativeGameReady && (pr || camComp || isLight || hasCollider || e.components.Tilemap)) {
           const renderer2D = (e.components.Tilemap
             ?? e.components.Line2D
             ?? e.components.AnimatedSprite2D
@@ -1799,7 +1808,7 @@ export function Viewport(props: {
     }>;
     drawn.sort(compareWorldDrawOrder);
 
-    for (const { e, t, pr, renderKind } of drawn) {
+    for (const { e, t, pr, renderKind } of nativeGameReady ? [] : drawn) {
       if (renderKind === 'trail') {
         const trailDraw = trailDrawByEntity.get(e.entity);
         if (!trailDraw) continue;
@@ -2627,7 +2636,7 @@ export function Viewport(props: {
         const logicalUiSize = p.gameResolution
           ? { w: p.gameResolution.width, h: p.gameResolution.height }
           : { w: uiRoot.w, h: uiRoot.h };
-        const uiItems = [
+        const uiItems = nativeGameReady && !requiresBrowserViewportSnapshot(p.entities) ? [] : [
           ...(gameCamera
             ? layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement)
             : []),
@@ -2662,7 +2671,7 @@ export function Viewport(props: {
           }
         }
         uiLayoutScaleRef.current = layoutScale || 1;
-        const stats = drawUiItems(
+        const stats = nativeGameReady ? { elements: uiItems.length, primitives: nativeGameFrameRef.current!.uiPrimitives, batches: nativeGameFrameRef.current!.uiBatches } : drawUiItems(
           ctx,
           uiItems,
           uiHoverRef.current,

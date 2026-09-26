@@ -23,9 +23,13 @@ try{
   }
   await new Promise(resolve=>setTimeout(resolve,4000));
   await execute('profiler.clear');
+  const simulationBefore=await query('scene.snapshot');
   const started=performance.now();
   await new Promise(resolve=>setTimeout(resolve,12000));
-  const result={scope:'Isolated native editor, friction sample, 1080x1920 Game output, Game and Profiler visible in the default layout',executable:process.env.MENGINE_EDITOR_EXECUTABLE,elapsedMs:performance.now()-started,game:await query('profiler.get_samples',{source:'game',limit:120}),scene:await query('profiler.get_samples',{source:'scene',limit:120})};
+  const simulationAfter=await query('scene.snapshot');
+  const elapsedMs=performance.now()-started;
+  const simulation={frames:simulationAfter.simFrame-simulationBefore.simFrame,elapsedMs,framesPerSecond:(simulationAfter.simFrame-simulationBefore.simFrame)*1000/elapsedMs};
+  const result={simulation,scope:'Isolated native editor, friction sample, 1080x1920 Game output, Game and Profiler visible in the default layout',executable:process.env.MENGINE_EDITOR_EXECUTABLE,elapsedMs:performance.now()-started,game:await query('profiler.get_samples',{source:'game',limit:120}),scene:await query('profiler.get_samples',{source:'scene',limit:120})};
   fs.writeFileSync(`docs/designs/editor-performance/${tag}.json`,JSON.stringify(result,null,2)+'\n');
   const screenshot=await query('view.window_screenshot',{windowLabel:'main'});
   fs.writeFileSync(`docs/designs/editor-performance/${tag}.png`,Buffer.from(screenshot.dataUrl.split(',')[1],'base64'));

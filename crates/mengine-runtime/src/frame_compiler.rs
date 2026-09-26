@@ -112,6 +112,7 @@ pub struct FrameCompiler<'a> {
 
 /// Owned frame packet shared by window, editor, and future offscreen submission paths.
 pub struct CompiledFrame {
+    pub profile_stages: Vec<(&'static str, f64)>,
     pub clear: ClearColor,
     pub camera: FrameCamera,
     pub objects: Vec<RenderObject>,
@@ -137,6 +138,9 @@ impl CompiledFrame {
 
 impl FrameCompiler<'_> {
     pub fn compile(&mut self, request: FrameCompileRequest<'_>) -> CompiledFrame {
+        let mut profile_stages = Vec::with_capacity(7);
+        let mut started = std::time::Instant::now();
+        let mut phase = |name| { profile_stages.push((name, started.elapsed().as_secs_f64() * 1000.0)); started = std::time::Instant::now(); };
         let width = request.viewport[0].max(1);
         let height = request.viewport[1].max(1);
         let active_camera = request.view_camera.map_or_else(
@@ -161,6 +165,7 @@ impl FrameCompiler<'_> {
         };
         let mut lighting = collect_lighting(request.world, request.hierarchy);
         let clear = resolve_camera_background(&active_camera, request.scene_clear, &mut lighting);
+        phase("Camera, meshes and lighting");
 
         self.fonts.begin_frame();
         let mut ui = if request.include_ui {
@@ -183,6 +188,7 @@ impl FrameCompiler<'_> {
             .textures
             .resolve_image_alpha_hit_tests(&mut ui.controls);
         append_ui_focus_ring(&mut ui.plan, &ui.controls, request.focused_ui);
+        phase("Canvas layout and text");
 
         let mut world_primitives = if has_scene_camera {
             collect_world_primitives_with_materials(
@@ -195,6 +201,7 @@ impl FrameCompiler<'_> {
         } else {
             Vec::new()
         };
+        phase("World sprites");
         let particle_primitives = self.particles.update_and_collect_world_with_hierarchy(
             request.world,
             request.hierarchy,
@@ -224,14 +231,18 @@ impl FrameCompiler<'_> {
             primitives.extend(std::mem::take(&mut ui.plan.primitives));
             ui.plan.primitives = primitives;
         }
+        phase("Particles, trails and sorting");
         texture_failures.extend(
             self.textures
                 .resolve_sprite_regions(&mut ui.plan.primitives),
         );
         resolve_ui_materials(&mut ui.plan.primitives, self.materials);
+        phase("Sprite regions and materials");
         ui.plan = UiBatchPlan::build(std::mem::take(&mut ui.plan.primitives));
+        phase("UI batching");
 
         CompiledFrame {
+            profile_stages,
             clear: clear.into(),
             camera,
             objects,

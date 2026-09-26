@@ -22,6 +22,7 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
 mod agent_bridge;
+mod native_viewport_transport;
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
     capture_editor_window, capture_editor_window_element, cleanup_bridge_discovery,
@@ -4283,15 +4284,25 @@ fn world_from_snapshot(snapshot: &WorldSnapshot) -> mengine_core::World {
     world
 }
 
-fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str) -> Result<tauri::ipc::Response, String> {
+async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str, shared_request: Option<String>, window: tauri::WebviewWindow, started: Instant) -> Result<tauri::ipc::Response, String> {
     if !raw {
-        return serde_json::to_string(&encode_native_viewport_frame(frame, label)?).map(tauri::ipc::Response::new).map_err(|error| error.to_string());
+        let label = label.to_owned();
+        return tauri::async_runtime::spawn_blocking(move || serde_json::to_string(&encode_native_viewport_frame(frame, &label)?).map(tauri::ipc::Response::new).map_err(|error| error.to_string())).await.map_err(|error| error.to_string())?;
     }
-    let metadata = serde_json::to_vec(&serde_json::json!({"hasAuthoredCamera":frame.has_authored_camera,"profile":frame.profile})).map_err(|error| error.to_string())?;
+    let mut metadata = serde_json::json!({"hasAuthoredCamera":frame.has_authored_camera,"profile":frame.profile});
+    metadata["profile"]["commandMs"] = serde_json::json!(started.elapsed().as_secs_f64() * 1000.0);
+    let metadata = serde_json::to_vec(&metadata).map_err(|error| error.to_string())?;
     let mut bytes = Vec::with_capacity(16 + metadata.len() + frame.rgba.len());
     for value in [0x3146474d_u32, frame.width, frame.height, metadata.len() as u32] { bytes.extend_from_slice(&value.to_le_bytes()); }
     bytes.extend_from_slice(&metadata);
     bytes.extend_from_slice(&frame.rgba);
+    if let Some(request) = shared_request.filter(|request| request.len() <= 128) {
+        let shared = Arc::new(bytes);
+        if native_viewport_transport::share_frame(&window, Arc::clone(&shared), request).await.is_ok() {
+            return Ok(tauri::ipc::Response::new(Vec::<u8>::new()));
+        }
+        bytes = Arc::try_unwrap(shared).unwrap_or_else(|bytes| (*bytes).clone());
+    }
     Ok(tauri::ipc::Response::new(bytes))
 }
 
@@ -4319,10 +4330,10 @@ async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state
 }
 
 #[tauri::command]
-async fn step_editor_play(session_id: u64, snapshot: WorldSnapshot, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<WorldSnapshot, String> {
+async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<WorldSnapshot, String> {
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     let runtime = state.play_runtime.clone();
-    let result = tauri::async_runtime::spawn_blocking(move || runtime.step(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
+    let result = tauri::async_runtime::spawn_blocking(move || runtime.advance(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     Ok(result)
 }
@@ -4337,9 +4348,13 @@ async fn render_native_game_view(
     width: u32,
     height: u32,
     snapshot: Option<WorldSnapshot>,
+    play_session_id: Option<u64>,
     raw: Option<bool>,
+    shared_request: Option<String>,
+    window: tauri::WebviewWindow,
     state: State<'_, AppState>,
 ) -> Result<tauri::ipc::Response, String> {
+    let started = Instant::now();
     let (project_root, snapshot) = {
         let project = state.project.lock();
         let session = project
@@ -4347,11 +4362,12 @@ async fn render_native_game_view(
             .ok_or_else(|| "no MEngine project is open".to_string())?;
         (
             session.project_root().to_owned(),
-            snapshot.unwrap_or_else(|| WorldSnapshot::from_world(session.active_world())),
+            snapshot.or_else(|| play_session_id.is_none().then(|| WorldSnapshot::from_world(session.active_world()))),
         )
     };
-    tauri::async_runtime::spawn_blocking(move || {
-        let world = world_from_snapshot(&snapshot);
+    let runtime = state.play_runtime.clone();
+    let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
+        let render = move |world: &mengine_core::World| -> Result<EditorViewportFrame, String> {
         let viewport = VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
         let mut viewport = viewport.lock();
         if viewport
@@ -4366,22 +4382,33 @@ async fn render_native_game_view(
         let frame = viewport
             .as_mut()
             .expect("viewport renderer initialized above")
-            .render_game(&world, width, height)
+            .render_game(world, width, height)
             .map_err(|error| error.to_string())?;
         drop(viewport);
-        native_viewport_response(frame, raw.unwrap_or(false), "viewport")
+        Ok(frame)
+        };
+        match (snapshot, play_session_id) {
+            (Some(snapshot), _) => render(&world_from_snapshot(&snapshot)),
+            (None, Some(id)) => runtime.render(id, render),
+            _ => Err("viewport world is unavailable".into()),
+        }
     })
     .await
-    .map_err(|error| format!("Game viewport worker failed: {error}"))?
+    .map_err(|error| format!("Game viewport worker failed: {error}"))??;
+    native_viewport_response(frame, raw.unwrap_or(false), "viewport", shared_request, window, started).await
 }
 
 #[tauri::command]
 async fn render_native_scene_view(
     request: NativeSceneViewRequest,
     snapshot: Option<WorldSnapshot>,
+    play_session_id: Option<u64>,
     raw: Option<bool>,
+    shared_request: Option<String>,
+    window: tauri::WebviewWindow,
     state: State<'_, AppState>,
 ) -> Result<tauri::ipc::Response, String> {
+    let started = Instant::now();
     let (project_root, snapshot) = {
         let project = state.project.lock();
         let session = project
@@ -4389,18 +4416,20 @@ async fn render_native_scene_view(
             .ok_or_else(|| "no MEngine project is open".to_string())?;
         (
             session.project_root().to_owned(),
-            snapshot.unwrap_or_else(|| WorldSnapshot::from_world(session.active_world())),
+            snapshot.or_else(|| play_session_id.is_none().then(|| WorldSnapshot::from_world(session.active_world()))),
         )
     };
-    tauri::async_runtime::spawn_blocking(move || {
-        let mut snapshot = snapshot;
-        if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
+    let runtime = state.play_runtime.clone();
+    let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
+        let render = move |world: &mengine_core::World| -> Result<EditorViewportFrame, String> {
+        let filtered_world;
+        let world = if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
             let hidden: HashSet<u64> = request.hidden_entity_ids.iter().copied().collect();
-            snapshot
-                .entities
-                .retain(|entity| !hidden.contains(&entity.entity));
-        }
-        let world = world_from_snapshot(&snapshot);
+            let mut snapshot = WorldSnapshot::from_world(world);
+            snapshot.entities.retain(|entity| !hidden.contains(&entity.entity));
+            filtered_world = world_from_snapshot(&snapshot);
+            &filtered_world
+        } else { world };
         let viewport = SCENE_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
         let mut viewport_guard = viewport.lock();
         if viewport_guard
@@ -4421,7 +4450,7 @@ async fn render_native_scene_view(
             .expect("Scene viewport renderer initialized above");
         let frame = if request.camera_entity.is_some() {
             viewport.render_camera(
-                &world,
+                world,
                 request.width,
                 request.height,
                 EditorCameraPreview {
@@ -4452,7 +4481,7 @@ async fn render_native_scene_view(
             )
         } else {
             viewport.render_scene(
-                &world,
+                world,
                 request.width,
                 request.height,
                 EditorSceneCamera {
@@ -4466,10 +4495,17 @@ async fn render_native_scene_view(
         }
         .map_err(|error| error.to_string())?;
         drop(viewport_guard);
-        native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport")
+        Ok(frame)
+        };
+        match (snapshot, play_session_id) {
+            (Some(snapshot), _) => render(&world_from_snapshot(&snapshot)),
+            (None, Some(id)) => runtime.render(id, render),
+            _ => Err("viewport world is unavailable".into()),
+        }
     })
     .await
-    .map_err(|error| format!("Scene viewport worker failed: {error}"))?
+    .map_err(|error| format!("Scene viewport worker failed: {error}"))??;
+    native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport", shared_request, window, started).await
 }
 
 #[tauri::command]

@@ -189,6 +189,8 @@ impl RuntimeTextureCache {
             return Vec::new();
         };
         let mut failures = Vec::new();
+        // Every slice of an atlas observes the same file revision for this frame.
+        let mut stamps = HashMap::new();
         for primitive in primitives {
             let original = primitive.key.texture.trim().to_owned();
             let (texture_reference, slice) = split_sprite_reference(&original);
@@ -204,8 +206,8 @@ impl RuntimeTextureCache {
                 continue;
             };
             let import_path = sprite_import_path(&texture_path);
-            let texture_stamp = file_stamp(&texture_path);
-            let import_stamp = file_stamp(&import_path);
+            let texture_stamp = *stamps.entry(texture_path.clone()).or_insert_with(|| file_stamp(&texture_path));
+            let import_stamp = *stamps.entry(import_path.clone()).or_insert_with(|| file_stamp(&import_path));
             let stale = self.sprite_regions.get(&original).is_none_or(|cached| {
                 cached.texture_stamp != texture_stamp || cached.import_stamp != import_stamp
             });
@@ -255,11 +257,13 @@ impl RuntimeTextureCache {
             return Vec::new();
         };
         let mut failures = Vec::new();
+        let mut checked = HashSet::new();
         for batch in &plan.batches {
             let key = batch.key.texture.trim();
             if key.is_empty()
                 || key.eq_ignore_ascii_case("white")
                 || key.starts_with("mengine-font://")
+                || !checked.insert(key)
             {
                 continue;
             }

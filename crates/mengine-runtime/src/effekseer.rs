@@ -933,6 +933,7 @@ mod tests {
     fn frame() -> crate::frame_compiler::CompiledFrame {
         let eye = Vec3::new(0.0, 1.5, 4.0);
         crate::frame_compiler::CompiledFrame {
+            profile_stages: Vec::new(),
             clear: ClearColor::from(Vec4::new(0.025, 0.03, 0.045, 1.0)),
             camera: FrameCamera {
                 view: Mat4::look_at_rh(eye, Vec3::ZERO, Vec3::Y),

@@ -94,11 +94,16 @@ pub struct EditorViewportProfileCounts {
 pub struct EditorViewportProfile {
     pub schema_version: u32,
     pub total_ms: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub simulation_ms: Option<f64>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub simulation_stages: Vec<EditorViewportProfileNode>,
     pub call_tree: EditorViewportProfileNode,
     pub memory: Vec<EditorViewportMemoryCategory>,
     pub resident_memory_estimate_bytes: u64,
     pub resources: Vec<EditorViewportResource>,
     pub resources_truncated: bool,
+    pub resource_sample_age_ms: f64,
     pub counts: EditorViewportProfileCounts,
 }
 
@@ -186,6 +191,7 @@ pub struct EditorViewportRenderer {
     last_effect_frame: Instant,
     preview_restart: u64,
     sorting_layers: SortingLayers,
+    resource_sample: Option<(Instant, Vec<EditorViewportResource>, bool)>,
 }
 
 impl EditorViewportRenderer {
@@ -213,6 +219,7 @@ impl EditorViewportRenderer {
             last_effect_frame: Instant::now(),
             preview_restart: 0,
             sorting_layers,
+            resource_sample: None,
             project_root,
         })
     }
@@ -594,8 +601,15 @@ impl EditorViewportRenderer {
             .context("could not read the editor viewport")?;
         finish_stage(&mut stages, "Renderer.read_offscreen_rgba8", stage_started);
         let stage_started = Instant::now();
+        if self.resource_sample.as_ref().is_none_or(|(at, _, _)| at.elapsed().as_millis() >= 250) {
+            let (resources, truncated) = collect_frame_resources(&self.project_root, &frame);
+            self.resource_sample = Some((Instant::now(), resources, truncated));
+        }
+        let (sampled_at, resources, resources_truncated) = self.resource_sample.as_ref().expect("resource sample initialized");
         let profile = build_viewport_profile(
-            &self.project_root,
+            resources.clone(),
+            *resources_truncated,
+            sampled_at.elapsed().as_secs_f64() * 1000.0,
             world,
             &frame,
             &self.renderer,
@@ -608,8 +622,13 @@ impl EditorViewportRenderer {
         // Snapshot construction is intentionally reported as profiler overhead.
         let profile_overhead_ms = stage_started.elapsed().as_secs_f64() * 1_000.0;
         let mut profile = profile;
-        profile.total_ms += profile_overhead_ms;
-        profile.call_tree.total_ms += profile_overhead_ms;
+        if let Some(compile) = profile.call_tree.children.iter_mut().flat_map(|group| &mut group.children).find(|node| node.name == "FrameCompiler.compile") {
+            compile.children = frame.profile_stages.iter().map(|(name, total_ms)| EditorViewportProfileNode { name: (*name).into(), total_ms: *total_ms, self_ms: *total_ms, calls: 1, children: Vec::new() }).collect();
+            compile.self_ms = (compile.total_ms - compile.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.0);
+        }
+        profile.total_ms = render_started.elapsed().as_secs_f64() * 1000.0;
+        profile.call_tree.total_ms = profile.total_ms;
+        profile.call_tree.self_ms = (profile.total_ms - profile.call_tree.children.iter().map(|child| child.total_ms).sum::<f64>() - profile_overhead_ms).max(0.0);
         profile.call_tree.children.push(EditorViewportProfileNode {
             name: "Profiler".into(),
             total_ms: profile_overhead_ms,
@@ -634,7 +653,9 @@ impl EditorViewportRenderer {
 }
 
 fn build_viewport_profile(
-    project_root: &Path,
+    resources: Vec<EditorViewportResource>,
+    resources_truncated: bool,
+    resource_sample_age_ms: f64,
     world: &World,
     frame: &mengine_runtime::frame_compiler::CompiledFrame,
     renderer: &Renderer,
@@ -644,7 +665,6 @@ fn build_viewport_profile(
     stages: Vec<ProfileStage>,
     render_started: Instant,
 ) -> EditorViewportProfile {
-    let (resources, resources_truncated) = collect_frame_resources(project_root, frame);
     let texture_gpu_bytes = resources
         .iter()
         .filter_map(|resource| resource.gpu_bytes_estimate)
@@ -760,6 +780,8 @@ fn build_viewport_profile(
     let pipeline_stats = renderer.material_pipeline_stats();
     let texture_stats = renderer.material_texture_stats();
     EditorViewportProfile {
+        simulation_ms: None,
+        simulation_stages: Vec::new(),
         schema_version: 1,
         total_ms,
         call_tree,
@@ -767,6 +789,7 @@ fn build_viewport_profile(
         memory,
         resources,
         resources_truncated,
+        resource_sample_age_ms,
         counts: EditorViewportProfileCounts {
             entities: world.iter_entities().count(),
             render_objects: frame.objects.len(),

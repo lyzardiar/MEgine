@@ -21,7 +21,8 @@ function createContext() {
     mode: 'edit',
     selected: entity.entity,
     selectedIds: [entity.entity],
-    snapshot: () => ({ entities: [entity] }),
+    snapshot: () => { throw new Error('Menu validation must not clone the scene'); },
+    canAddComponent: (id, type) => id === entity.entity && entity.components[type] == null,
     addComponent: (...args) => {
       calls.push(args);
       entity.components[args[1]] = args[2];

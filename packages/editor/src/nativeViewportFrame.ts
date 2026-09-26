@@ -1,4 +1,10 @@
 import type { NativeViewportProfilePayload } from './editorProfiler';
+import { isSharedNativeViewportFrame, releaseNativeViewportFrame } from './nativeViewportTransport.ts';
+
+/** Browser-owned drawing and UI hit testing require the same snapshot as the native base image. */
+export function requiresBrowserViewportSnapshot(entities: readonly { components: Record<string, unknown> }[]): boolean {
+  return entities.some(({ components: c }) => c.SpineSkeleton || c.Button || c.Toggle || c.Slider || c.Scrollbar || c.InputField || c.Dropdown || c.ListView || c.ScrollView || c.TabView);
+}
 
 /** Match the pixels actually displayed; explicit captures still render at the requested output size. */
 export function nativeGamePreviewSize(width: number, height: number, displayWidth: number, displayHeight: number, fixedPixelCanvas = false) {
@@ -17,12 +23,16 @@ export function parseNativeViewportFrame(buffer: ArrayBuffer) {
 }
 
 export function uploadNativeViewportFrame(buffer: ArrayBuffer, previous?: HTMLImageElement | HTMLCanvasElement) {
-  const frame = parseNativeViewportFrame(buffer);
-  const image = previous instanceof HTMLCanvasElement ? previous : document.createElement('canvas');
-  if (image.width !== frame.width) image.width = frame.width;
-  if (image.height !== frame.height) image.height = frame.height;
-  const context = image.getContext('2d');
-  if (!context) throw new Error('Native viewport canvas is unavailable');
-  context.putImageData(new ImageData(frame.rgba, frame.width, frame.height), 0, 0);
-  return { width: frame.width, height: frame.height, hasAuthoredCamera: frame.hasAuthoredCamera, profile: frame.profile, image };
+  try {
+    const started = performance.now();
+    const frame = parseNativeViewportFrame(buffer);
+    const image = previous instanceof HTMLCanvasElement ? previous : document.createElement('canvas');
+    if (image.width !== frame.width) image.width = frame.width;
+    if (image.height !== frame.height) image.height = frame.height;
+    const context = image.getContext('2d');
+    if (!context) throw new Error('Native viewport canvas is unavailable');
+    context.putImageData(new ImageData(frame.rgba, frame.width, frame.height), 0, 0);
+    const profile = { ...frame.profile, uploadMs: performance.now() - started, nativeTransport: isSharedNativeViewportFrame(buffer) ? 'shared-buffer' as const : 'binary-ipc' as const };
+    return { width: frame.width, height: frame.height, hasAuthoredCamera: frame.hasAuthoredCamera, profile, image };
+  } finally { releaseNativeViewportFrame(buffer); }
 }

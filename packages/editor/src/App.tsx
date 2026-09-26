@@ -8,7 +8,7 @@ import {
 } from './store';
 import { createEditorUndoService } from './editorUndoService';
 import { applyPlaybackAction, playbackShortcut, type PlaybackAction } from './editorPlayback';
-import { createNativePlayRuntime } from './playRuntime';
+import { createNativePlayRuntime, type PlayInput } from './playRuntime';
 import {
   legacyGameResolution,
   normalizeGameDisplay,
@@ -188,6 +188,7 @@ function sameAssetPath(left: string | null, right: string): boolean {
 
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
+  | { type: 'play-input'; sender: string; sessionId: number; input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>> }
   | { type: 'scene-library-changed'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
   | { type: 'timeline-preview'; sender: string; preview: TimelineScenePreview | null }
@@ -225,6 +226,7 @@ type WorkspaceSyncMessage =
       mode: EditorMode;
       sceneName: string | null;
       sceneJson: string;
+      playSessionId?: number;
       selectedIds: number[];
       sceneHiddenIds?: number[];
       sceneUnpickableIds?: number[];
@@ -747,6 +749,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sceneName: sceneNameRef.current,
         mode: store.mode,
         sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled'),
+        playSessionId: store.playSessionId,
         selectedIds: store.selectedIds,
         sceneHiddenIds: store.sceneHiddenIds,
         sceneUnpickableIds: store.sceneUnpickableIds,
@@ -1209,6 +1212,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     channel.onmessage = (event: MessageEvent<WorkspaceSyncMessage>) => {
       const message = event.data;
       if (!message || message.sender === syncSender.current) return;
+      if (message.type === 'play-input') {
+        if (!props.detachedPanel && message.sessionId === store.playSessionId) store.setPlayInput(message.input);
+        return;
+      }
       if (message.type === 'request-dirty-state') {
         postWorkspaceDirtyState();
         return;
@@ -1384,7 +1391,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         applyingRemote.current = true;
         syncReady.current = true;
         lastRemoteTimestamp.current = message.timestamp;
-        store.loadRemoteSceneJson(message.sceneJson, message.mode);
+        store.loadRemoteSceneJson(message.sceneJson, message.mode, message.playSessionId);
         store.selectMany(message.selectedIds, 'replace');
         store.setSceneInteractionState(
           message.sceneHiddenIds ?? [],
@@ -2652,6 +2659,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, [props.detachedPanel, store]);
 
   useEffect(() => {
+    if (props.detachedPanel) return;
     let lastTick = performance.now();
     let lastPanelRefresh = 0;
     let disposed = false;
@@ -2961,7 +2969,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               pivotMode={pivotMode}
               handleOrientation={handleOrientation}
               playing={mode !== 'edit'}
-              onPlayInput={(input) => store.setPlayInput(input)}
+              onPlayInput={(input) => {
+                if (!props.detachedPanel) store.setPlayInput(input);
+                else if (store.playSessionId != null) syncChannel.current?.postMessage({ type: 'play-input', sender: syncSender.current, sessionId: store.playSessionId, input } satisfies WorkspaceSyncMessage);
+              }}
               sceneCamera={store.sceneCamera}
               gameResolution={gameResolution}
               gameDisplay={gameDisplay}

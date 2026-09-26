@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { nativeGamePreviewSize, parseNativeViewportFrame } from '../src/nativeViewportFrame.ts';
+import { nativeGamePreviewSize, parseNativeViewportFrame, requiresBrowserViewportSnapshot } from '../src/nativeViewportFrame.ts';
+
+test('browser overlays and interactive UI retain a matching snapshot', () => {
+  assert.equal(requiresBrowserViewportSnapshot([{ components: { Text: {}, SpriteRenderer: {} } }]), false);
+  for (const type of ['SpineSkeleton', 'Button', 'Toggle', 'Slider', 'Scrollbar', 'InputField', 'Dropdown', 'ListView', 'ScrollView', 'TabView']) {
+    assert.equal(requiresBrowserViewportSnapshot([{ components: { [type]: {} } }]), true);
+  }
+});
 
 function packet(width=2,height=1){
   const metadata=new TextEncoder().encode(JSON.stringify({hasAuthoredCamera:true,profile:{schemaVersion:1,totalMs:1}}));

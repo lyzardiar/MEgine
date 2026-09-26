@@ -65,13 +65,12 @@ impl WorldSnapshot {
                 .get_component::<crate::generated::Name>(e)
                 .map(|n| n.value.clone());
             let parent = world.get_component::<Parent>(e).map(|p| p.entity.to_u64());
-            let mut components = world.serialized_components(e).cloned().unwrap_or_default();
-            if let Some(live_components) = world.component_values(e) {
-                components.extend(
-                    live_components.into_iter().filter(|(name, _)| {
-                        name != "Name" && name != "Parent" && name != "Children"
-                    }),
-                );
+            let mut components = world.component_values(e).unwrap_or_default();
+            components.retain(|name, _| name != "Name" && name != "Parent" && name != "Children");
+            if let Some(serialized) = world.serialized_components(e) {
+                for (name, value) in serialized {
+                    if !components.contains_key(name) { components.insert(name.clone(), value.clone()); }
+                }
             }
             entities.push(EntitySnapshot {
                 entity: e.to_u64(),
@@ -99,6 +98,18 @@ impl WorldSnapshot {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn snapshot_uses_live_typed_values_and_preserves_unknown_components() {
+        let mut world = crate::World::new();
+        let entity = world.spawn_empty();
+        world.set_component_value(entity, "Transform", serde_json::json!({"position":[1,2,3]}));
+        world.set_component_value(entity, "ProjectBehaviour", serde_json::json!({"text":"自定义", "speed":4}));
+        world.get_component_mut::<crate::generated::Transform>(entity).unwrap().position[0] = 9.0;
+        let snapshot = WorldSnapshot::from_world(&world);
+        assert_eq!(snapshot.entities[0].components["Transform"]["position"][0], 9.0);
+        assert_eq!(snapshot.entities[0].components["ProjectBehaviour"]["speed"], 4);
+    }
 
     #[test]
     fn accepts_browser_snapshot_aliases_and_defaults() {

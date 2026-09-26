@@ -73,8 +73,28 @@ ab_glyph   = "0.2"
 lto = true
 codegen-units = 1
 
-# The editor executes project scripts every frame. Optimize the interpreter even
-# in debug builds while keeping the engine itself debuggable.
+# Keep symbols and assertions while optimizing the editor's per-frame engine work.
+[profile.dev.package.mengine-core]
+opt-level = 2
+
+[profile.dev.package.mengine-runtime]
+opt-level = 2
+
+[profile.dev.package.mengine-rhi]
+opt-level = 2
+
+[profile.dev.package.mengine-scene]
+opt-level = 2
+
+[profile.dev.package.mengine-physics]
+opt-level = 2
+
+[profile.dev.package.mengine-script]
+opt-level = 2
+
+[profile.dev.package.mengine-editor-host]
+opt-level = 2
+
 [profile.dev.package.boa_engine]
 opt-level = 2
 

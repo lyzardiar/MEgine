@@ -244,6 +244,12 @@ impl RuntimeFontCache {
     }
 
     fn font(&mut self, reference: &str) -> Option<(String, String, FontArc)> {
+        // Glyph layout asks for the same font many times after this frame's file check.
+        if self.checked_fonts.contains(reference) {
+            if let Some(CachedFont { revision, result: Ok(font), .. }) = self.fonts.get(reference) {
+                return Some((reference.to_owned(), revision.clone(), font.clone()));
+            }
+        }
         let key = reference.trim().replace('\\', "/");
         let root = self.project_root.as_deref()?;
         if !key.starts_with("Assets/") {
@@ -276,6 +282,7 @@ impl RuntimeFontCache {
                         .zip(path.canonicalize().ok())
                         .is_some_and(|(root, path)| path.starts_with(root));
                 if !confined {
+                    self.fonts.remove(&key);
                     self.report_failure(
                         &key,
                         path,

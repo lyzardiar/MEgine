@@ -6,7 +6,7 @@ process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = '--disable-background-timer-
 const { bridgeQuery: query, bridgeExecute, closeBridgeConnection } = await import('../packages/agent/mcp/server.mjs');
 const execute = async (command, args = {}) => { const result = await bridgeExecute(command, args, { requestId: crypto.randomUUID() }); assert.ok(result.ok, result.error?.message); return result.data; };
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-const out = 'docs/designs/editor-performance';
+const out = process.env.MENGINE_PERFORMANCE_OUT ?? 'docs/designs/editor-performance';
 const capture = async (name, windowLabel = 'main') => {
   const result = await query('view.window_screenshot', { windowLabel });
   fs.writeFileSync(`${out}/${name}.png`, Buffer.from(result.dataUrl.split(',')[1], 'base64'));
@@ -48,6 +48,13 @@ try {
   await execute('playback.step', { deltaTime: 0.1, steps: 1 });
   const stepped = await query('scene.snapshot');
   assert.ok(stepped.simulationTime > paused.simulationTime);
+  const ui = await query('window.ui_snapshot', { windowLabel: 'panel-game' });
+  const gameCanvas = ui.elements.find(element => element.name === 'Game viewport');
+  assert.ok(gameCanvas?.selector, 'Detached Game canvas must expose a keyboard target');
+  await execute('window.ui_press_key', { windowLabel: 'panel-game', selector: gameCanvas.selector, expectedSnapshotRevision: ui.snapshotRevision, key: 'h' });
+  await delay(100);
+  await execute('playback.step', { deltaTime: 1 / 60, steps: 1 });
+  assert.ok((await query('scene.snapshot')).entities.filter(entity => entity.components.Text).every(entity => entity.components.Text.enabled === false), 'Detached keyboard must reach the native play session');
   await execute('panel.dock', { kind: 'game' });
   await execute('panel.focus', { kind: 'game' });
   const screenshot = await query('view.screenshot', { target: 'game', maxSize: 4096 });
@@ -57,7 +64,7 @@ try {
   fs.writeFileSync(`${out}/game-full-resolution.png`, png);
   await execute('playback.stop');
   assert.deepEqual((await query('scene.snapshot')).entities, authored.entities);
-  fs.writeFileSync(`${out}/multi-view.json`, JSON.stringify({ scope: 'Native editor, Scene plus selected Camera preview and detached Game', executable: process.env.MENGINE_EDITOR_EXECUTABLE, scene: scene.nativeSummary, game: game.nativeSummary, checks: { detachedEditSceneSync: true, detachedPlaySceneSync: true, pause: true, step: true, stopRestoresAuthored: true, fullResolutionCapture: [1080, 1920] } }, null, 2) + '\n');
+  fs.writeFileSync(`${out}/multi-view.json`, JSON.stringify({ scope: 'Native editor, Scene plus selected Camera preview and detached Game', executable: process.env.MENGINE_EDITOR_EXECUTABLE, scene: scene.nativeSummary, game: game.nativeSummary, checks: { detachedEditSceneSync: true, detachedPlaySceneSync: true, detachedKeyboard: true, pause: true, step: true, stopRestoresAuthored: true, fullResolutionCapture: [1080, 1920] } }, null, 2) + '\n');
   console.log('PASS: multi-view, detached scene synchronization, pause, step, stop and full-resolution capture');
 } catch (error) { console.error(error.stack); process.exitCode = 1; }
 finally { try { await execute('playback.stop'); await execute('panel.dock', { kind: 'game' }); } catch {} closeBridgeConnection(); }

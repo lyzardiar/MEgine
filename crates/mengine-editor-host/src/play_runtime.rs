@@ -5,7 +5,10 @@ use mengine_script::{ScriptHost, ScriptAnimationEvent, ScriptTimelineSignal};
 pub use mengine_script::ScriptInput;
 use std::path::PathBuf;
 use std::sync::{Arc, atomic::{AtomicU64, Ordering}, mpsc::{self, Sender}};
-use std::time::Duration;
+use std::time::{Duration, Instant};
+use crate::viewport::{EditorViewportFrame, EditorViewportProfileNode};
+
+type RenderPlayWorld = Box<dyn FnOnce(&World) -> Result<EditorViewportFrame, String> + Send>;
 
 #[derive(Default)]
 pub struct PlayProject {
@@ -17,7 +20,8 @@ pub struct PlayProject {
 
 enum Request {
     Start { generation: u64, source: String, snapshot: WorldSnapshot, project: PlayProject, reply: Sender<Result<WorldSnapshot, String>> },
-    Step { generation: u64, snapshot: WorldSnapshot, input: ScriptInput, dt: f32, reply: Sender<Result<WorldSnapshot, String>> },
+    Step { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<WorldSnapshot, String>> },
+    Render { generation: u64, render: RenderPlayWorld, reply: Sender<Result<EditorViewportFrame, String>> },
     Stop { generation: u64 },
 }
 
@@ -48,6 +52,16 @@ impl Default for EditorPlayRuntime {
                         if result.is_err() { session = None; }
                         let _ = reply.send(result);
                     }
+                    Request::Render { generation, render, reply } => {
+                        let result = session.as_ref().filter(|(id, _)| *id == generation && current.load(Ordering::SeqCst) == generation)
+                            .ok_or_else(|| "Play session expired".to_string()).and_then(|(_, session)| {
+                                let mut frame = render(&session.world)?;
+                                frame.profile.simulation_ms = Some(session.step_ms);
+                                frame.profile.simulation_stages = session.step_stages.clone();
+                                Ok(frame)
+                            });
+                        let _ = reply.send(result);
+                    }
                     Request::Stop { generation } => { if current.load(Ordering::SeqCst) == generation { session = None; } }
                 }
             }
@@ -72,6 +86,10 @@ impl EditorPlayRuntime {
     }
 
     pub fn step(&self, generation: u64, snapshot: WorldSnapshot, input: ScriptInput, dt: f32) -> Result<WorldSnapshot, String> {
+        self.advance(generation, Some(snapshot), input, dt)
+    }
+
+    pub fn advance(&self, generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<WorldSnapshot, String> {
         if !dt.is_finite() || dt <= 0.0 || dt > 1.0 { return Err("Play step delta must be in (0, 1]".into()); }
         let (reply, result) = mpsc::channel();
         self.sender.send(Request::Step { generation, snapshot, input, dt, reply }).map_err(|error| error.to_string())?;
@@ -79,6 +97,13 @@ impl EditorPlayRuntime {
     }
 
     pub fn stop(&self) { self.begin(); }
+
+    /// Render on the owning worker so each view uses the live world without a scene round trip.
+    pub fn render(&self, generation: u64, render: impl FnOnce(&World) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
+        let (reply, result) = mpsc::channel();
+        self.sender.send(Request::Render { generation, render: Box::new(render), reply }).map_err(|error| error.to_string())?;
+        result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))?
+    }
 }
 
 struct PlaySession {
@@ -93,6 +118,8 @@ struct PlaySession {
     audio: AudioRuntime,
     physics2d: PhysicsWorld2D,
     physics3d: PhysicsWorld,
+    step_ms: f64,
+    step_stages: Vec<EditorViewportProfileNode>,
 }
 
 impl PlaySession {
@@ -106,16 +133,32 @@ impl PlaySession {
         script.inject_snapshot_json(&serde_json::to_string(&initial).map_err(|error| error.to_string())?).map_err(|error| error.to_string())?;
         script.eval(source).map_err(|error| error.to_string())?;
         script.notify_scene_loaded(&initial_scene.name, &initial_scene.path.to_string_lossy().replace('\\', "/"), initial_scene.build_index, initial_scene.build_scene_count).map_err(|error| error.to_string())?;
-        Ok(Self { world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new() })
+        Ok(Self { world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new() })
     }
 
-    fn step(&mut self, snapshot: WorldSnapshot, input: ScriptInput, dt: f32) -> Result<WorldSnapshot, String> {
+    fn step(&mut self, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<WorldSnapshot, String> {
+        let started = Instant::now();
+        self.step_stages.clear();
+        let stages = &mut self.step_stages;
+        let mut stage_started = started;
+        let mut stage = |name: &str| {
+            let total_ms = stage_started.elapsed().as_secs_f64() * 1000.0;
+            stages.push(EditorViewportProfileNode { name: name.into(), total_ms, self_ms: total_ms, calls: 1, children: Vec::new() });
+            stage_started = Instant::now();
+        };
         let world = &mut self.world;
         let elapsed = world.time.elapsed + f64::from(dt);
-        mengine_scene::reconcile_snapshot(world, &snapshot);
+        if let Some(snapshot) = snapshot {
+            mengine_scene::reconcile_snapshot(world, &snapshot);
+        } else {
+            world.time.frame += 1;
+            world.time.sim_frame += 1;
+        }
         world.time.elapsed = elapsed;
         world.time.delta = dt;
+        stage("Reconcile");
         self.script.set_input(&input).map_err(|error| error.to_string())?;
+        stage("Input");
         // Bound substeps so Agent stepping and realtime Play use the same collision solver.
         let steps = (dt / (1.0 / 60.0)).ceil().max(1.0) as u32;
         for _ in 0..steps {
@@ -130,6 +173,7 @@ impl PlaySession {
             self.script.notify_collision_events(&pairs(&three.started), &pairs(&three.stopped)).map_err(|error| error.to_string())?;
             self.script.notify_trigger_events(&pairs(&three.trigger_started), &pairs(&three.trigger_stopped)).map_err(|error| error.to_string())?;
         }
+        stage("Physics and collision callbacks");
         for failure in self.timelines.update(world, dt) { log::error!("Timeline '{}': {}", failure.asset, failure.error); }
         for failure in self.animations.update(world, dt) { log::error!("Animation '{}': {}", failure.clip, failure.error); }
         for failure in self.animations.apply_timeline_blends(world, &self.timelines.animation_blends()) { log::error!("Animation blend '{}': {}", failure.clip, failure.error); }
@@ -141,6 +185,7 @@ impl PlaySession {
         if !events.is_empty() || !signals.is_empty() { self.script.sync_world(world).map_err(|error| error.to_string())?; }
         self.script.notify_animation_events(&events).map_err(|error| error.to_string())?;
         self.script.notify_timeline_signals(&signals).map_err(|error| error.to_string())?;
+        stage("Animation, timeline and audio");
         self.script.tick(world, dt).map_err(|error| error.to_string())?;
         for request in self.script.take_runtime_requests() {
             let Some(selector) = (ScriptRequestContext { world, project_root: self.root.as_deref(), animations: &mut self.animations, timelines: &mut self.timelines, audio: &mut self.audio }).apply(request) else { continue; };
@@ -159,7 +204,11 @@ impl PlaySession {
                 Err(error) => log::error!("scene switch rejected: {error}"),
             }
         }
-        Ok(WorldSnapshot::from_world(world))
+        stage("Script and runtime requests");
+        let snapshot = WorldSnapshot::from_world(world);
+        stage("Snapshot export");
+        self.step_ms = started.elapsed().as_secs_f64() * 1000.0;
+        Ok(snapshot)
     }
 }
 
@@ -168,22 +217,48 @@ mod tests {
     use super::*;
 
     #[test]
+    fn retained_world_advances_clock_and_accepts_explicit_edits() {
+        let runtime = EditorPlayRuntime::default();
+        let id = runtime.begin();
+        runtime.start(id, "function onTick(dt, frame) { if (frame !== engine.snapshot.frame) throw Error('clock mismatch'); engine.setClearColor(frame, engine.snapshot.clear_color[1], dt, 1); }".into(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let first = runtime.advance(id, None, ScriptInput::default(), 0.125).unwrap();
+        let mut second = runtime.advance(id, None, ScriptInput::default(), 0.125).unwrap();
+        assert_eq!((first.frame, second.frame, second.sim_frame, second.elapsed), (1, 2, 2, 0.25));
+        second.clear_color[1] = 0.75;
+        second.frame += 1;
+        let edited = runtime.advance(id, Some(second), ScriptInput::default(), 0.125).unwrap();
+        assert_eq!(edited.clear_color, [3.0, 0.75, 0.125, 1.0]);
+        let retained = runtime.advance(id, None, ScriptInput::default(), 0.125).unwrap();
+        assert_eq!(retained.clear_color, [4.0, 0.75, 0.125, 1.0]);
+        runtime.stop();
+        assert!(runtime.advance(id, None, ScriptInput::default(), 0.125).is_err());
+    }
+
+    #[test]
     #[ignore = "manual sample performance measurement; requires MENGINE_SAMPLE_ROOT"]
     fn measure_sample_script_frames() {
         let root = PathBuf::from(std::env::var("MENGINE_SAMPLE_ROOT").expect("sample root"));
         let value: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
         let snapshot: WorldSnapshot = serde_json::from_value(value["world"].clone()).unwrap();
-        let source = std::fs::read_to_string(root.join("Assets/Scripts/Main.js")).unwrap();
+        let source = match std::env::var("MENGINE_COMPILED_SCRIPT") {
+            Ok(path) => serde_json::from_slice::<serde_json::Value>(&std::fs::read(path).unwrap()).unwrap()["source"].as_str().unwrap().to_owned(),
+            Err(_) => std::fs::read_to_string(root.join("Assets/Scripts/Main.js")).unwrap(),
+        };
         let runtime = EditorPlayRuntime::default();
         let mut snapshot = runtime.start(runtime.begin(), source, snapshot, PlayProject { root: Some(root), name: "Sample performance".into(), ..Default::default() }).unwrap();
+        let warmup: u32 = std::env::var("MENGINE_WARMUP_FRAMES").ok().and_then(|value| value.parse().ok()).unwrap_or(0);
+        for frame in 0..warmup {
+            let mut input = ScriptInput::default();
+            if frame == 1 { input.key("Enter".into(), true); }
+            snapshot = runtime.advance(runtime.generation(), None, input, 1.0 / 60.0).unwrap();
+        }
         let start = std::time::Instant::now();
         for frame in 0..60 {
             let mut input = ScriptInput::default();
-            if frame == 1 { input.key("Enter".into(), true); }
-            input.keys.insert("KeyW".into());
-            snapshot = runtime.step(runtime.generation(), snapshot, input, 0.1).unwrap();
+            if warmup == 0 && frame == 1 { input.key("Enter".into(), true); }
+            snapshot = runtime.advance(runtime.generation(), None, input, 1.0 / 60.0).unwrap();
         }
-        println!("60 sample frames in {:?}; {:.2} ms/frame (debug CPU simulation, excludes rendering)", start.elapsed(), start.elapsed().as_secs_f64() * 1000.0 / 60.0);
+        println!("60 retained-world frames in {:?}; {:.2} ms/frame (simulation, bridge and snapshot export; excludes rendering); frame {}", start.elapsed(), start.elapsed().as_secs_f64() * 1000.0 / 60.0, snapshot.frame);
         runtime.stop();
     }
 

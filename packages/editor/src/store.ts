@@ -227,6 +227,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let playError: unknown = null;
   let playInput = emptyPlayInput();
   let playClearColor: [number, number, number, number] | null = null;
+  let playSyncedFingerprint = '';
+  let playStepRequestMs = 0;
+  let remotePlaySessionId: number | undefined;
+  const playFingerprint = () => JSON.stringify([playEntities, playClearColor ?? clearColor]);
+  const nativePlaySessionId = () => mode !== 'edit' && playFingerprint() === playSyncedFingerprint ? playRuntime?.sessionId ?? remotePlaySessionId : undefined;
 
   const trackPlayOperation = (operation: Promise<void>, generation: number) => {
     playBusy = true;
@@ -244,16 +249,20 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
 
   const runPlayFrame = (dt: number) => {
     if (!playRuntime || !playEntities) return;
+    const started = performance.now();
     const generation = playGeneration;
     const input = structuredClone(playInput);
     playInput.pressedKeys = []; playInput.releasedKeys = [];
     playInput.pressedButtons = []; playInput.releasedButtons = [];
-    const snapshot = { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: playClearColor ?? clearColor, selected: primarySelected() };
+    const snapshot = playRuntime.retainsWorld && playFingerprint() === playSyncedFingerprint ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: playClearColor ?? clearColor, selected: primarySelected() };
     trackPlayOperation(playRuntime.step(snapshot, input, dt).then((result) => {
       if (generation !== playGeneration || mode === 'edit') return;
       playEntities = result.entities.map(normalizeEntity);
       playClearColor = result.clearColor;
       playSpin = result.simulationTime ?? playSpin;
+      frame = result.frame;
+      playSyncedFingerprint = playFingerprint();
+      playStepRequestMs = performance.now() - started;
     }), generation);
   };
 
@@ -820,12 +829,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return structuredClone(entities);
   };
 
-  const serializeScene = (sceneName: string, source: EntityRec[]) => JSON.stringify(
+  const serializeScene = (sceneName: string, source: EntityRec[], runtime = false) => JSON.stringify(
     {
       version: CURRENT_SCENE_VERSION,
       name: sceneName,
       world: {
-        entities: structuredClone(source).map((e) => ({
+        entities: source.map((e) => ({
           entity: e.entity,
           name: e.name,
           parent: e.parent,
@@ -836,7 +845,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           components: e.components,
         })),
         frame,
-        clearColor,
+        clearColor: runtime ? playClearColor ?? clearColor : clearColor,
+        ...(runtime ? { simulationTime: playSpin } : {}),
         selected: primarySelected(),
         selectedIds: [...selectedIds],
       },
@@ -858,6 +868,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       world?: {
         entities?: EntityRec[];
         clearColor?: [number, number, number, number];
+        simulationTime?: number;
+        frame?: number;
         selectedIds?: unknown;
         selected?: unknown;
       };
@@ -900,7 +912,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
     playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
     mode = targetMode;
-    playSpin = 0;
+    playClearColor = targetMode === 'edit' ? null : clearColor;
+    frame = data.world?.frame ?? frame;
+    playSpin = targetMode === 'edit' ? 0 : data.world?.simulationTime ?? 0;
     animationPreview = null;
     timelinePreview = null;
     gizmoDragging = false;
@@ -991,9 +1005,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       };
     },
     /** Read-only live data for viewport presentation; public snapshots remain isolated copies. */
-    playViewportSnapshot(): WorldSnapshotView | null {
-      return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected() } : null;
+    playViewportSnapshot(): (WorldSnapshotView & { nativeSessionId?: number; simulationRequestMs: number }) | null {
+      return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), nativeSessionId: nativePlaySessionId(), simulationRequestMs: playStepRequestMs } : null;
     },
+    get nativePlaySessionId() { return nativePlaySessionId(); },
+    get playSessionId() { return mode === 'edit' ? undefined : playRuntime?.sessionId ?? remotePlaySessionId; },
     authoredEntities() {
       return structuredClone(editEntities);
     },
@@ -1544,6 +1560,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
             playEntities = result.entities.map(normalizeEntity);
             playClearColor = result.clearColor;
             playSpin = result.simulationTime ?? playSpin;
+            frame = result.frame;
+            playSyncedFingerprint = playFingerprint();
           }
           if (playEntities) behaviourRunner.mount(playEntities);
         }
@@ -1556,6 +1574,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       playError = null;
       playInput = emptyPlayInput();
       playClearColor = null;
+      remotePlaySessionId = undefined;
+      playSyncedFingerprint = '';
       behaviourRunner.unmount();
       playEntities = null;
       mode = 'edit';
@@ -1608,6 +1628,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
       if (input.pointer) playInput.pointer = [...input.pointer];
       if (input.viewport) playInput.viewport = [...input.viewport];
+    },
+    canAddComponent(entity: number | null, type: string) {
+      const target = entity == null ? undefined : find(entity);
+      return target != null && target.components[type] == null;
     },
     addComponent(entity: number, type: string, value: Record<string, unknown>) {
       return this.addComponents([entity], type, value) > 0;
@@ -2755,7 +2779,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     /** Session-only serialization used to mirror live Play state to detached windows. */
     saveSessionSceneJson(sceneName = 'Untitled') {
-      return serializeScene(sceneName, list());
+      return serializeScene(sceneName, list(), mode !== 'edit');
     },
     newScene() {
       if (mode !== 'edit') return false;
@@ -2772,8 +2796,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       applySceneJson(json, 'edit', true, false);
       return true;
     },
-    loadRemoteSceneJson(json: string, remoteMode: EditorMode) {
+    loadRemoteSceneJson(json: string, remoteMode: EditorMode, nativeSessionId?: number) {
       applySceneJson(json, remoteMode, false);
+      remotePlaySessionId = nativeSessionId;
+      playSyncedFingerprint = playFingerprint();
     },
   };
 }

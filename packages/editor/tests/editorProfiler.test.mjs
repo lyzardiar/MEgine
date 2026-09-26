@@ -36,7 +36,7 @@ test('native presentation summary retains correct cadence after history reaches 
   for (let index = 0; index < 300; index++) recordNativeViewportProfile('game', { schemaVersion: 1, totalMs: 4, transportMs: 10 }, index * 20);
   const profiles = readNativeViewportProfiles('game');
   assert.equal(profiles.length, 240);
-  assert.deepEqual(summarizeNativeViewportProfiles(profiles), { intervals: 240, averagePresentIntervalMs: 20, p95PresentIntervalMs: 20, presentedFps: 50, averageRequestMs: 10, averageRenderMs: 4 });
+  assert.deepEqual(summarizeNativeViewportProfiles(profiles), { intervals: 240, averagePresentIntervalMs: 20, p95PresentIntervalMs: 20, presentedFps: 50, averageRequestMs: 10, averageRenderMs: 4, averageSimulationMs: null, averageSimulationRequestMs: null });
   clearEditorProfilerSamples();
   recordNativeViewportProfile('game', { schemaVersion: 1, totalMs: 4 }, 9000);
   assert.equal(summarizeNativeViewportProfiles(readNativeViewportProfiles('game')).intervals, 0);

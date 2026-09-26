@@ -7,7 +7,7 @@ process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--disable-background-timer-th
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(command,args={})=>{console.log(command);const r=await bridgeExecute(command,args,{requestId:crypto.randomUUID()});assert.ok(r.ok,r.error?.message);return r.data;};
 const root=fileURLToPath(new URL('../samples/thunder-fighter/',import.meta.url));
-const out=fileURLToPath(new URL('../docs/designs/thunder-fighter/',import.meta.url));
+const out=process.env.MENGINE_PERFORMANCE_OUT ?? fileURLToPath(new URL('../docs/designs/thunder-fighter/',import.meta.url));
 const snapshot=()=>query('scene.snapshot');
 const state=async()=>JSON.parse((await snapshot()).entities.find(e=>e.name==='Flight telemetry').components.Text.text);
 const capture=async name=>{const result=await query('view.screenshot',{target:'game'});fs.writeFileSync(`${out}/${name}.png`,Buffer.from(result.dataUrl.split(',')[1],'base64'));console.log('captured',name);};
@@ -23,6 +23,17 @@ try {
   await drive(['Space']);assert.equal((await state()).bombs,2);await capture('live-nova');
   await drive(['Escape']);const paused=await state();assert.equal(paused.mode,'paused');await drive(['KeyW','Space'],2);assert.deepEqual(await state(),paused);
   await drive(['Enter']);assert.equal((await state()).mode,'playing');await drive(['KeyR']);assert.equal((await state()).bombs,3);
+  if(process.argv.includes('--measure')){
+    await execute('playback.input',{keys:[]});await execute('playback.pause');
+    await new Promise(resolve=>setTimeout(resolve,4000));await execute('profiler.clear');
+    const before=await snapshot(),started=performance.now();
+    await new Promise(resolve=>setTimeout(resolve,12000));
+    const after=await snapshot(),elapsedMs=performance.now()-started,telemetry=await state();
+    assert.equal(telemetry.mode,'playing','Performance capture must include active combat');
+    const game=await query('profiler.get_samples',{source:'game',limit:120});
+    fs.writeFileSync(`${out}/performance.json`,JSON.stringify({scope:'Release native editor, live opening combat, 4s warmup and 12s capture',elapsedMs,simulationFrames:after.simFrame-before.simFrame,telemetry,game},null,2)+'\n');
+    await capture('realtime-combat');
+  }
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
   if(!process.argv.includes('--live-only')){
     for(const name of ['boss-3-0','boss-3-1','boss-4-0','boss-4-1','boss-4-2','laser','nova','victory']){
@@ -31,6 +42,6 @@ try {
     }
     await execute('scene.load_json',{json:JSON.stringify({version:1,name:'Astral Thunder / Ion Front',world:authored})});
   }
-  fs.writeFileSync(`${out}/agent-checks.json`,JSON.stringify({passed:true,path:'Native editor Agent bridge',start:true,movement:true,nova:true,pauseFreezes:true,resume:true,restart:true,stopRestoresAuthored:true,screenshots:'Live title and Nova; boss phases, Nova and victory rendered from native input replay snapshots'},null,2)+'\n');
+  fs.writeFileSync(`${out}/agent-checks.json`,JSON.stringify({passed:true,path:'Native editor Agent bridge',start:true,movement:true,nova:true,pauseFreezes:true,resume:true,restart:true,stopRestoresAuthored:true,screenshots:process.argv.includes('--live-only') ? 'Live title and Nova' : 'Live title and Nova; boss phases, Nova and victory rendered from native input replay snapshots'},null,2)+'\n');
   console.log('PASS: Agent input, pause, restart, Stop restoration and native captures');
 }catch(error){console.error(error.stack);process.exitCode=1;}finally{try{await execute('playback.stop');}catch{}closeBridgeConnection();}

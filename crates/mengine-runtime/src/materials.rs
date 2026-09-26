@@ -16,7 +16,7 @@ use mengine_rhi::{
 };
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::time::SystemTime;
 
 #[derive(Clone)]
@@ -59,6 +59,8 @@ struct LoadedSurfaceShader {
     schema: Arc<SurfaceShaderSchema>,
     parameter_bindings: Arc<[SurfaceShaderParameterBinding]>,
     texture_names: Arc<[String]>,
+    surface_validation: OnceLock<Result<(), String>>,
+    ui_validation: OnceLock<Result<(), String>>,
 }
 
 #[derive(Clone)]
@@ -104,7 +106,7 @@ impl RuntimeMaterialCache {
                 if material.shader == MaterialShader::Custom {
                     match self.load_custom_shader(&material.custom_shader) {
                         Ok(shader) => {
-                            match validate_surface_shader_hook(&shader.source).and_then(|_| {
+                            match shader.surface_validation.get_or_init(|| validate_surface_shader_hook(&shader.source)).clone().and_then(|_| {
                                 resolve_surface_shader_material_with_schema(
                                     &material,
                                     &shader.schema,
@@ -171,7 +173,7 @@ impl RuntimeMaterialCache {
             return Ok(render);
         }
         let shader = self.load_custom_shader(&material.custom_shader)?;
-        validate_surface_shader_hook(&shader.source)?;
+        shader.surface_validation.get_or_init(|| validate_surface_shader_hook(&shader.source)).clone()?;
         let bindings = resolve_surface_shader_material_with_schema(
             material,
             &shader.schema,
@@ -203,7 +205,7 @@ impl RuntimeMaterialCache {
                 );
             }
             let shader = self.load_custom_shader(&material.custom_shader)?;
-            validate_ui_shader_hook(&shader.source)?;
+            shader.ui_validation.get_or_init(|| validate_ui_shader_hook(&shader.source)).clone()?;
             let bindings = resolve_surface_shader_material_with_schema(
                 &material,
                 &shader.schema,
@@ -432,6 +434,8 @@ impl RuntimeMaterialCache {
                     let schema = Arc::new(parse_surface_shader_schema(&source)?);
                     let (parameter_bindings, texture_names) = surface_shader_reflection(&schema);
                     Ok(Arc::new(LoadedSurfaceShader {
+                        surface_validation: OnceLock::new(),
+                        ui_validation: OnceLock::new(),
                         source: Arc::from(source),
                         schema,
                         parameter_bindings,
@@ -1415,6 +1419,10 @@ fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
 
         let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
         let ui = cache.resolve_ui(material_key).unwrap();
+        let shader_key = "Assets/Shaders/GlowUi.mshader";
+        let validated = cache.load_custom_shader(shader_key).unwrap();
+        assert_eq!(validated.ui_validation.get(), Some(&Ok(())));
+        assert!(validated.surface_validation.get().is_none());
         assert!(!ui.is_error);
         assert_eq!(ui.blend, UiBlendMode::Additive);
         assert_eq!(ui.base_color, [0.5, 0.75, 1.0, 1.0]);
@@ -1458,6 +1466,11 @@ fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
             forward.is_error,
             "a UI hook must not enter the forward pipeline"
         );
+        assert!(Arc::ptr_eq(&validated, &cache.load_custom_shader(shader_key).unwrap()));
+        assert!(validated.surface_validation.get().unwrap().is_err());
+        std::fs::write(shaders.join("GlowUi.mshader"), "fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> { return invalid_symbol; }").unwrap();
+        cache.invalidate(shader_key);
+        assert!(cache.resolve_ui(material_key).unwrap().is_error, "shader edits must discard cached validation");
         std::fs::remove_dir_all(root).unwrap();
     }
 }
