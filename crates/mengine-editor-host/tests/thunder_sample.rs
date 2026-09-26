@@ -1,4 +1,4 @@
-//! Opt-in campaign acceptance through the real Boa bridge and native Play worker.
+//! Opt-in campaign acceptance through the real QuickJS bridge and native Play worker.
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_editor_host::{EditorPlayRuntime, PlayProject, ScriptInput};
 use serde_json::Value;
@@ -58,7 +58,7 @@ fn complete_thunder_campaign_in_native_play_runtime() {
     assert!(state["peak"].as_u64().unwrap() >= 150);
     assert!(state["graze"].as_u64().unwrap() > 0);
     assert!(state["damageTaken"].as_u64().unwrap() > 0);
-    let report = serde_json::json!({"passed":true,"path":"EditorPlayRuntime / Boa / native World / input-only replay","elapsedMs":start.elapsed().as_millis(),"flight":state,"phasePeaks":phase_peaks});
+    let report = serde_json::json!({"passed":true,"path":"EditorPlayRuntime / QuickJS / native World / input-only replay","elapsedMs":start.elapsed().as_millis(),"flight":state,"phasePeaks":phase_peaks});
     std::fs::write(repo.join("docs/designs/thunder-fighter/native-campaign.json"), serde_json::to_string_pretty(&report).unwrap() + "\n").unwrap();
     println!("{report}");
     runtime.stop();

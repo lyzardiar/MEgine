@@ -18,6 +18,12 @@ command RemoveComponent {
   component: string
 }
 
+command SetSpriteBatchData {
+  entity:    u64
+  instances: float4_array
+  colors:    float4_array
+}
+
 command SetParent {
   entity: u64
   parent: u64?

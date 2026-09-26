@@ -1,6 +1,8 @@
 # Runtime scripting
 
-MEngine 的 PC Player 和桌面编辑器 Play Mode 使用 Boa 执行项目配置中的启动脚本。脚本只通过全局
+每个 ScriptHost 使用独立的 QuickJS-NG VM（rquickjs），编辑器与独立 Player 共享同一 API。每次脚本调用限时 1 秒、JS 堆上限 256 MiB；超时以脚本错误返回。世界快照保持帧间隔离，未读取 `engine.snapshot` / `lastSnapshot` 时不序列化完整 JSON 字符串或解析 JS 对象。实体 ID 支持十进制字符串与 BigInt，以保留大于 2^53 的精度。
+
+MEngine 的 PC Player 和桌面编辑器 Play Mode 使用 QuickJS 执行项目配置中的启动脚本。脚本只通过全局
 `engine` 桥接器提交受控请求，场景和 World 的实际修改发生在帧边界。
 
 ## 生命周期
@@ -75,3 +77,11 @@ Agent 可调用 `playback.input`（MCP `set_game_input`）设置 held 状态，�
 来源为 Gamma 的 2D 场景需要在导入时将数值 RGB 解码到线性空间，同时关闭 ACES。
 纹理继续使用 sRGB 采样，不再次转换像素。官方 2D 示例在相机实体上保存该 EnvironmentLight 设置，
 并禁用环境背景，使场景背景颜色直接输出。原生截图验证背景为源颜色 `(49,77,121)`。
+
+## 批量精灵数据
+
+`engine.setSpriteBatchData(entity, instances, colors?)` 在帧边界替换已有 `SpriteBatch2D` 的实例和颜色数组，保留精灵、材质、尺寸、排序等作者属性。实例行是 `[x, y, rotationRadians, scale]`，颜色行是 `[r, g, b, a]`；两个数组各最多 8192 行，只接受有限 float32 值。缺少颜色时使用组件默认颜色。返回值表示请求已入队；不存在的实体或组件在提交时忽略。格式错误抛出脚本错误，超限或非有限数据返回 false。
+
+该接口直接复制 JS 数值数组到原生命令，避免动态弹幕每帧转换整段 JSON。命令仍保持提交顺序，失败脚本帧丢弃队列。雷霆战机在提供该接口的 Host 上使用此路径，旧 Host 和 Node 回放仍使用 `pushCommandJson`。
+
+Agent 的 `batch.apply` 同时接受 `{op: "setSpriteBatchData", entity, instances, colors}`，先验证完整事务，编辑态保留 Undo。

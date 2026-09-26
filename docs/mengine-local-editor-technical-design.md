@@ -106,7 +106,7 @@ flowchart LR
 #### Play Runtime
 
 - 从编辑器生成的临时场景快照启动。
-- 使用正式 `mengine-runtime`、Boa、RHI、物理和音频路径。
+- 使用正式 `mengine-runtime`、QuickJS、RHI、物理和音频路径。
 - 独立维护 Play World；Stop 直接销毁进程和临时目录。
 
 ### 4.2 为什么 Edit Host 不做 Sidecar
@@ -224,7 +224,7 @@ MyGame/
 
 编译器生成两份产物：
 
-1. Boa Runtime 使用的 JavaScript Bundle。
+1. QuickJS Runtime 使用的 JavaScript Bundle。
 2. Inspector 使用的字段、装饰器、按钮、依赖和校验元数据。
 
 React WebView 不执行用户项目脚本。正式发行包携带编译器，不要求用户安装 Node.js。编译失败只阻止受影响脚本刷新和 Play，不阻止打开场景或编辑其他组件。
@@ -304,7 +304,7 @@ registerMenuItem('GameObject/UI/Health Bar', createHealthBar, {
 - Capability 按窗口限定，不授予 WebView 通用 FS/Shell 权限。
 - 自定义 Command 继续校验窗口标签、Project ID、路径和负载。
 - Shell 仅由 Rust Backend 启动白名单 Sidecar。
-- 项目脚本运行在 Boa/Runtime 隔离边界，不能取得编辑器文件系统能力。
+- 项目脚本运行在 QuickJS/Runtime 隔离边界，不能取得编辑器文件系统能力。
 - 日志、错误和诊断包清除项目外绝对路径、环境变量和潜在凭据。
 
 ## 13. 恢复与诊断
@@ -366,7 +366,7 @@ registerMenuItem('GameObject/UI/Health Bar', createHealthBar, {
 ### P2：Runtime 闭环
 
 - Runtime Sidecar、Game View、Play/Pause/Step/Stop。
-- TypeScript 编译、Boa 加载、Console 和脚本热更新。
+- TypeScript 编译、QuickJS 加载、Console 和脚本热更新。
 
 ### P3：生产资源链路
 

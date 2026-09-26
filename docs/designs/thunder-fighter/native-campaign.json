@@ -1,5 +1,5 @@
 {
-  "elapsedMs": 52873,
+  "elapsedMs": 5684,
   "flight": {
     "armor": 5,
     "bombs": 1,
@@ -30,7 +30,7 @@
     "time": 109.00833333336617
   },
   "passed": true,
-  "path": "EditorPlayRuntime / Boa / native World / input-only replay",
+  "path": "EditorPlayRuntime / QuickJS / native World / input-only replay",
   "phasePeaks": {
     "boss-3-0": 170,
     "boss-3-1": 290,

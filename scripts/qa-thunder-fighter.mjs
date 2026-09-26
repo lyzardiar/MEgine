@@ -30,9 +30,12 @@ try {
     await new Promise(resolve=>setTimeout(resolve,12000));
     const after=await snapshot(),elapsedMs=performance.now()-started,telemetry=await state();
     assert.equal(telemetry.mode,'playing','Performance capture must include active combat');
+    await execute('playback.pause');
     const game=await query('profiler.get_samples',{source:'game',limit:120});
     fs.writeFileSync(`${out}/performance.json`,JSON.stringify({scope:'Release native editor, live opening combat, 4s warmup and 12s capture',elapsedMs,simulationFrames:after.simFrame-before.simFrame,telemetry,game},null,2)+'\n');
     await capture('realtime-combat');
+    const windowFrame=await query('view.window_screenshot',{windowLabel:'main'});
+    fs.writeFileSync(`${out}/realtime-editor.png`,Buffer.from(windowFrame.dataUrl.split(',')[1],'base64'));
   }
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
   if(!process.argv.includes('--live-only')){

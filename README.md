@@ -5,7 +5,7 @@ Cross-platform game engine: **Rust** core + **TypeScript** scripting/tools.
 - Platforms: PC (primary), Android / iOS (player)
 - Graphics: wgpu
 - Editor: Tauri 2 + React/TS panels + native wgpu viewport
-- Script: Boa JS host (CommandBuffer bridge)
+- Script: QuickJS JS host (CommandBuffer bridge)
 - Architecture: Schema/IDL → ECS + CommandBuffer + Intent IR
 
 ## Quick start

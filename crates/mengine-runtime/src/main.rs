@@ -1,5 +1,9 @@
 //! MEngine PC runtime / sample player.
 
+#[cfg(windows)]
+#[global_allocator]
+static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 use anyhow::{bail, Context, Result};
 use clap::Parser;
 use glam::Vec4;

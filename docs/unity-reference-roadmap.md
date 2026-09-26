@@ -44,9 +44,9 @@ Asset Store 包与 PaddleGameSO 不作为本次 MIT 示例源码的一部分。�
 | Input System | 原生键鼠输入驱动完整比赛，Agent 可注入物理键并暂停步进 | 动作资产、重绑定、手柄与多设备验收 |
 | URP / VFX | 原生 PBR、方向光阴影、海面 / 天空 / 路面自定义着色器、命中粒子 | 屏幕空间反射、接触阴影、泡沫、后处理与 GPU 性能分析 |
 | UI / 游戏流程 | 标题、仪表、连击、暂停和结果界面 | 通用运行时 Button 事件桥、编辑器与 Player 的 RectTransform 坐标一致性 |
-| Agent / 脚本效率 | Game 截图直接取得指定分辨率原生像素；场景快照直接构造 Boa 值；避免无事件帧重复注入 | 多步原生批处理、脚本快照增量化与帧预算分析 |
+| Agent / 脚本效率 | Game 截图直接取得指定分辨率原生像素；QuickJS 按需转换快照；避免无事件帧重复注入 | 多步原生批处理、脚本快照增量化与帧预算分析 |
 
-验证包括 Node 输入逻辑、真实 Boa / 原生 World 完整比赛，以及原生编辑器 Agent 交互截图。独立 Player 已构建、校验并启动；桌面自动化窗口捕获失败，Player 窗口内的操作与音频听感仍待人工确认。debug 脚本帧约 47 ms，未宣称达到 60 FPS。
+验证包括 Node 输入逻辑、真实 QuickJS / 原生 World 完整比赛，以及原生编辑器 Agent 交互截图。独立 Player 已构建、校验并启动；桌面自动化窗口捕获失败，Player 窗口内的操作与音频听感仍待人工确认。当前性能测量及其验收范围见[编辑器性能报告](designs/editor-performance/README.md)。
 
 本次同时修复无 Transform 的全局 EnvironmentLight 被忽略的问题，并覆盖失活环境光不生效的回归测试。上述能力在实际样例内交付；DOTween、Cinemachine、Input System 等通用工具仍按各自验收要求推进。
 
@@ -56,7 +56,13 @@ Asset Store 包与 PaddleGameSO 不作为本次 MIT 示例源码的一部分。�
 
 引擎新增 `SpriteBatch2D`：每个实例保存局部 X/Y、弧度和尺寸倍数，可提供平行颜色数组；支持父级变换、图集、材质、MaterialPropertyBlock、排序、编辑器预览和 Player 依赖收集。单组件处理前 8192 个实例，忽略非有限或非正尺寸；样例限制 900 发敌弹。复用现有精灵投影与材质合批路径。
 
-真实 Boa / 原生 World 输入回放约 109 秒通关，覆盖五种 Boss 阶段、受伤、擦弹与四次 Nova，峰值 478 发敌弹。Agent 实况验证出击、移动、Nova、暂停、继续、重开及 Stop 场景恢复；原生 Game 截图检查各弹幕阶段和图集切片。独立 Player 的桌面操作与音频听感尚未通过验收，未宣称达到 60 FPS。
+真实 QuickJS / 原生 World 输入回放约 109 秒通关，覆盖五种 Boss 阶段、受伤、擦弹与四次 Nova，峰值 478 发敌弹。Agent 实况验证出击、移动、Nova、暂停、继续、重开及 Stop 场景恢复；原生 Game 截图检查各弹幕阶段和图集切片。独立 Player 的桌面操作与音频听感尚未通过验收，未宣称达到 60 FPS。
+
+## 2026-09-26：小游戏帧预算与运行时重构
+
+编辑器与独立 Player 使用 QuickJS-NG，脚本保持每宿主隔离、调用超时、堆限制和帧边界提交。新增 `engine.setSpriteBatchData` 数值数组接口；IDL、编辑器 Undo、Agent `batch.apply` 原子校验和 MCP schema 同步支持。雷霆战机直接提交弹幕数值数组；资源变更检查按 250 ms 轮询，原生渲染缓存文字几何并简化 Canvas 合批重叠分析。
+
+按模拟、原生命令（包含渲染）、上传、浏览器绘制汇总约 5 ms 的整体工作预算，IPC 请求延迟和画面交付频率另列。最新实战值、与原实现的对比、测量环境及剩余差距见[完整性能报告](designs/editor-performance/README.md)，不以单独渲染耗时替代整体耗时。两款原生完整回放、Player 包校验及多视图回归分别留存证据。
 
 ## 3D 参考
 

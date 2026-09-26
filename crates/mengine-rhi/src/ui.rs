@@ -419,6 +419,15 @@ fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> 
     if primitives.len() < 3 {
         return primitives;
     }
+    let mut seen = HashSet::new();
+    let mut previous = None;
+    if !primitives.iter().any(|primitive| {
+        if previous == Some(&primitive.key) { return false; }
+        previous = Some(&primitive.key);
+        !seen.insert(&primitive.key)
+    }) {
+        return primitives;
+    }
     let bounds: Vec<_> = primitives.iter().map(primitive_bounds).collect();
     let non_empty: Vec<_> = bounds
         .iter()
@@ -459,7 +468,8 @@ fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> 
         )
     };
 
-    let mut cells: HashMap<(usize, usize), Vec<usize>> = HashMap::new();
+    let mut cells = vec![Vec::<usize>::new(); axis * axis];
+    let mut visited = vec![usize::MAX; primitives.len()];
     let mut outgoing = vec![Vec::<usize>::new(); primitives.len()];
     let mut indegree = vec![0usize; primitives.len()];
     let mut grid_references = 0usize;
@@ -474,77 +484,65 @@ fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> 
         if grid_references > MAX_CANVAS_SORTING_GRID_REFERENCES {
             return primitives;
         }
-        let mut candidates = std::collections::BTreeSet::new();
         for cell_x in min_x..=max_x {
             for cell_y in min_y..=max_y {
-                if let Some(entries) = cells.get(&(cell_x, cell_y)) {
-                    candidates.extend(entries.iter().copied());
+                for &earlier in &cells[cell_x * axis + cell_y] {
+                    if visited[earlier] == index { continue; }
+                    visited[earlier] = index;
+                    if bounds[earlier].intersects(current) {
+                        overlap_edges += 1;
+                        if overlap_edges > MAX_CANVAS_OVERLAP_EDGES { return primitives; }
+                        outgoing[earlier].push(index);
+                        indegree[index] += 1;
+                    }
                 }
-            }
-        }
-        for earlier in candidates {
-            if bounds[earlier].intersects(current) {
-                overlap_edges += 1;
-                if overlap_edges > MAX_CANVAS_OVERLAP_EDGES {
-                    return primitives;
-                }
-                outgoing[earlier].push(index);
-                indegree[index] += 1;
             }
         }
         for cell_x in min_x..=max_x {
             for cell_y in min_y..=max_y {
-                cells.entry((cell_x, cell_y)).or_default().push(index);
+                cells[cell_x * axis + cell_y].push(index);
             }
         }
     }
 
+    let mut key_ids = HashMap::new();
+    let keys: Vec<usize> = primitives.iter().map(|primitive| {
+        let next = key_ids.len();
+        *key_ids.entry(&primitive.key).or_insert(next)
+    }).collect();
     let mut ready = std::collections::BTreeSet::new();
-    let mut ready_by_key: HashMap<UiBatchKey, std::collections::BTreeSet<usize>> = HashMap::new();
+    let mut ready_by_key = vec![std::collections::BTreeSet::new(); key_ids.len()];
     for (index, degree) in indegree.iter().copied().enumerate() {
         if degree == 0 {
             ready.insert(index);
-            ready_by_key
-                .entry(primitives[index].key.clone())
-                .or_default()
-                .insert(index);
+            ready_by_key[keys[index]].insert(index);
         }
     }
     let mut order = Vec::with_capacity(primitives.len());
-    let mut previous_key: Option<UiBatchKey> = None;
+    let mut previous_key: Option<usize> = None;
     while !ready.is_empty() {
         let next = previous_key
-            .as_ref()
-            .and_then(|key| ready_by_key.get(key))
-            .and_then(|entries| entries.first().copied())
+            .and_then(|key| ready_by_key[key].first().copied())
             .or_else(|| {
                 ready.iter().copied().find(|candidate| {
                     outgoing[*candidate].iter().copied().any(|dependent| {
                         indegree[dependent] == 1
-                            && ready_by_key.contains_key(&primitives[dependent].key)
+                            && !ready_by_key[keys[dependent]].is_empty()
                     })
                 })
             })
             .or_else(|| ready.first().copied())
             .expect("non-empty ready set");
         ready.remove(&next);
-        let key = primitives[next].key.clone();
-        if let Some(entries) = ready_by_key.get_mut(&key) {
-            entries.remove(&next);
-            if entries.is_empty() {
-                ready_by_key.remove(&key);
-            }
-        }
+        let key = keys[next];
+        ready_by_key[key].remove(&next);
         order.push(next);
         previous_key = Some(key);
         for dependent in outgoing[next].iter().copied() {
             indegree[dependent] -= 1;
             if indegree[dependent] == 0 {
                 ready.insert(dependent);
-                ready_by_key
-                    .entry(primitives[dependent].key.clone())
-                    .or_default()
-                    .insert(dependent);
+                ready_by_key[keys[dependent]].insert(dependent);
             }
         }
     }

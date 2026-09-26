@@ -1,50 +1,15 @@
 use crate::{ScriptError, ScriptInput};
-use boa_engine::{Finalize, JsData, Trace};
-use boa_engine::{js_string, Context, JsArgs, JsValue, NativeFunction, Source};
-use mengine_core::command::{CommandBuffer, WorldCommand};
-use mengine_core::World;
+use mengine_core::{command::{CommandBuffer, WorldCommand}, snapshot::WorldSnapshot, World};
+use rquickjs::{CaughtError, Context, Ctx, Function, Object, Persistent, Runtime};
+use rquickjs::context::EvalOptions;
 use serde_json::Value as JsonValue;
-use std::sync::Mutex;
+use std::{cell::{Cell, RefCell}, rc::Rc, time::{Duration, Instant}};
 
-#[derive(Trace, Finalize, JsData)]
-struct ScriptQueues {
-    #[unsafe_ignore_trace]
-    commands: Mutex<CommandBuffer>,
-    #[unsafe_ignore_trace]
-    requests: Mutex<Vec<ScriptRuntimeRequest>>,
-}
-
-// Script snapshots stay as native data until a script reads either public view.
-#[derive(Trace, Finalize, JsData)]
+#[derive(Default)]
 struct ScriptSnapshot {
-    #[unsafe_ignore_trace]
-    source: std::rc::Rc<JsonValue>,
-    #[unsafe_ignore_trace]
-    raw_json: Option<String>,
-    value: boa_gc::GcRefCell<Option<JsValue>>,
-    json_value: boa_gc::GcRefCell<Option<JsValue>>,
-}
-
-fn read_snapshot(_this: &JsValue, _args: &[JsValue], context: &mut Context) -> boa_engine::JsResult<JsValue> {
-    let state = context.get_data::<ScriptSnapshot>().expect("snapshot installed");
-    if let Some(value) = state.value.borrow().as_ref() { return Ok(value.clone()); }
-    let source = state.source.clone();
-    let value = JsValue::from_json(&source, context)?;
-    *context.get_data::<ScriptSnapshot>().unwrap().value.borrow_mut() = Some(value.clone());
-    Ok(value)
-}
-
-fn read_snapshot_json(_this: &JsValue, _args: &[JsValue], context: &mut Context) -> boa_engine::JsResult<JsValue> {
-    let state = context.get_data::<ScriptSnapshot>().expect("snapshot installed");
-    if let Some(value) = state.json_value.borrow().as_ref() { return Ok(value.clone()); }
-    let json = state.raw_json.clone().unwrap_or_else(|| serde_json::to_string(state.source.as_ref()).expect("JSON snapshot serializes"));
-    let value = JsValue::from(js_string!(json));
-    *state.json_value.borrow_mut() = Some(value.clone());
-    Ok(value)
-}
-
-fn pending(context: &Context) -> &Mutex<CommandBuffer> {
-    &context.get_data::<ScriptQueues>().expect("script queues installed").commands
+    revision: u64,
+    world: Option<WorldSnapshot>,
+    json: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -137,118 +102,164 @@ pub struct ScriptTimelineSignal {
     pub payload: Option<JsonValue>,
 }
 
-fn pending_runtime_requests(context: &Context) -> &Mutex<Vec<ScriptRuntimeRequest>> {
-    &context.get_data::<ScriptQueues>().expect("script queues installed").requests
-}
 
-fn queue_runtime_request(ctx: &Context, request: ScriptRuntimeRequest) -> boa_engine::JsResult<JsValue> {
-    if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
-        requests.push(request);
-        Ok(JsValue::new(true))
-    } else {
-        Ok(JsValue::new(false))
-    }
-}
 
-/// Embeds a JS engine and exposes `engine` global for tick scripts.
+/// One QuickJS runtime per host; editor and standalone players execute the same engine API.
 pub struct ScriptHost {
+    // Persistent functions must be released before their owning context and runtime.
+    tick_callback: Option<Persistent<Function<'static>>>,
+    restore_snapshot: Persistent<Function<'static>>,
     context: Context,
-    tick_callback: Option<boa_engine::object::JsObject>,
+    _runtime: Runtime,
+    deadline: Rc<Cell<Instant>>,
+    commands: Rc<RefCell<CommandBuffer>>,
+    requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
+    snapshot: Rc<RefCell<ScriptSnapshot>>,
+}
+
+fn script_error(ctx: &Ctx<'_>, error: rquickjs::Error) -> ScriptError {
+    ScriptError::Js(CaughtError::from_error(ctx, error).to_string())
+}
+
+fn parse_command(json: &str) -> Option<WorldCommand> {
+    // Deserialize large component arrays once, without serde's tagged-enum buffer.
+    #[derive(serde::Deserialize)]
+    struct ComponentCommand { op: String, entity: u64, component: String, value: JsonValue }
+    if let Ok(command) = serde_json::from_str::<ComponentCommand>(json) {
+        if command.op == "setComponent" {
+            return Some(WorldCommand::SetComponent { entity: command.entity, component: command.component, value: command.value });
+        }
+    }
+    serde_json::from_str(json).ok()
+}
+
+fn read_float4_array(values: rquickjs::Array<'_>) -> rquickjs::Result<Vec<[f32; 4]>> {
+    values.iter::<rquickjs::Array>().map(|value| {
+        let value = value?;
+        if value.len() != 4 { return Err(rquickjs::Error::new_from_js_message("array", "float4", "expected four numbers")); }
+        Ok([value.get(0)?, value.get(1)?, value.get(2)?, value.get(3)?])
+    }).collect()
 }
 
 impl ScriptHost {
     pub fn new() -> Result<Self, ScriptError> {
-        let mut context = Context::default();
-        context.insert_data(ScriptQueues { commands: Mutex::new(CommandBuffer::new()), requests: Mutex::new(Vec::new()) });
-        context.runtime_limits_mut().set_loop_iteration_limit(1_000_000);
-        register_engine(&mut context)?;
-        let mut host = Self { context, tick_callback: None };
+        let runtime = Runtime::new().map_err(|error| ScriptError::Js(error.to_string()))?;
+        runtime.set_memory_limit(256 * 1024 * 1024);
+        runtime.set_max_stack_size(1024 * 1024);
+        let deadline = Rc::new(Cell::new(Instant::now() + Duration::from_secs(1)));
+        let limit = deadline.clone();
+        runtime.set_interrupt_handler(Some(Box::new(move || Instant::now() >= limit.get())));
+        let context = Context::full(&runtime).map_err(|error| ScriptError::Js(error.to_string()))?;
+        let commands = Rc::new(RefCell::new(CommandBuffer::new()));
+        let requests = Rc::new(RefCell::new(Vec::new()));
+        let snapshot = Rc::new(RefCell::new(ScriptSnapshot::default()));
+        let restore_snapshot = context.with(|ctx| {
+            let install = || -> rquickjs::Result<Persistent<Function<'static>>> {
+                let pending = commands.clone();
+                ctx.globals().set("__mengineCommand", Function::new(ctx.clone(), move |json: String| {
+                    if let Some(command) = parse_command(&json) { pending.borrow_mut().push(command); }
+                })?)?;
+                let pending = commands.clone();
+                ctx.globals().set("__mengineSpriteBatch", Function::new(ctx.clone(), move |entity: String, instances: rquickjs::Array, colors: rquickjs::Array| -> rquickjs::Result<bool> {
+                    let Ok(entity) = entity.parse::<u64>() else { return Ok(false); };
+                    if instances.len() > 8192 || colors.len() > 8192 { return Ok(false); }
+                    let instances = read_float4_array(instances)?;
+                    let colors = read_float4_array(colors)?;
+                    if !instances.iter().chain(&colors).flatten().all(|value| value.is_finite()) { return Ok(false); }
+                    pending.borrow_mut().push(WorldCommand::SetSpriteBatchData { entity, instances, colors });
+                    Ok(true)
+                })?)?;
+                let pending = requests.clone();
+                ctx.globals().set("__mengineRequest", Function::new(ctx.clone(), move |operation: String, json: String| {
+                    let request = serde_json::from_str::<Vec<JsonValue>>(&json).ok().and_then(|args| runtime_request(&operation, &args));
+                    if let Some(request) = request { pending.borrow_mut().push(request); true } else { false }
+                })?)?;
+                let state = snapshot.clone();
+                ctx.globals().set("__mengineRevision", Function::new(ctx.clone(), move || state.borrow().revision as f64)?)?;
+                let state = snapshot.clone();
+                ctx.globals().set("__mengineSnapshot", Function::new(ctx.clone(), move || {
+                    let mut state = state.borrow_mut();
+                    if state.json.is_none() { state.json = Some(serde_json::to_string(&state.world).expect("world snapshot serializes")); }
+                    state.json.as_ref().unwrap().clone()
+                })?)?;
+                Ok(Persistent::save(&ctx, ctx.eval::<Function, _>(include_str!("engine_api.js"))?))
+            };
+            install().map_err(|error| script_error(&ctx, error))
+        })?;
+        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
         self.tick_callback = None;
-        self.context
-            .eval(Source::from_bytes(source.as_bytes()))
-            .map(|_| ())
-            .map_err(|e| ScriptError::Js(format!("{e}")))
+        self.deadline.set(Instant::now() + Duration::from_secs(1));
+        let mut options = EvalOptions::default();
+        options.strict = false;
+        self.context.with(|ctx| ctx.eval_with_options::<(), _>(source, options).map_err(|error| script_error(&ctx, error)))
     }
 
-    pub fn load_file(&mut self, path: &std::path::Path) -> Result<(), ScriptError> {
-        let src = std::fs::read_to_string(path)?;
-        self.eval(&src)
-    }
+    pub fn load_file(&mut self, path: &std::path::Path) -> Result<(), ScriptError> { self.eval(&std::fs::read_to_string(path)?) }
 
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
         self.sync_world(world)?;
-        if self.tick_callback.is_none() {
-            self.tick_callback = Some(self.context.eval(Source::from_bytes("(function(dt, frame) { if (typeof onTick === 'function') onTick(dt, frame); })"))
-                .map_err(|error| ScriptError::Js(error.to_string()))?.as_object().expect("tick dispatcher is a function").clone());
-        }
-        let result = self.tick_callback.as_ref().unwrap().call(&JsValue::undefined(), &[JsValue::from(dt), JsValue::from(world.time.frame as f64)], &mut self.context);
+        self.deadline.set(Instant::now() + Duration::from_secs(1));
+        let result = self.context.with(|ctx| {
+            let mut invoke = || -> rquickjs::Result<()> {
+                if self.tick_callback.is_none() {
+                    let callback: Function = ctx.eval("(dt, frame) => { if (typeof onTick === 'function') onTick(dt, frame); }")?;
+                    self.tick_callback = Some(Persistent::save(&ctx, callback));
+                }
+                self.tick_callback.as_ref().unwrap().clone().restore(&ctx)?.call::<_, ()>((dt, world.time.frame as f64))
+            };
+            invoke().map_err(|error| script_error(&ctx, error))
+        });
         if let Err(error) = result {
-            pending(&self.context).lock().unwrap().drain();
-            pending_runtime_requests(&self.context).lock().unwrap().clear();
-            return Err(ScriptError::Js(error.to_string()));
+            self.commands.borrow_mut().drain(); self.requests.borrow_mut().clear();
+            return Err(error);
         }
-
-        if let Ok(mut buf) = pending(&self.context).lock() {
-            for cmd in buf.drain() {
-                world.commands.push(cmd);
-            }
-        }
+        for command in self.commands.borrow_mut().drain() { world.commands.push(command); }
         world.commit();
         Ok(())
     }
 
     pub fn sync_world(&mut self, world: &World) -> Result<(), ScriptError> {
-        let snapshot = mengine_core::snapshot::WorldSnapshot::from_world(world);
-        let value = serde_json::to_value(&snapshot).map_err(|error| ScriptError::Other(error.to_string()))?;
-        self.inject_snapshot_value(value, None)
+        let mut state = self.snapshot.borrow_mut();
+        state.revision += 1;
+        state.world = Some(WorldSnapshot::from_world(world));
+        state.json = None;
+        drop(state);
+        self.restore_snapshot_properties()
     }
 
     pub fn inject_snapshot_json(&mut self, json: &str) -> Result<(), ScriptError> {
-        let snapshot: JsonValue = serde_json::from_str(json).map_err(|error| ScriptError::Other(error.to_string()))?;
-        self.inject_snapshot_value(snapshot, Some(json.to_owned()))
+        serde_json::from_str::<JsonValue>(json).map_err(|error| ScriptError::Other(error.to_string()))?;
+        let mut state = self.snapshot.borrow_mut();
+        state.revision += 1; state.world = None; state.json = Some(json.to_owned());
+        drop(state);
+        self.restore_snapshot_properties()
     }
 
-    fn inject_snapshot_value(&mut self, source: JsonValue, raw_json: Option<String>) -> Result<(), ScriptError> {
-        use boa_engine::property::PropertyDescriptor;
-        let global = self.context.global_object();
-        let engine = global.get(js_string!("engine"), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
-        let object = engine.as_object().ok_or_else(|| ScriptError::Other("engine bridge is missing".into()))?;
-        self.context.insert_data(ScriptSnapshot { source: std::rc::Rc::new(source), raw_json, value: Default::default(), json_value: Default::default() });
-        let get = NativeFunction::from_fn_ptr(read_snapshot).to_js_function(self.context.realm());
-        let set = NativeFunction::from_copy_closure(|_, args, ctx| {
-            *ctx.get_data::<ScriptSnapshot>().unwrap().value.borrow_mut() = Some(args.get_or_undefined(0).clone());
-            Ok(JsValue::undefined())
-        }).to_js_function(self.context.realm());
-        object.define_property_or_throw(js_string!("snapshot"), PropertyDescriptor::builder().get(get).set(set).enumerable(true).configurable(true), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
-        let get = NativeFunction::from_fn_ptr(read_snapshot_json).to_js_function(self.context.realm());
-        let set = NativeFunction::from_copy_closure(|_, args, ctx| {
-            *ctx.get_data::<ScriptSnapshot>().unwrap().json_value.borrow_mut() = Some(args.get_or_undefined(0).clone());
-            Ok(JsValue::undefined())
-        }).to_js_function(self.context.realm());
-        global.define_property_or_throw(js_string!("lastSnapshot"), PropertyDescriptor::builder().get(get).set(set).enumerable(true).configurable(true), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
-        Ok(())
+    fn restore_snapshot_properties(&self) -> Result<(), ScriptError> {
+        self.deadline.set(Instant::now() + Duration::from_secs(1));
+        self.context.with(|ctx| {
+            self.restore_snapshot.clone().restore(&ctx).and_then(|restore| restore.call::<_, ()>(())).map_err(|error| script_error(&ctx, error))
+        })
     }
 
     pub fn set_input(&mut self, input: &ScriptInput) -> Result<(), ScriptError> {
-        let value = serde_json::to_value(input).map_err(|error| ScriptError::Other(error.to_string()))?;
-        let value = JsValue::from_json(&value, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
-        let engine = self.context.global_object().get(js_string!("engine"), &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
-        let object = engine.as_object().ok_or_else(|| ScriptError::Other("engine bridge is missing".into()))?;
-        object.set(js_string!("input"), value, true, &mut self.context).map_err(|error| ScriptError::Js(error.to_string()))?;
-        Ok(())
+        let json = serde_json::to_string(input).map_err(|error| ScriptError::Other(error.to_string()))?;
+        self.deadline.set(Instant::now() + Duration::from_secs(1));
+        self.context.with(|ctx| {
+            let assign = || -> rquickjs::Result<()> {
+                let engine: Object = ctx.globals().get("engine")?;
+                engine.set("input", ctx.json_parse(json)?)
+            };
+            assign().map_err(|error| script_error(&ctx, error))
+        })
     }
 
-    pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> {
-        pending_runtime_requests(&self.context)
-            .lock()
-            .map(|mut requests| std::mem::take(&mut *requests))
-            .unwrap_or_default()
-    }
+    pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> { std::mem::take(&mut *self.requests.borrow_mut()) }
 
     pub fn notify_scene_loaded(
         &mut self,
@@ -424,483 +435,121 @@ fn collision_events_json(pairs: &[(u64, u64)], dimension: &str) -> JsonValue {
     )
 }
 
+
 impl Default for ScriptHost {
-    fn default() -> Self {
-        Self::new().expect("ScriptHost")
-    }
+    fn default() -> Self { Self::new().expect("ScriptHost") }
 }
 
-fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
-    let set_clear = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let r = args.get_or_undefined(0).as_number().unwrap_or(0.0) as f32;
-        let g = args.get_or_undefined(1).as_number().unwrap_or(0.0) as f32;
-        let b = args.get_or_undefined(2).as_number().unwrap_or(0.0) as f32;
-        let a = args.get_or_undefined(3).as_number().unwrap_or(1.0) as f32;
-        if let Ok(mut buf) = pending(ctx).lock() {
-            buf.set_clear_color(r, g, b, a);
-        }
-        Ok(JsValue::undefined())
-    });
-
-    let push_cmd = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let s = args
-            .get_or_undefined(0)
-            .to_string(ctx)?
-            .to_std_string_escaped();
-        if let Ok(cmd) = serde_json::from_str::<WorldCommand>(&s) {
-            if let Ok(mut buf) = pending(ctx).lock() {
-                buf.push(cmd);
-            }
-        }
-        Ok(JsValue::undefined())
-    });
-
-    let load_scene = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let value = args.get_or_undefined(0);
-        let request = if let Some(index) = value.as_number() {
-            if !index.is_finite() || index < 0.0 || index.fract() != 0.0 {
-                return Ok(JsValue::new(false));
-            }
-            ScriptRuntimeRequest::LoadSceneByIndex(index as usize)
-        } else {
-            let reference = value.to_string(ctx)?.to_std_string_escaped();
-            if reference.trim().is_empty() {
-                return Ok(JsValue::new(false));
-            }
-            ScriptRuntimeRequest::LoadScene(reference)
-        };
-        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
-            requests.push(request);
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
-    });
-
-    let reload_scene = NativeFunction::from_copy_closure(|_this, _args, ctx| {
-        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
-            requests.push(ScriptRuntimeRequest::ReloadScene);
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
-    });
-
-    let set_animator_parameter = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let name = args
-            .get_or_undefined(1)
-            .to_string(ctx)?
-            .to_std_string_escaped();
-        if name.trim().is_empty() {
-            return Ok(JsValue::new(false));
-        }
-        let raw = args.get_or_undefined(2);
-        let value = if let Some(value) = raw.as_boolean() {
-            JsonValue::Bool(value)
-        } else if let Some(value) = raw.as_number() {
-            if !value.is_finite() {
-                return Ok(JsValue::new(false));
-            }
-            serde_json::Number::from_f64(value)
-                .map(JsonValue::Number)
-                .unwrap_or(JsonValue::Null)
-        } else {
-            return Ok(JsValue::new(false));
-        };
-        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
-            requests.push(ScriptRuntimeRequest::SetAnimatorParameter {
-                entity,
-                name,
-                value,
-            });
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
-    });
-
-    let set_animator_trigger = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let name = args
-            .get_or_undefined(1)
-            .to_string(ctx)?
-            .to_std_string_escaped();
-        if name.trim().is_empty() {
-            return Ok(JsValue::new(false));
-        }
-        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
-            requests.push(ScriptRuntimeRequest::SetAnimatorParameter {
-                entity,
-                name,
-                value: JsonValue::Bool(true),
-            });
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
-    });
-
-    let play_animator_state = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let state = args
-            .get_or_undefined(1)
-            .to_string(ctx)?
-            .to_std_string_escaped();
-        if state.trim().is_empty() {
-            return Ok(JsValue::new(false));
-        }
-        if let Ok(mut requests) = pending_runtime_requests(ctx).lock() {
-            requests.push(ScriptRuntimeRequest::PlayAnimatorState { entity, state });
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
-    });
-
-    let set_animator_layer_weight = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let layer = args
-            .get_or_undefined(1)
-            .to_string(ctx)?
-            .to_std_string_escaped();
-        let Some(weight) = args.get_or_undefined(2).as_number() else {
-            return Ok(JsValue::new(false));
-        };
-        if layer.trim().is_empty() || !weight.is_finite() || !(0.0..=1.0).contains(&weight) {
-            return Ok(JsValue::new(false));
-        }
-        queue_runtime_request(ctx, ScriptRuntimeRequest::SetAnimatorLayerWeight {
-            entity,
-            layer,
-            weight: weight as f32,
-        })
-    });
-
-    let play_animator_layer_state = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let layer = args
-            .get_or_undefined(1)
-            .to_string(ctx)?
-            .to_std_string_escaped();
-        let state = args
-            .get_or_undefined(2)
-            .to_string(ctx)?
-            .to_std_string_escaped();
-        if layer.trim().is_empty() || state.trim().is_empty() {
-            return Ok(JsValue::new(false));
-        }
-        queue_runtime_request(ctx, ScriptRuntimeRequest::PlayAnimatorLayerState {
-            entity,
-            layer,
-            state,
-        })
-    });
-
-    let play_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let restart = args.get_or_undefined(1).as_boolean().unwrap_or(false);
-        queue_runtime_request(ctx, ScriptRuntimeRequest::PlayAnimation { entity, restart })
-    });
-    let pause_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        queue_runtime_request(ctx, ScriptRuntimeRequest::PauseAnimation { entity })
-    });
-    let stop_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        queue_runtime_request(ctx, ScriptRuntimeRequest::StopAnimation { entity })
-    });
-    let seek_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let Some(time) = args.get_or_undefined(1).as_number() else {
-            return Ok(JsValue::new(false));
-        };
-        if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
-            return Ok(JsValue::new(false));
-        }
-        queue_runtime_request(ctx, ScriptRuntimeRequest::SeekAnimation {
-            entity,
-            time: time as f32,
-        })
-    });
-
-    let play_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let restart = args.get_or_undefined(1).as_boolean().unwrap_or(false);
-        queue_runtime_request(ctx, ScriptRuntimeRequest::PlayTimeline { entity, restart })
-    });
-    let pause_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        queue_runtime_request(ctx, ScriptRuntimeRequest::PauseTimeline { entity })
-    });
-    let stop_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        queue_runtime_request(ctx, ScriptRuntimeRequest::StopTimeline { entity })
-    });
-    let seek_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let Some(time) = args.get_or_undefined(1).as_number() else {
-            return Ok(JsValue::new(false));
-        };
-        if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
-            return Ok(JsValue::new(false));
-        }
-        queue_runtime_request(ctx, ScriptRuntimeRequest::SeekTimeline {
-            entity,
-            time: time as f32,
-        })
-    });
-
-    let play_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        queue_runtime_request(ctx, ScriptRuntimeRequest::PlayAudio { entity })
-    });
-    let pause_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        queue_runtime_request(ctx, ScriptRuntimeRequest::PauseAudio { entity })
-    });
-    let stop_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        queue_runtime_request(ctx, ScriptRuntimeRequest::StopAudio { entity })
-    });
-    let seek_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
-            return Ok(JsValue::new(false));
-        };
-        let Some(time) = args.get_or_undefined(1).as_number() else {
-            return Ok(JsValue::new(false));
-        };
-        if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
-            return Ok(JsValue::new(false));
-        }
-        queue_runtime_request(ctx, ScriptRuntimeRequest::SeekAudio {
-            entity,
-            time: time as f32,
-        })
-    });
-    let instantiate_prefab = NativeFunction::from_copy_closure(|_this, args, ctx| {
-        let path = args
-            .get_or_undefined(0)
-            .to_string(ctx)?
-            .to_std_string_escaped();
-        if path.trim().is_empty() {
-            return Ok(JsValue::new(false));
-        }
-        let parent = if args.len() < 2 {
-            None
-        } else {
-            let Some(parent) = js_entity_id(args.get_or_undefined(1), ctx) else {
-                return Ok(JsValue::new(false));
-            };
-            Some(parent)
-        };
-        queue_runtime_request(ctx, ScriptRuntimeRequest::InstantiatePrefab { path, parent })
-    });
-
-    context
-        .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playTimeline: null, pauseTimeline: null, stopTimeline: null, seekTimeline: null, playAudio: null, pauseAudio: null, stopAudio: null, seekAudio: null, scene: null };",
-        ))
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    let engine = context
-        .global_object()
-        .get(boa_engine::js_string!("engine"), context)
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    let engine_obj = engine
-        .as_object()
-        .ok_or_else(|| ScriptError::Js("engine not object".into()))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("setClearColor"),
-            set_clear.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("setAnimatorParameter"),
-            set_animator_parameter.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("setAnimatorTrigger"),
-            set_animator_trigger.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("playAnimatorState"),
-            play_animator_state.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("setAnimatorLayerWeight"),
-            set_animator_layer_weight.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("playAnimatorLayerState"),
-            play_animator_layer_state.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    for (name, function) in [
-        ("playAnimation", play_animation),
-        ("pauseAnimation", pause_animation),
-        ("stopAnimation", stop_animation),
-        ("seekAnimation", seek_animation),
-    ] {
-        engine_obj
-            .set(
-                boa_engine::JsString::from(name),
-                function.to_js_function(context.realm()),
-                false,
-                context,
-            )
-            .map_err(|e| ScriptError::Js(format!("{e}")))?;
-    }
-
-    for (name, function) in [
-        ("playTimeline", play_timeline),
-        ("pauseTimeline", pause_timeline),
-        ("stopTimeline", stop_timeline),
-        ("seekTimeline", seek_timeline),
-    ] {
-        engine_obj
-            .set(
-                boa_engine::JsString::from(name),
-                function.to_js_function(context.realm()),
-                false,
-                context,
-            )
-            .map_err(|e| ScriptError::Js(format!("{e}")))?;
-    }
-
-    for (name, function) in [
-        ("playAudio", play_audio),
-        ("pauseAudio", pause_audio),
-        ("stopAudio", stop_audio),
-        ("seekAudio", seek_audio),
-    ] {
-        engine_obj
-            .set(
-                boa_engine::JsString::from(name),
-                function.to_js_function(context.realm()),
-                false,
-                context,
-            )
-            .map_err(|e| ScriptError::Js(format!("{e}")))?;
-    }
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("instantiatePrefab"),
-            instantiate_prefab.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("pushCommandJson"),
-            push_cmd.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("loadScene"),
-            load_scene.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    engine_obj
-        .set(
-            boa_engine::js_string!("reloadScene"),
-            reload_scene.to_js_function(context.realm()),
-            false,
-            context,
-        )
-        .map_err(|e| ScriptError::Js(format!("{e}")))?;
-
-    Ok(())
+fn entity_id(value: &JsonValue) -> Option<u64> {
+    if let Some(id) = value.as_str() { return id.parse().ok(); }
+    value.as_u64().or_else(|| value.as_f64().filter(|n| n.is_finite() && *n >= 0.0 && n.fract() == 0.0).map(|n| n as u64))
 }
 
-fn js_entity_id(value: &JsValue, context: &mut Context) -> Option<u64> {
-    if let Some(number) = value.as_number() {
-        return (number.is_finite() && number >= 0.0 && number.fract() == 0.0)
-            .then_some(number as u64);
-    }
-    value
-        .to_string(context)
-        .ok()?
-        .to_std_string_escaped()
-        .parse()
-        .ok()
+fn runtime_request(operation: &str, args: &[JsonValue]) -> Option<ScriptRuntimeRequest> {
+    use ScriptRuntimeRequest::*;
+    let arg = |index| args.get(index).unwrap_or(&JsonValue::Null);
+    let text = |index| arg(index).as_str().filter(|value| !value.trim().is_empty()).map(str::to_owned);
+    let entity = || entity_id(arg(0));
+    let time = || arg(1).as_f64().filter(|time| *time >= 0.0 && *time <= f64::from(f32::MAX)).map(|time| time as f32);
+    let restart = || arg(1).as_bool().unwrap_or(false);
+    Some(match operation {
+        "loadScene" if arg(0).is_number() => LoadSceneByIndex(usize::try_from(entity()?).ok()?),
+        "loadScene" => LoadScene(text(0)?),
+        "reloadScene" => ReloadScene,
+        "instantiatePrefab" => InstantiatePrefab { path: text(0)?, parent: if args.len() < 2 { None } else { Some(entity_id(arg(1))?) } },
+        "setAnimatorParameter" => { let value = arg(2); if !value.is_boolean() && !value.is_number() { return None; } SetAnimatorParameter { entity: entity()?, name: text(1)?, value: value.clone() } },
+        "setAnimatorTrigger" => SetAnimatorParameter { entity: entity()?, name: text(1)?, value: JsonValue::Bool(true) },
+        "playAnimatorState" => PlayAnimatorState { entity: entity()?, state: text(1)? },
+        "setAnimatorLayerWeight" => SetAnimatorLayerWeight { entity: entity()?, layer: text(1)?, weight: arg(2).as_f64().filter(|weight| (0.0..=1.0).contains(weight))? as f32 },
+        "playAnimatorLayerState" => PlayAnimatorLayerState { entity: entity()?, layer: text(1)?, state: text(2)? },
+        "playAnimation" => PlayAnimation { entity: entity()?, restart: restart() },
+        "pauseAnimation" => PauseAnimation { entity: entity()? },
+        "stopAnimation" => StopAnimation { entity: entity()? },
+        "seekAnimation" => SeekAnimation { entity: entity()?, time: time()? },
+        "playTimeline" => PlayTimeline { entity: entity()?, restart: restart() },
+        "pauseTimeline" => PauseTimeline { entity: entity()? },
+        "stopTimeline" => StopTimeline { entity: entity()? },
+        "seekTimeline" => SeekTimeline { entity: entity()?, time: time()? },
+        "playAudio" => PlayAudio { entity: entity()? },
+        "pauseAudio" => PauseAudio { entity: entity()? },
+        "stopAudio" => StopAudio { entity: entity()? },
+        "seekAudio" => SeekAudio { entity: entity()?, time: time()? },
+        _ => return None,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sprite_batch_arrays_commit_in_command_order_and_preserve_authored_properties() {
+        use mengine_core::generated::SpriteBatch2D;
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, SpriteBatch2D { sprite: "Assets/bullet.png".into(), size: [2.0, 3.0], ..Default::default() });
+        host.eval(&format!("var data = [[1,2,0,1]]; if (!engine.setSpriteBatchData({}n, data, [[1,0,0,1]])) throw Error('batch rejected'); data[0][0] = 9;", entity.to_u64())).unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        let batch = world.get_component::<SpriteBatch2D>(entity).unwrap();
+        assert_eq!(batch.instances, vec![[1.0, 2.0, 0.0, 1.0]]);
+        assert_eq!(batch.colors, vec![[1.0, 0.0, 0.0, 1.0]]);
+        assert_eq!(batch.sprite, "Assets/bullet.png");
+        assert_eq!(batch.size, [2.0, 3.0]);
+        assert_eq!(world.component_value(entity, "SpriteBatch2D").unwrap()["instances"][0][0].as_f64(), Some(1.0));
+        host.eval(&format!("if(engine.setSpriteBatchData({}, [[NaN,0,0,1]])) throw Error('invalid batch accepted'); if(engine.setSpriteBatchData({}, new Array(8193).fill([0,0,0,1]))) throw Error('oversized batch accepted'); engine.setSpriteBatchData({}, []); engine.pushCommandJson('{{\"op\":\"removeComponent\",\"entity\":{},\"component\":\"SpriteBatch2D\"}}'); engine.setSpriteBatchData({}, [[0,0,0,1]]);", entity.to_u64(), entity.to_u64(), entity.to_u64(), entity.to_u64(), entity.to_u64())).unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(world.get_component::<SpriteBatch2D>(entity).is_none());
+        host.eval(&format!("function onTick() {{ engine.setSpriteBatchData({}, [[0,0,0,1]]); throw Error('abort'); }}", entity.to_u64())).unwrap();
+        assert!(host.tick(&mut world, 0.016).is_err());
+        assert!(host.commands.borrow().is_empty());
+    }
+
+    #[test]
+    fn component_command_fast_path_preserves_command_deserialization() {
+        for json in [r#"{"value":{"instances":[[1,2,3,4]]},"entity":9007199254740993,"op":"setComponent","component":"SpriteBatch2D"}"#, r#"{"op":"setClearColor","r":1,"g":0,"b":0,"a":1}"#, r#"{"op":"despawn","entity":1}"#, r#"{"op":"setComponent","entity":1,"component":"Text","value":null}"#, r#"{"op":"setComponent","entity":-1,"component":"Text","value":{}}"#, r#"{"op":"unknown"}"#] {
+            let expected = serde_json::from_str::<WorldCommand>(json).ok().map(|value| serde_json::to_value(value).unwrap());
+            assert_eq!(parse_command(json).map(|value| serde_json::to_value(value).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn runtime_requests_preserve_exact_ids_and_string_coercion() {
+        let mut host = ScriptHost::new().unwrap();
+        host.eval("if (!engine.playAudio(9007199254740993n) || !engine.setAnimatorTrigger({toString: () => '9007199254740993'}, 42) || !engine.instantiatePrefab({toString: () => 'Bird'}, 9007199254740993n)) throw Error('coercion'); if (engine.seekAudio(1n, 2n)) throw Error('invalid time');").unwrap();
+        assert_eq!(host.take_runtime_requests(), vec![
+            ScriptRuntimeRequest::PlayAudio { entity: 9_007_199_254_740_993 },
+            ScriptRuntimeRequest::SetAnimatorParameter { entity: 9_007_199_254_740_993, name: "42".into(), value: JsonValue::Bool(true) },
+            ScriptRuntimeRequest::InstantiatePrefab { path: "Bird".into(), parent: Some(9_007_199_254_740_993) },
+        ]);
+    }
+
+    #[test]
+    fn snapshot_sync_restores_deleted_and_redefined_properties() {
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        host.eval("delete engine.snapshot; Object.defineProperty(globalThis, 'lastSnapshot', {value: 'replaced', configurable: true});").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        host.eval("if (engine.snapshot.frame !== 0 || JSON.parse(lastSnapshot).frame !== 0) throw Error('missing snapshot'); delete lastSnapshot;").unwrap();
+        host.inject_snapshot_json("{\"frame\":42}").unwrap();
+        host.eval("if (engine.snapshot.frame !== 42 || JSON.parse(lastSnapshot).frame !== 42) throw Error('missing injected snapshot');").unwrap();
+    }
+
+    #[test]
+    fn runaway_ticks_abort_without_leaking_commands_and_the_host_recovers() {
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        let color = world.time.clear_color;
+        host.eval("function onTick() { engine.setClearColor(1,0,0,1); engine.reloadScene(); while(true) {} }").unwrap();
+        assert!(host.tick(&mut world, 0.016).is_err());
+        assert_eq!(world.time.clear_color, color);
+        assert!(host.take_runtime_requests().is_empty());
+        host.eval("onTick = () => engine.setClearColor(0,1,0,1);").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        host._runtime.run_gc();
+        host.tick(&mut world, 0.016).unwrap();
+        assert_eq!(world.time.clear_color.y, 1.0);
+    }
 
     #[test]
     fn cached_tick_dispatch_preserves_lexical_hooks_input_and_fresh_snapshots() {
@@ -929,9 +578,7 @@ mod tests {
         let mut world = World::new();
         host.eval("function onTick() {};").unwrap();
         host.tick(&mut world, 0.016).unwrap();
-        let state = host.context.get_data::<ScriptSnapshot>().unwrap();
-        assert!(state.value.borrow().is_none());
-        assert!(state.json_value.borrow().is_none());
+        assert!(host.snapshot.borrow().json.is_none());
         host.eval("const previous = engine.snapshot; if (previous !== engine.snapshot) throw Error('unstable snapshot'); previous.frame = 999; lastSnapshot = 'local';").unwrap();
         world.time.frame = 2;
         host.tick(&mut world, 0.016).unwrap();

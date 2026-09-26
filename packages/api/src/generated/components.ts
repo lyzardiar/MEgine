@@ -1675,6 +1675,7 @@ export type WorldCommand =
   | { op: 'despawn'; entity: number }
   | { op: 'setComponent'; entity: number; component: string; value: Record<string, unknown> }
   | { op: 'removeComponent'; entity: number; component: string }
+  | { op: 'setSpriteBatchData'; entity: number; instances: [number, number, number, number][]; colors: [number, number, number, number][] }
   | { op: 'setParent'; entity: number; parent?: number }
   | { op: 'setClearColor'; r: number; g: number; b: number; a: number }
 ;

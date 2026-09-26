@@ -1,0 +1,16 @@
+{
+  "thunder-fighter": {
+    "files": 32,
+    "contentHash": "880a60214b250dc62ed0820df1750a8c630e3943497c5549b3db283dbbb24cc1",
+    "executable": "Astral Thunder.exe",
+    "executableSha256": "4e6e5a196438be6548d6f320f87104e43fa8b8ff26c3c4f116150c6952dd4f22",
+    "packageValidation": "passed: file hashes, scene, assets and startup script"
+  },
+  "pelican-road-rage": {
+    "files": 55,
+    "contentHash": "fb111c2d7cdebdcb6f86b43e0761ac09266b8a74cd03564c8315564c10e24626",
+    "executable": "Pelican Road Rage.exe",
+    "executableSha256": "4e6e5a196438be6548d6f320f87104e43fa8b8ff26c3c4f116150c6952dd4f22",
+    "packageValidation": "passed: file hashes, scene, assets and startup script"
+  }
+}

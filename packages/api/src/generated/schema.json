@@ -2610,6 +2610,41 @@
     ],
     "type": "object"
   },
+  "SetSpriteBatchData": {
+    "properties": {
+      "colors": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "entity": {
+        "type": "number"
+      },
+      "instances": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "entity",
+      "instances",
+      "colors"
+    ],
+    "type": "object"
+  },
   "Shadow": {
     "properties": {
       "effect_color": {

@@ -1,4 +1,4 @@
-//! Script host backed by Boa (pure-Rust JS). API matches the planned QuickJS host:
+//! Script host backed by QuickJS, shared by editor Play and standalone players:
 //! scripts only talk to `engine.*` and emit CommandBuffer entries.
 
 mod bridge;

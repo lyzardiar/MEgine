@@ -1,0 +1,40 @@
+{
+  "scope": "Native editor, Scene plus selected Camera preview and detached Game",
+  "executable": "G:\\work\\github\\MEgine\\target\\release\\mengine-editor-tauri.exe",
+  "scene": {
+    "intervals": 240,
+    "averagePresentIntervalMs": 17.996249999975166,
+    "p95PresentIntervalMs": 21.399999976158142,
+    "presentedFps": 55.567132041474196,
+    "averageRequestMs": 7.047500000149012,
+    "averageRenderMs": 1.3813462499999996,
+    "averageCommandMs": 1.9406325000000006,
+    "averageUploadMs": 0.6616666651020447,
+    "averageSimulationMs": 1.40037125,
+    "averageSimulationRequestMs": 5.348333333681027
+  },
+  "game": {
+    "intervals": 240,
+    "averagePresentIntervalMs": 18.000416666766007,
+    "p95PresentIntervalMs": 20.299999982118607,
+    "presentedFps": 55.55426957678653,
+    "averageRequestMs": 5.347083334376415,
+    "averageRenderMs": 1.37595875,
+    "averageCommandMs": 2.3417775,
+    "averageUploadMs": 0.44041666698952514,
+    "averageSimulationMs": 1.4010437500000001,
+    "averageSimulationRequestMs": 0
+  },
+  "checks": {
+    "detachedEditSceneSync": true,
+    "detachedPlaySceneSync": true,
+    "detachedKeyboard": true,
+    "pause": true,
+    "step": true,
+    "stopRestoresAuthored": true,
+    "fullResolutionCapture": [
+      1080,
+      1920
+    ]
+  }
+}

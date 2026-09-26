@@ -37,6 +37,7 @@ base64 = "0.22"
 pollster.workspace = true
 
 [target.'cfg(windows)'.dependencies]
+mimalloc.workspace = true
 # WebView2 DevTools capture renders the editor off-screen without activating
 # the window or reading pixels from the user's foreground desktop.
 webview2-com = "=0.38.2"

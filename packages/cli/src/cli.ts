@@ -42,6 +42,7 @@ interface EngineApi {
   input: { keys: string[]; pressedKeys: string[]; releasedKeys: string[]; pointer: [number, number]; viewport: [number, number]; buttons: number[]; pressedButtons: number[]; releasedButtons: number[] };
   setClearColor(r: number, g: number, b: number, a?: number): void;
   pushCommandJson(json: string): void;
+  setSpriteBatchData(entity: number | string | bigint, instances: number[][], colors?: number[][]): boolean;
   loadScene(scene: string | number): boolean;
   reloadScene(): boolean;
   instantiatePrefab(path: string, parent?: number | string): boolean;

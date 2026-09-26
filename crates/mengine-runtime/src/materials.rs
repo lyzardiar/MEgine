@@ -17,10 +17,13 @@ use mengine_rhi::{
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
-use std::time::SystemTime;
+use std::time::{Duration, Instant, SystemTime};
+
+const ASSET_CHECK_INTERVAL: Duration = Duration::from_millis(250);
 
 #[derive(Clone)]
 struct CachedMaterial {
+    checked_at: Instant,
     modified: Option<SystemTime>,
     result: Result<Arc<MaterialAsset>, String>,
 }
@@ -49,6 +52,7 @@ pub fn resolve_ui_materials(primitives: &mut [UiPrimitive], cache: &mut RuntimeM
 
 #[derive(Clone)]
 struct CachedSurfaceShader {
+    checked_at: Instant,
     modified: Option<SystemTime>,
     result: Result<Arc<LoadedSurfaceShader>, String>,
 }
@@ -65,6 +69,7 @@ struct LoadedSurfaceShader {
 
 #[derive(Clone)]
 struct CachedMaterialInstance {
+    checked_at: Instant,
     modified: Option<SystemTime>,
     result: Result<Arc<MaterialInstanceAsset>, String>,
 }
@@ -356,6 +361,7 @@ impl RuntimeMaterialCache {
             .ok_or_else(|| "runtime requires --project-root to resolve materials".to_owned())?;
         let path = resolve_project_asset_path(root, key)
             .ok_or_else(|| "material path must be project-relative without '..'".to_owned())?;
+        if let Some(cached) = self.materials.get(&path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
         let modified = std::fs::metadata(&path)
             .and_then(|metadata| metadata.modified())
             .ok();
@@ -368,8 +374,9 @@ impl RuntimeMaterialCache {
                 .map(Arc::new)
                 .map_err(|error| error.to_string());
             self.materials
-                .insert(path.clone(), CachedMaterial { modified, result });
+                .insert(path.clone(), CachedMaterial { checked_at: Instant::now(), modified, result });
         }
+        self.materials.get_mut(&path).expect("material cache inserted").checked_at = Instant::now();
         self.materials
             .get(&path)
             .expect("material cache inserted")
@@ -385,6 +392,7 @@ impl RuntimeMaterialCache {
         let path = resolve_project_asset_path(root, key).ok_or_else(|| {
             "material instance path must be project-relative without '..'".to_owned()
         })?;
+        if let Some(cached) = self.instances.get(&path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
         let modified = std::fs::metadata(&path)
             .and_then(|metadata| metadata.modified())
             .ok();
@@ -397,8 +405,9 @@ impl RuntimeMaterialCache {
                 .map(Arc::new)
                 .map_err(|error| error.to_string());
             self.instances
-                .insert(path.clone(), CachedMaterialInstance { modified, result });
+                .insert(path.clone(), CachedMaterialInstance { checked_at: Instant::now(), modified, result });
         }
+        self.instances.get_mut(&path).expect("material instance cache inserted").checked_at = Instant::now();
         self.instances
             .get(&path)
             .expect("material instance cache inserted")
@@ -420,6 +429,7 @@ impl RuntimeMaterialCache {
             .ok_or_else(|| "runtime requires --project-root to resolve shaders".to_owned())?;
         let path = resolve_project_asset_path(root, normalized)
             .ok_or_else(|| "shader path must be project-relative without '..'".to_owned())?;
+        if let Some(cached) = self.surface_shaders.get(&path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
         let modified = std::fs::metadata(&path)
             .and_then(|metadata| metadata.modified())
             .ok();
@@ -443,8 +453,9 @@ impl RuntimeMaterialCache {
                     }))
                 });
             self.surface_shaders
-                .insert(path.clone(), CachedSurfaceShader { modified, result });
+                .insert(path.clone(), CachedSurfaceShader { checked_at: Instant::now(), modified, result });
         }
+        self.surface_shaders.get_mut(&path).expect("surface shader cache inserted").checked_at = Instant::now();
         self.surface_shaders
             .get(&path)
             .expect("surface shader cache inserted")
@@ -1288,6 +1299,9 @@ mod tests {
             r#"{"version":8,"name":"Base","shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_color":[1,0,0,1]},"base_color":[1,0,0,1],"roughness":0.8,"emissive_strength":4}"#,
         )
         .unwrap();
+        for cached in cache.materials.values_mut() { cached.checked_at = Instant::now(); }
+        assert_eq!(cache.resolve_asset("Assets/Materials/Ocean.minst").unwrap().emissive_strength, first.emissive_strength);
+        for cached in cache.materials.values_mut() { cached.checked_at -= ASSET_CHECK_INTERVAL; }
         let reloaded = cache.resolve_asset("Assets/Materials/Ocean.minst").unwrap();
         assert_eq!(reloaded.emissive_strength, 4.0);
 

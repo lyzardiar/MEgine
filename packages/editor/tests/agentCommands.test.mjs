@@ -202,6 +202,15 @@ function createContext() {
   };
 }
 
+test('batch.apply validates sprite instance arrays before submitting the transaction', () => {
+  const { ctx, calls } = createContext();
+  const component = { op: 'setComponent', entity: 1, component: 'SpriteBatch2D', value: { instances: [], colors: [] } };
+  assertBridgeError(() => run(ctx, 'batch.apply', { commands: [component, { op: 'setSpriteBatchData', entity: 1, instances: [[NaN, 0, 0, 1]], colors: [] }] }), 'INVALID_ARGS');
+  assert.deepEqual(calls, []);
+  run(ctx, 'batch.apply', { commands: [component, { op: 'setSpriteBatchData', entity: 1, instances: [[1, 2, 0, 1]], colors: [] }] });
+  assert.equal(calls[0][1][1].op, 'setSpriteBatchData');
+});
+
 function run(ctx, command, args = {}) {
   return WRITE_COMMANDS[command](ctx, args);
 }

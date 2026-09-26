@@ -38,7 +38,19 @@ pub struct UiFontGlyphTexture {
     pub bounds: [f32; 4],
 }
 
+/// Complete text geometry inputs; exact float bits keep distinct layouts separate.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct UiTextCacheKey {
+    pub(crate) strings: [String; 7],
+    pub(crate) values: [u32; 19],
+    pub(crate) flags: [bool; 3],
+    pub(crate) clip: UiClipRect,
+}
+
 pub trait UiFontResolver {
+    fn cached_text(&mut self, _key: &UiTextCacheKey) -> Option<Vec<UiPrimitive>> { None }
+    fn cache_text(&mut self, _key: UiTextCacheKey, _primitives: &[UiPrimitive]) {}
+
     fn measure_glyph(
         &mut self,
         font: &str,
@@ -7114,6 +7126,16 @@ fn push_text_styled_rich_internal(
     font_raster_scale: f32,
     font_resolver: &mut dyn UiFontResolver,
 ) {
+    let cache_key = UiTextCacheKey {
+        strings: [text.into(), font.into(), font_style.into(), alignment.into(), vertical_align.into(), horizontal_overflow.into(), vertical_overflow.into()],
+        values: [rect.x, rect.y, rect.width, rect.height, color[0], color[1], color[2], color[3], outline_color[0], outline_color[1], outline_color[2], outline_color[3], outline_width, font_size, min_size, max_size, font_scale, line_spacing, font_raster_scale].map(f32::to_bits),
+        flags: [align_by_geometry, support_rich_text, best_fit],
+        clip,
+    };
+    if let Some(cached) = font_resolver.cached_text(&cache_key) {
+        primitives.extend(cached);
+        return;
+    }
     let primitive_start = primitives.len();
     let layout = layout_bitmap_text_rich_with_font(
         text,
@@ -7336,6 +7358,7 @@ fn push_text_styled_rich_internal(
             }
         }
     }
+    font_resolver.cache_text(cache_key, &primitives[primitive_start..]);
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -7979,8 +8002,11 @@ mod tests {
 
     #[test]
     fn authored_text_font_flows_through_layout_and_shared_texture_primitives() {
-        struct MockFont;
+        #[derive(Default)]
+        struct MockFont { cache: HashMap<UiTextCacheKey, Vec<UiPrimitive>>, measured: usize }
         impl UiFontResolver for MockFont {
+            fn cached_text(&mut self, key: &UiTextCacheKey) -> Option<Vec<UiPrimitive>> { self.cache.get(key).cloned() }
+            fn cache_text(&mut self, key: UiTextCacheKey, primitives: &[UiPrimitive]) { self.cache.insert(key, primitives.to_vec()); }
             fn measure_glyph(
                 &mut self,
                 font: &str,
@@ -7988,6 +8014,7 @@ mod tests {
                 font_size: f32,
                 font_style: &str,
             ) -> Option<UiFontGlyphMetrics> {
+                self.measured += 1;
                 assert_eq!(font, "Assets/Fonts/Interface.ttf");
                 assert!(matches!(character, 'M' | 'A' | 'V'));
                 assert_eq!(font_size, 12.0);
@@ -8062,7 +8089,7 @@ mod tests {
         );
         world.set_parent(text, Some(canvas));
         let hierarchy = TransformHierarchy::build(&world);
-        let mut resolver = MockFont;
+        let mut resolver = MockFont::default();
         let frame = collect_ui_frame_for_display_with_interaction_and_fonts(
             &world,
             &hierarchy,
@@ -8082,6 +8109,14 @@ mod tests {
             .filter(|primitive| primitive.key.material == "ui/text/font")
             .collect::<Vec<_>>();
         assert_eq!(glyphs.len(), 2);
+        let measured = resolver.measured;
+        let repeated = collect_ui_frame_for_display_with_interaction_and_fonts(&world, &hierarchy, 100, 100, None, &SortingLayers::default(), 0, UiInteractionState::default(), &HashMap::new(), &mut resolver);
+        assert_eq!(resolver.measured, measured, "unchanged text must reuse its layout and glyphs");
+        assert_eq!(format!("{:?}", frame.plan.primitives), format!("{:?}", repeated.plan.primitives));
+        world.get_component_mut::<Text>(text).unwrap().color = [0.2, 0.4, 0.6, 1.0];
+        let changed = collect_ui_frame_for_display_with_interaction_and_fonts(&world, &hierarchy, 100, 100, None, &SortingLayers::default(), 0, UiInteractionState::default(), &HashMap::new(), &mut resolver);
+        assert!(resolver.measured > measured);
+        assert_eq!(changed.plan.primitives[0].color, [0.2, 0.4, 0.6, 1.0]);
         let primitive = glyphs[0];
         assert_eq!(primitive.key.texture, "mengine-font://test/0");
         assert_eq!(primitive.uv, [0.1, 0.2, 0.3, 0.4]);

@@ -25,7 +25,7 @@ enum Request {
     Stop { generation: u64 },
 }
 
-/// Boa stays on one worker thread. Native rendering and editor IPC never own its GC context.
+/// QuickJS stays on one worker thread. Native rendering and editor IPC never own its GC context.
 pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64> }
 
 impl Default for EditorPlayRuntime {

@@ -1,0 +1,2211 @@
+{
+  "scope": "Release native editor, live opening combat, 4s warmup and 12s capture",
+  "elapsedMs": 12024.663099999998,
+  "simulationFrames": 539,
+  "telemetry": {
+    "mode": "playing",
+    "time": 16.124999999999726,
+    "stage": 0,
+    "stageTime": 16.124999999999726,
+    "px": 0,
+    "py": -6.5,
+    "armor": 1,
+    "bombs": 3,
+    "energy": 100,
+    "level": 1,
+    "cores": 9,
+    "score": 4145,
+    "kills": 5,
+    "graze": 64,
+    "chain": 1,
+    "peak": 269,
+    "damageTaken": 4,
+    "novas": 0,
+    "bossPhases": 0,
+    "overdrive": 0,
+    "invincible": 0.23333333333333922,
+    "bullets": 265,
+    "shots": 24,
+    "enemies": [
+      {
+        "x": -3.96478719369393,
+        "y": -9.743750000000233,
+        "kind": 0,
+        "hp": 28,
+        "maxHp": 28,
+        "phase": 0
+      },
+      {
+        "x": -2.1647871936939302,
+        "y": -9.193750000000232,
+        "kind": 0,
+        "hp": 28,
+        "maxHp": 28,
+        "phase": 0
+      },
+      {
+        "x": 1.4352128063060698,
+        "y": -8.093750000000233,
+        "kind": 0,
+        "hp": 28,
+        "maxHp": 28,
+        "phase": 0
+      },
+      {
+        "x": 3.23521280630607,
+        "y": -7.543750000000234,
+        "kind": 0,
+        "hp": 28,
+        "maxHp": 28,
+        "phase": 0
+      },
+      {
+        "x": -3.5158689601785165,
+        "y": -1.4533333333333731,
+        "kind": 1,
+        "hp": 70,
+        "maxHp": 70,
+        "phase": 0
+      },
+      {
+        "x": 2.4841310398214835,
+        "y": -0.3533333333332542,
+        "kind": 1,
+        "hp": 70,
+        "maxHp": 70,
+        "phase": 0
+      },
+      {
+        "x": -2.921298748803868,
+        "y": -2.1345833333334348,
+        "kind": 2,
+        "hp": 45,
+        "maxHp": 45,
+        "phase": 0
+      },
+      {
+        "x": -1.1212987488038682,
+        "y": -1.5845833333334436,
+        "kind": 2,
+        "hp": 45,
+        "maxHp": 45,
+        "phase": 0
+      },
+      {
+        "x": 2.478701251196132,
+        "y": -0.4845833333334694,
+        "kind": 2,
+        "hp": 45,
+        "maxHp": 45,
+        "phase": 0
+      },
+      {
+        "x": 4.278701251196132,
+        "y": 0.0654166666665198,
+        "kind": 2,
+        "hp": 45,
+        "maxHp": 45,
+        "phase": 0
+      },
+      {
+        "x": -3.5439955094218876,
+        "y": 1.6699999999998851,
+        "kind": 0,
+        "hp": 28,
+        "maxHp": 28,
+        "phase": 0
+      },
+      {
+        "x": -1.7439955094218873,
+        "y": 2.219999999999878,
+        "kind": 0,
+        "hp": 28,
+        "maxHp": 28,
+        "phase": 0
+      },
+      {
+        "x": 1.8560044905781128,
+        "y": 3.3199999999998777,
+        "kind": 0,
+        "hp": 28,
+        "maxHp": 28,
+        "phase": 0
+      },
+      {
+        "x": 3.6560044905781126,
+        "y": 3.8699999999998766,
+        "kind": 0,
+        "hp": 28,
+        "maxHp": 28,
+        "phase": 0
+      },
+      {
+        "x": -2.484271142170462,
+        "y": 6.4866666666667205,
+        "kind": 1,
+        "hp": 70,
+        "maxHp": 70,
+        "phase": 0
+      },
+      {
+        "x": 3.515728857829538,
+        "y": 7.586666666666867,
+        "kind": 1,
+        "hp": 70,
+        "maxHp": 70,
+        "phase": 0
+      }
+    ],
+    "lasers": [],
+    "threats": [
+      {
+        "x": -1.0963949041960415,
+        "y": -8.903569532951515,
+        "vx": 0.17421559195947714,
+        "vy": -1.8919960167818592,
+        "r": 0.11
+      },
+      {
+        "x": -0.22748073367600538,
+        "y": -7.400633617425532,
+        "vx": 0.1330918841700943,
+        "vy": -1.8953328336649005,
+        "r": 0.12
+      },
+      {
+        "x": 0.4462178612276763,
+        "y": -7.698008086487612,
+        "vx": 1.076327589656505,
+        "vy": -1.5657327101853522,
+        "r": 0.11
+      },
+      {
+        "x": -0.44698041932248306,
+        "y": -8.108311970011743,
+        "vx": -0.7229794330172297,
+        "vy": -2.6014036094835586,
+        "r": 0.11
+      },
+      {
+        "x": 2.389756462364362,
+        "y": -8.613025496137588,
+        "vx": -0.2186706540506576,
+        "vy": -2.691130458572579,
+        "r": 0.11
+      },
+      {
+        "x": -2.39329621784043,
+        "y": -5.5172365184428775,
+        "vx": 0.1446809684336647,
+        "vy": -2.49580997220804,
+        "r": 0.12
+      },
+      {
+        "x": -0.28246955217978004,
+        "y": -5.224284060067566,
+        "vx": 0.5404609682450574,
+        "vy": -2.4408813862626784,
+        "r": 0.12
+      },
+      {
+        "x": 1.7547234623457917,
+        "y": -4.598780281580949,
+        "vx": 0.9224346584685933,
+        "vy": -2.323599427796437,
+        "r": 0.12
+      },
+      {
+        "x": -2.4736195252117406,
+        "y": -4.182786142547358,
+        "vx": -0.7406101871858363,
+        "vy": -1.7497132766932688,
+        "r": 0.11
+      },
+      {
+        "x": 1.4804601464503462,
+        "y": -5.75450215697737,
+        "vx": 0.09190541696949299,
+        "vy": -1.8977759073009073,
+        "r": 0.12
+      },
+      {
+        "x": -2.699705490663402,
+        "y": -7.567489624942606,
+        "vx": -0.8368846778530369,
+        "vy": -2.567026302158749,
+        "r": 0.11
+      },
+      {
+        "x": -0.20454038826293344,
+        "y": -8.125845047498341,
+        "vx": -0.33701854715512114,
+        "vy": -2.678883815859406,
+        "r": 0.11
+      },
+      {
+        "x": 2.35117269771911,
+        "y": -8.202918313125535,
+        "vx": 0.1749773966142401,
+        "vy": -2.6943242029633523,
+        "r": 0.11
+      },
+      {
+        "x": -2.1566099124535008,
+        "y": -4.324470533144119,
+        "vx": -0.1566349352274166,
+        "vy": -2.4950882744035936,
+        "r": 0.12
+      },
+      {
+        "x": -0.21563946420905533,
+        "y": -4.290878760558596,
+        "vx": 0.24287870763593422,
+        "vy": -2.488174015895411,
+        "r": 0.12
+      },
+      {
+        "x": 1.6951877375583242,
+        "y": -3.9484841152596473,
+        "vx": 0.6361879086858295,
+        "vy": -2.417698274152908,
+        "r": 0.12
+      },
+      {
+        "x": 0.486259312283513,
+        "y": -8.82096383110969,
+        "vx": 0.5536499300145524,
+        "vy": -2.6426259203668767,
+        "r": 0.11
+      },
+      {
+        "x": 2.8544155891729623,
+        "y": -8.084460204045936,
+        "vx": 1.0427699872034168,
+        "vy": -2.490508131644582,
+        "r": 0.11
+      },
+      {
+        "x": 0.5436571319507686,
+        "y": -5.936557824675247,
+        "vx": 1.0420756388720267,
+        "vy": -1.5887348308857463,
+        "r": 0.12
+      },
+      {
+        "x": -2.1856057050032724,
+        "y": -5.754277772127199,
+        "vx": -1.1636554889197817,
+        "vy": -2.4363714624635677,
+        "r": 0.11
+      },
+      {
+        "x": -0.012767032811174143,
+        "y": -6.548860258766838,
+        "vx": -0.6825841961835334,
+        "vy": -2.6122937842288105,
+        "r": 0.11
+      },
+      {
+        "x": 2.271033715902381,
+        "y": -6.9187837152046425,
+        "vx": -0.17694565403291349,
+        "vy": -2.694195656502858,
+        "r": 0.11
+      },
+      {
+        "x": -1.5163874222705362,
+        "y": -8.339409836054791,
+        "vx": 0.6437372148347585,
+        "vy": -2.622136990745676,
+        "r": 0.11
+      },
+      {
+        "x": 0.5188860964571864,
+        "y": -7.62919946762576,
+        "vx": 1.1273665658195637,
+        "vy": -2.453374130920966,
+        "r": 0.11
+      },
+      {
+        "x": 2.3834037660874703,
+        "y": -6.54739037028248,
+        "vx": 1.5704202694940905,
+        "vy": -2.196310583037406,
+        "r": 0.11
+      },
+      {
+        "x": -2.4680451368863485,
+        "y": -3.702504593432451,
+        "vx": 0.29610192631069165,
+        "vy": -2.482402797540137,
+        "r": 0.12
+      },
+      {
+        "x": -0.8914126452849072,
+        "y": -3.385006735627023,
+        "vx": 0.6878118621122757,
+        "vy": -2.4035213421847628,
+        "r": 0.12
+      },
+      {
+        "x": -1.9442339790372072,
+        "y": -6.057180639182995,
+        "vx": -0.7877238788486131,
+        "vy": -2.5825357869140357,
+        "r": 0.11
+      },
+      {
+        "x": 0.0048519849651033845,
+        "y": -6.454422162426836,
+        "vx": -0.2858133301784897,
+        "vy": -2.684829741397447,
+        "r": 0.11
+      },
+      {
+        "x": 1.9938852513415868,
+        "y": -6.476412799241204,
+        "vx": 0.22638407747211797,
+        "vy": -2.690492566328162,
+        "r": 0.11
+      },
+      {
+        "x": -1.741185337865026,
+        "y": -7.352424974400745,
+        "vx": 0.20256544457384568,
+        "vy": -2.692390618143029,
+        "r": 0.11
+      },
+      {
+        "x": 0.14353795713006795,
+        "y": -7.028715426713076,
+        "vx": 0.7074020414475188,
+        "vy": -2.6056827035838195,
+        "r": 0.11
+      },
+      {
+        "x": 1.933208787369718,
+        "y": -6.354884521106626,
+        "vx": 1.1867781566902869,
+        "vy": -2.4251922824392307,
+        "r": 0.11
+      },
+      {
+        "x": -2.6660551112558886,
+        "y": -3.3448896248483853,
+        "vx": -1.6361834761941307,
+        "vy": -2.147767127094856,
+        "r": 0.11
+      },
+      {
+        "x": -1.1831939156898115,
+        "y": -4.266356710179844,
+        "vx": -1.201114176761546,
+        "vy": -2.418124218145634,
+        "r": 0.11
+      },
+      {
+        "x": 0.44700931394004906,
+        "y": -4.891189763698264,
+        "vx": -0.7228149406843332,
+        "vy": -2.6014493194224455,
+        "r": 0.11
+      },
+      {
+        "x": 2.165881069570748,
+        "y": -5.196900087959647,
+        "vx": -0.21850048915456122,
+        "vy": -2.69114428008593,
+        "r": 0.11
+      },
+      {
+        "x": 0.31430184507790526,
+        "y": -3.0763381971603407,
+        "vx": -0.7784286874743978,
+        "vy": -1.733219195173241,
+        "r": 0.12
+      },
+      {
+        "x": 2.991155178466064,
+        "y": -3.9983892192844994,
+        "vx": 0.05067561181551646,
+        "vy": -1.8993240856597393,
+        "r": 0.11
+      },
+      {
+        "x": -1.7543850606283047,
+        "y": -6.5719210829702295,
+        "vx": 0.8014539883150972,
+        "vy": -2.5783078762269307,
+        "r": 0.11
+      },
+      {
+        "x": -0.28959290411462035,
+        "y": -5.958864038445235,
+        "vx": 1.2739675871904785,
+        "vy": -2.3805475392833624,
+        "r": 0.11
+      },
+      {
+        "x": 1.0330579211618043,
+        "y": -5.080200396303707,
+        "vx": 1.7006291437312637,
+        "vy": -2.0971076547215857,
+        "r": 0.11
+      },
+      {
+        "x": 2.165963188653751,
+        "y": -3.9675546051757156,
+        "vx": 2.0660824558254376,
+        "vy": -1.7381896575835245,
+        "r": 0.11
+      },
+      {
+        "x": -2.3611793115109023,
+        "y": -4.773159824241226,
+        "vx": 0.20859363638871598,
+        "vy": -1.8885149443036455,
+        "r": 0.11
+      },
+      {
+        "x": 0.1323973908566557,
+        "y": -4.231913538886574,
+        "vx": 1.0073322978426433,
+        "vy": -1.6109877844735943,
+        "r": 0.12
+      },
+      {
+        "x": -2.770625577351623,
+        "y": -6.752516285984283,
+        "vx": -2.3428961823025767,
+        "vy": -0.8722599835782979,
+        "r": 0.12
+      },
+      {
+        "x": -2.283653513397637,
+        "y": -7.796643047695483,
+        "vx": -2.174004137000634,
+        "vy": -1.2343848720330821,
+        "r": 0.12
+      },
+      {
+        "x": -1.6365530024667978,
+        "y": -8.749849958259171,
+        "vx": -1.949576214134444,
+        "vy": -1.5649768641360833,
+        "r": 0.12
+      },
+      {
+        "x": -2.4390116801440604,
+        "y": -3.820860748820612,
+        "vx": -1.3315771825021727,
+        "vy": -2.348808678253633,
+        "r": 0.11
+      },
+      {
+        "x": -1.141543332298705,
+        "y": -4.401422901455003,
+        "vx": -0.8640210211164595,
+        "vy": -2.5580202647885475,
+        "r": 0.11
+      },
+      {
+        "x": 0.24222040682775553,
+        "y": -4.726498955649726,
+        "vx": -0.3653674214312514,
+        "vy": -2.6751647888226775,
+        "r": 0.11
+      },
+      {
+        "x": 1.6624757634301357,
+        "y": -4.784388926924154,
+        "vx": 0.1464363106777288,
+        "vy": -2.6960260397323865,
+        "r": 0.11
+      },
+      {
+        "x": -2.9878277545188485,
+        "y": -5.628203733270794,
+        "vx": -0.2668980881931009,
+        "vy": -2.6867760253729505,
+        "r": 0.11
+      },
+      {
+        "x": -1.6432382151032114,
+        "y": -5.633599390221857,
+        "vx": 0.2453264982509623,
+        "vy": -2.6888315137352734,
+        "r": 0.11
+      },
+      {
+        "x": -0.32182657509323004,
+        "y": -5.384960253588105,
+        "vx": 0.7487214087309695,
+        "vy": -2.5941118426366883,
+        "r": 0.11
+      },
+      {
+        "x": 0.9288475391373047,
+        "y": -4.891235226256419,
+        "vx": 1.2251686903425993,
+        "vy": -2.406026117938914,
+        "r": 0.11
+      },
+      {
+        "x": 2.0637704529791217,
+        "y": -4.17019422724407,
+        "vx": 1.657520276568055,
+        "vy": -2.1313438326008685,
+        "r": 0.11
+      },
+      {
+        "x": 1.1853237839370063,
+        "y": -3.152934211113704,
+        "vx": -0.9013228605641231,
+        "vy": -2.545116323672556,
+        "r": 0.11
+      },
+      {
+        "x": 2.3281658406794996,
+        "y": -3.439103717471012,
+        "vx": -0.4044350098065296,
+        "vy": -2.669537848175746,
+        "r": 0.11
+      },
+      {
+        "x": 2.215253560078234,
+        "y": -6.870561623771242,
+        "vx": 2.493838513603982,
+        "vy": 0.1754122802584854,
+        "r": 0.12
+      },
+      {
+        "x": 2.085189729031732,
+        "y": -6.011277004382577,
+        "vx": 2.4340390510538734,
+        "vy": 0.5704856684832319,
+        "r": 0.12
+      },
+      {
+        "x": 1.819887481910055,
+        "y": -5.183689320244497,
+        "vx": 2.3120610064002265,
+        "vy": 0.9509857531443737,
+        "r": 0.12
+      },
+      {
+        "x": -2.9008232600601613,
+        "y": -6.6553430890532805,
+        "vx": -2.460317638080504,
+        "vy": -0.44366329547301075,
+        "r": 0.12
+      },
+      {
+        "x": -2.691500669886591,
+        "y": -7.4472716359670095,
+        "vx": -2.358209057508028,
+        "vy": -0.8299699037236821,
+        "r": 0.12
+      },
+      {
+        "x": -2.3586830619794448,
+        "y": -8.195736204294183,
+        "vx": -2.1958590048703925,
+        "vy": -1.195074571200312,
+        "r": 0.12
+      },
+      {
+        "x": -2.0530146116311303,
+        "y": -4.9456783718567445,
+        "vx": 0.8681651710644699,
+        "vy": -2.5566167557439266,
+        "r": 0.11
+      },
+      {
+        "x": -1.1224750444827045,
+        "y": -4.527490135639014,
+        "vx": 1.3353816901348226,
+        "vy": -2.3466477668479917,
+        "r": 0.11
+      },
+      {
+        "x": -0.28765981678300717,
+        "y": -3.9410868422134104,
+        "vx": 1.7545357793564385,
+        "vy": -2.052219335002498,
+        "r": 0.11
+      },
+      {
+        "x": 0.4213847943515784,
+        "y": -3.2075740431698483,
+        "vx": 2.110541441850784,
+        "vy": -1.6839283898760111,
+        "r": 0.11
+      },
+      {
+        "x": 2.451177143105281,
+        "y": -6.131458577049431,
+        "vx": 2.4121298704022984,
+        "vy": 0.6569851507553205,
+        "r": 0.12
+      },
+      {
+        "x": 2.2208625927184658,
+        "y": -5.492420553192,
+        "vx": 2.2766507231159365,
+        "vy": 1.0328898706714493,
+        "r": 0.12
+      },
+      {
+        "x": 1.8916793928989377,
+        "y": -4.898238082050389,
+        "vx": 2.083013546751507,
+        "vy": 1.3824089713430348,
+        "r": 0.12
+      },
+      {
+        "x": 1.6486641513379972,
+        "y": -3.075029028231934,
+        "vx": -0.08946368244413148,
+        "vy": -2.6985174169390747,
+        "r": 0.11
+      },
+      {
+        "x": 2.5007457927259447,
+        "y": -3.022252573631504,
+        "vx": 0.4217853023886311,
+        "vy": -2.6668515441788156,
+        "r": 0.11
+      },
+      {
+        "x": -0.26486822091677326,
+        "y": -5.914155496481617,
+        "vx": -2.4976116519564706,
+        "vy": -0.109252167078142,
+        "r": 0.12
+      },
+      {
+        "x": -0.18720946723343118,
+        "y": -6.53867380700624,
+        "vx": -2.448304506760689,
+        "vy": -0.5057717293160038,
+        "r": 0.12
+      },
+      {
+        "x": -0.01104548957372084,
+        "y": -7.142842868759077,
+        "vx": -2.3364543622148473,
+        "vy": -0.8893711336035206,
+        "r": 0.12
+      },
+      {
+        "x": -2.2375848373295337,
+        "y": -3.911956210737916,
+        "vx": -0.3423094158626159,
+        "vy": -2.6782128862007584,
+        "r": 0.11
+      },
+      {
+        "x": -1.461105427616375,
+        "y": -3.9369079384690115,
+        "vx": 0.1696550301020923,
+        "vy": -2.6946645748146576,
+        "r": 0.11
+      },
+      {
+        "x": -0.6938870030696763,
+        "y": -3.814765597483992,
+        "vx": 0.6755133320010205,
+        "vy": -2.6141311631761863,
+        "r": 0.11
+      },
+      {
+        "x": 0.03645707154692641,
+        "y": -3.5499252774840677,
+        "vx": 1.1570588757042692,
+        "vy": -2.4395111719674443,
+        "r": 0.11
+      },
+      {
+        "x": 0.7036405957328156,
+        "y": -3.151918986729612,
+        "vx": 1.5969601004422191,
+        "vy": -2.1770894417996653,
+        "r": 0.11
+      },
+      {
+        "x": -2.820580975942327,
+        "y": -3.4843461733714762,
+        "vx": 0.41967565807740204,
+        "vy": -2.667184347212862,
+        "r": 0.11
+      },
+      {
+        "x": -2.382298267370557,
+        "y": -3.3719353786622683,
+        "vx": 0.9158447621208768,
+        "vy": -2.5399268437684883,
+        "r": 0.11
+      },
+      {
+        "x": -1.9731325698466462,
+        "y": -3.1787739141567632,
+        "vx": 1.3790512121479372,
+        "vy": -2.3212534877245323,
+        "r": 0.11
+      },
+      {
+        "x": -1.9260515470944681,
+        "y": -7.9964179810306115,
+        "vx": 2.3410473249165853,
+        "vy": 0.8772100218880876,
+        "r": 0.12
+      },
+      {
+        "x": -2.0730876671449123,
+        "y": -7.682886488838713,
+        "vx": 2.1713902633199256,
+        "vy": 1.2389771282632394,
+        "r": 0.12
+      },
+      {
+        "x": -2.268197011553473,
+        "y": -7.396785176503436,
+        "vx": 1.9462640966946496,
+        "vy": 1.5690940271116196,
+        "r": 0.12
+      },
+      {
+        "x": -0.07397626974261784,
+        "y": -6.12516104858672,
+        "vx": -1.9869847634310165,
+        "vy": 1.517198586175517,
+        "r": 0.12
+      },
+      {
+        "x": -0.2344270750852355,
+        "y": -6.374317732793837,
+        "vx": -2.203322927937918,
+        "vy": 1.1812569894917362,
+        "r": 0.12
+      },
+      {
+        "x": -0.353133291665225,
+        "y": -6.6458547438355335,
+        "vx": -2.3633762536637497,
+        "vy": 0.8151396712332792,
+        "r": 0.12
+      },
+      {
+        "x": -1.456029961177504,
+        "y": -8.179077339999301,
+        "vx": 2.0256896227763717,
+        "vy": 1.4651216851088245,
+        "r": 0.12
+      },
+      {
+        "x": -1.5575868243991688,
+        "y": -8.06000454227907,
+        "vx": 1.7663955039125359,
+        "vy": 1.7691373388625253,
+        "r": 0.12
+      },
+      {
+        "x": -1.676816995174975,
+        "y": -7.958632484979696,
+        "vx": 1.4619780466126173,
+        "vy": 2.0279596128184494,
+        "r": 0.12
+      },
+      {
+        "x": 2.5465522652659565,
+        "y": -6.992073119206365,
+        "vx": -2.3105191280597523,
+        "vy": 0.9547258029769599,
+        "r": 0.12
+      },
+      {
+        "x": 2.5138606394897614,
+        "y": -7.093487040797241,
+        "vx": -2.433112724720487,
+        "vy": 0.5744235970111667,
+        "r": 0.12
+      },
+      {
+        "x": 2.497743658699162,
+        "y": -7.198814002295846,
+        "vx": -2.4935514026851995,
+        "vy": 0.17944749139142013,
+        "r": 0.12
+      }
+    ],
+    "muted": false
+  },
+  "game": {
+    "source": "game",
+    "scope": "editor-and-native-viewport",
+    "note": "WebView timing plus instrumented native editor-host/RHI call tree, memory provenance, and render-bound resources. GPU bytes are estimates; driver timing and process-wide heap sampling are not claimed.",
+    "summary": {
+      "latest": {
+        "source": "game",
+        "timestamp": 22970.399999976158,
+        "sampleCount": 14,
+        "frameMs": 17.985714284437044,
+        "frameMaxMs": 18.799999982118607,
+        "paintMs": 0.5357142899717603,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 929,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      "samples": 48,
+      "averageFrameMs": 18.003958333313225,
+      "p95FrameMs": 18.114285715988704,
+      "peakFrameMs": 23.399999976158142,
+      "averagePaintMs": 0.5837599210795902,
+      "p95PaintMs": 0.6714285824980054,
+      "peakPaintMs": 2.199999988079071
+    },
+    "nativeLatest": {
+      "callTree": {
+        "calls": 1,
+        "children": [
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.update",
+                "selfMs": 0.007700000000000001,
+                "totalMs": 0.007700000000000001
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.append_to_frame",
+                "selfMs": 0.0007999999999999999,
+                "totalMs": 0.0007999999999999999
+              }
+            ],
+            "name": "Effects",
+            "selfMs": 0,
+            "totalMs": 0.0085
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "TransformHierarchy.build",
+                "selfMs": 0.0374,
+                "totalMs": 0.0374
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Camera, meshes and lighting",
+                    "selfMs": 0.0088,
+                    "totalMs": 0.0088
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Canvas layout and text",
+                    "selfMs": 1.2059,
+                    "totalMs": 1.2059
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "World sprites",
+                    "selfMs": 0.6583,
+                    "totalMs": 0.6583
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Particles, trails and sorting",
+                    "selfMs": 0.2256,
+                    "totalMs": 0.2256
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Sprite regions and materials",
+                    "selfMs": 0.1444,
+                    "totalMs": 0.1444
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "UI batching",
+                    "selfMs": 0.426,
+                    "totalMs": 0.426
+                  }
+                ],
+                "name": "FrameCompiler.compile",
+                "selfMs": 0.002000000000000224,
+                "totalMs": 2.6710000000000003
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Diagnostics.texture_failures",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Frame compile",
+            "selfMs": 0,
+            "totalMs": 2.7084
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "OffscreenTarget.ensure_size",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 0.402,
+                "totalMs": 0.402
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 0.8777,
+                "totalMs": 0.8777
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 1.2798
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeMeshCache.sync",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeFontCache.sync",
+                "selfMs": 0.0006,
+                "totalMs": 0.0006
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui",
+                "selfMs": 0.034999999999999996,
+                "totalMs": 0.034999999999999996
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui_materials",
+                "selfMs": 0.0067,
+                "totalMs": 0.0067
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_materials",
+                "selfMs": 0.0005,
+                "totalMs": 0.0005
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_environment",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              }
+            ],
+            "name": "Resource sync",
+            "selfMs": 0,
+            "totalMs": 0.043
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Profiler.snapshot",
+                "selfMs": 0.0106,
+                "totalMs": 0.0106
+              }
+            ],
+            "name": "Profiler",
+            "selfMs": 0,
+            "totalMs": 0.0106
+          }
+        ],
+        "name": "EditorViewportRenderer.render_world",
+        "selfMs": 0.0032999999999995793,
+        "totalMs": 4.0536
+      },
+      "commandMs": 4.1936,
+      "counts": {
+        "entities": 71,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 18,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 0,
+        "materialTextureBindGroups": 0,
+        "materialTexturesColor": 0,
+        "materialTexturesData": 0,
+        "renderObjects": 0,
+        "uiBatches": 21,
+        "uiDrawCalls": 21,
+        "uiPrimitives": 931
+      },
+      "memory": [
+        {
+          "bytes": 1625200,
+          "certainty": "exact",
+          "domain": "cpu",
+          "name": "CPU readback RGBA",
+          "source": "Renderer.read_offscreen_rgba8 Vec length"
+        },
+        {
+          "bytes": 0,
+          "certainty": "lower-bound",
+          "domain": "cpu",
+          "name": "Frame packet / render objects",
+          "source": "Rust shallow size for compiled render objects"
+        },
+        {
+          "bytes": 476672,
+          "certainty": "lower-bound",
+          "domain": "cpu",
+          "name": "Frame packet / UI primitives",
+          "source": "Rust shallow size for compiled UI primitives"
+        },
+        {
+          "bytes": 2184,
+          "certainty": "lower-bound",
+          "domain": "cpu",
+          "name": "Frame packet / UI batches",
+          "source": "Rust shallow size for compiled UI batches"
+        },
+        {
+          "bytes": 0,
+          "certainty": "lower-bound",
+          "domain": "cpu",
+          "name": "Frame packet / controls",
+          "source": "Rust shallow size for compiled UI controls"
+        },
+        {
+          "bytes": 1625200,
+          "certainty": "estimate",
+          "domain": "gpu",
+          "name": "GPU offscreen color",
+          "source": "viewport width x height x 4 RGBA8 bytes"
+        },
+        {
+          "bytes": 1625200,
+          "certainty": "estimate",
+          "domain": "gpu",
+          "name": "GPU offscreen depth",
+          "source": "viewport width x height x 4 depth bytes"
+        },
+        {
+          "bytes": 44040192,
+          "certainty": "estimate",
+          "domain": "gpu",
+          "name": "GPU texture residency",
+          "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+        }
+      ],
+      "residentMemoryEstimateBytes": 49394648,
+      "resourceSampleAgeMs": 169.42409999999998,
+      "resources": [
+        {
+          "asset": "mengine-font://12f16df0db3aead9/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "mengine-font://274c9bbaf8209cce/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "mengine-font://30ffd6ef450f34e8/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "mengine-font://3c00dbf827340bfb/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "mengine-font://7d198ab8e484d6f7/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "mengine-font://b06677e86493ba7e/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "mengine-font://b290859b63bf8a81/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "mengine-font://d59079b7cf2b234e/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "mengine-font://ddb86eb809789bde/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "Assets/Materials/Arena.mmat",
+          "dimensions": null,
+          "gpuBytesEstimate": null,
+          "kind": "material",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\thunder-fighter\\Assets\\Materials\\Arena.mmat",
+          "sourceBytes": 346
+        },
+        {
+          "asset": "Assets/Materials/Diamond.mmat",
+          "dimensions": null,
+          "gpuBytesEstimate": null,
+          "kind": "material",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\thunder-fighter\\Assets\\Materials\\Diamond.mmat",
+          "sourceBytes": 287
+        },
+        {
+          "asset": "Assets/Materials/Glow.mmat",
+          "dimensions": null,
+          "gpuBytesEstimate": null,
+          "kind": "material",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\thunder-fighter\\Assets\\Materials\\Glow.mmat",
+          "sourceBytes": 281
+        },
+        {
+          "asset": "Assets/Materials/Nebula.mmat",
+          "dimensions": null,
+          "gpuBytesEstimate": null,
+          "kind": "material",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\thunder-fighter\\Assets\\Materials\\Nebula.mmat",
+          "sourceBytes": 348
+        },
+        {
+          "asset": "Assets/Materials/Needle.mmat",
+          "dimensions": null,
+          "gpuBytesEstimate": null,
+          "kind": "material",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\thunder-fighter\\Assets\\Materials\\Needle.mmat",
+          "sourceBytes": 285
+        },
+        {
+          "asset": "Assets/Materials/Orb.mmat",
+          "dimensions": null,
+          "gpuBytesEstimate": null,
+          "kind": "material",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\thunder-fighter\\Assets\\Materials\\Orb.mmat",
+          "sourceBytes": 279
+        },
+        {
+          "asset": "Assets/Art/fleet.png",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "gpuBytesEstimate": 6291456,
+          "kind": "texture",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\thunder-fighter\\Assets\\Art\\fleet.png",
+          "sourceBytes": 2103375
+        }
+      ],
+      "resourcesTruncated": false,
+      "schemaVersion": 1,
+      "simulationMs": 15.2155,
+      "simulationStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0029000000000000002,
+          "totalMs": 0.0029000000000000002
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.0218,
+          "totalMs": 0.0218
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.0969,
+          "totalMs": 0.0969
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.0502,
+          "totalMs": 0.0502
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Script and runtime requests",
+          "selfMs": 14.7512,
+          "totalMs": 14.7512
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.2913,
+          "totalMs": 0.2913
+        }
+      ],
+      "totalMs": 4.0536,
+      "uploadMs": 0.5999999940395355,
+      "nativeTransport": "shared-buffer",
+      "simulationRequestMs": 19,
+      "transportMs": 9.099999994039536,
+      "source": "game",
+      "timestamp": 22996.899999976158,
+      "presentIntervalMs": 9.299999982118607
+    },
+    "nativeProfileCount": 240,
+    "nativeSummary": {
+      "intervals": 240,
+      "averagePresentIntervalMs": 20.810833333308498,
+      "p95PresentIntervalMs": 32.900000005960464,
+      "presentedFps": 48.051896047788894,
+      "averageRequestMs": 12.432499999925493,
+      "averageRenderMs": 3.9100366666666693,
+      "averageSimulationMs": 15.190408750000008,
+      "averageSimulationRequestMs": 19.137083332737287
+    },
+    "totalSamples": 48,
+    "returnedSamples": 48,
+    "truncated": false,
+    "samples": [
+      {
+        "source": "game",
+        "timestamp": 11069.899999976158,
+        "sampleCount": 14,
+        "frameMs": 17.978571427719935,
+        "frameMaxMs": 18.5,
+        "paintMs": 0.6714285824980054,
+        "paintMaxMs": 1.4000000059604645,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 682,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 11323.5,
+        "sampleCount": 14,
+        "frameMs": 18.114285715988704,
+        "frameMaxMs": 21,
+        "paintMs": 0.6499999995742526,
+        "paintMaxMs": 1.300000011920929,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 682,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 11576.699999988079,
+        "sampleCount": 14,
+        "frameMs": 18.085714284862792,
+        "frameMaxMs": 19.19999998807907,
+        "paintMs": 0.5428571445601327,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 695,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 11829.59999999404,
+        "sampleCount": 14,
+        "frameMs": 18.064285714711463,
+        "frameMaxMs": 19.80000001192093,
+        "paintMs": 0.5571428537368774,
+        "paintMaxMs": 1.0999999940395355,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 701,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 12080.09999999404,
+        "sampleCount": 14,
+        "frameMs": 17.892857142857142,
+        "frameMaxMs": 18.19999998807907,
+        "paintMs": 0.5785714281456811,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 701,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 12332.399999976158,
+        "sampleCount": 14,
+        "frameMs": 18.02142857015133,
+        "frameMaxMs": 18.599999994039536,
+        "paintMs": 0.5,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 702,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 12599.899999976158,
+        "sampleCount": 15,
+        "frameMs": 17.833333333333332,
+        "frameMaxMs": 21,
+        "paintMs": 0.6533333321412405,
+        "paintMaxMs": 2.199999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 703,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 12851.59999999404,
+        "sampleCount": 14,
+        "frameMs": 17.97857142984867,
+        "frameMaxMs": 18.5,
+        "paintMs": 0.6285714230367115,
+        "paintMaxMs": 0.7999999821186066,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 717,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 13103.799999982119,
+        "sampleCount": 14,
+        "frameMs": 18.01428571343422,
+        "frameMaxMs": 20,
+        "paintMs": 0.6214285684483392,
+        "paintMaxMs": 1.4000000059604645,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 723,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 13354.5,
+        "sampleCount": 14,
+        "frameMs": 17.907142858420098,
+        "frameMaxMs": 18.599999994039536,
+        "paintMs": 0.5714285714285714,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 735,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 13605.899999976158,
+        "sampleCount": 14,
+        "frameMs": 17.957142855439866,
+        "frameMaxMs": 20.19999998807907,
+        "paintMs": 0.6071428656578064,
+        "paintMaxMs": 1,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 774,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 13857.899999976158,
+        "sampleCount": 14,
+        "frameMs": 18,
+        "frameMaxMs": 18.30000001192093,
+        "paintMs": 0.5500000097921917,
+        "paintMaxMs": 0.6000000238418579,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 768,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 14109.5,
+        "sampleCount": 14,
+        "frameMs": 17.97142857313156,
+        "frameMaxMs": 20.30000001192093,
+        "paintMs": 0.6142857138599668,
+        "paintMaxMs": 1.0999999940395355,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 766,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 14361.59999999404,
+        "sampleCount": 14,
+        "frameMs": 18.00714285671711,
+        "frameMaxMs": 18.5,
+        "paintMs": 0.5428571424313954,
+        "paintMaxMs": 1.100000023841858,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 762,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 14614.699999988079,
+        "sampleCount": 14,
+        "frameMs": 18.078571428145683,
+        "frameMaxMs": 19.69999998807907,
+        "paintMs": 0.528571428997176,
+        "paintMaxMs": 0.800000011920929,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 773,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 14882.5,
+        "sampleCount": 15,
+        "frameMs": 17.853333334128063,
+        "frameMaxMs": 18.19999998807907,
+        "paintMs": 0.553333334128062,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 783,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 15137.199999988079,
+        "sampleCount": 14,
+        "frameMs": 18.192857142005646,
+        "frameMaxMs": 21,
+        "paintMs": 0.5642857125827244,
+        "paintMaxMs": 0.800000011920929,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 777,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 15390.699999988079,
+        "sampleCount": 14,
+        "frameMs": 18.107142857142858,
+        "frameMaxMs": 20.19999998807907,
+        "paintMs": 0.5714285735573087,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 775,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 15642.199999988079,
+        "sampleCount": 14,
+        "frameMs": 17.964285714285715,
+        "frameMaxMs": 20.5,
+        "paintMs": 0.5928571394511631,
+        "paintMaxMs": 0.800000011920929,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 777,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 15894.199999988079,
+        "sampleCount": 14,
+        "frameMs": 18,
+        "frameMaxMs": 20.5,
+        "paintMs": 0.6357142840112958,
+        "paintMaxMs": 1,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 780,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 16145.59999999404,
+        "sampleCount": 14,
+        "frameMs": 17.957142857568606,
+        "frameMaxMs": 18.599999994039536,
+        "paintMs": 0.5714285714285714,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 807,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 16397.29999998212,
+        "sampleCount": 14,
+        "frameMs": 17.978571427719935,
+        "frameMaxMs": 18.69999998807907,
+        "paintMs": 0.5857142827340535,
+        "paintMaxMs": 0.800000011920929,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 819,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 16650.09999999404,
+        "sampleCount": 14,
+        "frameMs": 18.057142857994354,
+        "frameMaxMs": 19.599999994039536,
+        "paintMs": 0.5714285692998341,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 817,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 16902.29999998212,
+        "sampleCount": 14,
+        "frameMs": 18.01428571343422,
+        "frameMaxMs": 21,
+        "paintMs": 0.5857142891202655,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 814,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 17152.399999976158,
+        "sampleCount": 14,
+        "frameMs": 17.864285713859967,
+        "frameMaxMs": 18.599999994039536,
+        "paintMs": 0.5785714324031558,
+        "paintMaxMs": 1,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 821,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 17420.19999998808,
+        "sampleCount": 15,
+        "frameMs": 17.853333334128063,
+        "frameMaxMs": 18.299999982118607,
+        "paintMs": 0.6066666603088379,
+        "paintMaxMs": 1,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 814,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 17672.59999999404,
+        "sampleCount": 14,
+        "frameMs": 18.028571428997175,
+        "frameMaxMs": 19.700000017881393,
+        "paintMs": 0.5642857104539871,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 824,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 17924.5,
+        "sampleCount": 14,
+        "frameMs": 17.99285714328289,
+        "frameMaxMs": 19.200000017881393,
+        "paintMs": 0.5857142827340535,
+        "paintMaxMs": 1,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 820,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 18175.29999998212,
+        "sampleCount": 14,
+        "frameMs": 17.91428571300847,
+        "frameMaxMs": 19.19999998807907,
+        "paintMs": 0.5642857125827244,
+        "paintMaxMs": 1,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 833,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 18426.899999976158,
+        "sampleCount": 14,
+        "frameMs": 17.971428571002825,
+        "frameMaxMs": 18.30000001192093,
+        "paintMs": 0.6357142861400332,
+        "paintMaxMs": 1.5,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 853,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 18680.29999998212,
+        "sampleCount": 14,
+        "frameMs": 18.100000000425748,
+        "frameMaxMs": 19,
+        "paintMs": 0.5928571394511631,
+        "paintMaxMs": 1.300000011920929,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 865,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 18931.899999976158,
+        "sampleCount": 14,
+        "frameMs": 17.971428571002825,
+        "frameMaxMs": 20.200000017881393,
+        "paintMs": 0.6285714272941861,
+        "paintMaxMs": 1.399999976158142,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 858,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 19183.899999976158,
+        "sampleCount": 14,
+        "frameMs": 18,
+        "frameMaxMs": 20.600000023841858,
+        "paintMs": 0.7000000029802322,
+        "paintMaxMs": 1.2000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 853,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 19434.79999998212,
+        "sampleCount": 14,
+        "frameMs": 17.921428571854317,
+        "frameMaxMs": 19.700000017881393,
+        "paintMs": 0.5642857125827244,
+        "paintMaxMs": 0.800000011920929,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 851,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 19688.09999999404,
+        "sampleCount": 14,
+        "frameMs": 18.09285714370864,
+        "frameMaxMs": 22.30000001192093,
+        "paintMs": 0.6785714328289032,
+        "paintMaxMs": 1.300000011920929,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 881,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 19939.79999998212,
+        "sampleCount": 14,
+        "frameMs": 17.978571427719935,
+        "frameMaxMs": 20.899999976158142,
+        "paintMs": 0.6642857193946838,
+        "paintMaxMs": 1.5999999940395355,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 868,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 20192.29999998212,
+        "sampleCount": 14,
+        "frameMs": 18.035714285714285,
+        "frameMaxMs": 19.099999994039536,
+        "paintMs": 0.5500000012772424,
+        "paintMaxMs": 0.7999999821186066,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 888,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 20445.19999998808,
+        "sampleCount": 14,
+        "frameMs": 18.064285714711463,
+        "frameMaxMs": 19.099999994039536,
+        "paintMs": 0.5285714268684387,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 909,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 20697.59999999404,
+        "sampleCount": 14,
+        "frameMs": 18.028571428997175,
+        "frameMaxMs": 19.19999998807907,
+        "paintMs": 0.5071428567171097,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 899,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 20948.29999998212,
+        "sampleCount": 14,
+        "frameMs": 17.90714285629136,
+        "frameMaxMs": 21.099999994039536,
+        "paintMs": 0.6285714358091354,
+        "paintMaxMs": 1,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 918,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 21199.79999998212,
+        "sampleCount": 14,
+        "frameMs": 17.964285714285715,
+        "frameMaxMs": 18.900000005960464,
+        "paintMs": 0.600000011069434,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 904,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 21453.19999998808,
+        "sampleCount": 14,
+        "frameMs": 18.100000000425748,
+        "frameMaxMs": 19.900000005960464,
+        "paintMs": 0.5357142835855484,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 929,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 21704.69999998808,
+        "sampleCount": 14,
+        "frameMs": 17.964285714285715,
+        "frameMaxMs": 20.5,
+        "paintMs": 0.5285714268684387,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 933,
+        "uiBatches": 23,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 21957.5,
+        "sampleCount": 14,
+        "frameMs": 18.057142857994354,
+        "frameMaxMs": 21.69999998807907,
+        "paintMs": 0.6142857096024922,
+        "paintMaxMs": 1,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 933,
+        "uiBatches": 22,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 22210.69999998808,
+        "sampleCount": 14,
+        "frameMs": 18.085714284862792,
+        "frameMaxMs": 18.900000005960464,
+        "paintMs": 0.5071428567171097,
+        "paintMaxMs": 0.5999999940395355,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 925,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 22461.5,
+        "sampleCount": 14,
+        "frameMs": 17.914285715137208,
+        "frameMaxMs": 18.599999994039536,
+        "paintMs": 0.5357142835855484,
+        "paintMaxMs": 0.5999999940395355,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 921,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 22718.59999999404,
+        "sampleCount": 14,
+        "frameMs": 18.364285713859967,
+        "frameMaxMs": 23.399999976158142,
+        "paintMs": 0.5357142899717603,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 913,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 22970.399999976158,
+        "sampleCount": 14,
+        "frameMs": 17.985714284437044,
+        "frameMaxMs": 18.799999982118607,
+        "paintMs": 0.5357142899717603,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 71,
+        "drawItems": 0,
+        "uiPrimitives": 929,
+        "uiBatches": 21,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      }
+    ]
+  }
+}

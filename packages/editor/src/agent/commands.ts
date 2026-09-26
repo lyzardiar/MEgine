@@ -407,6 +407,20 @@ function worldCommandBatch(
       commands.push({ op: 'setComponent', entity, component, value: componentValue });
       return;
     }
+    if (op === 'setSpriteBatchData') {
+      const entity = batchEntityId(command, 'entity', index);
+      const simulated = requireBatchEntity(entities, entity, index);
+      if (!simulated.components.SpriteBatch2D) throw new BridgeError('COMPONENT_NOT_FOUND', `commands[${index}] requires SpriteBatch2D on entity ${entity}`);
+      const data = ['instances', 'colors'].map((key) => {
+        const rows = command[key];
+        if (!Array.isArray(rows) || rows.length > 8192 || !rows.every((row) => Array.isArray(row) && row.length === 4 && row.every((value) => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 3.4028234663852886e38))) throw new BridgeError('INVALID_ARGS', `commands[${index}].${key} must contain at most 8192 finite float4 rows`);
+        return structuredClone(rows) as [number, number, number, number][];
+      });
+      const [instances, colors] = data;
+      Object.assign(simulated.components.SpriteBatch2D, { instances, colors });
+      commands.push({ op: 'setSpriteBatchData', entity, instances, colors });
+      return;
+    }
     if (op === 'removeComponent') {
       const entity = batchEntityId(command, 'entity', index);
       const simulated = requireBatchEntity(entities, entity, index);

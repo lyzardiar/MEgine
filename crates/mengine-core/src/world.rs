@@ -353,6 +353,14 @@ impl World {
             WorldCommand::RemoveComponent { entity, component } => {
                 self.remove_component_by_name(Entity::from_u64(entity), &component);
             }
+            WorldCommand::SetSpriteBatchData { entity, instances, colors } => {
+                if instances.len() <= 8192 && colors.len() <= 8192 && instances.iter().chain(&colors).flatten().all(|value| value.is_finite()) {
+                    if let Some(batch) = self.get_component_mut::<crate::generated::SpriteBatch2D>(Entity::from_u64(entity)) {
+                        batch.instances = instances;
+                        batch.colors = colors;
+                    }
+                }
+            }
             WorldCommand::SetParent { entity, parent } => {
                 self.set_parent(Entity::from_u64(entity), parent.map(Entity::from_u64));
             }

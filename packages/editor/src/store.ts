@@ -1771,6 +1771,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
               structuredClone(cmd.value),
             );
           }
+        } else if (cmd.op === 'setSpriteBatchData') {
+          const batch = editEntities.find((e) => e.entity === cmd.entity)?.components.SpriteBatch2D as Record<string, unknown> | undefined;
+          if (batch && [cmd.instances, cmd.colors].every((rows) => Array.isArray(rows) && rows.length <= 8192 && rows.every((row) => Array.isArray(row) && row.length === 4 && row.every((value) => Number.isFinite(value) && Math.abs(value) <= 3.4028234663852886e38)))) {
+            batch.instances = structuredClone(cmd.instances);
+            batch.colors = structuredClone(cmd.colors);
+          }
         } else if (cmd.op === 'removeComponent') {
           const e = editEntities.find((x) => x.entity === cmd.entity);
           if (e && cmd.component !== 'Transform') delete e.components[cmd.component];

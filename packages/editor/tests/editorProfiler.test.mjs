@@ -36,11 +36,17 @@ test('native presentation summary retains correct cadence after history reaches 
   for (let index = 0; index < 300; index++) recordNativeViewportProfile('game', { schemaVersion: 1, totalMs: 4, transportMs: 10 }, index * 20);
   const profiles = readNativeViewportProfiles('game');
   assert.equal(profiles.length, 240);
-  assert.deepEqual(summarizeNativeViewportProfiles(profiles), { intervals: 240, averagePresentIntervalMs: 20, p95PresentIntervalMs: 20, presentedFps: 50, averageRequestMs: 10, averageRenderMs: 4, averageSimulationMs: null, averageSimulationRequestMs: null });
+  assert.deepEqual(summarizeNativeViewportProfiles(profiles), { intervals: 240, averagePresentIntervalMs: 20, p95PresentIntervalMs: 20, presentedFps: 50, averageRequestMs: 10, averageRenderMs: 4, averageCommandMs: null, averageUploadMs: null, averageSimulationMs: null, averageSimulationRequestMs: null });
   clearEditorProfilerSamples();
   recordNativeViewportProfile('game', { schemaVersion: 1, totalMs: 4 }, 9000);
   assert.equal(summarizeNativeViewportProfiles(readNativeViewportProfiles('game')).intervals, 0);
   clearEditorProfilerSamples();
+});
+
+test('native summary includes command and pixel upload costs without treating missing data as zero', () => {
+  const result = summarizeNativeViewportProfiles([{ totalMs: 2, commandMs: 3, uploadMs: 0.5 }, { totalMs: 2, commandMs: 5, uploadMs: 1.5 }, { totalMs: 2 }]);
+  assert.equal(result.averageCommandMs, 4);
+  assert.equal(result.averageUploadMs, 1);
 });
 
 test('editor profiler sampler aggregates bounded frame windows and preserves latest counters', () => {

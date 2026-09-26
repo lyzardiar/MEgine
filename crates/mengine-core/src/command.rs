@@ -20,6 +20,11 @@ pub enum WorldCommand {
         component: String,
         value: Value,
     },
+    SetSpriteBatchData {
+        entity: u64,
+        instances: Vec<[f32; 4]>,
+        colors: Vec<[f32; 4]>,
+    },
     RemoveComponent {
         entity: u64,
         component: String,

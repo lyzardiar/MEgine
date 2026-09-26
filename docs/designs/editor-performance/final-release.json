@@ -1,0 +1,1278 @@
+{
+  "simulation": {
+    "frames": 750,
+    "elapsedMs": 12012.353500000001,
+    "framesPerSecond": 62.43572502257779
+  },
+  "scope": "Isolated native editor, friction sample, 1080x1920 Game output, Game and Profiler visible in the default layout",
+  "executable": "G:\\work\\github\\MEgine\\target\\release\\mengine-editor-tauri.exe",
+  "elapsedMs": 12012.387999999999,
+  "game": {
+    "source": "game",
+    "scope": "editor-and-native-viewport",
+    "note": "WebView timing plus instrumented native editor-host/RHI call tree, memory provenance, and render-bound resources. GPU bytes are estimates; driver timing and process-wide heap sampling are not claimed.",
+    "summary": {
+      "latest": {
+        "source": "game",
+        "timestamp": 21953.90000000596,
+        "sampleCount": 14,
+        "frameMs": 17.98571428656578,
+        "frameMaxMs": 18.700000017881393,
+        "paintMs": 0.5357142814568111,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      "samples": 48,
+      "averageFrameMs": 18.016071428589168,
+      "p95FrameMs": 18.185714285288537,
+      "peakFrameMs": 22,
+      "averagePaintMs": 0.5872023799234912,
+      "p95PaintMs": 0.6785714328289032,
+      "peakPaintMs": 2.2000000178813934
+    },
+    "nativeLatest": {
+      "callTree": {
+        "calls": 1,
+        "children": [
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.update",
+                "selfMs": 0.0081,
+                "totalMs": 0.0081
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.append_to_frame",
+                "selfMs": 0.0007,
+                "totalMs": 0.0007
+              }
+            ],
+            "name": "Effects",
+            "selfMs": 0,
+            "totalMs": 0.008799999999999999
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "TransformHierarchy.build",
+                "selfMs": 0.0298,
+                "totalMs": 0.0298
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Camera, meshes and lighting",
+                    "selfMs": 0.0158,
+                    "totalMs": 0.0158
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Canvas layout and text",
+                    "selfMs": 0.1152,
+                    "totalMs": 0.1152
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "World sprites",
+                    "selfMs": 0.0781,
+                    "totalMs": 0.0781
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Particles, trails and sorting",
+                    "selfMs": 0.0248,
+                    "totalMs": 0.0248
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Sprite regions and materials",
+                    "selfMs": 0.0089,
+                    "totalMs": 0.0089
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "UI batching",
+                    "selfMs": 0.031099999999999996,
+                    "totalMs": 0.031099999999999996
+                  }
+                ],
+                "name": "FrameCompiler.compile",
+                "selfMs": 0.0010000000000000564,
+                "totalMs": 0.27490000000000003
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Diagnostics.texture_failures",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Frame compile",
+            "selfMs": 0,
+            "totalMs": 0.3047
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "OffscreenTarget.ensure_size",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 0.3635,
+                "totalMs": 0.3635
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 0.483,
+                "totalMs": 0.483
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 0.8466
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeMeshCache.sync",
+                "selfMs": 0.0003,
+                "totalMs": 0.0003
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeFontCache.sync",
+                "selfMs": 0.0007,
+                "totalMs": 0.0007
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui",
+                "selfMs": 0.2018,
+                "totalMs": 0.2018
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui_materials",
+                "selfMs": 0.0025,
+                "totalMs": 0.0025
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_materials",
+                "selfMs": 0.00039999999999999996,
+                "totalMs": 0.00039999999999999996
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_environment",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Resource sync",
+            "selfMs": 0,
+            "totalMs": 0.20570000000000002
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Profiler.snapshot",
+                "selfMs": 0.005699999999999999,
+                "totalMs": 0.005699999999999999
+              }
+            ],
+            "name": "Profiler",
+            "selfMs": 0,
+            "totalMs": 0.005699999999999999
+          }
+        ],
+        "name": "EditorViewportRenderer.render_world",
+        "selfMs": 0.0026000000000001968,
+        "totalMs": 1.3741
+      },
+      "commandMs": 1.4561000000000002,
+      "counts": {
+        "entities": 65,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 18,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 0,
+        "materialTextureBindGroups": 0,
+        "materialTexturesColor": 0,
+        "materialTexturesData": 0,
+        "renderObjects": 0,
+        "uiBatches": 20,
+        "uiDrawCalls": 20,
+        "uiPrimitives": 237
+      },
+      "memory": [
+        {
+          "bytes": 582296,
+          "certainty": "exact",
+          "domain": "cpu",
+          "name": "CPU readback RGBA",
+          "source": "Renderer.read_offscreen_rgba8 Vec length"
+        },
+        {
+          "bytes": 0,
+          "certainty": "lower-bound",
+          "domain": "cpu",
+          "name": "Frame packet / render objects",
+          "source": "Rust shallow size for compiled render objects"
+        },
+        {
+          "bytes": 121344,
+          "certainty": "lower-bound",
+          "domain": "cpu",
+          "name": "Frame packet / UI primitives",
+          "source": "Rust shallow size for compiled UI primitives"
+        },
+        {
+          "bytes": 2080,
+          "certainty": "lower-bound",
+          "domain": "cpu",
+          "name": "Frame packet / UI batches",
+          "source": "Rust shallow size for compiled UI batches"
+        },
+        {
+          "bytes": 0,
+          "certainty": "lower-bound",
+          "domain": "cpu",
+          "name": "Frame packet / controls",
+          "source": "Rust shallow size for compiled UI controls"
+        },
+        {
+          "bytes": 582296,
+          "certainty": "estimate",
+          "domain": "gpu",
+          "name": "GPU offscreen color",
+          "source": "viewport width x height x 4 RGBA8 bytes"
+        },
+        {
+          "bytes": 582296,
+          "certainty": "estimate",
+          "domain": "gpu",
+          "name": "GPU offscreen depth",
+          "source": "viewport width x height x 4 depth bytes"
+        },
+        {
+          "bytes": 4272704,
+          "certainty": "estimate",
+          "domain": "gpu",
+          "name": "GPU texture residency",
+          "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+        }
+      ],
+      "residentMemoryEstimateBytes": 6143016,
+      "resourceSampleAgeMs": 233.4883,
+      "resources": [
+        {
+          "asset": "mengine-font://61da0e40ed565439/0",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "gpuBytesEstimate": 4194304,
+          "kind": "font-atlas",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": null,
+          "sourceBytes": null
+        },
+        {
+          "asset": "Assets/Materials/Sprite.mmat",
+          "dimensions": null,
+          "gpuBytesEstimate": null,
+          "kind": "material",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\unity-physics-friction\\Assets\\Materials\\Sprite.mmat",
+          "sourceBytes": 295
+        },
+        {
+          "asset": "Assets/Sprites/boxAlt.png",
+          "dimensions": [
+            70,
+            70
+          ],
+          "gpuBytesEstimate": 19600,
+          "kind": "texture",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\unity-physics-friction\\Assets\\Sprites\\boxAlt.png",
+          "sourceBytes": 1561
+        },
+        {
+          "asset": "Assets/Sprites/grassHalfLeft.png",
+          "dimensions": [
+            70,
+            70
+          ],
+          "gpuBytesEstimate": 19600,
+          "kind": "texture",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\unity-physics-friction\\Assets\\Sprites\\grassHalfLeft.png",
+          "sourceBytes": 1936
+        },
+        {
+          "asset": "Assets/Sprites/grassHalfMid.png",
+          "dimensions": [
+            70,
+            70
+          ],
+          "gpuBytesEstimate": 19600,
+          "kind": "texture",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\unity-physics-friction\\Assets\\Sprites\\grassHalfMid.png",
+          "sourceBytes": 1760
+        },
+        {
+          "asset": "Assets/Sprites/grassHalfRight.png",
+          "dimensions": [
+            70,
+            70
+          ],
+          "gpuBytesEstimate": 19600,
+          "kind": "texture",
+          "loaded": true,
+          "referencedBy": [
+            "UI batch"
+          ],
+          "resolvedPath": "\\\\?\\G:\\work\\github\\MEgine\\samples\\unity-physics-friction\\Assets\\Sprites\\grassHalfRight.png",
+          "sourceBytes": 1958
+        }
+      ],
+      "resourcesTruncated": false,
+      "schemaVersion": 1,
+      "simulationMs": 1.2451999999999999,
+      "simulationStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0007999999999999999,
+          "totalMs": 0.0007999999999999999
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.024300000000000002,
+          "totalMs": 0.024300000000000002
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.0958,
+          "totalMs": 0.0958
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.045000000000000005,
+          "totalMs": 0.045000000000000005
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Script and runtime requests",
+          "selfMs": 0.9628,
+          "totalMs": 0.9628
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.1154,
+          "totalMs": 0.1154
+        }
+      ],
+      "totalMs": 1.3741,
+      "uploadMs": 0.20000001788139343,
+      "nativeTransport": "shared-buffer",
+      "simulationRequestMs": 3.800000011920929,
+      "transportMs": 3.800000011920929,
+      "source": "game",
+      "timestamp": 21975.80000001192,
+      "presentIntervalMs": 17.5
+    },
+    "nativeProfileCount": 240,
+    "nativeSummary": {
+      "intervals": 240,
+      "averagePresentIntervalMs": 18.010000000024835,
+      "p95PresentIntervalMs": 20.5,
+      "presentedFps": 55.52470849520383,
+      "averageRequestMs": 3.9395833330849808,
+      "averageRenderMs": 1.4030158333333331,
+      "averageCommandMs": 1.5821100000000006,
+      "averageUploadMs": 0.2808333333581686,
+      "averageSimulationMs": 1.3742208333333328,
+      "averageSimulationRequestMs": 4.396250001216928
+    },
+    "totalSamples": 48,
+    "returnedSamples": 48,
+    "truncated": false,
+    "samples": [
+      {
+        "source": "game",
+        "timestamp": 10099.59999999404,
+        "sampleCount": 14,
+        "frameMs": 18.035714285714285,
+        "frameMaxMs": 22,
+        "paintMs": 0.6714285803692681,
+        "paintMaxMs": 1.2000000178813934,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 10353.200000017881,
+        "sampleCount": 14,
+        "frameMs": 18.114285715988704,
+        "frameMaxMs": 19.5,
+        "paintMs": 0.6000000025544848,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 10608.5,
+        "sampleCount": 14,
+        "frameMs": 18.235714284437044,
+        "frameMaxMs": 19.900000005960464,
+        "paintMs": 0.7357142908232552,
+        "paintMaxMs": 2.2000000178813934,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 10861,
+        "sampleCount": 14,
+        "frameMs": 18.035714285714285,
+        "frameMaxMs": 19,
+        "paintMs": 0.5857142891202655,
+        "paintMaxMs": 0.9000000059604645,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 11113.300000011921,
+        "sampleCount": 14,
+        "frameMs": 18.021428572280065,
+        "frameMaxMs": 21.30000001192093,
+        "paintMs": 0.6785714328289032,
+        "paintMaxMs": 2.0999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 11365.40000000596,
+        "sampleCount": 14,
+        "frameMs": 18.00714285671711,
+        "frameMaxMs": 19.299999982118607,
+        "paintMs": 0.5857142806053162,
+        "paintMaxMs": 0.7999999821186066,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 11618.300000011921,
+        "sampleCount": 14,
+        "frameMs": 18.064285714711463,
+        "frameMaxMs": 19,
+        "paintMs": 0.5357142835855484,
+        "paintMaxMs": 0.5999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 11870.300000011921,
+        "sampleCount": 14,
+        "frameMs": 18,
+        "frameMaxMs": 19.099999994039536,
+        "paintMs": 0.5785714260169438,
+        "paintMaxMs": 0.7999999821186066,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 12122.59999999404,
+        "sampleCount": 14,
+        "frameMs": 18.02142857015133,
+        "frameMaxMs": 19.799999982118607,
+        "paintMs": 0.9285714285714286,
+        "paintMaxMs": 1.800000011920929,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 12373.200000017881,
+        "sampleCount": 14,
+        "frameMs": 17.90000000170299,
+        "frameMaxMs": 21,
+        "paintMs": 0.5642857125827244,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 12626.40000000596,
+        "sampleCount": 14,
+        "frameMs": 18.085714284862792,
+        "frameMaxMs": 21,
+        "paintMs": 0.5357142793280738,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 12877.800000011921,
+        "sampleCount": 14,
+        "frameMs": 17.957142857568606,
+        "frameMaxMs": 18.400000005960464,
+        "paintMs": 0.5571428622518267,
+        "paintMaxMs": 0.9000000059604645,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 13129.09999999404,
+        "sampleCount": 14,
+        "frameMs": 17.949999998722756,
+        "frameMaxMs": 20.30000001192093,
+        "paintMs": 0.585714286991528,
+        "paintMaxMs": 0.7999999821186066,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 13380.700000017881,
+        "sampleCount": 14,
+        "frameMs": 17.97142857313156,
+        "frameMaxMs": 20.80000001192093,
+        "paintMs": 0.5785714238882065,
+        "paintMaxMs": 1.0999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 13632.700000017881,
+        "sampleCount": 14,
+        "frameMs": 18,
+        "frameMaxMs": 19.5,
+        "paintMs": 0.521428570151329,
+        "paintMaxMs": 0.5999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 13884.800000011921,
+        "sampleCount": 14,
+        "frameMs": 18.00714285671711,
+        "frameMaxMs": 18.299999982118607,
+        "paintMs": 0.5642857083252498,
+        "paintMaxMs": 0.8999999761581421,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 14135.90000000596,
+        "sampleCount": 14,
+        "frameMs": 17.935714285288537,
+        "frameMaxMs": 18.599999994039536,
+        "paintMs": 0.5571428516081401,
+        "paintMaxMs": 0.7999999821186066,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 14389.800000011921,
+        "sampleCount": 14,
+        "frameMs": 18.135714286140033,
+        "frameMaxMs": 18.900000005960464,
+        "paintMs": 0.6357142818825585,
+        "paintMaxMs": 1.199999988079071,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 14642.800000011921,
+        "sampleCount": 14,
+        "frameMs": 18.071428571428573,
+        "frameMaxMs": 18.599999994039536,
+        "paintMs": 0.5999999982970101,
+        "paintMaxMs": 1.199999988079071,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 14894.09999999404,
+        "sampleCount": 14,
+        "frameMs": 17.949999998722756,
+        "frameMaxMs": 18.400000005960464,
+        "paintMs": 0.5928571458373751,
+        "paintMaxMs": 1.0999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 15146.59999999404,
+        "sampleCount": 14,
+        "frameMs": 18.035714285714285,
+        "frameMaxMs": 18.5,
+        "paintMs": 0.5214285786662783,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 15397.800000011921,
+        "sampleCount": 14,
+        "frameMs": 17.942857144134386,
+        "frameMaxMs": 21.69999998807907,
+        "paintMs": 0.5428571403026581,
+        "paintMaxMs": 0.9000000059604645,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 15651.200000017881,
+        "sampleCount": 14,
+        "frameMs": 18.100000000425748,
+        "frameMaxMs": 19.099999994039536,
+        "paintMs": 0.5928571373224258,
+        "paintMaxMs": 0.7999999821186066,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 15904.800000011921,
+        "sampleCount": 14,
+        "frameMs": 18.114285713859967,
+        "frameMaxMs": 19.399999976158142,
+        "paintMs": 0.5214285722800663,
+        "paintMaxMs": 0.6000000238418579,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 16155.59999999404,
+        "sampleCount": 14,
+        "frameMs": 17.91428571300847,
+        "frameMaxMs": 18.299999982118607,
+        "paintMs": 0.6357142840112958,
+        "paintMaxMs": 1,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 16406.90000000596,
+        "sampleCount": 14,
+        "frameMs": 17.950000000851496,
+        "frameMaxMs": 20,
+        "paintMs": 0.6642857087509972,
+        "paintMaxMs": 1.0999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 16657.80000001192,
+        "sampleCount": 14,
+        "frameMs": 17.921428571854317,
+        "frameMaxMs": 18.80000001192093,
+        "paintMs": 0.5428571403026581,
+        "paintMaxMs": 0.800000011920929,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 16910,
+        "sampleCount": 14,
+        "frameMs": 18.01428571343422,
+        "frameMaxMs": 18.80000001192093,
+        "paintMs": 0.5714285692998341,
+        "paintMaxMs": 0.800000011920929,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 17161.90000000596,
+        "sampleCount": 14,
+        "frameMs": 17.99285714328289,
+        "frameMaxMs": 18.5,
+        "paintMs": 0.5571428558656147,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 17413.80000001192,
+        "sampleCount": 14,
+        "frameMs": 17.99285714328289,
+        "frameMaxMs": 19.299999982118607,
+        "paintMs": 0.5642857125827244,
+        "paintMaxMs": 1,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 17668.40000000596,
+        "sampleCount": 14,
+        "frameMs": 18.185714285288537,
+        "frameMaxMs": 19.099999994039536,
+        "paintMs": 0.5071428567171097,
+        "paintMaxMs": 1,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 17920.80000001192,
+        "sampleCount": 14,
+        "frameMs": 18.028571428997175,
+        "frameMaxMs": 19.400000005960464,
+        "paintMs": 0.49999999574252535,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 18173.09999999404,
+        "sampleCount": 14,
+        "frameMs": 18.02142857015133,
+        "frameMaxMs": 21.099999994039536,
+        "paintMs": 0.5785714238882065,
+        "paintMaxMs": 1.0999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 18423.40000000596,
+        "sampleCount": 14,
+        "frameMs": 17.878571429422923,
+        "frameMaxMs": 18.200000017881393,
+        "paintMs": 0.6071428571428571,
+        "paintMaxMs": 1,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 18676.70000001788,
+        "sampleCount": 14,
+        "frameMs": 18.09285714370864,
+        "frameMaxMs": 19.099999994039536,
+        "paintMs": 0.5928571394511631,
+        "paintMaxMs": 1.0999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 18927.20000001788,
+        "sampleCount": 14,
+        "frameMs": 17.892857142857142,
+        "frameMaxMs": 19.099999994039536,
+        "paintMs": 0.5857142848627908,
+        "paintMaxMs": 0.8999999761581421,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 19179.70000001788,
+        "sampleCount": 14,
+        "frameMs": 18.035714285714285,
+        "frameMaxMs": 21,
+        "paintMs": 0.5785714281456811,
+        "paintMaxMs": 0.8999999761581421,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 19431.30000001192,
+        "sampleCount": 14,
+        "frameMs": 17.971428571002825,
+        "frameMaxMs": 19.600000023841858,
+        "paintMs": 0.54285714668887,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 19683.20000001788,
+        "sampleCount": 14,
+        "frameMs": 17.99285714328289,
+        "frameMaxMs": 18.69999998807907,
+        "paintMs": 0.5714285692998341,
+        "paintMaxMs": 1.0999999940395355,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 19935.80000001192,
+        "sampleCount": 14,
+        "frameMs": 18.042857142431394,
+        "frameMaxMs": 19.400000005960464,
+        "paintMs": 0.5642857147114617,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 20190.40000000596,
+        "sampleCount": 14,
+        "frameMs": 18.185714285288537,
+        "frameMaxMs": 20.19999998807907,
+        "paintMs": 0.6214285684483392,
+        "paintMaxMs": 1,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 20442.90000000596,
+        "sampleCount": 14,
+        "frameMs": 18.035714285714285,
+        "frameMaxMs": 18.599999994039536,
+        "paintMs": 0.5928571394511631,
+        "paintMaxMs": 0.7000000178813934,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 20694.30000001192,
+        "sampleCount": 14,
+        "frameMs": 17.957142857568606,
+        "frameMaxMs": 19.299999982118607,
+        "paintMs": 0.6571428562913623,
+        "paintMaxMs": 1.300000011920929,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 20947.30000001192,
+        "sampleCount": 14,
+        "frameMs": 18.071428571428573,
+        "frameMaxMs": 18.900000005960464,
+        "paintMs": 0.5499999970197678,
+        "paintMaxMs": 0.800000011920929,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 21199,
+        "sampleCount": 14,
+        "frameMs": 17.978571427719935,
+        "frameMaxMs": 19.19999998807907,
+        "paintMs": 0.5214285744088036,
+        "paintMaxMs": 0.9000000059604645,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 21449.80000001192,
+        "sampleCount": 14,
+        "frameMs": 17.914285715137208,
+        "frameMaxMs": 20.400000005960464,
+        "paintMs": 0.5785714238882065,
+        "paintMaxMs": 0.7999999821186066,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 21702.09999999404,
+        "sampleCount": 14,
+        "frameMs": 18.02142857015133,
+        "frameMaxMs": 20,
+        "paintMs": 0.5928571437086377,
+        "paintMaxMs": 1,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      {
+        "source": "game",
+        "timestamp": 21953.90000000596,
+        "sampleCount": 14,
+        "frameMs": 17.98571428656578,
+        "frameMaxMs": 18.700000017881393,
+        "paintMs": 0.5357142814568111,
+        "paintMaxMs": 0.699999988079071,
+        "entities": 65,
+        "drawItems": 0,
+        "uiPrimitives": 237,
+        "uiBatches": 20,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      }
+    ]
+  },
+  "scene": {
+    "source": "scene",
+    "scope": "editor-and-native-viewport",
+    "note": "WebView timing plus instrumented native editor-host/RHI call tree, memory provenance, and render-bound resources. GPU bytes are estimates; driver timing and process-wide heap sampling are not claimed.",
+    "summary": {
+      "latest": null,
+      "samples": 0,
+      "averageFrameMs": 0,
+      "p95FrameMs": 0,
+      "peakFrameMs": 0,
+      "averagePaintMs": 0,
+      "p95PaintMs": 0,
+      "peakPaintMs": 0
+    },
+    "nativeLatest": null,
+    "nativeProfileCount": 0,
+    "nativeSummary": {
+      "intervals": 0,
+      "averagePresentIntervalMs": 0,
+      "p95PresentIntervalMs": 0,
+      "presentedFps": 0,
+      "averageRequestMs": 0,
+      "averageRenderMs": 0,
+      "averageCommandMs": null,
+      "averageUploadMs": null,
+      "averageSimulationMs": null,
+      "averageSimulationRequestMs": null
+    },
+    "totalSamples": 0,
+    "returnedSamples": 0,
+    "truncated": false,
+    "samples": []
+  }
+}

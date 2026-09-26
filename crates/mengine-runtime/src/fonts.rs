@@ -1,7 +1,7 @@
 use crate::textures::resolve_project_asset_path;
-use crate::ui::{UiFontGlyphMetrics, UiFontGlyphTexture, UiFontResolver};
+use crate::ui::{UiFontGlyphMetrics, UiFontGlyphTexture, UiFontResolver, UiTextCacheKey};
 use ab_glyph::{point, Font, FontArc, ScaleFont};
-use mengine_rhi::Renderer;
+use mengine_rhi::{Renderer, UiPrimitive};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -138,9 +138,12 @@ pub struct RuntimeFontCache {
     project_root: Option<PathBuf>,
     fonts: HashMap<String, CachedFont>,
     checked_fonts: HashSet<String>,
+    last_font_check: Option<std::time::Instant>,
     atlases: HashMap<AtlasKey, Vec<FontAtlasPage>>,
     glyph_metrics: HashMap<(String, u16, u8, char), UiFontGlyphMetrics>,
     kerning: HashMap<(String, u16, char, char), f32>,
+    text_geometry: HashMap<UiTextCacheKey, Vec<UiPrimitive>>,
+    text_geometry_primitives: usize,
     retired_textures: Vec<String>,
     failures: Vec<FontLoadFailure>,
     reported_failures: HashSet<String>,
@@ -164,13 +167,16 @@ impl RuntimeFontCache {
         self.glyph_metrics.clear();
         self.kerning.clear();
         self.checked_fonts.clear();
+        self.last_font_check = None;
         self.reported_failures.clear();
     }
 
-    /// Start a new UI collection pass. A font's file stamp is checked once per
-    /// frame, while every glyph in that frame reuses the parsed FontArc.
+    /// Poll font files at 4 Hz; glyphs and text reuse the parsed font between polls.
     pub fn begin_frame(&mut self) {
-        self.checked_fonts.clear();
+        if self.last_font_check.is_none_or(|checked| checked.elapsed().as_millis() >= 250) {
+            self.checked_fonts.clear();
+            self.last_font_check = Some(std::time::Instant::now());
+        }
     }
 
     pub fn take_failures(&mut self) -> Vec<FontLoadFailure> {
@@ -208,6 +214,8 @@ impl RuntimeFontCache {
     }
 
     fn retire_all_atlases(&mut self) {
+        self.text_geometry.clear();
+        self.text_geometry_primitives = 0;
         self.retired_textures.extend(
             self.atlases
                 .values()
@@ -217,6 +225,8 @@ impl RuntimeFontCache {
     }
 
     fn retire_font_atlases(&mut self, font: &str) {
+        self.text_geometry.clear();
+        self.text_geometry_primitives = 0;
         let keys = self
             .atlases
             .keys()
@@ -439,6 +449,22 @@ impl RuntimeFontCache {
 }
 
 impl UiFontResolver for RuntimeFontCache {
+    fn cached_text(&mut self, key: &UiTextCacheKey) -> Option<Vec<UiPrimitive>> {
+        self.font(&key.strings[1])?;
+        self.text_geometry.get(key).cloned()
+    }
+
+    fn cache_text(&mut self, key: UiTextCacheKey, primitives: &[UiPrimitive]) {
+        // Bound both changing text variants and retained glyph geometry per viewport.
+        if primitives.len() > 4096 || key.strings[0].len() > 16_384 || !self.fonts.get(&key.strings[1]).is_some_and(|font| font.result.is_ok()) { return; }
+        if self.text_geometry.len() >= 256 || self.text_geometry_primitives + primitives.len() > 16_384 {
+            self.text_geometry.clear();
+            self.text_geometry_primitives = 0;
+        }
+        if let Some(previous) = self.text_geometry.insert(key, primitives.to_vec()) { self.text_geometry_primitives -= previous.len(); }
+        self.text_geometry_primitives += primitives.len();
+    }
+
     fn measure_glyph(
         &mut self,
         reference: &str,
@@ -711,6 +737,11 @@ mod tests {
             .flat_map(|page| page.pixels.chunks_exact(4))
             .any(|pixel| pixel[3] > 0));
         assert!(cache.take_failures().is_empty());
+        let key = UiTextCacheKey { strings: ["AV", "Assets/Fonts/Test.ttf", "Normal", "Left", "Top", "Overflow", "Overflow"].map(str::to_owned), values: [0; 19], flags: [false; 3], clip: mengine_rhi::UiClipRect { x: 0, y: 0, width: 100, height: 100 } };
+        cache.cache_text(key.clone(), &[UiPrimitive::solid([0.0, 0.0, 10.0, 10.0], [1.0; 4])]);
+        assert_eq!(cache.cached_text(&key).unwrap().len(), 1);
+        let mut changed = key.clone(); changed.strings[0] = "changed".into();
+        assert!(cache.cached_text(&changed).is_none());
         cache.begin_frame();
         assert!(cache.checked_fonts.is_empty());
         assert!(cache
@@ -718,10 +749,16 @@ mod tests {
             .is_some());
         assert_eq!(cache.checked_fonts.len(), 1);
         std::fs::write(root.join("Assets/Fonts/Test.ttf"), b"changed invalid font").unwrap();
+        cache.last_font_check = Some(std::time::Instant::now());
+        cache.begin_frame();
+        assert!(cache.measure_glyph("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal").is_some());
+        cache.last_font_check = None;
         cache.begin_frame();
         assert!(cache.measure_glyph("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal").is_none());
         assert!(cache.glyph_metrics.is_empty());
         assert!(cache.kerning.is_empty());
+        assert!(cache.text_geometry.is_empty());
+        assert!(cache.cached_text(&key).is_none());
         let _ = std::fs::remove_dir_all(root);
     }
 

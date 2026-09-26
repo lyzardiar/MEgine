@@ -168,7 +168,10 @@ function simulate(dt:number,keys:string[]):void {
   }
   drops=drops.filter(d=>d.age<15&&d.y>-9);peak=Math.max(peak,bullets.length);
 }
-function batch(name:string,instances:number[][],colors:number[][]=[]):void {set(name,'SpriteBatch2D',{...authored[name].SpriteBatch2D,instances,colors});}
+function batch(name:string,instances:number[][],colors:number[][]=[]):void {
+  if(typeof engine.setSpriteBatchData==='function') engine.setSpriteBatchData(entities[name].entity,instances,colors);
+  else set(name,'SpriteBatch2D',{...authored[name].SpriteBatch2D,instances,colors});
+}
 function effects(dt:number):void {
   displayTime+=dt;announcementTime=Math.max(0,announcementTime-dt);
   for(const s of sparks){s.life-=dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.vx*=Math.exp(-2*dt);s.vy*=Math.exp(-2*dt);}sparks=sparks.filter(s=>s.life>0);

@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "path": "Native editor Agent bridge",
+  "start": true,
+  "movement": true,
+  "nova": true,
+  "pauseFreezes": true,
+  "resume": true,
+  "restart": true,
+  "stopRestoresAuthored": true,
+  "screenshots": "Live title and Nova"
+}

@@ -15,8 +15,11 @@ All writers (scripts / editor / agent) emit `WorldCommand` values.
 
 ## Script host
 
-Embedded **Boa** (pure-Rust JS). Scripts only use `engine.*` APIs that push into `CommandBuffer`.  
-The host can be swapped for QuickJS/V8 later without changing the command contract.
+Embedded **QuickJS-NG** through `rquickjs`, shared by editor Play and standalone players. Scripts use `engine.*` APIs and emit `CommandBuffer` entries. Each host owns its VM, request queues and 256 MiB heap; JavaScript calls have a one-second execution deadline.
+
+World snapshots remain native data until a script reads `engine.snapshot` or `lastSnapshot`. Values stay stable within a frame and refresh before the next callback; `lastSnapshot` remains a JSON string. Pixel delivery uses WebView2 shared CPU buffers on Windows, with binary IPC on other hosts.
+
+Windows binaries use mimalloc for native allocations. UI text geometry is cached with complete layout/style inputs and invalidated when font atlases change; each viewport retains at most 16,384 cached primitives.
 
 ## IDL
 

@@ -78,6 +78,12 @@ const worldCommandSchema: AgentJsonSchema = {
       value: { type: 'object', description: 'Complete component value' },
     }, ['op', 'entity', 'component', 'value']),
     objectSchema({
+      op: { const: 'setSpriteBatchData' },
+      entity: entityId(),
+      instances: { type: 'array', maxItems: 8192, items: { type: 'array', minItems: 4, maxItems: 4, items: { type: 'number' } } },
+      colors: { type: 'array', maxItems: 8192, items: { type: 'array', minItems: 4, maxItems: 4, items: { type: 'number' } } },
+    }, ['op', 'entity', 'instances', 'colors']),
+    objectSchema({
       op: { const: 'removeComponent' },
       entity: entityId(),
       component: stringValue('Component type'),

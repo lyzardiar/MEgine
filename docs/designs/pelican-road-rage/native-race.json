@@ -1,8 +1,8 @@
 {
-  "elapsedMs": 31424,
+  "elapsedMs": 6056,
   "frames": 656,
   "passed": true,
-  "path": "EditorPlayRuntime / Boa / native World",
+  "path": "EditorPlayRuntime / QuickJS / native World",
   "race": {
     "boost": 22.803333333333057,
     "cameraStyle": 0,

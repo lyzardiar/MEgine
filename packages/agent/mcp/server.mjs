@@ -1157,6 +1157,17 @@ const WORLD_COMMAND_SCHEMA = {
     },
     {
       type: 'object',
+      properties: {
+        op: { const: 'setSpriteBatchData' },
+        entity: { type: 'integer', minimum: 0 },
+        instances: { type: 'array', maxItems: 8192, items: { type: 'array', minItems: 4, maxItems: 4, items: { type: 'number' } } },
+        colors: { type: 'array', maxItems: 8192, items: { type: 'array', minItems: 4, maxItems: 4, items: { type: 'number' } } },
+      },
+      required: ['op', 'entity', 'instances', 'colors'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
       required: ['op', 'entity', 'component'],
       properties: {
         op: { const: 'removeComponent' },

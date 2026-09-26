@@ -280,6 +280,8 @@ export function summarizeNativeViewportProfiles(profiles: readonly NativeViewpor
   const requests = profiles.map(profile => profile.transportMs ?? 0).filter(value => Number.isFinite(value) && value > 0);
   const simulations = profiles.map(profile => profile.simulationMs).filter((value): value is number => value != null && Number.isFinite(value));
   const simulationRequests = profiles.map(profile => profile.simulationRequestMs).filter((value): value is number => value != null && Number.isFinite(value));
+  const commands = profiles.map(profile => profile.commandMs).filter((value): value is number => value != null && Number.isFinite(value));
+  const uploads = profiles.map(profile => profile.uploadMs).filter((value): value is number => value != null && Number.isFinite(value));
   return {
     intervals: intervals.length,
     averagePresentIntervalMs,
@@ -287,6 +289,8 @@ export function summarizeNativeViewportProfiles(profiles: readonly NativeViewpor
     presentedFps: averagePresentIntervalMs > 0 ? 1000 / averagePresentIntervalMs : 0,
     averageRequestMs: requests.length ? requests.reduce((sum, value) => sum + value, 0) / requests.length : 0,
     averageRenderMs: profiles.length ? profiles.reduce((sum, value) => sum + value.totalMs, 0) / profiles.length : 0,
+    averageCommandMs: commands.length ? commands.reduce((sum, value) => sum + value, 0) / commands.length : null,
+    averageUploadMs: uploads.length ? uploads.reduce((sum, value) => sum + value, 0) / uploads.length : null,
     averageSimulationMs: simulations.length ? simulations.reduce((sum, value) => sum + value, 0) / simulations.length : null,
     averageSimulationRequestMs: simulationRequests.length ? simulationRequests.reduce((sum, value) => sum + value, 0) / simulationRequests.length : null,
   };

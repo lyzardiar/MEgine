@@ -37,6 +37,9 @@ thiserror.workspace = true
 sha2.workspace = true
 ab_glyph.workspace = true
 
+[target.'cfg(windows)'.dependencies]
+mimalloc.workspace = true
+
 [dev-dependencies]
 uuid.workspace = true
 image.workspace = true

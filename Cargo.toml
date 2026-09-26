@@ -52,7 +52,6 @@ wgpu       = "24"
 winit      = "0.30"
 pollster   = "0.4"
 raw-window-handle = "0.6"
-boa_engine = "0.20"
 clap       = { version = "4", features = ["derive"] }
 walkdir    = "2"
 heck       = "0.5"
@@ -68,6 +67,7 @@ kira       = "0.12.2"
 mint       = "0.5"
 sha2       = "0.10"
 ab_glyph   = "0.2"
+mimalloc   = "0.1.52"
 
 [profile.release]
 lto = true
@@ -95,11 +95,8 @@ opt-level = 2
 [profile.dev.package.mengine-editor-host]
 opt-level = 2
 
-[profile.dev.package.boa_engine]
+[profile.dev.package.rquickjs-core]
 opt-level = 2
 
-[profile.dev.package.boa_gc]
-opt-level = 2
-
-[profile.dev.package.boa_parser]
+[profile.dev.package.rquickjs-sys]
 opt-level = 2
