@@ -1,5 +1,7 @@
 /** Global engine bridge injected by mengine-script host. */
 interface EngineApi {
+  /** Bounded project-scoped JSON files under the OS user-data directory. */
+  storage: { load(key: string): unknown | null; save(key: string, value: unknown): boolean };
   /** Current simulation world, refreshed before onTick. Change it through pushCommandJson. */
   snapshot: { entities: Array<{ entity: number; name: string | null; parent: number | null; components: Record<string, any> }>; frame: number; elapsed: number; clear_color: number[] };
   /** Physical key codes (KeyA, ArrowLeft, Space); pointer pixels are relative to the Game content. */

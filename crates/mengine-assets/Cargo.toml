@@ -14,5 +14,6 @@ log.workspace = true
 uuid.workspace = true
 image.workspace = true
 gltf.workspace = true
+glam.workspace = true
 parking_lot.workspace = true
 walkdir.workspace = true

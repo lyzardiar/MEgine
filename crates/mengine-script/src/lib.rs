@@ -4,6 +4,8 @@
 mod bridge;
 mod input;
 mod network;
+mod storage;
+pub use storage::project_storage_root;
 
 pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal};
 pub use input::ScriptInput;

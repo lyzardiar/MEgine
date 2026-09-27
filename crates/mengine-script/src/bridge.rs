@@ -115,6 +115,7 @@ pub struct ScriptHost {
     commands: Rc<RefCell<CommandBuffer>>,
     requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
     snapshot: Rc<RefCell<ScriptSnapshot>>,
+    storage_root: Rc<RefCell<Option<std::path::PathBuf>>>,
 }
 
 fn script_error(ctx: &Ctx<'_>, error: rquickjs::Error) -> ScriptError {
@@ -154,8 +155,13 @@ impl ScriptHost {
         let requests = Rc::new(RefCell::new(Vec::new()));
         let snapshot = Rc::new(RefCell::new(ScriptSnapshot::default()));
         let network = Rc::new(RefCell::new(crate::network::ScriptNetwork::default()));
+        let storage_root = Rc::new(RefCell::new(None::<std::path::PathBuf>));
         let restore_snapshot = context.with(|ctx| {
             let install = || -> rquickjs::Result<Persistent<Function<'static>>> {
+                let storage = storage_root.clone();
+                ctx.globals().set("__mengineStorage", Function::new(ctx.clone(), move |operation: String, key: String, payload: String| -> String {
+                    crate::storage::operate(storage.borrow().as_deref(), &operation, &key, &payload)
+                })?)?;
                 let client = network.clone();
                 ctx.globals().set("__mengineNetwork", Function::new(ctx.clone(), move |operation: String, value: String| -> String {
                     let mut client = client.borrow_mut();
@@ -198,10 +204,12 @@ impl ScriptHost {
             };
             install().map_err(|error| script_error(&ctx, error))
         })?;
-        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot };
+        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot, storage_root };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
+
+    pub fn set_storage_root(&mut self, root: std::path::PathBuf) { *self.storage_root.borrow_mut() = Some(root); }
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
         self.tick_callback = None;
