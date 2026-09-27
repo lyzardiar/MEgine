@@ -1,0 +1,3 @@
+SourceAssets/** -text -diff
+Licenses/*.txt -text -whitespace
+Assets/Licenses/*.txt -text -whitespace

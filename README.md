@@ -19,6 +19,9 @@ cargo run -p mengine-runtime -- --sample spinning-cube
 npm.cmd run sample:effekseer
 # Spine 4.3 gallery with all 27 explicitly redistributable official export sets
 # Open samples/spine-showcase in the editor.
+# RTS, three-lane MOBA, tower defense, campaign and map editor with CC0 art
+node scripts/build-frostbound.mjs
+# Open samples/frostbound-realms in the editor; see its README for multiplayer.
 ```
 
 ## Windows 编辑器 EXE 打包
