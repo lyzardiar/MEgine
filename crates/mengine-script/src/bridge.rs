@@ -115,6 +115,7 @@ pub struct ScriptHost {
     commands: Rc<RefCell<CommandBuffer>>,
     requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
     snapshot: Rc<RefCell<ScriptSnapshot>>,
+    storage_root: Rc<RefCell<Option<std::path::PathBuf>>>,
 }
 
 fn script_error(ctx: &Ctx<'_>, error: rquickjs::Error) -> ScriptError {
@@ -154,8 +155,13 @@ impl ScriptHost {
         let requests = Rc::new(RefCell::new(Vec::new()));
         let snapshot = Rc::new(RefCell::new(ScriptSnapshot::default()));
         let network = Rc::new(RefCell::new(crate::network::ScriptNetwork::default()));
+        let storage_root = Rc::new(RefCell::new(None::<std::path::PathBuf>));
         let restore_snapshot = context.with(|ctx| {
             let install = || -> rquickjs::Result<Persistent<Function<'static>>> {
+                let storage = storage_root.clone();
+                ctx.globals().set("__mengineStorage", Function::new(ctx.clone(), move |operation: String, key: String, payload: String| -> String {
+                    crate::storage::operate(storage.borrow().as_deref(), &operation, &key, &payload)
+                })?)?;
                 let client = network.clone();
                 ctx.globals().set("__mengineNetwork", Function::new(ctx.clone(), move |operation: String, value: String| -> String {
                     let mut client = client.borrow_mut();
@@ -198,10 +204,12 @@ impl ScriptHost {
             };
             install().map_err(|error| script_error(&ctx, error))
         })?;
-        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot };
+        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot, storage_root };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
+
+    pub fn set_storage_root(&mut self, root: std::path::PathBuf) { *self.storage_root.borrow_mut() = Some(root); }
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
         self.tick_callback = None;
@@ -493,6 +501,16 @@ fn runtime_request(operation: &str, args: &[JsonValue]) -> Option<ScriptRuntimeR
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn script_activation_preserves_entity_and_updates_descendant_hierarchy() {
+        let mut world = World::new();let parent = world.spawn_empty();let child = world.spawn_empty();world.set_parent(child, Some(parent));world.set_editor_state(parent, 7, true);
+        let mut host = ScriptHost::new().unwrap();
+        for active in [false, true] {
+            host.eval(&format!("engine.setActive({}, {});", parent.to_u64(), active)).unwrap();host.tick(&mut world, 0.016).unwrap();
+            assert_eq!(mengine_core::TransformHierarchy::build(&world).is_active(child), active);assert_eq!(world.sibling_index(parent), 7);assert!(world.is_alive(parent));
+        }
+    }
 
     #[test]
     fn sprite_batch_arrays_commit_in_command_order_and_preserve_authored_properties() {

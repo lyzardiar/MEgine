@@ -1154,6 +1154,12 @@ function scanBuildAssetDependencies(
       const texture = path.slice(0, marker).trim();
       const slice = path.slice(marker + 1).trim();
       if (!texture || !slice) throw new Error(`invalid ${kind} subresource reference: ${path}`);
+      if (/\.(?:gltf|glb)$/i.test(texture)) {
+        const pose = /^pose=(\d+):(\d+)$/.exec(slice);
+        if (!pose || Number(pose[1]) > 255 || Number(pose[2]) > 1199) throw new Error(`invalid skeletal pose reference: ${path}`);
+        enqueue(texture, from, kind, builtins);
+        return;
+      }
       enqueue(texture, from, kind, builtins);
       enqueue(`${texture}.sprite.json`, from, 'sprite import metadata', [], slice);
       return;

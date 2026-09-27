@@ -421,13 +421,14 @@ fn collect_definitions(
     world
         .iter_entities()
         .filter_map(|entity| {
-            let transform = hierarchy.get(entity)?.to_transform();
+            if !hierarchy.is_active(entity) { return None; }
             let rigid_body = world.get_component::<RigidBody3D>(entity).cloned();
             let box_collider = world.get_component::<BoxCollider3D>(entity).cloned();
             let sphere_collider = world.get_component::<SphereCollider3D>(entity).cloned();
             if rigid_body.is_none() && box_collider.is_none() && sphere_collider.is_none() {
                 return None;
             }
+            let transform = hierarchy.get(entity)?.to_transform();
             let kind = rigid_body
                 .as_ref()
                 .map_or(BodyKind::Fixed, |body| body_kind(&body.body_type));
@@ -551,6 +552,12 @@ fn finite_vec4(value: [f32; 4], fallback: [f32; 4]) -> [f32; 4] {
 mod tests {
     use super::*;
     use mengine_core::Parent;
+
+    #[test]
+    fn inactive_parent_removes_and_reactivates_child_physics() {
+        let mut world = World::new();let parent = world.spawn_empty();let child = spawn_body(&mut world, [0.0;3], None, Some(BoxCollider3D::default()), None);world.set_parent(child, Some(parent));let mut physics = PhysicsWorld::new();
+        for (active, count) in [(true,1),(false,0),(true,1)] { world.set_editor_state(parent, 0, active);physics.step(&mut world, 0.016);assert_eq!(physics.body_count(), count);assert_eq!(physics.collider_count(), count); }
+    }
 
     fn spawn_body(
         world: &mut World,

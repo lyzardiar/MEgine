@@ -1,0 +1,665 @@
+{
+  "tree": {
+    "material": "Assets/Materials/tree.mmat",
+    "size": [
+      1.023,
+      2.412761,
+      1.023
+    ],
+    "parts": [
+      {
+        "name": "tree",
+        "mesh": "Assets/Models/tree-tree.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tree-high": {
+    "material": "Assets/Materials/tree-high.mmat",
+    "size": [
+      1.023,
+      2.972761,
+      1.023
+    ],
+    "parts": [
+      {
+        "name": "tree-high",
+        "mesh": "Assets/Models/tree-high-tree-high.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock-large": {
+    "material": "Assets/Materials/rock-large.mmat",
+    "size": [
+      1.670019,
+      1.1628,
+      1.548562
+    ],
+    "parts": [
+      {
+        "name": "rock-large",
+        "mesh": "Assets/Models/rock-large-rock-large.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock-wide": {
+    "material": "Assets/Materials/rock-wide.mmat",
+    "size": [
+      1.093521,
+      1.02,
+      1.567429
+    ],
+    "parts": [
+      {
+        "name": "rock-wide",
+        "mesh": "Assets/Models/rock-wide-rock-wide.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "windmill": {
+    "material": "Assets/Materials/windmill.mmat",
+    "size": [
+      0.471,
+      3.113214,
+      3.113214
+    ],
+    "parts": [
+      {
+        "name": "windmill",
+        "mesh": "Assets/Models/windmill-windmill.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "wall-block": {
+    "material": "Assets/Materials/wall-block.mmat",
+    "size": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "wall-block",
+        "mesh": "Assets/Models/wall-block-wall-block.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "roof-point": {
+    "material": "Assets/Materials/roof-point.mmat",
+    "size": [
+      1.1,
+      0.5,
+      1.1
+    ],
+    "parts": [
+      {
+        "name": "roof-point",
+        "mesh": "Assets/Models/roof-point-roof-point.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "Cleric": {
+    "material": "Assets/Materials/Cleric.mmat",
+    "parts": [
+      {
+        "name": "Cleric",
+        "mesh": "Assets/Models/Cleric.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 14
+      },
+      {
+        "name": "Idle",
+        "frames": 38
+      },
+      {
+        "name": "Idle_Weapon",
+        "frames": 38
+      },
+      {
+        "name": "PickUp",
+        "frames": 15
+      },
+      {
+        "name": "Punch",
+        "frames": 9
+      },
+      {
+        "name": "RecieveHit",
+        "frames": 8
+      },
+      {
+        "name": "RecieveHit_Attacking",
+        "frames": 8
+      },
+      {
+        "name": "Run",
+        "frames": 10
+      },
+      {
+        "name": "Spell1",
+        "frames": 15
+      },
+      {
+        "name": "Staff_Attack",
+        "frames": 9
+      },
+      {
+        "name": "Walk",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Monk": {
+    "material": "Assets/Materials/Monk.mmat",
+    "parts": [
+      {
+        "name": "Monk",
+        "mesh": "Assets/Models/Monk.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Attack",
+        "frames": 10
+      },
+      {
+        "name": "Attack2",
+        "frames": 10
+      },
+      {
+        "name": "Death",
+        "frames": 14
+      },
+      {
+        "name": "Idle",
+        "frames": 38
+      },
+      {
+        "name": "Idle_Attacking",
+        "frames": 20
+      },
+      {
+        "name": "PickUp",
+        "frames": 15
+      },
+      {
+        "name": "RecieveHit",
+        "frames": 8
+      },
+      {
+        "name": "RecieveHit_2",
+        "frames": 8
+      },
+      {
+        "name": "Roll",
+        "frames": 12
+      },
+      {
+        "name": "Run",
+        "frames": 10
+      },
+      {
+        "name": "Walk",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Ranger": {
+    "material": "Assets/Materials/Ranger.mmat",
+    "parts": [
+      {
+        "name": "Ranger",
+        "mesh": "Assets/Models/Ranger.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Bow_Draw",
+        "frames": 15
+      },
+      {
+        "name": "Bow_Shoot",
+        "frames": 8
+      },
+      {
+        "name": "Death",
+        "frames": 14
+      },
+      {
+        "name": "Idle",
+        "frames": 38
+      },
+      {
+        "name": "Idle_Attacking",
+        "frames": 20
+      },
+      {
+        "name": "Idle_Weapon",
+        "frames": 38
+      },
+      {
+        "name": "PickUp",
+        "frames": 15
+      },
+      {
+        "name": "Punch",
+        "frames": 9
+      },
+      {
+        "name": "RecieveHit",
+        "frames": 8
+      },
+      {
+        "name": "RecieveHit_2",
+        "frames": 8
+      },
+      {
+        "name": "Roll",
+        "frames": 12
+      },
+      {
+        "name": "Run",
+        "frames": 10
+      },
+      {
+        "name": "Run_Holding",
+        "frames": 10
+      },
+      {
+        "name": "Walk",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Rogue": {
+    "material": "Assets/Materials/Rogue.mmat",
+    "parts": [
+      {
+        "name": "Rogue",
+        "mesh": "Assets/Models/Rogue.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Attacking_Idle",
+        "frames": 20
+      },
+      {
+        "name": "Dagger_Attack",
+        "frames": 9
+      },
+      {
+        "name": "Dagger_Attack2",
+        "frames": 15
+      },
+      {
+        "name": "Death",
+        "frames": 14
+      },
+      {
+        "name": "Idle",
+        "frames": 38
+      },
+      {
+        "name": "PickUp",
+        "frames": 15
+      },
+      {
+        "name": "Punch",
+        "frames": 9
+      },
+      {
+        "name": "RecieveHit",
+        "frames": 8
+      },
+      {
+        "name": "RecieveHit_2",
+        "frames": 8
+      },
+      {
+        "name": "Roll",
+        "frames": 12
+      },
+      {
+        "name": "Run",
+        "frames": 10
+      },
+      {
+        "name": "Walk",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Warrior": {
+    "material": "Assets/Materials/Warrior.mmat",
+    "parts": [
+      {
+        "name": "Warrior",
+        "mesh": "Assets/Models/Warrior.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 14
+      },
+      {
+        "name": "Idle",
+        "frames": 38
+      },
+      {
+        "name": "Idle_Attacking",
+        "frames": 20
+      },
+      {
+        "name": "Idle_Weapon",
+        "frames": 38
+      },
+      {
+        "name": "PickUp",
+        "frames": 15
+      },
+      {
+        "name": "Punch",
+        "frames": 9
+      },
+      {
+        "name": "RecieveHit",
+        "frames": 8
+      },
+      {
+        "name": "Roll",
+        "frames": 12
+      },
+      {
+        "name": "Run",
+        "frames": 10
+      },
+      {
+        "name": "Run_Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Sword_Attack",
+        "frames": 10
+      },
+      {
+        "name": "Sword_Attack2",
+        "frames": 10
+      },
+      {
+        "name": "Walk",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Wizard": {
+    "material": "Assets/Materials/Wizard.mmat",
+    "parts": [
+      {
+        "name": "Wizard",
+        "mesh": "Assets/Models/Wizard.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 14
+      },
+      {
+        "name": "Idle",
+        "frames": 38
+      },
+      {
+        "name": "Idle_Attacking",
+        "frames": 20
+      },
+      {
+        "name": "Idle_Weapon",
+        "frames": 38
+      },
+      {
+        "name": "PickUp",
+        "frames": 15
+      },
+      {
+        "name": "Punch",
+        "frames": 9
+      },
+      {
+        "name": "RecieveHit",
+        "frames": 8
+      },
+      {
+        "name": "RecieveHit_2",
+        "frames": 8
+      },
+      {
+        "name": "Roll",
+        "frames": 12
+      },
+      {
+        "name": "Run",
+        "frames": 10
+      },
+      {
+        "name": "Run_Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Spell1",
+        "frames": 15
+      },
+      {
+        "name": "Spell2",
+        "frames": 18
+      },
+      {
+        "name": "Staff_Attack",
+        "frames": 9
+      },
+      {
+        "name": "Walk",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Barracks": {
+    "material": "Assets/Materials/Barracks.mmat",
+    "parts": [
+      {
+        "name": "Barracks",
+        "mesh": "Assets/Models/Barracks.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Citadel": {
+    "material": "Assets/Materials/Citadel.mmat",
+    "parts": [
+      {
+        "name": "Citadel",
+        "mesh": "Assets/Models/Citadel.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Farm": {
+    "material": "Assets/Materials/Farm.mmat",
+    "parts": [
+      {
+        "name": "Farm",
+        "mesh": "Assets/Models/Farm.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "House": {
+    "material": "Assets/Materials/House.mmat",
+    "parts": [
+      {
+        "name": "House",
+        "mesh": "Assets/Models/House.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Archery": {
+    "material": "Assets/Materials/Archery.mmat",
+    "parts": [
+      {
+        "name": "Archery",
+        "mesh": "Assets/Models/Archery.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  }
+}

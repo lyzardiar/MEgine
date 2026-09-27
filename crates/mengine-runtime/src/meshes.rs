@@ -1,5 +1,5 @@
 use crate::textures::resolve_project_asset_path;
-use mengine_assets::{load_gltf_mesh_data, MeshData};
+use mengine_assets::{load_gltf_mesh_data, parse_gltf_pose, GltfPoseSource, MeshData};
 use mengine_rhi::{RenderObject, Renderer, Vertex};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -23,6 +23,10 @@ pub struct RuntimeMeshCache {
     project_root: Option<PathBuf>,
     attempted: HashMap<String, FileStamp>,
     last_poll: Option<Instant>,
+    poses: HashMap<String, (FileStamp, GltfPoseSource)>,
+    pose_usage: HashMap<String, u64>,
+    frame: u64,
+    evicted: Vec<String>,
 }
 
 impl RuntimeMeshCache {
@@ -31,6 +35,10 @@ impl RuntimeMeshCache {
             project_root,
             attempted: HashMap::new(),
             last_poll: None,
+            poses: HashMap::new(),
+            pose_usage: HashMap::new(),
+            frame: 0,
+            evicted: Vec::new(),
         }
     }
 
@@ -41,10 +49,16 @@ impl RuntimeMeshCache {
         self.project_root = project_root;
         self.attempted.clear();
         self.last_poll = None;
+        self.poses.clear();
+        self.evicted.extend(self.pose_usage.keys().cloned());
+        self.pose_usage.clear();
     }
 
     pub fn invalidate(&mut self, key: &str) {
         self.attempted.remove(key.trim());
+        self.poses.remove(key.split('#').next().unwrap_or(key).trim());
+        let asset = key.split('#').next().unwrap_or(key).trim();
+        self.attempted.retain(|k, _| parse_gltf_pose(k).is_none_or(|p| p.0 != asset));
     }
 
     pub fn sync(
@@ -52,6 +66,8 @@ impl RuntimeMeshCache {
         renderer: &mut Renderer,
         objects: &[RenderObject],
     ) -> Vec<MeshLoadFailure> {
+        for key in self.evicted.drain(..) { renderer.remove_mesh(&key); }
+        self.frame += 1;
         let Some(root) = self.project_root.as_deref() else {
             return Vec::new();
         };
@@ -61,7 +77,10 @@ impl RuntimeMeshCache {
         let mut frame_keys = HashSet::new();
         for object in objects {
             let key = object.mesh_key.trim();
-            let lower = key.to_ascii_lowercase();
+            let pose = parse_gltf_pose(key);
+            if pose.is_some() { self.pose_usage.insert(key.to_owned(), self.frame); }
+            let asset_key = pose.map(|p| p.0).unwrap_or(key);
+            let lower = asset_key.to_ascii_lowercase();
             if !lower.ends_with(".gltf") && !lower.ends_with(".glb") {
                 continue;
             }
@@ -69,7 +88,7 @@ impl RuntimeMeshCache {
                 continue;
             }
             if !poll && self.attempted.contains_key(key) { continue; }
-            let Some(path) = resolve_project_asset_path(root, key) else {
+            let Some(path) = resolve_project_asset_path(root, asset_key) else {
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) {
                     failures.push(MeshLoadFailure {
                         key: key.to_owned(),
@@ -79,10 +98,20 @@ impl RuntimeMeshCache {
                 }
                 continue;
             };
-            if !should_attempt(&mut self.attempted, key, file_stamp(&path)) {
+            let stamp = file_stamp(&path);
+            if !should_attempt(&mut self.attempted, key, stamp) {
                 continue;
             }
-            match load_gltf_mesh_data(&path) {
+            let mesh = if let Some((asset, clip, frame)) = pose {
+                if self.poses.get(asset).is_none_or(|(old, _)| *old != stamp) {
+                    match GltfPoseSource::load(&path) {
+                        Ok(source) => { self.poses.insert(asset.to_owned(), (stamp, source)); }
+                        Err(error) => { failures.push(MeshLoadFailure { key:key.into(), path, error:error.to_string() }); continue; }
+                    }
+                }
+                self.poses[asset].1.sample(clip, frame)
+            } else { load_gltf_mesh_data(&path) };
+            match mesh {
                 Ok(mesh) => renderer.upload_gltf_static(
                     key,
                     &vertices_from_mesh(&mesh),
@@ -95,6 +124,12 @@ impl RuntimeMeshCache {
                 }),
             }
         }
+        if self.pose_usage.len() > 256 {
+            let mut stale = self.pose_usage.iter().filter(|(_, used)| **used != self.frame).map(|(k, v)| (k.clone(), *v)).collect::<Vec<_>>();
+            stale.sort_by_key(|(_, used)| *used);
+            for (key, _) in stale.into_iter().take(self.pose_usage.len() - 256) { self.pose_usage.remove(&key); self.attempted.remove(&key); renderer.remove_mesh(&key); }
+        }
+        self.poses.retain(|asset, _| self.pose_usage.keys().any(|key| parse_gltf_pose(key).is_some_and(|p| p.0 == asset)));
         failures
     }
 }

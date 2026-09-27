@@ -1,0 +1,1 @@
+{"version": 8, "name": "Wizard", "shader": "pbr", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/Wizard.png", "roughness": 0.9}

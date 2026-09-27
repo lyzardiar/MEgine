@@ -15,6 +15,10 @@ pub enum WorldCommand {
     Despawn {
         entity: u64,
     },
+    SetActive {
+        entity: u64,
+        active: bool,
+    },
     SetComponent {
         entity: u64,
         component: String,

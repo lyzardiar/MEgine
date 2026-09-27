@@ -1190,6 +1190,7 @@ impl ApplicationHandler for App {
 
         let mut script = ScriptHost::new().ok();
         if let Some(ref mut s) = script {
+            if let Some(root) = self.args.project_root.as_deref() { s.set_storage_root(mengine_script::project_storage_root(root)); }
             if let Err(error) = s.sync_world(&self.world) { log::error!("script snapshot failed: {error}"); }
             let default_script = r#"
 var t = 0.0;
@@ -1278,7 +1279,7 @@ function onTick(dt, frame) {
             } => {
                 if state == ElementState::Pressed {
                     match code {
-                        WinitKey::Tab => {
+                        WinitKey::Tab if !self.ui_controls.is_empty() => {
                             self.move_ui_focus(self.modifiers.shift_key());
                             return;
                         }
@@ -1330,7 +1331,7 @@ function onTick(dt, frame) {
                     ElementState::Pressed => self.input.key_down(key),
                     ElementState::Released => self.input.key_up(key),
                 }
-                if key == mengine_platform::KeyCode::Escape && state == ElementState::Pressed {
+                if key == mengine_platform::KeyCode::Escape && state == ElementState::Pressed && self.args.script.is_none() {
                     event_loop.exit();
                 }
             }
@@ -1983,10 +1984,13 @@ fn validate_world_assets(
     for entity in world.iter_entities() {
         if let Some(renderer) = world.get_component::<MeshRenderer>(entity) {
             let mesh = renderer.mesh.trim();
+            let pose = mengine_assets::parse_gltf_pose(mesh);
+            let mesh = pose.map(|p| p.0).unwrap_or(mesh);
             if mesh.to_ascii_lowercase().ends_with(".gltf")
                 || mesh.to_ascii_lowercase().ends_with(".glb")
             {
                 let path = resolve(mesh, "model")?;
+                if let Some((_, clip, frame)) = pose { mengine_assets::GltfPoseSource::load(&path)?.sample(clip, frame)?; }
                 if validated.insert(path.clone()) {
                     mengine_assets::load_gltf_mesh_data(&path)
                         .with_context(|| format!("invalid model {}", path.display()))?;

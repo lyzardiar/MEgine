@@ -343,6 +343,10 @@ impl World {
             WorldCommand::Despawn { entity } => {
                 self.despawn(Entity::from_u64(entity));
             }
+            WorldCommand::SetActive { entity, active } => {
+                let entity = Entity::from_u64(entity);
+                self.set_editor_state(entity, self.sibling_index(entity), active);
+            }
             WorldCommand::SetComponent {
                 entity,
                 component,

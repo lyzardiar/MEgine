@@ -2529,6 +2529,26 @@ test('buildPcPackage validates external glTF buffers and images', () => {
   }
 });
 
+test('buildPcPackage includes skeletal pose models without sprite sidecars and rejects invalid poses', () => {
+  const paths = fixture('gltf-pose');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Models'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Models', 'Hero.gltf'), JSON.stringify({ asset: { version: '2.0' } }));
+    const scene = join(paths.project, 'Assets', 'Scenes', 'Main.mscene');
+    const writePose = (pose) => writeFileSync(scene, JSON.stringify({ world: { entities: [{ components: { MeshRenderer: { mesh: `Assets/Models/Hero.gltf#${pose}`, material: 'default' } } }] } }));
+    for (const pose of ['pose=256:0', 'pose=0:1200', 'pose=-1:0', 'pose=foo:0']) {
+      writePose(pose);
+      assert.throws(() => buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' }), /invalid skeletal pose reference/);
+    }
+    writePose('pose=0:12');
+    const manifest = buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' });
+    assert.ok(manifest.files.some(file => file.path === 'Assets/Models/Hero.gltf'));
+    assert.ok(!manifest.files.some(file => file.path.endsWith('.sprite.json')));
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript', () => {
   const paths = fixture('typescript');
   try {

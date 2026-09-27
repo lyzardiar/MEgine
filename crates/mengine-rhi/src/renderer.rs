@@ -2240,6 +2240,9 @@ impl Renderer {
         let mesh = MeshGpu::upload(&self.device, vertices, indices);
         self.meshes.insert(key.to_string(), mesh);
     }
+
+    /// Release an imported mesh after its runtime cache entry has been evicted.
+    pub fn remove_mesh(&mut self, key: &str) { self.meshes.remove(key); }
 }
 
 fn preferred_backends() -> wgpu::Backends {

@@ -1157,6 +1157,7 @@ pub(crate) fn collect_ui_primitives(
         .collect();
     canvases.sort_by_key(|entity| canvas_sort_key(world, *entity, sorting_layers));
 
+    let tree = &index_ui_children(world);
     let mut primitives = Vec::new();
     let mut world_primitives = Vec::new();
     let mut controls = Vec::new();
@@ -1236,6 +1237,7 @@ pub(crate) fn collect_ui_primitives(
         let primitive_start = primitives.len();
         let control_start = controls.len();
         walk(
+            tree,
             world,
             canvas_entity,
             canvas_entity,
@@ -1950,6 +1952,7 @@ fn screen_space_camera_depth(camera: FrameCamera, distance: f32) -> f32 {
 
 #[allow(clippy::too_many_arguments)]
 fn walk(
+    tree: &UiChildren,
     world: &World,
     entity: Entity,
     canvas_root: Entity,
@@ -1997,8 +2000,8 @@ fn walk(
         world.get_component::<ContentSizeFitter>(entity),
         world.get_component::<LayoutGroup>(entity),
     ) {
-        let layout_children = layout_children_of(world, entity);
-        let layout_metrics = layout_children_metrics(world, &layout_children, None, font_resolver);
+        let layout_children = layout_children_of(tree, world, entity);
+        let layout_metrics = layout_children_metrics(tree, world, &layout_children, None, font_resolver);
         let horizontal_fit = if forced_axes.is_some_and(|axes| axes[0]) {
             "Unconstrained"
         } else {
@@ -2026,6 +2029,7 @@ fn walk(
             ),
         );
         let layout_metrics = layout_children_metrics_for_rect(
+            tree,
             world,
             &layout_children,
             layout,
@@ -3287,7 +3291,7 @@ fn walk(
         }
     }
 
-    let mut children = children_of(world, entity);
+    let mut children = children_of(tree, entity);
     if let Some(tab_view) = world.get_component::<TabView>(entity) {
         if !children.is_empty() {
             let selected = tab_view.selected_index.clamp(0, children.len() as i32 - 1) as usize;
@@ -3332,6 +3336,7 @@ fn walk(
     };
     let forced_rects = layout.map_or_else(Vec::new, |group| {
         let metrics = layout_children_metrics_for_rect(
+            tree,
             world,
             &layout_children,
             group,
@@ -3357,6 +3362,7 @@ fn walk(
             .position(|candidate| *candidate == child)
             .and_then(|index| forced_rects.get(index).copied());
         walk(
+            tree,
             world,
             child,
             canvas_root,
@@ -3381,19 +3387,18 @@ fn walk(
     primitives.extend(mask_pop);
 }
 
-fn children_of(world: &World, parent: Entity) -> Vec<Entity> {
-    let mut children: Vec<Entity> = world
-        .iter_entities()
-        .filter(|entity| {
-            world.entity_active(*entity)
-                && world
-                    .get_component::<Parent>(*entity)
-                    .is_some_and(|value| value.entity == parent)
-        })
-        .collect();
-    children.sort_by_key(|entity| world.sibling_index(*entity));
+type UiChildren = HashMap<Entity, Vec<Entity>>;
+
+fn index_ui_children(world: &World) -> UiChildren {
+    let mut children = UiChildren::new();
+    for entity in world.iter_entities().filter(|entity| world.entity_active(*entity)) {
+        if let Some(parent) = world.get_component::<Parent>(entity) { children.entry(parent.entity).or_default().push(entity); }
+    }
+    for siblings in children.values_mut() { siblings.sort_by_key(|entity| world.sibling_index(*entity)); }
     children
 }
+
+fn children_of(tree: &UiChildren, parent: Entity) -> Vec<Entity> { tree.get(&parent).cloned().unwrap_or_default() }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct ContentSize {
@@ -4664,20 +4669,22 @@ fn participates_in_layout(world: &World, entity: Entity) -> bool {
         .is_some_and(|element| element.ignore_layout)
 }
 
-fn layout_children_of(world: &World, parent: Entity) -> Vec<Entity> {
-    children_of(world, parent)
+fn layout_children_of(tree: &UiChildren, world: &World, parent: Entity) -> Vec<Entity> {
+    children_of(tree, parent)
         .into_iter()
         .filter(|entity| participates_in_layout(world, *entity))
         .collect()
 }
 
 fn layout_children_metrics(
+    tree: &UiChildren,
     world: &World,
     children: &[Entity],
     measured_widths: Option<&[f32]>,
     font_resolver: &mut Option<&mut dyn UiFontResolver>,
 ) -> Vec<LayoutChildMetrics> {
     layout_children_metrics_with_guard(
+        tree,
         world,
         children,
         measured_widths,
@@ -4687,6 +4694,7 @@ fn layout_children_metrics(
 }
 
 fn layout_children_metrics_with_guard(
+    tree: &UiChildren,
     world: &World,
     children: &[Entity],
     measured_widths: Option<&[f32]>,
@@ -4696,6 +4704,7 @@ fn layout_children_metrics_with_guard(
     let mut metrics = Vec::with_capacity(children.len());
     for (index, entity) in children.iter().enumerate() {
         metrics.push(layout_child_metrics_recursive(
+            tree,
             world,
             *entity,
             measured_widths
@@ -4709,6 +4718,7 @@ fn layout_children_metrics_with_guard(
 }
 
 fn layout_child_metrics_recursive(
+    tree: &UiChildren,
     world: &World,
     entity: Entity,
     measured_width: Option<f32>,
@@ -4719,9 +4729,9 @@ fn layout_child_metrics_recursive(
         return layout_child_metrics(world, entity, measured_width, font_resolver, None);
     }
     let nested_content = world.get_component::<LayoutGroup>(entity).map(|group| {
-        let children = layout_children_of(world, entity);
+        let children = layout_children_of(tree, world, entity);
         let initial =
-            layout_children_metrics_with_guard(world, &children, None, font_resolver, resolving);
+            layout_children_metrics_with_guard(tree, world, &children, None, font_resolver, resolving);
         let metrics = if group.direction == "Grid" || children.is_empty() {
             initial
         } else {
@@ -4742,6 +4752,7 @@ fn layout_child_metrics_recursive(
             );
             let widths: Vec<f32> = provisional.iter().map(|rect| rect.width).collect();
             layout_children_metrics_with_guard(
+                tree,
                 world,
                 &children,
                 Some(&widths),
@@ -4770,6 +4781,7 @@ fn layout_child_metrics_recursive(
 }
 
 fn layout_children_metrics_for_rect(
+    tree: &UiChildren,
     world: &World,
     children: &[Entity],
     group: &LayoutGroup,
@@ -4777,7 +4789,7 @@ fn layout_children_metrics_for_rect(
     scale: f32,
     font_resolver: &mut Option<&mut dyn UiFontResolver>,
 ) -> Vec<LayoutChildMetrics> {
-    let initial = layout_children_metrics(world, children, None, font_resolver);
+    let initial = layout_children_metrics(tree, world, children, None, font_resolver);
     if group.direction == "Grid" {
         return initial;
     }
@@ -4787,7 +4799,7 @@ fn layout_children_metrics_for_rect(
         .iter()
         .map(|rect| rect.width * inverse_scale)
         .collect();
-    layout_children_metrics(world, children, Some(&widths), font_resolver)
+    layout_children_metrics(tree, world, children, Some(&widths), font_resolver)
 }
 
 fn push_border(
@@ -10918,12 +10930,11 @@ mod tests {
         );
         world.set_parent(text, Some(parent));
 
-        let children = layout_children_of(&world, parent);
+        let children = layout_children_of(&index_ui_children(&world), &world, parent);
         let group = world.get_component::<LayoutGroup>(parent).unwrap();
         let mut font = WrappedFont;
         let mut resolver: Option<&mut dyn UiFontResolver> = Some(&mut font);
-        let metrics = layout_children_metrics_for_rect(
-            &world,
+        let metrics = layout_children_metrics_for_rect(&index_ui_children(&world), &world,
             &children,
             group,
             UiRect {
@@ -11012,7 +11023,7 @@ mod tests {
         world.set_parent(second, Some(nested));
 
         let mut resolver = None;
-        let metrics = layout_children_metrics(&world, &[nested], None, &mut resolver);
+        let metrics = layout_children_metrics(&index_ui_children(&world), &world, &[nested], None, &mut resolver);
         assert_eq!(metrics[0].min_width, Some(70.0));
         assert_eq!(metrics[0].min_height, Some(42.0));
         assert_eq!(metrics[0].preferred_width, Some(110.0));

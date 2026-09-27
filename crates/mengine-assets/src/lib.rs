@@ -5,6 +5,7 @@ mod animator;
 mod asset_sidecar;
 mod avatar_mask;
 mod gltf_import;
+mod gltf_pose;
 mod material;
 mod material_instance;
 mod registry;
@@ -30,6 +31,7 @@ pub use asset_sidecar::{
 };
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
+pub use gltf_pose::{parse_gltf_pose, GltfPoseSource};
 pub use material::{
     load_material_asset, parse_material_asset, MaterialAsset, MaterialBlendMode, MaterialFilter,
     MaterialShader, MaterialSurface, MaterialWrap,

@@ -4556,15 +4556,18 @@ export function Viewport(props: {
     const onKey = (ev: KeyboardEvent) => {
       if (propsRef.current.tab === 'game' && ev.target === inputProxyRef.current) return;
       if (propsRef.current.tab === 'game' && ev.key === 'Tab') {
-        focusedUiRef.current = nextUiSelectable(
+        const next = nextUiSelectable(
           uiItemsRef.current,
           focusedUiRef.current,
           ev.shiftKey,
         );
-        closeGameInput();
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        return;
+        if (next != null) {
+          focusedUiRef.current = next;
+          closeGameInput();
+          ev.preventDefault();
+          ev.stopImmediatePropagation();
+          return;
+        }
       }
       if (propsRef.current.tab === 'game' && focusedUiRef.current != null) {
         const item = uiItemsRef.current.find(

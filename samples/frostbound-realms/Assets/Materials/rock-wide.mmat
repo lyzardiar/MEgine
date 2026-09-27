@@ -1,0 +1,1 @@
+{"version": 8, "name": "rock-wide", "shader": "pbr", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/rock-wide.png", "roughness": 0.68, "metallic": 0.1}

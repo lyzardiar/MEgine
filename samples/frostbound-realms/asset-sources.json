@@ -1,0 +1,106 @@
+[
+  {
+    "author": "Kenney",
+    "page": "https://kenney.nl/assets/fantasy-town-kit",
+    "license": "CC0-1.0",
+    "download": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+    "sha256": "1a7530c09f4d2fa2cdee259876f089334f8b1f27fa86a0c4f54ef86cdd8676ef",
+    "file": "SourceAssets/fantasy-town-kit.zip"
+  },
+  {
+    "author": "Kenney",
+    "page": "https://kenney.nl/assets/particle-pack",
+    "license": "CC0-1.0",
+    "download": "https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip",
+    "sha256": "b631d4b07f7002549fdcf155f01141ad482f79f3440e4e301eed49ce5f1d8958",
+    "file": "SourceAssets/particle-pack.zip"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/rpgcharacters.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1LlmtVPWTRVbB5rXemboYstI5lor7I8vO&export=download&confirm=t",
+    "file": "SourceAssets/Cleric.gltf",
+    "sha256": "6497456a3fa1c151d7a6ab4f7b4c343ee416c23d9454505b950c93ea558e4601"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/rpgcharacters.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1GUeuxXhHiraTNo1voRxxhV3cgzZ7dPiq&export=download&confirm=t",
+    "file": "SourceAssets/Monk.gltf",
+    "sha256": "085c049ebb593e0edbef9f0dd1f62fce70f668f6be7be99f3a1aa5378c83e8a2"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/rpgcharacters.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1e3eAO6oHYVyDNdhoNogNii5CtLQB7pLc&export=download&confirm=t",
+    "file": "SourceAssets/Ranger.gltf",
+    "sha256": "2732741d5e21c20760d7f3dd9d71812d4b796f466be1a6cba212f45483dd56ed"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/rpgcharacters.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1mnmoERmMi_342qyS_WPioVU0pmIQvIYa&export=download&confirm=t",
+    "file": "SourceAssets/Rogue.gltf",
+    "sha256": "5a9eaca0871cd69f554747a1d42870b3bca702ba721d941d909fc530cf18afb8"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/rpgcharacters.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1oALqyqy7yVQnLh-Vs19kKg3eZgJqIgoc&export=download&confirm=t",
+    "file": "SourceAssets/Warrior.gltf",
+    "sha256": "2bab905ce12d279e1d099c2a8de0b1ef31c9f5e8d1959b41d24470b4f4181add"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/rpgcharacters.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1OfEos4LtQLrMfJLpw2OdBNhbu36RtZUd&export=download&confirm=t",
+    "file": "SourceAssets/Wizard.gltf",
+    "sha256": "320de17289857db6794e4eef55101ce3427e755319a4384fb6d9d9ca5206b41b"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/ultimatefantasyrts.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1qMCMZi-luDJhdMJCQjZfTjsB5iF4hFva&export=download&confirm=t",
+    "file": "SourceAssets/Barracks.gltf",
+    "sha256": "5cf25a470f743b8ed9824b5e66af30c1521f1bed06efdc9070cb32bc57ad554b"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/ultimatefantasyrts.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1Yh-YB_Ft0uy_3DcJqKXR1UNlcH1Y5UPb&export=download&confirm=t",
+    "file": "SourceAssets/Citadel.gltf",
+    "sha256": "7b961ec2083c8a1f7058028500798071b922e37ed4a90f954a1452c09d132e70"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/ultimatefantasyrts.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1gBb75Su5P45fYssJBjtOcezyu7OkijV5&export=download&confirm=t",
+    "file": "SourceAssets/Farm.gltf",
+    "sha256": "ec38d362a20e1846ac98dcd8b67ef65ee5997746a27fc88b6d9038d6d4db221d"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/ultimatefantasyrts.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1ITHANc2S6cJxNRx0O0wDfEmYC4nXBBVg&export=download&confirm=t",
+    "file": "SourceAssets/House.gltf",
+    "sha256": "3f35bc42544f0f26f69bbd1bb5a4716d4d4d9a9298fad8410f0169f1e428866e"
+  },
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/ultimatefantasyrts.html",
+    "license": "CC0-1.0",
+    "download": "https://drive.usercontent.google.com/download?id=1-XDduQ7MN-uGlcenuHkTOyeN5u4-Ch31&export=download&confirm=t",
+    "file": "SourceAssets/Archery.gltf",
+    "sha256": "767e779a2942921df8aed9f5eeb76c74ca834a5d4ec6c078b09ad94e32147b31"
+  }
+]
