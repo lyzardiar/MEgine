@@ -4,6 +4,12 @@ import net from 'node:net';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
+globalThis.Frost=S;const terrain=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
+const terrainState=S.create(),terrainCells=terrain.cells(terrainState,0,false),left=terrain.chunk(terrainCells,2,3).flat(),right=terrain.chunk(terrainCells,3,3).flat();
+for(let row=0;row<6;row++){assert.equal(left[row*6+4],right[row*6]);assert.equal(left[row*6+5],right[row*6+1]);}
+assert.ok(terrain.chunk(terrainCells,0,0).flat().every(Number.isFinite));assert.equal(terrain.cells(terrainState,0,true)[0]%2,1);
+const spellGame=S.create('rpg'),caster=spellGame.units.find(u=>u.kind==='hero');assert.equal(S.command(spellGame,0,{type:'spell',ids:[caster.id],slot:0,x:caster.x,z:caster.z}),null);S.tick(spellGame);assert.ok(spellGame.events.some(e=>e.type==='spell'),'command spell survives the authoritative tick');assert.equal(S.publicState(spellGame,0).pendingEvents,undefined);S.tick(spellGame);assert.ok(!spellGame.events.some(e=>e.type==='spell'),'spell effect is emitted for one tick');
+const aiSpell=S.create('moba',{ai:[false,true]}),aiHero=aiSpell.units.find(u=>u.kind==='hero'&&u.team===1),aiTarget=aiSpell.units.find(u=>u.kind==='hero'&&u.team===0);aiTarget.x=aiHero.x-2;aiTarget.z=aiHero.z;aiSpell.frame=39;aiSpell.visible[1].fill(1);S.tick(aiSpell);assert.equal(aiSpell.events.filter(e=>e.type==='spell').length,1);S.tick(aiSpell);assert.equal(aiSpell.events.filter(e=>e.type==='spell').length,0,'AI effects are not replayed next tick');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 const s=S.create('skirmish',{ai:[false,false]});step(s,250);assert.ok(s.teams[0].gold>500,'workers deliver gold');assert.ok(s.teams[0].wood>250,'workers deliver lumber');
 const barracks=s.units.find(u=>u.team===0&&u.kind==='barracks'),worker=s.units.find(u=>u.team===0&&u.kind==='worker');

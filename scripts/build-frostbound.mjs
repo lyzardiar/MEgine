@@ -11,28 +11,35 @@ const E=[],T=(position=[0,0,0],scale=[1,1,1],rotation=[0,0,0,1])=>({position,sca
 const entity=(name,components,parent=null)=>{const id=E.length+1;E.push({entity:id,name,parent,siblingIndex:id-1,active:true,components});return id;};
 const box=(name,p,size,color)=>entity(name,{Transform:T(p,size),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:color,roughness:.95}});
 entity('Strategy camera',{Transform:T([0,42,32],[1,1,1],q(-Math.atan2(42,32))),Camera3D:{primary:true,projection:'orthographic',orthographic_size:27,near:.1,far:220,capture_pointer:false},AudioListener:{primary:true}});
-entity('Winter sun',{Transform:T([0,0,0],[1,1,1],[-.45,-.25,-.12,.84]),DirectionalLight:{color:[.93,.93,1,1],intensity:2.2,cast_shadows:true,shadow_distance:100,shadow_strength:.6,shadow_bias:.002}});
+entity('Winter sun',{Transform:T([0,0,0],[1,1,1],[-.45,-.25,-.12,.84]),DirectionalLight:{color:[1,.91,.78,1],intensity:2,cast_shadows:true,shadow_distance:90,shadow_strength:.5,shadow_bias:.005,shadow_normal_bias:.08}});
 entity('Northern sky',{EnvironmentLight:{sky_color:[.09,.15,.24,1],equator_color:[.23,.32,.37,1],ground_color:[.13,.19,.18,1],diffuse_intensity:.85,specular_intensity:.4,background_enabled:true,tone_mapping:true,exposure:.1}});
-box('Terrain bed',[0,-.7,0],[72,1.2,72],[.11,.18,.2,1]);
-for(let z=0;z<32;z++)for(let x=0;x<32;x++)box('Tile '+(z*32+x),[x*2-31,-.12,z*2-31],[2,.2,2],[.24,.37,.3,1]);
+entity('Terrain bed',{Transform:T([0,-.7,0],[180,1.2,180]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Ground.mmat'}});
+for(let z=0;z<8;z++)for(let x=0;x<8;x++)entity('Ground '+(z*8+x),{Transform:T([x*8-28,-.12,z*8-28],[8,.2,8]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Ground.mmat'}});
+for(let i=0;i<140;i++)entity('Scenery '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree_pineTallA.parts[0].mesh,material:catalog.tree_pineTallA.material}});
+entity('Command marker',{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Selection.mmat'}});
+entity('Placement preview',{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['tower-square'].parts[0].mesh,material:'Assets/Materials/Placement.mmat'}});
 for(let i=0;i<100;i++)entity('Prop '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree.parts[0].mesh,material:catalog.tree.material}});
 for(let i=0;i<32;i++)entity('Objective '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['roof-point'].parts[0].mesh,material:catalog['roof-point'].material}});
 for(let i=0;i<S.LIMIT;i++){
   entity('Unit '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.Warrior.parts[0].mesh+'#pose=1:0',material:catalog.Warrior.material}});
-  box('Ring '+i,[0,-100,0],[1.7,.04,1.7],[.12,.9,.65,1]);box('HP '+i,[0,-100,0],[1.6,.09,.15],[.24,.86,.47,1]);box('Flag '+i,[0,-100,0],[.24,.3,.24],[.22,.62,1,1]);
+  entity('Ring '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Selection.mmat'}});box('HP '+i,[0,-100,0],[1.6,.09,.15],[.24,.86,.47,1]);entity('Flag '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.flag.parts[0].mesh,material:catalog.flag.material}});
 }
 for(let i=0;i<24;i++)entity('FX '+i,{Transform:T([0,-100,0]),ParticleEmitter3D:{playing:false,looping:true,rate_over_time:90,max_particles:36,lifetime_min:.25,lifetime_max:.65,speed_min:1,speed_max:4,size_start:.8,size_end:.05,color_start:[.3,.8,1,1],color_end:[.1,.3,1,0],gravity:[0,-2,0],shape:'sphere',shape_radius:.2,direction:[0,1,0],spread_degrees:160,simulation_space:'world',texture:'Assets/Textures/magic_01.png',billboard:true,seed:i+1}});
+for(let i=0;i<12;i++)entity('Missile '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:[.25,.72,1,1],emissive:[.2,.6,1],emissive_strength:2,roughness:.3}});
 entity('Snow',{Transform:T([0,12,0]),ParticleEmitter3D:{playing:true,looping:true,rate_over_time:30,max_particles:150,lifetime_min:8,lifetime_max:12,speed_min:.1,speed_max:.3,size_start:.07,size_end:.03,color_start:[.8,.9,1,.55],color_end:[.7,.85,1,0],gravity:[.05,-.1,0],shape:'box',shape_size:[65,1,65],direction:[0,-1,0],simulation_space:'world',texture:'Assets/Textures/spark_01.png',billboard:true,seed:17}});
 const canvas=entity('Interface',{Canvas:{render_mode:'ScreenSpaceOverlay'},CanvasScaler:{ui_scale_mode:'ScaleWithScreenSize',reference_resolution:[1280,720],match_width_or_height:.5}});
 const C={ink:[.025,.04,.057,.96],panel:[.042,.064,.078,.97],gold:[.81,.65,.36,1],white:[.84,.9,.91,1],muted:[.48,.61,.65,1],cyan:[.35,.83,.93,1]};
 const ui=(n,x,y,w,h,c)=>entity(n,{RectTransform:{anchor_min:[.5,.5],anchor_max:[.5,.5],pivot:[.5,.5],anchored_position:[x,y],size_delta:[w,h]},...c},canvas);
 const panel=(n,x,y,w,h,c=C.panel)=>ui(n,x,y,w,h,{Image:{color:c,raycast_target:false}});
+const art=(n,sprite,x,y,w,h)=>ui(n,x,y,w,h,{Image:{sprite,color:[1,1,1,1],raycast_target:false}});
+const metal=(n,x,y,w,h)=>ui(n,x,y,w,h,{Image:{material:'Assets/Materials/Panel.mmat',color:[.045,.075,.1,1],raycast_target:false}});
 const text=(n,value,x,y,w,h,size=18,color=C.white,alignment='Left')=>ui(n,x,y,w,h,{Text:{text:value,font:'Assets/Fonts/Roboto-Regular.ttf',font_size:size,color,alignment,vertical_align:'Middle',horizontal_overflow:'Overflow',vertical_overflow:'Overflow',raycast_target:false}});
 const buttons=[];
-function button(id,label,x,y,w,h,group='menu',detail=''){panel(id+' border',x,y,w+2,h+2,C.gold);panel(id+' box',x,y,w,h);text(id+' label',label,x,y-(detail?10:0),w-30,h,detail?21:16,C.white);if(detail)text(id+' detail',detail,x,y+19,w-30,24,12,C.muted);buttons.push({id,x,y,w,h,group});}
-panel('Menu shade',-330,0,620,720,C.ink);panel('Menu line',-570,-275,4,27,C.gold);
+function button(id,label,x,y,w,h,group='menu',detail=''){panel(id+' border',x,y,w+2,h+2,[.3,.24,.13,1]);metal(id+' box',x,y,w,h);text(id+' label',label,x,y-(detail?10:0),w-30,h,detail?21:16,C.white);if(detail)text(id+' detail',detail,x,y+19,w-30,24,12,C.muted);buttons.push({id,x,y,w,h,group});}
+art('Menu painting','Assets/Art/winterfall-menu.png',0,0,1280,720);panel('Menu shade',-330,0,620,720,[.008,.019,.032,.32]);panel('Menu line',-570,-275,4,27,C.gold);
 text('Menu eyebrow','THE NORTHERN CHRONICLES',-324,-276,440,30,14,C.gold);
 text('Menu title','FROSTBOUND\nREALMS',-320,-175,460,150,57);
+E.at(-1).components.Text.font='Assets/Fonts/Cinzel.ttf';E.at(-1).components.Text.font_size=51;E.at(-1).components.Text.color=[.86,.78,.56,1];
 text('Menu subtitle','Raise a kingdom. Command the storm.',-320,-73,460,30,16,C.muted);
 button('solo','I    SKIRMISH',-324,9,452,69,'menu','Harvest, build and lead your army against the AI');
 button('moba','II   ANCIENTS OF THE VALE',-324,91,452,69,'menu','Three lanes, heroes, items and rival strongholds');
@@ -41,13 +48,16 @@ button('editor','WORLD EDITOR',-440,245,220,43);button('network','MULTIPLAYER',-
 button('faction','FACTION',-440,298,220,37);button('continue','LOAD GAME',-207,298,220,37);
 text('Menu vista','WINTERFALL BASIN',360,248,440,45,30,C.white,'Right');text('Menu credit','FREE CC0 ART / QUATERNIUS + KENNEY',360,289,440,26,12,C.gold,'Right');
 button('rpg','THE SHATTERED COVENANT [F8]',360,171,440,69,'menu','RPG / quests, relics and the frost sovereign');
-panel('Header',0,-333,1250,43,C.ink);text('Brand','FROSTBOUND',-513,-334,200,30,19,C.gold);text('Resources','',30,-334,650,30,17,C.white);text('Clock','',509,-334,210,30,16,C.cyan,'Right');
-panel('Bottom',0,266,1250,179,C.ink);panel('Bottom rule',0,177,1250,2,C.gold);
+metal('Header',0,-333,1250,43);text('Brand','FROSTBOUND',-513,-334,200,30,19,C.gold);text('Resources','',30,-334,650,30,17,C.white);text('Clock','',509,-334,210,30,16,C.cyan,'Right');
+metal('Bottom',0,266,1250,179);panel('Bottom rule',0,177,1250,2,C.gold);
 panel('Minimap',-514,265,174,156,[.04,.11,.12,1]);
 for(let i=0;i<256;i++)panel('Mini tile '+i,-590+(i%16)*10,195+Math.floor(i/16)*9,10,9,[.15,.25,.22,1]);
 for(let i=0;i<S.LIMIT;i++)panel('Mini unit '+i,5000,5000,4,4,C.cyan);
-text('Selection title','',-238,203,330,28,21,C.gold);text('Selection stats','',-238,251,330,72,15,C.white);text('Selection queue','',-238,315,330,42,13,C.muted);
-for(let i=0;i<12;i++){const x=5+(i%4)*147,y=214+Math.floor(i/4)*50;button('action'+i,'',x,y,137,40,'hud');}
+art('Portrait','Assets/Art/command-icons.png#hero',-355,257,98,102);text('Selection title','',-238,199,330,25,19,C.gold);text('Selection stats','',-203,252,185,66,14,C.white);text('Selection queue','',-245,327,316,25,11,C.muted);
+panel('Health back',-203,291,182,8,[.025,.04,.06,1]);panel('Health fill',-203,291,182,8,[.14,.63,.4,1]);panel('Mana back',-203,305,182,5,[.025,.04,.06,1]);panel('Mana fill',-203,305,182,5,[.13,.48,.87,1]);
+for(let i=0;i<12;i++){const x=5+(i%4)*147,y=214+Math.floor(i/4)*50;button('action'+i,'',x,y,137,42,'hud');art('action'+i+' icon','Assets/Art/command-icons.png#attack',x-48,y,36,36);const label=E.find(e=>e.name==='action'+i+' label');label.components.RectTransform.anchored_position=[x+21,y];label.components.RectTransform.size_delta=[85,40];label.components.Text.font_size=12;}
+for(let i=0;i<12;i++)text('Damage '+i,'',5000,5000,90,28,20,C.gold,'Center');
+metal('Tooltip panel',306,127,590,67);text('Tooltip text','',306,127,558,58,14,C.white);
 text('Status','',0,151,1180,32,15,C.gold,'Center');text('Controls','',60,340,1020,20,12,C.muted,'Right');
 text('Objective text','',0,-280,1100,38,18,C.gold,'Center');
 panel('Modal shade',0,0,760,430,C.ink);panel('Modal rule',0,-213,760,2,C.gold);text('Modal title','',0,-164,690,48,34,C.gold);text('Modal text','',0,-13,690,230,19,C.white);button('modalPrimary','',-174,156,320,44,'modal');button('modalBack','BACK',174,156,320,44,'modal');
@@ -64,5 +74,5 @@ audio('winter-theme',24,t=>{const root=[45,48,41,43][Math.floor(t/6)],phase=t%6,
 for(const mode of ['skirmish','moba','td','rpg'])fs.writeFileSync(path.join(root,'Assets/Maps',mode+'.json'),JSON.stringify(S.defaultMap(mode),null,2)+'\n');
 fs.writeFileSync(path.join(root,'Assets/Scenes/Main.mscene'),JSON.stringify({version:1,name:'Frostbound Realms',world:{entities:E,frame:0,sim_frame:0,clear_color:[.08,.13,.18,1]}},null,2)+'\n');
 fs.writeFileSync(path.join(root,'project.json'),JSON.stringify({name:'Frostbound Realms',storageId:'frostbound-realms-2d128968-5677-47b3-8d38-a128a763e15a',version:1,language:'javascript',mainScene:'Assets/Scenes/Main.mscene',buildScenes:['Assets/Scenes/Main.mscene'],startupScript:'Assets/Scripts/Main.js',assetMode:'all'},null,2)+'\n');
-fs.writeFileSync(path.join(root,'Assets/Scripts/Main.js'),'// Generated by scripts/build-frostbound.mjs\nvar FrostArt='+JSON.stringify(catalog)+';\nvar FrostButtons='+JSON.stringify(buttons)+';\n'+fs.readFileSync(path.join(root,'game/simulation.js'),'utf8')+'\n'+fs.readFileSync(path.join(root,'game/client.js'),'utf8'));
-console.log('Built Frostbound Realms:',E.length,'entities;',Object.keys(catalog).length,'downloaded models');
+fs.writeFileSync(path.join(root,'Assets/Scripts/Main.js'),'// Generated by scripts/build-frostbound.mjs\nvar FrostArt='+JSON.stringify(catalog)+';\nvar FrostButtons='+JSON.stringify(buttons)+';\n'+['simulation','terrain','client'].map(n=>fs.readFileSync(path.join(root,'game/'+n+'.js'),'utf8')).join('\n'));
+console.log('Built Frostbound Realms:',E.length,'entities;',Object.keys(catalog).length,'model entries');

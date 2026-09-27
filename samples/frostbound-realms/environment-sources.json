@@ -1,0 +1,56 @@
+[
+  {
+    "author": "Kenney",
+    "license": "CC0-1.0",
+    "page": "https://kenney.nl/assets/castle-kit",
+    "download": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+    "file": "SourceAssets/castle-kit.zip",
+    "sha256": "921f3f73927bb23106cae34bc21d5ab4b033a9fc120475e96f714a406e3169df",
+    "models": [
+      "tower-square",
+      "tower-square-mid-windows",
+      "tower-square-top",
+      "tower-square-top-roof-high",
+      "tower-hexagon-top",
+      "wall",
+      "wall-corner",
+      "flag",
+      "bridge-straight"
+    ]
+  },
+  {
+    "author": "Kenney",
+    "license": "CC0-1.0",
+    "page": "https://kenney.nl/assets/nature-kit",
+    "download": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+    "file": "SourceAssets/nature-kit.zip",
+    "sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
+    "models": [
+      "tree_pineTallA",
+      "tree_pineTallB",
+      "tree_pineDefaultA",
+      "rock_largeA",
+      "rock_largeB",
+      "rock_smallA",
+      "cliff_rock"
+    ]
+  },
+  {
+    "author": "Poly Haven",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/snow_02",
+    "licenseUrl": "https://polyhaven.com/license",
+    "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_02/snow_02_diff_1k.jpg",
+    "file": "SourceAssets/snow_02_diff_1k.jpg",
+    "sha256": "523a4e69c90b96d787dd69b897f29a2b3761a017024405c60aa630d1e8e9009a"
+  },
+  {
+    "author": "Poly Haven",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/rocky_terrain",
+    "licenseUrl": "https://polyhaven.com/license",
+    "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_terrain/rocky_terrain_diff_1k.jpg",
+    "file": "SourceAssets/rocky_terrain_diff_1k.jpg",
+    "sha256": "429315865fd89c150272592f6d93def174c6f69804a565ff08e53627a885579b"
+  }
+]

@@ -140,3 +140,5 @@ def adapt(cache):
 
 if __name__ == '__main__':
     cache=download();characters(cache);adapt(cache)
+    environment_spec=importlib.util.spec_from_file_location('frost_environment',ROOT/'scripts/import-frost-environment.py')
+    environment=importlib.util.module_from_spec(environment_spec);environment_spec.loader.exec_module(environment);environment.main()

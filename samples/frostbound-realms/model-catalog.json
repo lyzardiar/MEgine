@@ -661,5 +661,366 @@
       3,
       1
     ]
+  },
+  "tower-square": {
+    "material": "Assets/Materials/tower-square.mmat",
+    "size": [
+      1.0,
+      1.31,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "tower-square",
+        "mesh": "Assets/Models/tower-square-tower-square.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "wall": {
+    "material": "Assets/Materials/wall.mmat",
+    "size": [
+      1.0,
+      1.31,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "wall",
+        "mesh": "Assets/Models/wall-wall.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "wall-corner": {
+    "material": "Assets/Materials/wall-corner.mmat",
+    "size": [
+      1.0,
+      1.31,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "wall-corner",
+        "mesh": "Assets/Models/wall-corner-wall-corner.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "flag": {
+    "material": "Assets/Materials/flag.mmat",
+    "size": [
+      0.106376,
+      0.865614,
+      0.432288
+    ],
+    "parts": [
+      {
+        "name": "flag",
+        "mesh": "Assets/Models/flag-flag.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "bridge-straight": {
+    "material": "Assets/Materials/bridge-straight.mmat",
+    "size": [
+      0.93,
+      1.176,
+      0.93
+    ],
+    "parts": [
+      {
+        "name": "bridge-straight",
+        "mesh": "Assets/Models/bridge-straight-bridge-straight.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tree_pineTallA": {
+    "material": "Assets/Materials/tree_pineTallA.mmat",
+    "size": [
+      0.386273,
+      1.529606,
+      0.39195
+    ],
+    "parts": [
+      {
+        "name": "tree_pineTallA",
+        "mesh": "Assets/Models/tree_pineTallA-tree_pineTallA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tree_pineTallB": {
+    "material": "Assets/Materials/tree_pineTallB.mmat",
+    "size": [
+      0.386273,
+      1.934606,
+      0.39195
+    ],
+    "parts": [
+      {
+        "name": "tree_pineTallB",
+        "mesh": "Assets/Models/tree_pineTallB-tree_pineTallB.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tree_pineDefaultA": {
+    "material": "Assets/Materials/tree_pineDefaultA.mmat",
+    "size": [
+      0.53196,
+      1.545836,
+      0.53196
+    ],
+    "parts": [
+      {
+        "name": "tree_pineDefaultA",
+        "mesh": "Assets/Models/tree_pineDefaultA-tree_pineDefaultA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock_largeA": {
+    "material": "Assets/Materials/rock_largeA.mmat",
+    "size": [
+      0.784907,
+      0.259776,
+      1.015461
+    ],
+    "parts": [
+      {
+        "name": "rock_largeA",
+        "mesh": "Assets/Models/rock_largeA-rock_largeA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock_largeB": {
+    "material": "Assets/Materials/rock_largeB.mmat",
+    "size": [
+      0.766715,
+      0.430254,
+      1.015461
+    ],
+    "parts": [
+      {
+        "name": "rock_largeB",
+        "mesh": "Assets/Models/rock_largeB-rock_largeB.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "rock_smallA": {
+    "material": "Assets/Materials/rock_smallA.mmat",
+    "size": [
+      0.3608,
+      0.191224,
+      0.3608
+    ],
+    "parts": [
+      {
+        "name": "rock_smallA",
+        "mesh": "Assets/Models/rock_smallA-rock_smallA.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "cliff_rock": {
+    "material": "Assets/Materials/cliff_rock.mmat",
+    "size": [
+      1.0,
+      1.0,
+      0.1685
+    ],
+    "parts": [
+      {
+        "name": "cliff_rock",
+        "mesh": "Assets/Models/cliff_rock-cliff_rock.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tower-square-mid-windows": {
+    "material": "Assets/Materials/tower-square-mid-windows.mmat",
+    "size": [
+      0.93,
+      1.01,
+      0.93
+    ],
+    "parts": [
+      {
+        "name": "tower-square-mid-windows",
+        "mesh": "Assets/Models/tower-square-mid-windows-tower-square-mid-windows.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tower-square-top": {
+    "material": "Assets/Materials/tower-square-top.mmat",
+    "size": [
+      1.0,
+      0.3,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "tower-square-top",
+        "mesh": "Assets/Models/tower-square-top-tower-square-top.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tower-square-top-roof-high": {
+    "material": "Assets/Materials/tower-square-top-roof-high.mmat",
+    "size": [
+      1.0,
+      1.35,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "tower-square-top-roof-high",
+        "mesh": "Assets/Models/tower-square-top-roof-high-tower-square-top-roof-high.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tower-hexagon-top": {
+    "material": "Assets/Materials/tower-hexagon-top.mmat",
+    "size": [
+      0.864,
+      0.13,
+      0.748246
+    ],
+    "parts": [
+      {
+        "name": "tower-hexagon-top",
+        "mesh": "Assets/Models/tower-hexagon-top-tower-hexagon-top.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "GuardTower": {
+    "material": "Assets/Materials/tower-square-top.mmat",
+    "parts": [
+      {
+        "name": "GuardTower",
+        "mesh": "Assets/Models/GuardTower.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1,
+      1.31,
+      1
+    ]
+  },
+  "FrostTower": {
+    "material": "Assets/Materials/tower-square-top-roof-high.mmat",
+    "parts": [
+      {
+        "name": "FrostTower",
+        "mesh": "Assets/Models/FrostTower.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1,
+      2.3600000000000003,
+      1
+    ]
+  },
+  "EmberTower": {
+    "material": "Assets/Materials/tower-hexagon-top.mmat",
+    "parts": [
+      {
+        "name": "EmberTower",
+        "mesh": "Assets/Models/EmberTower.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1,
+      1.1400000000000001,
+      1
+    ]
   }
 }

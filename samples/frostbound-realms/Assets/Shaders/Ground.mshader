@@ -1,0 +1,36 @@
+/* MENGINE_PARAMETERS
+{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]}],"textures":[{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"}]}
+*/
+// MiYu: 64 terrain chunks replace 1024 independently shaded cubes.
+fn frost_cell(p: vec2<i32>) -> vec3<f32> {
+    var data=array<vec4<f32>,9>(mengine_param_cells0(),mengine_param_cells1(),mengine_param_cells2(),mengine_param_cells3(),mengine_param_cells4(),mengine_param_cells5(),mengine_param_cells6(),mengine_param_cells7(),mengine_param_cells8());
+    let i=u32(clamp(p.y,0,5)*6+clamp(p.x,0,5));
+    let value=data[i/4u][i%4u];
+    let kind=floor(value/2.0);
+    return vec3<f32>(select(0.0,1.0,kind==1.0),select(0.0,1.0,kind==2.0),value-kind*2.0);
+}
+fn frost_ground(p: vec2<f32>) -> vec3<f32> {
+    let local=(p-object.model[3].xz+vec2<f32>(4.0))/2.0+vec2<f32>(0.5);
+    let cell=vec2<i32>(floor(local));
+    let blend=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(local));
+    return mix(mix(frost_cell(cell),frost_cell(cell+vec2<i32>(1,0)),blend.x),mix(frost_cell(cell+vec2<i32>(0,1)),frost_cell(cell+vec2<i32>(1,1)),blend.x),blend.y);
+}
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s=surface;let p=world_position.xz;let fields=frost_ground(p);
+    let snow=mengine_texture_snow(fract(p*0.16)).rgb;
+    let stone=mengine_texture_stone(fract(p*0.23)).rgb;
+    let fleck=sin(p.x*3.7+sin(p.y*2.9))*sin(p.y*4.1+p.x*1.3);
+    let road=smoothstep(0.22,0.8,fields.y+fleck*0.08);
+    let water=smoothstep(0.35,0.72,fields.x+fleck*0.055);
+    let soil=mix(stone*vec3<f32>(0.21,0.28,0.25),snow*vec3<f32>(0.6,0.72,0.78),0.64+0.23*sin(p.x*0.39+sin(p.y*0.5)));
+    let dry=mix(soil,stone*vec3<f32>(0.53,0.47,0.35),road);
+    let ripples=pow(0.5+0.5*sin(p.x*8.0+sin(p.y*3.0)),14.0)*0.07;
+    s.base_color=mix(dry,vec3<f32>(0.018,0.13,0.18)+ripples,water);
+    s.roughness=mix(0.88,0.29,water);s.metallic=water*0.14;
+    s.normal=normalize(vec3<f32>(fleck*0.06,1.0,cos(p.y*5.0)*0.045));
+    return s;
+}
+fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {
+    let fog=frost_ground(world_position.xz).z;
+    return vec4<f32>(mix(vec3<f32>(0.012,0.025,0.038),color.rgb,smoothstep(0.05,1.0,fog)),1.0);
+}

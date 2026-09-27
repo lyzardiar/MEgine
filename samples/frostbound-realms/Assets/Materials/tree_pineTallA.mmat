@@ -1,0 +1,1 @@
+{"version": 8, "name": "tree_pineTallA", "shader": "custom", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/tree_pineTallA.png", "roughness": 0.92, "metallic": 0, "custom_shader": "Assets/Shaders/Snowcap.mshader"}

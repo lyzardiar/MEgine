@@ -1,6 +1,8 @@
 # Frostbound Realms / 霜境战纪
 
-MEngine 原生 3D RTS 游戏工程。围绕资源采集、建造、出兵、英雄战斗与自定义地图建立可运行的基础版本，使用下载的 Quaternius、Kenney CC0 资产。当前实现尚未达到《魔兽争霸 III：冰封王座》完整复刻的内容量和玩法深度。
+MEngine 原生 3D RTS 游戏工程。围绕资源采集、建造、出兵、英雄战斗与自定义地图建立可运行的基础版本，使用下载的 Quaternius、Kenney、Poly Haven CC0 资产。当前实现尚未达到《魔兽争霸 III：冰封王座》完整复刻的内容量和玩法深度。
+
+当前画面采用雪地/岩土贴图、柔化边缘的战争迷雾、冬季松林与岩石、模块组装防御塔、原创菜单插画和技能图标。操作面板提供头像、生命/法力条、悬停提示；场景内显示选择圈、移动落点、建筑预览、远程弹道与伤害数字。
 
 ## 运行
 
@@ -61,6 +63,10 @@ node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 
 `asset-sources.json` 保存官方下载地址、13 个原始文件的 SHA-256 和许可；`SourceAssets/` 保留原始 glTF 与两个 Kenney ZIP，`Licenses/` 保留许可来源。角色来自 [Quaternius RPG Character Pack](https://quaternius.com/packs/rpgcharacters.html)，建筑来自 [Ultimate Fantasy RTS](https://quaternius.com/packs/ultimatefantasyrts.html)，自然物件来自 [Kenney Fantasy Town Kit](https://kenney.nl/assets/fantasy-town-kit)，粒子贴图来自 [Kenney Particle Pack](https://kenney.nl/assets/particle-pack)。四套均标注 CC0。角色原始骨架和动画保留，多个材质合成图集；生成器提供原创 24 秒循环配乐及指令、战斗、法术、胜利音效，字体沿用仓库的 Roboto 及其许可。导入器优先使用保留的原件，并在转换前核对源文件哈希。
 
+`environment-sources.json` 记录新增 [Kenney Castle Kit](https://kenney.nl/assets/castle-kit)、[Nature Kit](https://kenney.nl/assets/nature-kit) 原始 ZIP，以及 [Poly Haven](https://polyhaven.com/license) 的 snow_02 / rocky_terrain 贴图，共 16 个源模型及两张地表贴图。三种塔由下载的模块离线组装；目录合计 34 个来源模型和 3 个组合模型。冬季调色和积雪材质由代码适配，下载原件不改动。`font-sources.json` 保留 Cinzel 字体及 OFL 许可校验值。
+
+`generated-art.json` 保存内置 image_gen 生成菜单背景与 4×4 技能图集的完整提示词和 SHA-256；这两张原创插画位于 `Assets/Art/`，战场由引擎实时渲染。uuu9 当前主站跳转至资讯站，旧 war3.uuu9.com 未取得可用下载或明确再分发许可，本次没有纳入该站素材。
+
 本次引擎补充：
 
 - `engine.storage.load(key)` / `save(key,value)`：项目独立 JSON 持久化，256 KiB/文件、64 文件上限，原子替换与路径校验。
@@ -79,7 +85,7 @@ cargo test -p mengine-editor-host --test frost_sample
 node scripts/qa-frostbound.mjs
 ```
 
-游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`；修改后执行生成器。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow）。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
+游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个区块的自定义材质绘制，邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境导入）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
 
 ## 当前边界
 

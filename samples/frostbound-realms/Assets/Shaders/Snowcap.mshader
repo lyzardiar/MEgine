@@ -1,0 +1,8 @@
+// MiYu: snow gathers on upward-facing surfaces of the CC0 environment meshes.
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s=surface;let p=world_position;
+    let grain=sin(p.x*11.0+sin(p.z*13.0))*sin(p.y*17.0);
+    let snow=smoothstep(0.45,0.8,s.normal.y);
+    s.base_color=mix(s.base_color,vec3<f32>(0.55,0.68,0.74)*(0.94+grain*0.06),snow*0.88);s.roughness=0.92;s.metallic=0.0;
+    return s;
+}

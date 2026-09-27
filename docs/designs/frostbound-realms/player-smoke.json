@@ -1,23 +1,19 @@
 {
-  "checkedAt": "2026-09-28T00:17:28.9047830+08:00",
-  "processId": 66836,
-  "startedAt": "2026-09-28T00:16:16.9801339+08:00",
-  "elapsedSeconds": 71.9,
+  "checkedAt": "2026-09-28T02:21:09.0196283+08:00",
+  "processId": 150232,
+  "startedAt": "2026-09-28T02:12:34.2812664+08:00",
+  "elapsedSeconds": 514.7,
   "alive": true,
   "responding": true,
   "windowTitle": "Frostbound Realms",
   "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
-  "packagedFiles": 74,
-  "contentHash": "9b58533440fe63362fede55cb5138656ee012009359da87109c01c1cb748d049",
+  "packagedFiles": 139,
+  "contentHash": "eeabc1a78996e55f3f3a392840f0f4d6497edf600c44e56a4cfbfaf418a5f652",
   "packageValidationPassed": true,
   "scope": "Packaged Release executable startup and process responsiveness; no Player input injection or desktop capture",
   "physicalInput": false,
   "audioListening": false,
   "audioDeviceAvailable": false,
   "loggedErrors": 0,
-  "warnings": [
-    "Default audio output device unavailable; audio disabled",
-    "wgpu adapter reports missing downlevel indirect-draw flags"
-  ],
-  "shutdown": "Only the process started for this smoke check was stopped"
+  "shutdown": "Only this smoke-check process was stopped"
 }

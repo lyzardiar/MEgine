@@ -1,0 +1,1 @@
+{"version":10,"name":"Forged command panel","shader":"custom","custom_shader":"Assets/Shaders/Panel.mshader","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,1]}

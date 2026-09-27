@@ -1,0 +1,14 @@
+{
+  "mode": "built-in image_gen",
+  "title": "Create a production-ready background illustration for an original fantasy real-time strategy game titled Frostbound Realms (DO NOT render text). Landscape 16:9. Hand-painted premium PC strategy game art, not a screenshot. A winter citadel and pine forest in a cold alpine valley, warm amber windows, banners, distant mountains and thin drifting snow. On the right foreground a dignified armored frost warden with silver plate armor, dark teal cloak, ornate ice-blue staff, shown waist up in three-quarter view looking towards the citadel, strong readable silhouette. Composition: entire left 45 percent low-detail dark navy mist and shadow to receive menu text; architecture in center-right and hero at far right; avoid salient elements in left region. Rich painterly brushwork, believable stone and metal, restrained teal blue, bone white and antique gold, dramatic warm/cool lighting, atmospheric depth, elegant original world. No logos, no writing, no UI, no borders.",
+  "icons": "Production game asset: exactly 4 columns by 4 rows of equally sized square fantasy strategy ability icons, a seamless sprite sheet 1024x1024. Every tile fills its own 256x256 square, no gaps, no outer border, no labels, no writing. Rich hand-painted detailed fantasy RPG icons, readable at 48px, dark navy backgrounds and antique gold edge details inside each square, dramatic lighting. Row 1 left to right: ice crystal explosion (cyan); healing green radiant leaf and hand; violet teleport portal; blizzard with icy spears. Row 2: rune engraved steel sword; red glowing heart gemstone; brown leather boots with blue wind trails; ornate golden sword with cyan rune. Row 3: lightning enchanted boots; emerald sanctuary amulet; crossed swords on red banner; steel shield with blue crest. Row 4: portrait of silver armored male frost warden with blue eyes and fur collar; a stone watchtower with blue banner; glowing gold coins; crossed woodcutting axes and pine logs. Square crop of each subject, centered and separated within exact grid boundaries. Original art, no recognizable copyrighted characters.",
+  "files": [
+    "Assets/Art/winterfall-menu.png",
+    "Assets/Art/command-icons.png"
+  ],
+  "note": "Original menu and command illustrations. No generated illustration is used as a substitute for the real-time battlefield.",
+  "sha256": {
+    "Assets/Art/winterfall-menu.png": "f42a0e34e1b8803c21e617c7b2d616728fc9c8c08e18c04993bc0c8812cd378f",
+    "Assets/Art/command-icons.png": "db7aea83d3fa0f0f01eb227a9095fe14303764f54640ec66a13fa5f494f8e4de"
+  }
+}

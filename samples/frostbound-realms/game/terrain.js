@@ -1,0 +1,16 @@
+/* Author: MiYu. Four-cell chunks share a one-cell border for continuous terrain and fog. */
+var FrostTerrain=(()=>{
+  const names=Array.from({length:9},(_,i)=>'cells'+i);
+  function cells(state,team,allVisible){
+    return state.map.terrain.map((kind,i)=>{
+      if(state.mode==='td'&&kind===0){const x=i%32*2-31,z=Math.floor(i/32)*2-31;if(Frost.tdPath.slice(1).some((p,j)=>{const a=Frost.tdPath[j];return Math.abs(a[0]-p[0])<1?Math.abs(x-p[0])<2&&z>=Math.min(a[1],p[1])&&z<=Math.max(a[1],p[1]):Math.abs(z-p[1])<2&&x>=Math.min(a[0],p[0])&&x<=Math.max(a[0],p[0]);}))kind=2;}
+      return kind*2+(allVisible||state.visible[team]?.[i]?1:state.explored[team]?.[i]?.4:.07);
+    });
+  }
+  function chunk(data,x,z){
+    const packed=[];for(let dz=-1;dz<=4;dz++)for(let dx=-1;dx<=4;dx++)packed.push(data[Frost.clamp(z*4+dz,0,31)*32+Frost.clamp(x*4+dx,0,31)]);
+    return Array.from({length:9},(_,i)=>packed.slice(i*4,i*4+4));
+  }
+  return {names,cells,chunk};
+})();
+if(typeof module!=='undefined')module.exports=FrostTerrain;
