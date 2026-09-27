@@ -91889,13 +91889,13 @@
       },
       {
         "entity": 2340,
-        "name": "Sound spell",
+        "name": "Sound battle",
         "parent": null,
         "siblingIndex": 2339,
         "active": true,
         "components": {
           "AudioSource": {
-            "clip": "Assets/Audio/spell.wav",
+            "clip": "Assets/Audio/battle.wav",
             "volume": 0.25,
             "looped": false,
             "play_on_awake": false,
@@ -91905,13 +91905,13 @@
       },
       {
         "entity": 2341,
-        "name": "Sound battle",
+        "name": "Sound spell",
         "parent": null,
         "siblingIndex": 2340,
         "active": true,
         "components": {
           "AudioSource": {
-            "clip": "Assets/Audio/battle.wav",
+            "clip": "Assets/Audio/spell.wav",
             "volume": 0.25,
             "looped": false,
             "play_on_awake": false,
@@ -91932,6 +91932,22 @@
             "looped": false,
             "play_on_awake": false,
             "playing": false
+          }
+        }
+      },
+      {
+        "entity": 2343,
+        "name": "Sound winter-theme",
+        "parent": null,
+        "siblingIndex": 2342,
+        "active": true,
+        "components": {
+          "AudioSource": {
+            "clip": "Assets/Audio/winter-theme.wav",
+            "volume": 0.12,
+            "looped": true,
+            "play_on_awake": true,
+            "playing": true
           }
         }
       }

@@ -23,6 +23,10 @@ fn native_skirmish_editor_and_rpg_modes() {
     input.key("F7".into(),true);snapshot=tick(snapshot,&mut input);input.key("F7".into(),false);assert_eq!(telemetry(&snapshot)["mode"],"playing");
     input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);assert_eq!(telemetry(&snapshot)["mode"],"editor");
     input.key("KeyV".into(),true);snapshot=tick(snapshot,&mut input);input.key("KeyV".into(),false);assert_eq!(telemetry(&snapshot)["editorPage"],1);
+    for _ in 0..3 { input.key("Tab".into(),true);snapshot=tick(snapshot,&mut input);input.key("Tab".into(),false); }
+    assert_eq!(telemetry(&snapshot)["kind"],"rpg");assert_eq!(telemetry(&snapshot)["placedUnits"],5);
+    input.key("F7".into(),true);snapshot=tick(snapshot,&mut input);input.key("F7".into(),false);assert_eq!(telemetry(&snapshot)["kind"],"rpg");
+    input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);
     input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);
     input.key("F8".into(),true);snapshot=tick(snapshot,&mut input);input.key("F8".into(),false);assert_eq!(telemetry(&snapshot)["kind"],"rpg");assert_eq!(telemetry(&snapshot)["quest"]["stage"],0);
     runtime.stop();

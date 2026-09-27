@@ -28,14 +28,24 @@ QUATERNIUS = {
     'Archery': '1-XDduQ7MN-uGlcenuHkTOyeN5u4-Ch31',
 }
 
+def verify_source(path, relative):
+    manifest=SAMPLE/'asset-sources.json'
+    if manifest.exists():
+        expected=next((a['sha256'] for a in json.loads(manifest.read_text(encoding='utf-8')) if a.get('file')==relative),None)
+        if expected and hashlib.sha256(path.read_bytes()).hexdigest()!=expected:
+            raise ValueError('Source SHA-256 differs from the recorded license manifest: '+relative)
+
 def download():
     cache = ROOT / 'tmp/frost-assets'
     cache.mkdir(parents=True, exist_ok=True)
     for name, url in PACKS.items():
         archive = cache / (name + '.zip')
+        if not archive.exists() and (SAMPLE/'SourceAssets'/(name+'.zip')).exists():
+            shutil.copyfile(SAMPLE/'SourceAssets'/(name+'.zip'),archive)
         if not archive.exists():
             print('Downloading', name, flush=True)
             urllib.request.urlretrieve(url, archive)
+        verify_source(archive,'SourceAssets/'+name+'.zip')
         folder = cache / name
         if not folder.exists():
             with zipfile.ZipFile(archive) as z:
@@ -52,12 +62,15 @@ def characters(cache):
     def fetch(item):
         name, file_id=item
         target=folder/(name+'.gltf')
+        if not target.exists() and (SAMPLE/'SourceAssets'/(name+'.gltf')).exists():
+            shutil.copyfile(SAMPLE/'SourceAssets'/(name+'.gltf'),target)
         try: json.loads(target.read_text())
         except (FileNotFoundError, json.JSONDecodeError):
             temporary=target.with_suffix('.part')
             urllib.request.urlretrieve('https://drive.usercontent.google.com/download?id='+file_id+'&export=download&confirm=t',temporary)
             json.loads(temporary.read_text())
             temporary.replace(target)
+        verify_source(target,'SourceAssets/'+name+'.gltf')
         doc=json.loads(target.read_text())
         print(name, len(doc.get('animations',[])), 'animations', flush=True)
     with ThreadPoolExecutor(max_workers=4) as pool: list(pool.map(fetch,QUATERNIUS.items()))

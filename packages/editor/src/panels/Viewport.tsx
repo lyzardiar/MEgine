@@ -1308,7 +1308,7 @@ export function Viewport(props: {
       request.ready = requestNativeViewportFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight, ...nativeWorldArgs(p) })
         .then((buffer) => {
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
-          recordNativeViewportProfile('game', { ...result.profile, simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+          recordNativeViewportProfile('game', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
           const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
@@ -1411,7 +1411,7 @@ export function Viewport(props: {
       }).then((buffer) => {
         if (request.generation !== generation) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
-        recordNativeViewportProfile('scene', { ...result.profile, simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+        recordNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
         const image = result.image;
         const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {

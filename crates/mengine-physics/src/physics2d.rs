@@ -110,6 +110,7 @@ impl PhysicsWorld2D {
     }
 
     pub fn step(&mut self, world: &mut World, dt: f32) -> PhysicsStepEvents {
+        if self.bodies.is_empty() && !world.iter_entities().any(|e| world.get_component::<Rigidbody2D>(e).is_some() || world.get_component::<BoxCollider2D>(e).is_some() || world.get_component::<CircleCollider2D>(e).is_some() || world.get_component::<EdgeCollider2D>(e).is_some() || world.get_component::<PolygonCollider2D>(e).is_some()) { return PhysicsStepEvents::default(); }
         let hierarchy = TransformHierarchy::build(world);
         let definitions = collect_definitions(world, &hierarchy);
         self.remove_stale_bodies(&definitions);

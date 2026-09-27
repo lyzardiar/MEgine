@@ -22,7 +22,7 @@ if(process.argv.includes('--peer')){
   const click=async(p,x,y,button=0)=>{await p.execute('playback.input',{pointer:[x,y],viewport:[1280,720],buttons:[button]});await sleep(150);await p.execute('playback.input',{buttons:[]});await sleep(200);};
   const capture=async(p,name)=>{await sleep(400);const shot=await p.query('view.screenshot',{target:'game'});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));};
   async function open(p){await p.execute('project.open',{root:sample});await p.execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await p.execute('panel.focus',{kind:'game'});await p.execute('playback.play');await until(async()=>(await state(p)).mode==='title','title');}
-  const report={passed:false,scope:'Two native Release editor processes, shared QuickJS runtime, real TCP server'};
+  const report={passed:false,scope:'Two independent native Release editor processes, each with QuickJS, Agent input and real TCP server',physicalInput:false,audioListening:false};
   try{
     const a=peer(0);await open(a);await capture(a,'title');console.log('Native title rendered');
     await click(a,316,369);await until(async()=>(await state(a)).mode==='playing','skirmish click');let before=await state(a);assert.equal(before.kind,'skirmish');

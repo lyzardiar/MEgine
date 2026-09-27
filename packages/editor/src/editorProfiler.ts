@@ -67,6 +67,7 @@ export type NativeProfilerCounts = {
 
 export type NativeViewportProfile = {
   schemaVersion: 1;
+  renderSize?: [number, number];
   source: EditorProfilerSource;
   timestamp: number;
   totalMs: number;

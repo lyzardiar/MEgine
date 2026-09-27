@@ -141,6 +141,7 @@ impl PhysicsWorld {
     }
 
     pub fn step(&mut self, world: &mut World, dt: f32) -> PhysicsStepEvents {
+        if self.bodies.is_empty() && !world.iter_entities().any(|e| world.get_component::<RigidBody3D>(e).is_some() || world.get_component::<BoxCollider3D>(e).is_some() || world.get_component::<SphereCollider3D>(e).is_some()) { return PhysicsStepEvents::default(); }
         let hierarchy = TransformHierarchy::build(world);
         let definitions = collect_definitions(world, &hierarchy);
         self.remove_stale_bodies(&definitions);

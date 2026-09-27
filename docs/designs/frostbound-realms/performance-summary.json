@@ -1,0 +1,56 @@
+{
+  "date": "2026-09-28",
+  "hardware": {
+    "cpu": "Intel Core Ultra 7 265K",
+    "installedGpu": "AMD Radeon RX 6800 XT; Intel Graphics",
+    "gpuTimestamp": "not instrumented; adapter selection not recorded"
+  },
+  "targetMs": 5,
+  "targetMet": false,
+  "scope": "Opening skirmish, approximately 3 seconds, no large-army stress test; baseline native render size unavailable",
+  "baseline": {
+    "units": 20,
+    "entities": 2342,
+    "logicalCaptureSize": [
+      1280,
+      720
+    ],
+    "actualNativeRenderSize": null,
+    "nativeProfileCount": 19,
+    "simulationMs": 46.99006315789474,
+    "nativeRenderMs": 46.64534210526315,
+    "nativeCommandIncludingRenderMs": 59.4537105263158,
+    "uploadMs": 0.6894736791911878,
+    "browserPaintMs": 10.911538461844126,
+    "workBudgetProxyMs": 118.04478582524585,
+    "nativeRequestMs": 101.76315788846267,
+    "simulationRequestMs": 120.74210526127564,
+    "presentIntervalMs": 171.16111110978656,
+    "p95PresentIntervalMs": 220.80000001192093,
+    "presentedFps": 5.8424486351842955
+  },
+  "latest": {
+    "units": 20,
+    "entities": 2343,
+    "logicalCaptureSize": [
+      1280,
+      720
+    ],
+    "actualNativeRenderSize": [
+      850,
+      478
+    ],
+    "nativeProfileCount": 43,
+    "simulationMs": 25.484195348837204,
+    "nativeRenderMs": 7.012674418604655,
+    "nativeCommandIncludingRenderMs": 13.633527906976742,
+    "uploadMs": 0.6837209296780963,
+    "browserPaintMs": 9.412345675774562,
+    "workBudgetProxyMs": 49.2137898612666,
+    "nativeRequestMs": 58.01162789865982,
+    "simulationRequestMs": 104.5139534847681,
+    "presentIntervalMs": 72.60952380867232,
+    "p95PresentIntervalMs": 144.39999997615814,
+    "presentedFps": 13.772298006457415
+  }
+}

@@ -1,7 +1,7 @@
 /* Author: MiYu. Native RTS controls, presentation, map editor and TCP client. */
 var FrostClient=(()=>{
   const S=Frost,hidden=[0,-100,0],pitch=-Math.atan2(42,32),sin=-Math.sin(pitch);
-  let entities={},authored={},sent={},initialized=false,mode='title',state=null,team=0,faction=0,selected=[],groups={},camera=[0,0],zoom=27,time=0,accumulator=0,notice='',noticeUntil=0,drag=null,armed=null,paused=false,actions=[],renderAt=0,lastFrame=-1,fx=[],fxSerial=0;
+  let entities={},authored={},sent={},initialized=false,mode='title',state=null,team=0,faction=0,selected=[],groups={},camera=[0,0],zoom=27,time=0,accumulator=0,notice='',noticeUntil=0,drag=null,armed=null,paused=false,actions=[],renderAt=0,lastFrame=-1,fx=[],fxSerial=0,lastBattleSound=0;
   let editMap=S.defaultMap(),brush=0,undo=[],paintCell=-1,slot=1,returnEditor=false,online=false,address='127.0.0.1:7788',edit='',intent='',connected=false,code='',token='',room=null,rooms=[],roomIndex=0,seq=0,lastReceive=0,reconnectUntil=0,retry=0,netStates=0;
   const previous={},visibility={},modelNames={},active={},tileState=[];
   let editorPage=0,placeKind='soldier',placeTeam=0,placeTag='',triggerWhen='enter',triggerAction='spawn',triggerValue=10;
@@ -16,7 +16,7 @@ var FrostClient=(()=>{
   function persist(key,value){try{engine.storage.save(key,value);message('Saved '+key+' to your project user-data folder');return true;}catch(e){message('Save failed: '+e.message);return false;}}
   function load(key){try{return engine.storage.load(key);}catch(e){message('Load failed: '+e.message);return null;}}
   function stopNetwork(){if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';}
-  function solo(kind,map){stopNetwork();state=S.create(kind,{map,...(map?{}:{factions:[faction,(faction+1)%4]})});team=0;mode='playing';paused=false;selected=state.units.filter(u=>u.team===0&&u.kind==='hero').map(u=>u.id);camera=state.map.spawns[0].map(v=>S.clamp(v,-10,10));zoom=18;accumulator=0;lastFrame=-1;armed=null;groups={};}
+  function solo(kind,map){stopNetwork();state=S.create(kind,{map,...(map?{}:{factions:[faction,(faction+1)%4]})});team=0;mode='playing';paused=false;selected=state.units.filter(u=>u.team===0&&u.kind==='hero').map(u=>u.id);camera=state.map.spawns[0].map(v=>S.clamp(v,-10,10));zoom=18;accumulator=0;lastFrame=-1;armed=null;groups={};notice='';if(kind==='td')selectHero();}
   function title(){stopNetwork();mode='title';state=S.create();camera=[0,0];zoom=27;paused=false;selected=[];armed=null;returnEditor=false;}
   function order(command){const c={ids:[...selected],...command};if(online){if(connected)engine.network.send({type:'order',seq:++seq,command:c});else message('Reconnecting; orders are paused');}else{const error=S.command(state,team,c);if(error)message(error);else sound('order');}}
   function selectHero(){const h=state.units.find(u=>u.team===team&&u.kind==='hero'&&u.hp>0);if(h){selected=[h.id];camera=[h.x,h.z];}}
@@ -83,7 +83,8 @@ var FrostClient=(()=>{
     }
     const u=state.units.find(u=>selected.includes(u.id)&&u.team===team&&u.hp>0);if(!u)return;
     if(u.kind==='worker'){
-      for(const [kind,key] of [['farm','F'],['barracks','B'],['tower','T'],['altar','L']])add(S.types[kind].label+' ['+key+']',()=>{armed={type:'build',kind};message('Choose a site within 15 units of the worker');});
+      for(const [kind,key] of (state.mode==='td'?[['tower','T'],['frosttower','G'],['flametower','H']]:[['farm','F'],['barracks','B'],['tower','T'],['altar','L']]))add(S.types[kind].label+' ['+key+']',()=>{armed={type:'build',kind};message('Choose a site within 15 units of the worker');});
+    }else if(S.types[u.kind].model==='tower'){add('Upgrade '+(100*u.level),()=>order({type:'towerUpgrade'}));if(state.mode==='td')add('Sell / 65%',()=>order({type:'sell'}));
     }else if(u.kind==='hero'){
       ['Frost nova [Q]','Restoration [W]','Blink [E]','Blizzard [R]'].forEach((n,i)=>add(n+(u.spell[i]>.1?' '+Math.ceil(u.spell[i])+'s':''),()=>{armed={type:'spell',slot:i};message('Left click a target within 14 units');}));
       S.items.forEach((item,i)=>add(item.name+' '+item.gold,()=>order({type:'buy',item:i})));
@@ -116,7 +117,7 @@ var FrostClient=(()=>{
         if(press('Space'))selectHero();if(press('KeyA'))armed={type:'attackMove'};if(press('KeyS'))order({type:'stop'});
         const u=state.units.find(u=>selected.includes(u.id)&&u.team===team);
         if(u?.kind==='hero')for(const [i,k] of ['KeyQ','KeyW','KeyE','KeyR'].entries())if(press(k))armed={type:'spell',slot:i};
-        if(u?.kind==='worker')for(const [k,kind] of [['KeyF','farm'],['KeyB','barracks'],['KeyT','tower'],['KeyL','altar']])if(press(k))armed={type:'build',kind};
+        if(u?.kind==='worker')for(const [k,kind] of [['KeyF','farm'],['KeyB','barracks'],['KeyT','tower'],['KeyL','altar'],['KeyG','frosttower'],['KeyH','flametower']])if(press(k))armed={type:'build',kind};
         if(press('KeyU'))order({type:u?.kind==='hall'?'tech':'upgrade'});
         for(let i=1;i<=9;i++)if(press('Digit'+i)){if(held('ControlLeft'))groups[i]=[...selected];else selected=[...(groups[i]||[])];}
       }
@@ -154,13 +155,13 @@ var FrostClient=(()=>{
     for(let i=0;i<100;i++){const r=(editing?map.props:state.resources)[i],visible=r&&r.amount>0&&(allVisible||state.explored[team]?.[S.index(r.x,r.z)]);if(!visible){transform('Prop '+i,hidden);continue;}const key=r.kind==='tree'?(i%3===0?'tree-high':'tree'):r.kind==='mine'?'rock-large':'rock-wide',asset=FrostArt[key];set('Prop '+i,'MeshRenderer',{mesh:asset.parts[0].mesh,material:asset.material});const scale=r.kind==='tree'?1.8+(i%4)*.16:1.8;transform('Prop '+i,[r.x,0,r.z],[scale,scale,scale]);}
     for(let i=0;i<S.LIMIT;i++){
       const u=state.units[i],visible=u&&u.hp>0&&(allVisible||S.isVisible(state,team,u));if(!visible){for(const n of ['Unit ','Ring ','HP ','Flag '])transform(n+i,hidden);show('Mini unit '+i,false);continue;}
-      const keys={worker:'Monk',soldier:'Warrior',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',hall:'Citadel',barracks:'Barracks',farm:'House',tower:'House',altar:'Archery',creep:'Rogue',neutral:'Warrior'},key=u.tag==='boss'?'Wizard':keys[u.kind]||keys[S.types[u.kind].model],asset=FrostArt[key],old=previous[u.id],walking=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;let yaw=old?.yaw||0;if(walking)yaw=Math.atan2(u.x-old.x,u.z-old.z);previous[u.id]={x:u.x,z:u.z,yaw};
+      const keys={worker:'Monk',soldier:'Warrior',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',hall:'Citadel',barracks:'Barracks',farm:'House',tower:'House',altar:'Archery',creep:'Rogue',neutral:'Warrior'},key=u.tag==='boss'?'Wizard':u.kind==='frosttower'?'Archery':u.kind==='flametower'?'Barracks':keys[u.kind]||keys[S.types[u.kind].model],asset=FrostArt[key],old=previous[u.id],walking=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;let yaw=old?.yaw||0;if(walking)yaw=Math.atan2(u.x-old.x,u.z-old.z);previous[u.id]={x:u.x,z:u.z,yaw};
       let mesh=asset.parts[0].mesh;if(asset.animations?.length){const desired=u.cd>.25&&u.kind!=='worker'?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch/:walking?/^Run$|^Walk$/:/^Idle$/;let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;const frame=Math.floor(time*12)%asset.animations[clip].frames;mesh+='#pose='+clip+':'+frame;}
-      set('Unit '+i,'MeshRenderer',{mesh,material:asset.material});const scale=u.tag==='boss'?1.5:S.types[u.kind].speed?(u.kind==='hero'?.85:S.types[u.kind].model==='knight'?.8:.65):({hall:3,barracks:3.8,farm:3.2,tower:3.2,altar:3.5}[u.kind]);transform('Unit '+i,[u.x,0,u.z],[scale,scale*Math.max(.15,u.built),scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);
+      set('Unit '+i,'MeshRenderer',{mesh,material:asset.material});const scale=u.tag==='boss'||u.tdBoss?1.5:S.types[u.kind].speed?(u.kind==='hero'?.85:S.types[u.kind].model==='knight'?.8:.65):({hall:3,barracks:3.8,farm:3.2,tower:3.2,altar:3.5}[S.types[u.kind].model]);transform('Unit '+i,[u.x,0,u.z],[scale,scale*Math.max(.15,u.built),scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);
       const picked=selected.includes(u.id),height=S.types[u.kind].speed?2.6:u.kind==='hall'?5.7:3.3;transform('Ring '+i,picked?[u.x,.04,u.z]:hidden,[S.types[u.kind].speed?1.8:4,.04,S.types[u.kind].speed?1.8:4]);transform('HP '+i,[u.x,height,u.z],[1.7*u.hp/u.maxHp,.1,.17]);set('HP '+i,'PbrMaterial',{base_color:u.team===team?[.18,.82,.47,1]:[.9,.2,.18,1],roughness:1});transform('Flag '+i,[u.x,height+.4,u.z],[.22,.3,.22]);set('Flag '+i,'PbrMaterial',{base_color:u.team===0?[.13,.56,1,1]:u.team===1?[.92,.18,.12,1]:[.75,.59,.24,1],roughness:1});
       show('Mini unit '+i,world);const r=authored['Mini unit '+i].RectTransform;set('Mini unit '+i,'RectTransform',{...r,anchored_position:world?[-594+(u.x+32)/64*160,190+(u.z+32)/64*144]:[5000,5000]});set('Mini unit '+i,'Image',{color:u.team===team?[.2,.7,1,1]:[1,.25,.15,1],raycast_target:false});
     }
-    if(lastFrame!==state.frame){for(const e of state.events||[]){const id=fxSerial++%24;fx.push({id,e,until:time+(e.type==='spell'?.65:.22)});if(e.type==='spell')sound('spell');}lastFrame=state.frame;}
+    if(lastFrame!==state.frame){for(const e of state.events||[]){const id=fxSerial++%24;fx.push({id,e,until:time+(e.type==='spell'?.65:.22)});if(e.type==='spell')sound('spell');if(e.type==='hit'&&time-lastBattleSound>.25){sound('battle');lastBattleSound=time;}}lastFrame=state.frame;}
     fx=fx.filter(f=>f.until>time);for(let i=0;i<24;i++){const f=fx.findLast?fx.findLast(f=>f.id===i):[...fx].reverse().find(f=>f.id===i);set('FX '+i,'ParticleEmitter3D',{...authored['FX '+i].ParticleEmitter3D,playing:!!f,shape_radius:f?.e.type==='spell'?2:.2,color_start:f?.e.slot===1?[.2,1,.45,1]:f?.e.team===1?[1,.35,.12,1]:[.25,.7,1,1]});if(f)transform('FX '+i,[f.e.x,.6,f.e.z]);}
     const markers=editing?map.triggers:state.loot||[];for(let i=0;i<32;i++){const m=markers[i];transform('Objective '+i,m&&(editing||state.explored[team]?.[S.index(m.x,m.z)])?[m.x,.4+Math.sin(time*2)*.15,m.z]:hidden,[.8,.8,.8],[0,Math.sin(time/2),0,Math.cos(time/2)]);}
     label('Objective text',editing?'[V] '+['Terrain & objects','Units — click ground to place','Triggers — choose condition / action, click a region','Players & data'][editorPage]:state.mode==='rpg'?'QUEST '+(state.quest.stage+1)+'/4: '+(S.questNames[state.quest.stage]||'Covenant restored')+(state.quest.stage===0?' ('+state.quest.scouts+'/3)':''):state.announcement||'');show('Objective text',world);

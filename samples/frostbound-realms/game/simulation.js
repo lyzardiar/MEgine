@@ -18,6 +18,9 @@ var Frost = (() => {
     neutral: {label:'Ancient guardian',hp:450,damage:25,range:2,speed:2.8,cooldown:1.4,gold:0,wood:0,food:0,model:'knight'}
   };
   const items = [{name:'Runic blade',gold:180,damage:18},{name:'Heartstone',gold:160,hp:220},{name:'Wayfarer boots',gold:140,speed:.8}];
+  items.push({name:'Covenant edge',gold:120,damage:28,hp:120,recipe:[0,1]},{name:'Stormstride',gold:100,damage:16,speed:.6,recipe:[0,2]},{name:'Sanctuary charm',gold:100,hp:240,speed:.3,recipe:[1,2]});
+  types.frosttower={...types.tower,label:'Frost spire',damage:28,slow:2.5,gold:170,model:'tower'};
+  types.flametower={...types.tower,label:'Ember bastion',damage:34,splash:3,gold:210,cooldown:1.8,model:'tower'};
   const armies = [
     {units:['soldier','archer','paladin','rifleman'],names:['Footman','Ranger','Paladin','Rifleman']},
     {units:['raider','hunter','berserker','shaman'],names:['Raider','Spear hunter','Berserker','Shaman']},
@@ -89,7 +92,7 @@ var Frost = (() => {
         spawn(s,'hero',team,x,z+(team?4:-4));
         for(let lane=0;lane<3;lane++){const route=lanePath(team,lane);for(const j of [1,2]){const p=route[j];spawn(s,'tower',team,p[0],p[1],{lane});}}
       }else if(mode==='rpg'){spawn(s,'hero',0,x+3,z-3,{maxHp:950,hp:950,damage:55});}
-      else{spawn(s,'worker',0,-18,18);spawn(s,'hero',0,-22,17);}
+      else{spawn(s,'worker',0,-16,-17);spawn(s,'hero',0,-22,-18);spawn(s,'tower',0,-12,-20);s.nextWave=120;}
     }
     if(mode==='skirmish'||mode==='moba')for(const p of [{x:-8,z:-6},{x:8,z:6},...map.props.filter(p=>p.kind==='camp')])spawn(s,'neutral',-1,p.x,p.z,{home:[p.x,p.z]});
     for(const p of map.units){const extra={home:[p.x,p.z],tag:p.tag};if(mode==='rpg'){const hp=p.tag==='boss'?1900:p.tag==='keeper'?700:260;Object.assign(extra,{hp,maxHp:hp,damage:p.tag==='boss'?60:18,speed:2});}spawn(s,p.kind,p.team,p.x,p.z,extra);}
@@ -98,10 +101,17 @@ var Frost = (() => {
   function lanePath(team,lane){const paths=[[[-23,23],[-24,7],[-24,-18],[-7,-24],[23,-23]],[[-23,23],[-13,13],[-5,5],[5,-5],[13,-13],[23,-23]],[[-23,23],[-7,24],[18,24],[24,7],[23,-23]]];return team?[...paths[lane]].reverse():paths[lane];}
   const tdPath=[[-25,-24],[23,-24],[23,-8],[-21,-8],[-21,7],[20,7],[20,20],[-23,23]];
   function solid(s,x,z,ignore=0){if(Math.abs(x)>30||Math.abs(z)>30||s.map.terrain[index(x,z)]===1)return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
+  const navigationCache=new WeakMap();
+  function navigation(s){
+    let cache=navigationCache.get(s);if(cache&&cache.frame===s.frame&&cache.serial===s.serial)return cache.blocked;
+    const blocked=Uint8Array.from(s.map.terrain,v=>v===1?1:0);
+    for(const u of s.units)if(u.hp>0&&!types[u.kind].speed){const radius=(types[u.kind].radius||1)+.35,[cx,cz]=cell(u.x,u.z),r=Math.ceil(radius/2)+1;for(let z=Math.max(0,cz-r);z<=Math.min(31,cz+r);z++)for(let x=Math.max(0,cx-r);x<=Math.min(31,cx+r);x++)if(Math.hypot(x*2-31-u.x,z*2-31-u.z)<radius)blocked[z*32+x]=1;}
+    navigationCache.set(s,{frame:s.frame,serial:s.serial,blocked});return blocked;
+  }
   function path(s,u,tx,tz){
-    const start=index(u.x,u.z),goal=index(tx,tz),prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const queue=[start];let found=start,best=Infinity;
+    const start=index(u.x,u.z),goal=index(tx,tz),blocked=navigation(s),prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const queue=[start];let found=start,best=Infinity;
     for(let k=0;k<queue.length;k++){const n=queue[k],x=n%32,z=Math.floor(n/32),d=Math.hypot(x-goal%32,z-Math.floor(goal/32));if(d<best){best=d;found=n;}if(n===goal)break;
-      for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||solid(s,nx*2-31,nz*2-31,u.id))continue;prev[j]=n;queue.push(j);}}
+      for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j])continue;prev[j]=n;queue.push(j);}}
     const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%32*2-31,Math.floor(n/32)*2-31]);return result.reverse();
   }
   function move(s,u,x,z,stop=.5){
@@ -121,10 +131,11 @@ var Frost = (() => {
       own.forEach((v,i)=>{v.path=[];v.pathAt=-100;v.order=c.type==='stop'?null:{type:c.type,x:point?clamp(c.x+(i%5-2)*1.1,-29,29):0,z:point?clamp(c.z+Math.floor(i/5)*1.1,-29,29):0,target:c.target,resource:c.resource};});return null;
     }
     if(c.type==='build'){
-      if(s.mode==='moba'||!u||u.kind!=='worker'||!['farm','barracks','tower','altar'].includes(c.kind)||!point)return 'Select a worker and a building site';
+      if(s.mode==='moba'||!u||u.kind!=='worker'||!['farm','barracks','tower','frosttower','flametower','altar'].includes(c.kind)||!point)return 'Select a worker and a building site';
       const d=types[c.kind];if(distance(u,c)>15||solid(s,c.x,c.z)||s.units.some(v=>v.hp>0&&!types[v.kind].speed&&distance(v,c)<(types[v.kind].radius||1)+d.radius+.8))return 'Site blocked or too far from worker';
+      if(s.mode==='td'&&(d.model!=='tower'||s.units.filter(v=>v.team===team&&types[v.kind].model==='tower'&&v.hp>0).length>=40))return 'Defense supports up to 40 towers';
       if(s.mode==='td'&&tdPath.slice(1).some((p,i)=>segmentDistance(c.x,c.z,tdPath[i],p)<2.5))return 'Keep the creep road clear';
-      if(s.units.length>=LIMIT||!pay(s,team,d.gold,d.wood))return 'Not enough resources or unit capacity';
+      if(s.units.length>=LIMIT||!pay(s,team,d.gold,s.mode==='td'?0:d.wood))return 'Not enough resources or unit capacity';
       spawn(s,c.kind,team,c.x,c.z,{built:.01});return null;
     }
     if(c.type==='train'){
@@ -135,9 +146,13 @@ var Frost = (() => {
       if(!pay(s,team,d.gold,d.wood))return 'Not enough resources';u.queue.push({kind:c.kind,left:d.time});return null;
     }
     if(c.type==='tech'){const t=s.teams[team];if(!u||u.kind!=='hall'||u.built<1||t.tier>=3||t.research>0)return 'Select a stronghold ready to advance';if(!pay(s,team,250*t.tier,120*t.tier))return 'Not enough resources';t.research=20*t.tier;return null;}
+    if(c.type==='towerUpgrade'){if(!u||types[u.kind].model!=='tower'||u.built<1||u.level>=3)return 'Select a completed tower below level 3';if(!pay(s,team,100*u.level))return 'Not enough gold';u.level++;u.damage+=types[u.kind].damage*.65;u.maxHp+=200;u.hp=Math.min(u.maxHp,u.hp+200);return null;}
+    if(c.type==='sell'){if(s.mode!=='td'||!u||types[u.kind].model!=='tower')return 'Select a defense tower';s.teams[team].gold+=Math.floor((types[u.kind].gold+100*(u.level-1)*u.level/2)*.65);u.hp=0;return null;}
     if(c.type==='upgrade'){if(!u||u.kind!=='barracks'||u.built<1)return 'Select a completed barracks';if(s.teams[team].upgrade>=s.teams[team].tier)return 'Advance your stronghold for more research';if(!pay(s,team,180+s.teams[team].upgrade*100,100))return 'Not enough resources';s.teams[team].upgrade++;return null;}
     if(c.type==='buy'){
-      const item=items[c.item];if(!u||u.kind!=='hero'||!item||u.inventory.length>=6)return 'Select a hero with an empty inventory slot';if(!s.units.some(v=>v.team===team&&v.kind==='hall'&&v.hp>0&&distance(v,u)<10))return 'Visit your stronghold shop';
+      const item=Number.isInteger(c.item)?items[c.item]:null;if(!u||u.kind!=='hero'||!item||u.inventory.length>=6&&!item.recipe)return 'Select a hero with an empty inventory slot';if(!s.units.some(v=>v.team===team&&v.kind==='hall'&&v.hp>0&&distance(v,u)<10))return 'Visit your stronghold shop';
+      if(item.recipe&&!item.recipe.every(i=>u.inventory.includes(i)))return 'Requires '+item.recipe.map(i=>items[i].name).join(' + ');
+      if(item.recipe&&s.teams[team].gold>=item.gold)for(const i of item.recipe){u.inventory.splice(u.inventory.indexOf(i),1);const part=items[i];u.damage-=part.damage||0;u.maxHp-=part.hp||0;u.speed-=part.speed||0;u.hp=Math.min(u.hp,u.maxHp);}
       if(!pay(s,team,item.gold))return 'Not enough gold';equip(u,c.item);return null;
     }
     if(c.type==='spell'){
@@ -185,10 +200,10 @@ var Frost = (() => {
   function tick(s){
     if(s.winner!==null)return;s.frame++;s.events=[];
     for(const t of s.teams)if(t.research>0){t.research=Math.max(0,t.research-DT);if(t.research===0)t.tier++;}
-    if((s.mode==='moba'||s.mode==='td')&&s.frame>=s.nextWave){
+    if((s.mode==='moba'||s.mode==='td')&&s.frame>=s.nextWave&&(s.mode!=='td'||s.units.length+5+(s.wave+1)*2<=LIMIT)){
       s.wave++;s.nextWave=s.frame+Math.round(s.map.waveInterval/DT);
       if(s.mode==='moba')for(let t=0;t<2;t++)for(let lane=0;lane<3;lane++)for(let i=0;i<3;i++){const route=lanePath(t,lane),p=route[0];spawn(s,'creep',t,p[0]+i*.7,p[1],{route,waypoint:1,lane});}
-      else if(s.wave<=s.map.waves)for(let i=0;i<5+s.wave*2;i++)spawn(s,'creep',1,tdPath[0][0]-i*.25,tdPath[0][1],{hp:100+s.wave*40,maxHp:100+s.wave*40,speed:3+s.wave*.12,route:tdPath,waypoint:1,td:true});
+      else if(s.wave<=s.map.waves)for(let i=0;i<5+s.wave*2;i++){const boss=s.wave%4===0&&i===0,hp=(100+s.wave*40)*(boss?5:s.wave%3===2?1.4:1);spawn(s,'creep',1,tdPath[0][0]-i*.25,tdPath[0][1],{hp,maxHp:hp,speed:(3+s.wave*.12)*(s.wave%3===0?1.45:1),route:tdPath,waypoint:1,td:true,tdBoss:boss});}
     }
     if(s.frame%40===0)for(let t=0;t<2;t++)if(s.teams[t].ai)ai(s,t);
     if(s.frame%10===0&&s.mode==='moba')for(const t of s.teams)t.gold+=3;
@@ -200,11 +215,11 @@ var Frost = (() => {
       if(u.built<1){u.built=Math.min(1,u.built+DT/types[u.kind].time);continue;}
       if(u.queue.length){u.queue[0].left-=DT;if(u.queue[0].left<=0&&s.units.length<LIMIT){const q=u.queue.shift();let p=[u.x,u.z+4];for(let a=0;a<12;a++){const x=u.x+Math.cos(a*Math.PI/6)*4,z=u.z+Math.sin(a*Math.PI/6)*4;if(!solid(s,x,z)){p=[x,z];break;}}spawn(s,q.kind,u.team,p[0],p[1]);}}
       if(u.kind==='worker'&&u.order?.type==='gather'){gather(s,u);continue;}
-      if(u.td){const p=u.route[u.waypoint];if(!p){u.hp=0;s.lives--;if(s.lives<=0)s.winner=1;continue;}if(move(s,u,p[0],p[1],u.waypoint===u.route.length-1?4.5:1.3))u.waypoint++;continue;}
+      if(u.td){const p=u.route[u.waypoint];if(!p){u.hp=0;s.lives-=u.tdBoss?5:1;if(s.lives<=0)s.winner=1;continue;}if(move(s,u,p[0],p[1],u.waypoint===u.route.length-1?4.5:1.3))u.waypoint++;continue;}
       let target=u.order?.type==='attack'?s.units.find(v=>v.id===u.order.target&&v.hp>0&&isVisible(s,u.team,v)):null;
       if(u.order?.type==='attack'&&!target)u.order=null;
       if(u.order?.type!=='move'&&u.damage>0&&!target){let best=Infinity;for(const v of s.units){if(v.team===u.team||v.hp<=0||(u.team>=0&&!isVisible(s,u.team,v)))continue;const d=distance(u,v);if(d<best&&d<Math.max(types[u.kind].range,8)){target=v;best=d;}}}
-      if(target){const range=types[u.kind].range+(types[target.kind].radius||.3);if(distance(u,target)<=range){if(u.cd<=0){damage(s,u,target,u.damage+(s.teams[u.team]?.upgrade||0)*6);u.cd=types[u.kind].cooldown||1;s.events.push({type:'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,team:u.team,ranged:range>4});}}else move(s,u,target.x,target.z,range*.8);}
+      if(target){const range=types[u.kind].range+(types[target.kind].radius||.3);if(distance(u,target)<=range){if(u.cd<=0){damage(s,u,target,u.damage+(s.teams[u.team]?.upgrade||0)*6);if(types[u.kind].splash)for(const v of s.units)if(v.id!==target.id&&v.team!==u.team&&v.hp>0&&distance(v,target)<types[u.kind].splash)damage(s,u,v,u.damage*.6);u.cd=types[u.kind].cooldown||1;s.events.push({type:'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,team:u.team,ranged:range>4});}}else move(s,u,target.x,target.z,range*.8);}
       else if(u.order&&['move','attackMove'].includes(u.order.type)){if(move(s,u,u.order.x,u.order.z,1))u.order=null;}
       else if(u.route){const p=u.route[u.waypoint];if(p&&move(s,u,p[0],p[1],1.5))u.waypoint++;}
       else if(u.home&&distance(u,{x:u.home[0],z:u.home[1]})>3)move(s,u,...u.home,2);
