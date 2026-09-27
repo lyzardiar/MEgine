@@ -1151,6 +1151,12 @@ function scanBuildAssetDependencies(
     }
     const marker = path.indexOf('#');
     if (marker >= 0) {
+      if (kind === '3D model') {
+        const pose = /^(.*\.(?:gltf|glb))#pose=(\d+):(\d+)$/i.exec(path);
+        if (!pose || Number(pose[2]) > 255 || Number(pose[3]) > 1199) throw new Error(`invalid skeletal pose reference: ${path}`);
+        enqueue(pose[1], from, kind, builtins);
+        return;
+      }
       const texture = path.slice(0, marker).trim();
       const slice = path.slice(marker + 1).trim();
       if (!texture || !slice) throw new Error(`invalid ${kind} subresource reference: ${path}`);
@@ -1186,7 +1192,7 @@ function scanBuildAssetDependencies(
     const meshRenderer = component('MeshRenderer');
     const mesh = stringValue(meshRenderer, 'mesh');
     if (mesh && mesh.toLowerCase() !== 'cube'
-      && (/\.(?:gltf|glb)$/i.test(mesh) || mesh.includes('/') || mesh.includes('\\'))) {
+      && (/\.(?:gltf|glb)(?:#.*)?$/i.test(mesh) || mesh.includes('/') || mesh.includes('\\'))) {
       enqueue(mesh, from, '3D model');
     }
     enqueueMaterial(stringValue(meshRenderer, 'material'), from, 'surface');

@@ -9,7 +9,8 @@ pub fn parse_gltf_pose(reference: &str) -> Option<(&str, usize, u32)> {
     let (clip, frame) = suffix.split_once(':')?;
     let clip = clip.parse::<usize>().ok()?;
     let frame = frame.parse::<u32>().ok()?;
-    if clip > 255 || frame > 1199 || !(path.ends_with(".gltf") || path.ends_with(".glb")) { return None; }
+    let lower = path.to_ascii_lowercase();
+    if clip > 255 || frame > 1199 || !(lower.ends_with(".gltf") || lower.ends_with(".glb")) { return None; }
     Some((path, clip, frame))
 }
 

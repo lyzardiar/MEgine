@@ -2338,6 +2338,27 @@ test('buildPcPackage rejects custom shaders that declare engine entry points', (
   }
 });
 
+test('buildPcPackage includes skeletal pose models without requesting sprite metadata', () => {
+  const paths = fixture('skeletal-pose');
+  try {
+    const model = 'Assets/Animations/hero.gltf';
+    writeFileSync(join(paths.project, model), JSON.stringify({ asset: { version: '2.0' } }));
+    const scene = (reference) => writeFileSync(join(paths.project, 'Assets/Scenes/Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: { MeshRenderer: { mesh: reference, material: 'default' } } }] },
+    }));
+    const options = { projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test-engine' };
+    scene(`${model}#pose=8:4`);
+    buildPcPackage(options);
+    assert.ok(existsSync(join(paths.output, model)));
+    for (const suffix of ['pose=256:0', 'pose=0:1200', 'pose=-1:0', 'pose=0:NaN', 'Idle']) {
+      scene(`${model}#${suffix}`);
+      assert.throws(() => buildPcPackage({ ...options, outputDir: join(paths.root, 'Invalid') }), /invalid skeletal pose reference/);
+    }
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage validates tilemap sprite subresources and shared import metadata', () => {
   const paths = fixture('sprite-subresources');
   try {
