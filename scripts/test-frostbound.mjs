@@ -4,6 +4,7 @@ import net from 'node:net';
 import './test-frost-terrain.mjs';
 import './test-frost-formations.mjs';
 import './test-frost-waypoints.mjs';
+import './test-frost-patrol.mjs';
 import './test-frost-visuals.mjs';
 import './test-frost-heroes.mjs';
 import './test-frost-construction.mjs';
@@ -95,5 +96,6 @@ try{
   b.socket.destroy();await new Promise(r=>setTimeout(r,100));const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:guest.code,token:guest.token});const resumed=await next;assert.equal(resumed.team,guest.team);assert.equal(resumed.state.units.find(u=>u.kind==='hero'&&u.team===guest.team).heroClass,2);
   next=a.next(m=>m.type==='room'&&m.players.length===1);c.send({type:'leave'});await next;assert.equal(app.rooms.get(joined.code).state.teams[1].ai,true,'AI takes over a voluntarily vacated team');
   a.socket.destroy();await new Promise(r=>setTimeout(r,100));const hostResume=await peer();next=hostResume.next(m=>m.type==='joined');hostResume.send({type:'resume',code:joined.code,token:joined.token});const restoredHost=await next;assert.ok(restoredHost.state.units.filter(u=>squad.some(v=>v.id===u.id)).every(u=>u.waypoints?.length===1),'host reconnect retains pending route');
+  hostResume.send({type:'order',seq:1,command:{type:'hold',ids:squad.map(u=>u.id)}});const held=(await hostResume.next(m=>m.type==='state'&&m.state.frame>=restoredHost.state.frame+3)).state;assert.ok(held.units.filter(u=>squad.some(v=>v.id===u.id)).every(u=>u.order?.type==='hold'&&!u.waypoints.length));hostResume.send({type:'order',seq:2,command:{type:'patrol',ids:squad.map(u=>u.id),x:5,z:15}});const patrolling=(await hostResume.next(m=>m.type==='state'&&m.state.frame>=held.frame+3)).state;assert.ok(patrolling.units.filter(u=>squad.some(v=>v.id===u.id)).every(u=>u.order?.type==='patrol'&&Number.isFinite(u.order.fromX)&&!u.waypoints.length));
   console.log('PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect');
 }finally{for(const p of peers)p.socket.destroy();await app.close();}

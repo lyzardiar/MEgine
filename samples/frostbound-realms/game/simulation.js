@@ -254,19 +254,19 @@ var Frost = (() => {
     if(s.winner!==null||!c||![0,1].includes(team))return 'Match is finished';
     if(c.append!==undefined&&typeof c.append!=='boolean'||c.append&&!['move','attackMove'].includes(c.type))return 'Only movement orders can be queued';
     const own=s.units.filter(u=>u.team===team&&u.hp>0&&!u.inside&&Array.isArray(c.ids)&&c.ids.slice(0,40).includes(u.id)),u=own[0],point=Number.isFinite(c.x)&&Number.isFinite(c.z)&&Math.abs(c.x)<=30&&Math.abs(c.z)<=30;
-    if(['move','attackMove','attack','gather','stop'].includes(c.type)){
-      if(['move','attackMove'].includes(c.type)&&!point)return 'Invalid destination';
+    if(['move','attackMove','patrol','hold','attack','gather','stop'].includes(c.type)){
+      if(['move','attackMove','patrol'].includes(c.type)&&!point)return 'Invalid destination';
       const target=s.units.find(v=>v.id===c.target&&v.hp>0);if(c.type==='attack'&&(!target||target.team===team||!isVisible(s,team,target)))return 'Target is not visible';
       if(c.type==='attack'&&!own.some(v=>canAttack(v,target)))return 'Selected units cannot attack this target';
       if(c.type==='gather'&&(!Number.isInteger(c.resource)||!s.resources[c.resource]||s.resources[c.resource].kind==='camp'))return 'Select a resource';
-      const moving=['move','attackMove'].includes(c.type),members=moving?own.filter(v=>v.speed&&v.built===1):own;
+      const moving=['move','attackMove','patrol'].includes(c.type),members=moving||c.type==='hold'?own.filter(v=>v.speed&&v.built===1):own;
       if(c.append&&members.some(v=>v.order&&!['move','attackMove'].includes(v.order.type)))return 'Issue a move before adding waypoints';
       if(c.append&&members.some(v=>(v.waypoints?.length||0)>=8))return 'Waypoint queue is full (8 waiting)';
       const slots=moving?formation(s,members,c.x,c.z,c.append):null;
       if(moving&&!slots)return 'No reachable space for this formation';
       members.forEach(v=>{
         if(c.type==='attack'&&!canAttack(v,target))return;
-        const next=c.type==='stop'?null:{type:c.type,x:slots?.get(v.id)?.[0]??0,z:slots?.get(v.id)?.[1]??0,...(c.type==='attack'?{target:c.target}:c.type==='gather'?{resource:c.resource}:{})};
+        const next=c.type==='stop'?null:{type:c.type,x:slots?.get(v.id)?.[0]??0,z:slots?.get(v.id)?.[1]??0,...(c.type==='attack'?{target:c.target}:c.type==='gather'?{resource:c.resource}:c.type==='patrol'?{fromX:clamp(v.x,-30,30),fromZ:clamp(v.z,-30,30)}:{})};
         if(c.append&&v.order){(v.waypoints??=[]).push(next);return;}
         delete v.workResume;v.path=[];v.pathAt=-100;v.waypoints=[];v.order=next;
       });return null;
@@ -357,6 +357,7 @@ var Frost = (() => {
   function segmentDistance(x,z,a,b){const dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz),0,1);return Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t);}
   function equip(u,i){const item=items[i];u.inventory.push(i);u.damage+=item.damage||0;u.maxHp+=item.hp||0;u.hp=Math.min(u.maxHp,u.hp+(item.hp||0));u.speed+=item.speed||0;}
   function experience(h,xp){h.xp+=xp;while(h.xp>=h.level*90&&h.level<10){h.xp-=h.level*90;h.level++;h.skillPoints++;h.maxHp+=90;h.hp=Math.min(h.maxHp,h.hp+150);h.damage+=6;}}
+  function attackInRange(s,u,v){return Math.hypot(distance(u,v),unitHeight(s,u)-unitHeight(s,v))<=unitType(u).range+(types[v.kind].radius||.3)&&attackClear(s,u,v);}
   function damage(s,a,b,value){
     if(b.hp<=0||b.inside)return;if(b.avatar>0)value*=.6;const absorbed=Math.min(b.shield||0,value);b.shield=Math.max(0,(b.shield||0)-absorbed);value-=absorbed;if(value<=0)return;s.events.push({type:'damage',x:b.x,z:b.z,y:unitHeight(s,b),amount:Math.ceil(Math.min(b.hp,value)),team:b.team});b.hp-=value;
     if(types[a.kind].lifesteal)a.hp=Math.min(a.maxHp,a.hp+value*types[a.kind].lifesteal);
@@ -417,14 +418,14 @@ var Frost = (() => {
       if(u.td){const p=u.route[u.waypoint];if(!p){u.hp=0;s.lives-=u.tdBoss?5:1;if(s.lives<=0)s.winner=1;continue;}if(move(s,u,p[0],p[1],u.waypoint===u.route.length-1?4.5:1.3))u.waypoint++;continue;}
       let target=u.order?.type==='attack'?s.units.find(v=>v.id===u.order.target&&v.hp>0&&canAttack(u,v)&&isVisible(s,u.team,v)):null;
       if(u.order?.type==='attack'&&!target)u.order=null;
-      if(u.order?.type!=='move'&&u.damage>0&&!target){let best=Infinity;for(const v of s.units){if(v.team===u.team||v.hp<=0||!canAttack(u,v)||(u.team>=0&&!isVisible(s,u.team,v)))continue;const d=distance(u,v);if(d<best&&d<Math.max(unitType(u).range,8)){target=v;best=d;}}}
-      if(target){const range=unitType(u).range+(types[target.kind].radius||.3);if(Math.hypot(distance(u,target),unitHeight(s,u)-unitHeight(s,target))<=range&&attackClear(s,u,target)){if(u.cd<=0){damage(s,u,target,weaponDamage(u,target,u.damage*(u.avatar>0?1.6:1)+(s.teams[u.team]?.upgrade||0)*6));if(types[u.kind].splash)for(const v of s.units)if(v.id!==target.id&&v.team!==u.team&&v.hp>0&&canAttack(u,v)&&distance(v,target)<types[u.kind].splash)damage(s,u,v,weaponDamage(u,v,u.damage*.6));u.cd=unitType(u).cooldown||1;s.events.push({type:'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,fromY:unitHeight(s,u)+1.6,toY:unitHeight(s,target)+1.6,team:u.team,ranged:range>4});}}else move(s,u,target.x,target.z,range*.8);}
-      else if(u.order&&['move','attackMove'].includes(u.order.type)){
+      if(u.order?.type!=='move'&&u.damage>0&&!target){let best=Infinity;for(const v of s.units){if(v.team===u.team||v.hp<=0||!canAttack(u,v)||(u.team>=0&&!isVisible(s,u.team,v))||u.order?.type==='hold'&&!attackInRange(s,u,v))continue;const d=distance(u,v);if(d<best&&(u.order?.type==='hold'||d<Math.max(unitType(u).range,8))){target=v;best=d;}}}
+      if(target){const range=unitType(u).range+(types[target.kind].radius||.3);if(attackInRange(s,u,target)){if(u.cd<=0){damage(s,u,target,weaponDamage(u,target,u.damage*(u.avatar>0?1.6:1)+(s.teams[u.team]?.upgrade||0)*6));if(types[u.kind].splash)for(const v of s.units)if(v.id!==target.id&&v.team!==u.team&&v.hp>0&&canAttack(u,v)&&distance(v,target)<types[u.kind].splash)damage(s,u,v,weaponDamage(u,v,u.damage*.6));u.cd=unitType(u).cooldown||1;s.events.push({type:'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,fromY:unitHeight(s,u)+1.6,toY:unitHeight(s,target)+1.6,team:u.team,ranged:range>4});}}else if(u.order?.type!=='hold')move(s,u,target.x,target.z,range*.8);}
+      else if(u.order&&['move','attackMove','patrol'].includes(u.order.type)){
         if(!types[u.kind].flying&&solid(s,u.order.x,u.order.z,u.id,u.team)){const p=formation(s,[u],u.order.x,u.order.z)?.get(u.id);if(p){u.order.x=p[0];u.order.z=p[1];u.path=[];u.pathAt=-100;}}
-        if(move(s,u,u.order.x,u.order.z,.12)){u.order=u.waypoints?.shift()||null;u.path=[];u.pathAt=-100;}
+        if(move(s,u,u.order.x,u.order.z,.12)){if(u.order.type==='patrol'){const o=u.order;[o.x,o.z,o.fromX,o.fromZ]=[o.fromX,o.fromZ,o.x,o.z];}else u.order=u.waypoints?.shift()||null;u.path=[];u.pathAt=-100;}
       }
-      else if(u.route){const p=u.route[u.waypoint];if(p&&move(s,u,p[0],p[1],1.5))u.waypoint++;}
-      else if(u.home&&distance(u,{x:u.home[0],z:u.home[1]})>3)move(s,u,...u.home,2);
+      else if(!u.order&&u.route){const p=u.route[u.waypoint];if(p&&move(s,u,p[0],p[1],1.5))u.waypoint++;}
+      else if(!u.order&&u.home&&distance(u,{x:u.home[0],z:u.home[1]})>3)move(s,u,...u.home,2);
       if(u.kind==='hero'&&s.units.some(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1&&distance(u,v)<8))u.hp=Math.min(u.maxHp,u.hp+DT*12);
     }
     for(const zone of s.zones){zone.left-=DT;zone.pulse-=DT;if(zone.pulse<=0){zone.pulse+=1;for(const v of s.units)if(v.team!==zone.team&&v.hp>0&&distance(v,zone)<=zone.radius){damage(s,{kind:'hero',heroClass:zone.heroClass,team:zone.team},v,zone.damage);if(zone.slow)v.slow=zone.slow;}s.events.push({type:'spell',x:zone.x,z:zone.z,slot:zone.slot,heroClass:zone.heroClass,team:zone.team});}}s.zones=s.zones.filter(z=>z.left>0);
@@ -480,6 +481,7 @@ var Frost = (() => {
     if(s.teams.some(t=>!t||![t.gold,t.wood,t.faction,t.upgrade,t.kills].every(finite)||!Number.isInteger(t.faction)||t.faction<0||t.faction>3))throw Error('Invalid saved teams');
     const ids=new Set();for(const u of s.units){
       if(!u||!Object.hasOwn(types,u.kind)||![-1,0,1].includes(u.team)||!Number.isSafeInteger(u.id)||u.id<1||u.id>s.serial||ids.has(u.id)||![u.x,u.z,u.hp,u.maxHp,u.damage,u.speed,u.cd,u.built,u.level,u.xp,u.mana,u.cargo,u.respawn,u.pathAt].every(finite)||u.maxHp<=0||!Array.isArray(u.path)||u.path.length>1024||!u.path.every(point)||!Array.isArray(u.spell)||u.spell.length!==4||!u.spell.every(finite)||!Array.isArray(u.queue)||u.queue.length>3||u.queue.some(q=>!q||!Object.hasOwn(types,q.kind)||!finite(q.left))||!Array.isArray(u.inventory)||u.inventory.length>6||u.inventory.some(i=>!Number.isInteger(i)||!items[i])||u.route!==undefined&&(!Array.isArray(u.route)||!u.route.every(point))||u.home!==undefined&&!point(u.home))throw Error('Invalid saved units');ids.add(u.id);
+      if(u.order?.type==='patrol'&&(!types[u.kind].speed||![u.order.x,u.order.z,u.order.fromX,u.order.fromZ].every(v=>Number.isFinite(v)&&Math.abs(v)<=30))||u.order?.type==='hold'&&!types[u.kind].speed)throw Error('Invalid saved patrol or hold order');
       if(u.waypoints===undefined)u.waypoints=[];
       const waypoint=p=>p&&['move','attackMove'].includes(p.type)&&[p.x,p.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30);
       if(!Array.isArray(u.waypoints)||u.waypoints.length>8||!u.waypoints.every(waypoint)||u.waypoints.length&&(!types[u.kind].speed||u.hp<=0||!waypoint(u.order)))throw Error('Invalid saved waypoint queue');

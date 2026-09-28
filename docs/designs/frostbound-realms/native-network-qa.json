@@ -164,7 +164,7 @@
       },
       "paused": false,
       "online": true,
-      "room": "68DBDF",
+      "room": "8EEA83",
       "netStates": 21,
       "brush": 0,
       "slot": 1,
@@ -357,7 +357,7 @@
       },
       "paused": false,
       "online": true,
-      "room": "68DBDF",
+      "room": "8EEA83",
       "netStates": 23,
       "brush": 0,
       "slot": 1,
@@ -392,5 +392,6 @@
   ],
   "networkWaypoints": true,
   "reconnected": true,
-  "reconnectViewPreserved": true
+  "reconnectViewPreserved": true,
+  "networkPatrolRestored": true
 }

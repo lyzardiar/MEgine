@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "patrol": {
+    "holdStationary": true,
+    "patrolCombat": true,
+    "roundtrip": true,
+    "saveRestored": true,
+    "holdInterrupts": true,
+    "stopReleases": true
+  }
+}

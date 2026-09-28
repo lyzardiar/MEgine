@@ -72,3 +72,10 @@ Player包276文件、1753实体、79模型，哈希60b19e1f9ca44dc5680b104cab491
 验证：Node全规则/TCP通过；新增test-frost-waypoints.mjs验证顺序行军、攻击移动遇敌后继续、混合队列存档回放、8点上限与原子拒绝、改令/工作/闪现/死亡清理、忙碌拒绝、旧档迁移/坏档拒绝和对手保密。真实QuickJS 3/3；独立只读审核无阻塞项。native-waypoints-qa.json通过左右Shift、3个编号标记、保存加载后完整路线和停止清空。native-network-qa.json以两个实际Release编辑器验证协议5、英雄选择、追加路线及断线重连队列保留，保留镜头/缩放/有效选择并显示连接已恢复。截图waypoint-route.png、multiplayer-route.png。
 
 最终Player包276文件、1771实体、79模型，内容哈希afcf02a82ec8d649b1daf2ecdfcb641800691e18254b78dd0638653a3fe0d557。逐文件及Release exe一致，30秒启动响应正常、零ERROR；复用已验证Release引擎，无Rust/C#源改动。当前队列限移动/攻击移动；建造/采集通用指令队列、动态避让/近战包围、战役、全部四族内容与美术、完整Dota、可视触发图、录像观战、重叠地形、大规模导航和5ms目标仍待完成。完整目标保持active，原生Agent及启动检查不等于物理输入/听感/跨机LAN验收。
+
+
+2026-09-28 驻守巡逻阶段：H 驻守只攻击射程内且视线可达的目标，不追击；P 选择另一端后按编队落点循环巡逻，遇敌交战后继续。驻守/巡逻替换旧路线，S 释放驻守，蓝色编号表示两端；TD 火塔快捷键 Y。存档验证端点及移动单位类型，对手不可见命令端点；协议仍为5，新命令在旧服务端明确拒绝。
+
+验证：Node 全规则/TCP 通过，新增 test-frost-patrol.mjs 覆盖驻守范围/建筑半径/地形遮挡、停止恢复迎敌、多单位往返、战斗续巡、坡道、准确存档回放、非法存档、队列替换和对手保密。实际 QuickJS frost_sample 3/3；独立只读审核无阻塞项。native-patrol-qa.json 通过原生驻守、战斗巡逻、往返、存档恢复、驻守打断与停止；native-network-qa.json 在两个原生 Release 客户端验证队列恢复、驻守、巡逻和再次断线后的端点恢复。截图 hold-position.png、patrol-route.png、multiplayer-patrol.png。
+
+最终 Player 包276文件、1771实体、79模型，内容哈希b3fb752371706adb5f94c350f9d89e7874a4c18274f9e49f8e92ffc5972031db。逐文件及Release exe一致，30秒启动窗口响应正常、零ERROR。复用现有资产和Release引擎，无Rust/C#改动。完整目标保持active；战役、全部四族内容与美术、完整Dota、通用工作队列、动态避让/包围、可视触发图、录像观战、重叠地形、大规模导航和5ms目标仍未完成。物理输入、听感及跨机LAN未验收。
