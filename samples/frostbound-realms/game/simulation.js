@@ -179,7 +179,7 @@ var Frost = (() => {
   }
   function create(mode='skirmish',options={}) {
     const map=validateMap(options.map||defaultMap(mode));mode=map.mode;if(options.heroes&&(!Array.isArray(options.heroes)||options.heroes.length!==2||!options.heroes.every(validHero)))throw Error('Invalid hero selection');
-    const s={version:1,map,mode,frame:0,serial:0,units:[],resources:clone(map.props),teams:[0,1].map(i=>({gold:map.startingGold,wood:250,faction:clamp(options.factions?.[i]??map.players[i].faction,0,3),ai:options.ai?.[i]??map.players[i].ai,upgrade:0,kills:0,tier:1,research:0,heroClass:options.heroes?.[i]??map.players[i].heroClass})),events:[],zones:[],winner:null,wave:0,nextWave:40,lives:20,loot:[],quest:{stage:0,scouts:0,relic:false,boss:false},triggered:[],triggerState:map.triggers.map(()=>({count:0,last:-1,next:0})),announcement:'',announcements:['',''],explored:[Array(1024).fill(0),Array(1024).fill(0)],visible:[[],[]]};
+    const s={version:1,map,mode,frame:0,serial:0,units:[],resources:clone(map.props),teams:[0,1].map(i=>({gold:map.startingGold,wood:250,faction:clamp(options.factions?.[i]??map.players[i].faction,0,3),ai:options.ai?.[i]??map.players[i].ai,upgrade:0,kills:0,tier:1,research:0,heroClass:options.heroes?.[i]??map.players[i].heroClass})),events:[],zones:[],winner:null,wave:0,tdPending:[],nextWave:40,lives:20,loot:[],quest:{stage:0,scouts:0,relic:false,boss:false},triggered:[],triggerState:map.triggers.map(()=>({count:0,last:-1,next:0})),announcement:'',announcements:['',''],explored:[Array(1024).fill(0),Array(1024).fill(0)],visible:[[],[]]};
     for(const team of [0,1]){
       if((mode==='td'||mode==='rpg')&&team===1)continue;
       const [x,z]=map.spawns[team];spawn(s,'hall',team,x,z);
@@ -225,8 +225,8 @@ var Frost = (() => {
     for(const flying of [false,true]){
       const members=units.filter(u=>!!types[u.kind].flying===flying).map(u=>{const p=append&&(u.waypoints?.at(-1)||u.order);return p?{...u,x:p.x,z:p.z}:u;});if(!members.length)continue;
       const cx=members.reduce((n,u)=>n+u.x,0)/members.length,cz=members.reduce((n,u)=>n+u.z,0)/members.length,d=Math.hypot(x-cx,z-cz),fx=d>.01?(x-cx)/d:0,fz=d>.01?(z-cz)/d:-1,columns=Math.ceil(Math.sqrt(members.length)),rows=Math.ceil(members.length/columns),spacing=Math.max(...members.map(movementRadius))*2+.6;
-      members.sort((a,b)=>unitType(a).range-unitType(b).range||((b.x-cx)*fx+(b.z-cz)*fz)-((a.x-cx)*fx+(a.z-cz)*fz)||a.id-b.id);
-      const reserved=s.units.filter(u=>u.hp>0&&!u.inside&&u.speed&&u.team===members[0].team&&!u.order&&!units.some(v=>v.id===u.id)&&!!types[u.kind].flying===flying).map(u=>({x:u.x,z:u.z,r:movementRadius(u)}));
+      members.sort((a,b)=>unitType(a).range-unitType(b).range||Math.round((((b.x-cx)*fx+(b.z-cz)*fz)-((a.x-cx)*fx+(a.z-cz)*fz))*1e6)||a.id-b.id);
+      const reserved=s.units.filter(u=>u.hp>0&&!u.inside&&u.speed&&u.team===members[0].team&&!units.some(v=>v.id===u.id)&&!!types[u.kind].flying===flying).map(u=>{const p=u.waypoints?.at(-1)||(['move','attackMove','patrol'].includes(u.order?.type)?u.order:u);return {x:p.x,z:p.z,r:movementRadius(u)};});
       for(let i=0;i<members.length;i++){
         const u=members[i],row=Math.floor(i/columns),width=Math.min(columns,members.length-row*columns),side=(i%columns-(width-1)/2)*spacing,forward=((rows-1)/2-row)*spacing,ideal=[clamp(x+fz*side+fx*forward,-30,30),clamp(z-fx*side+fz*forward,-30,30)],r=movementRadius(u),search=flying?null:routeSearch(s,u),cells=flying?Array.from({length:1024},(_,j)=>j):search.cells;
         const available=(px,pz)=>Math.abs(px)<=30&&Math.abs(pz)<=30&&(flying||!solid(s,px,pz,u.id,u.team))&&reserved.every(v=>Math.hypot(px-v.x,pz-v.z)>=r+v.r+.3);
@@ -241,12 +241,56 @@ var Frost = (() => {
     }
     return orders;
   }
+  function walkClear(s,u,x,z){
+    if(Math.abs(x)>30||Math.abs(z)>30)return false;if(types[u.kind].flying)return true;
+    if(!traversable(s.map,u.x,u.z,x,z)||s.map.terrain[index(x,z)]===1)return false;
+    const dx=x-u.x,dz=z-u.z,cuts=[0,1];for(let i=1;i<32;i++)for(const [a,d] of [[u.x,dx],[u.z,dz]])if(d){const t=(i*2-32-a)/d;if(t>0&&t<1)cuts.push(t);}cuts.sort((a,b)=>a-b);
+    for(let i=1;i<cuts.length;i++){const t=(cuts[i-1]+cuts[i])/2;if(s.map.terrain[index(u.x+dx*t,u.z+dz*t)]===1)return false;}
+    return !s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&(distance(u,v)<(types[v.kind].radius||1)+.35?Math.hypot(x-v.x,z-v.z)<=distance(u,v)+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])<(types[v.kind].radius||1)+.35));
+  }
+  function traffic(s,u){return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&types[v.kind].speed&&!!types[v.kind].flying===!!types[u.kind].flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(types[u.kind].flying||Math.abs(unitHeight(s,u)-unitHeight(s,v))<1.5||traversable(s.map,u.x,u.z,v.x,v.z)));}
+  function trafficClear(u,near,x,z){
+    const r=movementRadius(u);return near.every(v=>{const radius=r+movementRadius(v),before=distance(u,v),after=Math.hypot(x-v.x,z-v.z);return before<radius-.0001?after>before+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])>=radius-.0001;});
+  }
+  const trafficCache=new WeakMap();
+  function trafficGrid(s,u){
+    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,teams:[]};trafficCache.set(s,cache);}const key=types[u.kind].flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
+    const grid=new Uint8Array(121*121);if(!types[u.kind].flying){for(let z=0;z<=120;z++)for(let x=0;x<=120;x++)if(s.map.terrain[Math.floor((z+4)/4)*32+Math.floor((x+4)/4)]===1)grid[z*121+x]=1;
+      for(const v of s.units)if(v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))){const r=(types[v.kind].radius||1)+.4;for(let z=Math.max(0,Math.floor((v.z-r)*2)+60);z<=Math.min(120,Math.ceil((v.z+r)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-r)*2)+60);x<=Math.min(120,Math.ceil((v.x+r)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<r)grid[z*121+x]=1;}}
+    return cache.teams[key]=grid;
+  }
+  function trafficPath(s,u,x,z,near,stop){
+    const size=121,start=(Math.round(u.z*2)+60)*size+Math.round(u.x*2)+60,blocked=trafficGrid(s,u).slice(),occupants=[],prev=new Int16Array(size*size),cost=new Float64Array(size*size);prev.fill(-1);cost.fill(Infinity);cost[start]=0;prev[start]=start;
+    const r=movementRadius(u);for(const v of near){const reach=r+movementRadius(v),margin=reach+.8;for(let iz=Math.max(0,Math.floor((v.z-margin)*2)+60);iz<=Math.min(120,Math.ceil((v.z+margin)*2)+60);iz++)for(let ix=Math.max(0,Math.floor((v.x-margin)*2)+60);ix<=Math.min(120,Math.ceil((v.x+margin)*2)+60);ix++){const d=Math.hypot(ix/2-30-v.x,iz/2-30-v.z),j=iz*size+ix;if(d<reach-.0001)blocked[j]=1;if(d<margin)(occupants[j]??=[]).push(v);}}
+    const heap=[];
+    const push=(node,score)=>{let i=heap.length;heap.push([node,score]);while(i){const p=(i-1)>>1;if(heap[p][1]<=score)break;heap[i]=heap[p];i=p;}heap[i]=[node,score];};
+    const pop=()=>{const first=heap[0],last=heap.pop();if(heap.length){let i=0;while(i*2+1<heap.length){let c=i*2+1;if(c+1<heap.length&&heap[c+1][1]<heap[c][1])c++;if(heap[c][1]>=last[1])break;heap[i]=heap[c];i=c;}heap[i]=last;}return first[0];};
+    push(start,0);let found=start,best=Math.hypot(u.x-x,u.z-z);
+    // Bound one search; partial routes are continued from the next position.
+    for(let visited=0;heap.length&&visited<2048;visited++){
+      const n=pop();if(blocked[n]===2)continue;blocked[n]=2;const cx=(n%size)/2-30,cz=Math.floor(n/size)/2-30,point=n===start?u:{id:u.id,kind:u.kind,team:u.team,x:cx,z:cz},d=Math.hypot(point.x-x,point.z-z);if(d<best){best=d;found=n;}if(d<=stop&&(types[u.kind].flying||traversable(s.map,point.x,point.z,x,z))||d<=.75&&walkClear(s,point,x,z)&&trafficClear(point,near,x,z)){found=n;break;}
+      for(const [dx,dz] of [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]]){
+        const nx=cx+dx/2,nz=cz+dz/2,j=(nz*2+60)*size+nx*2+60,next=cost[n]+Math.hypot(dx,dz)/2;if(nx<-30||nz<-30||nx>30||nz>30||blocked[j]||next>=cost[j])continue;
+        if(n===start?!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz):(!types[u.kind].flying&&!traversable(s.map,cx,cz,nx,nz))||!trafficClear(point,occupants[n]||[],nx,nz))continue;prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
+      }
+    }
+    const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%size/2-30,Math.floor(n/size)/2-30]);result.reverse();const last=result.at(-1),end=last?{...u,x:last[0],z:last[1]}:u;if(walkClear(s,end,x,z)&&trafficClear(end,near,x,z))result.push([x,z]);return result.slice(0,1024);
+  }
   function move(s,u,x,z,stop=.5){
     if(u.root>0||u.stun>0)return false;
     if(!u.speed||Math.hypot(u.x-x,u.z-z)<=stop&&(types[u.kind].flying||traversable(s.map,u.x,u.z,x,z)))return true;
-    if(types[u.kind].flying){const d=Math.hypot(x-u.x,z-u.z),step=Math.min(d,u.speed*(u.slow>0?.55:1)*(u.haste>0?1.6:1)*DT);u.x=clamp(u.x+(x-u.x)/d*step,-30,30);u.z=clamp(u.z+(z-u.z)/d*step,-30,30);return false;}
-    if(s.frame-u.pathAt>15||!u.path.length||Math.hypot((u.dest?.[0]||0)-x,(u.dest?.[1]||0)-z)>3){u.path=path(s,u,x,z);u.pathAt=s.frame;u.dest=[x,z];}
-    const p=u.path[0]||[x,z],d=Math.hypot(p[0]-u.x,p[1]-u.z),step=Math.min(d,u.speed*(u.slow>0?.55:1)*(u.haste>0?1.6:1)*DT);if(d>.001){const nx=u.x+(p[0]-u.x)/d*step,nz=u.z+(p[1]-u.z)/d*step;if(!solid(s,nx,nz,u.id)&&traversable(s.map,u.x,u.z,nx,nz)){u.x=nx;u.z=nz;}else u.path=[];}if(d<.5)u.path.shift();return false;
+    const near=traffic(s,u);
+    if(near.some(v=>distance(u,v)<movementRadius(u)+movementRadius(v)-.0001)||!types[u.kind].flying&&s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&distance(u,v)<(types[v.kind].radius||1)+.35)){
+      const angle=Math.atan2(z-u.z,x-u.x),step=u.speed*(u.slow>0?.55:1)*(u.haste>0?1.6:1)*DT;let best=null,score=-Infinity;
+      for(const turn of [0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2,Math.PI*3/4,-Math.PI*3/4,Math.PI]){const nx=u.x+Math.cos(angle+turn)*step,nz=u.z+Math.sin(angle+turn)*step;if(!walkClear(s,u,nx,nz)||!trafficClear(u,near,nx,nz))continue;const value=near.reduce((sum,v)=>sum+Math.min(0,Math.hypot(nx-v.x,nz-v.z)-movementRadius(u)-movementRadius(v)),0)-Math.hypot(x-nx,z-nz)*.01;if(value>score){score=value;best=[nx,nz];}}
+      if(best){[u.x,u.z]=best;u.path=[];}return false;
+    }
+    const direct=walkClear(s,u,x,z)&&trafficClear(u,near,x,z);
+    if(direct)u.path=[];else if(s.frame-u.pathAt>15||!u.path.length||Math.hypot((u.dest?.[0]||0)-x,(u.dest?.[1]||0)-z)>1){u.path=trafficPath(s,u,x,z,near,stop);u.pathAt=s.frame;u.dest=[x,z];}
+    while(u.path.length>1&&walkClear(s,u,...u.path[1])&&trafficClear(u,near,...u.path[1]))u.path.shift();
+    const p=direct?[x,z]:u.path[0];if(!p)return false;const dx=p[0]-u.x,dz=p[1]-u.z,d=Math.hypot(dx,dz),step=Math.min(d,u.speed*(u.slow>0?.55:1)*(u.haste>0?1.6:1)*DT);
+    if(d>.001){const nx=u.x+dx/d*step,nz=u.z+dz/d*step;if(walkClear(s,u,nx,nz)&&trafficClear(u,near,nx,nz)){u.x=nx;u.z=nz;}else u.path=[];}
+    if(d<.12)u.path.shift();return false;
   }
   function population(s,team){const us=s.units.filter(u=>u.team===team&&u.hp>0&&!u.consumed);return {used:us.reduce((n,u)=>n+(u.summoned?0:types[u.kind].food)+u.queue.reduce((a,q)=>a+types[q.kind].food,0),0),cap:Math.min(80,us.reduce((n,u)=>n+(u.built===1?(u.kind==='hall'?14:u.kind==='farm'?8:0):0),0))};}
   function pay(s,team,gold,wood=0){const t=s.teams[team];if(!t||t.gold<gold||t.wood<wood)return false;t.gold-=gold;t.wood-=wood;return true;}
@@ -354,9 +398,15 @@ var Frost = (() => {
     if(c.style==='work'){const workers=s.units.filter(w=>w.hp>0&&w.order?.type==='construct'&&w.order.target===b.id&&!w.stun&&!w.root&&distance(w,b)<=types[b.kind].radius+1.1&&traversable(s.map,w.x,w.z,b.x,b.z));if(!workers.length)return;const extra=.6*(workers.length-1),d=types[b.kind];if(extra&&pay(s,b.team,d.gold*DT/d.time*extra,d.wood*DT/d.time*extra))rate+=extra;}
     const progress=Math.min(1-b.built,DT/types[b.kind].time*rate);b.built=Math.min(1,b.built+progress);b.hp=Math.min(b.maxHp,b.hp+b.maxHp*progress*.9/.99);if(s.frame%10===0)s.events.push({type:'construction',x:b.x,z:b.z,team:b.team});if(b.built===1)finishWork(s,b);
   }
-  function segmentDistance(x,z,a,b){const dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz),0,1);return Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t);}
+  function segmentDistance(x,z,a,b){const dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t);}
   function equip(u,i){const item=items[i];u.inventory.push(i);u.damage+=item.damage||0;u.maxHp+=item.hp||0;u.hp=Math.min(u.maxHp,u.hp+(item.hp||0));u.speed+=item.speed||0;}
   function experience(h,xp){h.xp+=xp;while(h.xp>=h.level*90&&h.level<10){h.xp-=h.level*90;h.level++;h.skillPoints++;h.maxHp+=90;h.hp=Math.min(h.maxHp,h.hp+150);h.damage+=6;}}
+  function meleeSlot(s,u,target){
+    if(u.order?.type!=='attack'||unitType(u).range>2||!u.speed)return null;
+    const group=s.units.filter(v=>v.hp>0&&!v.inside&&v.team===u.team&&v.speed&&v.order?.type==='attack'&&v.order.target===target.id&&unitType(v).range<=2).sort((a,b)=>a.id-b.id);if(group.length<2)return null;
+    const radius=unitType(u).range+(types[target.kind].radius||.3)-.12,spacing=Math.max(...group.map(movementRadius))*2+.1,count=Math.max(1,Math.min(group.length,Math.floor(Math.PI*2*radius/spacing))),slot=group.findIndex(v=>v.id===u.id),angle=slot%count*Math.PI*2/count-Math.PI/2,ring=radius+Math.floor(slot/count)*spacing,x=target.x+Math.cos(angle)*ring,z=target.z+Math.sin(angle)*ring;
+    return Math.abs(x)<=30&&Math.abs(z)<=30&&(types[u.kind].flying||!solid(s,x,z,u.id,u.team)&&traversable(s.map,x,z,target.x,target.z))?{x,z}:null;
+  }
   function attackInRange(s,u,v){return Math.hypot(distance(u,v),unitHeight(s,u)-unitHeight(s,v))<=unitType(u).range+(types[v.kind].radius||.3)&&attackClear(s,u,v);}
   function damage(s,a,b,value){
     if(b.hp<=0||b.inside)return;if(b.avatar>0)value*=.6;const absorbed=Math.min(b.shield||0,value);b.shield=Math.max(0,(b.shield||0)-absorbed);value-=absorbed;if(value<=0)return;s.events.push({type:'damage',x:b.x,z:b.z,y:unitHeight(s,b),amount:Math.ceil(Math.min(b.hp,value)),team:b.team});b.hp-=value;
@@ -395,11 +445,12 @@ var Frost = (() => {
   function tick(s){
     if(s.winner!==null)return;simulating.add(s);s.frame++;s.events=s.pendingEvents||[];s.pendingEvents=[];
     for(const t of s.teams)if(t.research>0){t.research=Math.max(0,t.research-DT);if(t.research===0)t.tier++;}
-    if((s.mode==='moba'||s.mode==='td')&&s.frame>=s.nextWave&&(s.mode!=='td'||s.units.length+5+(s.wave+1)*2<=LIMIT)){
+    if((s.mode==='moba'||s.mode==='td')&&s.frame>=s.nextWave&&(s.mode!=='td'||s.units.length+s.tdPending.length+5+(s.wave+1)*2<=LIMIT)){
       s.wave++;s.nextWave=s.frame+Math.round(s.map.waveInterval/DT);
       if(s.mode==='moba')for(let t=0;t<2;t++)for(let lane=0;lane<3;lane++)for(let i=0;i<3;i++){const route=lanePath(t,lane),p=route[0];spawn(s,'creep',t,p[0]+i*.7,p[1],{route,waypoint:1,lane});}
-      else if(s.wave<=s.map.waves)for(let i=0;i<5+s.wave*2;i++){const boss=s.wave%4===0&&i===0,hp=(100+s.wave*40)*(boss?5:s.wave%3===2?1.4:1);spawn(s,'creep',1,tdPath[0][0]-i*.25,tdPath[0][1],{hp,maxHp:hp,speed:(3+s.wave*.12)*(s.wave%3===0?1.45:1),route:tdPath,waypoint:1,td:true,tdBoss:boss});}
+      else if(s.wave<=s.map.waves)for(let i=0;i<5+s.wave*2;i++){const boss=s.wave%4===0&&i===0,hp=(100+s.wave*40)*(boss?5:s.wave%3===2?1.4:1);s.tdPending.push({hp,speed:(3+s.wave*.12)*(s.wave%3===0?1.45:1),tdBoss:boss});}
     }
+    if(s.mode==='td'&&s.tdPending.length&&s.units.length<LIMIT&&!solid(s,...tdPath[0])&&s.units.every(u=>u.hp<=0||u.inside||types[u.kind].flying||!types[u.kind].speed||Math.hypot(u.x-tdPath[0][0],u.z-tdPath[0][1])>=movementRadius(u)+.55)){const next=s.tdPending.shift();spawn(s,'creep',1,...tdPath[0],{...next,maxHp:next.hp,route:tdPath,waypoint:1,td:true});}
     if(s.frame%40===0)for(let t=0;t<2;t++)if(s.teams[t].ai)ai(s,t);
     if(s.frame%10===0&&s.mode==='moba')for(const t of s.teams)t.gold+=3;
     for(const u of s.units){
@@ -411,7 +462,7 @@ var Frost = (() => {
       u.slow=Math.max(0,(u.slow||0)-DT);
       if(types[u.kind].heal&&s.frame%10===0)for(const ally of s.units)if(ally.team===u.team&&ally.hp>0&&distance(ally,u)<6)ally.hp=Math.min(ally.maxHp,ally.hp+types[u.kind].heal);
       if(u.built<1){construct(s,u);continue;}
-      if(u.queue.length){u.queue[0].left=Math.max(0,u.queue[0].left-DT);if(u.queue[0].left===0&&s.units.length<LIMIT){let p=null;for(let a=0;a<12;a++){const x=u.x+Math.cos(a*Math.PI/6)*4,z=u.z+Math.sin(a*Math.PI/6)*4;if(Math.abs(x)<=30&&Math.abs(z)<=30&&(types[u.queue[0].kind].flying||!solid(s,x,z))){p=[x,z];break;}}if(p){const q=u.queue.shift(),v=spawn(s,q.kind,u.team,...p);if(u.rally)v.order={type:v.kind==='worker'?'move':'attackMove',...u.rally};}}}
+      if(u.queue.length){u.queue[0].left=Math.max(0,u.queue[0].left-DT);if(u.queue[0].left===0&&s.units.length<LIMIT){let p=null;for(let a=0;a<12;a++){const x=u.x+Math.cos(a*Math.PI/6)*4,z=u.z+Math.sin(a*Math.PI/6)*4;if(Math.abs(x)<=30&&Math.abs(z)<=30&&(types[u.queue[0].kind].flying||!solid(s,x,z))&&s.units.every(v=>v.hp<=0||v.inside||!types[v.kind].speed||!!types[v.kind].flying!==!!types[u.queue[0].kind].flying||Math.hypot(x-v.x,z-v.z)>=movementRadius(v)+movementRadius({kind:u.queue[0].kind})+.05)){p=[x,z];break;}}if(p){const q=u.queue.shift(),v=spawn(s,q.kind,u.team,...p);if(u.rally)v.order={type:v.kind==='worker'?'move':'attackMove',...u.rally};}}}
       if(u.stun>0)continue;
       if(u.kind==='worker'&&['construct','repair'].includes(u.order?.type)){work(s,u);continue;}
       if(u.kind==='worker'&&u.order?.type==='gather'){gather(s,u);continue;}
@@ -419,9 +470,12 @@ var Frost = (() => {
       let target=u.order?.type==='attack'?s.units.find(v=>v.id===u.order.target&&v.hp>0&&canAttack(u,v)&&isVisible(s,u.team,v)):null;
       if(u.order?.type==='attack'&&!target)u.order=null;
       if(u.order?.type!=='move'&&u.damage>0&&!target){let best=Infinity;for(const v of s.units){if(v.team===u.team||v.hp<=0||!canAttack(u,v)||(u.team>=0&&!isVisible(s,u.team,v))||u.order?.type==='hold'&&!attackInRange(s,u,v))continue;const d=distance(u,v);if(d<best&&(u.order?.type==='hold'||d<Math.max(unitType(u).range,8))){target=v;best=d;}}}
-      if(target){const range=unitType(u).range+(types[target.kind].radius||.3);if(attackInRange(s,u,target)){if(u.cd<=0){damage(s,u,target,weaponDamage(u,target,u.damage*(u.avatar>0?1.6:1)+(s.teams[u.team]?.upgrade||0)*6));if(types[u.kind].splash)for(const v of s.units)if(v.id!==target.id&&v.team!==u.team&&v.hp>0&&canAttack(u,v)&&distance(v,target)<types[u.kind].splash)damage(s,u,v,weaponDamage(u,v,u.damage*.6));u.cd=unitType(u).cooldown||1;s.events.push({type:'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,fromY:unitHeight(s,u)+1.6,toY:unitHeight(s,target)+1.6,team:u.team,ranged:range>4});}}else if(u.order?.type!=='hold')move(s,u,target.x,target.z,range*.8);}
+      if(target){const range=unitType(u).range+(types[target.kind].radius||.3),inRange=attackInRange(s,u,target),slot=meleeSlot(s,u,target);
+        if(inRange){if(u.cd<=0){damage(s,u,target,weaponDamage(u,target,u.damage*(u.avatar>0?1.6:1)+(s.teams[u.team]?.upgrade||0)*6));if(types[u.kind].splash)for(const v of s.units)if(v.id!==target.id&&v.team!==u.team&&v.hp>0&&canAttack(u,v)&&distance(v,target)<types[u.kind].splash)damage(s,u,v,weaponDamage(u,v,u.damage*.6));u.cd=unitType(u).cooldown||1;s.events.push({type:'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,fromY:unitHeight(s,u)+1.6,toY:unitHeight(s,target)+1.6,team:u.team,ranged:range>4});}}
+        if(target.hp>0&&u.order?.type!=='hold'){if(slot)move(s,u,slot.x,slot.z,.12);else if(!inRange)move(s,u,target.x,target.z,range*.98);}
+      }
       else if(u.order&&['move','attackMove','patrol'].includes(u.order.type)){
-        if(!types[u.kind].flying&&solid(s,u.order.x,u.order.z,u.id,u.team)){const p=formation(s,[u],u.order.x,u.order.z)?.get(u.id);if(p){u.order.x=p[0];u.order.z=p[1];u.path=[];u.pathAt=-100;}}
+        if(!types[u.kind].flying&&solid(s,u.order.x,u.order.z,u.id,u.team)||s.units.some(v=>v.id!==u.id&&v.team===u.team&&v.hp>0&&!v.inside&&types[v.kind].speed&&(!v.order||v.order.type==='hold')&&!!types[v.kind].flying===!!types[u.kind].flying&&Math.hypot(v.x-u.order.x,v.z-u.order.z)<movementRadius(u)+movementRadius(v)+.1)){const p=formation(s,[u],u.order.x,u.order.z)?.get(u.id);if(p){u.order.x=p[0];u.order.z=p[1];u.path=[];u.pathAt=-100;}}
         if(move(s,u,u.order.x,u.order.z,.12)){if(u.order.type==='patrol'){const o=u.order;[o.x,o.z,o.fromX,o.fromZ]=[o.fromX,o.fromZ,o.x,o.z];}else u.order=u.waypoints?.shift()||null;u.path=[];u.pathAt=-100;}
       }
       else if(!u.order&&u.route){const p=u.route[u.waypoint];if(p&&move(s,u,p[0],p[1],1.5))u.waypoint++;}
@@ -439,7 +493,7 @@ var Frost = (() => {
       }
     }
     runTriggers(s);
-    if(s.mode==='td'&&s.wave>=s.map.waves&&!s.units.some(u=>u.td)&&s.frame>s.nextWave-Math.round(s.map.waveInterval/DT)+10)s.winner=0;
+    if(s.mode==='td'&&s.wave>=s.map.waves&&!s.tdPending.length&&!s.units.some(u=>u.td)&&s.frame>s.nextWave-Math.round(s.map.waveInterval/DT)+10)s.winner=0;
     if(s.frame%3===0)visibility(s);simulating.delete(s);
   }
   function inRegion(map,region,u,t){const r=map.regions[region];return r?Math.abs(u.x-r.x)<=r.width/2&&Math.abs(u.z-r.z)<=r.height/2:distance(u,t)<4;}
@@ -478,6 +532,7 @@ var Frost = (() => {
     const finite=v=>Number.isFinite(v)&&Math.abs(v)<=1000000,point=p=>Array.isArray(p)&&p.length===2&&p.every(finite);
     if(!raw||raw.version!==1||!Number.isSafeInteger(raw.frame)||raw.frame<0||!Number.isSafeInteger(raw.serial)||!Array.isArray(raw.units)||raw.units.length>LIMIT||!Array.isArray(raw.teams)||raw.teams.length!==2)throw Error('Invalid save header');
     const s=clone(raw);s.map=validateMap(s.map);if(s.mode!==s.map.mode)throw Error('Save mode mismatch');
+    s.tdPending??=[];if(!Array.isArray(s.tdPending)||s.tdPending.length>LIMIT||s.mode!=='td'&&s.tdPending.length||s.tdPending.some(v=>!v||!Number.isFinite(v.hp)||v.hp<=0||v.hp>20000||!Number.isFinite(v.speed)||v.speed<=0||v.speed>15||typeof v.tdBoss!=='boolean'))throw Error('Invalid saved entrance queue');
     if(s.teams.some(t=>!t||![t.gold,t.wood,t.faction,t.upgrade,t.kills].every(finite)||!Number.isInteger(t.faction)||t.faction<0||t.faction>3))throw Error('Invalid saved teams');
     const ids=new Set();for(const u of s.units){
       if(!u||!Object.hasOwn(types,u.kind)||![-1,0,1].includes(u.team)||!Number.isSafeInteger(u.id)||u.id<1||u.id>s.serial||ids.has(u.id)||![u.x,u.z,u.hp,u.maxHp,u.damage,u.speed,u.cd,u.built,u.level,u.xp,u.mana,u.cargo,u.respawn,u.pathAt].every(finite)||u.maxHp<=0||!Array.isArray(u.path)||u.path.length>1024||!u.path.every(point)||!Array.isArray(u.spell)||u.spell.length!==4||!u.spell.every(finite)||!Array.isArray(u.queue)||u.queue.length>3||u.queue.some(q=>!q||!Object.hasOwn(types,q.kind)||!finite(q.left))||!Array.isArray(u.inventory)||u.inventory.length>6||u.inventory.some(i=>!Number.isInteger(i)||!items[i])||u.route!==undefined&&(!Array.isArray(u.route)||!u.route.every(point))||u.home!==undefined&&!point(u.home))throw Error('Invalid saved units');ids.add(u.id);
@@ -509,7 +564,7 @@ var Frost = (() => {
     if(!Array.isArray(s.triggerState)||s.triggerState.length!==s.map.triggers.length||s.triggerState.some((c,i)=>!c||!Number.isInteger(c.count)||c.count<0||c.count>s.map.triggers[i].limit||!Number.isSafeInteger(c.last)||c.last < -1||c.last>s.frame||!Number.isSafeInteger(c.next)||c.next<0||c.next>s.frame+600/DT||!!c.count!==s.triggered.includes(i)||c.count===0&&c.last!==-1||c.count>0&&c.last<0))throw Error('Invalid saved trigger clock');
     for(const t of s.teams){t.tier??=1;t.research??=0;t.heroClass??=0;if(!validHero(t.heroClass)||!Number.isInteger(t.tier)||t.tier<1||t.tier>3||!Number.isFinite(t.research)||t.research<0||t.research>40)throw Error('Invalid saved technology');}s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
-  function publicState(s,team){const state=clone(s);delete state.pendingEvents;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]);state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
+  function publicState(s,team){const state=clone(s);delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]);state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
   return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,armies,siege,flyers,canAttack,weaponDamage,trainable,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import './test-frost-terrain.mjs';
 import './test-frost-formations.mjs';
+import './test-frost-avoidance.mjs';
 import './test-frost-waypoints.mjs';
 import './test-frost-patrol.mjs';
 import './test-frost-visuals.mjs';
