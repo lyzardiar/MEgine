@@ -22,6 +22,13 @@ const MATERIAL_PIPELINE_GRACE_FRAMES: u64 = 300;
 const MATERIAL_PIPELINE_PRUNE_INTERVAL: u64 = 60;
 const MAX_DYNAMIC_MATERIAL_PIPELINES: usize = 256;
 
+// MiYu: HDR, tone-mapped color and shared scene/UI depth must use the same supported sample count.
+fn scene_sample_count(features: impl Fn(wgpu::TextureFormat) -> wgpu::TextureFormatFeatures, output: wgpu::TextureFormat) -> u32 {
+    let color = wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X4 | wgpu::TextureFormatFeatureFlags::MULTISAMPLE_RESOLVE;
+    let supported = |format, flags| { let value = features(format); value.allowed_usages.contains(wgpu::TextureUsages::RENDER_ATTACHMENT) && value.flags.contains(flags) };
+    if [HDR_COLOR_FORMAT, output].iter().all(|format| supported(*format, color)) && supported(wgpu::TextureFormat::Depth24PlusStencil8, wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X4) { 4 } else { 1 }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct ClearColor {
     pub r: f64,
@@ -583,6 +590,7 @@ pub struct Renderer {
     pub queue: wgpu::Queue,
     surface: Option<wgpu::Surface<'static>>,
     config: wgpu::SurfaceConfiguration,
+    sample_count: u32,
     material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     error_material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     material_pipeline_last_used: HashMap<MaterialPipelineKey, u64>,
@@ -636,6 +644,9 @@ pub struct Renderer {
 }
 
 impl Renderer {
+    /// Scene color, depth and UI coverage sample count; presentation and readback remain single-sampled.
+    pub fn sample_count(&self) -> u32 { self.sample_count }
+
     pub async fn new(window: Arc<winit::window::Window>) -> Result<Self, RhiError> {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
@@ -700,6 +711,7 @@ impl Renderer {
                     .or_else(|| caps.formats.first().copied())
             })
             .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb);
+        let sample_count = scene_sample_count(|format| adapter.get_texture_format_features(format), format);
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -977,7 +989,7 @@ impl Renderer {
                     },
                 ],
             });
-        let sky = SkyBackground::new(&device, &environment_texture_layout);
+        let sky = SkyBackground::new(&device, &environment_texture_layout, sample_count);
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("forward_pipeline_layout"),
@@ -999,7 +1011,7 @@ impl Renderer {
             };
             material_pipelines.insert(
                 opaque,
-                create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, opaque),
+                create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, opaque, sample_count),
             );
             for blend in [
                 MaterialPipelineBlend::Alpha,
@@ -1016,7 +1028,7 @@ impl Renderer {
                     };
                     material_pipelines.insert(
                         key,
-                        create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, key),
+                        create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, key, sample_count),
                     );
                 }
             }
@@ -1157,10 +1169,10 @@ impl Renderer {
             true,
         );
 
-        let (depth_texture, depth_view) = create_depth(&device, config.width, config.height);
+        let (depth_texture, depth_view) = create_depth(&device, config.width, config.height, sample_count);
         let mut meshes = HashMap::new();
         meshes.insert("cube".into(), MeshGpu::unit_cube(&device));
-        let post_process = HdrPostProcess::new(&device, format, config.width, config.height);
+        let post_process = HdrPostProcess::new(&device, format, config.width, config.height, sample_count);
         let ui = UiRenderer::new(
             &device,
             &queue,
@@ -1168,6 +1180,7 @@ impl Renderer {
             config.width,
             config.height,
             supports_anisotropy,
+            sample_count,
         );
 
         Ok(Self {
@@ -1175,6 +1188,7 @@ impl Renderer {
             queue,
             surface,
             config,
+            sample_count,
             material_pipelines,
             error_material_pipelines: HashMap::new(),
             material_pipeline_last_used: HashMap::new(),
@@ -1251,7 +1265,7 @@ impl Renderer {
             return;
         }
         self.size = new_size;
-        let (tex, view) = create_depth(&self.device, new_size.width, new_size.height);
+        let (tex, view) = create_depth(&self.device, new_size.width, new_size.height, self.sample_count);
         self.depth_texture = tex;
         self.depth_view = view;
         self.post_process
@@ -1564,7 +1578,7 @@ impl Renderer {
                 let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("environment_background"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: self.post_process.hdr_view(),
+                        view: self.post_process.scene_view(),
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -1586,8 +1600,8 @@ impl Renderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("forward_hdr"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: self.post_process.hdr_view(),
-                    resolve_target: None,
+                    view: self.post_process.scene_view(),
+                    resolve_target: self.post_process.scene_resolve_target(),
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
@@ -1664,8 +1678,8 @@ impl Renderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("aces_tone_mapping"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    resolve_target: None,
+                    view: self.post_process.output_view(view),
+                    resolve_target: if ui_plan.is_empty() { self.post_process.output_resolve_target(view) } else { None },
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                         store: wgpu::StoreOp::Store,
@@ -1681,8 +1695,8 @@ impl Renderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("ui_overlay"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    resolve_target: None,
+                    view: self.post_process.output_view(view),
+                    resolve_target: self.post_process.output_resolve_target(view),
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
@@ -1808,6 +1822,7 @@ impl Renderer {
                 &shader,
                 &self.pipeline_layout,
                 key,
+                self.sample_count,
             ),
         );
         MaterialPipelinePrepareResult::Created
@@ -1834,6 +1849,7 @@ impl Renderer {
                 &shader,
                 &self.pipeline_layout,
                 key,
+                self.sample_count,
             ),
         );
     }
@@ -2815,6 +2831,7 @@ fn create_pipeline(
     shader: &wgpu::ShaderModule,
     layout: &wgpu::PipelineLayout,
     key: MaterialPipelineKey,
+    sample_count: u32,
 ) -> wgpu::RenderPipeline {
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some("forward_material_pipeline"),
@@ -2853,7 +2870,7 @@ fn create_pipeline(
             stencil: Default::default(),
             bias: Default::default(),
         }),
-        multisample: wgpu::MultisampleState::default(),
+        multisample: wgpu::MultisampleState { count: sample_count, ..Default::default() },
         multiview: None,
         cache: None,
     })
@@ -3236,6 +3253,7 @@ fn create_depth(
     device: &wgpu::Device,
     width: u32,
     height: u32,
+    sample_count: u32,
 ) -> (wgpu::Texture, wgpu::TextureView) {
     let tex = device.create_texture(&wgpu::TextureDescriptor {
         label: Some("depth"),
@@ -3245,7 +3263,7 @@ fn create_depth(
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
-        sample_count: 1,
+        sample_count,
         dimension: wgpu::TextureDimension::D2,
         format: wgpu::TextureFormat::Depth24PlusStencil8,
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
@@ -3426,9 +3444,9 @@ struct VsIn {
 
 struct VsOut {
     @builtin(position) clip: vec4<f32>,
-    @location(0) world_position: vec3<f32>,
-    @location(1) world_normal: vec3<f32>,
-    @location(2) uv: vec2<f32>,
+    @location(0) @interpolate(perspective, centroid) world_position: vec3<f32>,
+    @location(1) @interpolate(perspective, centroid) world_normal: vec3<f32>,
+    @location(2) @interpolate(perspective, centroid) uv: vec2<f32>,
 };
 
 @vertex
@@ -3931,6 +3949,81 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn scene_msaa_requires_color_resolve_and_matching_depth_support() {
+        use wgpu::TextureFormatFeatureFlags as F;
+        let color = F::MULTISAMPLE_X4 | F::MULTISAMPLE_RESOLVE;
+        let features = |flags| wgpu::TextureFormatFeatures { allowed_usages: wgpu::TextureUsages::RENDER_ATTACHMENT, flags };
+        assert_eq!(scene_sample_count(|_| features(color), wgpu::TextureFormat::Rgba8UnormSrgb), 4);
+        for missing in [HDR_COLOR_FORMAT, wgpu::TextureFormat::Rgba8UnormSrgb, wgpu::TextureFormat::Depth24PlusStencil8] {
+            assert_eq!(scene_sample_count(|format| features(if format == missing { F::empty() } else { color }), wgpu::TextureFormat::Rgba8UnormSrgb), 1);
+        }
+        assert_eq!(scene_sample_count(|_| features(F::MULTISAMPLE_X4), wgpu::TextureFormat::Rgba8UnormSrgb), 1);
+        assert_eq!(scene_sample_count(|_| wgpu::TextureFormatFeatures { allowed_usages: wgpu::TextureUsages::TEXTURE_BINDING, flags: color }, wgpu::TextureFormat::Rgba8UnormSrgb), 1);
+    }
+
+    #[test]
+    fn multisampled_scene_resolves_with_ui_depth_stencil_and_resize() {
+        use crate::{UiPrimitive, UiRenderMaterial, UiStencilMode};
+        let mut renderer = match pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))) {
+            Ok(renderer) => renderer,
+            Err(RhiError::NoAdapter) => { eprintln!("SKIP: no GPU adapter"); return; }
+            Err(error) => panic!("headless MSAA renderer: {error}"),
+        };
+        eprintln!("GPU scene sample count: {}", renderer.sample_count());
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let vertices = [[-1.0,-1.0,0.25],[1.0,-1.0,0.25],[-1.0,1.0,0.25]].map(|position| Vertex { position, normal: [0.0,0.0,1.0], uv: [0.0,0.0] });
+        renderer.upload_gltf_static("msaa_triangle", &vertices, &[0,1,2]);
+        let mut objects = [RenderObject { mesh_key: "msaa_triangle".into(), model: Mat4::IDENTITY, material: RenderMaterial { unlit: true, double_sided: true, base_color: [1.0;4], ..Default::default() }, cast_shadows: false, receive_shadows: false }];
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let mut lighting = FrameLighting::default();lighting.environment.tone_mapping = false;
+        let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
+        for size in [32,48,32] {
+            let target = renderer.create_offscreen_target(PhysicalSize::new(size, size));
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None }, RenderTarget::Offscreen(&target)).unwrap();
+            let data = renderer.read_offscreen_rgba8(&target).unwrap();
+            assert!(data.chunks_exact(4).any(|pixel| pixel[0] > 0 && pixel[0] < 255), "resolved diagonal has partial coverage");
+            let scale = size as f32 / 32.0;
+            let mut mask = UiPrimitive::solid([4.0,12.0,24.0,8.0].map(|v|v*scale), [1.0;4]);
+            mask.key.stencil = UiStencilMode::Push { reference: 0 };
+            let mut child = UiPrimitive::solid([0.0,8.0,32.0,16.0].map(|v|v*scale), [0.0,1.0,0.0,1.0]);
+            child.key.stencil = UiStencilMode::Test { reference: 1 };child.key.depth_test = true;
+            child.clip_corners = Some([[-1.0,0.5,0.6,1.0],[1.0,0.5,0.6,1.0],[1.0,-0.5,0.6,1.0],[-1.0,-0.5,0.6,1.0]]);
+            child.render_material = Some(Arc::new(UiRenderMaterial { shader: Arc::from("fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> { return input.vertex_color; }"), ..Default::default() }));
+            let mut pop = mask.clone();pop.key.stencil = UiStencilMode::Pop { reference: 1 };
+            let overlay = UiPrimitive::solid([8.0,3.0,4.0,4.0].map(|v|v*scale), [1.0,0.0,0.0,1.0]);
+            let ui = UiBatchPlan::build(vec![mask,child,pop,overlay]);
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: Some(&ui) }, RenderTarget::Offscreen(&target)).unwrap();
+            let data = renderer.read_offscreen_rgba8(&target).unwrap();
+            let pixel = |x: u32,y: u32| { let i = (((y as f32*scale) as u32*size+(x as f32*scale) as u32)*4) as usize; &data[i..i+3] };
+            assert_eq!(pixel(8,16), &[255,255,255], "foreground scene occludes world UI");
+            assert_eq!(pixel(24,16), &[0,255,0], "world UI is visible behind the empty scene");
+            assert_eq!(pixel(30,16), &[0,0,0], "stencil excludes pixels outside the mask");
+            assert_eq!(pixel(9,4), &[255,0,0], "screen UI is drawn after scene post processing");
+        }
+        let target = renderer.create_offscreen_target(PhysicalSize::new(32,32));
+        // Needle-width geometry must shade inside its covered portion of a pixel.
+        let needle = [([-0.91,-0.87,0.25],[0.0,0.0]),([0.83,0.91,0.25],[1.0,0.0]),([0.88,0.91,0.25],[0.0,1.0])].map(|(position,uv)| Vertex { position, normal: [0.0,0.0,1.0], uv });
+        renderer.upload_gltf_static("msaa_needle", &needle, &[0,1,2]);
+        objects[0].mesh_key = "msaa_needle".into();
+        objects[0].material.surface_shader = Arc::from("fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return select(vec4<f32>(0.0,1.0,0.0,1.0),vec4<f32>(1.0,0.0,0.0,1.0),uv.x < -0.001 || uv.y < -0.001 || uv.x + uv.y > 1.001); }");
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None }, RenderTarget::Offscreen(&target)).unwrap();
+        let needle_pixels = renderer.read_offscreen_rgba8(&target).unwrap();
+        assert!(needle_pixels.chunks_exact(4).any(|pixel| pixel[1] > 0), "subpixel geometry remains visible");
+        assert!(needle_pixels.chunks_exact(4).all(|pixel| pixel[0] == 0), "centroid UVs stay inside thin triangles");
+        objects[0].mesh_key = "msaa_triangle".into();
+        objects[0].material.surface_shader = Arc::from("fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return color; }");
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None }, RenderTarget::Offscreen(&target)).unwrap();
+        objects[0].material.is_error = true;
+        let mut error_ui = UiPrimitive::solid([0.0,0.0,4.0,4.0], [1.0;4]);
+        error_ui.render_material = Some(Arc::new(UiRenderMaterial { is_error: true, ..Default::default() }));
+        let ui = UiBatchPlan::build(vec![error_ui]);
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: Some(&ui) }, RenderTarget::Offscreen(&target)).unwrap();
+        renderer.read_offscreen_rgba8(&target).unwrap();
+        let error = pollster::block_on(renderer.device.pop_error_scope());
+        assert!(error.is_none(), "scene/UI MSAA validation: {error:?}");
+    }
 
     #[test]
     fn forward_shader_is_valid_wgsl() {

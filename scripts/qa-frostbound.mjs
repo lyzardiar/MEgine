@@ -53,13 +53,14 @@ if(process.argv.includes('--peer')){
     const a=peer(0);await open(a);await capture(a,'title');console.log('Native title rendered');
     if(realisticOnly){
       await press(a,'F1');await capture(a,'realistic-settlement');await press(a,'Home');await press(a,'Home');await capture(a,'realistic-close-detail');
-      const near=await a.query('scene.snapshot'),realMeshes=near.entities.filter(e=>e.components.MeshRenderer?.mesh?.includes('/Real'));
-      assert.ok(realMeshes.some(e=>e.name.startsWith('Prop ')&&!e.components.MeshRenderer.mesh.includes('-far')),'near resources use detailed meshes');
+      const near=await a.query('scene.snapshot'),realMeshes=near.entities.filter(e=>e.active!==false&&e.components.MeshRenderer?.mesh?.includes('/Real'));
+      assert.ok(realMeshes.some(e=>e.name.startsWith('Prop ')&&/RealSpruce[ABC]\.glb$/.test(e.components.MeshRenderer.mesh)),'near resource trees use 3D meshes');
+      await sleep(3000);await a.execute('profiler.clear');await sleep(5000);const nearPerformance=await a.query('profiler.get_samples',{source:'game',limit:120});assert.ok(nearPerformance.nativeProfileCount>=10);assert.equal(nearPerformance.nativeLatest.counts.materialPipelinesRejected,0);
       for(let i=0;i<5;i++)await press(a,'End');await capture(a,'realistic-overview');
       const far=await a.query('scene.snapshot');assert.ok(far.entities.some(e=>e.name.startsWith('Prop ')&&e.components.MeshRenderer?.mesh?.includes('-card.glb')),'far resources switch LOD');
       await press(a,'F10');await press(a,'F4');await capture(a,'realistic-editor');
-      const samples=await a.query('profiler.get_samples',{source:'game',limit:30});assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);
-      report.realistic={nearZoom:12,farZoom:27,realMeshes:realMeshes.length,lodSwitch:true,editorRendered:true,shaderRejections:0,profiler:samples.nativeSummary};
+      const samples=await a.query('profiler.get_samples',{source:'game',limit:30});assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);assert.ok([1,4].includes(samples.nativeLatest.counts.msaaSamples));
+      report.realistic={nearZoom:12,farZoom:27,realMeshes:realMeshes.length,lodSwitch:true,editorRendered:true,shaderRejections:0,msaaSamples:samples.nativeLatest.counts.msaaSamples,nearPerformance:{warmupMs:3000,sampleWindowMs:5000,summary:nearPerformance.nativeSummary},profiler:samples.nativeSummary};
     }
     if(workQueuesOnly){
       await press(a,'F1');const worker=(await state(a)).worker;await click(a,...projectPoint(await state(a),worker));await until(async()=>(await state(a)).selected.includes(worker.id),'queue worker selected');await press(a,'KeyS');await press(a,'KeyB');await click(a,...projectPoint(await state(a),{x:-12,z:18}));await until(async()=>(await state(a)).worker.order?.type==='construct','first building assigned');

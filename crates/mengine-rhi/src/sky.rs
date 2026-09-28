@@ -41,7 +41,7 @@ pub(crate) struct SkyBackground {
 }
 
 impl SkyBackground {
-    pub(crate) fn new(device: &wgpu::Device, environment_layout: &wgpu::BindGroupLayout) -> Self {
+    pub(crate) fn new(device: &wgpu::Device, environment_layout: &wgpu::BindGroupLayout, sample_count: u32) -> Self {
         let uniform = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("sky_background_uniform"),
             size: std::mem::size_of::<SkyUniforms>() as u64,
@@ -103,7 +103,7 @@ impl SkyBackground {
                 ..Default::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: wgpu::MultisampleState { count: sample_count, ..Default::default() },
             multiview: None,
             cache: None,
         });

@@ -19,6 +19,9 @@ impl ToneMappingUniforms {
 pub(crate) struct HdrPostProcess {
     _hdr_texture: wgpu::Texture,
     hdr_view: wgpu::TextureView,
+    multisampled_color: Option<[(wgpu::Texture, wgpu::TextureView); 2]>,
+    sample_count: u32,
+    surface_format: wgpu::TextureFormat,
     tone_mapping_uniform: wgpu::Buffer,
     tone_mapping_layout: wgpu::BindGroupLayout,
     tone_mapping_bind_group: wgpu::BindGroup,
@@ -31,8 +34,10 @@ impl HdrPostProcess {
         surface_format: wgpu::TextureFormat,
         width: u32,
         height: u32,
+        sample_count: u32,
     ) -> Self {
         let (hdr_texture, hdr_view) = create_hdr_target(device, width, height);
+        let multisampled_color = create_multisampled_color(device, surface_format, width, height, sample_count);
         let tone_mapping_uniform = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("tone_mapping_uniform"),
             size: std::mem::size_of::<ToneMappingUniforms>() as u64,
@@ -108,7 +113,7 @@ impl HdrPostProcess {
                     ..Default::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: wgpu::MultisampleState { count: sample_count, ..Default::default() },
                 multiview: None,
                 cache: None,
             });
@@ -116,6 +121,9 @@ impl HdrPostProcess {
         Self {
             _hdr_texture: hdr_texture,
             hdr_view,
+            multisampled_color,
+            sample_count,
+            surface_format,
             tone_mapping_uniform,
             tone_mapping_layout,
             tone_mapping_bind_group,
@@ -133,6 +141,7 @@ impl HdrPostProcess {
         );
         self._hdr_texture = hdr_texture;
         self.hdr_view = hdr_view;
+        self.multisampled_color = create_multisampled_color(device, self.surface_format, width, height, self.sample_count);
         self.tone_mapping_bind_group = tone_mapping_bind_group;
     }
 
@@ -144,15 +153,32 @@ impl HdrPostProcess {
         );
     }
 
-    pub(crate) fn hdr_view(&self) -> &wgpu::TextureView {
-        &self.hdr_view
-    }
+    pub(crate) fn scene_view(&self) -> &wgpu::TextureView { self.multisampled_color.as_ref().map_or(&self.hdr_view, |views| &views[0].1) }
+
+    pub(crate) fn scene_resolve_target(&self) -> Option<&wgpu::TextureView> { self.multisampled_color.as_ref().map(|_| &self.hdr_view) }
+
+    pub(crate) fn output_view<'a>(&'a self, target: &'a wgpu::TextureView) -> &'a wgpu::TextureView { self.multisampled_color.as_ref().map_or(target, |views| &views[1].1) }
+
+    pub(crate) fn output_resolve_target<'a>(&self, target: &'a wgpu::TextureView) -> Option<&'a wgpu::TextureView> { self.multisampled_color.as_ref().map(|_| target) }
 
     pub(crate) fn draw<'pass>(&'pass self, pass: &mut wgpu::RenderPass<'pass>) {
         pass.set_pipeline(&self.tone_mapping_pipeline);
         pass.set_bind_group(0, &self.tone_mapping_bind_group, &[]);
         pass.draw(0..3, 0..1);
     }
+}
+
+fn create_multisampled_color(device: &wgpu::Device, format: wgpu::TextureFormat, width: u32, height: u32, sample_count: u32) -> Option<[(wgpu::Texture, wgpu::TextureView); 2]> {
+    if sample_count == 1 { return None; }
+    Some([HDR_COLOR_FORMAT, format].map(|format| {
+        let texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("multisampled_scene_color"), size: wgpu::Extent3d { width: width.max(1), height: height.max(1), depth_or_array_layers: 1 },
+            mip_level_count: 1, sample_count, dimension: wgpu::TextureDimension::D2, format,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT, view_formats: &[],
+        });
+        let view = texture.create_view(&Default::default());
+        (texture, view)
+    }))
 }
 
 fn create_hdr_target(
@@ -311,7 +337,7 @@ mod tests {
         let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor::default(), None)).expect("post-process test device");
         device.push_error_scope(wgpu::ErrorFilter::Validation);
         for size in [32, 1] {
-            let mut post = HdrPostProcess::new(&device, wgpu::TextureFormat::Rgba8Unorm, size, size);
+            let mut post = HdrPostProcess::new(&device, wgpu::TextureFormat::Rgba8Unorm, size, size, 1);
             let input = device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("antialiasing_test_input"), size: wgpu::Extent3d { width: size, height: size, depth_or_array_layers: 1 },
                 mip_level_count: 1, sample_count: 1, dimension: wgpu::TextureDimension::D2, format: wgpu::TextureFormat::Rgba8Unorm,

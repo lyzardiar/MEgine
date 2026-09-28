@@ -810,6 +810,7 @@ pub(crate) struct UiRenderer {
     rejected_shader_last_used: HashMap<u64, u64>,
     pipeline_layout: wgpu::PipelineLayout,
     format: wgpu::TextureFormat,
+    sample_count: u32,
     vertex_buffer: wgpu::Buffer,
     instance_buffer: wgpu::Buffer,
     soft_clip_buffer: wgpu::Buffer,
@@ -897,6 +898,7 @@ impl UiRenderer {
         width: u32,
         height: u32,
         supports_anisotropy: bool,
+        sample_count: u32,
     ) -> Self {
         const VERTICES: [UiVertex; 6] = [
             UiVertex {
@@ -1086,7 +1088,7 @@ impl UiRenderer {
                     };
                     pipelines.insert(
                         key,
-                        create_ui_pipeline(device, &pipeline_layout, &shader, format, key),
+                        create_ui_pipeline(device, &pipeline_layout, &shader, format, key, sample_count),
                     );
                 }
             }
@@ -1100,7 +1102,7 @@ impl UiRenderer {
                 };
                 pipelines.insert(
                     key,
-                    create_ui_pipeline(device, &pipeline_layout, &shader, format, key),
+                    create_ui_pipeline(device, &pipeline_layout, &shader, format, key, sample_count),
                 );
             }
         }
@@ -1114,6 +1116,7 @@ impl UiRenderer {
             rejected_shader_last_used: HashMap::new(),
             pipeline_layout,
             format,
+            sample_count,
             vertex_buffer,
             instance_buffer,
             soft_clip_buffer,
@@ -1417,7 +1420,7 @@ impl UiRenderer {
         });
         self.custom_pipelines.insert(
             key,
-            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state),
+            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state, self.sample_count),
         );
     }
 
@@ -1433,7 +1436,7 @@ impl UiRenderer {
         });
         self.error_pipelines.insert(
             state,
-            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state),
+            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state, self.sample_count),
         );
     }
 
@@ -1620,6 +1623,7 @@ fn create_ui_pipeline(
     shader: &wgpu::ShaderModule,
     format: wgpu::TextureFormat,
     key: UiPipelineKey,
+    sample_count: u32,
 ) -> wgpu::RenderPipeline {
     let (compare, pass_op, color_write) = match key.stencil {
         UiStencilPipeline::Disabled => (
@@ -1727,7 +1731,7 @@ fn create_ui_pipeline(
             },
             bias: Default::default(),
         }),
-        multisample: wgpu::MultisampleState::default(),
+        multisample: wgpu::MultisampleState { count: sample_count, ..Default::default() },
         multiview: None,
         cache: None,
     })
@@ -2672,7 +2676,7 @@ mod tests {
             .get_downlevel_capabilities()
             .flags
             .contains(wgpu::DownlevelFlags::ANISOTROPIC_FILTERING);
-        let mut renderer = UiRenderer::new(&device, &queue, format, 16, 16, supports_anisotropy);
+        let mut renderer = UiRenderer::new(&device, &queue, format, 16, 16, supports_anisotropy, 1);
         let mut push = primitive("white", None);
         push.key.stencil = UiStencilMode::Push { reference: 0 };
         let mut child = primitive("white", None);

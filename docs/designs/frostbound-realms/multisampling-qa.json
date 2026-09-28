@@ -1,0 +1,151 @@
+{
+  "baselineCommit": "4fb7cfae94237e8f82c90748cea400ab5cdfeee8",
+  "method": "Native Release editor, 1899 entities, 1280x720; standard view 5-second warmup and three 5-second windows. Near view: separate 3-second warmup and one 5-second window. Small-run timing is not a long-term benchmark.",
+  "msaaSamples": 4,
+  "before": {
+    "runs": [
+      {
+        "intervals": 62,
+        "averagePresentIntervalMs": 82.72741935522326,
+        "p95PresentIntervalMs": 127.10000002384186,
+        "presentedFps": 12.087890663023103,
+        "averageRequestMs": 57.257142856953635,
+        "averageRenderMs": 8.990625396825397,
+        "averageCommandMs": 11.91913174603175,
+        "averageUploadMs": 1.4555555591507563,
+        "averageSimulationMs": 9.209901587301587,
+        "averageSimulationRequestMs": 40.0571428575213
+      },
+      {
+        "intervals": 61,
+        "averagePresentIntervalMs": 82.9163934422321,
+        "p95PresentIntervalMs": 126.80000001192093,
+        "presentedFps": 12.060341248401024,
+        "averageRequestMs": 56.19354838517405,
+        "averageRenderMs": 8.92671612903226,
+        "averageCommandMs": 12.295345161290324,
+        "averageUploadMs": 1.4838709687033007,
+        "averageSimulationMs": 10.14176935483871,
+        "averageSimulationRequestMs": 30.1080645120913
+      },
+      {
+        "intervals": 62,
+        "averagePresentIntervalMs": 81.49032258026061,
+        "p95PresentIntervalMs": 128.60000002384186,
+        "presentedFps": 12.271395772364139,
+        "averageRequestMs": 58.369841272868804,
+        "averageRenderMs": 8.89924126984127,
+        "averageCommandMs": 11.428620634920636,
+        "averageUploadMs": 1.4571428592242892,
+        "averageSimulationMs": 9.749439682539679,
+        "averageSimulationRequestMs": 32.94126984240517
+      }
+    ],
+    "medianPresentedFps": 12.087890663023103,
+    "medianRenderMs": 8.92671612903226
+  },
+  "after": {
+    "runs": [
+      {
+        "intervals": 62,
+        "averagePresentIntervalMs": 82.41290322522963,
+        "p95PresentIntervalMs": 126.30000001192093,
+        "presentedFps": 12.13402223274502,
+        "averageRequestMs": 57.358730161946916,
+        "averageRenderMs": 9.601926984126981,
+        "averageCommandMs": 12.370441269841267,
+        "averageUploadMs": 1.4634920614106315,
+        "averageSimulationMs": 10.293774603174604,
+        "averageSimulationRequestMs": 33.349206345421926
+      },
+      {
+        "intervals": 61,
+        "averagePresentIntervalMs": 83.39672131127999,
+        "p95PresentIntervalMs": 127.19999998807907,
+        "presentedFps": 11.99087906906411,
+        "averageRequestMs": 55.388709680687995,
+        "averageRenderMs": 9.36318064516129,
+        "averageCommandMs": 12.841009677419358,
+        "averageUploadMs": 1.5274193565691672,
+        "averageSimulationMs": 9.696704838709676,
+        "averageSimulationRequestMs": 32.80322580760525
+      },
+      {
+        "intervals": 65,
+        "averagePresentIntervalMs": 79.6399999994498,
+        "p95PresentIntervalMs": 126.39999997615814,
+        "presentedFps": 12.5565042692982,
+        "averageRequestMs": 56.40151515151515,
+        "averageRenderMs": 9.23105,
+        "averageCommandMs": 11.756996969696976,
+        "averageUploadMs": 1.4787878791491191,
+        "averageSimulationMs": 9.72065,
+        "averageSimulationRequestMs": 35.940909093076534
+      }
+    ],
+    "medianPresentedFps": 12.13402223274502,
+    "medianRenderMs": 9.36318064516129
+  },
+  "near": {
+    "warmupMs": 3000,
+    "sampleWindowMs": 5000,
+    "summary": {
+      "intervals": 53,
+      "averagePresentIntervalMs": 94.90566037735849,
+      "p95PresentIntervalMs": 129.0999999642372,
+      "presentedFps": 10.536779324055667,
+      "averageRequestMs": 59.21111110515065,
+      "averageRenderMs": 13.407127777777776,
+      "averageCommandMs": 17.90548333333334,
+      "averageUploadMs": 1.477777776894746,
+      "averageSimulationMs": 10.586305555555557,
+      "averageSimulationRequestMs": 35.98888889507011
+    }
+  },
+  "memory": [
+    {
+      "bytes": 3686400,
+      "certainty": "estimate",
+      "domain": "gpu",
+      "name": "GPU offscreen color",
+      "source": "viewport width x height x 4 RGBA8 bytes"
+    },
+    {
+      "bytes": 14745600,
+      "certainty": "estimate",
+      "domain": "gpu",
+      "name": "GPU offscreen depth",
+      "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+    },
+    {
+      "bytes": 51609600,
+      "certainty": "estimate",
+      "domain": "gpu",
+      "name": "GPU HDR and multisampled color",
+      "source": "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding"
+    },
+    {
+      "bytes": 130019248,
+      "certainty": "estimate",
+      "domain": "gpu",
+      "name": "GPU texture residency",
+      "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+    }
+  ],
+  "packageContentHash": "9ecfed3c7c8763c0a99295a24ed45ae34a0e47ff386cbc40c8d8166107256d71",
+  "packagedFiles": 362,
+  "runtimeSha256": "6e0e0e4c6bc2629ca17b620a1883ba9b4e07edb39d9e8b621ac80776023b830a",
+  "editorSha256": "1436f15877b5a41f96d0b742de2a04219ca7117df38c4bf082b4b1e2e0fc5f50",
+  "validation": {
+    "rhiTests": 48,
+    "rhiFailures": 0,
+    "hostViewportTests": 1,
+    "gpuSampleCount": 4,
+    "gpuResizeWorldUiStencilOverlayCustomErrorAndCentroid": "passed",
+    "singleSampleFallback": "capability selection and existing single-sample UI/post-process GPU tests; no unsupported-device full-renderer run",
+    "sourceAndDerivedHashes": "passed",
+    "nativeArt": "passed",
+    "nativeNetwork": "passed"
+  },
+  "overall5msTargetMet": false
+}

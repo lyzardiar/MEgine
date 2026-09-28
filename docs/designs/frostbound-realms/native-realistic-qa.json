@@ -6,21 +6,38 @@
   "realistic": {
     "nearZoom": 12,
     "farZoom": 27,
-    "realMeshes": 168,
+    "realMeshes": 92,
     "lodSwitch": true,
     "editorRendered": true,
     "shaderRejections": 0,
+    "msaaSamples": 4,
+    "nearPerformance": {
+      "warmupMs": 3000,
+      "sampleWindowMs": 5000,
+      "summary": {
+        "intervals": 53,
+        "averagePresentIntervalMs": 94.90566037735849,
+        "p95PresentIntervalMs": 129.0999999642372,
+        "presentedFps": 10.536779324055667,
+        "averageRequestMs": 59.21111110515065,
+        "averageRenderMs": 13.407127777777776,
+        "averageCommandMs": 17.90548333333334,
+        "averageUploadMs": 1.477777776894746,
+        "averageSimulationMs": 10.586305555555557,
+        "averageSimulationRequestMs": 35.98888889507011
+      }
+    },
     "profiler": {
-      "intervals": 72,
-      "averagePresentIntervalMs": 131.67499999950329,
-      "p95PresentIntervalMs": 213.19999998807907,
-      "presentedFps": 7.594456047114276,
-      "averageRequestMs": 179.9904109566179,
-      "averageRenderMs": 48.657378082191784,
-      "averageCommandMs": 122.89848630136989,
-      "averageUploadMs": 1.4794520523450145,
-      "averageSimulationMs": 12.084844444444448,
-      "averageSimulationRequestMs": 210.25416666352086
+      "intervals": 105,
+      "averagePresentIntervalMs": 97.8314285715421,
+      "p95PresentIntervalMs": 150,
+      "presentedFps": 10.221664086901487,
+      "averageRequestMs": 63.25660377009859,
+      "averageRenderMs": 12.173383018867922,
+      "averageCommandMs": 15.711933962264148,
+      "averageUploadMs": 1.481132076596314,
+      "averageSimulationMs": 10.612769811320753,
+      "averageSimulationRequestMs": 57.954716983831155
     }
   }
 }

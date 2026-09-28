@@ -73,6 +73,7 @@ pub struct EditorViewportResource {
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EditorViewportProfileCounts {
+    pub msaa_samples: u32,
     pub entities: usize,
     pub render_objects: usize,
     pub ui_primitives: usize,
@@ -720,9 +721,16 @@ fn build_viewport_profile(
         EditorViewportMemoryCategory {
             name: "GPU offscreen depth".into(),
             domain: "gpu".into(),
-            bytes: viewport_pixels * 4,
+            bytes: viewport_pixels * 4 * u64::from(renderer.sample_count()),
             certainty: "estimate".into(),
-            source: "viewport width x height x 4 depth bytes".into(),
+            source: "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "GPU HDR and multisampled color".into(),
+            domain: "gpu".into(),
+            bytes: viewport_pixels * (8 + if renderer.sample_count() > 1 { 12 * u64::from(renderer.sample_count()) } else { 0 }),
+            certainty: "estimate".into(),
+            source: "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding".into(),
         },
         EditorViewportMemoryCategory {
             name: "GPU texture residency".into(),
@@ -791,6 +799,7 @@ fn build_viewport_profile(
         resources_truncated,
         resource_sample_age_ms,
         counts: EditorViewportProfileCounts {
+            msaa_samples: renderer.sample_count(),
             entities: world.iter_entities().count(),
             render_objects: frame.objects.len(),
             ui_primitives: frame.ui.primitives.len(),
