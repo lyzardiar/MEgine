@@ -5,6 +5,28 @@ use serde_json::Value;
 use std::path::PathBuf;
 fn telemetry(s: &WorldSnapshot) -> Value { serde_json::from_str(s.entities.iter().find(|e|e.name.as_deref()==Some("Frost telemetry")).unwrap().components["Text"]["text"].as_str().unwrap()).unwrap() }
 #[test]
+fn unicode_map_input_save_cancel_and_undo() {
+    let root=PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let source=std::fs::read_to_string(root.join("Assets/Scripts/Main.js")).unwrap();
+    let scene:Value=serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let runtime=EditorPlayRuntime::default();
+    let mut snapshot=runtime.start(runtime.begin(),source,serde_json::from_value(scene["world"].clone()).unwrap(),PlayProject{root:Some(root),..Default::default()}).unwrap();
+    let mut input=ScriptInput::default();input.viewport=[1280,720];
+    let tick=|snapshot:WorldSnapshot,input:&mut ScriptInput| {let next=runtime.step(runtime.generation(),snapshot,input.clone(),0.1).unwrap();input.finish_frame();next};
+    snapshot=tick(snapshot,&mut input);
+    for key in ["F4","F8","KeyN"] {input.key(key.into(),true);snapshot=tick(snapshot,&mut input);input.key(key.into(),false);}
+    let original=telemetry(&snapshot)["editorTrigger"]["name"].clone();let depth=telemetry(&snapshot)["undoDepth"].as_u64().unwrap();
+    snapshot.entities.iter_mut().find(|e|e.name.as_deref()==Some("Rename input")).unwrap().components.get_mut("InputField").unwrap()["text"]=Value::String("霜境增援任务".into());
+    input.pointer=[640.0,425.0];input.button(0,true);snapshot=tick(snapshot,&mut input);input.button(0,false);snapshot=tick(snapshot,&mut input);
+    assert_eq!(telemetry(&snapshot)["editorTrigger"]["name"],"霜境增援任务");assert_eq!(telemetry(&snapshot)["undoDepth"],depth+1);
+    input.key("KeyN".into(),true);snapshot=tick(snapshot,&mut input);input.key("KeyN".into(),false);
+    snapshot.entities.iter_mut().find(|e|e.name.as_deref()==Some("Rename input")).unwrap().components.get_mut("InputField").unwrap()["text"]=Value::String("取消修改".into());
+    input.pointer=[910.0,425.0];input.button(0,true);snapshot=tick(snapshot,&mut input);input.button(0,false);snapshot=tick(snapshot,&mut input);
+    assert_eq!(telemetry(&snapshot)["editorTrigger"]["name"],"霜境增援任务");assert_eq!(telemetry(&snapshot)["undoDepth"],depth+1);
+    input.key("ControlLeft".into(),true);input.key("KeyZ".into(),true);snapshot=tick(snapshot,&mut input);assert_eq!(telemetry(&snapshot)["editorTrigger"]["name"],original);
+    runtime.stop();
+}
+#[test]
 fn native_snapshot_deltas_keep_game_state_and_reduce_payload() {
     let root=PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
     let source=std::fs::read_to_string(root.join("Assets/Scripts/Main.js")).unwrap();

@@ -1144,6 +1144,9 @@
       "character_limit": {
         "type": "number"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -1180,6 +1183,7 @@
     },
     "required": [
       "text",
+      "font",
       "placeholder",
       "text_color",
       "placeholder_color",

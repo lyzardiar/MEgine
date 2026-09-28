@@ -25,7 +25,8 @@ var FrostClient=(()=>{
   function changeMap(fn){const before=S.clone(editMap);try{fn();editorState();if(JSON.stringify(before)!==JSON.stringify(editMap)){undo.push(before);if(undo.length>20)undo.shift();}}catch(e){editMap=before;editorState();message(e.message);}}
   function newTrigger(x,z){return {name:'Trigger '+(editMap.triggers.length+1),x,z,after:-1,logic:'all',limit:1,interval:10,conditions:[{when:'enter',team:placeTeam,value:1,region:regionIndex,kind:'*'}],actions:[{action:'spawn',team:placeTeam,value:1,region:-1,kind:placeKind,text:'Reinforcements arrived'}]};}
   function deleteEditorEntry(){if(editorPage===4&&regionIndex>=0)changeMap(()=>S.removeRegion(editMap,regionIndex));else if(editorPage===2&&triggerIndex>=0)changeMap(()=>{const t=editMap.triggers[triggerIndex],entries=triggerPanel===1?t.conditions:t.actions;if(triggerPanel&&entries.length>1){entries.splice(entryIndex%entries.length,1);entryIndex=0;}else if(!triggerPanel){S.removeTrigger(editMap,triggerIndex);triggerIndex=Math.min(triggerIndex,editMap.triggers.length-1);}});}
-  function beginRename(){const t=editorPage===4?editMap.regions[regionIndex]:editMap.triggers[triggerIndex];if(!t)return;const entry=editorPage===2&&triggerPanel===2?t.actions[entryIndex%t.actions.length]:t;rename={region:editorPage===4,index:editorPage===4?regionIndex:triggerIndex,entry:entry===t?-1:entryIndex%t.actions.length,text:entry===t?t.name:entry.text};}
+  function beginRename(){const t=editorPage===4?editMap.regions[regionIndex]:editMap.triggers[triggerIndex];if(!t)return;const entry=editorPage===2&&triggerPanel===2?t.actions[entryIndex%t.actions.length]:t;rename={region:editorPage===4,index:editorPage===4?regionIndex:triggerIndex,entry:entry===t?-1:entryIndex%t.actions.length,text:entry===t?t.name:entry.text};delete sent['Rename input/InputField'];set('Rename input','InputField',{...authored['Rename input'].InputField,text:rename.text,character_limit:rename.entry<0?40:120});}
+  function finishRename(save){const value=rename;rename=null;if(save)changeMap(()=>{const t=value.region?editMap.regions[value.index]:editMap.triggers[value.index];if(t){if(value.entry<0)t.name=value.text;else t.actions[value.entry].text=value.text;}});}
   function triggerEditorActions(add){
     const t=editMap.triggers[triggerIndex],cycle=(v,values)=>values[(values.indexOf(v)+1)%values.length],region=v=>v+1>=editMap.regions.length?-1:v+1;
     add(t?'#'+(triggerIndex+1)+' '+t.name:'New trigger',()=>{if(editMap.triggers.length){triggerIndex=(triggerIndex+1)%editMap.triggers.length;entryIndex=0;}else{editorTool='new';message('Click the map to place a trigger');}});
@@ -123,8 +124,9 @@ var FrostClient=(()=>{
   function controls(input,dt){
     const press=k=>input.pressedKeys.includes(k),held=k=>input.keys.includes(k),p=screenPointer(input),w=worldPointer(input);updateActions();
     if(rename){
-      if(press('Escape')){rename=null;return;}if(press('Enter')){const value=rename;rename=null;changeMap(()=>{const t=value.region?editMap.regions[value.index]:editMap.triggers[value.index];if(t){if(value.entry<0)t.name=value.text;else t.actions[value.entry].text=value.text;}});return;}
-      for(const key of input.pressedKeys){if(held('ControlLeft')&&key==='KeyA')rename.text='';else if(key==='Backspace')rename.text=rename.text.slice(0,-1);else if(!held('ControlLeft')){const char=/^Key[A-Z]$/.test(key)?((held('ShiftLeft')||held('ShiftRight'))?key.slice(3):key.slice(3).toLowerCase()):/^Digit[0-9]$/.test(key)?((held('ShiftLeft')||held('ShiftRight'))?')!@#$%^&*(':'0123456789')[Number(key.slice(5))]:((held('ShiftLeft')||held('ShiftRight'))?{Space:' ',Minus:'_',Equal:'+',Period:'>',Comma:'<',Semicolon:':',Quote:'"',Slash:'?',Backslash:'|',BracketLeft:'{',BracketRight:'}'}:{Space:' ',Minus:'-',Equal:'=',Period:'.',Comma:',',Semicolon:';',Quote:"'",Slash:'/',Backslash:'\\',BracketLeft:'[',BracketRight:']'})[key];if(char)rename.text=(rename.text+char).slice(0,rename.entry<0?40:120);}}return;
+      const field=engine.snapshot.entities.find(e=>e.name==='Rename input');if(field)rename.text=field.components.InputField.text;
+      if(press('Escape')){finishRename(false);return;}
+      if(input.pressedButtons.includes(0)){const b=FrostButtons.find(b=>b.group==='rename'&&hovered(b,p));if(b?.id==='renameSave')finishRename(true);else if(b?.id==='renameCancel')finishRename(false);else if(b?.id==='renameClear'){delete sent['Rename input/InputField'];set('Rename input','InputField',{...authored['Rename input'].InputField,text:'',character_limit:rename.entry<0?40:120});}}return;
     }
     if(press('F10')){if(returnEditor)enterEditor();else title();return;}
     if(mode==='address'){for(const k of input.pressedKeys){if(k==='Backspace')edit=edit.slice(0,-1);else if(/^Digit\d$/.test(k))edit+=k.slice(5);else if(k==='Period')edit+='.';else if(k==='Semicolon')edit+=':';else if(/^Key[A-Z]$/.test(k))edit+=k.slice(3).toLowerCase();}edit=edit.slice(0,64);if(press('Enter'))primary();if(press('Escape'))mode='network';}
@@ -172,8 +174,8 @@ var FrostClient=(()=>{
   }
   function render(input){
     const playing=['playing','finished','reconnecting'].includes(mode),editing=mode==='editor',world=playing||editing,modal=!['title','playing','editor'].includes(mode),allVisible=!playing;
-    for(const n of Object.keys(entities)){if(n.startsWith('Menu '))show(n,mode==='title');if(n.startsWith('Modal '))show(n,modal);}
-    for(const b of FrostButtons){const on=b.group==='menu'?mode==='title':b.group==='modal'?modal:world&&!!actions[Number(b.id.slice(6))];for(const suffix of [' border',' box',' label',' detail',' icon'])show(b.id+suffix,on&&!(editing&&suffix===' icon'));}
+    for(const n of Object.keys(entities)){if(n.startsWith('Menu '))show(n,mode==='title');if(n.startsWith('Modal '))show(n,modal);if(n.startsWith('Rename '))show(n,!!rename);}
+    for(const b of FrostButtons){const on=b.group==='rename'?!!rename:b.group==='menu'?mode==='title':b.group==='modal'?modal:world&&!!actions[Number(b.id.slice(6))];for(const suffix of [' border',' box',' label',' detail',' icon'])show(b.id+suffix,on&&!(editing&&suffix===' icon'));}
     for(const n of ['Header','Brand','Resources','Clock','Bottom','Bottom rule','Minimap','Selection title','Selection stats','Selection queue','Controls','Portrait','Health back','Health fill','Mana back','Mana fill'])show(n,world);
     show('Hero preview',mode==='title');set('Hero preview','Image',{...authored['Hero preview'].Image,sprite:'Assets/Art/hero-portraits.png#hero-'+heroClass});
     label('heroChoice label',S.heroes[heroClass].label.toUpperCase()+' [H]');label('heroChoice detail',S.heroes[heroClass].role+' / click to change');
@@ -234,7 +236,7 @@ var FrostClient=(()=>{
     set('Portrait','Image',{...authored.Portrait.Image,sprite:u?.kind==='hero'&&!editing?'Assets/Art/hero-portraits.png#hero-'+u.heroClass:'Assets/Art/command-icons.png#'+(editing?'tower':u?.kind==='hero'?'hero':u?.kind==='worker'?'wood':u&&!S.types[u.kind].speed?'tower':'shield')});
     for(const [n,value] of [['Health',u?u.hp/u.maxHp:0],['Mana',u?.kind==='hero'?u.mana/(150+u.level*10):0]]){const a=authored[n+' fill'].RectTransform;set(n+' fill','RectTransform',{...a,size_delta:[182*S.clamp(value,0,1),a.size_delta[1]],anchored_position:[-294+91*S.clamp(value,0,1),a.anchored_position[1]]});show(n+' back',world&&!editing&&!!u);show(n+' fill',world&&!editing&&!!u);}
 
-    label('Status',rename?'Edit: '+rename.text+' | Enter save / Esc cancel / Ctrl+A clear':paused?'PAUSED — Escape to resume':armed?'TARGET: '+(armed.kind||armed.type)+' — click ground / Escape cancels':time<noticeUntil?notice:'');
+    label('Status',rename?'编辑完成后点击保存 / Click Save to apply':paused?'PAUSED — Escape to resume':armed?'TARGET: '+(armed.kind||armed.type)+' — click ground / Escape cancels':time<noticeUntil?notice:'');
     if(modal){
       let title='',body='',primaryLabel='CONTINUE';
       if(mode==='network'){title='MULTIPLAYER';body='Host address: '+address+'  [I to edit]\n\nF1  Host a skirmish     F2  Host an Ancients match\nF3  Browse rooms\n\nRun server.mjs on the host computer.\nCurrent map: '+editMap.name;primaryLabel='CREATE ROOM';}

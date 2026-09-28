@@ -12,5 +12,29 @@
     "download": "https://raw.githubusercontent.com/google/fonts/main/ofl/cinzel/OFL.txt",
     "file": "Licenses/Cinzel-OFL.txt",
     "sha256": "f2b3029aba64c378bf0963b62945eee15e564fe4330b934c8f2eb058282b5e83"
+  },
+  {
+    "author": "Adobe / Noto contributors",
+    "license": "OFL-1.1",
+    "download": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf",
+    "file": "SourceAssets/NotoSansSC-VF.ttf",
+    "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+  },
+  {
+    "author": "Adobe / Noto contributors",
+    "license": "OFL-1.1",
+    "download": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/OFL.txt",
+    "file": "Licenses/NotoSansSC-OFL.txt",
+    "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
+  },
+  {
+    "author": "Adobe / Noto contributors",
+    "license": "OFL-1.1",
+    "derivedFrom": "SourceAssets/NotoSansSC-VF.ttf",
+    "generator": "scripts/import-frost-font.py",
+    "fonttools": "4.61.1",
+    "weight": 400,
+    "file": "Assets/Fonts/NotoSansSC.ttf",
+    "sha256": "b7bebb49c3c6b0266362cf75dd9bdd9bf5fbe5fb390be8f7808ebedef376de76"
   }
 ]

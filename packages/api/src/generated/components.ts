@@ -732,6 +732,7 @@ export interface ProgressBar {
 
 export interface InputField {
   text: string;
+  font: string;
   placeholder: string;
   textColor: [number, number, number, number];
   placeholderColor: [number, number, number, number];
@@ -1464,6 +1465,7 @@ export type SerializedComponentMap = {
   };
   InputField: {
     text: string;
+    font: string;
     placeholder: string;
     text_color: [number, number, number, number];
     placeholder_color: [number, number, number, number];

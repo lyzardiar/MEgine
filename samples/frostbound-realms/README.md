@@ -65,7 +65,7 @@ Skirmish 建筑由工人到场启动：Kingdom 工人持续施工，可多工协
 
 增援先检查整批容量和可放置位置，失败时整条事件等待，不会发出部分奖励。公告只发给指定队伍；服务器不向客户端发布区域/触发器配置或运行计数。删除被引用的区域或前置触发器会提示先重新指定引用。旧单条件/单动作 JSON 地图可导入，新地图示例位于 `Assets/Maps/supply-road.json`。
 
-名称和公告目前通过键码输入，支持英文、数字和常用标点，Enter 保存、Esc 取消、Ctrl+A 清空；中文/IME 输入及可视化节点连线尚未实现。当前事件编辑器不等同于原作完整触发器系统。
+区域和事件页按 N 打开名称或公告输入框，点击框内使用键盘/输入法编辑，再点击保存、取消或清空。编辑器复用原生 textarea 的选择、粘贴和输入法；Player 接收键盘文本与 IME 提交，支持末尾输入和退格，尚无光标移动/选区/剪贴板编辑。字符上限按 Unicode 字符计算。实际物理输入法候选选择仍待设备验收；可视化节点连线尚未实现。当前事件编辑器不等同于原作完整触发器系统。
 
 ## 联机
 
@@ -84,7 +84,7 @@ node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 
 `asset-sources.json` 保存官方下载地址、13 个原始文件的 SHA-256 和许可；`SourceAssets/` 保留原始 glTF 与两个 Kenney ZIP，`Licenses/` 保留许可来源。角色来自 [Quaternius RPG Character Pack](https://quaternius.com/packs/rpgcharacters.html)，建筑来自 [Ultimate Fantasy RTS](https://quaternius.com/packs/ultimatefantasyrts.html)，自然物件来自 [Kenney Fantasy Town Kit](https://kenney.nl/assets/fantasy-town-kit)，粒子贴图来自 [Kenney Particle Pack](https://kenney.nl/assets/particle-pack)。四套均标注 CC0。角色原始骨架和动画保留，多个材质合成图集；生成器提供原创 24 秒循环配乐及指令、战斗、法术、胜利音效，字体沿用仓库的 Roboto 及其许可。导入器优先使用保留的原件，并在转换前核对源文件哈希。
 
-`environment-sources.json` 记录新增 [Kenney Castle Kit](https://kenney.nl/assets/castle-kit)、[Nature Kit](https://kenney.nl/assets/nature-kit) 原始 ZIP，以及 [Poly Haven](https://polyhaven.com/license) 的 snow_02 / rocky_terrain 贴图，共 20 个源模型及两张地表贴图，含四种攻城器械。三种塔由下载的模块离线组装；加上 Dragon，目录合计 39 个来源模型和 3 个组合模型。冬季调色和积雪材质由代码适配，下载原件不改动。`font-sources.json` 保留 Cinzel 字体及 OFL 许可校验值。
+`environment-sources.json` 记录新增 [Kenney Castle Kit](https://kenney.nl/assets/castle-kit)、[Nature Kit](https://kenney.nl/assets/nature-kit) 原始 ZIP，以及 [Poly Haven](https://polyhaven.com/license) 的 snow_02 / rocky_terrain 贴图，共 20 个源模型及两张地表贴图，含四种攻城器械。三种塔由下载的模块离线组装；加上 Dragon，目录合计 39 个来源模型和 3 个组合模型。冬季调色和积雪材质由代码适配，下载原件不改动。`font-sources.json` 保留 Cinzel、Noto Sans SC 字体及 OFL 许可校验值，许可随 Player 打包。中文字体原件位于 `SourceAssets/NotoSansSC-VF.ttf`；安装 fonttools==4.61.1 后运行 `python scripts/import-frost-font.py` 生成静态 400 字重，再运行构建脚本。
 
 `dragon-sources.json` 记录 [Quaternius Ultimate Monsters](https://quaternius.com/packs/ultimatemonsters.html) 的 CC0 Dragon FBX 镜像、原件哈希和固定版本 FBX2glTF 转换器归档哈希。原 FBX、派生 glTF、骨架与五个动画都保留；Windows 导入器在项目 tmp 目录提取转换工具，不修改系统安装。官方 glTF 文件本次遇到 Drive 配额限制，因此使用可取得的 FBX 源模型转换。
 

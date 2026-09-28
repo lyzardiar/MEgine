@@ -32,3 +32,8 @@ const game=triggers=>{const map=S.defaultMap();map.triggers=triggers;map.regions
   const s=S.create('skirmish',{map:S.eventMap(),ai:[false,false]}),h=s.units.find(u=>u.kind==='hero'&&u.team===0);step(s,60);assert.equal(S.command(s,0,{type:'move',ids:[h.id],x:-8,z:4}),null);step(s,200);assert.deepEqual(s.triggered,[0,1,2],'Supply Road chain completes using legal movement and authored orders');assert.match(s.announcements[0],/Escort complete/);
 }
 console.log('PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain');
+
+{
+  const map=S.eventMap(),name='中'.repeat(39)+'😀尾',text='字'.repeat(119)+'😀尾';map.name=name;map.regions[0].name=name;map.triggers[0].name=name;map.triggers[0].actions[0].text=text;
+  const validated=S.validateMap(map);assert.equal(validated.name,'中'.repeat(39)+'😀');assert.equal(validated.regions[0].name,validated.name);assert.equal(validated.triggers[0].name,validated.name);assert.equal(validated.triggers[0].actions[0].text,'字'.repeat(119)+'😀');assert.deepEqual(S.validateMap(JSON.parse(JSON.stringify(validated))),validated);
+}

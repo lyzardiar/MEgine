@@ -997,6 +997,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   InputField: {
     text: { kind: 'multiline' },
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     font_size: { min: 1, step: 1 },
     character_limit: { min: 0, step: 1 },
     on_value_changed: event,

@@ -7,6 +7,7 @@ const root=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url
 const catalog=JSON.parse(fs.readFileSync(path.join(root,'model-catalog.json'),'utf8'));
 for(const dir of ['Scenes','Scripts','Fonts','Maps','Audio'])fs.mkdirSync(path.join(root,'Assets',dir),{recursive:true});
 for(const file of ['Roboto-Regular.ttf','LICENSE.txt'])fs.copyFileSync(fileURLToPath(new URL('../samples/ion-outpost/Assets/Fonts/'+file,import.meta.url)),path.join(root,'Assets/Fonts',file));
+for(const file of ['Cinzel-OFL.txt','NotoSansSC-OFL.txt'])fs.copyFileSync(path.join(root,'Licenses',file),path.join(root,'Assets/Fonts',file));
 const E=[],T=(position=[0,0,0],scale=[1,1,1],rotation=[0,0,0,1])=>({position,scale,rotation}),q=p=>[Math.sin(p/2),0,0,Math.cos(p/2)];
 const entity=(name,components,parent=null)=>{const id=E.length+1;E.push({entity:id,name,parent,siblingIndex:id-1,active:true,components});return id;};
 const box=(name,p,size,color)=>entity(name,{Transform:T(p,size),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:color,roughness:.95}});
@@ -28,13 +29,13 @@ for(let i=0;i<S.LIMIT;i++){
 for(let i=0;i<24;i++)entity('FX '+i,{Transform:T([0,-100,0]),ParticleEmitter3D:{playing:false,looping:true,rate_over_time:90,max_particles:36,lifetime_min:.25,lifetime_max:.65,speed_min:1,speed_max:4,size_start:.8,size_end:.05,color_start:[.3,.8,1,1],color_end:[.1,.3,1,0],gravity:[0,-2,0],shape:'sphere',shape_radius:.2,direction:[0,1,0],spread_degrees:160,simulation_space:'world',texture:'Assets/Textures/magic_01.png',billboard:true,seed:i+1}});
 for(let i=0;i<12;i++)entity('Missile '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:[.25,.72,1,1],emissive:[.2,.6,1],emissive_strength:2,roughness:.3}});
 entity('Snow',{Transform:T([0,12,0]),ParticleEmitter3D:{playing:true,looping:true,rate_over_time:30,max_particles:150,lifetime_min:8,lifetime_max:12,speed_min:.1,speed_max:.3,size_start:.07,size_end:.03,color_start:[.8,.9,1,.55],color_end:[.7,.85,1,0],gravity:[.05,-.1,0],shape:'box',shape_size:[65,1,65],direction:[0,-1,0],simulation_space:'world',texture:'Assets/Textures/spark_01.png',billboard:true,seed:17}});
-const canvas=entity('Interface',{Canvas:{render_mode:'ScreenSpaceOverlay'},CanvasScaler:{ui_scale_mode:'ScaleWithScreenSize',reference_resolution:[1280,720],match_width_or_height:.5}});
+const canvas=entity('Interface',{Canvas:{render_mode:'ScreenSpaceOverlay'},GraphicRaycaster:{enabled:true},CanvasScaler:{ui_scale_mode:'ScaleWithScreenSize',reference_resolution:[1280,720],match_width_or_height:.5}});
 const C={ink:[.025,.04,.057,.96],panel:[.042,.064,.078,.97],gold:[.81,.65,.36,1],white:[.84,.9,.91,1],muted:[.48,.61,.65,1],cyan:[.35,.83,.93,1]};
 const ui=(n,x,y,w,h,c)=>entity(n,{RectTransform:{anchor_min:[.5,.5],anchor_max:[.5,.5],pivot:[.5,.5],anchored_position:[x,y],size_delta:[w,h]},...c},canvas);
 const panel=(n,x,y,w,h,c=C.panel)=>ui(n,x,y,w,h,{Image:{color:c,raycast_target:false}});
 const art=(n,sprite,x,y,w,h)=>ui(n,x,y,w,h,{Image:{sprite,color:[1,1,1,1],raycast_target:false}});
 const metal=(n,x,y,w,h)=>ui(n,x,y,w,h,{Image:{material:'Assets/Materials/Panel.mmat',color:[.045,.075,.1,1],raycast_target:false}});
-const text=(n,value,x,y,w,h,size=18,color=C.white,alignment='Left')=>ui(n,x,y,w,h,{Text:{text:value,font:'Assets/Fonts/Roboto-Regular.ttf',font_size:size,color,alignment,vertical_align:'Middle',horizontal_overflow:'Overflow',vertical_overflow:'Overflow',raycast_target:false}});
+const text=(n,value,x,y,w,h,size=18,color=C.white,alignment='Left')=>ui(n,x,y,w,h,{Text:{text:value,font:'Assets/Fonts/NotoSansSC.ttf',font_size:size,color,alignment,vertical_align:'Middle',horizontal_overflow:'Overflow',vertical_overflow:'Overflow',raycast_target:false}});
 const buttons=[];
 function button(id,label,x,y,w,h,group='menu',detail=''){panel(id+' border',x,y,w+2,h+2,[.3,.24,.13,1]);metal(id+' box',x,y,w,h);text(id+' label',label,x,y-(detail?10:0),w-30,h,detail?21:16,C.white);if(detail)text(id+' detail',detail,x,y+19,w-30,24,12,C.muted);buttons.push({id,x,y,w,h,group});}
 art('Menu painting','Assets/Art/winterfall-menu.png',0,0,1280,720);panel('Menu shade',-330,0,620,720,[.008,.019,.032,.32]);panel('Menu line',-570,-275,4,27,C.gold);
@@ -68,6 +69,11 @@ text('Objective text','',0,-280,1100,38,18,C.gold,'Center');
 panel('Modal shade',0,0,760,430,C.ink);panel('Modal rule',0,-213,760,2,C.gold);text('Modal title','',0,-164,690,48,34,C.gold);text('Modal text','',0,-13,690,230,19,C.white);button('modalPrimary','',-174,156,320,44,'modal');button('modalBack','BACK',174,156,320,44,'modal');
 panel('Drag box',5000,5000,1,1,[.1,.7,.5,.16]);
 text('Frost telemetry','{}',5000,5000,1,1,1);
+panel('Rename shade',0,-35,880,300,C.ink);panel('Rename rule',0,-184,880,2,C.gold);
+text('Rename title','编辑名称 / 任务公告',0,-143,800,38,26,C.gold);
+text('Rename hint','点击输入框，使用键盘或输入法编辑；点击保存应用到地图。',0,-96,800,32,17,C.muted);
+ui('Rename input',0,-28,800,64,{InputField:{text:'',font:'Assets/Fonts/NotoSansSC.ttf',font_size:22,character_limit:120,multiline:false,interactable:true,background_color:[.06,.1,.14,1],text_color:C.white}});
+button('renameClear','清空',-270,65,220,44,'rename');button('renameSave','保存',0,65,220,44,'rename');button('renameCancel','取消',270,65,220,44,'rename');
 // Original deterministic score and layered effects, generated at PCM 22050 Hz.
 function audio(name,duration,sample,loop=false){const count=Math.floor(22050*duration),b=Buffer.alloc(44+count*2);b.write('RIFF');b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(22050,24);b.writeUInt32LE(44100,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(count*2,40);for(let i=0;i<count;i++)b.writeInt16LE(Math.round(Math.max(-1,Math.min(1,sample(i/22050,i)))*24000),44+i*2);fs.writeFileSync(path.join(root,'Assets/Audio',name+'.wav'),b);entity('Sound '+name,{AudioSource:{clip:'Assets/Audio/'+name+'.wav',volume:loop?.12:.25,looped:loop,play_on_awake:loop,playing:loop}});}
 const sine=(hz,t)=>Math.sin(hz*t*Math.PI*2),midi=n=>440*2**((n-69)/12);let noiseSeed=71823;const noise=()=>{noiseSeed=(Math.imul(noiseSeed,1664525)+1013904223)>>>0;return noiseSeed/2147483648-1;};

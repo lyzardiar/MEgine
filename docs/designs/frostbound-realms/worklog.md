@@ -1,6 +1,6 @@
 # 霜境战纪当前交接
 
-工作目录 C:/Users/admin/.codex/worktrees/1339/MEgine，分支 codex/frostbound-realms。原目录 G:/work/github/MEgine 未改动。施工阶段 651dab9 已推送；本文件随地图事件阶段提交。完整复刻目标保持 active。
+工作目录 C:/Users/admin/.codex/worktrees/1339/MEgine，分支 codex/frostbound-realms。原目录 G:/work/github/MEgine 未改动。施工阶段 651dab9 与地图事件阶段 cc6e66a 已推送；本文件随中文编辑阶段提交。完整复刻目标保持 active。
 
 2026-09-28 本阶段：World 实体写入维护 revision，WorldSnapshotCache 复用 Arc<EntitySnapshot>，每个 World 有唯一缓存身份。ScriptHost 和 PlaySession 使用不可变快照；原生 Play 返回变化实体、完整顺序、帧元数据及连续revision，前端重建全量状态；显式 Inspector/Agent 编辑强制全量校正。快照过滤重复 Name/Parent/Children 元数据，修复运行改名回滚。异步启动/停止串行且停止绑定原生会话；编译子进程有 30 秒超时和 kill_on_drop。组件序列化状态变更通过 World 写 API 或 get_component_mut，不能经只读引用内部修改。
 
@@ -27,3 +27,13 @@
 地图事件收尾补齐传输容量：合法最大数量的区域/事件/文本地图超过原生64KiB与服务端16KiB限制，ScriptNetwork和服务器统一512KiB消息上限，服务器累计缓冲1MiB，原生队列仍有界。新增150KB Unicode分片往返与超过512KiB拒绝，mengine-script 21/21通过。新Release runtime/editor重建后用native-large-map-qa验证超过256KiB合法地图从原生客户端创建房间、双端游玩与重连；此测试只在隔离QA样例中注入作者地图，不修改交付默认地图。
 
 最终大地图原生验收通过：上传 263,398 字节合法作者地图，双原生客户端进入权威比赛并重连成功。Release 引擎已重建，最终包哈希已更新，159文件逐文件SHA-256与新Release可执行文件一致。
+
+2026-09-28 中文编辑阶段：地图区域名称、触发器名称与公告复用现有 InputField。N 打开面板，点击输入框编辑，鼠标保存/取消/清空。编辑器 textarea 支持原生组合输入、选区与粘贴；Player 接收键盘文本和 IME Commit，组合期间不触发游戏快捷键，失焦清理组合状态，退格按 Unicode scalar 删除。Player 尚无光标移动/选区/剪贴板支持。地图长度校验按字符截断，不切断补充平面字符。
+
+新增免费 Noto Sans SC：Google Fonts 原始变量字体、OFL 许可、来源/下载/哈希记录，fonttools 4.61.1 生成静态400字重，重复生成SHA-256一致。Text 与 InputField 使用随包字体，InputField 新增 font 属性并支持 Inspector/浏览器/原生字体渲染及引用资产打包；Cinzel/Noto许可随Player交付。模型条目仍42，未增加模型。
+
+原生 Game 的浏览器命中布局按原生 Y-down 计算，覆盖锚点、非对称pivot与嵌套Canvas；Scene/浏览器默认维持已有Unity坐标。Frost Canvas配置GraphicRaycaster，隐藏InputField不触发额外浏览器快照。UI输入处理兼容没有nativeEvent的语义事件。
+
+验证：Node规则/TCP通过；真实QuickJS frost_sample 3/3，含中文保存/取消/撤销；Player文本编辑1/1与CJK字形栅格化1/1；编辑器相关测试14/14；CLI Text/InputField引用字体和损坏字体拒绝2/2；编辑器/CLI构建与Release编辑器/Player构建通过。native-triggers-qa.json通过原生窗口实际textarea焦点与文本提交，中文区域名、公告、地图保存/重载、区域/条件/动作/依赖保护、撤销、模式切换、护送事件完成及存档恢复。window UI语义事件不是物理键盘或IME候选选择验收。截图editor-unicode-input.png、editor-regions.png、supply-road.png。
+
+最终包162文件，1753场景实体，42模型条目，内容哈希9b2d0a532852af5cd3936defab04bf421dc91634278cdc684b91cab51f6b978c；逐文件SHA-256及Release exe一致。Player启动30秒、窗口正确、响应正常、零ERROR，见player-smoke.json。完整复刻仍active；完整战役/四族美术与内容、Dota完整规则、可视触发图、分层地形、录像观战、大规模导航、公网与5ms目标仍未完成。实际物理IME/音频/跨机LAN未验收。

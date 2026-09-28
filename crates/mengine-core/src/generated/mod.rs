@@ -2819,6 +2819,7 @@ impl Component for ProgressBar {
 #[serde(default)]
 pub struct InputField {
     pub text: String,
+    pub font: String,
     pub placeholder: String,
     pub text_color: [f32; 4],
     pub placeholder_color: [f32; 4],
@@ -2836,6 +2837,7 @@ impl Default for InputField {
     fn default() -> Self {
         Self {
             text: "".into(),
+            font: "".into(),
             placeholder: "Enter text...".into(),
             text_color: [0.94, 0.95, 0.98, 1.0],
             placeholder_color: [0.55, 0.58, 0.64, 1.0],

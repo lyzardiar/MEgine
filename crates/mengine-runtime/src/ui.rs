@@ -2785,6 +2785,10 @@ fn walk(
         } else {
             (&input.text, input.text_color)
         };
+        let input_rect = inset_rect(rect, [8.0, 2.0, 8.0, 2.0], scale);
+        if let Some(resolver) = font_resolver.as_deref_mut().filter(|_| !input.font.trim().is_empty()) {
+            push_text_styled_rich_with_font(primitives, input_rect, value, multiply_alpha(color, alpha), [0.0; 4], 0.0, &input.font, input.font_size * scale, "Normal", false, false, false, 1.0, 512.0, scale, "Left", "Middle", 1.0, if input.multiline { "Wrap" } else { "Overflow" }, "Truncate", intersect_clip(clip, input_rect), font_raster_scale, resolver);
+        } else {
         push_text(
             primitives,
             inset_rect(rect, [8.0, 2.0, 8.0, 2.0], scale),
@@ -2795,6 +2799,7 @@ fn walk(
             "Middle",
             clip,
         );
+        }
         if enabled && receives_graphic_raycast && state.accepts_raycasts() {
             controls.push(control_region(
                 entity,

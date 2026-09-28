@@ -107,7 +107,7 @@ var Frost = (() => {
     const point=p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&Math.abs(v)<=27);
     if(!Array.isArray(raw.spawns)||raw.spawns.length!==2||!raw.spawns.every(point)||Math.hypot(raw.spawns[0][0]-raw.spawns[1][0],raw.spawns[0][1]-raw.spawns[1][1])<20)throw Error('Two separated spawn points are required');
     if(!Array.isArray(raw.props)||raw.props.length>100||raw.props.some(p=>!p||!['tree','mine','camp'].includes(p.kind)||!Number.isFinite(p.x)||!Number.isFinite(p.z)||Math.abs(p.x)>29||Math.abs(p.z)>29))throw Error('Invalid map objects');
-    const map={version:1,name:String(raw.name||'Custom battlefield').slice(0,40),mode:raw.mode,terrain:[...raw.terrain],spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
+    const map={version:1,name:Array.from(String(raw.name||'Custom battlefield')).slice(0,40).join(''),mode:raw.mode,terrain:[...raw.terrain],spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
     const at=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<=27&&Math.abs(p.z)<=27;
     if(raw.players!==undefined&&(!Array.isArray(raw.players)||raw.players.length!==2||raw.players.some(p=>!p||!Number.isInteger(p.faction)||p.faction<0||p.faction>3||typeof p.ai!=='boolean'||p.heroClass!==undefined&&!validHero(p.heroClass))))throw Error('Invalid player settings');
     map.players=clone(raw.players||[{faction:0,ai:false},{faction:1,ai:true}]);for(const p of map.players)p.heroClass??=0;
@@ -115,7 +115,7 @@ var Frost = (() => {
     map.units=(raw.units||[]).map(u=>({kind:u.kind,team:u.team,x:u.x,z:u.z,...(u.heroClass!==undefined?{heroClass:u.heroClass}:{}),...(u.tag?{tag:u.tag}:{})}));
     if(map.mode==='rpg'&&(map.units.filter(u=>u.tag==='scout'&&u.team===1).length<3||!map.units.some(u=>u.tag==='keeper'&&u.team===1)||!map.units.some(u=>u.tag==='boss'&&u.team===1)))throw Error('RPG requires three enemy scouts, a relic keeper and a boss');
     if(raw.regions!==undefined&&(!Array.isArray(raw.regions)||raw.regions.length>32||raw.regions.some(r=>!at(r)||![r.width,r.height].every(v=>Number.isFinite(v)&&v>=2&&v<=54)||Math.abs(r.x)+r.width/2>29||Math.abs(r.z)+r.height/2>29)))throw Error('Invalid map regions');
-    map.regions=(raw.regions||[]).map((r,i)=>({name:String(r.name||'Region '+(i+1)).slice(0,40),x:r.x,z:r.z,width:r.width,height:r.height}));
+    map.regions=(raw.regions||[]).map((r,i)=>({name:Array.from(String(r.name||'Region '+(i+1))).slice(0,40).join(''),x:r.x,z:r.z,width:r.width,height:r.height}));
     const integer=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max,region=v=>integer(v,-1,map.regions.length-1);
     if(raw.triggers!==undefined&&(!Array.isArray(raw.triggers)||raw.triggers.length>32))throw Error('Invalid map triggers');
     map.triggers=(raw.triggers||[]).map((t,i)=>{
@@ -124,7 +124,7 @@ var Frost = (() => {
       if(!Array.isArray(conditions)||!conditions.length||conditions.length>8||conditions.some(c=>!c||!['timer','delay','enter','kills','gold','wood','units','clear'].includes(c.when)||!integer(c.team,0,1)||!integer(c.value,1,600)||!region(c.region)||c.kind!=='*'&&!Object.hasOwn(types,c.kind)))throw Error('Invalid trigger conditions');
       if(!Array.isArray(actions)||!actions.length||actions.length>8||actions.some(a=>!a||!['spawn','gold','wood','message','victory','attackMove','heal'].includes(a.action)||!integer(a.team,0,1)||!integer(a.value,1,a.action==='spawn'?32:600)||!region(a.region)||!Object.hasOwn(types,a.kind)))throw Error('Invalid trigger actions');
       const logic=t.logic??'all',limit=t.limit??1,interval=t.interval??10;if(!['all','any'].includes(logic)||!integer(limit,1,99)||!integer(interval,1,600))throw Error('Invalid trigger repetition');
-      return {name:String(t.name||'Trigger '+(i+1)).slice(0,40),x:t.x,z:t.z,after:t.after,logic,limit,interval,conditions:conditions.map(c=>({when:c.when,team:c.team,value:c.value,region:c.region,kind:c.kind})),actions:actions.map(a=>({action:a.action,team:a.team,value:a.value,region:a.region,kind:a.kind,text:String(a.text||'Map objective activated').slice(0,120)}))};
+      return {name:Array.from(String(t.name||'Trigger '+(i+1))).slice(0,40).join(''),x:t.x,z:t.z,after:t.after,logic,limit,interval,conditions:conditions.map(c=>({when:c.when,team:c.team,value:c.value,region:c.region,kind:c.kind})),actions:actions.map(a=>({action:a.action,team:a.team,value:a.value,region:a.region,kind:a.kind,text:Array.from(String(a.text||'Map objective activated')).slice(0,120).join('')}))};
     });
     for(const p of map.spawns){const c=cell(...p);for(let z=c[1]-2;z<=c[1]+2;z++)for(let x=c[0]-2;x<=c[0]+2;x++)if(x>=0&&z>=0&&x<32&&z<32)map.terrain[z*32+x]=0;}
     return map;

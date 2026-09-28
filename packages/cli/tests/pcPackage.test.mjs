@@ -931,7 +931,7 @@ test('buildPcPackage referenced mode copies the validated closure and always-inc
   }
 });
 
-test('referenced builds include validated Text fonts and reject corrupt sfnt data', {
+for (const component of ['Text', 'InputField']) test(`referenced builds include validated ${component} fonts and reject corrupt sfnt data`, {
   skip: installedFont == null ? 'no system TrueType font is available' : false,
 }, () => {
   const paths = fixture('text-font');
@@ -946,7 +946,7 @@ test('referenced builds include validated Text fonts and reject corrupt sfnt dat
       world: {
         entities: [{
           entity: 1,
-          components: { Text: { text: 'Agent UI', font: 'Assets/Fonts/Interface.ttf' } },
+          components: { [component]: { text: 'Agent UI', font: 'Assets/Fonts/Interface.ttf' } },
         }],
       },
     }));

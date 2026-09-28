@@ -275,6 +275,7 @@ export type UiDrawItem = {
   };
   input?: {
     text: string;
+    font?: string;
     placeholder: string;
     textColor: [number, number, number, number];
     placeholderColor: [number, number, number, number];
@@ -1030,6 +1031,7 @@ export function layoutUiOverlay(
   eventCamera?: Camera,
   targetDisplay: number | null = 0,
   textMeasurement?: UiTextLayoutMeasurement,
+  nativeCoordinates = false,
 ): UiDrawItem[] {
   const canvases = entities
     .filter((e) => e.components.Canvas
@@ -1206,10 +1208,12 @@ export function layoutUiOverlay(
       }
       const hasRt = !!ent.components.RectTransform;
       const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
+      // Browser geometry helpers use Y-up pivots; native Game pixels use Y-down pivots.
+      if (rt && nativeCoordinates) rt.pivot[1] = 1 - rt.pivot[1];
       let rect = forcedLayout?.rect ?? (isCanvasRoot
         ? parentRect
         : hasRt
-          ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform))
+          ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform), nativeCoordinates)
           : parentRect);
       const layout = ent.components.LayoutGroup as Record<string, unknown> | undefined;
       const contentFitter = ent.components.ContentSizeFitter as Record<string, unknown> | undefined;
@@ -1729,6 +1733,7 @@ export function layoutUiOverlay(
           input: input
             ? {
                 text: String(input.text ?? ''),
+                font: String(input.font ?? '').trim().replaceAll('\\', '/'),
                 placeholder: String(input.placeholder ?? 'Enter text...'),
                 textColor: color4(input.text_color ?? input.textColor, [0.94, 0.95, 0.98, 1]),
                 placeholderColor: color4(input.placeholder_color ?? input.placeholderColor, [0.55, 0.58, 0.64, 1]),
@@ -1910,16 +1915,16 @@ export function layoutUiOverlay(
         current = ancestor.parent ?? null;
       }
       if (inheritedCanvas.components.RectTransform) {
-        canvasParent = solveRectTransform(root, scaleRt(inheritedCanvas.components.RectTransform));
+        canvasParent = solveRectTransform(root, scaleRt(inheritedCanvas.components.RectTransform), nativeCoordinates);
       }
       for (const ancestor of chain.reverse()) {
         if (ancestor.components.RectTransform) {
-          canvasParent = solveRectTransform(canvasParent, scaleRt(ancestor.components.RectTransform));
+          canvasParent = solveRectTransform(canvasParent, scaleRt(ancestor.components.RectTransform), nativeCoordinates);
         }
       }
     }
     const canvasRt = canvas.components.RectTransform
-      ? solveRectTransform(canvasParent, scaleRt(canvas.components.RectTransform))
+      ? solveRectTransform(canvasParent, scaleRt(canvas.components.RectTransform), nativeCoordinates)
       : canvasParent;
     walk(canvas, canvasRt, 0, true, undefined, {
       canvasBatchRoot: canvas.entity,
@@ -3858,7 +3863,7 @@ export function drawUiItems(
         const textColor = it.input.text ? it.input.textColor : it.input.placeholderColor;
         const fontSize = Math.max(8, it.input.fontSize);
         ctx.fillStyle = cssColor(textColor, it.input.interactable ? 1 : 0.45);
-        ctx.font = `${fontSize}px system-ui, sans-serif`;
+        ctx.font = uiTextFontCss(fontSize, 'Normal', it.input.font ?? '');
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         fillReadableText(value, x + 8, y + h * 0.5, Math.max(0, w - 16), textColor, fontSize);

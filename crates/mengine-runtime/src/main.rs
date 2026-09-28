@@ -127,6 +127,7 @@ struct App {
     active_slider: Option<Entity>,
     active_ui_press: Option<Entity>,
     focused_input: Option<Entity>,
+    ime_composing: bool,
     focused_ui: Option<Entity>,
     ui_button_tints: HashMap<Entity, UiButtonTintTween>,
     modifiers: ModifiersState,
@@ -199,6 +200,7 @@ impl App {
             active_slider: None,
             active_ui_press: None,
             focused_input: None,
+            ime_composing: false,
             focused_ui: None,
             ui_button_tints: HashMap::new(),
             modifiers: ModifiersState::empty(),
@@ -292,6 +294,7 @@ impl App {
                 self.ui_controls.clear();
                 self.active_slider = None;
                 self.focused_input = None;
+                self.ime_composing = false;
                 self.focused_ui = None;
                 self.last_ui_draw_calls = u32::MAX;
                 self.particles = ParticleWorld::default();
@@ -787,6 +790,7 @@ impl App {
             self.focused_ui = Some(control.entity);
             if !matches!(control.kind, UiControlKind::InputField) {
                 self.focused_input = None;
+                self.ime_composing = false;
                 if let Some(window) = &self.window {
                     window.set_ime_allowed(false);
                 }
@@ -820,6 +824,7 @@ impl App {
             }
             UiControlKind::InputField => {
                 self.focused_input = Some(control.entity);
+                self.ime_composing = false;
                 if let Some(window) = &self.window {
                     window.set_ime_allowed(true);
                 }
@@ -855,6 +860,7 @@ impl App {
     fn move_ui_focus(&mut self, reverse: bool) {
         self.focused_ui = next_ui_focus(&self.ui_controls, self.focused_ui, reverse);
         self.focused_input = None;
+        self.ime_composing = false;
         if let Some(window) = &self.window {
             window.set_ime_allowed(false);
         }
@@ -879,6 +885,7 @@ impl App {
         }
         if self.world.get_component::<InputField>(entity).is_some() {
             self.focused_input = Some(entity);
+            self.ime_composing = false;
             if let Some(window) = &self.window {
                 window.set_ime_allowed(true);
             }
@@ -969,6 +976,7 @@ impl App {
         };
         let Some(input) = self.world.get_component_mut::<InputField>(entity) else {
             self.focused_input = None;
+            self.ime_composing = false;
             return;
         };
         let sanitized;
@@ -1003,6 +1011,7 @@ impl App {
             true
         } else {
             self.focused_input = None;
+            self.ime_composing = false;
             false
         }
     }
@@ -1022,9 +1031,11 @@ impl App {
             }
             log::info!("UI InputField {:?} submitted: {}", entity, input.text);
             self.focused_input = None;
+            self.ime_composing = false;
             true
         } else {
             self.focused_input = None;
+            self.ime_composing = false;
             false
         }
     }
@@ -1273,10 +1284,15 @@ function onTick(dt, frame) {
                     KeyEvent {
                         physical_key: PhysicalKey::Code(code),
                         state,
+                        text,
                         ..
                     },
                 ..
             } => {
+                if self.focused_input.is_some() {
+                    for key in self.script_input.keys.clone() { self.script_input.key(key, false); }
+                }
+                if self.focused_input.is_some() && self.ime_composing { return; }
                 if state == ElementState::Pressed {
                     match code {
                         WinitKey::Tab if !self.ui_controls.is_empty() => {
@@ -1294,6 +1310,7 @@ function onTick(dt, frame) {
                         }
                         WinitKey::Escape if self.focused_input.is_some() => {
                             self.focused_input = None;
+                            self.ime_composing = false;
                             if let Some(window) = &self.window {
                                 window.set_ime_allowed(false);
                             }
@@ -1314,6 +1331,12 @@ function onTick(dt, frame) {
                         }
                         _ => {}
                     }
+                }
+                if self.focused_input.is_some() {
+                    if state == ElementState::Pressed && !self.modifiers.control_key() && !self.modifiers.super_key() {
+                        if let Some(text) = text { self.edit_focused_input(&text.chars().filter(|c| !c.is_control()).collect::<String>()); }
+                    }
+                    return;
                 }
                 if code == WinitKey::Escape && state == ElementState::Pressed { self.release_pointer(); }
                 self.script_input.key(format!("{code:?}"), state == ElementState::Pressed);
@@ -1336,7 +1359,12 @@ function onTick(dt, frame) {
                 }
             }
             WindowEvent::ModifiersChanged(modifiers) => self.modifiers = modifiers.state(),
-            WindowEvent::Ime(Ime::Commit(text)) => self.edit_focused_input(&text),
+            WindowEvent::Ime(Ime::Preedit(text, _)) => self.ime_composing = !text.is_empty(),
+            WindowEvent::Ime(Ime::Commit(text)) => {
+                self.ime_composing = false;
+                self.edit_focused_input(&text);
+            }
+            WindowEvent::Ime(Ime::Disabled) => self.ime_composing = false,
             WindowEvent::CursorMoved { position, .. } => {
                 self.cursor = [position.x as f32, position.y as f32];
                 self.cursor_inside = true;
@@ -1345,6 +1373,7 @@ function onTick(dt, frame) {
             WindowEvent::CursorEntered { .. } => self.cursor_inside = true,
             WindowEvent::CursorLeft { .. } => self.cursor_inside = false,
             WindowEvent::Focused(false) => {
+                self.ime_composing = false;
                 self.release_pointer();
                 self.script_input.release_all();
                 self.cursor_inside = false;
@@ -1710,6 +1739,11 @@ function onTick(dt, frame) {
                         );
                     }
                     self.ui_controls = std::mem::take(&mut frame.controls);
+                    if self.focused_input.is_some_and(|entity| !self.ui_controls.iter().any(|control| control.entity == entity && matches!(control.kind, UiControlKind::InputField))) {
+                        self.focused_input = None;
+                        self.ime_composing = false;
+                        if let Some(window) = &self.window { window.set_ime_allowed(false); }
+                    }
                     if let Err(e) = r.submit_frame(&frame.render_frame()) {
                         log::warn!("render: {e}");
                     }
@@ -2706,6 +2740,23 @@ fn validate_animation_clip_asset(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn input_field_preserves_unicode_and_character_limits() {
+        let mut app = App::new(Args::parse_from(["mengine-runtime"]));
+        let entity = app.world.spawn_empty();
+        app.world.insert_component(entity, InputField { character_limit: 4, ..Default::default() });
+        app.focused_input = Some(entity);
+        app.edit_focused_input("A中\r\n文😀Z");
+        assert_eq!(app.world.get_component::<InputField>(entity).unwrap().text, "A中文😀");
+        assert!(app.backspace_focused_input());
+        assert_eq!(app.world.get_component::<InputField>(entity).unwrap().text, "A中文");
+        app.edit_focused_input("B");
+        assert!(app.submit_focused_input());
+        assert!(app.focused_input.is_none());
+        app.edit_focused_input("ignored");
+        assert_eq!(app.world.get_component::<InputField>(entity).unwrap().text, "A中文B");
+    }
 
     fn temporary_project_root(label: &str) -> PathBuf {
         std::env::temp_dir().join(format!(

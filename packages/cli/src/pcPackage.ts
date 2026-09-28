@@ -1291,6 +1291,7 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('Image'), 'sprite'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('Text'), 'font'), from, 'UI font');
+    enqueue(stringValue(component('InputField'), 'font'), from, 'UI font');
     for (const name of ['Image', 'RawImage', 'Text', 'Panel', 'SpriteRenderer', 'SpriteBatch2D', 'AnimatedSprite2D']) {
       enqueueMaterial(stringValue(component(name), 'material'), from, 'ui');
     }

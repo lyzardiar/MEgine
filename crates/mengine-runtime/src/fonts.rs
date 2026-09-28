@@ -635,6 +635,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn packaged_frost_font_rasterizes_cjk() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+        let font = "Assets/Fonts/NotoSansSC.ttf";
+        let source = FontArc::try_from_vec(std::fs::read(root.join(font)).unwrap()).unwrap();
+        let mut cache = RuntimeFontCache::new(Some(root));
+        for character in "霜境补给营地保存取消ABC".chars() {
+            assert_ne!(source.glyph_id(character).0, 0, "missing {character}");
+            assert!(cache.measure_glyph(font, character, 22.0, "Normal").unwrap().advance > 0.0);
+            assert!(cache.resolve_glyph_texture(font, character, 22.0, "Normal", 1.0).is_some());
+        }
+    }
+
+    #[test]
     fn font_paths_are_confined_and_invalid_data_fails_softly_once() {
         let root = std::env::temp_dir().join(format!(
             "mengine-font-cache-{}-{}",

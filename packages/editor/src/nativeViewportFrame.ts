@@ -2,8 +2,8 @@ import type { NativeViewportProfilePayload } from './editorProfiler';
 import { isSharedNativeViewportFrame, releaseNativeViewportFrame } from './nativeViewportTransport.ts';
 
 /** Browser-owned drawing and UI hit testing require the same snapshot as the native base image. */
-export function requiresBrowserViewportSnapshot(entities: readonly { components: Record<string, unknown> }[]): boolean {
-  return entities.some(({ components: c }) => c.SpineSkeleton || c.Button || c.Toggle || c.Slider || c.Scrollbar || c.InputField || c.Dropdown || c.ListView || c.ScrollView || c.TabView);
+export function requiresBrowserViewportSnapshot(entities: readonly { active?: boolean; components: Record<string, unknown> }[]): boolean {
+  return entities.some(({ active, components: c }) => active !== false && (c.SpineSkeleton || c.Button || c.Toggle || c.Slider || c.Scrollbar || c.InputField || c.Dropdown || c.ListView || c.ScrollView || c.TabView));
 }
 
 /** Match the pixels actually displayed; explicit captures still render at the requested output size. */

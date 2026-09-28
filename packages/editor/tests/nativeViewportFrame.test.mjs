@@ -6,6 +6,7 @@ test('browser overlays and interactive UI retain a matching snapshot', () => {
   assert.equal(requiresBrowserViewportSnapshot([{ components: { Text: {}, SpriteRenderer: {} } }]), false);
   for (const type of ['SpineSkeleton', 'Button', 'Toggle', 'Slider', 'Scrollbar', 'InputField', 'Dropdown', 'ListView', 'ScrollView', 'TabView']) {
     assert.equal(requiresBrowserViewportSnapshot([{ components: { [type]: {} } }]), true);
+    assert.equal(requiresBrowserViewportSnapshot([{ active: false, components: { [type]: {} } }]), false);
   }
 });
 

@@ -2655,6 +2655,7 @@ export function Viewport(props: {
             gameCamera ?? undefined,
             p.gameDisplay,
             textMeasurement,
+            nativeGameReady,
           ),
         ];
         uiItemsRef.current = uiItems;
@@ -5231,7 +5232,7 @@ export function Viewport(props: {
               event.currentTarget,
               item?.input?.onValueChanged,
               false,
-              inputCompositionRef.current || native.isComposing === true,
+              inputCompositionRef.current || native?.isComposing === true,
             );
           }}
           onCompositionStart={() => {
@@ -5258,7 +5259,7 @@ export function Viewport(props: {
             const action = uiInputKeyAction(
               event.key,
               item.input.multiline,
-              inputCompositionRef.current || native.isComposing || native.keyCode === 229,
+              inputCompositionRef.current || native?.isComposing || native?.keyCode === 229,
             );
             if (action === 'native') return;
             event.preventDefault();

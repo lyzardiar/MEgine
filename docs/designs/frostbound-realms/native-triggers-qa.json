@@ -3,5 +3,11 @@
   "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
   "physicalInput": false,
   "audioListening": false,
-  "regionTriggerEditingAndMission": true
+  "regionTriggerEditingAndMission": true,
+  "unicodeEditorInput": {
+    "region": "霜境补给营地",
+    "message": "补给已抵达，请护送至山口",
+    "method": "Window UI pointer gesture and textarea setValue, then Agent save/load and gameplay",
+    "physicalIme": false
+  }
 }
