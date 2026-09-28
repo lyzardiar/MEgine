@@ -1,0 +1,418 @@
+{
+  "baselineCommit": "e62fd4a13c59f2898f5cd459996e638a586009b1",
+  "scene": "Frostbound skirmish, 1899 entities, 1280x720",
+  "method": "Three 5-second native Release editor windows after 5-second warmup; same art and gameplay configuration. Stage samples are individual snapshots, not stage averages.",
+  "before": {
+    "runs": [
+      {
+        "summary": {
+          "intervals": 63,
+          "averagePresentIntervalMs": 83.28888888964578,
+          "p95PresentIntervalMs": 146.5,
+          "presentedFps": 12.006403415045641,
+          "averageRequestMs": 55.650000002235174,
+          "averageRenderMs": 8.46545625,
+          "averageCommandMs": 12.398414062499999,
+          "averageUploadMs": 1.4875000044703484,
+          "averageSimulationMs": 12.170424999999996,
+          "averageSimulationRequestMs": 34.1328125
+        },
+        "simulationStagesSnapshot": [
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Reconcile",
+            "selfMs": 0.0009,
+            "totalMs": 0.0009
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Input",
+            "selfMs": 0.030199999999999998,
+            "totalMs": 0.030199999999999998
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Physics and collision callbacks",
+            "selfMs": 2.2401,
+            "totalMs": 2.2401
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Animation, timeline and audio",
+            "selfMs": 0.7414000000000001,
+            "totalMs": 0.7414000000000001
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Script and runtime requests",
+            "selfMs": 8.4003,
+            "totalMs": 8.4003
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot export",
+            "selfMs": 0.11349999999999999,
+            "totalMs": 0.11349999999999999
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot delta",
+            "selfMs": 0.1044,
+            "totalMs": 0.1044
+          }
+        ],
+        "transport": "shared-buffer"
+      },
+      {
+        "summary": {
+          "intervals": 56,
+          "averagePresentIntervalMs": 92.86428571492434,
+          "p95PresentIntervalMs": 129.19999998807907,
+          "presentedFps": 10.768402430508209,
+          "averageRequestMs": 57.226315791146796,
+          "averageRenderMs": 8.722319298245615,
+          "averageCommandMs": 14.696249122807018,
+          "averageUploadMs": 1.4771929791099148,
+          "averageSimulationMs": 12.365984210526321,
+          "averageSimulationRequestMs": 30.1210526238408
+        },
+        "simulationStagesSnapshot": [
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Reconcile",
+            "selfMs": 0.0013,
+            "totalMs": 0.0013
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Input",
+            "selfMs": 0.030000000000000002,
+            "totalMs": 0.030000000000000002
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Physics and collision callbacks",
+            "selfMs": 1.9178000000000002,
+            "totalMs": 1.9178000000000002
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Animation, timeline and audio",
+            "selfMs": 0.7329,
+            "totalMs": 0.7329
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Script and runtime requests",
+            "selfMs": 8.0464,
+            "totalMs": 8.0464
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot export",
+            "selfMs": 0.1044,
+            "totalMs": 0.1044
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot delta",
+            "selfMs": 0.10890000000000001,
+            "totalMs": 0.10890000000000001
+          }
+        ],
+        "transport": "shared-buffer"
+      },
+      {
+        "summary": {
+          "intervals": 60,
+          "averagePresentIntervalMs": 85.64000000059605,
+          "p95PresentIntervalMs": 137.0999999642372,
+          "presentedFps": 11.676786548260626,
+          "averageRequestMs": 56.72295081810873,
+          "averageRenderMs": 8.34862131147541,
+          "averageCommandMs": 12.892006557377051,
+          "averageUploadMs": 1.4540983663230647,
+          "averageSimulationMs": 12.152611475409838,
+          "averageSimulationRequestMs": 28.270491799370188
+        },
+        "simulationStagesSnapshot": [
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Reconcile",
+            "selfMs": 0.0011,
+            "totalMs": 0.0011
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Input",
+            "selfMs": 0.0281,
+            "totalMs": 0.0281
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Physics and collision callbacks",
+            "selfMs": 2.1908000000000003,
+            "totalMs": 2.1908000000000003
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Animation, timeline and audio",
+            "selfMs": 0.7242000000000001,
+            "totalMs": 0.7242000000000001
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Script and runtime requests",
+            "selfMs": 8.4247,
+            "totalMs": 8.4247
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot export",
+            "selfMs": 0.1032,
+            "totalMs": 0.1032
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot delta",
+            "selfMs": 0.1082,
+            "totalMs": 0.1082
+          }
+        ],
+        "transport": "shared-buffer"
+      }
+    ],
+    "medianPresentedFps": 11.676786548260626,
+    "medianSimulationMs": 12.170424999999996,
+    "medianRenderMs": 8.46545625
+  },
+  "after": {
+    "runs": [
+      {
+        "summary": {
+          "intervals": 68,
+          "averagePresentIntervalMs": 74.06029411712113,
+          "p95PresentIntervalMs": 123,
+          "presentedFps": 13.502511864435355,
+          "averageRequestMs": 58.24202899224516,
+          "averageRenderMs": 8.326365217391306,
+          "averageCommandMs": 9.948497101449274,
+          "averageUploadMs": 1.4695652179096057,
+          "averageSimulationMs": 9.007428985507248,
+          "averageSimulationRequestMs": 31.739130442557126
+        },
+        "simulationStagesSnapshot": [
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Reconcile",
+            "selfMs": 0.0011,
+            "totalMs": 0.0011
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Input",
+            "selfMs": 0.0265,
+            "totalMs": 0.0265
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Physics and collision callbacks",
+            "selfMs": 0.0034000000000000002,
+            "totalMs": 0.0034000000000000002
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Animation, timeline and audio",
+            "selfMs": 1.4406,
+            "totalMs": 1.4406
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Script and runtime requests",
+            "selfMs": 8.4344,
+            "totalMs": 8.4344
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot export",
+            "selfMs": 0.0989,
+            "totalMs": 0.0989
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot delta",
+            "selfMs": 0.09459999999999999,
+            "totalMs": 0.09459999999999999
+          }
+        ],
+        "transport": "shared-buffer"
+      },
+      {
+        "summary": {
+          "intervals": 62,
+          "averagePresentIntervalMs": 80.90645161271095,
+          "p95PresentIntervalMs": 124.60000002384186,
+          "presentedFps": 12.359953749879857,
+          "averageRequestMs": 56.75079364625235,
+          "averageRenderMs": 8.31800634920635,
+          "averageCommandMs": 11.323666666666664,
+          "averageUploadMs": 1.4714285702932448,
+          "averageSimulationMs": 10.2982619047619,
+          "averageSimulationRequestMs": 33.4238095236203
+        },
+        "simulationStagesSnapshot": [
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Reconcile",
+            "selfMs": 0.0013,
+            "totalMs": 0.0013
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Input",
+            "selfMs": 0.0305,
+            "totalMs": 0.0305
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Physics and collision callbacks",
+            "selfMs": 0.0042,
+            "totalMs": 0.0042
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Animation, timeline and audio",
+            "selfMs": 1.3477000000000001,
+            "totalMs": 1.3477000000000001
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Script and runtime requests",
+            "selfMs": 12.0993,
+            "totalMs": 12.0993
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot export",
+            "selfMs": 0.12229999999999999,
+            "totalMs": 0.12229999999999999
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot delta",
+            "selfMs": 0.1132,
+            "totalMs": 0.1132
+          }
+        ],
+        "transport": "shared-buffer"
+      },
+      {
+        "summary": {
+          "intervals": 71,
+          "averagePresentIntervalMs": 73.5,
+          "p95PresentIntervalMs": 131.80000001192093,
+          "presentedFps": 13.605442176870747,
+          "averageRequestMs": 55.754166666004394,
+          "averageRenderMs": 8.188256944444444,
+          "averageCommandMs": 10.066106944444444,
+          "averageUploadMs": 1.461111109289858,
+          "averageSimulationMs": 9.784790277777779,
+          "averageSimulationRequestMs": 33.75416666848792
+        },
+        "simulationStagesSnapshot": [
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Reconcile",
+            "selfMs": 0.0013,
+            "totalMs": 0.0013
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Input",
+            "selfMs": 0.0275,
+            "totalMs": 0.0275
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Physics and collision callbacks",
+            "selfMs": 0.0034000000000000002,
+            "totalMs": 0.0034000000000000002
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Animation, timeline and audio",
+            "selfMs": 0.7691,
+            "totalMs": 0.7691
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Script and runtime requests",
+            "selfMs": 7.6301,
+            "totalMs": 7.6301
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot export",
+            "selfMs": 0.0883,
+            "totalMs": 0.0883
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot delta",
+            "selfMs": 0.0976,
+            "totalMs": 0.0976
+          }
+        ],
+        "transport": "shared-buffer"
+      }
+    ],
+    "medianPresentedFps": 13.502511864435355,
+    "medianSimulationMs": 9.784790277777779,
+    "medianRenderMs": 8.31800634920635
+  },
+  "editorSha256": "e3fdfff221a38f1ab61323289f76657765bf41608d1078480351704bb020b2e3",
+  "runtimeSha256": "2b38a6ac34669a9ca50309d096fb567b1b6105d1fd606e9009056d69d7e67114",
+  "overall5msTargetMet": false
+}

@@ -6,7 +6,7 @@ var FrostClient=(()=>{
   const itemIcons=['blade','heart','boots','edge','storm','charm','heal','frost'];
   const previous={},visibility={},modelNames={},active={},tileState=[];
   let editorPage=0,placeKind='soldier',placeHeroClass=0,placeTeam=0,placeTag='',triggerIndex=-1,triggerPanel=0,entryIndex=0,regionIndex=-1,editorTool='select',heightBrush=1,rampBrush=0,rename=null;
-  function set(n,c,v){const e=entities[n];if(!e)return;const json=JSON.stringify(v),key=n+'/'+c;if(sent[key]===json)return;sent[key]=json;engine.pushCommandJson(JSON.stringify({op:'setComponent',entity:e.entity,component:c,value:v}));}
+  function set(n,c,v){const e=entities[n];if(!e)return;const json=JSON.stringify(v),key=n+'/'+c;if(sent[key]===json)return;sent[key]=json;engine.pushCommandJson('{"op":"setComponent","entity":'+e.entity+',"component":'+JSON.stringify(c)+',"value":'+json+'}');}
   function activate(n,on){const e=entities[n];if(!e||active[n]===on)return;active[n]=on;engine.setActive(e.entity,on);}
   function transform(n,position,scale=[1,1,1],rotation=[0,0,0,1]){activate(n,position!==hidden);if(position!==hidden)set(n,'Transform',{position,scale,rotation});}
   function label(n,text,color){if(authored[n]?.Text)set(n,'Text',{...authored[n].Text,text,...(color?{color}:{})});}

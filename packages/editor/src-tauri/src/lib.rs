@@ -4293,18 +4293,13 @@ async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: 
     let mut metadata = serde_json::json!({"hasAuthoredCamera":frame.has_authored_camera,"profile":frame.profile});
     metadata["profile"]["commandMs"] = serde_json::json!(started.elapsed().as_secs_f64() * 1000.0);
     let metadata = serde_json::to_vec(&metadata).map_err(|error| error.to_string())?;
-    let mut bytes = Vec::with_capacity(16 + metadata.len() + frame.rgba.len());
-    for value in [0x3146474d_u32, frame.width, frame.height, metadata.len() as u32] { bytes.extend_from_slice(&value.to_le_bytes()); }
-    bytes.extend_from_slice(&metadata);
-    bytes.extend_from_slice(&frame.rgba);
+    let bytes = Arc::new(native_viewport_transport::FramePayload::new(frame.width, frame.height, metadata, frame.rgba)?);
     if let Some(request) = shared_request.filter(|request| request.len() <= 128) {
-        let shared = Arc::new(bytes);
-        if native_viewport_transport::share_frame(&window, Arc::clone(&shared), request).await.is_ok() {
+        if native_viewport_transport::share_frame(&window, Arc::clone(&bytes), request).await.is_ok() {
             return Ok(tauri::ipc::Response::new(Vec::<u8>::new()));
         }
-        bytes = Arc::try_unwrap(shared).unwrap_or_else(|bytes| (*bytes).clone());
     }
-    Ok(tauri::ipc::Response::new(bytes))
+    Ok(tauri::ipc::Response::new(bytes.encode()))
 }
 
 #[tauri::command]

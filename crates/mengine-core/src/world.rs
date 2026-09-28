@@ -30,6 +30,7 @@ pub struct World {
     pub(crate) snapshot_id: u64,
     entities: Vec<EntityRecord>,
     free_list: Vec<u32>,
+    component_counts: HashMap<String, usize>,
     pub time: Time,
     pub commands: CommandBuffer,
     pub schedule: Schedule,
@@ -57,6 +58,7 @@ impl World {
             snapshot_id: NEXT_WORLD_ID.fetch_add(1, Ordering::Relaxed),
             entities: Vec::new(),
             free_list: Vec::new(),
+            component_counts: HashMap::new(),
             time: Time::default(),
             commands: CommandBuffer::new(),
             schedule: Schedule::new(),
@@ -119,6 +121,7 @@ impl World {
         }
         let rec = &mut self.entities[entity.index as usize];
         rec.alive = false;
+        for name in rec.components.keys() { *self.component_counts.get_mut(name).expect("live component count") -= 1; }
         rec.components.clear();
         rec.serialized_components.clear();
         rec.name = None;
@@ -146,11 +149,9 @@ impl World {
         if !self.is_alive(entity) {
             return;
         }
-        let name = T::type_name().to_string();
+        let name = T::type_name();
         self.entities[entity.index as usize].revision += 1;
-        self.entities[entity.index as usize]
-            .components
-            .insert(name, Box::new(value));
+        if self.entities[entity.index as usize].components.insert(name.to_string(), Box::new(value)).is_none() { *self.component_counts.entry(name.to_string()).or_default() += 1; }
     }
 
     /// Read component state; serialized mutations must use `get_component_mut` or a World command.
@@ -215,7 +216,7 @@ impl World {
         }
         let name = canonical_component_name(name);
         self.entities[entity.index as usize].revision += 1;
-        self.entities[entity.index as usize].components.remove(name);
+        if self.entities[entity.index as usize].components.remove(name).is_some() { *self.component_counts.get_mut(name).expect("live component count") -= 1; }
         self.entities[entity.index as usize]
             .serialized_components
             .remove(name);
@@ -285,11 +286,15 @@ impl World {
             .unwrap_or_default()
     }
 
+    /// Whether any live entity contains this canonical typed component, including inactive entities.
+    pub fn has_component_type(&self, name: &str) -> bool { self.component_counts.get(name).copied().unwrap_or(0) > 0 }
+
     pub fn entities_with_components<'a>(
         &'a self,
         type_names: &'a [&'static str],
     ) -> impl Iterator<Item = Entity> + 'a {
-        self.iter_entities().filter(move |e| {
+        let available = type_names.iter().all(|name| self.has_component_type(name));
+        self.iter_entities().take(if available { usize::MAX } else { 0 }).filter(move |e| {
             let rec = &self.entities[e.index as usize];
             type_names.iter().all(|n| rec.components.contains_key(*n))
         })
@@ -421,9 +426,7 @@ impl World {
             }
             other => match crate::generated::component_from_value(other, value) {
                 Ok(Some(component)) => {
-                    self.entities[entity.index as usize]
-                        .components
-                        .insert(other.to_string(), component);
+                    if self.entities[entity.index as usize].components.insert(other.to_string(), component).is_none() { *self.component_counts.entry(other.to_string()).or_default() += 1; }
                 }
                 Ok(None) => {
                     log::debug!("unknown component '{other}' preserved as serialized data");
@@ -567,6 +570,46 @@ impl Transform {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn component_presence_tracks_typed_serialized_and_entity_lifecycles() {
+        use super::*;
+        let mut world = World::new();
+        let first = world.spawn_empty();
+        let second = world.spawn_empty();
+        assert!(!world.has_component_type("Transform"));
+        world.insert_component(first, Transform::default());
+        world.insert_component(first, Transform::default());
+        world.set_component_value(second, "transform", serde_json::json!({"position":[1,2,3]}));
+        world.set_editor_state(second, 0, false);
+        assert_eq!(world.entities_with_components(&["Transform"]).count(), 2);
+        world.remove_component_by_name(first, "transform");
+        world.remove_component_by_name(first, "Transform");
+        assert!(world.has_component_type("Transform"));
+        world.set_component_value(second, "UserBehaviour", serde_json::json!({"enabled":true}));
+        assert!(!world.has_component_type("UserBehaviour"));
+        assert_eq!(world.entities_with_components(&["Transform", "BoxCollider3D"]).count(), 0);
+        world.despawn(second);
+        assert!(!world.has_component_type("Transform"));
+        let recycled = world.spawn_empty();
+        assert_eq!(second.index, recycled.index);
+        world.insert_component(second, Transform::default());
+        world.remove_component_by_name(second, "Transform");
+        assert!(!world.has_component_type("Transform"));
+        for name in crate::generated::meta::COMPONENT_NAMES {
+            world.set_component_value(recycled, name, serde_json::json!({}));
+            world.set_component_value(recycled, name, serde_json::json!({}));
+            assert!(world.has_component_type(name), "{name}");
+            world.remove_component_by_name(recycled, name);
+            assert!(!world.has_component_type(name), "{name}");
+        }
+        world.set_parent(recycled, Some(first));
+        assert!(world.has_component_type("Parent"));
+        world.despawn(first);
+        assert!(!world.has_component_type("Parent"));
+        assert!(!world.has_component_type("Children"));
+        assert_eq!(world.entities_with_components(&[]).count(), 1);
+    }
+
     #[test]
     fn generated_factory_deserializes_every_registered_idl_component() {
         for name in crate::generated::meta::COMPONENT_NAMES {

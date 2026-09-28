@@ -2,6 +2,8 @@
 
 最新写实美术阶段：[来源、重建、截图与验收边界](realistic-art.md)。
 
+最新运行与交付：[性能实测、测试及 Player 包](runtime-performance.md)。
+
 2026-09-28。工程与操作说明见 [样例 README](../../../samples/frostbound-realms/README.md)。这是原创 RTS/RPG/MOBA/塔防基础版本；《冰封王座》完整内容复刻与约 5 ms 整体帧预算尚未完成。
 
 ## 本次范围
@@ -62,7 +64,7 @@ Node 全规则/TCP 回归与实际 QuickJS 3/3 通过。[原生驻守巡逻验�
 
 ![编队到达](formation-arrival.png)
 
-最新 Player 包284文件、1771 实体、81 模型，内容哈希 `1362668f15059a0c866fa9ff1101e8f25720dcb72e7cb7c8297fec153a5c9910`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
+当前 Player 包 362 文件、1899 实体，内容哈希 `e6e270d55b667d285faf55785bad529a9ca3cebc8e07ee1b638e6f1f7430a2f3`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
 
 本阶段接入四阵营 32 个建筑模型与 5 个骨骼动画怪物，模型目录共 79 项。建筑由 Kenney Castle/Nature/Graveyard 的 46 个模块组合，包含各阵营三级主基地与五类功能建筑；怪物来自 Quaternius Ultimate Monsters。下载原件、CC0 许可、源地址、配方和派生 SHA-256 分别留存于 faction-sources.json、monster-sources.json。32 个建造图标由真实建筑的原生渲染生成，建造菜单、预览、头像和升级外观保持对应。
 
