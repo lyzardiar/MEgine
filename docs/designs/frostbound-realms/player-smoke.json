@@ -1,19 +1,20 @@
 {
-  "checkedAt": "2026-09-28T02:21:09.0196283+08:00",
-  "processId": 150232,
-  "startedAt": "2026-09-28T02:12:34.2812664+08:00",
-  "elapsedSeconds": 514.7,
+  "checkedAt": "2026-09-28T08:15:19.2981775+08:00",
+  "processId": 94772,
+  "startedAt": "2026-09-28T08:12:04.898869+08:00",
+  "elapsedSeconds": 194.4,
   "alive": true,
   "responding": true,
   "windowTitle": "Frostbound Realms",
   "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
-  "packagedFiles": 139,
-  "contentHash": "eeabc1a78996e55f3f3a392840f0f4d6497edf600c44e56a4cfbfaf418a5f652",
+  "packagedFiles": 154,
+  "contentHash": "e8d419bfd32f1ae17274bb94fb1f5039ce211d72431b07141237232e5a70204d",
   "packageValidationPassed": true,
   "scope": "Packaged Release executable startup and process responsiveness; no Player input injection or desktop capture",
   "physicalInput": false,
   "audioListening": false,
-  "audioDeviceAvailable": false,
+  "audioDeviceAvailable": null,
   "loggedErrors": 0,
-  "shutdown": "Only this smoke-check process was stopped"
+  "shutdown": "Only this smoke-check process was stopped",
+  "audioDeviceStatus": "Not verified; startup log contains no audio-disable warning"
 }

@@ -681,6 +681,82 @@
       }
     ]
   },
+  "tower-square-mid-windows": {
+    "material": "Assets/Materials/tower-square-mid-windows.mmat",
+    "size": [
+      0.93,
+      1.01,
+      0.93
+    ],
+    "parts": [
+      {
+        "name": "tower-square-mid-windows",
+        "mesh": "Assets/Models/tower-square-mid-windows-tower-square-mid-windows.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tower-square-top": {
+    "material": "Assets/Materials/tower-square-top.mmat",
+    "size": [
+      1.0,
+      0.3,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "tower-square-top",
+        "mesh": "Assets/Models/tower-square-top-tower-square-top.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tower-square-top-roof-high": {
+    "material": "Assets/Materials/tower-square-top-roof-high.mmat",
+    "size": [
+      1.0,
+      1.35,
+      1.0
+    ],
+    "parts": [
+      {
+        "name": "tower-square-top-roof-high",
+        "mesh": "Assets/Models/tower-square-top-roof-high-tower-square-top-roof-high.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "tower-hexagon-top": {
+    "material": "Assets/Materials/tower-hexagon-top.mmat",
+    "size": [
+      0.864,
+      0.13,
+      0.748246
+    ],
+    "parts": [
+      {
+        "name": "tower-hexagon-top",
+        "mesh": "Assets/Models/tower-hexagon-top-tower-hexagon-top.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
   "wall": {
     "material": "Assets/Materials/wall.mmat",
     "size": [
@@ -749,6 +825,82 @@
       {
         "name": "bridge-straight",
         "mesh": "Assets/Models/bridge-straight-bridge-straight.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "siege-ballista": {
+    "material": "Assets/Materials/siege-ballista.mmat",
+    "size": [
+      1.630346,
+      0.910314,
+      1.198499
+    ],
+    "parts": [
+      {
+        "name": "siege-ballista",
+        "mesh": "Assets/Models/siege-ballista-siege-ballista.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "siege-catapult": {
+    "material": "Assets/Materials/siege-catapult.mmat",
+    "size": [
+      1.734794,
+      1.329642,
+      1.209853
+    ],
+    "parts": [
+      {
+        "name": "siege-catapult",
+        "mesh": "Assets/Models/siege-catapult-siege-catapult.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "siege-trebuchet": {
+    "material": "Assets/Materials/siege-trebuchet.mmat",
+    "size": [
+      1.851245,
+      1.958634,
+      1.257984
+    ],
+    "parts": [
+      {
+        "name": "siege-trebuchet",
+        "mesh": "Assets/Models/siege-trebuchet-siege-trebuchet.glb",
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "siege-ram": {
+    "material": "Assets/Materials/siege-ram.mmat",
+    "size": [
+      2.087348,
+      1.184289,
+      1.000189
+    ],
+    "parts": [
+      {
+        "name": "siege-ram",
+        "mesh": "Assets/Models/siege-ram-siege-ram.glb",
         "pivot": [
           0.0,
           0.0,
@@ -890,82 +1042,6 @@
       }
     ]
   },
-  "tower-square-mid-windows": {
-    "material": "Assets/Materials/tower-square-mid-windows.mmat",
-    "size": [
-      0.93,
-      1.01,
-      0.93
-    ],
-    "parts": [
-      {
-        "name": "tower-square-mid-windows",
-        "mesh": "Assets/Models/tower-square-mid-windows-tower-square-mid-windows.glb",
-        "pivot": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      }
-    ]
-  },
-  "tower-square-top": {
-    "material": "Assets/Materials/tower-square-top.mmat",
-    "size": [
-      1.0,
-      0.3,
-      1.0
-    ],
-    "parts": [
-      {
-        "name": "tower-square-top",
-        "mesh": "Assets/Models/tower-square-top-tower-square-top.glb",
-        "pivot": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      }
-    ]
-  },
-  "tower-square-top-roof-high": {
-    "material": "Assets/Materials/tower-square-top-roof-high.mmat",
-    "size": [
-      1.0,
-      1.35,
-      1.0
-    ],
-    "parts": [
-      {
-        "name": "tower-square-top-roof-high",
-        "mesh": "Assets/Models/tower-square-top-roof-high-tower-square-top-roof-high.glb",
-        "pivot": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      }
-    ]
-  },
-  "tower-hexagon-top": {
-    "material": "Assets/Materials/tower-hexagon-top.mmat",
-    "size": [
-      0.864,
-      0.13,
-      0.748246
-    ],
-    "parts": [
-      {
-        "name": "tower-hexagon-top",
-        "mesh": "Assets/Models/tower-hexagon-top-tower-hexagon-top.glb",
-        "pivot": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      }
-    ]
-  },
   "GuardTower": {
     "material": "Assets/Materials/tower-square-top.mmat",
     "parts": [
@@ -1020,6 +1096,47 @@
     "size": [
       1,
       1.1400000000000001,
+      1
+    ]
+  },
+  "Dragon": {
+    "material": "Assets/Materials/Dragon.mmat",
+    "parts": [
+      {
+        "name": "Dragon",
+        "mesh": "Assets/Models/Dragon.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "DragonArmature|Dragon_Attack",
+        "frames": 10
+      },
+      {
+        "name": "DragonArmature|Dragon_Attack2",
+        "frames": 20
+      },
+      {
+        "name": "DragonArmature|Dragon_Death",
+        "frames": 15
+      },
+      {
+        "name": "DragonArmature|Dragon_Flying",
+        "frames": 20
+      },
+      {
+        "name": "DragonArmature|Dragon_Hit",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1,
+      3,
       1
     ]
   }

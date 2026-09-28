@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / 'samples/frostbound-realms'
 PACKS = {
-    'castle-kit': ('https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip', '921f3f73927bb23106cae34bc21d5ab4b033a9fc120475e96f714a406e3169df', ['tower-square', 'tower-square-mid-windows', 'tower-square-top', 'tower-square-top-roof-high', 'tower-hexagon-top', 'wall', 'wall-corner', 'flag', 'bridge-straight']),
+    'castle-kit': ('https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip', '921f3f73927bb23106cae34bc21d5ab4b033a9fc120475e96f714a406e3169df', ['tower-square', 'tower-square-mid-windows', 'tower-square-top', 'tower-square-top-roof-high', 'tower-hexagon-top', 'wall', 'wall-corner', 'flag', 'bridge-straight', 'siege-ballista', 'siege-catapult', 'siege-trebuchet', 'siege-ram']),
     'nature-kit': ('https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip', 'fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d', ['tree_pineTallA', 'tree_pineTallB', 'tree_pineDefaultA', 'rock_largeA', 'rock_largeB', 'rock_smallA', 'cliff_rock']),
 }
 
@@ -88,7 +88,7 @@ def main():
     (SAMPLE / 'Licenses/PolyHaven.txt').write_text('Poly Haven snow_02 and rocky_terrain. CC0-1.0.\nhttps://polyhaven.com/license\nhttps://creativecommons.org/publicdomain/zero/1.0/\n', encoding='utf-8')
     catalog_path.write_text(json.dumps(catalog, indent=2) + '\n', encoding='utf-8')
     source_path.write_text(json.dumps(sources, indent=2) + '\n', encoding='utf-8')
-    print('Imported 16 CC0 environment models, assembled 3 towers and copied 2 ground textures; retained pinned source archives.')
+    print('Imported 20 CC0 environment models, assembled 3 towers and copied 2 ground textures; retained pinned source archives.')
 
 if __name__ == '__main__':
     main()

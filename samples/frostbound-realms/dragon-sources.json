@@ -1,0 +1,57 @@
+[
+  {
+    "author": "Quaternius",
+    "page": "https://quaternius.com/packs/ultimatemonsters.html",
+    "license": "CC0-1.0",
+    "download": "https://raw.githubusercontent.com/Another-Axiom/GT_CustomMapExample/main/Assets/Meshes/Animated_Monsters_by_Quaternius/Dragon/Dragon.fbx",
+    "file": "SourceAssets/Dragon.fbx",
+    "sha256": "5a45dcf6ac912b6357ab28ecb9d0b2104e7ee0fdae20d082a180cdc8c65adeba",
+    "conversion": {
+      "tool": "FBX2glTF 0.9.7",
+      "download": "https://registry.npmjs.org/fbx2gltf/-/fbx2gltf-0.9.7-p1.tgz",
+      "sha256": "9ff30dc5839155aead31ddadce99884773f8bf81678f3ac9a97ca24f8d58d64c",
+      "arguments": [
+        "-e",
+        "--anim-framerate",
+        "bake24"
+      ]
+    },
+    "atlasSrgbPalette": {
+      "Eyes": [
+        0.95,
+        0.72,
+        0.2,
+        1
+      ],
+      "Main": [
+        0.25,
+        0.55,
+        0.72,
+        1
+      ],
+      "Belly": [
+        0.68,
+        0.78,
+        0.78,
+        1
+      ],
+      "Claws": [
+        0.2,
+        0.25,
+        0.3,
+        1
+      ],
+      "Wings": [
+        0.16,
+        0.32,
+        0.48,
+        1
+      ]
+    }
+  },
+  {
+    "file": "SourceAssets/Dragon.gltf",
+    "derivedFrom": "SourceAssets/Dragon.fbx",
+    "sha256": "49e1ddd315d0bade79611fee32a910147354d1a1a60c8f29df8494984f7abca9"
+  }
+]

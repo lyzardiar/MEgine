@@ -7,7 +7,7 @@
   },
   "targetMs": 5,
   "targetMet": false,
-  "scope": "Opening skirmish after winter visual upgrade, approximately 3 seconds, no large-army stress test; original baseline native render size unavailable",
+  "scope": "Opening skirmish with siege/air systems, approximately 3 seconds, no large-army stress test; original baseline native render size unavailable",
   "baseline": {
     "units": 20,
     "entities": 2342,
@@ -31,27 +31,27 @@
   },
   "latest": {
     "units": 20,
-    "entities": 1569,
+    "entities": 1574,
     "logicalCaptureSize": [
       1280,
       720
     ],
     "actualNativeRenderSize": [
-      850,
-      478
+      1280,
+      720
     ],
-    "nativeProfileCount": 60,
-    "simulationMs": 19.699944999999992,
-    "nativeRenderMs": 5.905428333333332,
-    "nativeCommandIncludingRenderMs": 10.054219999999999,
-    "uploadMs": 0.6883333305517833,
-    "browserPaintMs": 5.040163936185055,
-    "workBudgetProxyMs": 35.48266226673683,
-    "nativeRequestMs": 42.37166666785876,
-    "simulationRequestMs": 58.141666663686436,
-    "presentIntervalMs": 50.94915254237288,
-    "p95PresentIntervalMs": 96.70000004768372,
-    "presentedFps": 19.627411842980706
+    "nativeProfileCount": 55,
+    "simulationMs": 15.024239999999999,
+    "nativeRenderMs": 7.1701345454545455,
+    "nativeCommandIncludingRenderMs": 10.319527272727273,
+    "uploadMs": 1.4581818157976323,
+    "browserPaintMs": 5.134821429848671,
+    "workBudgetProxyMs": 31.936770518373574,
+    "nativeRequestMs": 48.82181818160144,
+    "simulationRequestMs": 63.22909091819417,
+    "presentIntervalMs": 56.15555555511404,
+    "p95PresentIntervalMs": 103.89999997615814,
+    "presentedFps": 17.80767708759549
   },
   "previousMilestone": {
     "units": 20,
@@ -76,5 +76,29 @@
     "presentIntervalMs": 72.60952380867232,
     "p95PresentIntervalMs": 144.39999997615814,
     "presentedFps": 13.772298006457415
+  },
+  "previousVisualMilestone": {
+    "units": 20,
+    "entities": 1569,
+    "logicalCaptureSize": [
+      1280,
+      720
+    ],
+    "actualNativeRenderSize": [
+      850,
+      478
+    ],
+    "nativeProfileCount": 60,
+    "simulationMs": 19.699944999999992,
+    "nativeRenderMs": 5.905428333333332,
+    "nativeCommandIncludingRenderMs": 10.054219999999999,
+    "uploadMs": 0.6883333305517833,
+    "browserPaintMs": 5.040163936185055,
+    "workBudgetProxyMs": 35.48266226673683,
+    "nativeRequestMs": 42.37166666785876,
+    "simulationRequestMs": 58.141666663686436,
+    "presentIntervalMs": 50.94915254237288,
+    "p95PresentIntervalMs": 96.70000004768372,
+    "presentedFps": 19.627411842980706
   }
 }

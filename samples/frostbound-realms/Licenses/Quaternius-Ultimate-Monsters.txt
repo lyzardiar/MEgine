@@ -1,0 +1,6 @@
+Ultimate Monsters / Dragon
+Author: Quaternius
+CC0-1.0
+https://quaternius.com/packs/ultimatemonsters.html
+https://creativecommons.org/publicdomain/zero/1.0/
+Source mirror and hashes: dragon-sources.json

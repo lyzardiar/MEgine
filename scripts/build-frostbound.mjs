@@ -17,6 +17,7 @@ entity('Terrain bed',{Transform:T([0,-.7,0],[180,1.2,180]),MeshRenderer:{mesh:'c
 for(let z=0;z<8;z++)for(let x=0;x<8;x++)entity('Ground '+(z*8+x),{Transform:T([x*8-28,-.12,z*8-28],[8,.2,8]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Ground.mmat'}});
 for(let i=0;i<140;i++)entity('Scenery '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree_pineTallA.parts[0].mesh,material:catalog.tree_pineTallA.material}});
 entity('Command marker',{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Selection.mmat'}});
+entity('Rally marker',{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.flag.parts[0].mesh,material:catalog.flag.material}});
 entity('Placement preview',{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['tower-square'].parts[0].mesh,material:'Assets/Materials/Placement.mmat'}});
 for(let i=0;i<100;i++)entity('Prop '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree.parts[0].mesh,material:catalog.tree.material}});
 for(let i=0;i<32;i++)entity('Objective '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['roof-point'].parts[0].mesh,material:catalog['roof-point'].material}});
@@ -48,6 +49,7 @@ button('editor','WORLD EDITOR',-440,245,220,43);button('network','MULTIPLAYER',-
 button('faction','FACTION',-440,298,220,37);button('continue','LOAD GAME',-207,298,220,37);
 text('Menu vista','WINTERFALL BASIN',360,248,440,45,30,C.white,'Right');text('Menu credit','FREE CC0 ART / QUATERNIUS + KENNEY',360,289,440,26,12,C.gold,'Right');
 button('rpg','THE SHATTERED COVENANT [F8]',360,171,440,69,'menu','RPG / quests, relics and the frost sovereign');
+button('siege','SIEGE OF WINTERFALL [F9]',360,89,440,69,'menu','Lead siege engines against the fortified pass');
 metal('Header',0,-333,1250,43);text('Brand','FROSTBOUND',-513,-334,200,30,19,C.gold);text('Resources','',30,-334,650,30,17,C.white);text('Clock','',509,-334,210,30,16,C.cyan,'Right');
 metal('Bottom',0,266,1250,179);panel('Bottom rule',0,177,1250,2,C.gold);
 panel('Minimap',-514,265,174,156,[.04,.11,.12,1]);

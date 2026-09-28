@@ -11,6 +11,29 @@ assert.ok(terrain.chunk(terrainCells,0,0).flat().every(Number.isFinite));assert.
 const spellGame=S.create('rpg'),caster=spellGame.units.find(u=>u.kind==='hero');assert.equal(S.command(spellGame,0,{type:'spell',ids:[caster.id],slot:0,x:caster.x,z:caster.z}),null);S.tick(spellGame);assert.ok(spellGame.events.some(e=>e.type==='spell'),'command spell survives the authoritative tick');assert.equal(S.publicState(spellGame,0).pendingEvents,undefined);S.tick(spellGame);assert.ok(!spellGame.events.some(e=>e.type==='spell'),'spell effect is emitted for one tick');
 const aiSpell=S.create('moba',{ai:[false,true]}),aiHero=aiSpell.units.find(u=>u.kind==='hero'&&u.team===1),aiTarget=aiSpell.units.find(u=>u.kind==='hero'&&u.team===0);aiTarget.x=aiHero.x-2;aiTarget.z=aiHero.z;aiSpell.frame=39;aiSpell.visible[1].fill(1);S.tick(aiSpell);assert.equal(aiSpell.events.filter(e=>e.type==='spell').length,1);S.tick(aiSpell);assert.equal(aiSpell.events.filter(e=>e.type==='spell').length,0,'AI effects are not replayed next tick');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
+for(let faction=0;faction<4;faction++){
+  const game=S.create('skirmish',{factions:[faction,0],ai:[false,false]}),worker=game.units.find(u=>u.team===0&&u.kind==='worker'),hall=game.units.find(u=>u.team===0&&u.kind==='hall');
+  assert.match(S.command(game,0,{type:'build',ids:[worker.id],kind:'workshop',x:-10,z:25}),/tier 2/);
+  step(game,400);assert.equal(S.command(game,0,{type:'tech',ids:[hall.id]}),null);step(game,201);
+  assert.equal(S.command(game,0,{type:'move',ids:[worker.id],x:-10,z:21}),null);step(game,60);
+  assert.equal(S.command(game,0,{type:'build',ids:[worker.id],kind:'workshop',x:-10,z:25}),null);step(game,125);
+  step(game,1200);const workshop=game.units.find(u=>u.team===0&&u.kind==='workshop'),kind=S.siege[faction],gold=game.teams[0].gold,wood=game.teams[0].wood,pop=S.population(game,0).used;
+  assert.deepEqual(S.trainable(game,workshop),[kind]);assert.equal(S.command(game,0,{type:'train',ids:[workshop.id],kind}),null);assert.equal(S.population(game,0).used,pop+3);
+  assert.ok(S.command(game,0,{type:'cancelTrain',ids:[workshop.id],index:-1}));assert.equal(S.command(game,0,{type:'cancelTrain',ids:[workshop.id],index:0}),null);assert.equal(game.teams[0].gold,gold);assert.equal(game.teams[0].wood,wood);assert.equal(S.population(game,0).used,pop);
+  assert.equal(S.command(game,0,{type:'rally',ids:[workshop.id],x:-6,z:15}),null);assert.equal(S.command(game,0,{type:'train',ids:[workshop.id],kind}),null);
+  const restored=S.restore(game);step(restored,160);const unit=restored.units.find(u=>u.kind===kind);assert.ok(unit);assert.equal(unit.order?.type,'attackMove');assert.ok(unit.z<23,'production follows saved rally');
+  assert.throws(()=>S.restore({...game,units:game.units.map(u=>u.id===workshop.id?{...u,rally:{x:NaN,z:0}}:u)}));
+  game.visible[1].fill(1);const visible=S.publicState(game,1).units.find(u=>u.id===workshop.id);assert.equal(visible.rally,undefined);assert.deepEqual(visible.queue,[]);
+  step(game,400);assert.equal(S.command(game,0,{type:'build',ids:[worker.id],kind:'altar',x:-6,z:18}),null);step(game,110);const altar=game.units.find(u=>u.team===0&&u.kind==='altar');assert.match(S.command(game,0,{type:'train',ids:[altar.id],kind:S.flyers[faction]}),/tier 3/);
+  assert.equal(S.command(game,0,{type:'tech',ids:[hall.id]}),null);step(game,401);assert.equal(S.command(game,0,{type:'train',ids:[altar.id],kind:S.flyers[faction]}),null);step(game,181);assert.ok(game.units.some(u=>u.kind===S.flyers[faction]));
+}
+assert.equal(S.weaponDamage({kind:'ballista'},{kind:'tower'},100),300);assert.equal(S.weaponDamage({kind:'ballista'},{kind:'soldier'},100),65);assert.equal(S.weaponDamage({kind:'archer'},{kind:'knight'},100),75);assert.equal(S.weaponDamage({kind:'mage'},{kind:'knight'},100),150);
+assert.equal(S.create('skirmish',{map:S.siegeMap()}).map.name,'Siege of Winterfall');
+assert.deepEqual(S.trainable(S.create(),{kind:'workshop',team:-1}),[]);assert.deepEqual(S.trainable(S.create(),{kind:'barracks',team:-1}),[]);
+const sky=S.create('skirmish',{ai:[false,false]}),dragon=S.spawn(sky,'dragon',0,-4,10),sword=S.spawn(sky,'soldier',1,-3,10),bow=S.spawn(sky,'archer',1,-2,10);S.visibility(sky);assert.ok(S.command(sky,1,{type:'attack',ids:[sword.id],target:dragon.id}));assert.equal(S.command(sky,1,{type:'attack',ids:[bow.id],target:dragon.id}),null);S.tick(sky);assert.ok(dragon.hp<dragon.maxHp,'ranged units can damage flying targets');assert.ok(!S.canAttack(sword,dragon));assert.ok(!S.canAttack({kind:'catapult'},dragon));
+assert.equal(S.command(sky,0,{type:'move',ids:[dragon.id],x:6,z:10}),null);step(sky,20);assert.ok(dragon.x>2,'flying units cross water without ground navigation');assert.ok(sky.map.terrain[S.index(0,10)]===1);
+console.log('PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy');
+const harvest=S.create('skirmish',{factions:[2,0],ai:[false,false]}),initialWood=harvest.resources.filter(r=>r.kind==='tree').reduce((n,r)=>n+r.amount,0);step(harvest,2000);assert.ok(harvest.teams[0].wood>850,'fast faction delivers cargo and automatically moves to the next tree');const carried=harvest.units.filter(u=>u.cargoKind==='tree').reduce((n,u)=>n+u.cargo,0);assert.equal(harvest.teams.reduce((n,t)=>n+t.wood-250,0)+carried,initialWood-harvest.resources.filter(r=>r.kind==='tree').reduce((n,r)=>n+r.amount,0),'no wood is discarded when trees deplete');
 const s=S.create('skirmish',{ai:[false,false]});step(s,250);assert.ok(s.teams[0].gold>500,'workers deliver gold');assert.ok(s.teams[0].wood>250,'workers deliver lumber');
 const barracks=s.units.find(u=>u.team===0&&u.kind==='barracks'),worker=s.units.find(u=>u.team===0&&u.kind==='worker');
 assert.equal(S.command(s,0,{type:'train',ids:[barracks.id],kind:'archer'}),null);step(s,75);assert.ok(s.units.some(u=>u.team===0&&u.kind==='archer'));

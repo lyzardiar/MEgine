@@ -15,7 +15,11 @@
       "wall",
       "wall-corner",
       "flag",
-      "bridge-straight"
+      "bridge-straight",
+      "siege-ballista",
+      "siege-catapult",
+      "siege-trebuchet",
+      "siege-ram"
     ]
   },
   {
