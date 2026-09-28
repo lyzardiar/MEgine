@@ -4,11 +4,13 @@
 
 ## 本次范围
 
-本阶段补充单位动态避让、显式近战围攻和入口占用处理。按体型扫掠整段移动，空中/地面分层，驻守单位不被推开；0.5 网格有界 A* 复用静态障碍与邻近单位索引。其他编队预订的终点留出空间，新占用的落点重新分配，微小点击误差不会反转同排单位。近战对同一目标的显式攻击分配环形位置。训练出口被占时保留生产队列，塔防波次按入口空位逐只放行，待出怪队列支持存档并参与胜利判定。
+本阶段优化密集行军的重复寻路计算。相同可见障碍集合及碰撞半径共用动态占用网格，单位在同帧内移动后增量更新；固定网格节点的地形通行边按帧复用。保留整段扫掠、空地分层、编队终点、围攻和塔防入口规则。独立只读复核在混合编队、交错、空地、坡道、封闭高台五类场景各对照220帧，单位状态与优化前完全一致。
 
-Node 全规则/TCP、实际 QuickJS 3/3 通过；专项测试覆盖相向/同目标编队、窄道错身、空地分层、驻守、10 人围攻、旧重叠脱困、基地出生、生产出口、30 波末波 65 单位、待出怪存档和移动速度上限。[原生验收](native-avoidance-qa.json) 验证两队共12人交错行军，11次位置采样的最小间距为1.010；6人围攻造成伤害，以及实际第一波7个激活的TD单位离开入口。[联机验收](native-network-qa.json) 的双客户端指令及断线恢复通过。
+Node 全规则/TCP、实际 QuickJS 3/3 通过。[原生验收](native-avoidance-qa.json) 覆盖12人交错到达、6人围攻造成伤害和塔防第一波7个激活单位离开入口；双原生客户端指令及断线恢复见[联机验收](native-network-qa.json)。
 
-[密集行军 CPU 测量](avoidance-cpu.json)：Node 首个模拟 tick，3次热身后10个独立场景，20/40/80人中位数为12.47/23.78/43.92 ms。该结果不代表原生渲染帧时间，密集寻路和5ms整体帧预算仍待优化。游戏仍为1771实体、79模型，复用已有免费资产及Release引擎。
+[实际 QuickJS CPU 对照](avoidance-quickjs-cpu.json) 使用 Release 测试程序：20/40/80人密集出发首tick中位数由287.92/484.29/789.57 ms降至230.07/358.45/489.03 ms。40人混合编队整段行军均在235tick到位，模拟总耗时9.90→9.88秒，基本持平；该整段数据各运行一次，不表示稳定性能提升。优化降低密集出发峰值，持续行军与5ms整体预算仍待改进。测量不含原生渲染或IPC，也不代表整机帧率。
+
+[Node 首tick记录](avoidance-cpu.json) 的20/40/80人中位数为8.96/14.58/21.71 ms。游戏仍为1771实体、79模型，复用已有免费资产及Release引擎。新增 `frost_traffic` 手动基准，可设置 `FROST_TRAFFIC_SOURCE` 对照历史模拟源码；运行命令见下文。
 
 ![近战围攻](melee-surround.png)
 ![塔防入口](td-entrance.png)
@@ -31,7 +33,7 @@ Node 全规则/TCP 回归与实际 QuickJS 3/3 通过。[原生驻守巡逻验�
 
 ![编队到达](formation-arrival.png)
 
-最新 Player 包 276 文件、1771 实体、79 模型，内容哈希 `f4882a5ae3896905137b17a8ae3925ab588be4afa910bdb65bbd12ca077ef4d0`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
+最新 Player 包 276 文件、1771 实体、79 模型，内容哈希 `0d026dac0c2f57e653238187eaf427f706ba822719c49da486576234b6b4ee56`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
 
 本阶段接入四阵营 32 个建筑模型与 5 个骨骼动画怪物，模型目录共 79 项。建筑由 Kenney Castle/Nature/Graveyard 的 46 个模块组合，包含各阵营三级主基地与五类功能建筑；怪物来自 Quaternius Ultimate Monsters。下载原件、CC0 许可、源地址、配方和派生 SHA-256 分别留存于 faction-sources.json、monster-sources.json。32 个建造图标由真实建筑的原生渲染生成，建造菜单、预览、头像和升级外观保持对应。
 
@@ -137,6 +139,7 @@ pnpm.cmd run build:editor
 cargo build --release -p mengine-runtime -p mengine-editor-tauri --features tauri/custom-protocol
 node scripts/qa-frostbound.mjs
 node scripts/qa-frostbound.mjs --performance-only
+cargo test -p mengine-script --release --test frost_traffic -- --ignored --nocapture
 node scripts/qa-frostbound.mjs --formations-only
 node scripts/qa-frostbound.mjs --waypoints-only
 pnpm.cmd --filter @mengine/cli build

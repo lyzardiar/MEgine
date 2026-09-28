@@ -250,18 +250,28 @@ var Frost = (() => {
   }
   function traffic(s,u){return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&types[v.kind].speed&&!!types[v.kind].flying===!!types[u.kind].flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(types[u.kind].flying||Math.abs(unitHeight(s,u)-unitHeight(s,v))<1.5||traversable(s.map,u.x,u.z,v.x,v.z)));}
   function trafficClear(u,near,x,z){
-    const r=movementRadius(u);return near.every(v=>{const radius=r+movementRadius(v),before=distance(u,v),after=Math.hypot(x-v.x,z-v.z);return before<radius-.0001?after>before+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])>=radius-.0001;});
+    const r=movementRadius(u);return near.every(v=>{if(v.id===u.id)return true;const radius=r+movementRadius(v),before=distance(u,v),after=Math.hypot(x-v.x,z-v.z);return before<radius-.0001?after>before+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])>=radius-.0001;});
   }
   const trafficCache=new WeakMap();
   function trafficGrid(s,u){
-    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,teams:[]};trafficCache.set(s,cache);}const key=types[u.kind].flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
+    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,teams:[],edges:new Uint8Array(121*121*8)};trafficCache.set(s,cache);}const key=types[u.kind].flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
     const grid=new Uint8Array(121*121);if(!types[u.kind].flying){for(let z=0;z<=120;z++)for(let x=0;x<=120;x++)if(s.map.terrain[Math.floor((z+4)/4)*32+Math.floor((x+4)/4)]===1)grid[z*121+x]=1;
       for(const v of s.units)if(v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))){const r=(types[v.kind].radius||1)+.4;for(let z=Math.max(0,Math.floor((v.z-r)*2)+60);z<=Math.min(120,Math.ceil((v.z+r)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-r)*2)+60);x<=Math.min(120,Math.ceil((v.x+r)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<r)grid[z*121+x]=1;}}
     return cache.teams[key]=grid;
   }
+  // Share only identical visible obstacle sets and radii; update moved members within the tick.
+  function trafficField(s,u,near){
+    const r=movementRadius(u),members=[u,...near].sort((a,b)=>a.id-b.id),key=r+':'+members.map(v=>v.id).join(','),cache=trafficCache.get(s);cache.fields??=new Map();let field=cache.fields.get(key);
+    if(!field){field={counts:new Uint16Array(121*121),occupants:[],positions:new Map()};cache.fields.set(key,field);}
+    const raster=(v,x,z,delta)=>{const reach=r+movementRadius(v),margin=reach+.8;for(let iz=Math.max(0,Math.floor((z-margin)*2)+60);iz<=Math.min(120,Math.ceil((z+margin)*2)+60);iz++)for(let ix=Math.max(0,Math.floor((x-margin)*2)+60);ix<=Math.min(120,Math.ceil((x+margin)*2)+60);ix++){const d=Math.hypot(ix/2-30-x,iz/2-30-z),j=iz*121+ix;if(d<reach-.0001)field.counts[j]+=delta;if(d<margin){const list=field.occupants[j]??=[];if(delta>0)list.push(v);else list.splice(list.indexOf(v),1);}}};
+    for(const v of members){const p=field.positions.get(v.id);if(p&&p[0]===v.x&&p[1]===v.z)continue;if(p)raster(v,p[0],p[1],-1);raster(v,v.x,v.z,1);field.positions.set(v.id,[v.x,v.z]);}
+    return field;
+  }
+  const trafficDirections=[[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]];
   function trafficPath(s,u,x,z,near,stop){
-    const size=121,start=(Math.round(u.z*2)+60)*size+Math.round(u.x*2)+60,blocked=trafficGrid(s,u).slice(),occupants=[],prev=new Int16Array(size*size),cost=new Float64Array(size*size);prev.fill(-1);cost.fill(Infinity);cost[start]=0;prev[start]=start;
-    const r=movementRadius(u);for(const v of near){const reach=r+movementRadius(v),margin=reach+.8;for(let iz=Math.max(0,Math.floor((v.z-margin)*2)+60);iz<=Math.min(120,Math.ceil((v.z+margin)*2)+60);iz++)for(let ix=Math.max(0,Math.floor((v.x-margin)*2)+60);ix<=Math.min(120,Math.ceil((v.x+margin)*2)+60);ix++){const d=Math.hypot(ix/2-30-v.x,iz/2-30-v.z),j=iz*size+ix;if(d<reach-.0001)blocked[j]=1;if(d<margin)(occupants[j]??=[]).push(v);}}
+    const size=121,start=(Math.round(u.z*2)+60)*size+Math.round(u.x*2)+60,blocked=trafficGrid(s,u).slice(),field=trafficField(s,u,near),prev=new Int16Array(size*size),cost=new Float64Array(size*size);prev.fill(-1);cost.fill(Infinity);cost[start]=0;prev[start]=start;
+    // Fixed grid edges depend only on this frame's map; each caller subtracts its own body below.
+    const r=movementRadius(u),edges=trafficCache.get(s).edges;
     const heap=[];
     const push=(node,score)=>{let i=heap.length;heap.push([node,score]);while(i){const p=(i-1)>>1;if(heap[p][1]<=score)break;heap[i]=heap[p];i=p;}heap[i]=[node,score];};
     const pop=()=>{const first=heap[0],last=heap.pop();if(heap.length){let i=0;while(i*2+1<heap.length){let c=i*2+1;if(c+1<heap.length&&heap[c+1][1]<heap[c][1])c++;if(heap[c][1]>=last[1])break;heap[i]=heap[c];i=c;}heap[i]=last;}return first[0];};
@@ -269,9 +279,9 @@ var Frost = (() => {
     // Bound one search; partial routes are continued from the next position.
     for(let visited=0;heap.length&&visited<2048;visited++){
       const n=pop();if(blocked[n]===2)continue;blocked[n]=2;const cx=(n%size)/2-30,cz=Math.floor(n/size)/2-30,point=n===start?u:{id:u.id,kind:u.kind,team:u.team,x:cx,z:cz},d=Math.hypot(point.x-x,point.z-z);if(d<best){best=d;found=n;}if(d<=stop&&(types[u.kind].flying||traversable(s.map,point.x,point.z,x,z))||d<=.75&&walkClear(s,point,x,z)&&trafficClear(point,near,x,z)){found=n;break;}
-      for(const [dx,dz] of [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]]){
-        const nx=cx+dx/2,nz=cz+dz/2,j=(nz*2+60)*size+nx*2+60,next=cost[n]+Math.hypot(dx,dz)/2;if(nx<-30||nz<-30||nx>30||nz>30||blocked[j]||next>=cost[j])continue;
-        if(n===start?!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz):(!types[u.kind].flying&&!traversable(s.map,cx,cz,nx,nz))||!trafficClear(point,occupants[n]||[],nx,nz))continue;prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
+      for(let direction=0;direction<8;direction++){
+        const [dx,dz]=trafficDirections[direction],nx=cx+dx/2,nz=cz+dz/2,j=(nz*2+60)*size+nx*2+60,next=cost[n]+Math.hypot(dx,dz)/2;if(nx<-30||nz<-30||nx>30||nz>30||blocked[j]||field.counts[j]>(Math.hypot(nx-u.x,nz-u.z)<r*2-.0001?1:0)||next>=cost[j])continue;
+        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=traversable(s.map,cx,cz,nx,nz)?1:2;if(edges[edge]===2)continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
       }
     }
     const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%size/2-30,Math.floor(n/size)/2-30]);result.reverse();const last=result.at(-1),end=last?{...u,x:last[0],z:last[1]}:u;if(walkClear(s,end,x,z)&&trafficClear(end,near,x,z))result.push([x,z]);return result.slice(0,1024);

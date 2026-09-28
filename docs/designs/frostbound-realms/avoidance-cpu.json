@@ -1,22 +1,22 @@
 {
   "scope": "Node CPU, first dense marching tick; 3 warmups and 10 independent scenes per size. Not native frame time.",
   "node": "v24.18.0",
-  "checkedAt": "2026-09-28T11:34:43.738Z",
+  "checkedAt": "2026-09-28T12:52:43.775Z",
   "rows": [
     {
       "units": 20,
-      "medianMs": 12.471200000000039,
-      "maxMs": 13.394599999999969
+      "medianMs": 8.958200000000033,
+      "maxMs": 10.215100000000007
     },
     {
       "units": 40,
-      "medianMs": 23.782300000000077,
-      "maxMs": 26.655000000000086
+      "medianMs": 14.579200000000014,
+      "maxMs": 15.20959999999991
     },
     {
       "units": 80,
-      "medianMs": 43.915700000000015,
-      "maxMs": 46.25680000000011
+      "medianMs": 21.71270000000004,
+      "maxMs": 22.832999999999856
     }
   ]
 }

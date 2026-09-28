@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-09-28T12:56:43.972067+00:00",
+  "referenceCommit": "4a49b5f30e40f292aa3abe72f6a1b7eb3853fe7b",
+  "referenceBlob": "64c2522b312308dcaf6176e6f303de2bbd473386",
+  "sourceSha256": "3d8e012ffe6e41de0b7203a7a47c596da70f907a74a791a6949dc1dd5240e32c",
+  "command": "cargo test -p mengine-script --release --test frost_traffic -- --ignored --nocapture",
+  "baselineOverride": "Set FROST_TRAFFIC_SOURCE to simulation.js from referenceCommit",
+  "before": {
+    "mixedFormationMarch": {
+      "arrivalFrame": 235,
+      "maxTickMs": 541.045,
+      "medianTickMs": 30.7714,
+      "p95TickMs": 115.19699999999999,
+      "runs": 1,
+      "totalMs": 9902.674899999998,
+      "units": 40
+    },
+    "profile": "release",
+    "rows": [
+      {
+        "maxMs": 293.3884,
+        "medianMs": 287.9204,
+        "units": 20
+      },
+      {
+        "maxMs": 493.45250000000004,
+        "medianMs": 484.29200000000003,
+        "units": 40
+      },
+      {
+        "maxMs": 804.9922,
+        "medianMs": 789.56605,
+        "units": 80
+      }
+    ],
+    "scope": "QuickJS simulation CPU, first dense marching tick; 3 warmups and 10 independent scenes per size. Also one complete forty-unit mixed formation march. Excludes native rendering and IPC."
+  },
+  "after": {
+    "mixedFormationMarch": {
+      "arrivalFrame": 235,
+      "maxTickMs": 405.9413,
+      "medianTickMs": 32.353100000000005,
+      "p95TickMs": 115.0322,
+      "runs": 1,
+      "totalMs": 9881.438799999996,
+      "units": 40
+    },
+    "profile": "release",
+    "rows": [
+      {
+        "maxMs": 231.71880000000002,
+        "medianMs": 230.06825,
+        "units": 20
+      },
+      {
+        "maxMs": 360.03790000000004,
+        "medianMs": 358.4483,
+        "units": 40
+      },
+      {
+        "maxMs": 493.16589999999997,
+        "medianMs": 489.0274,
+        "units": 80
+      }
+    ],
+    "scope": "QuickJS simulation CPU, first dense marching tick; 3 warmups and 10 independent scenes per size. Also one complete forty-unit mixed formation march. Excludes native rendering and IPC."
+  },
+  "limitations": "Local sequential diagnostic, not an exclusive-machine benchmark. First tick median: 3 warmups + 10 scenes per size; full 40-unit mixed march: one scene per version, both arrive at tick 235. Total march CPU is effectively unchanged; this reduces startup peaks. Excludes renderer, transport and physical input. Does not meet 5 ms target."
+}

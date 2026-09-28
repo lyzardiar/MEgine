@@ -90,3 +90,12 @@ TD以固定合法入口分批出怪，tdPending保存待出怪HP、速度和首�
 CPU证据avoidance-cpu.json：Node密集出发首tick，3热身+10独立场景，20/40/80人中位12.47/23.78/43.92ms，最大13.39/26.66/46.26ms。不是原生稳定帧率，5ms目标未达。最终Player包276文件、1771实体、79模型，哈希f4882a5ae3896905137b17a8ae3925ab588be4afa910bdb65bbd12ca077ef4d0；逐文件及Release exe一致，30秒启动响应正常、零ERROR。
 
 完整复刻保持active：完整战役、全部四族内容/美术、完整Dota与经典地图内容、通用工作队列、自动战斗围攻策略、大规模拥堵与寻路性能、可视触发图、录像观战、重叠地形和5ms预算仍未完成。
+
+
+2026-09-28 密集行军计算复用阶段：相同可见障碍成员集和碰撞半径共享动态占用网格，同帧位置变化按旧/新位置更新；固定网格节点八方向的地形通行结果按帧/serial缓存。调用者自身不作为障碍，保持原有整段绕行和避让规则。独立只读复核五类场景各220tick，与前一提交的单位状态逐帧完全一致。
+
+验证：Node全规则/TCP通过；实际QuickJS frost_sample 3/3；新增手动Release QuickJS基准 frost_traffic，历史源由FROST_TRAFFIC_SOURCE指定。基线为4a49b5f30e40f292aa3abe72f6a1b7eb3853fe7b，源Git blob 64c2522b312308dcaf6176e6f303de2bbd473386。20/40/80人密集首tick中位287.92/484.29/789.57→230.07/358.45/489.03ms。40人混合编队完整行军均235tick到位，总CPU 9.90→9.88秒基本持平，整段各运行一次；结果只证明出发峰值降低，不代表稳定帧率或5ms验收。原始记录avoidance-quickjs-cpu.json；Node首tick 8.96/14.58/21.71ms见avoidance-cpu.json。
+
+原生Release avoidance QA通过12人交错到达、6人围攻/伤害和真实第一波7人TD入口；双原生客户端网络QA通过协议5、英雄选择、队列/驻守/巡逻与断线恢复。更新对应截图与JSON。Player最终276文件、1771实体、79模型，内容哈希0d026dac0c2f57e653238187eaf427f706ba822719c49da486576234b6b4ee56；逐文件和Release exe哈希正确，30秒启动正常响应、零ERROR。复用现有免费资产和Release引擎，新增Rust仅手动基准测试。物理输入、音频听感和跨机LAN未验收。
+
+完整目标保持active。下一阶段需继续扩大可用素材的实际场景表现，并优化持续行军与拥堵；完整战役、四族内容/美术、完整Dota/经典地图、通用工作队列、可视触发图、录像观战、重叠地形和5ms预算仍未完成。保留tmp/frost-traffic-reference.js及CPU profile作为后续性能参考；tmp和scripts/__pycache__不提交。
