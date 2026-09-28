@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import './test-frost-heroes.mjs';
+import './test-frost-construction.mjs';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
@@ -25,7 +26,7 @@ for(let faction=0;faction<4;faction++){
   const restored=S.restore(game);step(restored,160);const unit=restored.units.find(u=>u.kind===kind);assert.ok(unit);assert.equal(unit.order?.type,'attackMove');assert.ok(unit.z<23,'production follows saved rally');
   assert.throws(()=>S.restore({...game,units:game.units.map(u=>u.id===workshop.id?{...u,rally:{x:NaN,z:0}}:u)}));
   game.visible[1].fill(1);const visible=S.publicState(game,1).units.find(u=>u.id===workshop.id);assert.equal(visible.rally,undefined);assert.deepEqual(visible.queue,[]);
-  step(game,400);assert.equal(S.command(game,0,{type:'build',ids:[worker.id],kind:'altar',x:-6,z:18}),null);step(game,110);const altar=game.units.find(u=>u.team===0&&u.kind==='altar');assert.match(S.command(game,0,{type:'train',ids:[altar.id],kind:S.flyers[faction]}),/tier 3/);
+  step(game,400);const altarWorker=game.units.find(u=>u.team===0&&u.kind==='worker'&&!u.inside);assert.equal(S.command(game,0,{type:'move',ids:[altarWorker.id],x:-10,z:18}),null);step(game,70);assert.equal(S.command(game,0,{type:'build',ids:[altarWorker.id],kind:'altar',x:-10,z:15}),null);step(game,150);const altar=game.units.find(u=>u.team===0&&u.kind==='altar');assert.match(S.command(game,0,{type:'train',ids:[altar.id],kind:S.flyers[faction]}),/tier 3/);
   assert.equal(S.command(game,0,{type:'tech',ids:[hall.id]}),null);step(game,401);assert.equal(S.command(game,0,{type:'train',ids:[altar.id],kind:S.flyers[faction]}),null);step(game,181);assert.ok(game.units.some(u=>u.kind===S.flyers[faction]));
 }
 assert.equal(S.weaponDamage({kind:'ballista'},{kind:'tower'},100),300);assert.equal(S.weaponDamage({kind:'ballista'},{kind:'soldier'},100),65);assert.equal(S.weaponDamage({kind:'archer'},{kind:'knight'},100),75);assert.equal(S.weaponDamage({kind:'mage'},{kind:'knight'},100),150);
@@ -71,9 +72,9 @@ assert.ok(restored);assert.equal(rpg.winner,0);assert.equal(rpg.quest.stage,4);a
 assert.throws(()=>S.restore({...rpg,teams:null}));assert.throws(()=>S.restore({...rpg,units:[{...rpg.units[0],spell:null}]}));assert.throws(()=>S.validateMap({...S.defaultMap('rpg'),units:[]}));
 assert.equal(S.publicState(tg,1).map.units.length,0,'authored units stay on the server');assert.equal(S.publicState(tg,1).map.triggers.length,0);
 const app=createServer({port:0}),address=await app.listening,peers=[];
-async function peer(protocol=2){const messages=[],waiting=[];const socket=net.connect(address.port,'127.0.0.1');await new Promise((r,j)=>{socket.once('connect',r);socket.once('error',j);});let buffer='';socket.setEncoding('utf8');socket.on('data',b=>{buffer+=b;let end;while((end=buffer.indexOf('\n'))>=0){const m=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);messages.push(m);for(const w of [...waiting])if(w.predicate(m)){waiting.splice(waiting.indexOf(w),1);clearTimeout(w.timer);w.resolve(m);}}});const p={socket,messages,send:m=>socket.write(JSON.stringify(m)+'\n'),next:predicate=>new Promise((resolve,reject)=>{const w={predicate,resolve,timer:setTimeout(()=>reject(Error('Network message timed out')),6000)};waiting.push(w);})};peers.push(p);const welcome=p.next(m=>m.type==='welcome'||m.type==='error');p.send({type:'hello',protocol,name:'Tester'});const response=await welcome;if(protocol===2)assert.equal(response.protocol,2);else assert.match(response.message,/Protocol version mismatch/);return p;}
+async function peer(protocol=3){const messages=[],waiting=[];const socket=net.connect(address.port,'127.0.0.1');await new Promise((r,j)=>{socket.once('connect',r);socket.once('error',j);});let buffer='';socket.setEncoding('utf8');socket.on('data',b=>{buffer+=b;let end;while((end=buffer.indexOf('\n'))>=0){const m=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);messages.push(m);for(const w of [...waiting])if(w.predicate(m)){waiting.splice(waiting.indexOf(w),1);clearTimeout(w.timer);w.resolve(m);}}});const p={socket,messages,send:m=>socket.write(JSON.stringify(m)+'\n'),next:predicate=>new Promise((resolve,reject)=>{const w={predicate,resolve,timer:setTimeout(()=>reject(Error('Network message timed out')),6000)};waiting.push(w);})};peers.push(p);const welcome=p.next(m=>m.type==='welcome'||m.type==='error');p.send({type:'hello',protocol,name:'Tester'});const response=await welcome;if(protocol===3)assert.equal(response.protocol,3);else assert.match(response.message,/Protocol version mismatch/);return p;}
 try{
-  const legacy=await peer(1);legacy.socket.destroy();const a=await peer(),b=await peer();let next=a.next(m=>m.type==='joined');a.send({type:'create',mode:'skirmish',heroClass:1});const joined=await next;
+  for(const version of [1,2]){const legacy=await peer(version);legacy.socket.destroy();}const a=await peer(),b=await peer();let next=a.next(m=>m.type==='joined');a.send({type:'create',mode:'skirmish',heroClass:1});const joined=await next;
   next=b.next(m=>m.type==='joined');b.send({type:'join',code:joined.code,heroClass:2});const guest=await next;assert.notEqual(guest.team,joined.team);
   next=a.next(m=>m.type==='error');a.send({type:'pick',heroClass:'constructor'});assert.match((await next).message,/Invalid hero/);
   next=a.next(m=>m.type==='room'&&m.players.some(p=>p.team===0&&p.heroClass===3));a.send({type:'pick',heroClass:3});await next;
