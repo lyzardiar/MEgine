@@ -40,4 +40,3 @@ for(let f=0;f<4;f++){
   const {s,w}=setup(),b=build(s,w,'hall'),h=s.units.find(u=>u.team===0&&u.kind==='hero');h.x=b.x;h.z=b.z;h.hp-=100;const hp=h.hp;assert.match(S.command(s,0,{type:'buy',ids:[h.id],item:0}),/Visit/);step(s,5);assert.equal(h.hp,hp,'unfinished base cannot heal heroes');
 }
 console.log('PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration');
-

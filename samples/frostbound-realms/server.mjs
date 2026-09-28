@@ -15,7 +15,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
   function join(c,r,p){leave(c);p.client=c;p.expires=0;c.room=r;c.player=p;c.lastSeq=0;send(c,{type:'joined',team:p.team,token:p.token,code:r.code,state:r.state?view(r,p):null});publish(r);}
   function handle(c,m){
     if(!m||typeof m!=='object'||Array.isArray(m))return fail(c,'Invalid message');
-    if(m.type==='hello'){if(m.protocol!==3)return fail(c,'Protocol version mismatch');c.hello=true;c.name=String(m.name||'Commander').replace(/[\r\n]/g,'').slice(0,20);return send(c,{type:'welcome',protocol:3});}
+    if(m.type==='hello'){if(m.protocol!==4)return fail(c,'Protocol version mismatch');c.hello=true;c.name=String(m.name||'Commander').replace(/[\r\n]/g,'').slice(0,20);return send(c,{type:'welcome',protocol:4});}
     if(!c.hello)return fail(c,'Handshake required');
     if(m.type==='ping')return send(c,{type:'pong',nonce:typeof m.nonce==='number'?m.nonce:0});
     if(m.type==='list')return send(c,{type:'rooms',rooms:[...rooms.values()].map(roomInfo)});
@@ -47,7 +47,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
   const server=net.createServer(socket=>{
     if(clients.size>=48||[...clients].filter(c=>c.socket.remoteAddress===socket.remoteAddress).length>=8){socket.destroy();return;}
     socket.setNoDelay(true);socket.setTimeout(12000,()=>socket.destroy());socket.setEncoding('utf8');const c={socket,buffer:'',hello:false,name:'Commander',room:null,player:null,lastSeq:0,rate:0,rateAt:Date.now()};clients.add(c);
-    socket.on('data',chunk=>{c.buffer+=chunk;if(Buffer.byteLength(c.buffer)>32768)return socket.destroy();let end;while((end=c.buffer.indexOf('\n'))>=0){const line=c.buffer.slice(0,end);c.buffer=c.buffer.slice(end+1);if(Date.now()-c.rateAt>1000){c.rateAt=Date.now();c.rate=0;}if(++c.rate>40||Buffer.byteLength(line)>16384)return socket.destroy();try{handle(c,JSON.parse(line));}catch{fail(c,'Invalid request');}}});
+    socket.on('data',chunk=>{c.buffer+=chunk;if(Buffer.byteLength(c.buffer)>1048576)return socket.destroy();let end;while((end=c.buffer.indexOf('\n'))>=0){const line=c.buffer.slice(0,end);c.buffer=c.buffer.slice(end+1);if(Date.now()-c.rateAt>1000){c.rateAt=Date.now();c.rate=0;}if(++c.rate>40||Buffer.byteLength(line)>524288)return socket.destroy();try{handle(c,JSON.parse(line));}catch{fail(c,'Invalid request');}}});
     socket.on('error',()=>{});socket.on('close',()=>{leave(c,true);clients.delete(c);});
   });
   const interval=setInterval(()=>{

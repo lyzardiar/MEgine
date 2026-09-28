@@ -94,7 +94,7 @@ var Frost = (() => {
     if(mode==='moba')for(let z=3;z<29;z++)for(let x=3;x<29;x++)if(map.terrain[z*32+x]===0&&[0,1,2].some(lane=>{const route=lanePath(0,lane);return route.slice(1).some((p,i)=>segmentDistance(x*2-31,z*2-31,route[i],p)<1.8);}))map.terrain[z*32+x]=2;
     for(const team of [0,1]){const [x,z]=map.spawns[team];map.props.push({kind:'mine',x:x+(team?-6:6),z,amount:9000});for(let i=0;i<8;i++)map.props.push({kind:'tree',x:x+(team?-1:1)*(2+i%4*2),z:z+(team?1:-1)*(6+Math.floor(i/4)*2),amount:600});}
     for(let i=0;i<24;i++){const x=((i*17)%50)-25,z=((i*29)%48)-24;if(Math.hypot(x,z)>12&&map.spawns.every(p=>Math.hypot(p[0]-x,p[1]-z)>12))map.props.push({kind:'tree',x,z,amount:600});}
-    map.players=[{faction:0,ai:false},{faction:1,ai:true}];map.units=[];map.triggers=[];
+    map.players=[{faction:0,ai:false},{faction:1,ai:true}];map.units=[];map.triggers=[];map.regions=[];
     if(mode==='rpg'){
       map.name='The Shattered Covenant';map.startingGold=180;map.props=map.props.filter(p=>p.kind==='tree');
       map.units=[{kind:'neutral',team:1,x:-12,z:14,tag:'scout'},{kind:'neutral',team:1,x:-7,z:10,tag:'scout'},{kind:'neutral',team:1,x:-13,z:5,tag:'scout'},{kind:'neutral',team:1,x:5,z:0,tag:'keeper'},{kind:'neutral',team:1,x:20,z:-18,tag:'boss'}];
@@ -114,10 +114,29 @@ var Frost = (() => {
     if(raw.units!==undefined&&(!Array.isArray(raw.units)||raw.units.length>64||raw.units.some(u=>!at(u)||!Object.hasOwn(types,u.kind)||![-1,0,1].includes(u.team)||u.heroClass!==undefined&&(u.kind!=='hero'||!validHero(u.heroClass))||u.tag!==undefined&&!['scout','keeper','boss'].includes(u.tag))))throw Error('Invalid placed units');
     map.units=(raw.units||[]).map(u=>({kind:u.kind,team:u.team,x:u.x,z:u.z,...(u.heroClass!==undefined?{heroClass:u.heroClass}:{}),...(u.tag?{tag:u.tag}:{})}));
     if(map.mode==='rpg'&&(map.units.filter(u=>u.tag==='scout'&&u.team===1).length<3||!map.units.some(u=>u.tag==='keeper'&&u.team===1)||!map.units.some(u=>u.tag==='boss'&&u.team===1)))throw Error('RPG requires three enemy scouts, a relic keeper and a boss');
-    if(raw.triggers!==undefined&&(!Array.isArray(raw.triggers)||raw.triggers.length>32||raw.triggers.some((t,i)=>!at(t)||!['timer','enter','kills'].includes(t.when)||!['spawn','gold','message','victory'].includes(t.action)||![0,1].includes(t.team)||!Number.isInteger(t.value)||t.value<1||t.value>600||!Number.isInteger(t.after)||t.after < -1||t.after>=i||t.action==='spawn'&&!Object.hasOwn(types,t.kind))))throw Error('Invalid map triggers');
-    map.triggers=(raw.triggers||[]).map(t=>({when:t.when,action:t.action,team:t.team,value:t.value,after:t.after,x:t.x,z:t.z,kind:t.kind||'soldier',text:String(t.text||'Map objective activated').slice(0,120)}));
+    if(raw.regions!==undefined&&(!Array.isArray(raw.regions)||raw.regions.length>32||raw.regions.some(r=>!at(r)||![r.width,r.height].every(v=>Number.isFinite(v)&&v>=2&&v<=54)||Math.abs(r.x)+r.width/2>29||Math.abs(r.z)+r.height/2>29)))throw Error('Invalid map regions');
+    map.regions=(raw.regions||[]).map((r,i)=>({name:String(r.name||'Region '+(i+1)).slice(0,40),x:r.x,z:r.z,width:r.width,height:r.height}));
+    const integer=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max,region=v=>integer(v,-1,map.regions.length-1);
+    if(raw.triggers!==undefined&&(!Array.isArray(raw.triggers)||raw.triggers.length>32))throw Error('Invalid map triggers');
+    map.triggers=(raw.triggers||[]).map((t,i)=>{
+      if(!at(t)||!integer(t.after,-1,i-1))throw Error('Invalid trigger position or dependency');
+      const conditions=t.conditions||[{when:t.when,team:t.team,value:t.value,region:-1,kind:'*'}],actions=t.actions||[{action:t.action,team:t.team,value:t.action==='spawn'?1:t.value,region:-1,kind:t.kind||'soldier',text:t.text||'Map objective activated'}];
+      if(!Array.isArray(conditions)||!conditions.length||conditions.length>8||conditions.some(c=>!c||!['timer','delay','enter','kills','gold','wood','units','clear'].includes(c.when)||!integer(c.team,0,1)||!integer(c.value,1,600)||!region(c.region)||c.kind!=='*'&&!Object.hasOwn(types,c.kind)))throw Error('Invalid trigger conditions');
+      if(!Array.isArray(actions)||!actions.length||actions.length>8||actions.some(a=>!a||!['spawn','gold','wood','message','victory','attackMove','heal'].includes(a.action)||!integer(a.team,0,1)||!integer(a.value,1,a.action==='spawn'?32:600)||!region(a.region)||!Object.hasOwn(types,a.kind)))throw Error('Invalid trigger actions');
+      const logic=t.logic??'all',limit=t.limit??1,interval=t.interval??10;if(!['all','any'].includes(logic)||!integer(limit,1,99)||!integer(interval,1,600))throw Error('Invalid trigger repetition');
+      return {name:String(t.name||'Trigger '+(i+1)).slice(0,40),x:t.x,z:t.z,after:t.after,logic,limit,interval,conditions:conditions.map(c=>({when:c.when,team:c.team,value:c.value,region:c.region,kind:c.kind})),actions:actions.map(a=>({action:a.action,team:a.team,value:a.value,region:a.region,kind:a.kind,text:String(a.text||'Map objective activated').slice(0,120)}))};
+    });
     for(const p of map.spawns){const c=cell(...p);for(let z=c[1]-2;z<=c[1]+2;z++)for(let x=c[0]-2;x<=c[0]+2;x++)if(x>=0&&z>=0&&x<32&&z<32)map.terrain[z*32+x]=0;}
     return map;
+  }
+  function eventMap(){
+    const map=defaultMap();map.name='Winterfall Supply Road';map.players[1].ai=false;map.regions=[{name:'Reinforcements',x:-12,z:18,width:8,height:8},{name:'Mountain pass',x:-8,z:4,width:10,height:10}];
+    const condition=(when,value,region=-1,kind='*')=>({when,value,region,kind,team:0}),action=(action,value,region=-1,kind='archer',text='')=>({action,value,region,kind,text,team:0});
+    map.triggers=[
+      {name:'Supply arrival',x:-12,z:18,after:-1,conditions:[condition('timer',3)],actions:[action('spawn',3,0),action('wood',80),action('message',1,-1,'archer','A supply escort has arrived. Lead your hero to the mountain pass.')]},
+      {name:'Escort marches',x:-8,z:4,after:0,conditions:[condition('delay',2)],actions:[action('attackMove',1,1),action('message',1,-1,'archer','The escort is moving to the pass.')]},
+      {name:'Pass secured',x:-8,z:4,after:1,conditions:[condition('enter',1,1,'hero'),condition('units',2,1,'archer')],actions:[action('gold',250),action('message',1,-1,'archer','Escort complete. Winterfall receives 250 gold.')]}
+    ];return validateMap(map);
   }
   function siegeMap(){const map=defaultMap();map.name='Siege of Winterfall';map.startingGold=1500;map.units=[{kind:'ballista',team:0,x:-17,z:13},{kind:'trebuchet',team:0,x:-22,z:12},{kind:'catapult',team:0,x:-25,z:17},{kind:'ram',team:0,x:-13,z:18},{kind:'workshop',team:0,x:-10,z:26},{kind:'farm',team:0,x:-27,z:27},{kind:'farm',team:0,x:-27,z:8},{kind:'dragon',team:0,x:-15,z:9},{kind:'archer',team:1,x:-6,z:2},{kind:'tower',team:1,x:-8,z:0},{kind:'tower',team:1,x:0,z:0}];return map;}
   function spawn(s,kind,team,x,z,extra={}) {
@@ -127,7 +146,7 @@ var Frost = (() => {
   }
   function create(mode='skirmish',options={}) {
     const map=validateMap(options.map||defaultMap(mode));mode=map.mode;if(options.heroes&&(!Array.isArray(options.heroes)||options.heroes.length!==2||!options.heroes.every(validHero)))throw Error('Invalid hero selection');
-    const s={version:1,map,mode,frame:0,serial:0,units:[],resources:clone(map.props),teams:[0,1].map(i=>({gold:map.startingGold,wood:250,faction:clamp(options.factions?.[i]??map.players[i].faction,0,3),ai:options.ai?.[i]??map.players[i].ai,upgrade:0,kills:0,tier:1,research:0,heroClass:options.heroes?.[i]??map.players[i].heroClass})),events:[],zones:[],winner:null,wave:0,nextWave:40,lives:20,loot:[],quest:{stage:0,scouts:0,relic:false,boss:false},triggered:[],announcement:'',explored:[Array(1024).fill(0),Array(1024).fill(0)],visible:[[],[]]};
+    const s={version:1,map,mode,frame:0,serial:0,units:[],resources:clone(map.props),teams:[0,1].map(i=>({gold:map.startingGold,wood:250,faction:clamp(options.factions?.[i]??map.players[i].faction,0,3),ai:options.ai?.[i]??map.players[i].ai,upgrade:0,kills:0,tier:1,research:0,heroClass:options.heroes?.[i]??map.players[i].heroClass})),events:[],zones:[],winner:null,wave:0,nextWave:40,lives:20,loot:[],quest:{stage:0,scouts:0,relic:false,boss:false},triggered:[],triggerState:map.triggers.map(()=>({count:0,last:-1,next:0})),announcement:'',announcements:['',''],explored:[Array(1024).fill(0),Array(1024).fill(0)],visible:[[],[]]};
     for(const team of [0,1]){
       if((mode==='td'||mode==='rpg')&&team===1)continue;
       const [x,z]=map.spawns[team];spawn(s,'hall',team,x,z);
@@ -343,15 +362,42 @@ var Frost = (() => {
         if(q.stage<4&&done[q.stage]){q.stage++;experience(h,180);s.teams[0].gold+=150;s.announcement=q.stage===4?'The covenant is restored.':questNames[q.stage];s.events.push({type:'spell',slot:1,x:h.x,z:h.z,team:0});if(q.stage===4)s.winner=0;}
       }
     }
-    for(const [i,t] of s.map.triggers.entries()){
-      if(s.triggered.includes(i)||t.after>=0&&!s.triggered.includes(t.after))continue;
-      const ready=t.when==='timer'?s.frame*DT>=t.value:t.when==='kills'?s.teams[t.team].kills>=t.value:s.units.some(u=>u.team===t.team&&u.hp>0&&types[u.kind].speed&&distance(u,t)<4);
-      if(!ready)continue;if(t.action==='spawn'&&!spawn(s,t.kind,t.team,t.x,t.z))continue;
-      if(t.action==='gold')s.teams[t.team].gold+=t.value;if(t.action==='victory')s.winner=t.team;s.announcement=t.text;s.triggered.push(i);
-    }
+    runTriggers(s);
     if(s.mode==='td'&&s.wave>=s.map.waves&&!s.units.some(u=>u.td)&&s.frame>s.nextWave-Math.round(s.map.waveInterval/DT)+10)s.winner=0;
     if(s.frame%3===0)visibility(s);simulating.delete(s);
   }
+  function inRegion(map,region,u,t){const r=map.regions[region];return r?Math.abs(u.x-r.x)<=r.width/2&&Math.abs(u.z-r.z)<=r.height/2:distance(u,t)<4;}
+  function triggerReady(s,t,c){
+    if(c.when==='timer')return s.frame*DT>=c.value;
+    if(c.when==='delay')return (s.frame-(t.after>=0?s.triggerState[t.after].last:0))*DT>=c.value;
+    if(['kills','gold','wood'].includes(c.when))return s.teams[c.team][c.when]>=c.value;
+    const units=s.units.filter(u=>u.hp>0&&!u.inside&&u.team===c.team&&(c.kind==='*'||u.kind===c.kind)&&(c.region>=0?inRegion(s.map,c.region,u,t):c.when!=='enter'||inRegion(s.map,-1,u,t)));
+    return c.when==='clear'?units.length===0:c.when==='units'?units.length>=c.value:units.some(u=>types[u.kind].speed);
+  }
+  function runTriggers(s){
+    for(const [i,t] of s.map.triggers.entries()){
+      const clock=s.triggerState[i];if(clock.count>=t.limit||s.frame<clock.next||t.after>=0&&!s.triggerState[t.after].count||!(t.logic==='all'?t.conditions.every(c=>triggerReady(s,t,c)):t.conditions.some(c=>triggerReady(s,t,c))))continue;
+      const plan=[];let blocked=false;
+      for(const a of t.actions)if(a.action==='spawn'){
+        const center=s.map.regions[a.region]||t,d=types[a.kind];for(let n=0;n<a.value;n++){
+          let pos=null;for(let j=0;j<160;j++){const radius=j===0?0:Math.sqrt(j)*.65,angle=j*2.399963,p={x:center.x+Math.cos(angle)*radius,z:center.z+Math.sin(angle)*radius};if(Math.abs(p.x)>29||Math.abs(p.z)>29||a.region>=0&&!inRegion(s.map,a.region,p,t)||!d.flying&&solid(s,p.x,p.z)||plan.some(v=>distance(v,p)<(types[v.kind].radius||.4)+(d.radius||.4)+.3)||!d.speed&&s.units.some(v=>v.hp>0&&!types[v.kind].speed&&distance(v,p)<(types[v.kind].radius||1)+(d.radius||1)+.8))continue;pos=p;break;}
+          if(!pos){blocked=true;break;}plan.push({...pos,kind:a.kind,team:a.team,source:a});
+        }if(blocked)break;
+      }
+      if(blocked||s.units.length+plan.length>LIMIT)continue;
+      for(const a of t.actions){
+        if(a.action==='spawn'){for(const p of plan)if(p.source===a)spawn(s,p.kind,p.team,p.x,p.z);}
+        else if(a.action==='gold'||a.action==='wood')s.teams[a.team][a.action]+=a.value;
+        else if(a.action==='message')s.announcements[a.team]=a.text;
+        else if(a.action==='victory')s.winner=a.team;
+        else if(a.action==='attackMove'){const p=s.map.regions[a.region]||t;for(const u of s.units)if(u.team===a.team&&u.kind===a.kind&&u.hp>0&&u.speed&&!u.inside){u.order={type:'attackMove',x:p.x,z:p.z};u.path=[];u.pathAt=-100;delete u.workResume;}}
+        else if(a.action==='heal')for(const u of s.units)if(u.team===a.team&&u.hp>0&&!u.inside&&(a.region<0||inRegion(s.map,a.region,u,t)))u.hp=Math.min(u.maxHp,u.hp+a.value);
+      }
+      clock.count++;clock.last=s.frame;clock.next=s.frame+Math.round(t.interval/DT);if(!s.triggered.includes(i))s.triggered.push(i);if(s.winner!==null)break;
+    }
+  }
+  function removeTrigger(map,index){if(map.triggers.some(t=>t.after===index))throw Error('Reassign dependent triggers before deleting this trigger');map.triggers.splice(index,1);for(const t of map.triggers)t.after=t.after===index?-1:t.after>index?t.after-1:t.after;}
+  function removeRegion(map,index){if(map.triggers.some(t=>[...t.conditions,...t.actions].some(e=>e.region===index)))throw Error('Reassign trigger regions before deleting this region');map.regions.splice(index,1);for(const t of map.triggers)for(const entry of [...t.conditions,...t.actions])entry.region=entry.region===index?-1:entry.region>index?entry.region-1:entry.region;}
   function restore(raw){
     const finite=v=>Number.isFinite(v)&&Math.abs(v)<=1000000,point=p=>Array.isArray(p)&&p.length===2&&p.every(finite);
     if(!raw||raw.version!==1||!Number.isSafeInteger(raw.frame)||raw.frame<0||!Number.isSafeInteger(raw.serial)||!Array.isArray(raw.units)||raw.units.length>LIMIT||!Array.isArray(raw.teams)||raw.teams.length!==2)throw Error('Invalid save header');
@@ -376,11 +422,14 @@ var Frost = (() => {
     }
     if(!Array.isArray(s.resources)||s.resources.length>100||s.resources.some(r=>!r||!['mine','tree','camp'].includes(r.kind)||![r.x,r.z,r.amount].every(finite)))throw Error('Invalid saved resources');
     s.zones??=[];if(!Array.isArray(s.zones)||s.zones.length>LIMIT*4||s.zones.some(z=>!z||![0,1].includes(z.team)||!validHero(z.heroClass)||![z.x,z.z,z.radius,z.damage,z.slow,z.left,z.pulse].every(finite)||z.radius<0||z.radius>14||z.damage<0||z.left<0||z.left>30||!Number.isInteger(z.slot)||z.slot<0||z.slot>3))throw Error('Invalid saved spell zones');
-    const defaults=create(s.mode,{map:s.map});for(const key of ['loot','quest','triggered','announcement'])s[key]??=defaults[key];
-    if(!Array.isArray(s.loot)||s.loot.length>LIMIT||s.loot.some(d=>!d||![d.x,d.z].every(finite)||!items[d.item])||!Array.isArray(s.triggered)||s.triggered.some(i=>!Number.isInteger(i)||i<0||i>=s.map.triggers.length)||!Number.isInteger(s.quest.stage)||s.quest.stage<0||s.quest.stage>4)throw Error('Invalid saved objectives');
+    const defaults=create(s.mode,{map:s.map});for(const key of ['loot','quest','triggered','announcement','announcements'])s[key]??=defaults[key];
+    if(!Array.isArray(s.loot)||s.loot.length>LIMIT||s.loot.some(d=>!d||![d.x,d.z].every(finite)||!items[d.item])||!Array.isArray(s.triggered)||new Set(s.triggered).size!==s.triggered.length||s.triggered.some(i=>!Number.isInteger(i)||i<0||i>=s.map.triggers.length)||!Number.isInteger(s.quest.stage)||s.quest.stage<0||s.quest.stage>4)throw Error('Invalid saved objectives');
+    if(!Array.isArray(s.announcements)||s.announcements.length!==2||s.announcements.some(text=>typeof text!=='string'||text.length>120))throw Error('Invalid saved player announcements');
+    if(s.triggerState===undefined)s.triggerState=s.map.triggers.map((t,i)=>({count:s.triggered.includes(i)?1:0,last:s.triggered.includes(i)?s.frame:-1,next:0}));
+    if(!Array.isArray(s.triggerState)||s.triggerState.length!==s.map.triggers.length||s.triggerState.some((c,i)=>!c||!Number.isInteger(c.count)||c.count<0||c.count>s.map.triggers[i].limit||!Number.isSafeInteger(c.last)||c.last < -1||c.last>s.frame||!Number.isSafeInteger(c.next)||c.next<0||c.next>s.frame+600/DT||!!c.count!==s.triggered.includes(i)||c.count===0&&c.last!==-1||c.count>0&&c.last<0))throw Error('Invalid saved trigger clock');
     for(const t of s.teams){t.tier??=1;t.research??=0;t.heroClass??=0;if(!validHero(t.heroClass)||!Number.isInteger(t.tier)||t.tier<1||t.tier>3||!Number.isFinite(t.research)||t.research<0||t.research>40)throw Error('Invalid saved technology');}s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
-  function publicState(s,team){const state=clone(s);delete state.pendingEvents;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.triggered=[];state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.team!==team){u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;u.order=null;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]);state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,armies,siege,flyers,canAttack,weaponDamage,trainable,questNames,clamp,clone,cell,index,distance,defaultMap,siegeMap,validateMap,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  function publicState(s,team){const state=clone(s);delete state.pendingEvents;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.team!==team){u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;u.order=null;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]);state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
+  return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,armies,siege,flyers,canAttack,weaponDamage,trainable,questNames,clamp,clone,cell,index,distance,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

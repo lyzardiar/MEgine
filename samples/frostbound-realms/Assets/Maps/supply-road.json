@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "name": "The Shattered Covenant",
-  "mode": "rpg",
+  "name": "Winterfall Supply Road",
+  "mode": "skirmish",
   "terrain": [
     0,
     1,
@@ -33,7 +33,7 @@
     1,
     1,
     1,
-    2,
+    0,
     1,
     1,
     1,
@@ -64,7 +64,7 @@
     1,
     1,
     1,
-    2,
+    0,
     1,
     1,
     1,
@@ -95,8 +95,8 @@
     0,
     0,
     0,
-    2,
-    2,
+    0,
+    0,
     1,
     1,
     1,
@@ -126,9 +126,9 @@
     0,
     0,
     0,
-    2,
-    2,
-    2,
+    0,
+    0,
+    0,
     1,
     1,
     1,
@@ -157,10 +157,10 @@
     0,
     0,
     0,
-    2,
-    2,
-    2,
+    0,
     0,
+    0,
+    0,
     1,
     0,
     0,
@@ -188,9 +188,9 @@
     0,
     0,
     0,
-    2,
-    2,
-    2,
+    0,
+    0,
+    0,
     0,
     0,
     0,
@@ -220,8 +220,8 @@
     0,
     0,
     2,
-    2,
-    2,
+    0,
+    0,
     0,
     0,
     0,
@@ -808,8 +808,8 @@
     0,
     0,
     0,
-    2,
-    2,
+    0,
+    0,
     2,
     0,
     0,
@@ -839,9 +839,6 @@
     1,
     0,
     0,
-    2,
-    2,
-    2,
     0,
     0,
     0,
@@ -865,14 +862,16 @@
     0,
     0,
     0,
+    0,
+    0,
+    0,
     1,
     1,
     1,
     1,
     0,
-    2,
-    2,
-    2,
+    0,
+    0,
     0,
     0,
     0,
@@ -897,13 +896,14 @@
     0,
     0,
     0,
+    0,
     1,
     1,
     1,
     1,
-    2,
-    2,
-    2,
+    0,
+    0,
+    0,
     0,
     0,
     0,
@@ -932,9 +932,7 @@
     1,
     1,
     1,
-    2,
-    2,
-    2,
+    0,
     0,
     0,
     0,
@@ -961,9 +959,11 @@
     0,
     0,
     0,
+    0,
+    0,
     1,
     0,
-    2,
+    0,
     1,
     1,
     1,
@@ -1028,8 +1028,24 @@
     1,
     1
   ],
+  "spawns": [
+    [
+      -23,
+      23
+    ],
+    [
+      23,
+      -23
+    ]
+  ],
   "props": [
     {
+      "kind": "mine",
+      "x": -17,
+      "z": 23,
+      "amount": 9000
+    },
+    {
       "kind": "tree",
       "x": -21,
       "z": 17,
@@ -1076,6 +1092,12 @@
       "x": -15,
       "z": 15,
       "amount": 600
+    },
+    {
+      "kind": "mine",
+      "x": 17,
+      "z": -23,
+      "amount": 9000
     },
     {
       "kind": "tree",
@@ -1222,66 +1244,161 @@
       "amount": 600
     }
   ],
-  "spawns": [
-    [
-      -23,
-      23
-    ],
-    [
-      23,
-      -23
-    ]
-  ],
-  "startingGold": 180,
+  "startingGold": 500,
   "waveInterval": 24,
   "waves": 12,
   "players": [
     {
       "faction": 0,
-      "ai": false
+      "ai": false,
+      "heroClass": 0
     },
     {
       "faction": 1,
-      "ai": true
+      "ai": false,
+      "heroClass": 0
     }
   ],
-  "units": [
+  "units": [],
+  "regions": [
     {
-      "kind": "neutral",
-      "team": 1,
+      "name": "Reinforcements",
       "x": -12,
-      "z": 14,
-      "tag": "scout"
+      "z": 18,
+      "width": 8,
+      "height": 8
     },
     {
-      "kind": "neutral",
-      "team": 1,
-      "x": -7,
-      "z": 10,
-      "tag": "scout"
-    },
-    {
-      "kind": "neutral",
-      "team": 1,
-      "x": -13,
-      "z": 5,
-      "tag": "scout"
-    },
-    {
-      "kind": "neutral",
-      "team": 1,
-      "x": 5,
-      "z": 0,
-      "tag": "keeper"
-    },
-    {
-      "kind": "neutral",
-      "team": 1,
-      "x": 20,
-      "z": -18,
-      "tag": "boss"
+      "name": "Mountain pass",
+      "x": -8,
+      "z": 4,
+      "width": 10,
+      "height": 10
     }
   ],
-  "triggers": [],
-  "regions": []
+  "triggers": [
+    {
+      "name": "Supply arrival",
+      "x": -12,
+      "z": 18,
+      "after": -1,
+      "logic": "all",
+      "limit": 1,
+      "interval": 10,
+      "conditions": [
+        {
+          "when": "timer",
+          "team": 0,
+          "value": 3,
+          "region": -1,
+          "kind": "*"
+        }
+      ],
+      "actions": [
+        {
+          "action": "spawn",
+          "team": 0,
+          "value": 3,
+          "region": 0,
+          "kind": "archer",
+          "text": "Map objective activated"
+        },
+        {
+          "action": "wood",
+          "team": 0,
+          "value": 80,
+          "region": -1,
+          "kind": "archer",
+          "text": "Map objective activated"
+        },
+        {
+          "action": "message",
+          "team": 0,
+          "value": 1,
+          "region": -1,
+          "kind": "archer",
+          "text": "A supply escort has arrived. Lead your hero to the mountain pass."
+        }
+      ]
+    },
+    {
+      "name": "Escort marches",
+      "x": -8,
+      "z": 4,
+      "after": 0,
+      "logic": "all",
+      "limit": 1,
+      "interval": 10,
+      "conditions": [
+        {
+          "when": "delay",
+          "team": 0,
+          "value": 2,
+          "region": -1,
+          "kind": "*"
+        }
+      ],
+      "actions": [
+        {
+          "action": "attackMove",
+          "team": 0,
+          "value": 1,
+          "region": 1,
+          "kind": "archer",
+          "text": "Map objective activated"
+        },
+        {
+          "action": "message",
+          "team": 0,
+          "value": 1,
+          "region": -1,
+          "kind": "archer",
+          "text": "The escort is moving to the pass."
+        }
+      ]
+    },
+    {
+      "name": "Pass secured",
+      "x": -8,
+      "z": 4,
+      "after": 1,
+      "logic": "all",
+      "limit": 1,
+      "interval": 10,
+      "conditions": [
+        {
+          "when": "enter",
+          "team": 0,
+          "value": 1,
+          "region": 1,
+          "kind": "hero"
+        },
+        {
+          "when": "units",
+          "team": 0,
+          "value": 2,
+          "region": 1,
+          "kind": "archer"
+        }
+      ],
+      "actions": [
+        {
+          "action": "gold",
+          "team": 0,
+          "value": 250,
+          "region": -1,
+          "kind": "archer",
+          "text": "Map objective activated"
+        },
+        {
+          "action": "message",
+          "team": 0,
+          "value": 1,
+          "region": -1,
+          "kind": "archer",
+          "text": "Escort complete. Winterfall receives 250 gold."
+        }
+      ]
+    }
+  ]
 }

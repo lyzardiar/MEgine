@@ -57864,6 +57864,5894 @@
             "material": "Assets/Materials/wall-block.mmat"
           }
         }
+      },
+      {
+        "entity": 1612,
+        "name": "Region 0 0",
+        "parent": null,
+        "siblingIndex": 1611,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1613,
+        "name": "Region 0 1",
+        "parent": null,
+        "siblingIndex": 1612,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1614,
+        "name": "Region 0 2",
+        "parent": null,
+        "siblingIndex": 1613,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1615,
+        "name": "Region 0 3",
+        "parent": null,
+        "siblingIndex": 1614,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1616,
+        "name": "Region 1 0",
+        "parent": null,
+        "siblingIndex": 1615,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1617,
+        "name": "Region 1 1",
+        "parent": null,
+        "siblingIndex": 1616,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1618,
+        "name": "Region 1 2",
+        "parent": null,
+        "siblingIndex": 1617,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1619,
+        "name": "Region 1 3",
+        "parent": null,
+        "siblingIndex": 1618,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1620,
+        "name": "Region 2 0",
+        "parent": null,
+        "siblingIndex": 1619,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1621,
+        "name": "Region 2 1",
+        "parent": null,
+        "siblingIndex": 1620,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1622,
+        "name": "Region 2 2",
+        "parent": null,
+        "siblingIndex": 1621,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1623,
+        "name": "Region 2 3",
+        "parent": null,
+        "siblingIndex": 1622,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1624,
+        "name": "Region 3 0",
+        "parent": null,
+        "siblingIndex": 1623,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1625,
+        "name": "Region 3 1",
+        "parent": null,
+        "siblingIndex": 1624,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1626,
+        "name": "Region 3 2",
+        "parent": null,
+        "siblingIndex": 1625,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1627,
+        "name": "Region 3 3",
+        "parent": null,
+        "siblingIndex": 1626,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1628,
+        "name": "Region 4 0",
+        "parent": null,
+        "siblingIndex": 1627,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1629,
+        "name": "Region 4 1",
+        "parent": null,
+        "siblingIndex": 1628,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1630,
+        "name": "Region 4 2",
+        "parent": null,
+        "siblingIndex": 1629,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1631,
+        "name": "Region 4 3",
+        "parent": null,
+        "siblingIndex": 1630,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1632,
+        "name": "Region 5 0",
+        "parent": null,
+        "siblingIndex": 1631,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1633,
+        "name": "Region 5 1",
+        "parent": null,
+        "siblingIndex": 1632,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1634,
+        "name": "Region 5 2",
+        "parent": null,
+        "siblingIndex": 1633,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1635,
+        "name": "Region 5 3",
+        "parent": null,
+        "siblingIndex": 1634,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1636,
+        "name": "Region 6 0",
+        "parent": null,
+        "siblingIndex": 1635,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1637,
+        "name": "Region 6 1",
+        "parent": null,
+        "siblingIndex": 1636,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1638,
+        "name": "Region 6 2",
+        "parent": null,
+        "siblingIndex": 1637,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1639,
+        "name": "Region 6 3",
+        "parent": null,
+        "siblingIndex": 1638,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1640,
+        "name": "Region 7 0",
+        "parent": null,
+        "siblingIndex": 1639,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1641,
+        "name": "Region 7 1",
+        "parent": null,
+        "siblingIndex": 1640,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1642,
+        "name": "Region 7 2",
+        "parent": null,
+        "siblingIndex": 1641,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1643,
+        "name": "Region 7 3",
+        "parent": null,
+        "siblingIndex": 1642,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1644,
+        "name": "Region 8 0",
+        "parent": null,
+        "siblingIndex": 1643,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1645,
+        "name": "Region 8 1",
+        "parent": null,
+        "siblingIndex": 1644,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1646,
+        "name": "Region 8 2",
+        "parent": null,
+        "siblingIndex": 1645,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1647,
+        "name": "Region 8 3",
+        "parent": null,
+        "siblingIndex": 1646,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1648,
+        "name": "Region 9 0",
+        "parent": null,
+        "siblingIndex": 1647,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1649,
+        "name": "Region 9 1",
+        "parent": null,
+        "siblingIndex": 1648,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1650,
+        "name": "Region 9 2",
+        "parent": null,
+        "siblingIndex": 1649,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1651,
+        "name": "Region 9 3",
+        "parent": null,
+        "siblingIndex": 1650,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1652,
+        "name": "Region 10 0",
+        "parent": null,
+        "siblingIndex": 1651,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1653,
+        "name": "Region 10 1",
+        "parent": null,
+        "siblingIndex": 1652,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1654,
+        "name": "Region 10 2",
+        "parent": null,
+        "siblingIndex": 1653,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1655,
+        "name": "Region 10 3",
+        "parent": null,
+        "siblingIndex": 1654,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1656,
+        "name": "Region 11 0",
+        "parent": null,
+        "siblingIndex": 1655,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1657,
+        "name": "Region 11 1",
+        "parent": null,
+        "siblingIndex": 1656,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1658,
+        "name": "Region 11 2",
+        "parent": null,
+        "siblingIndex": 1657,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1659,
+        "name": "Region 11 3",
+        "parent": null,
+        "siblingIndex": 1658,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1660,
+        "name": "Region 12 0",
+        "parent": null,
+        "siblingIndex": 1659,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1661,
+        "name": "Region 12 1",
+        "parent": null,
+        "siblingIndex": 1660,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1662,
+        "name": "Region 12 2",
+        "parent": null,
+        "siblingIndex": 1661,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1663,
+        "name": "Region 12 3",
+        "parent": null,
+        "siblingIndex": 1662,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1664,
+        "name": "Region 13 0",
+        "parent": null,
+        "siblingIndex": 1663,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1665,
+        "name": "Region 13 1",
+        "parent": null,
+        "siblingIndex": 1664,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1666,
+        "name": "Region 13 2",
+        "parent": null,
+        "siblingIndex": 1665,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1667,
+        "name": "Region 13 3",
+        "parent": null,
+        "siblingIndex": 1666,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1668,
+        "name": "Region 14 0",
+        "parent": null,
+        "siblingIndex": 1667,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1669,
+        "name": "Region 14 1",
+        "parent": null,
+        "siblingIndex": 1668,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1670,
+        "name": "Region 14 2",
+        "parent": null,
+        "siblingIndex": 1669,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1671,
+        "name": "Region 14 3",
+        "parent": null,
+        "siblingIndex": 1670,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1672,
+        "name": "Region 15 0",
+        "parent": null,
+        "siblingIndex": 1671,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1673,
+        "name": "Region 15 1",
+        "parent": null,
+        "siblingIndex": 1672,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1674,
+        "name": "Region 15 2",
+        "parent": null,
+        "siblingIndex": 1673,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1675,
+        "name": "Region 15 3",
+        "parent": null,
+        "siblingIndex": 1674,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1676,
+        "name": "Region 16 0",
+        "parent": null,
+        "siblingIndex": 1675,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1677,
+        "name": "Region 16 1",
+        "parent": null,
+        "siblingIndex": 1676,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1678,
+        "name": "Region 16 2",
+        "parent": null,
+        "siblingIndex": 1677,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1679,
+        "name": "Region 16 3",
+        "parent": null,
+        "siblingIndex": 1678,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1680,
+        "name": "Region 17 0",
+        "parent": null,
+        "siblingIndex": 1679,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1681,
+        "name": "Region 17 1",
+        "parent": null,
+        "siblingIndex": 1680,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1682,
+        "name": "Region 17 2",
+        "parent": null,
+        "siblingIndex": 1681,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1683,
+        "name": "Region 17 3",
+        "parent": null,
+        "siblingIndex": 1682,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1684,
+        "name": "Region 18 0",
+        "parent": null,
+        "siblingIndex": 1683,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1685,
+        "name": "Region 18 1",
+        "parent": null,
+        "siblingIndex": 1684,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1686,
+        "name": "Region 18 2",
+        "parent": null,
+        "siblingIndex": 1685,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1687,
+        "name": "Region 18 3",
+        "parent": null,
+        "siblingIndex": 1686,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1688,
+        "name": "Region 19 0",
+        "parent": null,
+        "siblingIndex": 1687,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1689,
+        "name": "Region 19 1",
+        "parent": null,
+        "siblingIndex": 1688,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1690,
+        "name": "Region 19 2",
+        "parent": null,
+        "siblingIndex": 1689,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1691,
+        "name": "Region 19 3",
+        "parent": null,
+        "siblingIndex": 1690,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1692,
+        "name": "Region 20 0",
+        "parent": null,
+        "siblingIndex": 1691,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1693,
+        "name": "Region 20 1",
+        "parent": null,
+        "siblingIndex": 1692,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1694,
+        "name": "Region 20 2",
+        "parent": null,
+        "siblingIndex": 1693,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1695,
+        "name": "Region 20 3",
+        "parent": null,
+        "siblingIndex": 1694,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1696,
+        "name": "Region 21 0",
+        "parent": null,
+        "siblingIndex": 1695,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1697,
+        "name": "Region 21 1",
+        "parent": null,
+        "siblingIndex": 1696,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1698,
+        "name": "Region 21 2",
+        "parent": null,
+        "siblingIndex": 1697,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1699,
+        "name": "Region 21 3",
+        "parent": null,
+        "siblingIndex": 1698,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1700,
+        "name": "Region 22 0",
+        "parent": null,
+        "siblingIndex": 1699,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1701,
+        "name": "Region 22 1",
+        "parent": null,
+        "siblingIndex": 1700,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1702,
+        "name": "Region 22 2",
+        "parent": null,
+        "siblingIndex": 1701,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1703,
+        "name": "Region 22 3",
+        "parent": null,
+        "siblingIndex": 1702,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1704,
+        "name": "Region 23 0",
+        "parent": null,
+        "siblingIndex": 1703,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1705,
+        "name": "Region 23 1",
+        "parent": null,
+        "siblingIndex": 1704,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1706,
+        "name": "Region 23 2",
+        "parent": null,
+        "siblingIndex": 1705,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1707,
+        "name": "Region 23 3",
+        "parent": null,
+        "siblingIndex": 1706,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1708,
+        "name": "Region 24 0",
+        "parent": null,
+        "siblingIndex": 1707,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1709,
+        "name": "Region 24 1",
+        "parent": null,
+        "siblingIndex": 1708,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1710,
+        "name": "Region 24 2",
+        "parent": null,
+        "siblingIndex": 1709,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1711,
+        "name": "Region 24 3",
+        "parent": null,
+        "siblingIndex": 1710,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1712,
+        "name": "Region 25 0",
+        "parent": null,
+        "siblingIndex": 1711,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1713,
+        "name": "Region 25 1",
+        "parent": null,
+        "siblingIndex": 1712,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1714,
+        "name": "Region 25 2",
+        "parent": null,
+        "siblingIndex": 1713,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1715,
+        "name": "Region 25 3",
+        "parent": null,
+        "siblingIndex": 1714,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1716,
+        "name": "Region 26 0",
+        "parent": null,
+        "siblingIndex": 1715,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1717,
+        "name": "Region 26 1",
+        "parent": null,
+        "siblingIndex": 1716,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1718,
+        "name": "Region 26 2",
+        "parent": null,
+        "siblingIndex": 1717,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1719,
+        "name": "Region 26 3",
+        "parent": null,
+        "siblingIndex": 1718,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1720,
+        "name": "Region 27 0",
+        "parent": null,
+        "siblingIndex": 1719,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1721,
+        "name": "Region 27 1",
+        "parent": null,
+        "siblingIndex": 1720,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1722,
+        "name": "Region 27 2",
+        "parent": null,
+        "siblingIndex": 1721,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1723,
+        "name": "Region 27 3",
+        "parent": null,
+        "siblingIndex": 1722,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1724,
+        "name": "Region 28 0",
+        "parent": null,
+        "siblingIndex": 1723,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1725,
+        "name": "Region 28 1",
+        "parent": null,
+        "siblingIndex": 1724,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1726,
+        "name": "Region 28 2",
+        "parent": null,
+        "siblingIndex": 1725,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1727,
+        "name": "Region 28 3",
+        "parent": null,
+        "siblingIndex": 1726,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1728,
+        "name": "Region 29 0",
+        "parent": null,
+        "siblingIndex": 1727,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1729,
+        "name": "Region 29 1",
+        "parent": null,
+        "siblingIndex": 1728,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1730,
+        "name": "Region 29 2",
+        "parent": null,
+        "siblingIndex": 1729,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1731,
+        "name": "Region 29 3",
+        "parent": null,
+        "siblingIndex": 1730,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1732,
+        "name": "Region 30 0",
+        "parent": null,
+        "siblingIndex": 1731,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1733,
+        "name": "Region 30 1",
+        "parent": null,
+        "siblingIndex": 1732,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1734,
+        "name": "Region 30 2",
+        "parent": null,
+        "siblingIndex": 1733,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1735,
+        "name": "Region 30 3",
+        "parent": null,
+        "siblingIndex": 1734,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1736,
+        "name": "Region 31 0",
+        "parent": null,
+        "siblingIndex": 1735,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1737,
+        "name": "Region 31 1",
+        "parent": null,
+        "siblingIndex": 1736,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1738,
+        "name": "Region 31 2",
+        "parent": null,
+        "siblingIndex": 1737,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
+      },
+      {
+        "entity": 1739,
+        "name": "Region 31 3",
+        "parent": null,
+        "siblingIndex": 1738,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.2,
+              0.7,
+              1,
+              1
+            ],
+            "roughness": 1,
+            "emissive": [
+              0.1,
+              0.3,
+              0.4
+            ],
+            "emissive_strength": 0.4
+          }
+        }
       }
     ],
     "frame": 0,
