@@ -1,0 +1,107 @@
+{
+  "baselineCommit": "5a29271f9a7a62b13b8b1a1a74c00e1b04cf26c2",
+  "method": "Native Release editor, 1899 entities, 1280x720; 5-second warmup and three 5-second windows. Includes all stage changes; not an isolated FXAA benchmark.",
+  "before": {
+    "runs": [
+      {
+        "intervals": 68,
+        "averagePresentIntervalMs": 74.06029411712113,
+        "p95PresentIntervalMs": 123,
+        "presentedFps": 13.502511864435355,
+        "averageRequestMs": 58.24202899224516,
+        "averageRenderMs": 8.326365217391306,
+        "averageCommandMs": 9.948497101449274,
+        "averageUploadMs": 1.4695652179096057,
+        "averageSimulationMs": 9.007428985507248,
+        "averageSimulationRequestMs": 31.739130442557126
+      },
+      {
+        "intervals": 62,
+        "averagePresentIntervalMs": 80.90645161271095,
+        "p95PresentIntervalMs": 124.60000002384186,
+        "presentedFps": 12.359953749879857,
+        "averageRequestMs": 56.75079364625235,
+        "averageRenderMs": 8.31800634920635,
+        "averageCommandMs": 11.323666666666664,
+        "averageUploadMs": 1.4714285702932448,
+        "averageSimulationMs": 10.2982619047619,
+        "averageSimulationRequestMs": 33.4238095236203
+      },
+      {
+        "intervals": 71,
+        "averagePresentIntervalMs": 73.5,
+        "p95PresentIntervalMs": 131.80000001192093,
+        "presentedFps": 13.605442176870747,
+        "averageRequestMs": 55.754166666004394,
+        "averageRenderMs": 8.188256944444444,
+        "averageCommandMs": 10.066106944444444,
+        "averageUploadMs": 1.461111109289858,
+        "averageSimulationMs": 9.784790277777779,
+        "averageSimulationRequestMs": 33.75416666848792
+      }
+    ],
+    "medianPresentedFps": 13.502511864435355,
+    "medianRenderMs": 8.31800634920635
+  },
+  "after": {
+    "runs": [
+      {
+        "intervals": 62,
+        "averagePresentIntervalMs": 82.72741935522326,
+        "p95PresentIntervalMs": 127.10000002384186,
+        "presentedFps": 12.087890663023103,
+        "averageRequestMs": 57.257142856953635,
+        "averageRenderMs": 8.990625396825397,
+        "averageCommandMs": 11.91913174603175,
+        "averageUploadMs": 1.4555555591507563,
+        "averageSimulationMs": 9.209901587301587,
+        "averageSimulationRequestMs": 40.0571428575213
+      },
+      {
+        "intervals": 61,
+        "averagePresentIntervalMs": 82.9163934422321,
+        "p95PresentIntervalMs": 126.80000001192093,
+        "presentedFps": 12.060341248401024,
+        "averageRequestMs": 56.19354838517405,
+        "averageRenderMs": 8.92671612903226,
+        "averageCommandMs": 12.295345161290324,
+        "averageUploadMs": 1.4838709687033007,
+        "averageSimulationMs": 10.14176935483871,
+        "averageSimulationRequestMs": 30.1080645120913
+      },
+      {
+        "intervals": 62,
+        "averagePresentIntervalMs": 81.49032258026061,
+        "p95PresentIntervalMs": 128.60000002384186,
+        "presentedFps": 12.271395772364139,
+        "averageRequestMs": 58.369841272868804,
+        "averageRenderMs": 8.89924126984127,
+        "averageCommandMs": 11.428620634920636,
+        "averageUploadMs": 1.4571428592242892,
+        "averageSimulationMs": 9.749439682539679,
+        "averageSimulationRequestMs": 32.94126984240517
+      }
+    ],
+    "medianPresentedFps": 12.087890663023103,
+    "medianRenderMs": 8.92671612903226
+  },
+  "packageContentHash": "79e6b430e95c52542161a3062a86e49f34550af1de6be7dd67fba8ca0b757ba5",
+  "packagedFiles": 362,
+  "runtimeSha256": "62bab638436096876132b46299b314e0ab252cfdf960fce3fbb929fdd18115b3",
+  "editorSha256": "ff333553926373df2a13948afae26c29a8b3185ba24cfab35707f1ff1d835267",
+  "validation": {
+    "rhiTests": 46,
+    "rhiFailures": 0,
+    "gpuDiagonalFlatColorAlphaAndOnePixel": "passed without adapter skip",
+    "sourceUvRegression": "passed",
+    "twoImportAndBakeManifestComparison": "identical",
+    "nativeRealistic": "passed",
+    "packageSmokeErrors": 0
+  },
+  "remaining": [
+    "Sparse dark close-view needles",
+    "Grid-authored shore contours",
+    "Other faction and character realism",
+    "Frame rate below gameplay target"
+  ]
+}

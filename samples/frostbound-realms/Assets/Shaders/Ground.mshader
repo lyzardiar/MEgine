@@ -15,23 +15,35 @@ fn frost_ground(p: vec2<f32>) -> vec3<f32> {
     let blend=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(local));
     return mix(mix(frost_cell(cell),frost_cell(cell+vec2<i32>(1,0)),blend.x),mix(frost_cell(cell+vec2<i32>(0,1)),frost_cell(cell+vec2<i32>(1,1)),blend.x),blend.y);
 }
+fn frost_noise(p: vec2<f32>) -> f32 {
+    let cell=floor(p);let blend=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(p));
+    let corners=vec4<f32>(dot(cell,vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(1.0,0.0),vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(0.0,1.0),vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(1.0,1.0),vec2<f32>(127.1,311.7)));
+    let values=fract(sin(corners)*43758.5453);
+    return mix(mix(values.x,values.y,blend.x),mix(values.z,values.w,blend.x),blend.y);
+}
 fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
     var s=surface;let p=world_position.xz;let fields=frost_ground(p);
-    let snow=mengine_texture_snow(fract(p*0.16)).rgb;
-    let stone=mengine_texture_stone(fract(p*0.23)).rgb;
+    let snow=mengine_texture_snow(p*0.16).rgb;
+    let stone=mengine_texture_stone(p*0.23).rgb;
     let fleck=sin(p.x*3.7+sin(p.y*2.9))*sin(p.y*4.1+p.x*1.3);
     let road=smoothstep(0.22,0.8,fields.y+fleck*0.08);
-    let water=smoothstep(0.35,0.72,fields.x+fleck*0.055);
-    let litter=mengine_texture_soil(fract(p*0.21)).rgb;
+    let shore=fields.x+(frost_noise(p*1.7)-0.5)*0.1;
+    let water=smoothstep(0.44,0.65,shore);
+    let wet=smoothstep(0.12,0.49,shore);
+    let depth=smoothstep(0.52,0.95,shore);
+    let litter=mengine_texture_soil(p*0.21).rgb;
     let cover=smoothstep(0.1,0.8,0.44+0.29*sin(p.x*0.19+sin(p.y*0.23))+0.18*sin(p.y*0.31-p.x*0.11));
     let soil=mix(litter*vec3<f32>(0.65,0.7,0.64),snow*vec3<f32>(0.68,0.73,0.76),cover);
     let dry=mix(soil,stone*vec3<f32>(0.59,0.57,0.52),road);
-    let ripples=(sin(p.x*7.0+p.y*5.0)*sin(p.y*9.0-p.x*3.0)+sin(p.x*15.0+p.y*2.0)*0.35)*0.007;
-    s.base_color=mix(dry,vec3<f32>(0.035,0.071,0.078)+ripples,water);
-    s.roughness=mix(0.88,0.29,water);s.metallic=water*0.14;
+    let bank=mix(dry,mix(litter,stone,0.6)*vec3<f32>(0.29,0.32,0.29),wet);
+    let wave=sin(p.x*4.2+p.y*2.6+frost_noise(p*0.8)*5.0);
+    let ripples=wave*0.003+sin(p.y*8.3-p.x*1.1)*0.0015;
+    let shallow=mix(stone*vec3<f32>(0.19,0.3,0.27),vec3<f32>(0.032,0.092,0.088),0.65);
+    s.base_color=mix(bank,mix(shallow,vec3<f32>(0.019,0.049,0.061),depth)+ripples,water);
+    s.roughness=mix(mix(0.88,0.56,wet),0.23,water);s.metallic=0.0;
     let cliff=1.0-smoothstep(0.3,0.85,abs(surface.normal.y));
-    s.base_color=mix(s.base_color,mengine_texture_stone(fract(vec2<f32>(p.x+p.y,world_position.y)*0.3)).rgb*vec3<f32>(0.35,0.4,0.44),cliff);
-    s.normal=normalize(surface.normal+vec3<f32>(fleck*0.04+water*sin(p.x*7.0+p.y*5.0)*0.09,0.0,cos(p.y*5.0)*0.03+water*cos(p.y*9.0-p.x*3.0)*0.09));
+    s.base_color=mix(s.base_color,mengine_texture_stone(vec2<f32>(p.x+p.y,world_position.y)*0.3).rgb*vec3<f32>(0.35,0.4,0.44),cliff);
+    s.normal=normalize(surface.normal+vec3<f32>(fleck*0.04+water*wave*0.045,0.0,cos(p.y*5.0)*0.03+water*cos(p.y*8.3-p.x*1.1)*0.035));
     return s;
 }
 fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {

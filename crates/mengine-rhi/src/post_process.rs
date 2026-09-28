@@ -232,20 +232,48 @@ fn aces_fitted(color: vec3<f32>) -> vec3<f32> {
     return clamp(numerator / denominator, vec3<f32>(0.0), vec3<f32>(1.0));
 }
 
-@fragment
-fn fs_main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
+fn mapped_pixel(pixel: vec2<i32>) -> vec4<f32> {
     let dimensions = vec2<i32>(textureDimensions(hdr_color));
-    let coordinate = clamp(
-        vec2<i32>(i32(position.x), i32(position.y)),
-        vec2<i32>(0),
-        dimensions - vec2<i32>(1),
-    );
+    let coordinate = clamp(pixel, vec2<i32>(0), dimensions - vec2<i32>(1));
     let hdr = textureLoad(hdr_color, coordinate, 0);
     let exposed = max(hdr.rgb, vec3<f32>(0.0)) * exp2(settings.params.x);
     if settings.params.y < 0.5 {
         return vec4<f32>(exposed, clamp(hdr.a, 0.0, 1.0));
     }
     return vec4<f32>(aces_fitted(exposed), clamp(hdr.a, 0.0, 1.0));
+}
+
+// MiYu: FXAA operates on exposed, tone-mapped scene color before the UI overlay.
+fn mapped_sample(pixel: vec2<f32>) -> vec3<f32> {
+    let base = vec2<i32>(floor(pixel));
+    let blend = fract(pixel);
+    return mix(mix(mapped_pixel(base).rgb, mapped_pixel(base + vec2<i32>(1, 0)).rgb, blend.x), mix(mapped_pixel(base + vec2<i32>(0, 1)).rgb, mapped_pixel(base + vec2<i32>(1, 1)).rgb, blend.x), blend.y);
+}
+
+fn luma(color: vec3<f32>) -> f32 {
+    return sqrt(max(dot(color, vec3<f32>(0.299, 0.587, 0.114)), 0.0));
+}
+
+@fragment
+fn fs_main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
+    let pixel = vec2<i32>(position.xy);
+    let center = mapped_pixel(pixel);
+    let nw = luma(mapped_pixel(pixel + vec2<i32>(-1, -1)).rgb);
+    let ne = luma(mapped_pixel(pixel + vec2<i32>(1, -1)).rgb);
+    let sw = luma(mapped_pixel(pixel + vec2<i32>(-1, 1)).rgb);
+    let se = luma(mapped_pixel(pixel + vec2<i32>(1, 1)).rgb);
+    let middle = luma(center.rgb);
+    let low = min(middle, min(min(nw, ne), min(sw, se)));
+    let high = max(middle, max(max(nw, ne), max(sw, se)));
+    if high - low < max(0.0312, high * 0.125) { return center; }
+    let direction = vec2<f32>(-((nw + ne) - (sw + se)), (nw + sw) - (ne + se));
+    let reduction = max((nw + ne + sw + se) * 0.03125, 0.0078125);
+    let step = clamp(direction / (min(abs(direction.x), abs(direction.y)) + reduction), vec2<f32>(-8.0), vec2<f32>(8.0));
+    let p = vec2<f32>(pixel);
+    let narrow = (mapped_sample(p - step / 6.0) + mapped_sample(p + step / 6.0)) * 0.5;
+    let wide = narrow * 0.5 + (mapped_sample(p - step * 0.5) + mapped_sample(p + step * 0.5)) * 0.25;
+    let wide_luma = luma(wide);
+    return vec4<f32>(select(wide, narrow, wide_luma < low || wide_luma > high), center.a);
 }
 "#;
 
@@ -274,5 +302,58 @@ mod tests {
         )
         .validate(&module)
         .expect("tone mapping shader must validate");
+    }
+
+    #[test]
+    fn antialiasing_smooths_diagonals_and_preserves_flat_color_and_alpha() {
+        let instance = wgpu::Instance::default();
+        let Some(adapter) = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions::default())) else { eprintln!("SKIP: no headless GPU adapter"); return; };
+        let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor::default(), None)).expect("post-process test device");
+        device.push_error_scope(wgpu::ErrorFilter::Validation);
+        for size in [32, 1] {
+            let mut post = HdrPostProcess::new(&device, wgpu::TextureFormat::Rgba8Unorm, size, size);
+            let input = device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("antialiasing_test_input"), size: wgpu::Extent3d { width: size, height: size, depth_or_array_layers: 1 },
+                mip_level_count: 1, sample_count: 1, dimension: wgpu::TextureDimension::D2, format: wgpu::TextureFormat::Rgba8Unorm,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST, view_formats: &[],
+            });
+            let pixels: Vec<u8> = (0..size).flat_map(|y| (0..size).flat_map(move |x| { let value = if size == 1 { 64 } else if x > y { 255 } else { 0 }; [value, value, value, 128] })).collect();
+            queue.write_texture(input.as_image_copy(), &pixels, wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(size * 4), rows_per_image: Some(size) }, input.size());
+            post.tone_mapping_bind_group = create_tone_mapping_bind_group(&device, &post.tone_mapping_layout, &input.create_view(&Default::default()), &post.tone_mapping_uniform);
+            post.write_settings(&queue, 0.0, false);
+            let output = device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("antialiasing_test_output"), size: input.size(), mip_level_count: 1, sample_count: 1,
+                dimension: wgpu::TextureDimension::D2, format: wgpu::TextureFormat::Rgba8Unorm,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC, view_formats: &[],
+            });
+            let readback = device.create_buffer(&wgpu::BufferDescriptor { label: None, size: size as u64 * 256, usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ, mapped_at_creation: false });
+            let view = output.create_view(&Default::default());
+            let mut encoder = device.create_command_encoder(&Default::default());
+            {
+                let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment { view: &view, resolve_target: None, ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), store: wgpu::StoreOp::Store } })],
+                    ..Default::default()
+                });
+                post.draw(&mut pass);
+            }
+            encoder.copy_texture_to_buffer(output.as_image_copy(), wgpu::TexelCopyBufferInfo { buffer: &readback, layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(256), rows_per_image: Some(size) } }, output.size());
+            queue.submit([encoder.finish()]);
+            let (tx, rx) = std::sync::mpsc::channel();
+            readback.slice(..).map_async(wgpu::MapMode::Read, move |result| { tx.send(result).unwrap(); });
+            device.poll(wgpu::Maintain::Wait);
+            rx.recv().unwrap().unwrap();
+            let data = readback.slice(..).get_mapped_range();
+            if size == 1 {
+                assert_eq!(&data[..4], &[64, 64, 64, 128], "one-pixel border clamps without changing color or alpha");
+            } else {
+                assert_eq!(data[4 * 24 + 4 * 256], 255, "flat white stays white");
+                assert_eq!(data[4 * 4 + 24 * 256], 0, "flat black stays black");
+                assert!((4..28).any(|y| { let value = data[y * 256 + y * 4]; value > 0 && value < 255 }), "diagonal gets fractional coverage");
+                for y in 0..size as usize { for x in 0..size as usize { assert_eq!(data[y * 256 + x * 4 + 3], 128); } }
+            }
+            drop(data);readback.unmap();
+        }
+        let error = pollster::block_on(device.pop_error_scope());
+        assert!(error.is_none(), "post-process GPU validation: {error:?}");
     }
 }

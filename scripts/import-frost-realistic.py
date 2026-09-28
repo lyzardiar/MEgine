@@ -14,6 +14,14 @@ from PIL import Image
 ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';MANIFEST=SAMPLE/'realistic-sources.json'
 UA={'User-Agent':'MEngineAssetImporter/1.0 (https://github.com/lyzardiar/MEgine)'}
 
+def texture_mapping(texture):
+    transform=texture.get('extensions',{}).get('KHR_texture_transform',{})
+    return (transform.get('texCoord',texture.get('texCoord',0)),tuple(transform.get('scale',[1,1])),tuple(transform.get('offset',[0,0])),transform.get('rotation',0))
+
+def texture_uvs(uv,mapping):
+    _,scale,offset,rotation=mapping;c=math.cos(rotation);s=math.sin(rotation)
+    return (np.asarray(uv)*scale)@np.array([[c,s],[-s,c]])+offset
+
 def main():
     manifest=json.loads(MANIFEST.read_text(encoding='utf-8'))
     for item in manifest['sources']:
@@ -31,10 +39,18 @@ def main():
     for asset in manifest['assets']:
         key=asset['id'];base=SAMPLE/'SourceAssets/polyhaven'/key;doc=json.loads((base/(key+'_1k.gltf')).read_text())
         if len(doc['buffers'])!=1:raise ValueError('Expected one geometry buffer')
-        blob=(base/doc['buffers'][0]['uri']).read_bytes();materials=doc['materials'];uvs=[adapter.accessor(doc,blob,p['attributes']['TEXCOORD_0']) for m in doc['meshes'] for p in m['primitives']];vmin=math.floor(min(uv[:,1].min() for uv in uvs)+1e-6);vmax=math.ceil(max(uv[:,1].max() for uv in uvs)-1e-6);rows=max(1,vmax-vmin)
+        blob=(base/doc['buffers'][0]['uri']).read_bytes();materials=doc['materials'];mappings=[]
+        for mat in materials:
+            pbr=mat['pbrMetallicRoughness'];mapping=texture_mapping(pbr['baseColorTexture'])
+            if any(texture_mapping(texture)!=mapping for texture in [mat['normalTexture'],pbr['metallicRoughnessTexture']]):raise ValueError('Atlas requires matching color, normal and ARM texture transforms: '+mat['name'])
+            mappings.append(mapping)
+        def read_uv(primitive):
+            mapping=mappings[primitive.get('material',0)]
+            return texture_uvs(adapter.accessor(doc,blob,primitive['attributes']['TEXCOORD_'+str(mapping[0])]),mapping)
+        uvs=[read_uv(p) for m in doc['meshes'] for p in m['primitives']];vmin=math.floor(min(uv[:,1].min() for uv in uvs)+1e-6);vmax=math.ceil(max(uv[:,1].max() for uv in uvs)-1e-6);rows=max(1,vmax-vmin)
         tiles=[];columns=0
         for i in range(len(materials)):
-            mus=[adapter.accessor(doc,blob,p['attributes']['TEXCOORD_0']) for m in doc['meshes'] for p in m['primitives'] if p.get('material',0)==i]
+            mus=[read_uv(p) for m in doc['meshes'] for p in m['primitives'] if p.get('material',0)==i]
             low=math.floor(min(uv[:,0].min() for uv in mus)+1e-6);high=math.ceil(max(uv[:,0].max() for uv in mus)-1e-6);width=max(1,high-low);tiles.append((low,width,columns));columns+=width
         if max(columns,rows)>8:raise ValueError('Tiled atlas exceeds 8192 pixels')
         maps={}
@@ -56,7 +72,7 @@ def main():
             name=asset['names'][index];positions=[];normals=[];coords=[];indices=[];transform=adapter.matrix(node)
             for prim in doc['meshes'][node['mesh']]['primitives']:
                 if prim.get('mode',4)!=4:raise ValueError('Expected triangles')
-                p=adapter.accessor(doc,blob,prim['attributes']['POSITION']);n=adapter.accessor(doc,blob,prim['attributes']['NORMAL']);uv=adapter.accessor(doc,blob,prim['attributes']['TEXCOORD_0']);tile=tiles[prim.get('material',0)];uv[:,0]=(uv[:,0]-tile[0]+tile[2])/columns;uv[:,1]=(uv[:,1]-vmin)/rows
+                p=adapter.accessor(doc,blob,prim['attributes']['POSITION']);n=adapter.accessor(doc,blob,prim['attributes']['NORMAL']);uv=read_uv(prim);tile=tiles[prim.get('material',0)];uv[:,0]=(uv[:,0]-tile[0]+tile[2])/columns;uv[:,1]=(uv[:,1]-vmin)/rows
                 indices.extend((adapter.accessor(doc,blob,prim['indices']).astype(np.int64).reshape(-1)+len(positions)).tolist());positions.extend((transform@np.c_[p,np.ones(len(p))].T).T[:,:3]);normal=(np.linalg.inv(transform[:3,:3]).T@n.T).T;normal/=np.maximum(np.linalg.norm(normal,axis=1)[:,None],1e-9);normals.extend(normal);coords.extend(uv)
             positions=np.asarray(positions);lo=positions.min(axis=0);hi=positions.max(axis=0);positions-=np.array([(lo[0]+hi[0])/2,lo[1],(lo[2]+hi[2])/2]);original=work/(name+'.glb');adapter.glb(original,positions,normals,coords,indices)
             meshes=[];stats=[]

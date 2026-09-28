@@ -12,15 +12,15 @@
     "shaderRejections": 0,
     "profiler": {
       "intervals": 72,
-      "averagePresentIntervalMs": 125.06666666683223,
-      "p95PresentIntervalMs": 228,
-      "presentedFps": 7.995735607665321,
-      "averageRequestMs": 172.61369863438279,
-      "averageRenderMs": 44.56282465753426,
-      "averageCommandMs": 118.85883287671231,
-      "averageUploadMs": 1.4739726055158329,
-      "averageSimulationMs": 14.835713888888888,
-      "averageSimulationRequestMs": 168.2777777844005
+      "averagePresentIntervalMs": 131.67499999950329,
+      "p95PresentIntervalMs": 213.19999998807907,
+      "presentedFps": 7.594456047114276,
+      "averageRequestMs": 179.9904109566179,
+      "averageRenderMs": 48.657378082191784,
+      "averageCommandMs": 122.89848630136989,
+      "averageUploadMs": 1.4794520523450145,
+      "averageSimulationMs": 12.084844444444448,
+      "averageSimulationRequestMs": 210.25416666352086
     }
   }
 }

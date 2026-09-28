@@ -1,6 +1,6 @@
 # 写实美术阶段
 
-本页记录写实素材接入阶段。后续性能实测和当前 Player 包见 [运行性能阶段](runtime-performance.md)。
+本页记录写实素材接入阶段。当前画面、性能实测和 Player 包见 [画面细化阶段](rendering-refinement.md)。
 
 人族八种建筑外观使用 Daniel74 的木梁、灰泥、砖基与瓦顶房屋模块，补充门窗并烘焙原始重复贴图；建造预览、场景模型、选中模型和建筑按钮使用同一份模型目录。环境使用 Poly Haven 的中型冷杉、灌木、扫描岩石、石砌火塘和森林地表。所有新增来源为 CC0，原件、来源地址与 SHA-256 保存在 `house-sources.json`、`realistic-sources.json`，许可位于样例 `Licenses/`。
 

@@ -457,15 +457,15 @@
       "lods": [
         {
           "sourceTriangles": 685046,
-          "triangles": 219997,
-          "vertices": 344347,
-          "error": 0.00035551763721741736
+          "triangles": 219994,
+          "vertices": 344429,
+          "error": 0.0003452666860539466
         },
         {
           "sourceTriangles": 685046,
-          "triangles": 129993,
-          "vertices": 238896,
-          "error": 0.0005032930057495832
+          "triangles": 129989,
+          "vertices": 239122,
+          "error": 0.0005033020279370248
         }
       ]
     },
@@ -476,14 +476,14 @@
         {
           "sourceTriangles": 420822,
           "triangles": 220000,
-          "vertices": 293140,
-          "error": 0.0002589494688436389
+          "vertices": 293107,
+          "error": 0.00025895016733556986
         },
         {
           "sourceTriangles": 420822,
           "triangles": 130000,
-          "vertices": 207499,
-          "error": 0.00040486021316610277
+          "vertices": 207497,
+          "error": 0.00040485779754817486
         }
       ]
     },
@@ -494,14 +494,14 @@
         {
           "sourceTriangles": 427645,
           "triangles": 220000,
-          "vertices": 294816,
-          "error": 0.00035588923492468894
+          "vertices": 294835,
+          "error": 0.0003558474709279835
         },
         {
           "sourceTriangles": 427645,
-          "triangles": 130000,
-          "vertices": 208976,
-          "error": 0.0005458888481371105
+          "triangles": 129999,
+          "vertices": 208936,
+          "error": 0.0005459089879877865
         }
       ]
     }
@@ -601,39 +601,39 @@
     },
     {
       "file": "Assets/Models/RealSpruceA-far.glb",
-      "sha256": "0043101aec8290f3603cc046ee4e8929c557996902f4c403170c2e196ab0aa23"
+      "sha256": "49fe52a1df3e282e93c637388c23eec74b467bc0c8b5aec6c60fa0a6aa064a17"
     },
     {
       "file": "Assets/Models/RealSpruceA.glb",
-      "sha256": "b8c012383425aa1e62e33d47739f41fa4fe0f818e27b9cb91c026b162f5d35a6"
+      "sha256": "e3bb82cfe35a8c5816202ba505ea91d572a6c8a1889ac389d7c283ae516991ea"
     },
     {
       "file": "Assets/Models/RealSpruceB-far.glb",
-      "sha256": "127f514731b1ae5040bdfdd5fdfe15b5de3aeb6b8bdc7ef549f00a692a66771d"
+      "sha256": "d4b3e60b3f4f9496f1ab06453fc5aecd2dd5337018ab0de9fae5909007a4fee0"
     },
     {
       "file": "Assets/Models/RealSpruceB.glb",
-      "sha256": "ac4120719870b3e61085d67a25b6eb3f5a91feb213034f6956338fd1a16b2f39"
+      "sha256": "79a63acc7e4ce1bca20427d9ee6f2eb7f13679ccad5843738401ba603f08e536"
     },
     {
       "file": "Assets/Models/RealSpruceC-far.glb",
-      "sha256": "ef980b431ab37dd52e83520f01a2b9f6bd09f92649cc9bf33412f4bfabe8b66e"
+      "sha256": "7ac7ee9adf33f20ff7a41dee38f5210ccd36408f9bd77c6c5250d99227d90c48"
     },
     {
       "file": "Assets/Models/RealSpruceC.glb",
-      "sha256": "651f83fc477137d54721181a6d27baa38f484712c851a104c0a4f0db5a202e2b"
+      "sha256": "bcd041cefd49cae202d777ae02ee83a914cdb9ffdd01256fc13367212da79176"
     },
     {
       "file": "Assets/Textures/Real_fir_sapling_medium_arm.png",
-      "sha256": "ebdd7267f04b5c764a9cea1df67ada396a39efaa980a24fe796a007deda0bd9a"
+      "sha256": "82f85c2eda4d4ef6e55206d3eccfe68ca17996d14b469ab2e380e43e81f5d73a"
     },
     {
       "file": "Assets/Textures/Real_fir_sapling_medium_base.png",
-      "sha256": "408f3b3c4dab4a24c359e00eab0a099c8adf848a2ab3e0491031f1808fa3fd79"
+      "sha256": "78c7c34556043b63e03fdcd1b140366989bffb48008502ad26b40d6c892778f9"
     },
     {
       "file": "Assets/Textures/Real_fir_sapling_medium_normal.png",
-      "sha256": "48d59c7eaaa21dc16eae2ecff7bdf1f0cf372bd0044787c6056ec4cd65f8bf30"
+      "sha256": "984457fc6b1dd3e9cc9e87d201fdf84633fbeb228c7d808f15cd5f29e4587222"
     },
     {
       "file": "Assets/Textures/Real_rock_07_arm.png",
