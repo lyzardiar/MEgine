@@ -56,3 +56,11 @@
 验证：Node 规则/TCP、视觉映射/真实升级/存档/可见性与全部来源和派生哈希检查通过；frost_skins 2/2（9 个动画模型与 32 个建筑网格）、实际 QuickJS frost_sample 3/3。native-factions-qa.json 通过四族建筑、动画工人选择、建造预览、按钮图标、头像和名称，0 shader 拒绝。最终截图 faction-0.png 至 faction-3.png。Player 包 276 文件、1753 实体，内容哈希 24811ac4891cccbe9b099000f2ee7696648077b1ebdb0ab08f0738f2ee3f4f58；逐文件与 Release exe 哈希一致。
 
 完整复刻目标保持 active；战役、全部兵种美术、完整 Dota、可视触发图、录像观战、重叠地形、大规模导航与 5ms 目标尚未完成。Agent 输入和 Player 启动不代表物理设备、音频听感或跨机 LAN 验收。
+
+2026-09-28 编队阶段：玩家 move/attackMove 为最多40个选中移动单位分配目的地，按行军方向和射程形成前后排，使用体型间距并分别处理地面与空中。单个单位到实际点击点；空位搜索受本地可达分量、建筑、边界和待命友军约束，无空间时原子拒绝。地面路径复用 routeSearch，单位到达半径0.12。修正实际RPG规则回放中的旧横向偏移补偿。
+
+独立只读复核发现隐藏建筑会提前改变公开目标；导航障碍缓存按队伍可见性区分，编队只使用可见建筑，接近后发现阻挡时重新分配落点。回归对比有/无隐藏建筑的己方公开位置、路径与命令；揭示后仍能正常到达。原生QA使用隔离平地测试地图，无交付默认地图修改。
+
+验证：test-frost-formations.mjs覆盖40单位混合编队真实行军、近战前排、空地、坡道、不可达崖壁、河流、阻挡、边界、整组失败不变、输入顺序确定性、行军中存档恢复与迷雾；Node全规则/TCP通过并新增服务端四单位目标分配；真实QuickJS frost_sample 3/3。native-formations-qa.json通过12单位框选、Ctrl+1编组/召回、各自到达和存档恢复，0 shader拒绝；截图formation-selected.png/formation-arrival.png。复用上阶段Release引擎，未修改Rust或C#。
+
+Player包276文件、1753实体、79模型，哈希60b19e1f9ca44dc5680b104cab491e78bcdcc884547529668f59f0a2dffb0bb6，逐文件和Release exe核验；30秒启动见player-smoke.json。当前仅玩家移动/攻击移动形成编队，动态避让/近战包围/指令队列尚未实现；完整战役/四族美术与内容、完整Dota、可视触发图、录像观战、重叠地形、大规模导航和5ms仍未完成。完整目标保持active，物理输入/音频/跨机LAN未验收。

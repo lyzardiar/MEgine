@@ -199,19 +199,47 @@ var Frost = (() => {
   }
   function lanePath(team,lane){const paths=[[[-23,23],[-24,7],[-24,-18],[-7,-24],[23,-23]],[[-23,23],[-13,13],[-5,5],[5,-5],[13,-13],[23,-23]],[[-23,23],[-7,24],[18,24],[24,7],[23,-23]]];return team?[...paths[lane]].reverse():paths[lane];}
   const tdPath=[[-25,-24],[23,-24],[23,-8],[-21,-8],[-21,7],[20,7],[20,20],[-23,23]];
-  function solid(s,x,z,ignore=0){if(Math.abs(x)>30||Math.abs(z)>30||s.map.terrain[index(x,z)]===1)return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
+  function solid(s,x,z,ignore=0,team=-1){if(Math.abs(x)>30||Math.abs(z)>30||s.map.terrain[index(x,z)]===1)return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
   const navigationCache=new WeakMap();
-  function navigation(s){
-    let cache=navigationCache.get(s);if(cache&&cache.frame===s.frame&&cache.serial===s.serial)return cache.blocked;
+  function navigation(s,team=-1){
+    let cache=navigationCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,blocked:[]};navigationCache.set(s,cache);}if(cache.blocked[team+1])return cache.blocked[team+1];
     const blocked=Uint8Array.from(s.map.terrain,v=>v===1?1:0);
-    for(const u of s.units)if(u.hp>0&&!types[u.kind].speed){const radius=(types[u.kind].radius||1)+.35,[cx,cz]=cell(u.x,u.z),r=Math.ceil(radius/2)+1;for(let z=Math.max(0,cz-r);z<=Math.min(31,cz+r);z++)for(let x=Math.max(0,cx-r);x<=Math.min(31,cx+r);x++)if(Math.hypot(x*2-31-u.x,z*2-31-u.z)<radius)blocked[z*32+x]=1;}
-    navigationCache.set(s,{frame:s.frame,serial:s.serial,blocked});return blocked;
+    for(const u of s.units)if(u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))){const radius=(types[u.kind].radius||1)+.35,[cx,cz]=cell(u.x,u.z),r=Math.ceil(radius/2)+1;for(let z=Math.max(0,cz-r);z<=Math.min(31,cz+r);z++)for(let x=Math.max(0,cx-r);x<=Math.min(31,cx+r);x++)if(Math.hypot(x*2-31-u.x,z*2-31-u.z)<radius)blocked[z*32+x]=1;}
+    cache.blocked[team+1]=blocked;return blocked;
+  }
+  function routeSearch(s,u,goal=-1){
+    const start=index(u.x,u.z),blocked=navigation(s,u.team),prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const cells=[start];
+    for(let k=0;k<cells.length;k++){const n=cells[k],x=n%32,z=Math.floor(n/32);if(n===goal)break;
+      for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;prev[j]=n;cells.push(j);}}
+    return {start,prev,cells};
   }
   function path(s,u,tx,tz){
-    const start=index(u.x,u.z),goal=index(tx,tz),blocked=navigation(s),prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const queue=[start];let found=start,best=Infinity;
-    for(let k=0;k<queue.length;k++){const n=queue[k],x=n%32,z=Math.floor(n/32),d=Math.hypot(x-goal%32,z-Math.floor(goal/32));if(d<best){best=d;found=n;}if(n===goal)break;
-      for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;prev[j]=n;queue.push(j);}}
+    const goal=index(tx,tz),{start,prev,cells}=routeSearch(s,u,goal);let found=start,best=Infinity;
+    for(const n of cells){const d=Math.hypot(n%32-goal%32,Math.floor(n/32)-Math.floor(goal/32));if(d<best){best=d;found=n;}}
     const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%32*2-31,Math.floor(n/32)*2-31]);return result.reverse();
+  }
+  function movementRadius(u){return types[u.kind].flying?1:types[u.kind].attack==='siege'?.9:types[u.kind].model==='knight'?.7:.5;}
+  // ponytail: each selected unit scans the 32x32 grid (max 40); share reachability fields when maps grow.
+  function formation(s,units,x,z){
+    const orders=new Map();
+    for(const flying of [false,true]){
+      const members=units.filter(u=>!!types[u.kind].flying===flying);if(!members.length)continue;
+      const cx=members.reduce((n,u)=>n+u.x,0)/members.length,cz=members.reduce((n,u)=>n+u.z,0)/members.length,d=Math.hypot(x-cx,z-cz),fx=d>.01?(x-cx)/d:0,fz=d>.01?(z-cz)/d:-1,columns=Math.ceil(Math.sqrt(members.length)),rows=Math.ceil(members.length/columns),spacing=Math.max(...members.map(movementRadius))*2+.6;
+      members.sort((a,b)=>unitType(a).range-unitType(b).range||((b.x-cx)*fx+(b.z-cz)*fz)-((a.x-cx)*fx+(a.z-cz)*fz)||a.id-b.id);
+      const reserved=s.units.filter(u=>u.hp>0&&!u.inside&&u.speed&&u.team===members[0].team&&!u.order&&!units.includes(u)&&!!types[u.kind].flying===flying).map(u=>({x:u.x,z:u.z,r:movementRadius(u)}));
+      for(let i=0;i<members.length;i++){
+        const u=members[i],row=Math.floor(i/columns),width=Math.min(columns,members.length-row*columns),side=(i%columns-(width-1)/2)*spacing,forward=((rows-1)/2-row)*spacing,ideal=[clamp(x+fz*side+fx*forward,-30,30),clamp(z-fx*side+fz*forward,-30,30)],r=movementRadius(u),search=flying?null:routeSearch(s,u),cells=flying?Array.from({length:1024},(_,j)=>j):search.cells;
+        const available=(px,pz)=>Math.abs(px)<=30&&Math.abs(pz)<=30&&(flying||!solid(s,px,pz,u.id,u.team))&&reserved.every(v=>Math.hypot(px-v.x,pz-v.z)>=r+v.r+.3);
+        let dest=null,best=Infinity;
+        const consider=(px,pz)=>{const score=(px-ideal[0])**2+(pz-ideal[1])**2;if(score<best&&available(px,pz)){dest=[px,pz];best=score;}};
+        const cellX=cell(...ideal)[0]*2-31,cellZ=cell(...ideal)[1]*2-31;
+        if(flying||search.prev[index(...ideal)]!==-1&&traversable(s.map,cellX,cellZ,...ideal))consider(...ideal);
+        for(const j of cells)consider(j%32*2-31,Math.floor(j/32)*2-31);
+        if(!dest)return null;
+        reserved.push({x:dest[0],z:dest[1],r});orders.set(u.id,dest);
+      }
+    }
+    return orders;
   }
   function move(s,u,x,z,stop=.5){
     if(u.root>0||u.stun>0)return false;
@@ -230,7 +258,9 @@ var Frost = (() => {
       const target=s.units.find(v=>v.id===c.target&&v.hp>0);if(c.type==='attack'&&(!target||target.team===team||!isVisible(s,team,target)))return 'Target is not visible';
       if(c.type==='attack'&&!own.some(v=>canAttack(v,target)))return 'Selected units cannot attack this target';
       if(c.type==='gather'&&(!Number.isInteger(c.resource)||!s.resources[c.resource]||s.resources[c.resource].kind==='camp'))return 'Select a resource';
-      own.forEach((v,i)=>{if(c.type==='attack'&&!canAttack(v,target))return;delete v.workResume;v.path=[];v.pathAt=-100;v.order=c.type==='stop'?null:{type:c.type,x:point?clamp(c.x+(i%5-2)*1.1,-29,29):0,z:point?clamp(c.z+Math.floor(i/5)*1.1,-29,29):0,target:c.target,resource:c.resource};});return null;
+      const moving=['move','attackMove'].includes(c.type),members=moving?own.filter(v=>v.speed&&v.built===1):own,slots=moving?formation(s,members,c.x,c.z):null;
+      if(moving&&!slots)return 'No reachable space for this formation';
+      members.forEach(v=>{if(c.type==='attack'&&!canAttack(v,target))return;delete v.workResume;v.path=[];v.pathAt=-100;v.order=c.type==='stop'?null:{type:c.type,x:slots?.get(v.id)?.[0]??0,z:slots?.get(v.id)?.[1]??0,target:c.target,resource:c.resource};});return null;
     }
     if(c.type==='build'){
       if(s.mode==='moba'||!u||u.kind!=='worker'||!['hall','farm','barracks','tower','frosttower','flametower','altar','workshop'].includes(c.kind)||!point)return 'Select a worker and a building site';
@@ -380,7 +410,10 @@ var Frost = (() => {
       if(u.order?.type==='attack'&&!target)u.order=null;
       if(u.order?.type!=='move'&&u.damage>0&&!target){let best=Infinity;for(const v of s.units){if(v.team===u.team||v.hp<=0||!canAttack(u,v)||(u.team>=0&&!isVisible(s,u.team,v)))continue;const d=distance(u,v);if(d<best&&d<Math.max(unitType(u).range,8)){target=v;best=d;}}}
       if(target){const range=unitType(u).range+(types[target.kind].radius||.3);if(Math.hypot(distance(u,target),unitHeight(s,u)-unitHeight(s,target))<=range&&attackClear(s,u,target)){if(u.cd<=0){damage(s,u,target,weaponDamage(u,target,u.damage*(u.avatar>0?1.6:1)+(s.teams[u.team]?.upgrade||0)*6));if(types[u.kind].splash)for(const v of s.units)if(v.id!==target.id&&v.team!==u.team&&v.hp>0&&canAttack(u,v)&&distance(v,target)<types[u.kind].splash)damage(s,u,v,weaponDamage(u,v,u.damage*.6));u.cd=unitType(u).cooldown||1;s.events.push({type:'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,fromY:unitHeight(s,u)+1.6,toY:unitHeight(s,target)+1.6,team:u.team,ranged:range>4});}}else move(s,u,target.x,target.z,range*.8);}
-      else if(u.order&&['move','attackMove'].includes(u.order.type)){if(move(s,u,u.order.x,u.order.z,1))u.order=null;}
+      else if(u.order&&['move','attackMove'].includes(u.order.type)){
+        if(!types[u.kind].flying&&solid(s,u.order.x,u.order.z,u.id,u.team)){const p=formation(s,[u],u.order.x,u.order.z)?.get(u.id);if(p){u.order.x=p[0];u.order.z=p[1];u.path=[];u.pathAt=-100;}}
+        if(move(s,u,u.order.x,u.order.z,.12))u.order=null;
+      }
       else if(u.route){const p=u.route[u.waypoint];if(p&&move(s,u,p[0],p[1],1.5))u.waypoint++;}
       else if(u.home&&distance(u,{x:u.home[0],z:u.home[1]})>3)move(s,u,...u.home,2);
       if(u.kind==='hero'&&s.units.some(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1&&distance(u,v)<8))u.hp=Math.min(u.maxHp,u.hp+DT*12);

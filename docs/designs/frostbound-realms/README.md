@@ -4,9 +4,17 @@
 
 ## 本次范围
 
+本阶段完善玩家多单位移动：最多 40 个单位按行军方向、射程与体型分配各自的可达位置，地面/空中独立编队，单单位精确到达点击点。河流、封闭高地、建筑和边界会调整落点；无足够空间时整组保留原命令。寻路和编队分配只使用可见敌方建筑，目标被新发现的建筑占用后重新落位。
+
+`test-frost-formations.mjs` 验证 40 单位混合编队实际到达、近战/远程排序、输入顺序确定性、行军中存档恢复、坡道、封闭崖壁、河流、空军、建筑、边界和原子拒绝，并比较隐藏建筑存在/不存在时的己方公开路径和命令。Node 全部规则/TCP 回归、服务端四单位目标分配及实际 QuickJS 3/3 通过。[原生编队验收](native-formations-qa.json) 在隔离的平地测试地图验证 12 单位框选、Ctrl+1 编组、1 召回、右键移动、各自到达与保存恢复；未改动交付默认地图。当前编队未实现行军动态避让、近战包围或指令队列。
+
+![编队到达](formation-arrival.png)
+
+最新 Player 包 276 文件、1753 实体、79 模型，内容哈希 `60b19e1f9ca44dc5680b104cab491e78bcdcc884547529668f59f0a2dffb0bb6`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
+
 本阶段接入四阵营 32 个建筑模型与 5 个骨骼动画怪物，模型目录共 79 项。建筑由 Kenney Castle/Nature/Graveyard 的 46 个模块组合，包含各阵营三级主基地与五类功能建筑；怪物来自 Quaternius Ultimate Monsters。下载原件、CC0 许可、源地址、配方和派生 SHA-256 分别留存于 faction-sources.json、monster-sources.json。32 个建造图标由真实建筑的原生渲染生成，建造菜单、预览、头像和升级外观保持对应。
 
-本阶段 Node 规则/TCP 与资源校验通过，frost_skins 2/2、实际 QuickJS frost_sample 3/3 通过；[四阵营原生验收](native-factions-qa.json) 覆盖四族初始建筑、动画工人选择、建造预览、图标、头像和名称，着色器拒绝数为 0。下图为实际游戏画面。完整 Player 包 276 文件、1753 实体，内容哈希 `24811ac4891cccbe9b099000f2ee7696648077b1ebdb0ab08f0738f2ee3f4f58`；逐文件哈希与 Release exe 一致，启动证据见 player-smoke.json。
+本阶段 Node 规则/TCP 与资源校验通过，frost_skins 2/2、实际 QuickJS frost_sample 3/3 通过；[四阵营原生验收](native-factions-qa.json) 覆盖四族初始建筑、动画工人选择、建造预览、图标、头像和名称，着色器拒绝数为 0。下图为实际游戏画面。资产阶段 Player 包 276 文件、1753 实体，内容哈希 `24811ac4891cccbe9b099000f2ee7696648077b1ebdb0ab08f0738f2ee3f4f58`；逐文件哈希与 Release exe 一致，启动证据见 player-smoke.json。
 
 ![王国基地](faction-0.png)
 ![战团基地](faction-1.png)
@@ -108,8 +116,10 @@ pnpm.cmd run build:editor
 cargo build --release -p mengine-runtime -p mengine-editor-tauri --features tauri/custom-protocol
 node scripts/qa-frostbound.mjs
 node scripts/qa-frostbound.mjs --performance-only
+node scripts/qa-frostbound.mjs --formations-only
 pnpm.cmd --filter @mengine/cli build
 node packages/cli/dist/cli.js build samples/frostbound-realms --runtime target/release/mengine-runtime.exe --skip-runtime-build --out samples/frostbound-realms/Builds/windows-x64 --clean
+./scripts/smoke-frostbound.ps1
 ```
 
 运行 `samples/frostbound-realms/Builds/windows-x64/Frostbound Realms.exe`。生成脚本 Main.js 和 Builds 目录按仓库惯例不提交；新检出必须先运行生成器。最终包的内容哈希、文件数与启动检查留存于 player-smoke.json。

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import './test-frost-terrain.mjs';
+import './test-frost-formations.mjs';
 import './test-frost-visuals.mjs';
 import './test-frost-heroes.mjs';
 import './test-frost-construction.mjs';
@@ -67,7 +68,7 @@ let rpg=S.create('rpg'),restored=false;
 for(let i=0;i<3000&&rpg.winner===null;i++){
   const hero=rpg.units.find(u=>u.kind==='hero'&&u.team===0);
   if(hero.hp>0&&i%10===0){for(const slot of [3,0,1,2])S.command(rpg,0,{type:'learn',ids:[hero.id],slot});const enemy=rpg.units.filter(u=>u.team!==0&&u.hp>0).sort((a,b)=>S.distance(a,hero)-S.distance(b,hero))[0],drop=rpg.loot[0];
-    if(drop)S.command(rpg,0,{type:'move',ids:[hero.id],x:drop.x+2.2,z:drop.z});else if(enemy)S.command(rpg,0,{type:S.isVisible(rpg,0,enemy)?'attack':'attackMove',ids:[hero.id],target:enemy.id,x:enemy.x+2.2,z:enemy.z});else S.command(rpg,0,{type:'move',ids:[hero.id],x:-20.8,z:23});
+    if(drop)S.command(rpg,0,{type:'move',ids:[hero.id],x:drop.x,z:drop.z});else if(enemy)S.command(rpg,0,{type:S.isVisible(rpg,0,enemy)?'attack':'attackMove',ids:[hero.id],target:enemy.id,x:enemy.x,z:enemy.z});else S.command(rpg,0,{type:'move',ids:[hero.id],x:-23,z:23});
     if(hero.hp<hero.maxHp*.7)S.command(rpg,0,{type:'spell',ids:[hero.id],slot:1,x:hero.x,z:hero.z});if(enemy&&S.distance(hero,enemy)<12)for(const slot of [0,3])S.command(rpg,0,{type:'spell',ids:[hero.id],slot,x:enemy.x,z:enemy.z});
   }S.tick(rpg);if(!restored&&rpg.quest.stage===1){rpg=S.restore(JSON.parse(JSON.stringify(rpg)));restored=true;}
 }
@@ -88,6 +89,7 @@ try{
   const hero=state.units.find(u=>u.kind==='hero'),before=[hero.x,hero.z];a.send({type:'order',seq:1,command:{type:'move',ids:[hero.id],x:-16,z:15}});state=(await a.next(m=>m.type==='state'&&m.state.frame>12)).state;const moved=state.units.find(u=>u.id===hero.id);assert.ok(Math.hypot(moved.x-before[0],moved.z-before[1])>.5);
   next=a.next(m=>m.type==='error');a.send({type:'order',seq:1,command:{type:'move',ids:[hero.id],x:0,z:0}});assert.match((await next).message,/Stale/);
   const [hostEvent,guestEvent]=await Promise.all([a.next(m=>m.type==='state'&&m.state.frame>=31),b.next(m=>m.type==='state'&&m.state.frame>=31)]);assert.equal(hostEvent.state.map.name,'Winterfall Supply Road');assert.equal(hostEvent.state.units.filter(u=>u.team===0&&u.kind==='archer').length,3);assert.match(hostEvent.state.announcements[0],/supply escort/);assert.equal(guestEvent.state.announcements[0],'');assert.deepEqual(guestEvent.state.map.regions,[]);assert.equal(guestEvent.state.triggerState,undefined);assert.equal(app.rooms.get(joined.code).state.triggerState[0].count,1);
+  const squad=hostEvent.state.units.filter(u=>u.team===0&&(u.kind==='archer'||u.kind==='hero'));assert.equal(squad.length,4);a.send({type:'order',seq:2,command:{type:'move',ids:squad.map(u=>u.id),x:-5,z:5}});const marching=(await a.next(m=>m.type==='state'&&m.state.frame>=hostEvent.state.frame+3)).state.units.filter(u=>squad.some(v=>v.id===u.id));assert.equal(marching.length,4);assert.ok(marching.every(u=>u.order?.type==='move'));assert.equal(new Set(marching.map(u=>JSON.stringify([u.order.x,u.order.z]))).size,4,'server assigns distinct formation destinations');
   b.socket.destroy();await new Promise(r=>setTimeout(r,100));const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:guest.code,token:guest.token});const resumed=await next;assert.equal(resumed.team,guest.team);assert.equal(resumed.state.units.find(u=>u.kind==='hero'&&u.team===guest.team).heroClass,2);
   next=a.next(m=>m.type==='room'&&m.players.length===1);c.send({type:'leave'});await next;assert.equal(app.rooms.get(joined.code).state.teams[1].ai,true,'AI takes over a voluntarily vacated team');
   console.log('PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect');
