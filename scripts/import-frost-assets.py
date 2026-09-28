@@ -156,3 +156,9 @@ if __name__ == '__main__':
 
     skeleton_spec=importlib.util.spec_from_file_location('frost_skeletons',ROOT/'scripts/import-frost-skeletons.py')
     skeleton=importlib.util.module_from_spec(skeleton_spec);skeleton_spec.loader.exec_module(skeleton);skeleton.main()
+    realistic_spec=importlib.util.spec_from_file_location('frost_realistic',ROOT/'scripts/import-frost-realistic.py')
+    realistic=importlib.util.module_from_spec(realistic_spec);realistic_spec.loader.exec_module(realistic);realistic.main()
+    import os, subprocess
+    subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-houses.py')],check=True,cwd=ROOT)
+
+    subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/bake-frost-foliage.py')],check=True,cwd=ROOT)

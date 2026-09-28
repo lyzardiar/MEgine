@@ -1141,11 +1141,11 @@
     ]
   },
   "KingdomHall": {
-    "material": "Assets/Materials/KingdomHall.mmat",
+    "material": "Assets/Materials/RealKingdomHall.mmat",
     "parts": [
       {
         "name": "KingdomHall",
-        "mesh": "Assets/Models/KingdomHall.glb",
+        "mesh": "Assets/Models/RealKingdomHall.glb",
         "pivot": [
           0,
           0,
@@ -1154,18 +1154,19 @@
       }
     ],
     "size": [
-      4.2,
-      4.2,
-      4.2
+      8.777414321899414,
+      12.441641807556152,
+      5.539161682128906
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "KingdomBarracks": {
-    "material": "Assets/Materials/KingdomBarracks.mmat",
+    "material": "Assets/Materials/RealKingdomBarracks.mmat",
     "parts": [
       {
         "name": "KingdomBarracks",
-        "mesh": "Assets/Models/KingdomBarracks.glb",
+        "mesh": "Assets/Models/RealKingdomBarracks.glb",
         "pivot": [
           0,
           0,
@@ -1174,18 +1175,19 @@
       }
     ],
     "size": [
-      3.6,
-      3.5,
-      3.3
+      13.241365432739258,
+      9.321049690246582,
+      5.539161682128906
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "KingdomLodge": {
-    "material": "Assets/Materials/KingdomLodge.mmat",
+    "material": "Assets/Materials/RealKingdomLodge.mmat",
     "parts": [
       {
         "name": "KingdomLodge",
-        "mesh": "Assets/Models/KingdomLodge.glb",
+        "mesh": "Assets/Models/RealKingdomLodge.glb",
         "pivot": [
           0,
           0,
@@ -1194,18 +1196,19 @@
       }
     ],
     "size": [
-      2.6,
-      2.5,
-      2.4
+      8.777414321899414,
+      7.404144287109375,
+      5.539161682128906
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "KingdomTower": {
-    "material": "Assets/Materials/KingdomTower.mmat",
+    "material": "Assets/Materials/RealKingdomTower.mmat",
     "parts": [
       {
         "name": "KingdomTower",
-        "mesh": "Assets/Models/KingdomTower.glb",
+        "mesh": "Assets/Models/RealKingdomTower.glb",
         "pivot": [
           0,
           0,
@@ -1214,18 +1217,19 @@
       }
     ],
     "size": [
-      1.9,
-      4.25,
-      1.9
+      4.827577590942383,
+      10.067081451416016,
+      3.046538829803467
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "KingdomAltar": {
-    "material": "Assets/Materials/KingdomAltar.mmat",
+    "material": "Assets/Materials/RealKingdomAltar.mmat",
     "parts": [
       {
         "name": "KingdomAltar",
-        "mesh": "Assets/Models/KingdomAltar.glb",
+        "mesh": "Assets/Models/RealKingdomAltar.glb",
         "pivot": [
           0,
           0,
@@ -1234,18 +1238,19 @@
       }
     ],
     "size": [
-      2.6,
-      4.5,
-      2.6
+      5.349999904632568,
+      8.804880142211914,
+      4.45736026763916
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "KingdomWorkshop": {
-    "material": "Assets/Materials/KingdomWorkshop.mmat",
+    "material": "Assets/Materials/RealKingdomWorkshop.mmat",
     "parts": [
       {
         "name": "KingdomWorkshop",
-        "mesh": "Assets/Models/KingdomWorkshop.glb",
+        "mesh": "Assets/Models/RealKingdomWorkshop.glb",
         "pivot": [
           0,
           0,
@@ -1254,11 +1259,12 @@
       }
     ],
     "size": [
-      3.8,
-      2.9,
-      3.9
+      5.349999904632568,
+      6.997012138366699,
+      4.45736026763916
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WarclansHall": {
     "material": "Assets/Materials/WarclansHall.mmat",
@@ -1621,11 +1627,11 @@
     "factionBuilding": true
   },
   "KingdomHall2": {
-    "material": "Assets/Materials/KingdomHall2.mmat",
+    "material": "Assets/Materials/RealKingdomHall2.mmat",
     "parts": [
       {
         "name": "KingdomHall2",
-        "mesh": "Assets/Models/KingdomHall2.glb",
+        "mesh": "Assets/Models/RealKingdomHall2.glb",
         "pivot": [
           0,
           0,
@@ -1634,18 +1640,19 @@
       }
     ],
     "size": [
-      4.2,
-      6.6,
-      4.2
+      13.241365432739258,
+      12.441641807556152,
+      5.539161682128906
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "KingdomHall3": {
-    "material": "Assets/Materials/KingdomHall3.mmat",
+    "material": "Assets/Materials/RealKingdomHall3.mmat",
     "parts": [
       {
         "name": "KingdomHall3",
-        "mesh": "Assets/Models/KingdomHall3.glb",
+        "mesh": "Assets/Models/RealKingdomHall3.glb",
         "pivot": [
           0,
           0,
@@ -1654,11 +1661,12 @@
       }
     ],
     "size": [
-      4.2,
-      6.6,
-      4.2
+      17.705318450927734,
+      12.441641807556152,
+      5.539161682128906
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WarclansHall2": {
     "material": "Assets/Materials/WarclansHall2.mmat",
@@ -2230,5 +2238,308 @@
       2.65,
       2
     ]
+  },
+  "RealRock07": {
+    "material": "Assets/Materials/Real_rock_07.mmat",
+    "parts": [
+      {
+        "name": "RealRock07",
+        "mesh": "Assets/Models/RealRock07.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      0.168882,
+      0.14372,
+      0.320277
+    ],
+    "lods": [
+      "Assets/Models/RealRock07.glb",
+      "Assets/Models/RealRock07-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealMossRock1": {
+    "material": "Assets/Materials/Real_rock_moss_set_01.mmat",
+    "parts": [
+      {
+        "name": "RealMossRock1",
+        "mesh": "Assets/Models/RealMossRock1.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.237632,
+      1.472698,
+      3.368804
+    ],
+    "lods": [
+      "Assets/Models/RealMossRock1.glb",
+      "Assets/Models/RealMossRock1-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealMossRock2": {
+    "material": "Assets/Materials/Real_rock_moss_set_01.mmat",
+    "parts": [
+      {
+        "name": "RealMossRock2",
+        "mesh": "Assets/Models/RealMossRock2.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.655381,
+      1.261991,
+      3.26372
+    ],
+    "lods": [
+      "Assets/Models/RealMossRock2.glb",
+      "Assets/Models/RealMossRock2-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealMossRock3": {
+    "material": "Assets/Materials/Real_rock_moss_set_01.mmat",
+    "parts": [
+      {
+        "name": "RealMossRock3",
+        "mesh": "Assets/Models/RealMossRock3.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.108583,
+      1.099694,
+      2.079586
+    ],
+    "lods": [
+      "Assets/Models/RealMossRock3.glb",
+      "Assets/Models/RealMossRock3-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealMossRock4": {
+    "material": "Assets/Materials/Real_rock_moss_set_01.mmat",
+    "parts": [
+      {
+        "name": "RealMossRock4",
+        "mesh": "Assets/Models/RealMossRock4.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.127629,
+      1.76832,
+      1.964741
+    ],
+    "lods": [
+      "Assets/Models/RealMossRock4.glb",
+      "Assets/Models/RealMossRock4-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealMossRock5": {
+    "material": "Assets/Materials/Real_rock_moss_set_01.mmat",
+    "parts": [
+      {
+        "name": "RealMossRock5",
+        "mesh": "Assets/Models/RealMossRock5.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.817323,
+      1.205451,
+      2.998664
+    ],
+    "lods": [
+      "Assets/Models/RealMossRock5.glb",
+      "Assets/Models/RealMossRock5-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealMossRock6": {
+    "material": "Assets/Materials/Real_rock_moss_set_01.mmat",
+    "parts": [
+      {
+        "name": "RealMossRock6",
+        "mesh": "Assets/Models/RealMossRock6.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.125982,
+      1.261853,
+      2.757303
+    ],
+    "lods": [
+      "Assets/Models/RealMossRock6.glb",
+      "Assets/Models/RealMossRock6-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealFirePit": {
+    "material": "Assets/Materials/Real_stone_fire_pit.mmat",
+    "parts": [
+      {
+        "name": "RealFirePit",
+        "mesh": "Assets/Models/RealFirePit.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.448496,
+      0.388326,
+      1.433234
+    ],
+    "lods": [
+      "Assets/Models/RealFirePit.glb",
+      "Assets/Models/RealFirePit-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealShrub": {
+    "material": "Assets/Materials/Real_shrub_01.mmat",
+    "parts": [
+      {
+        "name": "RealShrub",
+        "mesh": "Assets/Models/RealShrub.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.586661,
+      0.395974,
+      0.218561
+    ],
+    "lods": [
+      "Assets/Models/RealShrub.glb",
+      "Assets/Models/RealShrub-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealSpruceA": {
+    "material": "Assets/Materials/Real_fir_sapling_medium.mmat",
+    "parts": [
+      {
+        "name": "RealSpruceA",
+        "mesh": "Assets/Models/RealSpruceA.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.98789,
+      8.826327,
+      5.275873
+    ],
+    "lods": [
+      "Assets/Models/RealSpruceA.glb",
+      "Assets/Models/RealSpruceA-far.glb"
+    ],
+    "realistic": true,
+    "impostor": {
+      "mesh": "Assets/Models/RealSpruceA-card.glb",
+      "material": "Assets/Materials/RealSpruceA-card.mmat",
+      "cameraElevation": 52.69605172201657
+    }
+  },
+  "RealSpruceB": {
+    "material": "Assets/Materials/Real_fir_sapling_medium.mmat",
+    "parts": [
+      {
+        "name": "RealSpruceB",
+        "mesh": "Assets/Models/RealSpruceB.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.268615,
+      7.795253,
+      3.957899
+    ],
+    "lods": [
+      "Assets/Models/RealSpruceB.glb",
+      "Assets/Models/RealSpruceB-far.glb"
+    ],
+    "realistic": true,
+    "impostor": {
+      "mesh": "Assets/Models/RealSpruceB-card.glb",
+      "material": "Assets/Materials/RealSpruceB-card.mmat",
+      "cameraElevation": 52.69605172201657
+    }
+  },
+  "RealSpruceC": {
+    "material": "Assets/Materials/Real_fir_sapling_medium.mmat",
+    "parts": [
+      {
+        "name": "RealSpruceC",
+        "mesh": "Assets/Models/RealSpruceC.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.306527,
+      5.906752,
+      4.013304
+    ],
+    "lods": [
+      "Assets/Models/RealSpruceC.glb",
+      "Assets/Models/RealSpruceC-far.glb"
+    ],
+    "realistic": true,
+    "impostor": {
+      "mesh": "Assets/Models/RealSpruceC-card.glb",
+      "material": "Assets/Materials/RealSpruceC-card.mmat",
+      "cameraElevation": 52.69605172201657
+    }
   }
 }

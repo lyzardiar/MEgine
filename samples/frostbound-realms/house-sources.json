@@ -1,0 +1,237 @@
+{
+  "license": "CC0-1.0",
+  "author": "Daniel74",
+  "page": "https://opengameart.org/content/modular-medieval-building-pack",
+  "generator": "scripts/import-frost-houses.py (Blender 4.5.9)",
+  "sources": [
+    {
+      "file": "SourceAssets/medieval-housepack.zip",
+      "url": "https://opengameart.org/sites/default/files/74697_HousePack2_2Upload_blend.zip",
+      "sha256": "a0e1fad57e741e712717c661982cdc45fe5f735bbff05598ff8f234c6e45e363"
+    }
+  ],
+  "layouts": {
+    "KingdomHall": [
+      [
+        4,
+        1,
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    ],
+    "KingdomHall2": [
+      [
+        4,
+        1,
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      [
+        1,
+        0.65,
+        [
+          -6,
+          0,
+          0
+        ]
+      ]
+    ],
+    "KingdomHall3": [
+      [
+        4,
+        1,
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      [
+        1,
+        0.65,
+        [
+          -6,
+          0,
+          0
+        ]
+      ],
+      [
+        1,
+        0.65,
+        [
+          6,
+          0,
+          0
+        ]
+      ]
+    ],
+    "KingdomLodge": [
+      [
+        1,
+        1,
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    ],
+    "KingdomBarracks": [
+      [
+        3,
+        1,
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      [
+        1,
+        0.65,
+        [
+          6,
+          0,
+          0
+        ]
+      ]
+    ],
+    "KingdomWorkshop": [
+      [
+        5,
+        1,
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    ],
+    "KingdomAltar": [
+      [
+        6,
+        1,
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    ],
+    "KingdomTower": [
+      [
+        2,
+        1,
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    ]
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealKingdomHall.png",
+      "sha256": "9044212d89650a66f50bd4e0a17eaf6f996bbb56a890f09a00f9e8fc2ddb20ba"
+    },
+    {
+      "file": "Assets/Models/RealKingdomHall.glb",
+      "sha256": "7c453fce86025da125b594ae8eb9d3dd691881995ac53db334665216599c5dfe"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomHall.mmat",
+      "sha256": "bf0aefc7776cfa43c33d15aa7fdddac23d20c72beeb25d5920ad9bc2cda06612"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomHall2.png",
+      "sha256": "bde74f2997b7716ad1f5160dd9011cba4f395c2823c9869b8b156a797b18b577"
+    },
+    {
+      "file": "Assets/Models/RealKingdomHall2.glb",
+      "sha256": "0c3da5a1a28f50203a6d5bd78b00a15d898109ae6924fd6cc035a4ead92baac6"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomHall2.mmat",
+      "sha256": "d5fe198649258f40e6e9d9d61d80759afb9c98fd20790e02b2b8de022712a4e8"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomHall3.png",
+      "sha256": "6feb577dd534401e5f09510b6e0ded01a3854469160f67f900067a3c548b986c"
+    },
+    {
+      "file": "Assets/Models/RealKingdomHall3.glb",
+      "sha256": "66a64654e5dc49e6172730cdaa9d1c86d8a306c525acdf68fa7c13e6590789a4"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomHall3.mmat",
+      "sha256": "69746bd685c3254a56ebcfa6c9981ff3ad20e61845bc2d1198125265f7ec687d"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomLodge.png",
+      "sha256": "6430f52c27079dfbd10bb88440058899bb8d7858a08ce8b8a83f0e851c3bf4a4"
+    },
+    {
+      "file": "Assets/Models/RealKingdomLodge.glb",
+      "sha256": "4a15a2f18664bd9e24d23a795c1b4a9321354a49630891929f79fbc97f0c6af1"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomLodge.mmat",
+      "sha256": "73b607c45ca334ab7b5adb270986b864319e8d4f9a8decb0240402f9488c2c65"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomBarracks.png",
+      "sha256": "67159328916cb3da1e32135ecbef6e1ab944ac56be1fa854d24fe9b6b7f28468"
+    },
+    {
+      "file": "Assets/Models/RealKingdomBarracks.glb",
+      "sha256": "0ef4c257fa606d57e94d300d6744c69c6870eb96c5077ec472e5ad02974178e0"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomBarracks.mmat",
+      "sha256": "fe89cdfcf4b471ffcda4ef128078b37be05796a0cc667bfe62290ccad9640cca"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomWorkshop.png",
+      "sha256": "bb008486447ba60322f980c19ee0186d5dac4fb2375dfc55f409f5c41bc27a09"
+    },
+    {
+      "file": "Assets/Models/RealKingdomWorkshop.glb",
+      "sha256": "6a5415de1326b86a161e569137389db9403d7b8eccedad00c867d9df3ff209c2"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomWorkshop.mmat",
+      "sha256": "0d5a3075836a8858c46f3dba06f1263962013264e5f249e9cc7c19c11e9aeac5"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomAltar.png",
+      "sha256": "3c5dc24a6e9eec3cfffb82c75fd367e7c723a08835ef8127d82646ed7b695054"
+    },
+    {
+      "file": "Assets/Models/RealKingdomAltar.glb",
+      "sha256": "42b6d8f021cb3143766df2645dde0b97600b3c186b382be87d51169a959b6899"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomAltar.mmat",
+      "sha256": "1228ed5f6c01d02eb7dde3daa1ba3e2909bf40d294e13f1bd312391e2c340a22"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomTower.png",
+      "sha256": "48a08494ced7365bb94f14bdc5f4790acc046930e4e5b3f9b90aec62b74cefb3"
+    },
+    {
+      "file": "Assets/Models/RealKingdomTower.glb",
+      "sha256": "00e8dd2fb02aab562b6a69247bf6c358f21a7737c5309f9e5057392dace10c0d"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomTower.mmat",
+      "sha256": "f54ba47fd5e3bb5e9141d4f90ea784a21fd5fbb25e79d08e34823b6928df158f"
+    }
+  ]
+}

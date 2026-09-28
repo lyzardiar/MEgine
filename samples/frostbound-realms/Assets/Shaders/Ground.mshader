@@ -1,5 +1,5 @@
 /* MENGINE_PARAMETERS
-{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]}],"textures":[{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"}]}
+{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]}],"textures":[{"name":"soil","type":"color","default":"Assets/Textures/forest_ground_04_diff_1k.jpg"},{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"}]}
 */
 // MiYu: 64 terrain chunks replace 1024 independently shaded cubes.
 fn frost_cell(p: vec2<i32>) -> vec3<f32> {
@@ -22,14 +22,16 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let fleck=sin(p.x*3.7+sin(p.y*2.9))*sin(p.y*4.1+p.x*1.3);
     let road=smoothstep(0.22,0.8,fields.y+fleck*0.08);
     let water=smoothstep(0.35,0.72,fields.x+fleck*0.055);
-    let soil=mix(stone*vec3<f32>(0.21,0.28,0.25),snow*vec3<f32>(0.6,0.72,0.78),0.64+0.23*sin(p.x*0.39+sin(p.y*0.5)));
-    let dry=mix(soil,stone*vec3<f32>(0.53,0.47,0.35),road);
-    let ripples=pow(0.5+0.5*sin(p.x*8.0+sin(p.y*3.0)),14.0)*0.07;
-    s.base_color=mix(dry,vec3<f32>(0.018,0.13,0.18)+ripples,water);
+    let litter=mengine_texture_soil(fract(p*0.21)).rgb;
+    let cover=smoothstep(0.1,0.8,0.44+0.29*sin(p.x*0.19+sin(p.y*0.23))+0.18*sin(p.y*0.31-p.x*0.11));
+    let soil=mix(litter*vec3<f32>(0.65,0.7,0.64),snow*vec3<f32>(0.68,0.73,0.76),cover);
+    let dry=mix(soil,stone*vec3<f32>(0.59,0.57,0.52),road);
+    let ripples=(sin(p.x*7.0+p.y*5.0)*sin(p.y*9.0-p.x*3.0)+sin(p.x*15.0+p.y*2.0)*0.35)*0.007;
+    s.base_color=mix(dry,vec3<f32>(0.035,0.071,0.078)+ripples,water);
     s.roughness=mix(0.88,0.29,water);s.metallic=water*0.14;
     let cliff=1.0-smoothstep(0.3,0.85,abs(surface.normal.y));
     s.base_color=mix(s.base_color,mengine_texture_stone(fract(vec2<f32>(p.x+p.y,world_position.y)*0.3)).rgb*vec3<f32>(0.35,0.4,0.44),cliff);
-    s.normal=normalize(surface.normal+vec3<f32>(fleck*0.04,0.0,cos(p.y*5.0)*0.03));
+    s.normal=normalize(surface.normal+vec3<f32>(fleck*0.04+water*sin(p.x*7.0+p.y*5.0)*0.09,0.0,cos(p.y*5.0)*0.03+water*cos(p.y*9.0-p.x*3.0)*0.09));
     return s;
 }
 fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {

@@ -25,7 +25,10 @@ var FrostVisual=(()=>{
     const attack=u.cd>.25&&u.kind!=='worker',desired=asset===FrostArt.Skeleton_Rogue?(attack?/^2H_Ranged_Shooting$/:walking?/^Walking_A$/:/^Idle$/):asset===FrostArt.Skeleton_Mage?(attack?/^Spellcast_Shoot$/:walking?/^Walking_A$/:/^Idle$/):Frost.types[u.kind].flying?(attack?/Dragon_Attack$/:/Dragon_Flying/):attack?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch|Headbutt/:walking?/^Run$|^Walk$|Fast_Flying/:/^Idle$|Flying_Idle/;
     let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;
   }
+  function environment(key,height,yaw,far,width=Infinity){const original=FrostArt[key],card=far&&original.impostor,asset=card?{...original,material:card.material}:original;return {key,asset,mesh:card?card.mesh:asset.lods[far?1:0],scale:Math.min(height/asset.size[1],width/Math.max(asset.size[0],asset.size[2])),yaw:card?0:yaw};}
+  function resource(r,zoom=27){const seed=(Math.imul(Math.round(r.x*100),73856093)^Math.imul(Math.round(r.z*100),19349663))>>>0,key=r.kind==='tree'?['RealSpruceA','RealSpruceB','RealSpruceC'][seed%3]:r.kind==='mine'?'RealRock07':'RealFirePit';return environment(key,r.kind==='tree'?4.7+(seed%12)/10:r.kind==='mine'?2.5:.65,seed%628/100,zoom>14,r.kind==='tree'?5:r.kind==='mine'?4.5:1.4);}
+  function scenery(i,edge,zoom=27){const tree=edge?i%4!==0:i%5===0,shrub=!tree&&i%3===0,key=tree?['RealSpruceA','RealSpruceB','RealSpruceC'][i%3]:shrub?'RealShrub':'RealMossRock'+(i%6+1);return environment(key,tree?(edge?7+i%4:3.8+i%3*.5):shrub?1.2:edge?2.1+i%3*.4:.35+i%4*.2,i*2.399963,edge||zoom>14,tree?6:edge?4.5:1.7);}
   function name(state,u){const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??state.teams[u.team]?.tier??1)-1,0,2)]:value||Frost.unitType(u).label;}
-  return {model,name,pose,heading};
+  return {model,name,pose,heading,resource,scenery};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

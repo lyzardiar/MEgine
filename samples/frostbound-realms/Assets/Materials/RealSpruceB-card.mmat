@@ -1,0 +1,1 @@
+{"version": 8, "name": "RealSpruceB canopy card", "shader": "unlit", "surface": "cutout", "alpha_cutoff": 0.22, "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/RealSpruceB-card.png", "double_sided": true}

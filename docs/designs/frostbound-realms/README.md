@@ -1,5 +1,7 @@
 # Frostbound Realms 交付证据
 
+最新写实美术阶段：[来源、重建、截图与验收边界](realistic-art.md)。
+
 2026-09-28。工程与操作说明见 [样例 README](../../../samples/frostbound-realms/README.md)。这是原创 RTS/RPG/MOBA/塔防基础版本；《冰封王座》完整内容复刻与约 5 ms 整体帧预算尚未完成。
 
 ## 本次范围

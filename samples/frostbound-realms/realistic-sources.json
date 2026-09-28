@@ -1,0 +1,737 @@
+{
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "generator": "scripts/import-frost-realistic.py",
+  "simplifier": "meshoptimizer@0.24.0 (MIT), geometry + normal + UV error; no runtime dependency",
+  "assets": [
+    {
+      "id": "rock_07",
+      "page": "https://polyhaven.com/a/rock_07",
+      "authors": {
+        "Jenelle van Heerden": "All"
+      },
+      "names": [
+        "RealRock07"
+      ],
+      "triangles": [
+        4500,
+        1200
+      ]
+    },
+    {
+      "id": "rock_moss_set_01",
+      "page": "https://polyhaven.com/a/rock_moss_set_01",
+      "authors": {
+        "Kless Gyzen": "All"
+      },
+      "names": [
+        "RealMossRock1",
+        "RealMossRock2",
+        "RealMossRock3",
+        "RealMossRock4",
+        "RealMossRock5",
+        "RealMossRock6"
+      ],
+      "triangles": [
+        4500,
+        1200
+      ]
+    },
+    {
+      "id": "stone_fire_pit",
+      "page": "https://polyhaven.com/a/stone_fire_pit",
+      "authors": {
+        "Sebastian Platen": "All"
+      },
+      "names": [
+        "RealFirePit"
+      ],
+      "triangles": [
+        3000,
+        1000
+      ]
+    },
+    {
+      "id": "shrub_01",
+      "page": "https://polyhaven.com/a/shrub_01",
+      "names": [
+        "RealShrub"
+      ],
+      "triangles": [
+        65000,
+        45000
+      ],
+      "authors": {
+        "Rico Cilliers": "All"
+      }
+    },
+    {
+      "id": "fir_sapling_medium",
+      "page": "https://polyhaven.com/a/fir_sapling_medium",
+      "names": [
+        "RealSpruceA",
+        "RealSpruceB",
+        "RealSpruceC"
+      ],
+      "triangles": [
+        220000,
+        130000
+      ],
+      "authors": {
+        "Rob Tuytel": "photography",
+        "Rico Cilliers": "modeling"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "asset": "rock_07",
+      "file": "SourceAssets/polyhaven/rock_07/rock_07_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_07/rock_07_1k.gltf",
+      "sha256": "efcc2dcaa133ff8ad5c865dc2135772e8f5dbc83fa38db2ee2cf25382436b6e6",
+      "bytes": 2979
+    },
+    {
+      "asset": "rock_07",
+      "file": "SourceAssets/polyhaven/rock_07/rock_07.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_07/rock_07.bin",
+      "sha256": "e4a532a6d6cf4a08c288f501b790f32cba0528136a29959ce774c3cd39369e7e",
+      "bytes": 468936
+    },
+    {
+      "asset": "rock_07",
+      "file": "SourceAssets/polyhaven/rock_07/textures/rock_07_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_07/rock_07_arm_1k.jpg",
+      "sha256": "1ed76e9a8542c76bdc6b7b018720ae1f52cd75d9f5ae719f613de3f5032cf4da",
+      "bytes": 309735
+    },
+    {
+      "asset": "rock_07",
+      "file": "SourceAssets/polyhaven/rock_07/textures/rock_07_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_07/rock_07_diff_1k.jpg",
+      "sha256": "8ff1965aa1664cc4abcc0131c44ee2b97ab14d6e131d7a51429ff261eeb101c8",
+      "bytes": 635452
+    },
+    {
+      "asset": "rock_07",
+      "file": "SourceAssets/polyhaven/rock_07/textures/rock_07_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_07/rock_07_nor_gl_1k.jpg",
+      "sha256": "57cb2210951aeb376164fce5f7c65f03e5599def04873b56cad0f173c275d78d",
+      "bytes": 766986
+    },
+    {
+      "asset": "rock_moss_set_01",
+      "file": "SourceAssets/polyhaven/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+      "sha256": "c36675aca9c6b2be7785c2534cf413b03ec82a5a2a5407a2b1c0cdb0346c9727",
+      "bytes": 9987
+    },
+    {
+      "asset": "rock_moss_set_01",
+      "file": "SourceAssets/polyhaven/rock_moss_set_01/textures/rock_moss_set_01_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_nor_gl_1k.jpg",
+      "sha256": "eb4aad3f207f1dc5b624d74ae240372171626a66912bd71adf7bd3e518181d6e",
+      "bytes": 209975
+    },
+    {
+      "asset": "rock_moss_set_01",
+      "file": "SourceAssets/polyhaven/rock_moss_set_01/rock_moss_set_01.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_moss_set_01/rock_moss_set_01.bin",
+      "sha256": "de8360e6175879aaf02c171911069cf5f1852547f9ca7f10e440085dbcc3315e",
+      "bytes": 1466380
+    },
+    {
+      "asset": "rock_moss_set_01",
+      "file": "SourceAssets/polyhaven/rock_moss_set_01/textures/rock_moss_set_01_rough_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_rough_1k.jpg",
+      "sha256": "4d6ec46623abd8e2cdb855f59c7ce31873ad61b36b60e4de579e9e776a497c6b",
+      "bytes": 82624
+    },
+    {
+      "asset": "rock_moss_set_01",
+      "file": "SourceAssets/polyhaven/rock_moss_set_01/textures/rock_moss_set_01_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_diff_1k.jpg",
+      "sha256": "40cea65d8aa4ee73a93b04af19963834d061eee9779c3fc2c1cba76eef812ccc",
+      "bytes": 168099
+    },
+    {
+      "asset": "stone_fire_pit",
+      "file": "SourceAssets/polyhaven/stone_fire_pit/stone_fire_pit_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/stone_fire_pit/stone_fire_pit_1k.gltf",
+      "sha256": "40034b326d28c06f25cf1cdb39a5ab3f3b1d1a9415d490af39621efe6c31cee6",
+      "bytes": 2792
+    },
+    {
+      "asset": "stone_fire_pit",
+      "file": "SourceAssets/polyhaven/stone_fire_pit/stone_fire_pit.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/stone_fire_pit/stone_fire_pit.bin",
+      "sha256": "83528a314ac1ff67a583a59640612e7f8dca803dbb581188b8226d9b661ef0d6",
+      "bytes": 96220
+    },
+    {
+      "asset": "stone_fire_pit",
+      "file": "SourceAssets/polyhaven/stone_fire_pit/textures/stone_fire_pit_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/stone_fire_pit/stone_fire_pit_diff_1k.jpg",
+      "sha256": "3f2a2340a7dc7207d5b24deb7697c11c43bbd1963533b8f7c41644d32872d1ff",
+      "bytes": 785670
+    },
+    {
+      "asset": "stone_fire_pit",
+      "file": "SourceAssets/polyhaven/stone_fire_pit/textures/stone_fire_pit_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/stone_fire_pit/stone_fire_pit_nor_gl_1k.jpg",
+      "sha256": "6ba240fbdc1ab6dac4b06ac342e7fca9fa6064c7d4f98e75cfccad44214c533a",
+      "bytes": 969822
+    },
+    {
+      "asset": "stone_fire_pit",
+      "file": "SourceAssets/polyhaven/stone_fire_pit/textures/stone_fire_pit_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/stone_fire_pit/stone_fire_pit_arm_1k.jpg",
+      "sha256": "9812f7511ccbddcb8340fd47a6fffcf3897820fad31004241639d6d2ea523e2c",
+      "bytes": 681441
+    },
+    {
+      "asset": "shrub_01",
+      "file": "SourceAssets/polyhaven/shrub_01/shrub_01_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/shrub_01/shrub_01_1k.gltf",
+      "sha256": "c3bb3340687d46c684b9dab82f5b2f92b7b0fe761842423d3c9e19f59a839393",
+      "bytes": 2895
+    },
+    {
+      "asset": "shrub_01",
+      "file": "SourceAssets/polyhaven/shrub_01/textures/shrub_01_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_01/shrub_01_nor_gl_1k.jpg",
+      "sha256": "076870a39a4e21a364cf94566e6dd1852a29045fdf1f23393637235b19d1c2e8",
+      "bytes": 746497
+    },
+    {
+      "asset": "shrub_01",
+      "file": "SourceAssets/polyhaven/shrub_01/shrub_01.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/shrub_01/shrub_01.bin",
+      "sha256": "a8646f51386c84b12a6be8324dd0c2357c393c9108aac911847a203cf490b426",
+      "bytes": 5239664
+    },
+    {
+      "asset": "shrub_01",
+      "file": "SourceAssets/polyhaven/shrub_01/textures/shrub_01_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_01/shrub_01_arm_1k.jpg",
+      "sha256": "8faecdc28d8f03ba0ac139be16e617e8bfd0778780ec1d7850812230378b89be",
+      "bytes": 386309
+    },
+    {
+      "asset": "shrub_01",
+      "file": "SourceAssets/polyhaven/shrub_01/textures/shrub_01_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_01/shrub_01_diff_1k.jpg",
+      "sha256": "fe60e639d694e1807c0a3ae97dd1d5a7e7b3f84e5fc32d0610b868ce48f36331",
+      "bytes": 502162
+    },
+    {
+      "asset": "forest_ground_04",
+      "file": "SourceAssets/polyhaven/forest_ground_04/forest_ground_04_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_diff_1k.jpg",
+      "sha256": "50a4dda30875020c64385261aa7e00e2155b592302fa6794165f58fae73cbd2c",
+      "bytes": 1113899
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "file": "SourceAssets/polyhaven/fir_sapling_medium/fir_sapling_medium_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fir_sapling_medium/fir_sapling_medium_1k.gltf",
+      "sha256": "2e80cd49d716c99bdead5a42aa6441e89443044d9a0edc31b56b5dbf87fc41de",
+      "bytes": 17059
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "file": "SourceAssets/polyhaven/fir_sapling_medium/textures/fir_sapling_medium_branches_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_branches_nor_gl_1k.jpg",
+      "sha256": "6a570ab53ab2249ecdfa93e7d3b9a8a2cb1a8ad391400e5a64c708914779b2c3",
+      "bytes": 1137533
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "file": "SourceAssets/polyhaven/fir_sapling_medium/textures/fir_sapling_medium_branches_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_branches_diff_1k.jpg",
+      "sha256": "a5d25150ba1bee10008c039f98aa3c73b4477a404d6715c511ca9b5b0f4a9077",
+      "bytes": 776567
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "file": "SourceAssets/polyhaven/fir_sapling_medium/textures/fir_sapling_medium_branches_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_branches_arm_1k.jpg",
+      "sha256": "95d4e9e62cd309fbc38a175e2306379c76c062425b09c0fb72c5b7356a719123",
+      "bytes": 789264
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "file": "SourceAssets/polyhaven/fir_sapling_medium/textures/fir_sapling_medium_twigs_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_twigs_nor_gl_1k.jpg",
+      "sha256": "d470dc39b1d02bbeba06feb0ad818680ef3c24623b4db597270301a5fb8c9369",
+      "bytes": 472604
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "file": "SourceAssets/polyhaven/fir_sapling_medium/textures/fir_sapling_medium_twigs_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_twigs_diff_1k.jpg",
+      "sha256": "db1113d37d68d960b84eb14ce67a4022d02bf10d6f0c078d689063f6296eaa1d",
+      "bytes": 297200
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "file": "SourceAssets/polyhaven/fir_sapling_medium/textures/fir_sapling_medium_twigs_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_twigs_arm_1k.jpg",
+      "sha256": "d66c81fc073ee7ea97a76b6da2399769f16944e50ef0e007f09c95619f597c79",
+      "bytes": 407309
+    },
+    {
+      "asset": "fir_sapling_medium",
+      "file": "SourceAssets/polyhaven/fir_sapling_medium/fir_sapling_medium.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fir_sapling_medium/fir_sapling_medium.bin",
+      "sha256": "e3f3fabcaa1bacfc8b1feca5e6500b13c63a0e45cd812e663d01d31b042d73b1",
+      "bytes": 74159400
+    }
+  ],
+  "models": {
+    "RealRock07": {
+      "source": "rock_07",
+      "node": 0,
+      "lods": [
+        {
+          "sourceTriangles": 14844,
+          "triangles": 4500,
+          "vertices": 2575,
+          "error": 0.002692930866032839
+        },
+        {
+          "sourceTriangles": 14844,
+          "triangles": 1199,
+          "vertices": 769,
+          "error": 0.0072592743672430515
+        }
+      ]
+    },
+    "RealMossRock1": {
+      "source": "rock_moss_set_01",
+      "node": 0,
+      "lods": [
+        {
+          "sourceTriangles": 11000,
+          "triangles": 4500,
+          "vertices": 2698,
+          "error": 0.0033825754653662443
+        },
+        {
+          "sourceTriangles": 11000,
+          "triangles": 1199,
+          "vertices": 819,
+          "error": 0.009899871423840523
+        }
+      ]
+    },
+    "RealMossRock2": {
+      "source": "rock_moss_set_01",
+      "node": 1,
+      "lods": [
+        {
+          "sourceTriangles": 10996,
+          "triangles": 4498,
+          "vertices": 2803,
+          "error": 0.0030792909674346447
+        },
+        {
+          "sourceTriangles": 10996,
+          "triangles": 1200,
+          "vertices": 885,
+          "error": 0.008911347016692162
+        }
+      ]
+    },
+    "RealMossRock3": {
+      "source": "rock_moss_set_01",
+      "node": 2,
+      "lods": [
+        {
+          "sourceTriangles": 5000,
+          "triangles": 4500,
+          "vertices": 2490,
+          "error": 0.0015558351296931505
+        },
+        {
+          "sourceTriangles": 5000,
+          "triangles": 1200,
+          "vertices": 769,
+          "error": 0.007671300787478685
+        }
+      ]
+    },
+    "RealMossRock4": {
+      "source": "rock_moss_set_01",
+      "node": 3,
+      "lods": [
+        {
+          "sourceTriangles": 10589,
+          "triangles": 4499,
+          "vertices": 2588,
+          "error": 0.0034472837578505278
+        },
+        {
+          "sourceTriangles": 10589,
+          "triangles": 1200,
+          "vertices": 761,
+          "error": 0.010439752601087093
+        }
+      ]
+    },
+    "RealMossRock5": {
+      "source": "rock_moss_set_01",
+      "node": 4,
+      "lods": [
+        {
+          "sourceTriangles": 16548,
+          "triangles": 4500,
+          "vertices": 2460,
+          "error": 0.0018520605517551303
+        },
+        {
+          "sourceTriangles": 16548,
+          "triangles": 1200,
+          "vertices": 686,
+          "error": 0.005434053484350443
+        }
+      ]
+    },
+    "RealMossRock6": {
+      "source": "rock_moss_set_01",
+      "node": 5,
+      "lods": [
+        {
+          "sourceTriangles": 8994,
+          "triangles": 4500,
+          "vertices": 2480,
+          "error": 0.002234433777630329
+        },
+        {
+          "sourceTriangles": 8994,
+          "triangles": 1200,
+          "vertices": 736,
+          "error": 0.007165323942899704
+        }
+      ]
+    },
+    "RealFirePit": {
+      "source": "stone_fire_pit",
+      "node": 0,
+      "lods": [
+        {
+          "sourceTriangles": 3887,
+          "triangles": 3000,
+          "vertices": 1811,
+          "error": 0.002328698057681322
+        },
+        {
+          "sourceTriangles": 3887,
+          "triangles": 997,
+          "vertices": 701,
+          "error": 0.00870878528803587
+        }
+      ]
+    },
+    "RealShrub": {
+      "source": "shrub_01",
+      "node": 0,
+      "lods": [
+        {
+          "sourceTriangles": 156012,
+          "triangles": 64999,
+          "vertices": 48732,
+          "error": 0.00013299180136527866
+        },
+        {
+          "sourceTriangles": 156012,
+          "triangles": 44999,
+          "vertices": 35599,
+          "error": 0.00020242705068085343
+        }
+      ]
+    },
+    "RealSpruceA": {
+      "source": "fir_sapling_medium",
+      "node": 0,
+      "lods": [
+        {
+          "sourceTriangles": 685046,
+          "triangles": 219997,
+          "vertices": 344347,
+          "error": 0.00035551763721741736
+        },
+        {
+          "sourceTriangles": 685046,
+          "triangles": 129993,
+          "vertices": 238896,
+          "error": 0.0005032930057495832
+        }
+      ]
+    },
+    "RealSpruceB": {
+      "source": "fir_sapling_medium",
+      "node": 1,
+      "lods": [
+        {
+          "sourceTriangles": 420822,
+          "triangles": 220000,
+          "vertices": 293140,
+          "error": 0.0002589494688436389
+        },
+        {
+          "sourceTriangles": 420822,
+          "triangles": 130000,
+          "vertices": 207499,
+          "error": 0.00040486021316610277
+        }
+      ]
+    },
+    "RealSpruceC": {
+      "source": "fir_sapling_medium",
+      "node": 2,
+      "lods": [
+        {
+          "sourceTriangles": 427645,
+          "triangles": 220000,
+          "vertices": 294816,
+          "error": 0.00035588923492468894
+        },
+        {
+          "sourceTriangles": 427645,
+          "triangles": 130000,
+          "vertices": 208976,
+          "error": 0.0005458888481371105
+        }
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Materials/Real_fir_sapling_medium.mmat",
+      "sha256": "4fb999a2be3359923b9cdaa3211af5cf0e23a38ad422d292f49bb36032d2def8"
+    },
+    {
+      "file": "Assets/Materials/Real_rock_07.mmat",
+      "sha256": "519a608eb0cd91a854c33c574558fd7a58f90f090b298933b988e078cf120fab"
+    },
+    {
+      "file": "Assets/Materials/Real_rock_moss_set_01.mmat",
+      "sha256": "1ae6abfb72f0944d3339490d00f464e0ba296cf7481bdb3dae04cd47934ef276"
+    },
+    {
+      "file": "Assets/Materials/Real_shrub_01.mmat",
+      "sha256": "92ce24d34c75523ee20f7e61a9eb02f365cb20ee235dd7b41e60a24e651212bb"
+    },
+    {
+      "file": "Assets/Materials/Real_stone_fire_pit.mmat",
+      "sha256": "838dcca46d4dc4d30a6e2b52937e2a7f3fdd8ec83af61166a25480883f34c131"
+    },
+    {
+      "file": "Assets/Models/RealFirePit-far.glb",
+      "sha256": "e27077c457b7cecadc5d715a0c7f80c6921f3ae4f2b9983ed2a851babf587166"
+    },
+    {
+      "file": "Assets/Models/RealFirePit.glb",
+      "sha256": "0ad7c9b900767c0153f2fe71f04a121ea454c26d325775bc82f1a19e46b85e23"
+    },
+    {
+      "file": "Assets/Models/RealMossRock1-far.glb",
+      "sha256": "379c89256bc7e2ec32cfe857aeb97a41eacf24aca9d10969328d5c04411c493d"
+    },
+    {
+      "file": "Assets/Models/RealMossRock1.glb",
+      "sha256": "945268e84e4f6d9074b58c1b4f5ac6c2ac8b3f13e7d7d1594094cdb37551af12"
+    },
+    {
+      "file": "Assets/Models/RealMossRock2-far.glb",
+      "sha256": "7bb92e7d0d07cb59e2bff61ea2d971f1454da953d29523132dc21200db79343a"
+    },
+    {
+      "file": "Assets/Models/RealMossRock2.glb",
+      "sha256": "7aca73e572c1fbbbcabe3e6539007dd291ef68c6c0a74e8236ee5dcdb32f4d62"
+    },
+    {
+      "file": "Assets/Models/RealMossRock3-far.glb",
+      "sha256": "3e937989af401e0b9b31cbc543d15c4804ddd23299c2b99f743b0a67102a4409"
+    },
+    {
+      "file": "Assets/Models/RealMossRock3.glb",
+      "sha256": "396e9218464ba7126382f4c506135a8e7283d15d0551a87a20b00ed1e2e15662"
+    },
+    {
+      "file": "Assets/Models/RealMossRock4-far.glb",
+      "sha256": "bb3cee257aec496ad5a204157e069b76c46dfd8858fcb21bbbc17f5443ac7db8"
+    },
+    {
+      "file": "Assets/Models/RealMossRock4.glb",
+      "sha256": "ad4c0e5cb1a1fe2d1b57497c934c75141aad72680172d570f35e4b95e221e789"
+    },
+    {
+      "file": "Assets/Models/RealMossRock5-far.glb",
+      "sha256": "e873476587e9457b28778f30f8bf38681bccc3da04d83567bd2c894841007c76"
+    },
+    {
+      "file": "Assets/Models/RealMossRock5.glb",
+      "sha256": "2fea4446d0e58c85c8f4a5f30fe2c217d1f32ed378bc5dfb90b313837800f972"
+    },
+    {
+      "file": "Assets/Models/RealMossRock6-far.glb",
+      "sha256": "a92fe23ffa84d101e961e10d85e24bd03e0b764ccd6335664c2ef82be175bd5c"
+    },
+    {
+      "file": "Assets/Models/RealMossRock6.glb",
+      "sha256": "cef0cf803f33283e7d43d86ac9022cea87e8c3d8431745b7cbe6bbb85d506160"
+    },
+    {
+      "file": "Assets/Models/RealRock07-far.glb",
+      "sha256": "75ee119aadcec2481acd0de9ec99b1e71c86771ca817e5e7455e914b0e6d017b"
+    },
+    {
+      "file": "Assets/Models/RealRock07.glb",
+      "sha256": "ece968fbf840d1a2564afca860985ad3c8d76c42c79109035039a7466f45903a"
+    },
+    {
+      "file": "Assets/Models/RealShrub-far.glb",
+      "sha256": "cb7ee831670641bbd4f6bfe8a454a115e7a76716987d37629ee805119d4ff25e"
+    },
+    {
+      "file": "Assets/Models/RealShrub.glb",
+      "sha256": "d3ed8a4722fd367aec1913022500273afaf588b0ff661128e6e86ba096387b1a"
+    },
+    {
+      "file": "Assets/Models/RealSpruceA-far.glb",
+      "sha256": "0043101aec8290f3603cc046ee4e8929c557996902f4c403170c2e196ab0aa23"
+    },
+    {
+      "file": "Assets/Models/RealSpruceA.glb",
+      "sha256": "b8c012383425aa1e62e33d47739f41fa4fe0f818e27b9cb91c026b162f5d35a6"
+    },
+    {
+      "file": "Assets/Models/RealSpruceB-far.glb",
+      "sha256": "127f514731b1ae5040bdfdd5fdfe15b5de3aeb6b8bdc7ef549f00a692a66771d"
+    },
+    {
+      "file": "Assets/Models/RealSpruceB.glb",
+      "sha256": "ac4120719870b3e61085d67a25b6eb3f5a91feb213034f6956338fd1a16b2f39"
+    },
+    {
+      "file": "Assets/Models/RealSpruceC-far.glb",
+      "sha256": "ef980b431ab37dd52e83520f01a2b9f6bd09f92649cc9bf33412f4bfabe8b66e"
+    },
+    {
+      "file": "Assets/Models/RealSpruceC.glb",
+      "sha256": "651f83fc477137d54721181a6d27baa38f484712c851a104c0a4f0db5a202e2b"
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_arm.png",
+      "sha256": "ebdd7267f04b5c764a9cea1df67ada396a39efaa980a24fe796a007deda0bd9a"
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_base.png",
+      "sha256": "408f3b3c4dab4a24c359e00eab0a099c8adf848a2ab3e0491031f1808fa3fd79"
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_normal.png",
+      "sha256": "48d59c7eaaa21dc16eae2ecff7bdf1f0cf372bd0044787c6056ec4cd65f8bf30"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_07_arm.png",
+      "sha256": "15b034d28c9678646816ecb20ca0f0a6fb24258af60b9eb78d4b06b1bc066e38"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_07_base.png",
+      "sha256": "3f0bc4e420171ba58652310b500d01f8ec169e32b07d335fbcca34f891e1615d"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_07_normal.png",
+      "sha256": "a23b42992ee9985a181252ff7b170a40d2be9dfec9b065caabf8aff51fbdd2db"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_moss_set_01_arm.png",
+      "sha256": "223c30472c5ea3f33bef84ec797e3ca6cabb61277d37a7530da865f5281f1f0e"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_moss_set_01_base.png",
+      "sha256": "d3055b67dd380693ace6cd55255c7f62e5435c3da02391500489b2af6b283838"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_moss_set_01_normal.png",
+      "sha256": "4a23b787d86875a89b9d0458dafa5b62da62178dbdb29fe15b1d2c21efda505b"
+    },
+    {
+      "file": "Assets/Textures/Real_shrub_01_arm.png",
+      "sha256": "caae4140f3f12d6bdb7e22ed367a8917f72c6c90b0f56019bfe82085d1181833"
+    },
+    {
+      "file": "Assets/Textures/Real_shrub_01_base.png",
+      "sha256": "2cdd5863a97c86ac91eb60de2e4b72d6d940645572e23218d55a41fff91cde83"
+    },
+    {
+      "file": "Assets/Textures/Real_shrub_01_normal.png",
+      "sha256": "b1636e673a14ca6750cf2c32cbe5b33f3a57f33db65f9093a21f1fdccc29fa2c"
+    },
+    {
+      "file": "Assets/Textures/Real_stone_fire_pit_arm.png",
+      "sha256": "bac2ea3b0d13b5dfbbb81cf4f8453c08b4cbf2cc57de2f7ab0fed08fe587e75c"
+    },
+    {
+      "file": "Assets/Textures/Real_stone_fire_pit_base.png",
+      "sha256": "634b82818788888d397d68f1554ab8c609117c5d3c05f6265a25d9bb4ede3403"
+    },
+    {
+      "file": "Assets/Textures/Real_stone_fire_pit_normal.png",
+      "sha256": "9cb7d2ea42be14d026f27115ff9aec84164f04b03ddfd44cac9f8328fb44c41b"
+    },
+    {
+      "file": "Assets/Textures/forest_ground_04_diff_1k.jpg",
+      "sha256": "50a4dda30875020c64385261aa7e00e2155b592302fa6794165f58fae73cbd2c"
+    }
+  ],
+  "textures": [
+    {
+      "source": "SourceAssets/polyhaven/forest_ground_04/forest_ground_04_diff_1k.jpg",
+      "output": "Assets/Textures/forest_ground_04_diff_1k.jpg",
+      "page": "https://polyhaven.com/a/forest_ground_04"
+    }
+  ],
+  "impostorGenerator": "scripts/bake-frost-foliage.py (Blender 4.5.9, fixed 52.696 degree camera)",
+  "impostors": [
+    {
+      "file": "Assets/Textures/RealSpruceA-card.png",
+      "sha256": "7411fe037abb61264d1485b6f7b362f0b926c026eb28cc10ea6854deced4d439"
+    },
+    {
+      "file": "Assets/Models/RealSpruceA-card.glb",
+      "sha256": "1339ac6d07004355f78381278fddd18a5d978369b692f993d9124201b1ebbc20"
+    },
+    {
+      "file": "Assets/Materials/RealSpruceA-card.mmat",
+      "sha256": "4b123aaff01ca27b3652faa18114448b4c150d60258505b541960b89b9f412a9"
+    },
+    {
+      "file": "Assets/Textures/RealSpruceB-card.png",
+      "sha256": "f6202e864d81e3e8d333dfe98ece598bcad1a193146cef89c0de0fb5b7b62a27"
+    },
+    {
+      "file": "Assets/Models/RealSpruceB-card.glb",
+      "sha256": "98d3ca055d1a6371f77bd3185a984596a89c4eceb8173257054817af255efea0"
+    },
+    {
+      "file": "Assets/Materials/RealSpruceB-card.mmat",
+      "sha256": "5ed5e7716ebb22b6e465acca15b098f9ec7ec6b2ea93729801751249aef837fc"
+    },
+    {
+      "file": "Assets/Textures/RealSpruceC-card.png",
+      "sha256": "274cc82f8c60059d2f5fbc53f3dc79733abe7fb4fb719f83fbe0b5148bfdbfc6"
+    },
+    {
+      "file": "Assets/Models/RealSpruceC-card.glb",
+      "sha256": "d2a4be12a1197c4ebcb8ba4ae06e73c0cb54d972b159356f27697cd93fec0abc"
+    },
+    {
+      "file": "Assets/Materials/RealSpruceC-card.mmat",
+      "sha256": "c32a239effd6b8022be6257aedc4638b4f2377b7a8492dd4b24a88d33acd5e22"
+    }
+  ]
+}

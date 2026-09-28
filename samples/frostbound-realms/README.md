@@ -131,7 +131,7 @@ cargo test -p mengine-editor-host --test frost_sample
 node scripts/qa-frostbound.mjs
 ```
 
-游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个 `terrain4:` 网格区块和自定义材质绘制。每格 2 世界单位，高度 0/2/4/6，坡道连接相邻高度；崖壁与坡道具有实际几何，旧地图默认平地。寻路及逐步移动检查地块边界，建造要求整块地基平坦且干燥，施工和采集不能隔崖进行，射线在每个经过的地块边界检测地形遮挡。单位、资源、弹道与点击坐标使用同一高度数据。邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境、Dragon、阵营建筑和怪物导入）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
+游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个 `terrain4:` 网格区块和自定义材质绘制。每格 2 世界单位，高度 0/2/4/6，坡道连接相邻高度；崖壁与坡道具有实际几何，旧地图默认平地。寻路及逐步移动检查地块边界，建造要求整块地基平坦且干燥，施工和采集不能隔崖进行，射线在每个经过的地块边界检测地形遮挡。单位、资源、弹道与点击坐标使用同一高度数据。邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境、Dragon、阵营建筑、怪物和写实资产导入；写实阶段另需 meshoptimizer 0.24.0 与 Blender 4.5.9，见写实美术记录）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
 
 ## 当前边界
 
@@ -140,3 +140,5 @@ node scripts/qa-frostbound.mjs
 本任务进展、性能数据及验收限制见 [交付证据](../../docs/designs/frostbound-realms/README.md)。
 
 英雄背包：I 打开六格背包，按钮切换 Use / Drop / Sell 后点击物品；数字小键盘 1–6 直接使用药水。右键地面掉落物会走近拾取，物品可转交其他英雄。O 打开主城商店，合成需要部件和配方费用，出售返还含部件总价的 50%。生命药水回复 250 HP，魔法药水回复 100 MP，共享 10 秒冷却。装备变更保持生命比例；满包时任务掉落保留在地面，手动丢弃不会被自动捡回。背包、掉落、拾取路线和冷却随存档及联机重连恢复。
+
+写实素材与重建命令：[写实美术记录](../../docs/designs/frostbound-realms/realistic-art.md)。当前人族八种建筑外观和环境已接入 CC0 材质资产；其他阵营与角色仍是原型美术。

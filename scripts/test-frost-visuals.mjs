@@ -17,6 +17,13 @@ for(let f=0;f<4;f++){
 }
 assert.equal(halls.size,4);
 const verify=entry=>{const data=fs.readFileSync(new URL(entry.file,root));assert.equal(crypto.createHash('sha256').update(data).digest('hex'),entry.sha256,entry.file);};
+const realistic=JSON.parse(fs.readFileSync(new URL('realistic-sources.json',root))),houses=JSON.parse(fs.readFileSync(new URL('house-sources.json',root)));
+for(const manifest of [realistic,houses]){assert.equal(manifest.license,'CC0-1.0');manifest.sources.forEach(verify);manifest.generated.forEach(verify);}realistic.impostors.forEach(verify);
+for(let i=0;i<140;i++)for(const zoom of [12,27]){const edge=i<72,visual=V.scenery(i,edge,zoom);assert.ok(visual.scale>0);assert.ok(Math.max(visual.asset.size[0],visual.asset.size[2])*visual.scale<=(visual.key.startsWith('RealSpruce')?6:edge?4.5:1.7)+1e-6,'scenery horizontal footprint is bounded');}
+for(const kind of ['tree','mine','camp']){
+ const near=V.resource({kind,x:12,z:-3},12),far=V.resource({kind,x:12,z:-3},27);assert.ok(fs.existsSync(new URL(near.mesh,root)));assert.ok(fs.existsSync(new URL(far.mesh,root)));assert.notEqual(near.mesh,far.mesh);assert.equal(near.scale,far.scale);
+ if(kind==='tree'){assert.match(far.mesh,/-card.glb$/);assert.equal(far.yaw,0,'card faces the fixed camera');const material=JSON.parse(fs.readFileSync(new URL(far.asset.material,root)));assert.equal(material.surface,'cutout');}
+}
 const buildings=JSON.parse(fs.readFileSync(new URL('faction-sources.json',root)));buildings.sources.forEach(verify);buildings.generated.forEach(verify);
 const monsters=JSON.parse(fs.readFileSync(new URL('monster-sources.json',root)));monsters.forEach(m=>{verify(m);m.generated.forEach(verify);assert.ok(m.animations.length>=8);});
 const icons=JSON.parse(fs.readFileSync(new URL('faction-icons.json',root))),slices=JSON.parse(fs.readFileSync(new URL(icons.file+'.sprite.json',root))).slices;verify(icons);assert.equal(slices.length,32);assert.deepEqual(slices.map(s=>s.name).sort(),Object.keys(buildings.models).sort());
