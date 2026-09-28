@@ -79,7 +79,7 @@ node samples/frostbound-realms/server.mjs
 node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 ```
 
-多人菜单按 I 编辑服务器 `IPv4:端口`，F1 创建 RTS 房间、F2 创建 MOBA 房间、F3 浏览房间。大厅 H 更换英雄，更换后双方需要重新准备。双方 Enter 准备，房主再次 Enter 开局。协议版本为 2，客户端和服务器必须配套更新，旧协议连接会被拒绝。服务器以 10 Hz 推进模拟，客户端仅提交命令；拒绝重复序号、操作敌方单位、不可见目标与非法坐标，限制连接、请求大小和发送频率。未提供公网匹配、NAT 穿透、账户系统或加密传输；当前目标为本机与可信局域网。
+多人菜单按 I 编辑服务器 `IPv4:端口`，F1 创建 RTS 房间、F2 创建 MOBA 房间、F3 浏览房间。大厅 H 更换英雄，更换后双方需要重新准备。双方 Enter 准备，房主再次 Enter 开局。协议版本为 4，客户端和服务器必须配套更新，旧协议连接会被拒绝。服务器以 10 Hz 推进模拟，客户端仅提交命令；拒绝重复序号、操作敌方单位、不可见目标与非法坐标，限制连接、请求大小和发送频率。未提供公网匹配、NAT 穿透、账户系统或加密传输；当前目标为本机与可信局域网。
 
 ## 资源与引擎扩展
 
@@ -90,6 +90,10 @@ node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 `dragon-sources.json` 记录 [Quaternius Ultimate Monsters](https://quaternius.com/packs/ultimatemonsters.html) 的 CC0 Dragon FBX 镜像、原件哈希和固定版本 FBX2glTF 转换器归档哈希。原 FBX、派生 glTF、骨架与五个动画都保留；Windows 导入器在项目 tmp 目录提取转换工具，不修改系统安装。官方 glTF 文件本次遇到 Drive 配额限制，因此使用可取得的 FBX 源模型转换。
 
 `generated-art.json` 保存内置 image_gen 生成菜单背景与 4×4 技能图集的完整提示词和 SHA-256；这两张原创插画位于 `Assets/Art/`，战场由引擎实时渲染。uuu9 当前主站跳转至资讯站，旧 war3.uuu9.com 未取得可用下载或明确再分发许可，本次没有纳入该站素材。
+
+新增 [Kenney Graveyard Kit](https://kenney.nl/assets/graveyard-kit)，复用 Castle Kit、Nature Kit 的 46 个源模块，离线组合为四阵营 32 个独立建筑模型，包含三级主基地、兵营、住房、塔、祭坛和工坊。每个建筑合并为单网格和单材质，按玩法占地缩放。`faction-sources.json` 保存模块组合配方、原始归档与 96 个派生文件哈希。新增 [Quaternius Ultimate Monsters](https://quaternius.com/packs/ultimatemonsters.html) 的 Orc、Orc_Skull、Tribal、Demon、Ghost_Skull，保留骨架及每个角色 8–14 个动画，记录于 `monster-sources.json`。这些素材均为 CC0；当前目录共 79 个模型条目。
+
+建筑图标由实际 Release 引擎渲染成 32 格图集，建造菜单与建筑头像直接引用对应模型图标；`faction-icons.json` 保存模型引用、图集哈希和渲染程序哈希。`game/visuals.js` 统一单位、建造预览与名称，升级主基地改变轮廓；联机只公开可见主基地的外观等级，敌方全局科技仍隐藏。部分兵种仍共享模型，完整四阵营美术尚未完成。
 
 `hero-art.json` 保存本轮四张英雄头像和 16 个技能图标的内置 image_gen 提示词、文件路径与 SHA-256；图集为原创 UI 插画，英雄场景模型来自上述免费资产包。
 
@@ -112,10 +116,10 @@ cargo test -p mengine-editor-host --test frost_sample
 node scripts/qa-frostbound.mjs
 ```
 
-游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个 `terrain4:` 网格区块和自定义材质绘制。每格 2 世界单位，高度 0/2/4/6，坡道连接相邻高度；崖壁与坡道具有实际几何，旧地图默认平地。寻路及逐步移动检查地块边界，建造要求整块地基平坦且干燥，施工和采集不能隔崖进行，射线在每个经过的地块边界检测地形遮挡。单位、资源、弹道与点击坐标使用同一高度数据。邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境和 Dragon 导入）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
+游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个 `terrain4:` 网格区块和自定义材质绘制。每格 2 世界单位，高度 0/2/4/6，坡道连接相邻高度；崖壁与坡道具有实际几何，旧地图默认平地。寻路及逐步移动检查地块边界，建造要求整块地基平坦且干燥，施工和采集不能隔崖进行，射线在每个经过的地块边界检测地形遮挡。单位、资源、弹道与点击坐标使用同一高度数据。邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境、Dragon、阵营建筑和怪物导入）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
 
 ## 当前边界
 
-这是可扩展的基础版本。尚未实现原作战役、四族完整独立建筑与科技树/全部兵种、完整海陆空兵种体系、完整装备合成与技能树、完整 Dota 内容、可视化触发器图与通用脚本编辑、桥梁/洞穴等重叠地形、录像、观战、大规模单位寻路与完整公网服务。模拟上限 160 个单位，单张地图 64×64 世界单位。寻路使用网格广度优先搜索，角色姿态为 12 Hz，尚需进一步优化大规模战斗表现；不应将本次测试视为这些未实现功能的验收。
+这是可扩展的基础版本。尚未实现原作战役、四族完整美术与科技树/全部兵种、完整海陆空兵种体系、完整装备合成与技能树、完整 Dota 内容、可视化触发器图与通用脚本编辑、桥梁/洞穴等重叠地形、录像、观战、大规模单位寻路与完整公网服务。模拟上限 160 个单位，单张地图 64×64 世界单位。寻路使用网格广度优先搜索，角色姿态为 12 Hz，尚需进一步优化大规模战斗表现；不应将本次测试视为这些未实现功能的验收。
 
 本任务进展、性能数据及验收限制见 [交付证据](../../docs/designs/frostbound-realms/README.md)。

@@ -148,3 +148,8 @@ if __name__ == '__main__':
     environment=importlib.util.module_from_spec(environment_spec);environment_spec.loader.exec_module(environment);environment.main()
     dragon_spec=importlib.util.spec_from_file_location('frost_dragon',ROOT/'scripts/import-frost-dragon.py')
     dragon=importlib.util.module_from_spec(dragon_spec);dragon_spec.loader.exec_module(dragon);dragon.main()
+
+    faction_spec=importlib.util.spec_from_file_location('frost_factions',ROOT/'scripts/import-frost-factions.py')
+    faction=importlib.util.module_from_spec(faction_spec);faction_spec.loader.exec_module(faction);faction.main()
+    monster_spec=importlib.util.spec_from_file_location('frost_monsters',ROOT/'scripts/import-frost-monsters.py')
+    monster=importlib.util.module_from_spec(monster_spec);monster_spec.loader.exec_module(monster);monster.main()

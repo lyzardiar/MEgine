@@ -48,3 +48,11 @@
 最终Player包163文件、1753实体、42模型，内容哈希7b2436d0545fb19fbdc2a7d6008dd711ce04f932a4615dc6b4dac4cf39ddc4ed，逐文件哈希与Release exe一致。Player启动30秒、响应正常、正确窗口标题、零ERROR；无本阶段QA/editor/player进程遗留。完整目标保持active，完整战役/四族内容与美术、完整Dota规则、可视触发图、录像/观战、重叠地形、大规模导航/5ms目标及物理输入/音频/跨机LAN仍未完成。后续继续完善内容与真实玩法，不能把当前原型视为完整复刻。
 
 新增第六编辑页后的 native-triggers-qa 回归通过：区域选择/缩放/命名、中文公告、条件动作编辑、依赖保护、保存加载和 Supply Road 护送完成均通过。
+
+2026-09-28 四阵营资产阶段：新增 Kenney Graveyard Kit 原始 ZIP 和许可，复用 Castle/Nature 模块，46 个源模块合成为 32 个单网格/单材质建筑。三级主基地具有不同高度和轮廓，四阵营各有兵营、住房、塔、祭坛、工坊。新增 Quaternius Orc、Orc_Skull、Tribal、Demon、Ghost_Skull 原始嵌入式 glTF，保留骨架及 8–14 段动画。所有源文件、96 个建筑派生文件、15 个怪物派生文件均有哈希；重复生成一致。完整导入脚本已接续新导入器。
+
+运行时 FrostVisual 统一模型、占地缩放、名称和预览；可见敌方主基地公开外观等级但不泄露全局科技。32 格建筑图标由 Release 引擎直接渲染，建造按钮和建筑头像使用对应图标，建造提示含资源价格。模型目录 79 项；部分兵种仍共享模型。
+
+验证：Node 规则/TCP、视觉映射/真实升级/存档/可见性与全部来源和派生哈希检查通过；frost_skins 2/2（9 个动画模型与 32 个建筑网格）、实际 QuickJS frost_sample 3/3。native-factions-qa.json 通过四族建筑、动画工人选择、建造预览、按钮图标、头像和名称，0 shader 拒绝。最终截图 faction-0.png 至 faction-3.png。Player 包 276 文件、1753 实体，内容哈希 24811ac4891cccbe9b099000f2ee7696648077b1ebdb0ab08f0738f2ee3f4f58；逐文件与 Release exe 哈希一致。
+
+完整复刻目标保持 active；战役、全部兵种美术、完整 Dota、可视触发图、录像观战、重叠地形、大规模导航与 5ms 目标尚未完成。Agent 输入和 Player 启动不代表物理设备、音频听感或跨机 LAN 验收。

@@ -1,0 +1,1 @@
+{"version": 8, "name": "RevenantAltar", "shader": "pbr", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/RevenantAltar.png", "roughness": 0.87, "metallic": 0}

@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "factions": [
+    {
+      "faction": "Kingdom",
+      "hall": "Keep",
+      "preview": "Assets/Models/KingdomBarracks.glb",
+      "workerModel": "Monk"
+    },
+    {
+      "faction": "Warclans",
+      "hall": "Great lodge",
+      "preview": "Assets/Models/WarclansBarracks.glb",
+      "workerModel": "Tribal"
+    },
+    {
+      "faction": "Wildwood",
+      "hall": "Ancient of roots",
+      "preview": "Assets/Models/WildwoodBarracks.glb",
+      "workerModel": "Rogue"
+    },
+    {
+      "faction": "Revenant",
+      "hall": "Necropolis",
+      "preview": "Assets/Models/RevenantBarracks.glb",
+      "workerModel": "Ghost_Skull"
+    }
+  ],
+  "shaderRejections": 0
+}

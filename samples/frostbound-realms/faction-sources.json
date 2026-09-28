@@ -1,0 +1,2610 @@
+{
+  "sources": [
+    {
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/nature-kit",
+      "download": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+      "file": "SourceAssets/nature-kit.zip",
+      "sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d"
+    },
+    {
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/castle-kit",
+      "download": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+      "file": "SourceAssets/castle-kit.zip",
+      "sha256": "921f3f73927bb23106cae34bc21d5ab4b033a9fc120475e96f714a406e3169df"
+    },
+    {
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/graveyard-kit",
+      "download": "https://kenney.nl/media/pages/assets/graveyard-kit/ba8d4b4517-1760691807/kenney_graveyard-kit_5.0.zip",
+      "file": "SourceAssets/graveyard-kit.zip",
+      "sha256": "1a93613f2e5675f3310acf49ec9ef13ae7adeb756ac3b205bfb6cc9311a81062"
+    }
+  ],
+  "models": {
+    "KingdomHall": [
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-base",
+        "size": [
+          3.8,
+          2.1,
+          3.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top-roof-high-windows",
+        "size": [
+          4,
+          2.2,
+          4
+        ],
+        "position": [
+          0,
+          2,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          -1.65,
+          0,
+          -1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          1.65,
+          0,
+          -1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          -1.65,
+          0,
+          1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          1.65,
+          0,
+          1.65
+        ],
+        "yaw": 0
+      }
+    ],
+    "KingdomBarracks": [
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-mid-door",
+        "size": [
+          3.3,
+          1.8,
+          3
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-roof",
+        "size": [
+          3.6,
+          1.3,
+          3.3
+        ],
+        "position": [
+          0,
+          1.8,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "flag-banner-long",
+        "size": [
+          0.4,
+          1.3,
+          0.15
+        ],
+        "position": [
+          1.1,
+          2.2,
+          1.55
+        ],
+        "yaw": 0
+      }
+    ],
+    "KingdomLodge": [
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-mid-door",
+        "size": [
+          2.4,
+          1.4,
+          2.2
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-slant-roof",
+        "size": [
+          2.6,
+          1.1,
+          2.4
+        ],
+        "position": [
+          0,
+          1.4,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "KingdomTower": [
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-mid-windows",
+        "size": [
+          1.4,
+          3.4,
+          1.4
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          1.9,
+          0.85,
+          1.9
+        ],
+        "position": [
+          0,
+          3.4,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "KingdomAltar": [
+      {
+        "pack": "castle-kit",
+        "model": "tower-hexagon-base",
+        "size": [
+          2.6,
+          0.5,
+          2.6
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-hexagon-mid",
+        "size": [
+          1.9,
+          2.4,
+          1.9
+        ],
+        "position": [
+          0,
+          0.5,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-hexagon-roof",
+        "size": [
+          2.5,
+          1.6,
+          2.5
+        ],
+        "position": [
+          0,
+          2.9,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "KingdomWorkshop": [
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-mid-open",
+        "size": [
+          3.5,
+          1.7,
+          3
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-roof",
+        "size": [
+          3.8,
+          1.2,
+          3.3
+        ],
+        "position": [
+          0,
+          1.7,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "siege-ballista",
+        "size": [
+          1.6,
+          1,
+          1.7
+        ],
+        "position": [
+          1,
+          0,
+          1.4
+        ],
+        "yaw": 0
+      }
+    ],
+    "WarclansHall": [
+      {
+        "pack": "nature-kit",
+        "model": "tent_detailedOpen",
+        "size": [
+          3.8,
+          3,
+          3.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          -1.8,
+          0,
+          -1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          1.8,
+          0,
+          -1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          -1.8,
+          0,
+          1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          1.8,
+          0,
+          1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "campfire_logs",
+        "size": [
+          1,
+          0.5,
+          1
+        ],
+        "position": [
+          0,
+          0,
+          2
+        ],
+        "yaw": 0
+      }
+    ],
+    "WarclansBarracks": [
+      {
+        "pack": "nature-kit",
+        "model": "tent_detailedOpen",
+        "size": [
+          2.4,
+          2.2,
+          3
+        ],
+        "position": [
+          -0.8,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tent_smallClosed",
+        "size": [
+          1.7,
+          1.7,
+          2.4
+        ],
+        "position": [
+          1.3,
+          0,
+          -0.2
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "log_stackLarge",
+        "size": [
+          1.8,
+          0.8,
+          0.8
+        ],
+        "position": [
+          0,
+          0,
+          1.7
+        ],
+        "yaw": 0
+      }
+    ],
+    "WarclansLodge": [
+      {
+        "pack": "nature-kit",
+        "model": "tent_smallOpen",
+        "size": [
+          2.4,
+          1.8,
+          2.4
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "log_stack",
+        "size": [
+          1.4,
+          0.6,
+          0.6
+        ],
+        "position": [
+          0,
+          0,
+          1.4
+        ],
+        "yaw": 0
+      }
+    ],
+    "WarclansTower": [
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.6,
+          3,
+          0.6
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-hexagon-top-wood",
+        "size": [
+          1.9,
+          1.2,
+          1.9
+        ],
+        "position": [
+          0,
+          2.3,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tent_smallClosed",
+        "size": [
+          1.6,
+          1.1,
+          1.6
+        ],
+        "position": [
+          0,
+          3.4,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "WarclansAltar": [
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          2.8,
+          0.4,
+          2.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_head",
+        "size": [
+          1.7,
+          2.2,
+          1.4
+        ],
+        "position": [
+          0,
+          0.4,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "campfire_logs",
+        "size": [
+          0.8,
+          0.5,
+          0.8
+        ],
+        "position": [
+          0,
+          0.4,
+          1.1
+        ],
+        "yaw": 0
+      }
+    ],
+    "WarclansWorkshop": [
+      {
+        "pack": "nature-kit",
+        "model": "tent_detailedOpen",
+        "size": [
+          3.5,
+          2.1,
+          3
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "siege-catapult",
+        "size": [
+          2,
+          1.5,
+          2
+        ],
+        "position": [
+          0,
+          0,
+          1.3
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "log_stackLarge",
+        "size": [
+          1,
+          1.2,
+          2
+        ],
+        "position": [
+          -1.7,
+          0,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodHall": [
+      {
+        "pack": "nature-kit",
+        "model": "stump_old",
+        "size": [
+          2.3,
+          1.3,
+          2.3
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_oak",
+        "size": [
+          4.6,
+          5.4,
+          4.6
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          3.2,
+          0.4,
+          3.2
+        ],
+        "position": [
+          0,
+          1.6,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodBarracks": [
+      {
+        "pack": "nature-kit",
+        "model": "tree_oak",
+        "size": [
+          2,
+          3.2,
+          2
+        ],
+        "position": [
+          -1.55,
+          0,
+          -0.8
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_oak",
+        "size": [
+          2,
+          3.2,
+          2
+        ],
+        "position": [
+          1.55,
+          0,
+          -0.8
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          3.2,
+          0.45,
+          2.7
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_old",
+        "size": [
+          1.7,
+          1.5,
+          1.3
+        ],
+        "position": [
+          0,
+          0,
+          -0.3
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodLodge": [
+      {
+        "pack": "nature-kit",
+        "model": "tree_fat",
+        "size": [
+          2.5,
+          3.2,
+          2.5
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          2.4,
+          0.3,
+          2.4
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodTower": [
+      {
+        "pack": "nature-kit",
+        "model": "tree_thin",
+        "size": [
+          1.8,
+          4.8,
+          1.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          1.5,
+          0.4,
+          1.5
+        ],
+        "position": [
+          0,
+          2.5,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodAltar": [
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          2.8,
+          0.6,
+          2.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_obelisk",
+        "size": [
+          0.85,
+          3,
+          0.85
+        ],
+        "position": [
+          0,
+          0.5,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_small",
+        "size": [
+          1,
+          1.9,
+          1
+        ],
+        "position": [
+          -1.1,
+          0,
+          -0.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_small",
+        "size": [
+          1,
+          1.9,
+          1
+        ],
+        "position": [
+          1.1,
+          0,
+          -0.7
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodWorkshop": [
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          2,
+          2.5,
+          2
+        ],
+        "position": [
+          -0.65,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_oak",
+        "size": [
+          3.1,
+          3.8,
+          3.1
+        ],
+        "position": [
+          -0.65,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "siege-trebuchet",
+        "size": [
+          1.9,
+          2.5,
+          1.9
+        ],
+        "position": [
+          1,
+          0,
+          0.8
+        ],
+        "yaw": 0
+      }
+    ],
+    "RevenantHall": [
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt-large",
+        "size": [
+          3.5,
+          2.4,
+          3.5
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt-large-roof",
+        "size": [
+          4,
+          1.1,
+          4
+        ],
+        "position": [
+          0,
+          2.35,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          -1.7,
+          0,
+          -1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          1.7,
+          0,
+          -1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          -1.7,
+          0,
+          1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          1.7,
+          0,
+          1.7
+        ],
+        "yaw": 0
+      }
+    ],
+    "RevenantBarracks": [
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt",
+        "size": [
+          3.2,
+          2,
+          2.6
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt-small-roof",
+        "size": [
+          3.5,
+          1.1,
+          2.9
+        ],
+        "position": [
+          0,
+          1.8,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "gravestone-decorative",
+        "size": [
+          0.6,
+          1.1,
+          0.4
+        ],
+        "position": [
+          -1.3,
+          0,
+          1.5
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "gravestone-decorative",
+        "size": [
+          0.6,
+          1.1,
+          0.4
+        ],
+        "position": [
+          1.3,
+          0,
+          1.5
+        ],
+        "yaw": 0
+      }
+    ],
+    "RevenantLodge": [
+      {
+        "pack": "graveyard-kit",
+        "model": "grave-border",
+        "size": [
+          2.4,
+          0.25,
+          2.4
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "gravestone-cross-large",
+        "size": [
+          1.1,
+          2.5,
+          0.6
+        ],
+        "position": [
+          0,
+          0,
+          -0.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "coffin",
+        "size": [
+          1,
+          0.5,
+          1.8
+        ],
+        "position": [
+          0,
+          0.25,
+          0.3
+        ],
+        "yaw": 0
+      }
+    ],
+    "RevenantTower": [
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          1.5,
+          4.4,
+          1.5
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "altar-stone",
+        "size": [
+          1.8,
+          0.5,
+          1.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "RevenantAltar": [
+      {
+        "pack": "graveyard-kit",
+        "model": "altar-stone",
+        "size": [
+          2.7,
+          1,
+          2.7
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "cross-column",
+        "size": [
+          1.2,
+          3.1,
+          0.8
+        ],
+        "position": [
+          0,
+          0.7,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "candle-multiple",
+        "size": [
+          0.5,
+          0.8,
+          0.5
+        ],
+        "position": [
+          -0.9,
+          1,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "candle-multiple",
+        "size": [
+          0.5,
+          0.8,
+          0.5
+        ],
+        "position": [
+          0.9,
+          1,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "RevenantWorkshop": [
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt-a",
+        "size": [
+          3,
+          2.3,
+          2.6
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "coffin-old",
+        "size": [
+          1,
+          0.5,
+          2.2
+        ],
+        "position": [
+          -1,
+          0,
+          1.5
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "coffin-old",
+        "size": [
+          1,
+          0.5,
+          2.2
+        ],
+        "position": [
+          1,
+          0,
+          1.5
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.7,
+          3,
+          0.7
+        ],
+        "position": [
+          0,
+          0,
+          -1.4
+        ],
+        "yaw": 0
+      }
+    ],
+    "KingdomHall2": [
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-base",
+        "size": [
+          3.8,
+          2.1,
+          3.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top-roof-high-windows",
+        "size": [
+          4,
+          2.2,
+          4
+        ],
+        "position": [
+          0,
+          2,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          -1.65,
+          0,
+          -1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          1.65,
+          0,
+          -1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          -1.65,
+          0,
+          1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          1.65,
+          0,
+          1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-mid-windows",
+        "size": [
+          1.4,
+          2.2,
+          1.4
+        ],
+        "position": [
+          0,
+          3,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top-roof-high",
+        "size": [
+          1.8,
+          1.5,
+          1.8
+        ],
+        "position": [
+          0,
+          5.1,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "KingdomHall3": [
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-base",
+        "size": [
+          3.8,
+          2.1,
+          3.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top-roof-high-windows",
+        "size": [
+          4,
+          2.2,
+          4
+        ],
+        "position": [
+          0,
+          2,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          -1.65,
+          0,
+          -1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          1.65,
+          0,
+          -1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          -1.65,
+          0,
+          1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top",
+        "size": [
+          0.9,
+          2.8,
+          0.9
+        ],
+        "position": [
+          1.65,
+          0,
+          1.65
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-mid-windows",
+        "size": [
+          1.4,
+          2.2,
+          1.4
+        ],
+        "position": [
+          0,
+          3,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top-roof-high",
+        "size": [
+          1.8,
+          1.5,
+          1.8
+        ],
+        "position": [
+          0,
+          5.1,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top-roof-high",
+        "size": [
+          0.85,
+          5.7,
+          0.85
+        ],
+        "position": [
+          -1.5,
+          0,
+          -1.2
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-square-top-roof-high",
+        "size": [
+          0.85,
+          5.7,
+          0.85
+        ],
+        "position": [
+          1.5,
+          0,
+          -1.2
+        ],
+        "yaw": 0
+      }
+    ],
+    "WarclansHall2": [
+      {
+        "pack": "nature-kit",
+        "model": "tent_detailedOpen",
+        "size": [
+          3.8,
+          3,
+          3.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          -1.8,
+          0,
+          -1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          1.8,
+          0,
+          -1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          -1.8,
+          0,
+          1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          1.8,
+          0,
+          1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "campfire_logs",
+        "size": [
+          1,
+          0.5,
+          1
+        ],
+        "position": [
+          0,
+          0,
+          2
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_head",
+        "size": [
+          1.3,
+          2.5,
+          1
+        ],
+        "position": [
+          0,
+          2.5,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "WarclansHall3": [
+      {
+        "pack": "nature-kit",
+        "model": "tent_detailedOpen",
+        "size": [
+          3.8,
+          3,
+          3.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          -1.8,
+          0,
+          -1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          1.8,
+          0,
+          -1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          -1.8,
+          0,
+          1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "stump_oldTall",
+        "size": [
+          0.35,
+          2.7,
+          0.35
+        ],
+        "position": [
+          1.8,
+          0,
+          1.6
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "campfire_logs",
+        "size": [
+          1,
+          0.5,
+          1
+        ],
+        "position": [
+          0,
+          0,
+          2
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_head",
+        "size": [
+          1.3,
+          2.5,
+          1
+        ],
+        "position": [
+          0,
+          2.5,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-hexagon-top-wood",
+        "size": [
+          0.85,
+          5.7,
+          0.85
+        ],
+        "position": [
+          -1.5,
+          0,
+          -1.2
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "castle-kit",
+        "model": "tower-hexagon-top-wood",
+        "size": [
+          0.85,
+          5.7,
+          0.85
+        ],
+        "position": [
+          1.5,
+          0,
+          -1.2
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodHall2": [
+      {
+        "pack": "nature-kit",
+        "model": "stump_old",
+        "size": [
+          2.3,
+          1.3,
+          2.3
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_oak",
+        "size": [
+          4.6,
+          5.4,
+          4.6
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          3.2,
+          0.4,
+          3.2
+        ],
+        "position": [
+          0,
+          1.6,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          2.2,
+          0.5,
+          2.2
+        ],
+        "position": [
+          0,
+          5.1,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_obelisk",
+        "size": [
+          0.6,
+          1.5,
+          0.6
+        ],
+        "position": [
+          0,
+          5.4,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodHall3": [
+      {
+        "pack": "nature-kit",
+        "model": "stump_old",
+        "size": [
+          2.3,
+          1.3,
+          2.3
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_oak",
+        "size": [
+          4.6,
+          5.4,
+          4.6
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          3.2,
+          0.4,
+          3.2
+        ],
+        "position": [
+          0,
+          1.6,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_ring",
+        "size": [
+          2.2,
+          0.5,
+          2.2
+        ],
+        "position": [
+          0,
+          5.1,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "statue_obelisk",
+        "size": [
+          0.6,
+          1.5,
+          0.6
+        ],
+        "position": [
+          0,
+          5.4,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_thin",
+        "size": [
+          0.85,
+          5.7,
+          0.85
+        ],
+        "position": [
+          -1.5,
+          0,
+          -1.2
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "nature-kit",
+        "model": "tree_thin",
+        "size": [
+          0.85,
+          5.7,
+          0.85
+        ],
+        "position": [
+          1.5,
+          0,
+          -1.2
+        ],
+        "yaw": 0
+      }
+    ],
+    "RevenantHall2": [
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt-large",
+        "size": [
+          3.5,
+          2.4,
+          3.5
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt-large-roof",
+        "size": [
+          4,
+          1.1,
+          4
+        ],
+        "position": [
+          0,
+          2.35,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          -1.7,
+          0,
+          -1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          1.7,
+          0,
+          -1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          -1.7,
+          0,
+          1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          1.7,
+          0,
+          1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "cross-column",
+        "size": [
+          1.1,
+          3.4,
+          0.8
+        ],
+        "position": [
+          0,
+          3.1,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "RevenantHall3": [
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt-large",
+        "size": [
+          3.5,
+          2.4,
+          3.5
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "crypt-large-roof",
+        "size": [
+          4,
+          1.1,
+          4
+        ],
+        "position": [
+          0,
+          2.35,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          -1.7,
+          0,
+          -1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          1.7,
+          0,
+          -1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          -1.7,
+          0,
+          1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.55,
+          3.5,
+          0.55
+        ],
+        "position": [
+          1.7,
+          0,
+          1.7
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "cross-column",
+        "size": [
+          1.1,
+          3.4,
+          0.8
+        ],
+        "position": [
+          0,
+          3.1,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.85,
+          5.7,
+          0.85
+        ],
+        "position": [
+          -1.5,
+          0,
+          -1.2
+        ],
+        "yaw": 0
+      },
+      {
+        "pack": "graveyard-kit",
+        "model": "pillar-obelisk",
+        "size": [
+          0.85,
+          5.7,
+          0.85
+        ],
+        "position": [
+          1.5,
+          0,
+          -1.2
+        ],
+        "yaw": 0
+      }
+    ]
+  },
+  "generated": [
+    {
+      "file": "Assets/Models/KingdomAltar.glb",
+      "sha256": "ab0ad6a2914265a87f8c213a0dc90e29cd126e213c1f42908a3c496b04de9448"
+    },
+    {
+      "file": "Assets/Textures/KingdomAltar.png",
+      "sha256": "a532cdf8612415adaa468fc9ba485b905b98db2400a2e63f3bce145315c8c890"
+    },
+    {
+      "file": "Assets/Materials/KingdomAltar.mmat",
+      "sha256": "ff01cefdbe30697097992234689f340d05923d021725a5e17c8436fe6dd2c6c8"
+    },
+    {
+      "file": "Assets/Models/KingdomBarracks.glb",
+      "sha256": "a0994f8a58149052720fe3eb65467c591fb01f04e32e713b5d6d77651906d36b"
+    },
+    {
+      "file": "Assets/Textures/KingdomBarracks.png",
+      "sha256": "67367b4257f9a9d6aaf2fab86e67950c623710571cba050d1ffd2cc72eedfa46"
+    },
+    {
+      "file": "Assets/Materials/KingdomBarracks.mmat",
+      "sha256": "bbc7f352762e6e3e1c1e3ea6c9f51b512ced1ac3fca78a3bdd29133c7f3a7bfc"
+    },
+    {
+      "file": "Assets/Models/KingdomHall.glb",
+      "sha256": "a3e55d4d9a84a888d602f1c8acbd619d57c86879973db8e820a1177394b10fe7"
+    },
+    {
+      "file": "Assets/Textures/KingdomHall.png",
+      "sha256": "ff3edf20b67b2f8db4d8e87c297612a1af818abf4ed15ba8a71a0d44b1826f1b"
+    },
+    {
+      "file": "Assets/Materials/KingdomHall.mmat",
+      "sha256": "180a2ceedc07ce5806d2f7c6319580d13cd9cb3d92c5a01b32ae76b4891ca30f"
+    },
+    {
+      "file": "Assets/Models/KingdomHall2.glb",
+      "sha256": "c5d43342f54414f90d00bffe9db9e38be2bdea510cb4554ca7f035a3bec0eca5"
+    },
+    {
+      "file": "Assets/Textures/KingdomHall2.png",
+      "sha256": "38fe8bc1b39f16d777cc454c678e4660f6f897a019f66fd02ee714afc04ed754"
+    },
+    {
+      "file": "Assets/Materials/KingdomHall2.mmat",
+      "sha256": "09cd6fee6ae937737f9c67348b828239b1dbf8294cb8bb4cbed3056e68620166"
+    },
+    {
+      "file": "Assets/Models/KingdomHall3.glb",
+      "sha256": "c03b420756f81abe64c87b64b11d3b47363764349ebdc4652fe420668def8122"
+    },
+    {
+      "file": "Assets/Textures/KingdomHall3.png",
+      "sha256": "38fe8bc1b39f16d777cc454c678e4660f6f897a019f66fd02ee714afc04ed754"
+    },
+    {
+      "file": "Assets/Materials/KingdomHall3.mmat",
+      "sha256": "118efe6f1c8277885a4cb9cf219a968b942be695bd35064406788d99b139c761"
+    },
+    {
+      "file": "Assets/Models/KingdomLodge.glb",
+      "sha256": "5c0ac1d26c6114b3f9d4e60c0fa7622470cf0d1f025aa271939d49e44407776b"
+    },
+    {
+      "file": "Assets/Textures/KingdomLodge.png",
+      "sha256": "c8cd45e09c096c37cb071282febb00c21d2a4834ff2c8a813d70ebfa5a9c88d4"
+    },
+    {
+      "file": "Assets/Materials/KingdomLodge.mmat",
+      "sha256": "0658969c56406150dea8db45de8578b4b496431fe8944da3170b94403cfb8a3a"
+    },
+    {
+      "file": "Assets/Models/KingdomTower.glb",
+      "sha256": "3691b183bf2a2b0ba2a97ba694b1dd55322b41c618a2492bd6c77cc1efb21446"
+    },
+    {
+      "file": "Assets/Textures/KingdomTower.png",
+      "sha256": "31e25e84dcf8f81cb1e83b57c11a473c8cf878a34d93445ae192efeef72bb2bf"
+    },
+    {
+      "file": "Assets/Materials/KingdomTower.mmat",
+      "sha256": "93dd0adb0396acce8321d0738bc8b9f8d135fd485c112108c9429329ac79df6e"
+    },
+    {
+      "file": "Assets/Models/KingdomWorkshop.glb",
+      "sha256": "30b44a3df4079e9300002db3064a0cb6cf293ddbf870f9e60e22c9c7991af9b1"
+    },
+    {
+      "file": "Assets/Textures/KingdomWorkshop.png",
+      "sha256": "332f5ccb3e97622f895b81142cf70675bb339ae30a728c0222d7a1c8fb7a38f0"
+    },
+    {
+      "file": "Assets/Materials/KingdomWorkshop.mmat",
+      "sha256": "686130a799039ff6f06ddc648c1f2e0ea01ff8e5c01c511bc9ff4f6e3a1e0514"
+    },
+    {
+      "file": "Assets/Models/RevenantAltar.glb",
+      "sha256": "1eb97c4650f41dd664efe802e904dca5db69f246b22f0ca6bc0c5e7c6aabc3e1"
+    },
+    {
+      "file": "Assets/Textures/RevenantAltar.png",
+      "sha256": "7b3de7c1944797410975f77157ad865034445a407c035b5c83c3b0b7ee93204a"
+    },
+    {
+      "file": "Assets/Materials/RevenantAltar.mmat",
+      "sha256": "ed174e6663d8406aa6b0ba704939bef74ec082d474b7da3d61863ecda5006ba2"
+    },
+    {
+      "file": "Assets/Models/RevenantBarracks.glb",
+      "sha256": "f5144771e3a9bd9ee53dfefd67585740b34cbd6c7eb1c34399b9a6d0bed2ea17"
+    },
+    {
+      "file": "Assets/Textures/RevenantBarracks.png",
+      "sha256": "c8980252abc7329a366aff626232e321ef41bc3821cf4bf3c9040c0103273b98"
+    },
+    {
+      "file": "Assets/Materials/RevenantBarracks.mmat",
+      "sha256": "922815fd546588649f48b18c429667bacb59d12d621665affee9c549bb1a2a87"
+    },
+    {
+      "file": "Assets/Models/RevenantHall.glb",
+      "sha256": "ce5443c344965cb6307a125134a66d6f2c629b9317cc5d1636a5a5df39d4226d"
+    },
+    {
+      "file": "Assets/Textures/RevenantHall.png",
+      "sha256": "332f7115559fe4f8fda25cfa2975584fb99af9705b4b7b09cda3b35673a3eff6"
+    },
+    {
+      "file": "Assets/Materials/RevenantHall.mmat",
+      "sha256": "d9ca40a62367a6114bbfff7dc7b313ebf94523874b939c8eb818b5b519b9b469"
+    },
+    {
+      "file": "Assets/Models/RevenantHall2.glb",
+      "sha256": "0eb34959e2ac4bd9761820ac27c872450131c7ce2d82bd2644987e66345ca7a5"
+    },
+    {
+      "file": "Assets/Textures/RevenantHall2.png",
+      "sha256": "ee505c2d69745f8d47c47ebfd5d3f2f5fd22be32ecf30b37808f3dc85b76b957"
+    },
+    {
+      "file": "Assets/Materials/RevenantHall2.mmat",
+      "sha256": "138689c8fdfb146b67dd7f9a85e59a7125f42ebad97b9284806ba9611f49ad7e"
+    },
+    {
+      "file": "Assets/Models/RevenantHall3.glb",
+      "sha256": "b8d42dce6c7d91ae6e36d6a87b4934745689d24b0f5be5a4f69c6e9b21f6cc02"
+    },
+    {
+      "file": "Assets/Textures/RevenantHall3.png",
+      "sha256": "ee505c2d69745f8d47c47ebfd5d3f2f5fd22be32ecf30b37808f3dc85b76b957"
+    },
+    {
+      "file": "Assets/Materials/RevenantHall3.mmat",
+      "sha256": "beb5a66e42b663fb5965659dfe805f5f19e7b0a2e9a6199e24535893d87e92c5"
+    },
+    {
+      "file": "Assets/Models/RevenantLodge.glb",
+      "sha256": "18b8726ccc517aedaa8e8df752460aa61905d7d1b087802122d05c094feb3f90"
+    },
+    {
+      "file": "Assets/Textures/RevenantLodge.png",
+      "sha256": "e7e5aa5961974ed9f277c347a17c30d188f011864e9aed45bbf879aad28a2072"
+    },
+    {
+      "file": "Assets/Materials/RevenantLodge.mmat",
+      "sha256": "dccd5f87e6818d92742af855b08a48ead790987ec5cae93b800403719ff2358d"
+    },
+    {
+      "file": "Assets/Models/RevenantTower.glb",
+      "sha256": "df0d825833e387199b5a0d67a123d92405229d5533c546f968b2c8e2e94e9cd1"
+    },
+    {
+      "file": "Assets/Textures/RevenantTower.png",
+      "sha256": "c782f2fb1c4e0326b68e9327e7ccb334d64c3eeb87c78f4f504d2f4cb7f4f95f"
+    },
+    {
+      "file": "Assets/Materials/RevenantTower.mmat",
+      "sha256": "f88cdb80ba0294752b2ab9c7dd88fc90519e4d0c5ea3409d98d63bee060914c5"
+    },
+    {
+      "file": "Assets/Models/RevenantWorkshop.glb",
+      "sha256": "e1646e7a68cd7ff01377f4d71ab3a3108b56b858138c58466c70417e227ca366"
+    },
+    {
+      "file": "Assets/Textures/RevenantWorkshop.png",
+      "sha256": "0b8680556b50f5c08545393f5420a54ecdae15ffe549a2aa84269741a1304788"
+    },
+    {
+      "file": "Assets/Materials/RevenantWorkshop.mmat",
+      "sha256": "e1c093f679ee1441e665ec6510b98c0796de1832586a5c85a2b605d581e207d1"
+    },
+    {
+      "file": "Assets/Models/WarclansAltar.glb",
+      "sha256": "40767fbb836918bb4d25c3457ae4856aa8973ba3e49d94bf25a850e7463fe928"
+    },
+    {
+      "file": "Assets/Textures/WarclansAltar.png",
+      "sha256": "010ac676322c4d1e87a3b16802d9e35d59a11b7a11bc7ba12d6545ba40a55afb"
+    },
+    {
+      "file": "Assets/Materials/WarclansAltar.mmat",
+      "sha256": "25ae7a0c8685f7087097ba1df2f57269111faea9c612e7c103753e1f425c4c41"
+    },
+    {
+      "file": "Assets/Models/WarclansBarracks.glb",
+      "sha256": "17b5c403cec5c45f3b2d7fcc529cc2cb6ee65c17c95e10712d331a2ddbd8aab8"
+    },
+    {
+      "file": "Assets/Textures/WarclansBarracks.png",
+      "sha256": "ef3ffb6a521436978d9e4d106a4ff7fbf1d7b0b595ab4a9cf905ed615f3ec8c6"
+    },
+    {
+      "file": "Assets/Materials/WarclansBarracks.mmat",
+      "sha256": "91d1f93a6403c65ddaba794c3e980b152a5bb68ae6d8042bb9b6985613d96ec3"
+    },
+    {
+      "file": "Assets/Models/WarclansHall.glb",
+      "sha256": "07bbb3bd1ed843d228cef2ff7e20db458cd6251598ae7aaf7058d6dbc2172f82"
+    },
+    {
+      "file": "Assets/Textures/WarclansHall.png",
+      "sha256": "a3c3cd5c519deebefd5efc34dcabfde0b11ff6aeca1c8a8e717577e0395803bc"
+    },
+    {
+      "file": "Assets/Materials/WarclansHall.mmat",
+      "sha256": "3e57a2e649017d40afdf8848af8b89479ebad80da6e00e03e427e49bc922f933"
+    },
+    {
+      "file": "Assets/Models/WarclansHall2.glb",
+      "sha256": "c49f26ed983037a4589dcbe453dd84cff154553cc4e6f7f6721af94adaee13fe"
+    },
+    {
+      "file": "Assets/Textures/WarclansHall2.png",
+      "sha256": "eaa1e3a78d9fcc802c1e8e1591244167d0f4a908b32c84c98f284c4e4098384e"
+    },
+    {
+      "file": "Assets/Materials/WarclansHall2.mmat",
+      "sha256": "8eacb79269928df646e3b43edce96ee32cb1029ac1ed734233e1b4eb6f628375"
+    },
+    {
+      "file": "Assets/Models/WarclansHall3.glb",
+      "sha256": "1b4b5979fcd8c63ef58aa26f716802e4cd990b16a999b2f1918af2696fac9edc"
+    },
+    {
+      "file": "Assets/Textures/WarclansHall3.png",
+      "sha256": "f625878a9f09a642e1d8317aacb5103df8bd75fff77ba58ad9f960d1e02f29ce"
+    },
+    {
+      "file": "Assets/Materials/WarclansHall3.mmat",
+      "sha256": "970c632b693b3e328651cba69b10d2c4b45737dc5978135e4802ce65a8f5345b"
+    },
+    {
+      "file": "Assets/Models/WarclansLodge.glb",
+      "sha256": "02c8485e0c0a9f7493103e6939aca2ea50a285009083e1ad02ea56dad9b4d62b"
+    },
+    {
+      "file": "Assets/Textures/WarclansLodge.png",
+      "sha256": "3103845105a9c2ed409169e11b0a64232fdb793930e9e821e198e2cf8f88fdc8"
+    },
+    {
+      "file": "Assets/Materials/WarclansLodge.mmat",
+      "sha256": "2a76ac54a2e1c039f38f8dfc4ad3efa8bce9bcffe204fd89d003a605af95ebbf"
+    },
+    {
+      "file": "Assets/Models/WarclansTower.glb",
+      "sha256": "4c112577508622bf0589c62d1c14d33cb4d29f1a3a44c2f5df6f0f86149eec59"
+    },
+    {
+      "file": "Assets/Textures/WarclansTower.png",
+      "sha256": "a1ae1d3835d51c133ebc16ae641f7cb55cbe8182ad4d4f98ceb29d20f8de7854"
+    },
+    {
+      "file": "Assets/Materials/WarclansTower.mmat",
+      "sha256": "59d336c05dfccca204f2c825caad2cbb519c62d51e470daba5bf6648db769b37"
+    },
+    {
+      "file": "Assets/Models/WarclansWorkshop.glb",
+      "sha256": "ee8bf6b086df139e5c3b9f788ce396236d7ad657ce5bb5d564ba934c7b6e92bd"
+    },
+    {
+      "file": "Assets/Textures/WarclansWorkshop.png",
+      "sha256": "86bd64cf4b48f7ecf65338f9a3b2a9466ca7d9f5e45b8e0ffa895b35e424bdd6"
+    },
+    {
+      "file": "Assets/Materials/WarclansWorkshop.mmat",
+      "sha256": "fd8a5148a8e64a9d7c6eaedf070b94dd339dd59012514bfcac62a9923526181c"
+    },
+    {
+      "file": "Assets/Models/WildwoodAltar.glb",
+      "sha256": "e5109e22a14a2bb46e5b31d418c9b29c47565cf7e2ce3ea3b8f3258f8f934026"
+    },
+    {
+      "file": "Assets/Textures/WildwoodAltar.png",
+      "sha256": "e581ac28cac3ba969376bf1e5688d2932f95d9c783681985ff9d1c9de7db0e2b"
+    },
+    {
+      "file": "Assets/Materials/WildwoodAltar.mmat",
+      "sha256": "8447a6c8880a6ca6f6bca6937eb4eb36c409e97c2dceb8c8ec1594d32ae04833"
+    },
+    {
+      "file": "Assets/Models/WildwoodBarracks.glb",
+      "sha256": "b77847c1ef91441690531f7efe05e6735db94d1fdc5b13bedfc7dc79aef73ae6"
+    },
+    {
+      "file": "Assets/Textures/WildwoodBarracks.png",
+      "sha256": "69fc4f3e732c5d8e2dbbd9859d2b41e82d51c1250576ebef120ce9cc1d79eb6d"
+    },
+    {
+      "file": "Assets/Materials/WildwoodBarracks.mmat",
+      "sha256": "228b6eba2210da056d5c5758ce0e5ff4fe966e1846f9348f2ffc98c7614b08fd"
+    },
+    {
+      "file": "Assets/Models/WildwoodHall.glb",
+      "sha256": "79edcb69e4bab75f1c47894a5a2d92ae42102b8589fda84d1ee5e6e2f6591b6e"
+    },
+    {
+      "file": "Assets/Textures/WildwoodHall.png",
+      "sha256": "0809b49026155c04397f30eb1460d2912fe0b50cedb0c798d27560071f58c63c"
+    },
+    {
+      "file": "Assets/Materials/WildwoodHall.mmat",
+      "sha256": "d928e08f011231ddb34c1da72d8262cb7d815b0a62fb31abf20bfa29b640bbaa"
+    },
+    {
+      "file": "Assets/Models/WildwoodHall2.glb",
+      "sha256": "f1a152ab881b1c010af40649dca3691472319d9cfdad037891174df802ec2d88"
+    },
+    {
+      "file": "Assets/Textures/WildwoodHall2.png",
+      "sha256": "0809b49026155c04397f30eb1460d2912fe0b50cedb0c798d27560071f58c63c"
+    },
+    {
+      "file": "Assets/Materials/WildwoodHall2.mmat",
+      "sha256": "baffa5b09b7e56b3f3fb8601585aa90c960c21d4aa542e054b8bbfa0a9ac2500"
+    },
+    {
+      "file": "Assets/Models/WildwoodHall3.glb",
+      "sha256": "731e1887b34c0231ffd29c4d07be255d034c26442f87b4a2699de872026939c6"
+    },
+    {
+      "file": "Assets/Textures/WildwoodHall3.png",
+      "sha256": "0809b49026155c04397f30eb1460d2912fe0b50cedb0c798d27560071f58c63c"
+    },
+    {
+      "file": "Assets/Materials/WildwoodHall3.mmat",
+      "sha256": "72ddbb8b868e47ae55f34c4f96a6e138f9fc7a23d5df898ae3140db1df5e8469"
+    },
+    {
+      "file": "Assets/Models/WildwoodLodge.glb",
+      "sha256": "088b58bbcd7bbf6e29e2064d50b9a21cf02542388fa45ed1daa4e0bd5bd6bc91"
+    },
+    {
+      "file": "Assets/Textures/WildwoodLodge.png",
+      "sha256": "69fc4f3e732c5d8e2dbbd9859d2b41e82d51c1250576ebef120ce9cc1d79eb6d"
+    },
+    {
+      "file": "Assets/Materials/WildwoodLodge.mmat",
+      "sha256": "ba0c5d783bd4e88affe147cfe74b9f0b7883556b4bcf9b0feef1b97b75ffdf4c"
+    },
+    {
+      "file": "Assets/Models/WildwoodTower.glb",
+      "sha256": "43f9a9f02ec3ba831954abb6f4f510a85e6ed4feed10b72db04d63adaedb59b7"
+    },
+    {
+      "file": "Assets/Textures/WildwoodTower.png",
+      "sha256": "69fc4f3e732c5d8e2dbbd9859d2b41e82d51c1250576ebef120ce9cc1d79eb6d"
+    },
+    {
+      "file": "Assets/Materials/WildwoodTower.mmat",
+      "sha256": "b7b3725712971fbba6a40cfc2674c7396b388055b8498e2fa0974d8ea4bedc60"
+    },
+    {
+      "file": "Assets/Models/WildwoodWorkshop.glb",
+      "sha256": "af6ceca5fe42601d274870d08c1a84eb4717724e76f04982e18beaa677714e77"
+    },
+    {
+      "file": "Assets/Textures/WildwoodWorkshop.png",
+      "sha256": "06adc8c6da864e995531ed4aa331add40aa1ddd29ccf5b5d54532813163151d8"
+    },
+    {
+      "file": "Assets/Materials/WildwoodWorkshop.mmat",
+      "sha256": "6f6ebfb4509932276e436d3317361551f7454587b128f6447b4d6532e73d350f"
+    }
+  ]
+}

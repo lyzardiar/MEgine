@@ -1139,5 +1139,1006 @@
       3,
       1
     ]
+  },
+  "KingdomHall": {
+    "material": "Assets/Materials/KingdomHall.mmat",
+    "parts": [
+      {
+        "name": "KingdomHall",
+        "mesh": "Assets/Models/KingdomHall.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.2,
+      4.2,
+      4.2
+    ],
+    "factionBuilding": true
+  },
+  "KingdomBarracks": {
+    "material": "Assets/Materials/KingdomBarracks.mmat",
+    "parts": [
+      {
+        "name": "KingdomBarracks",
+        "mesh": "Assets/Models/KingdomBarracks.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.6,
+      3.5,
+      3.3
+    ],
+    "factionBuilding": true
+  },
+  "KingdomLodge": {
+    "material": "Assets/Materials/KingdomLodge.mmat",
+    "parts": [
+      {
+        "name": "KingdomLodge",
+        "mesh": "Assets/Models/KingdomLodge.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.6,
+      2.5,
+      2.4
+    ],
+    "factionBuilding": true
+  },
+  "KingdomTower": {
+    "material": "Assets/Materials/KingdomTower.mmat",
+    "parts": [
+      {
+        "name": "KingdomTower",
+        "mesh": "Assets/Models/KingdomTower.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.9,
+      4.25,
+      1.9
+    ],
+    "factionBuilding": true
+  },
+  "KingdomAltar": {
+    "material": "Assets/Materials/KingdomAltar.mmat",
+    "parts": [
+      {
+        "name": "KingdomAltar",
+        "mesh": "Assets/Models/KingdomAltar.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.6,
+      4.5,
+      2.6
+    ],
+    "factionBuilding": true
+  },
+  "KingdomWorkshop": {
+    "material": "Assets/Materials/KingdomWorkshop.mmat",
+    "parts": [
+      {
+        "name": "KingdomWorkshop",
+        "mesh": "Assets/Models/KingdomWorkshop.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.8,
+      2.9,
+      3.9
+    ],
+    "factionBuilding": true
+  },
+  "WarclansHall": {
+    "material": "Assets/Materials/WarclansHall.mmat",
+    "parts": [
+      {
+        "name": "WarclansHall",
+        "mesh": "Assets/Models/WarclansHall.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.95,
+      3.0,
+      4.4
+    ],
+    "factionBuilding": true
+  },
+  "WarclansBarracks": {
+    "material": "Assets/Materials/WarclansBarracks.mmat",
+    "parts": [
+      {
+        "name": "WarclansBarracks",
+        "mesh": "Assets/Models/WarclansBarracks.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.15,
+      2.2,
+      3.6
+    ],
+    "factionBuilding": true
+  },
+  "WarclansLodge": {
+    "material": "Assets/Materials/WarclansLodge.mmat",
+    "parts": [
+      {
+        "name": "WarclansLodge",
+        "mesh": "Assets/Models/WarclansLodge.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.4,
+      1.8,
+      2.9
+    ],
+    "factionBuilding": true
+  },
+  "WarclansTower": {
+    "material": "Assets/Materials/WarclansTower.mmat",
+    "parts": [
+      {
+        "name": "WarclansTower",
+        "mesh": "Assets/Models/WarclansTower.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.9,
+      4.5,
+      1.9
+    ],
+    "factionBuilding": true
+  },
+  "WarclansAltar": {
+    "material": "Assets/Materials/WarclansAltar.mmat",
+    "parts": [
+      {
+        "name": "WarclansAltar",
+        "mesh": "Assets/Models/WarclansAltar.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.8,
+      2.6,
+      2.9
+    ],
+    "factionBuilding": true
+  },
+  "WarclansWorkshop": {
+    "material": "Assets/Materials/WarclansWorkshop.mmat",
+    "parts": [
+      {
+        "name": "WarclansWorkshop",
+        "mesh": "Assets/Models/WarclansWorkshop.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.95,
+      2.1,
+      3.8
+    ],
+    "factionBuilding": true
+  },
+  "WildwoodHall": {
+    "material": "Assets/Materials/WildwoodHall.mmat",
+    "parts": [
+      {
+        "name": "WildwoodHall",
+        "mesh": "Assets/Models/WildwoodHall.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.6,
+      5.4,
+      4.6
+    ],
+    "factionBuilding": true
+  },
+  "WildwoodBarracks": {
+    "material": "Assets/Materials/WildwoodBarracks.mmat",
+    "parts": [
+      {
+        "name": "WildwoodBarracks",
+        "mesh": "Assets/Models/WildwoodBarracks.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.1,
+      3.2,
+      3.15
+    ],
+    "factionBuilding": true
+  },
+  "WildwoodLodge": {
+    "material": "Assets/Materials/WildwoodLodge.mmat",
+    "parts": [
+      {
+        "name": "WildwoodLodge",
+        "mesh": "Assets/Models/WildwoodLodge.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.5,
+      3.2,
+      2.5
+    ],
+    "factionBuilding": true
+  },
+  "WildwoodTower": {
+    "material": "Assets/Materials/WildwoodTower.mmat",
+    "parts": [
+      {
+        "name": "WildwoodTower",
+        "mesh": "Assets/Models/WildwoodTower.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.8,
+      4.8,
+      1.8
+    ],
+    "factionBuilding": true
+  },
+  "WildwoodAltar": {
+    "material": "Assets/Materials/WildwoodAltar.mmat",
+    "parts": [
+      {
+        "name": "WildwoodAltar",
+        "mesh": "Assets/Models/WildwoodAltar.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.2,
+      3.5,
+      2.8
+    ],
+    "factionBuilding": true
+  },
+  "WildwoodWorkshop": {
+    "material": "Assets/Materials/WildwoodWorkshop.mmat",
+    "parts": [
+      {
+        "name": "WildwoodWorkshop",
+        "mesh": "Assets/Models/WildwoodWorkshop.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.15,
+      3.8,
+      3.3
+    ],
+    "factionBuilding": true
+  },
+  "RevenantHall": {
+    "material": "Assets/Materials/RevenantHall.mmat",
+    "parts": [
+      {
+        "name": "RevenantHall",
+        "mesh": "Assets/Models/RevenantHall.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.0,
+      3.5,
+      4.0
+    ],
+    "factionBuilding": true
+  },
+  "RevenantBarracks": {
+    "material": "Assets/Materials/RevenantBarracks.mmat",
+    "parts": [
+      {
+        "name": "RevenantBarracks",
+        "mesh": "Assets/Models/RevenantBarracks.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.5,
+      2.9,
+      3.15
+    ],
+    "factionBuilding": true
+  },
+  "RevenantLodge": {
+    "material": "Assets/Materials/RevenantLodge.mmat",
+    "parts": [
+      {
+        "name": "RevenantLodge",
+        "mesh": "Assets/Models/RevenantLodge.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.4,
+      2.5,
+      2.4
+    ],
+    "factionBuilding": true
+  },
+  "RevenantTower": {
+    "material": "Assets/Materials/RevenantTower.mmat",
+    "parts": [
+      {
+        "name": "RevenantTower",
+        "mesh": "Assets/Models/RevenantTower.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.8,
+      4.4,
+      1.8
+    ],
+    "factionBuilding": true
+  },
+  "RevenantAltar": {
+    "material": "Assets/Materials/RevenantAltar.mmat",
+    "parts": [
+      {
+        "name": "RevenantAltar",
+        "mesh": "Assets/Models/RevenantAltar.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.7,
+      3.8,
+      2.7
+    ],
+    "factionBuilding": true
+  },
+  "RevenantWorkshop": {
+    "material": "Assets/Materials/RevenantWorkshop.mmat",
+    "parts": [
+      {
+        "name": "RevenantWorkshop",
+        "mesh": "Assets/Models/RevenantWorkshop.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.0,
+      3.0,
+      4.35
+    ],
+    "factionBuilding": true
+  },
+  "KingdomHall2": {
+    "material": "Assets/Materials/KingdomHall2.mmat",
+    "parts": [
+      {
+        "name": "KingdomHall2",
+        "mesh": "Assets/Models/KingdomHall2.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.2,
+      6.6,
+      4.2
+    ],
+    "factionBuilding": true
+  },
+  "KingdomHall3": {
+    "material": "Assets/Materials/KingdomHall3.mmat",
+    "parts": [
+      {
+        "name": "KingdomHall3",
+        "mesh": "Assets/Models/KingdomHall3.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.2,
+      6.6,
+      4.2
+    ],
+    "factionBuilding": true
+  },
+  "WarclansHall2": {
+    "material": "Assets/Materials/WarclansHall2.mmat",
+    "parts": [
+      {
+        "name": "WarclansHall2",
+        "mesh": "Assets/Models/WarclansHall2.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.95,
+      5.0,
+      4.4
+    ],
+    "factionBuilding": true
+  },
+  "WarclansHall3": {
+    "material": "Assets/Materials/WarclansHall3.mmat",
+    "parts": [
+      {
+        "name": "WarclansHall3",
+        "mesh": "Assets/Models/WarclansHall3.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.95,
+      5.7,
+      4.4
+    ],
+    "factionBuilding": true
+  },
+  "WildwoodHall2": {
+    "material": "Assets/Materials/WildwoodHall2.mmat",
+    "parts": [
+      {
+        "name": "WildwoodHall2",
+        "mesh": "Assets/Models/WildwoodHall2.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.6,
+      6.9,
+      4.6
+    ],
+    "factionBuilding": true
+  },
+  "WildwoodHall3": {
+    "material": "Assets/Materials/WildwoodHall3.mmat",
+    "parts": [
+      {
+        "name": "WildwoodHall3",
+        "mesh": "Assets/Models/WildwoodHall3.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.6,
+      6.9,
+      4.6
+    ],
+    "factionBuilding": true
+  },
+  "RevenantHall2": {
+    "material": "Assets/Materials/RevenantHall2.mmat",
+    "parts": [
+      {
+        "name": "RevenantHall2",
+        "mesh": "Assets/Models/RevenantHall2.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.0,
+      6.5,
+      4.0
+    ],
+    "factionBuilding": true
+  },
+  "RevenantHall3": {
+    "material": "Assets/Materials/RevenantHall3.mmat",
+    "parts": [
+      {
+        "name": "RevenantHall3",
+        "mesh": "Assets/Models/RevenantHall3.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.0,
+      6.5,
+      4.0
+    ],
+    "factionBuilding": true
+  },
+  "Orc": {
+    "material": "Assets/Materials/Orc.mmat",
+    "parts": [
+      {
+        "name": "Orc",
+        "mesh": "Assets/Models/Orc.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 9
+      },
+      {
+        "name": "Duck",
+        "frames": 20
+      },
+      {
+        "name": "HitReact",
+        "frames": 7
+      },
+      {
+        "name": "Idle",
+        "frames": 12
+      },
+      {
+        "name": "Jump",
+        "frames": 4
+      },
+      {
+        "name": "Jump_Idle",
+        "frames": 6
+      },
+      {
+        "name": "Jump_Land",
+        "frames": 4
+      },
+      {
+        "name": "No",
+        "frames": 20
+      },
+      {
+        "name": "Punch",
+        "frames": 10
+      },
+      {
+        "name": "Run",
+        "frames": 7
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Wave",
+        "frames": 20
+      },
+      {
+        "name": "Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Yes",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Orc_Skull": {
+    "material": "Assets/Materials/Orc_Skull.mmat",
+    "parts": [
+      {
+        "name": "Orc_Skull",
+        "mesh": "Assets/Models/Orc_Skull.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 9
+      },
+      {
+        "name": "Duck",
+        "frames": 20
+      },
+      {
+        "name": "HitReact",
+        "frames": 7
+      },
+      {
+        "name": "Idle",
+        "frames": 12
+      },
+      {
+        "name": "Jump",
+        "frames": 4
+      },
+      {
+        "name": "Jump_Idle",
+        "frames": 6
+      },
+      {
+        "name": "Jump_Land",
+        "frames": 4
+      },
+      {
+        "name": "No",
+        "frames": 20
+      },
+      {
+        "name": "Punch",
+        "frames": 10
+      },
+      {
+        "name": "Run",
+        "frames": 7
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Wave",
+        "frames": 20
+      },
+      {
+        "name": "Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Yes",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Tribal": {
+    "material": "Assets/Materials/Tribal.mmat",
+    "parts": [
+      {
+        "name": "Tribal",
+        "mesh": "Assets/Models/Tribal.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 9
+      },
+      {
+        "name": "Duck",
+        "frames": 20
+      },
+      {
+        "name": "HitReact",
+        "frames": 7
+      },
+      {
+        "name": "Idle",
+        "frames": 12
+      },
+      {
+        "name": "Jump",
+        "frames": 4
+      },
+      {
+        "name": "Jump_Idle",
+        "frames": 6
+      },
+      {
+        "name": "Jump_Land",
+        "frames": 4
+      },
+      {
+        "name": "No",
+        "frames": 20
+      },
+      {
+        "name": "Punch",
+        "frames": 10
+      },
+      {
+        "name": "Run",
+        "frames": 7
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Wave",
+        "frames": 20
+      },
+      {
+        "name": "Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Yes",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Demon": {
+    "material": "Assets/Materials/Demon.mmat",
+    "parts": [
+      {
+        "name": "Demon",
+        "mesh": "Assets/Models/Demon.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 9
+      },
+      {
+        "name": "Duck",
+        "frames": 20
+      },
+      {
+        "name": "HitReact",
+        "frames": 7
+      },
+      {
+        "name": "Idle",
+        "frames": 12
+      },
+      {
+        "name": "Jump",
+        "frames": 4
+      },
+      {
+        "name": "Jump_Idle",
+        "frames": 6
+      },
+      {
+        "name": "Jump_Land",
+        "frames": 4
+      },
+      {
+        "name": "No",
+        "frames": 20
+      },
+      {
+        "name": "Punch",
+        "frames": 10
+      },
+      {
+        "name": "Run",
+        "frames": 7
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Wave",
+        "frames": 20
+      },
+      {
+        "name": "Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Yes",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
+  },
+  "Ghost_Skull": {
+    "material": "Assets/Materials/Ghost_Skull.mmat",
+    "parts": [
+      {
+        "name": "Ghost_Skull",
+        "mesh": "Assets/Models/Ghost_Skull.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 8
+      },
+      {
+        "name": "Fast_Flying",
+        "frames": 10
+      },
+      {
+        "name": "Flying_Idle",
+        "frames": 14
+      },
+      {
+        "name": "Headbutt",
+        "frames": 14
+      },
+      {
+        "name": "HitReact",
+        "frames": 6
+      },
+      {
+        "name": "No",
+        "frames": 14
+      },
+      {
+        "name": "Punch",
+        "frames": 14
+      },
+      {
+        "name": "Yes",
+        "frames": 14
+      }
+    ],
+    "size": [
+      1,
+      3,
+      1
+    ]
   }
 }

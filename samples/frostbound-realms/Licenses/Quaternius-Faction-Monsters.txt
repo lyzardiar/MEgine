@@ -1,0 +1,5 @@
+Quaternius Ultimate Monsters: Orc, Orc_Skull, Tribal, Demon, Ghost_Skull.
+CC0-1.0
+https://quaternius.com/packs/ultimatemonsters.html
+https://creativecommons.org/publicdomain/zero/1.0/
+Original embedded glTF files, source URLs and SHA-256 values: monster-sources.json

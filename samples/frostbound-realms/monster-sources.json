@@ -1,0 +1,378 @@
+[
+  {
+    "author": "Quaternius",
+    "license": "CC0-1.0",
+    "page": "https://quaternius.com/packs/ultimatemonsters.html",
+    "download": "https://drive.usercontent.google.com/download?id=17675H4Owu5FeHUk_7Goyc9TKI5YK3cEM&export=download&confirm=t",
+    "file": "SourceAssets/monsters/Orc.gltf",
+    "sha256": "e61a37f8d9b2eee28928bdfad2c55e0798cc0a212e925cc5dcc66b243526c1a3",
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 9
+      },
+      {
+        "name": "Duck",
+        "frames": 20
+      },
+      {
+        "name": "HitReact",
+        "frames": 7
+      },
+      {
+        "name": "Idle",
+        "frames": 12
+      },
+      {
+        "name": "Jump",
+        "frames": 4
+      },
+      {
+        "name": "Jump_Idle",
+        "frames": 6
+      },
+      {
+        "name": "Jump_Land",
+        "frames": 4
+      },
+      {
+        "name": "No",
+        "frames": 20
+      },
+      {
+        "name": "Punch",
+        "frames": 10
+      },
+      {
+        "name": "Run",
+        "frames": 7
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Wave",
+        "frames": 20
+      },
+      {
+        "name": "Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Yes",
+        "frames": 20
+      }
+    ],
+    "generated": [
+      {
+        "file": "Assets/Models/Orc.glb",
+        "sha256": "0be7e793827ecec03e43596c2c83632b95bf691ce8a4fc06fb62ef9f355a56e9"
+      },
+      {
+        "file": "Assets/Textures/Orc.png",
+        "sha256": "e72c6fd5c65790234736976adce21fcab94cde1c5758fcdb692eeb1c8bf3abfb"
+      },
+      {
+        "file": "Assets/Materials/Orc.mmat",
+        "sha256": "355e954756891aa183f47ff222352d8bfd26409cbc3c667920ec1e9bd9bf9b3e"
+      }
+    ]
+  },
+  {
+    "author": "Quaternius",
+    "license": "CC0-1.0",
+    "page": "https://quaternius.com/packs/ultimatemonsters.html",
+    "download": "https://drive.usercontent.google.com/download?id=13wbbztVj_2eYyF5lavumLvK9JyCfQEhI&export=download&confirm=t",
+    "file": "SourceAssets/monsters/Orc_Skull.gltf",
+    "sha256": "e27e3acf826e9f5cad021c647bd3ce6f1c82d2aaa3530c03ee442df4828a710e",
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 9
+      },
+      {
+        "name": "Duck",
+        "frames": 20
+      },
+      {
+        "name": "HitReact",
+        "frames": 7
+      },
+      {
+        "name": "Idle",
+        "frames": 12
+      },
+      {
+        "name": "Jump",
+        "frames": 4
+      },
+      {
+        "name": "Jump_Idle",
+        "frames": 6
+      },
+      {
+        "name": "Jump_Land",
+        "frames": 4
+      },
+      {
+        "name": "No",
+        "frames": 20
+      },
+      {
+        "name": "Punch",
+        "frames": 10
+      },
+      {
+        "name": "Run",
+        "frames": 7
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Wave",
+        "frames": 20
+      },
+      {
+        "name": "Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Yes",
+        "frames": 20
+      }
+    ],
+    "generated": [
+      {
+        "file": "Assets/Models/Orc_Skull.glb",
+        "sha256": "7cc67fc8b189cc05f679a4ee9f7c12dfc20a106edd9af0b5de69ddc62cc04649"
+      },
+      {
+        "file": "Assets/Textures/Orc_Skull.png",
+        "sha256": "e72c6fd5c65790234736976adce21fcab94cde1c5758fcdb692eeb1c8bf3abfb"
+      },
+      {
+        "file": "Assets/Materials/Orc_Skull.mmat",
+        "sha256": "b5c2c21727b5a188999b1e888d170644cd95f129c6bdbcc01e6445488f221b1c"
+      }
+    ]
+  },
+  {
+    "author": "Quaternius",
+    "license": "CC0-1.0",
+    "page": "https://quaternius.com/packs/ultimatemonsters.html",
+    "download": "https://drive.usercontent.google.com/download?id=1hWEwACHKMfDzYbqG2Cum3KP6semUY_Ap&export=download&confirm=t",
+    "file": "SourceAssets/monsters/Tribal.gltf",
+    "sha256": "ffe686b0f0e7a2fb968ea9829358f059df903d2a60c9a94bd3516b1c3d42b7c4",
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 9
+      },
+      {
+        "name": "Duck",
+        "frames": 20
+      },
+      {
+        "name": "HitReact",
+        "frames": 7
+      },
+      {
+        "name": "Idle",
+        "frames": 12
+      },
+      {
+        "name": "Jump",
+        "frames": 4
+      },
+      {
+        "name": "Jump_Idle",
+        "frames": 6
+      },
+      {
+        "name": "Jump_Land",
+        "frames": 4
+      },
+      {
+        "name": "No",
+        "frames": 20
+      },
+      {
+        "name": "Punch",
+        "frames": 10
+      },
+      {
+        "name": "Run",
+        "frames": 7
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Wave",
+        "frames": 20
+      },
+      {
+        "name": "Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Yes",
+        "frames": 20
+      }
+    ],
+    "generated": [
+      {
+        "file": "Assets/Models/Tribal.glb",
+        "sha256": "2c5d502b399ee2e5352421aed2dc8988697e27b5a8c709e3b887475b5f5d1246"
+      },
+      {
+        "file": "Assets/Textures/Tribal.png",
+        "sha256": "e72c6fd5c65790234736976adce21fcab94cde1c5758fcdb692eeb1c8bf3abfb"
+      },
+      {
+        "file": "Assets/Materials/Tribal.mmat",
+        "sha256": "630c167ca72009f6c0bcbd2e30d1fa855b442e69a25fd291d123d0b337adc140"
+      }
+    ]
+  },
+  {
+    "author": "Quaternius",
+    "license": "CC0-1.0",
+    "page": "https://quaternius.com/packs/ultimatemonsters.html",
+    "download": "https://drive.usercontent.google.com/download?id=1XhBLnR6tjqIrFy0AUfRlqKf-hYmVwIR4&export=download&confirm=t",
+    "file": "SourceAssets/monsters/Demon.gltf",
+    "sha256": "9ce361b41a0e80d42a70f6325169b9c70a6e3304b8d856b8344a2b7f185067af",
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 9
+      },
+      {
+        "name": "Duck",
+        "frames": 20
+      },
+      {
+        "name": "HitReact",
+        "frames": 7
+      },
+      {
+        "name": "Idle",
+        "frames": 12
+      },
+      {
+        "name": "Jump",
+        "frames": 4
+      },
+      {
+        "name": "Jump_Idle",
+        "frames": 6
+      },
+      {
+        "name": "Jump_Land",
+        "frames": 4
+      },
+      {
+        "name": "No",
+        "frames": 20
+      },
+      {
+        "name": "Punch",
+        "frames": 10
+      },
+      {
+        "name": "Run",
+        "frames": 7
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Wave",
+        "frames": 20
+      },
+      {
+        "name": "Weapon",
+        "frames": 10
+      },
+      {
+        "name": "Yes",
+        "frames": 20
+      }
+    ],
+    "generated": [
+      {
+        "file": "Assets/Models/Demon.glb",
+        "sha256": "87442918c10d1bf6b1e32831b7a1535ed720dadff8b0898809ed81666306cf74"
+      },
+      {
+        "file": "Assets/Textures/Demon.png",
+        "sha256": "e72c6fd5c65790234736976adce21fcab94cde1c5758fcdb692eeb1c8bf3abfb"
+      },
+      {
+        "file": "Assets/Materials/Demon.mmat",
+        "sha256": "7ff870de1c013709e002fe7132653cb21d096d5c9b5a454f5e54827d2f9170c8"
+      }
+    ]
+  },
+  {
+    "author": "Quaternius",
+    "license": "CC0-1.0",
+    "page": "https://quaternius.com/packs/ultimatemonsters.html",
+    "download": "https://drive.usercontent.google.com/download?id=1JIw8lx6H5IIhf_3Z5FprEu_yCoMcoRN7&export=download&confirm=t",
+    "file": "SourceAssets/monsters/Ghost_Skull.gltf",
+    "sha256": "5bf24cf0f22aa94b0b58315e7d879afc53a0964a5b326aa0c844ba3278cae1da",
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 8
+      },
+      {
+        "name": "Fast_Flying",
+        "frames": 10
+      },
+      {
+        "name": "Flying_Idle",
+        "frames": 14
+      },
+      {
+        "name": "Headbutt",
+        "frames": 14
+      },
+      {
+        "name": "HitReact",
+        "frames": 6
+      },
+      {
+        "name": "No",
+        "frames": 14
+      },
+      {
+        "name": "Punch",
+        "frames": 14
+      },
+      {
+        "name": "Yes",
+        "frames": 14
+      }
+    ],
+    "generated": [
+      {
+        "file": "Assets/Models/Ghost_Skull.glb",
+        "sha256": "819407d3edf021b274e97044e14eb813fbe3e121d845d3ff75c46a412308213f"
+      },
+      {
+        "file": "Assets/Textures/Ghost_Skull.png",
+        "sha256": "e264705baf5728824327504003df7cadb458dba47689da72639e34b6f9dcf037"
+      },
+      {
+        "file": "Assets/Materials/Ghost_Skull.mmat",
+        "sha256": "17192e09e41b1d52e569d1ff7ea78be4d3801d8c68c43648d172b7baf51fa792"
+      }
+    ]
+  }
+]
