@@ -5,6 +5,37 @@ use serde_json::Value;
 use std::path::PathBuf;
 fn telemetry(s: &WorldSnapshot) -> Value { serde_json::from_str(s.entities.iter().find(|e|e.name.as_deref()==Some("Frost telemetry")).unwrap().components["Text"]["text"].as_str().unwrap()).unwrap() }
 #[test]
+fn native_snapshot_deltas_keep_game_state_and_reduce_payload() {
+    let root=PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let source=std::fs::read_to_string(root.join("Assets/Scripts/Main.js")).unwrap();
+    let scene:Value=serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let runtime=EditorPlayRuntime::default();
+    let initial=runtime.start(runtime.begin(),source,serde_json::from_value(scene["world"].clone()).unwrap(),PlayProject{root:Some(root),..Default::default()}).unwrap();
+    let mut entities=initial.entities.into_iter().map(|e|(e.entity,e)).collect::<std::collections::HashMap<_,_>>();
+    let (mut full_bytes,mut delta_bytes,mut changed)=(0,0,0);
+    for frame in 0..40 {
+        let mut input=ScriptInput::default();
+        if frame==1 { input.key("F1".into(),true); }
+        let update=runtime.advance_update(runtime.generation(),None,input,0.1).unwrap();
+        assert_eq!(update.base_revision,frame);
+        let bytes=serde_json::to_vec(&update).unwrap().len();
+        let count=update.snapshot.entities.len();
+        let mut snapshot=update.snapshot;
+        for entity in snapshot.entities.drain(..) { entities.insert(entity.entity,entity); }
+        snapshot.entities=update.entity_order.iter().map(|id|entities[id].clone()).collect();
+        entities.retain(|id,_|update.entity_order.contains(id));
+        if frame>4 {
+            assert_eq!(telemetry(&snapshot)["kind"],"skirmish");
+            assert_eq!(telemetry(&snapshot)["mode"],"playing");
+            assert!(telemetry(&snapshot)["frame"].as_u64().unwrap()>0);
+            delta_bytes+=bytes;full_bytes+=serde_json::to_vec(&snapshot).unwrap().len();changed+=count;
+        }
+    }
+    println!("Snapshot IPC: {delta_bytes} delta bytes / {full_bytes} full bytes over 35 frames; {changed} changed entities");
+    assert!(delta_bytes*4<full_bytes,"steady gameplay delta payload must be below 25% of full snapshots");
+    runtime.stop();
+}
+#[test]
 fn native_skirmish_editor_and_rpg_modes() {
     let root=PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
     let source=std::fs::read_to_string(root.join("Assets/Scripts/Main.js")).unwrap();

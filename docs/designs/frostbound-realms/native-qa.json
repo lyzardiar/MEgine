@@ -17,12 +17,12 @@
       "summary": {
         "latest": {
           "source": "game",
-          "timestamp": 15237.5,
-          "sampleCount": 11,
-          "frameMs": 23.045454545454547,
-          "frameMaxMs": 65.69999998807907,
-          "paintMs": 4.818181818181818,
-          "paintMaxMs": 5.799999952316284,
+          "timestamp": 15410.300000011921,
+          "sampleCount": 10,
+          "frameMs": 25.239999997615815,
+          "frameMaxMs": 65.80000001192093,
+          "paintMs": 5.249999994039536,
+          "paintMaxMs": 8.099999964237213,
           "entities": 1579,
           "drawItems": 0,
           "uiPrimitives": 746,
@@ -31,13 +31,13 @@
           "spineSkeletons": 0,
           "viewportPixels": 1730600
         },
-        "samples": 12,
-        "averageFrameMs": 28.35582281133091,
-        "p95FrameMs": 38.066666662693024,
-        "peakFrameMs": 103.79999995231628,
-        "averagePaintMs": 5.126456227751844,
-        "p95PaintMs": 6.088888883590698,
-        "peakPaintMs": 10.299999952316284
+        "samples": 11,
+        "averageFrameMs": 28.302969959301223,
+        "p95FrameMs": 37.61428571598871,
+        "peakFrameMs": 94.69999998807907,
+        "averagePaintMs": 5.023957757648482,
+        "p95PaintMs": 5.654545458880338,
+        "peakPaintMs": 9.100000023841858
       },
       "nativeLatest": {
         "callTree": {
@@ -50,20 +50,20 @@
                   "calls": 1,
                   "children": [],
                   "name": "EffekseerWorld.update",
-                  "selfMs": 0.0864,
-                  "totalMs": 0.0864
+                  "selfMs": 0.0843,
+                  "totalMs": 0.0843
                 },
                 {
                   "calls": 1,
                   "children": [],
                   "name": "EffekseerWorld.append_to_frame",
-                  "selfMs": 0.0011,
-                  "totalMs": 0.0011
+                  "selfMs": 0.0012,
+                  "totalMs": 0.0012
                 }
               ],
               "name": "Effects",
               "selfMs": 0,
-              "totalMs": 0.08750000000000001
+              "totalMs": 0.0855
             },
             {
               "calls": 1,
@@ -72,8 +72,8 @@
                   "calls": 1,
                   "children": [],
                   "name": "TransformHierarchy.build",
-                  "selfMs": 0.3781,
-                  "totalMs": 0.3781
+                  "selfMs": 0.3479,
+                  "totalMs": 0.3479
                 },
                 {
                   "calls": 1,
@@ -82,60 +82,60 @@
                       "calls": 1,
                       "children": [],
                       "name": "Camera, meshes and lighting",
-                      "selfMs": 1.6421999999999999,
-                      "totalMs": 1.6421999999999999
+                      "selfMs": 0.5682,
+                      "totalMs": 0.5682
                     },
                     {
                       "calls": 1,
                       "children": [],
                       "name": "Canvas layout and text",
-                      "selfMs": 0.9238000000000001,
-                      "totalMs": 0.9238000000000001
+                      "selfMs": 0.6301,
+                      "totalMs": 0.6301
                     },
                     {
                       "calls": 1,
                       "children": [],
                       "name": "World sprites",
-                      "selfMs": 0.047599999999999996,
-                      "totalMs": 0.047599999999999996
+                      "selfMs": 0.0422,
+                      "totalMs": 0.0422
                     },
                     {
                       "calls": 1,
                       "children": [],
                       "name": "Particles, trails and sorting",
-                      "selfMs": 0.19340000000000002,
-                      "totalMs": 0.19340000000000002
+                      "selfMs": 0.16670000000000001,
+                      "totalMs": 0.16670000000000001
                     },
                     {
                       "calls": 1,
                       "children": [],
                       "name": "Sprite regions and materials",
-                      "selfMs": 0.39740000000000003,
-                      "totalMs": 0.39740000000000003
+                      "selfMs": 0.49989999999999996,
+                      "totalMs": 0.49989999999999996
                     },
                     {
                       "calls": 1,
                       "children": [],
                       "name": "UI batching",
-                      "selfMs": 0.2869,
-                      "totalMs": 0.2869
+                      "selfMs": 0.28430000000000005,
+                      "totalMs": 0.28430000000000005
                     }
                   ],
                   "name": "FrameCompiler.compile",
-                  "selfMs": 0.0019000000000000128,
-                  "totalMs": 3.4932000000000003
+                  "selfMs": 0.0014999999999996128,
+                  "totalMs": 2.1929
                 },
                 {
                   "calls": 1,
                   "children": [],
                   "name": "Diagnostics.texture_failures",
-                  "selfMs": 0.00009999999999999999,
-                  "totalMs": 0.00009999999999999999
+                  "selfMs": 0,
+                  "totalMs": 0
                 }
               ],
               "name": "Frame compile",
               "selfMs": 0,
-              "totalMs": 3.8714000000000004
+              "totalMs": 2.5408
             },
             {
               "calls": 1,
@@ -151,20 +151,20 @@
                   "calls": 1,
                   "children": [],
                   "name": "Renderer.submit_frame_to",
-                  "selfMs": 0.8,
-                  "totalMs": 0.8
+                  "selfMs": 0.7311000000000001,
+                  "totalMs": 0.7311000000000001
                 },
                 {
                   "calls": 1,
                   "children": [],
                   "name": "Renderer.read_offscreen_rgba8",
-                  "selfMs": 2.235,
-                  "totalMs": 2.235
+                  "selfMs": 2.5595000000000003,
+                  "totalMs": 2.5595000000000003
                 }
               ],
               "name": "Render backend",
               "selfMs": 0,
-              "totalMs": 3.0351
+              "totalMs": 3.2907
             },
             {
               "calls": 1,
@@ -173,36 +173,36 @@
                   "calls": 1,
                   "children": [],
                   "name": "RuntimeMeshCache.sync",
-                  "selfMs": 0.587,
-                  "totalMs": 0.587
+                  "selfMs": 1.0399,
+                  "totalMs": 1.0399
                 },
                 {
                   "calls": 1,
                   "children": [],
                   "name": "RuntimeFontCache.sync",
-                  "selfMs": 0.0009,
-                  "totalMs": 0.0009
+                  "selfMs": 0.0007,
+                  "totalMs": 0.0007
                 },
                 {
                   "calls": 1,
                   "children": [],
                   "name": "RuntimeTextureCache.sync_ui",
-                  "selfMs": 0.1584,
-                  "totalMs": 0.1584
+                  "selfMs": 0.1672,
+                  "totalMs": 0.1672
                 },
                 {
                   "calls": 1,
                   "children": [],
                   "name": "RuntimeTextureCache.sync_ui_materials",
-                  "selfMs": 0.0026,
-                  "totalMs": 0.0026
+                  "selfMs": 0.0036,
+                  "totalMs": 0.0036
                 },
                 {
                   "calls": 1,
                   "children": [],
                   "name": "RuntimeTextureCache.sync_materials",
-                  "selfMs": 0.5954,
-                  "totalMs": 0.5954
+                  "selfMs": 0.0245,
+                  "totalMs": 0.0245
                 },
                 {
                   "calls": 1,
@@ -214,7 +214,7 @@
               ],
               "name": "Resource sync",
               "selfMs": 0,
-              "totalMs": 1.3443
+              "totalMs": 1.2359
             },
             {
               "calls": 1,
@@ -223,20 +223,20 @@
                   "calls": 1,
                   "children": [],
                   "name": "Profiler.snapshot",
-                  "selfMs": 0.0174,
-                  "totalMs": 0.0174
+                  "selfMs": 0.0152,
+                  "totalMs": 0.0152
                 }
               ],
               "name": "Profiler",
               "selfMs": 0,
-              "totalMs": 0.0174
+              "totalMs": 0.0152
             }
           ],
           "name": "EditorViewportRenderer.render_world",
-          "selfMs": 0.0035999999999990207,
-          "totalMs": 8.3593
+          "selfMs": 0.003299999999999517,
+          "totalMs": 7.171399999999999
         },
-        "commandMs": 8.4651,
+        "commandMs": 7.3022,
         "counts": {
           "entities": 1579,
           "materialPipelineEvictions": 0,
@@ -312,7 +312,7 @@
           }
         ],
         "residentMemoryEstimateBytes": 73477624,
-        "resourceSampleAgeMs": 145.2611,
+        "resourceSampleAgeMs": 96.9522,
         "resources": [
           {
             "asset": "mengine-font://7d198ab8e484d6f7/0",
@@ -413,7 +413,7 @@
             "referencedBy": [
               "UI batch"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Materials\\Panel.mmat",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Materials\\Panel.mmat",
             "sourceBytes": 178
           },
           {
@@ -425,7 +425,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\Barracks.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\Barracks.glb",
             "sourceBytes": 96052
           },
           {
@@ -437,7 +437,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\Citadel.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\Citadel.glb",
             "sourceBytes": 714688
           },
           {
@@ -449,7 +449,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\Cleric.glb#pose=1:14",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\Cleric.glb#pose=1:14",
             "sourceBytes": null
           },
           {
@@ -461,7 +461,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\House.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\House.glb",
             "sourceBytes": 29400
           },
           {
@@ -473,7 +473,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\Monk.glb#pose=3:14",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\Monk.glb#pose=3:14",
             "sourceBytes": null
           },
           {
@@ -485,7 +485,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\Warrior.glb#pose=1:14",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\Warrior.glb#pose=1:14",
             "sourceBytes": null
           },
           {
@@ -497,7 +497,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\flag-flag.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\flag-flag.glb",
             "sourceBytes": 10928
           },
           {
@@ -509,7 +509,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\rock-large-rock-large.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\rock-large-rock-large.glb",
             "sourceBytes": 13840
           },
           {
@@ -521,7 +521,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\rock_largeA-rock_largeA.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\rock_largeA-rock_largeA.glb",
             "sourceBytes": 11184
           },
           {
@@ -533,7 +533,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\rock_largeB-rock_largeB.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\rock_largeB-rock_largeB.glb",
             "sourceBytes": 17552
           },
           {
@@ -545,7 +545,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\tree_pineDefaultA-tree_pineDefaultA.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\tree_pineDefaultA-tree_pineDefaultA.glb",
             "sourceBytes": 28728
           },
           {
@@ -557,7 +557,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\tree_pineTallA-tree_pineTallA.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\tree_pineTallA-tree_pineTallA.glb",
             "sourceBytes": 10520
           },
           {
@@ -569,7 +569,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Models\\tree_pineTallB-tree_pineTallB.glb",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Models\\tree_pineTallB-tree_pineTallB.glb",
             "sourceBytes": 10520
           },
           {
@@ -581,7 +581,7 @@
             "referencedBy": [
               "RenderObject"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\cube",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\cube",
             "sourceBytes": null
           },
           {
@@ -596,7 +596,7 @@
             "referencedBy": [
               "UI batch"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Art\\command-icons.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Art\\command-icons.png",
             "sourceBytes": 3822376
           },
           {
@@ -611,7 +611,7 @@
             "referencedBy": [
               "UI batch"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Art\\hero-portraits.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Art\\hero-portraits.png",
             "sourceBytes": 3094872
           },
           {
@@ -626,7 +626,7 @@
             "referencedBy": [
               "UI batch"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Art\\hero-skills.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Art\\hero-skills.png",
             "sourceBytes": 3022456
           },
           {
@@ -641,7 +641,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\Barracks.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\Barracks.png",
             "sourceBytes": 2982
           },
           {
@@ -656,7 +656,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\Citadel.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\Citadel.png",
             "sourceBytes": 3262
           },
           {
@@ -671,7 +671,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\Cleric.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\Cleric.png",
             "sourceBytes": 160857
           },
           {
@@ -686,7 +686,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\House.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\House.png",
             "sourceBytes": 1204
           },
           {
@@ -701,7 +701,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\Monk.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\Monk.png",
             "sourceBytes": 88449
           },
           {
@@ -716,7 +716,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\Warrior.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\Warrior.png",
             "sourceBytes": 141562
           },
           {
@@ -731,7 +731,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\flag.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\flag.png",
             "sourceBytes": 7529
           },
           {
@@ -746,7 +746,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\rock-large.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\rock-large.png",
             "sourceBytes": 11143
           },
           {
@@ -761,7 +761,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\rock_largeA.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\rock_largeA.png",
             "sourceBytes": 134
           },
           {
@@ -776,7 +776,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\rock_largeB.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\rock_largeB.png",
             "sourceBytes": 139
           },
           {
@@ -791,7 +791,7 @@
             "referencedBy": [
               "Surface Shader"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\rocky_terrain_diff_1k.jpg",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\rocky_terrain_diff_1k.jpg",
             "sourceBytes": 905179
           },
           {
@@ -806,7 +806,7 @@
             "referencedBy": [
               "Surface Shader"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\snow_02_diff_1k.jpg",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\snow_02_diff_1k.jpg",
             "sourceBytes": 325497
           },
           {
@@ -821,7 +821,7 @@
             "referencedBy": [
               "UI batch"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\spark_01.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\spark_01.png",
             "sourceBytes": 95070
           },
           {
@@ -836,7 +836,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\tree_pineDefaultA.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\tree_pineDefaultA.png",
             "sourceBytes": 136
           },
           {
@@ -851,7 +851,7 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\tree_pineTallA.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\tree_pineTallA.png",
             "sourceBytes": 136
           },
           {
@@ -866,98 +866,105 @@
             "referencedBy": [
               "3D material"
             ],
-            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790558311954\\sample\\Assets\\Textures\\tree_pineTallB.png",
+            "resolvedPath": "\\\\?\\C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\tmp\\frost-qa-1790563864278\\sample\\Assets\\Textures\\tree_pineTallB.png",
             "sourceBytes": 136
           }
         ],
         "resourcesTruncated": false,
         "schemaVersion": 1,
-        "simulationMs": 16.3098,
+        "simulationMs": 8.3601,
         "simulationStages": [
           {
             "calls": 1,
             "children": [],
             "name": "Reconcile",
-            "selfMs": 0.0033,
-            "totalMs": 0.0033
+            "selfMs": 0.001,
+            "totalMs": 0.001
           },
           {
             "calls": 1,
             "children": [],
             "name": "Input",
-            "selfMs": 0.027200000000000002,
-            "totalMs": 0.027200000000000002
+            "selfMs": 0.027,
+            "totalMs": 0.027
           },
           {
             "calls": 1,
             "children": [],
             "name": "Physics and collision callbacks",
-            "selfMs": 1.6824,
-            "totalMs": 1.6824
+            "selfMs": 1.3873,
+            "totalMs": 1.3873
           },
           {
             "calls": 1,
             "children": [],
             "name": "Animation, timeline and audio",
-            "selfMs": 0.6079,
-            "totalMs": 0.6079
+            "selfMs": 0.5921000000000001,
+            "totalMs": 0.5921000000000001
           },
           {
             "calls": 1,
             "children": [],
             "name": "Script and runtime requests",
-            "selfMs": 10.8369,
-            "totalMs": 10.8369
+            "selfMs": 6.180899999999999,
+            "totalMs": 6.180899999999999
           },
           {
             "calls": 1,
             "children": [],
             "name": "Snapshot export",
-            "selfMs": 3.1500999999999997,
-            "totalMs": 3.1500999999999997
+            "selfMs": 0.0876,
+            "totalMs": 0.0876
+          },
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Snapshot delta",
+            "selfMs": 0.08220000000000001,
+            "totalMs": 0.08220000000000001
           }
         ],
-        "totalMs": 8.3593,
-        "uploadMs": 1.300000011920929,
+        "totalMs": 7.171399999999999,
+        "uploadMs": 1.399999976158142,
         "nativeTransport": "shared-buffer",
         "renderSize": [
           1280,
           720
         ],
-        "simulationRequestMs": 40.30000001192093,
-        "transportMs": 77.29999995231628,
+        "simulationRequestMs": 16.900000035762787,
+        "transportMs": 25.600000023841858,
         "source": "game",
-        "timestamp": 15365.199999988079,
-        "presentIntervalMs": 107.79999995231628
+        "timestamp": 15568.400000035763,
+        "presentIntervalMs": 51.90000003576279
       },
-      "nativeProfileCount": 53,
+      "nativeProfileCount": 62,
       "nativeSummary": {
-        "intervals": 52,
-        "averagePresentIntervalMs": 58.738461538003044,
-        "p95PresentIntervalMs": 100.10000002384186,
-        "presentedFps": 17.024620220143365,
-        "averageRequestMs": 49.85283018395586,
-        "averageRenderMs": 7.386416981132077,
-        "averageCommandMs": 10.513513207547167,
-        "averageUploadMs": 1.4339622664001752,
-        "averageSimulationMs": 15.353811320754712,
-        "averageSimulationRequestMs": 56.754716989004386
+        "intervals": 61,
+        "averagePresentIntervalMs": 48.26229508196721,
+        "p95PresentIntervalMs": 94.5,
+        "presentedFps": 20.720108695652176,
+        "averageRequestMs": 40.93064516109805,
+        "averageRenderMs": 7.295003225806455,
+        "averageCommandMs": 7.893675806451613,
+        "averageUploadMs": 1.479032261717704,
+        "averageSimulationMs": 6.774590322580641,
+        "averageSimulationRequestMs": 23.133870965050114
       },
-      "totalSamples": 12,
-      "returnedSamples": 12,
+      "totalSamples": 11,
+      "returnedSamples": 11,
       "truncated": false,
       "samples": [
         {
           "source": "game",
-          "timestamp": 12303.699999988079,
-          "sampleCount": 9,
-          "frameMs": 38.066666662693024,
-          "frameMaxMs": 103.79999995231628,
-          "paintMs": 6.088888883590698,
-          "paintMaxMs": 10.299999952316284,
+          "timestamp": 12641.400000035763,
+          "sampleCount": 7,
+          "frameMs": 37.61428571598871,
+          "frameMaxMs": 94.69999998807907,
+          "paintMs": 4.799999994891031,
+          "paintMaxMs": 5,
           "entities": 1579,
           "drawItems": 0,
-          "uiPrimitives": 713,
+          "uiPrimitives": 722,
           "uiBatches": 13,
           "particles": 0,
           "spineSkeletons": 0,
@@ -965,15 +972,15 @@
         },
         {
           "source": "game",
-          "timestamp": 12554.400000035763,
+          "timestamp": 12950.400000035763,
           "sampleCount": 10,
-          "frameMs": 25.07000000476837,
-          "frameMaxMs": 67.89999997615814,
-          "paintMs": 4.839999997615815,
-          "paintMaxMs": 5.699999988079071,
+          "frameMs": 30.9,
+          "frameMaxMs": 64.19999998807907,
+          "paintMs": 4.960000002384186,
+          "paintMaxMs": 5.400000035762787,
           "entities": 1579,
           "drawItems": 0,
-          "uiPrimitives": 723,
+          "uiPrimitives": 729,
           "uiBatches": 13,
           "particles": 0,
           "spineSkeletons": 0,
@@ -981,107 +988,43 @@
         },
         {
           "source": "game",
-          "timestamp": 12830.900000035763,
-          "sampleCount": 10,
-          "frameMs": 27.65,
-          "frameMaxMs": 65.70000004768372,
-          "paintMs": 5.029999989271164,
-          "paintMaxMs": 5.699999988079071,
-          "entities": 1579,
-          "drawItems": 0,
-          "uiPrimitives": 732,
-          "uiBatches": 13,
-          "particles": 0,
-          "spineSkeletons": 0,
-          "viewportPixels": 1730600
-        },
-        {
-          "source": "game",
-          "timestamp": 13087.800000011921,
-          "sampleCount": 9,
-          "frameMs": 28.54444444179535,
-          "frameMaxMs": 65.39999997615814,
-          "paintMs": 4.877777775128682,
-          "paintMaxMs": 5.799999952316284,
-          "entities": 1579,
-          "drawItems": 0,
-          "uiPrimitives": 740,
-          "uiBatches": 13,
-          "particles": 0,
-          "spineSkeletons": 0,
-          "viewportPixels": 1730600
-        },
-        {
-          "source": "game",
-          "timestamp": 13379.900000035763,
-          "sampleCount": 8,
-          "frameMs": 36.51250000298023,
-          "frameMaxMs": 66.60000002384186,
-          "paintMs": 5.199999995529652,
-          "paintMaxMs": 6.899999976158142,
-          "entities": 1579,
-          "drawItems": 0,
-          "uiPrimitives": 746,
-          "uiBatches": 13,
-          "particles": 0,
-          "spineSkeletons": 0,
-          "viewportPixels": 1730600
-        },
-        {
-          "source": "game",
-          "timestamp": 13633.199999988079,
+          "timestamp": 13204.200000047684,
           "sampleCount": 11,
-          "frameMs": 23.027272722937845,
+          "frameMs": 23.072727273810994,
+          "frameMaxMs": 64.90000003576279,
+          "paintMs": 5.654545458880338,
+          "paintMaxMs": 9.100000023841858,
+          "entities": 1579,
+          "drawItems": 0,
+          "uiPrimitives": 739,
+          "uiBatches": 13,
+          "particles": 0,
+          "spineSkeletons": 0,
+          "viewportPixels": 1730600
+        },
+        {
+          "source": "game",
+          "timestamp": 13472.900000035763,
+          "sampleCount": 9,
+          "frameMs": 29.855555554231007,
+          "frameMaxMs": 56.69999998807907,
+          "paintMs": 5.24444442987442,
+          "paintMaxMs": 8.299999952316284,
+          "entities": 1579,
+          "drawItems": 0,
+          "uiPrimitives": 745,
+          "uiBatches": 13,
+          "particles": 0,
+          "spineSkeletons": 0,
+          "viewportPixels": 1730600
+        },
+        {
+          "source": "game",
+          "timestamp": 13729,
+          "sampleCount": 11,
+          "frameMs": 23.28181817856702,
           "frameMaxMs": 56.5,
-          "paintMs": 5.127272725105286,
-          "paintMaxMs": 7.600000023841858,
-          "entities": 1579,
-          "drawItems": 0,
-          "uiPrimitives": 746,
-          "uiBatches": 13,
-          "particles": 0,
-          "spineSkeletons": 0,
-          "viewportPixels": 1730600
-        },
-        {
-          "source": "game",
-          "timestamp": 13884.199999988079,
-          "sampleCount": 9,
-          "frameMs": 27.88888888888889,
-          "frameMaxMs": 62.5,
-          "paintMs": 5.255555550257365,
-          "paintMaxMs": 6.799999952316284,
-          "entities": 1579,
-          "drawItems": 0,
-          "uiPrimitives": 746,
-          "uiBatches": 13,
-          "particles": 0,
-          "spineSkeletons": 0,
-          "viewportPixels": 1730600
-        },
-        {
-          "source": "game",
-          "timestamp": 14140,
-          "sampleCount": 9,
-          "frameMs": 28.42222222354677,
-          "frameMaxMs": 68.09999996423721,
-          "paintMs": 5.255555563502842,
-          "paintMaxMs": 6,
-          "entities": 1579,
-          "drawItems": 0,
-          "uiPrimitives": 746,
-          "uiBatches": 13,
-          "particles": 0,
-          "spineSkeletons": 0,
-          "viewportPixels": 1730600
-        },
-        {
-          "source": "game",
-          "timestamp": 14403.100000023842,
-          "sampleCount": 9,
-          "frameMs": 29.23333333598243,
-          "frameMaxMs": 66.5,
-          "paintMs": 5.133333332008785,
+          "paintMs": 4.936363637447357,
           "paintMaxMs": 5.800000011920929,
           "entities": 1579,
           "drawItems": 0,
@@ -1093,12 +1036,12 @@
         },
         {
           "source": "game",
-          "timestamp": 14669.300000011921,
-          "sampleCount": 11,
-          "frameMs": 24.19999999891628,
-          "frameMaxMs": 66,
-          "paintMs": 4.981818182901903,
-          "paintMaxMs": 6.800000011920929,
+          "timestamp": 14037.300000011921,
+          "sampleCount": 9,
+          "frameMs": 34.255555556880104,
+          "frameMaxMs": 65.19999998807907,
+          "paintMs": 5.0999999973509045,
+          "paintMaxMs": 7,
           "entities": 1579,
           "drawItems": 0,
           "uiPrimitives": 746,
@@ -1109,12 +1052,12 @@
         },
         {
           "source": "game",
-          "timestamp": 14984,
+          "timestamp": 14310,
           "sampleCount": 11,
-          "frameMs": 28.60909090800719,
-          "frameMaxMs": 66.19999998807907,
-          "paintMs": 4.909090919928118,
-          "paintMaxMs": 6,
+          "frameMs": 24.79090908982537,
+          "frameMaxMs": 65.80000001192093,
+          "paintMs": 4.736363643949682,
+          "paintMaxMs": 5.100000023841858,
           "entities": 1579,
           "drawItems": 0,
           "uiPrimitives": 746,
@@ -1125,12 +1068,60 @@
         },
         {
           "source": "game",
-          "timestamp": 15237.5,
+          "timestamp": 14610.200000047684,
+          "sampleCount": 10,
+          "frameMs": 30.02000000476837,
+          "frameMaxMs": 65.60000002384186,
+          "paintMs": 4.6199999988079075,
+          "paintMaxMs": 4.800000011920929,
+          "entities": 1579,
+          "drawItems": 0,
+          "uiPrimitives": 746,
+          "uiBatches": 13,
+          "particles": 0,
+          "spineSkeletons": 0,
+          "viewportPixels": 1730600
+        },
+        {
+          "source": "game",
+          "timestamp": 14881.700000047684,
           "sampleCount": 11,
-          "frameMs": 23.045454545454547,
-          "frameMaxMs": 65.69999998807907,
-          "paintMs": 4.818181818181818,
-          "paintMaxMs": 5.799999952316284,
+          "frameMs": 24.681818181818183,
+          "frameMaxMs": 67.59999996423721,
+          "paintMs": 4.881818175315857,
+          "paintMaxMs": 5.800000011920929,
+          "entities": 1579,
+          "drawItems": 0,
+          "uiPrimitives": 746,
+          "uiBatches": 13,
+          "particles": 0,
+          "spineSkeletons": 0,
+          "viewportPixels": 1730600
+        },
+        {
+          "source": "game",
+          "timestamp": 15157.900000035763,
+          "sampleCount": 10,
+          "frameMs": 27.619999998807906,
+          "frameMaxMs": 62.09999996423721,
+          "paintMs": 5.080000001192093,
+          "paintMaxMs": 7.300000011920929,
+          "entities": 1579,
+          "drawItems": 0,
+          "uiPrimitives": 746,
+          "uiBatches": 13,
+          "particles": 0,
+          "spineSkeletons": 0,
+          "viewportPixels": 1730600
+        },
+        {
+          "source": "game",
+          "timestamp": 15410.300000011921,
+          "sampleCount": 10,
+          "frameMs": 25.239999997615815,
+          "frameMaxMs": 65.80000001192093,
+          "paintMs": 5.249999994039536,
+          "paintMaxMs": 8.099999964237213,
           "entities": 1579,
           "drawItems": 0,
           "uiPrimitives": 746,
@@ -1307,7 +1298,7 @@
       },
       "paused": false,
       "online": true,
-      "room": "F554B7",
+      "room": "48AAA4",
       "netStates": 20,
       "brush": 0,
       "slot": 1,
@@ -1348,7 +1339,7 @@
           "inventory": [],
           "kind": "hall",
           "level": 1,
-          "mana": 153.5999999999998,
+          "mana": 153.99999999999977,
           "maxHp": 2200,
           "order": null,
           "pathAt": -100,
@@ -1378,7 +1369,7 @@
           "inventory": [],
           "kind": "barracks",
           "level": 1,
-          "mana": 153.5999999999998,
+          "mana": 153.99999999999977,
           "maxHp": 950,
           "order": null,
           "pathAt": -100,
@@ -1403,14 +1394,14 @@
         "built": 1,
         "cargo": 5,
         "cargoKind": "mine",
-        "cd": 0.2500000000000001,
+        "cd": 0.0500000000000001,
         "damage": 6,
         "hp": 100,
         "id": 13,
         "inventory": [],
         "kind": "worker",
         "level": 1,
-        "mana": 153.5999999999998,
+        "mana": 153.99999999999977,
         "maxHp": 100,
         "order": {
           "resource": 9,
@@ -1433,7 +1424,7 @@
         "xp": 0,
         "z": -20.199999999999996
       },
-      "frame": 18,
+      "frame": 20,
       "kind": "skirmish",
       "team": 1,
       "units": 9,
@@ -1452,7 +1443,7 @@
         "inventory": [],
         "kind": "hero",
         "level": 1,
-        "mana": 153.5999999999998,
+        "mana": 153.99999999999977,
         "maxHp": 560,
         "order": null,
         "pathAt": -100,
@@ -1481,8 +1472,8 @@
       },
       "paused": false,
       "online": true,
-      "room": "F554B7",
-      "netStates": 19,
+      "room": "48AAA4",
+      "netStates": 21,
       "brush": 0,
       "slot": 1,
       "editorPage": 0,

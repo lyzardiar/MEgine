@@ -1,5 +1,5 @@
 use crate::{ScriptError, ScriptInput};
-use mengine_core::{command::{CommandBuffer, WorldCommand}, snapshot::WorldSnapshot, World};
+use mengine_core::{command::{CommandBuffer, WorldCommand}, snapshot::{SharedWorldSnapshot, WorldSnapshotCache}, World};
 use rquickjs::{CaughtError, Context, Ctx, Function, Object, Persistent, Runtime};
 use rquickjs::context::EvalOptions;
 use serde_json::Value as JsonValue;
@@ -8,7 +8,7 @@ use std::{cell::{Cell, RefCell}, rc::Rc, time::{Duration, Instant}};
 #[derive(Default)]
 struct ScriptSnapshot {
     revision: u64,
-    world: Option<WorldSnapshot>,
+    world: Option<SharedWorldSnapshot>,
     json: Option<String>,
 }
 
@@ -116,6 +116,7 @@ pub struct ScriptHost {
     requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
     snapshot: Rc<RefCell<ScriptSnapshot>>,
     storage_root: Rc<RefCell<Option<std::path::PathBuf>>>,
+    snapshot_cache: WorldSnapshotCache,
 }
 
 fn script_error(ctx: &Ctx<'_>, error: rquickjs::Error) -> ScriptError {
@@ -204,7 +205,7 @@ impl ScriptHost {
             };
             install().map_err(|error| script_error(&ctx, error))
         })?;
-        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot, storage_root };
+        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot, storage_root, snapshot_cache: WorldSnapshotCache::default() };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
@@ -246,7 +247,7 @@ impl ScriptHost {
     pub fn sync_world(&mut self, world: &World) -> Result<(), ScriptError> {
         let mut state = self.snapshot.borrow_mut();
         state.revision += 1;
-        state.world = Some(WorldSnapshot::from_world(world));
+        state.world = Some(self.snapshot_cache.capture(world));
         state.json = None;
         drop(state);
         self.restore_snapshot_properties()

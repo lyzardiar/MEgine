@@ -79,6 +79,7 @@ node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 
 本次引擎补充：
 
+- 实体修改版本与不可变快照缓存：脚本和原生 Play 复用未变化实体；编辑器逐帧传输变化实体及完整顺序，保留 Inspector、Agent 查询和场景切换状态。显式编辑触发全量校正，会话版本校验拒绝过期结果；停止仅作用于对应会话，启动编译有 30 秒超时。
 - `engine.storage.load(key)` / `save(key,value)`：项目独立 JSON 持久化，256 KiB/文件、64 文件上限，原子替换与路径校验。
 - `engine.setActive(entity, active)`：停用预留渲染与 UI 实体，保留数据；子节点活动状态继承，物理体相应移除/恢复。Canvas 每帧建立子节点索引，避免逐节点扫描全世界。
 - GLB/glTF 骨骼姿态采样：`MeshRenderer.mesh = 'Assets/Models/Warrior.glb#pose=8:4'`，表示第 8 个动画、第 4 个 12 Hz 采样帧。CPU 蒙皮后共享姿态 GPU 网格，缓存保留至多 256 个非同时活动姿态；支持 LINEAR、STEP、四权重、节点层次及逆绑定矩阵。当前明确拒绝 CUBICSPLINE、形变权重和超过四关节影响。

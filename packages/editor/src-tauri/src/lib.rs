@@ -23,6 +23,7 @@ use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
 mod agent_bridge;
 mod native_viewport_transport;
+mod play_compiler;
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
     capture_editor_window, capture_editor_window_element, cleanup_bridge_discovery,
@@ -4312,13 +4313,15 @@ async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state
     let generation = state.play_runtime.begin();
     let project_root = project.project_root.clone();
     let bundled_sdk = app.path().resolve("build-sdk", BaseDirectory::Resource).ok().filter(|path| path.join("sdk.json").is_file());
-    let source = tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
-        let output = history_patch_command(bundled_sdk, "release")?.arg("compile-play-script").arg(project_root).output().map_err(|error| error.to_string())?;
+    let source = {
+        let mut command = history_patch_command(bundled_sdk, "release")?;
+        command.arg("compile-play-script").arg(project_root);
+        let output = play_compiler::output(command, std::time::Duration::from_secs(30)).await?;
         if !output.status.success() { return Err(command_failure("Play script compilation", &output)); }
         if output.stdout.len() > 16 * 1024 * 1024 { return Err("Play script exceeds 16 MiB".into()); }
         let result: serde_json::Value = serde_json::from_slice(&output.stdout).map_err(|error| error.to_string())?;
-        result.get("source").and_then(serde_json::Value::as_str).map(str::to_owned).ok_or_else(|| "Play compiler did not return script source".into())
-    }).await.map_err(|error| error.to_string())??;
+        result.get("source").and_then(serde_json::Value::as_str).map(str::to_owned).ok_or_else(|| "Play compiler did not return script source".to_string())?
+    };
     if state.play_runtime.generation() != generation || !state.project.lock().as_ref().is_some_and(|session| session.snapshot().project_id == project.project_id) {
         return Err("Play initialization was superseded".into());
     }
@@ -4330,17 +4333,17 @@ async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state
 }
 
 #[tauri::command]
-async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<WorldSnapshot, String> {
+async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<mengine_editor_host::PlayWorldUpdate, String> {
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     let runtime = state.play_runtime.clone();
-    let result = tauri::async_runtime::spawn_blocking(move || runtime.advance(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
+    let result = tauri::async_runtime::spawn_blocking(move || runtime.advance_update(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     Ok(result)
 }
 
 #[tauri::command]
-fn stop_editor_play(state: State<'_, AppState>) {
-    state.play_runtime.stop();
+fn stop_editor_play(session_id: u64, state: State<'_, AppState>) {
+    state.play_runtime.stop_session(session_id);
 }
 
 #[tauri::command]

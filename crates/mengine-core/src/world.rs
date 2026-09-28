@@ -9,8 +9,12 @@ use glam::{Quat, Vec3, Vec4};
 use serde_json::Value;
 use std::any::Any;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_WORLD_ID: AtomicU64 = AtomicU64::new(1);
 
 struct EntityRecord {
+    revision: u64,
     generation: u32,
     alive: bool,
     name: Option<String>,
@@ -23,6 +27,7 @@ struct EntityRecord {
 }
 
 pub struct World {
+    pub(crate) snapshot_id: u64,
     entities: Vec<EntityRecord>,
     free_list: Vec<u32>,
     pub time: Time,
@@ -49,6 +54,7 @@ impl World {
         registry.register_named("Parent");
         registry.register_named("Children");
         Self {
+            snapshot_id: NEXT_WORLD_ID.fetch_add(1, Ordering::Relaxed),
             entities: Vec::new(),
             free_list: Vec::new(),
             time: Time::default(),
@@ -64,6 +70,7 @@ impl World {
         if let Some(index) = self.free_list.pop() {
             let rec = &mut self.entities[index as usize];
             rec.alive = true;
+            rec.revision = 0;
             rec.generation = rec.generation.wrapping_add(1);
             rec.name = None;
             rec.components.clear();
@@ -76,6 +83,7 @@ impl World {
         } else {
             let index = self.entities.len() as u32;
             self.entities.push(EntityRecord {
+                revision: 0,
                 generation: 1,
                 alive: true,
                 name: None,
@@ -139,11 +147,13 @@ impl World {
             return;
         }
         let name = T::type_name().to_string();
+        self.entities[entity.index as usize].revision += 1;
         self.entities[entity.index as usize]
             .components
             .insert(name, Box::new(value));
     }
 
+    /// Read component state; serialized mutations must use `get_component_mut` or a World command.
     pub fn get_component<T: Any + Send + Sync>(&self, entity: Entity) -> Option<&T> {
         if !self.is_alive(entity) {
             return None;
@@ -158,11 +168,15 @@ impl World {
         if !self.is_alive(entity) {
             return None;
         }
-        self.entities[entity.index as usize]
-            .components
+        let record = &mut self.entities[entity.index as usize];
+        let value = record.components
             .values_mut()
-            .find_map(|c| c.as_any_mut().downcast_mut::<T>())
+            .find_map(|c| c.as_any_mut().downcast_mut::<T>());
+        if value.is_some() { record.revision += 1; }
+        value
     }
+
+    pub(crate) fn entity_revision(&self, entity: Entity) -> u64 { self.entities[entity.index as usize].revision }
 
     /// Serialize the live typed component, including runtime mutations.
     pub fn component_value(&self, entity: Entity, name: &str) -> Option<Value> {
@@ -200,6 +214,7 @@ impl World {
             return;
         }
         let name = canonical_component_name(name);
+        self.entities[entity.index as usize].revision += 1;
         self.entities[entity.index as usize].components.remove(name);
         self.entities[entity.index as usize]
             .serialized_components
@@ -216,6 +231,7 @@ impl World {
     pub fn set_editor_state(&mut self, entity: Entity, sibling_index: i32, active: bool) {
         if let Some(record) = self.entities.get_mut(entity.index as usize) {
             if record.alive && record.generation == entity.generation {
+                if record.sibling_index != sibling_index || record.active != active { record.revision += 1; }
                 record.sibling_index = sibling_index;
                 record.active = active;
             }
@@ -241,6 +257,7 @@ impl World {
     pub fn set_entity_metadata(&mut self, entity: Entity, tag: String, layer: u8) {
         if let Some(record) = self.entities.get_mut(entity.index as usize) {
             if record.alive && record.generation == entity.generation {
+                record.revision += 1;
                 let tag = tag.trim();
                 record.tag = if tag.is_empty() {
                     "Untagged".into()
@@ -379,6 +396,7 @@ impl World {
             return;
         }
         let component = canonical_component_name(component);
+        self.entities[entity.index as usize].revision += 1;
         self.entities[entity.index as usize]
             .serialized_components
             .insert(component.to_string(), value.clone());

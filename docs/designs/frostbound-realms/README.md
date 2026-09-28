@@ -18,19 +18,24 @@
 
 ## 验证
 
+本轮引擎改进：World 按实体修改版本缓存不可变快照，脚本和编辑器复用未变化实体；原生 Play 逐帧传输变化实体及顺序，显式编辑全量校正。实体删除、编号复用、换场景和旧帧隔离有回归覆盖。修复重复名称组件覆盖运行中改名；停止操作绑定会话，启动/停止有序执行，编译超时为 30 秒。
+
 | 验证路径 | 结果 |
 | --- | --- |
 | Node 游戏规则与真实 TCP | 通过；含完整 RPG 合法命令回放、科技、地图、迷雾、TD、合成和断线恢复 |
-| mengine-script 库 | 20 通过 |
+| mengine-core 库 / mengine-script 库 | 11 + 20 通过，含快照缓存更新与旧帧隔离 |
+| Play runtime / Play compiler | 8 + 1 通过；另 1 手动性能测试未运行 |
+| 编辑器 Play 前端 | 4 通过，含增量合并与异步停止/重启 |
+| mengine-scene 库 | 18 通过 |
 | mengine-physics 库 | 17 通过 |
 | mengine-runtime UI | 85 通过 |
 | gltf_pose / frost_skins | 2 + 1 通过；四个下载角色模型的蒙皮顶点变化，含 Dragon 飞行动画 |
-| editor-host frost_sample | 1 通过；真实 QuickJS，含 RPG 地图角色与试玩 |
+| editor-host frost_sample | 2 通过；真实 QuickJS 游戏与地图流程、35 帧快照传输检查 |
 | CLI pcPackage | 63 通过 |
 | editorProfiler / nativeViewportFrame | 14 通过 |
 | 编辑器前端及 Release 编辑器/Player | 构建通过，编辑器启用 tauri/custom-protocol |
 
-本轮最终完整 [native-qa.json](native-qa.json) 记录原生 Agent 菜单点击、英雄移动、施法、暂停、存档恢复、地图绘制与保存加载试玩、单位/触发器持久化、RPG 保存，以及双客户端真实 TCP 开局与强制断线重连。最新额外验证生产建筑选择/右键集结/取消队列、四种攻城模型、飞龙空中选中及跨河移动、塔防工人选择/建造预览/下单、RPG 施法、地表自定义材质未被拒绝；共享边界、玩家施法跨 tick 保留、AI 施法不重复发送均有规则回归。本轮还覆盖四英雄选人/学习/施法/存档、编辑器指定英雄保存加载试玩、两客户端分别选择圣骑士和法师并重连；规则检查覆盖全部 16 技能、等级门槛、非法存档、临时效果及旧档迁移。表中引擎及 CLI 套件为此前阶段结果，本轮重新运行 Node 规则/TCP、真实 QuickJS 和完整原生 QA。QA 使用独立配置和独立 storageId，不触碰用户存档。
+本轮最终完整 [native-qa.json](native-qa.json) 记录原生 Agent 菜单点击、英雄移动、施法、暂停、存档恢复、地图绘制与保存加载试玩、单位/触发器持久化、RPG 保存，以及双客户端真实 TCP 开局与强制断线重连。最新额外验证生产建筑选择/右键集结/取消队列、四种攻城模型、飞龙空中选中及跨河移动、塔防工人选择/建造预览/下单、RPG 施法、地表自定义材质未被拒绝；共享边界、玩家施法跨 tick 保留、AI 施法不重复发送均有规则回归。本轮还覆盖四英雄选人/学习/施法/存档、编辑器指定英雄保存加载试玩、两客户端分别选择圣骑士和法师并重连；规则检查覆盖全部 16 技能、等级门槛、非法存档、临时效果及旧档迁移。表中物理、UI、GLB、CLI 和前端 profiler 套件为此前阶段结果；本轮验证 core、script、scene、Play runtime/compiler、Play 前端、真实 QuickJS 和完整原生 QA。Node 规则/TCP 为英雄阶段已通过结果，游戏规则本轮未改。QA 使用独立配置和独立 storageId，不触碰用户存档。
 
 Agent 输入没有覆盖物理键鼠设备；未听取实际音频，未做跨机器局域网和弱网验收。独立 Player 启动后保持响应，窗口标题正确，日志无 ERROR；本次未核验音频设备状态或实际听感，日志仍有 wgpu downlevel 能力警告。见 [启动证据](player-smoke.json) 和 [日志](player-stderr.txt)，不能替代 Player 窗口内完整操作验收。
 
@@ -49,20 +54,22 @@ Agent 输入没有覆盖物理键鼠设备；未听取实际音频，未做跨�
 
 ## 性能口径
 
-| 指标（ms） | 初始基线 | 攻城阶段 | 当前英雄阶段 |
+| 指标（ms） | 初始基线 | 英雄阶段 | 当前缓存阶段 |
 | --- | ---: | ---: | ---: |
-| 模拟 | 46.990 | 15.024 | 15.354 |
-| 原生渲染（已包含在命令内） | 46.645 | 7.170 | 7.386 |
-| 原生命令 | 59.454 | 10.320 | 10.514 |
-| 上传 | 0.689 | 1.458 | 1.434 |
-| 浏览器绘制（按 sampleCount 加权） | 10.912 | 5.135 | 5.111 |
-| 整体工作预算代理值 | 118.045 | 31.937 | 32.412 |
-| 原生请求延迟 | 101.763 | 48.822 | 49.853 |
-| 模拟请求延迟 | 120.742 | 63.229 | 56.755 |
-| 呈现间隔 | 171.161 | 56.156 | 58.738 |
-| P95 呈现间隔 | 220.800 | 103.900 | 100.100 |
+| 模拟 | 46.990 | 15.354 | 6.775 |
+| 原生渲染（已包含在命令内） | 46.645 | 7.386 | 7.295 |
+| 原生命令 | 59.454 | 10.514 | 7.894 |
+| 上传 | 0.689 | 1.434 | 1.479 |
+| 浏览器绘制（按 sampleCount 加权） | 10.912 | 5.111 | 5.028 |
+| 整体工作预算代理值 | 118.045 | 32.412 | 21.176 |
+| 原生请求延迟 | 101.763 | 49.853 | 40.931 |
+| 模拟请求延迟 | 120.742 | 56.755 | 23.134 |
+| 呈现间隔 | 171.161 | 58.738 | 48.262 |
+| P95 呈现间隔 | 220.800 | 100.100 | 94.500 |
 
-最新实际原生预览 **1280×720**，**1579 实体**，53 次原生采样，呈现频率约 **17.02 FPS**。整体工作预算约 **32.41 ms**，**未达到 5 ms**。短采样存在运行波动，不能作为长期性能结论。
+最终完整 QA 的实际原生预览 **1280×720**，**1579 实体**，62 次原生采样，呈现约 **20.72 FPS**。整体工作预算约 **21.18 ms**，**未达到 5 ms**。
+
+独立性能对照使用相同 Skirmish、1280×720、预热 5 秒，再记录三组 5 秒窗口；开局单位数随游戏由 20 增至 21/22。三组中位数：模拟 **15.616 → 6.217 ms**，模拟请求 **54.724 → 17.644 ms**，整体工作预算代理 **32.631 → 19.893 ms**，呈现 **17.60 → 21.33 FPS**。实际 QuickJS 的 35 帧传输从 35,148,665 字节降至 1,060,789 字节（约减少 97%）。原始 [之前采样](performance-hero-baseline.json)、[之后采样](native-performance-qa.json) 和 [对照汇总](performance-cache-comparison.json) 保留；这是短窗口诊断，未进行独占机器长期基准或大军团压力测试。
 
 采样场景是开局 20 单位 Skirmish，不能代表 160 单位压力测试。CPU 为 Intel Core Ultra 7 265K；系统安装 AMD Radeon RX 6800 XT 和 Intel Graphics，编辑器本次实际选择的适配器未记录。未接入 GPU timestamp，表内原生渲染是 CPU/提交墙钟耗时，不能作为 GPU 执行时间。
 
@@ -76,6 +83,7 @@ node scripts/test-frostbound.mjs
 pnpm.cmd run build:editor
 cargo build --release -p mengine-runtime -p mengine-editor-tauri --features tauri/custom-protocol
 node scripts/qa-frostbound.mjs
+node scripts/qa-frostbound.mjs --performance-only
 pnpm.cmd --filter @mengine/cli build
 node packages/cli/dist/cli.js build samples/frostbound-realms --runtime target/release/mengine-runtime.exe --skip-runtime-build --out samples/frostbound-realms/Builds/windows-x64 --clean
 ```
