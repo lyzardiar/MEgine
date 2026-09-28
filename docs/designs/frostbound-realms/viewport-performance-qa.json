@@ -1,0 +1,140 @@
+{
+  "baselineCommit": "b79fa4cf218d17bcb236d7b914696357e3209abe",
+  "method": "Native Release editor, 1899 entities, 1280x720, unchanged 4x MSAA and assets. Standard view: 5-second warmup, three 5-second windows. Near view: 3-second warmup, one 5-second window. Sequential short samples, not an exclusive-machine benchmark.",
+  "before": {
+    "runs": [
+      {
+        "intervals": 62,
+        "averagePresentIntervalMs": 82.41290322522963,
+        "p95PresentIntervalMs": 126.30000001192093,
+        "presentedFps": 12.13402223274502,
+        "averageRequestMs": 57.358730161946916,
+        "averageRenderMs": 9.601926984126981,
+        "averageCommandMs": 12.370441269841267,
+        "averageUploadMs": 1.4634920614106315,
+        "averageSimulationMs": 10.293774603174604,
+        "averageSimulationRequestMs": 33.349206345421926,
+        "browserPaintMs": 6.797013889638677
+      },
+      {
+        "intervals": 61,
+        "averagePresentIntervalMs": 83.39672131127999,
+        "p95PresentIntervalMs": 127.19999998807907,
+        "presentedFps": 11.99087906906411,
+        "averageRequestMs": 55.388709680687995,
+        "averageRenderMs": 9.36318064516129,
+        "averageCommandMs": 12.841009677419358,
+        "averageUploadMs": 1.5274193565691672,
+        "averageSimulationMs": 9.696704838709676,
+        "averageSimulationRequestMs": 32.80322580760525,
+        "browserPaintMs": 6.753178784096849
+      },
+      {
+        "intervals": 65,
+        "averagePresentIntervalMs": 79.6399999994498,
+        "p95PresentIntervalMs": 126.39999997615814,
+        "presentedFps": 12.5565042692982,
+        "averageRequestMs": 56.40151515151515,
+        "averageRenderMs": 9.23105,
+        "averageCommandMs": 11.756996969696976,
+        "averageUploadMs": 1.4787878791491191,
+        "averageSimulationMs": 9.72065,
+        "averageSimulationRequestMs": 35.940909093076534,
+        "browserPaintMs": 6.692470759246732
+      }
+    ],
+    "medianPresentedFps": 12.13402223274502,
+    "medianBrowserPaintMs": 6.753178784096849,
+    "medianRenderMs": 9.36318064516129
+  },
+  "after": {
+    "runs": [
+      {
+        "intervals": 66,
+        "averagePresentIntervalMs": 77.65454545436484,
+        "p95PresentIntervalMs": 121.10000002384186,
+        "presentedFps": 12.877546242127822,
+        "averageRequestMs": 55.70447761176237,
+        "averageRenderMs": 9.76939552238806,
+        "averageCommandMs": 12.772785074626862,
+        "averageUploadMs": 1.5358208978354042,
+        "averageSimulationMs": 10.03942835820896,
+        "averageSimulationRequestMs": 22.491044780211663,
+        "browserPaintMs": 3.36299270601803
+      },
+      {
+        "intervals": 71,
+        "averagePresentIntervalMs": 71.18732394382987,
+        "p95PresentIntervalMs": 123.89999997615814,
+        "presentedFps": 14.047444749981707,
+        "averageRequestMs": 53.930555556383396,
+        "averageRenderMs": 9.28593611111111,
+        "averageCommandMs": 11.71882777777778,
+        "averageUploadMs": 1.45972221924199,
+        "averageSimulationMs": 9.443318055555556,
+        "averageSimulationRequestMs": 26.97361110564735,
+        "browserPaintMs": 3.386004890947315
+      },
+      {
+        "intervals": 69,
+        "averagePresentIntervalMs": 75.34202898585278,
+        "p95PresentIntervalMs": 119,
+        "presentedFps": 13.272804216458962,
+        "averageRequestMs": 57.72142857228007,
+        "averageRenderMs": 9.389168571428575,
+        "averageCommandMs": 12.314578571428573,
+        "averageUploadMs": 1.4714285697255816,
+        "averageSimulationMs": 10.45559857142857,
+        "averageSimulationRequestMs": 29.441428569384982,
+        "browserPaintMs": 3.282765058228813
+      }
+    ],
+    "medianPresentedFps": 13.272804216458962,
+    "medianBrowserPaintMs": 3.36299270601803,
+    "medianRenderMs": 9.389168571428575
+  },
+  "closeBefore": {
+    "warmupMs": 3000,
+    "sampleWindowMs": 5000,
+    "summary": {
+      "intervals": 53,
+      "averagePresentIntervalMs": 94.90566037735849,
+      "p95PresentIntervalMs": 129.0999999642372,
+      "presentedFps": 10.536779324055667,
+      "averageRequestMs": 59.21111110515065,
+      "averageRenderMs": 13.407127777777776,
+      "averageCommandMs": 17.90548333333334,
+      "averageUploadMs": 1.477777776894746,
+      "averageSimulationMs": 10.586305555555557,
+      "averageSimulationRequestMs": 35.98888889507011
+    }
+  },
+  "closeAfter": {
+    "warmupMs": 3000,
+    "sampleWindowMs": 5000,
+    "summary": {
+      "intervals": 51,
+      "averagePresentIntervalMs": 98.16862745027916,
+      "p95PresentIntervalMs": 141.5,
+      "presentedFps": 10.186553749124016,
+      "averageRequestMs": 52.25769230494132,
+      "averageRenderMs": 13.523007692307695,
+      "averageCommandMs": 19.710650000000005,
+      "averageUploadMs": 1.5153846190525935,
+      "averageSimulationMs": 10.75766923076923,
+      "averageSimulationRequestMs": 24.09999999518578
+    }
+  },
+  "editorSha256": "256e9296f027e9fdd79ae218c287209ed28dcac2099d1316036a585287b56a0e",
+  "validation": {
+    "editorTests": 11,
+    "failures": 0,
+    "frontendBuild": "passed",
+    "releaseBuild": "passed",
+    "nativeArt": true,
+    "msaaSamples": 4
+  },
+  "physicalInput": false,
+  "audioListening": false,
+  "overall5msTargetMet": false
+}

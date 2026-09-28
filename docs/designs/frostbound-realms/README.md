@@ -2,7 +2,7 @@
 
 最新写实美术阶段：[来源、重建、截图与验收边界](realistic-art.md)。
 
-最新运行与交付：[场景与界面 4× MSAA、性能及 Player 包](multisampling.md)。贴图和湿岸见 [画面细化阶段](rendering-refinement.md)，组件扫描与共享传输优化见 [运行性能阶段](runtime-performance.md)。
+最新编辑器性能：[原生视口的浏览器开销与实测](viewport-performance.md)。渲染及 Player 包见 [场景与界面 4× MSAA](multisampling.md)。贴图和湿岸见 [画面细化阶段](rendering-refinement.md)，组件扫描与共享传输优化见 [运行性能阶段](runtime-performance.md)。
 
 2026-09-28。工程与操作说明见 [样例 README](../../../samples/frostbound-realms/README.md)。这是原创 RTS/RPG/MOBA/塔防基础版本；《冰封王座》完整内容复刻与约 5 ms 整体帧预算尚未完成。
 

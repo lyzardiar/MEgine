@@ -1241,7 +1241,6 @@ export function Viewport(props: {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const p = currentViewportProps();
     const sc = liveCam.current;
     const now = paintStartedAt;
     const rect = canvas.getBoundingClientRect();
@@ -1249,6 +1248,7 @@ export function Viewport(props: {
       lastProfilerFrameRef.current = 0;
       return;
     }
+    const p = currentViewportProps();
     const frameIntervalMs = lastProfilerFrameRef.current > 0
       ? now - lastProfilerFrameRef.current
       : 0;
@@ -1495,7 +1495,7 @@ export function Viewport(props: {
     const isActive = (id: number) =>
       p.activeInHierarchy ? p.activeInHierarchy(id) : true;
     const environment = p.entities.find(
-      (entity) => isActive(entity.entity) && entity.components.EnvironmentLight,
+      (entity) => entity.components.EnvironmentLight && isActive(entity.entity),
     )?.components.EnvironmentLight as EnvironmentBackground | undefined;
 
     ctx.save();
@@ -1680,8 +1680,8 @@ export function Viewport(props: {
     const liveSpineIds = new Set<number>();
     for (const entity of p.entities) {
       if (
-        isActive(entity.entity)
-        && entity.components.SpineSkeleton
+        entity.components.SpineSkeleton
+        && isActive(entity.entity)
         && (
           resolvedTransform(worldTransforms, entity.entity)
           || entity.components.RectTransform
@@ -1704,7 +1704,7 @@ export function Viewport(props: {
 
     const drawn = (isGame && !gameCamera ? [] : p.entities
       .flatMap((e, hierarchyOrder) => {
-        if (!isActive(e.entity) || (nativeGameReady && !e.components.SpineSkeleton)) return null;
+        if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return null;
         const t = resolvedTransform(worldTransforms, e.entity) ?? undefined;
         if (!t) return null;
         const pr = project(t.position as Vec3, cam, vp);
