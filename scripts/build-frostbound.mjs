@@ -84,6 +84,8 @@ audio('victory',2.4,t=>{const note=[69,72,76,81][Math.min(3,Math.floor(t/.6))],p
 audio('winter-theme',24,t=>{const root=[45,48,41,43][Math.floor(t/6)],phase=t%6,env=Math.sin(Math.PI*phase/6)**.4,chord=[0,3,7].reduce((v,n)=>v+sine(midi(root+n),t),0)*.065*env,beat=t%.75,note=root+24+[0,7,3,10,7,3,2,7][Math.floor(t/.75)%8],melody=(sine(midi(note),t)+.15*sine(midi(note)*2,t))*.1*Math.exp(-beat*5)*Math.min(1,beat*80);return chord+melody;},true);
 for(let i=0;i<32;i++)entity('Foundation '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['wall-block'].parts[0].mesh,material:catalog['wall-block'].material}});
 for(let i=0;i<32;i++)for(let edge=0;edge<4;edge++)entity('Region '+i+' '+edge,{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:[.2,.7,1,1],roughness:1,emissive:[.1,.3,.4],emissive_strength:.4}});
+for(let i=0;i<9;i++)entity('Waypoint '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Selection.mmat'}});
+for(let i=0;i<9;i++)text('Waypoint label '+i,'',0,0,28,24,15,C.gold,'Center');
 for(const mode of ['skirmish','moba','td','rpg'])fs.writeFileSync(path.join(root,'Assets/Maps',mode+'.json'),JSON.stringify(S.defaultMap(mode),null,2)+'\n');
 fs.writeFileSync(path.join(root,'Assets/Maps/highland-pass.json'),JSON.stringify(S.highlandMap(),null,2)+'\n');
 fs.writeFileSync(path.join(root,'Assets/Maps/supply-road.json'),JSON.stringify(S.eventMap(),null,2)+'\n');

@@ -64364,6 +64364,708 @@
             "emissive_strength": 0.4
           }
         }
+      },
+      {
+        "entity": 1754,
+        "name": "Waypoint 0",
+        "parent": null,
+        "siblingIndex": 1753,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1755,
+        "name": "Waypoint 1",
+        "parent": null,
+        "siblingIndex": 1754,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1756,
+        "name": "Waypoint 2",
+        "parent": null,
+        "siblingIndex": 1755,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1757,
+        "name": "Waypoint 3",
+        "parent": null,
+        "siblingIndex": 1756,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1758,
+        "name": "Waypoint 4",
+        "parent": null,
+        "siblingIndex": 1757,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1759,
+        "name": "Waypoint 5",
+        "parent": null,
+        "siblingIndex": 1758,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1760,
+        "name": "Waypoint 6",
+        "parent": null,
+        "siblingIndex": 1759,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1761,
+        "name": "Waypoint 7",
+        "parent": null,
+        "siblingIndex": 1760,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1762,
+        "name": "Waypoint 8",
+        "parent": null,
+        "siblingIndex": 1761,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "Assets/Materials/Selection.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1763,
+        "name": "Waypoint label 0",
+        "parent": 1021,
+        "siblingIndex": 1762,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 1764,
+        "name": "Waypoint label 1",
+        "parent": 1021,
+        "siblingIndex": 1763,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 1765,
+        "name": "Waypoint label 2",
+        "parent": 1021,
+        "siblingIndex": 1764,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 1766,
+        "name": "Waypoint label 3",
+        "parent": 1021,
+        "siblingIndex": 1765,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 1767,
+        "name": "Waypoint label 4",
+        "parent": 1021,
+        "siblingIndex": 1766,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 1768,
+        "name": "Waypoint label 5",
+        "parent": 1021,
+        "siblingIndex": 1767,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 1769,
+        "name": "Waypoint label 6",
+        "parent": 1021,
+        "siblingIndex": 1768,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 1770,
+        "name": "Waypoint label 7",
+        "parent": 1021,
+        "siblingIndex": 1769,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 1771,
+        "name": "Waypoint label 8",
+        "parent": 1021,
+        "siblingIndex": 1770,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              28,
+              24
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
       }
     ],
     "frame": 0,

@@ -4,13 +4,19 @@
 
 ## 本次范围
 
+本阶段增加 Shift 移动/攻击移动队列：每单位最多8个等待落点，整组上限检查，未来编队按前一个落点朝向分配；普通改令和停止清空后续路线。工作、闪现、死亡和触发器改令同步清理队列。界面增加首个选中单位的编号路线，绿色移动/橙色攻击移动，越出战场的屏幕编号隐藏。地图场景新增18个标记/文字实体，保留既有实体编号；资产仍为79模型，1771场景实体。
+
+规则验证覆盖顺序到达、攻击移动遇敌后续行军、混合编队存档回放、上限原子拒绝、改令/工作/闪现/死亡清理、旧档迁移、坏档拒绝及对手队列保密。Node全规则/TCP与真实QuickJS 3/3通过，服务器队列和主机重连有专门断言。[原生路线验收](native-waypoints-qa.json) 验证左右Shift、编号显示、保存/加载后继续完成和停止清空；[原生联机验收](native-network-qa.json) 检查协议5、两个客户端和重连。建造/采集等通用指令队列仍待实现。
+
+![Shift路线](waypoint-route.png)
+
 本阶段完善玩家多单位移动：最多 40 个单位按行军方向、射程与体型分配各自的可达位置，地面/空中独立编队，单单位精确到达点击点。河流、封闭高地、建筑和边界会调整落点；无足够空间时整组保留原命令。寻路和编队分配只使用可见敌方建筑，目标被新发现的建筑占用后重新落位。
 
-`test-frost-formations.mjs` 验证 40 单位混合编队实际到达、近战/远程排序、输入顺序确定性、行军中存档恢复、坡道、封闭崖壁、河流、空军、建筑、边界和原子拒绝，并比较隐藏建筑存在/不存在时的己方公开路径和命令。Node 全部规则/TCP 回归、服务端四单位目标分配及实际 QuickJS 3/3 通过。[原生编队验收](native-formations-qa.json) 在隔离的平地测试地图验证 12 单位框选、Ctrl+1 编组、1 召回、右键移动、各自到达与保存恢复；未改动交付默认地图。当前编队未实现行军动态避让、近战包围或指令队列。
+`test-frost-formations.mjs` 验证 40 单位混合编队实际到达、近战/远程排序、输入顺序确定性、行军中存档恢复、坡道、封闭崖壁、河流、空军、建筑、边界和原子拒绝，并比较隐藏建筑存在/不存在时的己方公开路径和命令。Node 全部规则/TCP 回归、服务端四单位目标分配及实际 QuickJS 3/3 通过。[原生编队验收](native-formations-qa.json) 在隔离的平地测试地图验证 12 单位框选、Ctrl+1 编组、1 召回、右键移动、各自到达与保存恢复；未改动交付默认地图。当前编队未实现行军动态避让、近战包围或建造/采集等通用指令队列。
 
 ![编队到达](formation-arrival.png)
 
-最新 Player 包 276 文件、1753 实体、79 模型，内容哈希 `60b19e1f9ca44dc5680b104cab491e78bcdcc884547529668f59f0a2dffb0bb6`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
+最新 Player 包 276 文件、1771 实体、79 模型，内容哈希 `afcf02a82ec8d649b1daf2ecdfcb641800691e18254b78dd0638653a3fe0d557`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
 
 本阶段接入四阵营 32 个建筑模型与 5 个骨骼动画怪物，模型目录共 79 项。建筑由 Kenney Castle/Nature/Graveyard 的 46 个模块组合，包含各阵营三级主基地与五类功能建筑；怪物来自 Quaternius Ultimate Monsters。下载原件、CC0 许可、源地址、配方和派生 SHA-256 分别留存于 faction-sources.json、monster-sources.json。32 个建造图标由真实建筑的原生渲染生成，建造菜单、预览、头像和升级外观保持对应。
 
@@ -36,7 +42,7 @@
 
 引擎补充项目 JSON 存储、GLB 骨骼姿态、实体激活接口、Canvas 子节点索引、无物理组件场景快速路径，以及 GLB 姿态引用的打包依赖识别。原生视口 profiler 记录实际 renderSize，区分逻辑截图尺寸与编辑器预览尺寸。地表使用 64 个共享边界数据的区块，采用实际雪地/岩土贴图和插值迷雾；并接入冬季松林/岩石、建筑预览、技能图标、悬停说明、英雄状态条、远程弹道和伤害数字。
 
-英雄支持技能点、普通技能 1/3/5 级学习门槛、6 级终极技能，以及护盾、缠绕、眩晕、加速、持续区域和临时飞龙召唤。主菜单/大厅 H 选人，K 学习、Shift+Q/W/E/R 加点、O 商店；地图英雄类型保存并进入试玩。服务端协议为 4，换英雄清除双方准备状态；存档恢复校验技能等级和点数，兼容旧单机英雄存档。新增四张头像与 16 个技能图标，提示词和 SHA-256 见 [hero-art.json](../../../samples/frostbound-realms/hero-art.json)。
+英雄支持技能点、普通技能 1/3/5 级学习门槛、6 级终极技能，以及护盾、缠绕、眩晕、加速、持续区域和临时飞龙召唤。主菜单/大厅 H 选人，K 学习、Shift+Q/W/E/R 加点、O 商店；地图英雄类型保存并进入试玩。服务端协议为 5，换英雄清除双方准备状态；存档恢复校验技能等级和点数，兼容旧单机英雄存档。新增四张头像与 16 个技能图标，提示词和 SHA-256 见 [hero-art.json](../../../samples/frostbound-realms/hero-art.json)。
 
 ## 验证
 
@@ -117,6 +123,7 @@ cargo build --release -p mengine-runtime -p mengine-editor-tauri --features taur
 node scripts/qa-frostbound.mjs
 node scripts/qa-frostbound.mjs --performance-only
 node scripts/qa-frostbound.mjs --formations-only
+node scripts/qa-frostbound.mjs --waypoints-only
 pnpm.cmd --filter @mengine/cli build
 node packages/cli/dist/cli.js build samples/frostbound-realms --runtime target/release/mengine-runtime.exe --skip-runtime-build --out samples/frostbound-realms/Builds/windows-x64 --clean
 ./scripts/smoke-frostbound.ps1

@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "waypoints": {
+    "shiftLeft": true,
+    "shiftRight": true,
+    "pending": 2,
+    "markers": 3,
+    "saveRestored": true,
+    "routeCompleted": true,
+    "stopCleared": true
+  }
+}

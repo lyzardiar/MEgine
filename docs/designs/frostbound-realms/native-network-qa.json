@@ -8,12 +8,14 @@
       "mode": "playing",
       "heroChoice": 3,
       "heroPanel": "skills",
+      "faction": 0,
       "camera": [
         -23,
         23
       ],
       "zoom": 18,
       "flyers": [],
+      "construction": [],
       "production": [
         {
           "built": 1,
@@ -41,6 +43,8 @@
             0
           ],
           "team": 0,
+          "upgradeTier": 1,
+          "waypoints": [],
           "x": -23,
           "xp": 0,
           "z": 23
@@ -71,6 +75,7 @@
             0
           ],
           "team": 0,
+          "waypoints": [],
           "x": -17,
           "xp": 0,
           "z": 28
@@ -105,6 +110,7 @@
           0
         ],
         "team": 0,
+        "waypoints": [],
         "x": -17.40000000000002,
         "xp": 0,
         "z": 19
@@ -151,13 +157,14 @@
           0
         ],
         "team": 0,
+        "waypoints": [],
         "x": -19,
         "xp": 0,
         "z": 21
       },
       "paused": false,
       "online": true,
-      "room": "3CD4AB",
+      "room": "68DBDF",
       "netStates": 21,
       "brush": 0,
       "slot": 1,
@@ -165,6 +172,13 @@
       "placedHeroes": [],
       "placedUnits": 0,
       "triggers": 0,
+      "regions": 0,
+      "editorTrigger": null,
+      "editorRegion": null,
+      "triggerPanel": 0,
+      "triggered": [],
+      "announcement": "",
+      "undoDepth": 0,
       "quest": {
         "boss": false,
         "relic": false,
@@ -173,20 +187,27 @@
       },
       "loot": 0,
       "map": "Winterfall Basin",
+      "terrainRaised": 0,
+      "terrainRamps": 0,
+      "heroElevation": 0,
+      "heightBrush": 1,
+      "rampBrush": 0,
       "terrainWater": 210,
       "winner": null,
-      "notice": "Connecting to 127.0.0.1:7788"
+      "notice": ""
     },
     {
       "mode": "playing",
       "heroChoice": 0,
       "heroPanel": "skills",
+      "faction": 0,
       "camera": [
         23,
         -23
       ],
       "zoom": 18,
       "flyers": [],
+      "construction": [],
       "production": [
         {
           "built": 1,
@@ -198,7 +219,7 @@
           "inventory": [],
           "kind": "hall",
           "level": 1,
-          "mana": 154.19999999999976,
+          "mana": 154.39999999999975,
           "maxHp": 2200,
           "order": null,
           "pathAt": -100,
@@ -214,6 +235,8 @@
             0
           ],
           "team": 1,
+          "upgradeTier": 1,
+          "waypoints": [],
           "x": 23,
           "xp": 0,
           "z": -23
@@ -228,7 +251,7 @@
           "inventory": [],
           "kind": "barracks",
           "level": 1,
-          "mana": 154.19999999999976,
+          "mana": 154.39999999999975,
           "maxHp": 950,
           "order": null,
           "pathAt": -100,
@@ -244,6 +267,7 @@
             0
           ],
           "team": 1,
+          "waypoints": [],
           "x": 17,
           "xp": 0,
           "z": -28
@@ -253,14 +277,14 @@
         "built": 1,
         "cargo": 10,
         "cargoKind": "mine",
-        "cd": 0.65,
+        "cd": 0.55,
         "damage": 6,
         "hp": 100,
         "id": 13,
         "inventory": [],
         "kind": "worker",
         "level": 1,
-        "mana": 154.19999999999976,
+        "mana": 154.39999999999975,
         "maxHp": 100,
         "order": {
           "resource": 9,
@@ -279,11 +303,12 @@
           0
         ],
         "team": 1,
+        "waypoints": [],
         "x": 17.000000000000004,
         "xp": 0,
         "z": -20.199999999999996
       },
-      "frame": 21,
+      "frame": 22,
       "kind": "skirmish",
       "team": 1,
       "units": 9,
@@ -302,7 +327,7 @@
         "inventory": [],
         "kind": "hero",
         "level": 1,
-        "mana": 154.19999999999976,
+        "mana": 154.39999999999975,
         "maxHp": 560,
         "order": null,
         "pathAt": -100,
@@ -325,20 +350,28 @@
           0
         ],
         "team": 1,
+        "waypoints": [],
         "x": 19,
         "xp": 0,
         "z": -21
       },
       "paused": false,
       "online": true,
-      "room": "3CD4AB",
-      "netStates": 22,
+      "room": "68DBDF",
+      "netStates": 23,
       "brush": 0,
       "slot": 1,
       "editorPage": 0,
       "placedHeroes": [],
       "placedUnits": 0,
       "triggers": 0,
+      "regions": 0,
+      "editorTrigger": null,
+      "editorRegion": null,
+      "triggerPanel": 0,
+      "triggered": [],
+      "announcement": "",
+      "undoDepth": 0,
       "quest": {
         "boss": false,
         "relic": false,
@@ -347,10 +380,17 @@
       },
       "loot": 0,
       "map": "Winterfall Basin",
+      "terrainRaised": 0,
+      "terrainRamps": 0,
+      "heroElevation": 0,
+      "heightBrush": 1,
+      "rampBrush": 0,
       "terrainWater": 210,
       "winner": null,
-      "notice": "Connecting to 127.0.0.1:7788"
+      "notice": ""
     }
   ],
-  "reconnected": true
+  "networkWaypoints": true,
+  "reconnected": true,
+  "reconnectViewPreserved": true
 }
