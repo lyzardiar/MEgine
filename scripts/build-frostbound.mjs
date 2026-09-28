@@ -15,7 +15,7 @@ entity('Strategy camera',{Transform:T([0,42,32],[1,1,1],q(-Math.atan2(42,32))),C
 entity('Winter sun',{Transform:T([0,0,0],[1,1,1],[-.45,-.25,-.12,.84]),DirectionalLight:{color:[1,.91,.78,1],intensity:2,cast_shadows:true,shadow_distance:90,shadow_strength:.5,shadow_bias:.005,shadow_normal_bias:.08}});
 entity('Northern sky',{EnvironmentLight:{sky_color:[.09,.15,.24,1],equator_color:[.23,.32,.37,1],ground_color:[.13,.19,.18,1],diffuse_intensity:.85,specular_intensity:.4,background_enabled:true,tone_mapping:true,exposure:.1}});
 entity('Terrain bed',{Transform:T([0,-.7,0],[180,1.2,180]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Ground.mmat'}});
-for(let z=0;z<8;z++)for(let x=0;x<8;x++)entity('Ground '+(z*8+x),{Transform:T([x*8-28,-.12,z*8-28],[8,.2,8]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Ground.mmat'}});
+for(let z=0;z<8;z++)for(let x=0;x<8;x++)entity('Ground '+(z*8+x),{Transform:T([x*8-28,0,z*8-28],[1,1,1]),MeshRenderer:{mesh:'terrain4:'+'0'.repeat(64),material:'Assets/Materials/Ground.mmat'}});
 for(let i=0;i<140;i++)entity('Scenery '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree_pineTallA.parts[0].mesh,material:catalog.tree_pineTallA.material}});
 entity('Command marker',{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Selection.mmat'}});
 entity('Rally marker',{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.flag.parts[0].mesh,material:catalog.flag.material}});
@@ -85,6 +85,7 @@ audio('winter-theme',24,t=>{const root=[45,48,41,43][Math.floor(t/6)],phase=t%6,
 for(let i=0;i<32;i++)entity('Foundation '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['wall-block'].parts[0].mesh,material:catalog['wall-block'].material}});
 for(let i=0;i<32;i++)for(let edge=0;edge<4;edge++)entity('Region '+i+' '+edge,{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:[.2,.7,1,1],roughness:1,emissive:[.1,.3,.4],emissive_strength:.4}});
 for(const mode of ['skirmish','moba','td','rpg'])fs.writeFileSync(path.join(root,'Assets/Maps',mode+'.json'),JSON.stringify(S.defaultMap(mode),null,2)+'\n');
+fs.writeFileSync(path.join(root,'Assets/Maps/highland-pass.json'),JSON.stringify(S.highlandMap(),null,2)+'\n');
 fs.writeFileSync(path.join(root,'Assets/Maps/supply-road.json'),JSON.stringify(S.eventMap(),null,2)+'\n');
 fs.writeFileSync(path.join(root,'Assets/Scenes/Main.mscene'),JSON.stringify({version:1,name:'Frostbound Realms',world:{entities:E,frame:0,sim_frame:0,clear_color:[.08,.13,.18,1]}},null,2)+'\n');
 fs.writeFileSync(path.join(root,'project.json'),JSON.stringify({name:'Frostbound Realms',storageId:'frostbound-realms-2d128968-5677-47b3-8d38-a128a763e15a',version:1,language:'javascript',mainScene:'Assets/Scenes/Main.mscene',buildScenes:['Assets/Scenes/Main.mscene'],startupScript:'Assets/Scripts/Main.js',assetMode:'all'},null,2)+'\n');

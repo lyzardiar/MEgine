@@ -1,0 +1,47 @@
+// Author: MiYu. Terrain persistence, geometric continuity and real movement/combat rules.
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
+globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
+const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
+const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;
+assert.equal(S.validateMap(legacy).heights.reduce((a,b)=>a+b),0);
+for(const bad of [{heights:[0]},{ramps:Array(1024).fill(5)},{heights:Array(1024).fill(NaN)},{heights:Array(1024).fill(3),ramps:Array(1024).fill(1)}])assert.throws(()=>S.validateMap({...legacy,...bad}));
+for(const [r,delta] of [[1,1],[2,-1],[3,32],[4,-32]]){
+  const m=S.defaultMap(),i=16*32+16;m.heights.fill(1);m.ramps[i]=r;m.heights[i+delta]=2;
+  assert.ok(S.terrainEdge(m,i-delta,i));assert.ok(S.terrainEdge(m,i,i+delta));assert.ok(S.terrainEdge(m,i+delta,i));
+  assert.equal(S.elevation(m,1,1),3);assert.ok(!S.terrainEdge(m,i,i+(Math.abs(delta)===1?32:1)));
+}
+const map=S.highlandMap();assert.equal(S.elevation(map,5,-5),4);assert.equal(S.elevation(map,-13,7),1);assert.equal(S.elevation(map,-12,7),2);
+assert.ok(S.terrainEdge(map,S.index(-15,7),S.index(-13,7)));assert.ok(S.terrainEdge(map,S.index(-13,7),S.index(-11,7)));
+assert.ok(!S.terrainEdge(map,S.index(-13,3),S.index(-11,3)));assert.ok(!S.terrainEdge(map,S.index(-13,3),S.index(-13,5)),'cannot enter the side of a ramp');
+assert.ok(S.flatSite(map,5,-5,1));assert.ok(!S.flatSite(map,-12,7,1));
+for(let z=0;z<8;z++)for(let x=0;x<8;x++){
+  const key=T.mesh(map,x,z);assert.match(key,/^terrain4:[0-6]{64}$/);
+  for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++){const corners=key.slice(9+(dz*4+dx)*4,13+(dz*4+dx)*4).split('').map(Number);assert.equal(corners.reduce((a,b)=>a+b)/4,S.elevation(map,(x*4+dx)*2-31,(z*4+dz)*2-31));}
+}
+{
+  let s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const u=S.spawn(s,'worker',0,-17,7);u.order={type:'move',x:-5,z:7};
+  const route=S.path(s,u,-5,7);assert.ok(route.length);let p=[u.x,u.z];for(const next of route){assert.ok(S.traversable(s.map,...p,...next));p=next;}
+  step(s,45);assert.ok(u.x>-12&&S.unitHeight(s,u)===2,'ground unit climbs a real ramp');s=S.restore(s);step(s,40);assert.ok(s.units[0].x>-6);
+  assert.equal(S.publicState(s,0).map.heights[S.index(5,-5)],2);
+}
+{
+  const sealed=S.clone(map);sealed.ramps.fill(0);const s=S.create('skirmish',{map:sealed,ai:[false,false]});s.units=[];s.resources=[];const u=S.spawn(s,'soldier',0,-13,3);u.order={type:'move',x:-11,z:3};
+  step(s,120);assert.ok(u.x<-12,'empty-path fallback cannot walk through a cliff');
+  const fly=S.spawn(s,'dragon',0,-13,3);fly.order={type:'move',x:-9,z:3};step(s,20);assert.ok(fly.x>-12,'flying units clear cliffs');
+  s.units=s.units.filter(v=>v.id!==fly.id);const defender=S.spawn(s,'soldier',1,-11,3);u.order=null;u.cd=0;const hp=defender.hp;step(s,5);assert.equal(defender.hp,hp,'melee cannot strike across a cliff');
+}
+{
+  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const worker=S.spawn(s,'worker',0,-15,7),money=s.teams[0].gold;
+  assert.match(S.command(s,0,{type:'build',ids:[worker.id],kind:'tower',x:-13,z:7}),/flat dry/);assert.equal(s.teams[0].gold,money);
+  assert.equal(S.command(s,0,{type:'build',ids:[worker.id],kind:'tower',x:-7,z:7}),null);
+  const archer=S.spawn(s,'archer',0,-13,1),target=S.spawn(s,'archer',1,13,1);assert.equal(S.attackClear(s,archer,target),false,'plateau blocks line of fire');
+}
+{
+  const s=S.create();s.map.heights[S.index(.1,-1)]=3;const a={kind:'archer',x:-.1,z:-1},b={kind:'archer',x:.1,z:-1};assert.equal(S.attackClear(s,a,b),false,'short rays test the vertical cliff crossing');assert.equal(S.attackClear(s,b,a),false);
+}
+{
+  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const w=S.spawn(s,'worker',0,-12.5,1);assert.equal(S.command(s,0,{type:'build',ids:[w.id],kind:'tower',x:-11,z:1}),null);const b=s.units.at(-1);step(s,5);assert.equal(b.built,.01,'workers cannot start construction through a cliff');
+}
+console.log('PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion');

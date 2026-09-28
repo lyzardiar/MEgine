@@ -27,7 +27,9 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let ripples=pow(0.5+0.5*sin(p.x*8.0+sin(p.y*3.0)),14.0)*0.07;
     s.base_color=mix(dry,vec3<f32>(0.018,0.13,0.18)+ripples,water);
     s.roughness=mix(0.88,0.29,water);s.metallic=water*0.14;
-    s.normal=normalize(vec3<f32>(fleck*0.06,1.0,cos(p.y*5.0)*0.045));
+    let cliff=1.0-smoothstep(0.3,0.85,abs(surface.normal.y));
+    s.base_color=mix(s.base_color,mengine_texture_stone(fract(vec2<f32>(p.x+p.y,world_position.y)*0.3)).rgb*vec3<f32>(0.35,0.4,0.44),cliff);
+    s.normal=normalize(surface.normal+vec3<f32>(fleck*0.04,0.0,cos(p.y*5.0)*0.03));
     return s;
 }
 fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {

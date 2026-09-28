@@ -1,5 +1,5 @@
 use crate::textures::resolve_project_asset_path;
-use mengine_assets::{load_gltf_mesh_data, parse_gltf_pose, GltfPoseSource, MeshData};
+use mengine_assets::{load_gltf_mesh_data, terrain_mesh, parse_gltf_pose, GltfPoseSource, MeshData};
 use mengine_rhi::{RenderObject, Renderer, Vertex};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -77,6 +77,16 @@ impl RuntimeMeshCache {
         let mut frame_keys = HashSet::new();
         for object in objects {
             let key = object.mesh_key.trim();
+            if key.starts_with("terrain4:") {
+                self.pose_usage.insert(key.to_owned(), self.frame);
+                if should_attempt(&mut self.attempted, key, FileStamp::default()) {
+                    match terrain_mesh(key) {
+                        Ok(mesh) => renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices),
+                        Err(error) => failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:error.into() }),
+                    }
+                }
+                continue;
+            }
             let pose = parse_gltf_pose(key);
             if pose.is_some() { self.pose_usage.insert(key.to_owned(), self.frame); }
             let asset_key = pose.map(|p| p.0).unwrap_or(key);

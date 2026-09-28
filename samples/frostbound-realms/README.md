@@ -49,10 +49,11 @@ Skirmish 建筑由工人到场启动：Kingdom 工人持续施工，可多工协
 | 商店 | O 切换商店页；英雄回主基地附近，点击装备按钮 |
 | 编队 | Ctrl+1..9 保存；1..9 选择 |
 | 暂停 / 保存 / 返回菜单 | Escape / F5 / F10 |
-| 编辑器页面 / RPG | V 在地形、单位、触发器、玩家、区域五页切换；RPG 地图保留 scout / keeper / boss 角色 |
+| 编辑器页面 / RPG | V 在地形、单位、触发器、玩家、区域、高度六页切换；RPG 地图保留 scout / keeper / boss 角色 |
 | 区域与触发器 | 点击选择；按钮新建/移动/缩放；触发器面板切换 Setup / Conditions / Actions；Del 删除条目，N 编辑名称或动作公告 |
 | 护送示例 | 编辑器内 F8 载入 Winterfall Supply Road；F7 试玩，带英雄抵达山口完成护送事件链 |
 | 编辑器笔刷 | 数字 1..9 或底部按钮 |
+| 编辑器高度 / 坡道 | V 切到高度页，选择 0–3 级高度和东/西/南/北坡道；F9 载入 Highland Pass，两层高地可通过坡道攀登 |
 | 编辑器保存 / 加载 / 试玩 | F5 / F6 / F7；地形、单位或玩家页 N 切换保存槽 |
 | 地图模式 / 波数 / 间隔 / 金币 | Tab / PageUp、PageDown / [、] / +、- |
 | 编辑器撤销 | Ctrl+Z |
@@ -111,10 +112,10 @@ cargo test -p mengine-editor-host --test frost_sample
 node scripts/qa-frostbound.mjs
 ```
 
-游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个区块的自定义材质绘制，邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境和 Dragon 导入）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
+游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个 `terrain4:` 网格区块和自定义材质绘制。每格 2 世界单位，高度 0/2/4/6，坡道连接相邻高度；崖壁与坡道具有实际几何，旧地图默认平地。寻路及逐步移动检查地块边界，建造要求整块地基平坦且干燥，施工和采集不能隔崖进行，射线在每个经过的地块边界检测地形遮挡。单位、资源、弹道与点击坐标使用同一高度数据。邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境和 Dragon 导入）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
 
 ## 当前边界
 
-这是可扩展的基础版本。尚未实现原作战役、四族完整独立建筑与科技树/全部兵种、完整海陆空兵种体系、完整装备合成与技能树、完整 Dota 内容、可视化触发器图与通用脚本编辑、多层地形、录像、观战、大规模单位寻路与完整公网服务。模拟上限 160 个单位，单张地图 64×64 世界单位。寻路使用网格广度优先搜索，角色姿态为 12 Hz，尚需进一步优化大规模战斗表现；不应将本次测试视为这些未实现功能的验收。
+这是可扩展的基础版本。尚未实现原作战役、四族完整独立建筑与科技树/全部兵种、完整海陆空兵种体系、完整装备合成与技能树、完整 Dota 内容、可视化触发器图与通用脚本编辑、桥梁/洞穴等重叠地形、录像、观战、大规模单位寻路与完整公网服务。模拟上限 160 个单位，单张地图 64×64 世界单位。寻路使用网格广度优先搜索，角色姿态为 12 Hz，尚需进一步优化大规模战斗表现；不应将本次测试视为这些未实现功能的验收。
 
 本任务进展、性能数据及验收限制见 [交付证据](../../docs/designs/frostbound-realms/README.md)。

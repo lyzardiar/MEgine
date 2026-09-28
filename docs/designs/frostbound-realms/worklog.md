@@ -37,3 +37,14 @@
 验证：Node规则/TCP通过；真实QuickJS frost_sample 3/3，含中文保存/取消/撤销；Player文本编辑1/1与CJK字形栅格化1/1；编辑器相关测试14/14；CLI Text/InputField引用字体和损坏字体拒绝2/2；编辑器/CLI构建与Release编辑器/Player构建通过。native-triggers-qa.json通过原生窗口实际textarea焦点与文本提交，中文区域名、公告、地图保存/重载、区域/条件/动作/依赖保护、撤销、模式切换、护送事件完成及存档恢复。window UI语义事件不是物理键盘或IME候选选择验收。截图editor-unicode-input.png、editor-regions.png、supply-road.png。
 
 最终包162文件，1753场景实体，42模型条目，内容哈希9b2d0a532852af5cd3936defab04bf421dc91634278cdc684b91cab51f6b978c；逐文件SHA-256及Release exe一致。Player启动30秒、窗口正确、响应正常、零ERROR，见player-smoke.json。完整复刻仍active；完整战役/四族美术与内容、Dota完整规则、可视触发图、分层地形、录像观战、大规模导航、公网与5ms目标仍未完成。实际物理IME/音频/跨机LAN未验收。
+
+
+2026-09-28 分层地形阶段：引擎 mengine-assets/runtime 增加 terrain4: 有界网格引用，4×4 两单位格子、独立四角整数高度与下缘崖壁，复用 GPU 上传和 256 项动态网格缓存淘汰。Frost 保持 64 个地形实体，四级高度与四向坡道保存到地图；旧地图平地迁移。编辑器第六页提供高度、坡道，F9 载入 Winterfall Highland Pass；鼠标静止时不重复刷写因抬升而变化的拾取位置。沿用现有许可雪地、岩石、建筑、兵种资产。
+
+寻路和实际移动均检查地块接边；地基要求完整干燥平面，工人不隔崖施工/采集。攻击线检查所经地块区间两端，覆盖近距离跨垂直崖壁；单位/资源/地基/预览/选择圈/血条/特效/伤害文字按实际地形高度定位。点击按正交视线与高度面相交。区域轮廓以中心地形高度显示；横跨多个高度的矩形区域轮廓仍是水平线，不贴合每格地面。单元地形不能表达桥梁/洞穴等重叠高度。
+
+验证：Node规则/TCP通过；新增terrain专项覆盖四向坡道、序列化/公开状态、网格编码、真实移动/空路径回退、防隔崖建造和射线遮挡；实际QuickJS 3/3；Rust地形网格1/1；Release runtime/editor构建通过。只读独立审核发现的短射线穿崖已修复并回归。native-terrain-qa.json验证64区块、204高地格、11坡道、编辑/撤销/保存加载、原生英雄沿坡道上山和0 shader拒绝。截图highland-editor.png、highland-brush.png、highland-ascent.png。Native Agent输入不等于物理操作验收；profiler含编辑和切换场景，不作为稳定帧率数据。
+
+最终Player包163文件、1753实体、42模型，内容哈希7b2436d0545fb19fbdc2a7d6008dd711ce04f932a4615dc6b4dac4cf39ddc4ed，逐文件哈希与Release exe一致。Player启动30秒、响应正常、正确窗口标题、零ERROR；无本阶段QA/editor/player进程遗留。完整目标保持active，完整战役/四族内容与美术、完整Dota规则、可视触发图、录像/观战、重叠地形、大规模导航/5ms目标及物理输入/音频/跨机LAN仍未完成。后续继续完善内容与真实玩法，不能把当前原型视为完整复刻。
+
+新增第六编辑页后的 native-triggers-qa 回归通过：区域选择/缩放/命名、中文公告、条件动作编辑、依赖保护、保存加载和 Supply Road 护送完成均通过。

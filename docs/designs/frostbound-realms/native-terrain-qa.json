@@ -1,0 +1,85 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "terrain": {
+    "chunks": 64,
+    "raisedCells": 204,
+    "ramps": 11,
+    "brushUndoSaveLoad": true,
+    "groundUnitClimbed": true,
+    "hero": {
+      "id": 8,
+      "kind": "hero",
+      "team": 0,
+      "x": -8.300000000000004,
+      "z": 11,
+      "hp": 700,
+      "maxHp": 700,
+      "damage": 38,
+      "speed": 4.5,
+      "cd": 0,
+      "order": {
+        "type": "move",
+        "x": -7.2,
+        "z": 7.000119270840074
+      },
+      "path": [
+        [
+          -7,
+          11
+        ],
+        [
+          -7,
+          9
+        ],
+        [
+          -7,
+          7
+        ]
+      ],
+      "pathAt": 63,
+      "built": 1,
+      "queue": [],
+      "level": 1,
+      "xp": 0,
+      "mana": 160,
+      "spell": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "inventory": [],
+      "cargo": 0,
+      "respawn": 0,
+      "heroClass": 0,
+      "skills": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "skillPoints": 1,
+      "shield": 0,
+      "slow": 0,
+      "dest": [
+        -7.2,
+        7.000119270840074
+      ]
+    },
+    "profile": {
+      "intervals": 194,
+      "averagePresentIntervalMs": 81.1608247422066,
+      "p95PresentIntervalMs": 149.30000001192093,
+      "presentedFps": 12.32121535453007,
+      "averageRequestMs": 88.309743589927,
+      "averageRenderMs": 14.422234358974364,
+      "averageCommandMs": 41.566476923076905,
+      "averageUploadMs": 1.478461537300012,
+      "averageSimulationMs": 11.519173711340198,
+      "averageSimulationRequestMs": 81.57371133811695
+    }
+  }
+}

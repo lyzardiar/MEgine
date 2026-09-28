@@ -1,6 +1,7 @@
 // Author: MiYu. Rule, editor-data and real TCP acceptance checks.
 import assert from 'node:assert/strict';
 import net from 'node:net';
+import './test-frost-terrain.mjs';
 import './test-frost-heroes.mjs';
 import './test-frost-construction.mjs';
 import './test-frost-triggers.mjs';

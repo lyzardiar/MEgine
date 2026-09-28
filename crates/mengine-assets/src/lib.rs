@@ -11,6 +11,7 @@ mod material_instance;
 mod registry;
 mod sprite;
 mod surface_shader;
+mod terrain_mesh;
 mod texture;
 mod timeline;
 
@@ -32,6 +33,7 @@ pub use asset_sidecar::{
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use gltf_pose::{parse_gltf_pose, GltfPoseSource};
+pub use terrain_mesh::terrain_mesh;
 pub use material::{
     load_material_asset, parse_material_asset, MaterialAsset, MaterialBlendMode, MaterialFilter,
     MaterialShader, MaterialSurface, MaterialWrap,
