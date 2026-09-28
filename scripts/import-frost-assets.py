@@ -153,3 +153,6 @@ if __name__ == '__main__':
     faction=importlib.util.module_from_spec(faction_spec);faction_spec.loader.exec_module(faction);faction.main()
     monster_spec=importlib.util.spec_from_file_location('frost_monsters',ROOT/'scripts/import-frost-monsters.py')
     monster=importlib.util.module_from_spec(monster_spec);monster_spec.loader.exec_module(monster);monster.main()
+
+    skeleton_spec=importlib.util.spec_from_file_location('frost_skeletons',ROOT/'scripts/import-frost-skeletons.py')
+    skeleton=importlib.util.module_from_spec(skeleton_spec);skeleton_spec.loader.exec_module(skeleton);skeleton.main()

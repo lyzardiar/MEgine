@@ -1,0 +1,351 @@
+{
+  "file": "Assets/Art/unit-portraits.png",
+  "sha256": "4a66945e95e28bb87eab6d5b2b2cd2e73d0ab69ae62785ac45a45f19a57e41ab",
+  "generator": "scripts/render-frost-unit-icons.mjs",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "906706d0224fda27a855d2957261ecdaa5e28af20350b25e358a6e8c3ed8fce1",
+  "models": [
+    {
+      "name": "Cleric",
+      "mesh": "Assets/Models/Cleric.glb#pose=1:4",
+      "material": "Assets/Materials/Cleric.mmat",
+      "bounds": {
+        "max": [
+          0.8304426670074463,
+          2.966670036315918,
+          1.2473526000976562
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Cleric.glb#pose=1:4",
+        "min": [
+          -0.8304426670074463,
+          -0.005114101804792881,
+          -1.036761999130249
+        ],
+        "vertices": 6100
+      }
+    },
+    {
+      "name": "Demon",
+      "mesh": "Assets/Models/Demon.glb#pose=3:4",
+      "material": "Assets/Materials/Demon.mmat",
+      "bounds": {
+        "max": [
+          1.8491877317428589,
+          2.9682421684265137,
+          0.8942006826400757
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Demon.glb#pose=3:4",
+        "min": [
+          -1.5590744018554688,
+          -0.01548854075372219,
+          -1.2761752605438232
+        ],
+        "vertices": 4261
+      }
+    },
+    {
+      "name": "Dragon",
+      "mesh": "Assets/Models/Dragon.glb#pose=3:4",
+      "material": "Assets/Materials/Dragon.mmat",
+      "bounds": {
+        "max": [
+          1.3550043106079102,
+          3.656329870223999,
+          1.7927038669586182
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Dragon.glb#pose=3:4",
+        "min": [
+          -1.4666781425476074,
+          0.11013650894165039,
+          -2.3465118408203125
+        ],
+        "vertices": 2970
+      }
+    },
+    {
+      "name": "Ghost_Skull",
+      "mesh": "Assets/Models/Ghost_Skull.glb#pose=2:4",
+      "material": "Assets/Materials/Ghost_Skull.mmat",
+      "bounds": {
+        "max": [
+          1.3299297094345093,
+          3.3744165897369385,
+          1.2495994567871094
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Ghost_Skull.glb#pose=2:4",
+        "min": [
+          -1.3696324825286865,
+          0.26673123240470886,
+          -0.8488377332687378
+        ],
+        "vertices": 2408
+      }
+    },
+    {
+      "name": "Monk",
+      "mesh": "Assets/Models/Monk.glb#pose=3:4",
+      "material": "Assets/Materials/Monk.mmat",
+      "bounds": {
+        "max": [
+          0.753009557723999,
+          2.910135269165039,
+          0.46405935287475586
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Monk.glb#pose=3:4",
+        "min": [
+          -0.7878715991973877,
+          -0.0007534059113822877,
+          -0.346416175365448
+        ],
+        "vertices": 7198
+      }
+    },
+    {
+      "name": "Orc",
+      "mesh": "Assets/Models/Orc.glb#pose=3:4",
+      "material": "Assets/Materials/Orc.mmat",
+      "bounds": {
+        "max": [
+          1.524283766746521,
+          3.05584716796875,
+          1.021941065788269
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Orc.glb#pose=3:4",
+        "min": [
+          -1.591382622718811,
+          -0.01337142288684845,
+          -0.7611678838729858
+        ],
+        "vertices": 4412
+      }
+    },
+    {
+      "name": "Orc_Skull",
+      "mesh": "Assets/Models/Orc_Skull.glb#pose=3:4",
+      "material": "Assets/Materials/Orc_Skull.mmat",
+      "bounds": {
+        "max": [
+          1.5267008543014526,
+          3.1146044731140137,
+          1.0683398246765137
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Orc_Skull.glb#pose=3:4",
+        "min": [
+          -1.5874630212783813,
+          -0.013379969634115696,
+          -0.6245719790458679
+        ],
+        "vertices": 4504
+      }
+    },
+    {
+      "name": "Ranger",
+      "mesh": "Assets/Models/Ranger.glb#pose=3:4",
+      "material": "Assets/Materials/Ranger.mmat",
+      "bounds": {
+        "max": [
+          0.572755753993988,
+          2.9216806888580322,
+          1.122950792312622
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Ranger.glb#pose=3:4",
+        "min": [
+          -0.6131759285926819,
+          -0.0023155510425567627,
+          -0.8838688135147095
+        ],
+        "vertices": 4531
+      }
+    },
+    {
+      "name": "Rogue",
+      "mesh": "Assets/Models/Rogue.glb#pose=4:4",
+      "material": "Assets/Materials/Rogue.mmat",
+      "bounds": {
+        "max": [
+          0.5411955118179321,
+          2.9665322303771973,
+          0.6108810901641846
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Rogue.glb#pose=4:4",
+        "min": [
+          -0.5530550479888916,
+          -0.00525450985878706,
+          -0.8609089851379395
+        ],
+        "vertices": 2279
+      }
+    },
+    {
+      "name": "siege-ballista",
+      "mesh": "Assets/Models/siege-ballista-siege-ballista.glb",
+      "material": "Assets/Materials/siege-ballista.mmat",
+      "bounds": {
+        "max": [
+          0.8151727914810181,
+          0.9103140234947205,
+          0.5992494821548462
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\siege-ballista-siege-ballista.glb",
+        "min": [
+          -0.8151727914810181,
+          0,
+          -0.5992494821548462
+        ],
+        "vertices": 1158
+      }
+    },
+    {
+      "name": "siege-catapult",
+      "mesh": "Assets/Models/siege-catapult-siege-catapult.glb",
+      "material": "Assets/Materials/siege-catapult.mmat",
+      "bounds": {
+        "max": [
+          0.8673970103263855,
+          1.3296419382095337,
+          0.6049265265464783
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\siege-catapult-siege-catapult.glb",
+        "min": [
+          -0.8673970103263855,
+          0,
+          -0.6049265265464783
+        ],
+        "vertices": 1534
+      }
+    },
+    {
+      "name": "siege-ram",
+      "mesh": "Assets/Models/siege-ram-siege-ram.glb",
+      "material": "Assets/Materials/siege-ram.mmat",
+      "bounds": {
+        "max": [
+          1.0436742305755615,
+          1.184288501739502,
+          0.5000945329666138
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\siege-ram-siege-ram.glb",
+        "min": [
+          -1.0436742305755615,
+          0,
+          -0.5000945329666138
+        ],
+        "vertices": 1838
+      }
+    },
+    {
+      "name": "siege-trebuchet",
+      "mesh": "Assets/Models/siege-trebuchet-siege-trebuchet.glb",
+      "material": "Assets/Materials/siege-trebuchet.mmat",
+      "bounds": {
+        "max": [
+          0.9256224036216736,
+          1.9586340188980103,
+          0.6289920210838318
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\siege-trebuchet-siege-trebuchet.glb",
+        "min": [
+          -0.9256224036216736,
+          0,
+          -0.6289920210838318
+        ],
+        "vertices": 2496
+      }
+    },
+    {
+      "name": "Skeleton_Mage",
+      "mesh": "Assets/Models/Skeleton_Mage.glb#pose=0:4",
+      "material": "Assets/Materials/Skeleton_Mage.mmat",
+      "bounds": {
+        "max": [
+          0.8821272253990173,
+          2.600192070007324,
+          0.8928455114364624
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Skeleton_Mage.glb#pose=0:4",
+        "min": [
+          -0.9158181548118591,
+          -0.21321511268615723,
+          -0.8532806038856506
+        ],
+        "vertices": 5935
+      }
+    },
+    {
+      "name": "Skeleton_Rogue",
+      "mesh": "Assets/Models/Skeleton_Rogue.glb#pose=0:4",
+      "material": "Assets/Materials/Skeleton_Rogue.mmat",
+      "bounds": {
+        "max": [
+          0.6692131757736206,
+          2.277885913848877,
+          0.5710819363594055
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Skeleton_Rogue.glb#pose=0:4",
+        "min": [
+          -1.0360883474349976,
+          -0.5085631608963013,
+          -0.5813896059989929
+        ],
+        "vertices": 6044
+      }
+    },
+    {
+      "name": "Tribal",
+      "mesh": "Assets/Models/Tribal.glb#pose=3:4",
+      "material": "Assets/Materials/Tribal.mmat",
+      "bounds": {
+        "max": [
+          1.5849311351776123,
+          3.7904410362243652,
+          0.8073796629905701
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Tribal.glb#pose=3:4",
+        "min": [
+          -1.584930419921875,
+          0.0036014446523040533,
+          -0.5844882726669312
+        ],
+        "vertices": 4792
+      }
+    },
+    {
+      "name": "Warrior",
+      "mesh": "Assets/Models/Warrior.glb#pose=1:4",
+      "material": "Assets/Materials/Warrior.mmat",
+      "bounds": {
+        "max": [
+          0.6853940486907959,
+          2.9066290855407715,
+          1.8375027179718018
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Warrior.glb#pose=1:4",
+        "min": [
+          -0.7124035358428955,
+          -0.00464058481156826,
+          -0.6459696888923645
+        ],
+        "vertices": 5846
+      }
+    },
+    {
+      "name": "Wizard",
+      "mesh": "Assets/Models/Wizard.glb#pose=1:4",
+      "material": "Assets/Materials/Wizard.mmat",
+      "bounds": {
+        "max": [
+          0.6932516694068909,
+          3.050128221511841,
+          1.0214616060256958
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Wizard.glb#pose=1:4",
+        "min": [
+          -0.709304690361023,
+          -0.005613715387880802,
+          -1.0414835214614868
+        ],
+        "vertices": 5413
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+// Author: MiYu. Render portraits from the game's actual native meshes and sampled skeletal poses.
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createRequire} from 'node:module';
+import {execFileSync} from 'node:child_process';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),tag=Date.now(),sample=path.join(repo,'tmp','unit-icons-'+tag,'sample');
+process.env.MENGINE_AGENT_EDITOR_MODE='auto-background';process.env.MENGINE_EDITOR_EXECUTABLE=path.join(repo,'target/release/mengine-editor-tauri.exe');process.env.MENGINE_EDITOR_CONFIG_DIR=path.join(repo,'tmp','unit-icons-'+tag,'config');
+process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows';
+fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});fs.cpSync(source,sample,{recursive:true,filter:p=>!['SourceAssets','Builds'].includes(path.basename(p))});
+const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js');globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(path.join(source,'model-catalog.json')));const V=require('../samples/frostbound-realms/game/visuals.js');
+const units=new Map();for(let faction=0;faction<4;faction++){const state=S.create('skirmish',{factions:[faction,0]});for(const kind of Object.keys(S.types))if(S.types[kind].speed){const u={kind,team:0,heroClass:0},v=V.model(state,u);units.set(v.key,{key:v.key,asset:v.asset,u});}for(let heroClass=0;heroClass<4;heroClass++){const u={kind:'hero',team:0,heroClass},v=V.model(state,u);units.set(v.key,{key:v.key,asset:v.asset,u});}}
+const models=[...units.values()].sort((a,b)=>a.key.localeCompare(b.key));for(const m of models)m.mesh=V.pose(m.u,m.asset,false,1/3);
+const output=execFileSync('cargo',['run','-q','-p','mengine-assets','--example','gltf_bounds','--',...models.map(m=>path.join(source,m.mesh))],{cwd:repo,encoding:'utf8',windowsHide:true});
+const bounds=output.trim().split(/\r?\n/).map(line=>JSON.parse(line));assert.equal(bounds.length,models.length);
+const cols=6,rows=Math.ceil(models.length/cols),pitch=8,angle=Math.PI/6,yaw=-Math.PI/8,sin=Math.sin(angle),cos=Math.cos(angle),entities=[],slices=[];
+const transform=(position,scale=[1,1,1],rotation=[0,0,0,1])=>({position,scale,rotation}),add=(name,components)=>entities.push({entity:entities.length+1,name,parent:null,siblingIndex:entities.length,active:true,components});
+add('Portrait camera',{Transform:transform([0,80*sin,80*cos],[1,1,1],[Math.sin(-angle/2),0,0,Math.cos(-angle/2)]),Camera3D:{primary:true,projection:'orthographic',orthographic_size:rows*pitch/2,near:.1,far:220}});
+const original=JSON.parse(fs.readFileSync(path.join(source,'Assets/Scenes/Main.mscene')));for(const name of ['Winter sun','Northern sky'])add(name,original.world.entities.find(e=>e.name===name).components);entities.at(-1).components.EnvironmentLight.background_enabled=false;
+models.forEach((m,i)=>{
+  const {min,max}=bounds[i],points=[];for(const x of [min[0],max[0]])for(const y of [min[1],max[1]])for(const z of [min[2],max[2]])points.push([x*Math.cos(yaw)+z*Math.sin(yaw),y*cos-(-x*Math.sin(yaw)+z*Math.cos(yaw))*sin]);
+  const left=Math.min(...points.map(p=>p[0])),right=Math.max(...points.map(p=>p[0])),bottom=Math.min(...points.map(p=>p[1])),top=Math.max(...points.map(p=>p[1])),scale=6.8/Math.max(right-left,top-bottom),col=i%cols,row=Math.floor(i/cols),x=(col-(cols-1)/2)*pitch-(left+right)/2*scale,z=((top+bottom)/2*scale-((rows-1)/2-row)*pitch)/sin;
+  add(m.key,{Transform:transform([x,0,z],[scale,scale,scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]),MeshRenderer:{mesh:m.mesh,material:m.asset.material}});slices.push({name:m.key,rect:[col*256,row*256,256,256],pivot:[.5,.5]});
+});
+fs.writeFileSync(path.join(sample,'Assets/Scenes/Main.mscene'),JSON.stringify({version:1,name:'Unit portraits',world:{entities,frame:0,sim_frame:0,clear_color:[.025,.04,.055,1]}}));fs.writeFileSync(path.join(sample,'Assets/Scripts/Main.js'),'function onTick(dt) {}');
+const project=JSON.parse(fs.readFileSync(path.join(sample,'project.json')));project.storageId='unit-icons-'+tag;fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(project));
+const {bridgeQuery,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),execute=async(name,args={})=>{const r=await bridgeExecute(name,args,{requestId:crypto.randomUUID()});assert.ok(r.ok,r.error?.message);return r.data;};
+try{
+  for(let attempt=0;;attempt++){try{await execute('project.open',{root:sample});break;}catch(e){if(attempt>=5||!e.message.includes('lifecycle is busy'))throw e;await sleep(500);}}
+  await execute('view.set_game_resolution',{resolution:{width:cols*256,height:rows*256}});await execute('panel.focus',{kind:'game'});await execute('playback.play');await sleep(2000);
+  const shot=await bridgeQuery('view.screenshot',{target:'game'}),png=Buffer.from(shot.dataUrl.split(',')[1],'base64');assert.equal(png.readUInt32BE(16),cols*256);assert.equal(png.readUInt32BE(20),rows*256);
+  const atlas='Assets/Art/unit-portraits.png';fs.writeFileSync(path.join(source,atlas),png);fs.writeFileSync(path.join(source,atlas+'.sprite.json'),JSON.stringify({version:1,mode:'multiple',pixels_per_unit:256,slices},null,2)+'\n');
+  fs.writeFileSync(path.join(source,'unit-icons.json'),JSON.stringify({file:atlas,sha256:crypto.createHash('sha256').update(png).digest('hex'),generator:'scripts/render-frost-unit-icons.mjs',method:'Native MEngine Release render, fitted to native sampled geometry bounds',runtimeSha256:crypto.createHash('sha256').update(fs.readFileSync(process.env.MENGINE_EDITOR_EXECUTABLE)).digest('hex'),models:models.map((m,i)=>({name:m.key,mesh:m.mesh,material:m.asset.material,bounds:bounds[i]}))},null,2)+'\n');
+  console.log('Rendered '+models.length+' unit portraits at '+cols*256+' x '+rows*256);
+}finally{try{await execute('playback.stop');}finally{closeBridgeConnection();}}

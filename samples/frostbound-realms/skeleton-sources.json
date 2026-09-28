@@ -1,0 +1,112 @@
+{
+  "author": "Kay Lousberg",
+  "license": "CC0-1.0",
+  "page": "https://kaylousberg.itch.io/kaykit-skeletons",
+  "revision": "15b62b9bad122f72926c10fb14d622c73819fa54",
+  "sources": [
+    {
+      "file": "SourceAssets/kaykit-skeletons/LICENSE.txt",
+      "download": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/15b62b9bad122f72926c10fb14d622c73819fa54/LICENSE.txt",
+      "sha256": "5d822abca4e08c5a91d329e5372b3dc605cba8d994f752cb0f7dfdb7a0a79954"
+    },
+    {
+      "file": "SourceAssets/kaykit-skeletons/Skeleton_Rogue.glb",
+      "download": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Characters/gltf/Skeleton_Rogue.glb",
+      "sha256": "4003f2b77891bb56f7e0de7d555abcb497aebbcaee35b614211f16275f9ccae3"
+    },
+    {
+      "file": "SourceAssets/kaykit-skeletons/Skeleton_Mage.glb",
+      "download": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Characters/gltf/Skeleton_Mage.glb",
+      "sha256": "e05b0f5cfa395271c9f75fd07c0a0613c56f401ece4ab644e080001a79971075"
+    },
+    {
+      "file": "SourceAssets/kaykit-skeletons/Skeleton_Crossbow.gltf",
+      "download": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Assets/gltf/Skeleton_Crossbow.gltf",
+      "sha256": "8b7b8adbc33d2b9921637735d3f319b86a98b8bab9dbbce022541cc732e415ce"
+    },
+    {
+      "file": "SourceAssets/kaykit-skeletons/Skeleton_Crossbow.bin",
+      "download": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Assets/gltf/Skeleton_Crossbow.bin",
+      "sha256": "dfe637f4d112fcfa515a6f8c921034bb017c68896751cceb8119675c157fa1f8"
+    },
+    {
+      "file": "SourceAssets/kaykit-skeletons/Skeleton_Staff.gltf",
+      "download": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Assets/gltf/Skeleton_Staff.gltf",
+      "sha256": "6bb554fef0889dc9e1a69a71ddae793a772fc18eea059ded61be4f8157fd2f04"
+    },
+    {
+      "file": "SourceAssets/kaykit-skeletons/Skeleton_Staff.bin",
+      "download": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Assets/gltf/Skeleton_Staff.bin",
+      "sha256": "2b91a59316cea919b2a8b3d94ab85e3b5faa9fdb607a9ab633a6bb6d1e6bbf2f"
+    },
+    {
+      "file": "SourceAssets/kaykit-skeletons/skeleton_texture.png",
+      "download": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0/15b62b9bad122f72926c10fb14d622c73819fa54/addons/kaykit_character_pack_skeletons/Assets/gltf/skeleton_texture.png",
+      "sha256": "15741a25c53e04fa9bf3beac3bc0de442359404b1ff9be863b892cb551ad3657"
+    }
+  ],
+  "models": {
+    "Skeleton_Rogue": {
+      "weapon": "Skeleton_Crossbow",
+      "socket": "handslot.r",
+      "rotation": [
+        0,
+        0.7071067811865476,
+        0,
+        0.7071067811865476
+      ],
+      "clips": [
+        "Idle",
+        "Walking_A",
+        "2H_Ranged_Shooting",
+        "Hit_A",
+        "Death_A",
+        "Spawn_Ground"
+      ]
+    },
+    "Skeleton_Mage": {
+      "weapon": "Skeleton_Staff",
+      "socket": "handslot.r",
+      "rotation": [
+        0,
+        0,
+        0.7071067811865476,
+        0.7071067811865476
+      ],
+      "clips": [
+        "Idle",
+        "Walking_A",
+        "Spellcast_Shoot",
+        "Hit_A",
+        "Death_A",
+        "Spawn_Ground"
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Models/Skeleton_Rogue.glb",
+      "sha256": "5679c177ff8c579cf03df7d66be6a23f2686e4cf7ead46e87817f26001246e87"
+    },
+    {
+      "file": "Assets/Textures/Skeleton_Rogue.png",
+      "sha256": "d3bdaa0ec6452a0708c7055c324a5bac4ceeb0e4c26094e077ce97afcab912eb"
+    },
+    {
+      "file": "Assets/Materials/Skeleton_Rogue.mmat",
+      "sha256": "84095b33b37e2dac49e5bacf6af693ff2b5be8f43981865aea1435f36a827757"
+    },
+    {
+      "file": "Assets/Models/Skeleton_Mage.glb",
+      "sha256": "619be5bff40df9f981332481b1706f9a41998e7949d22fed140c2fcde8d20f74"
+    },
+    {
+      "file": "Assets/Textures/Skeleton_Mage.png",
+      "sha256": "d3bdaa0ec6452a0708c7055c324a5bac4ceeb0e4c26094e077ce97afcab912eb"
+    },
+    {
+      "file": "Assets/Materials/Skeleton_Mage.mmat",
+      "sha256": "d33ae32fdad22410ed2c157dacd1639a0a0777f3ab04e911a7d23c126ea285e0"
+    }
+  ]
+}

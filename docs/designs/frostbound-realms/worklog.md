@@ -99,3 +99,14 @@ CPU证据avoidance-cpu.json：Node密集出发首tick，3热身+10独立场景�
 原生Release avoidance QA通过12人交错到达、6人围攻/伤害和真实第一波7人TD入口；双原生客户端网络QA通过协议5、英雄选择、队列/驻守/巡逻与断线恢复。更新对应截图与JSON。Player最终276文件、1771实体、79模型，内容哈希0d026dac0c2f57e653238187eaf427f706ba822719c49da486576234b6b4ee56；逐文件和Release exe哈希正确，30秒启动正常响应、零ERROR。复用现有免费资产和Release引擎，新增Rust仅手动基准测试。物理输入、音频听感和跨机LAN未验收。
 
 完整目标保持active。下一阶段需继续扩大可用素材的实际场景表现，并优化持续行军与拥堵；完整战役、四族内容/美术、完整Dota/经典地图、通用工作队列、可视触发图、录像观战、重叠地形和5ms预算仍未完成。保留tmp/frost-traffic-reference.js及CPU profile作为后续性能参考；tmp和scripts/__pycache__不提交。
+
+
+2026-09-28 骨骼兵种与原生头像阶段：下载KayKit官方Skeletons免费版，固定Git提交15b62b9bad122f72926c10fb14d622c73819fa54。引入Skeleton_Rogue与Skeleton_Mage，对应Bone archer和Necromancer；弩与法杖追加为handslot.r子节点，按源坐标校准武器朝向。身体、帽子、披风原节点保持完整，原始95动画保留于SourceAssets，运行模型选取待机/行走/射击或施法/受击/死亡/出生六段。8个源文件、CC0原文、导入配方与6个派生哈希见skeleton-sources.json；import-frost-skeletons.py可独立或随主导入脚本重建。
+
+新增18个实际模型原生渲染头像，覆盖全部可移动模型键。训练菜单与单位头像绑定同一模型键，并展示金/木/人口成本；英雄选中保留既有英雄肖像。gltf_bounds Rust示例复用原生模型加载/骨骼采样给出真实几何边界，render-frost-unit-icons.mjs生成图集与unit-icons.json。显示层pose函数复用原有角色动画选择并支持新骨架；攻击朝向来自实际命中事件或有效显式目标，行军按位移转向，建筑维持原始朝向。无战斗数值、存档格式或网络协议变更。
+
+验证：Node全规则/TCP通过，新增图标覆盖、来源哈希、挂接层级、Idle/Walking/Attack片段和攻击朝向回归。实际QuickJS frost_sample 3/3；Rust frost_skins 3/3，证明身体顶点与源模型完全一致、武器随手部变换且保持刚体形状、全部保留片段坐标有效。重复导入6个派生文件哈希一致。独立只读审核确认CC0、源/派生哈希、身体节点及双方publicState的模型/pose/heading均有效。
+
+原生Release units QA通过新模型待机/行走/攻击、真实伤害、朝向旋转断言、选中头像、训练图标与存档恢复；四阵营factions QA通过建筑、工人选择、预览、标签。证据native-units-qa.json、native-factions-qa.json，截图undead-crossbow、undead-mage、undead-training。最终Player 284文件、1771实体、81模型，内容哈希1362668f15059a0c866fa9ff1101e8f25720dcb72e7cb7c8297fec153a5c9910；逐文件及Release exe一致，30秒启动响应正常、零ERROR。运行时Rust未改，复用Release引擎；新增Rust只为资产边界示例和测试。原生Agent输入不证明物理键鼠、音频听感或跨机LAN。
+
+完整目标保持active；本阶段只补足两种亡灵兵种美术与通用单位头像，完整战役、四族全量兵种/美术、完整Dota和经典地图内容、通用工作队列、持续密集行军性能、可视触发图、录像观战、重叠地形及5ms整体预算仍未完成。下一阶段可继续补种族科技/空军差异或核心内容，不能把当前原型标记为完整复刻。tmp与scripts/__pycache__仍保留且不提交。

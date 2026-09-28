@@ -2140,5 +2140,95 @@
       3,
       1
     ]
+  },
+  "Skeleton_Rogue": {
+    "material": "Assets/Materials/Skeleton_Rogue.mmat",
+    "parts": [
+      {
+        "name": "Skeleton_Rogue",
+        "mesh": "Assets/Models/Skeleton_Rogue.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 13
+      },
+      {
+        "name": "Walking_A",
+        "frames": 13
+      },
+      {
+        "name": "2H_Ranged_Shooting",
+        "frames": 13
+      },
+      {
+        "name": "Hit_A",
+        "frames": 8
+      },
+      {
+        "name": "Death_A",
+        "frames": 10
+      },
+      {
+        "name": "Spawn_Ground",
+        "frames": 16
+      }
+    ],
+    "size": [
+      2.3,
+      2.3,
+      2
+    ]
+  },
+  "Skeleton_Mage": {
+    "material": "Assets/Materials/Skeleton_Mage.mmat",
+    "parts": [
+      {
+        "name": "Skeleton_Mage",
+        "mesh": "Assets/Models/Skeleton_Mage.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 13
+      },
+      {
+        "name": "Walking_A",
+        "frames": 13
+      },
+      {
+        "name": "Spellcast_Shoot",
+        "frames": 11
+      },
+      {
+        "name": "Hit_A",
+        "frames": 8
+      },
+      {
+        "name": "Death_A",
+        "frames": 10
+      },
+      {
+        "name": "Spawn_Ground",
+        "frames": 16
+      }
+    ],
+    "size": [
+      2.3,
+      2.65,
+      2
+    ]
   }
 }

@@ -21,4 +21,15 @@ const buildings=JSON.parse(fs.readFileSync(new URL('faction-sources.json',root))
 const monsters=JSON.parse(fs.readFileSync(new URL('monster-sources.json',root)));monsters.forEach(m=>{verify(m);m.generated.forEach(verify);assert.ok(m.animations.length>=8);});
 const icons=JSON.parse(fs.readFileSync(new URL('faction-icons.json',root))),slices=JSON.parse(fs.readFileSync(new URL(icons.file+'.sprite.json',root))).slices;verify(icons);assert.equal(slices.length,32);assert.deepEqual(slices.map(s=>s.name).sort(),Object.keys(buildings.models).sort());
 assert.equal(Object.keys(buildings.models).length,32);assert.equal(monsters.length,5);
-console.log('PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters and pinned source/derived hashes');
+const skeletons=JSON.parse(fs.readFileSync(new URL('skeleton-sources.json',root)));assert.equal(skeletons.license,'CC0-1.0');skeletons.sources.forEach(verify);skeletons.generated.forEach(verify);
+const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,18);
+for(let faction=0;faction<4;faction++){const state=S.create('skirmish',{factions:[faction,0]});for(const kind of Object.keys(S.types))if(S.types[kind].speed)assert.ok(portraitKeys.has(V.model(state,{kind,team:0}).key),kind);}
+for(const [kind,key] of [['bonearcher','Skeleton_Rogue'],['necromancer','Skeleton_Mage']]){
+ const unit={kind,team:0,cd:0},visual=V.model(S.create(),unit);assert.equal(visual.key,key);assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(unit,visual.asset,true,.5),/#pose=1:6$/);unit.cd=1;assert.match(V.pose(unit,visual.asset,false,.5),/#pose=2:6$/);
+ const bytes=fs.readFileSync(new URL(visual.asset.parts[0].mesh,root)),doc=JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());const socket=doc.nodes.find(n=>n.name==='handslot.r'),weapon=skeletons.models[key].weapon;assert.ok(socket.children.some(i=>doc.nodes[i].name===weapon&&Number.isInteger(doc.nodes[i].mesh)),'weapon follows the hand hierarchy');assert.deepEqual(doc.animations.map(a=>a.name),skeletons.models[key].clips);
+}
+{
+ const state=S.create(),unit=S.spawn(state,'bonearcher',0,0,0),target=S.spawn(state,'soldier',1,8,0),old={x:0,z:-1,yaw:0};unit.cd=1;unit.order={type:'attack',target:target.id};state.events=[{type:'hit',team:0,fromX:0,fromZ:0,x:8,z:0}];assert.equal(V.heading(state,unit,old),Math.PI/2,'attack turns from the old marching direction toward the actual hit');
+ state.events=[];assert.equal(V.heading(state,unit,{x:0,z:0,yaw:0}),Math.PI/2,'stationary explicit attacks continue tracking their target');unit.order=null;unit.cd=0;assert.equal(V.heading(state,unit,{x:-1,z:0,yaw:0}),Math.PI/2,'marching turns with movement');assert.equal(V.heading(state,{kind:'tower',team:0,x:0,z:0,cd:1},old),0,'buildings retain their authored orientation');
+}
+console.log('PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 18 native unit portraits and pinned source/derived hashes');

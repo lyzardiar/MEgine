@@ -4,6 +4,15 @@
 
 ## 本次范围
 
+本阶段增加 KayKit 官方 CC0 骷髅弩手和骷髅法师，分别用于 Bone archer 与 Necromancer。弩和法杖挂接到原作者 `handslot.r`，保留身体骨架、帽子/披风层级；按实际状态播放待机、行走、射击/施法，模型随攻击目标转向。来源固定到官方Git提交，8个源文件、原文许可、配方和派生哈希见 [skeleton-sources.json](../../../samples/frostbound-realms/skeleton-sources.json)。当前81模型、1771实体。
+
+全部18种可移动模型拥有原生渲染头像，训练按钮和选中头像使用同一模型键；英雄选择仍使用已有英雄肖像。图集由实际骨骼姿态和原生几何边界生成，命令见下文。[兵种原生验收](native-units-qa.json) 覆盖两套模型待机/行走/攻击、实际伤害、攻击朝向、选中头像、训练图标和存档恢复；[四阵营原生回归](native-factions-qa.json) 通过。Node全规则/TCP、实际QuickJS 3/3、Rust模型/骨骼3/3通过，重新导入的6个派生文件哈希完全一致。
+
+![骷髅弩手](undead-crossbow.png)
+![亡灵训练](undead-training.png)
+
+### 密集行军阶段
+
 本阶段优化密集行军的重复寻路计算。相同可见障碍集合及碰撞半径共用动态占用网格，单位在同帧内移动后增量更新；固定网格节点的地形通行边按帧复用。保留整段扫掠、空地分层、编队终点、围攻和塔防入口规则。独立只读复核在混合编队、交错、空地、坡道、封闭高台五类场景各对照220帧，单位状态与优化前完全一致。
 
 Node 全规则/TCP、实际 QuickJS 3/3 通过。[原生验收](native-avoidance-qa.json) 覆盖12人交错到达、6人围攻造成伤害和塔防第一波7个激活单位离开入口；双原生客户端指令及断线恢复见[联机验收](native-network-qa.json)。
@@ -33,7 +42,7 @@ Node 全规则/TCP 回归与实际 QuickJS 3/3 通过。[原生驻守巡逻验�
 
 ![编队到达](formation-arrival.png)
 
-最新 Player 包 276 文件、1771 实体、79 模型，内容哈希 `0d026dac0c2f57e653238187eaf427f706ba822719c49da486576234b6b4ee56`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
+最新 Player 包284文件、1771 实体、81 模型，内容哈希 `1362668f15059a0c866fa9ff1101e8f25720dcb72e7cb7c8297fec153a5c9910`，逐文件与 Release exe 哈希核验及 30 秒启动结果见 [player-smoke.json](player-smoke.json)。
 
 本阶段接入四阵营 32 个建筑模型与 5 个骨骼动画怪物，模型目录共 79 项。建筑由 Kenney Castle/Nature/Graveyard 的 46 个模块组合，包含各阵营三级主基地与五类功能建筑；怪物来自 Quaternius Ultimate Monsters。下载原件、CC0 许可、源地址、配方和派生 SHA-256 分别留存于 faction-sources.json、monster-sources.json。32 个建造图标由真实建筑的原生渲染生成，建造菜单、预览、头像和升级外观保持对应。
 
@@ -134,10 +143,12 @@ Agent 输入没有覆盖物理键鼠设备；未听取实际音频，未做跨�
 
 ```powershell
 node scripts/build-frostbound.mjs
+node scripts/render-frost-unit-icons.mjs
 node scripts/test-frostbound.mjs
 pnpm.cmd run build:editor
 cargo build --release -p mengine-runtime -p mengine-editor-tauri --features tauri/custom-protocol
 node scripts/qa-frostbound.mjs
+node scripts/qa-frostbound.mjs --units-only
 node scripts/qa-frostbound.mjs --performance-only
 cargo test -p mengine-script --release --test frost_traffic -- --ignored --nocapture
 node scripts/qa-frostbound.mjs --formations-only
