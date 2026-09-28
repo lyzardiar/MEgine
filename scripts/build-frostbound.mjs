@@ -50,6 +50,9 @@ button('faction','FACTION',-440,298,220,37);button('continue','LOAD GAME',-207,2
 text('Menu vista','WINTERFALL BASIN',360,248,440,45,30,C.white,'Right');text('Menu credit','FREE CC0 ART / QUATERNIUS + KENNEY',360,289,440,26,12,C.gold,'Right');
 button('rpg','THE SHATTERED COVENANT [F8]',360,171,440,69,'menu','RPG / quests, relics and the frost sovereign');
 button('siege','SIEGE OF WINTERFALL [F9]',360,89,440,69,'menu','Lead siege engines against the fortified pass');
+button('heroChoice','FROST WARDEN [H]',360,7,440,69,'menu','Control / healing / click to change');
+art('Hero preview','Assets/Art/hero-portraits.png#hero-0',173,7,62,62);
+for(const suffix of [' label',' detail']){const r=E.find(e=>e.name==='heroChoice'+suffix).components.RectTransform;r.anchored_position[0]+=30;r.size_delta[0]-=70;}
 metal('Header',0,-333,1250,43);text('Brand','FROSTBOUND',-513,-334,200,30,19,C.gold);text('Resources','',30,-334,650,30,17,C.white);text('Clock','',509,-334,210,30,16,C.cyan,'Right');
 metal('Bottom',0,266,1250,179);panel('Bottom rule',0,177,1250,2,C.gold);
 panel('Minimap',-514,265,174,156,[.04,.11,.12,1]);

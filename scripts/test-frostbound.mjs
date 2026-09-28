@@ -1,6 +1,7 @@
 // Author: MiYu. Rule, editor-data and real TCP acceptance checks.
 import assert from 'node:assert/strict';
 import net from 'node:net';
+import './test-frost-heroes.mjs';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
@@ -8,7 +9,7 @@ globalThis.Frost=S;const terrain=createRequire(import.meta.url)('../samples/fros
 const terrainState=S.create(),terrainCells=terrain.cells(terrainState,0,false),left=terrain.chunk(terrainCells,2,3).flat(),right=terrain.chunk(terrainCells,3,3).flat();
 for(let row=0;row<6;row++){assert.equal(left[row*6+4],right[row*6]);assert.equal(left[row*6+5],right[row*6+1]);}
 assert.ok(terrain.chunk(terrainCells,0,0).flat().every(Number.isFinite));assert.equal(terrain.cells(terrainState,0,true)[0]%2,1);
-const spellGame=S.create('rpg'),caster=spellGame.units.find(u=>u.kind==='hero');assert.equal(S.command(spellGame,0,{type:'spell',ids:[caster.id],slot:0,x:caster.x,z:caster.z}),null);S.tick(spellGame);assert.ok(spellGame.events.some(e=>e.type==='spell'),'command spell survives the authoritative tick');assert.equal(S.publicState(spellGame,0).pendingEvents,undefined);S.tick(spellGame);assert.ok(!spellGame.events.some(e=>e.type==='spell'),'spell effect is emitted for one tick');
+const spellGame=S.create('rpg'),caster=spellGame.units.find(u=>u.kind==='hero');assert.equal(S.command(spellGame,0,{type:'learn',ids:[caster.id],slot:0}),null);assert.equal(S.command(spellGame,0,{type:'spell',ids:[caster.id],slot:0,x:caster.x,z:caster.z}),null);S.tick(spellGame);assert.ok(spellGame.events.some(e=>e.type==='spell'),'command spell survives the authoritative tick');assert.equal(S.publicState(spellGame,0).pendingEvents,undefined);S.tick(spellGame);assert.ok(!spellGame.events.some(e=>e.type==='spell'),'spell effect is emitted for one tick');
 const aiSpell=S.create('moba',{ai:[false,true]}),aiHero=aiSpell.units.find(u=>u.kind==='hero'&&u.team===1),aiTarget=aiSpell.units.find(u=>u.kind==='hero'&&u.team===0);aiTarget.x=aiHero.x-2;aiTarget.z=aiHero.z;aiSpell.frame=39;aiSpell.visible[1].fill(1);S.tick(aiSpell);assert.equal(aiSpell.events.filter(e=>e.type==='spell').length,1);S.tick(aiSpell);assert.equal(aiSpell.events.filter(e=>e.type==='spell').length,0,'AI effects are not replayed next tick');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 for(let faction=0;faction<4;faction++){
@@ -40,7 +41,7 @@ assert.equal(S.command(s,0,{type:'train',ids:[barracks.id],kind:'archer'}),null)
 const enemy=s.units.find(u=>u.team===1&&u.kind==='hero'),old=[enemy.x,enemy.z];S.command(s,0,{type:'move',ids:[enemy.id],x:0,z:0});assert.deepEqual([enemy.x,enemy.z],old);assert.equal(enemy.order,null,'cannot command opponent');
 assert.ok(S.command(s,0,{type:'attack',ids:[worker.id],target:enemy.id}),'unseen enemy cannot be targeted');
 assert.ok(S.command(s,0,{type:'build',ids:[worker.id],kind:'tower',x:NaN,z:0}));
-const h=s.units.find(u=>u.team===0&&u.kind==='hero');h.x=0;h.z=0;enemy.x=2;enemy.z=0;S.visibility(s);const hp=enemy.hp;assert.equal(S.command(s,0,{type:'spell',ids:[h.id],slot:0,x:2,z:0}),null);assert.ok(enemy.hp<hp);assert.ok(S.command(s,0,{type:'spell',ids:[h.id],slot:0,x:2,z:0}),'cooldown enforced');
+const h=s.units.find(u=>u.team===0&&u.kind==='hero');S.command(s,0,{type:'learn',ids:[h.id],slot:0});h.x=0;h.z=0;enemy.x=2;enemy.z=0;S.visibility(s);const hp=enemy.hp;assert.equal(S.command(s,0,{type:'spell',ids:[h.id],slot:0,x:2,z:0}),null);assert.ok(enemy.hp<hp);assert.ok(S.command(s,0,{type:'spell',ids:[h.id],slot:0,x:2,z:0}),'cooldown enforced');
 const route=S.path(s,{x:-10,z:0,id:0},10,0);assert.ok(route.length);assert.ok(route.every(([x,z])=>s.map.terrain[S.index(x,z)]!==1));
 const map=S.defaultMap('td');map.name='Roundtrip';map.startingGold=1100;map.terrain[70]=1;assert.deepEqual(S.validateMap(JSON.parse(JSON.stringify(map))),S.validateMap(map));assert.throws(()=>S.validateMap({...map,terrain:[1]}));assert.throws(()=>S.validateMap({...map,props:[{kind:'tree',x:Infinity,z:0}]}));
 const td=S.create('td');td.map.waves=3;td.map.waveInterval=10;for(const u of td.units)u.damage=0;step(td,1800);assert.equal(td.winner,1,'unopposed creeps reach the exit and win');
@@ -61,7 +62,7 @@ const fog=S.create('skirmish',{ai:[false,false]}),fh=fog.units.find(u=>u.kind===
 let rpg=S.create('rpg'),restored=false;
 for(let i=0;i<3000&&rpg.winner===null;i++){
   const hero=rpg.units.find(u=>u.kind==='hero'&&u.team===0);
-  if(hero.hp>0&&i%10===0){const enemy=rpg.units.filter(u=>u.team!==0&&u.hp>0).sort((a,b)=>S.distance(a,hero)-S.distance(b,hero))[0],drop=rpg.loot[0];
+  if(hero.hp>0&&i%10===0){for(const slot of [3,0,1,2])S.command(rpg,0,{type:'learn',ids:[hero.id],slot});const enemy=rpg.units.filter(u=>u.team!==0&&u.hp>0).sort((a,b)=>S.distance(a,hero)-S.distance(b,hero))[0],drop=rpg.loot[0];
     if(drop)S.command(rpg,0,{type:'move',ids:[hero.id],x:drop.x+2.2,z:drop.z});else if(enemy)S.command(rpg,0,{type:S.isVisible(rpg,0,enemy)?'attack':'attackMove',ids:[hero.id],target:enemy.id,x:enemy.x+2.2,z:enemy.z});else S.command(rpg,0,{type:'move',ids:[hero.id],x:-20.8,z:23});
     if(hero.hp<hero.maxHp*.7)S.command(rpg,0,{type:'spell',ids:[hero.id],slot:1,x:hero.x,z:hero.z});if(enemy&&S.distance(hero,enemy)<12)for(const slot of [0,3])S.command(rpg,0,{type:'spell',ids:[hero.id],slot,x:enemy.x,z:enemy.z});
   }S.tick(rpg);if(!restored&&rpg.quest.stage===1){rpg=S.restore(JSON.parse(JSON.stringify(rpg)));restored=true;}
@@ -70,15 +71,18 @@ assert.ok(restored);assert.equal(rpg.winner,0);assert.equal(rpg.quest.stage,4);a
 assert.throws(()=>S.restore({...rpg,teams:null}));assert.throws(()=>S.restore({...rpg,units:[{...rpg.units[0],spell:null}]}));assert.throws(()=>S.validateMap({...S.defaultMap('rpg'),units:[]}));
 assert.equal(S.publicState(tg,1).map.units.length,0,'authored units stay on the server');assert.equal(S.publicState(tg,1).map.triggers.length,0);
 const app=createServer({port:0}),address=await app.listening,peers=[];
-async function peer(){const messages=[],waiting=[];const socket=net.connect(address.port,'127.0.0.1');await new Promise((r,j)=>{socket.once('connect',r);socket.once('error',j);});let buffer='';socket.setEncoding('utf8');socket.on('data',b=>{buffer+=b;let end;while((end=buffer.indexOf('\n'))>=0){const m=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);messages.push(m);for(const w of [...waiting])if(w.predicate(m)){waiting.splice(waiting.indexOf(w),1);clearTimeout(w.timer);w.resolve(m);}}});const p={socket,messages,send:m=>socket.write(JSON.stringify(m)+'\n'),next:predicate=>new Promise((resolve,reject)=>{const w={predicate,resolve,timer:setTimeout(()=>reject(Error('Network message timed out')),6000)};waiting.push(w);})};peers.push(p);const welcome=p.next(m=>m.type==='welcome');p.send({type:'hello',protocol:1,name:'Tester'});await welcome;return p;}
+async function peer(protocol=2){const messages=[],waiting=[];const socket=net.connect(address.port,'127.0.0.1');await new Promise((r,j)=>{socket.once('connect',r);socket.once('error',j);});let buffer='';socket.setEncoding('utf8');socket.on('data',b=>{buffer+=b;let end;while((end=buffer.indexOf('\n'))>=0){const m=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);messages.push(m);for(const w of [...waiting])if(w.predicate(m)){waiting.splice(waiting.indexOf(w),1);clearTimeout(w.timer);w.resolve(m);}}});const p={socket,messages,send:m=>socket.write(JSON.stringify(m)+'\n'),next:predicate=>new Promise((resolve,reject)=>{const w={predicate,resolve,timer:setTimeout(()=>reject(Error('Network message timed out')),6000)};waiting.push(w);})};peers.push(p);const welcome=p.next(m=>m.type==='welcome'||m.type==='error');p.send({type:'hello',protocol,name:'Tester'});const response=await welcome;if(protocol===2)assert.equal(response.protocol,2);else assert.match(response.message,/Protocol version mismatch/);return p;}
 try{
-  const a=await peer(),b=await peer();let next=a.next(m=>m.type==='joined');a.send({type:'create',mode:'skirmish'});const joined=await next;
-  next=b.next(m=>m.type==='joined');b.send({type:'join',code:joined.code});const guest=await next;assert.notEqual(guest.team,joined.team);
+  const legacy=await peer(1);legacy.socket.destroy();const a=await peer(),b=await peer();let next=a.next(m=>m.type==='joined');a.send({type:'create',mode:'skirmish',heroClass:1});const joined=await next;
+  next=b.next(m=>m.type==='joined');b.send({type:'join',code:joined.code,heroClass:2});const guest=await next;assert.notEqual(guest.team,joined.team);
+  next=a.next(m=>m.type==='error');a.send({type:'pick',heroClass:'constructor'});assert.match((await next).message,/Invalid hero/);
+  next=a.next(m=>m.type==='room'&&m.players.some(p=>p.team===0&&p.heroClass===3));a.send({type:'pick',heroClass:3});await next;
   const ready=a.next(m=>m.type==='room'&&m.players.length===2&&m.players.every(p=>p.ready));a.send({type:'ready',ready:true});b.send({type:'ready',ready:true});await ready;
-  next=a.next(m=>m.type==='state');a.send({type:'start'});let state=(await next).state;assert.ok(state.units.every(u=>u.team!==1),'fog hides the distant opponent');
+  next=a.next(m=>m.type==='room'&&m.players.every(p=>!p.ready));a.send({type:'pick',heroClass:3});await next;next=a.next(m=>m.type==='error');a.send({type:'start'});assert.match((await next).message,/must be ready/);const reready=a.next(m=>m.type==='room'&&m.players.every(p=>p.ready));a.send({type:'ready',ready:true});b.send({type:'ready',ready:true});await reready;
+  next=a.next(m=>m.type==='state');a.send({type:'start'});let state=(await next).state;assert.equal(state.units.find(u=>u.kind==='hero').heroClass,3);assert.ok(state.units.every(u=>u.team!==1),'fog hides the distant opponent');
   const hero=state.units.find(u=>u.kind==='hero'),before=[hero.x,hero.z];a.send({type:'order',seq:1,command:{type:'move',ids:[hero.id],x:-16,z:15}});state=(await a.next(m=>m.type==='state'&&m.state.frame>12)).state;const moved=state.units.find(u=>u.id===hero.id);assert.ok(Math.hypot(moved.x-before[0],moved.z-before[1])>.5);
   next=a.next(m=>m.type==='error');a.send({type:'order',seq:1,command:{type:'move',ids:[hero.id],x:0,z:0}});assert.match((await next).message,/Stale/);
-  b.socket.destroy();await new Promise(r=>setTimeout(r,100));const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:guest.code,token:guest.token});assert.equal((await next).team,guest.team);
+  b.socket.destroy();await new Promise(r=>setTimeout(r,100));const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:guest.code,token:guest.token});const resumed=await next;assert.equal(resumed.team,guest.team);assert.equal(resumed.state.units.find(u=>u.kind==='hero'&&u.team===guest.team).heroClass,2);
   next=a.next(m=>m.type==='room'&&m.players.length===1);c.send({type:'leave'});await next;assert.equal(app.rooms.get(joined.code).state.teams[1].ai,true,'AI takes over a voluntarily vacated team');
   console.log('PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect');
 }finally{for(const p of peers)p.socket.destroy();await app.close();}

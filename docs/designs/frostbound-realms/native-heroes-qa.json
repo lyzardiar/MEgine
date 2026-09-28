@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "heroChoiceLearningSave": true,
+  "authoredHeroRoundtrip": true
+}

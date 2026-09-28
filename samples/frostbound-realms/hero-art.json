@@ -1,0 +1,16 @@
+{
+  "mode": "built-in image_gen",
+  "prompts": {
+    "portraits": "Production asset for original fantasy RTS Frostbound Realms. A perfectly regular 2 by 2 sprite sheet, square 1024x1024, four equal square close-up hero portraits. No gaps, no outer border, no writing, no names. Each face centered inside its own quadrant with shoulders and head, a slim antique gold ornamental edge entirely inside each tile. Rich hand painted PC fantasy strategy art, strong silhouettes readable at 96px, dark navy backgrounds. Top left: Frost Warden, mature silver haired male spellwarden, short beard, silver armor, blue hood, ice blue light. Top right: Ember Sage, older red haired male wizard with pointed dark red hat, red robes, amber eyes and fire glow, distinctly different face. Bottom left: Sylvan Ranger, young adult female elf archer, emerald hood, auburn hair, clear focused green eyes, leather shoulder guard and bow behind shoulder. Bottom right: Dawn Paladin, clean-shaven dark haired broad-faced male knight, shining gold and ivory plate armor, white cape, warm holy light. All four are original characters with consistent painterly style, detailed elegant game art, no modern objects.",
+    "skills": "Production game sprite sheet for original fantasy RTS. Exactly 4 columns by 4 rows of equally sized square spell icons, square 1024x1024 image. Every icon occupies exactly one grid cell; no gaps or outer border; no text, numbers, letters or labels. Detailed hand-painted fantasy ability art readable at 36px, dark navy square backgrounds, restrained antique gold edge inside each cell, central dramatic colored magical symbols. Row 1 left to right: cyan ice crystal nova explosion; blue-green healing hands; purple teleport portal; blizzard raining ice shards. Row 2 left to right: orange blazing fireball; amber flaming protective shield; burning lava circle on the ground; red winged dragon summoned from fire. Row 3 left to right: three silver arrows flying in a green cone; twisting roots binding a boot; leather boot with green wind trails; many golden arrows raining from the sky. Row 4 left to right: shining golden hammer of judgment; radiant golden healing palm; silver divine shield with white halo; armored knight silhouette crowned with radiant golden power. Clear original symbols, coherent premium strategy game icon art."
+  },
+  "files": [
+    "Assets/Art/hero-portraits.png",
+    "Assets/Art/hero-skills.png"
+  ],
+  "note": "Original UI illustrations; all gameplay screenshots are rendered by the native engine.",
+  "sha256": {
+    "Assets/Art/hero-portraits.png": "16c441aa7701d4227a61a1f8f0fe1a002273ae52facb0bf4f08459d29d2362fc",
+    "Assets/Art/hero-skills.png": "a0fc1d531a677ef81c78347764ddbee0cf87f69ade88b1a2342c41e6a69aa532"
+  }
+}
