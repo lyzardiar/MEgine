@@ -30,7 +30,7 @@ const command=(s,us,type,x,z,append=false)=>S.command(s,0,{type,ids:us.map(u=>u.
   assert.match(S.command(s,0,{type:'move',ids:[us[1].id],x:2,z:2,append:'yes'}),/Only movement/);assert.deepEqual(us,previous);
   assert.equal(command(s,us,'stop'),null);assert.ok(us.every(u=>!u.order&&!u.waypoints.length));
   command(s,us,'move',0,0);command(s,us,'move',5,5,true);assert.equal(command(s,us,'move',-5,-5),null);assert.ok(us.every(u=>!u.waypoints.length));
-  const worker=S.spawn(s,'worker',0,-10,0);s.resources=[{kind:'tree',x:-5,z:0,amount:100}];worker.order={type:'gather',resource:0};previous=S.clone(worker);assert.match(command(s,[worker],'move',10,0,true),/Issue a move/);assert.deepEqual(worker,previous);
+  const worker=S.spawn(s,'worker',0,-10,0);s.resources=[{kind:'tree',x:-5,z:0,amount:100}];worker.order={type:'gather',resource:0};previous=S.clone(worker);assert.equal(command(s,[worker],'move',10,0,true),null);assert.equal(worker.order.type,'gather');assert.equal(worker.waypoints.length,1);
 }
 {
   const s=game(),worker=S.spawn(s,'worker',0,0,0);s.teams[0].gold=2000;command(s,[worker],'move',5,0);command(s,[worker],'move',10,0,true);

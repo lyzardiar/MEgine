@@ -25,7 +25,7 @@ const order=(s,us,type,x,z)=>S.command(s,0,{type,ids:us.map(u=>u.id),x,z});
   const scan=()=>us.forEach((u,i)=>{if(Math.hypot(u.x-starts[i][0],u.z-starts[i][1])<.2)visits[i].start++;if(Math.hypot(u.x-ends[i][0],u.z-ends[i][1])<.2)visits[i].end++;});
   step(s,30);const restored=S.restore(s);for(let i=0;i<360;i++){S.tick(s);S.tick(restored);scan();}assert.deepEqual(s.units,restored.units);assert.ok(visits.every(v=>v.start>1&&v.end>1),'all formation members repeatedly visit both endpoints');
   assert.ok(us.every(u=>u.order.type==='patrol'));s.visible[1].fill(1);assert.ok(S.publicState(s,1).units.every(u=>u.order===null));
-  assert.match(S.command(s,0,{type:'move',ids:[us[0].id],x:0,z:0,append:true}),/Issue a move/);assert.equal(order(s,us,'move',-10,-10),null);assert.ok(us.every(u=>u.order.type==='move'&&!('fromX' in u.order)));
+  assert.match(S.command(s,0,{type:'move',ids:[us[0].id],x:0,z:0,append:true}),/Finish this order/);assert.equal(order(s,us,'move',-10,-10),null);assert.ok(us.every(u=>u.order.type==='move'&&!('fromX' in u.order)));
 }
 {
   const s=game(),u=S.spawn(s,'soldier',0,-10,-10),enemy=S.spawn(s,'worker',1,-4,-10,{hp:20,damage:0,speed:0});order(s,[u],'patrol',2,-10);let returned=false;

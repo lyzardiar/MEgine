@@ -222,13 +222,16 @@ var Frost = (() => {
   }
   function movementRadius(u){return types[u.kind].flying?1:types[u.kind].attack==='siege'?.9:types[u.kind].model==='knight'?.7:.5;}
   // ponytail: each selected unit scans the 32x32 grid (max 40); share reachability fields when maps grow.
+  function orderPoint(s,u,o){return o?.type==='gather'?s.resources[o.resource]||u:['construct','repair'].includes(o?.type)?s.units.find(b=>b.id===o.target)||u:Number.isFinite(o?.x)&&Number.isFinite(o?.z)?o:u;}
+  function queueable(u,o){return ['move','attackMove'].includes(o?.type)||u.kind==='worker'&&['build','construct','repair','gather'].includes(o?.type);}
+  function queueError(us){return us.some(u=>u.consumed||u.order&&!queueable(u,u.order))?'Finish this order before queuing work':us.some(u=>(u.waypoints?.length||0)>=8)?'Waypoint queue is full (8 waiting)':null;}
   function formation(s,units,x,z,append=false){
     const orders=new Map();
     for(const flying of [false,true]){
-      const members=units.filter(u=>!!types[u.kind].flying===flying).map(u=>{const p=append&&(u.waypoints?.at(-1)||u.order);return p?{...u,x:p.x,z:p.z}:u;});if(!members.length)continue;
+      const members=units.filter(u=>!!types[u.kind].flying===flying).map(u=>{const p=append&&orderPoint(s,u,u.waypoints?.at(-1)||u.order);return p?{...u,x:p.x,z:p.z}:u;});if(!members.length)continue;
       const cx=members.reduce((n,u)=>n+u.x,0)/members.length,cz=members.reduce((n,u)=>n+u.z,0)/members.length,d=Math.hypot(x-cx,z-cz),fx=d>.01?(x-cx)/d:0,fz=d>.01?(z-cz)/d:-1,columns=Math.ceil(Math.sqrt(members.length)),rows=Math.ceil(members.length/columns),spacing=Math.max(...members.map(movementRadius))*2+.6;
       members.sort((a,b)=>unitType(a).range-unitType(b).range||Math.round((((b.x-cx)*fx+(b.z-cz)*fz)-((a.x-cx)*fx+(a.z-cz)*fz))*1e6)||a.id-b.id);
-      const reserved=s.units.filter(u=>u.hp>0&&!u.inside&&u.speed&&u.team===members[0].team&&!units.some(v=>v.id===u.id)&&!!types[u.kind].flying===flying).map(u=>{const p=u.waypoints?.at(-1)||(['move','attackMove','patrol'].includes(u.order?.type)?u.order:u);return {x:p.x,z:p.z,r:movementRadius(u)};});
+      const reserved=s.units.filter(u=>u.hp>0&&!u.inside&&u.speed&&u.team===members[0].team&&!units.some(v=>v.id===u.id)&&!!types[u.kind].flying===flying).map(u=>{const p=orderPoint(s,u,u.waypoints?.at(-1)||(['move','attackMove','patrol'].includes(u.order?.type)?u.order:u));return {x:p.x,z:p.z,r:movementRadius(u)};});
       for(let i=0;i<members.length;i++){
         const u=members[i],row=Math.floor(i/columns),width=Math.min(columns,members.length-row*columns),side=(i%columns-(width-1)/2)*spacing,forward=((rows-1)/2-row)*spacing,ideal=[clamp(x+fz*side+fx*forward,-30,30),clamp(z-fx*side+fz*forward,-30,30)],r=movementRadius(u),search=flying?null:routeSearch(s,u),cells=flying?Array.from({length:1024},(_,j)=>j):search.cells;
         const available=(px,pz)=>Math.abs(px)<=30&&Math.abs(pz)<=30&&(flying||!solid(s,px,pz,u.id,u.team))&&reserved.every(v=>Math.hypot(px-v.x,pz-v.z)>=r+v.r+.3);
@@ -308,16 +311,15 @@ var Frost = (() => {
   function pay(s,team,gold,wood=0){const t=s.teams[team];if(!t||t.gold<gold||t.wood<wood)return false;t.gold-=gold;t.wood-=wood;return true;}
   function command(s,team,c){
     if(s.winner!==null||!c||![0,1].includes(team))return 'Match is finished';
-    if(c.append!==undefined&&typeof c.append!=='boolean'||c.append&&!['move','attackMove'].includes(c.type))return 'Only movement orders can be queued';
-    const own=s.units.filter(u=>u.team===team&&u.hp>0&&!u.inside&&Array.isArray(c.ids)&&c.ids.slice(0,40).includes(u.id)),u=own[0],point=Number.isFinite(c.x)&&Number.isFinite(c.z)&&Math.abs(c.x)<=30&&Math.abs(c.z)<=30;
+    if(c.append!==undefined&&typeof c.append!=='boolean'||c.append&&!['move','attackMove','build','construct','repair','gather'].includes(c.type))return 'Only movement and worker jobs can be queued';
+    const own=s.units.filter(u=>u.team===team&&u.hp>0&&(!u.inside||c.append&&u.kind==='worker'&&!u.consumed)&&Array.isArray(c.ids)&&c.ids.slice(0,40).includes(u.id)),u=own[0],point=Number.isFinite(c.x)&&Number.isFinite(c.z)&&Math.abs(c.x)<=30&&Math.abs(c.z)<=30;
     if(['move','attackMove','patrol','hold','attack','gather','stop'].includes(c.type)){
       if(['move','attackMove','patrol'].includes(c.type)&&!point)return 'Invalid destination';
       const target=s.units.find(v=>v.id===c.target&&v.hp>0);if(c.type==='attack'&&(!target||target.team===team||!isVisible(s,team,target)))return 'Target is not visible';
       if(c.type==='attack'&&!own.some(v=>canAttack(v,target)))return 'Selected units cannot attack this target';
       if(c.type==='gather'&&(!Number.isInteger(c.resource)||!s.resources[c.resource]||s.resources[c.resource].kind==='camp'))return 'Select a resource';
-      const moving=['move','attackMove','patrol'].includes(c.type),members=moving||c.type==='hold'?own.filter(v=>v.speed&&v.built===1):own;
-      if(c.append&&members.some(v=>v.order&&!['move','attackMove'].includes(v.order.type)))return 'Issue a move before adding waypoints';
-      if(c.append&&members.some(v=>(v.waypoints?.length||0)>=8))return 'Waypoint queue is full (8 waiting)';
+      const moving=['move','attackMove','patrol'].includes(c.type),members=c.type==='gather'?own.filter(v=>v.kind==='worker'):moving||c.type==='hold'?own.filter(v=>v.speed&&v.built===1):own;if(c.type==='gather'&&!members.length)return 'Select a worker';
+      if(c.append){const error=queueError(members);if(error)return error;}
       const slots=moving?formation(s,members,c.x,c.z,c.append):null;
       if(moving&&!slots)return 'No reachable space for this formation';
       members.forEach(v=>{
@@ -329,6 +331,7 @@ var Frost = (() => {
     }
     if(c.type==='build'){
       if(s.mode==='moba'||!u||u.kind!=='worker'||!['hall','farm','barracks','tower','frosttower','flametower','altar','workshop'].includes(c.kind)||!point)return 'Select a worker and a building site';
+      if(c.append){const error=queueError([u]);if(error)return error;if(!flatSite(s.map,c.x,c.z,types[c.kind].radius))return 'Building footprint requires flat dry ground';const next={type:'build',kind:c.kind,x:c.x,z:c.z};if(u.order)u.waypoints.push(next);else{u.order=next;u.path=[];u.pathAt=-100;}return null;}
       if(c.kind==='workshop'&&(s.mode!=='skirmish'||s.teams[team].tier<2))return 'Siege workshop requires stronghold tier 2';
       if(s.mode==='skirmish'&&s.teams[team].faction===3&&c.kind!=='hall'&&!s.units.some(v=>v.team===team&&v.hp>0&&v.built===1&&['hall','altar'].includes(v.kind)&&distance(v,c)<=(v.kind==='hall'?18:12)))return 'Summon inside stronghold or altar territory';
       const d=types[c.kind];if(!flatSite(s.map,c.x,c.z,d.radius))return 'Building footprint requires flat dry ground';if(distance(u,c)>15||solid(s,c.x,c.z)||s.units.some(v=>v.hp>0&&!types[v.kind].speed&&distance(v,c)<(types[v.kind].radius||1)+d.radius+.8))return 'Site blocked or too far from worker';
@@ -340,7 +343,8 @@ var Frost = (() => {
     if(c.type==='construct'||c.type==='repair'){
       const b=s.units.find(v=>v.id===c.target&&v.team===team&&v.hp>0&&!types[v.kind].speed),workers=own.filter(v=>v.kind==='worker');
       if(!b||!workers.length||c.type==='construct'&&(b.built===1||b.construction?.started&&b.construction.style!=='work')||c.type==='repair'&&(b.built<1||b.hp>=b.maxHp))return 'Select workers and a friendly construction site or damaged completed building';
-      for(const w of workers)assignWork(w,b,c.type);return null;
+      if(c.append){const error=queueError(workers);if(error)return error;}
+      for(const w of workers)if(c.append&&w.order)w.waypoints.push({type:c.type,target:b.id});else assignWork(w,b,c.type);return null;
     }
     if(c.type==='cancelBuild'){
       if(!u||u.built===1||!u.construction)return 'Select an unfinished building';const c=u.construction;s.teams[team].gold+=Math.floor(c.paidGold*.75);s.teams[team].wood+=Math.floor(c.paidWood*.75);u.hp=0;finishWork(s,u,true);hallDefeat(s,u);return null;
@@ -410,14 +414,18 @@ var Frost = (() => {
   }
   function hallDefeat(s,b){if(b.kind==='hall'&&s.mode!=='td'&&(s.mode!=='skirmish'||!s.units.some(v=>v.team===b.team&&v.kind==='hall'&&v.hp>0)))s.winner=1-b.team;}
   function assignWork(w,b,type){if(!w.workResume&&w.order?.type==='gather')w.workResume=clone(w.order);w.order={type,target:b.id};w.waypoints=[];w.path=[];w.pathAt=-100;}
-  function releaseWorker(w){delete w.inside;delete w.consumed;w.order=w.workResume||null;delete w.workResume;w.path=[];w.pathAt=-100;}
-  function finishWork(s,b,cancel=false){for(const w of s.units)if(w.inside===b.id||['construct','repair'].includes(w.order?.type)&&w.order.target===b.id){if(w.consumed&&!cancel)w.hp=0;releaseWorker(w);}delete b.construction;}
+  function advanceOrder(s,u){
+    u.order=null;u.path=[];u.pathAt=-100;
+    while(u.hp>0&&u.waypoints.length){const next=u.waypoints.shift();if(['move','attackMove','build'].includes(next.type)){u.order=next;return;}const pending=u.waypoints,error=command(s,u.team,{...next,ids:[u.id]});u.waypoints=pending;if(!error)return;s.announcements[u.team]='Queued '+next.type+' skipped: '+error;}
+  }
+  function releaseWorker(s,w){delete w.inside;delete w.consumed;w.order=w.hp>0?w.workResume||null:null;delete w.workResume;w.path=[];w.pathAt=-100;if(w.hp<=0)w.waypoints=[];else if(w.waypoints.length)advanceOrder(s,w);}
+  function finishWork(s,b,cancel=false){for(const w of s.units)if(w.inside===b.id||['construct','repair'].includes(w.order?.type)&&w.order.target===b.id){if(w.consumed&&!cancel)w.hp=0;releaseWorker(s,w);}delete b.construction;}
   function work(s,w){
-    const b=s.units.find(v=>v.id===w.order.target&&v.team===w.team&&v.hp>0&&!types[v.kind].speed);if(!b||w.order.type==='construct'&&b.built===1||w.order.type==='repair'&&(b.built<1||b.hp>=b.maxHp)){releaseWorker(w);return;}
+    const b=s.units.find(v=>v.id===w.order.target&&v.team===w.team&&v.hp>0&&!types[v.kind].speed);if(!b||w.order.type==='construct'&&b.built===1||w.order.type==='repair'&&(b.built<1||b.hp>=b.maxHp)){releaseWorker(s,w);return;}
     if(!move(s,w,b.x,b.z,types[b.kind].radius+1.1))return;
     if(w.order.type==='repair'){const d=types[b.kind],hp=Math.min(b.maxHp-b.hp,b.maxHp*DT/(d.time*1.5));if(pay(s,w.team,d.gold*hp/b.maxHp*.5,d.wood*hp/b.maxHp*.5))b.hp+=hp;return;}
-    const c=b.construction;if(!c){releaseWorker(w);return;}if(c.started&&c.style!=='work'){releaseWorker(w);return;}
-    c.started=true;if(c.style==='inside'||c.style==='growth'&&!['farm','altar'].includes(b.kind)){w.inside=b.id;w.consumed=c.style==='growth';}else if(c.style!=='work')releaseWorker(w);
+    const c=b.construction;if(!c){releaseWorker(s,w);return;}if(c.started&&c.style!=='work'){releaseWorker(s,w);return;}
+    c.started=true;if(c.style==='inside'||c.style==='growth'&&!['farm','altar'].includes(b.kind)){w.inside=b.id;w.consumed=c.style==='growth';if(w.consumed){if(w.waypoints.length)s.announcements[w.team]='Worker consumed by living construction; queued work cleared';w.waypoints=[];}}else if(c.style!=='work')releaseWorker(s,w);
   }
   function construct(s,b){
     const c=b.construction;if(!c?.started)return;let rate=1;
@@ -454,8 +462,8 @@ var Frost = (() => {
   function visibility(s){
     for(let t=0;t<2;t++){const vis=Array(1024).fill(0);for(const u of s.units)if(u.team===t&&u.hp>0&&!u.inside){const [cx,cz]=cell(u.x,u.z),r=u.kind==='tower'?7:6;for(let z=Math.max(0,cz-r);z<=Math.min(31,cz+r);z++)for(let x=Math.max(0,cx-r);x<=Math.min(31,cx+r);x++)if((x-cx)**2+(z-cz)**2<=r*r)vis[z*32+x]=1;}s.visible[t]=vis;for(let i=0;i<1024;i++)if(vis[i])s.explored[t][i]=1;}
   }
-  function gather(s,u){let r=s.resources[u.order.resource];if(!r){u.order=null;return;}if(r.amount<=0&&!u.cargo){const next=s.resources.filter(v=>v.kind===r.kind&&v.amount>0).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!next){u.order=null;return;}u.order.resource=s.resources.indexOf(next);r=next;}const hall=s.units.filter(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!hall)return;const returning=u.cargo>=20||u.cargo>0&&(r.amount<=0||u.cargoKind&&u.cargoKind!==r.kind),target=returning?hall:r;
-    const reach=returning?4:3;if(distance(u,target)>reach||!traversable(s.map,u.x,u.z,target.x,target.z)){move(s,u,target.x,target.z,reach-.1);return;}if(returning){s.teams[u.team][(u.cargoKind||r.kind)==='mine'?'gold':'wood']+=u.cargo;u.cargo=0;delete u.cargoKind;}else if(u.cd<=0){const take=Math.min(5,r.amount);u.cargo+=take;u.cargoKind=r.kind;r.amount-=take;u.cd=.65;}
+  function gather(s,u){let r=s.resources[u.order.resource];if(!r){advanceOrder(s,u);return;}if(r.amount<=0&&!u.cargo){const next=s.resources.filter(v=>v.kind===r.kind&&v.amount>0).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!next){advanceOrder(s,u);return;}u.order.resource=s.resources.indexOf(next);r=next;}const hall=s.units.filter(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!hall){if(u.waypoints.length){s.announcements[u.team]='Queued gathering skipped: no completed stronghold';advanceOrder(s,u);}return;}const returning=u.cargo>=20||u.cargo>0&&(r.amount<=0||u.cargoKind&&u.cargoKind!==r.kind),target=returning?hall:r;
+    const reach=returning?4:3;if(distance(u,target)>reach||!traversable(s.map,u.x,u.z,target.x,target.z)){move(s,u,target.x,target.z,reach-.1);return;}if(returning){s.teams[u.team][(u.cargoKind||r.kind)==='mine'?'gold':'wood']+=u.cargo;u.cargo=0;delete u.cargoKind;if(u.waypoints.length)advanceOrder(s,u);}else if(u.cd<=0){const take=Math.min(5,r.amount);u.cargo+=take;u.cargoKind=r.kind;r.amount-=take;u.cd=.65;}
   }
   function ai(s,t){
     const team=s.teams[t],us=s.units.filter(u=>u.team===t&&u.hp>0),base=s.map.spawns[t],foe=s.map.spawns[1-t],worker=us.find(u=>u.kind==='worker'&&!u.inside&&!['construct','repair'].includes(u.order?.type));
@@ -498,6 +506,9 @@ var Frost = (() => {
       if(u.queue.length){u.queue[0].left=Math.max(0,u.queue[0].left-DT);if(u.queue[0].left===0&&s.units.length<LIMIT){let p=null;for(let a=0;a<12;a++){const x=u.x+Math.cos(a*Math.PI/6)*4,z=u.z+Math.sin(a*Math.PI/6)*4;if(Math.abs(x)<=30&&Math.abs(z)<=30&&(types[u.queue[0].kind].flying||!solid(s,x,z))&&s.units.every(v=>v.hp<=0||v.inside||!types[v.kind].speed||!!types[v.kind].flying!==!!types[u.queue[0].kind].flying||Math.hypot(x-v.x,z-v.z)>=movementRadius(v)+movementRadius({kind:u.queue[0].kind})+.05)){p=[x,z];break;}}if(p){const q=u.queue.shift(),v=spawn(s,q.kind,u.team,...p);if(u.rally)v.order={type:v.kind==='worker'?'move':'attackMove',...u.rally};}}}
       if(u.stun>0)continue;
       if(u.order?.type==='pickup'){const d=s.loot.find(d=>d.id===u.order.target);if(!d||!s.visible[u.team][index(d.x,d.z)]||u.inventory.length>=6&&!d.relic){u.order=null;u.path=[];}else if(distance(u,d)<=2.5&&traversable(s.map,u.x,u.z,d.x,d.z)){pickup(s,u,d);u.order=null;u.path=[];}else move(s,u,d.x,d.z,2.25);continue;}
+      if(u.kind==='worker'&&u.order?.type==='build'){
+        const o=u.order;if(distance(u,o)>15){move(s,u,o.x,o.z,types[o.kind].radius+1.1);continue;}const pending=u.waypoints,error=command(s,u.team,{...o,ids:[u.id]});u.waypoints=pending;if(error){s.announcements[u.team]='Queued build skipped: '+error;advanceOrder(s,u);}else if(!u.order)advanceOrder(s,u);continue;
+      }
       if(u.kind==='worker'&&['construct','repair'].includes(u.order?.type)){work(s,u);continue;}
       if(u.kind==='worker'&&u.order?.type==='gather'){gather(s,u);continue;}
       if(u.td){const p=u.route[u.waypoint];if(!p){u.hp=0;s.lives-=u.tdBoss?5:1;if(s.lives<=0)s.winner=1;continue;}if(move(s,u,p[0],p[1],u.waypoint===u.route.length-1?4.5:1.3))u.waypoint++;continue;}
@@ -510,7 +521,7 @@ var Frost = (() => {
       }
       else if(u.order&&['move','attackMove','patrol'].includes(u.order.type)){
         if(!types[u.kind].flying&&solid(s,u.order.x,u.order.z,u.id,u.team)||s.units.some(v=>v.id!==u.id&&v.team===u.team&&v.hp>0&&!v.inside&&types[v.kind].speed&&(!v.order||v.order.type==='hold')&&!!types[v.kind].flying===!!types[u.kind].flying&&Math.hypot(v.x-u.order.x,v.z-u.order.z)<movementRadius(u)+movementRadius(v)+.1)){const p=formation(s,[u],u.order.x,u.order.z)?.get(u.id);if(p){u.order.x=p[0];u.order.z=p[1];u.path=[];u.pathAt=-100;}}
-        if(move(s,u,u.order.x,u.order.z,.12)){if(u.order.type==='patrol'){const o=u.order;[o.x,o.z,o.fromX,o.fromZ]=[o.fromX,o.fromZ,o.x,o.z];}else u.order=u.waypoints?.shift()||null;u.path=[];u.pathAt=-100;}
+        if(move(s,u,u.order.x,u.order.z,.12)){if(u.order.type==='patrol'){const o=u.order;[o.x,o.z,o.fromX,o.fromZ]=[o.fromX,o.fromZ,o.x,o.z];}else advanceOrder(s,u);u.path=[];u.pathAt=-100;}
       }
       else if(!u.order&&u.route){const p=u.route[u.waypoint];if(p&&move(s,u,p[0],p[1],1.5))u.waypoint++;}
       else if(!u.order&&u.home&&distance(u,{x:u.home[0],z:u.home[1]})>3)move(s,u,...u.home,2);
@@ -573,8 +584,8 @@ var Frost = (() => {
       if(u.order?.type==='pickup'&&(u.kind!=='hero'||!Number.isSafeInteger(u.order.target)||u.order.target<1||u.order.target>s.serial))throw Error('Invalid saved pickup order');
       if(u.order?.type==='patrol'&&(!types[u.kind].speed||![u.order.x,u.order.z,u.order.fromX,u.order.fromZ].every(v=>Number.isFinite(v)&&Math.abs(v)<=30))||u.order?.type==='hold'&&!types[u.kind].speed)throw Error('Invalid saved patrol or hold order');
       if(u.waypoints===undefined)u.waypoints=[];
-      const waypoint=p=>p&&['move','attackMove'].includes(p.type)&&[p.x,p.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30);
-      if(!Array.isArray(u.waypoints)||u.waypoints.length>8||!u.waypoints.every(waypoint)||u.waypoints.length&&(!types[u.kind].speed||u.hp<=0||!waypoint(u.order)))throw Error('Invalid saved waypoint queue');
+      const waypoint=p=>p&&(['move','attackMove'].includes(p.type)?[p.x,p.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30):u.kind==='worker'&&(p.type==='build'?['hall','farm','barracks','tower','frosttower','flametower','altar','workshop'].includes(p.kind)&&[p.x,p.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30):p.type==='gather'?Number.isInteger(p.resource)&&p.resource>=0&&raw.resources?.[p.resource]&&raw.resources[p.resource].kind!=='camp':['construct','repair'].includes(p.type)&&Number.isSafeInteger(p.target)&&p.target>0&&p.target<=s.serial));
+      if(!Array.isArray(u.waypoints)||u.waypoints.length>8||!u.waypoints.every(waypoint)||u.order?.type==='build'&&!waypoint(u.order)||u.waypoints.length&&(!types[u.kind].speed||u.hp<=0||u.consumed||!waypoint(u.order)))throw Error('Invalid saved waypoint queue');
       if(u.built<0||u.built>1)throw Error('Invalid saved construction progress');
       if(u.built<1&&!u.construction)u.construction={style:'legacy',started:true,paidGold:0,paidWood:0};
       if(u.construction){const c=u.construction,d=types[u.kind];if(u.built===1||d.speed||!['work','inside','growth','summon','legacy'].includes(c.style)||typeof c.started!=='boolean'||![c.paidGold,c.paidWood].every(v=>finite(v)&&v>=0)||c.paidGold>d.gold||c.paidWood>d.wood)throw Error('Invalid saved construction');}
@@ -600,6 +611,6 @@ var Frost = (() => {
     for(const t of s.teams){t.tier??=1;t.research??=0;t.heroClass??=0;if(!validHero(t.heroClass)||!Number.isInteger(t.tier)||t.tier<1||t.tier>3||!Number.isFinite(t.research)||t.research<0||t.research>40)throw Error('Invalid saved technology');}s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
   function publicState(s,team){const state=clone(s);delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]);state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,canAttack,weaponDamage,trainable,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,canAttack,weaponDamage,trainable,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "workQueues": {
+    "fixture": "Flat terrain, no AI, one mine; initial workers hold. Real Agent build/Shift placement/right-click gather/save/load/stop.",
+    "mixedJobs": true,
+    "deferredPayment": true,
+    "numberedMarkers": 3,
+    "saveRestore": true,
+    "sequentialConstruction": true,
+    "miningDelivery": true,
+    "stopClears": true
+  }
+}
