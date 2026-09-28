@@ -4,6 +4,15 @@
 
 ## 本次范围
 
+英雄六格背包支持使用、丢弃、右键走近拾取和主城出售；配方购买原子结算，出售返还含部件价值的50%，换装保持当前生命比例。生命/魔法药水回复250 HP/100 MP，共享10秒冷却。地面物品、拾取路径、物品冷却随存档和联机重连恢复；协议升级为6，拒绝1–5。任务单位每次死亡生成独立掉落ID，地面最多160件，满包保留掉落。
+
+[背包原生验收](native-inventory-qa.json) 使用平坦无AI地图，英雄初始HP300/MP0并放置在商店范围内、基地回血范围外；所有购买、合成、丢弃、拾取、出售、药水和保存加载操作通过原生Agent输入。规则/TCP全套通过，新增真实TCP合成/掉落/拾取/重连/出售链路，实际QuickJS 3/3、[双原生客户端协议6与重连](native-network-qa.json) 通过。当前81模型、1899实体；本阶段沿用现有许可素材。
+
+![背包与合成](inventory-recipe.png)
+![药水与共享冷却](inventory-potion.png)
+
+### 骨骼兵种与原生头像
+
 本阶段增加 KayKit 官方 CC0 骷髅弩手和骷髅法师，分别用于 Bone archer 与 Necromancer。弩和法杖挂接到原作者 `handslot.r`，保留身体骨架、帽子/披风层级；按实际状态播放待机、行走、射击/施法，模型随攻击目标转向。来源固定到官方Git提交，8个源文件、原文许可、配方和派生哈希见 [skeleton-sources.json](../../../samples/frostbound-realms/skeleton-sources.json)。当前81模型、1771实体。
 
 全部18种可移动模型拥有原生渲染头像，训练按钮和选中头像使用同一模型键；英雄选择仍使用已有英雄肖像。图集由实际骨骼姿态和原生几何边界生成，命令见下文。[兵种原生验收](native-units-qa.json) 覆盖两套模型待机/行走/攻击、实际伤害、攻击朝向、选中头像、训练图标和存档恢复；[四阵营原生回归](native-factions-qa.json) 通过。Node全规则/TCP、实际QuickJS 3/3、Rust模型/骨骼3/3通过，重新导入的6个派生文件哈希完全一致。
@@ -32,7 +41,7 @@ Node 全规则/TCP 回归与实际 QuickJS 3/3 通过。[原生驻守巡逻验�
 
 本阶段增加 Shift 移动/攻击移动队列：每单位最多8个等待落点，整组上限检查，未来编队按前一个落点朝向分配；普通改令和停止清空后续路线。工作、闪现、死亡和触发器改令同步清理队列。界面增加首个选中单位的编号路线，绿色移动/橙色攻击移动，越出战场的屏幕编号隐藏。地图场景新增18个标记/文字实体，保留既有实体编号；资产仍为79模型，1771场景实体。
 
-规则验证覆盖顺序到达、攻击移动遇敌后续行军、混合编队存档回放、上限原子拒绝、改令/工作/闪现/死亡清理、旧档迁移、坏档拒绝及对手队列保密。Node全规则/TCP与真实QuickJS 3/3通过，服务器队列和主机重连有专门断言。[原生路线验收](native-waypoints-qa.json) 验证左右Shift、编号显示、保存/加载后继续完成和停止清空；[原生联机验收](native-network-qa.json) 检查协议5、两个客户端和重连。建造/采集等通用指令队列仍待实现。
+规则验证覆盖顺序到达、攻击移动遇敌后续行军、混合编队存档回放、上限原子拒绝、改令/工作/闪现/死亡清理、旧档迁移、坏档拒绝及对手队列保密。Node全规则/TCP与真实QuickJS 3/3通过，服务器队列和主机重连有专门断言。[原生路线验收](native-waypoints-qa.json) 验证左右Shift、编号显示、保存/加载后继续完成和停止清空；[原生联机验收](native-network-qa.json) 检查协议6、两个客户端和重连。建造/采集等通用指令队列仍待实现。
 
 ![Shift路线](waypoint-route.png)
 
@@ -151,6 +160,7 @@ node scripts/qa-frostbound.mjs
 node scripts/qa-frostbound.mjs --units-only
 node scripts/qa-frostbound.mjs --performance-only
 cargo test -p mengine-script --release --test frost_traffic -- --ignored --nocapture
+node scripts/qa-frostbound.mjs --inventory-only
 node scripts/qa-frostbound.mjs --formations-only
 node scripts/qa-frostbound.mjs --waypoints-only
 pnpm.cmd --filter @mengine/cli build

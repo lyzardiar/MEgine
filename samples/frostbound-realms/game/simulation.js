@@ -20,6 +20,8 @@ var Frost = (() => {
   };
   const items = [{name:'Runic blade',gold:180,damage:18},{name:'Heartstone',gold:160,hp:220},{name:'Wayfarer boots',gold:140,speed:.8}];
   items.push({name:'Covenant edge',gold:120,damage:28,hp:120,recipe:[0,1]},{name:'Stormstride',gold:100,damage:16,speed:.6,recipe:[0,2]},{name:'Sanctuary charm',gold:100,hp:240,speed:.3,recipe:[1,2]});
+  items.push({name:'Healing potion',gold:80,restoreHp:250},{name:'Mana potion',gold:90,restoreMana:100});
+  const itemValue=i=>items[i].gold+(items[i].recipe||[]).reduce((n,p)=>n+itemValue(p),0);
   types.frosttower={...types.tower,label:'Frost spire',damage:28,slow:2.5,gold:170,model:'tower'};
   types.flametower={...types.tower,label:'Ember bastion',damage:34,splash:3,gold:210,cooldown:1.8,model:'tower'};
   const armies = [
@@ -175,7 +177,7 @@ var Frost = (() => {
   function spawn(s,kind,team,x,z,extra={}) {
     if(s.units.length>=LIMIT)return null;
     const heroClass=kind==='hero'?(extra.heroClass??s.teams[team]?.heroClass??0):0,d=kind==='hero'?heroes[heroClass]:types[kind],f=s.teams[team]?.faction||0,hp=d.hp*(f===1?1.12:1),speed=d.speed*(f===2?1.12:1);
-    const u={id:++s.serial,kind,team,x,z,hp,maxHp:hp,damage:d.damage*(f===3?1.1:1),speed,cd:0,order:null,waypoints:[],path:[],pathAt:-100,built:1,queue:[],level:1,xp:0,mana:150,spell:[0,0,0,0],inventory:[],cargo:0,respawn:0,...(kind==='hero'?{heroClass,skills:[0,0,0,0],skillPoints:1}:{}),...extra};s.units.push(u);return u;
+    const u={id:++s.serial,kind,team,x,z,hp,maxHp:hp,damage:d.damage*(f===3?1.1:1),speed,cd:0,order:null,waypoints:[],path:[],pathAt:-100,built:1,queue:[],level:1,xp:0,mana:150,spell:[0,0,0,0],inventory:[],cargo:0,respawn:0,...(kind==='hero'?{heroClass,skills:[0,0,0,0],skillPoints:1,itemCooldown:0}:{}),...extra};s.units.push(u);return u;
   }
   function create(mode='skirmish',options={}) {
     const map=validateMap(options.map||defaultMap(mode));mode=map.mode;if(options.heroes&&(!Array.isArray(options.heroes)||options.heroes.length!==2||!options.heroes.every(validHero)))throw Error('Invalid hero selection');
@@ -358,10 +360,24 @@ var Frost = (() => {
     if(c.type==='sell'){if(s.mode!=='td'||!u||types[u.kind].model!=='tower')return 'Select a defense tower';s.teams[team].gold+=Math.floor((types[u.kind].gold+100*(u.level-1)*u.level/2)*.65);u.hp=0;return null;}
     if(c.type==='upgrade'){if(!u||u.kind!=='barracks'||u.built<1)return 'Select a completed barracks';if(s.teams[team].upgrade>=s.teams[team].tier)return 'Advance your stronghold for more research';if(!pay(s,team,180+s.teams[team].upgrade*100,100))return 'Not enough resources';s.teams[team].upgrade++;return null;}
     if(c.type==='buy'){
-      const item=Number.isInteger(c.item)?items[c.item]:null;if(!u||u.kind!=='hero'||!item||u.inventory.length>=6&&!item.recipe)return 'Select a hero with an empty inventory slot';if(!s.units.some(v=>v.team===team&&v.kind==='hall'&&v.hp>0&&v.built===1&&distance(v,u)<10))return 'Visit your stronghold shop';
-      if(item.recipe&&!item.recipe.every(i=>u.inventory.includes(i)))return 'Requires '+item.recipe.map(i=>items[i].name).join(' + ');
-      if(item.recipe&&s.teams[team].gold>=item.gold)for(const i of item.recipe){u.inventory.splice(u.inventory.indexOf(i),1);const part=items[i];u.damage-=part.damage||0;u.maxHp-=part.hp||0;u.speed-=part.speed||0;u.hp=Math.min(u.hp,u.maxHp);}
-      if(!pay(s,team,item.gold))return 'Not enough gold';equip(u,c.item);return null;
+      const item=Number.isInteger(c.item)?items[c.item]:null;if(!u||u.kind!=='hero'||!item)return 'Select a hero and an item';if(!atShop(s,u))return 'Visit your stronghold shop';
+      const next=[...u.inventory];for(const part of item.recipe||[]){const slot=next.indexOf(part);if(slot<0)return 'Requires '+item.recipe.map(i=>items[i].name).join(' + ');next.splice(slot,1);}if(next.length>=6)return 'Inventory is full';
+      if(!pay(s,team,item.gold))return 'Not enough gold';setInventory(u,[...next,c.item]);return null;
+    }
+    if(['dropItem','sellItem','useItem'].includes(c.type)){
+      if(!u||u.kind!=='hero'||!Number.isInteger(c.slot)||c.slot<0||c.slot>=u.inventory.length||!Number.isInteger(c.item)||u.inventory[c.slot]!==c.item)return 'Select a current inventory slot';
+      const item=items[c.item],next=u.inventory.filter((_,i)=>i!==c.slot);
+      if(c.type==='sellItem'){if(!atShop(s,u))return 'Visit your stronghold shop';s.teams[team].gold+=Math.floor(itemValue(c.item)/2);}
+      if(c.type==='dropItem'){if(s.loot.length>=LIMIT-64)return 'Too many items on the ground';s.loot.push({id:++s.serial,x:u.x,z:u.z,item:c.item,relic:false,manual:true});}
+      if(c.type==='useItem'){
+        if(!item.restoreHp&&!item.restoreMana)return 'This item grants a passive bonus';if(u.stun>0||u.itemCooldown>0)return 'Item is not ready';if(item.restoreHp&&u.hp>=u.maxHp||item.restoreMana&&u.mana>=150+u.level*10)return 'Already at full health or mana';
+        if(item.restoreHp)u.hp=Math.min(u.maxHp,u.hp+item.restoreHp);if(item.restoreMana)u.mana=Math.min(150+u.level*10,u.mana+item.restoreMana);u.itemCooldown=10;const event={type:'spell',slot:1,heroClass:u.heroClass,x:u.x,z:u.z,team};s.events.push(event);if(!simulating.has(s))(s.pendingEvents??=[]).push(event);
+      }
+      setInventory(u,next);return null;
+    }
+    if(c.type==='pickup'){
+      const loot=Number.isSafeInteger(c.loot)?s.loot.find(d=>d.id===c.loot):null;if(!u||u.kind!=='hero'||!loot||!s.visible[team][index(loot.x,loot.z)])return 'Select a hero and a visible dropped item';if(u.inventory.length>=6&&!loot.relic)return 'Inventory is full';if(loot.relic&&(s.mode!=='rpg'||team!==0))return 'Quest relic belongs to the expedition';
+      u.order={type:'pickup',target:loot.id};u.waypoints=[];u.path=[];u.pathAt=-100;return null;
     }
     if(c.type==='learn'){
       if(!u||u.kind!=='hero'||!Number.isInteger(c.slot)||c.slot<0||c.slot>3)return 'Select your hero and a skill';
@@ -409,7 +425,13 @@ var Frost = (() => {
     const progress=Math.min(1-b.built,DT/types[b.kind].time*rate);b.built=Math.min(1,b.built+progress);b.hp=Math.min(b.maxHp,b.hp+b.maxHp*progress*.9/.99);if(s.frame%10===0)s.events.push({type:'construction',x:b.x,z:b.z,team:b.team});if(b.built===1)finishWork(s,b);
   }
   function segmentDistance(x,z,a,b){const dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t);}
-  function equip(u,i){const item=items[i];u.inventory.push(i);u.damage+=item.damage||0;u.maxHp+=item.hp||0;u.hp=Math.min(u.maxHp,u.hp+(item.hp||0));u.speed+=item.speed||0;}
+  function atShop(s,u){return s.units.some(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1&&distance(v,u)<10&&traversable(s.map,u.x,u.z,v.x,v.z));}
+  function setInventory(u,next){
+    const sum=(list,key)=>list.reduce((n,i)=>n+(items[i][key]||0),0),ratio=u.hp/u.maxHp;u.damage+=sum(next,'damage')-sum(u.inventory,'damage');u.maxHp+=sum(next,'hp')-sum(u.inventory,'hp');u.speed+=sum(next,'speed')-sum(u.inventory,'speed');u.hp=Math.min(u.maxHp,u.maxHp*ratio);u.inventory=next;
+  }
+  function equip(u,i){setInventory(u,[...u.inventory,i]);}
+  function pickup(s,u,d){if(d.relic)s.quest.relic=true;else equip(u,d.item);s.loot.splice(s.loot.indexOf(d),1);}
+
   function experience(h,xp){h.xp+=xp;while(h.xp>=h.level*90&&h.level<10){h.xp-=h.level*90;h.level++;h.skillPoints++;h.maxHp+=90;h.hp=Math.min(h.maxHp,h.hp+150);h.damage+=6;}}
   function meleeSlot(s,u,target){
     if(u.order?.type!=='attack'||unitType(u).range>2||!u.speed)return null;
@@ -423,7 +445,7 @@ var Frost = (() => {
     if(types[a.kind].lifesteal)a.hp=Math.min(a.maxHp,a.hp+value*types[a.kind].lifesteal);
     if(types[a.kind].slow)b.slow=types[a.kind].slow;
     if(b.hp<=0){b.hp=0;b.waypoints=[];if(!types[b.kind].speed)finishWork(s,b);s.events.push({type:'death',x:b.x,z:b.z,team:b.team});if(a.team>=0){s.teams[a.team].gold+=b.kind==='hero'?140:!types[b.kind].speed?80:25;s.teams[a.team].kills++;for(const h of s.units.filter(u=>u.team===a.team&&u.kind==='hero'&&u.hp>0&&distance(u,b)<18))experience(h,b.kind==='hero'?100:35);}
-      if(s.mode==='rpg'&&a.team===0){if(b.tag==='scout')s.quest.scouts++;if(b.tag==='boss')s.quest.boss=true;if(b.tag)s.loot.push({id:b.id,x:b.x,z:b.z,relic:b.tag==='keeper',item:b.tag==='boss'?0:b.id%3});}
+      if(s.mode==='rpg'&&a.team===0){if(b.tag==='scout')s.quest.scouts++;if(b.tag==='boss')s.quest.boss=true;if(b.tag){if(s.loot.length>=LIMIT&&b.tag==='keeper'){const old=s.loot.findIndex(d=>!d.manual&&!d.relic);if(old>=0)s.loot.splice(old,1);}if(s.loot.length<LIMIT)s.loot.push({id:++s.serial,x:b.x,z:b.z,relic:b.tag==='keeper',item:b.tag==='boss'?0:b.id%3});}}
       if(b.kind==='hero'&&(s.mode==='moba'||s.mode==='rpg')){b.respawn=12+b.level*2;if(s.mode==='rpg')s.teams[b.team].gold=Math.max(0,s.teams[b.team].gold-50);}
       hallDefeat(s,b);
     }
@@ -468,12 +490,14 @@ var Frost = (() => {
       if(u.inside)continue;
       if(u.summoned&&s.frame>=u.expires){u.hp=0;continue;}
       for(const effect of ['stun','root','haste','avatar','shieldLeft'])if(u[effect]>0)u[effect]=Math.max(0,u[effect]-DT);if(!u.shieldLeft)u.shield=0;
+      if(u.kind==='hero')u.itemCooldown=Math.max(0,(u.itemCooldown||0)-DT);
       u.cd=Math.max(0,u.cd-DT);u.spell=u.spell.map(v=>Math.max(0,v-DT));u.mana=Math.min(150+u.level*10,u.mana+DT*2);
       u.slow=Math.max(0,(u.slow||0)-DT);
       if(types[u.kind].heal&&s.frame%10===0)for(const ally of s.units)if(ally.team===u.team&&ally.hp>0&&distance(ally,u)<6)ally.hp=Math.min(ally.maxHp,ally.hp+types[u.kind].heal);
       if(u.built<1){construct(s,u);continue;}
       if(u.queue.length){u.queue[0].left=Math.max(0,u.queue[0].left-DT);if(u.queue[0].left===0&&s.units.length<LIMIT){let p=null;for(let a=0;a<12;a++){const x=u.x+Math.cos(a*Math.PI/6)*4,z=u.z+Math.sin(a*Math.PI/6)*4;if(Math.abs(x)<=30&&Math.abs(z)<=30&&(types[u.queue[0].kind].flying||!solid(s,x,z))&&s.units.every(v=>v.hp<=0||v.inside||!types[v.kind].speed||!!types[v.kind].flying!==!!types[u.queue[0].kind].flying||Math.hypot(x-v.x,z-v.z)>=movementRadius(v)+movementRadius({kind:u.queue[0].kind})+.05)){p=[x,z];break;}}if(p){const q=u.queue.shift(),v=spawn(s,q.kind,u.team,...p);if(u.rally)v.order={type:v.kind==='worker'?'move':'attackMove',...u.rally};}}}
       if(u.stun>0)continue;
+      if(u.order?.type==='pickup'){const d=s.loot.find(d=>d.id===u.order.target);if(!d||!s.visible[u.team][index(d.x,d.z)]||u.inventory.length>=6&&!d.relic){u.order=null;u.path=[];}else if(distance(u,d)<=2.5&&traversable(s.map,u.x,u.z,d.x,d.z)){pickup(s,u,d);u.order=null;u.path=[];}else move(s,u,d.x,d.z,2.25);continue;}
       if(u.kind==='worker'&&['construct','repair'].includes(u.order?.type)){work(s,u);continue;}
       if(u.kind==='worker'&&u.order?.type==='gather'){gather(s,u);continue;}
       if(u.td){const p=u.route[u.waypoint];if(!p){u.hp=0;s.lives-=u.tdBoss?5:1;if(s.lives<=0)s.winner=1;continue;}if(move(s,u,p[0],p[1],u.waypoint===u.route.length-1?4.5:1.3))u.waypoint++;continue;}
@@ -497,7 +521,7 @@ var Frost = (() => {
     s.units=s.units.filter(u=>u.hp>0||u.respawn>0);
     if(s.mode==='rpg'){
       const h=s.units.find(u=>u.kind==='hero'&&u.team===0&&u.hp>0);
-      if(h){s.loot=s.loot.filter(d=>{if(distance(h,d)>2.5)return true;if(d.relic)s.quest.relic=true;else if(h.inventory.length<6)equip(h,d.item);else s.teams[0].gold+=60;return false;});
+      if(h){s.loot=s.loot.filter(d=>{if(d.manual||distance(h,d)>2.5||!traversable(s.map,h.x,h.z,d.x,d.z)||!d.relic&&h.inventory.length>=6)return true;if(d.relic)s.quest.relic=true;else equip(h,d.item);return false;});
         const q=s.quest,done=[q.scouts>=3,q.relic,q.boss,distance(h,{x:s.map.spawns[0][0],z:s.map.spawns[0][1]})<7];
         if(q.stage<4&&done[q.stage]){q.stage++;experience(h,180);s.teams[0].gold+=150;s.announcement=q.stage===4?'The covenant is restored.':questNames[q.stage];s.events.push({type:'spell',slot:1,x:h.x,z:h.z,team:0});if(q.stage===4)s.winner=0;}
       }
@@ -546,6 +570,7 @@ var Frost = (() => {
     if(s.teams.some(t=>!t||![t.gold,t.wood,t.faction,t.upgrade,t.kills].every(finite)||!Number.isInteger(t.faction)||t.faction<0||t.faction>3))throw Error('Invalid saved teams');
     const ids=new Set();for(const u of s.units){
       if(!u||!Object.hasOwn(types,u.kind)||![-1,0,1].includes(u.team)||!Number.isSafeInteger(u.id)||u.id<1||u.id>s.serial||ids.has(u.id)||![u.x,u.z,u.hp,u.maxHp,u.damage,u.speed,u.cd,u.built,u.level,u.xp,u.mana,u.cargo,u.respawn,u.pathAt].every(finite)||u.maxHp<=0||!Array.isArray(u.path)||u.path.length>1024||!u.path.every(point)||!Array.isArray(u.spell)||u.spell.length!==4||!u.spell.every(finite)||!Array.isArray(u.queue)||u.queue.length>3||u.queue.some(q=>!q||!Object.hasOwn(types,q.kind)||!finite(q.left))||!Array.isArray(u.inventory)||u.inventory.length>6||u.inventory.some(i=>!Number.isInteger(i)||!items[i])||u.route!==undefined&&(!Array.isArray(u.route)||!u.route.every(point))||u.home!==undefined&&!point(u.home))throw Error('Invalid saved units');ids.add(u.id);
+      if(u.order?.type==='pickup'&&(u.kind!=='hero'||!Number.isSafeInteger(u.order.target)||u.order.target<1||u.order.target>s.serial))throw Error('Invalid saved pickup order');
       if(u.order?.type==='patrol'&&(!types[u.kind].speed||![u.order.x,u.order.z,u.order.fromX,u.order.fromZ].every(v=>Number.isFinite(v)&&Math.abs(v)<=30))||u.order?.type==='hold'&&!types[u.kind].speed)throw Error('Invalid saved patrol or hold order');
       if(u.waypoints===undefined)u.waypoints=[];
       const waypoint=p=>p&&['move','attackMove'].includes(p.type)&&[p.x,p.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30);
@@ -554,7 +579,7 @@ var Frost = (() => {
       if(u.built<1&&!u.construction)u.construction={style:'legacy',started:true,paidGold:0,paidWood:0};
       if(u.construction){const c=u.construction,d=types[u.kind];if(u.built===1||d.speed||!['work','inside','growth','summon','legacy'].includes(c.style)||typeof c.started!=='boolean'||![c.paidGold,c.paidWood].every(v=>finite(v)&&v>=0)||c.paidGold>d.gold||c.paidWood>d.wood)throw Error('Invalid saved construction');}
       if(u.workResume&&!(u.workResume.type==='gather'&&Number.isInteger(u.workResume.resource)&&raw.resources?.[u.workResume.resource]))throw Error('Invalid saved work resume');
-      if(u.kind==='hero'){u.heroClass??=0;if(u.skills===undefined){u.skills=[1,0,0,0];u.skillPoints=u.level-1;}if(!validHero(u.heroClass)||!Number.isInteger(u.level)||u.level<1||u.level>10||!Array.isArray(u.skills)||u.skills.length!==4||u.skills.some((r,i)=>!Number.isInteger(r)||r<0||r>(i===3?1:3)||r>0&&u.level<skillLevel(i,r))||!Number.isInteger(u.skillPoints)||u.skillPoints<0||u.skills.reduce((n,r)=>n+r,0)+u.skillPoints!==u.level)throw Error('Invalid saved hero skills');}
+      if(u.kind==='hero'){u.itemCooldown??=0;if(!finite(u.itemCooldown)||u.itemCooldown<0||u.itemCooldown>10)throw Error('Invalid saved item cooldown');u.heroClass??=0;if(u.skills===undefined){u.skills=[1,0,0,0];u.skillPoints=u.level-1;}if(!validHero(u.heroClass)||!Number.isInteger(u.level)||u.level<1||u.level>10||!Array.isArray(u.skills)||u.skills.length!==4||u.skills.some((r,i)=>!Number.isInteger(r)||r<0||r>(i===3?1:3)||r>0&&u.level<skillLevel(i,r))||!Number.isInteger(u.skillPoints)||u.skillPoints<0||u.skills.reduce((n,r)=>n+r,0)+u.skillPoints!==u.level)throw Error('Invalid saved hero skills');}
       for(const key of ['stun','root','haste','avatar','shieldLeft','shield'])if(u[key]!==undefined&&(!finite(u[key])||u[key]<0))throw Error('Invalid saved combat effect');
       if(u.summoned&&(!Number.isSafeInteger(u.expires)||u.expires<0))throw Error('Invalid saved summon');
       if(u.rally!==undefined&&(!u.rally||![u.rally.x,u.rally.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30)||u.team<0||!trainable(s,u).length))throw Error('Invalid saved rally');
@@ -568,13 +593,13 @@ var Frost = (() => {
     if(!Array.isArray(s.resources)||s.resources.length>100||s.resources.some(r=>!r||!['mine','tree','camp'].includes(r.kind)||![r.x,r.z,r.amount].every(finite)))throw Error('Invalid saved resources');
     s.zones??=[];if(!Array.isArray(s.zones)||s.zones.length>LIMIT*4||s.zones.some(z=>!z||![0,1].includes(z.team)||!validHero(z.heroClass)||![z.x,z.z,z.radius,z.damage,z.slow,z.left,z.pulse].every(finite)||z.radius<0||z.radius>14||z.damage<0||z.left<0||z.left>30||!Number.isInteger(z.slot)||z.slot<0||z.slot>3))throw Error('Invalid saved spell zones');
     const defaults=create(s.mode,{map:s.map});for(const key of ['loot','quest','triggered','announcement','announcements'])s[key]??=defaults[key];
-    if(!Array.isArray(s.loot)||s.loot.length>LIMIT||s.loot.some(d=>!d||![d.x,d.z].every(finite)||!items[d.item])||!Array.isArray(s.triggered)||new Set(s.triggered).size!==s.triggered.length||s.triggered.some(i=>!Number.isInteger(i)||i<0||i>=s.map.triggers.length)||!Number.isInteger(s.quest.stage)||s.quest.stage<0||s.quest.stage>4)throw Error('Invalid saved objectives');
+    if(!Array.isArray(s.loot)||s.loot.length>LIMIT||new Set(s.loot.map(d=>d?.id)).size!==s.loot.length||s.loot.some(d=>!d||!Number.isSafeInteger(d.id)||d.id<1||d.id>s.serial||![d.x,d.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30)||!Number.isInteger(d.item)||!items[d.item]||d.manual!==undefined&&typeof d.manual!=='boolean'||d.relic!==undefined&&typeof d.relic!=='boolean')||!Array.isArray(s.triggered)||new Set(s.triggered).size!==s.triggered.length||s.triggered.some(i=>!Number.isInteger(i)||i<0||i>=s.map.triggers.length)||!Number.isInteger(s.quest.stage)||s.quest.stage<0||s.quest.stage>4)throw Error('Invalid saved objectives');
     if(!Array.isArray(s.announcements)||s.announcements.length!==2||s.announcements.some(text=>typeof text!=='string'||text.length>120))throw Error('Invalid saved player announcements');
     if(s.triggerState===undefined)s.triggerState=s.map.triggers.map((t,i)=>({count:s.triggered.includes(i)?1:0,last:s.triggered.includes(i)?s.frame:-1,next:0}));
     if(!Array.isArray(s.triggerState)||s.triggerState.length!==s.map.triggers.length||s.triggerState.some((c,i)=>!c||!Number.isInteger(c.count)||c.count<0||c.count>s.map.triggers[i].limit||!Number.isSafeInteger(c.last)||c.last < -1||c.last>s.frame||!Number.isSafeInteger(c.next)||c.next<0||c.next>s.frame+600/DT||!!c.count!==s.triggered.includes(i)||c.count===0&&c.last!==-1||c.count>0&&c.last<0))throw Error('Invalid saved trigger clock');
     for(const t of s.teams){t.tier??=1;t.research??=0;t.heroClass??=0;if(!validHero(t.heroClass)||!Number.isInteger(t.tier)||t.tier<1||t.tier>3||!Number.isFinite(t.research)||t.research<0||t.research>40)throw Error('Invalid saved technology');}s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
   function publicState(s,team){const state=clone(s);delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]);state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,armies,siege,flyers,canAttack,weaponDamage,trainable,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,canAttack,weaponDamage,trainable,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "inventory": {
+    "fixture": "Flat terrain, no AI; initial hero HP 300 and mana 0, positioned within shop range outside hall regeneration. All purchases and inventory actions use Agent input.",
+    "recipe": true,
+    "drop": true,
+    "rightClickPickup": true,
+    "healthRatio": true,
+    "sell": true,
+    "healingPotion": true,
+    "manaPotion": true,
+    "sharedCooldown": true,
+    "saveRestore": true
+  }
+}

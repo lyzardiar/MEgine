@@ -65066,6 +65066,3974 @@
             "raycast_target": false
           }
         }
+      },
+      {
+        "entity": 1772,
+        "name": "Objective 32",
+        "parent": null,
+        "siblingIndex": 1771,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1773,
+        "name": "Objective 33",
+        "parent": null,
+        "siblingIndex": 1772,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1774,
+        "name": "Objective 34",
+        "parent": null,
+        "siblingIndex": 1773,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1775,
+        "name": "Objective 35",
+        "parent": null,
+        "siblingIndex": 1774,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1776,
+        "name": "Objective 36",
+        "parent": null,
+        "siblingIndex": 1775,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1777,
+        "name": "Objective 37",
+        "parent": null,
+        "siblingIndex": 1776,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1778,
+        "name": "Objective 38",
+        "parent": null,
+        "siblingIndex": 1777,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1779,
+        "name": "Objective 39",
+        "parent": null,
+        "siblingIndex": 1778,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1780,
+        "name": "Objective 40",
+        "parent": null,
+        "siblingIndex": 1779,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1781,
+        "name": "Objective 41",
+        "parent": null,
+        "siblingIndex": 1780,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1782,
+        "name": "Objective 42",
+        "parent": null,
+        "siblingIndex": 1781,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1783,
+        "name": "Objective 43",
+        "parent": null,
+        "siblingIndex": 1782,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1784,
+        "name": "Objective 44",
+        "parent": null,
+        "siblingIndex": 1783,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1785,
+        "name": "Objective 45",
+        "parent": null,
+        "siblingIndex": 1784,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1786,
+        "name": "Objective 46",
+        "parent": null,
+        "siblingIndex": 1785,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1787,
+        "name": "Objective 47",
+        "parent": null,
+        "siblingIndex": 1786,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1788,
+        "name": "Objective 48",
+        "parent": null,
+        "siblingIndex": 1787,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1789,
+        "name": "Objective 49",
+        "parent": null,
+        "siblingIndex": 1788,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1790,
+        "name": "Objective 50",
+        "parent": null,
+        "siblingIndex": 1789,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1791,
+        "name": "Objective 51",
+        "parent": null,
+        "siblingIndex": 1790,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1792,
+        "name": "Objective 52",
+        "parent": null,
+        "siblingIndex": 1791,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1793,
+        "name": "Objective 53",
+        "parent": null,
+        "siblingIndex": 1792,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1794,
+        "name": "Objective 54",
+        "parent": null,
+        "siblingIndex": 1793,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1795,
+        "name": "Objective 55",
+        "parent": null,
+        "siblingIndex": 1794,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1796,
+        "name": "Objective 56",
+        "parent": null,
+        "siblingIndex": 1795,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1797,
+        "name": "Objective 57",
+        "parent": null,
+        "siblingIndex": 1796,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1798,
+        "name": "Objective 58",
+        "parent": null,
+        "siblingIndex": 1797,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1799,
+        "name": "Objective 59",
+        "parent": null,
+        "siblingIndex": 1798,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1800,
+        "name": "Objective 60",
+        "parent": null,
+        "siblingIndex": 1799,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1801,
+        "name": "Objective 61",
+        "parent": null,
+        "siblingIndex": 1800,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1802,
+        "name": "Objective 62",
+        "parent": null,
+        "siblingIndex": 1801,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1803,
+        "name": "Objective 63",
+        "parent": null,
+        "siblingIndex": 1802,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1804,
+        "name": "Objective 64",
+        "parent": null,
+        "siblingIndex": 1803,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1805,
+        "name": "Objective 65",
+        "parent": null,
+        "siblingIndex": 1804,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1806,
+        "name": "Objective 66",
+        "parent": null,
+        "siblingIndex": 1805,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1807,
+        "name": "Objective 67",
+        "parent": null,
+        "siblingIndex": 1806,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1808,
+        "name": "Objective 68",
+        "parent": null,
+        "siblingIndex": 1807,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1809,
+        "name": "Objective 69",
+        "parent": null,
+        "siblingIndex": 1808,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1810,
+        "name": "Objective 70",
+        "parent": null,
+        "siblingIndex": 1809,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1811,
+        "name": "Objective 71",
+        "parent": null,
+        "siblingIndex": 1810,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1812,
+        "name": "Objective 72",
+        "parent": null,
+        "siblingIndex": 1811,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1813,
+        "name": "Objective 73",
+        "parent": null,
+        "siblingIndex": 1812,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1814,
+        "name": "Objective 74",
+        "parent": null,
+        "siblingIndex": 1813,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1815,
+        "name": "Objective 75",
+        "parent": null,
+        "siblingIndex": 1814,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1816,
+        "name": "Objective 76",
+        "parent": null,
+        "siblingIndex": 1815,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1817,
+        "name": "Objective 77",
+        "parent": null,
+        "siblingIndex": 1816,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1818,
+        "name": "Objective 78",
+        "parent": null,
+        "siblingIndex": 1817,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1819,
+        "name": "Objective 79",
+        "parent": null,
+        "siblingIndex": 1818,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1820,
+        "name": "Objective 80",
+        "parent": null,
+        "siblingIndex": 1819,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1821,
+        "name": "Objective 81",
+        "parent": null,
+        "siblingIndex": 1820,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1822,
+        "name": "Objective 82",
+        "parent": null,
+        "siblingIndex": 1821,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1823,
+        "name": "Objective 83",
+        "parent": null,
+        "siblingIndex": 1822,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1824,
+        "name": "Objective 84",
+        "parent": null,
+        "siblingIndex": 1823,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1825,
+        "name": "Objective 85",
+        "parent": null,
+        "siblingIndex": 1824,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1826,
+        "name": "Objective 86",
+        "parent": null,
+        "siblingIndex": 1825,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1827,
+        "name": "Objective 87",
+        "parent": null,
+        "siblingIndex": 1826,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1828,
+        "name": "Objective 88",
+        "parent": null,
+        "siblingIndex": 1827,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1829,
+        "name": "Objective 89",
+        "parent": null,
+        "siblingIndex": 1828,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1830,
+        "name": "Objective 90",
+        "parent": null,
+        "siblingIndex": 1829,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1831,
+        "name": "Objective 91",
+        "parent": null,
+        "siblingIndex": 1830,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1832,
+        "name": "Objective 92",
+        "parent": null,
+        "siblingIndex": 1831,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1833,
+        "name": "Objective 93",
+        "parent": null,
+        "siblingIndex": 1832,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1834,
+        "name": "Objective 94",
+        "parent": null,
+        "siblingIndex": 1833,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1835,
+        "name": "Objective 95",
+        "parent": null,
+        "siblingIndex": 1834,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1836,
+        "name": "Objective 96",
+        "parent": null,
+        "siblingIndex": 1835,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1837,
+        "name": "Objective 97",
+        "parent": null,
+        "siblingIndex": 1836,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1838,
+        "name": "Objective 98",
+        "parent": null,
+        "siblingIndex": 1837,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1839,
+        "name": "Objective 99",
+        "parent": null,
+        "siblingIndex": 1838,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1840,
+        "name": "Objective 100",
+        "parent": null,
+        "siblingIndex": 1839,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1841,
+        "name": "Objective 101",
+        "parent": null,
+        "siblingIndex": 1840,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1842,
+        "name": "Objective 102",
+        "parent": null,
+        "siblingIndex": 1841,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1843,
+        "name": "Objective 103",
+        "parent": null,
+        "siblingIndex": 1842,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1844,
+        "name": "Objective 104",
+        "parent": null,
+        "siblingIndex": 1843,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1845,
+        "name": "Objective 105",
+        "parent": null,
+        "siblingIndex": 1844,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1846,
+        "name": "Objective 106",
+        "parent": null,
+        "siblingIndex": 1845,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1847,
+        "name": "Objective 107",
+        "parent": null,
+        "siblingIndex": 1846,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1848,
+        "name": "Objective 108",
+        "parent": null,
+        "siblingIndex": 1847,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1849,
+        "name": "Objective 109",
+        "parent": null,
+        "siblingIndex": 1848,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1850,
+        "name": "Objective 110",
+        "parent": null,
+        "siblingIndex": 1849,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1851,
+        "name": "Objective 111",
+        "parent": null,
+        "siblingIndex": 1850,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1852,
+        "name": "Objective 112",
+        "parent": null,
+        "siblingIndex": 1851,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1853,
+        "name": "Objective 113",
+        "parent": null,
+        "siblingIndex": 1852,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1854,
+        "name": "Objective 114",
+        "parent": null,
+        "siblingIndex": 1853,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1855,
+        "name": "Objective 115",
+        "parent": null,
+        "siblingIndex": 1854,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1856,
+        "name": "Objective 116",
+        "parent": null,
+        "siblingIndex": 1855,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1857,
+        "name": "Objective 117",
+        "parent": null,
+        "siblingIndex": 1856,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1858,
+        "name": "Objective 118",
+        "parent": null,
+        "siblingIndex": 1857,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1859,
+        "name": "Objective 119",
+        "parent": null,
+        "siblingIndex": 1858,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1860,
+        "name": "Objective 120",
+        "parent": null,
+        "siblingIndex": 1859,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1861,
+        "name": "Objective 121",
+        "parent": null,
+        "siblingIndex": 1860,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1862,
+        "name": "Objective 122",
+        "parent": null,
+        "siblingIndex": 1861,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1863,
+        "name": "Objective 123",
+        "parent": null,
+        "siblingIndex": 1862,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1864,
+        "name": "Objective 124",
+        "parent": null,
+        "siblingIndex": 1863,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1865,
+        "name": "Objective 125",
+        "parent": null,
+        "siblingIndex": 1864,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1866,
+        "name": "Objective 126",
+        "parent": null,
+        "siblingIndex": 1865,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1867,
+        "name": "Objective 127",
+        "parent": null,
+        "siblingIndex": 1866,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1868,
+        "name": "Objective 128",
+        "parent": null,
+        "siblingIndex": 1867,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1869,
+        "name": "Objective 129",
+        "parent": null,
+        "siblingIndex": 1868,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1870,
+        "name": "Objective 130",
+        "parent": null,
+        "siblingIndex": 1869,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1871,
+        "name": "Objective 131",
+        "parent": null,
+        "siblingIndex": 1870,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1872,
+        "name": "Objective 132",
+        "parent": null,
+        "siblingIndex": 1871,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1873,
+        "name": "Objective 133",
+        "parent": null,
+        "siblingIndex": 1872,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1874,
+        "name": "Objective 134",
+        "parent": null,
+        "siblingIndex": 1873,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1875,
+        "name": "Objective 135",
+        "parent": null,
+        "siblingIndex": 1874,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1876,
+        "name": "Objective 136",
+        "parent": null,
+        "siblingIndex": 1875,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1877,
+        "name": "Objective 137",
+        "parent": null,
+        "siblingIndex": 1876,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1878,
+        "name": "Objective 138",
+        "parent": null,
+        "siblingIndex": 1877,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1879,
+        "name": "Objective 139",
+        "parent": null,
+        "siblingIndex": 1878,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1880,
+        "name": "Objective 140",
+        "parent": null,
+        "siblingIndex": 1879,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1881,
+        "name": "Objective 141",
+        "parent": null,
+        "siblingIndex": 1880,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1882,
+        "name": "Objective 142",
+        "parent": null,
+        "siblingIndex": 1881,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1883,
+        "name": "Objective 143",
+        "parent": null,
+        "siblingIndex": 1882,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1884,
+        "name": "Objective 144",
+        "parent": null,
+        "siblingIndex": 1883,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1885,
+        "name": "Objective 145",
+        "parent": null,
+        "siblingIndex": 1884,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1886,
+        "name": "Objective 146",
+        "parent": null,
+        "siblingIndex": 1885,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1887,
+        "name": "Objective 147",
+        "parent": null,
+        "siblingIndex": 1886,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1888,
+        "name": "Objective 148",
+        "parent": null,
+        "siblingIndex": 1887,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1889,
+        "name": "Objective 149",
+        "parent": null,
+        "siblingIndex": 1888,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1890,
+        "name": "Objective 150",
+        "parent": null,
+        "siblingIndex": 1889,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1891,
+        "name": "Objective 151",
+        "parent": null,
+        "siblingIndex": 1890,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1892,
+        "name": "Objective 152",
+        "parent": null,
+        "siblingIndex": 1891,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1893,
+        "name": "Objective 153",
+        "parent": null,
+        "siblingIndex": 1892,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1894,
+        "name": "Objective 154",
+        "parent": null,
+        "siblingIndex": 1893,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1895,
+        "name": "Objective 155",
+        "parent": null,
+        "siblingIndex": 1894,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1896,
+        "name": "Objective 156",
+        "parent": null,
+        "siblingIndex": 1895,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1897,
+        "name": "Objective 157",
+        "parent": null,
+        "siblingIndex": 1896,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1898,
+        "name": "Objective 158",
+        "parent": null,
+        "siblingIndex": 1897,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
+      },
+      {
+        "entity": 1899,
+        "name": "Objective 159",
+        "parent": null,
+        "siblingIndex": 1898,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/roof-point-roof-point.glb",
+            "material": "Assets/Materials/roof-point.mmat"
+          }
+        }
       }
     ],
     "frame": 0,
