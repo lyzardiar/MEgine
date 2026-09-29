@@ -55,6 +55,19 @@ for(const [kind,key] of [['soldier','RealFootman'],['worker','RealWorker']]){
  assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),Math.PI/2,'melee slot adjustment after striking keeps facing the victim');target.x=20;assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),0,'out of range pursuit faces movement');
 }
 const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,20);
+const siege=JSON.parse(fs.readFileSync(new URL('siege-sources.json',root)));assert.equal(siege.license,'CC-BY-SA-3.0');siege.sources.forEach(verify);siege.generated.forEach(verify);
+for(const [kind,key] of [['ballista','RealBallista'],['catapult','RealCatapult'],['trebuchet','RealTrebuchet'],['ram','RealRam']]){
+ const map=S.defaultMap();map.terrain.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const state=S.create('skirmish',{map}),unit=S.spawn(state,kind,0,0,0),target=S.spawn(state,'tower',1,0,3);target.damage=0;target.hp=target.maxHp=100000;S.visibility(state);unit.order={type:'attack',target:target.id};
+ const idle=V.model(state,unit);assert.equal(idle.key,key);assert.equal(idle.scale,1);assert.ok(portraitKeys.has(key));assert.equal(idle.asset,FrostArt[key]);
+ let released=false,sawLoaded=false,sawEmpty=false;
+ for(let i=0;i<100;i++){
+  S.tick(state);const v=V.model(state,unit);assert.equal(v.key,key);assert.equal(v.scale,1);if(state.events.some(e=>e.type==='launch'&&e.fromX===unit.x&&e.fromZ===unit.z)){released=true;if(v.asset.shotModel)assert.equal(v.asset,FrostArt[key+'Shoot'],'released ammunition is removed');}
+  sawLoaded||=v.asset===FrostArt[key];sawEmpty||=v.asset===FrostArt[key+'Shoot'];
+  const copy=S.restore(state),restored=copy.units.find(u=>u.id===unit.id);assert.equal(V.model(copy,restored).asset,v.asset);assert.equal(V.pose(restored,v.asset,false,0),V.pose(unit,v.asset,false,90),'mechanical cycle survives save restoration');
+ }
+ if(kind!=='ram')assert.ok(released&&sawLoaded&&sawEmpty,kind+' completes loaded/release/reload cycle');
+ assert.equal(V.model(state,unit,true).asset,FrostArt[key]);assert.match(V.pose(unit,FrostArt[key],true,.5),/#pose=1:/);assert.equal(V.model(state,{...unit,stun:1}).asset,FrostArt[key]);
+}
 {
  const map=S.defaultMap();map.terrain.fill(0);map.props=[{kind:'tree',x:-8,z:12,amount:4000},{kind:'mine',x:-8,z:16,amount:4000}];map.players.forEach(p=>p.ai=false);
  const state=S.create('skirmish',{map,factions:[0,1]}),worker=state.units.find(u=>u.kind==='worker'&&u.team===0);state.units.filter(u=>u.kind==='worker').forEach(u=>u.order=null);worker.x=-12;worker.z=12;

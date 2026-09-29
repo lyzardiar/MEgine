@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/siege-poses.png",
+  "sha256": "22e9742d50ab3c391e75b8ab7a484aa39fbfa5a7770b4d4cd123c14747e08493",
+  "generator": "scripts/render-frost-unit-icons.mjs --siege-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
+  "models": [
+    {
+      "name": "RealBallista 0",
+      "mesh": "Assets/Models/RealBallistaShoot.glb#pose=2:0",
+      "material": "Assets/Materials/RealBallistaShoot.mmat",
+      "bounds": {
+        "max": [
+          1.7538971900939941,
+          1.9919854402542114,
+          2.1820712089538574
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallistaShoot.glb#pose=2:0",
+        "min": [
+          -1.7539019584655762,
+          -0.17418095469474792,
+          -1.6179587841033936
+        ],
+        "vertices": 4102
+      }
+    },
+    {
+      "name": "RealBallista 0.35",
+      "mesh": "Assets/Models/RealBallista.glb#pose=2:61",
+      "material": "Assets/Materials/RealBallista.mmat",
+      "bounds": {
+        "max": [
+          1.7538971900939941,
+          1.9935460090637207,
+          4.007645606994629
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallista.glb#pose=2:61",
+        "min": [
+          -1.7539019584655762,
+          -0.17418095469474792,
+          -1.6179587841033936
+        ],
+        "vertices": 4149
+      }
+    },
+    {
+      "name": "RealBallista 0.7",
+      "mesh": "Assets/Models/RealBallista.glb#pose=2:123",
+      "material": "Assets/Materials/RealBallista.mmat",
+      "bounds": {
+        "max": [
+          1.4889405965805054,
+          2.0386784076690674,
+          2.6605372428894043
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallista.glb#pose=2:123",
+        "min": [
+          -1.6248729228973389,
+          -0.17418095469474792,
+          -1.6179587841033936
+        ],
+        "vertices": 4149
+      }
+    },
+    {
+      "name": "RealCatapult 0",
+      "mesh": "Assets/Models/RealCatapultShoot.glb#pose=2:0",
+      "material": "Assets/Materials/RealCatapultShoot.mmat",
+      "bounds": {
+        "max": [
+          1.118246078491211,
+          1.7358812093734741,
+          1.7859684228897095
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealCatapultShoot.glb#pose=2:0",
+        "min": [
+          -1.13007652759552,
+          -1.8228895726224437e-7,
+          -2.0140316486358643
+        ],
+        "vertices": 3055
+      }
+    },
+    {
+      "name": "RealCatapult 0.35",
+      "mesh": "Assets/Models/RealCatapultShoot.glb#pose=2:21",
+      "material": "Assets/Materials/RealCatapultShoot.mmat",
+      "bounds": {
+        "max": [
+          1.118246078491211,
+          2.5066709518432617,
+          1.7859684228897095
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealCatapultShoot.glb#pose=2:21",
+        "min": [
+          -1.13007652759552,
+          -1.8228895726224437e-7,
+          -1.8515878915786743
+        ],
+        "vertices": 3055
+      }
+    },
+    {
+      "name": "RealCatapult 0.7",
+      "mesh": "Assets/Models/RealCatapultShoot.glb#pose=2:42",
+      "material": "Assets/Materials/RealCatapultShoot.mmat",
+      "bounds": {
+        "max": [
+          1.1182135343551636,
+          1.9847016334533691,
+          1.7858792543411255
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealCatapultShoot.glb#pose=2:42",
+        "min": [
+          -1.1304556131362915,
+          -0.004792774561792612,
+          -1.8265095949172974
+        ],
+        "vertices": 3055
+      }
+    },
+    {
+      "name": "RealTrebuchet 0",
+      "mesh": "Assets/Models/RealTrebuchet.glb#pose=2:0",
+      "material": "Assets/Materials/RealTrebuchet.mmat",
+      "bounds": {
+        "max": [
+          0.6859079599380493,
+          2.5647783279418945,
+          1.1272361278533936
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchet.glb#pose=2:0",
+        "min": [
+          -1.260806679725647,
+          0.05428219959139824,
+          -2.9775331020355225
+        ],
+        "vertices": 3094
+      }
+    },
+    {
+      "name": "RealTrebuchet 0.35",
+      "mesh": "Assets/Models/RealTrebuchetShoot.glb#pose=2:18",
+      "material": "Assets/Materials/RealTrebuchetShoot.mmat",
+      "bounds": {
+        "max": [
+          0.6859079599380493,
+          2.564769744873047,
+          1.1272361278533936
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchetShoot.glb#pose=2:18",
+        "min": [
+          -1.260806679725647,
+          0.05428219959139824,
+          -2.977541446685791
+        ],
+        "vertices": 2956
+      }
+    },
+    {
+      "name": "RealTrebuchet 0.7",
+      "mesh": "Assets/Models/RealTrebuchetShoot.glb#pose=2:36",
+      "material": "Assets/Materials/RealTrebuchetShoot.mmat",
+      "bounds": {
+        "max": [
+          0.6859079599380493,
+          2.5647776126861572,
+          1.1272361278533936
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchetShoot.glb#pose=2:36",
+        "min": [
+          -1.260806679725647,
+          0.05428219959139824,
+          -2.977534294128418
+        ],
+        "vertices": 2956
+      }
+    },
+    {
+      "name": "RealRam 0",
+      "mesh": "Assets/Models/RealRam.glb#pose=2:0",
+      "material": "Assets/Materials/RealRam.mmat",
+      "bounds": {
+        "max": [
+          1.6047871112823486,
+          2.4102635383605957,
+          2.4069411754608154
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRam.glb#pose=2:0",
+        "min": [
+          -1.6046142578125,
+          -1.906253714878403e-7,
+          -1.7930588722229004
+        ],
+        "vertices": 1256
+      }
+    },
+    {
+      "name": "RealRam 0.35",
+      "mesh": "Assets/Models/RealRam.glb#pose=2:4",
+      "material": "Assets/Materials/RealRam.mmat",
+      "bounds": {
+        "max": [
+          1.6047871112823486,
+          2.427995443344116,
+          2.0165860652923584
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRam.glb#pose=2:4",
+        "min": [
+          -1.6046142578125,
+          -0.01352278608828783,
+          -1.7974077463150024
+        ],
+        "vertices": 1256
+      }
+    },
+    {
+      "name": "RealRam 0.7",
+      "mesh": "Assets/Models/RealRam.glb#pose=2:9",
+      "material": "Assets/Materials/RealRam.mmat",
+      "bounds": {
+        "max": [
+          1.6047871112823486,
+          2.4370601177215576,
+          2.6691231727600098
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRam.glb#pose=2:9",
+        "min": [
+          -1.6046142578125,
+          -0.0076972804963588715,
+          -1.7869070768356323
+        ],
+        "vertices": 1256
+      }
+    }
+  ]
+}

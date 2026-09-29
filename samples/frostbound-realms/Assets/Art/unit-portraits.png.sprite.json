@@ -108,7 +108,7 @@
       ]
     },
     {
-      "name": "RealFootman",
+      "name": "RealBallista",
       "rect": [
         512,
         256,
@@ -121,7 +121,7 @@
       ]
     },
     {
-      "name": "RealWorker",
+      "name": "RealCatapult",
       "rect": [
         768,
         256,
@@ -134,7 +134,7 @@
       ]
     },
     {
-      "name": "Rogue",
+      "name": "RealFootman",
       "rect": [
         1024,
         256,
@@ -147,7 +147,7 @@
       ]
     },
     {
-      "name": "siege-ballista",
+      "name": "RealRam",
       "rect": [
         1280,
         256,
@@ -160,7 +160,7 @@
       ]
     },
     {
-      "name": "siege-catapult",
+      "name": "RealTrebuchet",
       "rect": [
         0,
         512,
@@ -173,7 +173,7 @@
       ]
     },
     {
-      "name": "siege-ram",
+      "name": "RealWorker",
       "rect": [
         256,
         512,
@@ -186,7 +186,7 @@
       ]
     },
     {
-      "name": "siege-trebuchet",
+      "name": "Rogue",
       "rect": [
         512,
         512,

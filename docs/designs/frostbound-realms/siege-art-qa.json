@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "source": "0 A.D. / Wildfire Games",
+  "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+  "license": "CC-BY-SA-3.0",
+  "models": [
+    "RealBallistaShoot",
+    "RealBallista",
+    "RealCatapultShoot",
+    "RealCatapult",
+    "RealTrebuchetShoot",
+    "RealTrebuchet",
+    "RealRam"
+  ],
+  "sources": 43,
+  "sourceBytes": 16375861,
+  "generatedFiles": 35,
+  "reproducibility": {
+    "siegeMatchingFiles": 35,
+    "humanRegressionMatchingFiles": 43
+  },
+  "nativeImportReport": "siege-import-qa.json",
+  "nativeGameplayReport": "native-siege-art-qa.json",
+  "nativeTacticsReport": "native-tactics-qa.json",
+  "rulesAndTcp": "siege-rules.txt",
+  "unitPortraits": 20,
+  "catalogModels": 109,
+  "package": {
+    "files": 483,
+    "bytes": 178150972,
+    "contentHash": "566b103b3371f23effa02c31a2c12575cb5a5f1c38deca74a3fadc2cd07dbf4a",
+    "smokeSeconds": 30,
+    "loggedErrors": 0
+  },
+  "limitations": [
+    "Machinery has no operator characters",
+    "Other remaining units still use earlier art",
+    "No physical mouse, audio listening, cross-machine LAN or standalone frame-time acceptance"
+  ]
+}

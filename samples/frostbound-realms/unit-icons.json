@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "e2054931e70480084ac42e12c73143019ed6a7581e10213f0694b7fd9b7406f8",
+  "sha256": "54402dca6f194158b6191467cd9ef127c210d7dd8522ba8f419393a9f21e9257",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -158,6 +158,44 @@
       }
     },
     {
+      "name": "RealBallista",
+      "mesh": "Assets/Models/RealBallista.glb#pose=0:0",
+      "material": "Assets/Materials/RealBallista.mmat",
+      "bounds": {
+        "max": [
+          1.7538971900939941,
+          1.9919854402542114,
+          3.7779109477996826
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallista.glb#pose=0:0",
+        "min": [
+          -1.7539019584655762,
+          -0.17418095469474792,
+          -1.6179587841033936
+        ],
+        "vertices": 4149
+      }
+    },
+    {
+      "name": "RealCatapult",
+      "mesh": "Assets/Models/RealCatapult.glb#pose=0:4",
+      "material": "Assets/Materials/RealCatapult.mmat",
+      "bounds": {
+        "max": [
+          1.118246078491211,
+          1.7358812093734741,
+          1.7859684228897095
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealCatapult.glb#pose=0:4",
+        "min": [
+          -1.13007652759552,
+          -1.8228895726224437e-7,
+          -2.0140323638916016
+        ],
+        "vertices": 3173
+      }
+    },
+    {
       "name": "RealFootman",
       "mesh": "Assets/Models/RealFootman.glb#pose=0:4",
       "material": "Assets/Materials/RealFootman.mmat",
@@ -174,6 +212,44 @@
           -0.5167722702026367
         ],
         "vertices": 1680
+      }
+    },
+    {
+      "name": "RealRam",
+      "mesh": "Assets/Models/RealRam.glb#pose=0:4",
+      "material": "Assets/Materials/RealRam.mmat",
+      "bounds": {
+        "max": [
+          1.6047871112823486,
+          2.4102635383605957,
+          2.4069411754608154
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRam.glb#pose=0:4",
+        "min": [
+          -1.6046142578125,
+          -1.906253714878403e-7,
+          -1.7930588722229004
+        ],
+        "vertices": 1256
+      }
+    },
+    {
+      "name": "RealTrebuchet",
+      "mesh": "Assets/Models/RealTrebuchet.glb#pose=0:0",
+      "material": "Assets/Materials/RealTrebuchet.mmat",
+      "bounds": {
+        "max": [
+          0.6859079599380493,
+          2.5647783279418945,
+          1.1272361278533936
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchet.glb#pose=0:0",
+        "min": [
+          -1.260806679725647,
+          0.05428219959139824,
+          -2.9775331020355225
+        ],
+        "vertices": 3094
       }
     },
     {
@@ -212,82 +288,6 @@
           -0.8609089851379395
         ],
         "vertices": 2279
-      }
-    },
-    {
-      "name": "siege-ballista",
-      "mesh": "Assets/Models/siege-ballista-siege-ballista.glb",
-      "material": "Assets/Materials/siege-ballista.mmat",
-      "bounds": {
-        "max": [
-          0.8151727914810181,
-          0.9103140234947205,
-          0.5992494821548462
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\siege-ballista-siege-ballista.glb",
-        "min": [
-          -0.8151727914810181,
-          0,
-          -0.5992494821548462
-        ],
-        "vertices": 1158
-      }
-    },
-    {
-      "name": "siege-catapult",
-      "mesh": "Assets/Models/siege-catapult-siege-catapult.glb",
-      "material": "Assets/Materials/siege-catapult.mmat",
-      "bounds": {
-        "max": [
-          0.8673970103263855,
-          1.3296419382095337,
-          0.6049265265464783
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\siege-catapult-siege-catapult.glb",
-        "min": [
-          -0.8673970103263855,
-          0,
-          -0.6049265265464783
-        ],
-        "vertices": 1534
-      }
-    },
-    {
-      "name": "siege-ram",
-      "mesh": "Assets/Models/siege-ram-siege-ram.glb",
-      "material": "Assets/Materials/siege-ram.mmat",
-      "bounds": {
-        "max": [
-          1.0436742305755615,
-          1.184288501739502,
-          0.5000945329666138
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\siege-ram-siege-ram.glb",
-        "min": [
-          -1.0436742305755615,
-          0,
-          -0.5000945329666138
-        ],
-        "vertices": 1838
-      }
-    },
-    {
-      "name": "siege-trebuchet",
-      "mesh": "Assets/Models/siege-trebuchet-siege-trebuchet.glb",
-      "material": "Assets/Materials/siege-trebuchet.mmat",
-      "bounds": {
-        "max": [
-          0.9256224036216736,
-          1.9586340188980103,
-          0.6289920210838318
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\siege-trebuchet-siege-trebuchet.glb",
-        "min": [
-          -0.9256224036216736,
-          0,
-          -0.6289920210838318
-        ],
-        "vertices": 2496
       }
     },
     {

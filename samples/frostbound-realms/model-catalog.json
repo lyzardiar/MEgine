@@ -2826,5 +2826,269 @@
       1.5
     ],
     "realistic": true
+  },
+  "RealBallistaShoot": {
+    "material": "Assets/Materials/RealBallistaShoot.mmat",
+    "parts": [
+      {
+        "name": "RealBallistaShoot",
+        "mesh": "Assets/Models/RealBallistaShoot.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 4
+      },
+      {
+        "name": "Walk",
+        "frames": 4
+      },
+      {
+        "name": "Attack",
+        "frames": 176
+      }
+    ],
+    "size": [
+      3.5077934923954537,
+      2.166166541250716,
+      3.8
+    ],
+    "realistic": true,
+    "attackEvent": 0.99,
+    "ammoLoad": 0.25,
+    "siegeModel": true,
+    "shotModel": "RealBallistaShoot"
+  },
+  "RealBallista": {
+    "material": "Assets/Materials/RealBallista.mmat",
+    "parts": [
+      {
+        "name": "RealBallista",
+        "mesh": "Assets/Models/RealBallista.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 4
+      },
+      {
+        "name": "Walk",
+        "frames": 4
+      },
+      {
+        "name": "Attack",
+        "frames": 176
+      }
+    ],
+    "size": [
+      3.5077934923954537,
+      2.166166541250716,
+      5.395869207126519
+    ],
+    "realistic": true,
+    "attackEvent": 0.99,
+    "ammoLoad": 0.25,
+    "siegeModel": true,
+    "shotModel": "RealBallistaShoot"
+  },
+  "RealCatapultShoot": {
+    "material": "Assets/Materials/RealCatapultShoot.mmat",
+    "parts": [
+      {
+        "name": "RealCatapultShoot",
+        "mesh": "Assets/Models/RealCatapultShoot.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 60
+      },
+      {
+        "name": "Walk",
+        "frames": 60
+      },
+      {
+        "name": "Attack",
+        "frames": 60
+      }
+    ],
+    "size": [
+      2.248322561921414,
+      1.7358809527069392,
+      3.8
+    ],
+    "realistic": true,
+    "attackEvent": 0.145,
+    "ammoLoad": 0.05,
+    "siegeModel": true,
+    "shotModel": "RealCatapultShoot"
+  },
+  "RealCatapult": {
+    "material": "Assets/Materials/RealCatapult.mmat",
+    "parts": [
+      {
+        "name": "RealCatapult",
+        "mesh": "Assets/Models/RealCatapult.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 60
+      },
+      {
+        "name": "Walk",
+        "frames": 60
+      },
+      {
+        "name": "Attack",
+        "frames": 60
+      }
+    ],
+    "size": [
+      2.248322561921414,
+      1.7358809527069392,
+      3.8
+    ],
+    "realistic": true,
+    "attackEvent": 0.145,
+    "ammoLoad": 0.05,
+    "siegeModel": true,
+    "shotModel": "RealCatapultShoot"
+  },
+  "RealTrebuchetShoot": {
+    "material": "Assets/Materials/RealTrebuchetShoot.mmat",
+    "parts": [
+      {
+        "name": "RealTrebuchetShoot",
+        "mesh": "Assets/Models/RealTrebuchetShoot.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 2
+      },
+      {
+        "name": "Walk",
+        "frames": 2
+      },
+      {
+        "name": "Attack",
+        "frames": 52
+      }
+    ],
+    "size": [
+      1.946715299696878,
+      2.3621511897242726,
+      4.2
+    ],
+    "realistic": true,
+    "attackEvent": 0.11,
+    "ammoLoad": 0.85,
+    "siegeModel": true,
+    "shotModel": "RealTrebuchetShoot"
+  },
+  "RealTrebuchet": {
+    "material": "Assets/Materials/RealTrebuchet.mmat",
+    "parts": [
+      {
+        "name": "RealTrebuchet",
+        "mesh": "Assets/Models/RealTrebuchet.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 2
+      },
+      {
+        "name": "Walk",
+        "frames": 2
+      },
+      {
+        "name": "Attack",
+        "frames": 52
+      }
+    ],
+    "size": [
+      1.946715299696878,
+      2.3621511897242726,
+      4.2
+    ],
+    "realistic": true,
+    "attackEvent": 0.11,
+    "ammoLoad": 0.85,
+    "siegeModel": true,
+    "shotModel": "RealTrebuchetShoot"
+  },
+  "RealRam": {
+    "material": "Assets/Materials/RealRam.mmat",
+    "parts": [
+      {
+        "name": "RealRam",
+        "mesh": "Assets/Models/RealRam.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 14
+      },
+      {
+        "name": "Walk",
+        "frames": 14
+      },
+      {
+        "name": "Attack",
+        "frames": 14
+      }
+    ],
+    "size": [
+      3.2094014471116012,
+      2.4102632141234874,
+      4.2
+    ],
+    "realistic": true,
+    "attackEvent": 0.3,
+    "siegeModel": true
   }
 }

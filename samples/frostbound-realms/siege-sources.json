@@ -1,0 +1,827 @@
+{
+  "author": "Wildfire Games",
+  "upstream": "https://github.com/0ad/0ad",
+  "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "generator": "scripts/import-frost-humans.py --manifest siege-sources.json",
+  "models": {
+    "RealBallistaShoot": {
+      "sourceActor": "actors/units/hellenes/siege_oxybeles.xml",
+      "parts": [
+        {
+          "mesh": "meshes/props/siege_artillery/oxybeles_01.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/props/siege_artillery_01_norm.png",
+          "specular": "textures/skins/props/siege_artillery_01_spec.png",
+          "tint": null,
+          "bone": null
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/ammo_bolt_med.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "prop_ammo",
+          "loaded": false
+        }
+      ],
+      "animations": {
+        "Idle": "animation/mechanical/siege_artillery/oxybeles_idle_01.dae",
+        "Walk": "animation/mechanical/siege_artillery/oxybeles_idle_01.dae",
+        "Attack": "animation/mechanical/siege_artillery/oxybeles_attack_ranged_01.dae"
+      },
+      "width": 3.8,
+      "siegeModel": true,
+      "attackEvent": 0.99,
+      "ammoLoad": 0.25,
+      "shotModel": "RealBallistaShoot"
+    },
+    "RealBallista": {
+      "sourceActor": "actors/units/hellenes/siege_oxybeles.xml",
+      "parts": [
+        {
+          "mesh": "meshes/props/siege_artillery/oxybeles_01.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/props/siege_artillery_01_norm.png",
+          "specular": "textures/skins/props/siege_artillery_01_spec.png",
+          "tint": null,
+          "bone": null
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/front_bolt_med.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/props/siege_artillery_01_norm.png",
+          "specular": "textures/skins/props/siege_artillery_01_spec.png",
+          "tint": null,
+          "bone": "prop_projectile",
+          "loaded": true
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/ammo_bolt_med.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "prop_ammo",
+          "loaded": false
+        }
+      ],
+      "animations": {
+        "Idle": "animation/mechanical/siege_artillery/oxybeles_idle_01.dae",
+        "Walk": "animation/mechanical/siege_artillery/oxybeles_idle_01.dae",
+        "Attack": "animation/mechanical/siege_artillery/oxybeles_attack_ranged_01.dae"
+      },
+      "width": 3.8,
+      "siegeModel": true,
+      "attackEvent": 0.99,
+      "ammoLoad": 0.25,
+      "shotModel": "RealBallistaShoot"
+    },
+    "RealCatapultShoot": {
+      "sourceActor": "actors/units/romans/siege_onager.xml",
+      "parts": [
+        {
+          "mesh": "meshes/structural/siege_onager.dae",
+          "base": "textures/skins/structural/rome_siege_onager.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/structural/rome_siege_onager_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": null
+        }
+      ],
+      "animations": {
+        "Idle": "animation/mechanical/siege_onager_idle.dae",
+        "Walk": "animation/mechanical/siege_onager_idle.dae",
+        "Attack": "animation/mechanical/siege_onager_attack.dae"
+      },
+      "width": 3.8,
+      "siegeModel": true,
+      "attackEvent": 0.145,
+      "ammoLoad": 0.05,
+      "shotModel": "RealCatapultShoot"
+    },
+    "RealCatapult": {
+      "sourceActor": "actors/units/romans/siege_onager.xml",
+      "parts": [
+        {
+          "mesh": "meshes/structural/siege_onager.dae",
+          "base": "textures/skins/structural/rome_siege_onager.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/structural/rome_siege_onager_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": null
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/projectile_stone_lrg.dae",
+          "base": "textures/skins/gaia/stone_temperate_granite.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "prop_projectile",
+          "loaded": true
+        }
+      ],
+      "animations": {
+        "Idle": "animation/mechanical/siege_onager_idle.dae",
+        "Walk": "animation/mechanical/siege_onager_idle.dae",
+        "Attack": "animation/mechanical/siege_onager_attack.dae"
+      },
+      "width": 3.8,
+      "siegeModel": true,
+      "attackEvent": 0.145,
+      "ammoLoad": 0.05,
+      "shotModel": "RealCatapultShoot"
+    },
+    "RealTrebuchetShoot": {
+      "sourceActor": "actors/units/han/siege_mangonel.xml",
+      "parts": [
+        {
+          "mesh": "meshes/structural/han_mangonel.dae",
+          "base": "textures/skins/structural/hele_siege.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": null
+        },
+        {
+          "mesh": "meshes/props/rock_pile.dae",
+          "base": "textures/skins/gaia/stone_temperate_granite.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "prop_ammo_1",
+          "loaded": false
+        },
+        {
+          "mesh": "meshes/props/rock_pile.dae",
+          "base": "textures/skins/gaia/stone_temperate_granite.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "prop_ammo_2",
+          "loaded": false
+        }
+      ],
+      "animations": {
+        "Idle": "animation/mechanical/han_mangonel_idle.dae",
+        "Walk": "animation/mechanical/han_mangonel_idle.dae",
+        "Attack": "animation/mechanical/han_mangonel_attack.dae"
+      },
+      "width": 4.2,
+      "siegeModel": true,
+      "attackEvent": 0.11,
+      "ammoLoad": 0.85,
+      "shotModel": "RealTrebuchetShoot"
+    },
+    "RealTrebuchet": {
+      "sourceActor": "actors/units/han/siege_mangonel.xml",
+      "parts": [
+        {
+          "mesh": "meshes/structural/han_mangonel.dae",
+          "base": "textures/skins/structural/hele_siege.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": null
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/projectile_stone_lrg.dae",
+          "base": "textures/skins/gaia/stone_temperate_granite.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "prop_projectile",
+          "loaded": true
+        },
+        {
+          "mesh": "meshes/props/rock_pile.dae",
+          "base": "textures/skins/gaia/stone_temperate_granite.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "prop_ammo_1",
+          "loaded": false
+        },
+        {
+          "mesh": "meshes/props/rock_pile.dae",
+          "base": "textures/skins/gaia/stone_temperate_granite.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "prop_ammo_2",
+          "loaded": false
+        }
+      ],
+      "animations": {
+        "Idle": "animation/mechanical/han_mangonel_idle.dae",
+        "Walk": "animation/mechanical/han_mangonel_idle.dae",
+        "Attack": "animation/mechanical/han_mangonel_attack.dae"
+      },
+      "width": 4.2,
+      "siegeModel": true,
+      "attackEvent": 0.11,
+      "ammoLoad": 0.85,
+      "shotModel": "RealTrebuchetShoot"
+    },
+    "RealRam": {
+      "sourceActor": "actors/structures/iberians/siege_ram.xml",
+      "parts": [
+        {
+          "mesh": "meshes/structural/iber_ram.dae",
+          "base": "textures/skins/structural/iber_siege_ram.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": null
+        }
+      ],
+      "animations": {
+        "Idle": "animation/mechanical/iber_ram_idle.dae",
+        "Walk": "animation/mechanical/iber_ram_move.dae",
+        "Attack": "animation/mechanical/iber_ram_attack.dae"
+      },
+      "width": 4.2,
+      "siegeModel": true,
+      "attackEvent": 0.3
+    }
+  },
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/LICENSE.txt",
+      "sha256": "ef98babd771c206032e005f3d440a1e610df409d9a9191f03e64deaa4abefbd9",
+      "size": 1426
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/rock_pile.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/rock_pile.xml",
+      "sha256": "946ee4033f0d7a9224f97a95b7404ea776d89f4cfa6bcf7577a6223a919f1a28",
+      "size": 468
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/siege_artillery/bolt_ammo_med.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/siege_artillery/bolt_ammo_med.xml",
+      "sha256": "e990c6f032fda2eb03e4798adae203347b5077623a35c827f516738d4c5e560a",
+      "size": 472
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/siege_artillery/bolt_front_med.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/siege_artillery/bolt_front_med.xml",
+      "sha256": "4c671c27f8b69024808338c424494265778f78a807ece092caa27a1dc69dcf74",
+      "size": 531
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/siege_artillery/stone_projectile_large.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/siege_artillery/stone_projectile_large.xml",
+      "sha256": "729b82d0035e2eec5b97ba7c5c72325a64e7864bdecabf850249e85f3e8a86e4",
+      "size": 498
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/weapons/rock.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/rock.xml",
+      "sha256": "44fae7c1689ee56fee8447277058ba84ef8114cd07de7c6977c6174e8d381097",
+      "size": 476
+    },
+    {
+      "file": "SourceAssets/0ad/actors/structures/iberians/siege_ram.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/structures/iberians/siege_ram.xml",
+      "sha256": "4657dc7964c83c3deb9c6ffd8286476f4360d531f74cf72b1c413273c76469eb",
+      "size": 1076
+    },
+    {
+      "file": "SourceAssets/0ad/actors/units/han/siege_mangonel.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/han/siege_mangonel.xml",
+      "sha256": "e778472639100e23503bf0526b068b9ed07a0ec9110ac94b4536ea7d6b08dbbe",
+      "size": 1398
+    },
+    {
+      "file": "SourceAssets/0ad/actors/units/hellenes/siege_oxybeles.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/hellenes/siege_oxybeles.xml",
+      "sha256": "9e06b740f64c8a1e8a4398514ba35c8ccda5b2ef21bcc46bd896250d1497ec2c",
+      "size": 1420
+    },
+    {
+      "file": "SourceAssets/0ad/actors/units/romans/siege_onager.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/romans/siege_onager.xml",
+      "sha256": "d24b1746b8efdfb68087ec8e6fb737ce5c18b2d2cde32d584baccf9e7a0f1003",
+      "size": 1010
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/han_mangonel_attack.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/han_mangonel_attack.dae",
+      "sha256": "2201905e8461560b1ec1fa16e38f24093140360d010237acf0de7504c0520ddc",
+      "size": 1697389
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/han_mangonel_idle.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/han_mangonel_idle.dae",
+      "sha256": "6803e2e40bbf9b53b462ccbd8f9b7f0058755e4197e0940f2c2d32ecfdceab1a",
+      "size": 320666
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/iber_ram_attack.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/iber_ram_attack.dae",
+      "sha256": "ef78bcac6f08027fc0d746261dd386fb32f9092ca22bf78c4b006758d533f0f0",
+      "size": 88033
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/iber_ram_idle.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/iber_ram_idle.dae",
+      "sha256": "173230870543f181fb148118e0e33ee4cd41bcc7ea0dde43dcd23f327e1bed58",
+      "size": 82007
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/iber_ram_move.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/iber_ram_move.dae",
+      "sha256": "71f97ce254db9b5fafd8fba571befb36ee7a22a3af6686622cff7b8c6169f7e5",
+      "size": 105946
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/siege_artillery/oxybeles_attack_ranged_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/siege_artillery/oxybeles_attack_ranged_01.dae",
+      "sha256": "72ee15be0fec147eb45d34da759c1ddeb435269f202aa64b6d36931c882b3ab9",
+      "size": 3084048
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/siege_artillery/oxybeles_idle_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/siege_artillery/oxybeles_idle_01.dae",
+      "sha256": "e3d6f94b8893a88b3b6da9d3a416a13bd12c76d6632e8da9434690cbea54ce9f",
+      "size": 596708
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/siege_onager_attack.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/siege_onager_attack.dae",
+      "sha256": "917e0880a099218e0256887131c32163ce05c47ee4002690aee372c8855f6ae3",
+      "size": 254949
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/siege_onager_idle.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/siege_onager_idle.dae",
+      "sha256": "37546549801d0c412136193800ac82f1a203a853a7c813069a22693e32c25860",
+      "size": 226057
+    },
+    {
+      "file": "SourceAssets/0ad/materials/basic_trans_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/basic_trans_norm_spec.xml",
+      "sha256": "1d45ed04b40bcda4f06694987885eadcf2f8bf59d2838d5d870cd64bfea4a394",
+      "size": 429
+    },
+    {
+      "file": "SourceAssets/0ad/materials/basic_trans_parallax_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/basic_trans_parallax_spec.xml",
+      "sha256": "5cb8456ecd1de25d85db182bf78e958686410db749c9884c589844a21d9c076b",
+      "size": 485
+    },
+    {
+      "file": "SourceAssets/0ad/materials/no_trans_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/no_trans_norm_spec.xml",
+      "sha256": "14161f0846354a5529a5e8ac558cb5c974928d084f5e7e4f605d60387a4f13b1",
+      "size": 346
+    },
+    {
+      "file": "SourceAssets/0ad/materials/no_trans_parallax_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/no_trans_parallax_spec.xml",
+      "sha256": "a26ce2f3d1d69ac6c0c496876e1e9df7ac92d8d2a935e0c49633583f42d9b4e6",
+      "size": 407
+    },
+    {
+      "file": "SourceAssets/0ad/materials/player_trans_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/player_trans_norm_spec.xml",
+      "sha256": "48a6730a21ba962045c589dbcf2e8098a5e574e9afeb65df861cc8b2ec1aa545",
+      "size": 395
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/onager_projectile.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/onager_projectile.dae",
+      "sha256": "87fa59348ff4605dbd6c94d3cf0bf5ca227dd915a2717ba191a8918935998709",
+      "size": 13666
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/rock_pile.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/rock_pile.dae",
+      "sha256": "77622870ba7f6e50e475b8f5b06a18539816c2336ea6f0fc4f5e08b6e2de8dc2",
+      "size": 60655
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/siege_artillery/ammo_bolt_med.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/siege_artillery/ammo_bolt_med.dae",
+      "sha256": "1452989d0ef508905bf27077a4d11f2a9d4aa6b9c9563f793649d6a9c03cfaee",
+      "size": 60065
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/siege_artillery/front_bolt_med.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/siege_artillery/front_bolt_med.dae",
+      "sha256": "c38f3629bb861fa99dc66dbe1c41bf04ecdd2dfbd1c03c4d53b1e2dbe26230a1",
+      "size": 14983
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/siege_artillery/oxybeles_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/siege_artillery/oxybeles_01.dae",
+      "sha256": "310ad406f1a5d56bd7db3961d481ba05de7cb2ca8e8ee973b9995cd93146f22e",
+      "size": 466593
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/siege_artillery/projectile_stone_lrg.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/siege_artillery/projectile_stone_lrg.dae",
+      "sha256": "da19a5b5aa7486db2e1da569b5fd4540795462ea7fa58af9dd0a9e1e6a55a448",
+      "size": 9345
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/han_mangonel.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/han_mangonel.dae",
+      "sha256": "a5bc2581eee63d7552d9c36a5fd721db1dafe9425a13979cd611fd3c0c9272e2",
+      "size": 183839
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/iber_ram.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/iber_ram.dae",
+      "sha256": "e94f1875dc68750cf8b5fd8e612a97151dd7899f511ba860afc843039cc17125",
+      "size": 86165
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/siege_onager.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/siege_onager.dae",
+      "sha256": "614a50ab4bc5bcf08253fb4a988a42497e560eef9ea7acdbc30ce5f62ddc3f9b",
+      "size": 418839
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/default_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/default_norm.png",
+      "sha256": "b1ba25ca729a28c798a99a1a0bcf9310d0994a55b4f9d1a36f163fb31676cecf",
+      "size": 69
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/gaia/stone_temperate_granite.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/gaia/stone_temperate_granite.dds",
+      "sha256": "2e12611d1c991b413d696ce86f891fe023308ab830998dd4342882dec2a14f9c",
+      "size": 22000
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/null_black.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/null_black.dds",
+      "sha256": "1b2fefc88f9523c56af637318150f92722e88bf93f3876d38b6c039114b21c7a",
+      "size": 152
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/siege_artillery_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/siege_artillery_01.png",
+      "sha256": "d1f6c38557f06e5d654ab20ff892edbdfab354ce94ef1eecadb83e20d4b8f1cc",
+      "size": 2366875
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/siege_artillery_01_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/siege_artillery_01_norm.png",
+      "sha256": "9cbc0d3e6bea58cfe63847cfec59053f41568900092cf853310d88e8ab04cb03",
+      "size": 2523891
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/siege_artillery_01_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/siege_artillery_01_spec.png",
+      "sha256": "903e67b9d0a8f4bd500169db8d10fbbd27e10ebef61d8e1b93aaf28761896d8c",
+      "size": 1955597
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/hele_siege.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/hele_siege.dds",
+      "sha256": "89a3baaa7998d122b42b40a406100243ba5870a1fbf986d2ac96e19179ca3ac6",
+      "size": 87536
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/iber_siege_ram.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/iber_siege_ram.dds",
+      "sha256": "534080c6b837be0db0ee57b9a77cb34ec5ee22d0972b6452973a1946ed04f585",
+      "size": 349680
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/rome_siege_onager.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/rome_siege_onager.png",
+      "sha256": "cd6176c3ed44331b39574e87f221ba5523ed25ded5ef7ba51eefb14441d14358",
+      "size": 1277398
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/rome_siege_onager_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/rome_siege_onager_spec.png",
+      "sha256": "85d6501438e60e313c3d4a8941b5bf558ad38ddfb931535fd51282c6f799dd44",
+      "size": 11873
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/RealBallistaShoot_base.png",
+      "sha256": "a3877e1fc16cacf4a39cb653045ca70e5ada94899c4636f4ca8a0cc1e5ecdbfa"
+    },
+    {
+      "file": "Assets/Textures/RealBallistaShoot_normal.png",
+      "sha256": "50d6417ef74c1a3cb6cb46bfd03f4abf69ebbeec255d2c3e52e95166d9e98f0f"
+    },
+    {
+      "file": "Assets/Textures/RealBallistaShoot_arm.png",
+      "sha256": "ea2870887d75f6677ef8d64c1b90e65c682afb7032921cbbcbe3c6efd6addfad"
+    },
+    {
+      "file": "Assets/Models/RealBallistaShoot.glb",
+      "sha256": "63bb0b39beed2de0c7c211ca495ba641cc618cd9d58cb495402ae7985e1a309a"
+    },
+    {
+      "file": "Assets/Materials/RealBallistaShoot.mmat",
+      "sha256": "c8dd1d03fa09c6fffa676515887d02dc55be9ceb16adaab6ce4443070a2871e7"
+    },
+    {
+      "file": "Assets/Textures/RealBallista_base.png",
+      "sha256": "22b7164ba0fc6a2d83cdafb8385afa2ee9a59c112af0ee1c7394a9e3ed7a4aca"
+    },
+    {
+      "file": "Assets/Textures/RealBallista_normal.png",
+      "sha256": "53bea1d1ab47e99c7187318dc4c2f4b8c495008d1b7ab860fe4f5669ae0320bb"
+    },
+    {
+      "file": "Assets/Textures/RealBallista_arm.png",
+      "sha256": "e5b49bfc04bebbc99a38599d527facb62a1aa4bcecbdb7d6f94ed7d49042e8bf"
+    },
+    {
+      "file": "Assets/Models/RealBallista.glb",
+      "sha256": "394dde6172a666a366f9db4968bab75b343e48a39ea3a3f8f0344591c0d8db5c"
+    },
+    {
+      "file": "Assets/Materials/RealBallista.mmat",
+      "sha256": "6dd8aa29de915ea0b18818477f041e8e8aaeda584b3eb01cbe14c55b97197903"
+    },
+    {
+      "file": "Assets/Textures/RealCatapultShoot_base.png",
+      "sha256": "76cac8b1df8141a2ab6863499731f612aaad8e7dcd017defba1c4a2d2b39df9d"
+    },
+    {
+      "file": "Assets/Textures/RealCatapultShoot_normal.png",
+      "sha256": "f3b7a24d5b09b1c4ad7df0878135f779ffee4860002b79e73b99d2762e5fd6c3"
+    },
+    {
+      "file": "Assets/Textures/RealCatapultShoot_arm.png",
+      "sha256": "fbd4e75fd56f47df39ae5322b93ebf0370ac2c8c082a117e34ac0944ef2c9dba"
+    },
+    {
+      "file": "Assets/Models/RealCatapultShoot.glb",
+      "sha256": "b74f260cb01de02fabbbd0c07add35302a2bcc32fc415c53c111aa27e1cbddbe"
+    },
+    {
+      "file": "Assets/Materials/RealCatapultShoot.mmat",
+      "sha256": "ab31c804687b1e36c3a7e70f0593f486af88f8d89918ac3c4500c1178129130e"
+    },
+    {
+      "file": "Assets/Textures/RealCatapult_base.png",
+      "sha256": "adb3c7f3ef4a6f52bc74f81de1450891ab0fc69f825b0156dd9d6bf68994ca9d"
+    },
+    {
+      "file": "Assets/Textures/RealCatapult_normal.png",
+      "sha256": "cf57213396270028bc0dfd56da84fc883732bc529b939ba7a977ce6be52be44b"
+    },
+    {
+      "file": "Assets/Textures/RealCatapult_arm.png",
+      "sha256": "c4a840a38fb32690d0640a4f81fd82263d35ce9998821658b0e76a64bc60646a"
+    },
+    {
+      "file": "Assets/Models/RealCatapult.glb",
+      "sha256": "d9b0e76bee1dbb5f7a9d9925fcda98b2eaabad7bca9aa00143c27087a62793ea"
+    },
+    {
+      "file": "Assets/Materials/RealCatapult.mmat",
+      "sha256": "c02298a77dd3c08db0d39bc5a85bf4f28ae3d4acc5ba97ac38766c658b7dcc64"
+    },
+    {
+      "file": "Assets/Textures/RealTrebuchetShoot_base.png",
+      "sha256": "6484c2e6007df9b6e22e22591682a6e0ae8b8e17a954651cd4d4b4a51e9d4525"
+    },
+    {
+      "file": "Assets/Textures/RealTrebuchetShoot_normal.png",
+      "sha256": "a7ecf5529417eb489d8f7ebab16a637af32b540436448da6143d26f274ba91f2"
+    },
+    {
+      "file": "Assets/Textures/RealTrebuchetShoot_arm.png",
+      "sha256": "22d5d7358f6a2d49f7255617cbd682a1bdd7c5cfef0647aaaa73a23da755e5a1"
+    },
+    {
+      "file": "Assets/Models/RealTrebuchetShoot.glb",
+      "sha256": "81d56c030ef89bc5dfc4b8439e3cf6bc023e7ed9ef178bb2939977f9a8d1c904"
+    },
+    {
+      "file": "Assets/Materials/RealTrebuchetShoot.mmat",
+      "sha256": "49ed2edf0b71feaca235bd55c9fdf9128e4c3292110548f5c50087afac8bf076"
+    },
+    {
+      "file": "Assets/Textures/RealTrebuchet_base.png",
+      "sha256": "991d677a84861721f9b7ca2f6c3a7f30bbf8369e0bd32fc8aa091c2fd241c1cf"
+    },
+    {
+      "file": "Assets/Textures/RealTrebuchet_normal.png",
+      "sha256": "d5ffce4aa6045a6a7376668fe442c94fa85eebc90e0c50998af162888d6ae89f"
+    },
+    {
+      "file": "Assets/Textures/RealTrebuchet_arm.png",
+      "sha256": "830abedae7d7fd4b03bcf7f7ce5ed2babe73895c46dfa94e0f4389f0f4b7c7aa"
+    },
+    {
+      "file": "Assets/Models/RealTrebuchet.glb",
+      "sha256": "e26e5424c9eab36300fa5ef3e35648b0f1280ab3cc533ae1d3c2206e9a1962b4"
+    },
+    {
+      "file": "Assets/Materials/RealTrebuchet.mmat",
+      "sha256": "5411d46805c1d7a8882f7db10890ba997c0be734363c5451bf3d1704ab7dd8e0"
+    },
+    {
+      "file": "Assets/Textures/RealRam_base.png",
+      "sha256": "416dd71de4890f567e40c87704b6f734bd89c43f6fc8ba9cb1a7d0221328aba9"
+    },
+    {
+      "file": "Assets/Textures/RealRam_normal.png",
+      "sha256": "12463c7f27847d0a53ae20a302b5214bb0c8c8180b91f67f94f6f1bcdb4d0362"
+    },
+    {
+      "file": "Assets/Textures/RealRam_arm.png",
+      "sha256": "707b6c330b8a04ec4ad79342dc2e0a2c58e9ec55f87fdfc72979ef9acb5d7942"
+    },
+    {
+      "file": "Assets/Models/RealRam.glb",
+      "sha256": "dea9e1aa1e2704588daf8959f3140f3b34abf52450c97f1c92af45c948dd8ee2"
+    },
+    {
+      "file": "Assets/Materials/RealRam.mmat",
+      "sha256": "8092e1474cae33dce1a7c2aba480003d37e612655b81fb92ed23be88c66ef0bc"
+    }
+  ],
+  "modelStats": {
+    "RealBallistaShoot": {
+      "triangles": 3040,
+      "bones": 40,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 4
+        },
+        {
+          "name": "Walk",
+          "frames": 4
+        },
+        {
+          "name": "Attack",
+          "frames": 176
+        }
+      ],
+      "size": [
+        3.5077934923954537,
+        2.166166541250716,
+        3.8
+      ]
+    },
+    "RealBallista": {
+      "triangles": 3102,
+      "bones": 40,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 4
+        },
+        {
+          "name": "Walk",
+          "frames": 4
+        },
+        {
+          "name": "Attack",
+          "frames": 176
+        }
+      ],
+      "size": [
+        3.5077934923954537,
+        2.166166541250716,
+        5.395869207126519
+      ]
+    },
+    "RealCatapultShoot": {
+      "triangles": 1962,
+      "bones": 8,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 60
+        },
+        {
+          "name": "Walk",
+          "frames": 60
+        },
+        {
+          "name": "Attack",
+          "frames": 60
+        }
+      ],
+      "size": [
+        2.248322561921414,
+        1.7358809527069392,
+        3.8
+      ]
+    },
+    "RealCatapult": {
+      "triangles": 2010,
+      "bones": 8,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 60
+        },
+        {
+          "name": "Walk",
+          "frames": 60
+        },
+        {
+          "name": "Attack",
+          "frames": 60
+        }
+      ],
+      "size": [
+        2.248322561921414,
+        1.7358809527069392,
+        3.8
+      ]
+    },
+    "RealTrebuchetShoot": {
+      "triangles": 1638,
+      "bones": 41,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 2
+        },
+        {
+          "name": "Walk",
+          "frames": 2
+        },
+        {
+          "name": "Attack",
+          "frames": 52
+        }
+      ],
+      "size": [
+        1.946715299696878,
+        2.3621511897242726,
+        4.2
+      ]
+    },
+    "RealTrebuchet": {
+      "triangles": 1686,
+      "bones": 41,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 2
+        },
+        {
+          "name": "Walk",
+          "frames": 2
+        },
+        {
+          "name": "Attack",
+          "frames": 52
+        }
+      ],
+      "size": [
+        1.946715299696878,
+        2.3621511897242726,
+        4.2
+      ]
+    },
+    "RealRam": {
+      "triangles": 660,
+      "bones": 6,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 14
+        },
+        {
+          "name": "Walk",
+          "frames": 14
+        },
+        {
+          "name": "Attack",
+          "frames": 14
+        }
+      ],
+      "size": [
+        3.2094014471116012,
+        2.4102632141234874,
+        4.2
+      ]
+    }
+  }
+}

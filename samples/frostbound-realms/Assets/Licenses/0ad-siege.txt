@@ -1,0 +1,19 @@
+0 A.D. siege machinery art
+Original author: Wildfire Games - https://www.wildfiregames.com/
+Source: https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+License: Creative Commons Attribution-ShareAlike 3.0 Unported
+https://creativecommons.org/licenses/by-sa/3.0/
+
+RealBallista, RealCatapult, RealTrebuchet and their Shoot variants, RealRam,
+their textures and materials, and the combined Assets/Art/unit-portraits.png
+atlas are distributed under CC-BY-SA-3.0. Other original art in the atlas
+is available separately under the licenses documented in the sample manifests.
+
+Modifications by MEngine contributors: assembled machinery and ammunition;
+baked base color, normal and roughness atlases; converted and normalized glTF
+meshes and sampled mechanical animations; attached loaded projectiles to bones.
+The traction trebuchet uses the artillery stone mesh with granite texture.
+Operators are not included. Artillery movement uses the idle mechanical pose;
+the ram retains its authored movement clip.
+Pinned source URLs and source/generated hashes: siege-sources.json.
+Original license notice: SourceAssets/0ad/LICENSE.txt.

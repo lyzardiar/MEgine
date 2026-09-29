@@ -1,8 +1,10 @@
-"""Author: MiYu. Blender 4.5.9: assemble and animate licensed 0 A.D. human units."""
+"""Author: MiYu. Blender 4.5.9: assemble and animate licensed 0 A.D. units and machinery."""
+import argparse
 import bpy
 import hashlib
 import json
 import math
+import sys
 from pathlib import Path
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -24,7 +26,16 @@ def attachment_matrices(path):
     doc=ET.parse(SOURCE/path);ns={'c':'http://www.collada.org/2005/11/COLLADASchema'};result={}
     assert doc.findtext('c:asset/c:up_axis',namespaces=ns)=='Z_UP'
     def visit(node,parent):
-        values=[float(x) for x in node.findtext('c:matrix',namespaces=ns).split()];world=parent@Matrix([values[i:i+4] for i in range(0,16,4)])
+        local=Matrix.Identity(4)
+        for item in node:
+            kind=item.tag.rsplit('}',1)[-1]
+            if kind not in ['matrix','translate','rotate','scale']:
+                if kind in ['lookat','skew']:raise ValueError('Unsupported Collada transform: '+kind)
+                continue
+            values=[float(x) for x in item.text.split()]
+            transform=Matrix([values[i:i+4] for i in range(0,16,4)]) if kind=='matrix' else Matrix.Translation(Vector(values)) if kind=='translate' else Matrix.Rotation(math.radians(values[3]),4,Vector(values[:3])) if kind=='rotate' else Matrix.Diagonal(Vector(values+[1]))
+            local=local@transform
+        world=parent@local
         result[node.get('name')]=world
         for child in node.findall('c:node',ns):visit(child,world)
     for node in doc.findall('c:library_visual_scenes/c:visual_scene/c:node',ns):visit(node,Matrix.Identity(4))
@@ -46,9 +57,10 @@ def main():
         for action in list(bpy.data.actions):bpy.data.actions.remove(action)
         scene=bpy.context.scene;scene.frame_start=0;scene.render.engine='CYCLES';scene.cycles.samples=1;scene.cycles.seed=0;scene.render.threads_mode='FIXED';scene.render.threads=1;scene.render.bake.margin=12
         body=definition['parts'][0];objects=import_dae(body['mesh']);rig=next(o for o in objects if o.type=='ARMATURE');rig.name=key+'Rig';rig.data.pose_position='REST'
-        matrices=attachment_matrices(body['mesh']);meshes=[];surfaces={};props=[]
+        matrices=attachment_matrices(body['mesh']);meshes=[];surfaces={};props=[];body_points=[]
         for index,part in enumerate(definition['parts']):
             added=objects if index==0 else import_dae(part['mesh'])
+            assert any(o.type=='MESH' and len(o.data.polygons)>0 for o in added),'Missing mesh geometry: '+part['mesh']
             if part.get('skeletal'):
                 prop_rig=next(o for o in added if o.type=='ARMATURE');placement=matrices[part['bone']]@prop_rig.matrix_world
                 bones={b.name:{'matrix':b.matrix_local.copy(),'length':b.length,'parent':b.parent.name if b.parent else part['bone']} for b in prop_rig.data.bones}
@@ -60,6 +72,7 @@ def main():
                 bpy.ops.object.mode_set(mode='OBJECT');props.append({'part':part,'bones':bones,'placement':placement})
             for obj in [o for o in added if o.type=='MESH']:
                 matrix=obj.matrix_world.copy();obj.parent=None;obj.data.transform(matrix);obj.matrix_world=Matrix.Identity(4)
+                if index==0:body_points.extend(v.co.copy() for v in obj.data.vertices)
                 if part['bone']:
                     bone=part['bone'];assert bone in rig.data.bones and bone in matrices,bone
                     obj.data.transform(matrices[bone])
@@ -104,7 +117,7 @@ def main():
         while len(mesh.data.uv_layers)>1:mesh.data.uv_layers.remove(mesh.data.uv_layers[0])
         for face in mesh.data.polygons:face.material_index=0
         mesh.data.materials.clear();mesh.data.materials.append(bpy.data.materials.new(key+' atlas'))
-        points=[v.co for v in mesh.data.vertices];low=min(p.z for p in points);scale=3/(max(p.z for p in points)-low);rig.scale=(scale,)*3;rig.location.z=-low*scale;rig.data.pose_position='POSE';rig.animation_data_create()
+        points=[v.co for v in mesh.data.vertices];reference=body_points if definition.get('width') else points;low=min(p.z for p in reference);scale=definition['width']/max(max(p[i] for p in reference)-min(p[i] for p in reference) for i in [0,1]) if definition.get('width') else 3/(max(p.z for p in points)-low);rig.scale=(scale,)*3;rig.location.z=-low*scale;rig.data.pose_position='POSE';rig.animation_data_create()
         clips=[]
         for name,path in definition['animations'].items():
             added=import_dae(path);animated=max((o for o in added if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));source_action=animated.animation_data.action;start,end=source_action.frame_range
@@ -148,7 +161,7 @@ def main():
         generated.extend([model,material]);size=[(max(p[i] for p in points)-min(p[i] for p in points))*scale for i in [0,2,1]]
         catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True}
         if definition.get('workAnimation'):catalog[key]['workAnimation']=definition['workAnimation']
-        for field in ['attackEvent','ammoLoad']:
+        for field in ['attackEvent','ammoLoad','siegeModel','shotModel']:
             if field in definition:catalog[key][field]=definition[field]
         stats[key]={'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};print('Imported',key,stats[key],flush=True)
     if manifest.get('projectile'):
@@ -163,4 +176,8 @@ def main():
         generated.extend([model,texture,material]);catalog['RealArrow']={'material':material,'parts':[{'name':'RealArrow','mesh':model,'pivot':[0,0,0]}],'size':[.11,.11,1.5],'realistic':True}
     manifest['modelStats']=stats;manifest['generated']=[{'file':p,'sha256':hashlib.sha256((SAMPLE/p).read_bytes()).hexdigest()} for p in generated];MANIFEST.write_text(json.dumps(manifest,indent=2)+'\n');catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    parser=argparse.ArgumentParser();parser.add_argument('--manifest',default='human-sources.json');args=parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
+    MANIFEST=(SAMPLE/args.manifest).resolve()
+    if MANIFEST.parent!=SAMPLE.resolve():raise ValueError('Manifest must belong to the sample root')
+    main()

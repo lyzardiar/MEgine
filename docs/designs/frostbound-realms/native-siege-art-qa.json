@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "siegeArt": {
+    "models": [
+      "RealBallista",
+      "RealCatapult",
+      "RealTrebuchet",
+      "RealRam"
+    ],
+    "movement": true,
+    "attackFacing": true,
+    "loadedCycles": 3,
+    "selectionPortraits": 4,
+    "royalTrainingIcon": true,
+    "damage": true,
+    "saveRestore": true,
+    "shaderRejections": 0,
+    "fixture": "Flat field, no AI, one stationary invulnerable target; actual Agent selection, movement and attack commands."
+  }
+}
