@@ -11,9 +11,11 @@ is available separately under the licenses documented in the sample manifests.
 
 Modifications by MEngine contributors: assembled machinery and ammunition;
 baked base color, normal and roughness atlases; converted and normalized glTF
-meshes and sampled mechanical animations; attached loaded projectiles to bones.
+meshes and sampled mechanical animations; attached loaded projectiles to bones;
+assembled two ballista operators and four traction trebuchet operators with
+their heads, helmets, uniforms, levers and synchronized skeletal animations.
 The traction trebuchet uses the artillery stone mesh with granite texture.
-Operators are not included. Artillery movement uses the idle mechanical pose;
-the ram retains its authored movement clip.
+Artillery movement uses the idle mechanical pose with walking operators;
+the ram retains its authored movement clip. The onager and ram have no visible crew.
 Pinned source URLs and source/generated hashes: siege-sources.json.
 Original license notice: SourceAssets/0ad/LICENSE.txt.

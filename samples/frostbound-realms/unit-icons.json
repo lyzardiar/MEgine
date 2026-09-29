@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "54402dca6f194158b6191467cd9ef127c210d7dd8522ba8f419393a9f21e9257",
+  "sha256": "fe26074c3cc86aa410281899aac4fd632057553176e20e8fdcd9aa45ee1b0b12",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -144,13 +144,13 @@
       "material": "Assets/Materials/RealArcher.mmat",
       "bounds": {
         "max": [
-          0.5322701930999756,
+          0.8439063429832458,
           2.9246768951416016,
           0.8853884935379028
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcher.glb#pose=0:4",
         "min": [
-          -0.48787984251976013,
+          -1.0607930421829224,
           -0.002976532094180584,
           -0.6209447979927063
         ],
@@ -159,21 +159,21 @@
     },
     {
       "name": "RealBallista",
-      "mesh": "Assets/Models/RealBallista.glb#pose=0:0",
+      "mesh": "Assets/Models/RealBallista.glb#pose=0:4",
       "material": "Assets/Materials/RealBallista.mmat",
       "bounds": {
         "max": [
           1.7538971900939941,
-          1.9919854402542114,
+          3.034938335418701,
           3.7779109477996826
         ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallista.glb#pose=0:0",
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallista.glb#pose=0:4",
         "min": [
           -1.7539019584655762,
           -0.17418095469474792,
-          -1.6179587841033936
+          -1.7336359024047852
         ],
-        "vertices": 4149
+        "vertices": 7058
       }
     },
     {
@@ -235,21 +235,21 @@
     },
     {
       "name": "RealTrebuchet",
-      "mesh": "Assets/Models/RealTrebuchet.glb#pose=0:0",
+      "mesh": "Assets/Models/RealTrebuchet.glb#pose=0:4",
       "material": "Assets/Materials/RealTrebuchet.mmat",
       "bounds": {
         "max": [
           0.6859079599380493,
           2.5647783279418945,
-          1.1272361278533936
+          1.3625527620315552
         ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchet.glb#pose=0:0",
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchet.glb#pose=0:4",
         "min": [
           -1.260806679725647,
           0.05428219959139824,
           -2.9775331020355225
         ],
-        "vertices": 3094
+        "vertices": 8952
       }
     },
     {

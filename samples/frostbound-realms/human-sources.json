@@ -869,7 +869,7 @@
     },
     {
       "file": "Assets/Models/RealArcher.glb",
-      "sha256": "d192337ebf5ebb28be7c2bf7c8c023f12730b8071fa277468804e94fc71e1528"
+      "sha256": "2215b40985286999b3286fa7f23e2f55c7433bce5d9fa377fb616767883ece86"
     },
     {
       "file": "Assets/Materials/RealArcher.mmat",
@@ -889,7 +889,7 @@
     },
     {
       "file": "Assets/Models/RealArcherShoot.glb",
-      "sha256": "d48fde74a6cc1fe9aaa5881848885694035bf6bc4e179b85a22e0b974a329315"
+      "sha256": "257cd7772305a1601e27b15e33082cf3cd537ec177d5ba4201bc8890748ddac3"
     },
     {
       "file": "Assets/Materials/RealArcherShoot.mmat",
@@ -909,7 +909,7 @@
     },
     {
       "file": "Assets/Models/RealArcherLoaded.glb",
-      "sha256": "6abf2e5a6abafa96eea99cc0fe5e3ae269caf332c28c632b4bfbcf1b77f6c471"
+      "sha256": "a492e910587b8de02b40f067926d058abb118a7e431237280dd6dcf24b99a8d7"
     },
     {
       "file": "Assets/Materials/RealArcherLoaded.mmat",

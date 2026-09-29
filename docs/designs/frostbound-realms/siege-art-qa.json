@@ -12,28 +12,34 @@
     "RealTrebuchet",
     "RealRam"
   ],
-  "sources": 43,
-  "sourceBytes": 16375861,
+  "sources": 95,
+  "sourceBytes": 41052343,
   "generatedFiles": 35,
   "reproducibility": {
     "siegeMatchingFiles": 35,
-    "humanRegressionMatchingFiles": 43
+    "humanMatchingFiles": 43
   },
   "nativeImportReport": "siege-import-qa.json",
   "nativeGameplayReport": "native-siege-art-qa.json",
-  "nativeTacticsReport": "native-tactics-qa.json",
+  "nativeHumanReport": "native-humans-qa.json",
+  "crew": {
+    "ballista": 2,
+    "trebuchet": 4
+  },
+  "bowBindingOrientationCorrected": true,
   "rulesAndTcp": "siege-rules.txt",
   "unitPortraits": 20,
   "catalogModels": 109,
   "package": {
     "files": 483,
-    "bytes": 178150972,
-    "contentHash": "566b103b3371f23effa02c31a2c12575cb5a5f1c38deca74a3fadc2cd07dbf4a",
+    "bytes": 195774359,
+    "contentHash": "475eed03c256f2ddcd2c097f5e9fc64417e1c87280b331b85bb9a8214ba2f321",
     "smokeSeconds": 30,
     "loggedErrors": 0
   },
   "limitations": [
-    "Machinery has no operator characters",
+    "Onager and ram have no visible crew",
+    "Handheld ammunition transfer is not rendered",
     "Other remaining units still use earlier art",
     "No physical mouse, audio listening, cross-machine LAN or standalone frame-time acceptance"
   ]

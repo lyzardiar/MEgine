@@ -151,4 +151,4 @@ node scripts/qa-frostbound.mjs
 
 实体箭、短弩箭、长投射物、弩炮箭和扫描石弹分别显示；火焰、冰霜、自然、暗影与奥术使用粒子拖尾和对应命中特效。弹体按渲染帧在已收到的位置之间平滑过渡，仍由权威模拟决定命中。详见 [弹体视觉阶段](../../docs/designs/frostbound-realms/projectile-visuals.md)。
 
-四族攻城器械采用 0 A.D. CC-BY-SA-3.0 写实木制机械，包含弩炮、扭力投石机、牵引投石机和冲车，以及装填/发射机械动画。43 个源文件、35 个派生文件哈希见 siege-sources.json；素材署名随包位于 Assets/Licenses/0ad-siege.txt。操作士兵尚未接入；重建及原生截图见 [攻城器械美术记录](../../docs/designs/frostbound-realms/siege-art.md)。
+四族攻城器械采用 0 A.D. CC-BY-SA-3.0 写实木制机械，包含弩炮、扭力投石机、牵引投石机和冲车，以及装填/发射机械动画。95 个源文件、35 个派生文件哈希见 siege-sources.json；素材署名随包位于 Assets/Licenses/0ad-siege.txt。弩炮两名、牵引投石机四名操作士兵已接入同步动画；重建及原生截图见 [攻城器械美术记录](../../docs/designs/frostbound-realms/siege-art.md)。

@@ -25,6 +25,92 @@
           "tint": null,
           "bone": "prop_ammo",
           "loaded": false
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_short.dae",
+          "base": "textures/skins/skeletal/athen/epilektos_05.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_operator_L",
+          "skeletal": true,
+          "prefix": "crew1_",
+          "animations": {
+            "Idle": "animation/biped/citizen/idle_relax_m_a.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/oxybeles_attack_01.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/hele_a.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew1_prop-head"
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/lever_sml.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/props/siege_artillery_01_norm.png",
+          "specular": "textures/skins/props/siege_artillery_01_spec.png",
+          "tint": null,
+          "bone": "crew1_prop-weapon_R"
+        },
+        {
+          "mesh": "meshes/props/helmet/hele_pilos_a1.dae",
+          "base": "textures/skins/props/helmet/hele_pilos_01_bronze.png",
+          "normal": "textures/skins/props/helmet/hele_pilos_01_norm.png",
+          "specular": "textures/skins/props/helmet/hele_pilos_01_bronze_spec.png",
+          "tint": null,
+          "bone": "crew1_prop-helmet"
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_short.dae",
+          "base": "textures/skins/skeletal/athen/epilektos_01.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_operator_R",
+          "skeletal": true,
+          "prefix": "crew2_",
+          "animations": {
+            "Idle": "animation/biped/citizen/idle_relax_m_a.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/oxybeles_attack_02.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/hele_a.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew2_prop-head"
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/lever_sml.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/props/siege_artillery_01_norm.png",
+          "specular": "textures/skins/props/siege_artillery_01_spec.png",
+          "tint": null,
+          "bone": "crew2_prop-weapon_L"
+        },
+        {
+          "mesh": "meshes/props/helmet/hele_pilos_a1.dae",
+          "base": "textures/skins/props/helmet/hele_pilos_01_bronze.png",
+          "normal": "textures/skins/props/helmet/hele_pilos_01_norm.png",
+          "specular": "textures/skins/props/helmet/hele_pilos_01_bronze_spec.png",
+          "tint": null,
+          "bone": "crew2_prop-helmet"
         }
       ],
       "animations": {
@@ -36,7 +122,8 @@
       "siegeModel": true,
       "attackEvent": 0.99,
       "ammoLoad": 0.25,
-      "shotModel": "RealBallistaShoot"
+      "shotModel": "RealBallistaShoot",
+      "crewCount": 2
     },
     "RealBallista": {
       "sourceActor": "actors/units/hellenes/siege_oxybeles.xml",
@@ -66,6 +153,92 @@
           "tint": null,
           "bone": "prop_ammo",
           "loaded": false
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_short.dae",
+          "base": "textures/skins/skeletal/athen/epilektos_05.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_operator_L",
+          "skeletal": true,
+          "prefix": "crew1_",
+          "animations": {
+            "Idle": "animation/biped/citizen/idle_relax_m_a.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/oxybeles_attack_01.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/hele_a.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew1_prop-head"
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/lever_sml.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/props/siege_artillery_01_norm.png",
+          "specular": "textures/skins/props/siege_artillery_01_spec.png",
+          "tint": null,
+          "bone": "crew1_prop-weapon_R"
+        },
+        {
+          "mesh": "meshes/props/helmet/hele_pilos_a1.dae",
+          "base": "textures/skins/props/helmet/hele_pilos_01_bronze.png",
+          "normal": "textures/skins/props/helmet/hele_pilos_01_norm.png",
+          "specular": "textures/skins/props/helmet/hele_pilos_01_bronze_spec.png",
+          "tint": null,
+          "bone": "crew1_prop-helmet"
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_short.dae",
+          "base": "textures/skins/skeletal/athen/epilektos_01.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_operator_R",
+          "skeletal": true,
+          "prefix": "crew2_",
+          "animations": {
+            "Idle": "animation/biped/citizen/idle_relax_m_a.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/oxybeles_attack_02.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/hele_a.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew2_prop-head"
+        },
+        {
+          "mesh": "meshes/props/siege_artillery/lever_sml.dae",
+          "base": "textures/skins/props/siege_artillery_01.png",
+          "normal": "textures/skins/props/siege_artillery_01_norm.png",
+          "specular": "textures/skins/props/siege_artillery_01_spec.png",
+          "tint": null,
+          "bone": "crew2_prop-weapon_L"
+        },
+        {
+          "mesh": "meshes/props/helmet/hele_pilos_a1.dae",
+          "base": "textures/skins/props/helmet/hele_pilos_01_bronze.png",
+          "normal": "textures/skins/props/helmet/hele_pilos_01_norm.png",
+          "specular": "textures/skins/props/helmet/hele_pilos_01_bronze_spec.png",
+          "tint": null,
+          "bone": "crew2_prop-helmet"
         }
       ],
       "animations": {
@@ -77,7 +250,8 @@
       "siegeModel": true,
       "attackEvent": 0.99,
       "ammoLoad": 0.25,
-      "shotModel": "RealBallistaShoot"
+      "shotModel": "RealBallistaShoot",
+      "crewCount": 2
     },
     "RealCatapultShoot": {
       "sourceActor": "actors/units/romans/siege_onager.xml",
@@ -170,6 +344,210 @@
           "tint": null,
           "bone": "prop_ammo_2",
           "loaded": false
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_long.dae",
+          "base": "textures/skins/skeletal/han/uniform_a_04.png",
+          "normal": "textures/skins/skeletal/han/uniform_c_01_norm.png",
+          "specular": "textures/skins/skeletal/han/uniform_a_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_engineer_1",
+          "skeletal": true,
+          "prefix": "crew1_",
+          "animations": {
+            "Idle": "animation/biped/infantry/siege_operators/mangonel_operator_idle_b.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/mangonel_operator_attack_b.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/han_a.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew1_prop-head"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_hairbun.dae",
+          "base": "textures/skins/props/head/han_b.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew1_prop-helmet"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_advanced_melee_helmet.dae",
+          "base": "textures/skins/props/helmets/han_advanced_melee_helmet.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew1_prop-helmet"
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_long.dae",
+          "base": "textures/skins/skeletal/han/uniform_a_03.png",
+          "normal": "textures/skins/skeletal/han/uniform_c_01_norm.png",
+          "specular": "textures/skins/skeletal/han/uniform_a_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_engineer_2",
+          "skeletal": true,
+          "prefix": "crew2_",
+          "animations": {
+            "Idle": "animation/biped/infantry/siege_operators/mangonel_operator_idle_b.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/mangonel_operator_attack_b.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/han_a.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew2_prop-head"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_hairbun.dae",
+          "base": "textures/skins/props/head/han_b.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew2_prop-helmet"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_advanced_melee_helmet.dae",
+          "base": "textures/skins/props/helmets/han_advanced_melee_helmet.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew2_prop-helmet"
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_long.dae",
+          "base": "textures/skins/skeletal/han/uniform_a_02.png",
+          "normal": "textures/skins/skeletal/han/uniform_c_01_norm.png",
+          "specular": "textures/skins/skeletal/han/uniform_a_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_engineer_3",
+          "skeletal": true,
+          "prefix": "crew3_",
+          "animations": {
+            "Idle": "animation/biped/infantry/siege_operators/mangonel_operator_idle_b.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/mangonel_operator_attack_b.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/han_a.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew3_prop-head"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_hairbun.dae",
+          "base": "textures/skins/props/head/han_b.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew3_prop-helmet"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_advanced_melee_helmet.dae",
+          "base": "textures/skins/props/helmets/han_advanced_melee_helmet.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew3_prop-helmet"
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_long.dae",
+          "base": "textures/skins/skeletal/han/uniform_a_01.png",
+          "normal": "textures/skins/skeletal/han/uniform_c_01_norm.png",
+          "specular": "textures/skins/skeletal/han/uniform_a_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_engineer_4",
+          "skeletal": true,
+          "prefix": "crew4_",
+          "animations": {
+            "Idle": "animation/biped/infantry/siege_operators/mangonel_operator_idle_a.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/mangonel_operator_attack_a.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/han_a.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew4_prop-head"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_hairbun.dae",
+          "base": "textures/skins/props/head/han_b.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew4_prop-helmet"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_advanced_melee_helmet.dae",
+          "base": "textures/skins/props/helmets/han_advanced_melee_helmet.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew4_prop-helmet"
         }
       ],
       "animations": {
@@ -181,7 +559,8 @@
       "siegeModel": true,
       "attackEvent": 0.11,
       "ammoLoad": 0.85,
-      "shotModel": "RealTrebuchetShoot"
+      "shotModel": "RealTrebuchetShoot",
+      "crewCount": 4
     },
     "RealTrebuchet": {
       "sourceActor": "actors/units/han/siege_mangonel.xml",
@@ -220,6 +599,210 @@
           "tint": null,
           "bone": "prop_ammo_2",
           "loaded": false
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_long.dae",
+          "base": "textures/skins/skeletal/han/uniform_a_04.png",
+          "normal": "textures/skins/skeletal/han/uniform_c_01_norm.png",
+          "specular": "textures/skins/skeletal/han/uniform_a_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_engineer_1",
+          "skeletal": true,
+          "prefix": "crew1_",
+          "animations": {
+            "Idle": "animation/biped/infantry/siege_operators/mangonel_operator_idle_b.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/mangonel_operator_attack_b.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/han_a.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew1_prop-head"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_hairbun.dae",
+          "base": "textures/skins/props/head/han_b.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew1_prop-helmet"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_advanced_melee_helmet.dae",
+          "base": "textures/skins/props/helmets/han_advanced_melee_helmet.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew1_prop-helmet"
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_long.dae",
+          "base": "textures/skins/skeletal/han/uniform_a_03.png",
+          "normal": "textures/skins/skeletal/han/uniform_c_01_norm.png",
+          "specular": "textures/skins/skeletal/han/uniform_a_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_engineer_2",
+          "skeletal": true,
+          "prefix": "crew2_",
+          "animations": {
+            "Idle": "animation/biped/infantry/siege_operators/mangonel_operator_idle_b.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/mangonel_operator_attack_b.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/han_a.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew2_prop-head"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_hairbun.dae",
+          "base": "textures/skins/props/head/han_b.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew2_prop-helmet"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_advanced_melee_helmet.dae",
+          "base": "textures/skins/props/helmets/han_advanced_melee_helmet.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew2_prop-helmet"
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_long.dae",
+          "base": "textures/skins/skeletal/han/uniform_a_02.png",
+          "normal": "textures/skins/skeletal/han/uniform_c_01_norm.png",
+          "specular": "textures/skins/skeletal/han/uniform_a_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_engineer_3",
+          "skeletal": true,
+          "prefix": "crew3_",
+          "animations": {
+            "Idle": "animation/biped/infantry/siege_operators/mangonel_operator_idle_b.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/mangonel_operator_attack_b.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/han_a.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew3_prop-head"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_hairbun.dae",
+          "base": "textures/skins/props/head/han_b.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew3_prop-helmet"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_advanced_melee_helmet.dae",
+          "base": "textures/skins/props/helmets/han_advanced_melee_helmet.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew3_prop-helmet"
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_tunic_long.dae",
+          "base": "textures/skins/skeletal/han/uniform_a_01.png",
+          "normal": "textures/skins/skeletal/han/uniform_c_01_norm.png",
+          "specular": "textures/skins/skeletal/han/uniform_a_spec.png",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "prop_engineer_4",
+          "skeletal": true,
+          "prefix": "crew4_",
+          "animations": {
+            "Idle": "animation/biped/infantry/siege_operators/mangonel_operator_idle_a.dae",
+            "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+            "Attack": "animation/biped/infantry/siege_operators/mangonel_operator_attack_a.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/dude_head.dae",
+          "base": "textures/skins/props/head/han_a.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew4_prop-head"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_hairbun.dae",
+          "base": "textures/skins/props/head/han_b.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": "crew4_prop-helmet"
+        },
+        {
+          "mesh": "meshes/props/helmet/han_advanced_melee_helmet.dae",
+          "base": "textures/skins/props/helmets/han_advanced_melee_helmet.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.28,
+            0.38,
+            0.42
+          ],
+          "bone": "crew4_prop-helmet"
         }
       ],
       "animations": {
@@ -231,7 +814,8 @@
       "siegeModel": true,
       "attackEvent": 0.11,
       "ammoLoad": 0.85,
-      "shotModel": "RealTrebuchetShoot"
+      "shotModel": "RealTrebuchetShoot",
+      "crewCount": 4
     },
     "RealRam": {
       "sourceActor": "actors/structures/iberians/siege_ram.xml",
@@ -267,6 +851,60 @@
       "size": 1426
     },
     {
+      "file": "SourceAssets/0ad/actors/props/units/han/mangonel_operator_a.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/han/mangonel_operator_a.xml",
+      "sha256": "6265c299ac789d83b02348f8fdc7bd041470037c734e1ad043ec9332c64e8541",
+      "size": 972
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/han/mangonel_operator_b.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/han/mangonel_operator_b.xml",
+      "sha256": "de36638e7368f0c988f983b7057ded88a3f09b422c9b3b5b7ec6ebf97c0279d8",
+      "size": 972
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/han/mangonel_operator_c.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/han/mangonel_operator_c.xml",
+      "sha256": "ab8d956ad88e85785727e874c785580aa7be282a52d04d300d235d8fa45e26ab",
+      "size": 972
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/han/mangonel_operator_d.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/han/mangonel_operator_d.xml",
+      "sha256": "7939124a81f64ef5e7cf2472ff9f517ce23fb37f7a58da410a6f651f8f8a7d82",
+      "size": 972
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/heads/head_china.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/heads/head_china.xml",
+      "sha256": "f3e7730504754345db206ed45a84f29954b6f7741c6cb019001a09b755404c04",
+      "size": 1499
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/heads/new/head_hele_b.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/heads/new/head_hele_b.xml",
+      "sha256": "4956b46a80ad1ab4fcebd05ac361fad08887c25565681bca29f92a757b3e28a0",
+      "size": 1872
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/helmets/han_advanced_melee_helmet.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/helmets/han_advanced_melee_helmet.xml",
+      "sha256": "8ccf6f2c482082a830a57c7dc0e3877f1e63128916f0023b242baa2b79efede0",
+      "size": 511
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/helmets/han_hairbun.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/helmets/han_hairbun.xml",
+      "sha256": "c0b2483957ba99c9bb9d2b54d8b330a006bd7ce01500c1fbe63aa989eff61944",
+      "size": 482
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/helmets/hele_pilos.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/helmets/hele_pilos.xml",
+      "sha256": "7735e8dd491bd397b5e4db075374ac412258bc52b45d62d3cb03b7b19276e372",
+      "size": 622
+    },
+    {
       "file": "SourceAssets/0ad/actors/props/units/rock_pile.xml",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/rock_pile.xml",
       "sha256": "946ee4033f0d7a9224f97a95b7404ea776d89f4cfa6bcf7577a6223a919f1a28",
@@ -291,6 +929,12 @@
       "size": 498
     },
     {
+      "file": "SourceAssets/0ad/actors/props/units/tools/siege_lever.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/tools/siege_lever.xml",
+      "sha256": "e3176e5466f6af8130c16b4497fa1eaca9e77e166b5edd80e7a52dc66ce9c5b0",
+      "size": 523
+    },
+    {
       "file": "SourceAssets/0ad/actors/props/units/weapons/rock.xml",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/rock.xml",
       "sha256": "44fae7c1689ee56fee8447277058ba84ef8114cd07de7c6977c6174e8d381097",
@@ -309,6 +953,18 @@
       "size": 1398
     },
     {
+      "file": "SourceAssets/0ad/actors/units/hellenes/oxybeles_infantry_a.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/hellenes/oxybeles_infantry_a.xml",
+      "sha256": "71332ad003b8cf72d217fc339e1a2413f694b3c6faddd475a48d80c92d325dbe",
+      "size": 2596
+    },
+    {
+      "file": "SourceAssets/0ad/actors/units/hellenes/oxybeles_infantry_b.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/hellenes/oxybeles_infantry_b.xml",
+      "sha256": "c384bed70f92bce9718b3166e2fe8024108c2e23b4460ee5e6d950510ceff9c0",
+      "size": 2596
+    },
+    {
       "file": "SourceAssets/0ad/actors/units/hellenes/siege_oxybeles.xml",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/hellenes/siege_oxybeles.xml",
       "sha256": "9e06b740f64c8a1e8a4398514ba35c8ccda5b2ef21bcc46bd896250d1497ec2c",
@@ -319,6 +975,54 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/romans/siege_onager.xml",
       "sha256": "d24b1746b8efdfb68087ec8e6fb737ce5c18b2d2cde32d584baccf9e7a0f1003",
       "size": 1010
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/idle_relax_m_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/idle_relax_m_a.dae",
+      "sha256": "414f3ce18f609a3478532ede3a6a21bc29fee64d2d40bd7e06efbbbe3a445656",
+      "size": 1350706
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/walk_relax_m_aggresive.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/walk_relax_m_aggresive.dae",
+      "sha256": "149e92d063637b95b667d6ca2f9f262456c1213db9340bbc1fa1840be5ceff16",
+      "size": 1048638
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/siege_operators/mangonel_operator_attack_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/siege_operators/mangonel_operator_attack_a.dae",
+      "sha256": "a9bd4de2ba1208e73f8b6435a342bbab26e084e24e91bb9897993cf3598288b8",
+      "size": 2609226
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/siege_operators/mangonel_operator_attack_b.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/siege_operators/mangonel_operator_attack_b.dae",
+      "sha256": "629a486af64bb662189a8ef593120cf0b8c3cbc7fb71406b9d956020be4f3b36",
+      "size": 2626731
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/siege_operators/mangonel_operator_idle_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/siege_operators/mangonel_operator_idle_a.dae",
+      "sha256": "cfd89ca1507941936562332e0403791f49338119af2a4a60951d9d402c66518f",
+      "size": 556452
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/siege_operators/mangonel_operator_idle_b.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/siege_operators/mangonel_operator_idle_b.dae",
+      "sha256": "deaf958101a6b01f68d490b7254bdfb1a169435e6c4e0dcf74b6c9d4d63982e9",
+      "size": 567197
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/siege_operators/oxybeles_attack_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/siege_operators/oxybeles_attack_01.dae",
+      "sha256": "53ea475a9255e1af68ff1cf4a739e6f5f153531b1258adcc766c8def2120a9d9",
+      "size": 7028435
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/siege_operators/oxybeles_attack_02.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/siege_operators/oxybeles_attack_02.dae",
+      "sha256": "87e6bb95b3c46570a2dcd179cc53a7b30b4aadadd189760baeeea85c18a487ac",
+      "size": 7015588
     },
     {
       "file": "SourceAssets/0ad/animation/mechanical/han_mangonel_attack.dae",
@@ -399,10 +1103,40 @@
       "size": 407
     },
     {
+      "file": "SourceAssets/0ad/materials/objectcolor_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/objectcolor_norm_spec.xml",
+      "sha256": "9e01afad6d50270fd871d46acef9fbbd09678dca4784cd6a5d34c73bd143aeda",
+      "size": 403
+    },
+    {
       "file": "SourceAssets/0ad/materials/player_trans_norm_spec.xml",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/player_trans_norm_spec.xml",
       "sha256": "48a6730a21ba962045c589dbcf2e8098a5e574e9afeb65df861cc8b2ec1aa545",
       "size": 395
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/helmet/han_advanced_melee_helmet.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/helmet/han_advanced_melee_helmet.dae",
+      "sha256": "f3e96f0c40b40e2e98f14e44880b9d1cc5e0dc04ed4e4dd72ebc48bf8cc33d56",
+      "size": 24836
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/helmet/han_hairbun.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/helmet/han_hairbun.dae",
+      "sha256": "e810de2fd1fbcac7f2d701b6566528a890205fc4df20662c15308989dd44fa2f",
+      "size": 11489
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/helmet/hele_pilos_a1.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/helmet/hele_pilos_a1.dae",
+      "sha256": "0ba87320e84f1188be12486016f8b2fef6981e362d29d8d392669ed1876e24a7",
+      "size": 29909
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/new/dude_head.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/new/dude_head.dae",
+      "sha256": "cd9b853b175feb8d89ada520ca5079edfa2de8e9aa20292c1d0ad3366740795e",
+      "size": 24596
     },
     {
       "file": "SourceAssets/0ad/meshes/props/onager_projectile.dae",
@@ -429,6 +1163,12 @@
       "size": 14983
     },
     {
+      "file": "SourceAssets/0ad/meshes/props/siege_artillery/lever_sml.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/siege_artillery/lever_sml.dae",
+      "sha256": "979bfe676f683a861332d8ee19b116e5342a4922ebc32432fa7c774b3e3a111f",
+      "size": 10648
+    },
+    {
       "file": "SourceAssets/0ad/meshes/props/siege_artillery/oxybeles_01.dae",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/siege_artillery/oxybeles_01.dae",
       "sha256": "310ad406f1a5d56bd7db3961d481ba05de7cb2ca8e8ee973b9995cd93146f22e",
@@ -439,6 +1179,18 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/siege_artillery/projectile_stone_lrg.dae",
       "sha256": "da19a5b5aa7486db2e1da569b5fd4540795462ea7fa58af9dd0a9e1e6a55a448",
       "size": 9345
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/new/m_armor_tunic_long.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/new/m_armor_tunic_long.dae",
+      "sha256": "5182f7b92230eb43c38c3e747e6c3f0f15075358e28a97ddbc815677dfd0dd92",
+      "size": 233278
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/new/m_armor_tunic_short.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/new/m_armor_tunic_short.dae",
+      "sha256": "9c8164ab958933dd0116c4154d18bb11640c321364eb3c7794c99908abc15319",
+      "size": 304317
     },
     {
       "file": "SourceAssets/0ad/meshes/structural/han_mangonel.dae",
@@ -477,6 +1229,48 @@
       "size": 152
     },
     {
+      "file": "SourceAssets/0ad/textures/skins/props/head/han_a.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/head/han_a.png",
+      "sha256": "6f9b51e92e1bf562340748a231e56f98a74b333157d0abbfedd23fadec98c47e",
+      "size": 27859
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/head/han_b.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/head/han_b.png",
+      "sha256": "146bc14cbc1b671209c7f18bd6d7dcb4c6ba3e6810ca8d37b5b7c1276a280014",
+      "size": 25442
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/head/hele_a.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/head/hele_a.dds",
+      "sha256": "a31c83a6066ded08fe863767798e8cbdcafca2301532ed01ba01d5135d1e6849",
+      "size": 5616
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/hele_pilos_01_bronze.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/hele_pilos_01_bronze.png",
+      "sha256": "16362ed9b51ce83fb23cd412a74ae75b6cd93cf928df61ea8ce509a495f41905",
+      "size": 82717
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/hele_pilos_01_bronze_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/hele_pilos_01_bronze_spec.png",
+      "sha256": "92d7ff1377e11f971ffc2725ad4f43a74051ac1034d8529658a0813dedf1247f",
+      "size": 109998
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/hele_pilos_01_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/hele_pilos_01_norm.png",
+      "sha256": "5f3cfa3c2be6f6e32fbe4dc23a056f55c6d784c5f5500d5c3feda39799a72b17",
+      "size": 31827
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmets/han_advanced_melee_helmet.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmets/han_advanced_melee_helmet.png",
+      "sha256": "96c8bec672d12182bee7c5ac25578e16d80c83954567a471eef6208f81b78638",
+      "size": 35221
+    },
+    {
       "file": "SourceAssets/0ad/textures/skins/props/siege_artillery_01.png",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/siege_artillery_01.png",
       "sha256": "d1f6c38557f06e5d654ab20ff892edbdfab354ce94ef1eecadb83e20d4b8f1cc",
@@ -493,6 +1287,54 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/siege_artillery_01_spec.png",
       "sha256": "903e67b9d0a8f4bd500169db8d10fbbd27e10ebef61d8e1b93aaf28761896d8c",
       "size": 1955597
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/athen/epilektos_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/athen/epilektos_01.png",
+      "sha256": "573d3ef3717544da3ec96440d85be1f44b9518e52e3d46bd13d0980ea6ac5345",
+      "size": 132243
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/athen/epilektos_05.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/athen/epilektos_05.png",
+      "sha256": "af12c52807c446565377b25e113926f928939be17239ba3676cdc0181543892e",
+      "size": 137329
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/han/uniform_a_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/han/uniform_a_01.png",
+      "sha256": "8e528b591b543c82a94dd57e1964d2175b01b89977f6e4dd0e0b36f941ecd73c",
+      "size": 132956
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/han/uniform_a_02.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/han/uniform_a_02.png",
+      "sha256": "e054adcf21926cc1449fc9f4246f78ab9657d52dc0fa0885f65baf7acaec1327",
+      "size": 137121
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/han/uniform_a_03.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/han/uniform_a_03.png",
+      "sha256": "6d5709d82f05775a2ecce487bb79ead5258defd087bc9921564fd1c3cc96af7b",
+      "size": 113583
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/han/uniform_a_04.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/han/uniform_a_04.png",
+      "sha256": "e156a939a7723f3ec645fb0376befbfa276bb2d3f6a5e8d3560a3b68bb2521d3",
+      "size": 117899
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/han/uniform_a_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/han/uniform_a_spec.png",
+      "sha256": "57985cfb99f5bb4f0484360f1bdea0a62bad825f92c0ad4df38d474b0b35a3ba",
+      "size": 10701
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/han/uniform_c_01_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/han/uniform_c_01_norm.png",
+      "sha256": "d9d55f8a579f25c7fabd18371184c01b4c081116087ea1ed020684c24a30350f",
+      "size": 114936
     },
     {
       "file": "SourceAssets/0ad/textures/skins/structural/hele_siege.dds",
@@ -517,24 +1359,78 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/rome_siege_onager_spec.png",
       "sha256": "85d6501438e60e313c3d4a8941b5bf558ad38ddfb931535fd51282c6f799dd44",
       "size": 11873
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/attack_ranged_mangonel_a.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/attack_ranged_mangonel_a.xml",
+      "sha256": "0288e7b399d96ab1dba795cee068add44e1f4880134012068df43c561256b44c",
+      "size": 401
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/attack_ranged_mangonel_b.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/attack_ranged_mangonel_b.xml",
+      "sha256": "792415f8d2acfb491fae40c75c1285d850b397302a122dacdd23a7b8993c94df",
+      "size": 255
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/attack_ranged_oxybeles_01.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/attack_ranged_oxybeles_01.xml",
+      "sha256": "f932580f82bd1b4d8c153c7e23b773825e360ea835fd2169ae859aafa9fe94fe",
+      "size": 242
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/attack_ranged_oxybeles_02.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/attack_ranged_oxybeles_02.xml",
+      "sha256": "9b18bc07220b3bb67bd84f2bfd3589900e9a470477e56e19757fb88de572cb55",
+      "size": 422
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/base_citizen_soldier.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/base_citizen_soldier.xml",
+      "sha256": "491a9bb6fe1e180e9a5c83dd9790a84108fbb210b7d7e9ac61394b6488657cc5",
+      "size": 1380
+    },
+    {
+      "file": "SourceAssets/0ad/variants/clothes/han/uniform_a_01.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/clothes/han/uniform_a_01.xml",
+      "sha256": "e991095776bc5103be982d08af6ff9a831b64d8e2767513dcbb1a09df8b30674",
+      "size": 324
+    },
+    {
+      "file": "SourceAssets/0ad/variants/clothes/han/uniform_a_02.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/clothes/han/uniform_a_02.xml",
+      "sha256": "d631f36a8a5d720d829a4a152680a7911d84b9414ac353b3b92d053d6b1dcf24",
+      "size": 324
+    },
+    {
+      "file": "SourceAssets/0ad/variants/clothes/han/uniform_a_03.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/clothes/han/uniform_a_03.xml",
+      "sha256": "7ab6b5b9d89600c2e58102de1a9266d62bd676c8364ba8f7773cc763798d15d4",
+      "size": 324
+    },
+    {
+      "file": "SourceAssets/0ad/variants/clothes/han/uniform_a_04.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/clothes/han/uniform_a_04.xml",
+      "sha256": "fcce8b4ff97d7c3198836e360a382827cb1fa243d719cbf124b2c29b0b409a54",
+      "size": 324
     }
   ],
   "generated": [
     {
       "file": "Assets/Textures/RealBallistaShoot_base.png",
-      "sha256": "a3877e1fc16cacf4a39cb653045ca70e5ada94899c4636f4ca8a0cc1e5ecdbfa"
+      "sha256": "f110e8c9c40b6cc3365859023cb216835b172facbe5d34ea2a1590a7383e7c69"
     },
     {
       "file": "Assets/Textures/RealBallistaShoot_normal.png",
-      "sha256": "50d6417ef74c1a3cb6cb46bfd03f4abf69ebbeec255d2c3e52e95166d9e98f0f"
+      "sha256": "f9ce14c5d9ed590c362be252fe2205fd13d0bf109a38f98a60c8c36aa402c6d3"
     },
     {
       "file": "Assets/Textures/RealBallistaShoot_arm.png",
-      "sha256": "ea2870887d75f6677ef8d64c1b90e65c682afb7032921cbbcbe3c6efd6addfad"
+      "sha256": "a224af2090d989dffe7ae197577611583507bb8b54141f7d84aa82e884fb835c"
     },
     {
       "file": "Assets/Models/RealBallistaShoot.glb",
-      "sha256": "63bb0b39beed2de0c7c211ca495ba641cc618cd9d58cb495402ae7985e1a309a"
+      "sha256": "333c66a791849f5f4d68e3e2d31a2b23344e8f3b7ab4d07dd7f031d8808d28ad"
     },
     {
       "file": "Assets/Materials/RealBallistaShoot.mmat",
@@ -542,19 +1438,19 @@
     },
     {
       "file": "Assets/Textures/RealBallista_base.png",
-      "sha256": "22b7164ba0fc6a2d83cdafb8385afa2ee9a59c112af0ee1c7394a9e3ed7a4aca"
+      "sha256": "6b2691345de5efa62f1dfd50e200a5514e51e1c1112ee6c5175678dd0f9a0783"
     },
     {
       "file": "Assets/Textures/RealBallista_normal.png",
-      "sha256": "53bea1d1ab47e99c7187318dc4c2f4b8c495008d1b7ab860fe4f5669ae0320bb"
+      "sha256": "b45ec7d9a4db584d9711018fcc94d374234e627a2ff69c6adf79e9eaa87300cf"
     },
     {
       "file": "Assets/Textures/RealBallista_arm.png",
-      "sha256": "e5b49bfc04bebbc99a38599d527facb62a1aa4bcecbdb7d6f94ed7d49042e8bf"
+      "sha256": "b47bf66cd73f3634c8734d87910a9d51fd9804d77a6a37e0f130fa24960b1b86"
     },
     {
       "file": "Assets/Models/RealBallista.glb",
-      "sha256": "394dde6172a666a366f9db4968bab75b343e48a39ea3a3f8f0344591c0d8db5c"
+      "sha256": "3df22f02c489b21430d50e262240906a5f80f12404e4d0c9b7f3537c03a65a8a"
     },
     {
       "file": "Assets/Materials/RealBallista.mmat",
@@ -602,19 +1498,19 @@
     },
     {
       "file": "Assets/Textures/RealTrebuchetShoot_base.png",
-      "sha256": "6484c2e6007df9b6e22e22591682a6e0ae8b8e17a954651cd4d4b4a51e9d4525"
+      "sha256": "59a401c81a33a6ccbd67b43fb58c49cb52ddaf55e456b8aa5b91df217a6b824c"
     },
     {
       "file": "Assets/Textures/RealTrebuchetShoot_normal.png",
-      "sha256": "a7ecf5529417eb489d8f7ebab16a637af32b540436448da6143d26f274ba91f2"
+      "sha256": "edd489ccf402b23e006a0afeeaa75fc62938b824e3c63c67e2e643d53757b2fe"
     },
     {
       "file": "Assets/Textures/RealTrebuchetShoot_arm.png",
-      "sha256": "22d5d7358f6a2d49f7255617cbd682a1bdd7c5cfef0647aaaa73a23da755e5a1"
+      "sha256": "7b5679f178fa2137bf809136e462b495ad22f0d6e66f32a900bde611cd93a51e"
     },
     {
       "file": "Assets/Models/RealTrebuchetShoot.glb",
-      "sha256": "81d56c030ef89bc5dfc4b8439e3cf6bc023e7ed9ef178bb2939977f9a8d1c904"
+      "sha256": "ead62259670b54f0c802c3c5e715dd787f5119b07010f3c6db2fc38f77b0f1fc"
     },
     {
       "file": "Assets/Materials/RealTrebuchetShoot.mmat",
@@ -622,19 +1518,19 @@
     },
     {
       "file": "Assets/Textures/RealTrebuchet_base.png",
-      "sha256": "991d677a84861721f9b7ca2f6c3a7f30bbf8369e0bd32fc8aa091c2fd241c1cf"
+      "sha256": "bbaec921638847bf076916ccb896b6cabe0494709951cfffdebe539ddbff6106"
     },
     {
       "file": "Assets/Textures/RealTrebuchet_normal.png",
-      "sha256": "d5ffce4aa6045a6a7376668fe442c94fa85eebc90e0c50998af162888d6ae89f"
+      "sha256": "81ff83459384b538335395d253f87767c1c86ab8af841946980e08f902f9250c"
     },
     {
       "file": "Assets/Textures/RealTrebuchet_arm.png",
-      "sha256": "830abedae7d7fd4b03bcf7f7ce5ed2babe73895c46dfa94e0f4389f0f4b7c7aa"
+      "sha256": "fea96ee05a413c9c8943ae4bb88fd7f8bf4d845dbaf77d24de8534c4103d33a2"
     },
     {
       "file": "Assets/Models/RealTrebuchet.glb",
-      "sha256": "e26e5424c9eab36300fa5ef3e35648b0f1280ab3cc533ae1d3c2206e9a1962b4"
+      "sha256": "76df2591246bb4a9374770606d30e7c432a1c21379f5f17e4ce92063da14cd15"
     },
     {
       "file": "Assets/Materials/RealTrebuchet.mmat",
@@ -663,16 +1559,16 @@
   ],
   "modelStats": {
     "RealBallistaShoot": {
-      "triangles": 3040,
-      "bones": 40,
+      "triangles": 5740,
+      "bones": 244,
       "clips": [
         {
           "name": "Idle",
-          "frames": 4
+          "frames": 30
         },
         {
           "name": "Walk",
-          "frames": 4
+          "frames": 20
         },
         {
           "name": "Attack",
@@ -681,21 +1577,21 @@
       ],
       "size": [
         3.5077934923954537,
-        2.166166541250716,
+        3.247610834615887,
         3.8
       ]
     },
     "RealBallista": {
-      "triangles": 3102,
-      "bones": 40,
+      "triangles": 5802,
+      "bones": 244,
       "clips": [
         {
           "name": "Idle",
-          "frames": 4
+          "frames": 30
         },
         {
           "name": "Walk",
-          "frames": 4
+          "frames": 20
         },
         {
           "name": "Attack",
@@ -704,7 +1600,7 @@
       ],
       "size": [
         3.5077934923954537,
-        2.166166541250716,
+        3.247610834615887,
         5.395869207126519
       ]
     },
@@ -755,16 +1651,16 @@
       ]
     },
     "RealTrebuchetShoot": {
-      "triangles": 1638,
-      "bones": 41,
+      "triangles": 7182,
+      "bones": 449,
       "clips": [
         {
           "name": "Idle",
-          "frames": 2
+          "frames": 30
         },
         {
           "name": "Walk",
-          "frames": 2
+          "frames": 20
         },
         {
           "name": "Attack",
@@ -774,20 +1670,20 @@
       "size": [
         1.946715299696878,
         2.3621511897242726,
-        4.2
+        4.391550365529776
       ]
     },
     "RealTrebuchet": {
-      "triangles": 1686,
-      "bones": 41,
+      "triangles": 7230,
+      "bones": 449,
       "clips": [
         {
           "name": "Idle",
-          "frames": 2
+          "frames": 30
         },
         {
           "name": "Walk",
-          "frames": 2
+          "frames": 20
         },
         {
           "name": "Attack",
@@ -797,7 +1693,7 @@
       "size": [
         1.946715299696878,
         2.3621511897242726,
-        4.2
+        4.391550365529776
       ]
     },
     "RealRam": {

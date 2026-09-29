@@ -1,6 +1,6 @@
 {
   "file": "docs/designs/frostbound-realms/siege-poses.png",
-  "sha256": "22e9742d50ab3c391e75b8ab7a484aa39fbfa5a7770b4d4cd123c14747e08493",
+  "sha256": "6ff9ec5fc3875f8a77b92e7476cdf60731d601a682cc22a91b57a883eaf11914",
   "generator": "scripts/render-frost-unit-icons.mjs --siege-sheet",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -12,16 +12,16 @@
       "bounds": {
         "max": [
           1.7538971900939941,
-          1.9919854402542114,
+          3.033825397491455,
           2.1820712089538574
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallistaShoot.glb#pose=2:0",
         "min": [
           -1.7539019584655762,
           -0.17418095469474792,
-          -1.6179587841033936
+          -1.889955759048462
         ],
-        "vertices": 4102
+        "vertices": 6993
       }
     },
     {
@@ -31,7 +31,7 @@
       "bounds": {
         "max": [
           1.7538971900939941,
-          1.9935460090637207,
+          3.026773691177368,
           4.007645606994629
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallista.glb#pose=2:61",
@@ -40,7 +40,7 @@
           -0.17418095469474792,
           -1.6179587841033936
         ],
-        "vertices": 4149
+        "vertices": 7058
       }
     },
     {
@@ -50,16 +50,16 @@
       "bounds": {
         "max": [
           1.4889405965805054,
-          2.0386784076690674,
+          2.956890106201172,
           2.6605372428894043
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBallista.glb#pose=2:123",
         "min": [
           -1.6248729228973389,
           -0.17418095469474792,
-          -1.6179587841033936
+          -2.7143473625183105
         ],
-        "vertices": 4149
+        "vertices": 7058
       }
     },
     {
@@ -127,7 +127,7 @@
         "max": [
           0.6859079599380493,
           2.5647783279418945,
-          1.1272361278533936
+          1.3981218338012695
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchet.glb#pose=2:0",
         "min": [
@@ -135,7 +135,7 @@
           0.05428219959139824,
           -2.9775331020355225
         ],
-        "vertices": 3094
+        "vertices": 8952
       }
     },
     {
@@ -146,7 +146,7 @@
         "max": [
           0.6859079599380493,
           2.564769744873047,
-          1.1272361278533936
+          1.397761583328247
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchetShoot.glb#pose=2:18",
         "min": [
@@ -154,7 +154,7 @@
           0.05428219959139824,
           -2.977541446685791
         ],
-        "vertices": 2956
+        "vertices": 8802
       }
     },
     {
@@ -165,7 +165,7 @@
         "max": [
           0.6859079599380493,
           2.5647776126861572,
-          1.1272361278533936
+          1.3977382183074951
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTrebuchetShoot.glb#pose=2:36",
         "min": [
@@ -173,7 +173,7 @@
           0.05428219959139824,
           -2.977534294128418
         ],
-        "vertices": 2956
+        "vertices": 8802
       }
     },
     {

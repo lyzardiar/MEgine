@@ -2843,11 +2843,11 @@
     "animations": [
       {
         "name": "Idle",
-        "frames": 4
+        "frames": 30
       },
       {
         "name": "Walk",
-        "frames": 4
+        "frames": 20
       },
       {
         "name": "Attack",
@@ -2856,14 +2856,15 @@
     ],
     "size": [
       3.5077934923954537,
-      2.166166541250716,
+      3.247610834615887,
       3.8
     ],
     "realistic": true,
     "attackEvent": 0.99,
     "ammoLoad": 0.25,
     "siegeModel": true,
-    "shotModel": "RealBallistaShoot"
+    "shotModel": "RealBallistaShoot",
+    "crewCount": 2
   },
   "RealBallista": {
     "material": "Assets/Materials/RealBallista.mmat",
@@ -2881,11 +2882,11 @@
     "animations": [
       {
         "name": "Idle",
-        "frames": 4
+        "frames": 30
       },
       {
         "name": "Walk",
-        "frames": 4
+        "frames": 20
       },
       {
         "name": "Attack",
@@ -2894,14 +2895,15 @@
     ],
     "size": [
       3.5077934923954537,
-      2.166166541250716,
+      3.247610834615887,
       5.395869207126519
     ],
     "realistic": true,
     "attackEvent": 0.99,
     "ammoLoad": 0.25,
     "siegeModel": true,
-    "shotModel": "RealBallistaShoot"
+    "shotModel": "RealBallistaShoot",
+    "crewCount": 2
   },
   "RealCatapultShoot": {
     "material": "Assets/Materials/RealCatapultShoot.mmat",
@@ -2995,11 +2997,11 @@
     "animations": [
       {
         "name": "Idle",
-        "frames": 2
+        "frames": 30
       },
       {
         "name": "Walk",
-        "frames": 2
+        "frames": 20
       },
       {
         "name": "Attack",
@@ -3009,13 +3011,14 @@
     "size": [
       1.946715299696878,
       2.3621511897242726,
-      4.2
+      4.391550365529776
     ],
     "realistic": true,
     "attackEvent": 0.11,
     "ammoLoad": 0.85,
     "siegeModel": true,
-    "shotModel": "RealTrebuchetShoot"
+    "shotModel": "RealTrebuchetShoot",
+    "crewCount": 4
   },
   "RealTrebuchet": {
     "material": "Assets/Materials/RealTrebuchet.mmat",
@@ -3033,11 +3036,11 @@
     "animations": [
       {
         "name": "Idle",
-        "frames": 2
+        "frames": 30
       },
       {
         "name": "Walk",
-        "frames": 2
+        "frames": 20
       },
       {
         "name": "Attack",
@@ -3047,13 +3050,14 @@
     "size": [
       1.946715299696878,
       2.3621511897242726,
-      4.2
+      4.391550365529776
     ],
     "realistic": true,
     "attackEvent": 0.11,
     "ammoLoad": 0.85,
     "siegeModel": true,
-    "shotModel": "RealTrebuchetShoot"
+    "shotModel": "RealTrebuchetShoot",
+    "crewCount": 4
   },
   "RealRam": {
     "material": "Assets/Materials/RealRam.mmat",

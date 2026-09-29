@@ -1,6 +1,6 @@
 {
   "file": "docs/designs/frostbound-realms/archer-poses.png",
-  "sha256": "7026662f93526a713d583d951bb162fd459c28a2357f160ac47b176601219c26",
+  "sha256": "d3d75b74a6a395b0aef9a5c759d1f14b7c19cce7a403fc7f5665a288d756ec78",
   "generator": "scripts/render-frost-unit-icons.mjs --archer-sheet",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -11,13 +11,13 @@
       "material": "Assets/Materials/RealArcher.mmat",
       "bounds": {
         "max": [
-          0.5323832035064697,
+          0.8424699902534485,
           2.9236199855804443,
           0.879124641418457
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcher.glb#pose=0:0",
         "min": [
-          -0.48787981271743774,
+          -1.0644499063491821,
           -0.0029652216471731663,
           -0.6151912212371826
         ],
@@ -30,13 +30,13 @@
       "material": "Assets/Materials/RealArcher.mmat",
       "bounds": {
         "max": [
-          0.9401144981384277,
+          1.1594772338867188,
           2.8484644889831543,
-          0.6006596088409424
+          0.6285058259963989
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcher.glb#pose=1:4",
         "min": [
-          -0.3862791061401367,
+          -0.7215250730514526,
           -0.02307966910302639,
           -0.7222033739089966
         ],
@@ -49,13 +49,13 @@
       "material": "Assets/Materials/RealArcherLoaded.mmat",
       "bounds": {
         "max": [
-          0.5003178119659424,
+          0.7375600337982178,
           2.9217371940612793,
           1.8092665672302246
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:1",
         "min": [
-          -0.4604875445365906,
+          -0.9779605865478516,
           -0.006878361105918884,
           -0.5347737669944763
         ],
@@ -69,7 +69,7 @@
       "bounds": {
         "max": [
           0.41827601194381714,
-          2.8731749057769775,
+          3.3505656719207764,
           2.0595059394836426
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:6",
@@ -88,8 +88,8 @@
       "bounds": {
         "max": [
           0.42196929454803467,
-          2.8801352977752686,
-          1.7884528636932373
+          3.3767786026000977,
+          1.581666111946106
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:12",
         "min": [
@@ -107,8 +107,8 @@
       "bounds": {
         "max": [
           0.42196929454803467,
-          2.8801352977752686,
-          1.7323579788208008
+          3.351065158843994,
+          1.4723410606384277
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherShoot.glb#pose=2:14",
         "min": [
@@ -126,12 +126,12 @@
       "bounds": {
         "max": [
           0.5986695289611816,
-          2.9242732524871826,
-          1.8105088472366333
+          3.3510515689849854,
+          1.4449927806854248
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherShoot.glb#pose=2:18",
         "min": [
-          -0.4518440365791321,
+          -0.5566831827163696,
           -0.014142196625471115,
           -0.7576155066490173
         ],
@@ -146,11 +146,11 @@
         "max": [
           0.7265735864639282,
           3.0008368492126465,
-          1.575920581817627
+          1.2393018007278442
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:23",
         "min": [
-          -0.44962581992149353,
+          -0.6702190637588501,
           -0.005369223654270172,
           -0.6739389896392822
         ],
@@ -163,13 +163,13 @@
       "material": "Assets/Materials/RealArcherLoaded.mmat",
       "bounds": {
         "max": [
-          0.49307966232299805,
+          0.723042905330658,
           2.8697712421417236,
-          1.2422963380813599
+          1.1129662990570068
         ],
         "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:27",
         "min": [
-          -0.7029021382331848,
+          -0.7725577354431152,
           -0.0070661939680576324,
           -0.5501253008842468
         ],

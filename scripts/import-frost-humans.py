@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import sys
+import tempfile
 from pathlib import Path
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -13,10 +14,27 @@ from mathutils import Matrix, Vector
 ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';SOURCE=SAMPLE/'SourceAssets/0ad';MANIFEST=SAMPLE/'human-sources.json'
 
 def import_dae(path):
-    before=set(bpy.data.objects);bpy.ops.wm.collada_import(filepath=str(SOURCE/path))
+    document=ET.parse(SOURCE/path);changed=False
+    if path.startswith('animation/'):
+        for texture in document.findall('.//{*}library_effects//{*}texture'):
+            if 'texcoord' not in texture.attrib:texture.set('texcoord','UVMap');changed=True
+    for scene in document.findall('{*}library_visual_scenes/{*}visual_scene'):
+        seen={}
+        for node in scene.findall('{*}node'):
+            identity=node.get('id');signature=[(e.tag,e.attrib,(e.text or '').strip()) for e in node.iter()]
+            if identity in seen:
+                if seen[identity]!=signature:raise ValueError('Conflicting duplicate Collada node: '+identity)
+                scene.remove(node);changed=True
+            else:seen[identity]=signature
+    before=set(bpy.data.objects)
+    if changed:
+        # Repair duplicate source skeletons and unused animation texture declarations without changing source bytes.
+        with tempfile.TemporaryDirectory() as folder:
+            clean=Path(folder)/'deduplicated.dae';ET.register_namespace('','http://www.collada.org/2005/11/COLLADASchema');document.write(clean,encoding='utf-8',xml_declaration=True);bpy.ops.wm.collada_import(filepath=str(clean))
+    else:bpy.ops.wm.collada_import(filepath=str(SOURCE/path))
     objects=sorted(set(bpy.data.objects)-before,key=lambda o:o.name)
     # 0 A.D. props use the same authored coordinates as bodies despite legacy inch/centimeter metadata.
-    unit=ET.parse(SOURCE/path).find('{*}asset/{*}unit');meter=float(unit.get('meter','1')) if unit is not None else 1
+    unit=document.find('{*}asset/{*}unit');meter=float(unit.get('meter','1')) if unit is not None else 1
     for obj in objects:
         if obj.parent not in objects:obj.matrix_world=Matrix.Scale(1/meter,4)@obj.matrix_world
     bpy.context.view_layer.update()
@@ -62,19 +80,28 @@ def main():
             added=objects if index==0 else import_dae(part['mesh'])
             assert any(o.type=='MESH' and len(o.data.polygons)>0 for o in added),'Missing mesh geometry: '+part['mesh']
             if part.get('skeletal'):
-                prop_rig=next(o for o in added if o.type=='ARMATURE');placement=matrices[part['bone']]@prop_rig.matrix_world
-                bones={b.name:{'matrix':b.matrix_local.copy(),'length':b.length,'parent':b.parent.name if b.parent else part['bone']} for b in prop_rig.data.bones}
+                prop_rig=max((o for o in added if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));placement=matrices[part['bone']]@prop_rig.matrix_world
+                prefix=part.get('prefix','');bones={prefix+b.name:{'source':b.name,'matrix':b.matrix_local.copy(),'length':b.length,'parent':prefix+b.parent.name if b.parent else part['bone']} for b in prop_rig.data.bones}
                 assert not set(bones).intersection(rig.data.bones.keys()),'Equipment bones must have unique names'
+                if prefix:
+                    for obj in added:
+                        if obj.type=='MESH':
+                            for group in obj.vertex_groups:group.name=prefix+group.name
+                    for name,matrix in attachment_matrices(part['mesh']).items():matrices[prefix+name]=matrices[part['bone']]@matrix
                 bpy.context.view_layer.objects.active=rig;bpy.ops.object.mode_set(mode='EDIT')
                 for name,b in bones.items():
-                    new=rig.data.edit_bones.new(name);new.matrix=placement@b['matrix'];new.length=b['length']*placement.to_scale().length/(3**.5)
+                    new=rig.data.edit_bones.new(name);new.length=b['length']*placement.to_scale().length/(3**.5);new.matrix=placement@b['matrix']
                 for name,b in bones.items():rig.data.edit_bones[name].parent=rig.data.edit_bones[b['parent']]
                 bpy.ops.object.mode_set(mode='OBJECT');props.append({'part':part,'bones':bones,'placement':placement})
+                if prefix:
+                    for bone,b in bones.items():
+                        expected=placement@b['matrix'];actual=rig.data.bones[bone].matrix_local
+                        assert max(abs(expected[i][j]-actual[i][j]) for i in range(4) for j in range(4))<.001,(bone,expected,actual)
             for obj in [o for o in added if o.type=='MESH']:
                 matrix=obj.matrix_world.copy();obj.parent=None;obj.data.transform(matrix);obj.matrix_world=Matrix.Identity(4)
                 if index==0:body_points.extend(v.co.copy() for v in obj.data.vertices)
                 if part['bone']:
-                    bone=part['bone'];assert bone in rig.data.bones and bone in matrices,bone
+                    bone=part['bone'];assert bone in rig.data.bones and bone in matrices,(bone,bone in rig.data.bones,bone in matrices)
                     obj.data.transform(matrices[bone])
                     if not part.get('skeletal'):obj.vertex_groups.clear();obj.vertex_groups.new(name=bone).add(list(range(len(obj.data.vertices))),1,'REPLACE')
                 obj.parent=rig;obj.matrix_parent_inverse=Matrix.Identity(4);obj.modifiers.clear();modifier=obj.modifiers.new('Authored skeleton','ARMATURE');modifier.object=rig
@@ -128,12 +155,14 @@ def main():
             for prop in props:
                 clip=prop['part'].get('animations',{}).get(name)
                 if not clip:equipment.append((prop,None,None,None));continue
-                extra=import_dae(clip);added.extend(extra);moving=next(o for o in extra if o.type=='ARMATURE');assert all(b in moving.pose.bones for b in prop['bones'])
+                extra=import_dae(clip);added.extend(extra);moving=max((o for o in extra if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));assert all(b['source'] in moving.pose.bones for bone,b in prop['bones'].items() if bone in weighted),clip
                 equipment.append((prop,moving,moving.animation_data.action.frame_range,moving.matrix_world.copy()))
+            body_end=end
+            if name in ['Idle','Walk']:end=start+max([end-start]+[extent[1]-extent[0] for _,moving,extent,_ in equipment if moving])
             action=bpy.data.actions.new(name);rig.animation_data.action=action
             # Collada files can use different rest-bone orientations. Bake deformation matrices into the mesh rig's own rest basis.
             for frame in range(int(start),int(end)+1):
-                scene.frame_set(frame);desired={}
+                sample=start+(frame-start)/(end-start)*(body_end-start) if end!=body_end else frame;scene.frame_set(int(sample),subframe=sample-int(sample));desired={}
                 for bone in rig.data.bones:
                     source_bone=animated.pose.bones.get(bone.name)
                     desired[bone.name]=source_bone.matrix@source_bone.bone.matrix_local.inverted()@bone.matrix_local if source_bone else bone.matrix_local
@@ -142,7 +171,9 @@ def main():
                     if moving:
                         sample=extent[0]+(frame-start)/(end-start)*(extent[1]-extent[0]);scene.frame_set(int(sample),subframe=sample-int(sample))
                     for bone,rest in prop['bones'].items():
-                        pose=moving.pose.bones[bone] if moving else None
+                        pose=moving.pose.bones.get(rest['source']) if moving else None
+                        if moving and pose is None:
+                            parent=rest['parent'];desired[bone]=desired[parent]@rig.data.bones[parent].matrix_local.inverted()@rig.data.bones[bone].matrix_local;continue
                         local=world.inverted()@moving.matrix_world@pose.matrix@pose.bone.matrix_local.inverted()@rest['matrix'] if moving else rest['matrix']
                         desired[bone]=deform@placement@local
                 for pose in rig.pose.bones:
@@ -161,7 +192,7 @@ def main():
         generated.extend([model,material]);size=[(max(p[i] for p in points)-min(p[i] for p in points))*scale for i in [0,2,1]]
         catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True}
         if definition.get('workAnimation'):catalog[key]['workAnimation']=definition['workAnimation']
-        for field in ['attackEvent','ammoLoad','siegeModel','shotModel']:
+        for field in ['attackEvent','ammoLoad','siegeModel','shotModel','crewCount']:
             if field in definition:catalog[key][field]=definition[field]
         stats[key]={'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};print('Imported',key,stats[key],flush=True)
     if manifest.get('projectile'):
