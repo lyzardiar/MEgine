@@ -1,0 +1,388 @@
+{
+  "author": "Wildfire Games",
+  "upstream": "https://github.com/0ad/0ad",
+  "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+  "license": "CC-BY-SA-3.0",
+  "generator": "scripts/import-frost-humans.py",
+  "models": {
+    "RealFootman": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/m_armor_pants.dae",
+          "base": "textures/skins/skeletal/brit/chainmail_04_01.png",
+          "bone": null,
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ],
+          "specular": "textures/skins/skeletal/celt/chainmail_04_spec.png"
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/weap_csword_a.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-weapon_R",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/shield/oval_01.dae",
+          "base": "textures/skins/props/shield/celt_shield_01.png",
+          "bone": "prop-shield",
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ]
+        },
+        {
+          "mesh": "meshes/props/helmet/celt_mihovo.dae",
+          "base": "textures/skins/props/helmet/celt_mihovo_iron.png",
+          "bone": "prop-helmet",
+          "tint": null,
+          "normal": "textures/skins/props/helmet/celt_mihovo_norm.png",
+          "specular": "textures/skins/props/helmet/celt_mihovo_spec.png"
+        }
+      ],
+      "animations": {
+        "Idle": "animation/biped/infantry/swordsman/idle_relax_shield_celt_01.dae",
+        "Walk": "animation/biped/infantry/swordsman/walk_relax_shield.dae",
+        "Sword_Attack": "animation/biped/infantry/swordsman/attack_melee_shield_01.dae"
+      }
+    },
+    "RealWorker": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/m_tunic_long.dae",
+          "base": "textures/skins/skeletal/hele/tunic_02_01.png",
+          "bone": null,
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ]
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/weap_axe_a.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-weapon_R",
+          "tint": null
+        }
+      ],
+      "animations": {
+        "Idle": "animation/biped/citizen/idle_relax_m_a.dae",
+        "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
+        "Sword_Attack": "animation/biped/infantry/axe/attack_melee_shield_01.dae"
+      }
+    }
+  },
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/LICENSE.txt",
+      "sha256": "ef98babd771c206032e005f3d440a1e610df409d9a9191f03e64deaa4abefbd9",
+      "size": 1426
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/heads/new/head_celt.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/heads/new/head_celt.xml",
+      "sha256": "719a5ccc8b336f3019a0ac012d0721a08ee95a9577329cfcbf365c044c2a1107",
+      "size": 1893
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/helmets/celt_helmet_mihovo.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/helmets/celt_helmet_mihovo.xml",
+      "sha256": "ab5fc156967819125acc2402c6e707f0d1c768bc9e63d7c44ecbadb0d37bcaf3",
+      "size": 533
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/shields/brit_shield_spear_oval_a_03.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/shields/brit_shield_spear_oval_a_03.xml",
+      "sha256": "d0c04f5c66b518ab6aa22b271b9fb230cea7dea0091424e37f37dbb323c60fde",
+      "size": 2601
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/weapons/axe_single.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/axe_single.xml",
+      "sha256": "bb93b8603834f8cebe06ed15a5fb2c660494fb5c823f179361a73ceb087bc5f0",
+      "size": 600
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/weapons/csword.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/csword.xml",
+      "sha256": "bc4053e064def2162f89d3899bd55af4ffc3d622c811b700fa06df65378f8828",
+      "size": 743
+    },
+    {
+      "file": "SourceAssets/0ad/actors/units/britons/infantry_swordsman_c.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/britons/infantry_swordsman_c.xml",
+      "sha256": "754b9f186bb0c8954dc448bdfa1cc95290794ae510f1dfa23defcd395a73b5d4",
+      "size": 3592
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/idle_relax_m_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/idle_relax_m_a.dae",
+      "sha256": "414f3ce18f609a3478532ede3a6a21bc29fee64d2d40bd7e06efbbbe3a445656",
+      "size": 1350706
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/walk_relax_m_aggresive.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/walk_relax_m_aggresive.dae",
+      "sha256": "149e92d063637b95b667d6ca2f9f262456c1213db9340bbc1fa1840be5ceff16",
+      "size": 1048638
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/axe/attack_melee_shield_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/axe/attack_melee_shield_01.dae",
+      "sha256": "ad20b12a8c0f192e876b2570544f979586c3ae58ce7fa5736f5620a22354d2f3",
+      "size": 328648
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/swordsman/attack_melee_shield_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/swordsman/attack_melee_shield_01.dae",
+      "sha256": "752ba49975601518ce9c46673e2adfa014e234deebba6718b521da272320a87a",
+      "size": 914509
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/swordsman/idle_relax_shield_celt_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/swordsman/idle_relax_shield_celt_01.dae",
+      "sha256": "440f9efd65cd09969755457f8cbf72017f882e577d49e5eb610ae872e73eba40",
+      "size": 1467306
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/swordsman/walk_relax_shield.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/swordsman/walk_relax_shield.dae",
+      "sha256": "a8b9ab35ac7cfe32d75524b72d440022500fb36129950c5da933f24ba162c873",
+      "size": 1141056
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/helmet/celt_mihovo.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/helmet/celt_mihovo.dae",
+      "sha256": "d307c7c10d458fda3b41db7410150bb7de09d02ea3d8adad034e028825590577",
+      "size": 74763
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/new/head_longhair.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/new/head_longhair.dae",
+      "sha256": "3ee141b79819b6128dcb3ea4abda50bce857054d755c1affcb39d9f11fa8d6f5",
+      "size": 25090
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/shield/oval_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/shield/oval_01.dae",
+      "sha256": "9e0151fa3333fe701b8a223e505d8573d78791ba91d43c26bdf81ec9c8470d73",
+      "size": 6855
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weap_axe_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weap_axe_a.dae",
+      "sha256": "fcaf0ae2ce16c777fc77f873803fcee9f87d9a73f19be7d07055387c058b315a",
+      "size": 12313
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weap_csword_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weap_csword_a.dae",
+      "sha256": "7f8f8f38d394238ea1d62ac47e1eee7a4594d834c20bf2378431723cbe5f1490",
+      "size": 7190
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/new/m_armor_pants.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/new/m_armor_pants.dae",
+      "sha256": "1430b79e186d9a6dd596bd866864b5e67b6ef08a3a006f046ef1bd4726177469",
+      "size": 216060
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/new/m_tunic_long.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/new/m_tunic_long.dae",
+      "sha256": "788346b24a3604e7408ee9c57baca4cee8c0912ec80bb7b87253207b45ff1c3b",
+      "size": 233029
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/head/celt_a.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/head/celt_a.dds",
+      "sha256": "c6e5ffa5c672782a231ca4ee909f793ca1842a3816cd52b598d34e0b17e905c8",
+      "size": 5616
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/celt_mihovo_iron.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/celt_mihovo_iron.png",
+      "sha256": "0a5c287fa79d2e1e32556b13e54c8545f7d2352e4ecd767c33989ca4f5dd79d5",
+      "size": 103728
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/celt_mihovo_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/celt_mihovo_norm.png",
+      "sha256": "e9939285247d7e1278802cceb06004492fb5705999bab9bc2074294d2987d94e",
+      "size": 148817
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/celt_mihovo_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/celt_mihovo_spec.png",
+      "sha256": "73f1d2aac318e28c70ef6516fee6130bc64293b30af815446ed0ec2126f9fc30",
+      "size": 38721
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/prop_weap.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/prop_weap.dds",
+      "sha256": "761a9987655353d96cf5093d3d713a62dca98f5f605c8fef52311eac0b3a1bde",
+      "size": 87536
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/shield/celt_shield_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/shield/celt_shield_01.png",
+      "sha256": "d860c674693038e4415e89cfcf46233342ec2ca6ad63472d94831cfa636a60ca",
+      "size": 31520
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/brit/chainmail_04_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/brit/chainmail_04_01.png",
+      "sha256": "a080256ca3fc2b5d87c0b7c82279d76960c066328258f5b5cd0520d16adc4bb7",
+      "size": 70871
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/celt/chainmail_04_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/celt/chainmail_04_spec.png",
+      "sha256": "6ed31aa4fdb6547a1d87e009de5456b69cc486e144c150e140cff0d0a3bacef1",
+      "size": 18548
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/hele/tunic_02_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/hele/tunic_02_01.png",
+      "sha256": "43f5bb8d5ec8b4aeb966bb7b89eeaa16a552efb006a7804e4155d4e5df9dbc72",
+      "size": 98096
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/base_citizen_soldier.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/base_citizen_soldier.xml",
+      "sha256": "491a9bb6fe1e180e9a5c83dd9790a84108fbb210b7d7e9ac61394b6488657cc5",
+      "size": 1380
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/base_swordsman_shield_relax_celt.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/base_swordsman_shield_relax_celt.xml",
+      "sha256": "bba7dafdd6fef81f6f6fdf68fbd984d5c85e5c8fdc5aa550a4ad1a88fd0c743f",
+      "size": 2160
+    },
+    {
+      "file": "SourceAssets/0ad/variants/shields/celt_shield_01.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/shields/celt_shield_01.xml",
+      "sha256": "7b949e2d2756ded1cc45c2457766a79ce8c8c3803583b0e38e11e662956a51b2",
+      "size": 215
+    },
+    {
+      "file": "SourceAssets/0ad/variants/shields/celt_shield_base.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/shields/celt_shield_base.xml",
+      "sha256": "3bda339d4a67c9838f17ddae6b2a8df00f90c39b07b67f923c3ab56948c601e3",
+      "size": 241
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/RealFootman_base.png",
+      "sha256": "ebfc3b5ddf9d29279a38f50ee41dac9a30d6e21352bc34b586b38125df880324"
+    },
+    {
+      "file": "Assets/Textures/RealFootman_normal.png",
+      "sha256": "3eb7460d115aa2ccd7bb23034a258f12fb73351825dc048b47189c24fbc9af1a"
+    },
+    {
+      "file": "Assets/Textures/RealFootman_arm.png",
+      "sha256": "a176f595d19084233a1e884303c610a1f92e53ac6adccf4a5edfaf0bc1fd9b35"
+    },
+    {
+      "file": "Assets/Models/RealFootman.glb",
+      "sha256": "5bb7f4daf39af6854d61b974a620dfa6a621886998554644c19219a8d95ff52e"
+    },
+    {
+      "file": "Assets/Materials/RealFootman.mmat",
+      "sha256": "17be5805f3218327bbc140b5891d0440eb6b2e8508b0e621b174c3518c0d3366"
+    },
+    {
+      "file": "Assets/Textures/RealWorker_base.png",
+      "sha256": "da8f0f3435663c46d3d0eeae620d25092a1ba02dc9845e5d37c5bc006538aedf"
+    },
+    {
+      "file": "Assets/Textures/RealWorker_normal.png",
+      "sha256": "4663666f53a0b6d3a55b55f8e7342c9e7b9580b0a30fb537cab628eb2a21224c"
+    },
+    {
+      "file": "Assets/Textures/RealWorker_arm.png",
+      "sha256": "e8aca9e06629366bdb936d984673c8945275ef8046235e2a0c0a78a0d21a02c5"
+    },
+    {
+      "file": "Assets/Models/RealWorker.glb",
+      "sha256": "7ef676e81e3d33b43cebe1de8333ee7888494b8f90cea1b31d7b2d280583bb6c"
+    },
+    {
+      "file": "Assets/Materials/RealWorker.mmat",
+      "sha256": "86ec0ec6fa3df1dc17037f99db585debdc4f6a04735b0eaee8e34127fce482ff"
+    }
+  ],
+  "modelStats": {
+    "RealFootman": {
+      "triangles": 1616,
+      "bones": 102,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Sword_Attack",
+          "frames": 12
+        }
+      ],
+      "size": [
+        1.453769775415252,
+        3.0,
+        1.826678307082004
+      ]
+    },
+    "RealWorker": {
+      "triangles": 1238,
+      "bones": 102,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Sword_Attack",
+          "frames": 15
+        }
+      ],
+      "size": [
+        1.3547985666567999,
+        3.0,
+        1.1296698889437535
+      ]
+    }
+  }
+}

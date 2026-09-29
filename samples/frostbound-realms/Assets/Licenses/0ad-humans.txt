@@ -1,0 +1,19 @@
+0 A.D. human unit art
+Original author: Wildfire Games - https://www.wildfiregames.com/
+Source: https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+License: Creative Commons Attribution-ShareAlike 3.0 Unported
+https://creativecommons.org/licenses/by-sa/3.0/
+
+The RealFootman and RealWorker models, their textures and materials, and the
+derived combined Assets/Art/unit-portraits.png atlas are distributed under
+CC-BY-SA-3.0. Other original character art in the atlas remains available
+separately under its original license as documented in the sample manifests.
+
+Modifications by MEngine contributors: assembled body, head and equipment;
+blue cloth and brown hair masks; simplified oval shield; baked UV atlases;
+specular-to-roughness conversion; four-weight skinning; skeletal animation
+conversion; normalized scale; native-rendered portraits.
+RealFootman uses Briton chainmail swordsman modules. RealWorker combines
+official male tunic, Celtic head, axe and biped animations.
+Pinned source URLs, source hashes and generated hashes: human-sources.json.
+Original license notice: SourceAssets/0ad/LICENSE.txt.

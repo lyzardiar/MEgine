@@ -32,7 +32,14 @@ const monsters=JSON.parse(fs.readFileSync(new URL('monster-sources.json',root)))
 const icons=JSON.parse(fs.readFileSync(new URL('faction-icons.json',root))),slices=JSON.parse(fs.readFileSync(new URL(icons.file+'.sprite.json',root))).slices;verify(icons);assert.equal(slices.length,32);assert.deepEqual(slices.map(s=>s.name).sort(),Object.keys(buildings.models).sort());
 assert.equal(Object.keys(buildings.models).length,32);assert.equal(monsters.length,5);
 const skeletons=JSON.parse(fs.readFileSync(new URL('skeleton-sources.json',root)));assert.equal(skeletons.license,'CC0-1.0');skeletons.sources.forEach(verify);skeletons.generated.forEach(verify);
-const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,18);
+const humans=JSON.parse(fs.readFileSync(new URL('human-sources.json',root)));assert.equal(humans.license,'CC-BY-SA-3.0');assert.equal(humans.author,'Wildfire Games');humans.sources.forEach(verify);humans.generated.forEach(verify);
+const humanLicense=fs.readFileSync(new URL('Assets/Licenses/0ad-humans.txt',root),'utf8');assert.ok(humanLicense.includes('Wildfire Games')&&humanLicense.includes('https://creativecommons.org/licenses/by-sa/3.0/')&&humanLicense.includes('Assets/Art/unit-portraits.png'));
+for(const [kind,key] of [['soldier','RealFootman'],['worker','RealWorker']]){
+ const unit={kind,team:0,cd:0},visual=V.model(S.create('skirmish',{factions:[0,1]}),unit);assert.equal(visual.key,key);assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(unit,visual.asset,true,.5),/#pose=1:6$/);
+ for(const order of [undefined,{type:'attack'},{type:'attackMove'},{type:'hold'},{type:'patrol'}]){unit.cd=.7;unit.order=order;assert.match(V.pose(unit,visual.asset,false,.5),/#pose=2:6$/);}
+ if(kind==='worker')for(const type of ['gather','build','construct','repair']){unit.order={type};assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/,'work cooldown does not play combat');}
+}
+const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,19);
 for(let faction=0;faction<4;faction++){const state=S.create('skirmish',{factions:[faction,0]});for(const kind of Object.keys(S.types))if(S.types[kind].speed)assert.ok(portraitKeys.has(V.model(state,{kind,team:0}).key),kind);}
 for(const [kind,key] of [['bonearcher','Skeleton_Rogue'],['necromancer','Skeleton_Mage']]){
  const unit={kind,team:0,cd:0},visual=V.model(S.create(),unit);assert.equal(visual.key,key);assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(unit,visual.asset,true,.5),/#pose=1:6$/);unit.cd=1;assert.match(V.pose(unit,visual.asset,false,.5),/#pose=2:6$/);
@@ -42,4 +49,4 @@ for(const [kind,key] of [['bonearcher','Skeleton_Rogue'],['necromancer','Skeleto
  const state=S.create(),unit=S.spawn(state,'bonearcher',0,0,0),target=S.spawn(state,'soldier',1,8,0),old={x:0,z:-1,yaw:0};unit.cd=1;unit.order={type:'attack',target:target.id};state.events=[{type:'hit',team:0,fromX:0,fromZ:0,x:8,z:0}];assert.equal(V.heading(state,unit,old),Math.PI/2,'attack turns from the old marching direction toward the actual hit');
  state.events=[];assert.equal(V.heading(state,unit,{x:0,z:0,yaw:0}),Math.PI/2,'stationary explicit attacks continue tracking their target');unit.order=null;unit.cd=0;assert.equal(V.heading(state,unit,{x:-1,z:0,yaw:0}),Math.PI/2,'marching turns with movement');assert.equal(V.heading(state,{kind:'tower',team:0,x:0,z:0,cd:1},old),0,'buildings retain their authored orientation');
 }
-console.log('PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 18 native unit portraits and pinned source/derived hashes');
+console.log('PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 19 native unit portraits and pinned source/derived hashes');

@@ -2549,5 +2549,73 @@
       "material": "Assets/Materials/RealSpruceC-card.mmat",
       "cameraElevation": 52.69605172201657
     }
+  },
+  "RealFootman": {
+    "material": "Assets/Materials/RealFootman.mmat",
+    "parts": [
+      {
+        "name": "RealFootman",
+        "mesh": "Assets/Models/RealFootman.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Sword_Attack",
+        "frames": 12
+      }
+    ],
+    "size": [
+      1.453769775415252,
+      3.0,
+      1.826678307082004
+    ],
+    "realistic": true
+  },
+  "RealWorker": {
+    "material": "Assets/Materials/RealWorker.mmat",
+    "parts": [
+      {
+        "name": "RealWorker",
+        "mesh": "Assets/Models/RealWorker.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Sword_Attack",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.3547985666567999,
+      3.0,
+      1.1296698889437535
+    ],
+    "realistic": true
   }
 }

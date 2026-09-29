@@ -161,5 +161,6 @@ if __name__ == '__main__':
     import os, subprocess
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-houses.py')],check=True,cwd=ROOT)
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-warclans.py')],check=True,cwd=ROOT)
+    subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-humans.py')],check=True,cwd=ROOT)
 
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/bake-frost-foliage.py')],check=True,cwd=ROOT)

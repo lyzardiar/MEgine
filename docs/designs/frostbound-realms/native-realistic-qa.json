@@ -6,7 +6,7 @@
   "realistic": {
     "nearZoom": 12,
     "farZoom": 27,
-    "realMeshes": 92,
+    "realMeshes": 97,
     "lodSwitch": true,
     "editorRendered": true,
     "shaderRejections": 0,
@@ -15,29 +15,29 @@
       "warmupMs": 3000,
       "sampleWindowMs": 5000,
       "summary": {
-        "intervals": 73,
-        "averagePresentIntervalMs": 67.76438356180714,
-        "p95PresentIntervalMs": 117.19999998807907,
-        "presentedFps": 14.757014635688542,
-        "averageRequestMs": 48.53378377653457,
-        "averageRenderMs": 12.135620270270268,
-        "averageCommandMs": 15.285336486486488,
-        "averageUploadMs": 1.4905405415071022,
-        "averageSimulationMs": 8.367571621621623,
-        "averageSimulationRequestMs": 23.436486483425707
+        "intervals": 50,
+        "averagePresentIntervalMs": 97.78200000047684,
+        "p95PresentIntervalMs": 141,
+        "presentedFps": 10.22683111406111,
+        "averageRequestMs": 52.19411764659134,
+        "averageRenderMs": 13.649376470588237,
+        "averageCommandMs": 19.60001372549019,
+        "averageUploadMs": 1.5392156851057912,
+        "averageSimulationMs": 11.099298039215682,
+        "averageSimulationRequestMs": 31.354901960083083
       }
     },
     "profiler": {
-      "intervals": 133,
-      "averagePresentIntervalMs": 74.85037594002888,
-      "p95PresentIntervalMs": 152.0999999642372,
-      "presentedFps": 13.359986338628591,
-      "averageRequestMs": 53.40671641301753,
-      "averageRenderMs": 14.313081343283576,
-      "averageCommandMs": 17.242930597014922,
-      "averageUploadMs": 1.47089552034193,
-      "averageSimulationMs": 8.640797761194035,
-      "averageSimulationRequestMs": 37.11492537384603
+      "intervals": 97,
+      "averagePresentIntervalMs": 105.17216494833072,
+      "p95PresentIntervalMs": 208.4000000357628,
+      "presentedFps": 9.508219218376677,
+      "averageRequestMs": 62.45102040986625,
+      "averageRenderMs": 16.909843877551022,
+      "averageCommandMs": 22.037553061224486,
+      "averageUploadMs": 1.5500000015813478,
+      "averageSimulationMs": 10.958533673469384,
+      "averageSimulationRequestMs": 46.521428572280065
     }
   }
 }

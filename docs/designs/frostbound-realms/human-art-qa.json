@@ -1,0 +1,192 @@
+{
+  "checkedAt": "2026-09-29T09:50:07.917678+00:00",
+  "baseCommit": "4853a5d5e7786bef251fef1de420c8fa8a63b7d6",
+  "scope": "Realistic-proportion footman and worker models, native skeletal poses, UI portraits, combat, persistence and packaged Player startup",
+  "upstream": {
+    "author": "Wildfire Games",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "license": "CC-BY-SA-3.0",
+    "sourceFiles": 33,
+    "sourceBytes": 7445000
+  },
+  "derived": {
+    "files": 10,
+    "byteIdenticalRebuild": true,
+    "models": {
+      "RealFootman": {
+        "triangles": 1616,
+        "bones": 102,
+        "clips": [
+          {
+            "name": "Idle",
+            "frames": 30
+          },
+          {
+            "name": "Walk",
+            "frames": 20
+          },
+          {
+            "name": "Sword_Attack",
+            "frames": 12
+          }
+        ],
+        "size": [
+          1.453769775415252,
+          3.0,
+          1.826678307082004
+        ]
+      },
+      "RealWorker": {
+        "triangles": 1238,
+        "bones": 102,
+        "clips": [
+          {
+            "name": "Idle",
+            "frames": 30
+          },
+          {
+            "name": "Walk",
+            "frames": 20
+          },
+          {
+            "name": "Sword_Attack",
+            "frames": 15
+          }
+        ],
+        "size": [
+          1.3547985666567999,
+          3.0,
+          1.1296698889437535
+        ]
+      }
+    },
+    "nativePoseSamples": 18
+  },
+  "validation": {
+    "geometry": [
+      "RealFootman 1616 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorker 1238 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "PASS: eighteen native skeletal samples, complete equipment and stable pose bounds"
+    ],
+    "rules": [
+      "PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion",
+      "PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection",
+      "PASS: opposing traffic, hold, narrow passage/head-on, flying layers, exact saves, melee surround, fog privacy, stacked TD recovery, base exit and speed limits",
+      "PASS: ordered route arrival, group queues/save replay, eight-waypoint atomic limit, command/work/blink/death cancellation, busy rejection, legacy/malformed saves and opponent privacy",
+      "PASS: four-faction queued construction, deferred payment, gathering delivery, distant site, repair/cancel, inside worker, consumed worker, invalid site skip, queue capacity/privacy and exact save replay",
+      "PASS: stationary hold combat/range/occlusion, stop release, six-unit patrol roundtrips/save replay, combat resumption, ramps, route overrides, privacy and invalid saves",
+      "PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 19 native unit portraits and pinned source/derived hashes",
+      "PASS: six slots, atomic recipes, health-ratio invariance, sell value/shop range, potions/cooldown, real pickup/transfer/race, fog, saved routes and malformed saves",
+      "PASS: four heroes / 16 skills, learning gates, status effects, timed areas/summons, targeting, hero saves and legacy migration",
+      "PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration",
+      "PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain",
+      "PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water",
+      "PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy",
+      "PASS: four faction rosters and tech gates, one-shot map triggers, fog privacy, full RPG legal-order quest/loot/growth/save roundtrip (549 ticks)",
+      "PASS: TCP inventory recipe, drop, pickup, reconnect and sell",
+      "PASS: TCP deferred worker construction, mixed queue reconnect and return to mining",
+      "PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect"
+    ],
+    "humans": {
+      "models": [
+        "RealFootman",
+        "RealWorker"
+      ],
+      "idleWalkAttack": true,
+      "attackFacing": true,
+      "selectionPortraits": true,
+      "trainingIcons": true,
+      "damage": true,
+      "saveRestore": true,
+      "shaderRejections": 0
+    },
+    "skeletonRegression": {
+      "models": [
+        "Skeleton_Rogue",
+        "Skeleton_Mage"
+      ],
+      "idleWalkAttack": true,
+      "attackFacing": true,
+      "selectionPortraits": true,
+      "trainingIcons": true,
+      "damage": true,
+      "saveRestore": true,
+      "shaderRejections": 0
+    },
+    "nearFarRendering": {
+      "nearZoom": 12,
+      "farZoom": 27,
+      "realMeshes": 97,
+      "lodSwitch": true,
+      "editorRendered": true,
+      "shaderRejections": 0,
+      "msaaSamples": 4,
+      "nearPerformance": {
+        "warmupMs": 3000,
+        "sampleWindowMs": 5000,
+        "summary": {
+          "intervals": 50,
+          "averagePresentIntervalMs": 97.78200000047684,
+          "p95PresentIntervalMs": 141,
+          "presentedFps": 10.22683111406111,
+          "averageRequestMs": 52.19411764659134,
+          "averageRenderMs": 13.649376470588237,
+          "averageCommandMs": 19.60001372549019,
+          "averageUploadMs": 1.5392156851057912,
+          "averageSimulationMs": 11.099298039215682,
+          "averageSimulationRequestMs": 31.354901960083083
+        }
+      },
+      "profiler": {
+        "intervals": 97,
+        "averagePresentIntervalMs": 105.17216494833072,
+        "p95PresentIntervalMs": 208.4000000357628,
+        "presentedFps": 9.508219218376677,
+        "averageRequestMs": 62.45102040986625,
+        "averageRenderMs": 16.909843877551022,
+        "averageCommandMs": 22.037553061224486,
+        "averageUploadMs": 1.5500000015813478,
+        "averageSimulationMs": 10.958533673469384,
+        "averageSimulationRequestMs": 46.521428572280065
+      }
+    }
+  },
+  "package": {
+    "files": 414,
+    "bytes": 147842474,
+    "contentHash": "d12468039893807d3c6f845504b7e84727f48461ccc4dd101ebddc23fc1ba266",
+    "newAssetsAndAttributionHashVerified": true,
+    "player": {
+      "contentHash": "d12468039893807d3c6f845504b7e84727f48461ccc4dd101ebddc23fc1ba266",
+      "windowTitle": "Frostbound Realms",
+      "responding": true,
+      "audioListening": false,
+      "shutdown": "Only this smoke-check process was stopped",
+      "elapsedSeconds": 30,
+      "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+      "alive": true,
+      "packageValidationPassed": true,
+      "startedAt": "2026-09-29T17:44:08.7386850+08:00",
+      "processId": 119604,
+      "packagedFiles": 414,
+      "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+      "checkedAt": "2026-09-29T17:44:38.7725445+08:00",
+      "physicalInput": false,
+      "loggedErrors": 0
+    }
+  },
+  "evidenceHashes": {
+    "native-humans-qa.json": "6b8d3d1db228953a4edb8c575cb0436c45b3895e278972ec2c49b2825c69ac80",
+    "native-units-qa.json": "c891a0b76eafd17b4f5e8db514f9779b41daa71a3f33809792e4797fc5ccf96c",
+    "native-realistic-qa.json": "6022053ccae5dd0b28d85b0410678a3c3a0a583f71cade026501c24f84c844ce",
+    "human-footman-combat.png": "bfda0c9b19a2c39b223a285148ab3741515a8a54ee0fbf84cd9daf9f0d95e2d0",
+    "human-worker-combat.png": "19bf2a92abdfa871cc106800ebbd08edf1a57d60134e5d596a000dca9b2a5adc",
+    "realistic-close-detail.png": "f44742686aaa4b49f0cf6bb543e81c04297255a3252771aceeaede233116f9f1"
+  },
+  "limitations": [
+    "Other characters and two faction building sets remain simplified.",
+    "Worker gathering and construction-specific clips are not implemented.",
+    "Full requested game recreation and 5 ms performance target remain incomplete.",
+    "Standalone Player FPS, physical mouse, audio listening and cross-machine LAN not verified."
+  ]
+}

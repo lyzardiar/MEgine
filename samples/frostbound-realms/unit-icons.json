@@ -1,9 +1,9 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "4a66945e95e28bb87eab6d5b2b2cd2e73d0ab69ae62785ac45a45f19a57e41ab",
+  "sha256": "6f89a4270caa0d8199be04f503054808588a14522729666d597c3f6cba88aade",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
-  "runtimeSha256": "906706d0224fda27a855d2957261ecdaa5e28af20350b25e358a6e8c3ed8fce1",
+  "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
   "models": [
     {
       "name": "Cleric",
@@ -82,25 +82,6 @@
       }
     },
     {
-      "name": "Monk",
-      "mesh": "Assets/Models/Monk.glb#pose=3:4",
-      "material": "Assets/Materials/Monk.mmat",
-      "bounds": {
-        "max": [
-          0.753009557723999,
-          2.910135269165039,
-          0.46405935287475586
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Monk.glb#pose=3:4",
-        "min": [
-          -0.7878715991973877,
-          -0.0007534059113822877,
-          -0.346416175365448
-        ],
-        "vertices": 7198
-      }
-    },
-    {
       "name": "Orc",
       "mesh": "Assets/Models/Orc.glb#pose=3:4",
       "material": "Assets/Materials/Orc.mmat",
@@ -155,6 +136,44 @@
           -0.8838688135147095
         ],
         "vertices": 4531
+      }
+    },
+    {
+      "name": "RealFootman",
+      "mesh": "Assets/Models/RealFootman.glb#pose=0:4",
+      "material": "Assets/Materials/RealFootman.mmat",
+      "bounds": {
+        "max": [
+          0.6694931983947754,
+          2.941094160079956,
+          0.4435507357120514
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFootman.glb#pose=0:4",
+        "min": [
+          -0.6135421991348267,
+          -0.004016749560832977,
+          -0.5167722702026367
+        ],
+        "vertices": 1680
+      }
+    },
+    {
+      "name": "RealWorker",
+      "mesh": "Assets/Models/RealWorker.glb#pose=0:4",
+      "material": "Assets/Materials/RealWorker.mmat",
+      "bounds": {
+        "max": [
+          0.487681120634079,
+          2.9596128463745117,
+          0.3369966447353363
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealWorker.glb#pose=0:4",
+        "min": [
+          -0.6107206344604492,
+          -0.004681880120187998,
+          -0.6197182536125183
+        ],
+        "vertices": 1373
       }
     },
     {

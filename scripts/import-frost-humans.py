@@ -1,0 +1,126 @@
+"""Author: MiYu. Blender 4.5.9: assemble and animate licensed 0 A.D. human units."""
+import bpy
+import hashlib
+import json
+from pathlib import Path
+import urllib.request
+import xml.etree.ElementTree as ET
+from mathutils import Matrix, Vector
+
+ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';SOURCE=SAMPLE/'SourceAssets/0ad';MANIFEST=SAMPLE/'human-sources.json'
+
+def import_dae(path):
+    before=set(bpy.data.objects);bpy.ops.wm.collada_import(filepath=str(SOURCE/path))
+    objects=sorted(set(bpy.data.objects)-before,key=lambda o:o.name)
+    # 0 A.D. props use the same authored coordinates as bodies despite legacy inch/centimeter metadata.
+    unit=ET.parse(SOURCE/path).find('{*}asset/{*}unit');meter=float(unit.get('meter','1')) if unit is not None else 1
+    for obj in objects:
+        if obj.parent not in objects:obj.matrix_world=Matrix.Scale(1/meter,4)@obj.matrix_world
+    bpy.context.view_layer.update()
+    return objects
+
+def attachment_matrices(path):
+    doc=ET.parse(SOURCE/path);ns={'c':'http://www.collada.org/2005/11/COLLADASchema'};result={}
+    assert doc.findtext('c:asset/c:up_axis',namespaces=ns)=='Z_UP'
+    def visit(node,parent):
+        values=[float(x) for x in node.findtext('c:matrix',namespaces=ns).split()];world=parent@Matrix([values[i:i+4] for i in range(0,16,4)])
+        result[node.get('name')]=world
+        for child in node.findall('c:node',ns):visit(child,world)
+    for node in doc.findall('c:library_visual_scenes/c:visual_scene/c:node',ns):visit(node,Matrix.Identity(4))
+    return result
+
+def main():
+    manifest=json.loads(MANIFEST.read_text())
+    for entry in manifest['sources']:
+        target=(SAMPLE/entry['file']).resolve()
+        if not target.is_relative_to(SOURCE.resolve()):raise ValueError('Source escapes 0 A.D. directory')
+        if not target.exists():
+            data=urllib.request.urlopen(entry['url'],timeout=90).read()
+            if hashlib.sha256(data).hexdigest()!=entry['sha256']:raise ValueError('Download hash mismatch')
+            target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
+        if hashlib.sha256(target.read_bytes()).hexdigest()!=entry['sha256']:raise ValueError('Source hash mismatch: '+entry['file'])
+    catalog_path=SAMPLE/'model-catalog.json';catalog=json.loads(catalog_path.read_text());generated=[];stats={}
+    for key,definition in manifest['models'].items():
+        bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
+        for action in list(bpy.data.actions):bpy.data.actions.remove(action)
+        scene=bpy.context.scene;scene.frame_start=0;scene.render.engine='CYCLES';scene.cycles.samples=1;scene.cycles.seed=0;scene.render.threads_mode='FIXED';scene.render.threads=1;scene.render.bake.margin=12
+        body=definition['parts'][0];objects=import_dae(body['mesh']);rig=next(o for o in objects if o.type=='ARMATURE');rig.name=key+'Rig';rig.data.pose_position='REST'
+        matrices=attachment_matrices(body['mesh']);meshes=[];surfaces={}
+        for index,part in enumerate(definition['parts']):
+            added=objects if index==0 else import_dae(part['mesh'])
+            for obj in [o for o in added if o.type=='MESH']:
+                matrix=obj.matrix_world.copy();obj.parent=None;obj.data.transform(matrix);obj.matrix_world=Matrix.Identity(4)
+                if part['bone']:
+                    bone=part['bone'];assert bone in rig.data.bones and bone in matrices,bone
+                    obj.data.transform(matrices[bone]);obj.vertex_groups.clear();obj.vertex_groups.new(name=bone).add(list(range(len(obj.data.vertices))),1,'REPLACE')
+                obj.parent=rig;obj.matrix_parent_inverse=Matrix.Identity(4);obj.modifiers.clear();modifier=obj.modifiers.new('Authored skeleton','ARMATURE');modifier.object=rig
+                obj.data.uv_layers[0].name='SourceUV';mat=bpy.data.materials.new(key+' '+str(index));mat.use_nodes=True;nodes=mat.node_tree.nodes;nodes.clear();links=mat.node_tree.links
+                out=nodes.new('ShaderNodeOutputMaterial');shader=nodes.new('ShaderNodeBsdfPrincipled');shader.inputs['Roughness'].default_value=.8;links.new(shader.outputs['BSDF'],out.inputs['Surface'])
+                def texture(path,noncolor=False):
+                    node=nodes.new('ShaderNodeTexImage');node.image=bpy.data.images.load(str(SOURCE/path),check_existing=True);node.image.alpha_mode='CHANNEL_PACKED'
+                    if noncolor:node.image.colorspace_settings.name='Non-Color'
+                    uv=nodes.new('ShaderNodeUVMap');uv.uv_map='SourceUV';links.new(uv.outputs['UV'],node.inputs['Vector']);return node
+                base=texture(part['base']);color=base.outputs['Color']
+                if part['tint']:
+                    # Original alpha masks player/object color; it is not cutout opacity.
+                    tint=nodes.new('ShaderNodeMixRGB');tint.inputs[1].default_value=(*part['tint'],1);tint.inputs[2].default_value=(1,1,1,1);links.new(base.outputs['Alpha'],tint.inputs[0])
+                    mult=nodes.new('ShaderNodeMixRGB');mult.blend_type='MULTIPLY';mult.inputs[0].default_value=1;links.new(color,mult.inputs[1]);links.new(tint.outputs[0],mult.inputs[2]);color=mult.outputs[0]
+                links.new(color,shader.inputs['Base Color'])
+                if part.get('normal'):
+                    normal=nodes.new('ShaderNodeNormalMap');normal.uv_map='SourceUV';links.new(texture(part['normal'],True).outputs['Color'],normal.inputs['Color']);links.new(normal.outputs['Normal'],shader.inputs['Normal'])
+                arm=nodes.new('ShaderNodeCombineRGB');arm.inputs[0].default_value=1;arm.inputs[1].default_value=.8;arm.inputs[2].default_value=0
+                if part.get('specular'):
+                    rough=nodes.new('ShaderNodeMath');rough.operation='MULTIPLY_ADD';rough.inputs[1].default_value=-.5;rough.inputs[2].default_value=.9;links.new(texture(part['specular'],True).outputs['Color'],rough.inputs[0]);links.new(rough.outputs[0],arm.inputs[1])
+                emission=nodes.new('ShaderNodeEmission');surfaces[mat.name]=(out,shader,emission,color,arm.outputs[0]);obj.data.materials.clear();obj.data.materials.append(mat);meshes.append(obj)
+            for obj in added:
+                if obj.type!='MESH' and obj!=rig:bpy.data.objects.remove(obj,do_unlink=True)
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in meshes:obj.select_set(True)
+        bpy.context.view_layer.objects.active=meshes[0];bpy.ops.object.join();mesh=meshes[0];mesh.name=key
+        modifier=mesh.modifiers.new('Stable triangles','TRIANGULATE');bpy.ops.object.modifier_apply(modifier=modifier.name)
+        mesh.data.uv_layers.new(name='BakeUV');mesh.data.uv_layers.active_index=len(mesh.data.uv_layers)-1
+        bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=1.15,island_margin=.014);bpy.ops.object.mode_set(mode='OBJECT')
+        textures={}
+        for channel in ['base','normal','arm']:
+            atlas=bpy.data.images.new(key+' '+channel,width=1024,height=1024,alpha=False);atlas.colorspace_settings.name='sRGB' if channel=='base' else 'Non-Color'
+            for mat in mesh.data.materials:
+                out,shader,emission,color,arm=surfaces[mat.name];links=mat.node_tree.links
+                if channel=='normal':links.new(shader.outputs['BSDF'],out.inputs['Surface'])
+                else:links.new(color if channel=='base' else arm,emission.inputs['Color']);links.new(emission.outputs[0],out.inputs['Surface'])
+                target=mat.node_tree.nodes.new('ShaderNodeTexImage');target.image=atlas;mat.node_tree.nodes.active=target
+            bpy.ops.object.bake(type='NORMAL' if channel=='normal' else 'EMIT')
+            path='Assets/Textures/'+key+'_'+channel+'.png';atlas.filepath_raw=str(SAMPLE/path);atlas.file_format='PNG';atlas.save();textures[channel]=path;generated.append(path)
+        while len(mesh.data.uv_layers)>1:mesh.data.uv_layers.remove(mesh.data.uv_layers[0])
+        for face in mesh.data.polygons:face.material_index=0
+        mesh.data.materials.clear();mesh.data.materials.append(bpy.data.materials.new(key+' atlas'))
+        points=[v.co for v in mesh.data.vertices];low=min(p.z for p in points);scale=3/(max(p.z for p in points)-low);rig.scale=(scale,)*3;rig.location.z=-low*scale;rig.data.pose_position='POSE';rig.animation_data_create()
+        clips=[]
+        for name,path in definition['animations'].items():
+            added=import_dae(path);animated=max((o for o in added if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));source_action=animated.animation_data.action;start,end=source_action.frame_range
+            weighted={mesh.vertex_groups[g.group].name for v in mesh.data.vertices for g in v.groups if g.weight>0}
+            assert all(name in animated.pose.bones for name in weighted),'Animation is missing a weighted body or equipment bone'
+            action=bpy.data.actions.new(name);rig.animation_data.action=action
+            # Collada files can use different rest-bone orientations. Bake deformation matrices into the mesh rig's own rest basis.
+            for frame in range(int(start),int(end)+1):
+                scene.frame_set(frame);desired={}
+                for bone in rig.data.bones:
+                    source_bone=animated.pose.bones.get(bone.name)
+                    desired[bone.name]=source_bone.matrix@source_bone.bone.matrix_local.inverted()@bone.matrix_local if source_bone else bone.matrix_local
+                for pose in rig.pose.bones:
+                    bone=pose.bone;parent=bone.parent
+                    basis=bone.convert_local_to_pose(desired[bone.name],bone.matrix_local,parent_matrix=desired[parent.name] if parent else Matrix.Identity(4),parent_matrix_local=parent.matrix_local if parent else Matrix.Identity(4),invert=True)
+                    pose.rotation_mode='QUATERNION';pose.matrix_basis=basis
+                    for channel in ['location','rotation_quaternion','scale']:pose.keyframe_insert(channel,frame=frame-int(start))
+            for curve in action.fcurves:
+                for point in curve.keyframe_points:point.interpolation='LINEAR'
+            rig.animation_data.action=None;track=rig.animation_data.nla_tracks.new();track.name=name;track.strips.new(name,0,action);clips.append({'name':name,'frames':max(1,round((end-start)/scene.render.fps*12))})
+            for obj in added:bpy.data.objects.remove(obj,do_unlink=True)
+        for bone in rig.data.bones:bone.use_deform=True
+        bpy.ops.object.select_all(action='DESELECT');mesh.select_set(True);rig.select_set(True);bpy.context.view_layer.objects.active=rig
+        model='Assets/Models/'+key+'.glb';bpy.ops.export_scene.gltf(filepath=str(SAMPLE/model),export_format='GLB',use_selection=True,export_materials='NONE',export_animations=True,export_animation_mode='NLA_TRACKS',export_force_sampling=True,export_optimize_animation_size=False,export_extras=False)
+        material='Assets/Materials/'+key+'.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':key,'shader':'pbr','base_color':[1,1,1,1],'base_color_texture':textures['base'],'normal_texture':textures['normal'],'normal_scale':1,'metallic_roughness_texture':textures['arm'],'occlusion_texture':textures['arm'],'metallic':0,'roughness':1,'double_sided':True}))
+        generated.extend([model,material]);size=[(max(p[i] for p in points)-min(p[i] for p in points))*scale for i in [0,2,1]]
+        catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True};stats[key]={'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};print('Imported',key,stats[key],flush=True)
+    manifest['modelStats']=stats;manifest['generated']=[{'file':p,'sha256':hashlib.sha256((SAMPLE/p).read_bytes()).hexdigest()} for p in generated];MANIFEST.write_text(json.dumps(manifest,indent=2)+'\n');catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')
+
+if __name__=='__main__':main()
