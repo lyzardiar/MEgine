@@ -1,0 +1,143 @@
+{
+  "checkedAt": "2026-09-30T02:55:34.4718888+08:00",
+  "baseCommit": "92f3512b3d02a6efd6f57dd8671e05b14b87568c",
+  "scope": "Ten projectile visual profiles, per-render-frame interpolation, typed impact effects, legacy saves and protocol 9",
+  "protocol": 9,
+  "sceneEntities": 2399,
+  "rules": [
+    "PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion",
+    "PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection",
+    "PASS: opposing traffic, hold, narrow passage/head-on, flying layers, exact saves, melee surround, fog privacy, stacked TD recovery, base exit and speed limits",
+    "PASS: ordered route arrival, group queues/save replay, eight-waypoint atomic limit, command/work/blink/death cancellation, busy rejection, legacy/malformed saves and opponent privacy",
+    "PASS: four-faction queued construction, deferred payment, gathering delivery, distant site, repair/cancel, inside worker, consumed worker, invalid site skip, queue capacity/privacy and exact save replay",
+    "PASS: stationary hold combat/range/occlusion, stop release, six-unit patrol roundtrips/save replay, combat resumption, ramps, route overrides, privacy and invalid saves",
+    "PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 20 native unit portraits and pinned source/derived hashes",
+    "PASS: delayed single impact, homing, posthumous credit/lifesteal, lost targets, artillery/splash, shields, immediate melee/rifle, exact save continuation, legacy/malformed saves, fog redaction, capacity and lifetime",
+    "PASS: ten projectile styles, impact art, legacy migration, bounded interpolation, frozen clock, hidden/removed shots and reconnect reset",
+    "PASS: six slots, atomic recipes, health-ratio invariance, sell value/shop range, potions/cooldown, real pickup/transfer/race, fog, saved routes and malformed saves",
+    "PASS: four heroes / 16 skills, learning gates, status effects, timed areas/summons, targeting, hero saves and legacy migration",
+    "PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration",
+    "PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain",
+    "PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water",
+    "PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy",
+    "PASS: four faction rosters and tech gates, one-shot map triggers, fog privacy, full RPG legal-order quest/loot/growth/save roundtrip (569 ticks)",
+    "PASS: TCP inventory recipe, drop, pickup, reconnect and sell",
+    "PASS: TCP deferred worker construction, mixed queue reconnect and return to mining",
+    "PASS: TCP redacted projectile snapshots, in-flight reconnect and exactly one delayed impact",
+    "PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect"
+  ],
+  "nativeArt": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "projectileArt": {
+      "styles": [
+        "arrow",
+        "quarrel",
+        "javelin",
+        "ballista",
+        "stone",
+        "fire",
+        "frost",
+        "nature",
+        "shadow",
+        "arcane"
+      ],
+      "subTickMotion": true,
+      "before": [
+        -22,
+        1.600000023841858,
+        10
+      ],
+      "after": [
+        -22,
+        1.75,
+        10.5
+      ],
+      "frame": 102,
+      "physicalMeshes": 5,
+      "particleTrails": 5,
+      "impactCleanup": true,
+      "shaderRejections": 0,
+      "fixture": "Ten stationary launchers and invulnerable stationary targets; native playback stepping between 10 Hz simulation ticks, screenshots use actual renderer."
+    }
+  },
+  "nativeSave": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "projectiles": {
+      "fixture": "Flat field, stationary target with 100000 HP, archer begins at range 8 with a 10-second cooldown; subsequent shots suppressed. Editor stepping captures flight before Agent Escape/save/load.",
+      "delayedDamage": true,
+      "authoritativeSnapshots": true,
+      "presentationWithinOneTick": true,
+      "pauseFreezesFlight": true,
+      "saveWhilePaused": true,
+      "inFlightSaveRestore": true,
+      "singleImpact": true,
+      "shaderRejections": 0
+    }
+  },
+  "nativeHumans": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "units": {
+      "models": [
+        "RealFootman",
+        "RealWorker",
+        "RealArcher"
+      ],
+      "arrowProjectile": true,
+      "loadedArrowCycle": true,
+      "idleWalkAttack": true,
+      "attackFacing": true,
+      "selectionPortraits": true,
+      "trainingIcons": true,
+      "damage": true,
+      "saveRestore": true,
+      "shaderRejections": 0
+    }
+  },
+  "nativeNetwork": {
+    "passed": true,
+    "report": "native-network-qa.json"
+  },
+  "review": {
+    "scope": "Read-only review of client/visuals/simulation and focused tests",
+    "definiteFindings": 0
+  },
+  "package": {
+    "files": 447,
+    "bytes": 161874703.0,
+    "contentHash": "142e0402c72c1c2de7074bf76519f9d21063ece8a6e3f6afdc01e2ad2e088685",
+    "smoke": {
+      "contentHash": "142e0402c72c1c2de7074bf76519f9d21063ece8a6e3f6afdc01e2ad2e088685",
+      "windowTitle": "Frostbound Realms",
+      "responding": true,
+      "audioListening": false,
+      "shutdown": "Only this smoke-check process was stopped",
+      "elapsedSeconds": 30,
+      "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+      "alive": true,
+      "packageValidationPassed": true,
+      "startedAt": "2026-09-30T02:51:25.5798096+08:00",
+      "processId": 170184,
+      "packagedFiles": 447,
+      "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+      "checkedAt": "2026-09-30T02:51:55.6343048+08:00",
+      "physicalInput": false,
+      "loggedErrors": 0
+    }
+  },
+  "limitations": [
+    "Four physical arrow profiles share the existing RealArrow asset.",
+    "Other units and two faction building sets still need consistent realistic art.",
+    "Unit transforms and UI retain their existing update rates.",
+    "Physical mouse, audio listening, cross-machine LAN and standalone frame timing were not validated.",
+    "Full recreation remains incomplete."
+  ]
+}

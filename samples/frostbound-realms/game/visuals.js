@@ -48,6 +48,19 @@ var FrostVisual=(()=>{
   function resource(r,zoom=27){const seed=(Math.imul(Math.round(r.x*100),73856093)^Math.imul(Math.round(r.z*100),19349663))>>>0,key=r.kind==='tree'?['RealSpruceA','RealSpruceB','RealSpruceC'][seed%3]:r.kind==='mine'?'RealRock07':'RealFirePit';return environment(key,r.kind==='tree'?4.7+(seed%12)/10:r.kind==='mine'?2.5:.65,seed%628/100,zoom>14,r.kind==='tree'?5:r.kind==='mine'?4.5:1.4);}
   function scenery(i,edge,zoom=27){const tree=edge?i%4!==0:i%5===0,shrub=!tree&&i%3===0,key=tree?['RealSpruceA','RealSpruceB','RealSpruceC'][i%3]:shrub?'RealShrub':'RealMossRock'+(i%6+1);return environment(key,tree?(edge?7+i%4:3.8+i%3*.5):shrub?1.2:edge?2.1+i%3*.4:.35+i%4*.2,i*2.399963,edge||zoom>14,tree?6:edge?4.5:1.7);}
   function name(state,u){const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??state.teams[u.team]?.tier??1)-1,0,2)]:value||Frost.unitType(u).label;}
-  return {model,name,pose,heading,resource,scenery};
+  const projectileColors={fire:[1,.32,.055,1],frost:[.35,.8,1,1],nature:[.35,.85,.24,1],shadow:[.57,.22,.8,1],arcane:[.5,.48,1,1]};
+  function projectile(art){
+    const color=projectileColors[art],stone=art==='stone',physical=!color,asset=physical?FrostArt[stone?'RealRock07':'RealArrow']:null,size=stone?1.2/Math.max(...asset.size):1;
+    return {mesh:asset?{mesh:stone?asset.lods[1]:asset.parts[0].mesh,material:asset.material}:null,scale:stone?[size,size,size]:art==='ballista'?[2.2,2.2,2]:art==='javelin'?[1.4,1.4,1.6]:art==='quarrel'?[1,1,.6]:[1,1,1],color:color||[.53,.43,.3,.7],texture:art==='fire'||art==='shadow'||stone?'smoke_01':art==='frost'?'star_04':'spark_01',trail:!!color,particleSize:art==='fire'?.65:art==='shadow'?.55:art==='frost'?.3:.4,impactSize:stone?1.8:physical?.3:.85};
+  }
+  function projectileView(){
+    let frame=-1,tracks=new Map();
+    const position=(v,clock)=>{const t=Frost.clamp((clock-v.at)/Frost.DT,0,1);return {...v.target,x:v.from.x+(v.target.x-v.from.x)*t,y:v.from.y+(v.target.y-v.from.y)*t,z:v.from.z+(v.target.z-v.from.z)*t};};
+    return {reset(){frame=-1;tracks.clear();},sample(shots,nextFrame,clock){
+      if(nextFrame!==frame){const fresh=new Map();for(const p of shots){const old=nextFrame>frame&&nextFrame-frame<=2?tracks.get(p.id):null;fresh.set(p.id,{from:old?position(old,clock):{...p},target:{...p},at:clock});}tracks=fresh;frame=nextFrame;}
+      return [...tracks.values()].map(v=>position(v,clock));
+    }};
+  }
+  return {model,name,pose,heading,resource,scenery,projectile,projectileView};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

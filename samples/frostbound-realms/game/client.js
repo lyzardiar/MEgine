@@ -5,6 +5,7 @@ var FrostClient=(()=>{
   let editMap=S.defaultMap(),brush=0,undo=[],paintCell=-1,paintPointer=null,slot=1,returnEditor=false,online=false,address='127.0.0.1:7788',edit='',intent='',connected=false,code='',token='',room=null,rooms=[],roomIndex=0,seq=0,lastReceive=0,reconnectUntil=0,retry=0,netStates=0;
   const itemIcons=['blade','heart','boots','edge','storm','charm','heal','frost'];
   const previous={},visibility={},modelNames={},active={},tileState=[];
+  const missileView=FrostVisual.projectileView();let flightTime=0,missileCount=0;
   let editorPage=0,placeKind='soldier',placeHeroClass=0,placeTeam=0,placeTag='',triggerIndex=-1,triggerPanel=0,entryIndex=0,regionIndex=-1,editorTool='select',heightBrush=1,rampBrush=0,rename=null;
   function set(n,c,v){const e=entities[n];if(!e)return;const json=JSON.stringify(v),key=n+'/'+c;if(sent[key]===json)return;sent[key]=json;engine.pushCommandJson('{"op":"setComponent","entity":'+e.entity+',"component":'+JSON.stringify(c)+',"value":'+json+'}');}
   function activate(n,on){const e=entities[n];if(!e||active[n]===on)return;active[n]=on;engine.setActive(e.entity,on);}
@@ -13,10 +14,10 @@ var FrostClient=(()=>{
   function show(n,on){if(visibility[n]===on)return;visibility[n]=on;activate(n,on);const a=authored[n]?.RectTransform;if(a&&on)set(n,'RectTransform',{...a,anchored_position:a.anchored_position});}
   function message(text){notice=text;noticeUntil=time+5;}
   function sound(n){if(entities['Sound '+n])engine.playAudio(entities['Sound '+n].entity);}
-  function init(){for(const e of engine.snapshot.entities)if(e.name){entities[e.name]=e;authored[e.name]=e.components;}activate('Frost telemetry',false);state=S.create();initialized=true;}
+  function init(){for(const e of engine.snapshot.entities)if(e.name){entities[e.name]=e;authored[e.name]=e.components;}activate('Frost telemetry',false);for(let i=0;i<S.PROJECTILE_LIMIT;i++){activate('Missile '+i,false);activate('Missile aura '+i,false);}state=S.create();initialized=true;}
   function persist(key,value){try{engine.storage.save(key,value);message('Saved '+key+' to your project user-data folder');return true;}catch(e){message('Save failed: '+e.message);return false;}}
   function load(key){try{return engine.storage.load(key);}catch(e){message('Load failed: '+e.message);return null;}}
-  function stopNetwork(){if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';}
+  function stopNetwork(){if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';missileView.reset();fx=[];damageText=[];lastFrame=-1;}
   function solo(kind,map){stopNetwork();state=S.create(kind,{map,...(map?{}:{factions:[faction,(faction+1)%4],heroes:[heroClass,(heroClass+1)%S.heroes.length]})});team=0;mode='playing';heroPanel='skills';paused=false;selected=state.units.filter(u=>u.team===0&&u.kind==='hero').map(u=>u.id);camera=state.map.spawns[0].map(v=>S.clamp(v,-18,18));zoom=16;accumulator=0;lastFrame=-1;armed=null;groups={};notice='';selectHero();}
   function title(){stopNetwork();mode='title';state=S.create();camera=[0,0];zoom=27;paused=false;selected=[];armed=null;returnEditor=false;}
   function order(command){const c={ids:[...selected],...command};if(['move','attackMove','build','construct','repair','gather'].includes(c.type)&&(engine.input?.keys||[]).some(k=>k==='ShiftLeft'||k==='ShiftRight'))c.append=true;if(online){if(connected)engine.network.send({type:'order',seq:++seq,command:c});else message('Reconnecting; orders are paused');}else{const error=S.command(state,team,c);if(error)message(error);else{sound('order');if(Number.isFinite(c.x)&&Number.isFinite(c.z))commandMarker={x:c.x,z:c.z,until:time+1.2};}}}
@@ -59,7 +60,7 @@ var FrostClient=(()=>{
   function connect(action){stopNetwork();online=true;intent=action;mode='connecting';retry=time;reconnectUntil=time+8;message('Connecting to '+address);}
   function receive(){
     for(const e of engine.network.poll()){
-      if(e.type==='connected'){connected=true;lastReceive=time;engine.network.send({type:'hello',protocol:8,name:'Commander'});}
+      if(e.type==='connected'){connected=true;lastReceive=time;engine.network.send({type:'hello',protocol:9,name:'Commander'});}
       if(e.type==='closed'){connected=false;if(online&&token){mode='reconnecting';intent='resume';retry=time+.5;reconnectUntil=time+12;message('Connection lost. Reconnecting...');}else if(online){online=false;mode='network';message('Connection failed. Start server.mjs and check the address.');}}
       if(e.type!=='message')continue;const m=e.data;lastReceive=time;
       if(m.type==='welcome'){
@@ -68,6 +69,7 @@ var FrostClient=(()=>{
         if(intent==='resume')engine.network.send({type:'resume',code,token});
       }
       if(m.type==='joined'){
+        missileView.reset();
         const resumed=intent==='resume'&&!!m.state;team=m.team;token=m.token;code=m.code;seq=0;if(m.state){state=m.state;mode=state.winner===null?'playing':'finished';}else mode='lobby';
         if(resumed){selected=selected.filter(id=>state.units.some(u=>u.id===id&&u.team===team&&u.hp>0&&!u.inside));message('Connection restored.');}
         else{selected=[];camera=[...(m.state?.map.spawns[team]||[team?23:-23,team?-23:23])];zoom=18;notice='';noticeUntil=0;}
@@ -223,12 +225,8 @@ var FrostClient=(()=>{
       show('Mini unit '+i,world);const r=authored['Mini unit '+i].RectTransform;set('Mini unit '+i,'RectTransform',{...r,anchored_position:world?[-594+(u.x+32)/64*160,190+(u.z+32)/64*144]:[5000,5000]});set('Mini unit '+i,'Image',{color:u.team===team?[.2,.7,1,1]:[1,.25,.15,1],raycast_target:false});
     }
     if(lastFrame!==state.frame){for(const e of state.events||[]){if(playing&&!state.visible[team]?.[S.index(e.x,e.z)])continue;if(e.type==='damage'){damageText.push({e,until:time+.8});if(damageText.length>12)damageText.shift();continue;}if(e.type==='launch'){if(time-lastBattleSound>.25){sound('battle');lastBattleSound=time;}continue;}const id=fxSerial++%24;fx.push({id,e,until:time+(e.type==='spell'?.65:e.ranged?.35:.22),start:time});if(e.type==='spell')sound('spell');if(e.type==='hit'&&time-lastBattleSound>.25){sound('battle');lastBattleSound=time;}}lastFrame=state.frame;}
-    fx=fx.filter(f=>f.until>time);for(let i=0;i<24;i++){const f=fx.findLast?fx.findLast(f=>f.id===i):[...fx].reverse().find(f=>f.id===i);set('FX '+i,'ParticleEmitter3D',{...authored['FX '+i].ParticleEmitter3D,playing:!!f,shape_radius:f?.e.type==='spell'?2:.2,color_start:f?.e.type==='spell'?S.heroes[f.e.heroClass??0].color:f?.e.team===1?[1,.35,.12,1]:[.25,.7,1,1]});if(f)transform('FX '+i,[f.e.x,S.elevation(map,f.e.x,f.e.z)+.6,f.e.z]);}
-    const missiles=state.projectiles||[];
-    for(let i=0;i<S.PROJECTILE_LIMIT;i++){const p=missiles[i];if(p){const yaw=Math.atan2(p.vx,p.vz),pitch=-Math.atan2(p.vy,Math.hypot(p.vx,p.vz)),arrow=p.art==='arrow';
-      set('Missile '+i,'MeshRenderer',arrow?{mesh:FrostArt.RealArrow.parts[0].mesh,material:FrostArt.RealArrow.material}:authored['Missile '+i].MeshRenderer);set('Missile '+i,'PbrMaterial',arrow?{base_color:[1,1,1,1],emissive:[0,0,0],emissive_strength:0,roughness:.8}:authored['Missile '+i].PbrMaterial);
-      transform('Missile '+i,[p.x,p.y,p.z],arrow?[1,1,1]:[.12,.12,.85],[Math.sin(pitch/2)*Math.cos(yaw/2),Math.cos(pitch/2)*Math.sin(yaw/2),-Math.sin(pitch/2)*Math.sin(yaw/2),Math.cos(pitch/2)*Math.cos(yaw/2)]);
-    }else transform('Missile '+i,hidden);}
+    fx=fx.filter(f=>f.until>time);for(let i=0;i<24;i++){const f=fx.findLast?fx.findLast(f=>f.id===i):[...fx].reverse().find(f=>f.id===i);if(!f){transform('FX '+i,hidden);continue;}const e=f.e,spell=e.type==='spell',style=FrostVisual.projectile(e.art||'arrow'),color=spell?S.heroes[e.heroClass??0].color:style.color;
+      set('FX '+i,'ParticleEmitter3D',{...authored['FX '+i].ParticleEmitter3D,playing:true,seed:f.id+Math.floor(f.start*1000)+1,shape_radius:spell?2:e.art==='stone'?.8:.12,texture:'Assets/Textures/'+(spell?'magic_01':style.trail?'spark_01':'smoke_01')+'.png',size_start:spell?.8:style.impactSize,color_start:color,color_end:[color[0]*.5,color[1]*.5,color[2]*.5,0]});transform('FX '+i,[e.x,e.art==='stone'?S.elevation(map,e.x,e.z)+.25:e.y??S.elevation(map,e.x,e.z)+.6,e.z]);}
     damageText=damageText.filter(d=>d.until>time);
     for(let i=0;i<12;i++){const d=damageText[i];show('Damage '+i,playing&&!!d);if(d){const p=screenWorld(d.e,input),r=authored['Damage '+i].RectTransform;set('Damage '+i,'RectTransform',{...r,anchored_position:[p.x,p.y-36-(.8-d.until+time)*26]});label('Damage '+i,'-'+d.e.amount,d.e.team===team?[1,.46,.35,1]:[1,.87,.52,1]);}}
     for(let i=0;i<32;i++)for(let edge=0;edge<4;edge++){const r=editing?map.regions[i]:null,horizontal=edge<2;transform('Region '+i+' '+edge,r?[r.x+(horizontal?0:(edge===2?-1:1)*r.width/2),S.elevation(map,r.x,r.z)+.07,r.z+(horizontal?(edge===0?-1:1)*r.height/2:0)]:hidden,[horizontal?r?.width||1:.2,.035,horizontal?.2:r?.height||1]);if(r)set('Region '+i+' '+edge,'MaterialPropertyBlock',{override_base_color:true,base_color:i===regionIndex?[1,.8,.2,1]:[.2,.7,1,1]});}
@@ -276,9 +274,22 @@ var FrostClient=(()=>{
     show('Drag box',!!drag);if(drag){const a=authored['Drag box'].RectTransform;set('Drag box','RectTransform',{...a,anchored_position:[(drag.start.x+drag.end.x)/2,(drag.start.y+drag.end.y)/2],size_delta:[Math.abs(drag.start.x-drag.end.x),Math.abs(drag.start.y-drag.end.y)]});}
     label('Frost telemetry',JSON.stringify({mode,heroChoice:heroClass,heroPanel,faction,camera,zoom,flyers:state.units.filter(u=>S.types[u.kind].flying),construction:state.units.filter(u=>u.team===team&&u.built<1),production:state.units.filter(u=>u.team===team&&S.trainable(state,u).length),worker:state.units.find(u=>u.team===team&&u.kind==='worker'),projectiles:state.projectiles?.map(({id,x,y,z,art})=>({id,x,y,z,art})),frame:state.frame,kind:state.mode,team,units:state.units.length,gold:state.teams[team].gold,selected,hero:state.units.find(u=>u.team===team&&u.kind==='hero'),paused,online,room:code,netStates,brush,slot,editorPage,placedHeroes:map.units.filter(u=>u.kind==='hero').map(u=>({heroClass:u.heroClass??map.players[u.team]?.heroClass??0,team:u.team})),placedUnits:map.units.length,triggers:map.triggers.length,regions:map.regions?.length||0,editorTrigger:editing?map.triggers[triggerIndex]:null,editorRegion:editing?map.regions[regionIndex]:null,triggerPanel,triggered:state.triggered,triggerState:state.triggerState,announcement:state.announcements?.[team]||state.announcement,undoDepth:undo.length,quest:state.quest,loot:state.loot.length,map:map.name,terrainRaised:map.heights.filter(v=>v>0).length,terrainRamps:map.ramps.filter(v=>v>0).length,heroElevation:state.units.some(u=>u.team===team&&u.kind==='hero')?S.unitHeight(state,state.units.find(u=>u.team===team&&u.kind==='hero')):0,heightBrush,rampBrush,terrainWater:map.terrain.filter(v=>v===1).length,winner:state.winner,notice}));
   }
+  function renderMissiles(dt){
+    if(mode==='playing'&&(!paused||online))flightTime+=dt;
+    if(mode!=='playing')missileView.reset();
+    const shots=mode==='playing'?(state.projectiles||[]).filter(p=>state.visible[team]?.[S.index(p.x,p.z)]):[],missiles=missileView.sample(shots,state.frame,flightTime);
+    for(let i=0;i<Math.max(missileCount,missiles.length);i++){
+      const p=missiles[i],visible=p&&state.visible[team]?.[S.index(p.x,p.z)];if(!visible){transform('Missile '+i,hidden);transform('Missile aura '+i,hidden);continue;}
+      const style=FrostVisual.projectile(p.art),yaw=Math.atan2(p.vx,p.vz),pitch=-Math.atan2(p.vy,Math.hypot(p.vx,p.vz)),position=[p.x,p.y,p.z];
+      if(style.mesh){set('Missile '+i,'MeshRenderer',style.mesh);transform('Missile '+i,position,style.scale,p.art==='stone'?[Math.sin(flightTime*3),0,0,Math.cos(flightTime*3)]:[Math.sin(pitch/2)*Math.cos(yaw/2),Math.cos(pitch/2)*Math.sin(yaw/2),-Math.sin(pitch/2)*Math.sin(yaw/2),Math.cos(pitch/2)*Math.cos(yaw/2)]);}else transform('Missile '+i,hidden);
+      if(style.trail){const color=style.color;set('Missile aura '+i,'ParticleEmitter3D',{...authored['Missile aura '+i].ParticleEmitter3D,playing:!paused||online,seed:p.id%2147483646+1,texture:'Assets/Textures/'+style.texture+'.png',size_start:style.particleSize,color_start:color,color_end:[color[0]*.3,color[1]*.3,color[2]*.3,0]});transform('Missile aura '+i,position);}else transform('Missile aura '+i,hidden);
+    }
+    missileCount=missiles.length;
+  }
   function tick(dt){if(!initialized)init();dt=Math.min(.2,Math.max(0,dt));time+=dt;const input=engine.input||{keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};receive();controls(input,dt);
     if(mode==='playing'&&!online&&!paused){accumulator+=dt;while(accumulator>=S.DT){S.tick(state);accumulator-=S.DT;}if(state.winner!==null){mode='finished';sound('victory');}}
     if(time>=renderAt){renderAt=time+.08;render(input);}
+    renderMissiles(dt);
   }
   return {tick};
 })();

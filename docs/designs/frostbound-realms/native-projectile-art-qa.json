@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "projectileArt": {
+    "styles": [
+      "arrow",
+      "quarrel",
+      "javelin",
+      "ballista",
+      "stone",
+      "fire",
+      "frost",
+      "nature",
+      "shadow",
+      "arcane"
+    ],
+    "subTickMotion": true,
+    "before": [
+      -22,
+      1.600000023841858,
+      10
+    ],
+    "after": [
+      -22,
+      1.75,
+      10.5
+    ],
+    "frame": 102,
+    "physicalMeshes": 5,
+    "particleTrails": 5,
+    "impactCleanup": true,
+    "shaderRejections": 0,
+    "fixture": "Ten stationary launchers and invulnerable stationary targets; native playback stepping between 10 Hz simulation ticks, screenshots use actual renderer."
+  }
+}

@@ -6,7 +6,8 @@
   "projectiles": {
     "fixture": "Flat field, stationary target with 100000 HP, archer begins at range 8 with a 10-second cooldown; subsequent shots suppressed. Editor stepping captures flight before Agent Escape/save/load.",
     "delayedDamage": true,
-    "authoritativePosition": true,
+    "authoritativeSnapshots": true,
+    "presentationWithinOneTick": true,
     "pauseFreezesFlight": true,
     "saveWhilePaused": true,
     "inFlightSaveRestore": true,
