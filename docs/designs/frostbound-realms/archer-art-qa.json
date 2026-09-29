@@ -1,0 +1,215 @@
+{
+  "checkedAt": "2026-09-29T15:55:44.526932+00:00",
+  "baseCommit": "123107daca51af62e0664bd22c6cd9caed44f90d",
+  "scope": "Realistic human archer, animated bow, loaded arrows and flight meshes, melee facing, native input, persistence and packaged startup",
+  "upstream": {
+    "author": "Wildfire Games",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "license": "CC-BY-SA-3.0",
+    "sourceFiles": 66,
+    "sourceBytes": 15917092
+  },
+  "derived": {
+    "files": 43,
+    "byteIdenticalRebuild": true,
+    "nativePoseSamples": 54,
+    "unitPortraits": 20,
+    "catalogModels": 102,
+    "archers": {
+      "RealArcher": {
+        "triangles": 1464,
+        "bones": 106,
+        "clips": [
+          {
+            "name": "Idle",
+            "frames": 30
+          },
+          {
+            "name": "Walk",
+            "frames": 12
+          },
+          {
+            "name": "Bow_Shoot",
+            "frames": 30
+          }
+        ],
+        "size": [
+          1.3547985666567999,
+          3.0,
+          2.045957952242739
+        ]
+      },
+      "RealArcherShoot": {
+        "triangles": 1417,
+        "bones": 106,
+        "clips": [
+          {
+            "name": "Idle",
+            "frames": 30
+          },
+          {
+            "name": "Walk",
+            "frames": 12
+          },
+          {
+            "name": "Bow_Shoot",
+            "frames": 30
+          }
+        ],
+        "size": [
+          1.3547985666567999,
+          3.0,
+          2.045957952242739
+        ]
+      },
+      "RealArcherLoaded": {
+        "triangles": 1464,
+        "bones": 106,
+        "clips": [
+          {
+            "name": "Idle",
+            "frames": 30
+          },
+          {
+            "name": "Walk",
+            "frames": 12
+          },
+          {
+            "name": "Bow_Shoot",
+            "frames": 30
+          }
+        ],
+        "size": [
+          1.392259176971006,
+          3.0,
+          2.045957952242739
+        ]
+      }
+    }
+  },
+  "validation": {
+    "geometry": [
+      "RealFootman 1616 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorker 1238 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorkerWood 1250 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorkerMine 1250 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorkerBuild 1182 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealArcher 1464 triangles; 106 bones; head/tool scale and four normalized weights valid",
+      "RealArcherShoot 1417 triangles; 106 bones; head/tool scale and four normalized weights valid",
+      "RealArcherLoaded 1464 triangles; 106 bones; head/tool scale and four normalized weights valid",
+      "PASS: 54 native skeletal samples, complete equipment and stable pose bounds",
+      "PASS: arrow projectile is 1.5 units long, bounded and points along flight"
+    ],
+    "rulesAndTCP": [
+      "PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion",
+      "PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection",
+      "PASS: opposing traffic, hold, narrow passage/head-on, flying layers, exact saves, melee surround, fog privacy, stacked TD recovery, base exit and speed limits",
+      "PASS: ordered route arrival, group queues/save replay, eight-waypoint atomic limit, command/work/blink/death cancellation, busy rejection, legacy/malformed saves and opponent privacy",
+      "PASS: four-faction queued construction, deferred payment, gathering delivery, distant site, repair/cancel, inside worker, consumed worker, invalid site skip, queue capacity/privacy and exact save replay",
+      "PASS: stationary hold combat/range/occlusion, stop release, six-unit patrol roundtrips/save replay, combat resumption, ramps, route overrides, privacy and invalid saves",
+      "PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 20 native unit portraits and pinned source/derived hashes",
+      "PASS: six slots, atomic recipes, health-ratio invariance, sell value/shop range, potions/cooldown, real pickup/transfer/race, fog, saved routes and malformed saves",
+      "PASS: four heroes / 16 skills, learning gates, status effects, timed areas/summons, targeting, hero saves and legacy migration",
+      "PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration",
+      "PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain",
+      "PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water",
+      "PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy",
+      "PASS: four faction rosters and tech gates, one-shot map triggers, fog privacy, full RPG legal-order quest/loot/growth/save roundtrip (549 ticks)",
+      "PASS: TCP inventory recipe, drop, pickup, reconnect and sell",
+      "PASS: TCP deferred worker construction, mixed queue reconnect and return to mining",
+      "PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect"
+    ],
+    "visualsAndMeleeFacing": [
+      "PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 20 native unit portraits and pinned source/derived hashes"
+    ],
+    "nativeHumans": [
+      "Native title rendered",
+      "PASS native animated unit movement, combat, portraits, training icons and save restore"
+    ],
+    "nativeWorkerRegression": [
+      "Native title rendered",
+      "PASS native mining, woodcutting, repair, construction, stop and save restore"
+    ]
+  },
+  "native": {
+    "native-humans-qa.json": {
+      "passed": true,
+      "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+      "physicalInput": false,
+      "audioListening": false,
+      "units": {
+        "models": [
+          "RealFootman",
+          "RealWorker",
+          "RealArcher"
+        ],
+        "arrowProjectile": true,
+        "loadedArrowCycle": true,
+        "idleWalkAttack": true,
+        "attackFacing": true,
+        "selectionPortraits": true,
+        "trainingIcons": true,
+        "damage": true,
+        "saveRestore": true,
+        "shaderRejections": 0
+      }
+    },
+    "native-worker-actions-qa.json": {
+      "passed": true,
+      "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+      "physicalInput": false,
+      "audioListening": false,
+      "workerActions": {
+        "mining": true,
+        "goldDelivery": true,
+        "woodcutting": true,
+        "repair": true,
+        "construction": true,
+        "workFacing": true,
+        "stopReturnsIdle": true,
+        "separateCombatCooldown": true,
+        "saveRestore": true,
+        "shaderRejections": 0
+      }
+    }
+  },
+  "package": {
+    "files": 447,
+    "bytes": 161307672,
+    "contentHash": "ce4d3104a5c52a05b40a1a8032da3d01e0a0f115b799e1364a421b871d70d1e3",
+    "newAssetsPortraitsAndLicenseVerified": true,
+    "player": {
+      "contentHash": "ce4d3104a5c52a05b40a1a8032da3d01e0a0f115b799e1364a421b871d70d1e3",
+      "windowTitle": "Frostbound Realms",
+      "responding": true,
+      "audioListening": false,
+      "shutdown": "Only this smoke-check process was stopped",
+      "elapsedSeconds": 30,
+      "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+      "alive": true,
+      "packageValidationPassed": true,
+      "startedAt": "2026-09-29T23:29:58.3448773+08:00",
+      "processId": 49580,
+      "packagedFiles": 447,
+      "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+      "checkedAt": "2026-09-29T23:30:28.4117749+08:00",
+      "physicalInput": false,
+      "loggedErrors": 0
+    }
+  },
+  "evidenceHashes": {
+    "native-humans-qa.json": "a2d265a0c2005fe5a913e3f77deb0da0d98604c32535d34584a41bbc8880727e",
+    "native-worker-actions-qa.json": "e451f0b7bfcc4a501d0f0a0fdcf5f64c0ced1c731fb3712f5700cfa6c3600346",
+    "archer-poses.png": "7026662f93526a713d583d951bb162fd459c28a2357f160ac47b176601219c26",
+    "archer-poses.json": "b64f30435f63c7174facdba7f29a087078a209c425a145d550905fb60d91648b",
+    "human-archer-combat.png": "52ef460ba8aaae8b72df2944e3947efa2453b23870277510d04ddff942abdca9",
+    "human-archer-draw.png": "74d01e285ec5d59a3959369cc8aa9caedfecd461aba292dd861d44c0ca0ddedc",
+    "human-archer-release.png": "383d923297f78d9f8d684318ebe55a4ea5c9d6343a9f294f2e4c4fbfe81155a7"
+  },
+  "limitations": [
+    "Other heroes, units and two faction building sets remain simplified.",
+    "Projectile travel is presentation; combat still resolves damage at shot time.",
+    "Full game recreation and 5 ms performance target remain incomplete.",
+    "Physical mouse, audio listening, standalone Player FPS and cross-machine LAN not verified."
+  ]
+}

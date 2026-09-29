@@ -195,6 +195,186 @@
         "Build": "animation/biped/citizen/build.dae"
       },
       "workAnimation": "Build"
+    },
+    "RealArcher": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/m_armor_pants.dae",
+          "base": "textures/skins/skeletal/brit/chainmail_04_01.png",
+          "bone": null,
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ],
+          "specular": "textures/skins/skeletal/celt/chainmail_04_spec.png"
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/weapons/bow_greek.dae",
+          "base": "textures/skins/props/spart_sail_a.png",
+          "bone": "prop-weapon_bow",
+          "tint": null,
+          "skeletal": true,
+          "animations": {
+            "Bow_Shoot": "animation/mechanical/weap_bow_attack.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back.dae",
+          "base": "textures/skins/props/quiver_greek_b.png",
+          "normal": "textures/skins/props/quiver_greek_b_norm.png",
+          "specular": "textures/skins/props/quiver_greek_b_spec.png",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back_arrows.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/weap_arrow_back.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-weapon_R",
+          "tint": null
+        }
+      ],
+      "animations": {
+        "Idle": "animation/biped/infantry/archer/idle_relax_01.dae",
+        "Walk": "animation/biped/infantry/archer/jog_relax.dae",
+        "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae"
+      },
+      "attackEvent": 0.45,
+      "ammoLoad": 0.72
+    },
+    "RealArcherShoot": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/m_armor_pants.dae",
+          "base": "textures/skins/skeletal/brit/chainmail_04_01.png",
+          "bone": null,
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ],
+          "specular": "textures/skins/skeletal/celt/chainmail_04_spec.png"
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/weapons/bow_greek.dae",
+          "base": "textures/skins/props/spart_sail_a.png",
+          "bone": "prop-weapon_bow",
+          "tint": null,
+          "skeletal": true,
+          "animations": {
+            "Bow_Shoot": "animation/mechanical/weap_bow_attack.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back.dae",
+          "base": "textures/skins/props/quiver_greek_b.png",
+          "normal": "textures/skins/props/quiver_greek_b_norm.png",
+          "specular": "textures/skins/props/quiver_greek_b_spec.png",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back_arrows.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-back",
+          "tint": null
+        }
+      ],
+      "animations": {
+        "Idle": "animation/biped/infantry/archer/idle_relax_01.dae",
+        "Walk": "animation/biped/infantry/archer/jog_relax.dae",
+        "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae"
+      },
+      "attackEvent": 0.45,
+      "ammoLoad": 0.72
+    },
+    "RealArcherLoaded": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/m_armor_pants.dae",
+          "base": "textures/skins/skeletal/brit/chainmail_04_01.png",
+          "bone": null,
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ],
+          "specular": "textures/skins/skeletal/celt/chainmail_04_spec.png"
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/weapons/bow_greek.dae",
+          "base": "textures/skins/props/spart_sail_a.png",
+          "bone": "prop-weapon_bow",
+          "tint": null,
+          "skeletal": true,
+          "animations": {
+            "Bow_Shoot": "animation/mechanical/weap_bow_attack.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back.dae",
+          "base": "textures/skins/props/quiver_greek_b.png",
+          "normal": "textures/skins/props/quiver_greek_b_norm.png",
+          "specular": "textures/skins/props/quiver_greek_b_spec.png",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back_arrows.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/weap_arrow_back.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-projectile",
+          "tint": null
+        }
+      ],
+      "animations": {
+        "Idle": "animation/biped/infantry/archer/idle_relax_01.dae",
+        "Walk": "animation/biped/infantry/archer/jog_relax.dae",
+        "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae"
+      },
+      "attackEvent": 0.45,
+      "ammoLoad": 0.72
     }
   },
   "sources": [
@@ -467,6 +647,111 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/shields/celt_shield_base.xml",
       "sha256": "3bda339d4a67c9838f17ddae6b2a8df00f90c39b07b67f923c3ab56948c601e3",
       "size": 241
+    },
+    {
+      "file": "SourceAssets/0ad/actors/units/athenians/infantry_archer_b.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/athenians/infantry_archer_b.xml",
+      "sha256": "0bfc2187fdd6809c67f05ab5bd5d34cb36f6200ee0f58c6aa2dc900dc76bbf9b"
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/weapons/bow_short.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/bow_short.xml",
+      "sha256": "d6f4f54e4f9e292aee05a3bf040abb13793e746527a1d216a429960004425cc4"
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/weapons/arrow_back.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/arrow_back.xml",
+      "sha256": "9d4a13d599b999f330999c7f250565ee9b6191e259baac521c7d8b96cf3fa538"
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/quiver_greek_back.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/quiver_greek_back.xml",
+      "sha256": "72a285b7bd81eb17789d6e6b5aa6fc4337a48210b54a0dbfe96f60d6aa2ab635"
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/quiver_greek_back_arrows.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/quiver_greek_back_arrows.xml",
+      "sha256": "aadda669246b53b664e25a705eb97dca4d04433e062a226d1ccaa4bf8b3fc34c"
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/base_archer_relax.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/base_archer_relax.xml",
+      "sha256": "5d674ea8c6f346d8348b4d3d765226fc830810d0ef23178aa2fd7a5836fd0551"
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/attack_ranged_archer.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/attack_ranged_archer.xml",
+      "sha256": "f32d7634767506842f721ab7a0fa3219b0bb7cf05e353ed7ffbeedf926ff8d0d"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/archer/idle_relax_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/archer/idle_relax_01.dae",
+      "sha256": "e0e9e1e81f05a700fbd93718fffe158b0ff2c8caa326b818226533be2c0bd038"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/archer/jog_relax.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/archer/jog_relax.dae",
+      "sha256": "e3be4b2954dbba235b4bff666b4661ff50ecc32c9c343cc30a6b22149c8a450d"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/archer/attack_ranged.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/archer/attack_ranged.dae",
+      "sha256": "c1f901a9338889b7104ba65855c9555d99b81e3094f7a680d25596bc701f4caf"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weapons/bow_greek.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weapons/bow_greek.dae",
+      "sha256": "13eb54e1c4c7edc882964c1d69e0bddd415531c8421b25716ceae618fda4b6a2"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/spart_sail_a.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/spart_sail_a.png",
+      "sha256": "c03027fcc0bd88c92344b5ed1336eb2bd1aede4ca0dbf5da2ea919e13d3b8652"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/weap_bow_attack.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/weap_bow_attack.dae",
+      "sha256": "35dda0d5219b773fbeaf482c73e3fc3ed6fb52016b902dc93e995bf648b36ea2"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/quiver_greek_back.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/quiver_greek_back.dae",
+      "sha256": "a2558b76f819e0b22dd9a3bc6aa2a386bda7e469c252cf718f71c7191d645caf"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/quiver_greek_b.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/quiver_greek_b.png",
+      "sha256": "aeccc8c411c7e052b962850238e1926576e047826019d4d82bc91b248980ddc0"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/quiver_greek_b_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/quiver_greek_b_norm.png",
+      "sha256": "e36ce4981c1e63b0a3caf2a8c9986c2681c902ff8ec738983b93be291b50c9dc"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/quiver_greek_b_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/quiver_greek_b_spec.png",
+      "sha256": "cea877ec0b2fa67a5bb8a94c27c00ca44da107ca008df1c08275c09faa1fcb60"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/quiver_greek_back_arrows.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/quiver_greek_back_arrows.dae",
+      "sha256": "438cd58ac4f7d0474c72e989460a69355da69dcf1a3b622bbcba90f76f76c9e5"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weap_arrow_back.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weap_arrow_back.dae",
+      "sha256": "d51dc687e1266873ac91cf5727ed6b7c75c7f07bc3aa2eb65a299408a90cea47"
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/weapons/arrow_front.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/arrow_front.xml",
+      "sha256": "2f63911f3de879d522aba6d178e56d07d50484d8fb0730b94a52002642efb146"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weap_arrow_front.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weap_arrow_front.dae",
+      "sha256": "76da26420144fdb069cf18bffaf0ddfc0c7e54707a934920e5690a5aa536663a"
     }
   ],
   "generated": [
@@ -569,6 +854,78 @@
     {
       "file": "Assets/Materials/RealWorkerBuild.mmat",
       "sha256": "6386f3ee7105c8c59483553d2af05368157fd22f57d57e23f7903eb748772cf2"
+    },
+    {
+      "file": "Assets/Textures/RealArcher_base.png",
+      "sha256": "7a5bbd6275dbeff2f181c45792bd16c89f896b37c1cd0cd75b5f3662daa8456b"
+    },
+    {
+      "file": "Assets/Textures/RealArcher_normal.png",
+      "sha256": "4bd81477e0c02eed68d6d6593679ef23cafc040ce8882acdb1c672260920b96a"
+    },
+    {
+      "file": "Assets/Textures/RealArcher_arm.png",
+      "sha256": "b42da7861bd789f979dbe5ab1ad0ce8fbb23d661b88bd3fa87a26238c7b7bdf2"
+    },
+    {
+      "file": "Assets/Models/RealArcher.glb",
+      "sha256": "d192337ebf5ebb28be7c2bf7c8c023f12730b8071fa277468804e94fc71e1528"
+    },
+    {
+      "file": "Assets/Materials/RealArcher.mmat",
+      "sha256": "34eb01a561e4d3f547acd3a1090c4e01ee42c6e385c023c622c5cac826e40679"
+    },
+    {
+      "file": "Assets/Textures/RealArcherShoot_base.png",
+      "sha256": "5f0f4ff2c332f846eeede9f029a37a48a0fda421258d9c3e2740f0b63440fe25"
+    },
+    {
+      "file": "Assets/Textures/RealArcherShoot_normal.png",
+      "sha256": "4851f035389ab9f87a22e388835fd2f45c1a3a39e7c985a37780f58a1483110e"
+    },
+    {
+      "file": "Assets/Textures/RealArcherShoot_arm.png",
+      "sha256": "34842154627ac1d2c2193867362c8a299316d1841bcfc4a9a456add0ae462af7"
+    },
+    {
+      "file": "Assets/Models/RealArcherShoot.glb",
+      "sha256": "d48fde74a6cc1fe9aaa5881848885694035bf6bc4e179b85a22e0b974a329315"
+    },
+    {
+      "file": "Assets/Materials/RealArcherShoot.mmat",
+      "sha256": "94b3f3fa7fe694be27a07f1907382b4923fe1ae82f6328b3e0e93036e8aaef32"
+    },
+    {
+      "file": "Assets/Textures/RealArcherLoaded_base.png",
+      "sha256": "be7a82b1efae1dd01cdbd03125ad20392550b87885dbcf5944b15dc3d0fefab4"
+    },
+    {
+      "file": "Assets/Textures/RealArcherLoaded_normal.png",
+      "sha256": "3db9ffec970ea0e0ef0a1d9a05c004eebb14aebc4fc7f341c617e1db5aaef7e4"
+    },
+    {
+      "file": "Assets/Textures/RealArcherLoaded_arm.png",
+      "sha256": "941a91b8a4c26d3ca845bad6c4ccdbc9af1767f99df1935517dd86a460ffbb26"
+    },
+    {
+      "file": "Assets/Models/RealArcherLoaded.glb",
+      "sha256": "6abf2e5a6abafa96eea99cc0fe5e3ae269caf332c28c632b4bfbcf1b77f6c471"
+    },
+    {
+      "file": "Assets/Materials/RealArcherLoaded.mmat",
+      "sha256": "4f3bcb3f869c6d3d36deaeccb522a652064a8433bb8b87048bcf2d0ecabc864a"
+    },
+    {
+      "file": "Assets/Models/RealArrow.glb",
+      "sha256": "968349f91f7931289452b6a2e15374fc213530dd094233bfffc06856d7ff2802"
+    },
+    {
+      "file": "Assets/Textures/RealArrow_base.png",
+      "sha256": "6a43cc20f5818daa32aeda35670057ae77913c3228119c50413b992cdaac687f"
+    },
+    {
+      "file": "Assets/Materials/RealArrow.mmat",
+      "sha256": "2723fabf2fbb292ecb20eca94825d4b00f20e5b8b3186471cb69b9ef739502d1"
     }
   ],
   "modelStats": {
@@ -662,6 +1019,79 @@
         3.0,
         0.7887330048710934
       ]
+    },
+    "RealArcher": {
+      "triangles": 1464,
+      "bones": 106,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 12
+        },
+        {
+          "name": "Bow_Shoot",
+          "frames": 30
+        }
+      ],
+      "size": [
+        1.3547985666567999,
+        3.0,
+        2.045957952242739
+      ]
+    },
+    "RealArcherShoot": {
+      "triangles": 1417,
+      "bones": 106,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 12
+        },
+        {
+          "name": "Bow_Shoot",
+          "frames": 30
+        }
+      ],
+      "size": [
+        1.3547985666567999,
+        3.0,
+        2.045957952242739
+      ]
+    },
+    "RealArcherLoaded": {
+      "triangles": 1464,
+      "bones": 106,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 12
+        },
+        {
+          "name": "Bow_Shoot",
+          "frames": 30
+        }
+      ],
+      "size": [
+        1.392259176971006,
+        3.0,
+        2.045957952242739
+      ]
     }
+  },
+  "projectile": {
+    "mesh": "meshes/props/weap_arrow_front.dae",
+    "base": "textures/skins/props/prop_weap.dds"
   }
 }

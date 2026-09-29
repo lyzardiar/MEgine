@@ -7,7 +7,7 @@ var FrostVisual=(()=>{
     {hall:['Ancient of roots','Ancient of boughs','Elder grove'],barracks:'Sentinel grove',farm:'Living shelter',tower:'Thorn watch',altar:'Moon sanctuary',workshop:'Grove workshop'},
     {hall:['Necropolis','Black citadel','Dread fortress'],barracks:'Crypt',farm:'Grave mound',tower:'Soul obelisk',altar:'Altar of shadows',workshop:'Bone foundry'}
   ];
-  const units={raider:'Orc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'Skeleton_Mage',bonearcher:'Skeleton_Rogue'};
+  const units={archer:'RealArcher',raider:'Orc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'Skeleton_Mage',bonearcher:'Skeleton_Rogue'};
   const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'Rogue',neutral:'Warrior',ballista:'siege-ballista',catapult:'siege-catapult',trebuchet:'siege-trebuchet',ram:'siege-ram',dragon:'Dragon'};
   function work(state,u){
     if(u.kind!=='worker'||!u.order||u.hp<=0||u.stun>0||u.inside)return null;
@@ -24,20 +24,23 @@ var FrostVisual=(()=>{
     }else return null;
     return Frost.traversable(state.map,u.x,u.z,target.x,target.z)?{target,animation}:null;
   }
-  function model(state,u){
+  function attackPhase(u,asset){return (asset.attackEvent+Frost.clamp(1-u.cd/(Frost.unitType(u).cooldown||1),0,1))%1;}
+  function model(state,u,walking=false){
     const d=Frost.types[u.kind],f=state.teams[u.team]?.faction||0,tier=Frost.clamp(u.upgradeTier??state.teams[u.team]?.tier??1,1,3);
     let key=buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'Demon':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','Tribal','Rogue','Ghost_Skull'][f]:units[u.kind]||base[u.kind]||base[d.model];
-    const activity=key==='RealWorker'?work(state,u):null,asset=FrostArt[activity?key+activity.animation:key],scale=asset.factionBuilding?(d.radius*2*.92)/Math.max(asset.size[0],asset.size[2]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
+    const activity=key==='RealWorker'?work(state,u):null,phase=key==='RealArcher'&&u.cd>0&&!walking&&!u.stun?attackPhase(u,FrostArt[key]):null,arrow=phase===null?'':phase<FrostArt[key].attackEvent||phase>=FrostArt[key].ammoLoad?'Loaded':'Shoot';
+    const asset=FrostArt[activity?key+activity.animation:key+arrow],scale=asset.factionBuilding?(d.radius*2*.92)/Math.max(asset.size[0],asset.size[2]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
     return {key,asset,scale,height:asset.size[1]*scale+.5};
   }
   function heading(state,u,old){
     if(!Frost.types[u.kind].speed)return 0;
-    const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008,hit=u.cd>.25&&(state.events||[]).find(e=>e.type==='hit'&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),target=work(state,u)?.target||hit||(!moved&&u.cd>.25&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0));
+    const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008,attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>e.type==='hit'&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy))<=Frost.unitType(u).range+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
     return target?Math.atan2(target.x-u.x,target.z-u.z):moved?Math.atan2(u.x-old.x,u.z-old.z):old?.yaw||0;
   }
   function pose(u,asset,walking,time){
     if(!asset.animations?.length)return asset.parts[0].mesh;
     if(asset.workAnimation)return asset.parts[0].mesh+'#pose=0:'+Math.floor(time*12)%asset.animations[0].frames;
+    if(asset.attackEvent!==undefined){const clip=walking?1:u.cd>0&&!u.stun?2:0,frame=clip===2?Math.floor(attackPhase(u,asset)*asset.animations[clip].frames):Math.floor(time*12)%asset.animations[clip].frames;return asset.parts[0].mesh+'#pose='+clip+':'+frame;}
     const attack=u.cd>.25&&(u.kind!=='worker'||asset===FrostArt.RealWorker&&!['gather','build','construct','repair'].includes(u.order?.type)),desired=asset===FrostArt.Skeleton_Rogue?(attack?/^2H_Ranged_Shooting$/:walking?/^Walking_A$/:/^Idle$/):asset===FrostArt.Skeleton_Mage?(attack?/^Spellcast_Shoot$/:walking?/^Walking_A$/:/^Idle$/):Frost.types[u.kind].flying?(attack?/Dragon_Attack$/:/Dragon_Flying/):attack?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch|Headbutt/:walking?/^Run$|^Walk$|Fast_Flying/:/^Idle$|Flying_Idle/;
     let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;
   }

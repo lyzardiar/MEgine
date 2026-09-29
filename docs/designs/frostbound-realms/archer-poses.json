@@ -1,0 +1,180 @@
+{
+  "file": "docs/designs/frostbound-realms/archer-poses.png",
+  "sha256": "7026662f93526a713d583d951bb162fd459c28a2357f160ac47b176601219c26",
+  "generator": "scripts/render-frost-unit-icons.mjs --archer-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
+  "models": [
+    {
+      "name": "Idle",
+      "mesh": "Assets/Models/RealArcher.glb#pose=0:0",
+      "material": "Assets/Materials/RealArcher.mmat",
+      "bounds": {
+        "max": [
+          0.5323832035064697,
+          2.9236199855804443,
+          0.879124641418457
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcher.glb#pose=0:0",
+        "min": [
+          -0.48787981271743774,
+          -0.0029652216471731663,
+          -0.6151912212371826
+        ],
+        "vertices": 1861
+      }
+    },
+    {
+      "name": "Walk",
+      "mesh": "Assets/Models/RealArcher.glb#pose=1:4",
+      "material": "Assets/Materials/RealArcher.mmat",
+      "bounds": {
+        "max": [
+          0.9401144981384277,
+          2.8484644889831543,
+          0.6006596088409424
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcher.glb#pose=1:4",
+        "min": [
+          -0.3862791061401367,
+          -0.02307966910302639,
+          -0.7222033739089966
+        ],
+        "vertices": 1861
+      }
+    },
+    {
+      "name": "Draw early",
+      "mesh": "Assets/Models/RealArcherLoaded.glb#pose=2:1",
+      "material": "Assets/Materials/RealArcherLoaded.mmat",
+      "bounds": {
+        "max": [
+          0.5003178119659424,
+          2.9217371940612793,
+          1.8092665672302246
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:1",
+        "min": [
+          -0.4604875445365906,
+          -0.006878361105918884,
+          -0.5347737669944763
+        ],
+        "vertices": 1856
+      }
+    },
+    {
+      "name": "Draw middle",
+      "mesh": "Assets/Models/RealArcherLoaded.glb#pose=2:6",
+      "material": "Assets/Materials/RealArcherLoaded.mmat",
+      "bounds": {
+        "max": [
+          0.41827601194381714,
+          2.8731749057769775,
+          2.0595059394836426
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:6",
+        "min": [
+          -0.6182650923728943,
+          -0.07541605830192566,
+          -0.5344620943069458
+        ],
+        "vertices": 1856
+      }
+    },
+    {
+      "name": "Draw full",
+      "mesh": "Assets/Models/RealArcherLoaded.glb#pose=2:12",
+      "material": "Assets/Materials/RealArcherLoaded.mmat",
+      "bounds": {
+        "max": [
+          0.42196929454803467,
+          2.8801352977752686,
+          1.7884528636932373
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:12",
+        "min": [
+          -0.4789058566093445,
+          -0.08487162739038467,
+          -0.5332716107368469
+        ],
+        "vertices": 1856
+      }
+    },
+    {
+      "name": "Release",
+      "mesh": "Assets/Models/RealArcherShoot.glb#pose=2:14",
+      "material": "Assets/Materials/RealArcherShoot.mmat",
+      "bounds": {
+        "max": [
+          0.42196929454803467,
+          2.8801352977752686,
+          1.7323579788208008
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherShoot.glb#pose=2:14",
+        "min": [
+          -0.4789058566093445,
+          -0.07408642768859863,
+          -0.5330620408058167
+        ],
+        "vertices": 1767
+      }
+    },
+    {
+      "name": "Follow through",
+      "mesh": "Assets/Models/RealArcherShoot.glb#pose=2:18",
+      "material": "Assets/Materials/RealArcherShoot.mmat",
+      "bounds": {
+        "max": [
+          0.5986695289611816,
+          2.9242732524871826,
+          1.8105088472366333
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherShoot.glb#pose=2:18",
+        "min": [
+          -0.4518440365791321,
+          -0.014142196625471115,
+          -0.7576155066490173
+        ],
+        "vertices": 1767
+      }
+    },
+    {
+      "name": "Reload",
+      "mesh": "Assets/Models/RealArcherLoaded.glb#pose=2:23",
+      "material": "Assets/Materials/RealArcherLoaded.mmat",
+      "bounds": {
+        "max": [
+          0.7265735864639282,
+          3.0008368492126465,
+          1.575920581817627
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:23",
+        "min": [
+          -0.44962581992149353,
+          -0.005369223654270172,
+          -0.6739389896392822
+        ],
+        "vertices": 1856
+      }
+    },
+    {
+      "name": "Ready",
+      "mesh": "Assets/Models/RealArcherLoaded.glb#pose=2:27",
+      "material": "Assets/Materials/RealArcherLoaded.mmat",
+      "bounds": {
+        "max": [
+          0.49307966232299805,
+          2.8697712421417236,
+          1.2422963380813599
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcherLoaded.glb#pose=2:27",
+        "min": [
+          -0.7029021382331848,
+          -0.0070661939680576324,
+          -0.5501253008842468
+        ],
+        "vertices": 1856
+      }
+    }
+  ]
+}

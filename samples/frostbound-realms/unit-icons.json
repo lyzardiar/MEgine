@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "6f89a4270caa0d8199be04f503054808588a14522729666d597c3f6cba88aade",
+  "sha256": "e2054931e70480084ac42e12c73143019ed6a7581e10213f0694b7fd9b7406f8",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -136,6 +136,25 @@
           -0.8838688135147095
         ],
         "vertices": 4531
+      }
+    },
+    {
+      "name": "RealArcher",
+      "mesh": "Assets/Models/RealArcher.glb#pose=0:4",
+      "material": "Assets/Materials/RealArcher.mmat",
+      "bounds": {
+        "max": [
+          0.5322701930999756,
+          2.9246768951416016,
+          0.8853884935379028
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealArcher.glb#pose=0:4",
+        "min": [
+          -0.48787984251976013,
+          -0.002976532094180584,
+          -0.6209447979927063
+        ],
+        "vertices": 1861
       }
     },
     {

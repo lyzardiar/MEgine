@@ -39,7 +39,22 @@ for(const [kind,key] of [['soldier','RealFootman'],['worker','RealWorker']]){
  for(const order of [undefined,{type:'attack'},{type:'attackMove'},{type:'hold'},{type:'patrol'}]){unit.cd=.7;unit.order=order;assert.match(V.pose(unit,visual.asset,false,.5),/#pose=2:6$/);}
  if(kind==='worker')for(const type of ['gather','build','construct','repair']){unit.order={type};assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/,'work cooldown does not play combat');}
 }
-const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,19);
+{
+ const state=S.create('skirmish',{factions:[0,1]}),unit={kind:'archer',team:0,cd:0};
+ assert.equal(V.model(state,unit).key,'RealArcher');assert.equal(V.model(state,unit).asset,FrostArt.RealArcher);
+ for(const [cd,key] of [[1.2,'RealArcherShoot'],[.8,'RealArcherLoaded'],[.2,'RealArcherLoaded']]){unit.cd=cd;const v=V.model(state,unit);assert.equal(v.key,'RealArcher');assert.equal(v.asset,FrostArt[key]);assert.equal(V.pose(unit,v.asset,false,0),V.pose(unit,v.asset,false,90),'shot frame depends on simulation cooldown, including save/network restoration');assert.match(V.pose(unit,v.asset,false,0),/#pose=2:/);}
+ assert.equal(V.model(state,unit,true).asset,FrostArt.RealArcher,'moving keeps the hand arrow');assert.match(V.pose(unit,FrostArt.RealArcher,true,.5),/#pose=1:/);
+ assert.equal(V.model(state,{...unit,stun:1}).asset,FrostArt.RealArcher);unit.cd=0;assert.match(V.pose(unit,V.model(state,unit).asset,false,.5),/#pose=0:/);
+}
+{
+ const map=S.defaultMap();map.terrain.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const state=S.create('skirmish',{map}),archer=S.spawn(state,'archer',0,0,0),target=S.spawn(state,'neutral',1,0,6);target.speed=0;target.damage=0;S.visibility(state);
+ assert.equal(S.command(state,0,{type:'attack',ids:[archer.id],target:target.id}),null);S.tick(state);const hit=state.events.find(e=>e.fromX===archer.x&&e.fromZ===archer.z);assert.equal(hit.projectile,'arrow');assert.equal(hit.ranged,true);assert.ok(target.hp<target.maxHp);assert.ok(S.publicState(state,0).events.some(e=>e.projectile==='arrow'),'network-visible hit retains projectile art');
+}
+{
+ const map=S.defaultMap();map.terrain.fill(0);map.props=[];const state=S.create('skirmish',{map}),unit=S.spawn(state,'worker',0,0,0),target=S.spawn(state,'neutral',1,1.5,0);unit.order={type:'attack',target:target.id};unit.cd=.7;
+ assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),Math.PI/2,'melee slot adjustment after striking keeps facing the victim');target.x=20;assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),0,'out of range pursuit faces movement');
+}
+const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,20);
 {
  const map=S.defaultMap();map.terrain.fill(0);map.props=[{kind:'tree',x:-8,z:12,amount:4000},{kind:'mine',x:-8,z:16,amount:4000}];map.players.forEach(p=>p.ai=false);
  const state=S.create('skirmish',{map,factions:[0,1]}),worker=state.units.find(u=>u.kind==='worker'&&u.team===0);state.units.filter(u=>u.kind==='worker').forEach(u=>u.order=null);worker.x=-12;worker.z=12;
@@ -65,4 +80,4 @@ for(const [kind,key] of [['bonearcher','Skeleton_Rogue'],['necromancer','Skeleto
  const state=S.create(),unit=S.spawn(state,'bonearcher',0,0,0),target=S.spawn(state,'soldier',1,8,0),old={x:0,z:-1,yaw:0};unit.cd=1;unit.order={type:'attack',target:target.id};state.events=[{type:'hit',team:0,fromX:0,fromZ:0,x:8,z:0}];assert.equal(V.heading(state,unit,old),Math.PI/2,'attack turns from the old marching direction toward the actual hit');
  state.events=[];assert.equal(V.heading(state,unit,{x:0,z:0,yaw:0}),Math.PI/2,'stationary explicit attacks continue tracking their target');unit.order=null;unit.cd=0;assert.equal(V.heading(state,unit,{x:-1,z:0,yaw:0}),Math.PI/2,'marching turns with movement');assert.equal(V.heading(state,{kind:'tower',team:0,x:0,z:0,cd:1},old),0,'buildings retain their authored orientation');
 }
-console.log('PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 19 native unit portraits and pinned source/derived hashes');
+console.log('PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 20 native unit portraits and pinned source/derived hashes');

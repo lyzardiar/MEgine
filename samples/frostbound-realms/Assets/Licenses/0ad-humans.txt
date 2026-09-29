@@ -5,7 +5,8 @@ License: Creative Commons Attribution-ShareAlike 3.0 Unported
 https://creativecommons.org/licenses/by-sa/3.0/
 
 The RealFootman, RealWorker, RealWorkerWood, RealWorkerMine and RealWorkerBuild
-models, their textures and materials, and the
+models, the RealArcher / RealArcherShoot / RealArcherLoaded variants and
+RealArrow projectile, their textures and materials, and the
 derived combined Assets/Art/unit-portraits.png atlas are distributed under
 CC-BY-SA-3.0. Other original character art in the atlas remains available
 separately under its original license as documented in the sample manifests.
@@ -17,6 +18,10 @@ conversion; normalized scale; native-rendered portraits.
 RealFootman uses Briton chainmail swordsman modules. RealWorker combines
 official male tunic, Celtic head, axe and biped animations. Work variants use
 the original left-hand axe, right-hand pick and right-hand mallet attachments
-with wood gathering, ore gathering and building animations.
+with wood gathering, ore gathering and building animations. The archer uses
+chainmail body modules, the Greek bow and back quiver, and infantry archer
+animations. Four mechanical bow bones retain the original draw deformation.
+Hand and loaded arrows use the original weapon_R and projectile attachments.
+RealArrow is rotated to positive Z and normalized to 1.5 engine units.
 Pinned source URLs, source hashes and generated hashes: human-sources.json.
 Original license notice: SourceAssets/0ad/LICENSE.txt.

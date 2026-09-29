@@ -1,0 +1,1 @@
+{"version": 8, "name": "RealArrow", "shader": "pbr", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/RealArrow_base.png", "metallic": 0, "roughness": 0.8, "double_sided": true}

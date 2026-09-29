@@ -2,6 +2,7 @@
 import bpy
 import hashlib
 import json
+import math
 from pathlib import Path
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -45,14 +46,24 @@ def main():
         for action in list(bpy.data.actions):bpy.data.actions.remove(action)
         scene=bpy.context.scene;scene.frame_start=0;scene.render.engine='CYCLES';scene.cycles.samples=1;scene.cycles.seed=0;scene.render.threads_mode='FIXED';scene.render.threads=1;scene.render.bake.margin=12
         body=definition['parts'][0];objects=import_dae(body['mesh']);rig=next(o for o in objects if o.type=='ARMATURE');rig.name=key+'Rig';rig.data.pose_position='REST'
-        matrices=attachment_matrices(body['mesh']);meshes=[];surfaces={}
+        matrices=attachment_matrices(body['mesh']);meshes=[];surfaces={};props=[]
         for index,part in enumerate(definition['parts']):
             added=objects if index==0 else import_dae(part['mesh'])
+            if part.get('skeletal'):
+                prop_rig=next(o for o in added if o.type=='ARMATURE');placement=matrices[part['bone']]@prop_rig.matrix_world
+                bones={b.name:{'matrix':b.matrix_local.copy(),'length':b.length,'parent':b.parent.name if b.parent else part['bone']} for b in prop_rig.data.bones}
+                assert not set(bones).intersection(rig.data.bones.keys()),'Equipment bones must have unique names'
+                bpy.context.view_layer.objects.active=rig;bpy.ops.object.mode_set(mode='EDIT')
+                for name,b in bones.items():
+                    new=rig.data.edit_bones.new(name);new.matrix=placement@b['matrix'];new.length=b['length']*placement.to_scale().length/(3**.5)
+                for name,b in bones.items():rig.data.edit_bones[name].parent=rig.data.edit_bones[b['parent']]
+                bpy.ops.object.mode_set(mode='OBJECT');props.append({'part':part,'bones':bones,'placement':placement})
             for obj in [o for o in added if o.type=='MESH']:
                 matrix=obj.matrix_world.copy();obj.parent=None;obj.data.transform(matrix);obj.matrix_world=Matrix.Identity(4)
                 if part['bone']:
                     bone=part['bone'];assert bone in rig.data.bones and bone in matrices,bone
-                    obj.data.transform(matrices[bone]);obj.vertex_groups.clear();obj.vertex_groups.new(name=bone).add(list(range(len(obj.data.vertices))),1,'REPLACE')
+                    obj.data.transform(matrices[bone])
+                    if not part.get('skeletal'):obj.vertex_groups.clear();obj.vertex_groups.new(name=bone).add(list(range(len(obj.data.vertices))),1,'REPLACE')
                 obj.parent=rig;obj.matrix_parent_inverse=Matrix.Identity(4);obj.modifiers.clear();modifier=obj.modifiers.new('Authored skeleton','ARMATURE');modifier.object=rig
                 obj.data.uv_layers[0].name='SourceUV';mat=bpy.data.materials.new(key+' '+str(index));mat.use_nodes=True;nodes=mat.node_tree.nodes;nodes.clear();links=mat.node_tree.links
                 out=nodes.new('ShaderNodeOutputMaterial');shader=nodes.new('ShaderNodeBsdfPrincipled');shader.inputs['Roughness'].default_value=.8;links.new(shader.outputs['BSDF'],out.inputs['Surface'])
@@ -98,7 +109,14 @@ def main():
         for name,path in definition['animations'].items():
             added=import_dae(path);animated=max((o for o in added if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));source_action=animated.animation_data.action;start,end=source_action.frame_range
             weighted={mesh.vertex_groups[g.group].name for v in mesh.data.vertices for g in v.groups if g.weight>0}
-            assert all(name in animated.pose.bones for name in weighted),'Animation is missing a weighted body or equipment bone'
+            prop_bones={name for prop in props for name in prop['bones']}
+            assert all(name in animated.pose.bones for name in weighted-prop_bones),'Animation is missing a weighted body or equipment bone'
+            equipment=[]
+            for prop in props:
+                clip=prop['part'].get('animations',{}).get(name)
+                if not clip:equipment.append((prop,None,None,None));continue
+                extra=import_dae(clip);added.extend(extra);moving=next(o for o in extra if o.type=='ARMATURE');assert all(b in moving.pose.bones for b in prop['bones'])
+                equipment.append((prop,moving,moving.animation_data.action.frame_range,moving.matrix_world.copy()))
             action=bpy.data.actions.new(name);rig.animation_data.action=action
             # Collada files can use different rest-bone orientations. Bake deformation matrices into the mesh rig's own rest basis.
             for frame in range(int(start),int(end)+1):
@@ -106,6 +124,14 @@ def main():
                 for bone in rig.data.bones:
                     source_bone=animated.pose.bones.get(bone.name)
                     desired[bone.name]=source_bone.matrix@source_bone.bone.matrix_local.inverted()@bone.matrix_local if source_bone else bone.matrix_local
+                for prop,moving,extent,world in equipment:
+                    attach=prop['part']['bone'];deform=desired[attach]@rig.data.bones[attach].matrix_local.inverted();placement=prop['placement']
+                    if moving:
+                        sample=extent[0]+(frame-start)/(end-start)*(extent[1]-extent[0]);scene.frame_set(int(sample),subframe=sample-int(sample))
+                    for bone,rest in prop['bones'].items():
+                        pose=moving.pose.bones[bone] if moving else None
+                        local=world.inverted()@moving.matrix_world@pose.matrix@pose.bone.matrix_local.inverted()@rest['matrix'] if moving else rest['matrix']
+                        desired[bone]=deform@placement@local
                 for pose in rig.pose.bones:
                     bone=pose.bone;parent=bone.parent
                     basis=bone.convert_local_to_pose(desired[bone.name],bone.matrix_local,parent_matrix=desired[parent.name] if parent else Matrix.Identity(4),parent_matrix_local=parent.matrix_local if parent else Matrix.Identity(4),invert=True)
@@ -122,7 +148,19 @@ def main():
         generated.extend([model,material]);size=[(max(p[i] for p in points)-min(p[i] for p in points))*scale for i in [0,2,1]]
         catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True}
         if definition.get('workAnimation'):catalog[key]['workAnimation']=definition['workAnimation']
+        for field in ['attackEvent','ammoLoad']:
+            if field in definition:catalog[key][field]=definition[field]
         stats[key]={'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};print('Imported',key,stats[key],flush=True)
+    if manifest.get('projectile'):
+        part=manifest['projectile'];bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
+        objects=import_dae(part['mesh']);arrow=next(o for o in objects if o.type=='MESH');arrow.data.transform(arrow.matrix_world);arrow.parent=None;arrow.matrix_world=Matrix.Identity(4)
+        low=min(v.co.z for v in arrow.data.vertices);high=max(v.co.z for v in arrow.data.vertices)
+        arrow.data.transform(Matrix.Rotation(math.pi/2,4,'X')@Matrix.Scale(1.5/(high-low),4)@Matrix.Translation((0,0,-(low+high)/2)))
+        bpy.ops.object.select_all(action='DESELECT');arrow.select_set(True);bpy.context.view_layer.objects.active=arrow
+        model='Assets/Models/RealArrow.glb';bpy.ops.export_scene.gltf(filepath=str(SAMPLE/model),export_format='GLB',use_selection=True,export_materials='NONE',export_animations=False)
+        texture='Assets/Textures/RealArrow_base.png';base=bpy.data.images.load(str(SOURCE/part['base']),check_existing=False);base.alpha_mode='CHANNEL_PACKED';assert len(base.pixels)>0;base.filepath_raw=str(SAMPLE/texture);base.file_format='PNG';base.save()
+        material='Assets/Materials/RealArrow.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':'RealArrow','shader':'pbr','base_color':[1,1,1,1],'base_color_texture':texture,'metallic':0,'roughness':.8,'double_sided':True}))
+        generated.extend([model,texture,material]);catalog['RealArrow']={'material':material,'parts':[{'name':'RealArrow','mesh':model,'pivot':[0,0,0]}],'size':[.11,.11,1.5],'realistic':True}
     manifest['modelStats']=stats;manifest['generated']=[{'file':p,'sha256':hashlib.sha256((SAMPLE/p).read_bytes()).hexdigest()} for p in generated];MANIFEST.write_text(json.dumps(manifest,indent=2)+'\n');catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')
 
 if __name__=='__main__':main()

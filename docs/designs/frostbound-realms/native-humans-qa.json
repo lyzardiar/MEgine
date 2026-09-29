@@ -6,8 +6,11 @@
   "units": {
     "models": [
       "RealFootman",
-      "RealWorker"
+      "RealWorker",
+      "RealArcher"
     ],
+    "arrowProjectile": true,
+    "loadedArrowCycle": true,
     "idleWalkAttack": true,
     "attackFacing": true,
     "selectionPortraits": true,

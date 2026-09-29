@@ -2698,5 +2698,133 @@
     ],
     "realistic": true,
     "workAnimation": "Build"
+  },
+  "RealArcher": {
+    "material": "Assets/Materials/RealArcher.mmat",
+    "parts": [
+      {
+        "name": "RealArcher",
+        "mesh": "Assets/Models/RealArcher.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Bow_Shoot",
+        "frames": 30
+      }
+    ],
+    "size": [
+      1.3547985666567999,
+      3.0,
+      2.045957952242739
+    ],
+    "realistic": true,
+    "attackEvent": 0.45,
+    "ammoLoad": 0.72
+  },
+  "RealArcherShoot": {
+    "material": "Assets/Materials/RealArcherShoot.mmat",
+    "parts": [
+      {
+        "name": "RealArcherShoot",
+        "mesh": "Assets/Models/RealArcherShoot.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Bow_Shoot",
+        "frames": 30
+      }
+    ],
+    "size": [
+      1.3547985666567999,
+      3.0,
+      2.045957952242739
+    ],
+    "realistic": true,
+    "attackEvent": 0.45,
+    "ammoLoad": 0.72
+  },
+  "RealArcherLoaded": {
+    "material": "Assets/Materials/RealArcherLoaded.mmat",
+    "parts": [
+      {
+        "name": "RealArcherLoaded",
+        "mesh": "Assets/Models/RealArcherLoaded.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Bow_Shoot",
+        "frames": 30
+      }
+    ],
+    "size": [
+      1.392259176971006,
+      3.0,
+      2.045957952242739
+    ],
+    "realistic": true,
+    "attackEvent": 0.45,
+    "ammoLoad": 0.72
+  },
+  "RealArrow": {
+    "material": "Assets/Materials/RealArrow.mmat",
+    "parts": [
+      {
+        "name": "RealArrow",
+        "mesh": "Assets/Models/RealArrow.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      0.11,
+      0.11,
+      1.5
+    ],
+    "realistic": true
   }
 }
