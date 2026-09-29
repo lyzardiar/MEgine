@@ -120,7 +120,9 @@ def main():
         model='Assets/Models/'+key+'.glb';bpy.ops.export_scene.gltf(filepath=str(SAMPLE/model),export_format='GLB',use_selection=True,export_materials='NONE',export_animations=True,export_animation_mode='NLA_TRACKS',export_force_sampling=True,export_optimize_animation_size=False,export_extras=False)
         material='Assets/Materials/'+key+'.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':key,'shader':'pbr','base_color':[1,1,1,1],'base_color_texture':textures['base'],'normal_texture':textures['normal'],'normal_scale':1,'metallic_roughness_texture':textures['arm'],'occlusion_texture':textures['arm'],'metallic':0,'roughness':1,'double_sided':True}))
         generated.extend([model,material]);size=[(max(p[i] for p in points)-min(p[i] for p in points))*scale for i in [0,2,1]]
-        catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True};stats[key]={'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};print('Imported',key,stats[key],flush=True)
+        catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True}
+        if definition.get('workAnimation'):catalog[key]['workAnimation']=definition['workAnimation']
+        stats[key]={'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};print('Imported',key,stats[key],flush=True)
     manifest['modelStats']=stats;manifest['generated']=[{'file':p,'sha256':hashlib.sha256((SAMPLE/p).read_bytes()).hexdigest()} for p in generated];MANIFEST.write_text(json.dumps(manifest,indent=2)+'\n');catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')
 
 if __name__=='__main__':main()

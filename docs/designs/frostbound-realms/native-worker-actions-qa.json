@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "workerActions": {
+    "mining": true,
+    "goldDelivery": true,
+    "woodcutting": true,
+    "repair": true,
+    "construction": true,
+    "workFacing": true,
+    "stopReturnsIdle": true,
+    "separateCombatCooldown": true,
+    "saveRestore": true,
+    "shaderRejections": 0
+  }
+}

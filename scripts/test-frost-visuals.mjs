@@ -40,6 +40,22 @@ for(const [kind,key] of [['soldier','RealFootman'],['worker','RealWorker']]){
  if(kind==='worker')for(const type of ['gather','build','construct','repair']){unit.order={type};assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/,'work cooldown does not play combat');}
 }
 const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,19);
+{
+ const map=S.defaultMap();map.terrain.fill(0);map.props=[{kind:'tree',x:-8,z:12,amount:4000},{kind:'mine',x:-8,z:16,amount:4000}];map.players.forEach(p=>p.ai=false);
+ const state=S.create('skirmish',{map,factions:[0,1]}),worker=state.units.find(u=>u.kind==='worker'&&u.team===0);state.units.filter(u=>u.kind==='worker').forEach(u=>u.order=null);worker.x=-12;worker.z=12;
+ const art=()=>V.model(state,worker),until=fn=>{for(let i=0;i<600;i++){if(fn())return;S.tick(state);}assert.fail('worker activity did not complete');};
+ assert.equal(S.command(state,0,{type:'gather',ids:[worker.id],resource:0}),null);assert.equal(art().asset,FrostArt.RealWorker,'approaching a resource keeps walking equipment');
+ until(()=>art().asset===FrostArt.RealWorkerWood&&worker.cargo>0);assert.equal(worker.cd,0);assert.ok(worker.gatherCd>0);assert.equal(art().key,'RealWorker','working keeps the same portrait identity');assert.match(V.pose(worker,art().asset,false,.5),/RealWorkerWood.glb#pose=0:/);
+ assert.equal(V.heading(state,worker,{x:worker.x,z:worker.z,yaw:0}),Math.atan2(-8-worker.x,12-worker.z));
+ const legacy=S.clone(state),legacyWorker=legacy.units.find(u=>u.id===worker.id);delete legacyWorker.gatherCd;legacyWorker.cd=.4;const migrated=S.restore(legacy).units.find(u=>u.id===worker.id);assert.equal(migrated.gatherCd,.4);assert.equal(migrated.cd,.4);legacyWorker.cd=1.2;assert.equal(S.restore(legacy).units.find(u=>u.id===worker.id).gatherCd,1.2);legacyWorker.gatherCd=-1;assert.throws(()=>S.restore(legacy),/gathering cooldown/);
+ const restored=S.restore(state),restoredWorker=restored.units.find(u=>u.id===worker.id);assert.equal(V.model(restored,restoredWorker).asset,FrostArt.RealWorkerWood);
+ for(const patch of [{cargo:20},{stun:1},{inside:1}])assert.equal(V.model(state,{...worker,...patch}).asset,FrostArt.RealWorker);
+ const amount=state.resources[0].amount;state.resources[0].amount=0;assert.equal(art().asset,FrostArt.RealWorker);state.resources[0].amount=amount;
+ assert.equal(S.command(state,0,{type:'gather',ids:[worker.id],resource:1}),null);until(()=>art().asset===FrostArt.RealWorkerMine&&worker.cargoKind==='mine');
+ assert.equal(S.command(state,0,{type:'stop',ids:[worker.id]}),null);assert.equal(art().asset,FrostArt.RealWorker);assert.match(V.pose(worker,art().asset,false,.5),/#pose=0:6$/,'stopping gathering does not start a combat swing');
+ assert.equal(S.command(state,0,{type:'build',ids:[worker.id],kind:'farm',x:-4,z:10}),null);const building=state.units.find(u=>u.kind==='farm'&&u.built<1);until(()=>art().asset===FrostArt.RealWorkerBuild);assert.ok(building.built<1);assert.equal(V.model(state,{...worker,root:1}).asset,FrostArt.RealWorker);const progress=building.built;S.tick(state);assert.ok(building.built>progress);
+ until(()=>building.built===1);assert.notEqual(art().asset,FrostArt.RealWorkerBuild);building.hp=building.maxHp/2;assert.equal(S.command(state,0,{type:'repair',ids:[worker.id],target:building.id}),null);until(()=>art().asset===FrostArt.RealWorkerBuild);const budget={...state.teams[0]};state.teams[0].gold=state.teams[0].wood=0;assert.equal(art().asset,FrostArt.RealWorker);Object.assign(state.teams[0],budget);const hp=building.hp;S.tick(state);assert.ok(building.hp>hp);until(()=>building.hp===building.maxHp);assert.notEqual(art().asset,FrostArt.RealWorkerBuild);
+}
 for(let faction=0;faction<4;faction++){const state=S.create('skirmish',{factions:[faction,0]});for(const kind of Object.keys(S.types))if(S.types[kind].speed)assert.ok(portraitKeys.has(V.model(state,{kind,team:0}).key),kind);}
 for(const [kind,key] of [['bonearcher','Skeleton_Rogue'],['necromancer','Skeleton_Mage']]){
  const unit={kind,team:0,cd:0},visual=V.model(S.create(),unit);assert.equal(visual.key,key);assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(unit,visual.asset,true,.5),/#pose=1:6$/);unit.cd=1;assert.match(V.pose(unit,visual.asset,false,.5),/#pose=2:6$/);

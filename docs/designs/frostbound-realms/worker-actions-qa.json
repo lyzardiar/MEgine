@@ -1,0 +1,244 @@
+{
+  "checkedAt": "2026-09-29T11:17:17.544293+00:00",
+  "baseCommit": "6b0e231b38652c795ddefc17ffbc6c50f18b17fa",
+  "scope": "Worker tools and skeletal work animations, rule/save compatibility, native Agent input and packaged Player startup",
+  "upstream": {
+    "author": "Wildfire Games",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "license": "CC-BY-SA-3.0",
+    "sourceFiles": 45,
+    "sourceBytes": 11071248
+  },
+  "derived": {
+    "files": 25,
+    "byteIdenticalRebuild": true,
+    "models": {
+      "RealFootman": {
+        "triangles": 1616,
+        "bones": 102,
+        "clips": [
+          {
+            "name": "Idle",
+            "frames": 30
+          },
+          {
+            "name": "Walk",
+            "frames": 20
+          },
+          {
+            "name": "Sword_Attack",
+            "frames": 12
+          }
+        ],
+        "size": [
+          1.453769775415252,
+          3.0,
+          1.826678307082004
+        ]
+      },
+      "RealWorker": {
+        "triangles": 1238,
+        "bones": 102,
+        "clips": [
+          {
+            "name": "Idle",
+            "frames": 30
+          },
+          {
+            "name": "Walk",
+            "frames": 20
+          },
+          {
+            "name": "Sword_Attack",
+            "frames": 15
+          }
+        ],
+        "size": [
+          1.3547985666567999,
+          3.0,
+          1.1296698889437535
+        ]
+      },
+      "RealWorkerWood": {
+        "triangles": 1250,
+        "bones": 102,
+        "clips": [
+          {
+            "name": "Wood",
+            "frames": 28
+          }
+        ],
+        "size": [
+          1.564955147200476,
+          3.0,
+          1.6758971178874198
+        ]
+      },
+      "RealWorkerMine": {
+        "triangles": 1250,
+        "bones": 102,
+        "clips": [
+          {
+            "name": "Mine",
+            "frames": 28
+          }
+        ],
+        "size": [
+          1.568196847847347,
+          3.0,
+          1.627528029971507
+        ]
+      },
+      "RealWorkerBuild": {
+        "triangles": 1182,
+        "bones": 102,
+        "clips": [
+          {
+            "name": "Build",
+            "frames": 10
+          }
+        ],
+        "size": [
+          1.355916831952279,
+          3.0,
+          0.7887330048710934
+        ]
+      }
+    },
+    "nativePoseSamples": 27
+  },
+  "validation": {
+    "geometry": [
+      "RealFootman 1616 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorker 1238 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorkerWood 1250 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorkerMine 1250 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "RealWorkerBuild 1182 triangles; 102 bones; head/tool scale and four normalized weights valid",
+      "PASS: 27 native skeletal samples, complete equipment and stable pose bounds"
+    ],
+    "rules": [
+      "PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion",
+      "PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection",
+      "PASS: opposing traffic, hold, narrow passage/head-on, flying layers, exact saves, melee surround, fog privacy, stacked TD recovery, base exit and speed limits",
+      "PASS: ordered route arrival, group queues/save replay, eight-waypoint atomic limit, command/work/blink/death cancellation, busy rejection, legacy/malformed saves and opponent privacy",
+      "PASS: four-faction queued construction, deferred payment, gathering delivery, distant site, repair/cancel, inside worker, consumed worker, invalid site skip, queue capacity/privacy and exact save replay",
+      "PASS: stationary hold combat/range/occlusion, stop release, six-unit patrol roundtrips/save replay, combat resumption, ramps, route overrides, privacy and invalid saves",
+      "PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 19 native unit portraits and pinned source/derived hashes",
+      "PASS: six slots, atomic recipes, health-ratio invariance, sell value/shop range, potions/cooldown, real pickup/transfer/race, fog, saved routes and malformed saves",
+      "PASS: four heroes / 16 skills, learning gates, status effects, timed areas/summons, targeting, hero saves and legacy migration",
+      "PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration",
+      "PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain",
+      "PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water",
+      "PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy",
+      "PASS: four faction rosters and tech gates, one-shot map triggers, fog privacy, full RPG legal-order quest/loot/growth/save roundtrip (549 ticks)",
+      "PASS: TCP inventory recipe, drop, pickup, reconnect and sell",
+      "PASS: TCP deferred worker construction, mixed queue reconnect and return to mining",
+      "PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect"
+    ],
+    "nativeActions": [
+      "Native title rendered",
+      "PASS native mining, woodcutting, repair, construction, stop and save restore"
+    ],
+    "nativeQueues": [
+      "Native title rendered",
+      "PASS native mixed worker queues, deferred building, save restore, mining delivery and stop"
+    ],
+    "nativeHumans": [
+      "Native title rendered",
+      "PASS native animated unit movement, combat, portraits, training icons and save restore"
+    ]
+  },
+  "native": {
+    "native-worker-actions-qa.json": {
+      "passed": true,
+      "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+      "physicalInput": false,
+      "audioListening": false,
+      "workerActions": {
+        "mining": true,
+        "goldDelivery": true,
+        "woodcutting": true,
+        "repair": true,
+        "construction": true,
+        "workFacing": true,
+        "stopReturnsIdle": true,
+        "separateCombatCooldown": true,
+        "saveRestore": true,
+        "shaderRejections": 0
+      }
+    },
+    "native-work-queues-qa.json": {
+      "passed": true,
+      "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+      "physicalInput": false,
+      "audioListening": false,
+      "workQueues": {
+        "fixture": "Flat terrain, no AI, one mine; initial workers hold. Real Agent build/Shift placement/right-click gather/save/load/stop.",
+        "mixedJobs": true,
+        "deferredPayment": true,
+        "numberedMarkers": 3,
+        "saveRestore": true,
+        "sequentialConstruction": true,
+        "miningDelivery": true,
+        "stopClears": true
+      }
+    },
+    "native-humans-qa.json": {
+      "passed": true,
+      "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+      "physicalInput": false,
+      "audioListening": false,
+      "units": {
+        "models": [
+          "RealFootman",
+          "RealWorker"
+        ],
+        "idleWalkAttack": true,
+        "attackFacing": true,
+        "selectionPortraits": true,
+        "trainingIcons": true,
+        "damage": true,
+        "saveRestore": true,
+        "shaderRejections": 0
+      }
+    }
+  },
+  "package": {
+    "files": 429,
+    "bytes": 152602825,
+    "contentHash": "14e3a52b1f5fe9899438d950f893cb20a6bf47f9a6a2eb91224f91fa8135be0b",
+    "newAssetsAndAttributionHashVerified": true,
+    "player": {
+      "contentHash": "14e3a52b1f5fe9899438d950f893cb20a6bf47f9a6a2eb91224f91fa8135be0b",
+      "windowTitle": "Frostbound Realms",
+      "responding": true,
+      "audioListening": false,
+      "shutdown": "Only this smoke-check process was stopped",
+      "elapsedSeconds": 30,
+      "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+      "alive": true,
+      "packageValidationPassed": true,
+      "startedAt": "2026-09-29T19:08:04.4072393+08:00",
+      "processId": 173152,
+      "packagedFiles": 429,
+      "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+      "checkedAt": "2026-09-29T19:08:34.4621356+08:00",
+      "physicalInput": false,
+      "loggedErrors": 0
+    }
+  },
+  "evidenceHashes": {
+    "native-worker-actions-qa.json": "e451f0b7bfcc4a501d0f0a0fdcf5f64c0ced1c731fb3712f5700cfa6c3600346",
+    "native-work-queues-qa.json": "773e6d9e8e8c59a2768ef94a1c57ee325359a64f90de77f21410e909bf4b6f9b",
+    "native-humans-qa.json": "6b8d3d1db228953a4edb8c575cb0436c45b3895e278972ec2c49b2825c69ac80",
+    "worker-mining.png": "9a013351d0a435fef063a5b650008e397db00bb85c75d3c523c44b6ac9d8cdd2",
+    "worker-woodcutting.png": "14329fa8d86a88e394073185c096e379decdab4cae3981668a2ba3d71a2fd1ab",
+    "worker-repair.png": "32c49a8d831fbc4885ae989293a827bc7dcf586c57e9067db928d8bc23dcffb1",
+    "worker-building.png": "3a6240c698f6be9c9278f938d892193c32df7451c523f781cf1803250be3876e"
+  },
+  "limitations": [
+    "Other heroes, units and two faction building sets still use simplified art.",
+    "Full requested game recreation and 5 ms performance target remain incomplete.",
+    "Physical mouse, audio listening, standalone Player FPS and cross-machine LAN not verified."
+  ]
+}

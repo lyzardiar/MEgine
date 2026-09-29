@@ -179,7 +179,7 @@ var Frost = (() => {
   function spawn(s,kind,team,x,z,extra={}) {
     if(s.units.length>=LIMIT)return null;
     const heroClass=kind==='hero'?(extra.heroClass??s.teams[team]?.heroClass??0):0,d=kind==='hero'?heroes[heroClass]:types[kind],f=s.teams[team]?.faction||0,hp=d.hp*(f===1?1.12:1),speed=d.speed*(f===2?1.12:1);
-    const u={id:++s.serial,kind,team,x,z,hp,maxHp:hp,damage:d.damage*(f===3?1.1:1),speed,cd:0,order:null,waypoints:[],path:[],pathAt:-100,built:1,queue:[],level:1,xp:0,mana:150,spell:[0,0,0,0],inventory:[],cargo:0,respawn:0,...(kind==='hero'?{heroClass,skills:[0,0,0,0],skillPoints:1,itemCooldown:0}:{}),...extra};s.units.push(u);return u;
+    const u={id:++s.serial,kind,team,x,z,hp,maxHp:hp,damage:d.damage*(f===3?1.1:1),speed,cd:0,order:null,waypoints:[],path:[],pathAt:-100,built:1,queue:[],level:1,xp:0,mana:150,spell:[0,0,0,0],inventory:[],cargo:0,respawn:0,...(kind==='worker'?{gatherCd:0}:{}),...(kind==='hero'?{heroClass,skills:[0,0,0,0],skillPoints:1,itemCooldown:0}:{}),...extra};s.units.push(u);return u;
   }
   function create(mode='skirmish',options={}) {
     const map=validateMap(options.map||defaultMap(mode));mode=map.mode;if(options.heroes&&(!Array.isArray(options.heroes)||options.heroes.length!==2||!options.heroes.every(validHero)))throw Error('Invalid hero selection');
@@ -422,10 +422,11 @@ var Frost = (() => {
   }
   function releaseWorker(s,w){delete w.inside;delete w.consumed;w.order=w.hp>0?w.workResume||null:null;delete w.workResume;w.path=[];w.pathAt=-100;if(w.hp<=0)w.waypoints=[];else if(w.waypoints.length)advanceOrder(s,w);}
   function finishWork(s,b,cancel=false){for(const w of s.units)if(w.inside===b.id||['construct','repair'].includes(w.order?.type)&&w.order.target===b.id){if(w.consumed&&!cancel)w.hp=0;releaseWorker(s,w);}delete b.construction;}
+  function repairCost(b){const d=types[b.kind],hp=Math.min(b.maxHp-b.hp,b.maxHp*DT/(d.time*1.5));return {hp,gold:d.gold*hp/b.maxHp*.5,wood:d.wood*hp/b.maxHp*.5};}
   function work(s,w){
     const b=s.units.find(v=>v.id===w.order.target&&v.team===w.team&&v.hp>0&&!types[v.kind].speed);if(!b||w.order.type==='construct'&&b.built===1||w.order.type==='repair'&&(b.built<1||b.hp>=b.maxHp)){releaseWorker(s,w);return;}
     if(!move(s,w,b.x,b.z,types[b.kind].radius+1.1))return;
-    if(w.order.type==='repair'){const d=types[b.kind],hp=Math.min(b.maxHp-b.hp,b.maxHp*DT/(d.time*1.5));if(pay(s,w.team,d.gold*hp/b.maxHp*.5,d.wood*hp/b.maxHp*.5))b.hp+=hp;return;}
+    if(w.order.type==='repair'){const cost=repairCost(b);if(pay(s,w.team,cost.gold,cost.wood))b.hp+=cost.hp;return;}
     const c=b.construction;if(!c){releaseWorker(s,w);return;}if(c.started&&c.style!=='work'){releaseWorker(s,w);return;}
     c.started=true;if(c.style==='inside'||c.style==='growth'&&!['farm','altar'].includes(b.kind)){w.inside=b.id;w.consumed=c.style==='growth';if(w.consumed){if(w.waypoints.length)s.announcements[w.team]='Worker consumed by living construction; queued work cleared';w.waypoints=[];}}else if(c.style!=='work')releaseWorker(s,w);
   }
@@ -465,7 +466,7 @@ var Frost = (() => {
     for(let t=0;t<2;t++){const vis=Array(1024).fill(0);for(const u of s.units)if(u.team===t&&u.hp>0&&!u.inside){const [cx,cz]=cell(u.x,u.z),r=u.kind==='tower'?7:6;for(let z=Math.max(0,cz-r);z<=Math.min(31,cz+r);z++)for(let x=Math.max(0,cx-r);x<=Math.min(31,cx+r);x++)if((x-cx)**2+(z-cz)**2<=r*r)vis[z*32+x]=1;}s.visible[t]=vis;for(let i=0;i<1024;i++)if(vis[i])s.explored[t][i]=1;}
   }
   function gather(s,u){let r=s.resources[u.order.resource];if(!r){advanceOrder(s,u);return;}if(r.amount<=0&&!u.cargo){const next=s.resources.filter(v=>v.kind===r.kind&&v.amount>0).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!next){advanceOrder(s,u);return;}u.order.resource=s.resources.indexOf(next);r=next;}const hall=s.units.filter(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!hall){if(u.waypoints.length){s.announcements[u.team]='Queued gathering skipped: no completed stronghold';advanceOrder(s,u);}return;}const returning=u.cargo>=20||u.cargo>0&&(r.amount<=0||u.cargoKind&&u.cargoKind!==r.kind),target=returning?hall:r;
-    const reach=returning?4:3;if(distance(u,target)>reach||!traversable(s.map,u.x,u.z,target.x,target.z)){move(s,u,target.x,target.z,reach-.1);return;}if(returning){s.teams[u.team][(u.cargoKind||r.kind)==='mine'?'gold':'wood']+=u.cargo;u.cargo=0;delete u.cargoKind;if(u.waypoints.length)advanceOrder(s,u);}else if(u.cd<=0){const take=Math.min(5,r.amount);u.cargo+=take;u.cargoKind=r.kind;r.amount-=take;u.cd=.65;}
+    const reach=returning?4:3;if(distance(u,target)>reach||!traversable(s.map,u.x,u.z,target.x,target.z)){move(s,u,target.x,target.z,reach-.1);return;}if(returning){s.teams[u.team][(u.cargoKind||r.kind)==='mine'?'gold':'wood']+=u.cargo;u.cargo=0;delete u.cargoKind;if(u.waypoints.length)advanceOrder(s,u);}else if(u.gatherCd<=0){const take=Math.min(5,r.amount);u.cargo+=take;u.cargoKind=r.kind;r.amount-=take;u.gatherCd=.65;}
   }
   function ai(s,t){
     const team=s.teams[t],us=s.units.filter(u=>u.team===t&&u.hp>0),base=s.map.spawns[t],foe=s.map.spawns[1-t],worker=us.find(u=>u.kind==='worker'&&!u.inside&&!['construct','repair'].includes(u.order?.type));
@@ -501,7 +502,7 @@ var Frost = (() => {
       if(u.summoned&&s.frame>=u.expires){u.hp=0;continue;}
       for(const effect of ['stun','root','haste','avatar','shieldLeft'])if(u[effect]>0)u[effect]=Math.max(0,u[effect]-DT);if(!u.shieldLeft)u.shield=0;
       if(u.kind==='hero')u.itemCooldown=Math.max(0,(u.itemCooldown||0)-DT);
-      u.cd=Math.max(0,u.cd-DT);u.spell=u.spell.map(v=>Math.max(0,v-DT));u.mana=Math.min(150+u.level*10,u.mana+DT*2);
+      u.cd=Math.max(0,u.cd-DT);if(u.kind==='worker')u.gatherCd=Math.max(0,(u.gatherCd||0)-DT);u.spell=u.spell.map(v=>Math.max(0,v-DT));u.mana=Math.min(150+u.level*10,u.mana+DT*2);
       u.slow=Math.max(0,(u.slow||0)-DT);
       if(types[u.kind].heal&&s.frame%10===0)for(const ally of s.units)if(ally.team===u.team&&ally.hp>0&&distance(ally,u)<6)ally.hp=Math.min(ally.maxHp,ally.hp+types[u.kind].heal);
       if(u.built<1){construct(s,u);continue;}
@@ -583,6 +584,7 @@ var Frost = (() => {
     if(s.teams.some(t=>!t||![t.gold,t.wood,t.faction,t.upgrade,t.kills].every(finite)||!Number.isInteger(t.faction)||t.faction<0||t.faction>3))throw Error('Invalid saved teams');
     const ids=new Set();for(const u of s.units){
       if(!u||!Object.hasOwn(types,u.kind)||![-1,0,1].includes(u.team)||!Number.isSafeInteger(u.id)||u.id<1||u.id>s.serial||ids.has(u.id)||![u.x,u.z,u.hp,u.maxHp,u.damage,u.speed,u.cd,u.built,u.level,u.xp,u.mana,u.cargo,u.respawn,u.pathAt].every(finite)||u.maxHp<=0||!Array.isArray(u.path)||u.path.length>1024||!u.path.every(point)||!Array.isArray(u.spell)||u.spell.length!==4||!u.spell.every(finite)||!Array.isArray(u.queue)||u.queue.length>3||u.queue.some(q=>!q||!Object.hasOwn(types,q.kind)||!finite(q.left))||!Array.isArray(u.inventory)||u.inventory.length>6||u.inventory.some(i=>!Number.isInteger(i)||!items[i])||u.route!==undefined&&(!Array.isArray(u.route)||!u.route.every(point))||u.home!==undefined&&!point(u.home))throw Error('Invalid saved units');ids.add(u.id);
+      if(u.kind==='worker'){if(u.gatherCd===undefined){u.gatherCd=u.order?.type==='gather'?Math.max(0,u.cd):0;}if(!finite(u.gatherCd)||u.gatherCd<0||u.gatherCd>Math.max(.65,types.worker.cooldown||1))throw Error('Invalid saved gathering cooldown');}
       if(u.order?.type==='pickup'&&(u.kind!=='hero'||!Number.isSafeInteger(u.order.target)||u.order.target<1||u.order.target>s.serial))throw Error('Invalid saved pickup order');
       if(u.order?.type==='patrol'&&(!types[u.kind].speed||![u.order.x,u.order.z,u.order.fromX,u.order.fromZ].every(v=>Number.isFinite(v)&&Math.abs(v)<=30))||u.order?.type==='hold'&&!types[u.kind].speed)throw Error('Invalid saved patrol or hold order');
       if(u.waypoints===undefined)u.waypoints=[];
@@ -613,6 +615,6 @@ var Frost = (() => {
     for(const t of s.teams){t.tier??=1;t.research??=0;t.heroClass??=0;if(!validHero(t.heroClass)||!Number.isInteger(t.tier)||t.tier<1||t.tier>3||!Number.isFinite(t.research)||t.research<0||t.research>40)throw Error('Invalid saved technology');}s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
   function publicState(s,team){const state=clone(s);delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]);state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,canAttack,weaponDamage,trainable,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  return {DT,LIMIT,SIZE,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,canAttack,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

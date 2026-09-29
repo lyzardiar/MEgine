@@ -9,19 +9,35 @@ var FrostVisual=(()=>{
   ];
   const units={raider:'Orc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'Skeleton_Mage',bonearcher:'Skeleton_Rogue'};
   const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'Rogue',neutral:'Warrior',ballista:'siege-ballista',catapult:'siege-catapult',trebuchet:'siege-trebuchet',ram:'siege-ram',dragon:'Dragon'};
+  function work(state,u){
+    if(u.kind!=='worker'||!u.order||u.hp<=0||u.stun>0||u.inside)return null;
+    let target,animation;
+    if(u.order.type==='gather'){
+      target=state.resources[u.order.resource];if(!target||target.amount<=0||u.cargo>=20||u.cargo>0&&u.cargoKind&&u.cargoKind!==target.kind||!state.units.some(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1)||Frost.distance(u,target)>3)return null;
+      animation=target.kind==='tree'?'Wood':'Mine';
+    }else if(['construct','repair'].includes(u.order.type)){
+      if(u.root>0)return null;
+      target=state.units.find(v=>v.id===u.order.target&&v.team===u.team&&v.hp>0&&!Frost.types[v.kind].speed);
+      if(!target||u.order.type==='construct'&&target.built===1||u.order.type==='repair'&&(target.built<1||target.hp>=target.maxHp)||Frost.distance(u,target)>Frost.types[target.kind].radius+1.1)return null;
+      if(u.order.type==='repair'){const cost=Frost.repairCost(target),team=state.teams[u.team];if(team.gold<cost.gold||team.wood<cost.wood)return null;}
+      animation='Build';
+    }else return null;
+    return Frost.traversable(state.map,u.x,u.z,target.x,target.z)?{target,animation}:null;
+  }
   function model(state,u){
     const d=Frost.types[u.kind],f=state.teams[u.team]?.faction||0,tier=Frost.clamp(u.upgradeTier??state.teams[u.team]?.tier??1,1,3);
     let key=buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'Demon':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','Tribal','Rogue','Ghost_Skull'][f]:units[u.kind]||base[u.kind]||base[d.model];
-    const asset=FrostArt[key],scale=asset.factionBuilding?(d.radius*2*.92)/Math.max(asset.size[0],asset.size[2]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
+    const activity=key==='RealWorker'?work(state,u):null,asset=FrostArt[activity?key+activity.animation:key],scale=asset.factionBuilding?(d.radius*2*.92)/Math.max(asset.size[0],asset.size[2]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
     return {key,asset,scale,height:asset.size[1]*scale+.5};
   }
   function heading(state,u,old){
     if(!Frost.types[u.kind].speed)return 0;
-    const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008,hit=u.cd>.25&&(state.events||[]).find(e=>e.type==='hit'&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),target=hit||(!moved&&u.cd>.25&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0));
+    const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008,hit=u.cd>.25&&(state.events||[]).find(e=>e.type==='hit'&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),target=work(state,u)?.target||hit||(!moved&&u.cd>.25&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0));
     return target?Math.atan2(target.x-u.x,target.z-u.z):moved?Math.atan2(u.x-old.x,u.z-old.z):old?.yaw||0;
   }
   function pose(u,asset,walking,time){
     if(!asset.animations?.length)return asset.parts[0].mesh;
+    if(asset.workAnimation)return asset.parts[0].mesh+'#pose=0:'+Math.floor(time*12)%asset.animations[0].frames;
     const attack=u.cd>.25&&(u.kind!=='worker'||asset===FrostArt.RealWorker&&!['gather','build','construct','repair'].includes(u.order?.type)),desired=asset===FrostArt.Skeleton_Rogue?(attack?/^2H_Ranged_Shooting$/:walking?/^Walking_A$/:/^Idle$/):asset===FrostArt.Skeleton_Mage?(attack?/^Spellcast_Shoot$/:walking?/^Walking_A$/:/^Idle$/):Frost.types[u.kind].flying?(attack?/Dragon_Attack$/:/Dragon_Flying/):attack?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch|Headbutt/:walking?/^Run$|^Walk$|Fast_Flying/:/^Idle$|Flying_Idle/;
     let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;
   }

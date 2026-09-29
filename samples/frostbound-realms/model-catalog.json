@@ -2617,5 +2617,86 @@
       1.1296698889437535
     ],
     "realistic": true
+  },
+  "RealWorkerWood": {
+    "material": "Assets/Materials/RealWorkerWood.mmat",
+    "parts": [
+      {
+        "name": "RealWorkerWood",
+        "mesh": "Assets/Models/RealWorkerWood.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Wood",
+        "frames": 28
+      }
+    ],
+    "size": [
+      1.564955147200476,
+      3.0,
+      1.6758971178874198
+    ],
+    "realistic": true,
+    "workAnimation": "Wood"
+  },
+  "RealWorkerMine": {
+    "material": "Assets/Materials/RealWorkerMine.mmat",
+    "parts": [
+      {
+        "name": "RealWorkerMine",
+        "mesh": "Assets/Models/RealWorkerMine.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Mine",
+        "frames": 28
+      }
+    ],
+    "size": [
+      1.568196847847347,
+      3.0,
+      1.627528029971507
+    ],
+    "realistic": true,
+    "workAnimation": "Mine"
+  },
+  "RealWorkerBuild": {
+    "material": "Assets/Materials/RealWorkerBuild.mmat",
+    "parts": [
+      {
+        "name": "RealWorkerBuild",
+        "mesh": "Assets/Models/RealWorkerBuild.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Build",
+        "frames": 10
+      }
+    ],
+    "size": [
+      1.355916831952279,
+      3.0,
+      0.7887330048710934
+    ],
+    "realistic": true,
+    "workAnimation": "Build"
   }
 }

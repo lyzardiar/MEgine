@@ -93,6 +93,108 @@
         "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
         "Sword_Attack": "animation/biped/infantry/axe/attack_melee_shield_01.dae"
       }
+    },
+    "RealWorkerWood": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/m_tunic_long.dae",
+          "base": "textures/skins/skeletal/hele/tunic_02_01.png",
+          "bone": null,
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ]
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/tool_axe.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-weapon_L",
+          "tint": null
+        }
+      ],
+      "animations": {
+        "Wood": "animation/biped/gatherer/gather_wood.dae"
+      },
+      "workAnimation": "Wood"
+    },
+    "RealWorkerMine": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/m_tunic_long.dae",
+          "base": "textures/skins/skeletal/hele/tunic_02_01.png",
+          "bone": null,
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ]
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/tool_pick.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-weapon_R",
+          "tint": null
+        }
+      ],
+      "animations": {
+        "Mine": "animation/biped/gatherer/gather_mine.dae"
+      },
+      "workAnimation": "Mine"
+    },
+    "RealWorkerBuild": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/m_tunic_long.dae",
+          "base": "textures/skins/skeletal/hele/tunic_02_01.png",
+          "bone": null,
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ]
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/prop_mallet.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-weapon_R",
+          "tint": null
+        }
+      ],
+      "animations": {
+        "Build": "animation/biped/citizen/build.dae"
+      },
+      "workAnimation": "Build"
     }
   },
   "sources": [
@@ -121,6 +223,24 @@
       "size": 2601
     },
     {
+      "file": "SourceAssets/0ad/actors/props/units/tools/axe.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/tools/axe.xml",
+      "sha256": "d0a14fbd1b2b1df055289b2b8c8c8287d2c0a11131c6874a6f814cec24904eab",
+      "size": 456
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/tools/mallet.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/tools/mallet.xml",
+      "sha256": "bbbd400e2cb9dbfebc48abcbd2af5b6f661fd043b37d74583e2389bdedc311c3",
+      "size": 494
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/tools/pick.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/tools/pick.xml",
+      "sha256": "909404049e86282743e78f0ad7901d3a66737fc2a7e40f81d7df3b501829314a",
+      "size": 457
+    },
+    {
       "file": "SourceAssets/0ad/actors/props/units/weapons/axe_single.xml",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/axe_single.xml",
       "sha256": "bb93b8603834f8cebe06ed15a5fb2c660494fb5c823f179361a73ceb087bc5f0",
@@ -139,6 +259,12 @@
       "size": 3592
     },
     {
+      "file": "SourceAssets/0ad/animation/biped/citizen/build.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/build.dae",
+      "sha256": "f05c74d89ca076ebbb3c50837e18f4dbc4cbbbb53388d50f24d27ce4e4b4d162",
+      "size": 710838
+    },
+    {
       "file": "SourceAssets/0ad/animation/biped/citizen/idle_relax_m_a.dae",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/idle_relax_m_a.dae",
       "sha256": "414f3ce18f609a3478532ede3a6a21bc29fee64d2d40bd7e06efbbbe3a445656",
@@ -149,6 +275,18 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/walk_relax_m_aggresive.dae",
       "sha256": "149e92d063637b95b667d6ca2f9f262456c1213db9340bbc1fa1840be5ceff16",
       "size": 1048638
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/gatherer/gather_mine.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/gatherer/gather_mine.dae",
+      "sha256": "39ce3347086a086be36201f254e0ed4e3f786f996d3554306b85fd8f577d98a2",
+      "size": 1515301
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/gatherer/gather_wood.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/gatherer/gather_wood.dae",
+      "sha256": "ab6cb5f61b1adf287c17bcfbf58de427d93fec1549fba505c1e364b9fba2269d",
+      "size": 1357986
     },
     {
       "file": "SourceAssets/0ad/animation/biped/infantry/axe/attack_melee_shield_01.dae",
@@ -187,10 +325,28 @@
       "size": 25090
     },
     {
+      "file": "SourceAssets/0ad/meshes/props/prop_mallet.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/prop_mallet.dae",
+      "sha256": "8320fcd5af6d9dfe5af6cae9d37f92c2a38073c2989d6d139ae3f9555bceb289",
+      "size": 8136
+    },
+    {
       "file": "SourceAssets/0ad/meshes/props/shield/oval_01.dae",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/shield/oval_01.dae",
       "sha256": "9e0151fa3333fe701b8a223e505d8573d78791ba91d43c26bdf81ec9c8470d73",
       "size": 6855
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/tool_axe.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/tool_axe.dae",
+      "sha256": "82ac131057bad1b55afccb987ae4387c0138ea513f80707105ff7a6386cba17b",
+      "size": 15669
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/tool_pick.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/tool_pick.dae",
+      "sha256": "3585d5c5de3c46279627c870da4913b2b9bfafd61abf4141a24ad99af9731853",
+      "size": 15549
     },
     {
       "file": "SourceAssets/0ad/meshes/props/weap_axe_a.dae",
@@ -283,6 +439,24 @@
       "size": 2160
     },
     {
+      "file": "SourceAssets/0ad/variants/biped/build.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/build.xml",
+      "sha256": "5fa1bdbb803f9e4c2b520f26ecdfd78bb295725c587928c489db4d778d2f17ad",
+      "size": 420
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/gather_ore.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/gather_ore.xml",
+      "sha256": "8b006a3a3e16af3159a0e21b7bcdca8ef0938746de1b5cb30439f348af22e0fc",
+      "size": 470
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/gather_tree.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/gather_tree.xml",
+      "sha256": "2c3cf8ae0a19d0f376be54fb63c3835c7873314b84b88a0335dec3d2cea7943b",
+      "size": 472
+    },
+    {
       "file": "SourceAssets/0ad/variants/shields/celt_shield_01.xml",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/shields/celt_shield_01.xml",
       "sha256": "7b949e2d2756ded1cc45c2457766a79ce8c8c3803583b0e38e11e662956a51b2",
@@ -335,6 +509,66 @@
     {
       "file": "Assets/Materials/RealWorker.mmat",
       "sha256": "86ec0ec6fa3df1dc17037f99db585debdc4f6a04735b0eaee8e34127fce482ff"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerWood_base.png",
+      "sha256": "fdd344d87af3b559dfbc45fe6a8cb0588de3fe68f0cf4cfe200e7ab00c5660ee"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerWood_normal.png",
+      "sha256": "3bd8d828b0b55e663b88bbfef87a0b4781fbb14d17390f1969b0d76454aad1df"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerWood_arm.png",
+      "sha256": "c5176b22d7173e7a2a6d64b60e4ece144f490d5a1946e35313590583a27f2144"
+    },
+    {
+      "file": "Assets/Models/RealWorkerWood.glb",
+      "sha256": "ef48110cc51d976b4562f4c76642207ca9ee39104327259f0df94da9fc3cfb0e"
+    },
+    {
+      "file": "Assets/Materials/RealWorkerWood.mmat",
+      "sha256": "ec4b9a577c9bb53ac53145ac98232d641021236aa51925e79606619c4a170fd8"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerMine_base.png",
+      "sha256": "055d0a32db7279a08c5fff969187970401d137fefcdc91f6034dcf7686534f63"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerMine_normal.png",
+      "sha256": "e59c038f401697a77c6016f16aedea51a40d453c7cadc49d5ec77a081915c7f3"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerMine_arm.png",
+      "sha256": "2b305f913e22e80a28f063d7b4ef64d77821626fa5be6d4cd8dce8dd9562e19e"
+    },
+    {
+      "file": "Assets/Models/RealWorkerMine.glb",
+      "sha256": "2c817e4ab73815f82b383e98f7c7918273ebeed248699ce8ef03fa1334dd05a2"
+    },
+    {
+      "file": "Assets/Materials/RealWorkerMine.mmat",
+      "sha256": "29481c81151216bc7920feaac7c619c36799bf5c1ca25fc6968605857d71d0c6"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerBuild_base.png",
+      "sha256": "63a4218cfc3fa7fde27e5d7f9664702948bd1ddf06ae28349caf353a0ccd8f6a"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerBuild_normal.png",
+      "sha256": "4f0a90ba0e074b1e9bd01b9ee3259e050512630cbbca6d9b1e93cf6bff054ad7"
+    },
+    {
+      "file": "Assets/Textures/RealWorkerBuild_arm.png",
+      "sha256": "ad6ea0b8426c458b5779de739ffa93a5a2416675b08ed64a79361f13aa2f25ac"
+    },
+    {
+      "file": "Assets/Models/RealWorkerBuild.glb",
+      "sha256": "b5fa5b7c5b41ba6079afba219f035fcc9223f098d6f00054a5d78f5c2a015b1b"
+    },
+    {
+      "file": "Assets/Materials/RealWorkerBuild.mmat",
+      "sha256": "6386f3ee7105c8c59483553d2af05368157fd22f57d57e23f7903eb748772cf2"
     }
   ],
   "modelStats": {
@@ -382,6 +616,51 @@
         1.3547985666567999,
         3.0,
         1.1296698889437535
+      ]
+    },
+    "RealWorkerWood": {
+      "triangles": 1250,
+      "bones": 102,
+      "clips": [
+        {
+          "name": "Wood",
+          "frames": 28
+        }
+      ],
+      "size": [
+        1.564955147200476,
+        3.0,
+        1.6758971178874198
+      ]
+    },
+    "RealWorkerMine": {
+      "triangles": 1250,
+      "bones": 102,
+      "clips": [
+        {
+          "name": "Mine",
+          "frames": 28
+        }
+      ],
+      "size": [
+        1.568196847847347,
+        3.0,
+        1.627528029971507
+      ]
+    },
+    "RealWorkerBuild": {
+      "triangles": 1182,
+      "bones": 102,
+      "clips": [
+        {
+          "name": "Build",
+          "frames": 10
+        }
+      ],
+      "size": [
+        1.355916831952279,
+        3.0,
+        0.7887330048710934
       ]
     }
   }
