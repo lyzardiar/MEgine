@@ -27,12 +27,12 @@
       },
       "waypoints": [],
       "path": [],
-      "pathAt": 32,
+      "pathAt": 30,
       "built": 1,
       "queue": [],
       "level": 1,
       "xp": 0,
-      "mana": 160,
+      "mana": 159.79999999999944,
       "spell": [
         0,
         0,
@@ -59,16 +59,16 @@
       ]
     },
     "profile": {
-      "intervals": 142,
-      "averagePresentIntervalMs": 99.91901408450704,
-      "p95PresentIntervalMs": 194.69999998807907,
-      "presentedFps": 10.008105155583747,
-      "averageRequestMs": 119.58181818215164,
-      "averageRenderMs": 22.77977762237762,
-      "averageCommandMs": 61.136860139860154,
-      "averageUploadMs": 1.5055944031768747,
-      "averageSimulationMs": 11.406700704225354,
-      "averageSimulationRequestMs": 77.75774647694239
+      "intervals": 130,
+      "averagePresentIntervalMs": 109.39307692326032,
+      "p95PresentIntervalMs": 201.5,
+      "presentedFps": 9.141346309341897,
+      "averageRequestMs": 119.83816794129729,
+      "averageRenderMs": 28.189154198473293,
+      "averageCommandMs": 76.71130229007636,
+      "averageUploadMs": 1.4801526743037101,
+      "averageSimulationMs": 10.967931538461528,
+      "averageSimulationRequestMs": 81.96538461492612
     }
   }
 }

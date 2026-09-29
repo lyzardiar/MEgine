@@ -797,12 +797,15 @@ export function Viewport(props: {
     const p = propsRef.current, live = p.runtimeSnapshot?.();
     if (!live) return p;
     const hidden = p.tab === 'scene' ? p.sceneHiddenIds ?? [] : [];
-    return { ...p, nativeSessionId: live.nativeSessionId, simulationRequestMs: live.simulationRequestMs, entities: hidden.length ? live.entities.filter(entity => !hidden.includes(entity.entity)) : live.entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
+    return { ...p, get nativeSessionId() { return live.nativeSessionId; }, simulationRequestMs: live.simulationRequestMs, entities: hidden.length ? live.entities.filter(entity => !hidden.includes(entity.entity)) : live.entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
   };
 
-  const nativeWorldArgs = (p: ReturnType<typeof currentViewportProps>) => p.nativeSessionId != null && !requiresBrowserViewportSnapshot(p.entities)
-    ? { playSessionId: p.nativeSessionId }
-    : { snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } };
+  const nativeWorldArgs = (p: ReturnType<typeof currentViewportProps>) => {
+    const sessionId = p.nativeSessionId;
+    return sessionId != null && !requiresBrowserViewportSnapshot(p.entities)
+      ? { playSessionId: sessionId }
+      : { snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } };
+  };
 
   const closeGameInput = (focusCanvas = false) => {
     focusedInputRef.current = null;

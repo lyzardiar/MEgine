@@ -1,0 +1,169 @@
+{
+  "checkedAt": "2026-09-29T08:00:16.417734+00:00",
+  "baseCommit": "a56d86cb8d57845da1dabaf55ff09b91e537b464",
+  "scope": "Release editor Game View, 1280x720, 5 s warmup, three 5 s windows per process, baseline/after/baseline repeat",
+  "change": "Defer retained-world fingerprint to native request argument construction; preserve step synchronization and Inspector mutation checks",
+  "executables": {
+    "before": "256e9296f027e9fdd79ae218c287209ed28dcac2099d1316036a585287b56a0e",
+    "after": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4"
+  },
+  "runs": {
+    "before": {
+      "fps": [
+        14.020537124802528,
+        13.25329383344351,
+        12.373366329033912
+      ],
+      "medianFps": 13.25329383344351,
+      "windows": [
+        {
+          "intervals": 71,
+          "averagePresentIntervalMs": 71.32394366197182,
+          "p95PresentIntervalMs": 119,
+          "presentedFps": 14.020537124802528,
+          "averageRequestMs": 53.15555555125078,
+          "averageRenderMs": 11.077331944444447,
+          "averageCommandMs": 13.829559722222223,
+          "averageUploadMs": 1.458333332505491,
+          "averageSimulationMs": 9.441786111111119,
+          "averageSimulationRequestMs": 19.980555551747482
+        },
+        {
+          "intervals": 68,
+          "averagePresentIntervalMs": 75.45294117576935,
+          "p95PresentIntervalMs": 121.30000001192093,
+          "presentedFps": 13.25329383344351,
+          "averageRequestMs": 54.656521738439366,
+          "averageRenderMs": 11.175588405797102,
+          "averageCommandMs": 14.389326086956526,
+          "averageUploadMs": 1.4855072489683179,
+          "averageSimulationMs": 9.436930434782612,
+          "averageSimulationRequestMs": 24.885507246722344
+        },
+        {
+          "intervals": 64,
+          "averagePresentIntervalMs": 80.81874999962747,
+          "p95PresentIntervalMs": 124,
+          "presentedFps": 12.373366329033912,
+          "averageRequestMs": 53.19384615512995,
+          "averageRenderMs": 11.285635384615388,
+          "averageCommandMs": 14.97702153846154,
+          "averageUploadMs": 1.4461538452368516,
+          "averageSimulationMs": 10.037572307692306,
+          "averageSimulationRequestMs": 23.155384612083434
+        }
+      ]
+    },
+    "after": {
+      "fps": [
+        15.433289605785927,
+        14.3522110162917,
+        13.262340803120921
+      ],
+      "medianFps": 14.3522110162917,
+      "windows": [
+        {
+          "intervals": 80,
+          "averagePresentIntervalMs": 64.79499999955297,
+          "p95PresentIntervalMs": 116.80000001192093,
+          "presentedFps": 15.433289605785927,
+          "averageRequestMs": 46.946913582307324,
+          "averageRenderMs": 10.756292592592589,
+          "averageCommandMs": 13.622746913580245,
+          "averageUploadMs": 1.4432098747771462,
+          "averageSimulationMs": 7.74776172839506,
+          "averageSimulationRequestMs": 19.177777774539994
+        },
+        {
+          "intervals": 74,
+          "averagePresentIntervalMs": 69.67567567567568,
+          "p95PresentIntervalMs": 116.69999998807907,
+          "presentedFps": 14.3522110162917,
+          "averageRequestMs": 51.03200000524521,
+          "averageRenderMs": 10.846788,
+          "averageCommandMs": 13.938788000000004,
+          "averageUploadMs": 1.46,
+          "averageSimulationMs": 8.994742666666664,
+          "averageSimulationRequestMs": 20.637333331902823
+        },
+        {
+          "intervals": 68,
+          "averagePresentIntervalMs": 75.4014705884106,
+          "p95PresentIntervalMs": 118.30000001192093,
+          "presentedFps": 13.262340803120921,
+          "averageRequestMs": 48.77971014423647,
+          "averageRenderMs": 10.85009855072464,
+          "averageCommandMs": 14.532355072463773,
+          "averageUploadMs": 1.426086962223053,
+          "averageSimulationMs": 8.573340579710145,
+          "averageSimulationRequestMs": 22.752173914425615
+        }
+      ]
+    },
+    "baselineRepeat": {
+      "fps": [
+        15.291419161217261,
+        12.480499219968799,
+        13.471826311031162
+      ],
+      "medianFps": 13.471826311031162,
+      "windows": [
+        {
+          "intervals": 78,
+          "averagePresentIntervalMs": 65.39615384661235,
+          "p95PresentIntervalMs": 115.90000003576279,
+          "presentedFps": 15.291419161217261,
+          "averageRequestMs": 51.50759493248372,
+          "averageRenderMs": 10.912186075949366,
+          "averageCommandMs": 13.49293544303798,
+          "averageUploadMs": 1.4493670901165734,
+          "averageSimulationMs": 9.203626582278485,
+          "averageSimulationRequestMs": 19.869620253013657
+        },
+        {
+          "intervals": 64,
+          "averagePresentIntervalMs": 80.125,
+          "p95PresentIntervalMs": 127.10000002384186,
+          "presentedFps": 12.480499219968799,
+          "averageRequestMs": 52.761538461538464,
+          "averageRenderMs": 11.135766153846154,
+          "averageCommandMs": 14.855350769230771,
+          "averageUploadMs": 1.4507692318696241,
+          "averageSimulationMs": 9.679996923076919,
+          "averageSimulationRequestMs": 24.020000007519354
+        },
+        {
+          "intervals": 69,
+          "averagePresentIntervalMs": 74.22898550741914,
+          "p95PresentIntervalMs": 131,
+          "presentedFps": 13.471826311031162,
+          "averageRequestMs": 52.52857143112591,
+          "averageRenderMs": 10.936378571428575,
+          "averageCommandMs": 14.08895857142857,
+          "averageUploadMs": 1.4557142853736877,
+          "averageSimulationMs": 9.664795714285711,
+          "averageSimulationRequestMs": 23.1285714336804
+        }
+      ]
+    }
+  },
+  "validation": {
+    "editorTests": {
+      "passed": 948,
+      "failed": 0
+    },
+    "presentationReads": 60,
+    "presentationSerializations": 0,
+    "nativeSessionReadSerializations": 1,
+    "frontendBuild": true,
+    "releaseEditorBuild": true,
+    "nativeTerrain": true,
+    "nativeRealistic": true
+  },
+  "limitations": [
+    "Short sampling windows and uncontrolled machine load; FPS improvement is not established as stable.",
+    "Render and simulation remain serialized on the native worker.",
+    "Standalone Player FPS, physical input, audio listening and cross-machine LAN not measured in this stage.",
+    "5 ms target not achieved."
+  ]
+}

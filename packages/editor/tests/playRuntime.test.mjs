@@ -100,6 +100,14 @@ test('retained runtime omits unchanged worlds and synchronizes Inspector edits b
     assert.equal(store.playViewportSnapshot().nativeSessionId, 42);
     const detachedCallback = store.playViewportSnapshot;
     assert.equal(detachedCallback().nativeSessionId, 42);
+    let fingerprints = 0;
+    const observed = detachedCallback().entities[0];
+    Object.defineProperty(observed, 'toJSON', { configurable: true, value() { fingerprints++; const { toJSON, ...entity } = this; return entity; } });
+    for (let i = 0; i < 60; i++) assert.ok(detachedCallback().entities.length);
+    assert.equal(fingerprints, 0, 'viewport presentation does not serialize the live world');
+    assert.equal(detachedCallback().nativeSessionId, 42);
+    assert.equal(fingerprints, 1, 'native rendering checks synchronization on demand');
+    delete observed.toJSON;
     store.step(); await store.waitForPlayRuntime();
     assert.equal(incoming[0], undefined);
     const target = store.playViewportSnapshot().entities[0];

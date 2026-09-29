@@ -1004,9 +1004,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         selectedIds: [...selectedIds],
       };
     },
-    /** Read-only live data for viewport presentation; public snapshots remain isolated copies. */
+    /** Live presentation data; verify the retained native world only when a render request reads its session ID. */
     playViewportSnapshot(): (WorldSnapshotView & { nativeSessionId?: number; simulationRequestMs: number }) | null {
-      return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), nativeSessionId: nativePlaySessionId(), simulationRequestMs: playStepRequestMs } : null;
+      return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), get nativeSessionId() { return nativePlaySessionId(); }, simulationRequestMs: playStepRequestMs } : null;
     },
     get nativePlaySessionId() { return nativePlaySessionId(); },
     get playSessionId() { return mode === 'edit' ? undefined : playRuntime?.sessionId ?? remotePlaySessionId; },

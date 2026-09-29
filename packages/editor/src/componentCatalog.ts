@@ -1269,6 +1269,7 @@ export function createUiInputFieldComponents() {
       placeholder_color: [0.55, 0.58, 0.64, 1],
       background_color: [0.08, 0.09, 0.12, 1],
       caret_color: [0.3, 0.7, 1, 1],
+      font: '',
       font_size: 16,
       interactable: true,
       multiline: false,
