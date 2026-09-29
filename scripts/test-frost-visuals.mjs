@@ -48,7 +48,7 @@ for(const [kind,key] of [['soldier','RealFootman'],['worker','RealWorker']]){
 }
 {
  const map=S.defaultMap();map.terrain.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const state=S.create('skirmish',{map}),archer=S.spawn(state,'archer',0,0,0),target=S.spawn(state,'neutral',1,0,6);target.speed=0;target.damage=0;S.visibility(state);
- assert.equal(S.command(state,0,{type:'attack',ids:[archer.id],target:target.id}),null);S.tick(state);const hit=state.events.find(e=>e.fromX===archer.x&&e.fromZ===archer.z);assert.equal(hit.projectile,'arrow');assert.equal(hit.ranged,true);assert.ok(target.hp<target.maxHp);assert.ok(S.publicState(state,0).events.some(e=>e.projectile==='arrow'),'network-visible hit retains projectile art');
+ assert.equal(S.command(state,0,{type:'attack',ids:[archer.id],target:target.id}),null);S.tick(state);const hit=state.events.find(e=>e.fromX===archer.x&&e.fromZ===archer.z);assert.equal(hit.type,'launch');assert.equal(hit.ranged,true);assert.equal(target.hp,target.maxHp);assert.equal(S.publicState(state,0).projectiles[0].art,'arrow','network-visible shot retains projectile art');
 }
 {
  const map=S.defaultMap();map.terrain.fill(0);map.props=[];const state=S.create('skirmish',{map}),unit=S.spawn(state,'worker',0,0,0),target=S.spawn(state,'neutral',1,1.5,0);unit.order={type:'attack',target:target.id};unit.cd=.7;

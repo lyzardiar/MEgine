@@ -38,7 +38,7 @@ const hero=s=>s.units.find(u=>u.kind==='hero'&&u.team===0),cmd=(s,u,type,extra={
 }
 {
  const s=game('rpg'),u=hero(s);for(let i=0;i<6;i++)buy(s,u,2);const target=S.spawn(s,'hero',1,u.x+1,u.z,{tag:'boss'});target.damage=0;target.speed=0;u.damage=10000;
- const kill=()=>{target.x=u.x+1;target.z=u.z;target.hp=1;u.cd=0;assert.equal(cmd(s,u,'attack',{target:target.id}),null);tick(s,1);assert.equal(target.hp,0);};
+ const kill=()=>{target.x=u.x+1;target.z=u.z;target.hp=1;u.cd=0;assert.equal(cmd(s,u,'attack',{target:target.id}),null);tick(s,2);assert.equal(target.hp,0);};
  kill();const first=s.loot.at(-1).id;tick(s,145);assert.ok(target.hp>0);kill();assert.notEqual(s.loot.at(-1).id,first);assert.equal(S.restore(s).loot.length,2,'repeated respawning boss drops restore');
  while(s.loot.length<S.LIMIT)s.loot.push({id:++s.serial,x:0,z:0,item:0,relic:false});kill();assert.equal(s.loot.length,S.LIMIT);target.tag='keeper';kill();assert.equal(s.loot.length,S.LIMIT-(s.quest.relic?1:0));assert.ok(s.quest.relic||s.loot.some(d=>d.relic));assert.doesNotThrow(()=>S.restore(s));
 }

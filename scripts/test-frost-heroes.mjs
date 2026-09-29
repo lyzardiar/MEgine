@@ -29,7 +29,7 @@ for(const [heroClass,slot] of [[0,3],[1,2],[2,3]]){
   const hidden=S.publicState(s,1);s.visible[1].fill(0);assert.equal(S.publicState(s,1).zones.length,0);assert.ok(hidden);
 }
 {
-  const {s,h,cast}=arena(1,1),ally=S.spawn(s,'soldier',0,4,0),enemy=S.spawn(s,'archer',1,5,0);assert.equal(cast(),null);const hp=ally.hp;S.visibility(s);S.command(s,1,{type:'attack',ids:[enemy.id],target:ally.id});S.tick(s);assert.equal(ally.hp,hp);assert.ok(ally.shield>0&&ally.shield<150);s.units=s.units.filter(u=>u.id!==enemy.id);step(s,65);assert.equal(ally.shield,0);
+  const {s,h,cast}=arena(1,1),ally=S.spawn(s,'soldier',0,4,0),enemy=S.spawn(s,'archer',1,5,0);assert.equal(cast(),null);const hp=ally.hp;S.visibility(s);S.command(s,1,{type:'attack',ids:[enemy.id],target:ally.id});step(s,2);assert.equal(ally.hp,hp);assert.ok(ally.shield>0&&ally.shield<150);s.units=s.units.filter(u=>u.id!==enemy.id);step(s,65);assert.equal(ally.shield,0);
 }
 {
   const {s,h,cast}=arena(1,3),used=S.population(s,0).used;assert.equal(cast(),null);const summon=s.units.find(u=>u.summoned);assert.ok(summon&&S.types[summon.kind].flying);assert.equal(S.population(s,0).used,used);step(s,251);assert.ok(!s.units.some(u=>u.summoned));

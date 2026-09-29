@@ -14,7 +14,7 @@ const order=(s,us,type,x,z)=>S.command(s,0,{type,ids:us.map(u=>u.id),x,z});
 }
 {
   const s=game(),u=S.spawn(s,'archer',0,-10,-10),hall=S.spawn(s,'hall',1,0,-10,{damage:0});s.visible[0].fill(1);
-  assert.equal(order(s,[u],'hold'),null);step(s,1);assert.ok(hall.hp<hall.maxHp,'building radius counts at the edge of weapon range');assert.deepEqual([u.x,u.z],[-10,-10]);
+  assert.equal(order(s,[u],'hold'),null);step(s,1);assert.equal(s.projectiles.length,1,'building radius allows release at the edge of weapon range');step(s,5);assert.ok(hall.hp<hall.maxHp,'projectile reaches the building');assert.deepEqual([u.x,u.z],[-10,-10]);
 }
 {
   const s=game(),u=S.spawn(s,'archer',0,-1,-1),enemy=S.spawn(s,'worker',1,1,-1,{damage:0,speed:0});s.map.heights[S.index(enemy.x,enemy.z)]=3;S.visibility(s);order(s,[u],'hold');step(s,5);assert.equal(enemy.hp,enemy.maxHp,'hold respects line of fire across a cliff');assert.equal(u.x,-1);

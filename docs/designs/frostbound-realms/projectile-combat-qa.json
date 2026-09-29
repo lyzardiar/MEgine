@@ -1,0 +1,104 @@
+{
+  "checkedAt": "2026-09-30T01:52:19.4169080+08:00",
+  "baseCommit": "1914f7daf5a4c1b2ad8df1bb57b031a116b01576",
+  "scope": "Authoritative projectile travel, delayed impact, save/restore, fog privacy and TCP reconnect",
+  "protocol": 8,
+  "projectileLimit": 256,
+  "rules": [
+    "PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion",
+    "PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection",
+    "PASS: opposing traffic, hold, narrow passage/head-on, flying layers, exact saves, melee surround, fog privacy, stacked TD recovery, base exit and speed limits",
+    "PASS: ordered route arrival, group queues/save replay, eight-waypoint atomic limit, command/work/blink/death cancellation, busy rejection, legacy/malformed saves and opponent privacy",
+    "PASS: four-faction queued construction, deferred payment, gathering delivery, distant site, repair/cancel, inside worker, consumed worker, invalid site skip, queue capacity/privacy and exact save replay",
+    "PASS: stationary hold combat/range/occlusion, stop release, six-unit patrol roundtrips/save replay, combat resumption, ramps, route overrides, privacy and invalid saves",
+    "PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 20 native unit portraits and pinned source/derived hashes",
+    "PASS: delayed single impact, homing, posthumous credit/lifesteal, lost targets, artillery/splash, shields, immediate melee/rifle, exact save continuation, legacy/malformed saves, fog redaction, capacity and lifetime",
+    "PASS: six slots, atomic recipes, health-ratio invariance, sell value/shop range, potions/cooldown, real pickup/transfer/race, fog, saved routes and malformed saves",
+    "PASS: four heroes / 16 skills, learning gates, status effects, timed areas/summons, targeting, hero saves and legacy migration",
+    "PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration",
+    "PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain",
+    "PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water",
+    "PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy",
+    "PASS: four faction rosters and tech gates, one-shot map triggers, fog privacy, full RPG legal-order quest/loot/growth/save roundtrip (569 ticks)",
+    "PASS: TCP inventory recipe, drop, pickup, reconnect and sell",
+    "PASS: TCP deferred worker construction, mixed queue reconnect and return to mining",
+    "PASS: TCP redacted projectile snapshots, in-flight reconnect and exactly one delayed impact",
+    "PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect"
+  ],
+  "nativeProjectiles": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "projectiles": {
+      "fixture": "Flat field, stationary target with 100000 HP, archer begins at range 8 with a 10-second cooldown; subsequent shots suppressed. Editor stepping captures flight before Agent Escape/save/load.",
+      "delayedDamage": true,
+      "authoritativePosition": true,
+      "pauseFreezesFlight": true,
+      "saveWhilePaused": true,
+      "inFlightSaveRestore": true,
+      "singleImpact": true,
+      "shaderRejections": 0
+    }
+  },
+  "nativeHumans": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "units": {
+      "models": [
+        "RealFootman",
+        "RealWorker",
+        "RealArcher"
+      ],
+      "arrowProjectile": true,
+      "loadedArrowCycle": true,
+      "idleWalkAttack": true,
+      "attackFacing": true,
+      "selectionPortraits": true,
+      "trainingIcons": true,
+      "damage": true,
+      "saveRestore": true,
+      "shaderRejections": 0
+    }
+  },
+  "nativeNetwork": {
+    "passed": true,
+    "report": "native-network-qa.json"
+  },
+  "package": {
+    "files": 447,
+    "bytes": 161537932.0,
+    "contentHash": "a0b2171293d508bf0e4a79ff61c5b0252536b7c90ea8266c03be0ae52ee2694e",
+    "smoke": {
+      "contentHash": "a0b2171293d508bf0e4a79ff61c5b0252536b7c90ea8266c03be0ae52ee2694e",
+      "windowTitle": "Frostbound Realms",
+      "responding": true,
+      "audioListening": false,
+      "shutdown": "Only this smoke-check process was stopped",
+      "elapsedSeconds": 30,
+      "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+      "alive": true,
+      "packageValidationPassed": true,
+      "startedAt": "2026-09-30T01:48:38.6472492+08:00",
+      "processId": 160668,
+      "packagedFiles": 447,
+      "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+      "checkedAt": "2026-09-30T01:49:08.675127+08:00",
+      "physicalInput": false,
+      "loggedErrors": 0
+    }
+  },
+  "free3d": {
+    "downloaded": false,
+    "httpStatus": 403
+  },
+  "limitations": [
+    "Remaining heroes, units and two faction building sets still need consistent realistic art.",
+    "Non-arrow projectiles retain simple existing art.",
+    "Projectile rendering uses 10 Hz positions without interpolation.",
+    "Physical mouse, audio listening, cross-machine LAN and standalone frame timing were not validated.",
+    "Full Warcraft III recreation remains incomplete."
+  ]
+}
