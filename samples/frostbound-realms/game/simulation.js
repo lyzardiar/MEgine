@@ -122,7 +122,9 @@ var Frost = (() => {
   function defaultMap(mode='skirmish') {
     const map={version:1,name:mode==='moba'?'Ancients of the Vale':mode==='td'?'Serpentine Watch':'Winterfall Basin',mode,terrain:Array(1024).fill(0),heights:Array(1024).fill(0),ramps:Array(1024).fill(0),props:[],spawns:[[-23,23],[23,-23]],startingGold:mode==='td'?650:500,waveInterval:mode==='td'?18:24,waves:12};
     for(let z=0;z<32;z++)for(let x=0;x<32;x++)if((x<2||x>29||z<2||z>29)&&((x+z)%5!==0))map.terrain[z*32+x]=1;
-    if(mode!=='td')for(let z=9;z<23;z++)if(z<14||z>18)map.terrain[z*32+15]=map.terrain[z*32+16]=1;
+    if(mode==='skirmish'){
+      for(let z=4;z<28;z++)if(z<13||z>18){const center=15.5+1.1*Math.sin((z-15.5)*.36),width=1.05+.25*Math.cos((z-15.5)*.63);for(let x=13;x<=18;x++)if(Math.abs(x-center)<=width)map.terrain[z*32+x]=1;}
+    }else if(mode!=='td')for(let z=9;z<23;z++)if(z<14||z>18)map.terrain[z*32+15]=map.terrain[z*32+16]=1;
     if(mode==='skirmish')for(let z=3;z<29;z++)for(let x=3;x<29;x++)if(Math.abs(x+z-31)<1.5&&map.terrain[z*32+x]===0)map.terrain[z*32+x]=2;
     if(mode==='moba')for(let z=3;z<29;z++)for(let x=3;x<29;x++)if(map.terrain[z*32+x]===0&&[0,1,2].some(lane=>{const route=lanePath(0,lane);return route.slice(1).some((p,i)=>segmentDistance(x*2-31,z*2-31,route[i],p)<1.8);}))map.terrain[z*32+x]=2;
     for(const team of [0,1]){const [x,z]=map.spawns[team];map.props.push({kind:'mine',x:x+(team?-6:6),z,amount:9000});for(let i=0;i<8;i++)map.props.push({kind:'tree',x:x+(team?-1:1)*(2+i%4*2),z:z+(team?1:-1)*(6+Math.floor(i/4)*2),amount:600});}

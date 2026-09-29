@@ -1,0 +1,157 @@
+{
+  "checkedAt": "2026-09-29T05:18:23.697Z",
+  "baseCommit": "8e5a86ecea2661fb909d61b5cd5b39595163688f",
+  "scope": "Bounded continuous shoreline shading and symmetric skirmish river, native visual/editor QA and packaged Player startup",
+  "rules": {
+    "passed": true,
+    "command": "node scripts/test-frostbound.mjs",
+    "log": [
+      "PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion",
+      "PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection",
+      "PASS: opposing traffic, hold, narrow passage/head-on, flying layers, exact saves, melee surround, fog privacy, stacked TD recovery, base exit and speed limits",
+      "PASS: ordered route arrival, group queues/save replay, eight-waypoint atomic limit, command/work/blink/death cancellation, busy rejection, legacy/malformed saves and opponent privacy",
+      "PASS: four-faction queued construction, deferred payment, gathering delivery, distant site, repair/cancel, inside worker, consumed worker, invalid site skip, queue capacity/privacy and exact save replay",
+      "PASS: stationary hold combat/range/occlusion, stop release, six-unit patrol roundtrips/save replay, combat resumption, ramps, route overrides, privacy and invalid saves",
+      "PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 18 native unit portraits and pinned source/derived hashes",
+      "PASS: six slots, atomic recipes, health-ratio invariance, sell value/shop range, potions/cooldown, real pickup/transfer/race, fog, saved routes and malformed saves",
+      "PASS: four heroes / 16 skills, learning gates, status effects, timed areas/summons, targeting, hero saves and legacy migration",
+      "PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration",
+      "PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain",
+      "PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water",
+      "PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy",
+      "PASS: four faction rosters and tech gates, one-shot map triggers, fog privacy, full RPG legal-order quest/loot/growth/save roundtrip (549 ticks)",
+      "PASS: TCP inventory recipe, drop, pickup, reconnect and sell",
+      "PASS: TCP deferred worker construction, mixed queue reconnect and return to mining",
+      "PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect"
+    ]
+  },
+  "realistic": {
+    "nearZoom": 12,
+    "farZoom": 27,
+    "realMeshes": 92,
+    "lodSwitch": true,
+    "editorRendered": true,
+    "shaderRejections": 0,
+    "msaaSamples": 4,
+    "nearPerformance": {
+      "warmupMs": 3000,
+      "sampleWindowMs": 5000,
+      "summary": {
+        "intervals": 67,
+        "averagePresentIntervalMs": 73.89701492483937,
+        "p95PresentIntervalMs": 123.80000001192093,
+        "presentedFps": 13.532346347374109,
+        "averageRequestMs": 51.536764701499656,
+        "averageRenderMs": 12.30851323529412,
+        "averageCommandMs": 15.317161764705887,
+        "averageUploadMs": 1.4455882372225033,
+        "averageSimulationMs": 9.261807352941176,
+        "averageSimulationRequestMs": 24.174999997896307
+      }
+    },
+    "profiler": {
+      "intervals": 120,
+      "averagePresentIntervalMs": 83.29583333333333,
+      "p95PresentIntervalMs": 157,
+      "presentedFps": 12.005402431093993,
+      "averageRequestMs": 54.466115700311896,
+      "averageRenderMs": 12.252757851239672,
+      "averageCommandMs": 15.455461157024793,
+      "averageUploadMs": 1.4619834713699404,
+      "averageSimulationMs": 9.482301652892565,
+      "averageSimulationRequestMs": 40.00082644500023
+    }
+  },
+  "terrain": {
+    "chunks": 64,
+    "raisedCells": 204,
+    "ramps": 11,
+    "brushUndoSaveLoad": true,
+    "groundUnitClimbed": true
+  },
+  "performance": [
+    {
+      "intervals": 63,
+      "averagePresentIntervalMs": 79.13492063492063,
+      "p95PresentIntervalMs": 120.19999998807907,
+      "presentedFps": 12.636646274195167,
+      "averageRequestMs": 53.40937499795109,
+      "averageRenderMs": 11.330060937499999,
+      "averageCommandMs": 14.876453125000001,
+      "averageUploadMs": 1.4874999970197678,
+      "averageSimulationMs": 9.4447828125,
+      "averageSimulationRequestMs": 24.08124999795109
+    },
+    {
+      "intervals": 63,
+      "averagePresentIntervalMs": 80.54761904761905,
+      "p95PresentIntervalMs": 129.10000002384186,
+      "presentedFps": 12.415016257759385,
+      "averageRequestMs": 52.12968750670552,
+      "averageRenderMs": 11.342068750000003,
+      "averageCommandMs": 15.071939062500004,
+      "averageUploadMs": 1.4609375,
+      "averageSimulationMs": 9.490445312500002,
+      "averageSimulationRequestMs": 21.545312500558794
+    },
+    {
+      "intervals": 67,
+      "averagePresentIntervalMs": 77.40000000017793,
+      "p95PresentIntervalMs": 123.79999995231628,
+      "presentedFps": 12.919896640797173,
+      "averageRequestMs": 52.76764706127784,
+      "averageRenderMs": 11.131707352941179,
+      "averageCommandMs": 14.37738382352941,
+      "averageUploadMs": 1.4691176440785914,
+      "averageSimulationMs": 9.525330882352941,
+      "averageSimulationRequestMs": 23.999999989481534
+    }
+  ],
+  "package": {
+    "files": 362,
+    "bytes": 119380445,
+    "contentHash": "5789263b84e97a5d32d0f315fa8a482547a30ccb824263da3aadfe477277d5b5",
+    "player": {
+      "contentHash": "5789263b84e97a5d32d0f315fa8a482547a30ccb824263da3aadfe477277d5b5",
+      "windowTitle": "Frostbound Realms",
+      "responding": true,
+      "audioListening": false,
+      "shutdown": "Only this smoke-check process was stopped",
+      "elapsedSeconds": 30,
+      "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+      "alive": true,
+      "packageValidationPassed": true,
+      "startedAt": "2026-09-29T13:14:58.2110295+08:00",
+      "processId": 118744,
+      "packagedFiles": 362,
+      "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+      "checkedAt": "2026-09-29T13:15:28.2652669+08:00",
+      "physicalInput": false,
+      "loggedErrors": 0
+    }
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/game/simulation.js": "2194229409fa01e9fc894c63b5cd943c6fd2ce482737ba96ce427360356766c3",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "dfc64c3968f72533a283a6eb62c989021240b8ac32103e7db23cc633ba856b1f",
+    "samples/frostbound-realms/Assets/Maps/skirmish.json": "c21824115e88df98c1ccbdb429f53ff08c0aa26a7f5ebf95fcd55f328a978792",
+    "samples/frostbound-realms/Assets/Maps/highland-pass.json": "b30d57ccbe5f6e08fe013461eda3282bb329c2403c56970140b3e6e501b933d5",
+    "samples/frostbound-realms/Assets/Maps/supply-road.json": "2be58683ade58959b43c86482b9f7eba14ca784be80554613548fefdf7e0c253",
+    "scripts/test-frostbound.mjs": "8a5b8569d67896298e09f26a89c38c0d55691b76f0a8840567b69b8f9cf96460"
+  },
+  "evidenceHashes": {
+    "native-realistic-qa.json": "5dab3b3bb99fa6a1e56116e2c84b4c31692aaa75b42fd9d8c8f8d5437021b39a",
+    "native-terrain-qa.json": "a707170626be26f529800155fa1d7737aded125f898842e5680f19b6cb7e48b2",
+    "native-performance-qa.json": "89ff105539be5b28edeb48164196a038c9fec4ae7c9c8554c01d2f61c3d21138",
+    "player-smoke.json": "a9efcd36e16b160a3887b7bc2d825c138797c5579fbbe8c711e351137f3d7518",
+    "realistic-editor.png": "7c03b6898232f10401aa6f37ec28985fb0ae3634507ded24f7dde4ff87a39a9d",
+    "realistic-close-detail.png": "59152ca4fda0f8f1548bab41798d4d4fca6d566bfbdeadebfd7611f3ab9dae47",
+    "realistic-overview.png": "be2faa78eb6c0448e622b9555cf027cf6d3cfbcaf1b6db4853cd69f19107ebe7",
+    "realistic-settlement.png": "5f8244a301b826196b3d5e583b7ce181c221ca9ccb71b170ee45cb6dabe32d47"
+  },
+  "limitations": [
+    "Physical input and audio listening unverified",
+    "Cross-machine LAN not tested in this stage",
+    "Five millisecond target unmet",
+    "Other faction buildings and characters still need realistic art"
+  ]
+}

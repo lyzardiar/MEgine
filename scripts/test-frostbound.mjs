@@ -15,6 +15,14 @@ import './test-frost-triggers.mjs';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
+const riverMap=S.defaultMap();
+for(let z=2;z<30;z++)for(let x=2;x<30;x++)assert.equal(riverMap.terrain[z*32+x]===1,riverMap.terrain[(31-z)*32+31-x]===1,'interior river is rotationally symmetric');
+for(let z=13;z<=18;z++)for(let x=13;x<=18;x++)assert.notEqual(riverMap.terrain[z*32+x],1,'central crossing stays dry');
+assert.equal(riverMap.terrain[4*32+16],1,'river extends toward the northern forest');
+for(const mode of ['td','moba','rpg']){const map=S.defaultMap(mode);for(let z=2;z<30;z++)for(let x=2;x<30;x++)assert.equal(map.terrain[z*32+x]===1,mode!=='td'&&z>=9&&z<23&&(z<14||z>18)&&(x===15||x===16),mode+' preserves its water layout');}
+const riverGame=S.create('skirmish',{ai:[false,false]});riverGame.units=[];
+for(const team of [0,1]){const [x,z]=riverGame.map.spawns[team],goal=riverGame.map.spawns[1-team],unit=S.spawn(riverGame,'soldier',team,x,z),route=S.path(riverGame,unit,...goal);assert.deepEqual(route.at(-1),goal,'both spawns remain connected');assert.ok(route.every(([px,pz])=>riverGame.map.terrain[S.index(px,pz)]!==1),'ground routes avoid water');}
+console.log('PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water');
 globalThis.Frost=S;const terrain=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
 const terrainState=S.create(),terrainCells=terrain.cells(terrainState,0,false),left=terrain.chunk(terrainCells,2,3).flat(),right=terrain.chunk(terrainCells,3,3).flat();
 for(let row=0;row<6;row++){assert.equal(left[row*6+4],right[row*6]);assert.equal(left[row*6+5],right[row*6+1]);}
