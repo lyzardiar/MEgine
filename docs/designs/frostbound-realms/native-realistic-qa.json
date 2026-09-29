@@ -15,29 +15,29 @@
       "warmupMs": 3000,
       "sampleWindowMs": 5000,
       "summary": {
-        "intervals": 67,
-        "averagePresentIntervalMs": 73.89701492483937,
-        "p95PresentIntervalMs": 123.80000001192093,
-        "presentedFps": 13.532346347374109,
-        "averageRequestMs": 51.536764701499656,
-        "averageRenderMs": 12.30851323529412,
-        "averageCommandMs": 15.317161764705887,
-        "averageUploadMs": 1.4455882372225033,
-        "averageSimulationMs": 9.261807352941176,
-        "averageSimulationRequestMs": 24.174999997896307
+        "intervals": 63,
+        "averagePresentIntervalMs": 79.90158730177652,
+        "p95PresentIntervalMs": 120,
+        "presentedFps": 12.51539592352712,
+        "averageRequestMs": 51.178124997764826,
+        "averageRenderMs": 12.491639062500003,
+        "averageCommandMs": 16.705384375,
+        "averageUploadMs": 1.5078124962747097,
+        "averageSimulationMs": 9.746345312499999,
+        "averageSimulationRequestMs": 21.75156250409782
       }
     },
     "profiler": {
-      "intervals": 120,
-      "averagePresentIntervalMs": 83.29583333333333,
-      "p95PresentIntervalMs": 157,
-      "presentedFps": 12.005402431093993,
-      "averageRequestMs": 54.466115700311896,
-      "averageRenderMs": 12.252757851239672,
-      "averageCommandMs": 15.455461157024793,
-      "averageUploadMs": 1.4619834713699404,
-      "averageSimulationMs": 9.482301652892565,
-      "averageSimulationRequestMs": 40.00082644500023
+      "intervals": 112,
+      "averagePresentIntervalMs": 91.56785714307001,
+      "p95PresentIntervalMs": 180.29999995231628,
+      "presentedFps": 10.920862748131716,
+      "averageRequestMs": 58.452212384844245,
+      "averageRenderMs": 15.196623008849556,
+      "averageCommandMs": 18.71371504424779,
+      "averageUploadMs": 1.497345130527969,
+      "averageSimulationMs": 10.197316814159295,
+      "averageSimulationRequestMs": 42.09734513590821
     }
   }
 }

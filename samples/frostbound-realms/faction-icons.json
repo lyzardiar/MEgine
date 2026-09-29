@@ -1,9 +1,9 @@
 {
   "file": "Assets/Art/faction-buildings.png",
-  "sha256": "bfed0ff9e8dc9e6e14681360a8f9e4cf9ddd13e6fd292b2cf33776623d42d23f",
+  "sha256": "7e11e735cdd986389a36a7561cc1bb07c174a935f1dff5b78d687581dabb8f76",
   "generator": "scripts/render-frost-faction-icons.mjs",
   "method": "Native MEngine Release render of the actual building meshes; no generated concept art",
-  "runtimeSha256": "906706d0224fda27a855d2957261ecdaa5e28af20350b25e358a6e8c3ed8fce1",
+  "runtimeSha256": "256e9296f027e9fdd79ae218c287209ed28dcac2099d1316036a585287b56a0e",
   "models": [
     {
       "name": "KingdomHall",
@@ -47,43 +47,43 @@
     },
     {
       "name": "WarclansHall",
-      "mesh": "Assets/Models/WarclansHall.glb",
-      "material": "Assets/Materials/WarclansHall.mmat"
+      "mesh": "Assets/Models/RealWarclansHall.glb",
+      "material": "Assets/Materials/RealWarclansHall.mmat"
     },
     {
       "name": "WarclansHall2",
-      "mesh": "Assets/Models/WarclansHall2.glb",
-      "material": "Assets/Materials/WarclansHall2.mmat"
+      "mesh": "Assets/Models/RealWarclansHall2.glb",
+      "material": "Assets/Materials/RealWarclansHall2.mmat"
     },
     {
       "name": "WarclansHall3",
-      "mesh": "Assets/Models/WarclansHall3.glb",
-      "material": "Assets/Materials/WarclansHall3.mmat"
+      "mesh": "Assets/Models/RealWarclansHall3.glb",
+      "material": "Assets/Materials/RealWarclansHall3.mmat"
     },
     {
       "name": "WarclansBarracks",
-      "mesh": "Assets/Models/WarclansBarracks.glb",
-      "material": "Assets/Materials/WarclansBarracks.mmat"
+      "mesh": "Assets/Models/RealWarclansBarracks.glb",
+      "material": "Assets/Materials/RealWarclansBarracks.mmat"
     },
     {
       "name": "WarclansLodge",
-      "mesh": "Assets/Models/WarclansLodge.glb",
-      "material": "Assets/Materials/WarclansLodge.mmat"
+      "mesh": "Assets/Models/RealWarclansLodge.glb",
+      "material": "Assets/Materials/RealWarclansLodge.mmat"
     },
     {
       "name": "WarclansTower",
-      "mesh": "Assets/Models/WarclansTower.glb",
-      "material": "Assets/Materials/WarclansTower.mmat"
+      "mesh": "Assets/Models/RealWarclansTower.glb",
+      "material": "Assets/Materials/RealWarclansTower.mmat"
     },
     {
       "name": "WarclansAltar",
-      "mesh": "Assets/Models/WarclansAltar.glb",
-      "material": "Assets/Materials/WarclansAltar.mmat"
+      "mesh": "Assets/Models/RealWarclansAltar.glb",
+      "material": "Assets/Materials/RealWarclansAltar.mmat"
     },
     {
       "name": "WarclansWorkshop",
-      "mesh": "Assets/Models/WarclansWorkshop.glb",
-      "material": "Assets/Materials/WarclansWorkshop.mmat"
+      "mesh": "Assets/Models/RealWarclansWorkshop.glb",
+      "material": "Assets/Materials/RealWarclansWorkshop.mmat"
     },
     {
       "name": "WildwoodHall",

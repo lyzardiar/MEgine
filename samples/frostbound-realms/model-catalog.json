@@ -1267,11 +1267,11 @@
     "realistic": true
   },
   "WarclansHall": {
-    "material": "Assets/Materials/WarclansHall.mmat",
+    "material": "Assets/Materials/RealWarclansHall.mmat",
     "parts": [
       {
         "name": "WarclansHall",
-        "mesh": "Assets/Models/WarclansHall.glb",
+        "mesh": "Assets/Models/RealWarclansHall.glb",
         "pivot": [
           0,
           0,
@@ -1280,18 +1280,19 @@
       }
     ],
     "size": [
-      3.95,
-      3.0,
-      4.4
+      0.965277373790741,
+      0.8206070065498352,
+      0.9999999403953552
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WarclansBarracks": {
-    "material": "Assets/Materials/WarclansBarracks.mmat",
+    "material": "Assets/Materials/RealWarclansBarracks.mmat",
     "parts": [
       {
         "name": "WarclansBarracks",
-        "mesh": "Assets/Models/WarclansBarracks.glb",
+        "mesh": "Assets/Models/RealWarclansBarracks.glb",
         "pivot": [
           0,
           0,
@@ -1300,18 +1301,19 @@
       }
     ],
     "size": [
-      4.15,
-      2.2,
-      3.6
+      1.0,
+      0.7904167175292969,
+      0.9392387270927429
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WarclansLodge": {
-    "material": "Assets/Materials/WarclansLodge.mmat",
+    "material": "Assets/Materials/RealWarclansLodge.mmat",
     "parts": [
       {
         "name": "WarclansLodge",
-        "mesh": "Assets/Models/WarclansLodge.glb",
+        "mesh": "Assets/Models/RealWarclansLodge.glb",
         "pivot": [
           0,
           0,
@@ -1320,18 +1322,19 @@
       }
     ],
     "size": [
-      2.4,
-      1.8,
-      2.9
+      0.7492060661315918,
+      0.9130711555480957,
+      1.0
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WarclansTower": {
-    "material": "Assets/Materials/WarclansTower.mmat",
+    "material": "Assets/Materials/RealWarclansTower.mmat",
     "parts": [
       {
         "name": "WarclansTower",
-        "mesh": "Assets/Models/WarclansTower.glb",
+        "mesh": "Assets/Models/RealWarclansTower.glb",
         "pivot": [
           0,
           0,
@@ -1340,18 +1343,19 @@
       }
     ],
     "size": [
-      1.9,
-      4.5,
-      1.9
+      1.0,
+      3.254631519317627,
+      0.8748868703842163
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WarclansAltar": {
-    "material": "Assets/Materials/WarclansAltar.mmat",
+    "material": "Assets/Materials/RealWarclansAltar.mmat",
     "parts": [
       {
         "name": "WarclansAltar",
-        "mesh": "Assets/Models/WarclansAltar.glb",
+        "mesh": "Assets/Models/RealWarclansAltar.glb",
         "pivot": [
           0,
           0,
@@ -1360,18 +1364,19 @@
       }
     ],
     "size": [
-      2.8,
-      2.6,
-      2.9
+      0.9956291317939758,
+      1.2461861371994019,
+      1.0
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WarclansWorkshop": {
-    "material": "Assets/Materials/WarclansWorkshop.mmat",
+    "material": "Assets/Materials/RealWarclansWorkshop.mmat",
     "parts": [
       {
         "name": "WarclansWorkshop",
-        "mesh": "Assets/Models/WarclansWorkshop.glb",
+        "mesh": "Assets/Models/RealWarclansWorkshop.glb",
         "pivot": [
           0,
           0,
@@ -1380,11 +1385,12 @@
       }
     ],
     "size": [
-      3.95,
-      2.1,
-      3.8
+      1.0,
+      0.6077234745025635,
+      0.9169018268585205
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WildwoodHall": {
     "material": "Assets/Materials/WildwoodHall.mmat",
@@ -1669,11 +1675,11 @@
     "realistic": true
   },
   "WarclansHall2": {
-    "material": "Assets/Materials/WarclansHall2.mmat",
+    "material": "Assets/Materials/RealWarclansHall2.mmat",
     "parts": [
       {
         "name": "WarclansHall2",
-        "mesh": "Assets/Models/WarclansHall2.glb",
+        "mesh": "Assets/Models/RealWarclansHall2.glb",
         "pivot": [
           0,
           0,
@@ -1682,18 +1688,19 @@
       }
     ],
     "size": [
-      3.95,
-      5.0,
-      4.4
+      1.1026387214660645,
+      1.5622230768203735,
+      0.9999999403953552
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WarclansHall3": {
-    "material": "Assets/Materials/WarclansHall3.mmat",
+    "material": "Assets/Materials/RealWarclansHall3.mmat",
     "parts": [
       {
         "name": "WarclansHall3",
-        "mesh": "Assets/Models/WarclansHall3.glb",
+        "mesh": "Assets/Models/RealWarclansHall3.glb",
         "pivot": [
           0,
           0,
@@ -1702,11 +1709,12 @@
       }
     ],
     "size": [
-      3.95,
-      5.7,
-      4.4
+      1.2400000095367432,
+      1.5622230768203735,
+      0.9999999403953552
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "WildwoodHall2": {
     "material": "Assets/Materials/WildwoodHall2.mmat",

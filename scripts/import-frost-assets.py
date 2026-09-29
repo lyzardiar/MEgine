@@ -160,5 +160,6 @@ if __name__ == '__main__':
     realistic=importlib.util.module_from_spec(realistic_spec);realistic_spec.loader.exec_module(realistic);realistic.main()
     import os, subprocess
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-houses.py')],check=True,cwd=ROOT)
+    subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-warclans.py')],check=True,cwd=ROOT)
 
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/bake-frost-foliage.py')],check=True,cwd=ROOT)

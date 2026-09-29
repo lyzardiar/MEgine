@@ -7,13 +7,13 @@
     {
       "faction": "Kingdom",
       "hall": "Keep",
-      "preview": "Assets/Models/KingdomBarracks.glb",
+      "preview": "Assets/Models/RealKingdomBarracks.glb",
       "workerModel": "Monk"
     },
     {
       "faction": "Warclans",
       "hall": "Great lodge",
-      "preview": "Assets/Models/WarclansBarracks.glb",
+      "preview": "Assets/Models/RealWarclansBarracks.glb",
       "workerModel": "Tribal"
     },
     {

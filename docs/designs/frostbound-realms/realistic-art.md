@@ -2,7 +2,7 @@
 
 本页记录写实素材接入阶段。当前树木、画面、性能实测和 Player 包见 [作者三维植被 LOD 阶段](foliage-lods.md)。
 
-人族八种建筑外观使用 Daniel74 的木梁、灰泥、砖基与瓦顶房屋模块，补充门窗并烘焙原始重复贴图；建造预览、场景模型、选中模型和建筑按钮使用同一份模型目录。环境使用 Poly Haven 的中型冷杉、灌木、扫描岩石、石砌火塘和森林地表。所有新增来源为 CC0，原件、来源地址与 SHA-256 保存在 `house-sources.json`、`realistic-sources.json`，许可位于样例 `Licenses/`。
+人族八种建筑外观使用 Daniel74 的木梁、灰泥、砖基与瓦顶房屋模块，补充门窗并烘焙原始重复贴图；建造预览、场景模型、选中模型和建筑按钮使用同一份模型目录。环境使用 Poly Haven 的中型冷杉、灌木、扫描岩石、石砌火塘和森林地表。这些人族与环境来源为 CC0，原件、来源地址与 SHA-256 保存在 `house-sources.json`、`realistic-sources.json`，许可位于样例 `Licenses/`。部落建筑采用 CC-BY-SA 3.0 的 0 A.D. 资产，来源、适配和许可分发见 [部落建筑记录](warclans-art.md)。
 
 Free3D 的实际访问返回 HTTP 403 与浏览器校验入口，正常浏览器也未成功加载。本阶段没有从 Free3D 下载模型。
 
@@ -24,6 +24,7 @@ npm install --prefix tmp/frost-realistic-tools meshoptimizer@0.24.0 --ignore-scr
 $env:BLENDER = '绝对路径/blender.exe'
 python scripts/import-frost-realistic.py
 & $env:BLENDER --background --factory-startup --python-exit-code 1 --python scripts/import-frost-houses.py
+& $env:BLENDER --background --factory-startup --python-exit-code 1 --python scripts/import-frost-warclans.py
 & $env:BLENDER --background --factory-startup --python-exit-code 1 --python scripts/bake-frost-foliage.py
 node scripts/build-frostbound.mjs
 node scripts/render-frost-faction-icons.mjs

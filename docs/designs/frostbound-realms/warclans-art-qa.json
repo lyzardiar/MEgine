@@ -1,0 +1,251 @@
+{
+  "checkedAt": "2026-09-29T06:21:57.488Z",
+  "baseCommit": "d2bae67a17e49478850aa3783a2fcc78e3972582",
+  "scope": "Eight authored Warclans building appearances, model portraits, native four-faction placement/selection, near/far graphics and packaged Player startup",
+  "upstream": {
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "license": "CC-BY-SA-3.0",
+    "sources": 82,
+    "sourceBytes": 22020172
+  },
+  "derived": {
+    "files": 40,
+    "byteIdenticalRebuild": true,
+    "modelStats": {
+      "WarclansHall": {
+        "triangles": 4620,
+        "size": [
+          0.965277373790741,
+          0.8206070065498352,
+          0.9999999403953552
+        ]
+      },
+      "WarclansBarracks": {
+        "triangles": 3734,
+        "size": [
+          1,
+          0.7904167175292969,
+          0.9392387270927429
+        ]
+      },
+      "WarclansLodge": {
+        "triangles": 1872,
+        "size": [
+          0.7492060661315918,
+          0.9130711555480957,
+          1
+        ]
+      },
+      "WarclansTower": {
+        "triangles": 456,
+        "size": [
+          1,
+          3.254631519317627,
+          0.8748868703842163
+        ]
+      },
+      "WarclansAltar": {
+        "triangles": 5627,
+        "size": [
+          0.9956291317939758,
+          1.2461861371994019,
+          1
+        ]
+      },
+      "WarclansWorkshop": {
+        "triangles": 12679,
+        "size": [
+          1,
+          0.6077234745025635,
+          0.9169018268585205
+        ]
+      },
+      "WarclansHall2": {
+        "triangles": 5076,
+        "size": [
+          1.1026387214660645,
+          1.5622230768203735,
+          0.9999999403953552
+        ]
+      },
+      "WarclansHall3": {
+        "triangles": 5532,
+        "size": [
+          1.2400000095367432,
+          1.5622230768203735,
+          0.9999999403953552
+        ]
+      }
+    }
+  },
+  "rules": {
+    "command": "node scripts/test-frostbound.mjs",
+    "passed": true,
+    "results": [
+      "PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion",
+      "PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection",
+      "PASS: opposing traffic, hold, narrow passage/head-on, flying layers, exact saves, melee surround, fog privacy, stacked TD recovery, base exit and speed limits",
+      "PASS: ordered route arrival, group queues/save replay, eight-waypoint atomic limit, command/work/blink/death cancellation, busy rejection, legacy/malformed saves and opponent privacy",
+      "PASS: four-faction queued construction, deferred payment, gathering delivery, distant site, repair/cancel, inside worker, consumed worker, invalid site skip, queue capacity/privacy and exact save replay",
+      "PASS: stationary hold combat/range/occlusion, stop release, six-unit patrol roundtrips/save replay, combat resumption, ramps, route overrides, privacy and invalid saves",
+      "PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 18 native unit portraits and pinned source/derived hashes",
+      "PASS: six slots, atomic recipes, health-ratio invariance, sell value/shop range, potions/cooldown, real pickup/transfer/race, fog, saved routes and malformed saves",
+      "PASS: four heroes / 16 skills, learning gates, status effects, timed areas/summons, targeting, hero saves and legacy migration",
+      "PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration",
+      "PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain",
+      "PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water",
+      "PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy",
+      "PASS: four faction rosters and tech gates, one-shot map triggers, fog privacy, full RPG legal-order quest/loot/growth/save roundtrip (549 ticks)",
+      "PASS: TCP inventory recipe, drop, pickup, reconnect and sell",
+      "PASS: TCP deferred worker construction, mixed queue reconnect and return to mining",
+      "PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect"
+    ]
+  },
+  "factions": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "factions": [
+      {
+        "faction": "Kingdom",
+        "hall": "Keep",
+        "preview": "Assets/Models/RealKingdomBarracks.glb",
+        "workerModel": "Monk"
+      },
+      {
+        "faction": "Warclans",
+        "hall": "Great lodge",
+        "preview": "Assets/Models/RealWarclansBarracks.glb",
+        "workerModel": "Tribal"
+      },
+      {
+        "faction": "Wildwood",
+        "hall": "Ancient of roots",
+        "preview": "Assets/Models/WildwoodBarracks.glb",
+        "workerModel": "Rogue"
+      },
+      {
+        "faction": "Revenant",
+        "hall": "Necropolis",
+        "preview": "Assets/Models/RevenantBarracks.glb",
+        "workerModel": "Ghost_Skull"
+      }
+    ],
+    "shaderRejections": 0
+  },
+  "realistic": {
+    "nearZoom": 12,
+    "farZoom": 27,
+    "realMeshes": 92,
+    "lodSwitch": true,
+    "editorRendered": true,
+    "shaderRejections": 0,
+    "msaaSamples": 4,
+    "nearPerformance": {
+      "warmupMs": 3000,
+      "sampleWindowMs": 5000,
+      "summary": {
+        "intervals": 63,
+        "averagePresentIntervalMs": 79.90158730177652,
+        "p95PresentIntervalMs": 120,
+        "presentedFps": 12.51539592352712,
+        "averageRequestMs": 51.178124997764826,
+        "averageRenderMs": 12.491639062500003,
+        "averageCommandMs": 16.705384375,
+        "averageUploadMs": 1.5078124962747097,
+        "averageSimulationMs": 9.746345312499999,
+        "averageSimulationRequestMs": 21.75156250409782
+      }
+    },
+    "profiler": {
+      "intervals": 112,
+      "averagePresentIntervalMs": 91.56785714307001,
+      "p95PresentIntervalMs": 180.29999995231628,
+      "presentedFps": 10.920862748131716,
+      "averageRequestMs": 58.452212384844245,
+      "averageRenderMs": 15.196623008849556,
+      "averageCommandMs": 18.71371504424779,
+      "averageUploadMs": 1.497345130527969,
+      "averageSimulationMs": 10.197316814159295,
+      "averageSimulationRequestMs": 42.09734513590821
+    }
+  },
+  "performance": [
+    {
+      "intervals": 59,
+      "averagePresentIntervalMs": 86.9864406787743,
+      "p95PresentIntervalMs": 126.40000003576279,
+      "presentedFps": 11.496044581164378,
+      "averageRequestMs": 54.91833333571752,
+      "averageRenderMs": 11.599683333333335,
+      "averageCommandMs": 15.658288333333335,
+      "averageUploadMs": 1.473333332935969,
+      "averageSimulationMs": 9.563013333333334,
+      "averageSimulationRequestMs": 26.638333336512247
+    },
+    {
+      "intervals": 69,
+      "averagePresentIntervalMs": 74.2869565219119,
+      "p95PresentIntervalMs": 131.9000000357628,
+      "presentedFps": 13.461313355932639,
+      "averageRequestMs": 56.25999999557223,
+      "averageRenderMs": 11.10955714285714,
+      "averageCommandMs": 14.264399999999997,
+      "averageUploadMs": 1.4985714324883053,
+      "averageSimulationMs": 10.373607142857136,
+      "averageSimulationRequestMs": 27.915714280945913
+    },
+    {
+      "intervals": 60,
+      "averagePresentIntervalMs": 85.68500000039737,
+      "p95PresentIntervalMs": 120.19999998807907,
+      "presentedFps": 11.670654140110432,
+      "averageRequestMs": 49.87704917935074,
+      "averageRenderMs": 11.337562295081966,
+      "averageCommandMs": 16.15879672131147,
+      "averageUploadMs": 1.4606557371186428,
+      "averageSimulationMs": 9.918450819672131,
+      "averageSimulationRequestMs": 25.13278688172825
+    }
+  ],
+  "package": {
+    "contentHash": "4b89da022f021e19db3a32b78c8f1c2e5f1345132e556eda3d8aec2a00b0a49f",
+    "files": 403,
+    "bytes": 142939594,
+    "attributionVerified": true,
+    "allNewAssetsHashVerified": true,
+    "player": {
+      "contentHash": "4b89da022f021e19db3a32b78c8f1c2e5f1345132e556eda3d8aec2a00b0a49f",
+      "windowTitle": "Frostbound Realms",
+      "responding": true,
+      "audioListening": false,
+      "shutdown": "Only this smoke-check process was stopped",
+      "elapsedSeconds": 30,
+      "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+      "alive": true,
+      "packageValidationPassed": true,
+      "startedAt": "2026-09-29T14:17:14.4917220+08:00",
+      "processId": 85276,
+      "packagedFiles": 403,
+      "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+      "checkedAt": "2026-09-29T14:17:44.5297496+08:00",
+      "physicalInput": false,
+      "loggedErrors": 0
+    }
+  },
+  "evidenceHashes": {
+    "warclans-close-detail.png": "a96ce74a240901d103b1d5642b5f9f5bce25015f336508dde11df4bac263aeda",
+    "realistic-editor.png": "37c9d93463e227c84282a5b10e481c44857141b38eda5324f0c574eab0f1b0cb",
+    "native-factions-qa.json": "2df742ae399b87924d5c3bfed46ef704fc2d75a2bd9a03d6480a2c8997d4fda8",
+    "native-realistic-qa.json": "4131344306f3f711cce08fb0f1ddd2d8d7f1a57a3596e8d6d533c8303d2d6b2f",
+    "native-performance-qa.json": "80ffbb1fe33c74e7293725e62300b228049f316fe7ce00499869f16160e03314",
+    "player-smoke.json": "a74a3b5ce706dede987c7ae5d6b89f625fefcb6d715980b0ae51d478adedd243"
+  },
+  "limitations": [
+    "Other two faction buildings and some character art remain simplified",
+    "Five millisecond performance target unmet",
+    "Physical input, audio listening and cross-machine LAN unverified in this stage",
+    "Full requested game recreation incomplete"
+  ]
+}

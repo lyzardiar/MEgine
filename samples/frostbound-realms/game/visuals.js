@@ -3,7 +3,7 @@ var FrostVisual=(()=>{
   const buildings={hall:'Hall',barracks:'Barracks',farm:'Lodge',tower:'Tower',altar:'Altar',workshop:'Workshop'};
   const names=[
     {hall:['Keep','Castle','Royal citadel'],barracks:'Royal barracks',farm:'Town house',tower:'Guard tower',altar:'Sanctuary',workshop:'Royal workshop'},
-    {hall:['Great lodge','War hall','Iron stronghold'],barracks:'War camp',farm:'Clan tent',tower:'Watch post',altar:'Spirit totem',workshop:'Siege encampment'},
+    {hall:['Great lodge','War hall','Iron stronghold'],barracks:'War barracks',farm:'Clan dwelling',tower:'Watch post',altar:'Spirit sanctuary',workshop:'Siege workshop'},
     {hall:['Ancient of roots','Ancient of boughs','Elder grove'],barracks:'Sentinel grove',farm:'Living shelter',tower:'Thorn watch',altar:'Moon sanctuary',workshop:'Grove workshop'},
     {hall:['Necropolis','Black citadel','Dread fortress'],barracks:'Crypt',farm:'Grave mound',tower:'Soul obelisk',altar:'Altar of shadows',workshop:'Bone foundry'}
   ];

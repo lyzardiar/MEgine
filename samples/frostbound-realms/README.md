@@ -141,4 +141,4 @@ node scripts/qa-frostbound.mjs
 
 英雄背包：I 打开六格背包，按钮切换 Use / Drop / Sell 后点击物品；数字小键盘 1–6 直接使用药水。右键地面掉落物会走近拾取，物品可转交其他英雄。O 打开主城商店，合成需要部件和配方费用，出售返还含部件总价的 50%。生命药水回复 250 HP，魔法药水回复 100 MP，共享 10 秒冷却。装备变更保持生命比例；满包时任务掉落保留在地面，手动丢弃不会被自动捡回。背包、掉落、拾取路线和冷却随存档及联机重连恢复。
 
-写实素材与重建命令：[写实美术记录](../../docs/designs/frostbound-realms/realistic-art.md)。当前人族八种建筑外观和环境已接入 CC0 材质资产；其他阵营与角色仍是原型美术。
+写实素材与重建命令：[写实美术记录](../../docs/designs/frostbound-realms/realistic-art.md)、[部落建筑记录](../../docs/designs/frostbound-realms/warclans-art.md)。人族八种建筑与环境使用 CC0 资产；部落八种建筑外观采用 Wildfire Games 的 0 A.D. 木构、茅草建筑，原件及派生资源遵循 CC-BY-SA 3.0，许可随 Player 位于 `Assets/Licenses/0ad-warclans.txt`。其余两族建筑与部分角色仍需完善。

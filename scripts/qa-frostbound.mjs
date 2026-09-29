@@ -134,15 +134,16 @@ if(process.argv.includes('--peer')){
       const samples=await a.query('profiler.get_samples',{source:'game',limit:30});assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);report.formation={units:12,boxSelect:true,controlGroup:true,distinctArrival:true,saveRestored:true,targets,shaderRejections:0};
     }
     if(factionsOnly){
-      report.factions=[];
+      report.factions=[];const catalog=JSON.parse(fs.readFileSync(path.join(sample,'model-catalog.json')));
       for(let f=0;f<4;f++){
         if(f){await press(a,'F10');await click(a,200,658);}assert.equal((await state(a)).faction,f);await press(a,'F1');await until(async()=>(await state(a)).mode==='playing','faction skirmish');
         let s=await state(a);const faction=['Kingdom','Warclans','Wildwood','Revenant'][f],scene=await a.query('scene.snapshot'),meshes=scene.entities.filter(e=>e.active!==false).map(e=>e.components.MeshRenderer?.mesh||'');
-        for(const kind of ['Hall','Barracks','Lodge'])assert.ok(meshes.includes('Assets/Models/'+faction+kind+'.glb'),faction+kind);
+        for(const kind of ['Hall','Barracks','Lodge']){const asset=catalog[faction+kind];assert.ok(meshes.includes(asset.parts[0].mesh),faction+kind);assert.ok(scene.entities.some(e=>e.active!==false&&e.components.MeshRenderer?.mesh===asset.parts[0].mesh&&e.components.MeshRenderer.material===asset.material),'authored building material');}
         const worker=s.worker;assert.ok(meshes.some(m=>m.startsWith('Assets/Models/'+['Monk','Tribal','Rogue','Ghost_Skull'][f]+'.glb#pose=')));await until(async()=>{const current=await state(a);if(current.selected.includes(worker.id))return true;await click(a,...projectPoint(current,current.worker));return false;},'faction worker selection');await press(a,'KeyS');await press(a,'KeyB');await a.execute('playback.input',{pointer:projectPoint(await state(a),{x:-12,z:18}),viewport:[1280,720]});await sleep(300);
-        const previewScene=await a.query('scene.snapshot'),preview=previewScene.entities.find(e=>e.name==='Placement preview');assert.equal(previewScene.entities.find(e=>e.name==='action0 icon').components.Image.sprite,'Assets/Art/faction-buildings.png#'+faction+'Hall');assert.equal(preview.components.MeshRenderer.mesh,'Assets/Models/'+faction+'Barracks.glb');await capture(a,'faction-'+f);await press(a,'Escape');
+        const previewScene=await a.query('scene.snapshot'),preview=previewScene.entities.find(e=>e.name==='Placement preview');assert.equal(previewScene.entities.find(e=>e.name==='action0 icon').components.Image.sprite,'Assets/Art/faction-buildings.png#'+faction+'Hall');assert.equal(preview.components.MeshRenderer.mesh,catalog[faction+'Barracks'].parts[0].mesh);await capture(a,'faction-'+f);await press(a,'Escape');
         const hall=(await state(a)).production.find(u=>u.kind==='hall');await click(a,...projectPoint(await state(a),hall));await until(async()=>(await state(a)).selected.includes(hall.id),'faction hall selection');
         const hallScene=await a.query('scene.snapshot'),label=hallScene.entities.find(e=>e.name==='Selection title').components.Text.text;assert.equal(hallScene.entities.find(e=>e.name==='Portrait').components.Image.sprite,'Assets/Art/faction-buildings.png#'+faction+'Hall');assert.ok(label.length);report.factions.push({faction,hall:label,preview:preview.components.MeshRenderer.mesh,workerModel:['Monk','Tribal','Rogue','Ghost_Skull'][f]});
+        if(f===1){await press(a,'Home');await press(a,'Home');await capture(a,'warclans-close-detail');}
       }
       const samples=await a.query('profiler.get_samples',{source:'game',limit:30});assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);report.shaderRejections=0;
     }

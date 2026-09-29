@@ -1,0 +1,1125 @@
+{
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "author": "Wildfire Games",
+  "authorUrl": "https://www.wildfiregames.com/",
+  "upstream": "https://github.com/0ad/0ad",
+  "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+  "generator": "scripts/import-frost-warclans.py",
+  "parts": {
+    "Hall": [
+      {
+        "actor": "actors/structures/gauls/civic_centre.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "structural/gaul_struct_1.png",
+          "normTex": "structural/gaul_struct_1_norm.png",
+          "specTex": "structural/gaul_struct_1_spec.png",
+          "aoTex": "structural/ao/gaul_civic_centre.png"
+        },
+        "mesh": "structural/gaul_civic_centre_struct1.dae"
+      },
+      {
+        "actor": "actors/props/structures/gauls/civic_centre_props_1.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_prop_1.png",
+          "normTex": "props/celt_prop_1_norm.png",
+          "specTex": "props/celt_prop_1_spec.png",
+          "aoTex": "structural/ao/gaul_civic_centre.png"
+        },
+        "mesh": "props/gaul_civic_centre_props_1.dae"
+      },
+      {
+        "actor": "actors/props/structures/gauls/civic_centre_props_new.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_props_new.dds",
+          "normTex": "props/celt_props_new_norm.png",
+          "specTex": "props/celt_props_new_spec.png",
+          "aoTex": "structural/ao/gaul_civic_centre.png"
+        },
+        "mesh": "props/gaul_civic_centre_props_new.dae"
+      },
+      {
+        "actor": "actors/props/structures/gauls/civic_centre_wood_c.xml",
+        "material": "no_trans_ao_norm_spec.xml",
+        "textures": {
+          "baseTex": "props/wood_c.png",
+          "aoTex": "structural/ao/gaul_civic_centre.png",
+          "normTex": "default_norm.png",
+          "specTex": "null_black.dds"
+        },
+        "mesh": "props/gaul_civic_centre_wood_c.dae"
+      }
+    ],
+    "Barracks": [
+      {
+        "actor": "actors/structures/britons/barracks.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "structural/brit_struct.png",
+          "normTex": "structural/celt_struct_norm.png",
+          "specTex": "structural/celt_struct_spec.png",
+          "aoTex": "structural/ao/brit_barracks.png"
+        },
+        "mesh": "structural/brit_barracks_struct.dae"
+      },
+      {
+        "actor": "actors/props/structures/britons/barracks_props_new.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_props_new.dds",
+          "normTex": "props/celt_props_new_norm.png",
+          "specTex": "props/celt_props_new_spec.png",
+          "aoTex": "structural/ao/brit_barracks.png"
+        },
+        "mesh": "props/brit_barracks_props_new.dae"
+      },
+      {
+        "actor": "actors/props/structures/britons/barracks_palisade.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/palisade_main.png",
+          "normTex": "props/palisade_main_norm.png",
+          "specTex": "props/palisade_main_spec.png",
+          "aoTex": "structural/ao/brit_barracks.png"
+        },
+        "mesh": "props/brit_barracks_palisade.dae"
+      },
+      {
+        "actor": "actors/props/structures/britons/barracks_props_1.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_prop_1.png",
+          "normTex": "props/celt_prop_1_norm.png",
+          "specTex": "props/celt_prop_1_spec.png",
+          "aoTex": "structural/ao/brit_barracks.png"
+        },
+        "mesh": "props/brit_barracks_props1.dae"
+      },
+      {
+        "actor": "actors/props/structures/britons/barracks_struct1.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "structural/celt_struct_1.dds",
+          "normTex": "structural/celt_struct_1_norm.png",
+          "specTex": "structural/celt_struct_1_spec.png",
+          "aoTex": "structural/ao/brit_barracks.png"
+        },
+        "mesh": "props/brit_barracks_struct1.dae"
+      },
+      {
+        "actor": "actors/props/structures/britons/barracks_weapons.xml",
+        "material": "player_trans_ao_norm_spec.xml",
+        "textures": {
+          "baseTex": "props/prop_weap.dds",
+          "aoTex": "structural/ao/brit_barracks.png",
+          "normTex": "default_norm.png",
+          "specTex": "null_black.dds"
+        },
+        "mesh": "props/brit_barracks_weapons.dae"
+      }
+    ],
+    "Lodge": [
+      {
+        "actor": "actors/structures/gauls/house.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "structural/celt_struct_1.dds",
+          "normTex": "structural/celt_struct_1_norm.png",
+          "specTex": "structural/celt_struct_1_spec.png",
+          "aoTex": "structural/ao/gaul_house_a.png"
+        },
+        "mesh": "structural/gaul_house_a.dae"
+      },
+      {
+        "actor": "actors/props/structures/gauls/house_a_props_1.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_prop_1.png",
+          "normTex": "props/celt_prop_1_norm.png",
+          "specTex": "props/celt_prop_1_spec.png",
+          "aoTex": "structural/ao/gaul_house_a.png"
+        },
+        "mesh": "props/gaul_house_a_props_1.dae"
+      },
+      {
+        "actor": "actors/props/structures/gauls/house_a_props_new.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_props_new.dds",
+          "normTex": "props/celt_props_new_norm.png",
+          "specTex": "props/celt_props_new_spec.png",
+          "aoTex": "structural/ao/gaul_house_a.png"
+        },
+        "mesh": "props/gaul_house_a_props_new.dae"
+      }
+    ],
+    "Tower": [
+      {
+        "actor": "actors/structures/gauls/wooden_tower.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "structural/celt_struct.dds",
+          "normTex": "structural/celt_struct_norm.png",
+          "specTex": "structural/celt_struct_spec.png",
+          "aoTex": "structural/ao/gaul_wooden_tower_AO.png"
+        },
+        "mesh": "structural/gaul_wooden_tower.dae"
+      }
+    ],
+    "Altar": [
+      {
+        "actor": "actors/structures/britons/temple.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "structural/brit_struct_1.png",
+          "normTex": "structural/celt_struct_1_norm.png",
+          "specTex": "structural/celt_struct_1_spec.png",
+          "aoTex": "structural/ao/celt_temple.png"
+        },
+        "mesh": "structural/celt_temple.dae"
+      },
+      {
+        "actor": "actors/props/structures/celts/temple_color.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_props_new.dds",
+          "normTex": "props/celt_props_new_norm.png",
+          "specTex": "props/celt_props_new_spec.png",
+          "aoTex": "structural/ao/celt_temple.png"
+        },
+        "mesh": "props/celt_temple_color.dae"
+      },
+      {
+        "actor": "actors/props/structures/celts/temple_palisade.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_temple_palisade.dds",
+          "normTex": "props/palisade_main_norm.png",
+          "specTex": "props/palisade_main_spec.png",
+          "aoTex": "structural/ao/celt_temple.png"
+        },
+        "mesh": "props/celt_temple_palisade.dae"
+      },
+      {
+        "actor": "actors/props/structures/celts/temple_prop_1.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_prop_1.png",
+          "normTex": "props/celt_prop_1_norm.png",
+          "specTex": "props/celt_prop_1_spec.png",
+          "aoTex": "structural/ao/celt_temple.png"
+        },
+        "mesh": "props/celt_temple_prop_1.dae"
+      },
+      {
+        "actor": "actors/props/structures/celts/temple_turf.xml",
+        "material": "player_trans_ao_norm_spec.xml",
+        "textures": {
+          "baseTex": "props/celt_wall_turf.dds",
+          "aoTex": "structural/ao/celt_temple.png",
+          "normTex": "default_norm.png",
+          "specTex": "null_black.dds"
+        },
+        "mesh": "props/celt_temple_turf.dae"
+      },
+      {
+        "actor": "actors/props/structures/celts/temple_celt_wall.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "structural/celt_wall.dds",
+          "normTex": "structural/celt_wall_norm.png",
+          "specTex": "structural/celt_wall_spec.png",
+          "aoTex": "structural/ao/celt_temple.png"
+        },
+        "mesh": "props/celt_temple_wall.dae"
+      }
+    ],
+    "Workshop": [
+      {
+        "actor": "actors/structures/gauls/workshop.xml",
+        "material": "player_trans_ao_parallax_spec.xml",
+        "textures": {
+          "baseTex": "structural/celt_struct.dds",
+          "normTex": "structural/celt_struct_norm.png",
+          "specTex": "structural/celt_struct_spec.png",
+          "aoTex": "structural/ao/gaul_workshop.png"
+        },
+        "mesh": "structural/gaul_workshop.dae"
+      }
+    ]
+  },
+  "models": {
+    "WarclansHall": [
+      {
+        "role": "Hall",
+        "scale": 1,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "WarclansBarracks": [
+      {
+        "role": "Barracks",
+        "scale": 1,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "WarclansLodge": [
+      {
+        "role": "Lodge",
+        "scale": 1,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "WarclansTower": [
+      {
+        "role": "Tower",
+        "scale": 1,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "WarclansAltar": [
+      {
+        "role": "Altar",
+        "scale": 1,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "WarclansWorkshop": [
+      {
+        "role": "Workshop",
+        "scale": 1,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "WarclansHall2": [
+      {
+        "role": "Hall",
+        "scale": 1,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "role": "Tower",
+        "scale": 0.48,
+        "position": [
+          -0.38,
+          0,
+          -0.28
+        ]
+      }
+    ],
+    "WarclansHall3": [
+      {
+        "role": "Hall",
+        "scale": 1,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "role": "Tower",
+        "scale": 0.48,
+        "position": [
+          -0.38,
+          0,
+          -0.28
+        ]
+      },
+      {
+        "role": "Tower",
+        "scale": 0.48,
+        "position": [
+          0.38,
+          0,
+          -0.28
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/LICENSE.txt",
+      "sha256": "ef98babd771c206032e005f3d440a1e610df409d9a9191f03e64deaa4abefbd9",
+      "size": 1426
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/britons/barracks_palisade.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/britons/barracks_palisade.xml",
+      "sha256": "0d9486a248f947e00e516ad995f0bde2284f20670254a69a058d027dfb0848ef",
+      "size": 576
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/britons/barracks_props_1.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/britons/barracks_props_1.xml",
+      "sha256": "51d55d1a3dd52995f939aaa91c255e8970627ac188f50631c50e21efa847c9dd",
+      "size": 528
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/britons/barracks_props_new.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/britons/barracks_props_new.xml",
+      "sha256": "79a2b69fb5ba98d31f45769701ea7efaa2600228dae967b8d80d9801c5105ba7",
+      "size": 537
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/britons/barracks_struct1.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/britons/barracks_struct1.xml",
+      "sha256": "041d3cf09462693ecad5ff34535e5eb7ca19b05f48f51c27b26787a49cd370ad",
+      "size": 578
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/britons/barracks_weapons.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/britons/barracks_weapons.xml",
+      "sha256": "431d41612a08fd5fe3687394f41c36bb437e3136190047dbf5a3e21d9cf9e3e2",
+      "size": 519
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/celts/temple_celt_wall.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/celts/temple_celt_wall.xml",
+      "sha256": "738889639a58a4ce11465d65bf313a6c0a077d1d6bc6e534ff1f8fb8b452a435",
+      "size": 526
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/celts/temple_color.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/celts/temple_color.xml",
+      "sha256": "bfc2ed1fdfde2947c7b4e60eafe68bf094e5d9a968f6fe7e0c775261a9acb36a",
+      "size": 529
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/celts/temple_palisade.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/celts/temple_palisade.xml",
+      "sha256": "baa1d78f4e28811934113765e808fb061d8e3fc72cc3e08ed6a0ab20fad0b6fe",
+      "size": 536
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/celts/temple_prop_1.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/celts/temple_prop_1.xml",
+      "sha256": "9888a0d0385b8a13c32ea9e42c56f452470ada80fb77cbb61722b23fff62cadb",
+      "size": 524
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/celts/temple_turf.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/celts/temple_turf.xml",
+      "sha256": "dcc52c9e02b4f562b50268f8eae641a71cfcadfcb817c5bc39b8616ff1aabd91",
+      "size": 517
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/gauls/civic_centre_props_1.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/gauls/civic_centre_props_1.xml",
+      "sha256": "65e6790a1f31999f439ffb64a9c75cbf90ff3591d87dee7cec94d5b1632a4e76",
+      "size": 584
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/gauls/civic_centre_props_new.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/gauls/civic_centre_props_new.xml",
+      "sha256": "a68a46ecb75f07b2087a5a3d5bf06cf6da2dbabc9f46919031449d7707167472",
+      "size": 589
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/gauls/civic_centre_wood_c.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/gauls/civic_centre_wood_c.xml",
+      "sha256": "6edbbc72e8a104b22e520c4cff2dc2ae05c032bc505e6aab6b8c5e861e4fad82",
+      "size": 560
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/gauls/house_a_props_1.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/gauls/house_a_props_1.xml",
+      "sha256": "3245235695ba28c5af82dc5a5101dfff34fe292e0a86fe08f283d96c3217d65f",
+      "size": 568
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/structures/gauls/house_a_props_new.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/structures/gauls/house_a_props_new.xml",
+      "sha256": "89c611c6f92bd94832d8533ef92d345bb2765e7560b636f2d06cd2d64b64f315",
+      "size": 579
+    },
+    {
+      "file": "SourceAssets/0ad/actors/structures/britons/barracks.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/structures/britons/barracks.xml",
+      "sha256": "98296a5b2c8659a700b65f58e4314f38be63a946e6cf764f3633497518fc5b61",
+      "size": 1924
+    },
+    {
+      "file": "SourceAssets/0ad/actors/structures/britons/temple.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/structures/britons/temple.xml",
+      "sha256": "55f31f20789b6041f234e7ae3328c835ec0b2e68b210e1f96eb6d158bd07068b",
+      "size": 2088
+    },
+    {
+      "file": "SourceAssets/0ad/actors/structures/gauls/civic_centre.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/structures/gauls/civic_centre.xml",
+      "sha256": "91cae76133f61f4a28db5ebd0ec73904a69650341a2d1cbc8ce7cab46c4dac88",
+      "size": 1707
+    },
+    {
+      "file": "SourceAssets/0ad/actors/structures/gauls/house.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/structures/gauls/house.xml",
+      "sha256": "113753445e2da0fc21c1eefdd3d22e372cb20dbe65eeab5db14e01fe8956fadf",
+      "size": 2370
+    },
+    {
+      "file": "SourceAssets/0ad/actors/structures/gauls/wooden_tower.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/structures/gauls/wooden_tower.xml",
+      "sha256": "96b7bd6ef605786bd6f081e42b7a76d34403e5acfafe88dc97dcdf4b13f8abca",
+      "size": 2163
+    },
+    {
+      "file": "SourceAssets/0ad/actors/structures/gauls/workshop.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/structures/gauls/workshop.xml",
+      "sha256": "045a8bc48b1639468a52806d29bbf92ca305f94c39e791865348c3d90bbfa958",
+      "size": 1065
+    },
+    {
+      "file": "SourceAssets/0ad/materials/no_trans_ao_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/no_trans_ao_norm_spec.xml",
+      "sha256": "181853cc06d5f2f54de26a09e93eaf4f506d6bf5d3c415d5c01f1d5915eea4d5",
+      "size": 405
+    },
+    {
+      "file": "SourceAssets/0ad/materials/player_trans_ao_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/player_trans_ao_norm_spec.xml",
+      "sha256": "913b003905428a8dce387d19a4a7bf7de260fa863f19c6b738d96080c7952e42",
+      "size": 472
+    },
+    {
+      "file": "SourceAssets/0ad/materials/player_trans_ao_parallax_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/player_trans_ao_parallax_spec.xml",
+      "sha256": "d0b5c6e541aefcc3dea32c3cc277328772430a35ce170b0f2abd808e8763b927",
+      "size": 512
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/brit_barracks_palisade.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/brit_barracks_palisade.dae",
+      "sha256": "32d675119b426313dd0f394d50291b2a6cca2e9cf173d574868b27e5587de0bc",
+      "size": 116474
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/brit_barracks_props1.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/brit_barracks_props1.dae",
+      "sha256": "c1f9aa97fbeb4b39b8ce045ec5b8408b93b67fb0352e12000949b3a988a33c81",
+      "size": 253768
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/brit_barracks_props_new.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/brit_barracks_props_new.dae",
+      "sha256": "b112e0674a7848830ecc928cebe4aafbe9fc9d5f1cd4fe58a97d320579dc82bf",
+      "size": 40856
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/brit_barracks_struct1.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/brit_barracks_struct1.dae",
+      "sha256": "06c0554e3839faf3749e149a9237509ddfdcb10742643fcc121cbe0ad88a1ac5",
+      "size": 69906
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/brit_barracks_weapons.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/brit_barracks_weapons.dae",
+      "sha256": "6dd67a577cc6aaa2ef1e0c30bcf7319510fe4ec16fcf522492dc63a09f692af2",
+      "size": 46342
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/celt_temple_color.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/celt_temple_color.dae",
+      "sha256": "d49028da2a3240498cfc130427a5aed34dcc9a233223e8067ad003461788acb2",
+      "size": 77988
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/celt_temple_palisade.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/celt_temple_palisade.dae",
+      "sha256": "88ec058f55a6e9f4e2ca508afb0c18abaf9fa7721777b386cb7c3261a50b07a6",
+      "size": 179346
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/celt_temple_prop_1.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/celt_temple_prop_1.dae",
+      "sha256": "e85b0ae817ce0f804b5f08ad165d1c0fc2eab8f8d34a6c14e4c0243acbb61a7c",
+      "size": 229730
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/celt_temple_turf.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/celt_temple_turf.dae",
+      "sha256": "dc69994d3d46e32412bc9157e8c385d0fd7884917aac79d25f89b9e2cf2e1249",
+      "size": 4957
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/celt_temple_wall.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/celt_temple_wall.dae",
+      "sha256": "d85fbf47a02ec55c40c0cde9c9a3f7b9c4851c4ea00ffaabb1c78c259e448682",
+      "size": 16756
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/gaul_civic_centre_props_1.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/gaul_civic_centre_props_1.dae",
+      "sha256": "4f2faf551104c2532265df2f6342b49e55bcd7993da46d4745901705580c7b39",
+      "size": 260858
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/gaul_civic_centre_props_new.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/gaul_civic_centre_props_new.dae",
+      "sha256": "c887e3373837584cef5958476590a664f1b01105076e67c21d5fdf8a07dbfa00",
+      "size": 93963
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/gaul_civic_centre_wood_c.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/gaul_civic_centre_wood_c.dae",
+      "sha256": "25bbaf48a0b8041503dca0b9ab9316b0e6ba076d649d2c3e0f06b08ef3919e5d",
+      "size": 29804
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/gaul_house_a_props_1.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/gaul_house_a_props_1.dae",
+      "sha256": "37db63e40e5c15c9d368b45335e3618ec4a180e5e8a32977b02ea183468706ed",
+      "size": 74660
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/gaul_house_a_props_new.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/gaul_house_a_props_new.dae",
+      "sha256": "e5ac1c27c908870d1e67ab6b307b8852ab07dfa5a7f5a076c035ddb0792b7eb2",
+      "size": 34590
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/brit_barracks_struct.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/brit_barracks_struct.dae",
+      "sha256": "40eb69ae79b97266e0fbb2f1ac9e3a0166d9600fd3d141ea38373744dea09393",
+      "size": 253202
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/celt_temple.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/celt_temple.dae",
+      "sha256": "664eb9f27a9de9393aec1762c6347e5f51063cfeaddacb8c877fcdee086a9355",
+      "size": 593397
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/gaul_civic_centre_struct1.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/gaul_civic_centre_struct1.dae",
+      "sha256": "28ca5734786ca336ae8006fb4920e4e61117282444c2b4f8b18aa2b127aaecd6",
+      "size": 538120
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/gaul_house_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/gaul_house_a.dae",
+      "sha256": "60f0614c1092395065c4ba8fe6bed64da873d38c579c9cbc400e9a9b8f30f3a8",
+      "size": 272099
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/gaul_wooden_tower.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/gaul_wooden_tower.dae",
+      "sha256": "732b726e62a35d545779a911daea8961f48f9549ff478d706c9d3acc29a1238b",
+      "size": 87102
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/structural/gaul_workshop.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/structural/gaul_workshop.dae",
+      "sha256": "622aaf459078ca0db70d7ce4fd27e61b0c673bae62a33c6bf7c5c0bbe3e88269",
+      "size": 2399463
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/default_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/default_norm.png",
+      "sha256": "b1ba25ca729a28c798a99a1a0bcf9310d0994a55b4f9d1a36f163fb31676cecf",
+      "size": 69
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/null_black.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/null_black.dds",
+      "sha256": "1b2fefc88f9523c56af637318150f92722e88bf93f3876d38b6c039114b21c7a",
+      "size": 152
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/celt_prop_1.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/celt_prop_1.png",
+      "sha256": "18b08b6c1d1d7991ac85e1540201929ad688dbcf1b8d4166f3388502c823ea39",
+      "size": 435637
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/celt_prop_1_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/celt_prop_1_norm.png",
+      "sha256": "77e5f8d3be4332541fb11c65435b5732b13d7bbcdf63e669268298bdbe4b1681",
+      "size": 197409
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/celt_prop_1_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/celt_prop_1_spec.png",
+      "sha256": "7b21c474e987d57296fc5b2680c9f76efb0994f4fe29540185054723d18d9904",
+      "size": 12000
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/celt_props_new.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/celt_props_new.dds",
+      "sha256": "ef1a124282cf39b13fa433444fad754d6cd15a773e0ebeb75f6e8809f4e4db78",
+      "size": 174928
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/celt_props_new_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/celt_props_new_norm.png",
+      "sha256": "545d94aec4ccfb8df4b06898e6f7f46b0cc2aadfd64a76f9a9370ecceb012213",
+      "size": 267097
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/celt_props_new_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/celt_props_new_spec.png",
+      "sha256": "a1d741e2a1136d5c5613a5ad6335da06db42590d68305c2c1bf0ec702d7a722f",
+      "size": 132187
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/celt_temple_palisade.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/celt_temple_palisade.dds",
+      "sha256": "b884d9342a854f15da5f74b7f52d81adee1b20f35456a4fc6b1b3465c6f0e9b6",
+      "size": 349680
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/celt_wall_turf.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/celt_wall_turf.dds",
+      "sha256": "9dfc37010cfedf98fe746289bd79e47f2b0cad70dd2e8faed42068fd30dac74e",
+      "size": 174928
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/palisade_main.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/palisade_main.png",
+      "sha256": "14965956bb352cbb97ff1419b1dc62443e254e740fc1f0bf23598a68e970e4d0",
+      "size": 652293
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/palisade_main_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/palisade_main_norm.png",
+      "sha256": "54fd2fcf6b57d42ae200934690682f14258716d1792b13cab0eab6b45600cdc4",
+      "size": 509927
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/palisade_main_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/palisade_main_spec.png",
+      "sha256": "c7846946883cad71e74e280c787387bd4d3478182de458d6ab45128914681389",
+      "size": 212105
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/prop_weap.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/prop_weap.dds",
+      "sha256": "761a9987655353d96cf5093d3d713a62dca98f5f605c8fef52311eac0b3a1bde",
+      "size": 87536
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/wood_c.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/wood_c.png",
+      "sha256": "6f83e0460b972c5ebe5606271124dfdd165661e1247777274d22e5892af4d15b",
+      "size": 136282
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/ao/brit_barracks.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/ao/brit_barracks.png",
+      "sha256": "557c27d4efdf0d200655873aa1099fd408e4eb923a686175a9125ca0db2854d3",
+      "size": 332961
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/ao/celt_temple.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/ao/celt_temple.png",
+      "sha256": "bf7b2be78a1178cec3b1df29c22b4f2298ccac5b10329dd4467bd51fbe3a26f2",
+      "size": 342890
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/ao/gaul_civic_centre.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/ao/gaul_civic_centre.png",
+      "sha256": "fd5489e2e94979b54e38bbf22b404bd30379132909f5931479deb012266cc994",
+      "size": 356883
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/ao/gaul_house_a.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/ao/gaul_house_a.png",
+      "sha256": "83d5a8d88b5a58daf9fcc44287a29fd145bce52ed3fb27d8e4f0ced9f21a2ffc",
+      "size": 233208
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/ao/gaul_wooden_tower_AO.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/ao/gaul_wooden_tower_AO.png",
+      "sha256": "344390c45b084d681afede0ee339e2494020674d4f7f9b0e2b4588bd704534d3",
+      "size": 83076
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/ao/gaul_workshop.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/ao/gaul_workshop.png",
+      "sha256": "0b09b08615a29fadf2bd4f1ca3c66915c60b67300a1040d7f1de3b68c151775d",
+      "size": 346587
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/brit_struct.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/brit_struct.png",
+      "sha256": "207dade618413facdfeae78d3472f2c02564b0a59988bbb86ec29f19b06761a9",
+      "size": 2472209
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/brit_struct_1.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/brit_struct_1.png",
+      "sha256": "b243e1eee5737c20191385a36aafd7a8c35823c87fb9be9591cfbf18a535bcbd",
+      "size": 623827
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_struct.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_struct.dds",
+      "sha256": "22b7f008856b980ab7b7cd6bb5b97a2b237db58f94452b4f2b61fe594b8f554a",
+      "size": 1398256
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_struct_1.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_struct_1.dds",
+      "sha256": "704dcb25bef11e3ca5c2d77cf014f136bc26cca66763633f75f4893f76e74e86",
+      "size": 349680
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_struct_1_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_struct_1_norm.png",
+      "sha256": "99821978f31a13d46b5a7a79746baa666a89d6176c12e0f80b78360938effae2",
+      "size": 639283
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_struct_1_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_struct_1_spec.png",
+      "sha256": "e19be51f3fd8a8210f8ba5d8e8460f6f74deabac4599724932b6031a672d2932",
+      "size": 59903
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_struct_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_struct_norm.png",
+      "sha256": "a25dc740b992b1eed91a3fe9f55392453feac4fa5f205e229324a43ed006bbe4",
+      "size": 2829815
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_struct_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_struct_spec.png",
+      "sha256": "f1725f48f3712eef7d64d28aa6a60a3a68cc9a96abdc264402ccfc762421f3ec",
+      "size": 909350
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_wall.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_wall.dds",
+      "sha256": "0ca0ecc73c977e355aec272ee883627f5dadfb01e43b71cea072d86c531e8b32",
+      "size": 65664
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_wall_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_wall_norm.png",
+      "sha256": "100e8ce3aa49f2fc612357a9ca0595fcb79830fad320787c4e4cd3e3090b74f2",
+      "size": 450986
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_wall_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_wall_spec.png",
+      "sha256": "0646febe71cb55be62e2d5f2e6d3d9478267d46b8175f6299ac64d842b51dd9e",
+      "size": 168338
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/gaul_struct_1.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/gaul_struct_1.png",
+      "sha256": "da52ebc29d1fbaef417784cf09e4816651fa749b9755baa8ec343c3152c7b600",
+      "size": 606142
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/gaul_struct_1_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/gaul_struct_1_norm.png",
+      "sha256": "66108bc87b1d426bd9e691a2fa8e02b3e4f0413693312ac19ca1588c539e6d6b",
+      "size": 634830
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/gaul_struct_1_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/gaul_struct_1_spec.png",
+      "sha256": "d3091fac8f0becf5ab4a9e2c2383ed70cab93089e89dcb8f61c727eb91953853",
+      "size": 77741
+    },
+    {
+      "file": "SourceAssets/0ad/variants/structures/defensive_building.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/structures/defensive_building.xml",
+      "sha256": "80d0d097247fdac914a46719d72def29acd3d780ab967bef0e69faf24ef1cd56",
+      "size": 550
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/RealWarclansHall_base.png",
+      "sha256": "92fae8f0b01c8439fad8615356ed1dcffa313b265a2dfe54f9b2bd6e2d2bb081"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansHall_normal.png",
+      "sha256": "da3e9754529bdc052e3d9b1aaf5a3ad54cd3d79dea42b9d82d7a49d33b450f1d"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansHall_arm.png",
+      "sha256": "cb112bdc91c91d408f9d3bc1f1d8ebeef9d73557db91bc2250734834a50cbb79"
+    },
+    {
+      "file": "Assets/Models/RealWarclansHall.glb",
+      "sha256": "6971b44feaa2fca759e5451fcf67849aceaee93bf949fd75ad2e54d3bd51412d"
+    },
+    {
+      "file": "Assets/Materials/RealWarclansHall.mmat",
+      "sha256": "068b59856f2fc886aa00ed65a6f67f0d29994d8593fda0ec499204d04a4fd91b"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansBarracks_base.png",
+      "sha256": "4e253e75e1e9db8c3d696e9ee1a552023c6ff3a7d214b88289ddf490a9be8d5e"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansBarracks_normal.png",
+      "sha256": "4dd6bda83bff72f29e9442e3d7dceeacc965e65dad75ec1b5349bebdc5d0355b"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansBarracks_arm.png",
+      "sha256": "210dcd6d65dbe4558a243363cb040baaea38d2ff0f1db423f3b31ad900782cbb"
+    },
+    {
+      "file": "Assets/Models/RealWarclansBarracks.glb",
+      "sha256": "bab8539142cffa461cf70fb8f14984780701c12a058c62f79bf48713dc32cb84"
+    },
+    {
+      "file": "Assets/Materials/RealWarclansBarracks.mmat",
+      "sha256": "a00f290900a5f303645ec334dc060b4e0a1cd5019ef336a7e34f1120b3ea688c"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansLodge_base.png",
+      "sha256": "d2dd4d07258c96c737c7b3d6c01c51dc3d39588b14ec2b9fc811e723ecda747f"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansLodge_normal.png",
+      "sha256": "a8e4ea18627ece1b2e9b2b632e3cfc2d9411981c31ffee639afa58e440d6cb36"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansLodge_arm.png",
+      "sha256": "85fa4fb37ee0a663818de315d02045c8b3a41535f473652d4b03b3b1498740de"
+    },
+    {
+      "file": "Assets/Models/RealWarclansLodge.glb",
+      "sha256": "298d79367ca3da8ad3c7f6c7d02f80bbc0575e4bf95a5f6138fa7145d6733669"
+    },
+    {
+      "file": "Assets/Materials/RealWarclansLodge.mmat",
+      "sha256": "619d8a80a9b1c4731a61e006d080fe07541886774c4cfa008cce7de02c7b61f1"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansTower_base.png",
+      "sha256": "9efde2602c4f0b2080dd7fcd54a77b5937b715152ab20444176e3729e0826e30"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansTower_normal.png",
+      "sha256": "0752536a570a3a970caedf4a7aeb4aa922dac113387fda29c62e65849c236efb"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansTower_arm.png",
+      "sha256": "37e2eb851622906d47bde0d09846f8299c2a2257b8b3723acbebf6040f50dadd"
+    },
+    {
+      "file": "Assets/Models/RealWarclansTower.glb",
+      "sha256": "eb32b06cee50e4b9cbf7d5456e4be30f1e1445caa4815ca70b85b77e78fec43d"
+    },
+    {
+      "file": "Assets/Materials/RealWarclansTower.mmat",
+      "sha256": "b3131ec35c9b5315493b10be3fbfef3a68ac9e78fdfa104d68701b4cbc9c6f44"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansAltar_base.png",
+      "sha256": "f01e9cf1a74aa8e2de0d673636bb8be79d738b45af7be1543f121f77f4dae392"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansAltar_normal.png",
+      "sha256": "2bed7102603e214ea55e5f8f234e2e1ccec4a4069c9183fa65579ea84a23eab7"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansAltar_arm.png",
+      "sha256": "89ecf9456b26c16707108c7b33b5ac3e1637e7084a6d7559576a5d4167055517"
+    },
+    {
+      "file": "Assets/Models/RealWarclansAltar.glb",
+      "sha256": "27d3bbfdc6ba56722cc748adf1cf9b7460c9555fabc9bdf814e7282f3a695b69"
+    },
+    {
+      "file": "Assets/Materials/RealWarclansAltar.mmat",
+      "sha256": "ecc1dba52bd82b341e4c8366bd01c7a83cd5ffe8ee23599d1fc9ebd5463de984"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansWorkshop_base.png",
+      "sha256": "05379e9b2ae245d5203f326b30eb74e1f278567a75482efce715b81ab0542ed4"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansWorkshop_normal.png",
+      "sha256": "96413e9c2c167a015a5b447ff73a8dea5a619d849d42969efde5f4489cf79d7e"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansWorkshop_arm.png",
+      "sha256": "46f6310ebf8b116d5a14e812125f16a6ed7541056f5032657e53288b6eda9095"
+    },
+    {
+      "file": "Assets/Models/RealWarclansWorkshop.glb",
+      "sha256": "5fd81d6a44b6821a63b0a3887e189f2c28920707f66da674431a3e9201d33399"
+    },
+    {
+      "file": "Assets/Materials/RealWarclansWorkshop.mmat",
+      "sha256": "ef8e2ce8f7b15e87181ec144138344a6bbf613b09e73203a32f3f4e3b74a00ff"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansHall2_base.png",
+      "sha256": "d3833b17eebdbe8d0c84dc46bbdeb7610a1d3899a5a78e50550159d36d9f8aaa"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansHall2_normal.png",
+      "sha256": "37b2f6e6de317eb7d9a7fa70260ce758bc0223a4189c9fc0beccdc3a97885713"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansHall2_arm.png",
+      "sha256": "9e4312e5d75e992b518cd2ab6386dbb7c4b3b7f51af6cd92d182a6302bab49dd"
+    },
+    {
+      "file": "Assets/Models/RealWarclansHall2.glb",
+      "sha256": "a50b22c19a152809c24c4878ecc3d34d5448a226d8bc66f086212f6f6e349f2f"
+    },
+    {
+      "file": "Assets/Materials/RealWarclansHall2.mmat",
+      "sha256": "cc56f2f8ec1f546ee58491db18a5231ae0b9c858f76cdfe5a2b9a2d74c6f134f"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansHall3_base.png",
+      "sha256": "dac149975f4bd8e47dfee5f116574f88fba2e156256d37d78670925d8e525023"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansHall3_normal.png",
+      "sha256": "c1461ddfd11efcf143d31d89ff284811709eb1c30f092c0ecf5e0bd6b62d01d6"
+    },
+    {
+      "file": "Assets/Textures/RealWarclansHall3_arm.png",
+      "sha256": "a0a59308df5edfb80d80ba46b8faf70c14e83b16a402d19556779c52bc87c460"
+    },
+    {
+      "file": "Assets/Models/RealWarclansHall3.glb",
+      "sha256": "41a8626187e0c53c0cf456b456be4bc54de2391bcd47574fdc9e5f5d5bcead79"
+    },
+    {
+      "file": "Assets/Materials/RealWarclansHall3.mmat",
+      "sha256": "47776d79218489b0d9d45294aa4e881cf06de143fbfd5d04eab0a7b15f26e83f"
+    }
+  ],
+  "sourceDimensions": {
+    "Hall": [
+      0.6526451110839844,
+      0.6761218309402466,
+      0.5548303127288818
+    ],
+    "Barracks": [
+      0.612409234046936,
+      0.5751984715461731,
+      0.4840584993362427
+    ],
+    "Lodge": [
+      0.2722998261451721,
+      0.36345118284225464,
+      0.33185678720474243
+    ],
+    "Tower": [
+      7.994143962860107,
+      6.993971824645996,
+      26.01799201965332
+    ],
+    "Altar": [
+      0.5476813316345215,
+      0.5500856637954712,
+      0.6855091452598572
+    ],
+    "Workshop": [
+      30.063718795776367,
+      27.565479278564453,
+      18.270427703857422
+    ]
+  },
+  "modelStats": {
+    "WarclansHall": {
+      "triangles": 4620,
+      "size": [
+        0.965277373790741,
+        0.8206070065498352,
+        0.9999999403953552
+      ]
+    },
+    "WarclansBarracks": {
+      "triangles": 3734,
+      "size": [
+        1.0,
+        0.7904167175292969,
+        0.9392387270927429
+      ]
+    },
+    "WarclansLodge": {
+      "triangles": 1872,
+      "size": [
+        0.7492060661315918,
+        0.9130711555480957,
+        1.0
+      ]
+    },
+    "WarclansTower": {
+      "triangles": 456,
+      "size": [
+        1.0,
+        3.254631519317627,
+        0.8748868703842163
+      ]
+    },
+    "WarclansAltar": {
+      "triangles": 5627,
+      "size": [
+        0.9956291317939758,
+        1.2461861371994019,
+        1.0
+      ]
+    },
+    "WarclansWorkshop": {
+      "triangles": 12679,
+      "size": [
+        1.0,
+        0.6077234745025635,
+        0.9169018268585205
+      ]
+    },
+    "WarclansHall2": {
+      "triangles": 5076,
+      "size": [
+        1.1026387214660645,
+        1.5622230768203735,
+        0.9999999403953552
+      ]
+    },
+    "WarclansHall3": {
+      "triangles": 5532,
+      "size": [
+        1.2400000095367432,
+        1.5622230768203735,
+        0.9999999403953552
+      ]
+    }
+  }
+}

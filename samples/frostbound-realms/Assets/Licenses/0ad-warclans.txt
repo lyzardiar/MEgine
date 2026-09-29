@@ -1,0 +1,31 @@
+Frostbound Realms - Warclans architecture attribution
+
+Original author: Wildfire Games
+https://www.wildfiregames.com/
+Original project: 0 A.D. https://play0ad.com/
+Source: https://github.com/0ad/0ad
+Revision: 61a3b9507d974084e6badb88a0826bd89a6d5b8b
+
+Copyright (C) 2009 Wildfire Games.
+Licensed under Creative Commons Attribution-ShareAlike 3.0 Unported:
+https://creativecommons.org/licenses/by-sa/3.0/
+https://creativecommons.org/licenses/by-sa/3.0/legalcode
+
+The following adapted resources are distributed under CC-BY-SA 3.0:
+Assets/Models/RealWarclans*.glb
+Assets/Materials/RealWarclans*.mmat
+Assets/Textures/RealWarclans*.png
+Assets/Art/faction-buildings.png (building portrait atlas including these models)
+
+Adaptation by MiYu / MEngine: selected static Gallic and Briton architecture;
+combined authored structural props; normalized bounds; composed tower upgrades;
+baked original color, normal and occlusion textures into new UV atlases; converted
+specular intensity to roughness; baked player-color regions as brown cloth;
+converted Collada geometry to glTF; rendered the game building portrait atlas.
+Source actors, models, textures and hashes are retained in the source project
+under SourceAssets/0ad and warclans-sources.json.
+
+Some upstream textures derive from CGTextures materials. Wildfire Games obtained
+special permission to distribute those altered textures under CC-BY-SA. This does
+not grant rights to other CGTextures materials. Original upstream license text is
+retained in SourceAssets/0ad/LICENSE.txt in the source project.

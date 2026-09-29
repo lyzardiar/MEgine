@@ -19,6 +19,9 @@ assert.equal(halls.size,4);
 const verify=entry=>{const data=fs.readFileSync(new URL(entry.file,root));assert.equal(crypto.createHash('sha256').update(data).digest('hex'),entry.sha256,entry.file);};
 const realistic=JSON.parse(fs.readFileSync(new URL('realistic-sources.json',root))),houses=JSON.parse(fs.readFileSync(new URL('house-sources.json',root)));
 for(const manifest of [realistic,houses]){assert.equal(manifest.license,'CC0-1.0');manifest.sources.forEach(verify);manifest.generated.forEach(verify);}realistic.impostors.forEach(verify);
+const warclans=JSON.parse(fs.readFileSync(new URL('warclans-sources.json',root)));assert.equal(warclans.license,'CC-BY-SA-3.0');assert.equal(warclans.author,'Wildfire Games');warclans.sources.forEach(verify);warclans.generated.forEach(verify);
+assert.equal(Object.keys(warclans.models).length,8);for(const key of Object.keys(warclans.models)){const asset=FrostArt[key];assert.ok(asset.realistic);assert.equal(asset.parts[0].mesh,'Assets/Models/Real'+key+'.glb');}
+const attribution=fs.readFileSync(new URL('Assets/Licenses/0ad-warclans.txt',root),'utf8');assert.ok(attribution.includes('Wildfire Games')&&attribution.includes(warclans.licenseUrl));assert.ok(attribution.includes('Assets/Art/faction-buildings.png'));
 for(let i=0;i<140;i++)for(const zoom of [12,27]){const edge=i<72,visual=V.scenery(i,edge,zoom);assert.ok(visual.scale>0);assert.ok(Math.max(visual.asset.size[0],visual.asset.size[2])*visual.scale<=(visual.key.startsWith('RealSpruce')?6:edge?4.5:1.7)+1e-6,'scenery horizontal footprint is bounded');}
 for(const kind of ['tree','mine','camp']){
  const near=V.resource({kind,x:12,z:-3},12),far=V.resource({kind,x:12,z:-3},27);assert.ok(fs.existsSync(new URL(near.mesh,root)));assert.ok(fs.existsSync(new URL(far.mesh,root)));assert.notEqual(near.mesh,far.mesh);assert.equal(near.scale,far.scale);
