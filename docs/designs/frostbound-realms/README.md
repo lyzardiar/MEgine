@@ -1,6 +1,6 @@
 # Frostbound Realms 交付证据
 
-最新写实美术阶段：[来源、重建、截图与验收边界](realistic-art.md)。
+最新写实美术与 Player 包：[作者三维植被 LOD、原始颜色与透明度](foliage-lods.md)。素材来源与完整重建流程见 [写实美术说明](realistic-art.md)。
 
 最新编辑器性能：[原生视口的浏览器开销与实测](viewport-performance.md)。渲染及 Player 包见 [场景与界面 4× MSAA](multisampling.md)。贴图和湿岸见 [画面细化阶段](rendering-refinement.md)，组件扫描与共享传输优化见 [运行性能阶段](runtime-performance.md)。
 

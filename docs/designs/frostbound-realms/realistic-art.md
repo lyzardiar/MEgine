@@ -1,6 +1,6 @@
 # 写实美术阶段
 
-本页记录写实素材接入阶段。当前画面、性能实测和 Player 包见 [多重采样阶段](multisampling.md)。
+本页记录写实素材接入阶段。当前树木、画面、性能实测和 Player 包见 [作者三维植被 LOD 阶段](foliage-lods.md)。
 
 人族八种建筑外观使用 Daniel74 的木梁、灰泥、砖基与瓦顶房屋模块，补充门窗并烘焙原始重复贴图；建造预览、场景模型、选中模型和建筑按钮使用同一份模型目录。环境使用 Poly Haven 的中型冷杉、灌木、扫描岩石、石砌火塘和森林地表。所有新增来源为 CC0，原件、来源地址与 SHA-256 保存在 `house-sources.json`、`realistic-sources.json`，许可位于样例 `Licenses/`。
 
@@ -21,8 +21,8 @@ Python 需要 numpy、Pillow；离线减面需要固定版本 meshoptimizer 0.24
 
 ```powershell
 npm install --prefix tmp/frost-realistic-tools meshoptimizer@0.24.0 --ignore-scripts --no-audit --no-fund
-python scripts/import-frost-realistic.py
 $env:BLENDER = '绝对路径/blender.exe'
+python scripts/import-frost-realistic.py
 & $env:BLENDER --background --factory-startup --python-exit-code 1 --python scripts/import-frost-houses.py
 & $env:BLENDER --background --factory-startup --python-exit-code 1 --python scripts/bake-frost-foliage.py
 node scripts/build-frostbound.mjs

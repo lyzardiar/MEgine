@@ -1,0 +1,270 @@
+{
+  "baselineCommit": "4df574e90b9905ccc16b4289e32a896a2a9a86c3",
+  "source": "Poly Haven fir_sapling_medium CC0, authored .blend LOD1/LOD2 and PNG textures; pinned source hashes in realistic-sources.json",
+  "method": "Native Release, 1899 entities, 1280x720, 4x MSAA. Standard view: 5s warmup and three 5s windows. Near: 3s warmup and one 5s window. Sequential short samples, not exclusive-machine benchmark. Standard zoom uses existing distant cards.",
+  "before": {
+    "standard": {
+      "runs": [
+        {
+          "intervals": 66,
+          "averagePresentIntervalMs": 77.65454545436484,
+          "p95PresentIntervalMs": 121.10000002384186,
+          "presentedFps": 12.877546242127822,
+          "averageRequestMs": 55.70447761176237,
+          "averageRenderMs": 9.76939552238806,
+          "averageCommandMs": 12.772785074626862,
+          "averageUploadMs": 1.5358208978354042,
+          "averageSimulationMs": 10.03942835820896,
+          "averageSimulationRequestMs": 22.491044780211663,
+          "browserPaintMs": 3.36299270601803
+        },
+        {
+          "intervals": 71,
+          "averagePresentIntervalMs": 71.18732394382987,
+          "p95PresentIntervalMs": 123.89999997615814,
+          "presentedFps": 14.047444749981707,
+          "averageRequestMs": 53.930555556383396,
+          "averageRenderMs": 9.28593611111111,
+          "averageCommandMs": 11.71882777777778,
+          "averageUploadMs": 1.45972221924199,
+          "averageSimulationMs": 9.443318055555556,
+          "averageSimulationRequestMs": 26.97361110564735,
+          "browserPaintMs": 3.386004890947315
+        },
+        {
+          "intervals": 69,
+          "averagePresentIntervalMs": 75.34202898585278,
+          "p95PresentIntervalMs": 119,
+          "presentedFps": 13.272804216458962,
+          "averageRequestMs": 57.72142857228007,
+          "averageRenderMs": 9.389168571428575,
+          "averageCommandMs": 12.314578571428573,
+          "averageUploadMs": 1.4714285697255816,
+          "averageSimulationMs": 10.45559857142857,
+          "averageSimulationRequestMs": 29.441428569384982,
+          "browserPaintMs": 3.282765058228813
+        }
+      ],
+      "medianPresentedFps": 13.272804216458962,
+      "medianBrowserPaintMs": 3.36299270601803,
+      "medianRenderMs": 9.389168571428575
+    },
+    "near": {
+      "warmupMs": 3000,
+      "sampleWindowMs": 5000,
+      "summary": {
+        "intervals": 51,
+        "averagePresentIntervalMs": 98.16862745027916,
+        "p95PresentIntervalMs": 141.5,
+        "presentedFps": 10.186553749124016,
+        "averageRequestMs": 52.25769230494132,
+        "averageRenderMs": 13.523007692307695,
+        "averageCommandMs": 19.710650000000005,
+        "averageUploadMs": 1.5153846190525935,
+        "averageSimulationMs": 10.75766923076923,
+        "averageSimulationRequestMs": 24.09999999518578
+      }
+    }
+  },
+  "after": {
+    "standard": {
+      "runs": [
+        {
+          "intervals": 73,
+          "averagePresentIntervalMs": 67.84657534262905,
+          "p95PresentIntervalMs": 112.79999995231628,
+          "presentedFps": 14.739137457564267,
+          "averageRequestMs": 48.35000000451062,
+          "averageRenderMs": 8.985167567567565,
+          "averageCommandMs": 11.92264189189189,
+          "averageUploadMs": 1.4581081142296661,
+          "averageSimulationMs": 8.851613513513515,
+          "averageSimulationRequestMs": 21.78108108285311
+        },
+        {
+          "intervals": 78,
+          "averagePresentIntervalMs": 64.71538461553745,
+          "p95PresentIntervalMs": 112.60000002384186,
+          "presentedFps": 15.452276239117198,
+          "averageRequestMs": 52.44556962010227,
+          "averageRenderMs": 9.030977215189875,
+          "averageCommandMs": 11.472216455696204,
+          "averageUploadMs": 1.4784810113001474,
+          "averageSimulationMs": 9.524570886075955,
+          "averageSimulationRequestMs": 22.841772151144244
+        },
+        {
+          "intervals": 72,
+          "averagePresentIntervalMs": 69.39861111094554,
+          "p95PresentIntervalMs": 127.89999997615814,
+          "presentedFps": 14.409510276817056,
+          "averageRequestMs": 51.16712328995744,
+          "averageRenderMs": 8.968061643835618,
+          "averageCommandMs": 11.59895890410959,
+          "averageUploadMs": 1.471232878835234,
+          "averageSimulationMs": 9.391232876712326,
+          "averageSimulationRequestMs": 20.62328766470086
+        }
+      ],
+      "medianPresentedFps": 14.739137457564267,
+      "medianRenderMs": 8.985167567567565
+    },
+    "near": {
+      "warmupMs": 3000,
+      "sampleWindowMs": 5000,
+      "summary": {
+        "intervals": 64,
+        "averagePresentIntervalMs": 78.72187499981374,
+        "p95PresentIntervalMs": 125.39999997615814,
+        "presentedFps": 12.702949466109212,
+        "averageRequestMs": 54.42307691940894,
+        "averageRenderMs": 10.309909230769234,
+        "averageCommandMs": 13.530956923076928,
+        "averageUploadMs": 1.464615383514991,
+        "averageSimulationMs": 9.906107692307689,
+        "averageSimulationRequestMs": 27.84923076904737
+      }
+    }
+  },
+  "models": {
+    "RealSpruceA": {
+      "source": "fir_sapling_medium",
+      "nodes": [
+        "fir_sapling_medium_a_LOD1",
+        "fir_sapling_medium_a_LOD2"
+      ],
+      "lods": [
+        {
+          "triangles": 19016,
+          "vertices": 16518,
+          "authored": true
+        },
+        {
+          "triangles": 14752,
+          "vertices": 12960,
+          "authored": true
+        }
+      ]
+    },
+    "RealSpruceB": {
+      "source": "fir_sapling_medium",
+      "nodes": [
+        "fir_sapling_medium_b_LOD1",
+        "fir_sapling_medium_b_LOD2"
+      ],
+      "lods": [
+        {
+          "triangles": 11886,
+          "vertices": 10952,
+          "authored": true
+        },
+        {
+          "triangles": 8761,
+          "vertices": 8417,
+          "authored": true
+        }
+      ]
+    },
+    "RealSpruceC": {
+      "source": "fir_sapling_medium",
+      "nodes": [
+        "fir_sapling_medium_c_LOD1",
+        "fir_sapling_medium_c_LOD2"
+      ],
+      "lods": [
+        {
+          "triangles": 11074,
+          "vertices": 10079,
+          "authored": true
+        },
+        {
+          "triangles": 8393,
+          "vertices": 7841,
+          "authored": true
+        }
+      ]
+    }
+  },
+  "files": [
+    {
+      "file": "Assets/Models/RealSpruceA-far.glb",
+      "beforeBytes": 9212684,
+      "afterBytes": 592644
+    },
+    {
+      "file": "Assets/Models/RealSpruceA.glb",
+      "beforeBytes": 13662568,
+      "afterBytes": 757668
+    },
+    {
+      "file": "Assets/Models/RealSpruceB-far.glb",
+      "beforeBytes": 8200812,
+      "afterBytes": 375372
+    },
+    {
+      "file": "Assets/Models/RealSpruceB.glb",
+      "beforeBytes": 12020336,
+      "afterBytes": 493996
+    },
+    {
+      "file": "Assets/Models/RealSpruceC-far.glb",
+      "beforeBytes": 8246848,
+      "afterBytes": 352520
+    },
+    {
+      "file": "Assets/Models/RealSpruceC.glb",
+      "beforeBytes": 12075628,
+      "afterBytes": 456316
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_arm.png",
+      "beforeBytes": 5725527,
+      "afterBytes": 1284377
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_base.png",
+      "beforeBytes": 5125835,
+      "afterBytes": 2969307
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_normal.png",
+      "beforeBytes": 6626950,
+      "afterBytes": 3033485
+    }
+  ],
+  "beforeAssetBytes": 80897188,
+  "afterAssetBytes": 10315685,
+  "repeatedGeneratedFiles": 54,
+  "validation": {
+    "sourceAndDerivedHashes": "passed",
+    "originalSrgbAndAlpha": "byte equality passed on authored twig mask",
+    "uvAndPaddingRegression": "passed",
+    "nativeNearFarEditor": true,
+    "msaaSamples": 4,
+    "shaderRejections": 0
+  },
+  "package": {
+    "contentHash": "bff512a959cd71e1d93995023477006cf296667adfcc61bb19df1053509cdb56",
+    "files": 362,
+    "bytes": 119379708
+  },
+  "smoke": {
+    "contentHash": "bff512a959cd71e1d93995023477006cf296667adfcc61bb19df1053509cdb56",
+    "windowTitle": "Frostbound Realms",
+    "responding": true,
+    "audioListening": false,
+    "shutdown": "Only this smoke-check process was stopped",
+    "elapsedSeconds": 30,
+    "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+    "alive": true,
+    "packageValidationPassed": true,
+    "startedAt": "2026-09-29T11:23:02.9449698+08:00",
+    "processId": 94276,
+    "packagedFiles": 362,
+    "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+    "checkedAt": "2026-09-29T11:23:33.0090808+08:00",
+    "physicalInput": false,
+    "loggedErrors": 0
+  },
+  "overall5msTargetMet": false
+}
