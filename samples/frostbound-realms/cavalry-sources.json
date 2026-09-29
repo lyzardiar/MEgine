@@ -1,0 +1,550 @@
+{
+  "author": "Wildfire Games",
+  "upstream": "https://github.com/0ad/0ad",
+  "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "generator": "scripts/import-frost-humans.py --manifest cavalry-sources.json",
+  "models": {
+    "RealKnight": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/horse_lusitano.dae",
+          "base": "textures/skins/skeletal/horse_brown.png",
+          "normal": "textures/skins/skeletal/horse_norm.png",
+          "specular": "textures/skins/skeletal/horse_spec.png",
+          "tint": null,
+          "bone": null
+        },
+        {
+          "mesh": "meshes/props/horse/chest_colorband_02.dae",
+          "base": "textures/skins/props/horse/peytral_bronze.png",
+          "normal": "textures/skins/props/horse/peytral_norm.png",
+          "specular": "textures/skins/props/horse/peytral_spec.png",
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ],
+          "bone": null,
+          "cutout": false
+        },
+        {
+          "mesh": "meshes/props/horse/blanket.dae",
+          "base": "textures/skins/props/horse/blanket_rome.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ],
+          "bone": null,
+          "cutout": false
+        },
+        {
+          "mesh": "meshes/props/horse/rein_01.dae",
+          "base": "textures/skins/props/horse/head_straps.png",
+          "normal": "textures/skins/props/horse/head_straps_norm.png",
+          "specular": "textures/skins/props/horse/head_straps_spec.png",
+          "tint": null,
+          "bone": null,
+          "cutout": false
+        },
+        {
+          "mesh": "meshes/props/horse/hair_mane_01.dae",
+          "base": "textures/skins/props/horse/hair_black.png",
+          "normal": "textures/skins/props/horse/hair_norm.png",
+          "specular": "textures/skins/props/horse/hair_spec.png",
+          "tint": null,
+          "bone": null,
+          "cutout": true
+        },
+        {
+          "mesh": "meshes/props/horse/hair_tail_01.dae",
+          "base": "textures/skins/props/horse/hair_black.png",
+          "normal": "textures/skins/props/horse/hair_norm.png",
+          "specular": "textures/skins/props/horse/hair_spec.png",
+          "tint": null,
+          "bone": null,
+          "cutout": true
+        },
+        {
+          "mesh": "meshes/skeletal/new/m_armor_pants.dae",
+          "base": "textures/skins/skeletal/brit/chainmail_04_01.png",
+          "bone": "prop_rider",
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ],
+          "specular": "textures/skins/skeletal/celt/chainmail_04_spec.png",
+          "skeletal": true,
+          "prefix": "rider_",
+          "animations": {
+            "Idle": "animation/biped/rider/cavalry/generic/idle_shield_ready_01.dae",
+            "Walk": "animation/biped/rider/cavalry/generic/gallop_shield_ready.dae",
+            "Attack": "animation/biped/rider/cavalry/generic/attack_melee_shield_01.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/new/head_longhair.dae",
+          "base": "textures/skins/props/head/celt_a.dds",
+          "bone": "rider_prop-head",
+          "tint": [
+            0.29,
+            0.24,
+            0.15
+          ]
+        },
+        {
+          "mesh": "meshes/props/weap_csword_a.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "rider_prop-weapon_R",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/shield/oval_01.dae",
+          "base": "textures/skins/props/shield/celt_shield_01.png",
+          "bone": "rider_prop-shield",
+          "tint": [
+            0.2,
+            0.32,
+            0.55
+          ]
+        },
+        {
+          "mesh": "meshes/props/helmet/celt_mihovo.dae",
+          "base": "textures/skins/props/helmet/celt_mihovo_iron.png",
+          "bone": "rider_prop-helmet",
+          "tint": null,
+          "normal": "textures/skins/props/helmet/celt_mihovo_norm.png",
+          "specular": "textures/skins/props/helmet/celt_mihovo_spec.png"
+        }
+      ],
+      "animations": {
+        "Idle": "animation/quadraped/horse_idle_01.dae",
+        "Walk": "animation/quadraped/horse_gallop.dae",
+        "Attack": "animation/quadraped/horse_attack_01.dae"
+      },
+      "height": 4.4,
+      "attackEvent": 0.5,
+      "mountedModel": true
+    }
+  },
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/LICENSE.txt",
+      "sha256": "ef98babd771c206032e005f3d440a1e610df409d9a9191f03e64deaa4abefbd9",
+      "size": 1426
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/horse/cav_blanket_rome.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/horse/cav_blanket_rome.xml",
+      "sha256": "47c6295dbb57b9ccee8eea48408233799432ef9e89fb2fa0acac3a39af91a3c1",
+      "size": 1627
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/horse/cav_rein_leather.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/horse/cav_rein_leather.xml",
+      "sha256": "089a542f49dc674ee5b877aee329e6c8c3efd9c9174aafc7b3fadfdf67dfe5bc",
+      "size": 1665
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/horse/chest_colorband_02.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/horse/chest_colorband_02.xml",
+      "sha256": "f569893ec2ed9473dc474f28ce079759de95018cf92f1a894a0155fd3a5fac09",
+      "size": 1482
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/horse/horse_hair_mane_gray_black.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/horse/horse_hair_mane_gray_black.xml",
+      "sha256": "b805d378c05e47d0c89193bf0e7d4f20efd8ac81680dee2f2cd92e1c0e9c5568",
+      "size": 1409
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/horse/horse_hair_tail_gray_black.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/horse/horse_hair_tail_gray_black.xml",
+      "sha256": "9fb4f618b425d7c50ec5f3559d0b0b6845cd1cd8c8cb6db6600e476a7f10b55b",
+      "size": 1425
+    },
+    {
+      "file": "SourceAssets/0ad/actors/units/romans/cavalry_swordsman_c_m.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/romans/cavalry_swordsman_c_m.xml",
+      "sha256": "e94bdcb01bd8173ae27a025de6136517fed759919c12ae15ed6013d432476fed",
+      "size": 1212
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/rider/cavalry/generic/attack_melee_shield_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/rider/cavalry/generic/attack_melee_shield_01.dae",
+      "sha256": "e40c20cacefdf1443c998823458ef6efb43d11010240ff4970bc50b702aaa66c",
+      "size": 1079845
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/rider/cavalry/generic/gallop_shield_ready.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/rider/cavalry/generic/gallop_shield_ready.dae",
+      "sha256": "8f4f5f15d162d939772683099b3d272c37cf41c48f18ad47ef5f9b8db5590a15",
+      "size": 731054
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/rider/cavalry/generic/idle_shield_ready_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/rider/cavalry/generic/idle_shield_ready_01.dae",
+      "sha256": "b2739bf8b4521d7624df14911b19ec6d26871d6b98e762e4937ce55d5b6b0bfc",
+      "size": 1310251
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/horse_attack_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/horse_attack_01.dae",
+      "sha256": "1a1d51faebd9dac240beb560dec1ffe82ca08d902e95baaa7bf5ae964824ff6d",
+      "size": 997094
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/horse_gallop.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/horse_gallop.dae",
+      "sha256": "7843cc1e9e869fefd7b815ed68fbb433101f78b90bb59bc72e24c59390de3eb9",
+      "size": 759875
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/horse_idle_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/horse_idle_01.dae",
+      "sha256": "2e3fdacf89b2888c616971627a7dc24eaae47bda966bf4de76d8d13bd5b620bd",
+      "size": 1224960
+    },
+    {
+      "file": "SourceAssets/0ad/materials/basic_trans_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/basic_trans_norm_spec.xml",
+      "sha256": "1d45ed04b40bcda4f06694987885eadcf2f8bf59d2838d5d870cd64bfea4a394",
+      "size": 429
+    },
+    {
+      "file": "SourceAssets/0ad/materials/no_trans_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/no_trans_norm_spec.xml",
+      "sha256": "14161f0846354a5529a5e8ac558cb5c974928d084f5e7e4f605d60387a4f13b1",
+      "size": 346
+    },
+    {
+      "file": "SourceAssets/0ad/materials/no_trans_parallax_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/no_trans_parallax_spec.xml",
+      "sha256": "a26ce2f3d1d69ac6c0c496876e1e9df7ac92d8d2a935e0c49633583f42d9b4e6",
+      "size": 407
+    },
+    {
+      "file": "SourceAssets/0ad/materials/player_trans_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/player_trans_norm_spec.xml",
+      "sha256": "48a6730a21ba962045c589dbcf2e8098a5e574e9afeb65df861cc8b2ec1aa545",
+      "size": 395
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/helmet/celt_mihovo.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/helmet/celt_mihovo.dae",
+      "sha256": "d307c7c10d458fda3b41db7410150bb7de09d02ea3d8adad034e028825590577",
+      "size": 74763
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/horse/blanket.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/horse/blanket.dae",
+      "sha256": "0c9f6fef55af6d51ea1c64c8c5f50b618542972e655e5c366c15d90c6c0b0702",
+      "size": 94009
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/horse/chest_colorband_02.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/horse/chest_colorband_02.dae",
+      "sha256": "7934bb39e32b60ee1181de69e337c4ebd5c19abcd1f0e3f2151e45a2313f815b",
+      "size": 88006
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/horse/hair_mane_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/horse/hair_mane_01.dae",
+      "sha256": "59ad146c1af5f430db71bc63f5a06baec6487e22160e8366baf1cd895934947e",
+      "size": 96483
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/horse/hair_tail_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/horse/hair_tail_01.dae",
+      "sha256": "072888a3c60ed59d5f802f155110e37ca090627533c88f57ba6785b649f384c9",
+      "size": 84691
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/horse/rein_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/horse/rein_01.dae",
+      "sha256": "13ad1621d63d8a7ea01f9208df2b1cb821eaa8f5283917354b01e4b1cd5dd8a1",
+      "size": 116317
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/new/head_longhair.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/new/head_longhair.dae",
+      "sha256": "3ee141b79819b6128dcb3ea4abda50bce857054d755c1affcb39d9f11fa8d6f5",
+      "size": 25090
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/shield/oval_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/shield/oval_01.dae",
+      "sha256": "9e0151fa3333fe701b8a223e505d8573d78791ba91d43c26bdf81ec9c8470d73",
+      "size": 6855
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weap_csword_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weap_csword_a.dae",
+      "sha256": "7f8f8f38d394238ea1d62ac47e1eee7a4594d834c20bf2378431723cbe5f1490",
+      "size": 7190
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/horse_lusitano.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/horse_lusitano.dae",
+      "sha256": "e8baa846e2886f930b5330405e488f4af692a0659b53675eb08bd29f3845bcde",
+      "size": 324900
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/new/m_armor_pants.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/new/m_armor_pants.dae",
+      "sha256": "1430b79e186d9a6dd596bd866864b5e67b6ef08a3a006f046ef1bd4726177469",
+      "size": 216060
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/default_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/default_norm.png",
+      "sha256": "b1ba25ca729a28c798a99a1a0bcf9310d0994a55b4f9d1a36f163fb31676cecf",
+      "size": 69
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/null_black.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/null_black.dds",
+      "sha256": "1b2fefc88f9523c56af637318150f92722e88bf93f3876d38b6c039114b21c7a",
+      "size": 152
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/head/celt_a.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/head/celt_a.dds",
+      "sha256": "c6e5ffa5c672782a231ca4ee909f793ca1842a3816cd52b598d34e0b17e905c8",
+      "size": 5616
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/celt_mihovo_iron.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/celt_mihovo_iron.png",
+      "sha256": "0a5c287fa79d2e1e32556b13e54c8545f7d2352e4ecd767c33989ca4f5dd79d5",
+      "size": 103728
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/celt_mihovo_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/celt_mihovo_norm.png",
+      "sha256": "e9939285247d7e1278802cceb06004492fb5705999bab9bc2074294d2987d94e",
+      "size": 148817
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/celt_mihovo_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/celt_mihovo_spec.png",
+      "sha256": "73f1d2aac318e28c70ef6516fee6130bc64293b30af815446ed0ec2126f9fc30",
+      "size": 38721
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/blanket_rome.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/blanket_rome.png",
+      "sha256": "1f5bc2b49d544cf37ecbc5d76f0ef0fdf425833c40dd56cb37c623c84ec55254",
+      "size": 777624
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/hair_black.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/hair_black.png",
+      "sha256": "98b070cd0befdb3bd07cb411d965c9c3618a1c43e29f96df1c75cef0b862b828",
+      "size": 74271
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/hair_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/hair_norm.png",
+      "sha256": "a37d8b6262d9f1a693ee79911b65665a7606e91e4d755fb5b10619308cfb0f07",
+      "size": 91778
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/hair_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/hair_spec.png",
+      "sha256": "9bd09b01c84eb103ffc808d3f88666cf6266ab35145f99e9dae26637eefcc93e",
+      "size": 39392
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/head_straps.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/head_straps.png",
+      "sha256": "cd0204b5828c164ae324ac4397db32ded6b21035b7af16a4a74781a32d96ebc6",
+      "size": 141008
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/head_straps_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/head_straps_norm.png",
+      "sha256": "21214d7613d06c25838379747eb6a665f606a1c9de010be4ad0fde6c590b915b",
+      "size": 116052
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/head_straps_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/head_straps_spec.png",
+      "sha256": "60b4e7485490a7c22e2ae67204d801f535af6c9601a3d090afb9a0550d50ce13",
+      "size": 48538
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/peytral_bronze.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/peytral_bronze.png",
+      "sha256": "f163f172c7214e93d7469ee7c012e34ab0a7f65b13e50c55cdd5ae87e0cdd090",
+      "size": 49671
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/peytral_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/peytral_norm.png",
+      "sha256": "a726b2830764651f85d3ed9824c233f2cf87745e3ed123935a1d8155e13080fe",
+      "size": 48660
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/horse/peytral_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/horse/peytral_spec.png",
+      "sha256": "9c29abeaf47b9a476be66518637d5dc77e11a109d6efe5fca21c02dc7333acfb",
+      "size": 23535
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/prop_weap.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/prop_weap.dds",
+      "sha256": "761a9987655353d96cf5093d3d713a62dca98f5f605c8fef52311eac0b3a1bde",
+      "size": 87536
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/shield/celt_shield_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/shield/celt_shield_01.png",
+      "sha256": "d860c674693038e4415e89cfcf46233342ec2ca6ad63472d94831cfa636a60ca",
+      "size": 31520
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/brit/chainmail_04_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/brit/chainmail_04_01.png",
+      "sha256": "a080256ca3fc2b5d87c0b7c82279d76960c066328258f5b5cd0520d16adc4bb7",
+      "size": 70871
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/celt/chainmail_04_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/celt/chainmail_04_spec.png",
+      "sha256": "6ed31aa4fdb6547a1d87e009de5456b69cc486e144c150e140cff0d0a3bacef1",
+      "size": 18548
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/horse_black.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/horse_black.png",
+      "sha256": "75a37dfb093e47cda8908e0efe94ab94b850107db8dc77feb41adbc4eb67f91c",
+      "size": 53172
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/horse_brown.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/horse_brown.png",
+      "sha256": "3e6549478bfd81305dce532714808038a7341194150b4a80ba0d4301b7189c2a",
+      "size": 195649
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/horse_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/horse_norm.png",
+      "sha256": "7095a26efdc09c1cd1fb9980697bd7ec376bd5de715671b246ab334806128448",
+      "size": 61660
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/horse_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/horse_spec.png",
+      "sha256": "212e0d92b11cfa320a3a458241164586b7e763f9881ddf0a2120930d7165129f",
+      "size": 32504
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/rider/cavalry/base_swordsman_fast_ready_shield.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/rider/cavalry/base_swordsman_fast_ready_shield.xml",
+      "sha256": "24a1c4e0eb2e019be71a94dc6737296bfcbb12799a51924f3b43da97cd7ffd70",
+      "size": 2049
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/base_horse_javelin_fast.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/base_horse_javelin_fast.xml",
+      "sha256": "0798d0e187699d8445dbb12aecff9a36ffcb0a16b24d1bc7a1a7183685d1f8d7",
+      "size": 1702
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/base_horse_pace.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/base_horse_pace.xml",
+      "sha256": "bf26803b6f4cff3776db48f23209b77090e8f8e355a79b3620e96cac2a30c949",
+      "size": 1761
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/horse/base.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/horse/base.xml",
+      "sha256": "19402f08e2abe7c32ad402dca0a67c10c49da22eda9a5c7404d2ea548457c5d7",
+      "size": 244
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/horse/black.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/horse/black.xml",
+      "sha256": "8c7bde5b767c2d42cd81644b07c662f289d27f39d8681d789a9fe8d470710238",
+      "size": 394
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/horse/brown.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/horse/brown.xml",
+      "sha256": "b93316bd1e0ba6bff2778895982cf2db3909273729b28101959c9e3130655fd8",
+      "size": 396
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/horse/props/blanket_rome.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/horse/props/blanket_rome.xml",
+      "sha256": "66030c352c946bf2cfd77abb08015ac39852c36783db409ac03a0c3ef7e452ed",
+      "size": 219
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/horse/props/hair_base.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/horse/props/hair_base.xml",
+      "sha256": "187b19d65e730d463e7cad235c788834630283a94d7fb1cdb582f0571d290275",
+      "size": 240
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/horse/props/hair_black.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/horse/props/hair_black.xml",
+      "sha256": "d73a7923ff7f6d3489891b6299be83151b9f9ddc5c26859e5bcee1c3a6b02777",
+      "size": 222
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/RealKnight_base.png",
+      "sha256": "17c8a3a9392f1990f8778414cd043af84ee0f3c5bfb16f21665dd496db333bec"
+    },
+    {
+      "file": "Assets/Textures/RealKnight_normal.png",
+      "sha256": "611a6c58b102fb4e05f3a2bed4bd7ec2ba58b61d1eb3317082fcabdf50b2f735"
+    },
+    {
+      "file": "Assets/Textures/RealKnight_arm.png",
+      "sha256": "16f215adbe80a4e52362e4dc7e4bb749fe3f91c634b137ee0e5217b79794ee9c"
+    },
+    {
+      "file": "Assets/Models/RealKnight.glb",
+      "sha256": "159ff9a90522822b1a55ac4a1ef5eeab7f3da0669b519640da94bf7fd0a2a552"
+    },
+    {
+      "file": "Assets/Materials/RealKnight.mmat",
+      "sha256": "2bbf9aa195924529a82a14618404f9fbf76ce8f551b2908ddfa487e4c287369b"
+    }
+  ],
+  "modelStats": {
+    "RealKnight": {
+      "triangles": 3962,
+      "bones": 188,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 24
+        },
+        {
+          "name": "Walk",
+          "frames": 8
+        },
+        {
+          "name": "Attack",
+          "frames": 16
+        }
+      ],
+      "size": [
+        1.1320323489883146,
+        4.4,
+        3.7472645979823134
+      ]
+    }
+  }
+}

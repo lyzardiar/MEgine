@@ -1,5 +1,6 @@
 """Author: MiYu. Blender 4.5.9: assemble and animate licensed 0 A.D. units and machinery."""
 import argparse
+from array import array
 import bpy
 import hashlib
 import json
@@ -74,7 +75,7 @@ def main():
         bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
         for action in list(bpy.data.actions):bpy.data.actions.remove(action)
         scene=bpy.context.scene;scene.frame_start=0;scene.render.engine='CYCLES';scene.cycles.samples=1;scene.cycles.seed=0;scene.render.threads_mode='FIXED';scene.render.threads=1;scene.render.bake.margin=12
-        body=definition['parts'][0];objects=import_dae(body['mesh']);rig=next(o for o in objects if o.type=='ARMATURE');rig.name=key+'Rig';rig.data.pose_position='REST'
+        body=definition['parts'][0];objects=import_dae(body['mesh']);rig=max((o for o in objects if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));rig.name=key+'Rig';rig.data.pose_position='REST'
         matrices=attachment_matrices(body['mesh']);meshes=[];surfaces={};props=[];body_points=[]
         for index,part in enumerate(definition['parts']):
             added=objects if index==0 else import_dae(part['mesh'])
@@ -122,7 +123,9 @@ def main():
                 arm=nodes.new('ShaderNodeCombineRGB');arm.inputs[0].default_value=1;arm.inputs[1].default_value=.8;arm.inputs[2].default_value=0
                 if part.get('specular'):
                     rough=nodes.new('ShaderNodeMath');rough.operation='MULTIPLY_ADD';rough.inputs[1].default_value=-.5;rough.inputs[2].default_value=.9;links.new(texture(part['specular'],True).outputs['Color'],rough.inputs[0]);links.new(rough.outputs[0],arm.inputs[1])
-                emission=nodes.new('ShaderNodeEmission');surfaces[mat.name]=(out,shader,emission,color,arm.outputs[0]);obj.data.materials.clear();obj.data.materials.append(mat);meshes.append(obj)
+                opacity=base.outputs['Alpha'] if part.get('cutout') else nodes.new('ShaderNodeValue').outputs[0]
+                if not part.get('cutout'):opacity.default_value=1
+                emission=nodes.new('ShaderNodeEmission');surfaces[mat.name]=(out,shader,emission,color,arm.outputs[0],opacity);obj.data.materials.clear();obj.data.materials.append(mat);meshes.append(obj)
             for obj in added:
                 if obj.type!='MESH' and obj!=rig:bpy.data.objects.remove(obj,do_unlink=True)
         bpy.ops.object.select_all(action='DESELECT')
@@ -131,20 +134,23 @@ def main():
         modifier=mesh.modifiers.new('Stable triangles','TRIANGULATE');bpy.ops.object.modifier_apply(modifier=modifier.name)
         mesh.data.uv_layers.new(name='BakeUV');mesh.data.uv_layers.active_index=len(mesh.data.uv_layers)-1
         bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=1.15,island_margin=.014);bpy.ops.object.mode_set(mode='OBJECT')
-        textures={}
-        for channel in ['base','normal','arm']:
-            atlas=bpy.data.images.new(key+' '+channel,width=1024,height=1024,alpha=False);atlas.colorspace_settings.name='sRGB' if channel=='base' else 'Non-Color'
+        textures={};cutout=any(p.get('cutout') for p in definition['parts']);base_atlas=None
+        for channel in ['base','normal','arm']+(['alpha'] if cutout else []):
+            atlas=bpy.data.images.new(key+' '+channel,width=1024,height=1024,alpha=cutout and channel=='base');atlas.colorspace_settings.name='sRGB' if channel=='base' else 'Non-Color'
+            if cutout and channel=='base':atlas.alpha_mode='CHANNEL_PACKED';base_atlas=atlas
             for mat in mesh.data.materials:
-                out,shader,emission,color,arm=surfaces[mat.name];links=mat.node_tree.links
+                out,shader,emission,color,arm,opacity=surfaces[mat.name];links=mat.node_tree.links
                 if channel=='normal':links.new(shader.outputs['BSDF'],out.inputs['Surface'])
-                else:links.new(color if channel=='base' else arm,emission.inputs['Color']);links.new(emission.outputs[0],out.inputs['Surface'])
+                else:links.new(color if channel=='base' else opacity if channel=='alpha' else arm,emission.inputs['Color']);links.new(emission.outputs[0],out.inputs['Surface'])
                 target=mat.node_tree.nodes.new('ShaderNodeTexImage');target.image=atlas;mat.node_tree.nodes.active=target
             bpy.ops.object.bake(type='NORMAL' if channel=='normal' else 'EMIT')
+            if channel=='alpha':
+                rgba=array('f',[0])*len(base_atlas.pixels);mask=array('f',[0])*len(atlas.pixels);base_atlas.pixels.foreach_get(rgba);atlas.pixels.foreach_get(mask);rgba[3::4]=mask[0::4];base_atlas.pixels.foreach_set(rgba);base_atlas.save();continue
             path='Assets/Textures/'+key+'_'+channel+'.png';atlas.filepath_raw=str(SAMPLE/path);atlas.file_format='PNG';atlas.save();textures[channel]=path;generated.append(path)
         while len(mesh.data.uv_layers)>1:mesh.data.uv_layers.remove(mesh.data.uv_layers[0])
         for face in mesh.data.polygons:face.material_index=0
         mesh.data.materials.clear();mesh.data.materials.append(bpy.data.materials.new(key+' atlas'))
-        points=[v.co for v in mesh.data.vertices];reference=body_points if definition.get('width') else points;low=min(p.z for p in reference);scale=definition['width']/max(max(p[i] for p in reference)-min(p[i] for p in reference) for i in [0,1]) if definition.get('width') else 3/(max(p.z for p in points)-low);rig.scale=(scale,)*3;rig.location.z=-low*scale;rig.data.pose_position='POSE';rig.animation_data_create()
+        points=[v.co for v in mesh.data.vertices];reference=body_points if definition.get('width') else points;low=min(p.z for p in reference);scale=definition['width']/max(max(p[i] for p in reference)-min(p[i] for p in reference) for i in [0,1]) if definition.get('width') else definition.get('height',3)/(max(p.z for p in points)-low);rig.scale=(scale,)*3;rig.location.z=-low*scale;rig.data.pose_position='POSE';rig.animation_data_create()
         clips=[]
         for name,path in definition['animations'].items():
             added=import_dae(path);animated=max((o for o in added if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));source_action=animated.animation_data.action;start,end=source_action.frame_range
@@ -189,10 +195,12 @@ def main():
         bpy.ops.object.select_all(action='DESELECT');mesh.select_set(True);rig.select_set(True);bpy.context.view_layer.objects.active=rig
         model='Assets/Models/'+key+'.glb';bpy.ops.export_scene.gltf(filepath=str(SAMPLE/model),export_format='GLB',use_selection=True,export_materials='NONE',export_animations=True,export_animation_mode='NLA_TRACKS',export_force_sampling=True,export_optimize_animation_size=False,export_extras=False)
         material='Assets/Materials/'+key+'.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':key,'shader':'pbr','base_color':[1,1,1,1],'base_color_texture':textures['base'],'normal_texture':textures['normal'],'normal_scale':1,'metallic_roughness_texture':textures['arm'],'occlusion_texture':textures['arm'],'metallic':0,'roughness':1,'double_sided':True}))
+        if cutout:
+            value=json.loads((SAMPLE/material).read_text());value.update(surface='cutout',alpha_cutoff=.3);(SAMPLE/material).write_text(json.dumps(value))
         generated.extend([model,material]);size=[(max(p[i] for p in points)-min(p[i] for p in points))*scale for i in [0,2,1]]
         catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True}
         if definition.get('workAnimation'):catalog[key]['workAnimation']=definition['workAnimation']
-        for field in ['attackEvent','ammoLoad','siegeModel','shotModel','crewCount']:
+        for field in ['attackEvent','ammoLoad','siegeModel','shotModel','crewCount','mountedModel']:
             if field in definition:catalog[key][field]=definition[field]
         stats[key]={'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};print('Imported',key,stats[key],flush=True)
     if manifest.get('projectile'):

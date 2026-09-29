@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "cavalryProduction": true,
+  "units": {
+    "models": [
+      "RealKnight"
+    ],
+    "idleWalkAttack": true,
+    "attackFacing": true,
+    "selectionPortraits": true,
+    "trainingIcons": true,
+    "damage": true,
+    "saveRestore": true,
+    "shaderRejections": 0
+  }
+}

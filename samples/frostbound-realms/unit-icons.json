@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "fe26074c3cc86aa410281899aac4fd632057553176e20e8fdcd9aa45ee1b0b12",
+  "sha256": "1fd82efd2cef6af27afa8415210cbe77ffa00fd24d60e47578e1c8a3ed7af319",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -212,6 +212,25 @@
           -0.5167722702026367
         ],
         "vertices": 1680
+      }
+    },
+    {
+      "name": "RealKnight",
+      "mesh": "Assets/Models/RealKnight.glb#pose=0:4",
+      "material": "Assets/Materials/RealKnight.mmat",
+      "bounds": {
+        "max": [
+          0.6894184350967407,
+          3.3042242527008057,
+          2.1960396766662598
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealKnight.glb#pose=0:4",
+        "min": [
+          -0.5929776430130005,
+          -0.008087575435638428,
+          -1.300988793373108
+        ],
+        "vertices": 3883
       }
     },
     {

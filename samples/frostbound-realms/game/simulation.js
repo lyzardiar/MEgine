@@ -7,7 +7,7 @@ var Frost = (() => {
     worker: {label:'Worker',hp:100,damage:6,range:1.7,speed:4,cooldown:1.2,gold:60,wood:0,food:1,time:4,model:'worker'},
     soldier: {label:'Footman',hp:260,damage:23,range:1.8,speed:3.8,cooldown:1,gold:100,wood:20,food:2,time:6,model:'soldier'},
     archer: {label:'Ranger',hp:150,damage:20,range:8,speed:4,cooldown:1.2,gold:120,wood:35,food:2,time:7,model:'archer'},
-    knight: {label:'Champion',hp:500,damage:38,range:2,speed:4.8,cooldown:1.3,gold:200,wood:60,food:3,time:10,model:'knight'},
+    knight: {label:'Knight',hp:500,damage:38,range:2,speed:4.8,cooldown:1.3,gold:200,wood:60,food:3,time:10,model:'knight'},
     mage: {label:'Arcanist',hp:160,damage:40,range:7,speed:3.6,cooldown:1.5,gold:180,wood:50,food:3,time:9,model:'mage'},
     hero: {label:'Frost Warden',hp:700,damage:38,range:5,speed:4.5,cooldown:1,gold:300,wood:80,food:4,time:14,model:'hero'},
     hall: {label:'Stronghold',hp:2200,damage:20,range:8,speed:0,cooldown:1.5,gold:350,wood:150,food:0,time:15,radius:2.5,model:'hall'},
@@ -25,7 +25,7 @@ var Frost = (() => {
   types.frosttower={...types.tower,label:'Frost spire',damage:28,slow:2.5,gold:170,model:'tower'};
   types.flametower={...types.tower,label:'Ember bastion',damage:34,splash:3,gold:210,cooldown:1.8,model:'tower'};
   const armies = [
-    {units:['soldier','archer','paladin','rifleman'],names:['Footman','Ranger','Paladin','Rifleman']},
+    {units:['soldier','archer','paladin','rifleman','knight'],names:['Footman','Ranger','Paladin','Rifleman','Knight']},
     {units:['raider','hunter','berserker','shaman'],names:['Raider','Spear hunter','Berserker','Shaman']},
     {units:['sentinel','huntress','treant','druid'],names:['Sentinel','Huntress','Treant','Druid']},
     {units:['ghoul','bonearcher','abomination','necromancer'],names:['Ghoul','Bone archer','Abomination','Necromancer']}
@@ -507,7 +507,7 @@ var Frost = (() => {
       for(const b of us.filter(u=>u.kind==='altar'))command(s,t,{type:'train',ids:[b.id],kind:flyers[team.faction]});
       if(worker&&!['construct','repair'].includes(worker.order?.type)&&team.tier>=2&&!us.some(u=>u.kind==='workshop')){const a=(s.frame/40%12)*Math.PI/6;command(s,t,{type:'build',ids:[worker.id],kind:'workshop',x:clamp(base[0]+Math.cos(a)*11,-27,27),z:clamp(base[1]+Math.sin(a)*11,-27,27)});}
       for(const b of us.filter(u=>u.kind==='workshop')){command(s,t,{type:'rally',ids:[b.id],x:foe[0],z:foe[1]});command(s,t,{type:'train',ids:[b.id],kind:trainable(s,b)[0]});}
-      for(const b of us.filter(u=>u.kind==='barracks')){const roster=trainable(s,b);command(s,t,{type:'train',ids:[b.id],kind:roster[Math.floor(s.frame/40)%(team.tier>=2?4:2)]});if(team.gold>500)command(s,t,{type:'upgrade',ids:[b.id]});}
+      for(const b of us.filter(u=>u.kind==='barracks')){const roster=trainable(s,b);command(s,t,{type:'train',ids:[b.id],kind:roster[Math.floor(s.frame/40)%(team.tier>=2?roster.length:2)]});if(team.gold>500)command(s,t,{type:'upgrade',ids:[b.id]});}
       for(const w of us.filter(u=>u.kind==='worker'&&!u.inside&&!u.order)){const ri=s.resources.findIndex(r=>r.amount>0&&r.kind!=='camp'&&distance(w,r)<16);if(ri>=0)w.order={type:'gather',resource:ri};}
       if(s.frame>200)for(const u of us.filter(u=>u.speed&&u.kind!=='worker'&&!u.order))u.order={type:'attackMove',x:foe[0],z:foe[1]};
     }

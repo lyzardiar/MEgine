@@ -3094,5 +3094,41 @@
     "realistic": true,
     "attackEvent": 0.3,
     "siegeModel": true
+  },
+  "RealKnight": {
+    "material": "Assets/Materials/RealKnight.mmat",
+    "parts": [
+      {
+        "name": "RealKnight",
+        "mesh": "Assets/Models/RealKnight.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 24
+      },
+      {
+        "name": "Walk",
+        "frames": 8
+      },
+      {
+        "name": "Attack",
+        "frames": 16
+      }
+    ],
+    "size": [
+      1.1320323489883146,
+      4.4,
+      3.7472645979823134
+    ],
+    "realistic": true,
+    "attackEvent": 0.5,
+    "mountedModel": true
   }
 }

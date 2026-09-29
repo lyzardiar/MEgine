@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "sourceFiles": 61,
+  "sourceBytes": 9515585,
+  "generatedFiles": 5,
+  "models": 110,
+  "portraits": 21,
+  "protocol": 10,
+  "reproducibility": {
+    "human": {
+      "files": 43,
+      "unchanged": true,
+      "changed": []
+    },
+    "siege": {
+      "files": 35,
+      "unchanged": true,
+      "changed": []
+    },
+    "cavalry": {
+      "files": 5,
+      "unchanged": true,
+      "changed": []
+    }
+  },
+  "geometryReport": "cavalry-import-qa.json",
+  "nativeReport": "native-cavalry-qa.json",
+  "nativeNetworkReport": "native-network-qa.json",
+  "ruleAndTcpSuite": true,
+  "package": {
+    "files": 489,
+    "bytes": 198758330,
+    "contentHash": "46cefefdc9c7d61f045cba02c76eef7ad3dd4f7a001a6613e69a6120507f70d9",
+    "smoke": "player-smoke.json"
+  },
+  "limits": [
+    "Remaining factions and heroes still have mixed art styles",
+    "Physical input, audio listening, cross-machine LAN and standalone Player frame rate are not verified"
+  ]
+}

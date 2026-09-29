@@ -81,7 +81,7 @@ Skirmish 建筑由工人到场启动：Kingdom 工人持续施工，可多工协
 
 ## 联机
 
-客户端与服务端使用协议 9，单条 JSON 消息上限 512 KiB，旧协议连接会被拒绝；更新时双方需同步。旧单机未完工建筑继续自动建造，新存档保留工人和施工状态。
+客户端与服务端使用协议 10，单条 JSON 消息上限 512 KiB，旧协议连接会被拒绝；更新时双方需同步。旧单机未完工建筑继续自动建造，新存档保留工人和施工状态。
 
 ```powershell
 # 同机测试
@@ -90,11 +90,11 @@ node samples/frostbound-realms/server.mjs
 node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 ```
 
-多人菜单按 I 编辑服务器 `IPv4:端口`，F1 创建 RTS 房间、F2 创建 MOBA 房间、F3 浏览房间。大厅 H 更换英雄，更换后双方需要重新准备。双方 Enter 准备，房主再次 Enter 开局。协议版本为 9，客户端和服务器必须配套更新，旧协议连接会被拒绝。服务器以 10 Hz 推进模拟，客户端仅提交命令；拒绝重复序号、操作敌方单位、不可见目标与非法坐标，限制连接、请求大小和发送频率。未提供公网匹配、NAT 穿透、账户系统或加密传输；当前目标为本机与可信局域网。
+多人菜单按 I 编辑服务器 `IPv4:端口`，F1 创建 RTS 房间、F2 创建 MOBA 房间、F3 浏览房间。大厅 H 更换英雄，更换后双方需要重新准备。双方 Enter 准备，房主再次 Enter 开局。协议版本为 10，客户端和服务器必须配套更新，旧协议连接会被拒绝。服务器以 10 Hz 推进模拟，客户端仅提交命令；拒绝重复序号、操作敌方单位、不可见目标与非法坐标，限制连接、请求大小和发送频率。未提供公网匹配、NAT 穿透、账户系统或加密传输；当前目标为本机与可信局域网。
 
 ## 资源与引擎扩展
 
-骷髅弩手与骷髅法师使用 [KayKit Skeletons](https://kaylousberg.itch.io/kaykit-skeletons) 免费版 CC0 模型，源版本固定为 `15b62b9bad122f72926c10fb14d622c73819fa54`。弩、法杖挂接原骨架手部插槽，随行走/射击/施法动画运动；身体、披风和帽子的骨骼层级完整保留。8个原始文件、许可和6个派生文件哈希见 `skeleton-sources.json`，可独立运行 `scripts/import-frost-skeletons.py` 重新导入，主资产导入脚本也包含该步骤。当前共109模型。
+骷髅弩手与骷髅法师使用 [KayKit Skeletons](https://kaylousberg.itch.io/kaykit-skeletons) 免费版 CC0 模型，源版本固定为 `15b62b9bad122f72926c10fb14d622c73819fa54`。弩、法杖挂接原骨架手部插槽，随行走/射击/施法动画运动；身体、披风和帽子的骨骼层级完整保留。8个原始文件、许可和6个派生文件哈希见 `skeleton-sources.json`，可独立运行 `scripts/import-frost-skeletons.py` 重新导入，主资产导入脚本也包含该步骤。当前共110模型。
 
 18种移动单位模型的选中头像与训练图标由 `node scripts/render-frost-unit-icons.mjs` 使用原生Release编辑器渲染，图集和模型姿态记录见 `unit-icons.json`。`gltf_bounds` Rust示例提供原生静态/骨骼姿态的几何边界，图标据此居中缩放。射击/施法的模型朝向跟随实际攻击目标；此改动不改变战斗数值或网络协议。
 
@@ -152,3 +152,5 @@ node scripts/qa-frostbound.mjs
 实体箭、短弩箭、长投射物、弩炮箭和扫描石弹分别显示；火焰、冰霜、自然、暗影与奥术使用粒子拖尾和对应命中特效。弹体按渲染帧在已收到的位置之间平滑过渡，仍由权威模拟决定命中。详见 [弹体视觉阶段](../../docs/designs/frostbound-realms/projectile-visuals.md)。
 
 四族攻城器械采用 0 A.D. CC-BY-SA-3.0 写实木制机械，包含弩炮、扭力投石机、牵引投石机和冲车，以及装填/发射机械动画。95 个源文件、35 个派生文件哈希见 siege-sources.json；素材署名随包位于 Assets/Licenses/0ad-siege.txt。弩炮两名、牵引投石机四名操作士兵已接入同步动画；重建及原生截图见 [攻城器械美术记录](../../docs/designs/frostbound-realms/siege-art.md)。
+
+王国二级兵营可训练写实骑士，使用 0 A.D. 棕色战马与链甲骑手，同步站立、奔跑和挥剑动作，AI 也会训练。61 个源文件与 5 个派生文件哈希见 `cavalry-sources.json`，许可位于 `Assets/Licenses/0ad-cavalry.txt`。当前共 21 个原生单位头像；详情及截图见 [骑兵美术记录](../../docs/designs/frostbound-realms/cavalry-art.md)。
