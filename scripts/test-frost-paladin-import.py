@@ -28,7 +28,7 @@ for key,definition in manifest['models'].items():
     output=subprocess.check_output(['cargo','run','-q','-p','mengine-assets','--example','gltf_bounds','--','--positions',*references],cwd=root,text=True)
     bounds=[];grip=[];greaves=[]
     for line in output.splitlines():
-        result=json.loads(line);posed=np.array(result.pop('positions'));assert len(posed)==len(points) and np.isfinite(posed).all();low=np.array(result['min']);high=np.array(result['max']);assert 2<high[1]-low[1]<(5.2 if '#pose=3:' in result['mesh'] else 4.5) and np.max(high-low)<5 and -.5<low[1]<.5,result
+        result=json.loads(line);posed=np.array(result.pop('positions'));assert len(posed)==len(points) and np.isfinite(posed).all();low=np.array(result['min']);high=np.array(result['max']);assert (.2 if asset['animations'][int(result['mesh'].split('#pose=')[1].split(':')[0])]['name']=='Death' else 2)<high[1]-low[1]<(5.2 if '#pose=3:' in result['mesh'] else 4.5) and np.max(high-low)<5 and -.5<low[1]<.5,result
         distance=np.linalg.norm(posed[groups['weapon']][:,None,:]-posed[groups['hand']][None,:,:],axis=2).min();assert distance<.2,(key,result['mesh'],'weapon grip',distance);grip.append(float(distance))
         if key=='RealDawnPaladin':
             for side in ['L','R']:

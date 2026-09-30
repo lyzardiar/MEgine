@@ -4,8 +4,8 @@
     "RealSylvanRanger": {
       "triangles": 2048,
       "bones": 106,
-      "nativePoses": 102,
-      "maximumBowGripGap": 0.029210713972426895,
+      "nativePoses": 117,
+      "maximumBowGripGap": 0.030764203165970085,
       "maximumArrowGripGap": 0.028504752203252985,
       "weightedCapeVertices": 88,
       "movingBones": {
@@ -145,6 +145,35 @@
           "thigh_R",
           "weapon_R",
           "weapon_bow"
+        ],
+        "Death": [
+          "arm_L",
+          "arm_R",
+          "cape1",
+          "cape2",
+          "cape3",
+          "chest",
+          "elbow_L",
+          "elbow_R",
+          "footIK_L",
+          "footIK_R",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "hip",
+          "knee_L",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "neck",
+          "shield",
+          "shoulder_L",
+          "thigh_L",
+          "thigh_R"
         ]
       },
       "bounds": [
@@ -1573,6 +1602,216 @@
             -0.9047924280166626,
             -0.002693071961402893,
             -0.5398198962211609
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            1.0774714946746826,
+            2.873243808746338,
+            0.5837094783782959
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:0",
+          "min": [
+            -0.5578094720840454,
+            -0.009561466053128242,
+            -0.5534650087356567
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            1.1310099363327026,
+            2.874344825744629,
+            0.8313517570495605
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:1",
+          "min": [
+            -0.9469480514526367,
+            -0.012782968580722809,
+            -0.5793039798736572
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            1.0148024559020996,
+            2.908928632736206,
+            0.9041085243225098
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:2",
+          "min": [
+            -1.0302808284759521,
+            -0.02035585790872574,
+            -0.6149225234985352
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            0.937761664390564,
+            2.8847086429595947,
+            0.9292516708374023
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:3",
+          "min": [
+            -1.2445976734161377,
+            -0.02721959911286831,
+            -0.6512197256088257
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            1.191812515258789,
+            3.251100778579712,
+            0.947320282459259
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:4",
+          "min": [
+            -1.0161890983581543,
+            -0.03994587063789368,
+            -0.766920804977417
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            1.5851287841796875,
+            3.234553575515747,
+            0.5718616843223572
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:5",
+          "min": [
+            -0.7758749723434448,
+            -0.042515747249126434,
+            -1.0963867902755737
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            2.0281710624694824,
+            2.62510347366333,
+            0.5736027956008911
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:6",
+          "min": [
+            -0.5080092549324036,
+            -0.012093260884284973,
+            -1.5568559169769287
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            2.437626361846924,
+            1.9537005424499512,
+            0.5432554483413696
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:7",
+          "min": [
+            -0.3754492998123169,
+            -0.07022225856781006,
+            -1.8373804092407227
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            2.772077798843384,
+            1.524448275566101,
+            0.5566929578781128
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:8",
+          "min": [
+            -0.37165367603302,
+            -0.14124561846256256,
+            -2.342376232147217
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            3.1395792961120605,
+            0.9843430519104004,
+            0.5922819972038269
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:9",
+          "min": [
+            -0.4900960326194763,
+            -0.3232138752937317,
+            -2.5814096927642822
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            3.346055030822754,
+            0.6733008623123169,
+            0.5922819972038269
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:10",
+          "min": [
+            -0.48372164368629456,
+            -0.32624393701553345,
+            -2.5904204845428467
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            3.534054756164551,
+            0.5915942192077637,
+            0.5922819972038269
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:11",
+          "min": [
+            -0.4708109498023987,
+            -0.32624393701553345,
+            -2.5904204845428467
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            3.5260815620422363,
+            0.5915942192077637,
+            0.5922819972038269
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:12",
+          "min": [
+            -0.48972320556640625,
+            -0.32624393701553345,
+            -2.5904204845428467
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            3.528733730316162,
+            0.5915942192077637,
+            0.5922819972038269
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:13",
+          "min": [
+            -0.5091389417648315,
+            -0.32624393701553345,
+            -2.5904204845428467
+          ],
+          "vertices": 2385
+        },
+        {
+          "max": [
+            3.5284109115600586,
+            0.5915942192077637,
+            0.5922819972038269
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:14",
+          "min": [
+            -0.5091389417648315,
+            -0.32624393701553345,
+            -2.5904204845428467
           ],
           "vertices": 2385
         }
@@ -4733,6 +4972,6 @@
       ]
     }
   },
-  "sourceFiles": 28,
+  "sourceFiles": 29,
   "generatedFiles": 15
 }

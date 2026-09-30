@@ -84,7 +84,8 @@
           "animations": {
             "Idle": "animation/biped/rider/cavalry/generic/idle_shield_ready_01.dae",
             "Walk": "animation/biped/rider/cavalry/generic/gallop_shield_ready.dae",
-            "Attack": "animation/biped/rider/cavalry/generic/attack_melee_shield_01.dae"
+            "Attack": "animation/biped/rider/cavalry/generic/attack_melee_shield_01.dae",
+            "Death": "animation/biped/rider/cavalry/generic/death_01.dae"
           }
         },
         {
@@ -125,7 +126,8 @@
       "animations": {
         "Idle": "animation/quadraped/horse_idle_01.dae",
         "Walk": "animation/quadraped/horse_gallop.dae",
-        "Attack": "animation/quadraped/horse_attack_01.dae"
+        "Attack": "animation/quadraped/horse_attack_01.dae",
+        "Death": "animation/quadraped/horse_death_01.dae"
       },
       "height": 4.4,
       "attackEvent": 0.5,
@@ -498,6 +500,18 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/horse/props/hair_black.xml",
       "sha256": "d73a7923ff7f6d3489891b6299be83151b9f9ddc5c26859e5bcee1c3a6b02777",
       "size": 222
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/rider/cavalry/generic/death_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/rider/cavalry/generic/death_01.dae",
+      "sha256": "4d88ac230d2b04e7ea358ee072bc149aa8b575e82f52ca0c9aedcedb0e7123e7",
+      "license": "CC-BY-SA-3.0"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/horse_death_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/horse_death_01.dae",
+      "sha256": "326e5e915953db6ada835f0b2958c986c7c8b130bdbaa07cbf1246ac0ed072d1",
+      "license": "CC-BY-SA-3.0"
     }
   ],
   "generated": [
@@ -515,7 +529,7 @@
     },
     {
       "file": "Assets/Models/RealKnight.glb",
-      "sha256": "159ff9a90522822b1a55ac4a1ef5eeab7f3da0669b519640da94bf7fd0a2a552"
+      "sha256": "cb21e6bbdd0548ddc26b0681b0bbc0c4eefb9291e422b0359477cf8ae4edf683"
     },
     {
       "file": "Assets/Materials/RealKnight.mmat",
@@ -538,6 +552,10 @@
         {
           "name": "Attack",
           "frames": 16
+        },
+        {
+          "name": "Death",
+          "frames": 28
         }
       ],
       "size": [

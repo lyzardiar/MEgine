@@ -26,6 +26,7 @@ for(let i=0;i<S.LIMIT;i++){
   entity('Unit '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.Warrior.parts[0].mesh+'#pose=1:0',material:catalog.Warrior.material}});
   entity('Ring '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Selection.mmat'}});box('HP '+i,[0,-100,0],[1.6,.09,.15],[.24,.86,.47,1]);entity('Flag '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.flag.parts[0].mesh,material:catalog.flag.material}});
 }
+for(let i=0;i<S.CORPSE_LIMIT;i++)entity('Corpse '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.Warrior.parts[0].mesh,material:catalog.Warrior.material}});
 for(let i=0;i<24;i++)entity('FX '+i,{Transform:T([0,-100,0]),ParticleEmitter3D:{playing:false,looping:true,rate_over_time:90,max_particles:36,lifetime_min:.25,lifetime_max:.65,speed_min:1,speed_max:4,size_start:.8,size_end:.05,color_start:[.3,.8,1,1],color_end:[.1,.3,1,0],gravity:[0,-2,0],shape:'sphere',shape_radius:.2,direction:[0,1,0],spread_degrees:160,simulation_space:'world',texture:'Assets/Textures/magic_01.png',billboard:true,seed:i+1}});
 for(let i=0;i<S.PROJECTILE_LIMIT;i++){
   entity('Missile '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.RealArrow.parts[0].mesh,material:catalog.RealArrow.material}});

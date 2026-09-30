@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "death": {
+    "combatDeaths": 4,
+    "models": [
+      "RealFootman",
+      "RealKnight",
+      "RealSylvanRanger",
+      "RealRifleman"
+    ],
+    "animatedFall": true,
+    "midDeathSaveRestore": true,
+    "nonLoopingBodies": true,
+    "unselectable": true,
+    "decayCleanup": true,
+    "shaderRejections": 0
+  }
+}

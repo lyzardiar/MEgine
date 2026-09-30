@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/death-poses.png",
+  "sha256": "df2f48590b1dcd16620f80b9a032be5e64b1b80b0f4c7a85cb2f020cf62483e1",
+  "generator": "scripts/render-frost-unit-icons.mjs --death-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
+  "models": [
+    {
+      "name": "RealFootman Death 0",
+      "mesh": "Assets/Models/RealFootman.glb#pose=3:0",
+      "material": "Assets/Materials/RealFootman.mmat",
+      "bounds": {
+        "max": [
+          1.6393014192581177,
+          2.7700703144073486,
+          1.2714753150939941
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFootman.glb#pose=3:0",
+        "min": [
+          -0.5940485596656799,
+          -0.010850134305655956,
+          -0.5196526050567627
+        ],
+        "vertices": 1680
+      }
+    },
+    {
+      "name": "RealFootman Death 0.5",
+      "mesh": "Assets/Models/RealFootman.glb#pose=3:7",
+      "material": "Assets/Materials/RealFootman.mmat",
+      "bounds": {
+        "max": [
+          2.36043119430542,
+          1.6476565599441528,
+          0.5739744901657104
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFootman.glb#pose=3:7",
+        "min": [
+          -0.36105644702911377,
+          0.02034643292427063,
+          -1.574399709701538
+        ],
+        "vertices": 1680
+      }
+    },
+    {
+      "name": "RealFootman Death 0.99",
+      "mesh": "Assets/Models/RealFootman.glb#pose=3:14",
+      "material": "Assets/Materials/RealFootman.mmat",
+      "bounds": {
+        "max": [
+          3.1205193996429443,
+          0.5454665422439575,
+          0.6814842224121094
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFootman.glb#pose=3:14",
+        "min": [
+          -0.5221505165100098,
+          -0.03744813799858093,
+          -1.7542755603790283
+        ],
+        "vertices": 1680
+      }
+    },
+    {
+      "name": "RealRifleman Death 0",
+      "mesh": "Assets/Models/RealRifleman.glb#pose=3:0",
+      "material": "Assets/Materials/RealRifleman.mmat",
+      "bounds": {
+        "max": [
+          0.9514513611793518,
+          2.7723305225372314,
+          0.6250276565551758
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=3:0",
+        "min": [
+          -0.5913244485855103,
+          0.00813860259950161,
+          -0.5451343059539795
+        ],
+        "vertices": 12347
+      }
+    },
+    {
+      "name": "RealRifleman Death 0.5",
+      "mesh": "Assets/Models/RealRifleman.glb#pose=3:7",
+      "material": "Assets/Materials/RealRifleman.mmat",
+      "bounds": {
+        "max": [
+          2.3356099128723145,
+          1.2320154905319214,
+          0.5713424682617188
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=3:7",
+        "min": [
+          -0.3710748255252838,
+          -0.01959279179573059,
+          -1.82987380027771
+        ],
+        "vertices": 12347
+      }
+    },
+    {
+      "name": "RealRifleman Death 0.99",
+      "mesh": "Assets/Models/RealRifleman.glb#pose=3:14",
+      "material": "Assets/Materials/RealRifleman.mmat",
+      "bounds": {
+        "max": [
+          2.631479501724243,
+          0.5619040131568909,
+          0.6267691850662231
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=3:14",
+        "min": [
+          -0.5197560787200928,
+          -0.4763334393501282,
+          -2.71616530418396
+        ],
+        "vertices": 12347
+      }
+    },
+    {
+      "name": "RealKnight Death 0",
+      "mesh": "Assets/Models/RealKnight.glb#pose=3:0",
+      "material": "Assets/Materials/RealKnight.mmat",
+      "bounds": {
+        "max": [
+          0.6688786745071411,
+          3.224444627761841,
+          1.9609489440917969
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealKnight.glb#pose=3:0",
+        "min": [
+          -0.5862932205200195,
+          -0.03315497934818268,
+          -1.4173681735992432
+        ],
+        "vertices": 3883
+      }
+    },
+    {
+      "name": "RealKnight Death 0.5",
+      "mesh": "Assets/Models/RealKnight.glb#pose=3:14",
+      "material": "Assets/Materials/RealKnight.mmat",
+      "bounds": {
+        "max": [
+          1.6162956953048706,
+          3.073228120803833,
+          1.8723279237747192
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealKnight.glb#pose=3:14",
+        "min": [
+          -0.5131052732467651,
+          -0.020837396383285522,
+          -2.0714313983917236
+        ],
+        "vertices": 3883
+      }
+    },
+    {
+      "name": "RealKnight Death 0.99",
+      "mesh": "Assets/Models/RealKnight.glb#pose=3:27",
+      "material": "Assets/Materials/RealKnight.mmat",
+      "bounds": {
+        "max": [
+          3.6284379959106445,
+          1.0438202619552612,
+          2.307729721069336
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealKnight.glb#pose=3:27",
+        "min": [
+          -0.06078416109085083,
+          -0.17003536224365234,
+          -2.1336920261383057
+        ],
+        "vertices": 3883
+      }
+    },
+    {
+      "name": "RealSylvanRanger Death 0",
+      "mesh": "Assets/Models/RealSylvanRanger.glb#pose=4:0",
+      "material": "Assets/Materials/RealSylvanRanger.mmat",
+      "bounds": {
+        "max": [
+          1.0774714946746826,
+          2.873243808746338,
+          0.5837094783782959
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:0",
+        "min": [
+          -0.5578094720840454,
+          -0.009561466053128242,
+          -0.5534650087356567
+        ],
+        "vertices": 2385
+      }
+    },
+    {
+      "name": "RealSylvanRanger Death 0.5",
+      "mesh": "Assets/Models/RealSylvanRanger.glb#pose=4:7",
+      "material": "Assets/Materials/RealSylvanRanger.mmat",
+      "bounds": {
+        "max": [
+          2.437626361846924,
+          1.9537005424499512,
+          0.5432554483413696
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:7",
+        "min": [
+          -0.3754492998123169,
+          -0.07022225856781006,
+          -1.8373804092407227
+        ],
+        "vertices": 2385
+      }
+    },
+    {
+      "name": "RealSylvanRanger Death 0.99",
+      "mesh": "Assets/Models/RealSylvanRanger.glb#pose=4:14",
+      "material": "Assets/Materials/RealSylvanRanger.mmat",
+      "bounds": {
+        "max": [
+          3.5284109115600586,
+          0.5915942192077637,
+          0.5922819972038269
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=4:14",
+        "min": [
+          -0.5091389417648315,
+          -0.32624393701553345,
+          -2.5904204845428467
+        ],
+        "vertices": 2385
+      }
+    }
+  ]
+}

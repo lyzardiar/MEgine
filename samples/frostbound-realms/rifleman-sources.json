@@ -91,7 +91,8 @@
       "animations": {
         "Idle": "0ad/animation/biped/infantry/crossbowman/idle_ready_01.dae",
         "Walk": "0ad/animation/biped/infantry/crossbowman/jog_ready.dae",
-        "Rifle_Shoot": "0ad/animation/biped/infantry/crossbowman/attack_ranged.dae"
+        "Rifle_Shoot": "0ad/animation/biped/infantry/crossbowman/attack_ranged.dae",
+        "Death": "0ad/animation/biped/infantry/death_a.dae"
       },
       "animationRanges": {
         "Rifle_Shoot": [
@@ -219,6 +220,12 @@
       "author": "DREAM_SEARCH_REPEAT",
       "license": "CC0-1.0",
       "sha256": "6d198b63da4067a7f5b747db2e1ad10000c0dc14c5f4be4c47d53445a0b19a1a"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
     }
   ],
   "modelStats": {
@@ -237,6 +244,10 @@
         {
           "name": "Rifle_Shoot",
           "frames": 14
+        },
+        {
+          "name": "Death",
+          "frames": 15
         }
       ],
       "size": [
@@ -261,7 +272,7 @@
     },
     {
       "file": "Assets/Models/RealRifleman.glb",
-      "sha256": "2ae30ce2f5b3d3136de5baf4e2470015bace86a6cc8fc7d84f1a2ffd29516842"
+      "sha256": "8150a53c57085a1343e287e51d4d0cec05d52b8e9153e1e925c2d6914f1940ec"
     },
     {
       "file": "Assets/Materials/RealRifleman.mmat",

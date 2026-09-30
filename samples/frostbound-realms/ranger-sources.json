@@ -80,7 +80,8 @@
         "Idle": "animation/biped/infantry/archer/idle_relax_01.dae",
         "Walk": "animation/biped/infantry/archer/jog_relax.dae",
         "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae",
-        "Cast": "animation/biped/infantry/archer/attack_ranged.dae"
+        "Cast": "animation/biped/infantry/archer/attack_ranged.dae",
+        "Death": "animation/biped/infantry/death_a.dae"
       },
       "attackEvent": 0.45,
       "ammoLoad": 0.72,
@@ -415,6 +416,12 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/base_archer_ready.xml",
       "sha256": "eac89b5fc6480a454005e54b59e2d06a4952c52d4f5e43166fd559864fdc7e04",
       "size": 944
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
     }
   ],
   "generated": [
@@ -432,7 +439,7 @@
     },
     {
       "file": "Assets/Models/RealSylvanRanger.glb",
-      "sha256": "a6698c6c98a16d2f6afd26ebb50a0ea085129f8310aced6348f3497a0b8acee0"
+      "sha256": "674bebc9a57e0dc62d7c471aee77df1a1c2562d82519ce5fc4bea4eafe128506"
     },
     {
       "file": "Assets/Materials/RealSylvanRanger.mmat",
@@ -499,6 +506,10 @@
         {
           "name": "Cast",
           "frames": 30
+        },
+        {
+          "name": "Death",
+          "frames": 15
         }
       ],
       "size": [

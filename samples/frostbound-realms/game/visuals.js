@@ -42,7 +42,13 @@ var FrostVisual=(()=>{
     const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;
     if(u.kind==='hero'&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[Frost.unitType(u).art],moved)!==null)return u.castYaw;
     const attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>['hit','launch'].includes(e.type)&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy))<=Frost.unitType(u).range+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
-    return target?Math.atan2(target.x-u.x,target.z-u.z):moved?Math.atan2(u.x-old.x,u.z-old.z):old?.yaw||0;
+    return target?Math.atan2(target.x-u.x,target.z-u.z):moved?Math.atan2(u.x-old.x,u.z-old.z):old?.yaw??u.yaw??0;
+  }
+  function corpse(state,c){
+    const visual=model(state,{...c,hp:0,tag:c.boss?'boss':undefined,tdBoss:c.large}),{asset,scale}=visual,clip=asset.animations?.findIndex(a=>/Death/.test(a.name));
+    if(clip===undefined||clip<0)return null;
+    const frames=asset.animations[clip].frames,ground=Frost.elevation(state.map,c.x,c.z),fall=Frost.clamp(c.age/(frames/12),0,1),decay=Frost.clamp((c.age-(Frost.CORPSE_LIFETIME-4))/4,0,1);
+    return {...visual,mesh:asset.parts[0].mesh+'#pose='+clip+':'+Math.min(frames-1,Math.floor(c.age*12)),y:ground+(c.y-ground)*(1-fall)-decay*Math.max(2,asset.size[1]*scale),yaw:c.yaw};
   }
   function pose(u,asset,walking,time){
     if(!asset.animations?.length)return asset.parts[0].mesh;
@@ -73,6 +79,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {model,name,pose,heroPortrait,heading,resource,scenery,projectile,projectileView,muzzle};
+  return {model,name,pose,corpse,heroPortrait,heading,resource,scenery,projectile,projectileView,muzzle};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

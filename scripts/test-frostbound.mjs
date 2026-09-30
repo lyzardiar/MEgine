@@ -9,6 +9,7 @@ import './test-frost-work-queues.mjs';
 import './test-frost-patrol.mjs';
 import './test-frost-visuals.mjs';
 import './test-frost-projectiles.mjs';
+import './test-frost-corpses.mjs';
 import './test-frost-projectile-art.mjs';
 import './test-frost-cavalry.mjs';
 import './test-frost-inventory.mjs';
@@ -130,5 +131,10 @@ try{
   const cavalryState=(await cavalryResume.next(m=>m.type==='state'&&m.state.units.some(u=>u.kind==='knight'),15000)).state,cavalry=cavalryState.units.find(u=>u.kind==='knight');assert.equal(cavalry.order.type,'attackMove');assert.equal(cavalry.order.x,-8);assert.equal(cavalry.order.z,10);console.log('PASS: TCP tier-2 cavalry cost, production queue reconnect and mounted unit rally');
   authoritative.units=[];const ranger=S.spawn(authoritative,'hero',0,0,0,{heroClass:2});S.visibility(authoritative);next=cavalryResume.next(m=>m.type==='state'&&m.state.units.find(u=>u.id===ranger.id)?.spell[0]>0);cavalryResume.send({type:'order',seq:1,command:{type:'learn',ids:[ranger.id],slot:0}});cavalryResume.send({type:'order',seq:2,command:{type:'spell',ids:[ranger.id],slot:0,x:3,z:4}});const castState=(await next).state,castHero=castState.units.find(u=>u.id===ranger.id);assert.equal(castHero.castYaw,Math.atan2(3,4));assert.equal(castHero.skills[0],1);
   cavalryResume.socket.destroy();const rangerResume=await peer();next=rangerResume.next(m=>m.type==='joined');rangerResume.send({type:'resume',code:arrowRoom.code,token:arrowRoom.token});const restoredRanger=(await next).state.units.find(u=>u.id===ranger.id);assert.equal(restoredRanger.castYaw,castHero.castYaw);assert.ok(restoredRanger.spell[0]>S.heroes[2].spells[0].cooldown-.8,'reconnect resumes the active casting gesture');console.log('PASS: TCP learned ranger spell, authoritative cast direction and mid-cast reconnect');
+  authoritative.units=[];authoritative.corpses=[];const gunner=S.spawn(authoritative,'rifleman',0,0,0,{damage:10000}),corpseVictim=S.spawn(authoritative,'soldier',1,0,2,{hp:1,damage:0,speed:0,yaw:1.2});S.visibility(authoritative);
+  next=rangerResume.next(m=>m.type==='state'&&m.state.corpses?.some(c=>c.id===corpseVictim.id));rangerResume.send({type:'order',seq:1,command:{type:'attack',ids:[gunner.id],target:corpseVictim.id}});const deadBody=(await next).state.corpses.find(c=>c.id===corpseVictim.id);assert.equal(deadBody.yaw,1.2);assert.equal(deadBody.kind,'soldier');assert.equal(deadBody.inventory,undefined);
+  rangerResume.socket.destroy();const corpseResume=await peer();next=corpseResume.next(m=>m.type==='joined');corpseResume.send({type:'resume',code:arrowRoom.code,token:arrowRoom.token});const resumedBody=(await next).state.corpses.find(c=>c.id===corpseVictim.id);assert.ok(resumedBody.age>=deadBody.age&&resumedBody.age<2);assert.equal(resumedBody.yaw,deadBody.yaw);
+  gunner.x=-28;gunner.z=-28;gunner.order={type:'hold'};await corpseResume.next(m=>m.type==='state'&&!m.state.corpses.some(c=>c.id===corpseVictim.id));gunner.x=0;gunner.z=0;await corpseResume.next(m=>m.type==='state'&&m.state.corpses.some(c=>c.id===corpseVictim.id));console.log('PASS: TCP actual rifle kill, authoritative corpse direction/age, mid-death reconnect and fog disappearance/reappearance');
+  authoritative.corpses[0].age=19.8;authoritative.winner=0;const finishedFrame=authoritative.frame,cleared=(await corpseResume.next(m=>m.type==='state'&&m.state.winner===0&&m.state.corpses.length===0)).state;assert.equal(cleared.frame,finishedFrame);console.log('PASS: TCP post-victory corpse expiry without advancing battle time');
   console.log('PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect');
 }finally{for(const p of peers)p.socket.destroy();await app.close();}

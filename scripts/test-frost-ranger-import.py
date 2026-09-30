@@ -23,12 +23,12 @@ for key,definition in manifest['models'].items():
     for index,clip in enumerate(doc['animations']):
         moving={doc['nodes'][c['target']['node']]['name'] for c in clip['channels'] if np.ptp(adapter.accessor(doc,blob,clip['samplers'][c['sampler']]['output']),axis=0).max()>.01};motion[clip['name']]=sorted(moving)
         if index==1:assert any(n.startswith('cape') for n in moving),'cape follows running'
-        if index>=2:assert 'Bow_String' in moving and 'arm_R' in moving,'bow and archer move together'
+        if clip['name'] in ['Bow_Shoot','Cast']:assert 'Bow_String' in moving and 'arm_R' in moving,'bow and archer move together'
         for frame in range(asset['animations'][index]['frames']):references.append(str(sample/asset['parts'][0]['mesh'])+f'#pose={index}:{frame}')
     output=subprocess.check_output(['cargo','run','-q','-p','mengine-assets','--example','gltf_bounds','--','--positions',*references],cwd=root,text=True)
     bounds=[];grip=[];arrows=[]
     for line in output.splitlines():
-        result=json.loads(line);posed=np.array(result.pop('positions'));assert len(posed)==len(points) and np.isfinite(posed).all();low=np.array(result['min']);high=np.array(result['max']);assert 2<high[1]-low[1]<4.5 and np.max(high-low)<5 and -.5<low[1]<.5,result
+        result=json.loads(line);posed=np.array(result.pop('positions'));assert len(posed)==len(points) and np.isfinite(posed).all();low=np.array(result['min']);high=np.array(result['max']);assert (.2 if asset['animations'][int(result['mesh'].split('#pose=')[1].split(':')[0])]['name']=='Death' else 2)<high[1]-low[1]<4.5 and np.max(high-low)<5 and -.5<low[1]<.5,result
         def gap(a,b):return float(np.linalg.norm(posed[groups[a]][:,None,:]-posed[groups[b]][None,:,:],axis=2).min())
         distance=gap('bow','left');assert distance<.2,(key,result['mesh'],'bow grip',distance);grip.append(distance)
         clip,frame=map(int,result['mesh'].split('#pose=')[1].split(':'));phase=frame/asset['animations'][clip]['frames']

@@ -61,7 +61,8 @@
         "Idle": "animation/biped/citizen/idle_relax_h_m.dae",
         "Walk": "animation/biped/citizen/walk_relax_h_m.dae",
         "Staff_Attack": "animation/biped/citizen/healing_m.dae",
-        "Cast": "animation/biped/citizen/healing_m.dae"
+        "Cast": "animation/biped/citizen/healing_m.dae",
+        "Death": "animation/biped/infantry/death_a.dae"
       },
       "height": 3.4,
       "attackEvent": 0.25
@@ -125,7 +126,8 @@
         "Idle": "animation/biped/citizen/idle_relax_h_m.dae",
         "Walk": "animation/biped/citizen/walk_relax_h_m.dae",
         "Staff_Attack": "animation/biped/citizen/healing_m.dae",
-        "Cast": "animation/biped/citizen/healing_m.dae"
+        "Cast": "animation/biped/citizen/healing_m.dae",
+        "Death": "animation/biped/infantry/death_a.dae"
       },
       "height": 3.4,
       "attackEvent": 0.25
@@ -317,6 +319,12 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/base_healer_male.xml",
       "sha256": "a0199063ab9403d88799e4dd807b1020fc334a139088578d797ca26bc533f1d2",
       "size": 749
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
     }
   ],
   "generated": [
@@ -334,7 +342,7 @@
     },
     {
       "file": "Assets/Models/RealFrostWarden.glb",
-      "sha256": "f6a38fe253b9e34551b461350d3f5aa6bfd8376d977932d9740aca7a2c72a641"
+      "sha256": "dd9d8f0065b8ebf49ab044f2f82bddb00432add31c749463a3e25fcd4294c459"
     },
     {
       "file": "Assets/Materials/RealFrostWarden.mmat",
@@ -354,7 +362,7 @@
     },
     {
       "file": "Assets/Models/RealEmberSage.glb",
-      "sha256": "452b8f33f9e302945ec561e275a3dd713fbb2313c8815a86f77ea8321c06b159"
+      "sha256": "94d182a34f889d4f34a5173a2f5ce68b06dce6fb21f655b87c7e0d385f9c9278"
     },
     {
       "file": "Assets/Materials/RealEmberSage.mmat",
@@ -381,6 +389,10 @@
         {
           "name": "Cast",
           "frames": 50
+        },
+        {
+          "name": "Death",
+          "frames": 15
         }
       ],
       "size": [
@@ -408,6 +420,10 @@
         {
           "name": "Cast",
           "frames": 50
+        },
+        {
+          "name": "Death",
+          "frames": 15
         }
       ],
       "size": [

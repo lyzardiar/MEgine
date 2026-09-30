@@ -73,7 +73,8 @@
       "animations": {
         "Idle": "animation/biped/infantry/swordsman/idle_relax_shield_celt_01.dae",
         "Walk": "animation/biped/infantry/swordsman/walk_relax_shield.dae",
-        "Sword_Attack": "animation/biped/infantry/swordsman/attack_melee_shield_01.dae"
+        "Sword_Attack": "animation/biped/infantry/swordsman/attack_melee_shield_01.dae",
+        "Death": "animation/biped/infantry/death_a.dae"
       },
       "height": 3.1
     },
@@ -154,7 +155,8 @@
         "Idle": "animation/biped/infantry/swordsman/idle_relax_shield_celt_01.dae",
         "Walk": "animation/biped/infantry/swordsman/walk_relax_shield.dae",
         "Sword_Attack": "animation/biped/infantry/swordsman/attack_melee_shield_01.dae",
-        "Cast": "animation/biped/infantry/promotion.dae"
+        "Cast": "animation/biped/infantry/promotion.dae",
+        "Death": "animation/biped/infantry/death_a.dae"
       },
       "height": 3.2
     }
@@ -381,6 +383,12 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/base_swordsman_shield_relax.xml",
       "sha256": "ac7dedb5b3fa9021c6a6d279e62d499711a5180b2ecce14448194254b5e17757",
       "size": 2230
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
     }
   ],
   "generated": [
@@ -398,7 +406,7 @@
     },
     {
       "file": "Assets/Models/RealPaladin.glb",
-      "sha256": "f10d3ffe49deafd1881647da96be15d1d24a41e79e48ed50ee475beaad8e3f3c"
+      "sha256": "0eb60f38d45851a8e063178521bfe76330ca59da95688efdde58f89de0bf71db"
     },
     {
       "file": "Assets/Materials/RealPaladin.mmat",
@@ -418,7 +426,7 @@
     },
     {
       "file": "Assets/Models/RealDawnPaladin.glb",
-      "sha256": "bd0ee0a8546f2dc7b2a19c54c453de35042beae611a72423a9f32ec35e19148f"
+      "sha256": "4f2b44fee6f9257e551fc8ad0b2d1fcea3d9e5846b463eeab824d211991ca7d9"
     },
     {
       "file": "Assets/Materials/RealDawnPaladin.mmat",
@@ -441,6 +449,10 @@
         {
           "name": "Sword_Attack",
           "frames": 12
+        },
+        {
+          "name": "Death",
+          "frames": 15
         }
       ],
       "size": [
@@ -468,6 +480,10 @@
         {
           "name": "Cast",
           "frames": 20
+        },
+        {
+          "name": "Death",
+          "frames": 15
         }
       ],
       "size": [

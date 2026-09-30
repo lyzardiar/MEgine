@@ -26,10 +26,11 @@ for key,definition in manifest['models'].items():
     output=subprocess.check_output(['cargo','run','-q','-p','mengine-assets','--example','gltf_bounds','--','--positions',*references],cwd=root,text=True)
     bounds=[];grip=[];support=[];muzzle_gap=None
     for line in output.splitlines():
-        result=json.loads(line);posed=np.array(result.pop('positions'));assert len(posed)==len(points) and np.isfinite(posed).all();low=np.array(result['min']);high=np.array(result['max']);assert 2<high[1]-low[1]<4.5 and np.max(high-low)<5 and -.5<low[1]<.5,result
+        result=json.loads(line);posed=np.array(result.pop('positions'));assert len(posed)==len(points) and np.isfinite(posed).all();low=np.array(result['min']);high=np.array(result['max']);assert (.2 if asset['animations'][int(result['mesh'].split('#pose=')[1].split(':')[0])]['name']=='Death' else 2)<high[1]-low[1]<4.5 and np.max(high-low)<5 and -.5<low[1]<.5,result
         def gap(a,b):return float(np.linalg.norm(posed[groups[a]][:,None,:]-posed[groups[b]][None,:,:],axis=2).min())
         distance=gap('gun','right');assert distance<.2,(result['mesh'],'trigger hand',distance);grip.append(distance)
-        distance=gap('gun','left');assert distance<.3,(result['mesh'],'support hand',distance);support.append(distance)
+        if asset['animations'][int(result['mesh'].split('#pose=')[1].split(':')[0])]['name']!='Death':
+            distance=gap('gun','left');assert distance<.3,(result['mesh'],'support hand',distance);support.append(distance)
         if result['mesh'].endswith('#pose=2:'+str(int(asset['attackEvent']*asset['animations'][2]['frames']))):
             muzzle_gap=float(np.linalg.norm(posed[groups['gun']]-np.array(asset['muzzle']),axis=1).min());assert muzzle_gap<.08,('muzzle attachment',muzzle_gap)
         bounds.append(result)

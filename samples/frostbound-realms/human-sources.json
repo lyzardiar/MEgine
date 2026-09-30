@@ -56,7 +56,8 @@
       "animations": {
         "Idle": "animation/biped/infantry/swordsman/idle_relax_shield_celt_01.dae",
         "Walk": "animation/biped/infantry/swordsman/walk_relax_shield.dae",
-        "Sword_Attack": "animation/biped/infantry/swordsman/attack_melee_shield_01.dae"
+        "Sword_Attack": "animation/biped/infantry/swordsman/attack_melee_shield_01.dae",
+        "Death": "animation/biped/infantry/death_a.dae"
       }
     },
     "RealWorker": {
@@ -91,7 +92,8 @@
       "animations": {
         "Idle": "animation/biped/citizen/idle_relax_m_a.dae",
         "Walk": "animation/biped/citizen/walk_relax_m_aggresive.dae",
-        "Sword_Attack": "animation/biped/infantry/axe/attack_melee_shield_01.dae"
+        "Sword_Attack": "animation/biped/infantry/axe/attack_melee_shield_01.dae",
+        "Death": "animation/biped/infantry/death_a.dae"
       }
     },
     "RealWorkerWood": {
@@ -253,7 +255,8 @@
       "animations": {
         "Idle": "animation/biped/infantry/archer/idle_relax_01.dae",
         "Walk": "animation/biped/infantry/archer/jog_relax.dae",
-        "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae"
+        "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae",
+        "Death": "animation/biped/infantry/death_a.dae"
       },
       "attackEvent": 0.45,
       "ammoLoad": 0.72
@@ -752,6 +755,12 @@
       "file": "SourceAssets/0ad/meshes/props/weap_arrow_front.dae",
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weap_arrow_front.dae",
       "sha256": "76da26420144fdb069cf18bffaf0ddfc0c7e54707a934920e5690a5aa536663a"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
     }
   ],
   "generated": [
@@ -769,7 +778,7 @@
     },
     {
       "file": "Assets/Models/RealFootman.glb",
-      "sha256": "5bb7f4daf39af6854d61b974a620dfa6a621886998554644c19219a8d95ff52e"
+      "sha256": "42b7f4a537cac036709828e1ce8b612ac721a4bd89cb46488e6c7a00c2010026"
     },
     {
       "file": "Assets/Materials/RealFootman.mmat",
@@ -789,7 +798,7 @@
     },
     {
       "file": "Assets/Models/RealWorker.glb",
-      "sha256": "7ef676e81e3d33b43cebe1de8333ee7888494b8f90cea1b31d7b2d280583bb6c"
+      "sha256": "4afba8df32642955e024b57b35fad437c24e19c23373fe4604b69bf14231c3ef"
     },
     {
       "file": "Assets/Materials/RealWorker.mmat",
@@ -809,7 +818,7 @@
     },
     {
       "file": "Assets/Models/RealWorkerWood.glb",
-      "sha256": "ef48110cc51d976b4562f4c76642207ca9ee39104327259f0df94da9fc3cfb0e"
+      "sha256": "668d3433cbb275426fbe1df1150f6c0dbd270889c202a024560a11b5288e7b87"
     },
     {
       "file": "Assets/Materials/RealWorkerWood.mmat",
@@ -829,7 +838,7 @@
     },
     {
       "file": "Assets/Models/RealWorkerMine.glb",
-      "sha256": "2c817e4ab73815f82b383e98f7c7918273ebeed248699ce8ef03fa1334dd05a2"
+      "sha256": "4eec5227633ebd7da640216689f57b7bc6b7690377bc31b766b4ac69e7d3dadc"
     },
     {
       "file": "Assets/Materials/RealWorkerMine.mmat",
@@ -849,7 +858,7 @@
     },
     {
       "file": "Assets/Models/RealWorkerBuild.glb",
-      "sha256": "b5fa5b7c5b41ba6079afba219f035fcc9223f098d6f00054a5d78f5c2a015b1b"
+      "sha256": "5565b3371a6b0483c4026386b5f75a4da0b54c2b322315eefe9aa1b45c0cebd8"
     },
     {
       "file": "Assets/Materials/RealWorkerBuild.mmat",
@@ -869,7 +878,7 @@
     },
     {
       "file": "Assets/Models/RealArcher.glb",
-      "sha256": "2215b40985286999b3286fa7f23e2f55c7433bce5d9fa377fb616767883ece86"
+      "sha256": "0e63cad9adc6db79ed6ed3d57c7378e77ca4895103ed544893e08308c20df14d"
     },
     {
       "file": "Assets/Materials/RealArcher.mmat",
@@ -889,7 +898,7 @@
     },
     {
       "file": "Assets/Models/RealArcherShoot.glb",
-      "sha256": "257cd7772305a1601e27b15e33082cf3cd537ec177d5ba4201bc8890748ddac3"
+      "sha256": "4893a56f3f53f489571aa562b46b01f52efdcfb0b612dc8f9961869a347ef814"
     },
     {
       "file": "Assets/Materials/RealArcherShoot.mmat",
@@ -909,7 +918,7 @@
     },
     {
       "file": "Assets/Models/RealArcherLoaded.glb",
-      "sha256": "a492e910587b8de02b40f067926d058abb118a7e431237280dd6dcf24b99a8d7"
+      "sha256": "d5912d2715f3afcfa5be7612ef298422ae7e4f86eae5a8703f01605f5a2547a7"
     },
     {
       "file": "Assets/Materials/RealArcherLoaded.mmat",
@@ -944,6 +953,10 @@
         {
           "name": "Sword_Attack",
           "frames": 12
+        },
+        {
+          "name": "Death",
+          "frames": 15
         }
       ],
       "size": [
@@ -966,6 +979,10 @@
         },
         {
           "name": "Sword_Attack",
+          "frames": 15
+        },
+        {
+          "name": "Death",
           "frames": 15
         }
       ],
@@ -1035,6 +1052,10 @@
         {
           "name": "Bow_Shoot",
           "frames": 30
+        },
+        {
+          "name": "Death",
+          "frames": 15
         }
       ],
       "size": [

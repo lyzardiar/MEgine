@@ -1,0 +1,23 @@
+0 A.D. death animation attribution
+Original author: Wildfire Games - https://www.wildfiregames.com/
+Pinned source revision: 61a3b9507d974084e6badb88a0826bd89a6d5b8b
+https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+Creative Commons Attribution-ShareAlike 3.0 Unported:
+https://creativecommons.org/licenses/by-sa/3.0/
+
+Source animations:
+animation/biped/infantry/death_a.dae
+animation/quadraped/horse_death_01.dae
+animation/biped/rider/cavalry/generic/death_01.dae
+
+Modifications by MEngine contributors: retargeted deformation matrices to
+the assembled character bind skeletons; synchronized the horse and mounted
+rider; retained attached equipment and sampled native glTF death poses.
+
+Death clips in RealFootman, RealWorker, RealArcher, RealKnight, RealPaladin,
+RealDawnPaladin, RealFrostWarden, RealEmberSage, RealSylvanRanger and
+RealRifleman are distributed under CC-BY-SA-3.0 with their combined models.
+Existing assets retain their separately documented original licenses.
+Pinned URLs and source/generated SHA256 appear in human-sources.json,
+cavalry-sources.json, paladin-sources.json, mage-sources.json,
+ranger-sources.json and rifleman-sources.json.

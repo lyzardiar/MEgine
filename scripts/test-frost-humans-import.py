@@ -35,7 +35,7 @@ for key in manifest['models']:
 output=subprocess.check_output(['cargo','run','-q','-p','mengine-assets','--example','gltf_bounds','--',*references],cwd=root,text=True)
 results=[json.loads(line) for line in output.splitlines()];assert len(results)==len(references)
 for result in results:
-    low=np.array(result['min']);high=np.array(result['max']);assert np.isfinite(low).all() and np.isfinite(high).all();minimum=1 if 'RealWorkerBuild.glb' in result['mesh'] else 1.5
+    low=np.array(result['min']);high=np.array(result['max']);assert np.isfinite(low).all() and np.isfinite(high).all();key=Path(result['mesh'].split('#pose=')[0]).stem;clip=int(result['mesh'].split('#pose=')[1].split(':')[0]);minimum=.2 if catalog[key]['animations'][clip]['name']=='Death' else 1 if 'RealWorkerBuild.glb' in result['mesh'] else 1.5
     assert minimum<high[1]-low[1]<4.5 and np.max(high-low)<6,result;assert -.6<low[1]<.6,'feet remain near ground'
 for start,count in groups:assert len({tuple(round(v,3) for v in r['max']) for r in results[start:start+count]})>=min(5,count-1),'native geometry changes with the authored clips'
 print('PASS:',len(results),'native skeletal samples, complete equipment and stable pose bounds')
