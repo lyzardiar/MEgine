@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "identicalGeneratedFiles": [
+    {
+      "file": "Assets/Textures/RealBoneArcher_base.png",
+      "sha256": "0b5dce3c9917c7c932314289154b2c8a96bd81f93fc0ff0ced4c78286756d784"
+    },
+    {
+      "file": "Assets/Models/RealBoneArcher.glb",
+      "sha256": "7725d45a462a2e521f11761ee77807ce4bc514d13787699ee69981c59f300323"
+    },
+    {
+      "file": "Assets/Models/RealBoneArcherShoot.glb",
+      "sha256": "f073b8e3cd0cd2c909829c60b831028aac1f7ed9155fb20a43753b02a0628e16"
+    },
+    {
+      "file": "Assets/Materials/RealBoneArcher.mmat",
+      "sha256": "6fbee16b61bedeb5a9f2648306eb21b8300f40b78bc8ae6dfceee2781d0fc533"
+    }
+  ],
+  "aimGripReachError": 0
+}

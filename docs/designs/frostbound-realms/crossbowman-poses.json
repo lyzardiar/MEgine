@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/crossbowman-poses.png",
+  "sha256": "59b5f21c15145476a074751171595fd30664e79712c418329838b510d96293d9",
+  "generator": "scripts/render-frost-unit-icons.mjs --crossbowman-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Idle 0",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=0:0",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.4652032256126404,
+          2.9331212043762207,
+          0.8519394993782043
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:0",
+        "min": [
+          -0.7310366630554199,
+          4.6193599700927734e-7,
+          -0.6973915100097656
+        ],
+        "vertices": 22922
+      }
+    },
+    {
+      "name": "Walk 0.25",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=1:2",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.4526105523109436,
+          2.7176778316497803,
+          1.0784974098205566
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:2",
+        "min": [
+          -0.8584166169166565,
+          -2.9802322387695312e-8,
+          -0.9235403537750244
+        ],
+        "vertices": 22922
+      }
+    },
+    {
+      "name": "Walk 0.75",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=1:7",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.42106813192367554,
+          2.7194879055023193,
+          0.9496243000030518
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:7",
+        "min": [
+          -0.9326902627944946,
+          -0.004012405872344971,
+          -0.8994358777999878
+        ],
+        "vertices": 22922
+      }
+    },
+    {
+      "name": "Attack 0.1",
+      "mesh": "Assets/Models/RealBoneArcherShoot.glb#pose=2:4",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.5288411378860474,
+          2.9631717205047607,
+          1.131424903869629
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:4",
+        "min": [
+          -0.8859673738479614,
+          6.556510925292969e-7,
+          -0.6228228807449341
+        ],
+        "vertices": 22848
+      }
+    },
+    {
+      "name": "Attack 0.47",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=2:18",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.694146990776062,
+          3.171603202819824,
+          1.16963529586792
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:18",
+        "min": [
+          -0.8148811459541321,
+          5.21540641784668e-7,
+          -0.6250110268592834
+        ],
+        "vertices": 22922
+      }
+    },
+    {
+      "name": "Attack 0.7",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=2:28",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.46334147453308105,
+          2.969911575317383,
+          0.9551998376846313
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:28",
+        "min": [
+          -0.7765980362892151,
+          3.203749656677246e-7,
+          -0.669539749622345
+        ],
+        "vertices": 22922
+      }
+    },
+    {
+      "name": "Attack 0.82",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=2:32",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.47369810938835144,
+          2.9638636112213135,
+          0.9147414565086365
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:32",
+        "min": [
+          -0.8256754875183105,
+          9.98377799987793e-7,
+          -0.6585406064987183
+        ],
+        "vertices": 22922
+      }
+    },
+    {
+      "name": "Attack 0.87",
+      "mesh": "Assets/Models/RealBoneArcherShoot.glb#pose=2:34",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.6085843443870544,
+          2.9637789726257324,
+          0.8219870924949646
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:34",
+        "min": [
+          -0.9319860935211182,
+          -3.725290298461914e-7,
+          -0.8021037578582764
+        ],
+        "vertices": 22848
+      }
+    },
+    {
+      "name": "Attack 0.98",
+      "mesh": "Assets/Models/RealBoneArcherShoot.glb#pose=2:39",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.5491948127746582,
+          2.95835542678833,
+          0.91805499792099
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:39",
+        "min": [
+          -0.8529375791549683,
+          -0.000014856457710266113,
+          -0.758080005645752
+        ],
+        "vertices": 22848
+      }
+    },
+    {
+      "name": "Death 0",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=3:0",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          1.0648483037948608,
+          2.876049518585205,
+          0.6072895526885986
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:0",
+        "min": [
+          -1.0139451026916504,
+          7.227063179016113e-7,
+          -0.6280044317245483
+        ],
+        "vertices": 22922
+      }
+    },
+    {
+      "name": "Death 0.5",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=3:7",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          2.4711437225341797,
+          1.1530539989471436,
+          0.47239625453948975
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:7",
+        "min": [
+          -0.34631145000457764,
+          0.017279893159866333,
+          -2.14255690574646
+        ],
+        "vertices": 22922
+      }
+    },
+    {
+      "name": "Death 0.99",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=3:14",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          2.8543434143066406,
+          1.3153765201568604,
+          0.49559485912323
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:14",
+        "min": [
+          -0.3886469006538391,
+          -2.086162567138672e-7,
+          -2.682246446609497
+        ],
+        "vertices": 22922
+      }
+    }
+  ]
+}

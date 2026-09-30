@@ -1,0 +1,2705 @@
+{
+  "passed": true,
+  "variants": {
+    "RealBoneArcher": {
+      "triangles": 16054,
+      "bones": 125,
+      "nativeSamples": 89,
+      "movingBones": {
+        "Idle": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.L",
+          "FOOT.R",
+          "HAND.L",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "PELVIS",
+          "RIB_T4",
+          "RIB_T5",
+          "STERNUM",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R"
+        ],
+        "Walk": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.L",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HEAD",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "PELVIS",
+          "RIB_T1",
+          "RIB_T11",
+          "RIB_T4",
+          "RIB_T5",
+          "RIB_T9",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_L5",
+          "VERTEBRAE_T12",
+          "VERTEBRAE_T6"
+        ],
+        "Attack": [
+          "Bow_Nu_arm_L",
+          "Bow_Nu_arm_R",
+          "Bow_Nu_crank",
+          "Bow_Nu_sling",
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.L",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HEAD",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "PELVIS",
+          "RIB_T1",
+          "RIB_T11",
+          "RIB_T12",
+          "RIB_T5",
+          "RIB_T7",
+          "RIB_T9",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_L5",
+          "VERTEBRAE_T12",
+          "VERTEBRAE_T6"
+        ],
+        "Death": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "JAW",
+          "PELVIS",
+          "RIB_T1",
+          "RIB_T11",
+          "RIB_T12",
+          "RIB_T4",
+          "RIB_T5",
+          "RIB_T7",
+          "RIB_T9",
+          "STERNUM",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_C7",
+          "VERTEBRAE_T6"
+        ]
+      },
+      "bounds": [
+        {
+          "max": [
+            0.4652032256126404,
+            2.9331212043762207,
+            0.8519394993782043
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:0",
+          "min": [
+            -0.7310366630554199,
+            4.6193599700927734e-07,
+            -0.6973915100097656
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651963710784912,
+            2.931692361831665,
+            0.853804886341095
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:1",
+          "min": [
+            -0.7310435771942139,
+            -2.4586915969848633e-07,
+            -0.6971730589866638
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651894271373749,
+            2.9300649166107178,
+            0.8558827042579651
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:2",
+          "min": [
+            -0.731050968170166,
+            0.0,
+            -0.6969237327575684
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651840329170227,
+            2.928297758102417,
+            0.8581463098526001
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:3",
+          "min": [
+            -0.7310558557510376,
+            -8.717179298400879e-07,
+            -0.6966535449028015
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651758670806885,
+            2.92647647857666,
+            0.8605210781097412
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:4",
+          "min": [
+            -0.7310645580291748,
+            -3.203749656677246e-07,
+            -0.6963732838630676
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.46516895294189453,
+            2.9246363639831543,
+            0.8629561066627502
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:5",
+          "min": [
+            -0.7310701608657837,
+            -7.525086402893066e-07,
+            -0.6960951685905457
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651643633842468,
+            2.9228713512420654,
+            0.8653830289840698
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:6",
+          "min": [
+            -0.7310752868652344,
+            4.6938657760620117e-07,
+            -0.6958158612251282
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651629626750946,
+            2.921299695968628,
+            0.867732584476471
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:7",
+          "min": [
+            -0.7310760021209717,
+            7.450580596923828e-08,
+            -0.6955739259719849
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.46516361832618713,
+            2.9199419021606445,
+            0.8699589967727661
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:8",
+          "min": [
+            -0.7310760617256165,
+            4.470348358154297e-08,
+            -0.6953636407852173
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651661813259125,
+            2.918860912322998,
+            0.8719886541366577
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:9",
+          "min": [
+            -0.7310729026794434,
+            -3.501772880554199e-07,
+            -0.695196270942688
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651733338832855,
+            2.918062210083008,
+            0.8737991452217102
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:10",
+          "min": [
+            -0.7310662269592285,
+            2.7567148208618164e-07,
+            -0.695072591304779
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651816189289093,
+            2.9175894260406494,
+            0.8753330707550049
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:11",
+          "min": [
+            -0.7310582399368286,
+            2.384185791015625e-07,
+            -0.694999098777771
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4651932716369629,
+            2.91742205619812,
+            0.8765866756439209
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:12",
+          "min": [
+            -0.7310464978218079,
+            -2.3096799850463867e-07,
+            -0.6949732899665833
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.46520715951919556,
+            2.9175894260406494,
+            0.8775169849395752
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:13",
+          "min": [
+            -0.731033205986023,
+            2.384185791015625e-07,
+            -0.6949993968009949
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4652230143547058,
+            2.9180614948272705,
+            0.8781347274780273
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:14",
+          "min": [
+            -0.7310168743133545,
+            1.564621925354004e-07,
+            -0.695072591304779
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4652421176433563,
+            2.91886043548584,
+            0.8784139752388
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:15",
+          "min": [
+            -0.7309974431991577,
+            -6.780028343200684e-07,
+            -0.6951959729194641
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4652498960494995,
+            2.9199419021606445,
+            0.8784236907958984
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:16",
+          "min": [
+            -0.7309894561767578,
+            -2.3096799850463867e-07,
+            -0.6953637003898621
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4652678370475769,
+            2.9212989807128906,
+            0.8776185512542725
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:17",
+          "min": [
+            -0.7309720516204834,
+            1.6391277313232422e-07,
+            -0.6955736875534058
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.46527567505836487,
+            2.9228720664978027,
+            0.8757237195968628
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:18",
+          "min": [
+            -0.7309644222259521,
+            3.7997961044311523e-07,
+            -0.6958158612251282
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4652741551399231,
+            2.9246366024017334,
+            0.8727337121963501
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:19",
+          "min": [
+            -0.7309653759002686,
+            -9.611248970031738e-07,
+            -0.6960952877998352
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4652654230594635,
+            2.926478147506714,
+            0.8689170479774475
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:20",
+          "min": [
+            -0.7309740781784058,
+            -8.940696716308594e-08,
+            -0.696373462677002
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4652480483055115,
+            2.928297996520996,
+            0.8645199537277222
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:21",
+          "min": [
+            -0.7309921979904175,
+            -8.419156074523926e-07,
+            -0.6966536045074463
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.465239942073822,
+            2.9300661087036133,
+            0.8599158525466919
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:22",
+          "min": [
+            -0.7309997081756592,
+            -2.7567148208618164e-07,
+            -0.6969237327575684
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.46521860361099243,
+            2.931692361831665,
+            0.855623185634613
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:23",
+          "min": [
+            -0.7310206294059753,
+            -1.1175870895385742e-07,
+            -0.6971730589866638
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.35775816440582275,
+            2.84537410736084,
+            0.9280933141708374
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:0",
+          "min": [
+            -0.8247121572494507,
+            -4.0605664253234863e-07,
+            -0.9742195010185242
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.38513290882110596,
+            2.7166218757629395,
+            1.012465000152588
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:1",
+          "min": [
+            -0.8463680148124695,
+            0.010733470320701599,
+            -1.0085574388504028
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4526105523109436,
+            2.7176778316497803,
+            1.0784974098205566
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:2",
+          "min": [
+            -0.8584166169166565,
+            -2.9802322387695312e-08,
+            -0.9235403537750244
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.49447643756866455,
+            2.7634146213531494,
+            1.0926984548568726
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:3",
+          "min": [
+            -0.970140278339386,
+            -0.0035351887345314026,
+            -0.6548318266868591
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4163144826889038,
+            2.865621328353882,
+            1.0741562843322754
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:4",
+          "min": [
+            -1.0331988334655762,
+            2.1606683731079102e-07,
+            -0.5691370964050293
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.3473348617553711,
+            2.8379335403442383,
+            1.0473546981811523
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:5",
+          "min": [
+            -1.0556188821792603,
+            -0.0009816139936447144,
+            -0.9769752025604248
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.3413124084472656,
+            2.6929702758789062,
+            1.0361398458480835
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:6",
+          "min": [
+            -1.0114322900772095,
+            3.725290298461914e-07,
+            -1.032854676246643
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.42106813192367554,
+            2.7194879055023193,
+            0.9496243000030518
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:7",
+          "min": [
+            -0.9326902627944946,
+            -0.004012405872344971,
+            -0.8994358777999878
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.3521157503128052,
+            2.8170018196105957,
+            0.8646820783615112
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:8",
+          "min": [
+            -0.8770425915718079,
+            -1.7136335372924805e-07,
+            -0.61379474401474
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.3367258906364441,
+            2.8726680278778076,
+            0.9054625630378723
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=1:9",
+          "min": [
+            -0.8484681844711304,
+            0.022706560790538788,
+            -0.6912581920623779
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5593541264533997,
+            2.953151226043701,
+            0.9095484614372253
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:0",
+          "min": [
+            -0.807837724685669,
+            3.725290298461914e-07,
+            -0.6944643259048462
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5590803623199463,
+            2.957711696624756,
+            0.9696156978607178
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:1",
+          "min": [
+            -0.8209104537963867,
+            1.1920928955078125e-07,
+            -0.6761442422866821
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.553727388381958,
+            2.9614248275756836,
+            1.034266710281372
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:2",
+          "min": [
+            -0.8398892879486084,
+            7.748603820800781e-07,
+            -0.646162748336792
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.542675793170929,
+            2.9633078575134277,
+            1.0901800394058228
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:3",
+          "min": [
+            -0.8630229830741882,
+            -8.419156074523926e-07,
+            -0.6221312880516052
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5288411378860474,
+            2.9631717205047607,
+            1.131424903869629
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:4",
+          "min": [
+            -0.8859673738479614,
+            6.556510925292969e-07,
+            -0.6228228807449341
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5165096521377563,
+            2.961555242538452,
+            1.1563994884490967
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:5",
+          "min": [
+            -0.9051870107650757,
+            1.4156103134155273e-07,
+            -0.626882791519165
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.508253276348114,
+            2.9590675830841064,
+            1.168156623840332
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:6",
+          "min": [
+            -0.9169661402702332,
+            4.470348358154297e-07,
+            -0.6368978023529053
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5008087754249573,
+            2.957874059677124,
+            1.1671568155288696
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:7",
+          "min": [
+            -0.9157317876815796,
+            7.82310962677002e-07,
+            -0.6390944123268127
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5008078813552856,
+            2.957350492477417,
+            1.1514816284179688
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:8",
+          "min": [
+            -0.8958491086959839,
+            5.736947059631348e-07,
+            -0.6393213272094727
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5008077621459961,
+            2.9565398693084717,
+            1.1301974058151245
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:9",
+          "min": [
+            -0.8689850568771362,
+            2.1606683731079102e-07,
+            -0.6398820877075195
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5008065700531006,
+            2.9567196369171143,
+            1.1080784797668457
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:10",
+          "min": [
+            -0.8360947370529175,
+            9.760260581970215e-07,
+            -0.6407442092895508
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5008054971694946,
+            2.956223964691162,
+            1.097408413887024
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:11",
+          "min": [
+            -0.8240994811058044,
+            5.587935447692871e-07,
+            -0.6419023871421814
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5008045434951782,
+            2.956159830093384,
+            1.0961984395980835
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:12",
+          "min": [
+            -0.8238382935523987,
+            4.842877388000488e-07,
+            -0.643196702003479
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5008037686347961,
+            2.9582056999206543,
+            1.100039005279541
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:13",
+          "min": [
+            -0.8242797255516052,
+            4.6938657760620117e-07,
+            -0.6433533430099487
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.6414960622787476,
+            2.961991310119629,
+            1.1080715656280518
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:14",
+          "min": [
+            -0.825207531452179,
+            4.76837158203125e-07,
+            -0.6416208744049072
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.7086688280105591,
+            2.9698541164398193,
+            1.1203030347824097
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:15",
+          "min": [
+            -0.8256773948669434,
+            5.736947059631348e-07,
+            -0.6371116638183594
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.6726371049880981,
+            2.9782750606536865,
+            1.1356325149536133
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:16",
+          "min": [
+            -0.8245135545730591,
+            4.3958425521850586e-07,
+            -0.629357099533081
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.6438910961151123,
+            3.043006181716919,
+            1.1527143716812134
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:17",
+          "min": [
+            -0.8208573460578918,
+            1.1920928955078125e-07,
+            -0.6249228119850159
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.694146990776062,
+            3.171603202819824,
+            1.16963529586792
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:18",
+          "min": [
+            -0.8148811459541321,
+            5.21540641784668e-07,
+            -0.6250110268592834
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.7430216073989868,
+            3.1393613815307617,
+            1.1848819255828857
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:19",
+          "min": [
+            -0.8079791069030762,
+            8.344650268554688e-07,
+            -0.6256784796714783
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.766677975654602,
+            2.992079973220825,
+            1.1680517196655273
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:20",
+          "min": [
+            -0.8014965653419495,
+            2.4586915969848633e-07,
+            -0.6274567246437073
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.7526285648345947,
+            2.9750499725341797,
+            1.1359481811523438
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:21",
+          "min": [
+            -0.7983719110488892,
+            -1.9073486328125e-06,
+            -0.6303448677062988
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.7356442809104919,
+            2.956378698348999,
+            1.1037935018539429
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:22",
+          "min": [
+            -0.7967178821563721,
+            1.169741153717041e-06,
+            -0.6338543891906738
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.6730095148086548,
+            2.9579803943634033,
+            1.0787856578826904
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:23",
+          "min": [
+            -0.7810287475585938,
+            -3.3229589462280273e-06,
+            -0.6374378204345703
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4821074306964874,
+            2.960354804992676,
+            1.0627949237823486
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:24",
+          "min": [
+            -0.759374737739563,
+            7.450580596923828e-08,
+            -0.6639552116394043
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4780903458595276,
+            2.9630274772644043,
+            1.0670793056488037
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:25",
+          "min": [
+            -0.7410645484924316,
+            -5.900859832763672e-06,
+            -0.6853752732276917
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4728931784629822,
+            2.9651641845703125,
+            1.0641556978225708
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:26",
+          "min": [
+            -0.7427970767021179,
+            1.1175870895385742e-06,
+            -0.7160099148750305
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.46743983030319214,
+            2.9713308811187744,
+            1.0191421508789062
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:27",
+          "min": [
+            -0.762826681137085,
+            1.7620623111724854e-05,
+            -0.7166445255279541
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.46334147453308105,
+            2.969911575317383,
+            0.9551998376846313
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:28",
+          "min": [
+            -0.7765980362892151,
+            3.203749656677246e-07,
+            -0.669539749622345
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4616739749908447,
+            2.96498966217041,
+            0.9172730445861816
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:29",
+          "min": [
+            -0.7828140258789062,
+            8.866190910339355e-07,
+            -0.6581748723983765
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4615747928619385,
+            2.9638702869415283,
+            0.9156548976898193
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:30",
+          "min": [
+            -0.7829950451850891,
+            4.023313522338867e-07,
+            -0.6581952571868896
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.4615747928619385,
+            2.9638702869415283,
+            0.9156548976898193
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:31",
+          "min": [
+            -0.7829950451850891,
+            4.023313522338867e-07,
+            -0.6581952571868896
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.47369810938835144,
+            2.9638636112213135,
+            0.9147414565086365
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:32",
+          "min": [
+            -0.8256754875183105,
+            9.98377799987793e-07,
+            -0.6585406064987183
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5783717036247253,
+            2.963850736618042,
+            0.8670604825019836
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:33",
+          "min": [
+            -0.9236311912536621,
+            -1.1324882507324219e-05,
+            -0.7206252813339233
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.6085843443870544,
+            2.9637789726257324,
+            0.8219870924949646
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:34",
+          "min": [
+            -0.9319860935211182,
+            -3.725290298461914e-07,
+            -0.8021037578582764
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5804876089096069,
+            2.963545083999634,
+            0.8089554309844971
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:35",
+          "min": [
+            -0.8900848627090454,
+            4.343688488006592e-06,
+            -0.8349599838256836
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5446323156356812,
+            2.963582754135132,
+            0.8624732494354248
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:36",
+          "min": [
+            -0.9156038761138916,
+            4.3213367462158203e-07,
+            -0.8183836936950684
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5103687047958374,
+            2.9631404876708984,
+            0.9057074189186096
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:37",
+          "min": [
+            -0.9416244029998779,
+            1.2621283531188965e-05,
+            -0.7903443574905396
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.532926619052887,
+            2.96128249168396,
+            0.9170850515365601
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:38",
+          "min": [
+            -0.8975101709365845,
+            5.438923835754395e-07,
+            -0.782663106918335
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5491948127746582,
+            2.95835542678833,
+            0.91805499792099
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=2:39",
+          "min": [
+            -0.8529375791549683,
+            -1.4856457710266113e-05,
+            -0.758080005645752
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            1.0648483037948608,
+            2.876049518585205,
+            0.6072895526885986
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:0",
+          "min": [
+            -1.0139451026916504,
+            7.227063179016113e-07,
+            -0.6280044317245483
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5225182771682739,
+            2.9035732746124268,
+            0.682854950428009
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:1",
+          "min": [
+            -1.138903021812439,
+            -3.0666589736938477e-05,
+            -0.6478767991065979
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.5052571892738342,
+            2.937856912612915,
+            0.7823256254196167
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:2",
+          "min": [
+            -1.36156165599823,
+            8.940696716308594e-07,
+            -0.7301034927368164
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.521489143371582,
+            2.9009454250335693,
+            0.845305860042572
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:3",
+          "min": [
+            -1.364464282989502,
+            -7.372349500656128e-05,
+            -1.0788052082061768
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            0.8473328351974487,
+            2.7484383583068848,
+            0.7482949495315552
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:4",
+          "min": [
+            -1.1419849395751953,
+            2.9802322387695312e-08,
+            -1.5063824653625488
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            1.4285523891448975,
+            2.192176342010498,
+            0.6041989922523499
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:5",
+          "min": [
+            -0.7419325709342957,
+            -0.004609100520610809,
+            -1.7310264110565186
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.088632106781006,
+            1.6220955848693848,
+            0.5340970754623413
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:6",
+          "min": [
+            -0.46589475870132446,
+            7.450580596923828e-08,
+            -1.9358289241790771
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.4711437225341797,
+            1.1530539989471436,
+            0.47239625453948975
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:7",
+          "min": [
+            -0.34631145000457764,
+            0.017279893159866333,
+            -2.14255690574646
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.580312967300415,
+            1.1513051986694336,
+            0.47191673517227173
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:8",
+          "min": [
+            -0.3310213088989258,
+            7.152557373046875e-07,
+            -2.468996524810791
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.5605599880218506,
+            1.4735640287399292,
+            0.494778037071228
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:9",
+          "min": [
+            -0.3582391142845154,
+            -0.002002149820327759,
+            -2.6847476959228516
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.5872695446014404,
+            1.3797733783721924,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:10",
+          "min": [
+            -0.3553401529788971,
+            -2.086162567138672e-07,
+            -2.682246446609497
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.789928436279297,
+            1.4145795106887817,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:11",
+          "min": [
+            -0.3393344581127167,
+            1.1920928955078125e-07,
+            -2.682246208190918
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.820772409439087,
+            1.3615293502807617,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:12",
+          "min": [
+            -0.36321908235549927,
+            -2.086162567138672e-07,
+            -2.682246446609497
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.851320743560791,
+            1.3170961141586304,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:13",
+          "min": [
+            -0.38669177889823914,
+            -2.086162567138672e-07,
+            -2.682246446609497
+          ],
+          "vertices": 22922
+        },
+        {
+          "max": [
+            2.8543434143066406,
+            1.3153765201568604,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=3:14",
+          "min": [
+            -0.3886469006538391,
+            -2.086162567138672e-07,
+            -2.682246446609497
+          ],
+          "vertices": 22922
+        }
+      ]
+    },
+    "RealBoneArcherShoot": {
+      "triangles": 16007,
+      "bones": 125,
+      "nativeSamples": 89,
+      "movingBones": {
+        "Idle": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.L",
+          "FOOT.R",
+          "HAND.L",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "PELVIS",
+          "RIB_T4",
+          "RIB_T5",
+          "STERNUM",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R"
+        ],
+        "Walk": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.L",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HEAD",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "PELVIS",
+          "RIB_T1",
+          "RIB_T11",
+          "RIB_T4",
+          "RIB_T5",
+          "RIB_T9",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_L5",
+          "VERTEBRAE_T12",
+          "VERTEBRAE_T6"
+        ],
+        "Attack": [
+          "Bow_Nu_arm_L",
+          "Bow_Nu_arm_R",
+          "Bow_Nu_crank",
+          "Bow_Nu_sling",
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.L",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HEAD",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "PELVIS",
+          "RIB_T1",
+          "RIB_T11",
+          "RIB_T12",
+          "RIB_T5",
+          "RIB_T7",
+          "RIB_T9",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_L5",
+          "VERTEBRAE_T12",
+          "VERTEBRAE_T6"
+        ],
+        "Death": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "JAW",
+          "PELVIS",
+          "RIB_T1",
+          "RIB_T11",
+          "RIB_T12",
+          "RIB_T4",
+          "RIB_T5",
+          "RIB_T7",
+          "RIB_T9",
+          "STERNUM",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_C7",
+          "VERTEBRAE_T6"
+        ]
+      },
+      "bounds": [
+        {
+          "max": [
+            0.4652032256126404,
+            2.9331212043762207,
+            0.8519394993782043
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:0",
+          "min": [
+            -0.7310366630554199,
+            4.6193599700927734e-07,
+            -0.6973915100097656
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651963710784912,
+            2.931692361831665,
+            0.853804886341095
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:1",
+          "min": [
+            -0.7310435771942139,
+            -2.4586915969848633e-07,
+            -0.6971730589866638
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651894271373749,
+            2.9300649166107178,
+            0.8558827042579651
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:2",
+          "min": [
+            -0.731050968170166,
+            0.0,
+            -0.6969237327575684
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651840329170227,
+            2.928297758102417,
+            0.8581463098526001
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:3",
+          "min": [
+            -0.7310558557510376,
+            -8.717179298400879e-07,
+            -0.6966535449028015
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651758670806885,
+            2.92647647857666,
+            0.8605210781097412
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:4",
+          "min": [
+            -0.7310645580291748,
+            -3.203749656677246e-07,
+            -0.6963732838630676
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.46516895294189453,
+            2.9246363639831543,
+            0.8629561066627502
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:5",
+          "min": [
+            -0.7310701608657837,
+            -7.525086402893066e-07,
+            -0.6960951685905457
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651643633842468,
+            2.9228713512420654,
+            0.8653830289840698
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:6",
+          "min": [
+            -0.7310752868652344,
+            4.6938657760620117e-07,
+            -0.6958158612251282
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651629626750946,
+            2.921299695968628,
+            0.867732584476471
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:7",
+          "min": [
+            -0.7310760021209717,
+            7.450580596923828e-08,
+            -0.6955739259719849
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.46516361832618713,
+            2.9199419021606445,
+            0.8699589967727661
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:8",
+          "min": [
+            -0.7310760617256165,
+            4.470348358154297e-08,
+            -0.6953636407852173
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651661813259125,
+            2.918860912322998,
+            0.8719886541366577
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:9",
+          "min": [
+            -0.7310729026794434,
+            -3.501772880554199e-07,
+            -0.695196270942688
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651733338832855,
+            2.918062210083008,
+            0.8737991452217102
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:10",
+          "min": [
+            -0.7310662269592285,
+            2.7567148208618164e-07,
+            -0.695072591304779
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651816189289093,
+            2.9175894260406494,
+            0.8753330707550049
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:11",
+          "min": [
+            -0.7310582399368286,
+            2.384185791015625e-07,
+            -0.694999098777771
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4651932716369629,
+            2.91742205619812,
+            0.8765866756439209
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:12",
+          "min": [
+            -0.7310464978218079,
+            -2.3096799850463867e-07,
+            -0.6949732899665833
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.46520715951919556,
+            2.9175894260406494,
+            0.8775169849395752
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:13",
+          "min": [
+            -0.731033205986023,
+            2.384185791015625e-07,
+            -0.6949993968009949
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4652230143547058,
+            2.9180614948272705,
+            0.8781347274780273
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:14",
+          "min": [
+            -0.7310168743133545,
+            1.564621925354004e-07,
+            -0.695072591304779
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4652421176433563,
+            2.91886043548584,
+            0.8784139752388
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:15",
+          "min": [
+            -0.7309974431991577,
+            -6.780028343200684e-07,
+            -0.6951959729194641
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4652498960494995,
+            2.9199419021606445,
+            0.8784236907958984
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:16",
+          "min": [
+            -0.7309894561767578,
+            -2.3096799850463867e-07,
+            -0.6953637003898621
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4652678370475769,
+            2.9212989807128906,
+            0.8776185512542725
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:17",
+          "min": [
+            -0.7309720516204834,
+            1.6391277313232422e-07,
+            -0.6955736875534058
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.46527567505836487,
+            2.9228720664978027,
+            0.8757237195968628
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:18",
+          "min": [
+            -0.7309644222259521,
+            3.7997961044311523e-07,
+            -0.6958158612251282
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4652741551399231,
+            2.9246366024017334,
+            0.8727337121963501
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:19",
+          "min": [
+            -0.7309653759002686,
+            -9.611248970031738e-07,
+            -0.6960952877998352
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4652654230594635,
+            2.926478147506714,
+            0.8689170479774475
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:20",
+          "min": [
+            -0.7309740781784058,
+            -8.940696716308594e-08,
+            -0.696373462677002
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4652480483055115,
+            2.928297996520996,
+            0.8645199537277222
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:21",
+          "min": [
+            -0.7309921979904175,
+            -8.419156074523926e-07,
+            -0.6966536045074463
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.465239942073822,
+            2.9300661087036133,
+            0.8599158525466919
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:22",
+          "min": [
+            -0.7309997081756592,
+            -2.7567148208618164e-07,
+            -0.6969237327575684
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.46521860361099243,
+            2.931692361831665,
+            0.855623185634613
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=0:23",
+          "min": [
+            -0.7310206294059753,
+            -1.1175870895385742e-07,
+            -0.6971730589866638
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.35775816440582275,
+            2.84537410736084,
+            0.9280933141708374
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:0",
+          "min": [
+            -0.8247121572494507,
+            -4.0605664253234863e-07,
+            -0.9742195010185242
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.38513290882110596,
+            2.7166218757629395,
+            1.012465000152588
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:1",
+          "min": [
+            -0.8463680148124695,
+            0.010733470320701599,
+            -1.0085574388504028
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4526105523109436,
+            2.7176778316497803,
+            1.0784974098205566
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:2",
+          "min": [
+            -0.8584166169166565,
+            -2.9802322387695312e-08,
+            -0.9235403537750244
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.49447643756866455,
+            2.7634146213531494,
+            1.0926984548568726
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:3",
+          "min": [
+            -0.970140278339386,
+            -0.0035351887345314026,
+            -0.6548318266868591
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4163144826889038,
+            2.865621328353882,
+            1.0741562843322754
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:4",
+          "min": [
+            -1.0331988334655762,
+            2.1606683731079102e-07,
+            -0.5691370964050293
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.3473348617553711,
+            2.8379335403442383,
+            1.0473546981811523
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:5",
+          "min": [
+            -1.0556188821792603,
+            -0.0009816139936447144,
+            -0.9769752025604248
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.3413124084472656,
+            2.6929702758789062,
+            1.0361398458480835
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:6",
+          "min": [
+            -1.0114322900772095,
+            3.725290298461914e-07,
+            -1.032854676246643
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.42106813192367554,
+            2.7194879055023193,
+            0.9496243000030518
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:7",
+          "min": [
+            -0.9326902627944946,
+            -0.004012405872344971,
+            -0.8994358777999878
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.3521157503128052,
+            2.8170018196105957,
+            0.8646820783615112
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:8",
+          "min": [
+            -0.8770425915718079,
+            -1.7136335372924805e-07,
+            -0.61379474401474
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.3367258906364441,
+            2.8726680278778076,
+            0.9054625630378723
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=1:9",
+          "min": [
+            -0.8484681844711304,
+            0.022706560790538788,
+            -0.6912581920623779
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5593541264533997,
+            2.953151226043701,
+            0.9095484614372253
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:0",
+          "min": [
+            -0.807837724685669,
+            3.725290298461914e-07,
+            -0.6944643259048462
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5590803623199463,
+            2.957711696624756,
+            0.9696156978607178
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:1",
+          "min": [
+            -0.8209104537963867,
+            1.1920928955078125e-07,
+            -0.6761442422866821
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.553727388381958,
+            2.9614248275756836,
+            1.034266710281372
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:2",
+          "min": [
+            -0.8398892879486084,
+            7.748603820800781e-07,
+            -0.646162748336792
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.542675793170929,
+            2.9633078575134277,
+            1.0901800394058228
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:3",
+          "min": [
+            -0.8630229830741882,
+            -8.419156074523926e-07,
+            -0.6221312880516052
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5288411378860474,
+            2.9631717205047607,
+            1.131424903869629
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:4",
+          "min": [
+            -0.8859673738479614,
+            6.556510925292969e-07,
+            -0.6228228807449341
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5165096521377563,
+            2.961555242538452,
+            1.1563994884490967
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:5",
+          "min": [
+            -0.9051870107650757,
+            1.4156103134155273e-07,
+            -0.626882791519165
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.508253276348114,
+            2.9590675830841064,
+            1.168156623840332
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:6",
+          "min": [
+            -0.9169661402702332,
+            4.470348358154297e-07,
+            -0.6368978023529053
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5008087754249573,
+            2.957874059677124,
+            1.1671568155288696
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:7",
+          "min": [
+            -0.9157317876815796,
+            7.82310962677002e-07,
+            -0.6390944123268127
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5008078813552856,
+            2.957350492477417,
+            1.1514816284179688
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:8",
+          "min": [
+            -0.8958491086959839,
+            5.736947059631348e-07,
+            -0.6393213272094727
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5008077621459961,
+            2.9565398693084717,
+            1.1301974058151245
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:9",
+          "min": [
+            -0.8689850568771362,
+            2.1606683731079102e-07,
+            -0.6398820877075195
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5008065700531006,
+            2.9567196369171143,
+            1.1080784797668457
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:10",
+          "min": [
+            -0.8360947370529175,
+            9.760260581970215e-07,
+            -0.6407442092895508
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5008054971694946,
+            2.956223964691162,
+            1.097408413887024
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:11",
+          "min": [
+            -0.8240994811058044,
+            5.587935447692871e-07,
+            -0.6419023871421814
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5008045434951782,
+            2.956159830093384,
+            1.0961984395980835
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:12",
+          "min": [
+            -0.8238382935523987,
+            4.842877388000488e-07,
+            -0.643196702003479
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5008037686347961,
+            2.9582056999206543,
+            1.100039005279541
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:13",
+          "min": [
+            -0.8242797255516052,
+            4.6938657760620117e-07,
+            -0.6433533430099487
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.6414960622787476,
+            2.961991310119629,
+            1.1080715656280518
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:14",
+          "min": [
+            -0.825207531452179,
+            4.76837158203125e-07,
+            -0.6416208744049072
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.7086688280105591,
+            2.9698541164398193,
+            1.1203030347824097
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:15",
+          "min": [
+            -0.8256773948669434,
+            5.736947059631348e-07,
+            -0.6371116638183594
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.6726371049880981,
+            2.9782750606536865,
+            1.1356325149536133
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:16",
+          "min": [
+            -0.8245135545730591,
+            4.3958425521850586e-07,
+            -0.629357099533081
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.6438910961151123,
+            3.043006181716919,
+            1.1527143716812134
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:17",
+          "min": [
+            -0.8208573460578918,
+            1.1920928955078125e-07,
+            -0.6249228119850159
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.694146990776062,
+            3.171603202819824,
+            1.16963529586792
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:18",
+          "min": [
+            -0.8148811459541321,
+            5.21540641784668e-07,
+            -0.6250110268592834
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.7430216073989868,
+            3.1393613815307617,
+            1.1848819255828857
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:19",
+          "min": [
+            -0.8079791069030762,
+            8.344650268554688e-07,
+            -0.6256784796714783
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.766677975654602,
+            2.992079973220825,
+            1.1680517196655273
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:20",
+          "min": [
+            -0.8014965653419495,
+            2.4586915969848633e-07,
+            -0.6274567246437073
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.7526285648345947,
+            2.9750499725341797,
+            1.1359481811523438
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:21",
+          "min": [
+            -0.7983719110488892,
+            -1.9073486328125e-06,
+            -0.6303448677062988
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.7356442809104919,
+            2.956378698348999,
+            1.1037935018539429
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:22",
+          "min": [
+            -0.7967178821563721,
+            1.169741153717041e-06,
+            -0.6338543891906738
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.6730095148086548,
+            2.9579803943634033,
+            1.0787856578826904
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:23",
+          "min": [
+            -0.7810287475585938,
+            -3.3229589462280273e-06,
+            -0.6374378204345703
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4821074306964874,
+            2.960354804992676,
+            1.0627949237823486
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:24",
+          "min": [
+            -0.759374737739563,
+            7.450580596923828e-08,
+            -0.6639552116394043
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4780903458595276,
+            2.9630274772644043,
+            1.0670793056488037
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:25",
+          "min": [
+            -0.7410645484924316,
+            -5.900859832763672e-06,
+            -0.6853752732276917
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4728931784629822,
+            2.9651641845703125,
+            1.0641556978225708
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:26",
+          "min": [
+            -0.7427970767021179,
+            1.1175870895385742e-06,
+            -0.7160099148750305
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.46743983030319214,
+            2.9713308811187744,
+            1.0191421508789062
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:27",
+          "min": [
+            -0.762826681137085,
+            1.7620623111724854e-05,
+            -0.7166445255279541
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.46334147453308105,
+            2.969911575317383,
+            0.9551998376846313
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:28",
+          "min": [
+            -0.7765980362892151,
+            3.203749656677246e-07,
+            -0.669539749622345
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4616739749908447,
+            2.96498966217041,
+            0.9172730445861816
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:29",
+          "min": [
+            -0.7828140258789062,
+            8.866190910339355e-07,
+            -0.6581748723983765
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4615747928619385,
+            2.9638702869415283,
+            0.9156548976898193
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:30",
+          "min": [
+            -0.7829950451850891,
+            4.023313522338867e-07,
+            -0.6581952571868896
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.4615747928619385,
+            2.9638702869415283,
+            0.9156548976898193
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:31",
+          "min": [
+            -0.7829950451850891,
+            4.023313522338867e-07,
+            -0.6581952571868896
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.47369810938835144,
+            2.9638636112213135,
+            0.9147414565086365
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:32",
+          "min": [
+            -0.8256754875183105,
+            9.98377799987793e-07,
+            -0.6585406064987183
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5783717036247253,
+            2.963850736618042,
+            0.8670604825019836
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:33",
+          "min": [
+            -0.9236311912536621,
+            -1.1324882507324219e-05,
+            -0.7206252813339233
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.6085843443870544,
+            2.9637789726257324,
+            0.8219870924949646
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:34",
+          "min": [
+            -0.9319860935211182,
+            -3.725290298461914e-07,
+            -0.8021037578582764
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5804876089096069,
+            2.963545083999634,
+            0.8089554309844971
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:35",
+          "min": [
+            -0.8900848627090454,
+            4.343688488006592e-06,
+            -0.8349599838256836
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5446323156356812,
+            2.963582754135132,
+            0.8624732494354248
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:36",
+          "min": [
+            -0.9156038761138916,
+            4.3213367462158203e-07,
+            -0.8183836936950684
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5103687047958374,
+            2.9631404876708984,
+            0.9057074189186096
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:37",
+          "min": [
+            -0.9416244029998779,
+            1.2621283531188965e-05,
+            -0.7903443574905396
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.532926619052887,
+            2.96128249168396,
+            0.9170850515365601
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:38",
+          "min": [
+            -0.8975101709365845,
+            5.438923835754395e-07,
+            -0.782663106918335
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5491948127746582,
+            2.95835542678833,
+            0.91805499792099
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=2:39",
+          "min": [
+            -0.8529375791549683,
+            -1.4856457710266113e-05,
+            -0.758080005645752
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            1.0648483037948608,
+            2.876049518585205,
+            0.6072895526885986
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:0",
+          "min": [
+            -1.0139451026916504,
+            7.227063179016113e-07,
+            -0.6280044317245483
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5225182771682739,
+            2.9035732746124268,
+            0.682854950428009
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:1",
+          "min": [
+            -1.138903021812439,
+            -3.0666589736938477e-05,
+            -0.6478767991065979
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.5052571892738342,
+            2.937856912612915,
+            0.7823256254196167
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:2",
+          "min": [
+            -1.36156165599823,
+            8.940696716308594e-07,
+            -0.7301034927368164
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.521489143371582,
+            2.9009454250335693,
+            0.845305860042572
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:3",
+          "min": [
+            -1.364464282989502,
+            -7.372349500656128e-05,
+            -1.0788052082061768
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            0.8473328351974487,
+            2.7484383583068848,
+            0.7482949495315552
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:4",
+          "min": [
+            -1.1419849395751953,
+            2.9802322387695312e-08,
+            -1.5063824653625488
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            1.4285523891448975,
+            2.192176342010498,
+            0.6041989922523499
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:5",
+          "min": [
+            -0.7419325709342957,
+            -0.004609100520610809,
+            -1.7310264110565186
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.088632106781006,
+            1.6220955848693848,
+            0.5340970754623413
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:6",
+          "min": [
+            -0.46589475870132446,
+            7.450580596923828e-08,
+            -1.9358289241790771
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.4711437225341797,
+            1.1530539989471436,
+            0.47239625453948975
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:7",
+          "min": [
+            -0.34631145000457764,
+            0.017279893159866333,
+            -2.14255690574646
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.580312967300415,
+            1.1513051986694336,
+            0.47191673517227173
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:8",
+          "min": [
+            -0.3310213088989258,
+            7.152557373046875e-07,
+            -2.468996524810791
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.5605599880218506,
+            1.4735640287399292,
+            0.494778037071228
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:9",
+          "min": [
+            -0.3582391142845154,
+            -0.002002149820327759,
+            -2.6847476959228516
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.5872695446014404,
+            1.3797733783721924,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:10",
+          "min": [
+            -0.3553401529788971,
+            -2.086162567138672e-07,
+            -2.682246446609497
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.789928436279297,
+            1.4145795106887817,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:11",
+          "min": [
+            -0.3393344581127167,
+            1.1920928955078125e-07,
+            -2.682246208190918
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.820772409439087,
+            1.3615293502807617,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:12",
+          "min": [
+            -0.36321908235549927,
+            -2.086162567138672e-07,
+            -2.682246446609497
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.851320743560791,
+            1.3170961141586304,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:13",
+          "min": [
+            -0.38669177889823914,
+            -2.086162567138672e-07,
+            -2.682246446609497
+          ],
+          "vertices": 22848
+        },
+        {
+          "max": [
+            2.8543434143066406,
+            1.3153765201568604,
+            0.49559485912323
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcherShoot.glb#pose=3:14",
+          "min": [
+            -0.3886469006538391,
+            -2.086162567138672e-07,
+            -2.682246446609497
+          ],
+          "vertices": 22848
+        }
+      ]
+    }
+  }
+}

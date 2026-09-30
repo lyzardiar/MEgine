@@ -108,9 +108,22 @@
       ]
     },
     {
-      "name": "RealCatapult",
+      "name": "RealBoneArcher",
       "rect": [
         512,
+        256,
+        256,
+        256
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "RealCatapult",
+      "rect": [
+        768,
         256,
         256,
         256
@@ -123,7 +136,7 @@
     {
       "name": "RealDawnPaladin",
       "rect": [
-        768,
+        1024,
         256,
         256,
         256
@@ -136,7 +149,7 @@
     {
       "name": "RealEmberSage",
       "rect": [
-        1024,
+        1280,
         256,
         256,
         256
@@ -149,8 +162,8 @@
     {
       "name": "RealFootman",
       "rect": [
-        1280,
-        256,
+        0,
+        512,
         256,
         256
       ],
@@ -162,7 +175,7 @@
     {
       "name": "RealFrostWarden",
       "rect": [
-        0,
+        256,
         512,
         256,
         256
@@ -175,7 +188,7 @@
     {
       "name": "RealKnight",
       "rect": [
-        256,
+        512,
         512,
         256,
         256
@@ -188,7 +201,7 @@
     {
       "name": "RealOrc",
       "rect": [
-        512,
+        768,
         512,
         256,
         256
@@ -201,7 +214,7 @@
     {
       "name": "RealPaladin",
       "rect": [
-        768,
+        1024,
         512,
         256,
         256
@@ -214,7 +227,7 @@
     {
       "name": "RealRam",
       "rect": [
-        1024,
+        1280,
         512,
         256,
         256
@@ -227,8 +240,8 @@
     {
       "name": "RealRifleman",
       "rect": [
-        1280,
-        512,
+        0,
+        768,
         256,
         256
       ],
@@ -240,7 +253,7 @@
     {
       "name": "RealSylvanRanger",
       "rect": [
-        0,
+        256,
         768,
         256,
         256
@@ -253,7 +266,7 @@
     {
       "name": "RealTreant",
       "rect": [
-        256,
+        512,
         768,
         256,
         256
@@ -266,7 +279,7 @@
     {
       "name": "RealTrebuchet",
       "rect": [
-        512,
+        768,
         768,
         256,
         256
@@ -279,7 +292,7 @@
     {
       "name": "RealWolf",
       "rect": [
-        768,
+        1024,
         768,
         256,
         256
@@ -292,7 +305,7 @@
     {
       "name": "RealWorker",
       "rect": [
-        1024,
+        1280,
         768,
         256,
         256
@@ -305,19 +318,6 @@
     {
       "name": "Rogue",
       "rect": [
-        1280,
-        768,
-        256,
-        256
-      ],
-      "pivot": [
-        0.5,
-        0.5
-      ]
-    },
-    {
-      "name": "Skeleton_Mage",
-      "rect": [
         0,
         1024,
         256,
@@ -329,7 +329,7 @@
       ]
     },
     {
-      "name": "Skeleton_Rogue",
+      "name": "Skeleton_Mage",
       "rect": [
         256,
         1024,

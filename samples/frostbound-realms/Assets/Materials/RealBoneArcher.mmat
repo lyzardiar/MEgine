@@ -1,0 +1,1 @@
+{"version": 8, "name": "RealBoneArcher", "shader": "pbr", "base_color": [1, 1, 1, 1], "base_color_texture": "Assets/Textures/RealBoneArcher_base.png", "metallic": 0, "roughness": 0.82, "double_sided": true}

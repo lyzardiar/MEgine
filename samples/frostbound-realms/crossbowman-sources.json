@@ -1,0 +1,132 @@
+{
+  "author": "Gord Goodwin; Wildfire Games; MiYu retargeting",
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "generator": "scripts/import-frost-crossbowman.py",
+  "dependencies": [
+    "anatomical-skeleton-sources.json",
+    "rifleman-sources.json",
+    "human-sources.json"
+  ],
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/actors/props/units/weapons/crossbow/han_nu.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/weapons/crossbow/han_nu.xml",
+      "sha256": "70aefe53f507a450857eaa73c60d25ed9f0d4632f04d2284ab244b296acab332"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weapons/crossbow/weap_han_nu.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weapons/crossbow/weap_han_nu.dae",
+      "sha256": "342ddd284b12ccf3ba00b4f06e7ada4b4e24b9d8e801cf21320632003bfdd7eb"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/rome_ballista.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/rome_ballista.png",
+      "sha256": "b0c4602e6091274cd63993891d527e31bcbb7c0cff7fafaac85b85f14e0078ba"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/han_nu_attack.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/han_nu_attack.dae",
+      "sha256": "bfd415373ce43c50d9293ee86d5e17536c6950b54a14a38ae45289e97c3668f1"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/crossbowman/attack_ranged.dae",
+      "sha256": "46f8a7101beb82c1955d2fa692734d1770dcd8d7d85940c8b794d3a8494e779b",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/crossbowman/attack_ranged.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/crossbowman/idle_ready_01.dae",
+      "sha256": "29bfa04a5c02d5799e567007538f4182c8a3c8884c9b9a753739c8f23bfc1848",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/crossbowman/idle_ready_01.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/crossbowman/jog_ready.dae",
+      "sha256": "efacc3e45b0465fd1904d6d478fa8187997b6364d65bed831daa2fbdfab40251",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/crossbowman/jog_ready.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/attack_ranged_crossbowman_back.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/attack_ranged_crossbowman_back.xml",
+      "sha256": "6452fa6861e95ec5149a625fb6230865730fac6970f3217589685b253b90d6e4"
+    }
+  ],
+  "model": {
+    "key": "RealBoneArcher",
+    "triangles": 16054,
+    "bones": 125,
+    "clips": [
+      {
+        "name": "Idle",
+        "frames": 24
+      },
+      {
+        "name": "Walk",
+        "frames": 10
+      },
+      {
+        "name": "Attack",
+        "frames": 40
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.1962401270866394,
+      2.9331214874982834,
+      1.5493308305740356
+    ],
+    "maxGripReachError": 0.11702717518894357,
+    "maxAimGripReachError": 0
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealBoneArcher_base.png",
+      "sha256": "0b5dce3c9917c7c932314289154b2c8a96bd81f93fc0ff0ced4c78286756d784"
+    },
+    {
+      "file": "Assets/Models/RealBoneArcher.glb",
+      "sha256": "7725d45a462a2e521f11761ee77807ce4bc514d13787699ee69981c59f300323"
+    },
+    {
+      "file": "Assets/Models/RealBoneArcherShoot.glb",
+      "sha256": "f073b8e3cd0cd2c909829c60b831028aac1f7ed9155fb20a43753b02a0628e16"
+    },
+    {
+      "file": "Assets/Materials/RealBoneArcher.mmat",
+      "sha256": "6fbee16b61bedeb5a9f2648306eb21b8300f40b78bc8ae6dfceee2781d0fc533"
+    }
+  ],
+  "inputs": [
+    {
+      "file": "Assets/Models/SkeletonBody.glb",
+      "sha256": "26d3543bfaa16e5639eb369963a471134aa00e307601a5f41d3fdc3c787bb8dc"
+    },
+    {
+      "file": "Assets/Textures/SkeletonBody_ao.png",
+      "sha256": "58fdf8809fb0e46ac3a03c0167c17fad7f57626fcff827cd2e34f62179ded7ff"
+    },
+    {
+      "file": "Assets/Models/RealRifleman.glb",
+      "sha256": "8150a53c57085a1343e287e51d4d0cec05d52b8e9153e1e925c2d6914f1940ec"
+    },
+    {
+      "file": "Assets/Models/RealArrow.glb",
+      "sha256": "968349f91f7931289452b6a2e15374fc213530dd094233bfffc06856d7ff2802"
+    },
+    {
+      "file": "Assets/Textures/RealArrow_base.png",
+      "sha256": "6a43cc20f5818daa32aeda35670057ae77913c3228119c50413b992cdaac687f"
+    }
+  ]
+}

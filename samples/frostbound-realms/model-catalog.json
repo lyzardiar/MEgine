@@ -3662,5 +3662,87 @@
       0.4745471798878764
     ],
     "realistic": true
+  },
+  "RealBoneArcher": {
+    "material": "Assets/Materials/RealBoneArcher.mmat",
+    "parts": [
+      {
+        "name": "RealBoneArcher",
+        "mesh": "Assets/Models/RealBoneArcher.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 24
+      },
+      {
+        "name": "Walk",
+        "frames": 10
+      },
+      {
+        "name": "Attack",
+        "frames": 40
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.1962401270866394,
+      2.9331214874982834,
+      1.5493308305740356
+    ],
+    "realistic": true,
+    "attackEvent": 0.85,
+    "ammoLoad": 0.47,
+    "shotModel": "RealBoneArcherShoot"
+  },
+  "RealBoneArcherShoot": {
+    "material": "Assets/Materials/RealBoneArcher.mmat",
+    "parts": [
+      {
+        "name": "RealBoneArcherShoot",
+        "mesh": "Assets/Models/RealBoneArcherShoot.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 24
+      },
+      {
+        "name": "Walk",
+        "frames": 10
+      },
+      {
+        "name": "Attack",
+        "frames": 40
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.1962401270866394,
+      2.9331214874982834,
+      1.5493308305740356
+    ],
+    "realistic": true,
+    "attackEvent": 0.85,
+    "ammoLoad": 0.47,
+    "shotModel": "RealBoneArcherShoot"
   }
 }

@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "7149029072a9410816d0a9c372412d46e35e80f58d6a95ca2e176d9d1fe66094",
+  "sha256": "610dbf81705988c78c58a45bafab7f0740afa070de2f40d9afa52dff415e2d3f",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -155,6 +155,25 @@
           -1.365095853805542
         ],
         "vertices": 2189
+      }
+    },
+    {
+      "name": "RealBoneArcher",
+      "mesh": "Assets/Models/RealBoneArcher.glb#pose=0:4",
+      "material": "Assets/Materials/RealBoneArcher.mmat",
+      "bounds": {
+        "max": [
+          0.4651758670806885,
+          2.92647647857666,
+          0.8605210781097412
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBoneArcher.glb#pose=0:4",
+        "min": [
+          -0.7310645580291748,
+          -3.203749656677246e-7,
+          -0.6963732838630676
+        ],
+        "vertices": 22922
       }
     },
     {
@@ -478,25 +497,6 @@
           -0.8532806038856506
         ],
         "vertices": 5935
-      }
-    },
-    {
-      "name": "Skeleton_Rogue",
-      "mesh": "Assets/Models/Skeleton_Rogue.glb#pose=0:4",
-      "material": "Assets/Materials/Skeleton_Rogue.mmat",
-      "bounds": {
-        "max": [
-          0.6692131757736206,
-          2.277885913848877,
-          0.5710819363594055
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Skeleton_Rogue.glb#pose=0:4",
-        "min": [
-          -1.0360883474349976,
-          -0.5085631608963013,
-          -0.5813896059989929
-        ],
-        "vertices": 6044
       }
     },
     {
