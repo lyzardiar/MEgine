@@ -2,18 +2,22 @@
 {"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]}],"textures":[{"name":"soil","type":"color","default":"Assets/Textures/forest_ground_04_diff_1k.jpg"},{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"},{"name":"soil_nrh","type":"data","default":"Assets/Textures/forest_ground_04_nrh_1k.png"},{"name":"snow_nrh","type":"data","default":"Assets/Textures/snow_02_nrh_1k.png"},{"name":"stone_nrh","type":"data","default":"Assets/Textures/rocky_terrain_nrh_1k.png"}]}
 */
 // MiYu: 64 terrain chunks replace 1024 independently shaded cubes.
-fn frost_cell(p: vec2<i32>) -> vec3<f32> {
+struct FrostGround { materials: vec4<f32>, fog: f32 }
+fn frost_cell(p: vec2<i32>) -> f32 {
     var data=array<vec4<f32>,9>(mengine_param_cells0(),mengine_param_cells1(),mengine_param_cells2(),mengine_param_cells3(),mengine_param_cells4(),mengine_param_cells5(),mengine_param_cells6(),mengine_param_cells7(),mengine_param_cells8());
     let i=u32(clamp(p.y,0,5)*6+clamp(p.x,0,5));
-    let value=data[i/4u][i%4u];
-    let kind=floor(value/2.0);
-    return vec3<f32>(select(0.0,1.0,kind==1.0),select(0.0,1.0,kind==2.0),value-kind*2.0);
+    return data[i/4u][i%4u];
 }
-fn frost_ground(p: vec2<f32>) -> vec3<f32> {
+fn frost_ground(p: vec2<f32>) -> FrostGround {
     let local=(p-object.model[3].xz+vec2<f32>(4.0))/2.0+vec2<f32>(0.5);
     let cell=vec2<i32>(floor(local));
     let blend=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(local));
-    return mix(mix(frost_cell(cell),frost_cell(cell+vec2<i32>(1,0)),blend.x),mix(frost_cell(cell+vec2<i32>(0,1)),frost_cell(cell+vec2<i32>(1,1)),blend.x),blend.y);
+    let values=vec4<f32>(frost_cell(cell),frost_cell(cell+vec2<i32>(1,0)),frost_cell(cell+vec2<i32>(0,1)),frost_cell(cell+vec2<i32>(1,1)));
+    let kinds=floor(values/2.0);let surfaces=floor(kinds/3.0);let terrain=kinds-surfaces*3.0;
+    let weights=vec4<f32>((1.0-blend.x)*(1.0-blend.y),blend.x*(1.0-blend.y),(1.0-blend.x)*blend.y,blend.x*blend.y);
+    let zero=vec4<f32>(0.0);let one=vec4<f32>(1.0);
+    let masks=vec4<f32>(dot(select(zero,one,terrain==one),weights),dot(select(zero,one,terrain==vec4<f32>(2.0)),weights),dot(select(zero,one,surfaces==one),weights),dot(select(zero,one,surfaces==vec4<f32>(2.0)),weights));
+    return FrostGround(masks,dot(values-kinds*2.0,weights));
 }
 fn frost_noise(p: vec2<f32>) -> f32 {
     let cell=floor(p);let blend=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(p));
@@ -36,7 +40,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     var s=surface;let p=world_position.xz;let geometric=normalize(surface.normal);
     // World-space offsets stay below the one-unit interpolation margin shared by adjacent chunks.
     let drift=vec2<f32>(frost_noise(p*0.42),frost_noise(p*0.42+vec2<f32>(37.0,19.0)))-vec2<f32>(0.5);
-    let shore_fields=frost_ground(p+drift*1.4);let fields=frost_ground(p);
+    let shore_fields=frost_ground(p+drift*1.4).materials;let fields=frost_ground(p).materials;
     let soil_uv=p*0.32;let snow_uv=p*0.5;let stone_uv=p*0.32;
     let offset=vec2<f32>(0.37,0.61);let tile_amount=frost_noise(p*0.21+vec2<f32>(11.0,7.0));
     let soil_a=mengine_texture_soil_nrh(soil_uv);let soil_b=mengine_texture_soil_nrh(soil_uv+offset);
@@ -46,7 +50,8 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let snow=mix(mengine_texture_snow(snow_uv).rgb,mengine_texture_snow(snow_uv+offset).rgb,snow_weight);let stone=mengine_texture_stone(stone_uv).rgb;
     let soil_nrh=mix(soil_a,soil_b,soil_weight);let snow_nrh=mix(snow_a,snow_b,snow_weight);let stone_nrh=mengine_texture_stone_nrh(stone_uv);
     let broad=frost_noise(p*0.085+vec2<f32>(4.0,9.0));let medium=frost_noise(p*0.31+vec2<f32>(23.0,5.0));let fine=frost_noise(p*1.2);
-    let cover=smoothstep(0.3,0.7,broad*0.58+medium*0.3+fine*0.12);
+    let natural_cover=smoothstep(0.3,0.7,broad*0.58+medium*0.3+fine*0.12);
+    let cover=natural_cover*(1.0-fields.z-fields.w)+fields.w;
     // MiYu: thin snow settles between raised litter; a narrow wet-soil band follows the melting edge.
     let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32);
     let melt=(1.0-snow_cover)*smoothstep(0.18,0.5,cover);
@@ -86,6 +91,6 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     return s;
 }
 fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {
-    let fog=frost_ground(world_position.xz).z;
+    let fog=frost_ground(world_position.xz).fog;
     return vec4<f32>(mix(vec3<f32>(0.012,0.025,0.038),color.rgb,smoothstep(0.05,1.0,fog)),1.0);
 }

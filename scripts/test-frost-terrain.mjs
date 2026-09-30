@@ -4,8 +4,27 @@ import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;
+const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;delete legacy.surfaces;
 assert.equal(S.validateMap(legacy).heights.reduce((a,b)=>a+b),0);
+assert.deepEqual(S.validateMap(legacy).surfaces,Array(1024).fill(0));
+for(const surfaces of [[0],Array(1024).fill(3),Array(1024).fill(-1),Array(1024).fill(.5),Array(1024).fill(NaN),null])assert.throws(()=>S.validateMap({...legacy,surfaces}));
+{
+  const s=S.create(),unit={id:0,x:-23,z:23},route=S.path(s,unit,23,-23),site=S.flatSite(s.map,-5,5,1);
+  s.map.surfaces=s.map.surfaces.map((_,i)=>i%3);
+  const restored=S.restore(JSON.parse(JSON.stringify(s)));
+  assert.deepEqual(restored.map.surfaces,s.map.surfaces);assert.deepEqual(S.publicState(s,0).map.surfaces,s.map.surfaces);
+  assert.deepEqual(S.path(restored,unit,23,-23),route);assert.equal(S.flatSite(restored.map,-5,5,1),site);
+  const validated=S.validateMap(s.map);validated.surfaces[0]=2;assert.equal(s.map.surfaces[0],0,'validated maps own the surface array');
+  for(const fog of [1,.4,.07]){
+    s.visible[0].fill(fog===1?1:0);s.explored[0].fill(fog>=.4?1:0);
+    const cells=T.cells(s,0,false);
+    for(let i=0;i<1024;i++){
+      const encoded=Math.floor(cells[i]/2),kind=s.map.terrain[i];
+      assert.equal(encoded%3,kind);assert.equal(Math.floor(encoded/3),kind===1?0:s.map.surfaces[i]);assert.ok(Math.abs(cells[i]-encoded*2-fog)<1e-6);
+    }
+    for(let z=0;z<8;z++)for(let x=0;x<7;x++){const a=T.chunk(cells,x,z).flat(),b=T.chunk(cells,x+1,z).flat();for(let row=0;row<6;row++)for(let dx=0;dx<2;dx++)assert.equal(a[row*6+4+dx],b[row*6+dx]);}
+  }
+}
 for(const bad of [{heights:[0]},{ramps:Array(1024).fill(5)},{heights:Array(1024).fill(NaN)},{heights:Array(1024).fill(3),ramps:Array(1024).fill(1)}])assert.throws(()=>S.validateMap({...legacy,...bad}));
 for(const [r,delta] of [[1,1],[2,-1],[3,32],[4,-32]]){
   const m=S.defaultMap(),i=16*32+16;m.heights.fill(1);m.ramps[i]=r;m.heights[i+delta]=2;
