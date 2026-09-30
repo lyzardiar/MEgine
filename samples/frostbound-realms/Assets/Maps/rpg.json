@@ -2,6 +2,7 @@
   "version": 1,
   "name": "The Shattered Covenant",
   "mode": "rpg",
+  "startingHour": 8,
   "terrain": [
     0,
     1,

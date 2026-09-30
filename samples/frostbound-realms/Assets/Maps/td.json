@@ -2,6 +2,7 @@
   "version": 1,
   "name": "Serpentine Watch",
   "mode": "td",
+  "startingHour": 8,
   "terrain": [
     0,
     1,

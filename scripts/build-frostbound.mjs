@@ -58,11 +58,12 @@ button('siege','SIEGE OF WINTERFALL [F9]',360,89,440,69,'menu','Lead siege engin
 button('heroChoice','FROST WARDEN [H]',360,7,440,69,'menu','Control / healing / click to change');
 art('Hero preview','Assets/Art/hero-portraits.png#hero-0',173,7,62,62);
 for(const suffix of [' label',' detail']){const r=E.find(e=>e.name==='heroChoice'+suffix).components.RectTransform;r.anchored_position[0]+=30;r.size_delta[0]-=70;}
-metal('Header',0,-333,1250,43);text('Brand','FROSTBOUND',-513,-334,200,30,19,C.gold);text('Resources','',30,-334,650,30,17,C.white);text('Clock','',509,-334,210,30,16,C.cyan,'Right');
+metal('Header',0,-333,1250,43);text('Brand','FROSTBOUND',-513,-334,200,30,19,C.gold);text('Resources','',30,-334,650,30,17,C.white);text('Clock','',509,-334,210,34,13,C.cyan,'Right');
 metal('Bottom',0,266,1250,179);panel('Bottom rule',0,177,1250,2,C.gold);
 panel('Minimap',-514,265,174,156,[.04,.11,.12,1]);
 for(let i=0;i<256;i++)panel('Mini tile '+i,-590+(i%16)*10,195+Math.floor(i/16)*9,10,9,[.15,.25,.22,1]);
 for(let i=0;i<S.LIMIT;i++)panel('Mini unit '+i,5000,5000,4,4,C.cyan);
+for(let i=0;i<S.LIMIT;i++)text('Sleep '+i,'Zzz',5000,5000,40,22,14,C.cyan);
 art('Portrait','Assets/Art/command-icons.png#hero',-355,257,98,102);text('Selection title','',-238,199,330,25,19,C.gold);text('Selection stats','',-203,252,185,66,14,C.white);text('Selection queue','',-245,327,316,25,11,C.muted);
 panel('Health back',-203,291,182,8,[.025,.04,.06,1]);panel('Health fill',-203,291,182,8,[.14,.63,.4,1]);panel('Mana back',-203,305,182,5,[.025,.04,.06,1]);panel('Mana fill',-203,305,182,5,[.13,.48,.87,1]);
 for(let i=0;i<12;i++){const x=5+(i%4)*147,y=214+Math.floor(i/4)*50;button('action'+i,'',x,y,137,42,'hud');art('action'+i+' icon','Assets/Art/command-icons.png#attack',x-48,y,36,36);const label=E.find(e=>e.name==='action'+i+' label');label.components.RectTransform.anchored_position=[x+21,y];label.components.RectTransform.size_delta=[85,40];label.components.Text.font_size=12;}

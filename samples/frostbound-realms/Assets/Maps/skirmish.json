@@ -2,6 +2,7 @@
   "version": 1,
   "name": "Winterfall Basin",
   "mode": "skirmish",
+  "startingHour": 8,
   "terrain": [
     0,
     1,

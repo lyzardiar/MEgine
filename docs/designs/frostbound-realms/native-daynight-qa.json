@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "daynight": {
+    "fixture": "Default skirmish map with AI disabled and one authored neutral wolf near the player base; starting hour is changed through real editor buttons.",
+    "editorHourAndMapSave": true,
+    "dayNightLighting": true,
+    "renderedSleepLabel": true,
+    "explicitWake": true,
+    "nightCombatSave": true,
+    "titleLightingReset": true,
+    "shaderRejections": 0
+  }
+}

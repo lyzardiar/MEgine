@@ -2,6 +2,7 @@
   "version": 1,
   "name": "Winterfall Highland Pass",
   "mode": "skirmish",
+  "startingHour": 8,
   "terrain": [
     0,
     1,

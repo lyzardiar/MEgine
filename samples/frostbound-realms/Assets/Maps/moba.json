@@ -2,6 +2,7 @@
   "version": 1,
   "name": "Ancients of the Vale",
   "mode": "moba",
+  "startingHour": 8,
   "terrain": [
     0,
     1,
