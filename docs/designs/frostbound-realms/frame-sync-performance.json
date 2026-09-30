@@ -1,0 +1,722 @@
+{
+  "baselineCommit": "1b986acb66cb080aa058515348bad3c5287998e7",
+  "baselineEditorSha256": "23ba940b9dd127396b6dd2c674ba05bd33beb6bc7491380b83b9d9fbbfbb9402",
+  "currentEditorSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "native": {
+    "before": {
+      "passed": true,
+      "zoom": 12,
+      "entities": 2463,
+      "browserControls": [],
+      "warmupMs": 5000,
+      "sampleWindowMs": 5000,
+      "runs": [
+        {
+          "frame": 114,
+          "units": 21,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 56994.799999952316,
+              "sampleCount": 8,
+              "frameMs": 36.9375,
+              "frameMaxMs": 89,
+              "paintMs": 3.125000014901161,
+              "paintMaxMs": 5.200000047683716,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 800,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 39.3413700916813,
+            "p95FrameMs": 59.9,
+            "peakFrameMs": 138.5,
+            "averagePaintMs": 3.0941123673292434,
+            "p95PaintMs": 4.277777804268731,
+            "peakPaintMs": 15.100000023841858
+          },
+          "native": {
+            "intervals": 45,
+            "averagePresentIntervalMs": 111.50444444550408,
+            "p95PresentIntervalMs": 158.29999995231628,
+            "presentedFps": 8.968252386466382,
+            "averageRequestMs": 72.59565217339474,
+            "averageRenderMs": 27.706182608695652,
+            "averageCommandMs": 31.563556521739134,
+            "averageUploadMs": 1.4891304347826086,
+            "averageSimulationMs": 10.689726086956519,
+            "averageSimulationRequestMs": 37.8521739218546
+          }
+        },
+        {
+          "frame": 166,
+          "units": 21,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 62058.39999997616,
+              "sampleCount": 7,
+              "frameMs": 38.01428571769169,
+              "frameMaxMs": 90.89999997615814,
+              "paintMs": 3.6285714421953474,
+              "paintMaxMs": 7.700000047683716,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 804,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 18,
+            "averageFrameMs": 42.32083333327026,
+            "p95FrameMs": 67,
+            "peakFrameMs": 118.29999995231628,
+            "averagePaintMs": 3.226322750171656,
+            "p95PaintMs": 4.700000017881393,
+            "peakPaintMs": 8
+          },
+          "native": {
+            "intervals": 44,
+            "averagePresentIntervalMs": 115.10454545508732,
+            "p95PresentIntervalMs": 234.39999997615814,
+            "presentedFps": 8.687754215494385,
+            "averageRequestMs": 74.01777777936724,
+            "averageRenderMs": 26.627371111111113,
+            "averageCommandMs": 31.273904444444447,
+            "averageUploadMs": 1.477777780426873,
+            "averageSimulationMs": 11.19008222222222,
+            "averageSimulationRequestMs": 31.297777774598863
+          }
+        },
+        {
+          "frame": 219,
+          "units": 22,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 67343.20000004768,
+              "sampleCount": 7,
+              "frameMs": 38.82857143878937,
+              "frameMaxMs": 92,
+              "paintMs": 2.8000000034059798,
+              "paintMaxMs": 5.200000047683716,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 804,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 40.291328320990225,
+            "p95FrameMs": 51.87999999523163,
+            "peakFrameMs": 106.20000004768372,
+            "averagePaintMs": 3.1253383450465293,
+            "p95PaintMs": 4.0875000059604645,
+            "peakPaintMs": 8.400000095367432
+          },
+          "native": {
+            "intervals": 40,
+            "averagePresentIntervalMs": 126.95500000119209,
+            "p95PresentIntervalMs": 224.40000009536743,
+            "presentedFps": 7.87680674247261,
+            "averageRequestMs": 71.20243902904231,
+            "averageRenderMs": 23.613473170731705,
+            "averageCommandMs": 29.34417560975611,
+            "averageUploadMs": 1.5000000029075435,
+            "averageSimulationMs": 11.192541463414631,
+            "averageSimulationRequestMs": 24.66829267362269
+          }
+        }
+      ]
+    },
+    "after": {
+      "passed": true,
+      "zoom": 12,
+      "entities": 2463,
+      "browserControls": [],
+      "warmupMs": 5000,
+      "sampleWindowMs": 5000,
+      "runs": [
+        {
+          "frame": 111,
+          "units": 21,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 57444,
+              "sampleCount": 9,
+              "frameMs": 28.366666661368477,
+              "frameMaxMs": 66.69999992847443,
+              "paintMs": 3.5666666428248086,
+              "paintMaxMs": 5.5,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 804,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 25.97844281429753,
+            "p95FrameMs": 33.666666666666664,
+            "peakFrameMs": 85.60000002384186,
+            "averagePaintMs": 3.4054404336848068,
+            "p95PaintMs": 4.270000004768372,
+            "peakPaintMs": 8.200000047683716
+          },
+          "native": {
+            "intervals": 83,
+            "averagePresentIntervalMs": 59.94939758978694,
+            "p95PresentIntervalMs": 118.5,
+            "presentedFps": 16.68073475637996,
+            "averageRequestMs": 49.710714277766996,
+            "averageRenderMs": 18.089539285714284,
+            "averageCommandMs": 19.50382142857142,
+            "averageUploadMs": 1.4357142845789592,
+            "averageSimulationMs": 6.2844892857142876,
+            "averageSimulationRequestMs": 24.602380959760573
+          }
+        },
+        {
+          "frame": 162,
+          "units": 21,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 62545.299999952316,
+              "sampleCount": 11,
+              "frameMs": 23.49090908874165,
+              "frameMaxMs": 78.59999990463257,
+              "paintMs": 2.745454571463845,
+              "paintMaxMs": 4.200000047683716,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 804,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 25.92949883391581,
+            "p95FrameMs": 42.13333332538605,
+            "peakFrameMs": 83.10000002384186,
+            "averagePaintMs": 3.3433551846008736,
+            "p95PaintMs": 4.050000011920929,
+            "peakPaintMs": 7.299999952316284
+          },
+          "native": {
+            "intervals": 82,
+            "averagePresentIntervalMs": 62.32195121922144,
+            "p95PresentIntervalMs": 124.60000002384186,
+            "presentedFps": 16.045710707651565,
+            "averageRequestMs": 52.39277107169829,
+            "averageRenderMs": 18.05195180722892,
+            "averageCommandMs": 19.830062650602407,
+            "averageUploadMs": 1.4710843362003925,
+            "averageSimulationMs": 6.693831325301204,
+            "averageSimulationRequestMs": 28.655421683587225
+          }
+        },
+        {
+          "frame": 213,
+          "units": 22,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 67872.10000002384,
+              "sampleCount": 10,
+              "frameMs": 25.739999997615815,
+              "frameMaxMs": 67.70000004768372,
+              "paintMs": 3.359999990463257,
+              "paintMaxMs": 5.399999976158142,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 801,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 26.45469165377367,
+            "p95FrameMs": 47.583333333333336,
+            "peakFrameMs": 81.89999997615814,
+            "averagePaintMs": 3.3651551911927235,
+            "p95PaintMs": 3.975000003973643,
+            "peakPaintMs": 7.100000023841858
+          },
+          "native": {
+            "intervals": 86,
+            "averagePresentIntervalMs": 58.55697674390881,
+            "p95PresentIntervalMs": 116,
+            "presentedFps": 17.077384380231372,
+            "averageRequestMs": 46.93793104160791,
+            "averageRenderMs": 16.55542988505748,
+            "averageCommandMs": 18.677727586206892,
+            "averageUploadMs": 1.4321839042093563,
+            "averageSimulationMs": 6.572121839080462,
+            "averageSimulationRequestMs": 24.42643678188324
+          }
+        }
+      ]
+    }
+  },
+  "cpu": {
+    "before": {
+      "durationMs": 15269.411,
+      "sampleIntervalUs": 1000,
+      "samples": 8574,
+      "profileSha256": "361a0b3151e460124d17cf1c31b7dd89dc602a756aec06ece10937f585ee6577",
+      "snapshotCloneSelfMs": 2168.449,
+      "idleSelfMs": 435.666,
+      "top": [
+        {
+          "functionName": "Dn",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 22563,
+          "selfMs": 2168.449
+        },
+        {
+          "functionName": "observe",
+          "scriptId": "15",
+          "url": "http://tauri.localhost/assets/index-RzLXaN6q.js",
+          "lineNumber": 1,
+          "columnNumber": 158483,
+          "selfMs": 1273.051
+        },
+        {
+          "functionName": "(program)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 781.145
+        },
+        {
+          "functionName": "",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 17220,
+          "selfMs": 671.318
+        },
+        {
+          "functionName": "(garbage collector)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 604.587
+        },
+        {
+          "functionName": "Lt",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 14664,
+          "selfMs": 578.32
+        },
+        {
+          "functionName": "Ye",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 17199,
+          "selfMs": 555.74
+        },
+        {
+          "functionName": "_e",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 17496,
+          "selfMs": 497.752
+        },
+        {
+          "functionName": "hd",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 48,
+          "columnNumber": 7862,
+          "selfMs": 460.562
+        },
+        {
+          "functionName": "(idle)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 435.666
+        },
+        {
+          "functionName": "ll",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 48,
+          "columnNumber": 71,
+          "selfMs": 378.038
+        },
+        {
+          "functionName": "",
+          "scriptId": "15",
+          "url": "http://tauri.localhost/assets/index-RzLXaN6q.js",
+          "lineNumber": 35,
+          "columnNumber": 165,
+          "selfMs": 370.968
+        },
+        {
+          "functionName": "Ke",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 17698,
+          "selfMs": 366.619
+        },
+        {
+          "functionName": "zr",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 7904,
+          "selfMs": 334.354
+        },
+        {
+          "functionName": "$v",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 100653,
+          "selfMs": 326.094
+        },
+        {
+          "functionName": "",
+          "scriptId": "15",
+          "url": "http://tauri.localhost/assets/index-RzLXaN6q.js",
+          "lineNumber": 40,
+          "columnNumber": 41,
+          "selfMs": 323.943
+        },
+        {
+          "functionName": "oc",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 93789,
+          "selfMs": 254.336
+        },
+        {
+          "functionName": "dl",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 8076,
+          "selfMs": 208.36
+        },
+        {
+          "functionName": "structuredClone",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 189.947
+        },
+        {
+          "functionName": "tl",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 41980,
+          "selfMs": 184.615
+        },
+        {
+          "functionName": "Ge",
+          "scriptId": "21",
+          "url": "http://tauri.localhost/assets/uiLayout-CaVO4WHD.js",
+          "lineNumber": 0,
+          "columnNumber": 24897,
+          "selfMs": 183.683
+        },
+        {
+          "functionName": "putImageData",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 183.682
+        },
+        {
+          "functionName": "ir",
+          "scriptId": "15",
+          "url": "http://tauri.localhost/assets/index-RzLXaN6q.js",
+          "lineNumber": 1,
+          "columnNumber": 228370,
+          "selfMs": 183.179
+        },
+        {
+          "functionName": "Im",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 115595,
+          "selfMs": 181.908
+        },
+        {
+          "functionName": "",
+          "scriptId": "19",
+          "url": "http://tauri.localhost/assets/App-WNWd2K6b.js",
+          "lineNumber": 106,
+          "columnNumber": 16772,
+          "selfMs": 176.751
+        }
+      ]
+    },
+    "after": {
+      "durationMs": 15172.613,
+      "sampleIntervalUs": 1000,
+      "samples": 8703,
+      "profileSha256": "45465c6de4f34fdf4126ac27f9c4736abecd365431cfa16b00ff63c83472141c",
+      "snapshotCloneSelfMs": 851.163,
+      "idleSelfMs": 2200.893,
+      "top": [
+        {
+          "functionName": "(idle)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 2200.893
+        },
+        {
+          "functionName": "(program)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 918.895
+        },
+        {
+          "functionName": "Dn",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 106,
+          "columnNumber": 22763,
+          "selfMs": 851.163
+        },
+        {
+          "functionName": "(garbage collector)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 712.876
+        },
+        {
+          "functionName": "Lt",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 106,
+          "columnNumber": 14664,
+          "selfMs": 663.671
+        },
+        {
+          "functionName": "hd",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 48,
+          "columnNumber": 7862,
+          "selfMs": 564.856
+        },
+        {
+          "functionName": "Ye",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 106,
+          "columnNumber": 17898,
+          "selfMs": 541.456
+        },
+        {
+          "functionName": "",
+          "scriptId": "15",
+          "url": "http://tauri.localhost/assets/index-D0k46zaJ.js",
+          "lineNumber": 35,
+          "columnNumber": 165,
+          "selfMs": 433.373
+        },
+        {
+          "functionName": "get nativeSessionId",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 106,
+          "columnNumber": 25465,
+          "selfMs": 430.688
+        },
+        {
+          "functionName": "ll",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 48,
+          "columnNumber": 71,
+          "selfMs": 413.624
+        },
+        {
+          "functionName": "zr",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 106,
+          "columnNumber": 7904,
+          "selfMs": 397.183
+        },
+        {
+          "functionName": "",
+          "scriptId": "15",
+          "url": "http://tauri.localhost/assets/index-D0k46zaJ.js",
+          "lineNumber": 40,
+          "columnNumber": 41,
+          "selfMs": 368.795
+        },
+        {
+          "functionName": "Ge",
+          "scriptId": "26",
+          "url": "http://tauri.localhost/assets/uiLayout-BVep9yIt.js",
+          "lineNumber": 0,
+          "columnNumber": 24897,
+          "selfMs": 347.441
+        },
+        {
+          "functionName": "$v",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 100653,
+          "selfMs": 331.561
+        },
+        {
+          "functionName": "putImageData",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 324.665
+        },
+        {
+          "functionName": "oc",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 93789,
+          "selfMs": 299.703
+        },
+        {
+          "functionName": "dl",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 106,
+          "columnNumber": 8076,
+          "selfMs": 272.048
+        },
+        {
+          "functionName": "",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 106,
+          "columnNumber": 16772,
+          "selfMs": 256.824
+        },
+        {
+          "functionName": "tl",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 41980,
+          "selfMs": 212.779
+        },
+        {
+          "functionName": "ir",
+          "scriptId": "15",
+          "url": "http://tauri.localhost/assets/index-D0k46zaJ.js",
+          "lineNumber": 1,
+          "columnNumber": 228316,
+          "selfMs": 212.598
+        },
+        {
+          "functionName": "M",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 40649,
+          "selfMs": 210.924
+        },
+        {
+          "functionName": "tick",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 1,
+          "columnNumber": 3787,
+          "selfMs": 209.195
+        },
+        {
+          "functionName": "sceneVisible",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/App-ByemCNpo.js",
+          "lineNumber": 106,
+          "columnNumber": 26421,
+          "selfMs": 204.928
+        },
+        {
+          "functionName": "wm",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 95207,
+          "selfMs": 188.155
+        },
+        {
+          "functionName": "Im",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/react-runtime-BZwu_XJr.js",
+          "lineNumber": 47,
+          "columnNumber": 115595,
+          "selfMs": 184.101
+        }
+      ]
+    }
+  },
+  "nativeSceneDiff": {
+    "passed": true,
+    "pausedRevision": 51,
+    "stepRevision": 52,
+    "changedIds": [
+      4294967651,
+      4294967653,
+      4294967655,
+      4294967659,
+      4294967663,
+      4294967667,
+      4294967671,
+      4294968929,
+      4294969192,
+      4294969433,
+      4294969452
+    ],
+    "telemetryChanged": true,
+    "emptyPausedDiff": true
+  },
+  "limits": [
+    "Native editor Game view, not standalone Player FPS.",
+    "CPU profiles are separate 15-second warmed skirmish runs, not the three native FPS windows.",
+    "Snapshot cloning attribution: emitted App function Dn, inspected against snapshotEntities in store.ts.",
+    "Same 1280x720 resolution, zoom12, source scene, assets and render settings; no quality reduction.",
+    "Three short measurement windows are not a statistical significance test; physical input, audio and cross-machine LAN unverified."
+  ]
+}

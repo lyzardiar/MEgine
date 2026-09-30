@@ -434,10 +434,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     selectedIds.length ? selectedIds[selectedIds.length - 1] : null;
 
   const getVisibleFlat = (): TreeNode[] => {
+    const children = new Map<number | null, EntityRec[]>();
+    for (const entity of list()) {
+      const parent = entity.parent ?? null;
+      const siblings = children.get(parent);
+      if (siblings) siblings.push(entity);
+      else children.set(parent, [entity]);
+    }
+    for (const siblings of children.values()) siblings.sort((a, b) => a.siblingIndex - b.siblingIndex || a.entity - b.entity);
     const out: TreeNode[] = [];
     const walk = (parent: number | null, depth: number) => {
-      for (const e of childrenOf(parent)) {
-        const kids = childrenOf(e.entity);
+      for (const e of children.get(parent) ?? []) {
+        const kids = children.get(e.entity) ?? [];
         const exp = expanded.has(e.entity);
         out.push({
           entity: e,

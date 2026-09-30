@@ -129,6 +129,61 @@ test('retained runtime omits unchanged worlds and synchronizes Inspector edits b
   } finally { await server.close(); }
 });
 
+test('Agent observation shares prepared snapshots without invoking live entity serialization hooks', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const { agentBridge } = await server.ssrLoadModule('/src/agent/AgentBridge.ts');
+    const store = createEditorStore();
+    store.play(); await store.waitForPlayRuntime(); store.pause();
+    const target = store.playViewportSnapshot().entities[0];
+    let serialized = 0;
+    Object.defineProperty(target, 'toJSON', { configurable: true, enumerable: true, value() { serialized++; return { entity: target.entity, name: 'Unexpected hook' }; } });
+    agentBridge.connect(store);
+    agentBridge.markEditorBootReady(store);
+    agentBridge.observe(true, store.snapshot());
+    const baseline = agentBridge.getSceneSnapshot();
+    assert.equal(serialized, 0);
+    assert.equal(agentBridge.getSceneDiff(baseline.revision).toRevision, baseline.revision);
+    target.name = 'Paused Inspector edit';
+    agentBridge.observe(true, store.snapshot());
+    const diff = agentBridge.getSceneDiff(baseline.revision);
+    assert.deepEqual(diff.changed, [target.entity]);
+    assert.equal(diff.entities[0].name, 'Paused Inspector edit');
+    diff.entities[0].name = 'Caller mutation';
+    assert.equal(target.name, 'Paused Inspector edit');
+    assert.equal(serialized, 0);
+    delete target.toJSON;
+    store.stop();
+  } finally { await server.close(); }
+});
+
+test('visible hierarchy rebuilds sibling order and parents after direct paused edits', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const store = createEditorStore();
+    store.loadSceneJson(JSON.stringify({ version: 1, name: 'Hierarchy', world: { entities: [
+      { entity: 1, parent: null, siblingIndex: 0, components: {} },
+      { entity: 2, parent: 1, siblingIndex: 1, components: {} },
+      { entity: 3, parent: 1, siblingIndex: 1, active: false, components: {} },
+      { entity: 4, parent: null, siblingIndex: 1, components: {} },
+    ] } }));
+    if (!store.getVisibleFlat().find(n => n.entity.entity === 1).expanded) store.toggleExpand(1);
+    assert.deepEqual(store.getVisibleFlat().map(n => [n.entity.entity, n.depth]), [[1, 0], [2, 1], [3, 1], [4, 0]]);
+    store.play(); await store.waitForPlayRuntime(); store.pause();
+    const entities = store.playViewportSnapshot().entities;
+    entities.find(e => e.entity === 3).siblingIndex = -1;
+    entities.find(e => e.entity === 2).parent = 4;
+    if (!store.getVisibleFlat().find(n => n.entity.entity === 4).expanded) store.toggleExpand(4);
+    assert.deepEqual(store.getVisibleFlat().map(n => [n.entity.entity, n.depth]), [[1, 0], [3, 1], [4, 0], [2, 1]]);
+    store.toggleExpand(4);
+    assert.deepEqual(store.getVisibleFlat().map(n => n.entity.entity), [1, 3, 4]);
+    assert.equal(store.getVisibleFlat().find(n => n.entity.entity === 4).hasChildren, true);
+    store.stop();
+  } finally { await server.close(); }
+});
+
 test('project runtime applies completed frames, consumes input edges, restores authored world and ignores stale completion', async () => {
   const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
   try {

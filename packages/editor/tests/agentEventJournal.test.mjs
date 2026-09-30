@@ -207,3 +207,24 @@ test('scene-level authored state advances revisions and is returned by increment
     entities: [],
   });
 });
+
+test('scene signatures detect live nested edits and isolate returned payloads across id reuse', () => {
+  const tracker = new SceneChangeTracker();
+  const entities = [{ entity: 1, components: { Transform: { position: [0, 0, 0] } } }];
+  tracker.observe('Main', entities);
+  assert.equal(tracker.observe('Main', entities), null);
+  entities[0].components.Transform.position[0] = 4;
+  assert.deepEqual(tracker.observe('Main', entities).changed, [1]);
+  const diff = tracker.diff(1, entities);
+  diff.entities[0].components.Transform.position[0] = 999;
+  assert.equal(tracker.diff(1, entities).entities[0].components.Transform.position[0], 4);
+  const reset = tracker.diff(0, entities);
+  reset.entities[0].components.Transform.position[1] = 999;
+  assert.equal(entities[0].components.Transform.position[1], 0);
+  assert.equal(tracker.observe('Main', entities), null);
+  assert.deepEqual(tracker.observe('Main', []).removed, [1]);
+  assert.deepEqual(tracker.observe('Main', entities).added, [1]);
+  assert.deepEqual(tracker.diff(2, entities).changed, [1]);
+  assert.throws(() => tracker.observe('Main', [...entities, entities[0]]), /duplicate entity id/);
+  assert.equal(tracker.observe('Main', entities), null);
+});

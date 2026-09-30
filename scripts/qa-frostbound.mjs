@@ -10,7 +10,7 @@ const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 if(process.argv.includes('--peer')){
   process.env.MENGINE_AGENT_EDITOR_MODE='auto-background';
-  process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows';
+  process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows '+(process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS||'');
   const {bridgeQuery,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
   process.on('message',async m=>{try{let result;if(m.op==='query')result=await bridgeQuery(m.name,m.args||{});else if(m.op==='execute'){const r=await bridgeExecute(m.name,m.args||{},{requestId:crypto.randomUUID()});assert.ok(r.ok,r.error?.message);result=r.data;}else{closeBridgeConnection();process.send({id:m.id,result:true});process.exit(0);}process.send({id:m.id,result});}catch(e){process.send({id:m.id,error:e.stack});}});
 }else{

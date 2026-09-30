@@ -2227,7 +2227,7 @@ class AgentBridge {
    * this after its normal refresh path, so UI and AgentBridge share one source
    * of truth without polling the foreground window.
    */
-  observe(forceScene = false): void {
+  observe(forceScene = false, preparedSnapshot?: ReturnType<EditorStore['snapshot']>): void {
     const store = this.store;
     if (!store) return;
     const sceneName = this.sceneMeta?.sceneName() ?? null;
@@ -2239,7 +2239,7 @@ class AgentBridge {
       || this.sceneChanges.revision === 0
       || now - this.lastPlaySceneObservationAt >= 100
     );
-    const snapshot = shouldObserveScene ? store.snapshot() : null;
+    const snapshot = shouldObserveScene ? preparedSnapshot ?? store.snapshot() : null;
     const sceneDelta = shouldObserveScene
       ? this.sceneChanges.observe(
         sceneName,

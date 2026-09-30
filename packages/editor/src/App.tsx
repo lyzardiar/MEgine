@@ -250,7 +250,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const undoService = useMemo(() => createEditorUndoService(), []);
   const store = useMemo(() => createEditorStore(undoService), [undoService]);
   const [, setUndoRevision] = useState(undoService.revision);
-  const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(store.snapshot());
+  const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(() => store.snapshot());
   const [mode, setMode] = useState<EditorMode>('edit');
   const [gizmo, setGizmo] = useState<GizmoMode>('translate');
   const [pivotMode, setPivotMode] = useState<ToolPivotMode>(
@@ -777,7 +777,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const refresh = (publish = true) => {
-    setSnap(store.snapshot());
+    const snapshot = store.snapshot();
+    setSnap(snapshot);
     setMode(store.mode);
     setGizmo(store.gizmo);
     setSelected(store.selected);
@@ -786,7 +787,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setGameDisplay(store.gameDisplay);
     setTreeTick((t) => t + 1);
     updateSceneDirty();
-    if (!props.detachedPanel) agentBridge.observe();
+    if (!props.detachedPanel) agentBridge.observe(false, snapshot);
     if (publish) broadcastScene();
   };
   refreshRef.current = refresh;
