@@ -5,7 +5,8 @@ use std::collections::HashSet;
 pub const SURFACE_SHADER_PARAMETERS_MARKER: &str = "/* MENGINE_PARAMETERS";
 pub const MAX_SURFACE_SHADER_PARAMETERS: usize = 16;
 pub const MAX_SURFACE_SHADER_KEYWORDS: usize = 16;
-pub const MAX_SURFACE_SHADER_TEXTURES: usize = 4;
+// Six custom, five standard PBR, four environment and one shadow texture fit WebGPU's limit of 16.
+pub const MAX_SURFACE_SHADER_TEXTURES: usize = 6;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SurfaceShaderParameterType {
@@ -470,6 +471,11 @@ mod tests {
 
     #[test]
     fn parses_and_validates_shader_textures() {
+        for count in [6, 7] {
+            let textures = (0..count).map(|i| format!(r#"{{"name":"layer{i}","type":"data"}}"#)).collect::<Vec<_>>().join(",");
+            let source = format!("/* MENGINE_PARAMETERS {{\"textures\":[{textures}]}} */");
+            assert_eq!(parse_surface_shader_schema(&source).is_ok(), count == 6);
+        }
         let schema = parse_surface_shader_schema(
             r#"/* MENGINE_PARAMETERS
             {"textures":[

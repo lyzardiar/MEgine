@@ -1,0 +1,132 @@
+{
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "generator": "scripts/import-frost-ground.py",
+  "packing": {
+    "R": "OpenGL tangent normal X",
+    "G": "OpenGL tangent normal Y",
+    "B": "linear roughness",
+    "A": "linear relative height"
+  },
+  "assets": [
+    {
+      "id": "forest_ground_04",
+      "page": "https://polyhaven.com/a/forest_ground_04",
+      "authors": {
+        "Rob Tuytel": "Photography, Processing",
+        "Rico Cilliers": "Minor adjustment"
+      },
+      "albedo": "Assets/Textures/forest_ground_04_diff_1k.jpg",
+      "channels": {
+        "nor_gl": "SourceAssets/polyhaven/ground/forest_ground_04_nor_gl_1k.png",
+        "Rough": "SourceAssets/polyhaven/ground/forest_ground_04_rough_1k.png",
+        "Displacement": "SourceAssets/polyhaven/ground/forest_ground_04_disp_1k.png"
+      },
+      "output": "Assets/Textures/forest_ground_04_nrh_1k.png"
+    },
+    {
+      "id": "snow_02",
+      "page": "https://polyhaven.com/a/snow_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "albedo": "Assets/Textures/snow_02_diff_1k.jpg",
+      "channels": {
+        "nor_gl": "SourceAssets/polyhaven/ground/snow_02_nor_gl_1k.png",
+        "Rough": "SourceAssets/polyhaven/ground/snow_02_rough_1k.png",
+        "Displacement": "SourceAssets/polyhaven/ground/snow_02_disp_1k.png"
+      },
+      "output": "Assets/Textures/snow_02_nrh_1k.png"
+    },
+    {
+      "id": "rocky_terrain",
+      "page": "https://polyhaven.com/a/rocky_terrain",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "albedo": "Assets/Textures/rocky_terrain_diff_1k.jpg",
+      "channels": {
+        "nor_gl": "SourceAssets/polyhaven/ground/rocky_terrain_nor_gl_1k.png",
+        "Rough": "SourceAssets/polyhaven/ground/rocky_terrain_rough_1k.png",
+        "Displacement": "SourceAssets/polyhaven/ground/rocky_terrain_disp_1k.png"
+      },
+      "output": "Assets/Textures/rocky_terrain_nrh_1k.png"
+    }
+  ],
+  "sources": [
+    {
+      "file": "SourceAssets/polyhaven/ground/forest_ground_04_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/forest_ground_04/forest_ground_04_nor_gl_1k.png",
+      "sha256": "dc30ffdf75d28b2f02831201b377cf8cce4594d86bbcf46ba711dfcd35a5fcf0"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/forest_ground_04_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/forest_ground_04/forest_ground_04_rough_1k.png",
+      "sha256": "d5827ac9071ae7cf98920bf1166b2b343ac0349fd3b0dc1b570f29ae67bea62c"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/forest_ground_04_disp_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/forest_ground_04/forest_ground_04_disp_1k.png",
+      "sha256": "d96e043c2b97120897b53414be520fd6a1ac6dcbb29b06f90ac4acff9c1e85df"
+    },
+    {
+      "file": "SourceAssets/polyhaven/forest_ground_04/forest_ground_04_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_diff_1k.jpg",
+      "sha256": "50a4dda30875020c64385261aa7e00e2155b592302fa6794165f58fae73cbd2c"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/snow_02_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/snow_02/snow_02_nor_gl_1k.png",
+      "sha256": "110f8f0b4668c780412480a459d1276a52633f2d0af6c3eb30fd7ef90c6426fa"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/snow_02_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/snow_02/snow_02_rough_1k.png",
+      "sha256": "162da34b174b0f3339d612c3c27a6253d2ff5eb3632494710b9df295d54d6ebb"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/snow_02_disp_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/snow_02/snow_02_disp_1k.png",
+      "sha256": "7ea857f5b1f4c3f4cf99471fbd9e4b5885d25e5e79296a9d9aedd39bbf7035c4"
+    },
+    {
+      "file": "SourceAssets/snow_02_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_02/snow_02_diff_1k.jpg",
+      "sha256": "523a4e69c90b96d787dd69b897f29a2b3761a017024405c60aa630d1e8e9009a"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/rocky_terrain_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rocky_terrain/rocky_terrain_nor_gl_1k.png",
+      "sha256": "dea802ceded8d77dddf26f7161afe66d4dff2d2394c2d6ce041041fdb8f5b00f"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/rocky_terrain_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rocky_terrain/rocky_terrain_rough_1k.png",
+      "sha256": "7b703599d909cb63f15b14a041b25557e919c8698f7cb10cedd27b32d8380173"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/rocky_terrain_disp_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rocky_terrain/rocky_terrain_disp_1k.png",
+      "sha256": "64c84c4959c61134112e526c93c0355f5bc7e855596869c2b6ec3774bc85c311"
+    },
+    {
+      "file": "SourceAssets/rocky_terrain_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_terrain/rocky_terrain_diff_1k.jpg",
+      "sha256": "429315865fd89c150272592f6d93def174c6f69804a565ff08e53627a885579b"
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/forest_ground_04_nrh_1k.png",
+      "sha256": "9acc5cdb6fd77ff57f1c19bd1d33c951d4222eabece8f81a7d296e7087ee1329"
+    },
+    {
+      "file": "Assets/Textures/snow_02_nrh_1k.png",
+      "sha256": "71aec32f6123bc2bdd96d80e61da4060af54a0d6abcd12be5f303d374d8c2752"
+    },
+    {
+      "file": "Assets/Textures/rocky_terrain_nrh_1k.png",
+      "sha256": "9a73215fcdd8824a41241ffa5dfb271e8ea10d181d5c5e4393fcb125a8e18873"
+    }
+  ]
+}

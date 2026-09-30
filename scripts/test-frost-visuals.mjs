@@ -17,6 +17,7 @@ for(let f=0;f<4;f++){
 }
 assert.equal(halls.size,4);
 const verify=entry=>{const data=fs.readFileSync(new URL(entry.file,root));assert.equal(crypto.createHash('sha256').update(data).digest('hex'),entry.sha256,entry.file);};
+const ground=JSON.parse(fs.readFileSync(new URL('ground-sources.json',root)));assert.equal(ground.license,'CC0-1.0');ground.sources.forEach(verify);ground.generated.forEach(verify);
 const realistic=JSON.parse(fs.readFileSync(new URL('realistic-sources.json',root))),houses=JSON.parse(fs.readFileSync(new URL('house-sources.json',root)));
 for(const manifest of [realistic,houses]){assert.equal(manifest.license,'CC0-1.0');manifest.sources.forEach(verify);manifest.generated.forEach(verify);}realistic.impostors.forEach(verify);
 const warclans=JSON.parse(fs.readFileSync(new URL('warclans-sources.json',root)));assert.equal(warclans.license,'CC-BY-SA-3.0');assert.equal(warclans.author,'Wildfire Games');warclans.sources.forEach(verify);warclans.generated.forEach(verify);

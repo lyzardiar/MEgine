@@ -77,6 +77,29 @@ const installedFont = [
   '/System/Library/Fonts/Supplemental/Arial.ttf',
 ].find((candidate) => existsSync(candidate));
 
+test('buildPcPackage resolves all six shader textures and the sixth object override', () => {
+  const paths = fixture('six-layer-ground');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Shaders'));
+    const textures = Array.from({length: 6}, (_, i) => ({name: `layer${i}`, type: i < 3 ? 'color' : 'data', default: `Assets/Textures/layer${i}.png`}));
+    for (let i = 0; i < 6; i++) writeFileSync(join(paths.project, textures[i].default), `texture ${i}`);
+    writeFileSync(join(paths.project, 'Assets/Textures/override.png'), 'object override');
+    writeFileSync(join(paths.project, 'Assets/Materials/Ground.mmat'), JSON.stringify({version: 10, shader: 'custom', custom_shader: 'Assets/Shaders/Ground.mshader', custom_textures: Object.fromEntries(textures.map(t => [t.name, t.default]))}));
+    const shader = () => `/* MENGINE_PARAMETERS ${JSON.stringify({textures})} */\nfn mengine_lit_surface_hook(s: MEngineSurface, uv: vec2<f32>, p: vec3<f32>) -> MEngineSurface { var r=s; r.roughness=mengine_texture_layer5(uv).b; return r; }`;
+    writeFileSync(join(paths.project, 'Assets/Shaders/Ground.mshader'), shader());
+    writeFileSync(join(paths.project, 'Assets/Scenes/Main.mscene'), JSON.stringify({world: {entities: [{components: {MeshRenderer: {mesh: 'cube', material: 'Assets/Materials/Ground.mmat'}, MaterialPropertyBlock: {custom_texture_names: textures.map(t => t.name), custom_texture_values: textures.map((t, i) => i === 5 ? 'Assets/Textures/override.png' : t.default)}}}]}}));
+    const options = {projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test-engine'};
+    buildPcPackage(options);
+    for (const texture of textures) assert.equal(existsSync(join(paths.output, texture.default)), true);
+    assert.equal(readFileSync(join(paths.output, 'Assets/Textures/override.png'), 'utf8'), 'object override');
+    textures.push({name: 'overflow', type: 'data', default: textures[0].default});
+    writeFileSync(join(paths.project, 'Assets/Shaders/Ground.mshader'), shader());
+    assert.throws(() => buildPcPackage({...options, outputDir: join(paths.root, 'Overflow')}), /more than 6 textures/);
+  } finally {
+    rmSync(paths.root, {recursive: true, force: true});
+  }
+});
+
 test('buildPcPackage signs the deterministic artifact identity with an external Ed25519 key', () => {
   const paths = fixture('artifact-signature');
   try {

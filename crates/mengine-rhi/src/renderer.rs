@@ -127,7 +127,7 @@ pub struct RenderMaterial {
     /// CPU-side reflection metadata used to apply named per-renderer overrides without parsing
     /// shader source every frame. This metadata is not uploaded or included in pipeline keys.
     pub custom_parameter_bindings: Arc<[SurfaceShaderParameterBinding]>,
-    /// Final custom texture paths packed in Surface Shader declaration order. Four fixed slots
+    /// Final custom texture paths packed in Surface Shader declaration order. Six fixed slots
     /// keep one stable material bind-group layout across all custom pipelines.
     pub custom_textures: [String; MAX_SURFACE_SHADER_TEXTURES],
     /// CPU-side names for matching MaterialPropertyBlock texture overrides to fixed slots.
@@ -856,6 +856,26 @@ impl Renderer {
                     },
                     wgpu::BindGroupLayoutEntry {
                         binding: 9,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 10,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 11,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             sample_type: wgpu::TextureSampleType::Float { filterable: true },
@@ -3427,6 +3447,8 @@ struct ShadowUniforms {
 @group(1) @binding(7) var mengine_custom_texture_1: texture_2d<f32>;
 @group(1) @binding(8) var mengine_custom_texture_2: texture_2d<f32>;
 @group(1) @binding(9) var mengine_custom_texture_3: texture_2d<f32>;
+@group(1) @binding(10) var mengine_custom_texture_4: texture_2d<f32>;
+@group(1) @binding(11) var mengine_custom_texture_5: texture_2d<f32>;
 @group(2) @binding(0) var<uniform> shadow: ShadowUniforms;
 @group(2) @binding(1) var directional_shadow_map: texture_depth_2d;
 @group(2) @binding(2) var directional_shadow_sampler: sampler_comparison;
@@ -4302,8 +4324,10 @@ mod tests {
                     "mask.png".into(),
                     String::new(),
                     String::new(),
+                    String::new(),
+                    String::new(),
                 ],
-                custom_texture_srgb: [true, false, false, false],
+                custom_texture_srgb: [true, false, false, false, false, false],
                 ..Default::default()
             },
         };
@@ -4315,7 +4339,7 @@ mod tests {
         assert_eq!(key.emissive, "emissive.png");
         assert_eq!(key.custom[0], "detail.png");
         assert_eq!(key.custom[1], "mask.png");
-        assert_eq!(key.custom_srgb, [true, false, false, false]);
+        assert_eq!(key.custom_srgb, [true, false, false, false, false, false]);
         assert_eq!(key.sampler.wrap_u, MaterialWrap::Clamp);
         assert_eq!(key.sampler.wrap_v, MaterialWrap::Mirror);
         assert_eq!(key.sampler.filter, MaterialFilter::Nearest);

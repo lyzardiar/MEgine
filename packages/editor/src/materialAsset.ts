@@ -1,3 +1,5 @@
+import { MAX_SURFACE_SHADER_TEXTURES } from './surfaceShader.ts';
+
 export type MaterialShader = 'pbr' | 'unlit' | 'custom';
 export type MaterialSurface = 'opaque' | 'transparent' | 'cutout';
 export type MaterialBlendMode = 'alpha' | 'premultiplied' | 'additive' | 'multiply';
@@ -216,7 +218,7 @@ export function normalizeMaterialCustomTextures(value: unknown): MaterialCustomT
     throw new Error('Material custom_textures must be an object');
   }
   const entries = Object.entries(value as Record<string, unknown>);
-  if (entries.length > 4) throw new Error('Material cannot contain more than 4 custom textures');
+  if (entries.length > MAX_SURFACE_SHADER_TEXTURES) throw new Error(`Material cannot contain more than ${MAX_SURFACE_SHADER_TEXTURES} custom textures`);
   const result: MaterialCustomTextures = {};
   for (const [name, raw] of entries.sort(([left], [right]) => left.localeCompare(right))) {
     if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)) {

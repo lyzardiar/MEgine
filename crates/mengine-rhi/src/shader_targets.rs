@@ -103,6 +103,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn six_texture_surface_and_ui_hooks_compile_for_all_backends() {
+        let textures = (0..6).map(|i| format!(r#"{{"name":"layer{i}","type":"data"}}"#)).collect::<Vec<_>>().join(",");
+        let schema = format!("/* MENGINE_PARAMETERS {{\"textures\":[{textures}]}} */\n");
+        for hook in [
+            "fn mengine_lit_surface_hook(s: MEngineSurface, uv: vec2<f32>, p: vec3<f32>) -> MEngineSurface { var r=s; r.base_color=mengine_texture_layer5(uv).rgb; return r; }",
+            "fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> { return mengine_texture_layer5(input.uv0); }",
+        ] {
+            let report = compile_shader_backends(&(schema.clone() + hook)).unwrap();
+            assert_eq!(report.artifacts.len(), 4);
+            assert!(report.artifacts.iter().all(|artifact| artifact.byte_size > 0));
+        }
+        assert!(5 + 6 + 4 + 1 <= wgpu::Limits::default().max_sampled_textures_per_shader_stage);
+    }
+
+    #[test]
+    fn frost_ground_shader_compiles_for_all_backends() {
+        let report = compile_shader_backends(include_str!("../../../samples/frostbound-realms/Assets/Shaders/Ground.mshader")).unwrap();
+        assert_eq!(report.artifacts.len(), 4);
+    }
+
+    #[test]
     fn surface_hooks_compile_for_webgpu_vulkan_d3d12_and_metal() {
         let report = compile_shader_backends(
             r#"fn mengine_lit_surface_hook(

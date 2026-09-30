@@ -1,0 +1,57 @@
+{
+  "passed": true,
+  "sources": 12,
+  "newSourceTextures": 9,
+  "packedTextures": 3,
+  "reproducedByteForByte": true,
+  "nativeGround": {
+    "chunks": 64,
+    "shaderRejections": 0,
+    "editorRendered": true,
+    "zoom": 12,
+    "profiler": {
+      "intervals": 38,
+      "averagePresentIntervalMs": 129.37105262906928,
+      "p95PresentIntervalMs": 146,
+      "presentedFps": 7.729704440661736,
+      "averageRequestMs": 54.61538460927132,
+      "averageRenderMs": 19.056297435897438,
+      "averageCommandMs": 24.5886282051282,
+      "averageUploadMs": 1.4794871837664874,
+      "averageSimulationMs": 9.777607692307692,
+      "averageSimulationRequestMs": 27.21794871794872
+    }
+  },
+  "baselineProfiler": {
+    "intervals": 37,
+    "averagePresentIntervalMs": 130.5810810810811,
+    "p95PresentIntervalMs": 185.30000007152557,
+    "presentedFps": 7.6580772016971945,
+    "averageRequestMs": 59.986842108400246,
+    "averageRenderMs": 17.856307894736847,
+    "averageCommandMs": 22.87558421052632,
+    "averageUploadMs": 1.4947368565358614,
+    "averageSimulationMs": 9.686344736842106,
+    "averageSimulationRequestMs": 27.936842115301836
+  },
+  "terrainInteractionPassed": true,
+  "tests": {
+    "core": 4,
+    "rhi": 50,
+    "runtimeMaterials": 13,
+    "assetMaterials": 13,
+    "editorMaterials": 29,
+    "cliExisting": 68,
+    "cliSixTexture": 1,
+    "rulesAndTcp": true
+  },
+  "package": {
+    "files": 538,
+    "bytes": 230993061,
+    "contentHash": "6200b02ad94467cb6bcef11e06e2bc5eacae85a16a1599b8ecfc9938a8614f45",
+    "startupSmokePassed": true
+  },
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLan": false
+}

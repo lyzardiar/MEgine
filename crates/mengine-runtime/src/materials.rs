@@ -1146,7 +1146,7 @@ mod tests {
         assert_eq!(material.custom_textures[1], "Assets/Textures/mask.png");
         assert_eq!(material.custom_texture_names[0], "detail");
         assert_eq!(material.custom_texture_names[1], "mask");
-        assert_eq!(material.custom_texture_srgb, [true, false, false, false]);
+        assert_eq!(material.custom_texture_srgb, [true, false, false, false, false, false]);
         let draft = load_material_asset(&root.join("Assets/Materials/Rim.mmat")).unwrap();
         let preview = cache.resolve_preview(&draft).unwrap();
         assert_eq!(preview.custom_parameters, material.custom_parameters);
@@ -1205,7 +1205,11 @@ mod tests {
         let shader = r#"/* MENGINE_PARAMETERS
         {"textures":[
           {"name":"detail","type":"color","default":"Assets/Textures/default.png"},
-          {"name":"mask","type":"data"}
+          {"name":"mask","type":"data"},
+          {"name":"snow","type":"color"},
+          {"name":"soil","type":"data"},
+          {"name":"stone","type":"data"},
+          {"name":"height","type":"data","default":"Assets/Textures/height.png"}
         ]}
         */
         fn mengine_lit_surface_hook(
@@ -1221,7 +1225,12 @@ mod tests {
         let (textures, srgb) = resolve_surface_shader_textures(&material, shader).unwrap();
         assert_eq!(textures[0], "Assets/Textures/default.png");
         assert_eq!(textures[1], "Assets/Textures/mask.png");
-        assert_eq!(srgb, [true, false, false, false]);
+        assert_eq!(textures[5], "Assets/Textures/height.png");
+        assert_eq!(srgb, [true, false, true, false, false, false]);
+        let mut overridden = textures;
+        let block = MaterialPropertyBlock { custom_texture_names: vec!["height".into()], custom_texture_values: vec!["Assets/Textures/object-height.png".into()], ..Default::default() };
+        apply_custom_property_block(&block, &mut [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS], &[], &mut overridden, &["detail".into(), "mask".into(), "snow".into(), "soil".into(), "stone".into(), "height".into()]);
+        assert_eq!(overridden[5], "Assets/Textures/object-height.png");
         material
             .custom_textures
             .insert("removed".into(), "Assets/Textures/stale.png".into());

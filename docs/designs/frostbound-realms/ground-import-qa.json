@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "materials": {
+    "forest_ground_04": {
+      "size": [
+        1024,
+        1024
+      ],
+      "normalHeightCorrelation": [
+        0.8269944431647643,
+        0.8372273680345571
+      ],
+      "roughnessRange": [
+        160,
+        250
+      ],
+      "heightRange": [
+        74,
+        145
+      ]
+    },
+    "snow_02": {
+      "size": [
+        1024,
+        1024
+      ],
+      "normalHeightCorrelation": [
+        0.8624175155267759,
+        0.8491663672222758
+      ],
+      "roughnessRange": [
+        195,
+        255
+      ],
+      "heightRange": [
+        3,
+        252
+      ]
+    },
+    "rocky_terrain": {
+      "size": [
+        1024,
+        1024
+      ],
+      "normalHeightCorrelation": [
+        0.7877340164021459,
+        0.7824142087263002
+      ],
+      "roughnessRange": [
+        210,
+        253
+      ],
+      "heightRange": [
+        23,
+        248
+      ]
+    }
+  }
+}

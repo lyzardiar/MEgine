@@ -1033,8 +1033,10 @@ impl UiRenderer {
                     material_texture_layout_entry(1),
                     material_texture_layout_entry(2),
                     material_texture_layout_entry(3),
+                    material_texture_layout_entry(4),
+                    material_texture_layout_entry(5),
                     wgpu::BindGroupLayoutEntry {
-                        binding: 4,
+                        binding: 6,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
@@ -1936,6 +1938,14 @@ fn create_ui_material_texture_set(
             },
             wgpu::BindGroupEntry {
                 binding: 4,
+                resource: wgpu::BindingResource::TextureView(views[4]),
+            },
+            wgpu::BindGroupEntry {
+                binding: 5,
+                resource: wgpu::BindingResource::TextureView(views[5]),
+            },
+            wgpu::BindGroupEntry {
+                binding: 6,
                 resource: wgpu::BindingResource::Sampler(sampler),
             },
         ],
@@ -2165,7 +2175,9 @@ struct UiMaterialInstance {
 @group(2) @binding(1) var mengine_custom_texture_1: texture_2d<f32>;
 @group(2) @binding(2) var mengine_custom_texture_2: texture_2d<f32>;
 @group(2) @binding(3) var mengine_custom_texture_3: texture_2d<f32>;
-@group(2) @binding(4) var ui_material_sampler: sampler;
+@group(2) @binding(4) var mengine_custom_texture_4: texture_2d<f32>;
+@group(2) @binding(5) var mengine_custom_texture_5: texture_2d<f32>;
+@group(2) @binding(6) var ui_material_sampler: sampler;
 
 struct VsIn {
     @builtin(instance_index) instance_index: u32,
@@ -2688,9 +2700,10 @@ mod tests {
         child.key.material = "Assets/Materials/HeadlessUi.mmat".into();
         child.render_material = Some(Arc::new(UiRenderMaterial {
             shader: Arc::from(
-                r#"fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+                r#"/* MENGINE_PARAMETERS {"textures":[{"name":"a","type":"data"},{"name":"b","type":"data"},{"name":"c","type":"data"},{"name":"d","type":"data"},{"name":"e","type":"data"},{"name":"f","type":"data"}]} */
+                fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
                     let stream = clamp(input.uv2.x + abs(input.normal.z), 0.0, 1.0);
-                    return mengine_ui_main_texture(input.uv0) * input.vertex_color
+                    return mengine_ui_main_texture(input.uv0) * mengine_texture_f(input.uv0) * input.vertex_color
                         * mengine_ui_material_color(input.instance_index)
                         * vec4<f32>(stream, stream, stream, 1.0);
                 }"#,

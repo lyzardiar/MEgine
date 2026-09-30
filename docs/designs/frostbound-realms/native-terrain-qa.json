@@ -13,8 +13,8 @@
       "id": 8,
       "kind": "hero",
       "team": 0,
-      "x": -8.903483076971794,
-      "z": 9.122790098630498,
+      "x": -8.50815358490676,
+      "z": 8.907814303007823,
       "hp": 700,
       "maxHp": 700,
       "damage": 38,
@@ -27,12 +27,12 @@
       },
       "waypoints": [],
       "path": [],
-      "pathAt": 30,
+      "pathAt": 31,
       "built": 1,
       "queue": [],
       "level": 1,
       "xp": 0,
-      "mana": 159.79999999999944,
+      "mana": 160,
       "spell": [
         0,
         0,
@@ -56,19 +56,20 @@
       "dest": [
         -5,
         7.000119270840074
-      ]
+      ],
+      "yaw": 2.068858447376569
     },
     "profile": {
-      "intervals": 130,
-      "averagePresentIntervalMs": 109.39307692326032,
-      "p95PresentIntervalMs": 201.5,
-      "presentedFps": 9.141346309341897,
-      "averageRequestMs": 119.83816794129729,
-      "averageRenderMs": 28.189154198473293,
-      "averageCommandMs": 76.71130229007636,
-      "averageUploadMs": 1.4801526743037101,
-      "averageSimulationMs": 10.967931538461528,
-      "averageSimulationRequestMs": 81.96538461492612
+      "intervals": 110,
+      "averagePresentIntervalMs": 150.72454545389522,
+      "p95PresentIntervalMs": 252.29999995231628,
+      "presentedFps": 6.634619444288772,
+      "averageRequestMs": 153.74504504010483,
+      "averageRenderMs": 52.519319819819835,
+      "averageCommandMs": 98.71235765765765,
+      "averageUploadMs": 1.4981981977686152,
+      "averageSimulationMs": 12.306351818181826,
+      "averageSimulationRequestMs": 122.156363641132
     }
   }
 }
