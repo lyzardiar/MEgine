@@ -1,0 +1,1 @@
+{"version": 8, "name": "Anatomical skeleton body", "shader": "pbr", "base_color": [0.7, 0.66, 0.55, 1], "base_color_texture": "Assets/Textures/SkeletonBody_ao.png", "metallic": 0, "roughness": 0.82, "double_sided": false}

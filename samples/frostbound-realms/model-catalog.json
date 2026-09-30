@@ -3642,5 +3642,25 @@
     ],
     "realistic": true,
     "attackEvent": 0.6363636363636364
+  },
+  "SkeletonBody": {
+    "material": "Assets/Materials/SkeletonBody.mmat",
+    "parts": [
+      {
+        "name": "SkeletonBody",
+        "mesh": "Assets/Models/SkeletonBody.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.4368498013249345,
+      3.2,
+      0.4745471798878764
+    ],
+    "realistic": true
   }
 }

@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "sources": 1,
+  "generated": 3,
+  "triangles": 15581,
+  "bones": 237,
+  "weightedBones": 116,
+  "nativeBounds": {
+    "max": [
+      0.718424916267395,
+      3.200000047683716,
+      0.20413072407245636
+    ],
+    "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\SkeletonBody.glb",
+    "min": [
+      -0.718424916267395,
+      -3.1376998776977416e-09,
+      -0.2704164385795593
+    ],
+    "vertices": 21925
+  },
+  "occlusionSamples": {
+    "min": 0,
+    "max": 255,
+    "std": 86.80089220396444
+  },
+  "scope": "Static rigged anatomical body; no gameplay unit replacement or animation acceptance"
+}

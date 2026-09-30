@@ -1,0 +1,66 @@
+{
+  "file": "docs/designs/frostbound-realms/anatomical-skeleton-views.png",
+  "sha256": "ea09981e4e655115f39add8a8c0ca347373ac9cf38ca3adf705e153bd60f8d74",
+  "generator": "scripts/render-frost-unit-icons.mjs --skeleton-body-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Front",
+      "mesh": "Assets/Models/SkeletonBody.glb",
+      "material": "Assets/Materials/SkeletonBody.mmat",
+      "bounds": {
+        "max": [
+          0.718424916267395,
+          3.200000047683716,
+          0.20413072407245636
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\SkeletonBody.glb",
+        "min": [
+          -0.718424916267395,
+          -3.1376998776977416e-9,
+          -0.2704164385795593
+        ],
+        "vertices": 21925
+      }
+    },
+    {
+      "name": "Side",
+      "mesh": "Assets/Models/SkeletonBody.glb",
+      "material": "Assets/Materials/SkeletonBody.mmat",
+      "bounds": {
+        "max": [
+          0.718424916267395,
+          3.200000047683716,
+          0.20413072407245636
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\SkeletonBody.glb",
+        "min": [
+          -0.718424916267395,
+          -3.1376998776977416e-9,
+          -0.2704164385795593
+        ],
+        "vertices": 21925
+      }
+    },
+    {
+      "name": "Back",
+      "mesh": "Assets/Models/SkeletonBody.glb",
+      "material": "Assets/Materials/SkeletonBody.mmat",
+      "bounds": {
+        "max": [
+          0.718424916267395,
+          3.200000047683716,
+          0.20413072407245636
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\SkeletonBody.glb",
+        "min": [
+          -0.718424916267395,
+          -3.1376998776977416e-9,
+          -0.2704164385795593
+        ],
+        "vertices": 21925
+      }
+    }
+  ]
+}

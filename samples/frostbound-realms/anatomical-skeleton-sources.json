@@ -1,0 +1,40 @@
+{
+  "author": "Gord Goodwin",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "page": "https://opengameart.org/content/skeleton-with-rig",
+  "generator": "scripts/import-frost-anatomical-skeleton.py",
+  "status": "Rigged anatomical body; gameplay animations and weapon fitting are not implemented",
+  "sources": [
+    {
+      "file": "SourceAssets/anatomical-skeleton/fgc_skeleton.blend",
+      "url": "https://opengameart.org/sites/default/files/fgc_skeleton.blend",
+      "sha256": "0ba13c9f0c2af50aafb317f450a92083f7d08ece67c3ecc9a2c64eac13257926"
+    }
+  ],
+  "model": {
+    "key": "SkeletonBody",
+    "triangles": 15581,
+    "bones": 237,
+    "size": [
+      1.4368498013249345,
+      3.2,
+      0.4745471798878764
+    ],
+    "animations": []
+  },
+  "generated": [
+    {
+      "file": "Assets/Models/SkeletonBody.glb",
+      "sha256": "26d3543bfaa16e5639eb369963a471134aa00e307601a5f41d3fdc3c787bb8dc"
+    },
+    {
+      "file": "Assets/Textures/SkeletonBody_ao.png",
+      "sha256": "58fdf8809fb0e46ac3a03c0167c17fad7f57626fcff827cd2e34f62179ded7ff"
+    },
+    {
+      "file": "Assets/Materials/SkeletonBody.mmat",
+      "sha256": "ac5a23759b739ce1142a0c56ffda06fbcc6b1a6a5a6cd6b78d56e6aae8ae3644"
+    }
+  ]
+}

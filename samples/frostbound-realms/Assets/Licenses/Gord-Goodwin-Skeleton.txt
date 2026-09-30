@@ -1,0 +1,11 @@
+Skeleton with rig / SkeletonBody
+Author: Gord Goodwin
+https://opengameart.org/content/skeleton-with-rig
+Creative Commons Zero 1.0 Universal (CC0-1.0)
+https://creativecommons.org/publicdomain/zero/1.0/
+Original file: SourceAssets/anatomical-skeleton/fgc_skeleton.blend
+MEngine adaptations: normalized scale and transforms, base mesh triangulation,
+four-bone skinning, occlusion UV unwrap/bake and GLB export.
+Derived files: Assets/Models/SkeletonBody.glb, Assets/Textures/SkeletonBody_ao.png,
+Assets/Materials/SkeletonBody.mmat. Sources/hashes: anatomical-skeleton-sources.json.
+The original rig is retained in the source. No authored animation clips are supplied.

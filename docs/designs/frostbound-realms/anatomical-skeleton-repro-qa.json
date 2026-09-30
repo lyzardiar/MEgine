@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "scope": "Two Blender imports from the same pinned source; all three derived hashes identical",
+  "generated": [
+    {
+      "file": "Assets/Models/SkeletonBody.glb",
+      "sha256": "26d3543bfaa16e5639eb369963a471134aa00e307601a5f41d3fdc3c787bb8dc"
+    },
+    {
+      "file": "Assets/Textures/SkeletonBody_ao.png",
+      "sha256": "58fdf8809fb0e46ac3a03c0167c17fad7f57626fcff827cd2e34f62179ded7ff"
+    },
+    {
+      "file": "Assets/Materials/SkeletonBody.mmat",
+      "sha256": "ac5a23759b739ce1142a0c56ffda06fbcc6b1a6a5a6cd6b78d56e6aae8ae3644"
+    }
+  ]
+}

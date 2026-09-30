@@ -170,3 +170,5 @@ node scripts/qa-frostbound.mjs
 冬季地表使用多尺度积雪分布和扫描高度混合，包含湿土边缘、石缝残雪及地表纹理平移混合。素材沿用 Poly Haven CC0 扫描资产；实际截图、四后端编译和独立 Player 帧耗时见 [冬季地表](../../docs/designs/frostbound-realms/snow-surface.md)。
 
 地图作者可在第七页单独绘制裸土、积雪或自动冬景，支持三种笔刷尺寸、撤销、地图保存与试玩。当前编辑地图可直接用于多人建房，双方显示和重连保留材质；操作说明与双原生客户端验收见 [地表材质编辑](../../docs/designs/frostbound-realms/surface-editor.md)。
+
+`SkeletonBody` 是 Gord Goodwin 的 CC0 解剖骨架基础资产，保留绑定，带烘焙骨缝贴图。原生三视图和重建记录见 [解剖骨架](../../docs/designs/frostbound-realms/anatomical-skeleton.md)。它尚未接入弩手动作和武器，现有兵种未切换。
