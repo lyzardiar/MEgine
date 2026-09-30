@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "1fd82efd2cef6af27afa8415210cbe77ffa00fd24d60e47578e1c8a3ed7af319",
+  "sha256": "ab458dd856ea0ac9aec3efc78000ea53bfcfab08b3c5a98c4e2e2bfbe1401eb6",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -196,6 +196,25 @@
       }
     },
     {
+      "name": "RealDawnPaladin",
+      "mesh": "Assets/Models/RealDawnPaladin.glb#pose=0:4",
+      "material": "Assets/Materials/RealDawnPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.8134878873825073,
+          3.1363425254821777,
+          0.47818222641944885
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:4",
+        "min": [
+          -0.6668881773948669,
+          -0.004366159439086914,
+          -0.6376053094863892
+        ],
+        "vertices": 2170
+      }
+    },
+    {
       "name": "RealFootman",
       "mesh": "Assets/Models/RealFootman.glb#pose=0:4",
       "material": "Assets/Materials/RealFootman.mmat",
@@ -231,6 +250,25 @@
           -1.300988793373108
         ],
         "vertices": 3883
+      }
+    },
+    {
+      "name": "RealPaladin",
+      "mesh": "Assets/Models/RealPaladin.glb#pose=0:4",
+      "material": "Assets/Materials/RealPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.7733622193336487,
+          3.039130926132202,
+          0.45459553599357605
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:4",
+        "min": [
+          -0.6339937448501587,
+          -0.004150642082095146,
+          -0.6061551570892334
+        ],
+        "vertices": 2273
       }
     },
     {

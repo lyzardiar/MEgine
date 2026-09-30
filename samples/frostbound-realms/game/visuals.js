@@ -7,7 +7,7 @@ var FrostVisual=(()=>{
     {hall:['Ancient of roots','Ancient of boughs','Elder grove'],barracks:'Sentinel grove',farm:'Living shelter',tower:'Thorn watch',altar:'Moon sanctuary',workshop:'Grove workshop'},
     {hall:['Necropolis','Black citadel','Dread fortress'],barracks:'Crypt',farm:'Grave mound',tower:'Soul obelisk',altar:'Altar of shadows',workshop:'Bone foundry'}
   ];
-  const units={knight:'RealKnight',archer:'RealArcher',raider:'Orc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'Skeleton_Mage',bonearcher:'Skeleton_Rogue'};
+  const units={paladin:'RealPaladin',knight:'RealKnight',archer:'RealArcher',raider:'Orc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'Skeleton_Mage',bonearcher:'Skeleton_Rogue'};
   const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'Rogue',neutral:'Warrior',ballista:'RealBallista',catapult:'RealCatapult',trebuchet:'RealTrebuchet',ram:'RealRam',dragon:'Dragon'};
   function work(state,u){
     if(u.kind!=='worker'||!u.order||u.hp<=0||u.stun>0||u.inside)return null;
@@ -40,6 +40,8 @@ var FrostVisual=(()=>{
   function pose(u,asset,walking,time){
     if(!asset.animations?.length)return asset.parts[0].mesh;
     if(asset.workAnimation)return asset.parts[0].mesh+'#pose=0:'+Math.floor(time*12)%asset.animations[0].frames;
+    const cast=asset.animations.findIndex(a=>a.name==='Cast');
+    if(cast>=0&&u.kind==='hero'&&!walking&&!u.stun){const elapsed=Math.min(...Frost.unitType(u).spells.map((s,i)=>u.spell?.[i]>0?s.cooldown-u.spell[i]:Infinity));if(elapsed>=0&&elapsed<.8)return asset.parts[0].mesh+'#pose='+cast+':'+Math.min(asset.animations[cast].frames-1,Math.floor(elapsed/.8*asset.animations[cast].frames));}
     if(asset.attackEvent!==undefined){const clip=walking?1:u.cd>0&&!u.stun?2:0,frame=clip===2?Math.floor(attackPhase(u,asset)*asset.animations[clip].frames):Math.floor(time*12)%asset.animations[clip].frames;return asset.parts[0].mesh+'#pose='+clip+':'+frame;}
     const attack=u.cd>.25&&(u.kind!=='worker'||asset===FrostArt.RealWorker&&!['gather','build','construct','repair'].includes(u.order?.type)),desired=asset===FrostArt.Skeleton_Rogue?(attack?/^2H_Ranged_Shooting$/:walking?/^Walking_A$/:/^Idle$/):asset===FrostArt.Skeleton_Mage?(attack?/^Spellcast_Shoot$/:walking?/^Walking_A$/:/^Idle$/):Frost.types[u.kind].flying?(attack?/Dragon_Attack$/:/Dragon_Flying/):attack?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch|Headbutt/:walking?/^Run$|^Walk$|Fast_Flying/:/^Idle$|Flying_Idle/;
     let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;
@@ -47,6 +49,7 @@ var FrostVisual=(()=>{
   function environment(key,height,yaw,far,width=Infinity){const original=FrostArt[key],card=far&&original.impostor,asset=card?{...original,material:card.material}:original;return {key,asset,mesh:card?card.mesh:asset.lods[far?1:0],scale:Math.min(height/asset.size[1],width/Math.max(asset.size[0],asset.size[2])),yaw:card?0:yaw};}
   function resource(r,zoom=27){const seed=(Math.imul(Math.round(r.x*100),73856093)^Math.imul(Math.round(r.z*100),19349663))>>>0,key=r.kind==='tree'?['RealSpruceA','RealSpruceB','RealSpruceC'][seed%3]:r.kind==='mine'?'RealRock07':'RealFirePit';return environment(key,r.kind==='tree'?4.7+(seed%12)/10:r.kind==='mine'?2.5:.65,seed%628/100,zoom>14,r.kind==='tree'?5:r.kind==='mine'?4.5:1.4);}
   function scenery(i,edge,zoom=27){const tree=edge?i%4!==0:i%5===0,shrub=!tree&&i%3===0,key=tree?['RealSpruceA','RealSpruceB','RealSpruceC'][i%3]:shrub?'RealShrub':'RealMossRock'+(i%6+1);return environment(key,tree?(edge?7+i%4:3.8+i%3*.5):shrub?1.2:edge?2.1+i%3*.4:.35+i%4*.2,i*2.399963,edge||zoom>14,tree?6:edge?4.5:1.7);}
+  function heroPortrait(heroClass=0){const art=Frost.heroes[heroClass].art;return FrostArt[art].realistic?'Assets/Art/unit-portraits.png#'+art:'Assets/Art/hero-portraits.png#hero-'+heroClass;}
   function name(state,u){const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??state.teams[u.team]?.tier??1)-1,0,2)]:value||Frost.unitType(u).label;}
   const projectileColors={fire:[1,.32,.055,1],frost:[.35,.8,1,1],nature:[.35,.85,.24,1],shadow:[.57,.22,.8,1],arcane:[.5,.48,1,1]};
   function projectile(art){
@@ -61,6 +64,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {model,name,pose,heading,resource,scenery,projectile,projectileView};
+  return {model,name,pose,heroPortrait,heading,resource,scenery,projectile,projectileView};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

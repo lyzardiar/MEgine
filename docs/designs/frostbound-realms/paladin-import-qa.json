@@ -1,0 +1,2286 @@
+{
+  "passed": true,
+  "models": {
+    "RealPaladin": {
+      "triangles": 2118,
+      "bones": 102,
+      "nativePoses": 62,
+      "maximumGripGap": 0.04237319469197389,
+      "maximumGreaveGap": null,
+      "weightedCapeVertices": 88,
+      "movingBones": {
+        "Idle": [
+          "arm_L",
+          "arm_R",
+          "chest",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "spine",
+          "spine1"
+        ],
+        "Walk": [
+          "arm_L",
+          "arm_R",
+          "cape1",
+          "cape2",
+          "cape3",
+          "chest",
+          "elbow_L",
+          "elbow_R",
+          "footIK_L",
+          "footIK_R",
+          "foot_L",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "hip",
+          "knee_L",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "prop_backplate",
+          "prop_quiver_B",
+          "prop_seax_back",
+          "quiver_L",
+          "quiver_R",
+          "sheath_01_L",
+          "sheath_01_R",
+          "sheath_02_L",
+          "sheath_02_R",
+          "shoulder_L",
+          "shoulder_R",
+          "spine",
+          "spine1",
+          "thigh_L",
+          "thigh_R"
+        ],
+        "Sword_Attack": [
+          "ammo",
+          "arm_L",
+          "arm_R",
+          "cape1",
+          "cape2",
+          "cape3",
+          "chest",
+          "elbow_L",
+          "elbow_R",
+          "finger_L",
+          "finger_R",
+          "fingertip_L",
+          "fingertip_R",
+          "footIK_L",
+          "foot_L",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "hip",
+          "knee_L",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "neck",
+          "neck_guard",
+          "projectile",
+          "prop_backplate",
+          "prop_quiver_B",
+          "prop_seax_back",
+          "shield",
+          "shield_arm",
+          "shoulder_L",
+          "shoulder_R",
+          "spine",
+          "spine1",
+          "thigh_L",
+          "thigh_R",
+          "weapon_L",
+          "weapon_R",
+          "weapon_bow"
+        ]
+      },
+      "bounds": [
+        {
+          "max": [
+            0.7712785601615906,
+            3.038348436355591,
+            0.45459452271461487
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:0",
+          "min": [
+            -0.633910059928894,
+            -0.004150642082095146,
+            -0.6120967864990234
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7715391516685486,
+            3.038536787033081,
+            0.45459479093551636
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:1",
+          "min": [
+            -0.6339325308799744,
+            -0.004150642082095146,
+            -0.6108152866363525
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7721003293991089,
+            3.03873610496521,
+            0.4545947313308716
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:2",
+          "min": [
+            -0.633953332901001,
+            -0.004150642082095146,
+            -0.6093736886978149
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7727102637290955,
+            3.0389351844787598,
+            0.4545944929122925
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:3",
+          "min": [
+            -0.6339738965034485,
+            -0.004150642082095146,
+            -0.6078070402145386
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7733622193336487,
+            3.039130926132202,
+            0.45459553599357605
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:4",
+          "min": [
+            -0.6339937448501587,
+            -0.004150642082095146,
+            -0.6061551570892334
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7740439772605896,
+            3.0393128395080566,
+            0.4545949399471283
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:5",
+          "min": [
+            -0.6340126991271973,
+            -0.004150642082095146,
+            -0.6046410799026489
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7747474908828735,
+            3.039478302001953,
+            0.45459529757499695
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:6",
+          "min": [
+            -0.6340312361717224,
+            -0.004150642082095146,
+            -0.6032286882400513
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7754616737365723,
+            3.0396173000335693,
+            0.45459580421447754
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:7",
+          "min": [
+            -0.6340494155883789,
+            -0.004150642082095146,
+            -0.6019045114517212
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7761739492416382,
+            3.039738178253174,
+            0.4545951783657074
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:8",
+          "min": [
+            -0.6340662240982056,
+            -0.004150642082095146,
+            -0.6006983518600464
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7768739461898804,
+            3.0398337841033936,
+            0.4545954167842865
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:9",
+          "min": [
+            -0.6340822577476501,
+            -0.004150642082095146,
+            -0.5996370911598206
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7775518894195557,
+            3.039907217025757,
+            0.45459479093551636
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:10",
+          "min": [
+            -0.6340979337692261,
+            -0.004150642082095146,
+            -0.5987383127212524
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7781975269317627,
+            3.039961814880371,
+            0.45459574460983276
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:11",
+          "min": [
+            -0.6341127753257751,
+            -0.004150642082095146,
+            -0.598013162612915
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7787990570068359,
+            3.0400004386901855,
+            0.4545946717262268
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:12",
+          "min": [
+            -0.6341256499290466,
+            -0.004150642082095146,
+            -0.5974643230438232
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7793503403663635,
+            3.040026903152466,
+            0.45459458231925964
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:13",
+          "min": [
+            -0.634138286113739,
+            -0.004150642082095146,
+            -0.5970869064331055
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7798470258712769,
+            3.0400407314300537,
+            0.4545954763889313
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:14",
+          "min": [
+            -0.6341502666473389,
+            -0.004150642082095146,
+            -0.5968735218048096
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7802773714065552,
+            3.040046453475952,
+            0.45459428429603577
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:15",
+          "min": [
+            -0.6341603994369507,
+            -0.004150642082095146,
+            -0.5968061685562134
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7806436419487,
+            3.040041446685791,
+            0.4545956552028656
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:16",
+          "min": [
+            -0.6341695785522461,
+            -0.004150642082095146,
+            -0.5968738198280334
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7809378504753113,
+            3.0400266647338867,
+            0.45459526777267456
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:17",
+          "min": [
+            -0.6341769099235535,
+            -0.004150642082095146,
+            -0.5970873832702637
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7811599373817444,
+            3.040001153945923,
+            0.454595685005188
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:18",
+          "min": [
+            -0.6341833472251892,
+            -0.004150642082095146,
+            -0.5974639058113098
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7813088893890381,
+            3.039961814880371,
+            0.45459505915641785
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:19",
+          "min": [
+            -0.6341879367828369,
+            -0.004150642082095146,
+            -0.5980132818222046
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7813827991485596,
+            3.039907693862915,
+            0.4545951187610626
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:20",
+          "min": [
+            -0.6341904997825623,
+            -0.004150642082095146,
+            -0.5987382531166077
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7813552618026733,
+            3.039832830429077,
+            0.454595148563385
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:21",
+          "min": [
+            -0.6341890692710876,
+            -0.004150642082095146,
+            -0.599637508392334
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7810578942298889,
+            3.039738655090332,
+            0.4545949101448059
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:22",
+          "min": [
+            -0.6341792941093445,
+            -0.004150642082095146,
+            -0.6006990671157837
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7804701328277588,
+            3.039618968963623,
+            0.454595148563385
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:23",
+          "min": [
+            -0.6341638565063477,
+            -0.004150642082095146,
+            -0.6019049882888794
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7796061635017395,
+            3.0394771099090576,
+            0.4545951187610626
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:24",
+          "min": [
+            -0.6341407895088196,
+            -0.004150642082095146,
+            -0.6032288074493408
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7785028219223022,
+            3.0393130779266357,
+            0.45459458231925964
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:25",
+          "min": [
+            -0.6341131925582886,
+            -0.004150642082095146,
+            -0.6046412587165833
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7772170901298523,
+            3.039130926132202,
+            0.4545956254005432
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:26",
+          "min": [
+            -0.6340802907943726,
+            -0.004150642082095146,
+            -0.6061553955078125
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7758181691169739,
+            3.038935422897339,
+            0.4545953869819641
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:27",
+          "min": [
+            -0.6340433955192566,
+            -0.004150642082095146,
+            -0.6078068017959595
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7743943929672241,
+            3.03873610496521,
+            0.4545955955982208
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:28",
+          "min": [
+            -0.6340026259422302,
+            -0.004150642082095146,
+            -0.6093735694885254
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7730318307876587,
+            3.038536787033081,
+            0.4545949399471283
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:29",
+          "min": [
+            -0.6339576244354248,
+            -0.004150642082095146,
+            -0.6108156442642212
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6018098592758179,
+            3.0459907054901123,
+            0.5647920370101929
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:0",
+          "min": [
+            -0.6331018805503845,
+            -0.015036270022392273,
+            -0.8028048276901245
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6060901880264282,
+            3.056896924972534,
+            0.6383652687072754
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:1",
+          "min": [
+            -0.6357721090316772,
+            -0.040675386786460876,
+            -0.8077161312103271
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6127777099609375,
+            3.065570592880249,
+            0.7180404663085938
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:2",
+          "min": [
+            -0.6408325433731079,
+            -0.0012302777031436563,
+            -0.8327131271362305
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6195145845413208,
+            3.0608279705047607,
+            0.826038122177124
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:3",
+          "min": [
+            -0.6291233897209167,
+            0.0003758120583370328,
+            -0.8551138639450073
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6267179250717163,
+            3.0233154296875,
+            0.9499314427375793
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:4",
+          "min": [
+            -0.6074264645576477,
+            -0.007979799062013626,
+            -0.8637789487838745
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6353700160980225,
+            3.000317335128784,
+            1.02039635181427
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:5",
+          "min": [
+            -0.5747902393341064,
+            -0.0020831783767789602,
+            -0.8797065019607544
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6500163674354553,
+            3.005624771118164,
+            1.0549967288970947
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:6",
+          "min": [
+            -0.5414735674858093,
+            -0.03609112650156021,
+            -0.9312507510185242
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6763321757316589,
+            3.018718719482422,
+            1.0595356225967407
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:7",
+          "min": [
+            -0.5113732814788818,
+            -0.07997000217437744,
+            -1.077388882637024
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7106052041053772,
+            3.0283379554748535,
+            1.033589482307434
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:8",
+          "min": [
+            -0.49734413623809814,
+            0.003125927411019802,
+            -1.0992685556411743
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7414913773536682,
+            3.038022041320801,
+            0.9642496109008789
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:9",
+          "min": [
+            -0.4884965717792511,
+            -0.0008124262094497681,
+            -0.9919135570526123
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7587964534759521,
+            3.0459907054901123,
+            0.87966388463974
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:10",
+          "min": [
+            -0.4869644343852997,
+            0.0014761623460799456,
+            -0.8060649633407593
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7631703019142151,
+            3.056898355484009,
+            0.831209123134613
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:11",
+          "min": [
+            -0.4804548919200897,
+            -0.035384535789489746,
+            -0.7875726222991943
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7783156037330627,
+            3.0655710697174072,
+            0.7704517841339111
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:12",
+          "min": [
+            -0.47752833366394043,
+            -0.025197580456733704,
+            -0.7663465142250061
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7992385625839233,
+            3.060826301574707,
+            0.6735117435455322
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:13",
+          "min": [
+            -0.4914349615573883,
+            -0.0014291444094851613,
+            -0.7850099802017212
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.8136367201805115,
+            3.023314952850342,
+            0.6516492366790771
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:14",
+          "min": [
+            -0.5290015935897827,
+            -0.011294662952423096,
+            -0.8220317959785461
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.8039788007736206,
+            3.0003175735473633,
+            0.7860201597213745
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:15",
+          "min": [
+            -0.5616039037704468,
+            0.0004993630573153496,
+            -0.8479567766189575
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7664230465888977,
+            3.0056259632110596,
+            0.8140258193016052
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:16",
+          "min": [
+            -0.5636399984359741,
+            -0.081027090549469,
+            -1.0169439315795898
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7163463234901428,
+            3.018719434738159,
+            0.7443994283676147
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:17",
+          "min": [
+            -0.5431983470916748,
+            -0.019157662987709045,
+            -1.0949077606201172
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6664091348648071,
+            3.02833890914917,
+            0.6221113204956055
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:18",
+          "min": [
+            -0.5641667246818542,
+            0.011110622435808182,
+            -1.07612943649292
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.625785231590271,
+            3.0380215644836426,
+            0.5073896646499634
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:19",
+          "min": [
+            -0.5999579429626465,
+            -0.0012787263840436935,
+            -0.820846676826477
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.5583388209342957,
+            2.8919217586517334,
+            0.8031655550003052
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:0",
+          "min": [
+            -0.8585758209228516,
+            -0.016783200204372406,
+            -0.9391425848007202
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.46608296036720276,
+            2.905686616897583,
+            0.743436336517334
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:1",
+          "min": [
+            -1.009381890296936,
+            -0.016925737261772156,
+            -0.93978351354599
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.38548558950424194,
+            2.9007019996643066,
+            0.7328565716743469
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:2",
+          "min": [
+            -1.2014262676239014,
+            -0.016790371388196945,
+            -1.2660343647003174
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.47163593769073486,
+            2.9105849266052246,
+            0.6780372262001038
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:3",
+          "min": [
+            -0.7916131019592285,
+            -0.016977865248918533,
+            -1.4480159282684326
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.6775219440460205,
+            2.884631633758545,
+            0.8779799938201904
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:4",
+          "min": [
+            -0.7823572158813477,
+            -0.016801025718450546,
+            -0.9438603520393372
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.8653265237808228,
+            2.7867045402526855,
+            1.2452019453048706
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:5",
+          "min": [
+            -0.7090877294540405,
+            -0.018834326416254044,
+            -0.9253536462783813
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.8311957120895386,
+            2.6956892013549805,
+            2.3315036296844482
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:6",
+          "min": [
+            -0.6184483766555786,
+            -0.016787759959697723,
+            -0.9053529500961304
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.8417407274246216,
+            2.603504180908203,
+            2.6008710861206055
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:7",
+          "min": [
+            -0.6816375851631165,
+            -0.016853397712111473,
+            -0.9038572907447815
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.8438826203346252,
+            2.6052536964416504,
+            2.493539810180664
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:8",
+          "min": [
+            -0.6184475421905518,
+            -0.016794562339782715,
+            -0.904026448726654
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.8328791856765747,
+            2.6521646976470947,
+            2.0524868965148926
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:9",
+          "min": [
+            -0.7648351192474365,
+            -0.017357580363750458,
+            -0.9036532640457153
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.7842772006988525,
+            2.7322592735290527,
+            1.5938172340393066
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:10",
+          "min": [
+            -0.7169408798217773,
+            -0.016798052936792374,
+            -0.9042236804962158
+          ],
+          "vertices": 2273
+        },
+        {
+          "max": [
+            0.683499813079834,
+            2.8227665424346924,
+            1.0943766832351685
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:11",
+          "min": [
+            -0.6173481941223145,
+            -0.017719261348247528,
+            -0.9176520109176636
+          ],
+          "vertices": 2273
+        }
+      ]
+    },
+    "RealDawnPaladin": {
+      "triangles": 1882,
+      "bones": 102,
+      "nativePoses": 82,
+      "maximumGripGap": 0.04455721345053585,
+      "maximumGreaveGap": 0.009028147293976625,
+      "weightedCapeVertices": 89,
+      "movingBones": {
+        "Idle": [
+          "arm_L",
+          "arm_R",
+          "chest",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "spine",
+          "spine1"
+        ],
+        "Walk": [
+          "arm_L",
+          "arm_R",
+          "cape1",
+          "cape2",
+          "cape3",
+          "chest",
+          "elbow_L",
+          "elbow_R",
+          "footIK_L",
+          "footIK_R",
+          "foot_L",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "hip",
+          "knee_L",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "prop_backplate",
+          "prop_quiver_B",
+          "prop_seax_back",
+          "quiver_L",
+          "quiver_R",
+          "sheath_01_L",
+          "sheath_01_R",
+          "sheath_02_L",
+          "sheath_02_R",
+          "shoulder_L",
+          "shoulder_R",
+          "spine",
+          "spine1",
+          "thigh_L",
+          "thigh_R"
+        ],
+        "Sword_Attack": [
+          "ammo",
+          "arm_L",
+          "arm_R",
+          "cape1",
+          "cape2",
+          "cape3",
+          "chest",
+          "elbow_L",
+          "elbow_R",
+          "finger_L",
+          "finger_R",
+          "fingertip_L",
+          "fingertip_R",
+          "footIK_L",
+          "foot_L",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "hip",
+          "knee_L",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "neck",
+          "neck_guard",
+          "projectile",
+          "prop_backplate",
+          "prop_quiver_B",
+          "prop_seax_back",
+          "shield",
+          "shield_arm",
+          "shoulder_L",
+          "shoulder_R",
+          "spine",
+          "spine1",
+          "thigh_L",
+          "thigh_R",
+          "weapon_L",
+          "weapon_R",
+          "weapon_bow"
+        ],
+        "Cast": [
+          "arm_L",
+          "arm_R",
+          "cape1",
+          "cape2",
+          "cape3",
+          "chest",
+          "elbow_L",
+          "elbow_R",
+          "footIK_R",
+          "foot_L",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "hip",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "neck",
+          "sheath_01_L",
+          "sheath_01_R",
+          "sheath_02_L",
+          "sheath_02_R",
+          "shoulder_L",
+          "shoulder_R",
+          "spine",
+          "spine1",
+          "thigh_L",
+          "thigh_R"
+        ]
+      },
+      "bounds": [
+        {
+          "max": [
+            0.8112961053848267,
+            3.1356520652770996,
+            0.4781811833381653
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:0",
+          "min": [
+            -0.6668000221252441,
+            -0.004366159439086914,
+            -0.643855094909668
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8115701079368591,
+            3.135819673538208,
+            0.4781813621520996
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:1",
+          "min": [
+            -0.6668236255645752,
+            -0.004366159439086914,
+            -0.6425071954727173
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8121606111526489,
+            3.1359970569610596,
+            0.478181391954422
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:2",
+          "min": [
+            -0.6668462753295898,
+            -0.004366159439086914,
+            -0.6409907937049866
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8128020763397217,
+            3.1361725330352783,
+            0.4781810939311981
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:3",
+          "min": [
+            -0.6668672561645508,
+            -0.004366159439086914,
+            -0.6393428444862366
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8134878873825073,
+            3.1363425254821777,
+            0.47818222641944885
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:4",
+          "min": [
+            -0.6668881773948669,
+            -0.004366159439086914,
+            -0.6376053094863892
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8142050504684448,
+            3.1364986896514893,
+            0.4781816005706787
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:5",
+          "min": [
+            -0.6669082641601562,
+            -0.004366159439086914,
+            -0.6360125541687012
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8149449825286865,
+            3.1366400718688965,
+            0.47818198800086975
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:6",
+          "min": [
+            -0.6669278144836426,
+            -0.004366159439086914,
+            -0.6345269083976746
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8156962394714355,
+            3.13675594329834,
+            0.47818249464035034
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:7",
+          "min": [
+            -0.6669465899467468,
+            -0.004366159439086914,
+            -0.6331340074539185
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8164455890655518,
+            3.1368541717529297,
+            0.47818177938461304
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:8",
+          "min": [
+            -0.6669643521308899,
+            -0.004366159439086914,
+            -0.631865382194519
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8171818256378174,
+            3.136930465698242,
+            0.4781821072101593
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:9",
+          "min": [
+            -0.6669814586639404,
+            -0.004366159439086914,
+            -0.630748987197876
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8178949356079102,
+            3.136986494064331,
+            0.47818148136138916
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:10",
+          "min": [
+            -0.6669979691505432,
+            -0.004366159439086914,
+            -0.6298036575317383
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8185741901397705,
+            3.137028217315674,
+            0.47818249464035034
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:11",
+          "min": [
+            -0.6670132875442505,
+            -0.004366159439086914,
+            -0.6290408372879028
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.819206953048706,
+            3.1370551586151123,
+            0.47818130254745483
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:12",
+          "min": [
+            -0.6670268177986145,
+            -0.004366159439086914,
+            -0.6284635066986084
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8197866678237915,
+            3.137073516845703,
+            0.4781811833381653
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:13",
+          "min": [
+            -0.6670404076576233,
+            -0.004366159439086914,
+            -0.6280664801597595
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8203091025352478,
+            3.13708233833313,
+            0.4781821668148041
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:14",
+          "min": [
+            -0.6670528650283813,
+            -0.004366159439086914,
+            -0.6278420686721802
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8207617402076721,
+            3.1370866298675537,
+            0.47818097472190857
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:15",
+          "min": [
+            -0.6670633554458618,
+            -0.004366159439086914,
+            -0.627771258354187
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8211472034454346,
+            3.137082815170288,
+            0.47818228602409363
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:16",
+          "min": [
+            -0.6670730710029602,
+            -0.004366159439086914,
+            -0.6278423070907593
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8214564323425293,
+            3.137073516845703,
+            0.478181928396225
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:17",
+          "min": [
+            -0.6670805811882019,
+            -0.004366159439086914,
+            -0.6280669569969177
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8216902017593384,
+            3.1370551586151123,
+            0.4781824052333832
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:18",
+          "min": [
+            -0.6670873761177063,
+            -0.004366159439086914,
+            -0.628463089466095
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8218468427658081,
+            3.1370279788970947,
+            0.4781818091869354
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:19",
+          "min": [
+            -0.6670925617218018,
+            -0.004366159439086914,
+            -0.6290409564971924
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8219245672225952,
+            3.1369872093200684,
+            0.4781818091869354
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:20",
+          "min": [
+            -0.6670956015586853,
+            -0.004366159439086914,
+            -0.6298035383224487
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8218954801559448,
+            3.136929512023926,
+            0.4781816899776459
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:21",
+          "min": [
+            -0.6670936942100525,
+            -0.004366159439086914,
+            -0.6307494640350342
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8215827941894531,
+            3.136854410171509,
+            0.4781816005706787
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:22",
+          "min": [
+            -0.6670836806297302,
+            -0.004366159439086914,
+            -0.6318660974502563
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8209646940231323,
+            3.136756658554077,
+            0.47818177938461304
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:23",
+          "min": [
+            -0.667067289352417,
+            -0.004366159439086914,
+            -0.6331345438957214
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8200558423995972,
+            3.13663911819458,
+            0.4781818091869354
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:24",
+          "min": [
+            -0.6670430302619934,
+            -0.004366159439086914,
+            -0.6345269680023193
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8188952803611755,
+            3.1364994049072266,
+            0.47818121314048767
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:25",
+          "min": [
+            -0.6670141816139221,
+            -0.004366159439086914,
+            -0.6360127925872803
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8175426721572876,
+            3.1363422870635986,
+            0.478182315826416
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:26",
+          "min": [
+            -0.6669794917106628,
+            -0.004366159439086914,
+            -0.6376055479049683
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8160712122917175,
+            3.1361725330352783,
+            0.4781820476055145
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:27",
+          "min": [
+            -0.6669405698776245,
+            -0.004366159439086914,
+            -0.6393426656723022
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8145735263824463,
+            3.1359972953796387,
+            0.47818228602409363
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:28",
+          "min": [
+            -0.666897714138031,
+            -0.004366159439086914,
+            -0.640990674495697
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.813140332698822,
+            3.135820150375366,
+            0.4781816899776459
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:29",
+          "min": [
+            -0.6668497920036316,
+            -0.004366159439086914,
+            -0.6425074934959412
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.6330347061157227,
+            3.1436924934387207,
+            0.5941094160079956
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:0",
+          "min": [
+            -0.6659501791000366,
+            -0.015816450119018555,
+            -0.8444581627845764
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.6375371217727661,
+            3.1549768447875977,
+            0.6715003252029419
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:1",
+          "min": [
+            -0.6687589287757874,
+            -0.04278594255447388,
+            -0.8496242761611938
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.6445714831352234,
+            3.163942337036133,
+            0.7553101778030396
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:2",
+          "min": [
+            -0.6740822196006775,
+            -0.001297739683650434,
+            -0.8759182691574097
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.6516580581665039,
+            3.158855438232422,
+            0.8689107894897461
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:3",
+          "min": [
+            -0.661765456199646,
+            0.0003916668938472867,
+            -0.8994811773300171
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.6592350006103516,
+            3.119422197341919,
+            0.9992318749427795
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:4",
+          "min": [
+            -0.6389423608779907,
+            -0.008397640660405159,
+            -0.9085959196090698
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.668336033821106,
+            3.0953643321990967,
+            1.0733531713485718
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:5",
+          "min": [
+            -0.6046128273010254,
+            -0.0021941529121249914,
+            -0.9253498911857605
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.6837422847747803,
+            3.101029634475708,
+            1.1097476482391357
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:6",
+          "min": [
+            -0.5695675611495972,
+            -0.03796587139368057,
+            -0.9795695543289185
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.7114232778549194,
+            3.1147940158843994,
+            1.1145230531692505
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:7",
+          "min": [
+            -0.5379050970077515,
+            -0.08412328362464905,
+            -1.1332911252975464
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.7474747896194458,
+            3.1250035762786865,
+            1.0872299671173096
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:8",
+          "min": [
+            -0.5231482982635498,
+            0.003288084641098976,
+            -1.1563067436218262
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.779963493347168,
+            3.1352860927581787,
+            1.0142918825149536
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:9",
+          "min": [
+            -0.5138413310050964,
+            -0.0008546076714992523,
+            -1.0433820486068726
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.7981663346290588,
+            3.143692970275879,
+            0.9253174662590027
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:10",
+          "min": [
+            -0.512230634689331,
+            0.0015527214854955673,
+            -0.847887396812439
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8027672171592712,
+            3.154978036880493,
+            0.8743488788604736
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:11",
+          "min": [
+            -0.5053831934928894,
+            -0.037229299545288086,
+            -0.8284357786178589
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8186983466148376,
+            3.163942813873291,
+            0.8104394674301147
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:12",
+          "min": [
+            -0.5023045539855957,
+            -0.02651338279247284,
+            -0.8061081171035767
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8407068848609924,
+            3.1588547229766846,
+            0.7084711790084839
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:13",
+          "min": [
+            -0.5169330835342407,
+            -0.0015033248346298933,
+            -0.8257399797439575
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8558521270751953,
+            3.1194231510162354,
+            0.6854604482650757
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:14",
+          "min": [
+            -0.5564484596252441,
+            -0.011880713514983654,
+            -0.8646825551986694
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8456929326057434,
+            3.095364570617676,
+            0.8268035650253296
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:15",
+          "min": [
+            -0.5907435417175293,
+            0.0005252417176961899,
+            -0.8919527530670166
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.806188702583313,
+            3.1010308265686035,
+            0.8562607169151306
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:16",
+          "min": [
+            -0.592885434627533,
+            -0.08523119986057281,
+            -1.0697077512741089
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.753513753414154,
+            3.1147944927215576,
+            0.7830221652984619
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:17",
+          "min": [
+            -0.5713819861412048,
+            -0.02015170454978943,
+            -1.151716709136963
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.7009855508804321,
+            3.125004291534424,
+            0.6543904542922974
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:18",
+          "min": [
+            -0.593438446521759,
+            0.01168568804860115,
+            -1.1319639682769775
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.658254086971283,
+            3.1352856159210205,
+            0.533728837966919
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:19",
+          "min": [
+            -0.6310863494873047,
+            -0.0013474514707922935,
+            -0.8634361028671265
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.5873081088066101,
+            2.981605291366577,
+            0.8448375463485718
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:0",
+          "min": [
+            -0.9031256437301636,
+            -0.017657799646258354,
+            -0.9543504118919373
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.49026551842689514,
+            2.995845317840576,
+            0.7820093631744385
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:1",
+          "min": [
+            -1.0617551803588867,
+            -0.01780797354876995,
+            -0.961773693561554
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.40548640489578247,
+            2.9903829097747803,
+            0.7708807587623596
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:2",
+          "min": [
+            -1.263765811920166,
+            -0.01766706258058548,
+            -1.3317234516143799
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.49610668420791626,
+            3.0008363723754883,
+            0.71321702003479
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:3",
+          "min": [
+            -0.8326848745346069,
+            -0.0178629569709301,
+            -1.5231480598449707
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.7126749753952026,
+            3.0291175842285156,
+            0.9235337972640991
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:4",
+          "min": [
+            -0.8229483366012573,
+            -0.017676761373877525,
+            -0.9686428308486938
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9102238416671753,
+            2.8695812225341797,
+            1.3098219633102417
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:5",
+          "min": [
+            -0.745873212814331,
+            -0.019814886152744293,
+            -0.953737199306488
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8743221759796143,
+            2.773881196975708,
+            2.4524857997894287
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:6",
+          "min": [
+            -0.6505359411239624,
+            -0.01766250655055046,
+            -0.9523293972015381
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8854142427444458,
+            2.674484968185425,
+            2.7358314990997314
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:7",
+          "min": [
+            -0.717004120349884,
+            -0.017730005085468292,
+            -0.9511853456497192
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.887667179107666,
+            2.676286458969116,
+            2.6229305267333984
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:8",
+          "min": [
+            -0.6505352854728699,
+            -0.017668163403868675,
+            -0.9518997669219971
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8760928511619568,
+            2.726348400115967,
+            2.158987283706665
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:9",
+          "min": [
+            -0.8045181632041931,
+            -0.018260996788740158,
+            -0.9510560631752014
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8249691724777222,
+            2.811793327331543,
+            1.6765215396881104
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:10",
+          "min": [
+            -0.7541383504867554,
+            -0.0176729466766119,
+            -0.9511412382125854
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.7189629673957825,
+            2.908177137374878,
+            1.151171088218689
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:11",
+          "min": [
+            -0.6493790149688721,
+            -0.018642008304595947,
+            -0.9516786336898804
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8616563081741333,
+            2.9816055297851562,
+            0.8219926357269287
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:0",
+          "min": [
+            -0.6781671047210693,
+            -0.024900831282138824,
+            -0.7415790557861328
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9089388251304626,
+            3.0173747539520264,
+            0.8281194567680359
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:1",
+          "min": [
+            -0.7059892416000366,
+            -0.024878110736608505,
+            -0.7415909767150879
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9535336494445801,
+            3.033067464828491,
+            0.8102121949195862
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:2",
+          "min": [
+            -0.9431493282318115,
+            -0.02492307871580124,
+            -0.7418032884597778
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9931758642196655,
+            3.0402331352233887,
+            0.8250021934509277
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:3",
+          "min": [
+            -1.077028751373291,
+            -0.02492116391658783,
+            -0.7417682409286499
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            1.0255464315414429,
+            3.035102605819702,
+            0.847423791885376
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:4",
+          "min": [
+            -1.0963116884231567,
+            -0.02493700012564659,
+            -0.7418373823165894
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            1.0483899116516113,
+            3.2707910537719727,
+            0.8817089796066284
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:5",
+          "min": [
+            -0.8377013206481934,
+            -0.02502227947115898,
+            -0.7356747388839722
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            1.0564533472061157,
+            4.008220672607422,
+            0.9291698932647705
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:6",
+          "min": [
+            -0.6445900201797485,
+            -0.024912670254707336,
+            -0.733726978302002
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            1.0414998531341553,
+            4.553925037384033,
+            0.9738285541534424
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:7",
+          "min": [
+            -0.6410769820213318,
+            -0.024914607405662537,
+            -0.7367562651634216
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            1.0127876996994019,
+            4.4397478103637695,
+            0.9969554543495178
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:8",
+          "min": [
+            -0.6402351260185242,
+            -0.024901114404201508,
+            -0.7373859286308289
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9917578101158142,
+            4.113280296325684,
+            0.9981808662414551
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:9",
+          "min": [
+            -0.6610819101333618,
+            -0.02493717521429062,
+            -0.738303005695343
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9849503636360168,
+            4.198484897613525,
+            0.9879163503646851
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:10",
+          "min": [
+            -0.6514972448348999,
+            -0.024901308119297028,
+            -0.7406338453292847
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9579371809959412,
+            4.670133590698242,
+            0.9785043001174927
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:11",
+          "min": [
+            -0.6415822505950928,
+            -0.03036382794380188,
+            -0.7421983480453491
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9102590084075928,
+            4.667550563812256,
+            0.974005401134491
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:12",
+          "min": [
+            -0.6463112831115723,
+            -0.024892177432775497,
+            -0.7355536222457886
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.863763689994812,
+            4.6362810134887695,
+            0.9739286303520203
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:13",
+          "min": [
+            -0.6477901935577393,
+            -0.02490544691681862,
+            -0.7392200231552124
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8362300992012024,
+            4.513631820678711,
+            0.9773896336555481
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:14",
+          "min": [
+            -0.6475051641464233,
+            -0.0249364972114563,
+            -0.7403455376625061
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8385787010192871,
+            4.229371547698975,
+            0.9836381673812866
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:15",
+          "min": [
+            -0.6475071310997009,
+            -0.024906981736421585,
+            -0.7407093644142151
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.86165452003479,
+            3.8418290615081787,
+            0.9819227457046509
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:16",
+          "min": [
+            -0.6475027799606323,
+            -0.0249006450176239,
+            -0.7410757541656494
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8920795917510986,
+            3.583630084991455,
+            0.9589160084724426
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:17",
+          "min": [
+            -0.6473321318626404,
+            -0.024912603199481964,
+            -0.741290807723999
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.9075103998184204,
+            3.236928701400757,
+            0.9090510606765747
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:18",
+          "min": [
+            -0.6474985480308533,
+            -0.024903152137994766,
+            -0.7415575981140137
+          ],
+          "vertices": 2170
+        },
+        {
+          "max": [
+            0.8966845273971558,
+            3.017221689224243,
+            0.8440762162208557
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:19",
+          "min": [
+            -0.6514058113098145,
+            -0.024914242327213287,
+            -0.7415364980697632
+          ],
+          "vertices": 2170
+        }
+      ]
+    }
+  },
+  "sourceFiles": 37,
+  "generatedFiles": 10
+}

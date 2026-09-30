@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "units": {
+    "models": [
+      "RealPaladin"
+    ],
+    "idleWalkAttack": true,
+    "attackFacing": true,
+    "selectionPortraits": true,
+    "trainingIcons": true,
+    "damage": true,
+    "saveRestore": true,
+    "shaderRejections": 0
+  },
+  "paladinCasting": {
+    "sameFrameHeroChoice": true,
+    "heroPortrait": true,
+    "learnedHolyLight": true,
+    "healingAndMana": true,
+    "castPose": true,
+    "midCastSaveRestore": true,
+    "fixture": "Tier-2 flat field, no AI; hero begins wounded. Actual Agent skill input and native frame stepping capture the short casting gesture."
+  }
+}

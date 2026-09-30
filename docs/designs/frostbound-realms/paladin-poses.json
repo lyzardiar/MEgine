@@ -1,0 +1,180 @@
+{
+  "file": "docs/designs/frostbound-realms/paladin-poses.png",
+  "sha256": "bd1b53ce4268c5c4a675265ad38a08300dcdf86ece0574976458b74e54dcd623",
+  "generator": "scripts/render-frost-unit-icons.mjs --paladin-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
+  "models": [
+    {
+      "name": "RealPaladin Idle 0",
+      "mesh": "Assets/Models/RealPaladin.glb#pose=0:0",
+      "material": "Assets/Materials/RealPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.7712785601615906,
+          3.038348436355591,
+          0.45459452271461487
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=0:0",
+        "min": [
+          -0.633910059928894,
+          -0.004150642082095146,
+          -0.6120967864990234
+        ],
+        "vertices": 2273
+      }
+    },
+    {
+      "name": "RealPaladin Walk 0.5",
+      "mesh": "Assets/Models/RealPaladin.glb#pose=1:10",
+      "material": "Assets/Materials/RealPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.7587964534759521,
+          3.0459907054901123,
+          0.87966388463974
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=1:10",
+        "min": [
+          -0.4869644343852997,
+          0.0014761623460799456,
+          -0.8060649633407593
+        ],
+        "vertices": 2273
+      }
+    },
+    {
+      "name": "RealPaladin Sword_Attack 0.5",
+      "mesh": "Assets/Models/RealPaladin.glb#pose=2:6",
+      "material": "Assets/Materials/RealPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.8311957120895386,
+          2.6956892013549805,
+          2.3315036296844482
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealPaladin.glb#pose=2:6",
+        "min": [
+          -0.6184483766555786,
+          -0.016787759959697723,
+          -0.9053529500961304
+        ],
+        "vertices": 2273
+      }
+    },
+    {
+      "name": "RealDawnPaladin Idle 0",
+      "mesh": "Assets/Models/RealDawnPaladin.glb#pose=0:0",
+      "material": "Assets/Materials/RealDawnPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.8112961053848267,
+          3.1356520652770996,
+          0.4781811833381653
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=0:0",
+        "min": [
+          -0.6668000221252441,
+          -0.004366159439086914,
+          -0.643855094909668
+        ],
+        "vertices": 2170
+      }
+    },
+    {
+      "name": "RealDawnPaladin Walk 0.5",
+      "mesh": "Assets/Models/RealDawnPaladin.glb#pose=1:10",
+      "material": "Assets/Materials/RealDawnPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.7981663346290588,
+          3.143692970275879,
+          0.9253174662590027
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=1:10",
+        "min": [
+          -0.512230634689331,
+          0.0015527214854955673,
+          -0.847887396812439
+        ],
+        "vertices": 2170
+      }
+    },
+    {
+      "name": "RealDawnPaladin Sword_Attack 0.5",
+      "mesh": "Assets/Models/RealDawnPaladin.glb#pose=2:6",
+      "material": "Assets/Materials/RealDawnPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.8743221759796143,
+          2.773881196975708,
+          2.4524857997894287
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=2:6",
+        "min": [
+          -0.6505359411239624,
+          -0.01766250655055046,
+          -0.9523293972015381
+        ],
+        "vertices": 2170
+      }
+    },
+    {
+      "name": "RealDawnPaladin Cast 0",
+      "mesh": "Assets/Models/RealDawnPaladin.glb#pose=3:0",
+      "material": "Assets/Materials/RealDawnPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.8616563081741333,
+          2.9816055297851562,
+          0.8219926357269287
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:0",
+        "min": [
+          -0.6781671047210693,
+          -0.024900831282138824,
+          -0.7415790557861328
+        ],
+        "vertices": 2170
+      }
+    },
+    {
+      "name": "RealDawnPaladin Cast 0.5",
+      "mesh": "Assets/Models/RealDawnPaladin.glb#pose=3:10",
+      "material": "Assets/Materials/RealDawnPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.9849503636360168,
+          4.198484897613525,
+          0.9879163503646851
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:10",
+        "min": [
+          -0.6514972448348999,
+          -0.024901308119297028,
+          -0.7406338453292847
+        ],
+        "vertices": 2170
+      }
+    },
+    {
+      "name": "RealDawnPaladin Cast 0.9",
+      "mesh": "Assets/Models/RealDawnPaladin.glb#pose=3:18",
+      "material": "Assets/Materials/RealDawnPaladin.mmat",
+      "bounds": {
+        "max": [
+          0.9075103998184204,
+          3.236928701400757,
+          0.9090510606765747
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealDawnPaladin.glb#pose=3:18",
+        "min": [
+          -0.6474985480308533,
+          -0.024903152137994766,
+          -0.7415575981140137
+        ],
+        "vertices": 2170
+      }
+    }
+  ]
+}

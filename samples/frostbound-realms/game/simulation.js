@@ -69,7 +69,7 @@ var Frost = (() => {
       {name:'Entangling roots',kind:'blast',cost:40,cooldown:9,range:14,radius:2.5,power:35,growth:20,root:2.5,description:'Damage and immobilize enemies; they may still attack.'},
       {name:'Windstep',kind:'haste',cost:35,cooldown:12,range:0,duration:5,description:'Move 60% faster for five seconds.'},
       {name:'Arrow storm',kind:'zone',cost:100,cooldown:25,range:14,radius:7,power:85,duration:4,description:'Four waves of arrows over a wide area.'}]},
-    {...types.hero,label:'Dawn Paladin',art:'Warrior',color:[1,.8,.25,1],role:'Melee tank / support',hp:900,damage:46,range:2,speed:3.8,antiAir:false,spells:[
+    {...types.hero,label:'Dawn Paladin',art:'RealDawnPaladin',color:[1,.8,.25,1],role:'Melee tank / support',hp:900,damage:46,range:2,speed:3.8,antiAir:false,spells:[
       {name:'Judgment',kind:'blast',cost:40,cooldown:7,range:10,radius:2,power:95,growth:45,stun:1.5,description:'Strike and stun enemies in a small area.'},
       {name:'Holy light',kind:'heal',cost:45,cooldown:8,range:12,radius:5,power:230,growth:110,description:'Restore a large amount of allied health.'},
       {name:'Divine guard',kind:'shield',cost:50,cooldown:14,range:0,radius:0,power:250,growth:125,duration:7,description:'Absorb incoming damage for seven seconds.'},

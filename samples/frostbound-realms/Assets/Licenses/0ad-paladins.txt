@@ -1,0 +1,18 @@
+0 A.D. armored infantry and hero art
+Original author: Wildfire Games - https://www.wildfiregames.com/
+Source: https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+License: Creative Commons Attribution-ShareAlike 3.0 Unported
+https://creativecommons.org/licenses/by-sa/3.0/
+
+RealPaladin, RealDawnPaladin, their textures and materials, and the combined
+Assets/Art/unit-portraits.png atlas are distributed under CC-BY-SA-3.0.
+Other original art in the atlas is available separately under the licenses
+documented in the sample manifests.
+
+Modifications by MEngine contributors: assembled chainmail and cuirass bodies,
+heads, helmet, spiked mace, round shield, greaves and animated capes; applied
+blue and gold colors; baked base, normal and ARM atlases; converted normalized
+glTF meshes and skeletal animations. The hero's casting gesture uses the
+authored promotion animation. Source meshes and downloaded textures are unchanged.
+Pinned URLs and source/generated hashes: paladin-sources.json.
+Original license notice: SourceAssets/0ad/LICENSE.txt.

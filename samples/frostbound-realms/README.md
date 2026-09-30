@@ -94,7 +94,7 @@ node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 
 ## 资源与引擎扩展
 
-骷髅弩手与骷髅法师使用 [KayKit Skeletons](https://kaylousberg.itch.io/kaykit-skeletons) 免费版 CC0 模型，源版本固定为 `15b62b9bad122f72926c10fb14d622c73819fa54`。弩、法杖挂接原骨架手部插槽，随行走/射击/施法动画运动；身体、披风和帽子的骨骼层级完整保留。8个原始文件、许可和6个派生文件哈希见 `skeleton-sources.json`，可独立运行 `scripts/import-frost-skeletons.py` 重新导入，主资产导入脚本也包含该步骤。当前共110模型。
+骷髅弩手与骷髅法师使用 [KayKit Skeletons](https://kaylousberg.itch.io/kaykit-skeletons) 免费版 CC0 模型，源版本固定为 `15b62b9bad122f72926c10fb14d622c73819fa54`。弩、法杖挂接原骨架手部插槽，随行走/射击/施法动画运动；身体、披风和帽子的骨骼层级完整保留。8个原始文件、许可和6个派生文件哈希见 `skeleton-sources.json`，可独立运行 `scripts/import-frost-skeletons.py` 重新导入，主资产导入脚本也包含该步骤。当前共112模型。
 
 18种移动单位模型的选中头像与训练图标由 `node scripts/render-frost-unit-icons.mjs` 使用原生Release编辑器渲染，图集和模型姿态记录见 `unit-icons.json`。`gltf_bounds` Rust示例提供原生静态/骨骼姿态的几何边界，图标据此居中缩放。射击/施法的模型朝向跟随实际攻击目标；此改动不改变战斗数值或网络协议。
 
@@ -153,4 +153,6 @@ node scripts/qa-frostbound.mjs
 
 四族攻城器械采用 0 A.D. CC-BY-SA-3.0 写实木制机械，包含弩炮、扭力投石机、牵引投石机和冲车，以及装填/发射机械动画。95 个源文件、35 个派生文件哈希见 siege-sources.json；素材署名随包位于 Assets/Licenses/0ad-siege.txt。弩炮两名、牵引投石机四名操作士兵已接入同步动画；重建及原生截图见 [攻城器械美术记录](../../docs/designs/frostbound-realms/siege-art.md)。
 
-王国二级兵营可训练写实骑士，使用 0 A.D. 棕色战马与链甲骑手，同步站立、奔跑和挥剑动作，AI 也会训练。61 个源文件与 5 个派生文件哈希见 `cavalry-sources.json`，许可位于 `Assets/Licenses/0ad-cavalry.txt`。当前共 21 个原生单位头像；详情及截图见 [骑兵美术记录](../../docs/designs/frostbound-realms/cavalry-art.md)。
+王国二级兵营可训练写实骑士，使用 0 A.D. 棕色战马与链甲骑手，同步站立、奔跑和挥剑动作，AI 也会训练。61 个源文件与 5 个派生文件哈希见 `cavalry-sources.json`，许可位于 `Assets/Licenses/0ad-cavalry.txt`。当前共 23 个原生单位头像；详情及截图见 [骑兵美术记录](../../docs/designs/frostbound-realms/cavalry-art.md)。
+
+王国圣骑士与黎明圣骑士英雄采用 0 A.D. 铠甲、披风、圆盾和钉锤模块，英雄具有随技能冷却同步的举锤施法动作，主菜单和选择头像同步使用实际模型。37 个源文件、10 个派生文件哈希见 `paladin-sources.json`，许可位于 `Assets/Licenses/0ad-paladins.txt`；[圣骑士美术记录](../../docs/designs/frostbound-realms/paladin-art.md) 包含动作图和实机施法存档验证。

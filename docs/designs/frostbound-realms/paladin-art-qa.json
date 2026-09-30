@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "sourceFiles": 37,
+  "sourceBytes": 6298474,
+  "generatedFiles": 10,
+  "generatedReproducible": true,
+  "models": 112,
+  "portraits": 23,
+  "protocol": 10,
+  "geometryReport": "paladin-import-qa.json",
+  "nativeReport": "native-paladin-qa.json",
+  "heroesReport": "native-heroes-qa.json",
+  "ruleAndTcpSuite": true,
+  "package": {
+    "files": 500,
+    "bytes": 204277765,
+    "contentHash": "2dfcd8e4546b1cfc571dbc15551dbce74f0d8ee9e13ceb1900931bcea76c2347",
+    "smoke": "player-smoke.json"
+  },
+  "limits": [
+    "Historical armor assembled into original paladin appearances; not a complete reproduction of Warcraft hero designs",
+    "Other heroes and factions still have mixed art styles",
+    "Physical input, audio listening, cross-machine LAN and standalone Player frame rate are not verified"
+  ]
+}

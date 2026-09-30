@@ -3130,5 +3130,77 @@
     "realistic": true,
     "attackEvent": 0.5,
     "mountedModel": true
+  },
+  "RealPaladin": {
+    "material": "Assets/Materials/RealPaladin.mmat",
+    "parts": [
+      {
+        "name": "RealPaladin",
+        "mesh": "Assets/Models/RealPaladin.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Sword_Attack",
+        "frames": 12
+      }
+    ],
+    "size": [
+      1.5248578852565822,
+      3.1,
+      1.6202826070619898
+    ],
+    "realistic": true
+  },
+  "RealDawnPaladin": {
+    "material": "Assets/Materials/RealDawnPaladin.mmat",
+    "parts": [
+      {
+        "name": "RealDawnPaladin",
+        "mesh": "Assets/Models/RealDawnPaladin.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Sword_Attack",
+        "frames": 12
+      },
+      {
+        "name": "Cast",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1.603975413864484,
+      3.2,
+      1.7043642141450939
+    ],
+    "realistic": true
   }
 }
