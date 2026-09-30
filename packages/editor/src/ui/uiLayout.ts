@@ -704,12 +704,6 @@ function participatesInLayout(entity: UiEnt): boolean {
   return element?.ignore_layout !== true && element?.ignoreLayout !== true;
 }
 
-function childrenOf(entities: UiEnt[], parent: number | null): UiEnt[] {
-  return entities
-    .filter((e) => (e.parent ?? null) === parent && e.active !== false)
-    .sort((a, b) => (a.siblingIndex ?? 0) - (b.siblingIndex ?? 0));
-}
-
 /** Pixel (canvas y-down) → world XY plane (Y-up), canvas centered at origin. */
 export function uiPixelToWorld(
   px: number,
@@ -1033,6 +1027,16 @@ export function layoutUiOverlay(
   textMeasurement?: UiTextLayoutMeasurement,
   nativeCoordinates = false,
 ): UiDrawItem[] {
+  // Rebuild per layout so in-place hierarchy, activity and sibling edits remain visible.
+  const childrenByParent = new Map<number | null, UiEnt[]>();
+  for (const entity of entities) {
+    if (entity.active === false) continue;
+    const parent = entity.parent ?? null;
+    const siblings = childrenByParent.get(parent);
+    if (siblings) siblings.push(entity);
+    else childrenByParent.set(parent, [entity]);
+  }
+  for (const siblings of childrenByParent.values()) siblings.sort((a, b) => (a.siblingIndex ?? 0) - (b.siblingIndex ?? 0));
   const canvases = entities
     .filter((e) => e.components.Canvas
       && canvasRenderRootEnabled(entities, e)
@@ -1106,7 +1110,7 @@ export function layoutUiOverlay(
       if (nestedLayoutRaw) {
         const nextResolving = new Set(resolving).add(entity.entity);
         const nestedLayout = layoutMetrics(nestedLayoutRaw);
-        const nestedChildren = childrenOf(entities, entity.entity).filter(participatesInLayout);
+        const nestedChildren = (childrenByParent.get(entity.entity) ?? []).filter(participatesInLayout);
         let nestedMetrics = nestedChildren.map((child) => (
           metricsForLayoutChild(child, undefined, nextResolving)
         ));
@@ -1219,7 +1223,7 @@ export function layoutUiOverlay(
       const contentFitter = ent.components.ContentSizeFitter as Record<string, unknown> | undefined;
       let drivenAxes: [boolean, boolean] = forcedLayout?.controlled ?? [false, false];
       if (contentFitter && layout && rt) {
-        const layoutChildren = childrenOf(entities, ent.entity).filter(participatesInLayout);
+        const layoutChildren = (childrenByParent.get(ent.entity) ?? []).filter(participatesInLayout);
         const resolvedLayout = layoutMetrics(layout);
         const horizontalFit = forcedLayout?.controlled[0]
           ? 'Unconstrained'
@@ -1845,7 +1849,7 @@ export function layoutUiOverlay(
         };
       }
 
-      let children = childrenOf(entities, ent.entity);
+      let children = childrenByParent.get(ent.entity) ?? [];
       if (tabs && children.length) {
         const selected = Math.max(0, Math.min(children.length - 1, Math.trunc(number(tabs.selected_index ?? tabs.selectedIndex, 0))));
         children = [children[selected]];

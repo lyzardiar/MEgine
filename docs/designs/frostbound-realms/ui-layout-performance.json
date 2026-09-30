@@ -1,0 +1,1364 @@
+{
+  "baselineCommit": "9deadc18c0f2ba33e94bac299b4fe21621407f61",
+  "baselineEditorSha256": "4c3d62e04b45e7237b6617012e631089187de7374c3ca8867f95fd0e3254c0f7",
+  "currentEditorSha256": "23ba940b9dd127396b6dd2c674ba05bd33beb6bc7491380b83b9d9fbbfbb9402",
+  "layoutMicrobenchmark": {
+    "before": {
+      "entities": 2463,
+      "items": 577,
+      "runsMs": [
+        3.344909,
+        3.283674000000001,
+        3.3601080000000003,
+        3.2859349999999994,
+        3.232855999999997
+      ],
+      "medianMs": 3.2859349999999994
+    },
+    "after": {
+      "entities": 2463,
+      "items": 577,
+      "runsMs": [
+        0.820922999999998,
+        0.9201980000000003,
+        0.7802499999999987,
+        0.7511869999999999,
+        0.7987139999999999
+      ],
+      "medianMs": 0.7987139999999999
+    },
+    "warmupIterations": 50,
+    "iterationsPerRun": 100,
+    "note": "Node/Vite authored scene, all authored UI; measures layout only, not native FPS."
+  },
+  "skirmish": {
+    "before": {
+      "passed": true,
+      "mode": "playing",
+      "zoom": 12,
+      "entities": 2463,
+      "browserControls": [],
+      "warmupMs": 5000,
+      "sampleWindowMs": 5000,
+      "latestCallTree": {
+        "calls": 1,
+        "children": [
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.update",
+                "selfMs": 0.1718,
+                "totalMs": 0.1718
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.append_to_frame",
+                "selfMs": 0.001,
+                "totalMs": 0.001
+              }
+            ],
+            "name": "Effects",
+            "selfMs": 0,
+            "totalMs": 0.1728
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "TransformHierarchy.build",
+                "selfMs": 0.7035,
+                "totalMs": 0.7035
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Camera, meshes and lighting",
+                    "selfMs": 0.623,
+                    "totalMs": 0.623
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Canvas layout and text",
+                    "selfMs": 0.7109,
+                    "totalMs": 0.7109
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "World sprites",
+                    "selfMs": 0.0572,
+                    "totalMs": 0.0572
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Particles, trails and sorting",
+                    "selfMs": 0.216,
+                    "totalMs": 0.216
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Sprite regions and materials",
+                    "selfMs": 0.3078,
+                    "totalMs": 0.3078
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "UI batching",
+                    "selfMs": 0.39990000000000003,
+                    "totalMs": 0.39990000000000003
+                  }
+                ],
+                "name": "FrameCompiler.compile",
+                "selfMs": 0.002200000000000202,
+                "totalMs": 2.317
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Diagnostics.texture_failures",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Frame compile",
+            "selfMs": 0,
+            "totalMs": 3.0205
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "OffscreenTarget.ensure_size",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 1.0324,
+                "totalMs": 1.0324
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 6.3171,
+                "totalMs": 6.3171
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 7.3496
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeMeshCache.sync",
+                "selfMs": 0.0332,
+                "totalMs": 0.0332
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeFontCache.sync",
+                "selfMs": 0.0007,
+                "totalMs": 0.0007
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui",
+                "selfMs": 0.1517,
+                "totalMs": 0.1517
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui_materials",
+                "selfMs": 0.0022,
+                "totalMs": 0.0022
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_materials",
+                "selfMs": 0.0538,
+                "totalMs": 0.0538
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_environment",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Resource sync",
+            "selfMs": 0,
+            "totalMs": 0.24159999999999998
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Profiler.snapshot",
+                "selfMs": 0.025400000000000002,
+                "totalMs": 0.025400000000000002
+              }
+            ],
+            "name": "Profiler",
+            "selfMs": 0,
+            "totalMs": 0.025400000000000002
+          }
+        ],
+        "name": "EditorViewportRenderer.render_world",
+        "selfMs": 0.004000000000000756,
+        "totalMs": 10.8139
+      },
+      "runs": [
+        {
+          "frame": 108,
+          "units": 20,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 58024.300000071526,
+              "sampleCount": 4,
+              "frameMs": 64.52500000596046,
+              "frameMaxMs": 108.5,
+              "paintMs": 3.7750000059604645,
+              "paintMaxMs": 5.100000023841858,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 802,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 40.69391186288126,
+            "p95FrameMs": 64.52500000596046,
+            "peakFrameMs": 143.20000004768372,
+            "averagePaintMs": 3.1649212030763914,
+            "p95PaintMs": 4.059999966621399,
+            "peakPaintMs": 9.600000023841858
+          },
+          "native": {
+            "intervals": 46,
+            "averagePresentIntervalMs": 111.22608695600344,
+            "p95PresentIntervalMs": 158.5,
+            "presentedFps": 8.990696583577193,
+            "averageRequestMs": 69.63404256485879,
+            "averageRenderMs": 21.69796382978723,
+            "averageCommandMs": 25.62875319148936,
+            "averageUploadMs": 1.525531918444532,
+            "averageSimulationMs": 10.655904255319149,
+            "averageSimulationRequestMs": 33.53617023153508
+          }
+        },
+        {
+          "frame": 159,
+          "units": 21,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 63444.200000047684,
+              "sampleCount": 8,
+              "frameMs": 37.212500005960464,
+              "frameMaxMs": 91.80000007152557,
+              "paintMs": 2.9749999940395355,
+              "paintMaxMs": 7.899999976158142,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 804,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 40.50542492487077,
+            "p95FrameMs": 65.6749999821186,
+            "peakFrameMs": 121,
+            "averagePaintMs": 3.1528218203673033,
+            "p95PaintMs": 3.912499964237213,
+            "peakPaintMs": 8.600000023841858
+          },
+          "native": {
+            "intervals": 44,
+            "averagePresentIntervalMs": 117.59999999945813,
+            "p95PresentIntervalMs": 220.80000007152557,
+            "presentedFps": 8.503401360583398,
+            "averageRequestMs": 74.47999999258253,
+            "averageRenderMs": 25.90998666666666,
+            "averageCommandMs": 30.302466666666678,
+            "averageUploadMs": 1.615555559264289,
+            "averageSimulationMs": 10.88928888888889,
+            "averageSimulationRequestMs": 45.18444444073571
+          }
+        },
+        {
+          "frame": 210,
+          "units": 22,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 68700.39999997616,
+              "sampleCount": 7,
+              "frameMs": 43.27142856802259,
+              "frameMaxMs": 102.89999997615814,
+              "paintMs": 4.000000017029898,
+              "paintMaxMs": 8.300000071525574,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 802,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 40.67343984924463,
+            "p95FrameMs": 68,
+            "peakFrameMs": 114.5,
+            "averagePaintMs": 3.1662468616376844,
+            "p95PaintMs": 4.000000017029898,
+            "peakPaintMs": 8.300000071525574
+          },
+          "native": {
+            "intervals": 47,
+            "averagePresentIntervalMs": 110.37021276545018,
+            "p95PresentIntervalMs": 206,
+            "presentedFps": 9.060415622511472,
+            "averageRequestMs": 68.70833333084981,
+            "averageRenderMs": 21.81238958333333,
+            "averageCommandMs": 26.298054166666663,
+            "averageUploadMs": 1.5291666661699612,
+            "averageSimulationMs": 11.014277083333338,
+            "averageSimulationRequestMs": 29.71874998261531
+          }
+        }
+      ]
+    },
+    "after": {
+      "passed": true,
+      "mode": "playing",
+      "zoom": 12,
+      "entities": 2463,
+      "browserControls": [],
+      "warmupMs": 5000,
+      "sampleWindowMs": 5000,
+      "latestCallTree": {
+        "calls": 1,
+        "children": [
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.update",
+                "selfMs": 0.132,
+                "totalMs": 0.132
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.append_to_frame",
+                "selfMs": 0.0007999999999999999,
+                "totalMs": 0.0007999999999999999
+              }
+            ],
+            "name": "Effects",
+            "selfMs": 0,
+            "totalMs": 0.1328
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "TransformHierarchy.build",
+                "selfMs": 0.7931,
+                "totalMs": 0.7931
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Camera, meshes and lighting",
+                    "selfMs": 0.603,
+                    "totalMs": 0.603
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Canvas layout and text",
+                    "selfMs": 0.7403000000000001,
+                    "totalMs": 0.7403000000000001
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "World sprites",
+                    "selfMs": 0.0748,
+                    "totalMs": 0.0748
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Particles, trails and sorting",
+                    "selfMs": 0.2218,
+                    "totalMs": 0.2218
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Sprite regions and materials",
+                    "selfMs": 0.3296,
+                    "totalMs": 0.3296
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "UI batching",
+                    "selfMs": 0.30200000000000005,
+                    "totalMs": 0.30200000000000005
+                  }
+                ],
+                "name": "FrameCompiler.compile",
+                "selfMs": 0.0017999999999998018,
+                "totalMs": 2.2733
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Diagnostics.texture_failures",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              }
+            ],
+            "name": "Frame compile",
+            "selfMs": 0,
+            "totalMs": 3.0665
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "OffscreenTarget.ensure_size",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 0.9353,
+                "totalMs": 0.9353
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 7.3483,
+                "totalMs": 7.3483
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 8.2837
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeMeshCache.sync",
+                "selfMs": 0.0294,
+                "totalMs": 0.0294
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeFontCache.sync",
+                "selfMs": 0.0007,
+                "totalMs": 0.0007
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui",
+                "selfMs": 0.1078,
+                "totalMs": 0.1078
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui_materials",
+                "selfMs": 0.0024,
+                "totalMs": 0.0024
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_materials",
+                "selfMs": 0.051,
+                "totalMs": 0.051
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_environment",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              }
+            ],
+            "name": "Resource sync",
+            "selfMs": 0,
+            "totalMs": 0.1914
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Profiler.snapshot",
+                "selfMs": 0.0316,
+                "totalMs": 0.0316
+              }
+            ],
+            "name": "Profiler",
+            "selfMs": 0,
+            "totalMs": 0.0316
+          }
+        ],
+        "name": "EditorViewportRenderer.render_world",
+        "selfMs": 0.00369999999999944,
+        "totalMs": 11.7097
+      },
+      "runs": [
+        {
+          "frame": 109,
+          "units": 20,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 58662.59999990463,
+              "sampleCount": 8,
+              "frameMs": 39.3374999910593,
+              "frameMaxMs": 104.59999990463257,
+              "paintMs": 2.8999999910593033,
+              "paintMaxMs": 5.100000023841858,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 797,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 41.71522556432806,
+            "p95FrameMs": 69.8250000178814,
+            "peakFrameMs": 142.10000002384186,
+            "averagePaintMs": 3.269235590443874,
+            "p95PaintMs": 4.000000019868215,
+            "peakPaintMs": 8.199999928474426
+          },
+          "native": {
+            "intervals": 42,
+            "averagePresentIntervalMs": 117.51904761791229,
+            "p95PresentIntervalMs": 228.39999997615814,
+            "presentedFps": 8.509258884153684,
+            "averageRequestMs": 71.02790697230849,
+            "averageRenderMs": 25.178316279069758,
+            "averageCommandMs": 29.92423720930233,
+            "averageUploadMs": 1.5162790653317473,
+            "averageSimulationMs": 10.552330232558138,
+            "averageSimulationRequestMs": 32.32790697175403
+          }
+        },
+        {
+          "frame": 161,
+          "units": 21,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 63957.89999997616,
+              "sampleCount": 8,
+              "frameMs": 37.75,
+              "frameMaxMs": 90.10000002384186,
+              "paintMs": 3.2374999821186066,
+              "paintMaxMs": 5.200000047683716,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 804,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 40.53151002586038,
+            "p95FrameMs": 61.64000000953674,
+            "peakFrameMs": 102.70000004768372,
+            "averagePaintMs": 3.1912740293302035,
+            "p95PaintMs": 4.057142853736877,
+            "peakPaintMs": 8.299999952316284
+          },
+          "native": {
+            "intervals": 44,
+            "averagePresentIntervalMs": 118.77272727272727,
+            "p95PresentIntervalMs": 227.19999992847443,
+            "presentedFps": 8.419441255262152,
+            "averageRequestMs": 70.14444445239172,
+            "averageRenderMs": 22.38968444444445,
+            "averageCommandMs": 27.272904444444436,
+            "averageUploadMs": 1.542222219043308,
+            "averageSimulationMs": 11.16290888888889,
+            "averageSimulationRequestMs": 29.98444443543752
+          }
+        },
+        {
+          "frame": 213,
+          "units": 22,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 69239.69999992847,
+              "sampleCount": 5,
+              "frameMs": 51.43999998569488,
+              "frameMaxMs": 100,
+              "paintMs": 3.7799999952316283,
+              "paintMaxMs": 7.899999976158142,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 803,
+              "uiBatches": 13,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 41.40872199359253,
+            "p95FrameMs": 63.17499998211861,
+            "peakFrameMs": 124.90000009536743,
+            "averagePaintMs": 3.1355342890645987,
+            "p95PaintMs": 3.7799999952316283,
+            "peakPaintMs": 8.5
+          },
+          "native": {
+            "intervals": 42,
+            "averagePresentIntervalMs": 123.71428571428571,
+            "p95PresentIntervalMs": 225.5,
+            "presentedFps": 8.083140877598153,
+            "averageRequestMs": 72.74418604928394,
+            "averageRenderMs": 24.667102325581396,
+            "averageCommandMs": 29.91991162790697,
+            "averageUploadMs": 1.5023255791775016,
+            "averageSimulationMs": 10.90666976744186,
+            "averageSimulationRequestMs": 34.27441860908686
+          }
+        }
+      ]
+    }
+  },
+  "highlandEditor": {
+    "before": {
+      "passed": true,
+      "mode": "editor",
+      "zoom": 12,
+      "entities": 2463,
+      "browserControls": [],
+      "warmupMs": 5000,
+      "sampleWindowMs": 5000,
+      "latestCallTree": {
+        "calls": 1,
+        "children": [
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.update",
+                "selfMs": 0.2043,
+                "totalMs": 0.2043
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.append_to_frame",
+                "selfMs": 0.0013,
+                "totalMs": 0.0013
+              }
+            ],
+            "name": "Effects",
+            "selfMs": 0,
+            "totalMs": 0.2056
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "TransformHierarchy.build",
+                "selfMs": 0.8186,
+                "totalMs": 0.8186
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Camera, meshes and lighting",
+                    "selfMs": 0.7961,
+                    "totalMs": 0.7961
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Canvas layout and text",
+                    "selfMs": 0.7225,
+                    "totalMs": 0.7225
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "World sprites",
+                    "selfMs": 0.0609,
+                    "totalMs": 0.0609
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Particles, trails and sorting",
+                    "selfMs": 0.2293,
+                    "totalMs": 0.2293
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Sprite regions and materials",
+                    "selfMs": 0.2054,
+                    "totalMs": 0.2054
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "UI batching",
+                    "selfMs": 0.322,
+                    "totalMs": 0.322
+                  }
+                ],
+                "name": "FrameCompiler.compile",
+                "selfMs": 0.0017999999999993577,
+                "totalMs": 2.3379999999999996
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Diagnostics.texture_failures",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Frame compile",
+            "selfMs": 0,
+            "totalMs": 3.1565999999999996
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "OffscreenTarget.ensure_size",
+                "selfMs": 0.00039999999999999996,
+                "totalMs": 0.00039999999999999996
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 1.1797000000000002,
+                "totalMs": 1.1797000000000002
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 9.818900000000001,
+                "totalMs": 9.818900000000001
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 10.999
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeMeshCache.sync",
+                "selfMs": 0.0553,
+                "totalMs": 0.0553
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeFontCache.sync",
+                "selfMs": 0.0011,
+                "totalMs": 0.0011
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui",
+                "selfMs": 0.0768,
+                "totalMs": 0.0768
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui_materials",
+                "selfMs": 0.0024,
+                "totalMs": 0.0024
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_materials",
+                "selfMs": 0.0644,
+                "totalMs": 0.0644
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_environment",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Resource sync",
+            "selfMs": 0,
+            "totalMs": 0.2
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Profiler.snapshot",
+                "selfMs": 0.0414,
+                "totalMs": 0.0414
+              }
+            ],
+            "name": "Profiler",
+            "selfMs": 0,
+            "totalMs": 0.0414
+          }
+        ],
+        "name": "EditorViewportRenderer.render_world",
+        "selfMs": 0.004100000000000541,
+        "totalMs": 14.6067
+      },
+      "runs": [
+        {
+          "frame": 0,
+          "units": 23,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 61662.5,
+              "sampleCount": 5,
+              "frameMs": 51.06000001430512,
+              "frameMaxMs": 101,
+              "paintMs": 3.5399999618530273,
+              "paintMaxMs": 5.299999952316284,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 825,
+              "uiBatches": 12,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 42.27891566080318,
+            "p95FrameMs": 61.57999999523163,
+            "peakFrameMs": 138,
+            "averagePaintMs": 3.1504750476576455,
+            "p95PaintMs": 3.671428544180734,
+            "peakPaintMs": 8.599999904632568
+          },
+          "native": {
+            "intervals": 40,
+            "averagePresentIntervalMs": 125.29500000178814,
+            "p95PresentIntervalMs": 153.79999995231628,
+            "presentedFps": 7.9811644517796285,
+            "averageRequestMs": 58.98780487804878,
+            "averageRenderMs": 18.95824146341463,
+            "averageCommandMs": 23.955524390243905,
+            "averageUploadMs": 1.512195124858763,
+            "averageSimulationMs": 9.764046341463418,
+            "averageSimulationRequestMs": 30.79024390476506
+          }
+        },
+        {
+          "frame": 0,
+          "units": 23,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 66979,
+              "sampleCount": 8,
+              "frameMs": 40.61249999701977,
+              "frameMaxMs": 93.60000002384186,
+              "paintMs": 3.625000014901161,
+              "paintMaxMs": 7.800000071525574,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 824,
+              "uiBatches": 12,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 40.61124174024499,
+            "p95FrameMs": 62.974999994039536,
+            "peakFrameMs": 117.69999992847443,
+            "averagePaintMs": 3.1784736484472504,
+            "p95PaintMs": 3.950000007947286,
+            "peakPaintMs": 8.100000023841858
+          },
+          "native": {
+            "intervals": 43,
+            "averagePresentIntervalMs": 118.15348837264749,
+            "p95PresentIntervalMs": 161.90000009536743,
+            "presentedFps": 8.463567295161637,
+            "averageRequestMs": 57.90454546971755,
+            "averageRenderMs": 18.21102954545455,
+            "averageCommandMs": 22.760977272727274,
+            "averageUploadMs": 1.5090909139676527,
+            "averageSimulationMs": 9.538440909090909,
+            "averageSimulationRequestMs": 34.136363644491546
+          }
+        },
+        {
+          "frame": 0,
+          "units": 23,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 72388.60000002384,
+              "sampleCount": 8,
+              "frameMs": 37.025000005960464,
+              "frameMaxMs": 92.29999995231628,
+              "paintMs": 3.087499976158142,
+              "paintMaxMs": 5.100000023841858,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 825,
+              "uiBatches": 12,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 42.867797334360134,
+            "p95FrameMs": 72.83999998569489,
+            "peakFrameMs": 117.79999995231628,
+            "averagePaintMs": 3.199473676898263,
+            "p95PaintMs": 4.139999985694885,
+            "peakPaintMs": 7.700000047683716
+          },
+          "native": {
+            "intervals": 40,
+            "averagePresentIntervalMs": 131.2449999988079,
+            "p95PresentIntervalMs": 165.29999995231628,
+            "presentedFps": 7.619337879607474,
+            "averageRequestMs": 56.6634146382169,
+            "averageRenderMs": 18.467770731707326,
+            "averageCommandMs": 24.367648780487805,
+            "averageUploadMs": 1.5048780470359615,
+            "averageSimulationMs": 9.603463414634149,
+            "averageSimulationRequestMs": 27.76097561382666
+          }
+        }
+      ]
+    },
+    "after": {
+      "passed": true,
+      "mode": "editor",
+      "zoom": 12,
+      "entities": 2463,
+      "browserControls": [],
+      "warmupMs": 5000,
+      "sampleWindowMs": 5000,
+      "latestCallTree": {
+        "calls": 1,
+        "children": [
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.update",
+                "selfMs": 0.1394,
+                "totalMs": 0.1394
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "EffekseerWorld.append_to_frame",
+                "selfMs": 0.0009,
+                "totalMs": 0.0009
+              }
+            ],
+            "name": "Effects",
+            "selfMs": 0,
+            "totalMs": 0.1403
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "TransformHierarchy.build",
+                "selfMs": 0.5726,
+                "totalMs": 0.5726
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Camera, meshes and lighting",
+                    "selfMs": 0.7327,
+                    "totalMs": 0.7327
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Canvas layout and text",
+                    "selfMs": 0.7146,
+                    "totalMs": 0.7146
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "World sprites",
+                    "selfMs": 0.058699999999999995,
+                    "totalMs": 0.058699999999999995
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Particles, trails and sorting",
+                    "selfMs": 0.2229,
+                    "totalMs": 0.2229
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Sprite regions and materials",
+                    "selfMs": 0.22010000000000002,
+                    "totalMs": 0.22010000000000002
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "UI batching",
+                    "selfMs": 0.331,
+                    "totalMs": 0.331
+                  }
+                ],
+                "name": "FrameCompiler.compile",
+                "selfMs": 0.0013000000000000789,
+                "totalMs": 2.2813
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Diagnostics.texture_failures",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Frame compile",
+            "selfMs": 0,
+            "totalMs": 2.8539
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "OffscreenTarget.ensure_size",
+                "selfMs": 0.00019999999999999998,
+                "totalMs": 0.00019999999999999998
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 1.1724999999999999,
+                "totalMs": 1.1724999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 8.965300000000001,
+                "totalMs": 8.965300000000001
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 10.138000000000002
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeMeshCache.sync",
+                "selfMs": 0.045399999999999996,
+                "totalMs": 0.045399999999999996
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeFontCache.sync",
+                "selfMs": 0.0007999999999999999,
+                "totalMs": 0.0007999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui",
+                "selfMs": 0.0792,
+                "totalMs": 0.0792
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_ui_materials",
+                "selfMs": 0.0023,
+                "totalMs": 0.0023
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_materials",
+                "selfMs": 0.0667,
+                "totalMs": 0.0667
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "RuntimeTextureCache.sync_environment",
+                "selfMs": 0,
+                "totalMs": 0
+              }
+            ],
+            "name": "Resource sync",
+            "selfMs": 0,
+            "totalMs": 0.19440000000000002
+          },
+          {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Profiler.snapshot",
+                "selfMs": 0.0365,
+                "totalMs": 0.0365
+              }
+            ],
+            "name": "Profiler",
+            "selfMs": 0,
+            "totalMs": 0.0365
+          }
+        ],
+        "name": "EditorViewportRenderer.render_world",
+        "selfMs": 0.0034999999999991496,
+        "totalMs": 13.3666
+      },
+      "runs": [
+        {
+          "frame": 0,
+          "units": 23,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 61635.200000047684,
+              "sampleCount": 6,
+              "frameMs": 45.416666666666664,
+              "frameMaxMs": 90.20000004768372,
+              "paintMs": 2.800000011920929,
+              "paintMaxMs": 4.899999976158142,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 825,
+              "uiBatches": 12,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 38.88093700124018,
+            "p95FrameMs": 47.85000000397364,
+            "peakFrameMs": 113.39999997615814,
+            "averagePaintMs": 3.077793339799982,
+            "p95PaintMs": 3.5166666905085244,
+            "peakPaintMs": 8.600000023841858
+          },
+          "native": {
+            "intervals": 45,
+            "averagePresentIntervalMs": 116.81333333121405,
+            "p95PresentIntervalMs": 141.29999995231628,
+            "presentedFps": 8.560666590727164,
+            "averageRequestMs": 60.29130433953327,
+            "averageRenderMs": 18.739571739130433,
+            "averageCommandMs": 23.034080434782606,
+            "averageUploadMs": 1.51739130590273,
+            "averageSimulationMs": 9.658415217391306,
+            "averageSimulationRequestMs": 26.467391306939334
+          }
+        },
+        {
+          "frame": 0,
+          "units": 23,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 66986.20000004768,
+              "sampleCount": 10,
+              "frameMs": 37.87000000476837,
+              "frameMaxMs": 134.5,
+              "paintMs": 2.8199999928474426,
+              "paintMaxMs": 5.299999952316284,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 823,
+              "uiBatches": 12,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 40.14691995141006,
+            "p95FrameMs": 49.45000000794729,
+            "peakFrameMs": 134.5,
+            "averagePaintMs": 3.0609685151030788,
+            "p95PaintMs": 3.48333332935969,
+            "peakPaintMs": 7.799999952316284
+          },
+          "native": {
+            "intervals": 43,
+            "averagePresentIntervalMs": 117.98837209302326,
+            "p95PresentIntervalMs": 160.10000002384186,
+            "presentedFps": 8.47541145166059,
+            "averageRequestMs": 56.18409089608626,
+            "averageRenderMs": 18.139322727272727,
+            "averageCommandMs": 22.850372727272728,
+            "averageUploadMs": 1.5090909112583508,
+            "averageSimulationMs": 9.673534090909092,
+            "averageSimulationRequestMs": 27.181818173690274
+          }
+        },
+        {
+          "frame": 0,
+          "units": 23,
+          "frontend": {
+            "latest": {
+              "source": "game",
+              "timestamp": 72145.10000002384,
+              "sampleCount": 6,
+              "frameMs": 43.566666662693024,
+              "frameMaxMs": 89.5,
+              "paintMs": 3.800000011920929,
+              "paintMaxMs": 7.200000047683716,
+              "entities": 2463,
+              "drawItems": 0,
+              "uiPrimitives": 825,
+              "uiBatches": 12,
+              "particles": 0,
+              "spineSkeletons": 0,
+              "viewportPixels": 1730600
+            },
+            "samples": 19,
+            "averageFrameMs": 40.59202380922802,
+            "p95FrameMs": 48.916666666666664,
+            "peakFrameMs": 106.29999995231628,
+            "averagePaintMs": 3.1121491187273107,
+            "p95PaintMs": 3.800000011920929,
+            "peakPaintMs": 8.100000023841858
+          },
+          "native": {
+            "intervals": 43,
+            "averagePresentIntervalMs": 121.8674418621285,
+            "p95PresentIntervalMs": 148.19999992847443,
+            "presentedFps": 8.205637081734459,
+            "averageRequestMs": 56.770454553040594,
+            "averageRenderMs": 18.292640909090906,
+            "averageCommandMs": 23.577184090909096,
+            "averageUploadMs": 1.5000000081279061,
+            "averageSimulationMs": 9.59624090909091,
+            "averageSimulationRequestMs": 26.911363631486893
+          }
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Editor 1280x720 zoom12; not standalone Player FPS.",
+    "No active browser controls in either native performance scene; the layout optimization does not address their main bottleneck.",
+    "Three 5-second windows do not establish statistical significance.",
+    "Physical input, audio and cross-machine LAN not tested."
+  ]
+}

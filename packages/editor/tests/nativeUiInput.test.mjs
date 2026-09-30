@@ -22,3 +22,29 @@ test('native nested sorting canvases preserve input hit geometry',()=>{
   const entities=[{entity:1,parent:null,components:{Canvas:{render_mode:'ScreenSpaceOverlay'},GraphicRaycaster:{enabled:true},RectTransform:{anchored_position:[40,-20],size_delta:[1000,600]}}},{entity:2,parent:1,components:{Canvas:{render_mode:'ScreenSpaceOverlay',override_sorting:true},GraphicRaycaster:{enabled:true},RectTransform:{anchored_position:[70,-40],size_delta:[400,250]}}},{entity:3,parent:2,components:{RectTransform:{anchored_position:[0,-28],size_delta:[200,64]},InputField:{text:'中文'}}}];
   const native=layoutUiOverlay(entities,{x:0,y:0,w:1280,h:720},new Set(),undefined,undefined,0,undefined,true);const field=native.find(item=>item.input);assert.deepEqual(field.rect,{x:650,y:240,w:200,h:64});assert.equal(hitTestUi(native,750,272)?.entity,3);
 });
+
+test('native nested layout and hits follow in-place hierarchy, activity and sibling edits',()=>{
+  const rect={anchored_position:[0,0],size_delta:[200,60]};
+  const entities=[
+    {entity:1,components:{Canvas:{render_mode:'ScreenSpaceOverlay'},GraphicRaycaster:{enabled:true}}},
+    {entity:2,parent:1,components:{RectTransform:rect,LayoutGroup:{direction:'Horizontal',spacing:[0,0],padding:[0,0,0,0],child_force_expand:false,child_control_width:false,child_control_height:false,child_alignment:'UpperLeft'}}},
+    {entity:3,parent:1,components:{Canvas:{render_mode:'ScreenSpaceOverlay',override_sorting:true},GraphicRaycaster:{enabled:true},RectTransform:{anchored_position:[200,0],size_delta:[200,60]}}},
+    {entity:4,parent:2,siblingIndex:0,components:{RectTransform:{size_delta:[60,30]},InputField:{text:'first'}}},
+    {entity:5,parent:2,siblingIndex:1,components:{RectTransform:{size_delta:[60,30]},InputField:{text:'second'}}},
+  ];
+  const layout=()=>layoutUiOverlay(entities,{x:0,y:0,w:800,h:600},new Set(),undefined,undefined,0,undefined,true);
+  const first=layout(),left=first.find(item=>item.entity===4).rect,right=first.find(item=>item.entity===5).rect;
+  assert.equal(right.x-left.x,60);
+  const hit=(items,rect)=>hitTestUi(items,rect.x+rect.w/2,rect.y+rect.h/2)?.entity;
+  assert.equal(hit(first,left),4);assert.equal(hit(first,right),5);
+  entities[4].siblingIndex=-1;
+  const reordered=layout();assert.equal(hit(reordered,left),5);assert.equal(hit(reordered,right),4);
+  entities[4].active=false;
+  const inactive=layout();assert.equal(hit(inactive,left),4);assert.equal(hit(inactive,right),undefined);
+  entities[4].active=true;entities[4].parent=3;
+  const reparented=layout(),moved=reparented.find(item=>item.entity===5).rect;
+  assert.equal(hit(reparented,left),4);assert.equal(hit(reparented,moved),5);assert.ok(moved.x>right.x);
+  entities.push({entity:6,parent:2,siblingIndex:2,components:{RectTransform:{size_delta:[60,30]},InputField:{text:'added'}}});
+  assert.equal(hit(layout(),right),6);
+  entities.splice(entities.findIndex(e=>e.entity===6),1);assert.equal(hit(layout(),right),undefined);
+});

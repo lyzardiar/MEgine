@@ -274,7 +274,8 @@ if(process.argv.includes('--peer')){
       const samples=await a.query('profiler.get_samples',{source:'game',limit:30});assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);report.terrain.profile=samples.nativeSummary;
     }
     if(performanceOnly){
-      await press(a,'F1');await until(async()=>(await state(a)).mode==='playing','performance skirmish');await sleep(5000);
+      const mapEditor=process.argv.includes('--map-editor');await press(a,mapEditor?'F4':'F1');await until(async()=>(await state(a)).mode===(mapEditor?'editor':'playing'),'performance mode');if(process.argv.includes('--near'))for(let i=0;i<(mapEditor?6:2);i++)await press(a,'Home');if(mapEditor){await press(a,'F9');await click(a,111,638);}await sleep(5000);
+      const scene=await a.query('scene.snapshot');report.mode=(await state(a)).mode;report.zoom=(await state(a)).zoom;report.entities=scene.entities.length;report.browserControls=scene.entities.filter(e=>e.active!==false&&['SpineSkeleton','Button','Toggle','Slider','Scrollbar','InputField','Dropdown','ListView','ScrollView','TabView'].some(c=>e.components[c])).map(e=>({entity:e.entity,name:e.name,parent:e.parent}));
       report.performanceRuns=[];report.warmupMs=5000;report.sampleWindowMs=5000;
       for(let i=0;i<3;i++){await a.execute('profiler.clear');await sleep(report.sampleWindowMs);const s=await state(a),samples=await a.query('profiler.get_samples',{source:'game',limit:120});assert.ok(samples.nativeProfileCount>=10);assert.deepEqual(samples.nativeLatest.renderSize,[1280,720]);assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);report.performanceRuns.push({frame:s.frame,units:s.units,samples});console.log('Performance window '+(i+1)+': '+samples.nativeSummary.presentedFps.toFixed(2)+' FPS');}
     }
