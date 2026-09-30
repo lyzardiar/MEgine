@@ -8,7 +8,7 @@ var FrostVisual=(()=>{
     {hall:['Necropolis','Black citadel','Dread fortress'],barracks:'Crypt',farm:'Grave mound',tower:'Soul obelisk',altar:'Altar of shadows',workshop:'Bone foundry'}
   ];
   const units={rifleman:'RealRifleman',mage:'RealEmberSage',paladin:'RealPaladin',knight:'RealKnight',archer:'RealArcher',raider:'Orc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'Skeleton_Mage',bonearcher:'Skeleton_Rogue'};
-  const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'Rogue',neutral:'Warrior',ballista:'RealBallista',catapult:'RealCatapult',trebuchet:'RealTrebuchet',ram:'RealRam',dragon:'Dragon'};
+  const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'RealFootman',rangedcreep:'RealArcher',siegecreep:'RealCatapult',neutral:'Warrior',ballista:'RealBallista',catapult:'RealCatapult',trebuchet:'RealTrebuchet',ram:'RealRam',dragon:'Dragon'};
   function work(state,u){
     if(u.kind!=='worker'||!u.order||u.hp<=0||u.stun>0||u.inside)return null;
     let target,animation;

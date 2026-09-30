@@ -47,7 +47,7 @@ for(const mode of ['skirmish','td','rpg'])assert.ok(attack(arena(3,1,mode)),mode
   const a=arena(2,8),{s,hero,creep,enemy}=a;assert.equal(attack(a),null);S.tick(s);hero.hp=0;hero.respawn=0;step(s,5);assert.equal(creep.hp,0);assert.equal(s.teams[0].kills,0);assert.equal(enemy.xp,17.5,'dead shooter retains the correct deny settlement');
 }
 {
-  const a=arena(2,8),{s,creep}=a;const vampire=S.spawn(s,'necromancer',0,0,0,{hp:50,damage:100});a.hero.damage=0;a.hero.order={type:'hold'};assert.equal(S.command(s,0,{type:'attack',ids:[vampire.id],target:creep.id}),null);S.tick(s);vampire.cd=99;step(s,5);assert.equal(vampire.hp,50,'deny attacks do not steal allied life');
+  const a=arena(2,8),{s,creep}=a;const vampire=S.spawn(s,'necromancer',0,0,0,{hp:50,damage:100,summoned:true,expires:10000});a.hero.damage=0;a.hero.order={type:'hold'};assert.equal(S.command(s,0,{type:'attack',ids:[vampire.id],target:creep.id}),null);S.tick(s);vampire.cd=99;step(s,5);assert.equal(vampire.hp,50,'deny attacks do not steal allied life');
 }
 {
   const a=arena(),{s,hero,creep}=a;creep.team=1;const ally=S.spawn(s,'hero',0,2,1,{damage:0,speed:0}),gold=s.teams[0].gold;S.visibility(s);assert.equal(attack(a),null);S.tick(s);
@@ -57,7 +57,7 @@ for(const mode of ['skirmish','td','rpg'])assert.ok(attack(arena(3,1,mode)),mode
   const a=arena(1,1),{s,hero,creep}=a;hero.skills[0]=1;assert.equal(S.command(s,0,{type:'spell',ids:[hero.id],slot:0,x:creep.x,z:creep.z}),null);assert.equal(creep.hp,20,'area spells do not deny allies');
 }
 for(const kind of ['rifleman','shaman','catapult']){
-  const {s,hero,creep}=arena(2,6),unit=S.spawn(s,kind,0,0,0,{damage:10});hero.damage=0;hero.order={type:'hold'};creep.hp=60;const ally=S.spawn(s,'creep',0,1,6,{hp:20,damage:0,speed:0});assert.equal(S.command(s,0,{type:'attack',ids:[unit.id],target:creep.id}),null);S.tick(s);unit.cd=99;step(s,6);
+  const {s,hero,creep}=arena(2,6),unit=S.spawn(s,kind,0,0,0,{damage:10,summoned:true,expires:10000});hero.damage=0;hero.order={type:'hold'};creep.hp=60;const ally=S.spawn(s,'creep',0,1,6,{hp:20,damage:0,speed:0});assert.equal(S.command(s,0,{type:'attack',ids:[unit.id],target:creep.id}),null);S.tick(s);unit.cd=99;step(s,6);
   assert.ok(creep.hp<60,kind+' can damage a deniable creep');assert.equal(creep.slow,0,'deny does not apply slow');assert.equal(ally.hp,20,'deny splash cannot damage nearby allies');if(kind==='rifleman')assert.equal(s.projectileSerial,0,'rifleman deny is immediate');
 }
 console.log('PASS: MOBA half-health eligibility, invalid allies/self, other modes, melee/ranged denies, shared reduced enemy XP, no gold/kill credit/lifesteal, explicit-only targeting, healing cancellation, fog, corpses and in-flight save/dead-shooter continuation');

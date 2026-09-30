@@ -15,7 +15,7 @@ var Frost = (() => {
     farm: {label:'Supply lodge',hp:500,damage:0,range:0,speed:0,gold:80,wood:40,food:0,time:6,radius:1.5,model:'farm'},
     tower: {label:'Guard tower',hp:800,damage:45,range:11,speed:0,cooldown:1.2,gold:140,wood:40,food:0,time:8,radius:1,model:'tower'},
     altar: {label:'Altar',hp:700,damage:0,range:0,speed:0,gold:180,wood:100,food:0,time:10,radius:1.5,model:'altar'},
-    creep: {label:'Raider',hp:140,damage:15,range:1.8,speed:3.5,cooldown:1.2,gold:0,wood:0,food:0,model:'soldier'},
+    creep: {label:'Melee creep',laneCreep:true,hp:140,damage:15,range:1.8,speed:3.5,cooldown:1.2,gold:0,wood:0,food:0,model:'soldier'},
     neutral: {label:'Ancient guardian',hp:450,damage:25,range:2,speed:2.8,cooldown:1.4,gold:0,wood:0,food:0,model:'knight'}
   };
   const items = [{name:'Runic blade',gold:180,damage:18},{name:'Heartstone',gold:160,hp:220},{name:'Wayfarer boots',gold:140,speed:.8}];
@@ -43,6 +43,8 @@ var Frost = (() => {
   types.catapult={...types.ballista,label:'Warclan catapult',damage:65,range:12,splash:2.5,model:'catapult'};
   types.trebuchet={...types.ballista,label:'Wildwood trebuchet',range:16,damage:80,cooldown:3.4,speed:2,model:'trebuchet'};
   types.ram={...types.ballista,label:'Revenant siege ram',hp:800,damage:75,range:2,speed:2.8,cooldown:2,model:'ram'};
+  types.rangedcreep={...types.creep,label:'Ranged creep',hp:90,damage:18,range:8,cooldown:1.4,model:'archer'};
+  types.siegecreep={...types.catapult,label:'Siege creep',laneCreep:true,hp:320,damage:30,speed:3.5,gold:0,wood:0,food:0};
   const siege=['ballista','catapult','trebuchet','ram'];
   types.dragon={label:'Royal drake',hp:480,damage:46,range:7,speed:6,cooldown:1.7,gold:260,wood:140,food:4,time:18,model:'dragon',flying:true,attack:'magic',armor:'light'};
   types.emberdrake={...types.dragon,label:'Ember drake',damage:54,speed:5.5};
@@ -79,14 +81,15 @@ var Frost = (() => {
   const validHero=v=>Number.isInteger(v)&&v>=0&&v<heroes.length;
   const unitType=u=>u.kind==='hero'?heroes[u.heroClass??0]:types[u.kind];
   const projectileSpeed=u=>unitType(u).range>4&&u.kind!=='rifleman'?(unitType(u).attack==='siege'?12:20):0;
-  const projectileArt=u=>['catapult','trebuchet'].includes(u.kind)?'stone':u.kind==='ballista'?'ballista':u.kind==='bonearcher'?'quarrel':u.kind==='hunter'?'javelin':['dragon','emberdrake','flametower'].includes(u.kind)||u.kind==='hero'&&u.heroClass===1?'fire':['frosttower','spectralwyrm','shaman'].includes(u.kind)||u.kind==='hero'&&!u.heroClass?'frost':['druid','grovewyrm'].includes(u.kind)?'nature':u.kind==='necromancer'?'shadow':unitType(u).attack==='magic'?'arcane':'arrow';
+  const projectileArt=u=>['catapult','trebuchet','siegecreep'].includes(u.kind)?'stone':u.kind==='ballista'?'ballista':u.kind==='bonearcher'?'quarrel':u.kind==='hunter'?'javelin':['dragon','emberdrake','flametower'].includes(u.kind)||u.kind==='hero'&&u.heroClass===1?'fire':['frosttower','spectralwyrm','shaman'].includes(u.kind)||u.kind==='hero'&&!u.heroClass?'frost':['druid','grovewyrm'].includes(u.kind)?'nature':u.kind==='necromancer'?'shadow':unitType(u).attack==='magic'?'arcane':'arrow';
   const canAttack=(a,b)=>!a.inside&&!b.inside&&unitType(a).damage>0&&(!types[b.kind].flying||unitType(a).antiAir);
-  const canDeny=(s,team,u)=>s.mode==='moba'&&u.team===team&&u.kind==='creep'&&!u.inside&&u.hp>0&&u.hp<=u.maxHp*.5;
+  const canControl=(s,team,u)=>u.team===team&&(s.mode!=='moba'||u.kind==='hero'||u.summoned===true);
+  const canDeny=(s,team,u)=>s.mode==='moba'&&u.team===team&&!!types[u.kind].laneCreep&&!u.inside&&u.hp>0&&u.hp<=u.maxHp*.5;
   const canTarget=(s,a,b)=>b.hp>0&&canAttack(a,b)&&(a.team!==b.team||canDeny(s,a.team,b)&&(a.source??a.id)!==b.id);
   const damageTable={normal:{fortified:.5},pierce:{light:1.35,heavy:.75,fortified:.35},siege:{light:.65,medium:.65,heavy:.65,hero:.5,fortified:3},magic:{heavy:1.5,fortified:.5}};
   const weaponDamage=(a,b,value)=>value*(damageTable[unitType(a).attack]?.[unitType(b).armor]??1);
   const questNames=['Clear the three Frostfang scouts','Recover the relic from the ruined shrine','Defeat the Frostbound sovereign','Return to the sanctuary'];
-  const trainable=(s,u)=>!s.teams[u.team]?[]:u.kind==='hall'?['worker']:u.kind==='altar'?['hero',flyers[s.teams[u.team].faction]]:u.kind==='barracks'?armies[s.teams[u.team].faction].units:u.kind==='workshop'?[siege[s.teams[u.team].faction]]:[];
+  const trainable=(s,u)=>s.mode==='moba'||!s.teams[u.team]?[]:u.kind==='hall'?['worker']:u.kind==='altar'?['hero',flyers[s.teams[u.team].faction]]:u.kind==='barracks'?armies[s.teams[u.team].faction].units:u.kind==='workshop'?[siege[s.teams[u.team].faction]]:[];
   const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
   const clone = v => JSON.parse(JSON.stringify(v));
   const cell = (x,z) => [clamp(Math.floor((x+32)/2),0,31),clamp(Math.floor((z+32)/2),0,31)];
@@ -124,7 +127,7 @@ var Frost = (() => {
     map.regions=[{name:'Highland outpost',x:5,z:-5,width:8,height:8}];return validateMap(map);
   }
   function defaultMap(mode='skirmish') {
-    const map={version:1,name:mode==='moba'?'Ancients of the Vale':mode==='td'?'Serpentine Watch':'Winterfall Basin',mode,terrain:Array(1024).fill(0),heights:Array(1024).fill(0),ramps:Array(1024).fill(0),props:[],spawns:[[-23,23],[23,-23]],startingGold:mode==='td'?650:500,waveInterval:mode==='td'?18:24,waves:12};
+    const map={version:1,name:mode==='moba'?'Ancients of the Vale':mode==='td'?'Serpentine Watch':'Winterfall Basin',mode,terrain:Array(1024).fill(0),heights:Array(1024).fill(0),ramps:Array(1024).fill(0),props:[],spawns:[[-23,23],[23,-23]],startingGold:mode==='td'?650:500,waveInterval:mode==='td'?18:mode==='moba'?30:24,waves:12};
     for(let z=0;z<32;z++)for(let x=0;x<32;x++)if((x<2||x>29||z<2||z>29)&&((x+z)%5!==0))map.terrain[z*32+x]=1;
     if(mode==='skirmish'){
       for(let z=4;z<28;z++)if(z<13||z>18){const center=15.5+1.1*Math.sin((z-15.5)*.36),width=1.05+.25*Math.cos((z-15.5)*.63);for(let x=13;x<=18;x++)if(Math.abs(x-center)<=width)map.terrain[z*32+x]=1;}
@@ -133,6 +136,7 @@ var Frost = (() => {
     if(mode==='moba')for(let z=3;z<29;z++)for(let x=3;x<29;x++)if(map.terrain[z*32+x]===0&&[0,1,2].some(lane=>{const route=lanePath(0,lane);return route.slice(1).some((p,i)=>segmentDistance(x*2-31,z*2-31,route[i],p)<1.8);}))map.terrain[z*32+x]=2;
     for(const team of [0,1]){const [x,z]=map.spawns[team];map.props.push({kind:'mine',x:x+(team?-6:6),z,amount:9000});for(let i=0;i<8;i++)map.props.push({kind:'tree',x:x+(team?-1:1)*(2+i%4*2),z:z+(team?1:-1)*(6+Math.floor(i/4)*2),amount:600});}
     for(let i=0;i<24;i++){const x=((i*17)%50)-25,z=((i*29)%48)-24;if(Math.hypot(x,z)>12&&map.spawns.every(p=>Math.hypot(p[0]-x,p[1]-z)>12))map.props.push({kind:'tree',x,z,amount:600});}
+    if(mode==='moba')map.props=map.props.filter(p=>p.kind!=='mine'&&[0,1,2].every(lane=>{const route=lanePath(0,lane);return route.slice(1).every((v,i)=>segmentDistance(p.x,p.z,route[i],v)>3.5);}));
     map.players=[{faction:0,ai:false},{faction:1,ai:true}];map.units=[];map.triggers=[];map.regions=[];
     if(mode==='rpg'){
       map.name='The Shattered Covenant';map.startingGold=180;map.props=map.props.filter(p=>p.kind==='tree');
@@ -147,7 +151,7 @@ var Frost = (() => {
     const point=p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&Math.abs(v)<=27);
     if(!Array.isArray(raw.spawns)||raw.spawns.length!==2||!raw.spawns.every(point)||Math.hypot(raw.spawns[0][0]-raw.spawns[1][0],raw.spawns[0][1]-raw.spawns[1][1])<20)throw Error('Two separated spawn points are required');
     if(!Array.isArray(raw.props)||raw.props.length>100||raw.props.some(p=>!p||!['tree','mine','camp'].includes(p.kind)||!Number.isFinite(p.x)||!Number.isFinite(p.z)||Math.abs(p.x)>29||Math.abs(p.z)>29))throw Error('Invalid map objects');
-    const map={version:1,name:Array.from(String(raw.name||'Custom battlefield')).slice(0,40).join(''),mode:raw.mode,terrain:[...raw.terrain],heights:raw.heights?[...raw.heights]:Array(1024).fill(0),ramps:raw.ramps?[...raw.ramps]:Array(1024).fill(0),spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
+    const map={version:1,name:Array.from(String(raw.name||'Custom battlefield')).slice(0,40).join(''),mode:raw.mode,terrain:[...raw.terrain],heights:raw.heights?[...raw.heights]:Array(1024).fill(0),ramps:raw.ramps?[...raw.ramps]:Array(1024).fill(0),spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:raw.mode==='moba'?30:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
     const at=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<=27&&Math.abs(p.z)<=27;
     if(raw.players!==undefined&&(!Array.isArray(raw.players)||raw.players.length!==2||raw.players.some(p=>!p||!Number.isInteger(p.faction)||p.faction<0||p.faction>3||typeof p.ai!=='boolean'||p.heroClass!==undefined&&!validHero(p.heroClass))))throw Error('Invalid player settings');
     map.players=clone(raw.players||[{faction:0,ai:false},{faction:1,ai:true}]);for(const p of map.players)p.heroClass??=0;
@@ -182,7 +186,7 @@ var Frost = (() => {
   function siegeMap(){const map=defaultMap();map.name='Siege of Winterfall';map.startingGold=1500;map.units=[{kind:'ballista',team:0,x:-17,z:13},{kind:'trebuchet',team:0,x:-22,z:12},{kind:'catapult',team:0,x:-25,z:17},{kind:'ram',team:0,x:-13,z:18},{kind:'workshop',team:0,x:-10,z:26},{kind:'farm',team:0,x:-27,z:27},{kind:'farm',team:0,x:-27,z:8},{kind:'dragon',team:0,x:-15,z:9},{kind:'archer',team:1,x:-6,z:2},{kind:'tower',team:1,x:-8,z:0},{kind:'tower',team:1,x:0,z:0}];return map;}
   function spawn(s,kind,team,x,z,extra={}) {
     if(s.units.length>=LIMIT)return null;
-    const heroClass=kind==='hero'?(extra.heroClass??s.teams[team]?.heroClass??0):0,d=kind==='hero'?heroes[heroClass]:types[kind],f=s.teams[team]?.faction||0,hp=d.hp*(f===1?1.12:1),speed=d.speed*(f===2?1.12:1);
+    const heroClass=kind==='hero'?(extra.heroClass??s.teams[team]?.heroClass??0):0,d=kind==='hero'?heroes[heroClass]:types[kind],f=s.mode==='moba'?0:s.teams[team]?.faction||0,hp=d.hp*(f===1?1.12:1),speed=d.speed*(f===2?1.12:1);
     const u={id:++s.serial,kind,team,x,z,hp,maxHp:hp,damage:d.damage*(f===3?1.1:1),speed,cd:0,order:null,waypoints:[],path:[],pathAt:-100,built:1,queue:[],level:1,xp:0,mana:150,spell:[0,0,0,0],inventory:[],cargo:0,respawn:0,...(kind==='worker'?{gatherCd:0}:{}),...(kind==='hero'?{heroClass,skills:[0,0,0,0],skillPoints:1,itemCooldown:0}:{}),...extra};s.units.push(u);return u;
   }
   function create(mode='skirmish',options={}) {
@@ -206,6 +210,17 @@ var Frost = (() => {
     s.projectiles=[];s.projectileSerial=0;visibility(s);return s;
   }
   function lanePath(team,lane){const paths=[[[-23,23],[-24,7],[-24,-18],[-7,-24],[23,-23]],[[-23,23],[-13,13],[-5,5],[5,-5],[13,-13],[23,-23]],[[-23,23],[-7,24],[18,24],[24,7],[23,-23]]];return team?[...paths[lane]].reverse():paths[lane];}
+  function spawnLaneWave(s){
+    const roster=['creep','creep','creep','rangedcreep',...((s.wave+1)%7===0?['siegecreep']:[])],planned=[];
+    if(s.units.length+roster.length*6>LIMIT)return false;
+    for(let team=0;team<2;team++)for(let lane=0;lane<3;lane++){
+      const route=lanePath(team,lane),[x,z]=route[0],dx=route[1][0]-x,dz=route[1][1]-z,d=Math.hypot(dx,dz),fx=dx/d,fz=dz/d;
+      const members=roster.map((kind,i)=>({id:s.serial+planned.length+i+1,kind,team,x:x+fx*7.6,z:z+fz*7.6,hp:types[kind].hp,speed:types[kind].speed,route,waypoint:1,lane}));
+      const slots=formation({...s,units:[...s.units,...planned]},members,x+fx*8.6,z+fz*8.6);if(!slots||[...slots.values()].some(([px,pz])=>Math.hypot(px-x-fx*8.6,pz-z-fz*8.6)>6||solid(s,px,pz)))return false;
+      for(const u of members){[u.x,u.z]=slots.get(u.id);planned.push(u);}
+    }
+    for(const u of planned)spawn(s,u.kind,u.team,u.x,u.z,{route:u.route,waypoint:1,lane:u.lane});return true;
+  }
   const tdPath=[[-25,-24],[23,-24],[23,-8],[-21,-8],[-21,7],[20,7],[20,20],[-23,23]];
   function solid(s,x,z,ignore=0,team=-1){if(Math.abs(x)>30||Math.abs(z)>30||s.map.terrain[index(x,z)]===1)return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
   const navigationCache=new WeakMap();
@@ -318,7 +333,8 @@ var Frost = (() => {
   function command(s,team,c){
     if(s.winner!==null||!c||![0,1].includes(team))return 'Match is finished';
     if(c.append!==undefined&&typeof c.append!=='boolean'||c.append&&!['move','attackMove','build','construct','repair','gather'].includes(c.type))return 'Only movement and worker jobs can be queued';
-    const own=s.units.filter(u=>u.team===team&&u.hp>0&&(!u.inside||c.append&&u.kind==='worker'&&!u.consumed)&&Array.isArray(c.ids)&&c.ids.slice(0,40).includes(u.id)),u=own[0],point=Number.isFinite(c.x)&&Number.isFinite(c.z)&&Math.abs(c.x)<=30&&Math.abs(c.z)<=30;
+    const own=s.units.filter(u=>canControl(s,team,u)&&u.hp>0&&(!u.inside||c.append&&u.kind==='worker'&&!u.consumed)&&Array.isArray(c.ids)&&c.ids.slice(0,40).includes(u.id)),u=own[0],point=Number.isFinite(c.x)&&Number.isFinite(c.z)&&Math.abs(c.x)<=30&&Math.abs(c.z)<=30;
+    if(s.mode==='moba'&&!own.length)return 'Control your hero or summoned units';
     if(['move','attackMove','patrol','hold','attack','gather','stop'].includes(c.type)){
       if(['move','attackMove','patrol'].includes(c.type)&&!point)return 'Invalid destination';
       const target=s.units.find(v=>v.id===c.target&&v.hp>0);if(c.type==='attack'&&(!target||!isVisible(s,team,target)))return 'Target is not visible';
@@ -521,16 +537,16 @@ var Frost = (() => {
       if(s.frame>200)for(const u of us.filter(u=>u.speed&&u.kind!=='worker'&&!u.order))u.order={type:'attackMove',x:foe[0],z:foe[1]};
     }
     for(const h of us.filter(u=>u.kind==='hero')){for(let n=0;n<10&&h.skillPoints;n++){const slot=[3,0,1,2].find(i=>h.skills[i]<(i===3?1:3)&&h.level>=(i===3?6:h.skills[i]*2+1));if(slot===undefined)break;command(s,t,{type:'learn',ids:[h.id],slot});}if(s.mode==='moba'&&!h.order)h.order={type:'attackMove',x:foe[0],z:foe[1]};const e=s.units.find(u=>u.team!==t&&u.hp>0&&isVisible(s,t,u)&&distance(u,h)<9);if(e)for(const slot of [3,0,1,2]){const spell=unitType(h).spells[slot],self=['heal','shield','haste','avatar'].includes(spell.kind),target=self?h:e;if(spell.kind==='heal'&&h.hp>h.maxHp*.75)continue;command(s,t,{type:'spell',ids:[h.id],slot,x:target.x,z:target.z});}}
-    if(team.faction===3)for(const u of us)u.hp=Math.min(u.maxHp,u.hp+2);
+    if(s.mode!=='moba'&&team.faction===3)for(const u of us)u.hp=Math.min(u.maxHp,u.hp+2);
   }
   function tick(s){
     s.corpses=s.corpses.filter(c=>(c.age+=DT)<CORPSE_LIFETIME);
     if(s.winner!==null)return;simulating.add(s);s.frame++;s.events=s.pendingEvents||[];s.pendingEvents=[];
     for(const t of s.teams)if(t.research>0){t.research=Math.max(0,t.research-DT);if(t.research===0)t.tier++;}
-    if((s.mode==='moba'||s.mode==='td')&&s.frame>=s.nextWave&&(s.mode!=='td'||s.units.length+s.tdPending.length+5+(s.wave+1)*2<=LIMIT)){
+    if(s.mode==='moba'&&s.frame>=s.nextWave&&spawnLaneWave(s)){s.wave++;s.nextWave=s.frame+Math.round(s.map.waveInterval/DT);}
+    if(s.mode==='td'&&s.frame>=s.nextWave&&s.units.length+s.tdPending.length+5+(s.wave+1)*2<=LIMIT){
       s.wave++;s.nextWave=s.frame+Math.round(s.map.waveInterval/DT);
-      if(s.mode==='moba')for(let t=0;t<2;t++)for(let lane=0;lane<3;lane++)for(let i=0;i<3;i++){const route=lanePath(t,lane),p=route[0];spawn(s,'creep',t,p[0]+i*.7,p[1],{route,waypoint:1,lane});}
-      else if(s.wave<=s.map.waves)for(let i=0;i<5+s.wave*2;i++){const boss=s.wave%4===0&&i===0,hp=(100+s.wave*40)*(boss?5:s.wave%3===2?1.4:1);s.tdPending.push({hp,speed:(3+s.wave*.12)*(s.wave%3===0?1.45:1),tdBoss:boss});}
+      if(s.wave<=s.map.waves)for(let i=0;i<5+s.wave*2;i++){const boss=s.wave%4===0&&i===0,hp=(100+s.wave*40)*(boss?5:s.wave%3===2?1.4:1);s.tdPending.push({hp,speed:(3+s.wave*.12)*(s.wave%3===0?1.45:1),tdBoss:boss});}
     }
     if(s.mode==='td'&&s.tdPending.length&&s.units.length<LIMIT&&!solid(s,...tdPath[0])&&s.units.every(u=>u.hp<=0||u.inside||types[u.kind].flying||!types[u.kind].speed||Math.hypot(u.x-tdPath[0][0],u.z-tdPath[0][1])>=movementRadius(u)+.55)){const next=s.tdPending.shift();spawn(s,'creep',1,...tdPath[0],{...next,maxHp:next.hp,route:tdPath,waypoint:1,td:true});}
     if(s.frame%40===0)for(let t=0;t<2;t++)if(s.teams[t].ai)ai(s,t);
@@ -646,7 +662,7 @@ var Frost = (() => {
       if(u.yaw!==undefined&&(!finite(u.yaw)||Math.abs(u.yaw)>Math.PI))throw Error('Invalid saved facing');
       if(u.castYaw!==undefined&&(u.kind!=='hero'||!finite(u.castYaw)||Math.abs(u.castYaw)>Math.PI))throw Error('Invalid saved cast direction');
       if(u.summoned&&(!Number.isSafeInteger(u.expires)||u.expires<0))throw Error('Invalid saved summon');
-      if(u.rally!==undefined&&(!u.rally||![u.rally.x,u.rally.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30)||u.team<0||!trainable(s,u).length))throw Error('Invalid saved rally');
+      if(u.rally!==undefined&&(!u.rally||![u.rally.x,u.rally.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30)||u.team<0||!trainable(s.mode==='moba'?{...s,mode:'skirmish'}:s,u).length))throw Error('Invalid saved rally');
       if(u.queue.length&&(u.team<0||u.queue.some(q=>!trainable(s,u).includes(q.kind))))throw Error('Invalid saved production');
     }
     for(const u of s.units){
@@ -664,6 +680,6 @@ var Frost = (() => {
     for(const t of s.teams){t.tier??=1;t.research??=0;t.heroClass??=0;if(!validHero(t.heroClass)||!Number.isInteger(t.tier)||t.tier<1||t.tier>3||!Number.isFinite(t.research)||t.research<0||t.research>40)throw Error('Invalid saved technology');}s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
   function publicState(s,team){const state=clone(s);state.corpses=s.corpses.filter(c=>c.team===team||s.visible[team][index(c.x,c.z)]).map(({id,kind,heroClass,team,x,y,z,yaw,age,boss,large})=>({id,kind,heroClass,team,x,y,z,yaw,age,boss,large}));state.projectiles=s.projectiles.filter(p=>s.visible[team][index(p.x,p.z)]).map(({id,x,y,z,vx,vy,vz,team,art})=>({id,x,y,z,vx,vy,vz,team,art}));delete state.projectileSerial;delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]&&(e.fromX===undefined||s.visible[team][index(e.fromX,e.fromZ)]));state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,canAttack,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  return {DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

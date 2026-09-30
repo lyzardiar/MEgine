@@ -3082,114 +3082,6 @@
   ],
   "props": [
     {
-      "kind": "mine",
-      "x": -17,
-      "z": 23,
-      "amount": 9000
-    },
-    {
-      "kind": "tree",
-      "x": -21,
-      "z": 17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -19,
-      "z": 17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -17,
-      "z": 17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -15,
-      "z": 17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -21,
-      "z": 15,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -19,
-      "z": 15,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -17,
-      "z": 15,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -15,
-      "z": 15,
-      "amount": 600
-    },
-    {
-      "kind": "mine",
-      "x": 17,
-      "z": -23,
-      "amount": 9000
-    },
-    {
-      "kind": "tree",
-      "x": 21,
-      "z": -17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 19,
-      "z": -17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 17,
-      "z": -17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 15,
-      "z": -17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 21,
-      "z": -15,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 19,
-      "z": -15,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 17,
-      "z": -15,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 15,
-      "z": -15,
-      "amount": 600
-    },
-    {
       "kind": "tree",
       "x": -25,
       "z": -24,
@@ -3199,18 +3091,6 @@
       "kind": "tree",
       "x": 9,
       "z": -14,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 10,
-      "z": -23,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -23,
-      "z": 6,
       "amount": 600
     },
     {
@@ -3227,26 +3107,8 @@
     },
     {
       "kind": "tree",
-      "x": -22,
-      "z": -3,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -5,
-      "z": -22,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
       "x": 12,
       "z": 7,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -21,
-      "z": -12,
       "amount": 600
     },
     {
@@ -3259,18 +3121,6 @@
       "kind": "tree",
       "x": 13,
       "z": -2,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -20,
-      "z": -21,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 14,
-      "z": -11,
       "amount": 600
     },
     {
@@ -3297,7 +3147,7 @@
     ]
   ],
   "startingGold": 500,
-  "waveInterval": 24,
+  "waveInterval": 30,
   "waves": 12,
   "players": [
     {

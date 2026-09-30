@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "lanes": {
+    "fixture": "Default MOBA map, AI disabled and wave counter starts at six to exercise the seventh siege wave.",
+    "wave": 7,
+    "units": 30,
+    "inspection": true,
+    "systemActionsHidden": true,
+    "systemCommandRejected": true,
+    "heroControl": true,
+    "saveRestore": true,
+    "movement": true,
+    "realisticMeshes": 3,
+    "shaderRejections": 0
+  }
+}
