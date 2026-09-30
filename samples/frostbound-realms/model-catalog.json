@@ -3564,5 +3564,44 @@
     ],
     "realistic": true,
     "attackEvent": 0.48
+  },
+  "RealTreant": {
+    "material": "Assets/Materials/RealTreant.mmat",
+    "parts": [
+      {
+        "name": "RealTreant",
+        "mesh": "Assets/Models/RealTreant.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 18
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Attack",
+        "frames": 12
+      },
+      {
+        "name": "Death",
+        "frames": 20
+      }
+    ],
+    "size": [
+      5.242491896549902,
+      4.2,
+      2.81224709198658
+    ],
+    "realistic": true,
+    "attackEvent": 0.5
   }
 }

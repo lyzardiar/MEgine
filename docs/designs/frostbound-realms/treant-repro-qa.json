@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "generatedFiles": 5,
+  "byteIdentical": true,
+  "generator": "scripts/import-frost-treant.py",
+  "files": [
+    {
+      "file": "Assets/Textures/RealTreant_base.png",
+      "sha256": "eca5a1c12f458a6b684bcd9fb650a5861445adcb013c4023f51a07e01414f2dc"
+    },
+    {
+      "file": "Assets/Textures/RealTreant_normal.png",
+      "sha256": "3f971dbad5163ca7ff8b2d5d14482b0d992574f5c3c2748c0c37323847624fe0"
+    },
+    {
+      "file": "Assets/Textures/RealTreant_arm.png",
+      "sha256": "b56279b36aaec56ca55422c2a2fbd82a494fb5e841d58591b9a29e7218350e64"
+    },
+    {
+      "file": "Assets/Models/RealTreant.glb",
+      "sha256": "65267ef386332de25244e1e09158dcdc29c4ef80af8e141c0ca7c9e11e97c1ff"
+    },
+    {
+      "file": "Assets/Materials/RealTreant.mmat",
+      "sha256": "c47728d28ef34cb8311856deea898500d3b29227fa3d888d7d8251697ea35658"
+    }
+  ]
+}

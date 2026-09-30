@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "da43a9f71752cdb7a81ed1769bcbb45b9de37bfc331059c8e487cf446e83a0f7",
+  "sha256": "7fbc6d2b2f142d2f23730be57b590e9eddbf620e7e1f8c063201a709a42a9588",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -367,6 +367,25 @@
       }
     },
     {
+      "name": "RealTreant",
+      "mesh": "Assets/Models/RealTreant.glb#pose=0:4",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.4092276096343994,
+          4.238110065460205,
+          1.287951111793518
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:4",
+        "min": [
+          -2.5727486610412598,
+          -0.010465754196047783,
+          -1.4315032958984375
+        ],
+        "vertices": 11325
+      }
+    },
+    {
       "name": "RealTrebuchet",
       "mesh": "Assets/Models/RealTrebuchet.glb#pose=0:4",
       "material": "Assets/Materials/RealTrebuchet.mmat",
@@ -497,25 +516,6 @@
           -0.5844882726669312
         ],
         "vertices": 4792
-      }
-    },
-    {
-      "name": "Warrior",
-      "mesh": "Assets/Models/Warrior.glb#pose=1:4",
-      "material": "Assets/Materials/Warrior.mmat",
-      "bounds": {
-        "max": [
-          0.6853940486907959,
-          2.9066290855407715,
-          1.8375027179718018
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Warrior.glb#pose=1:4",
-        "min": [
-          -0.7124035358428955,
-          -0.00464058481156826,
-          -0.6459696888923645
-        ],
-        "vertices": 5846
       }
     },
     {

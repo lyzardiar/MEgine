@@ -1,0 +1,15 @@
+Entangled Roots / RealTreant
+Model and textures: piacenti (https://opengameart.org/users/piacenti)
+Animations: mysterymagination (https://opengameart.org/users/mysterymagination)
+Original concept Alraune Rootling: Misha
+https://opengameart.org/content/entangled-roots
+https://opengameart.org/content/entangled-roots-with-animations
+https://opengameart.org/content/alraune-rootling
+Creative Commons Attribution 3.0 Unported (CC-BY-3.0)
+https://creativecommons.org/licenses/by/3.0/
+MEngine adaptations: recovered original packed textures, joined body and mask,
+bound three unweighted vertices to their nearest surface, normalized four-bone
+weights, 2048x1024 texture atlases, resized rig and GLB export.
+Derived files: Assets/Models/RealTreant.glb, Assets/Textures/RealTreant_*.png,
+Assets/Materials/RealTreant.mmat and the RealTreant unit portrait.
+Source URLs and hashes: treant-sources.json. Generator: scripts/import-frost-treant.py.

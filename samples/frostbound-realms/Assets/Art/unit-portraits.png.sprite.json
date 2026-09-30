@@ -251,7 +251,7 @@
       ]
     },
     {
-      "name": "RealTrebuchet",
+      "name": "RealTreant",
       "rect": [
         256,
         768,
@@ -264,7 +264,7 @@
       ]
     },
     {
-      "name": "RealWolf",
+      "name": "RealTrebuchet",
       "rect": [
         512,
         768,
@@ -277,9 +277,22 @@
       ]
     },
     {
-      "name": "RealWorker",
+      "name": "RealWolf",
       "rect": [
         768,
+        768,
+        256,
+        256
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "RealWorker",
+      "rect": [
+        1024,
         768,
         256,
         256
@@ -292,7 +305,7 @@
     {
       "name": "Rogue",
       "rect": [
-        1024,
+        1280,
         768,
         256,
         256
@@ -305,19 +318,6 @@
     {
       "name": "Skeleton_Mage",
       "rect": [
-        1280,
-        768,
-        256,
-        256
-      ],
-      "pivot": [
-        0.5,
-        0.5
-      ]
-    },
-    {
-      "name": "Skeleton_Rogue",
-      "rect": [
         0,
         1024,
         256,
@@ -329,7 +329,7 @@
       ]
     },
     {
-      "name": "Tribal",
+      "name": "Skeleton_Rogue",
       "rect": [
         256,
         1024,
@@ -342,7 +342,7 @@
       ]
     },
     {
-      "name": "Warrior",
+      "name": "Tribal",
       "rect": [
         512,
         1024,

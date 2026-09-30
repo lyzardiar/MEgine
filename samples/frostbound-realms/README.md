@@ -161,3 +161,5 @@ node scripts/qa-frostbound.mjs
 王国圣骑士与黎明圣骑士英雄采用 0 A.D. 铠甲、披风、圆盾和钉锤模块，英雄具有随技能冷却同步的举锤施法动作，主菜单和选择头像同步使用实际模型。37 个源文件、10 个派生文件哈希见 `paladin-sources.json`，许可位于 `Assets/Licenses/0ad-paladins.txt`；[圣骑士美术记录](../../docs/designs/frostbound-realms/paladin-art.md) 包含动作图和实机施法存档验证。
 
 野外守卫采用 0 A.D. 写实灰狼，RPG 终点守卫采用棕熊，包含待机、行走、攻击和死亡动画。`wildlife-sources.json` 保存 20 个来源与 10 个生成文件的哈希，许可随 Player 分发；模型与 28 格实际头像、存档和尸体表现一致。重建命令与原生验收见 [野外守卫美术记录](../../docs/designs/frostbound-realms/wildlife-art.md)。
+
+自然族树人使用 OpenGameArt 的 Entangled Roots，具备木纹材质、待机/行走/挥爪/死亡动画和实际模型头像。模型、动画及概念分别署名 piacenti、mysterymagination、Misha，遵循 CC-BY 3.0；两份原始 Blender 文件及派生资源哈希记录于 `treant-sources.json`，署名随 Player 分发。重建与原生验收见 [树人美术记录](../../docs/designs/frostbound-realms/treant-art.md)。

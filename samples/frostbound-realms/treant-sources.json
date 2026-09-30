@@ -1,0 +1,75 @@
+{
+  "license": "CC-BY-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "authors": [
+    "piacenti",
+    "mysterymagination",
+    "Misha"
+  ],
+  "generator": "scripts/import-frost-treant.py",
+  "sources": [
+    {
+      "file": "SourceAssets/treant/reapertreant.blend",
+      "url": "https://opengameart.org/sites/default/files/reapertreant.blend",
+      "sha256": "3c10b829a83c8d16ec834285cc5d93f3640104ed3296d604136fdbcce336245e",
+      "bytes": 15927296
+    },
+    {
+      "file": "SourceAssets/treant/tree-man-game.blend",
+      "url": "https://opengameart.org/sites/default/files/tree%20man%20game.blend",
+      "sha256": "78b3a3ba05fc8d5de600ce01f1f4ecd0cb11ca3d7c9c7a6a86a8c62fb589b04f",
+      "bytes": 24353656
+    }
+  ],
+  "models": {
+    "RealTreant": {
+      "triangles": 11152,
+      "bones": 15,
+      "size": [
+        5.242491896549902,
+        4.2,
+        2.81224709198658
+      ],
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 18
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Attack",
+          "frames": 12
+        },
+        {
+          "name": "Death",
+          "frames": 20
+        }
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealTreant_base.png",
+      "sha256": "eca5a1c12f458a6b684bcd9fb650a5861445adcb013c4023f51a07e01414f2dc"
+    },
+    {
+      "file": "Assets/Textures/RealTreant_normal.png",
+      "sha256": "3f971dbad5163ca7ff8b2d5d14482b0d992574f5c3c2748c0c37323847624fe0"
+    },
+    {
+      "file": "Assets/Textures/RealTreant_arm.png",
+      "sha256": "b56279b36aaec56ca55422c2a2fbd82a494fb5e841d58591b9a29e7218350e64"
+    },
+    {
+      "file": "Assets/Models/RealTreant.glb",
+      "sha256": "65267ef386332de25244e1e09158dcdc29c4ef80af8e141c0ca7c9e11e97c1ff"
+    },
+    {
+      "file": "Assets/Materials/RealTreant.mmat",
+      "sha256": "c47728d28ef34cb8311856deea898500d3b29227fa3d888d7d8251697ea35658"
+    }
+  ]
+}

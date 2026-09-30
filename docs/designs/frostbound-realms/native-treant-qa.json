@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "treant": {
+    "fixture": "Flat field, controlled Wildwood tree creature, stationary 80 HP opposing tree creature and passive hero.",
+    "selectionAndPortrait": true,
+    "movement": true,
+    "clawAttack": true,
+    "saveRestore": true,
+    "authoredDeath": true,
+    "shaderRejections": 0
+  }
+}

@@ -1,0 +1,1049 @@
+{
+  "passed": true,
+  "sourceFiles": 2,
+  "generatedFiles": 5,
+  "triangles": 11152,
+  "bones": 15,
+  "nativePoseSamples": 70,
+  "movingWeightedBones": {
+    "Idle": [
+      "Left Elbow",
+      "Left Shoulder",
+      "Neck",
+      "Right Elbow",
+      "Right Shoulder"
+    ],
+    "Walk": [
+      "Left Ankle",
+      "Left Hip",
+      "Left Knee",
+      "Left Shoulder",
+      "Neck",
+      "Right Ankle",
+      "Right Hip",
+      "Right Shoulder"
+    ],
+    "Attack": [
+      "Right Elbow",
+      "Right Shoulder",
+      "Right Wrist"
+    ],
+    "Death": [
+      "Left Elbow",
+      "Left Hip",
+      "Left Shoulder",
+      "Left Wrist",
+      "Neck",
+      "Right Elbow",
+      "Right Hip",
+      "Right Shoulder",
+      "Spine Base",
+      "Spine Upper"
+    ]
+  },
+  "textures": {
+    "base_color_texture": {
+      "size": [
+        2048,
+        1024
+      ],
+      "sha256": "eca5a1c12f458a6b684bcd9fb650a5861445adcb013c4023f51a07e01414f2dc"
+    },
+    "normal_texture": {
+      "size": [
+        2048,
+        1024
+      ],
+      "sha256": "3f971dbad5163ca7ff8b2d5d14482b0d992574f5c3c2748c0c37323847624fe0"
+    },
+    "metallic_roughness_texture": {
+      "size": [
+        2048,
+        1024
+      ],
+      "sha256": "b56279b36aaec56ca55422c2a2fbd82a494fb5e841d58591b9a29e7218350e64"
+    }
+  },
+  "bounds": [
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:0",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.584988832473755,
+        4.237582683563232,
+        1.2876907587051392
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:1",
+      "min": [
+        -2.567760467529297,
+        -0.010465754196047783,
+        -1.4315035343170166
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.5341076850891113,
+        4.2392659187316895,
+        1.2877970933914185
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:2",
+      "min": [
+        -2.5714547634124756,
+        -0.010465754196047783,
+        -1.4315035343170166
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.4630773067474365,
+        4.2363176345825195,
+        1.2879035472869873
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:3",
+      "min": [
+        -2.57360577583313,
+        -0.010465754196047783,
+        -1.4315032958984375
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.4092276096343994,
+        4.238110065460205,
+        1.287951111793518
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:4",
+      "min": [
+        -2.5727486610412598,
+        -0.010465754196047783,
+        -1.4315032958984375
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.4024407863616943,
+        4.25682258605957,
+        1.287882924079895
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:5",
+      "min": [
+        -2.5700507164001465,
+        -0.010465754196047783,
+        -1.4315036535263062
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.398963451385498,
+        4.263852119445801,
+        1.2876423597335815
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:6",
+      "min": [
+        -2.5684773921966553,
+        -0.010465754196047783,
+        -1.4315032958984375
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.4024410247802734,
+        4.243713855743408,
+        1.2873961925506592
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:7",
+      "min": [
+        -2.5700502395629883,
+        -0.010465754196047783,
+        -1.4315032958984375
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.4092278480529785,
+        4.239388465881348,
+        1.2873210906982422
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:8",
+      "min": [
+        -2.572748899459839,
+        -0.010465754196047783,
+        -1.4315036535263062
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.4630777835845947,
+        4.205234527587891,
+        1.287373423576355
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:9",
+      "min": [
+        -2.57360577583313,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.534106731414795,
+        4.278528690338135,
+        1.2874903678894043
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:10",
+      "min": [
+        -2.5714547634124756,
+        -0.010465754196047783,
+        -1.4315036535263062
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.584989309310913,
+        4.329475402832031,
+        1.2875975370407104
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:11",
+      "min": [
+        -2.567760467529297,
+        -0.010465754196047783,
+        -1.431503415107727
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.340157508850098,
+        1.2876423597335815
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:12",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.332976341247559,
+        1.2876423597335815
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:13",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.304608345031738,
+        1.2876423597335815
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:14",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.241715908050537,
+        1.287642240524292
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:15",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2066144943237305,
+        1.287642240524292
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:16",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2306694984436035,
+        1.2876423597335815
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:17",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:0",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.6043665409088135,
+        4.235947132110596,
+        1.2833458185195923
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:1",
+      "min": [
+        -2.5657896995544434,
+        -0.058231934905052185,
+        -1.3751544952392578
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.604367971420288,
+        4.2359466552734375,
+        1.2452558279037476
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:2",
+      "min": [
+        -2.5657896995544434,
+        -0.19833922386169434,
+        -1.3751544952392578
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.235947132110596,
+        1.4856202602386475
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:3",
+      "min": [
+        -2.5657896995544434,
+        -0.18907934427261353,
+        -1.3751544952392578
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.6043667793273926,
+        4.2359466552734375,
+        1.5467827320098877
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:4",
+      "min": [
+        -2.5657896995544434,
+        -0.15727293491363525,
+        -1.3751544952392578
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.235947132110596,
+        1.6015510559082031
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:5",
+      "min": [
+        -2.5657896995544434,
+        -0.16679751873016357,
+        -1.3751544952392578
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.6323473453521729
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:6",
+      "min": [
+        -2.5657896995544434,
+        -0.16351422667503357,
+        -1.3751544952392578
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.6043670177459717,
+        4.2359466552734375,
+        1.5878713130950928
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:7",
+      "min": [
+        -2.5657896995544434,
+        -0.13944518566131592,
+        -1.3870744705200195
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.235962390899658,
+        1.52411687374115
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:8",
+      "min": [
+        -2.5657899379730225,
+        -0.13005143404006958,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2363176345825195,
+        1.4208245277404785
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:9",
+      "min": [
+        -2.5657899379730225,
+        -0.13241076469421387,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236371994018555,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:10",
+      "min": [
+        -2.5657896995544434,
+        -0.24990084767341614,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.235788822174072,
+        1.4669233560562134
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:11",
+      "min": [
+        -2.5657899379730225,
+        -0.364603728055954,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.235528945922852,
+        1.5820472240447998
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:12",
+      "min": [
+        -2.565791368484497,
+        -0.44570744037628174,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236048698425293,
+        1.481579303741455
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:13",
+      "min": [
+        -2.5657901763916016,
+        -0.4136815071105957,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.23644495010376,
+        1.572425365447998
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:14",
+      "min": [
+        -2.565789222717285,
+        -0.2874028980731964,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236150741577148,
+        1.5994089841842651
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:15",
+      "min": [
+        -2.5657899379730225,
+        -0.14572393894195557,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.5934157371520996
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:16",
+      "min": [
+        -2.5657896995544434,
+        -0.11706563830375671,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.4626445770263672
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:17",
+      "min": [
+        -2.5657896995544434,
+        -0.1262134462594986,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.220841646194458
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:18",
+      "min": [
+        -2.5657896995544434,
+        -0.10648753494024277,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.2826759815216064
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:19",
+      "min": [
+        -2.5657896995544434,
+        -0.22200191020965576,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:0",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236417770385742,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:1",
+      "min": [
+        -2.6269989013671875,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236172199249268,
+        1.3391520977020264
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:2",
+      "min": [
+        -2.512458086013794,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236113548278809,
+        2.0605154037475586
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:3",
+      "min": [
+        -1.8436665534973145,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236172199249268,
+        2.2483527660369873
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:4",
+      "min": [
+        -1.670454502105713,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236172199249268,
+        2.0529940128326416
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:5",
+      "min": [
+        -1.670454502105713,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236172199249268,
+        1.832098364830017
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:6",
+      "min": [
+        -1.670454502105713,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.23602294921875,
+        1.4461175203323364
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:7",
+      "min": [
+        -1.670454502105713,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.235952854156494,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:8",
+      "min": [
+        -1.7235530614852905,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236435890197754,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:9",
+      "min": [
+        -2.1606130599975586,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:10",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:11",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.2359466552734375,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:0",
+      "min": [
+        -2.5657896995544434,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236204624176025,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:1",
+      "min": [
+        -2.565855026245117,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236444473266602,
+        1.287642478942871
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:2",
+      "min": [
+        -2.5659916400909424,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.60436749458313,
+        4.236169338226318,
+        1.431614637374878
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:3",
+      "min": [
+        -2.5660476684570312,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.604367733001709,
+        4.235897064208984,
+        1.5623334646224976
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:4",
+      "min": [
+        -2.5657899379730225,
+        -0.010465754196047783,
+        -1.431503176689148
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        2.317366600036621,
+        4.240363597869873,
+        1.717783808708191
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:5",
+      "min": [
+        -2.326707363128662,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.926767349243164,
+        4.2539238929748535,
+        1.7893322706222534
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:6",
+      "min": [
+        -1.838691234588623,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        4.397862911224365,
+        1.5200611352920532
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:7",
+      "min": [
+        -1.7996771335601807,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        4.458545684814453,
+        1.5009238719940186
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:8",
+      "min": [
+        -1.7683141231536865,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        4.390109062194824,
+        1.5009238719940186
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:9",
+      "min": [
+        -1.7683141231536865,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        4.325042724609375,
+        1.5009238719940186
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:10",
+      "min": [
+        -1.7683141231536865,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        4.359096050262451,
+        1.5009238719940186
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:11",
+      "min": [
+        -1.7683141231536865,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        4.368173599243164,
+        1.5009238719940186
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:12",
+      "min": [
+        -1.7683141231536865,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        4.248987674713135,
+        1.4778528213500977
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:13",
+      "min": [
+        -1.7683141231536865,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        3.8138699531555176,
+        1.8603118658065796
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:14",
+      "min": [
+        -1.7683143615722656,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        3.4526896476745605,
+        1.9558852910995483
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:15",
+      "min": [
+        -1.7683134078979492,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482115983963013,
+        3.3218634128570557,
+        1.8866922855377197
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:16",
+      "min": [
+        -1.7683141231536865,
+        -0.010465754196047783,
+        -1.3632254600524902
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482117176055908,
+        3.1595282554626465,
+        1.9296534061431885
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:17",
+      "min": [
+        -1.7683138847351074,
+        -0.03551967442035675,
+        -1.3520917892456055
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.6482120752334595,
+        2.855437994003296,
+        1.9979114532470703
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:18",
+      "min": [
+        -1.7683141231536865,
+        -0.11754243075847626,
+        -1.3336057662963867
+      ],
+      "vertices": 11325
+    },
+    {
+      "max": [
+        1.648212194442749,
+        2.5504369735717773,
+        1.7757105827331543
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:19",
+      "min": [
+        -1.7683141231536865,
+        -0.21571585536003113,
+        -1.3896929025650024
+      ],
+      "vertices": 11325
+    }
+  ]
+}

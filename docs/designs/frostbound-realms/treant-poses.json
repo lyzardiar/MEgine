@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/treant-poses.png",
+  "sha256": "d0ba78fa69a2f6e3c90a1a0a313d5f3e967e86c21a45c658ccbfb03f02d5bada",
+  "generator": "scripts/render-frost-unit-icons.mjs --treant-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Idle 0",
+      "mesh": "Assets/Models/RealTreant.glb#pose=0:0",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.60436749458313,
+          4.2359466552734375,
+          1.287642478942871
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:0",
+        "min": [
+          -2.5657896995544434,
+          -0.010465754196047783,
+          -1.431503176689148
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Idle 0.5",
+      "mesh": "Assets/Models/RealTreant.glb#pose=0:9",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.4630777835845947,
+          4.205234527587891,
+          1.287373423576355
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=0:9",
+        "min": [
+          -2.57360577583313,
+          -0.010465754196047783,
+          -1.431503176689148
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Walk 0",
+      "mesh": "Assets/Models/RealTreant.glb#pose=1:0",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.60436749458313,
+          4.2359466552734375,
+          1.287642478942871
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:0",
+        "min": [
+          -2.5657896995544434,
+          -0.010465754196047783,
+          -1.431503176689148
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Walk 0.33",
+      "mesh": "Assets/Models/RealTreant.glb#pose=1:6",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.60436749458313,
+          4.2359466552734375,
+          1.6323473453521729
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:6",
+        "min": [
+          -2.5657896995544434,
+          -0.16351422667503357,
+          -1.3751544952392578
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Walk 0.66",
+      "mesh": "Assets/Models/RealTreant.glb#pose=1:13",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.60436749458313,
+          4.236048698425293,
+          1.481579303741455
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=1:13",
+        "min": [
+          -2.5657901763916016,
+          -0.4136815071105957,
+          -1.431503176689148
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Attack 0",
+      "mesh": "Assets/Models/RealTreant.glb#pose=2:0",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.60436749458313,
+          4.2359466552734375,
+          1.287642478942871
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:0",
+        "min": [
+          -2.5657896995544434,
+          -0.010465754196047783,
+          -1.431503176689148
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Attack 0.5",
+      "mesh": "Assets/Models/RealTreant.glb#pose=2:6",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.60436749458313,
+          4.236172199249268,
+          1.832098364830017
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:6",
+        "min": [
+          -1.670454502105713,
+          -0.010465754196047783,
+          -1.431503176689148
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Attack 0.85",
+      "mesh": "Assets/Models/RealTreant.glb#pose=2:10",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.60436749458313,
+          4.2359466552734375,
+          1.287642478942871
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=2:10",
+        "min": [
+          -2.5657896995544434,
+          -0.010465754196047783,
+          -1.431503176689148
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Death 0",
+      "mesh": "Assets/Models/RealTreant.glb#pose=3:0",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          2.60436749458313,
+          4.2359466552734375,
+          1.287642478942871
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:0",
+        "min": [
+          -2.5657896995544434,
+          -0.010465754196047783,
+          -1.431503176689148
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Death 0.33",
+      "mesh": "Assets/Models/RealTreant.glb#pose=3:6",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          1.926767349243164,
+          4.2539238929748535,
+          1.7893322706222534
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:6",
+        "min": [
+          -1.838691234588623,
+          -0.010465754196047783,
+          -1.3632254600524902
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Death 0.66",
+      "mesh": "Assets/Models/RealTreant.glb#pose=3:13",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          1.6482115983963013,
+          4.248987674713135,
+          1.4778528213500977
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:13",
+        "min": [
+          -1.7683141231536865,
+          -0.010465754196047783,
+          -1.3632254600524902
+        ],
+        "vertices": 11325
+      }
+    },
+    {
+      "name": "Death 0.99",
+      "mesh": "Assets/Models/RealTreant.glb#pose=3:19",
+      "material": "Assets/Materials/RealTreant.mmat",
+      "bounds": {
+        "max": [
+          1.648212194442749,
+          2.5504369735717773,
+          1.7757105827331543
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTreant.glb#pose=3:19",
+        "min": [
+          -1.7683141231536865,
+          -0.21571585536003113,
+          -1.3896929025650024
+        ],
+        "vertices": 11325
+      }
+    }
+  ]
+}
