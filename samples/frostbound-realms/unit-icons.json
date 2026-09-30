@@ -1,29 +1,10 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "ab458dd856ea0ac9aec3efc78000ea53bfcfab08b3c5a98c4e2e2bfbe1401eb6",
+  "sha256": "74d269de0f5006e95bc10ee5d617b73536c39e621b05ec0c39fbfa1af0e594b9",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
   "models": [
-    {
-      "name": "Cleric",
-      "mesh": "Assets/Models/Cleric.glb#pose=1:4",
-      "material": "Assets/Materials/Cleric.mmat",
-      "bounds": {
-        "max": [
-          0.8304426670074463,
-          2.966670036315918,
-          1.2473526000976562
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Cleric.glb#pose=1:4",
-        "min": [
-          -0.8304426670074463,
-          -0.005114101804792881,
-          -1.036761999130249
-        ],
-        "vertices": 6100
-      }
-    },
     {
       "name": "Demon",
       "mesh": "Assets/Models/Demon.glb#pose=3:4",
@@ -215,6 +196,25 @@
       }
     },
     {
+      "name": "RealEmberSage",
+      "mesh": "Assets/Models/RealEmberSage.glb#pose=0:4",
+      "material": "Assets/Materials/RealEmberSage.mmat",
+      "bounds": {
+        "max": [
+          0.6134244203567505,
+          3.4082138538360596,
+          0.3768221139907837
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealEmberSage.glb#pose=0:4",
+        "min": [
+          -0.7834887504577637,
+          -0.20716464519500732,
+          -0.3888741731643677
+        ],
+        "vertices": 1661
+      }
+    },
+    {
       "name": "RealFootman",
       "mesh": "Assets/Models/RealFootman.glb#pose=0:4",
       "material": "Assets/Materials/RealFootman.mmat",
@@ -231,6 +231,25 @@
           -0.5167722702026367
         ],
         "vertices": 1680
+      }
+    },
+    {
+      "name": "RealFrostWarden",
+      "mesh": "Assets/Models/RealFrostWarden.glb#pose=0:4",
+      "material": "Assets/Materials/RealFrostWarden.mmat",
+      "bounds": {
+        "max": [
+          0.5929177403450012,
+          3.4022715091705322,
+          0.3838961124420166
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFrostWarden.glb#pose=0:4",
+        "min": [
+          -0.7499802708625793,
+          -0.21108126640319824,
+          -0.3961750566959381
+        ],
+        "vertices": 1675
       }
     },
     {

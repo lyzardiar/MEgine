@@ -54,12 +54,12 @@ var Frost = (() => {
   for(const kind of ['shaman','druid','necromancer'])types[kind].attack='magic';
   for(const d of Object.values(types))d.antiAir=d.range>4&&d.attack!=='siege';
   const heroes=[
-    {...types.hero,label:'Frost Warden',art:'Cleric',color:[.25,.7,1,1],role:'Control / healing',spells:[
+    {...types.hero,label:'Frost Warden',art:'RealFrostWarden',color:[.25,.7,1,1],role:'Control / healing',spells:[
       {name:'Frost nova',kind:'blast',cost:35,cooldown:5,range:14,radius:5,power:100,growth:45,slow:3,description:'Damage and slow enemies in an area.'},
       {name:'Restoration',kind:'heal',cost:45,cooldown:9,range:14,radius:5,power:200,growth:100,description:'Restore nearby allied units.'},
       {name:'Blink',kind:'blink',cost:30,cooldown:7,range:14,description:'Teleport to clear, visible ground.'},
       {name:'Blizzard',kind:'zone',cost:90,cooldown:25,range:14,radius:6,power:70,duration:5,slow:1.5,description:'Five pulses of frost damage and slow.'}]},
-    {...types.hero,label:'Ember Sage',art:'Wizard',color:[1,.3,.08,1],role:'Area damage / summons',hp:560,damage:30,range:7,attack:'magic',spells:[
+    {...types.hero,label:'Ember Sage',art:'RealEmberSage',color:[1,.3,.08,1],role:'Area damage / summons',hp:560,damage:30,range:7,attack:'magic',spells:[
       {name:'Fireball',kind:'blast',cost:40,cooldown:6,range:14,radius:3,power:130,growth:55,description:'Explode at the target area.'},
       {name:'Ember ward',kind:'shield',cost:45,cooldown:12,range:12,radius:4,power:150,growth:90,duration:6,description:'Absorb damage on nearby allies for six seconds.'},
       {name:'Flame field',kind:'zone',cost:60,cooldown:12,range:14,radius:4,power:35,growth:20,duration:4,description:'Four pulses of fire damage.'},

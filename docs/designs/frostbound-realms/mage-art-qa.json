@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "sourceFiles": 31,
+  "sourceBytes": 5810305,
+  "generatedFiles": 10,
+  "generatedReproducible": true,
+  "models": 114,
+  "portraits": 24,
+  "protocol": 10,
+  "geometryReport": "mage-import-qa.json",
+  "nativeReport": "native-mages-qa.json",
+  "ruleAndTcpSuite": true,
+  "package": {
+    "files": 511,
+    "bytes": 209087616,
+    "contentHash": "afeef861f9f19ae813aff89f75fb643a94ea16ab685dc5faf5ebbc8ede745dfa",
+    "smoke": "player-smoke.json"
+  },
+  "limits": [
+    "Historical robed characters assembled into original mage appearances; not complete Warcraft hero art fidelity",
+    "Other heroes and factions still have mixed art styles",
+    "Physical input, audio listening, cross-machine LAN and standalone Player frame rate are not verified"
+  ]
+}

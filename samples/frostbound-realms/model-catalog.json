@@ -3202,5 +3202,83 @@
       1.7043642141450939
     ],
     "realistic": true
+  },
+  "RealFrostWarden": {
+    "material": "Assets/Materials/RealFrostWarden.mmat",
+    "parts": [
+      {
+        "name": "RealFrostWarden",
+        "mesh": "Assets/Models/RealFrostWarden.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Staff_Attack",
+        "frames": 50
+      },
+      {
+        "name": "Cast",
+        "frames": 50
+      }
+    ],
+    "size": [
+      1.5253017971557807,
+      3.4,
+      2.249643468530424
+    ],
+    "realistic": true,
+    "attackEvent": 0.25
+  },
+  "RealEmberSage": {
+    "material": "Assets/Materials/RealEmberSage.mmat",
+    "parts": [
+      {
+        "name": "RealEmberSage",
+        "mesh": "Assets/Models/RealEmberSage.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Staff_Attack",
+        "frames": 50
+      },
+      {
+        "name": "Cast",
+        "frames": 50
+      }
+    ],
+    "size": [
+      1.603052856918458,
+      3.4,
+      2.208157282305009
+    ],
+    "realistic": true,
+    "attackEvent": 0.25
   }
 }

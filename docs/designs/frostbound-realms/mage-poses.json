@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/mage-poses.png",
+  "sha256": "0526e5c60a277811931ce0f23dd32794aeec1e2d67651bbce32f9053a9eaa773",
+  "generator": "scripts/render-frost-unit-icons.mjs --mage-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
+  "models": [
+    {
+      "name": "RealFrostWarden Idle 0",
+      "mesh": "Assets/Models/RealFrostWarden.glb#pose=0:0",
+      "material": "Assets/Materials/RealFrostWarden.mmat",
+      "bounds": {
+        "max": [
+          0.5930522680282593,
+          3.402827024459839,
+          0.3840290904045105
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFrostWarden.glb#pose=0:0",
+        "min": [
+          -0.7498885989189148,
+          -0.21106624603271484,
+          -0.3920675814151764
+        ],
+        "vertices": 1675
+      }
+    },
+    {
+      "name": "RealFrostWarden Walk 0.5",
+      "mesh": "Assets/Models/RealFrostWarden.glb#pose=1:10",
+      "material": "Assets/Materials/RealFrostWarden.mmat",
+      "bounds": {
+        "max": [
+          0.6318305730819702,
+          3.374101161956787,
+          0.3348567485809326
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFrostWarden.glb#pose=1:10",
+        "min": [
+          -0.5680239200592041,
+          -0.3932480812072754,
+          -1.0642954111099243
+        ],
+        "vertices": 1675
+      }
+    },
+    {
+      "name": "RealFrostWarden Cast 0",
+      "mesh": "Assets/Models/RealFrostWarden.glb#pose=3:0",
+      "material": "Assets/Materials/RealFrostWarden.mmat",
+      "bounds": {
+        "max": [
+          0.5046337246894836,
+          3.348510980606079,
+          0.39725297689437866
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFrostWarden.glb#pose=3:0",
+        "min": [
+          -0.9184772968292236,
+          -0.2703174352645874,
+          -0.39921149611473083
+        ],
+        "vertices": 1675
+      }
+    },
+    {
+      "name": "RealFrostWarden Cast 0.25",
+      "mesh": "Assets/Models/RealFrostWarden.glb#pose=3:12",
+      "material": "Assets/Materials/RealFrostWarden.mmat",
+      "bounds": {
+        "max": [
+          0.6139850616455078,
+          4.353494167327881,
+          0.9890927672386169
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFrostWarden.glb#pose=3:12",
+        "min": [
+          -1.050622820854187,
+          -0.01352321170270443,
+          -0.39037537574768066
+        ],
+        "vertices": 1675
+      }
+    },
+    {
+      "name": "RealFrostWarden Cast 0.5",
+      "mesh": "Assets/Models/RealFrostWarden.glb#pose=3:25",
+      "material": "Assets/Materials/RealFrostWarden.mmat",
+      "bounds": {
+        "max": [
+          0.61264967918396,
+          4.3575921058654785,
+          0.9077854156494141
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFrostWarden.glb#pose=3:25",
+        "min": [
+          -1.1227972507476807,
+          -0.03149346262216568,
+          -0.36400866508483887
+        ],
+        "vertices": 1675
+      }
+    },
+    {
+      "name": "RealFrostWarden Cast 0.75",
+      "mesh": "Assets/Models/RealFrostWarden.glb#pose=3:37",
+      "material": "Assets/Materials/RealFrostWarden.mmat",
+      "bounds": {
+        "max": [
+          0.5970624685287476,
+          4.347494125366211,
+          0.9959834218025208
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealFrostWarden.glb#pose=3:37",
+        "min": [
+          -0.7892273664474487,
+          -0.046515583992004395,
+          -0.37748169898986816
+        ],
+        "vertices": 1675
+      }
+    },
+    {
+      "name": "RealEmberSage Idle 0",
+      "mesh": "Assets/Models/RealEmberSage.glb#pose=0:0",
+      "material": "Assets/Materials/RealEmberSage.mmat",
+      "bounds": {
+        "max": [
+          0.6135505437850952,
+          3.4087655544281006,
+          0.37695205211639404
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealEmberSage.glb#pose=0:0",
+        "min": [
+          -0.7836177349090576,
+          -0.20714938640594482,
+          -0.38484230637550354
+        ],
+        "vertices": 1661
+      }
+    },
+    {
+      "name": "RealEmberSage Walk 0.5",
+      "mesh": "Assets/Models/RealEmberSage.glb#pose=1:10",
+      "material": "Assets/Materials/RealEmberSage.mmat",
+      "bounds": {
+        "max": [
+          0.6917687654495239,
+          3.3769867420196533,
+          0.32868579030036926
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealEmberSage.glb#pose=1:10",
+        "min": [
+          -0.55755615234375,
+          -0.3859727382659912,
+          -1.0446820259094238
+        ],
+        "vertices": 1661
+      }
+    },
+    {
+      "name": "RealEmberSage Cast 0",
+      "mesh": "Assets/Models/RealEmberSage.glb#pose=3:0",
+      "material": "Assets/Materials/RealEmberSage.mmat",
+      "bounds": {
+        "max": [
+          0.4953341484069824,
+          3.355449914932251,
+          0.38993406295776367
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealEmberSage.glb#pose=3:0",
+        "min": [
+          -0.9490150213241577,
+          -0.26531100273132324,
+          -0.39185458421707153
+        ],
+        "vertices": 1661
+      }
+    },
+    {
+      "name": "RealEmberSage Cast 0.25",
+      "mesh": "Assets/Models/RealEmberSage.glb#pose=3:12",
+      "material": "Assets/Materials/RealEmberSage.mmat",
+      "bounds": {
+        "max": [
+          0.6026703119277954,
+          4.273262023925781,
+          0.9708486199378967
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealEmberSage.glb#pose=3:12",
+        "min": [
+          -1.031260371208191,
+          -0.013273999094963074,
+          -0.38317859172821045
+        ],
+        "vertices": 1661
+      }
+    },
+    {
+      "name": "RealEmberSage Cast 0.5",
+      "mesh": "Assets/Models/RealEmberSage.glb#pose=3:25",
+      "material": "Assets/Materials/RealEmberSage.mmat",
+      "bounds": {
+        "max": [
+          0.601359486579895,
+          4.277285099029541,
+          0.89105623960495
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealEmberSage.glb#pose=3:25",
+        "min": [
+          -1.1021007299423218,
+          -0.030909614637494087,
+          -0.3808732032775879
+        ],
+        "vertices": 1661
+      }
+    },
+    {
+      "name": "RealEmberSage Cast 0.75",
+      "mesh": "Assets/Models/RealEmberSage.glb#pose=3:37",
+      "material": "Assets/Materials/RealEmberSage.mmat",
+      "bounds": {
+        "max": [
+          0.5860595703125,
+          4.267375469207764,
+          0.977611243724823
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealEmberSage.glb#pose=3:37",
+        "min": [
+          -0.7746812701225281,
+          -0.04565541818737984,
+          -0.3705223798751831
+        ],
+        "vertices": 1661
+      }
+    }
+  ]
+}

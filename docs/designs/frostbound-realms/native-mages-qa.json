@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "mages": [
+    {
+      "heroClass": 0,
+      "model": "RealFrostWarden",
+      "portrait": true,
+      "idleWalkAttack": true,
+      "projectile": "frost",
+      "projectileDamage": true,
+      "learnedSpell": true,
+      "spellDamageAndMana": true,
+      "castPose": true,
+      "midCastSaveRestore": true
+    },
+    {
+      "heroClass": 1,
+      "model": "RealEmberSage",
+      "portrait": true,
+      "idleWalkAttack": true,
+      "projectile": "fire",
+      "projectileDamage": true,
+      "learnedSpell": true,
+      "spellDamageAndMana": true,
+      "castPose": true,
+      "midCastSaveRestore": true
+    }
+  ],
+  "shaderRejections": 0,
+  "fixture": "Flat terrain, no AI, chosen hero at (-8,12), stationary target at (0,20). Actual Agent input and native frame stepping."
+}
