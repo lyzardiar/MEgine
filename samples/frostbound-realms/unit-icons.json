@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "74d269de0f5006e95bc10ee5d617b73536c39e621b05ec0c39fbfa1af0e594b9",
+  "sha256": "c19d73671e955eff7b9a0fcab537f01f730357540cb612d27f5a9736626fbd5a",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -307,6 +307,25 @@
           -1.7930588722229004
         ],
         "vertices": 1256
+      }
+    },
+    {
+      "name": "RealSylvanRanger",
+      "mesh": "Assets/Models/RealSylvanRanger.glb#pose=0:4",
+      "material": "Assets/Materials/RealSylvanRanger.mmat",
+      "bounds": {
+        "max": [
+          0.870610773563385,
+          3.0251553058624268,
+          0.9134045839309692
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSylvanRanger.glb#pose=0:4",
+        "min": [
+          -1.0943604707717896,
+          -0.0030705928802490234,
+          -0.6405938863754272
+        ],
+        "vertices": 2385
       }
     },
     {

@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "ranger": [
+    {
+      "heroClass": 2,
+      "model": "RealSylvanRanger",
+      "portrait": true,
+      "idleWalkAttack": true,
+      "loadedArrowCycle": true,
+      "castFacing": true,
+      "projectile": "arrow",
+      "projectileDamage": true,
+      "learnedSpell": true,
+      "spellDamageAndMana": true,
+      "castPose": true,
+      "midCastSaveRestore": true
+    }
+  ],
+  "shaderRejections": 0,
+  "fixture": "Flat terrain, no AI, chosen hero at (-8,12), stationary target at (0,20). Actual Agent input and native frame stepping."
+}

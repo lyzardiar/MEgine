@@ -1,0 +1,565 @@
+{
+  "author": "Wildfire Games",
+  "upstream": "https://github.com/0ad/0ad",
+  "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "generator": "scripts/import-frost-humans.py --manifest ranger-sources.json",
+  "models": {
+    "RealSylvanRanger": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/f_tunic_short.dae",
+          "base": "textures/skins/skeletal/maur/female_02_01.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/skeletal/maur/female_02_spec.png",
+          "bone": null,
+          "tint": [
+            0.18,
+            0.35,
+            0.12
+          ]
+        },
+        {
+          "mesh": "meshes/props/new/head_boudicca.dae",
+          "base": "textures/skins/props/head/celt_fem_boudicca_1.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.36,
+            0.18,
+            0.08
+          ]
+        },
+        {
+          "mesh": "meshes/props/weapons/bow_greek.dae",
+          "base": "textures/skins/props/spart_sail_a.png",
+          "bone": "prop-weapon_bow",
+          "tint": null,
+          "skeletal": true,
+          "animations": {
+            "Bow_Shoot": "animation/mechanical/weap_bow_attack.dae",
+            "Cast": "animation/mechanical/weap_bow_attack.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back.dae",
+          "base": "textures/skins/props/quiver_greek_b.png",
+          "normal": "textures/skins/props/quiver_greek_b_norm.png",
+          "specular": "textures/skins/props/quiver_greek_b_spec.png",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back_arrows.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/weap_arrow_back.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-weapon_R",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/new/capes/cape_hd_medium.dae",
+          "base": "textures/skins/props/cape_hd.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "bone": null,
+          "tint": [
+            0.18,
+            0.35,
+            0.12
+          ]
+        }
+      ],
+      "animations": {
+        "Idle": "animation/biped/infantry/archer/idle_relax_01.dae",
+        "Walk": "animation/biped/infantry/archer/jog_relax.dae",
+        "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae",
+        "Cast": "animation/biped/infantry/archer/attack_ranged.dae"
+      },
+      "attackEvent": 0.45,
+      "ammoLoad": 0.72,
+      "height": 3.1,
+      "shotModel": "RealSylvanRangerShoot",
+      "loadedModel": "RealSylvanRangerLoaded"
+    },
+    "RealSylvanRangerShoot": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/f_tunic_short.dae",
+          "base": "textures/skins/skeletal/maur/female_02_01.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/skeletal/maur/female_02_spec.png",
+          "bone": null,
+          "tint": [
+            0.18,
+            0.35,
+            0.12
+          ]
+        },
+        {
+          "mesh": "meshes/props/new/head_boudicca.dae",
+          "base": "textures/skins/props/head/celt_fem_boudicca_1.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.36,
+            0.18,
+            0.08
+          ]
+        },
+        {
+          "mesh": "meshes/props/weapons/bow_greek.dae",
+          "base": "textures/skins/props/spart_sail_a.png",
+          "bone": "prop-weapon_bow",
+          "tint": null,
+          "skeletal": true,
+          "animations": {
+            "Bow_Shoot": "animation/mechanical/weap_bow_attack.dae",
+            "Cast": "animation/mechanical/weap_bow_attack.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back.dae",
+          "base": "textures/skins/props/quiver_greek_b.png",
+          "normal": "textures/skins/props/quiver_greek_b_norm.png",
+          "specular": "textures/skins/props/quiver_greek_b_spec.png",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back_arrows.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/new/capes/cape_hd_medium.dae",
+          "base": "textures/skins/props/cape_hd.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "bone": null,
+          "tint": [
+            0.18,
+            0.35,
+            0.12
+          ]
+        }
+      ],
+      "animations": {
+        "Idle": "animation/biped/infantry/archer/idle_relax_01.dae",
+        "Walk": "animation/biped/infantry/archer/jog_relax.dae",
+        "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae",
+        "Cast": "animation/biped/infantry/archer/attack_ranged.dae"
+      },
+      "attackEvent": 0.45,
+      "ammoLoad": 0.72,
+      "height": 3.1,
+      "shotModel": "RealSylvanRangerShoot",
+      "loadedModel": "RealSylvanRangerLoaded"
+    },
+    "RealSylvanRangerLoaded": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/new/f_tunic_short.dae",
+          "base": "textures/skins/skeletal/maur/female_02_01.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/skeletal/maur/female_02_spec.png",
+          "bone": null,
+          "tint": [
+            0.18,
+            0.35,
+            0.12
+          ]
+        },
+        {
+          "mesh": "meshes/props/new/head_boudicca.dae",
+          "base": "textures/skins/props/head/celt_fem_boudicca_1.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "bone": "prop-head",
+          "tint": [
+            0.36,
+            0.18,
+            0.08
+          ]
+        },
+        {
+          "mesh": "meshes/props/weapons/bow_greek.dae",
+          "base": "textures/skins/props/spart_sail_a.png",
+          "bone": "prop-weapon_bow",
+          "tint": null,
+          "skeletal": true,
+          "animations": {
+            "Bow_Shoot": "animation/mechanical/weap_bow_attack.dae",
+            "Cast": "animation/mechanical/weap_bow_attack.dae"
+          }
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back.dae",
+          "base": "textures/skins/props/quiver_greek_b.png",
+          "normal": "textures/skins/props/quiver_greek_b_norm.png",
+          "specular": "textures/skins/props/quiver_greek_b_spec.png",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/quiver_greek_back_arrows.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-back",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/weap_arrow_back.dae",
+          "base": "textures/skins/props/prop_weap.dds",
+          "bone": "prop-projectile",
+          "tint": null
+        },
+        {
+          "mesh": "meshes/props/new/capes/cape_hd_medium.dae",
+          "base": "textures/skins/props/cape_hd.dds",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "bone": null,
+          "tint": [
+            0.18,
+            0.35,
+            0.12
+          ]
+        }
+      ],
+      "animations": {
+        "Idle": "animation/biped/infantry/archer/idle_relax_01.dae",
+        "Walk": "animation/biped/infantry/archer/jog_relax.dae",
+        "Bow_Shoot": "animation/biped/infantry/archer/attack_ranged.dae",
+        "Cast": "animation/biped/infantry/archer/attack_ranged.dae"
+      },
+      "attackEvent": 0.45,
+      "ammoLoad": 0.72,
+      "height": 3.1,
+      "shotModel": "RealSylvanRangerShoot",
+      "loadedModel": "RealSylvanRangerLoaded"
+    }
+  },
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/LICENSE.txt",
+      "sha256": "ef98babd771c206032e005f3d440a1e610df409d9a9191f03e64deaa4abefbd9",
+      "size": 1426
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/capes/cape_med_player.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/capes/cape_med_player.xml",
+      "sha256": "e81aaf5ca5e622580aeab9146945eeb0d41be4abb7c9bb8788e421d2e801baf3",
+      "size": 6048
+    },
+    {
+      "file": "SourceAssets/0ad/actors/props/units/heads/new/head_female_boudicca.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/heads/new/head_female_boudicca.xml",
+      "sha256": "9d9736f2a9094913c3a6e5adfe74556e73a1468a4de8178221b5b8c421c231df",
+      "size": 560
+    },
+    {
+      "file": "SourceAssets/0ad/actors/units/mauryas/infantry_archer_c.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/units/mauryas/infantry_archer_c.xml",
+      "sha256": "d8bd739260854c39a61433d11b4ea2b9959acc5cf73a00c51eae5766ba8a1dcd",
+      "size": 1652
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/archer/attack_ranged.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/archer/attack_ranged.dae",
+      "sha256": "c1f901a9338889b7104ba65855c9555d99b81e3094f7a680d25596bc701f4caf",
+      "size": 1570490
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/archer/idle_relax_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/archer/idle_relax_01.dae",
+      "sha256": "e0e9e1e81f05a700fbd93718fffe158b0ff2c8caa326b818226533be2c0bd038",
+      "size": 1428372
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/archer/jog_relax.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/archer/jog_relax.dae",
+      "sha256": "e3be4b2954dbba235b4bff666b4661ff50ecc32c9c343cc30a6b22149c8a450d",
+      "size": 886882
+    },
+    {
+      "file": "SourceAssets/0ad/animation/mechanical/weap_bow_attack.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/mechanical/weap_bow_attack.dae",
+      "sha256": "35dda0d5219b773fbeaf482c73e3fc3ed6fb52016b902dc93e995bf648b36ea2",
+      "size": 104103
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/new/capes/cape_hd_medium.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/new/capes/cape_hd_medium.dae",
+      "sha256": "da4957cb010420888a1432106f2d24aabd73f22b9639fd8181bb7b4aab85ab4f",
+      "size": 112739
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/new/head_boudicca.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/new/head_boudicca.dae",
+      "sha256": "453c87d8e973528bdf1d894e02920e1c82f4a3f93daa2b76180b42b6d47b3c36",
+      "size": 48987
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/quiver_greek_back.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/quiver_greek_back.dae",
+      "sha256": "a2558b76f819e0b22dd9a3bc6aa2a386bda7e469c252cf718f71c7191d645caf",
+      "size": 11706
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/quiver_greek_back_arrows.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/quiver_greek_back_arrows.dae",
+      "sha256": "438cd58ac4f7d0474c72e989460a69355da69dcf1a3b622bbcba90f76f76c9e5",
+      "size": 26492
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weap_arrow_back.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weap_arrow_back.dae",
+      "sha256": "d51dc687e1266873ac91cf5727ed6b7c75c7f07bc3aa2eb65a299408a90cea47",
+      "size": 13085
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weapons/bow_greek.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weapons/bow_greek.dae",
+      "sha256": "13eb54e1c4c7edc882964c1d69e0bddd415531c8421b25716ceae618fda4b6a2",
+      "size": 35893
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/new/f_tunic_short.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/new/f_tunic_short.dae",
+      "sha256": "0fbced347ead473f802cf8e2a083c2338f94eceec4887474f0d5b068f95a15e4",
+      "size": 216436
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/default_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/default_norm.png",
+      "sha256": "b1ba25ca729a28c798a99a1a0bcf9310d0994a55b4f9d1a36f163fb31676cecf",
+      "size": 69
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/null_black.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/null_black.dds",
+      "sha256": "1b2fefc88f9523c56af637318150f92722e88bf93f3876d38b6c039114b21c7a",
+      "size": 152
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/cape_hd.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/cape_hd.dds",
+      "sha256": "015695f17334b5439bdbf85ab19a15ab67c29f75f8030446aaaa23efc815d373",
+      "size": 43856
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/head/celt_fem_boudicca_1.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/head/celt_fem_boudicca_1.dds",
+      "sha256": "4d6eec9c2b85bdbd27c0ec9d820727ec38922a04305c1e2b8f8c27e9c9acb314",
+      "size": 22000
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/prop_weap.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/prop_weap.dds",
+      "sha256": "761a9987655353d96cf5093d3d713a62dca98f5f605c8fef52311eac0b3a1bde",
+      "size": 87536
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/quiver_greek_b.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/quiver_greek_b.png",
+      "sha256": "aeccc8c411c7e052b962850238e1926576e047826019d4d82bc91b248980ddc0",
+      "size": 197120
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/quiver_greek_b_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/quiver_greek_b_norm.png",
+      "sha256": "e36ce4981c1e63b0a3caf2a8c9986c2681c902ff8ec738983b93be291b50c9dc",
+      "size": 138472
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/quiver_greek_b_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/quiver_greek_b_spec.png",
+      "sha256": "cea877ec0b2fa67a5bb8a94c27c00ca44da107ca008df1c08275c09faa1fcb60",
+      "size": 11960
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/spart_sail_a.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/spart_sail_a.png",
+      "sha256": "c03027fcc0bd88c92344b5ed1336eb2bd1aede4ca0dbf5da2ea919e13d3b8652",
+      "size": 402506
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/maur/female_02_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/maur/female_02_01.png",
+      "sha256": "9c30fafb7c4620affafb7ff3f8c999304ea1a20ac3a05ad50951862158d026f9",
+      "size": 80950
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/maur/female_02_spec.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/maur/female_02_spec.png",
+      "sha256": "d715941366e0de24431c52f6547607934950246809f968b4dc7066170de83a4b",
+      "size": 43430
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/attack_ranged_archer.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/attack_ranged_archer.xml",
+      "sha256": "f32d7634767506842f721ab7a0fa3219b0bb7cf05e353ed7ffbeedf926ff8d0d",
+      "size": 885
+    },
+    {
+      "file": "SourceAssets/0ad/variants/biped/base_archer_ready.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/biped/base_archer_ready.xml",
+      "sha256": "eac89b5fc6480a454005e54b59e2d06a4952c52d4f5e43166fd559864fdc7e04",
+      "size": 944
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/RealSylvanRanger_base.png",
+      "sha256": "b97de0c9320c556fb6a1a12cd65ef67abf44c78429b5d8766fd2baaaf52caf6b"
+    },
+    {
+      "file": "Assets/Textures/RealSylvanRanger_normal.png",
+      "sha256": "237c3545bbada05aa55611252e6798bdd81f3e073ac741a7a2b34974369545b5"
+    },
+    {
+      "file": "Assets/Textures/RealSylvanRanger_arm.png",
+      "sha256": "abe4253b58e9260aa6180301338bd7759094f8a1a4efa4964d9b43d3f2373134"
+    },
+    {
+      "file": "Assets/Models/RealSylvanRanger.glb",
+      "sha256": "a6698c6c98a16d2f6afd26ebb50a0ea085129f8310aced6348f3497a0b8acee0"
+    },
+    {
+      "file": "Assets/Materials/RealSylvanRanger.mmat",
+      "sha256": "cc05a7f14b14de7e5e2b4875110e39e9057a961c0727972437fc394a41676eed"
+    },
+    {
+      "file": "Assets/Textures/RealSylvanRangerShoot_base.png",
+      "sha256": "509d945462f1e6f353352e1db3dda4df26303fa5a20e5717e6f6a16e460625fe"
+    },
+    {
+      "file": "Assets/Textures/RealSylvanRangerShoot_normal.png",
+      "sha256": "ed5566f360d207c2ccbf114956d10a1810914fe364acfa2b1851b4273704eeb2"
+    },
+    {
+      "file": "Assets/Textures/RealSylvanRangerShoot_arm.png",
+      "sha256": "a1b256fd97ca8a98a26baaccb69d21c81b70fb3c057a65d454618c1c92e3ba73"
+    },
+    {
+      "file": "Assets/Models/RealSylvanRangerShoot.glb",
+      "sha256": "8244be9fcc18b28828df8c6240b862ea6ba9e45ace04aa14b88cd68f88c508a7"
+    },
+    {
+      "file": "Assets/Materials/RealSylvanRangerShoot.mmat",
+      "sha256": "7f27a97e3dbb13f81674640498614eb25f9f3705d23b6d1b0ea72090e1538818"
+    },
+    {
+      "file": "Assets/Textures/RealSylvanRangerLoaded_base.png",
+      "sha256": "0063ea36c3b71b76bbe3e5522cc33495d3916534b358c4e79b3cac43766df8e4"
+    },
+    {
+      "file": "Assets/Textures/RealSylvanRangerLoaded_normal.png",
+      "sha256": "53aa7a0c581c31475058c9813c1307988511b9ed36c64400cd1db56927e2bbfb"
+    },
+    {
+      "file": "Assets/Textures/RealSylvanRangerLoaded_arm.png",
+      "sha256": "46ee95cb0060a485425a44fb22357b1bb749f97061e513eea50b210ce56a0c4c"
+    },
+    {
+      "file": "Assets/Models/RealSylvanRangerLoaded.glb",
+      "sha256": "6218b096170e2304f3c6609a4119571841581fc5c82b768ee99fa96685dff110"
+    },
+    {
+      "file": "Assets/Materials/RealSylvanRangerLoaded.mmat",
+      "sha256": "400328a7ff92e2d1e0e2f7eab2bf2e849d1fdafb4f3a3d8602708f24aae8474e"
+    }
+  ],
+  "modelStats": {
+    "RealSylvanRanger": {
+      "triangles": 2048,
+      "bones": 106,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 12
+        },
+        {
+          "name": "Bow_Shoot",
+          "frames": 30
+        },
+        {
+          "name": "Cast",
+          "frames": 30
+        }
+      ],
+      "size": [
+        1.4027692761802257,
+        3.1,
+        2.110699688213796
+      ]
+    },
+    "RealSylvanRangerShoot": {
+      "triangles": 2001,
+      "bones": 106,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 12
+        },
+        {
+          "name": "Bow_Shoot",
+          "frames": 30
+        },
+        {
+          "name": "Cast",
+          "frames": 30
+        }
+      ],
+      "size": [
+        1.4027692761802257,
+        3.1,
+        2.110699688213796
+      ]
+    },
+    "RealSylvanRangerLoaded": {
+      "triangles": 2048,
+      "bones": 106,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 12
+        },
+        {
+          "name": "Bow_Shoot",
+          "frames": 30
+        },
+        {
+          "name": "Cast",
+          "frames": 30
+        }
+      ],
+      "size": [
+        1.4388653418283368,
+        3.1,
+        2.110699688213796
+      ]
+    }
+  }
+}

@@ -25,23 +25,30 @@ var FrostVisual=(()=>{
     return Frost.traversable(state.map,u.x,u.z,target.x,target.z)?{target,animation}:null;
   }
   function attackPhase(u,asset){return (asset.attackEvent+Frost.clamp(1-u.cd/(Frost.unitType(u).cooldown||1),0,1))%1;}
+  function castPhase(u,asset,walking){
+    if(u.kind!=='hero'||walking||u.stun||!asset.animations?.some(a=>a.name==='Cast'))return null;
+    const elapsed=Math.min(...Frost.unitType(u).spells.map((s,i)=>u.spell?.[i]>0?s.cooldown-u.spell[i]:Infinity));
+    return elapsed>=0&&elapsed<.8?(asset.loadedModel?asset.attackEvent+(1-asset.attackEvent)*elapsed/.8:elapsed/.8):null;
+  }
   function model(state,u,walking=false){
     const d=Frost.types[u.kind],f=state.teams[u.team]?.faction||0,tier=Frost.clamp(u.upgradeTier??state.teams[u.team]?.tier??1,1,3);
     let key=buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'Demon':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','Tribal','Rogue','Ghost_Skull'][f]:units[u.kind]||base[u.kind]||base[d.model];
-    const original=FrostArt[key],activity=key==='RealWorker'?work(state,u):null,phase=(key==='RealArcher'||original.shotModel)&&u.cd>0&&!walking&&!u.stun?attackPhase(u,original):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?key:original.shotModel):key+(loaded?'Loaded':'Shoot');
+    const original=FrostArt[key],activity=key==='RealWorker'?work(state,u):null,phase=(key==='RealArcher'||original.shotModel)&&!walking&&!u.stun?(castPhase(u,original,walking)??(u.cd>0?attackPhase(u,original):null)):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?original.loadedModel||key:original.shotModel):key+(loaded?'Loaded':'Shoot');
     const asset=FrostArt[activity?key+activity.animation:variant],scale=asset.factionBuilding?(d.radius*2*.92)/Math.max(asset.size[0],asset.size[2]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
     return {key,asset,scale,height:asset.size[1]*scale+.5};
   }
   function heading(state,u,old){
     if(!Frost.types[u.kind].speed)return 0;
-    const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008,attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>['hit','launch'].includes(e.type)&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy))<=Frost.unitType(u).range+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
+    const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;
+    if(u.kind==='hero'&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[Frost.unitType(u).art],moved)!==null)return u.castYaw;
+    const attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>['hit','launch'].includes(e.type)&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy))<=Frost.unitType(u).range+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
     return target?Math.atan2(target.x-u.x,target.z-u.z):moved?Math.atan2(u.x-old.x,u.z-old.z):old?.yaw||0;
   }
   function pose(u,asset,walking,time){
     if(!asset.animations?.length)return asset.parts[0].mesh;
     if(asset.workAnimation)return asset.parts[0].mesh+'#pose=0:'+Math.floor(time*12)%asset.animations[0].frames;
-    const cast=asset.animations.findIndex(a=>a.name==='Cast');
-    if(cast>=0&&u.kind==='hero'&&!walking&&!u.stun){const elapsed=Math.min(...Frost.unitType(u).spells.map((s,i)=>u.spell?.[i]>0?s.cooldown-u.spell[i]:Infinity));if(elapsed>=0&&elapsed<.8)return asset.parts[0].mesh+'#pose='+cast+':'+Math.min(asset.animations[cast].frames-1,Math.floor(elapsed/.8*asset.animations[cast].frames));}
+    const cast=asset.animations.findIndex(a=>a.name==='Cast'),casting=castPhase(u,asset,walking);
+    if(cast>=0&&casting!==null)return asset.parts[0].mesh+'#pose='+cast+':'+Math.min(asset.animations[cast].frames-1,Math.floor(casting*asset.animations[cast].frames));
     if(asset.attackEvent!==undefined){const clip=walking?1:u.cd>0&&!u.stun?2:0,frame=clip===2?Math.floor(attackPhase(u,asset)*asset.animations[clip].frames):Math.floor(time*12)%asset.animations[clip].frames;return asset.parts[0].mesh+'#pose='+clip+':'+frame;}
     const attack=u.cd>.25&&(u.kind!=='worker'||asset===FrostArt.RealWorker&&!['gather','build','construct','repair'].includes(u.order?.type)),desired=asset===FrostArt.Skeleton_Rogue?(attack?/^2H_Ranged_Shooting$/:walking?/^Walking_A$/:/^Idle$/):asset===FrostArt.Skeleton_Mage?(attack?/^Spellcast_Shoot$/:walking?/^Walking_A$/:/^Idle$/):Frost.types[u.kind].flying?(attack?/Dragon_Attack$/:/Dragon_Flying/):attack?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch|Headbutt/:walking?/^Run$|^Walk$|Fast_Flying/:/^Idle$|Flying_Idle/;
     let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;

@@ -3280,5 +3280,131 @@
     ],
     "realistic": true,
     "attackEvent": 0.25
+  },
+  "RealSylvanRanger": {
+    "material": "Assets/Materials/RealSylvanRanger.mmat",
+    "parts": [
+      {
+        "name": "RealSylvanRanger",
+        "mesh": "Assets/Models/RealSylvanRanger.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Bow_Shoot",
+        "frames": 30
+      },
+      {
+        "name": "Cast",
+        "frames": 30
+      }
+    ],
+    "size": [
+      1.4027692761802257,
+      3.1,
+      2.110699688213796
+    ],
+    "realistic": true,
+    "attackEvent": 0.45,
+    "ammoLoad": 0.72,
+    "shotModel": "RealSylvanRangerShoot",
+    "loadedModel": "RealSylvanRangerLoaded"
+  },
+  "RealSylvanRangerShoot": {
+    "material": "Assets/Materials/RealSylvanRangerShoot.mmat",
+    "parts": [
+      {
+        "name": "RealSylvanRangerShoot",
+        "mesh": "Assets/Models/RealSylvanRangerShoot.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Bow_Shoot",
+        "frames": 30
+      },
+      {
+        "name": "Cast",
+        "frames": 30
+      }
+    ],
+    "size": [
+      1.4027692761802257,
+      3.1,
+      2.110699688213796
+    ],
+    "realistic": true,
+    "attackEvent": 0.45,
+    "ammoLoad": 0.72,
+    "shotModel": "RealSylvanRangerShoot",
+    "loadedModel": "RealSylvanRangerLoaded"
+  },
+  "RealSylvanRangerLoaded": {
+    "material": "Assets/Materials/RealSylvanRangerLoaded.mmat",
+    "parts": [
+      {
+        "name": "RealSylvanRangerLoaded",
+        "mesh": "Assets/Models/RealSylvanRangerLoaded.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Bow_Shoot",
+        "frames": 30
+      },
+      {
+        "name": "Cast",
+        "frames": 30
+      }
+    ],
+    "size": [
+      1.4388653418283368,
+      3.1,
+      2.110699688213796
+    ],
+    "realistic": true,
+    "attackEvent": 0.45,
+    "ammoLoad": 0.72,
+    "shotModel": "RealSylvanRangerShoot",
+    "loadedModel": "RealSylvanRangerLoaded"
   }
 }

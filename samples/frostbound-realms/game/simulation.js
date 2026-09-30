@@ -64,7 +64,7 @@ var Frost = (() => {
       {name:'Ember ward',kind:'shield',cost:45,cooldown:12,range:12,radius:4,power:150,growth:90,duration:6,description:'Absorb damage on nearby allies for six seconds.'},
       {name:'Flame field',kind:'zone',cost:60,cooldown:12,range:14,radius:4,power:35,growth:20,duration:4,description:'Four pulses of fire damage.'},
       {name:'Summon drake',kind:'summon',cost:110,cooldown:35,range:10,duration:25,description:'Summon a flying drake for 25 seconds; no supply cost.'}]},
-    {...types.hero,label:'Sylvan Ranger',art:'Ranger',color:[.3,.85,.3,1],role:'Ranged damage / mobility',hp:600,damage:34,range:9,speed:5.3,attack:'pierce',spells:[
+    {...types.hero,label:'Sylvan Ranger',art:'RealSylvanRanger',color:[.3,.85,.3,1],role:'Ranged damage / mobility',hp:600,damage:34,range:9,speed:5.3,attack:'pierce',spells:[
       {name:'Piercing volley',kind:'cone',cost:30,cooldown:5,range:14,radius:11,power:95,growth:40,description:'Piercing arrows in a cone toward the target.'},
       {name:'Entangling roots',kind:'blast',cost:40,cooldown:9,range:14,radius:2.5,power:35,growth:20,root:2.5,description:'Damage and immobilize enemies; they may still attack.'},
       {name:'Windstep',kind:'haste',cost:35,cooldown:12,range:0,duration:5,description:'Move 60% faster for five seconds.'},
@@ -398,6 +398,7 @@ var Frost = (() => {
       if(distance(u,target)>spell.range)return 'Target outside spell range';if(spell.kind==='blink'&&(u.root>0||solid(s,c.x,c.z)))return 'Blink destination is blocked or hero is rooted';
       if(!s.visible[team][index(target.x,target.z)])return 'Spell target is not visible';if(spell.kind==='summon'&&s.units.length>=LIMIT)return 'Unit capacity reached';
       const eventStart=s.events.length,power=(spell.power||0)+(rank-1)*(spell.growth||0);u.mana-=spell.cost;u.spell[c.slot]=spell.cooldown;
+      if(distance(u,target)>.01)u.castYaw=Math.atan2(target.x-u.x,target.z-u.z);else delete u.castYaw;
       if(spell.kind==='blink'){u.x=c.x;u.z=c.z;u.path=[];u.order=null;u.waypoints=[];}
       else if(spell.kind==='haste')u.haste=spell.duration+(rank-1);
       else if(spell.kind==='avatar')u.avatar=spell.duration;
@@ -631,6 +632,7 @@ var Frost = (() => {
       if(u.workResume&&!(u.workResume.type==='gather'&&Number.isInteger(u.workResume.resource)&&raw.resources?.[u.workResume.resource]))throw Error('Invalid saved work resume');
       if(u.kind==='hero'){u.itemCooldown??=0;if(!finite(u.itemCooldown)||u.itemCooldown<0||u.itemCooldown>10)throw Error('Invalid saved item cooldown');u.heroClass??=0;if(u.skills===undefined){u.skills=[1,0,0,0];u.skillPoints=u.level-1;}if(!validHero(u.heroClass)||!Number.isInteger(u.level)||u.level<1||u.level>10||!Array.isArray(u.skills)||u.skills.length!==4||u.skills.some((r,i)=>!Number.isInteger(r)||r<0||r>(i===3?1:3)||r>0&&u.level<skillLevel(i,r))||!Number.isInteger(u.skillPoints)||u.skillPoints<0||u.skills.reduce((n,r)=>n+r,0)+u.skillPoints!==u.level)throw Error('Invalid saved hero skills');}
       for(const key of ['stun','root','haste','avatar','shieldLeft','shield'])if(u[key]!==undefined&&(!finite(u[key])||u[key]<0))throw Error('Invalid saved combat effect');
+      if(u.castYaw!==undefined&&(u.kind!=='hero'||!finite(u.castYaw)||Math.abs(u.castYaw)>Math.PI))throw Error('Invalid saved cast direction');
       if(u.summoned&&(!Number.isSafeInteger(u.expires)||u.expires<0))throw Error('Invalid saved summon');
       if(u.rally!==undefined&&(!u.rally||![u.rally.x,u.rally.z].every(v=>Number.isFinite(v)&&Math.abs(v)<=30)||u.team<0||!trainable(s,u).length))throw Error('Invalid saved rally');
       if(u.queue.length&&(u.team<0||u.queue.some(q=>!trainable(s,u).includes(q.kind))))throw Error('Invalid saved production');

@@ -1,0 +1,19 @@
+0 A.D. ranger hero art
+Original author: Wildfire Games - https://www.wildfiregames.com/
+Source: https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+License: Creative Commons Attribution-ShareAlike 3.0 Unported
+https://creativecommons.org/licenses/by-sa/3.0/
+
+RealSylvanRanger, RealSylvanRangerLoaded, RealSylvanRangerShoot, their textures
+and materials, and the combined Assets/Art/unit-portraits.png atlas are
+distributed under CC-BY-SA-3.0. Other original art in the atlas is available
+separately under the licenses documented in the sample manifests.
+
+Modifications by MEngine contributors: assembled a female archer body, long
+hair, bow, quiver, arrows and animated cape; applied green cloth and brown
+hair colors; baked base, normal and ARM atlases; converted normalized glTF
+meshes and skeletal animations. Bow limbs and string retain their authored
+animation; separate hand-held, nocked and released arrow states follow the
+combat/skill timeline. Source meshes and downloaded textures are unchanged.
+Pinned URLs and source/generated hashes: ranger-sources.json.
+Original license notice: SourceAssets/0ad/LICENSE.txt.

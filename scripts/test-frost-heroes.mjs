@@ -7,6 +7,11 @@ function arena(heroClass,slot){const s=S.create('skirmish',{heroes:[heroClass,0]
 const placedMap=S.defaultMap();placedMap.players.forEach(p=>p.ai=false);placedMap.units=[{kind:'soldier',team:0,x:-10,z:10}];const placed=S.create('skirmish',{map:placedMap}),placedUnit=placed.units.at(-1);S.command(placed,0,{type:'move',ids:[placedUnit.id],x:-4,z:15});step(placed,100);assert.ok(placedUnit.x>-8&&placedUnit.z>14,'authored player units hold their commanded destination');
 const heroMap=S.defaultMap();heroMap.units=[{kind:'hero',team:0,x:0,z:0,heroClass:2}];assert.equal(S.create('skirmish',{map:heroMap}).units.at(-1).heroClass,2);assert.throws(()=>S.validateMap({...heroMap,units:[{kind:'hero',team:0,x:0,z:0,heroClass:99}]}));
 assert.equal(new Set(S.heroes.map(h=>h.art)).size,4);assert.equal(S.heroes.flatMap(h=>h.spells).length,16);
+for(let heroClass=0;heroClass<4;heroClass++){
+  const {s,h,cast}=arena(heroClass,0);assert.equal(h.castYaw,undefined);assert.equal(cast(3,4),null);assert.equal(h.castYaw,Math.atan2(3,4));assert.equal(S.restore(s).units[0].castYaw,h.castYaw);s.visible[1].fill(1);assert.equal(S.publicState(s,1).units.find(u=>u.id===h.id).castYaw,h.castYaw);assert.ok(cast(-4,0));assert.equal(h.castYaw,Math.atan2(3,4),'failed cast preserves active cast direction');
+  for(const invalid of [NaN,Infinity,-Infinity,Math.PI+.01,'0',null])assert.throws(()=>S.restore({...s,units:[{...h,castYaw:invalid}]}),/cast direction/);
+  const old=S.clone(s);delete old.units[0].castYaw;assert.equal(S.restore(old).units[0].castYaw,undefined,'older saves have no forced cast direction');h.spell[0]=0;assert.equal(cast(0,0),null);assert.equal(h.castYaw,undefined,'self-targeting does not reuse an old aim');
+}
 assert.throws(()=>S.create('moba',{heroes:['constructor',0]}));assert.throws(()=>S.validateMap({...S.defaultMap(),players:[{faction:0,ai:false,heroClass:99},{faction:1,ai:true}]}));
 for(let heroClass=0;heroClass<4;heroClass++){
   const s=S.create('moba',{heroes:[heroClass,0],ai:[false,false]}),h=s.units.find(u=>u.kind==='hero'&&u.team===0),def=S.heroes[heroClass];

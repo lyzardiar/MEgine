@@ -200,7 +200,7 @@ def main():
         generated.extend([model,material]);size=[(max(p[i] for p in points)-min(p[i] for p in points))*scale for i in [0,2,1]]
         catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True}
         if definition.get('workAnimation'):catalog[key]['workAnimation']=definition['workAnimation']
-        for field in ['attackEvent','ammoLoad','siegeModel','shotModel','crewCount','mountedModel']:
+        for field in ['attackEvent','ammoLoad','siegeModel','shotModel','loadedModel','crewCount','mountedModel']:
             if field in definition:catalog[key][field]=definition[field]
         stats[key]={'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};print('Imported',key,stats[key],flush=True)
     if manifest.get('projectile'):

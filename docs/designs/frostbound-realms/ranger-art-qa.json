@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "sourceFiles": 28,
+  "sourceBytes": 5494751,
+  "generatedFiles": 15,
+  "generatedReproducible": true,
+  "models": 117,
+  "portraits": 25,
+  "protocol": 10,
+  "geometryReport": "ranger-import-qa.json",
+  "nativeReport": "native-ranger-qa.json",
+  "heroesReport": "native-heroes-qa.json",
+  "ruleAndTcpSuite": true,
+  "tcpCastingReconnect": true,
+  "castDirectionSaved": true,
+  "package": {
+    "files": 527,
+    "bytes": 217553901,
+    "contentHash": "9e87b5fde3716c3cc54302f83c08e4e927f2d29298be9539991a1be84b31cb8f",
+    "smoke": "player-smoke.json"
+  },
+  "limits": [
+    "Historical assets assembled into original ranger appearance; not complete Warcraft hero art fidelity",
+    "Four heroes use realistic models; remaining faction units still have mixed art styles",
+    "Physical input, audio listening, cross-machine LAN and standalone Player frame rate are not verified"
+  ]
+}
