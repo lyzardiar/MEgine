@@ -17,11 +17,16 @@ for asset in manifest['assets']:
         assert np.array_equal(packed[:,:,index],expected),key
         assert np.std(packed[:,:,index])>3,'channel must retain scanned variation'
     height=source;dx=np.roll(height,-1,1)-np.roll(height,1,1);dy=np.roll(height,-1,0)-np.roll(height,1,0)
-    nx=normal[:,:,0].astype(float)-127.5;ny=normal[:,:,1].astype(float)-127.5
+    # MiYu: compare height slopes with normal X/Z and Y/Z, including steep rock faces.
+    nz=np.maximum(1,normal[:,:,2].astype(float)-127.5)
+    nx=(normal[:,:,0].astype(float)-127.5)/nz;ny=(normal[:,:,1].astype(float)-127.5)/nz
     corr=[float(np.corrcoef(nx.ravel(),-dx.ravel())[0,1]),float(np.corrcoef(ny.ravel(),dy.ravel())[0,1])]
     assert min(corr)>.7,'OpenGL normal X opposes height U; green follows image V, so world tangent V is negated'
-    report['materials'][asset['id']]={'size':[1024,1024],'normalHeightCorrelation':corr,'roughnessRange':[int(packed[:,:,2].min()),int(packed[:,:,2].max())],'heightRange':[int(packed[:,:,3].min()),int(packed[:,:,3].max())]}
+    report['materials'][asset['id']]={'size':[1024,1024],'normalSlopeHeightCorrelation':corr,'roughnessRange':[int(packed[:,:,2].min()),int(packed[:,:,2].max())],'heightRange':[int(packed[:,:,3].min()),int(packed[:,:,3].max())]}
 shader=(s/'Assets/Shaders/Ground.mshader').read_text();schema=json.loads(shader.split('/* MENGINE_PARAMETERS',1)[1].split('*/',1)[0]);assert [t['type'] for t in schema['textures']]==['color']*3+['data']*3
 for texture in schema['textures']:assert (s/texture['default']).is_file()
+material=json.loads((s/'Assets/Materials/Ground.mmat').read_text());cliff=next(a for a in manifest['assets'] if a['id']=='rock_face_03')
+assert material['base_color_texture']==cliff['albedo']
+assert material['metallic_roughness_texture']==cliff['output']
 (s.parents[1]/'docs/designs/frostbound-realms/ground-import-qa.json').write_text(json.dumps(report,indent=2)+'\n')
-print('PASS: 12 source hashes, 3 packed outputs, exact linear channels, 16-bit heights, normal orientation and six shader bindings')
+print(f"PASS: {len(manifest['sources'])} source hashes, {len(manifest['generated'])} packed outputs, exact linear channels, 16-bit heights, normal orientation and cliff material bindings")

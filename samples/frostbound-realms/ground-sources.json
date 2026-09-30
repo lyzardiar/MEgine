@@ -51,6 +51,21 @@
         "Displacement": "SourceAssets/polyhaven/ground/rocky_terrain_disp_1k.png"
       },
       "output": "Assets/Textures/rocky_terrain_nrh_1k.png"
+    },
+    {
+      "id": "rock_face_03",
+      "page": "https://polyhaven.com/a/rock_face_03",
+      "authors": {
+        "Dario Barresi": "Photography",
+        "Rico Cilliers": "Processing"
+      },
+      "albedo": "Assets/Textures/rock_face_03_diff_1k.jpg",
+      "channels": {
+        "nor_gl": "SourceAssets/polyhaven/ground/rock_face_03_nor_gl_1k.png",
+        "Rough": "SourceAssets/polyhaven/ground/rock_face_03_rough_1k.png",
+        "Displacement": "SourceAssets/polyhaven/ground/rock_face_03_disp_1k.png"
+      },
+      "output": "Assets/Textures/rock_face_03_nrh_1k.png"
     }
   ],
   "sources": [
@@ -113,6 +128,26 @@
       "file": "SourceAssets/rocky_terrain_diff_1k.jpg",
       "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_terrain/rocky_terrain_diff_1k.jpg",
       "sha256": "429315865fd89c150272592f6d93def174c6f69804a565ff08e53627a885579b"
+    },
+    {
+      "file": "Assets/Textures/rock_face_03_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face_03/rock_face_03_diff_1k.jpg",
+      "sha256": "ea48e0e47ad42c8bd312476178b1248ec66f0eb19156a26a1c222f2a40caaf2d"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/rock_face_03_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rock_face_03/rock_face_03_nor_gl_1k.png",
+      "sha256": "69cb133b4c6e7d046820bf5d1642dde3bbbaa56e5d4c889992ba251db8cf5218"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/rock_face_03_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rock_face_03/rock_face_03_rough_1k.png",
+      "sha256": "2c16f7644044eddb090113f7ac549e8ac8ab44b5b963437ae702075f617ad3dd"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/rock_face_03_disp_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rock_face_03/rock_face_03_disp_1k.png",
+      "sha256": "db8c173dd33a21d6eaa1c16f1f369bde045260a10c0576016d08a3f89f97bbd6"
     }
   ],
   "generated": [
@@ -127,6 +162,10 @@
     {
       "file": "Assets/Textures/rocky_terrain_nrh_1k.png",
       "sha256": "9a73215fcdd8824a41241ffa5dfb271e8ea10d181d5c5e4393fcb125a8e18873"
+    },
+    {
+      "file": "Assets/Textures/rock_face_03_nrh_1k.png",
+      "sha256": "c384fb53fabe9bfc45f9d7acff9220b8458fc561d9a5407cd5702c9e5e04a4a7"
     }
   ]
 }

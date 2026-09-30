@@ -1,0 +1,67 @@
+{
+  "passed": true,
+  "sources": 16,
+  "packedTextures": 4,
+  "reproducedByteForByte": true,
+  "shaderBackendCompilation": [
+    "WebGPU",
+    "Vulkan",
+    "D3D12",
+    "Metal"
+  ],
+  "nativeGround": {
+    "chunks": 64,
+    "shaderRejections": 0,
+    "editorRendered": true,
+    "zoom": 12,
+    "profiler": {
+      "intervals": 81,
+      "averagePresentIntervalMs": 61.61481481422613,
+      "p95PresentIntervalMs": 114.20000004768372,
+      "presentedFps": 16.22986294797906,
+      "averageRequestMs": 52.52073171371367,
+      "averageRenderMs": 16.35018048780488,
+      "averageCommandMs": 17.96140609756098,
+      "averageUploadMs": 1.464634153901077,
+      "averageSimulationMs": 5.9306109756097545,
+      "averageSimulationRequestMs": 16.09878049391072
+    }
+  },
+  "terrainInteractionPassed": true,
+  "package": {
+    "files": 540,
+    "bytes": 234752451,
+    "contentHash": "bb809c31c557c1ca3fc870e411b97e42ef1c879053e4b9480ac3ff5cd0e64ac9",
+    "startupSmokePassed": true,
+    "sourceGroundMatchesPackage": true
+  },
+  "nativePlayer": {
+    "skirmish": {
+      "medianFrameLoopFps": 53.71957282364465,
+      "viewport": [
+        2560,
+        1440
+      ],
+      "report": "native-player-performance-skirmish.json"
+    },
+    "moba": {
+      "medianFrameLoopFps": 54.59269975013265,
+      "viewport": [
+        2560,
+        1440
+      ],
+      "report": "native-player-performance-moba.json"
+    },
+    "td": {
+      "medianFrameLoopFps": 57.734373167643675,
+      "viewport": [
+        2560,
+        1440
+      ],
+      "report": "native-player-performance-td.json"
+    }
+  },
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLan": false
+}

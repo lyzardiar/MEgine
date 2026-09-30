@@ -6,9 +6,9 @@
         1024,
         1024
       ],
-      "normalHeightCorrelation": [
-        0.8269944431647643,
-        0.8372273680345571
+      "normalSlopeHeightCorrelation": [
+        0.8542301425451462,
+        0.8634423746530495
       ],
       "roughnessRange": [
         160,
@@ -24,9 +24,9 @@
         1024,
         1024
       ],
-      "normalHeightCorrelation": [
-        0.8624175155267759,
-        0.8491663672222758
+      "normalSlopeHeightCorrelation": [
+        0.8727731708722888,
+        0.8637108541815759
       ],
       "roughnessRange": [
         195,
@@ -42,9 +42,9 @@
         1024,
         1024
       ],
-      "normalHeightCorrelation": [
-        0.7877340164021459,
-        0.7824142087263002
+      "normalSlopeHeightCorrelation": [
+        0.8357971042025664,
+        0.8412902969085528
       ],
       "roughnessRange": [
         210,
@@ -53,6 +53,24 @@
       "heightRange": [
         23,
         248
+      ]
+    },
+    "rock_face_03": {
+      "size": [
+        1024,
+        1024
+      ],
+      "normalSlopeHeightCorrelation": [
+        0.7302289320150323,
+        0.7307395875218206
+      ],
+      "roughnessRange": [
+        150,
+        247
+      ],
+      "heightRange": [
+        0,
+        254
       ]
     }
   }

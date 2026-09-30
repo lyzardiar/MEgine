@@ -9,16 +9,16 @@
     "editorRendered": true,
     "zoom": 12,
     "profiler": {
-      "intervals": 38,
-      "averagePresentIntervalMs": 129.37105262906928,
-      "p95PresentIntervalMs": 146,
-      "presentedFps": 7.729704440661736,
-      "averageRequestMs": 54.61538460927132,
-      "averageRenderMs": 19.056297435897438,
-      "averageCommandMs": 24.5886282051282,
-      "averageUploadMs": 1.4794871837664874,
-      "averageSimulationMs": 9.777607692307692,
-      "averageSimulationRequestMs": 27.21794871794872
+      "intervals": 81,
+      "averagePresentIntervalMs": 61.61481481422613,
+      "p95PresentIntervalMs": 114.20000004768372,
+      "presentedFps": 16.22986294797906,
+      "averageRequestMs": 52.52073171371367,
+      "averageRenderMs": 16.35018048780488,
+      "averageCommandMs": 17.96140609756098,
+      "averageUploadMs": 1.464634153901077,
+      "averageSimulationMs": 5.9306109756097545,
+      "averageSimulationRequestMs": 16.09878049391072
     }
   }
 }

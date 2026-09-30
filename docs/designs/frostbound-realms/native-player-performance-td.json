@@ -10,20 +10,20 @@
   "sourceSceneSha256": "486b878b5a405c7ee65d62a781dfbdd03e4eccd1e9e396927ae0b257d1bebf06",
   "sourceScriptSha256": "d59dcfed5af956755c62b3ceff343e279abfa70dd1ba557b04487d6014411800",
   "fixtureScriptSha256": "5251dbccc7cc94d170e3bd836d87b283e8edc3f0eb6241c0871dc1b75e84d0fa",
-  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-td-1790755720343\\sample",
-  "processId": 123472,
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-td-1790757527864\\sample",
+  "processId": 72992,
   "warmupSeconds": 5,
   "sampleWindowSeconds": 5,
   "loggedErrors": [],
   "materialPipelineRejections": 0,
   "runs": [
     {
-      "samples": 293,
-      "durationMs": 5016.045992728323,
-      "frameLoopFps": 58.412542553389095,
-      "meanMs": 17.119610896683696,
-      "p95Ms": 30.74459917843342,
-      "maxMs": 52.56360024213791,
+      "samples": 298,
+      "durationMs": 4997.944715898484,
+      "frameLoopFps": 59.6245090611068,
+      "meanMs": 16.771626563417733,
+      "p95Ms": 28.357500210404396,
+      "maxMs": 41.05950146913528,
       "state": {
         "announcement": "",
         "brush": 0,
@@ -195,12 +195,12 @@
       }
     },
     {
-      "samples": 288,
-      "durationMs": 4984.817897900939,
-      "frameLoopFps": 57.7754304969243,
-      "meanMs": 17.308395478822703,
-      "p95Ms": 29.301000759005547,
-      "maxMs": 49.37649890780449,
+      "samples": 289,
+      "durationMs": 5005.683514755219,
+      "frameLoopFps": 57.734373167643675,
+      "meanMs": 17.320704203305258,
+      "p95Ms": 30.679700896143913,
+      "maxMs": 50.07990077137947,
       "state": {
         "announcement": "",
         "brush": 0,
@@ -400,12 +400,12 @@
       }
     },
     {
-      "samples": 286,
-      "durationMs": 4999.039006885141,
-      "frameLoopFps": 57.210995874625944,
-      "meanMs": 17.47915736673126,
-      "p95Ms": 30.894199386239052,
-      "maxMs": 42.523398995399475,
+      "samples": 285,
+      "durationMs": 4985.253397375345,
+      "frameLoopFps": 57.16860855057997,
+      "meanMs": 17.492117183773143,
+      "p95Ms": 30.28859943151474,
+      "maxMs": 47.26500064134598,
       "state": {
         "announcement": "",
         "brush": 0,
@@ -605,5 +605,11 @@
         "zoom": 12
       }
     }
-  ]
+  ],
+  "groundAssets": {
+    "ground-sources.json": "73a66b495a354f7ce868fe5719bf3c00874afdc67580d76387d30a43c8c29436",
+    "Assets/Materials/Ground.mmat": "8d6199382958aa3712bb8beae0ab9e08831089d60100ad3ef6fd692f9fb396f3",
+    "Assets/Shaders/Ground.mshader": "a20c6865c72aa308169277a7074f588a65dc0fb12661d00fa10bc862da14de71"
+  },
+  "measuredAt": "2026-09-30T08:39:17.396Z"
 }

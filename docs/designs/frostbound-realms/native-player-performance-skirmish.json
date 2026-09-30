@@ -10,20 +10,20 @@
   "sourceSceneSha256": "486b878b5a405c7ee65d62a781dfbdd03e4eccd1e9e396927ae0b257d1bebf06",
   "sourceScriptSha256": "d59dcfed5af956755c62b3ceff343e279abfa70dd1ba557b04487d6014411800",
   "fixtureScriptSha256": "2fadc3c14c5122568188d86b31f4b98913e3da0089676ee743d0e8e9aed74f56",
-  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790755790301\\sample",
-  "processId": 67444,
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790757468573\\sample",
+  "processId": 162708,
   "warmupSeconds": 5,
   "sampleWindowSeconds": 5,
   "loggedErrors": [],
   "materialPipelineRejections": 0,
   "runs": [
     {
-      "samples": 271,
-      "durationMs": 4980.890695471317,
-      "frameLoopFps": 54.40793957723191,
-      "meanMs": 18.379670462993786,
-      "p95Ms": 30.005499720573425,
-      "maxMs": 118.80289763212204,
+      "samples": 269,
+      "durationMs": 5001.831019297242,
+      "frameLoopFps": 53.78030544458388,
+      "meanMs": 18.594167357982315,
+      "p95Ms": 35.56869924068451,
+      "maxMs": 112.8723993897438,
       "state": {
         "announcement": "",
         "brush": 0,
@@ -245,12 +245,12 @@
       }
     },
     {
-      "samples": 256,
-      "durationMs": 5000.839909538627,
-      "frameLoopFps": 51.19140077083938,
-      "meanMs": 19.53453089663526,
-      "p95Ms": 31.585298478603363,
-      "maxMs": 115.8824935555458,
+      "samples": 251,
+      "durationMs": 4990.176101680845,
+      "frameLoopFps": 50.29882611065679,
+      "meanMs": 19.881179687971493,
+      "p95Ms": 36.82579845190048,
+      "maxMs": 120.70289254188538,
       "state": {
         "announcement": "",
         "brush": 0,
@@ -265,7 +265,7 @@
         "editorTrigger": null,
         "faction": 0,
         "flyers": [],
-        "frame": 155,
+        "frame": 154,
         "gold": 660,
         "heightBrush": 1,
         "hero": {
@@ -427,7 +427,7 @@
             -23,
             23
           ],
-          "gatherCd": 0.2500000000000001,
+          "gatherCd": 0.3500000000000001,
           "hp": 100,
           "id": 4,
           "inventory": [],
@@ -467,7 +467,7 @@
           ],
           "team": 0,
           "waypoints": [],
-          "x": -19.5,
+          "x": -19.299999999999997,
           "xp": 0,
           "yaw": -1.5707963267948966,
           "z": 20
@@ -476,12 +476,12 @@
       }
     },
     {
-      "samples": 271,
-      "durationMs": 5060.621606651694,
-      "frameLoopFps": 53.55073369717999,
-      "meanMs": 18.673880467349424,
-      "p95Ms": 30.80650046467781,
-      "maxMs": 116.89220368862152,
+      "samples": 272,
+      "durationMs": 5063.331402372569,
+      "frameLoopFps": 53.71957282364465,
+      "meanMs": 18.615188979310915,
+      "p95Ms": 30.32750077545643,
+      "maxMs": 116.60920083522797,
       "state": {
         "announcement": "",
         "brush": 0,
@@ -702,5 +702,11 @@
         "zoom": 12
       }
     }
-  ]
+  ],
+  "groundAssets": {
+    "ground-sources.json": "73a66b495a354f7ce868fe5719bf3c00874afdc67580d76387d30a43c8c29436",
+    "Assets/Materials/Ground.mmat": "8d6199382958aa3712bb8beae0ab9e08831089d60100ad3ef6fd692f9fb396f3",
+    "Assets/Shaders/Ground.mshader": "a20c6865c72aa308169277a7074f588a65dc0fb12661d00fa10bc862da14de71"
+  },
+  "measuredAt": "2026-09-30T08:38:18.539Z"
 }

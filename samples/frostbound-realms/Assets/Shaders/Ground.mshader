@@ -58,12 +58,13 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let water_normal=normalize(geometric+vec3<f32>(wave*0.045,0.0,cos(p.y*8.3-p.x*1.1)*0.035));
     s.normal=normalize(mix(ground_normal,water_normal,water));
     let cliff=1.0-smoothstep(0.3,0.85,abs(geometric.y));
-    let side_x=vec2<f32>(p.y,-world_position.y)*0.32;let side_z=vec2<f32>(p.x,-world_position.y)*0.32;
+    let side_x=vec2<f32>(p.y,-world_position.y)*0.18;let side_z=vec2<f32>(p.x,-world_position.y)*0.18;
     let side_weight=abs(geometric.x)/max(abs(geometric.x)+abs(geometric.z),0.0001);
-    let side_nx=mengine_texture_stone_nrh(side_x);let side_nz=mengine_texture_stone_nrh(side_z);
-    let side_color=mix(mengine_texture_stone(side_z).rgb,mengine_texture_stone(side_x).rgb,side_weight);
+    // MiYu: cliff color and linear NRH reuse the standard color/MR bindings; this hook supplies all final PBR channels.
+    let side_nx=textureSample(metallic_roughness_texture,material_sampler,side_x);let side_nz=textureSample(metallic_roughness_texture,material_sampler,side_z);
+    let side_color=mix(textureSample(base_color_texture,material_sampler,side_z).rgb,textureSample(base_color_texture,material_sampler,side_x).rgb,side_weight);
     let side_normal=normalize(mix(frost_bump(side_nz,geometric,vec3<f32>(1,0,0),vec3<f32>(0,-1,0),0.8),frost_bump(side_nx,geometric,vec3<f32>(0,0,1),vec3<f32>(0,-1,0),0.8),side_weight));
-    s.base_color=mix(s.base_color,side_color*vec3<f32>(0.48,0.51,0.53),cliff);
+    s.base_color=mix(s.base_color,side_color*vec3<f32>(0.78,0.82,0.86),cliff);
     s.normal=normalize(mix(s.normal,side_normal,cliff));s.roughness=mix(s.roughness,mix(side_nz.b,side_nx.b,side_weight),cliff);
     return s;
 }

@@ -1,5 +1,7 @@
 # 扫描地表材质
 
+本页记录扫描地表接入阶段；新增的第四种扫描材质、当前画面和运行包见 [自然岩壁](cliff-art.md)。
+
 森林地表、积雪和石路使用 Poly Haven 的配套 OpenGL 法线、粗糙度与高度图。雪面按 2 米的纹理周期采样；雪土交界参考相对扫描高度混合，保留突出的落叶和石块。岩壁按朝向投影石材颜色及法线，坡道将细节投影到几何切平面。材质混合只改变画面，地图地形、寻路和迷雾规则保持一致。
 
 新增九张 1K PNG 原件，加上已有三张颜色图，共十二份来源。素材均为 CC0：`forest_ground_04` 由 Rob Tuytel / Rico Cilliers 制作，`snow_02` 由 Rob Tuytel 制作，`rocky_terrain` 由 Amal Kumar 制作。`ground-sources.json` 固定下载 URL、SHA256、作者和三张派生图哈希；Player 附带 `Assets/Licenses/ground.txt`。
