@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "native": {
+    "fixture": "Flat MOBA field with a ranger, two low-health allied creeps, a full-health allied creep and a stationary enemy hero; initial attack cooldown enables deterministic flight capture.",
+    "fullHealthRejected": true,
+    "rightClick": true,
+    "attackClick": true,
+    "inFlightSaveRestore": true,
+    "noOwnGoldOrExperience": true,
+    "renderedDenyLabel": true,
+    "shaderRejections": 0
+  },
+  "checks": {
+    "rulesAndTcp": true,
+    "clientFeedbackBurstAndNetwork": true,
+    "quickJsPassed": 3,
+    "quickJsFailed": 0
+  },
+  "rules": {
+    "creepHealthThreshold": 0.5,
+    "denyGold": 0,
+    "denyOwnExperience": 0,
+    "denyEnemyExperience": 17.5,
+    "normalCreepExperience": 35,
+    "experienceRadius": 18,
+    "experienceSharedInMoba": true
+  },
+  "sourceSha256": {
+    "game/simulation.js": "06585153c1e7baf9ee3159bc4cbe5af7f101386c4f98d651b2dae41102001db1",
+    "game/client.js": "f0d9ecaf31c0fea96bd4d4d6fc8186839089070db367a5a5ccb8e6dd3cebdc48",
+    "Assets/Scripts/Main.js": "20a23b39a1f36c0b4ad20c51759c9c84e35be6ac272ef659c3c4a53059ae0b89"
+  },
+  "package": {
+    "files": 540,
+    "bytes": 234753874,
+    "contentHash": "02d6edae05a58b08a5d81e681e3c631ffc0deeaab92b3bcf40bd6a809cb58a03",
+    "startupSmokePassed": true,
+    "scriptMatchesSource": true
+  },
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLan": false
+}

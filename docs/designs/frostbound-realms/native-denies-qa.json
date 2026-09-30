@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "denies": {
+    "fixture": "Flat MOBA field with a ranger, two low-health allied creeps, a full-health allied creep and a stationary enemy hero; initial attack cooldown enables deterministic flight capture.",
+    "fullHealthRejected": true,
+    "rightClick": true,
+    "attackClick": true,
+    "inFlightSaveRestore": true,
+    "noOwnGoldOrExperience": true,
+    "renderedDenyLabel": true,
+    "shaderRejections": 0
+  }
+}

@@ -1,7 +1,7 @@
 /* Author: MiYu. Native RTS controls, presentation, map editor and TCP client. */
 var FrostClient=(()=>{
   const S=Frost,hidden=[0,-100,0],pitch=-Math.atan2(42,32),sin=-Math.sin(pitch);
-  let entities={},authored={},sent={},initialized=false,mode='title',state=null,team=0,faction=0,heroClass=0,heroPanel='skills',inventoryAction='useItem',selected=[],groups={},camera=[0,0],zoom=27,time=0,accumulator=0,notice='',noticeUntil=0,drag=null,armed=null,paused=false,actions=[],renderAt=0,lastFrame=-1,fx=[],fxSerial=0,lastBattleSound=0,commandMarker=null,damageText=[];
+  let entities={},authored={},sent={},initialized=false,mode='title',state=null,team=0,faction=0,heroClass=0,heroPanel='skills',inventoryAction='useItem',selected=[],groups={},camera=[0,0],zoom=27,time=0,accumulator=0,notice='',noticeUntil=0,drag=null,armed=null,paused=false,actions=[],renderAt=0,lastFrame=-1,fx=[],fxSerial=0,lastBattleSound=0,commandMarker=null,damageText=[],pendingFx=[];
   let editMap=S.defaultMap(),brush=0,undo=[],paintCell=-1,paintPointer=null,slot=1,returnEditor=false,online=false,address='127.0.0.1:7788',edit='',intent='',connected=false,code='',token='',room=null,rooms=[],roomIndex=0,seq=0,lastReceive=0,reconnectUntil=0,retry=0,netStates=0;
   const itemIcons=['blade','heart','boots','edge','storm','charm','heal','frost'];
   const previous={},visibility={},modelNames={},active={},tileState=[];
@@ -17,7 +17,7 @@ var FrostClient=(()=>{
   function init(){for(const e of engine.snapshot.entities)if(e.name){entities[e.name]=e;authored[e.name]=e.components;}activate('Frost telemetry',false);for(let i=0;i<S.PROJECTILE_LIMIT;i++){activate('Missile '+i,false);activate('Missile aura '+i,false);}state=S.create();initialized=true;}
   function persist(key,value){try{engine.storage.save(key,value);message('Saved '+key+' to your project user-data folder');return true;}catch(e){message('Save failed: '+e.message);return false;}}
   function load(key){try{return engine.storage.load(key);}catch(e){message('Load failed: '+e.message);return null;}}
-  function stopNetwork(){if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';missileView.reset();fx=[];damageText=[];lastFrame=-1;}
+  function stopNetwork(){if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';missileView.reset();fx=[];damageText=[];pendingFx=[];lastFrame=-1;}
   function solo(kind,map){stopNetwork();state=S.create(kind,{map,...(map?{}:{factions:[faction,(faction+1)%4],heroes:[heroClass,(heroClass+1)%S.heroes.length]})});team=0;mode='playing';heroPanel='skills';paused=false;selected=state.units.filter(u=>u.team===0&&u.kind==='hero').map(u=>u.id);camera=state.map.spawns[0].map(v=>S.clamp(v,-18,18));zoom=16;accumulator=0;lastFrame=-1;armed=null;groups={};notice='';selectHero();}
   function title(){stopNetwork();mode='title';state=S.create();camera=[0,0];zoom=27;paused=false;selected=[];armed=null;returnEditor=false;}
   function order(command){const c={ids:[...selected],...command};if(['move','attackMove','build','construct','repair','gather'].includes(c.type)&&(engine.input?.keys||[]).some(k=>k==='ShiftLeft'||k==='ShiftRight'))c.append=true;if(online){if(connected)engine.network.send({type:'order',seq:++seq,command:c});else message('Reconnecting; orders are paused');}else{const error=S.command(state,team,c);if(error)message(error);else{sound('order');if(Number.isFinite(c.x)&&Number.isFinite(c.z))commandMarker={x:c.x,z:c.z,until:time+1.2};}}}
@@ -58,6 +58,7 @@ var FrostClient=(()=>{
     try{editorState();if(JSON.stringify(before)!==JSON.stringify(editMap)){undo.push(before);if(undo.length>20)undo.shift();}}catch(e){editMap=before;editorState();message(e.message);}
   }
   function connect(action){stopNetwork();online=true;intent=action;mode='connecting';retry=time;reconnectUntil=time+8;message('Connecting to '+address);}
+  function collectEvents(){if(lastFrame===state.frame)return;for(const e of state.events||[])if(state.visible[team]?.[S.index(e.x,e.z)])pendingFx.push(e);if(pendingFx.length>48)pendingFx.splice(0,pendingFx.length-48);lastFrame=state.frame;}
   function receive(){
     for(const e of engine.network.poll()){
       if(e.type==='connected'){connected=true;lastReceive=time;engine.network.send({type:'hello',protocol:10,name:'Commander'});}
@@ -70,13 +71,13 @@ var FrostClient=(()=>{
       }
       if(m.type==='joined'){
         missileView.reset();
-        const resumed=intent==='resume'&&!!m.state;team=m.team;token=m.token;code=m.code;seq=0;if(m.state){state=m.state;mode=state.winner===null?'playing':'finished';}else mode='lobby';
+        const resumed=intent==='resume'&&!!m.state;team=m.team;token=m.token;code=m.code;seq=0;if(m.state){state=m.state;collectEvents();mode=state.winner===null?'playing':'finished';}else mode='lobby';
         if(resumed){selected=selected.filter(id=>state.units.some(u=>u.id===id&&u.team===team&&u.hp>0&&!u.inside));message('Connection restored.');}
         else{selected=[];camera=[...(m.state?.map.spawns[team]||[team?23:-23,team?-23:23])];zoom=18;notice='';noticeUntil=0;}
       }
       if(m.type==='room'){room=m;if(m.phase==='playing'&&state?.frame>0)mode='playing';}
       if(m.type==='rooms'){rooms=m.rooms;roomIndex=S.clamp(roomIndex,0,Math.max(0,rooms.length-1));}
-      if(m.type==='state'){state=m.state;netStates++;mode=state.winner===null?'playing':'finished';if(!selected.length)selected=state.units.filter(u=>u.team===team&&u.kind==='hero').map(u=>u.id);}
+      if(m.type==='state'){state=m.state;collectEvents();netStates++;mode=state.winner===null?'playing':'finished';if(!selected.length)selected=state.units.filter(u=>u.team===team&&u.kind==='hero').map(u=>u.id);}
       if(m.type==='error'){message(m.message);if(intent==='resume'&&m.message.includes('expired')){stopNetwork();mode='network';}}
     }
     if(online&&!connected&&time>=retry){if(time>reconnectUntil){stopNetwork();mode='network';message('Connection timed out');}else {engine.network.connect(address);retry=time+3;}}
@@ -92,6 +93,7 @@ var FrostClient=(()=>{
     if(y<0)z=base;return {x:S.clamp(x,-30,30),z:S.clamp(z,-30,30)};
   }
   function screenWorld(u,input){const [w,h]=input.viewport||[1280,720],scale=Math.sqrt(w/1280*h/720);return {x:(u.x-camera[0])/zoom*h/2/scale,y:((u.z-camera[1])*sin-(u.y??S.unitHeight(state,u))*Math.cos(pitch))/zoom*h/2/scale};}
+  function attackAt(input,p,includeAllies=false){let target=null,best=28;for(const u of state.units){if(u.hp<=0||!S.isVisible(state,team,u)||u.team===team&&!includeAllies&&!S.canDeny(state,team,u))continue;const point=screenWorld(u,input),distance=Math.hypot(point.x-p.x,point.y-p.y);if(distance<best){target=u;best=distance;}}return target;}
   function hovered(button,p){return Math.abs(p.x-button.x)<button.w/2&&Math.abs(p.y-button.y)<button.h/2;}
   function saveMap(){try{editMap=S.validateMap(editMap);persist('map'+slot,editMap);}catch(e){message(e.message);}}
   function restoreMap(){const map=load('map'+slot);if(map){try{editMap=S.validateMap(map);editorState();message('Loaded map slot '+slot);}catch(e){message(e.message);}}else message('Map slot '+slot+' is empty');}
@@ -138,7 +140,7 @@ var FrostClient=(()=>{
       for(const kind of S.trainable(state,u))add(S.types[kind].label+' '+S.types[kind].gold,()=>order({type:'train',kind}),'Cost: '+S.types[kind].gold+' gold / '+S.types[kind].wood+' lumber / '+S.types[kind].food+' supply','unit:'+FrostVisual.model(state,{kind,team,heroClass:state.teams[team].heroClass??0}).key);if(u.kind==='barracks')add('Weapons +6 [U]',()=>order({type:'upgrade'}));if(u.kind==='hall')add('Advance tier [U]',()=>order({type:'tech'}));
     }
     if(S.trainable(state,u).length){add('Rally point',()=>armed={type:'rally'});if(u.queue.length)add('Cancel last / refund',()=>order({type:'cancelTrain',index:u.queue.length-1}));}
-    add('Attack move [A]',()=>armed={type:'attackMove'},'Move and engage enemies. Hold Shift when choosing a target to append a waypoint.');add('Stop [S]',()=>{armed=null;order({type:'stop'});});if(u.speed){add('Hold position [H]',()=>{armed=null;order({type:'hold'});},'Stay here and attack only enemies in range. Replaces the current route.','shield');add('Patrol [P]',()=>armed={type:'patrol'},'Choose the other end of a repeating patrol. Engage enemies, then continue the route.','attack');}add('Hero [Space]',selectHero);
+    add('Attack move [A]',()=>armed={type:'attackMove'},'A-click a unit to attack, or ground to move and engage enemies. In MOBA, A-click or right-click an allied creep at 50% health or less to deny. Shift appends ground waypoints.');add('Stop [S]',()=>{armed=null;order({type:'stop'});});if(u.speed){add('Hold position [H]',()=>{armed=null;order({type:'hold'});},'Stay here and attack only enemies in range. Replaces the current route.','shield');add('Patrol [P]',()=>armed={type:'patrol'},'Choose the other end of a repeating patrol. Engage enemies, then continue the route.','attack');}add('Hero [Space]',selectHero);
   }
   function controls(input,dt){
     const press=k=>input.pressedKeys.includes(k),held=k=>input.keys.includes(k),p=screenPointer(input),w=worldPointer(input);updateActions();
@@ -180,7 +182,7 @@ var FrostClient=(()=>{
     if(input.pressedButtons.includes(0)){
       const group=mode==='title'?'menu':['playing','editor'].includes(mode)?'hud':'modal',b=FrostButtons.find(b=>b.group===group&&hovered(b,p)&&(!b.id.startsWith('action')||actions[Number(b.id.slice(6))]));if(b){action(b.id);return;}
       if(['playing','editor'].includes(mode)&&p.x>-604&&p.x<-420&&p.y>185&&p.y<347){camera=[S.clamp((p.x+594)/160*64-32,-25,25),S.clamp((p.y-190)/144*64-32,-25,25)];return;}
-      if(['playing','editor'].includes(mode)&&p.y<175&&p.y>-305&&!paused){if(mode==='editor'){paintCell=-1;paintPointer=[p.x,p.y];paint(w);}else if(armed){if(armed.type==='repair'){const b=state.units.find(u=>u.team===team&&u.hp>0&&!S.types[u.kind].speed&&Math.hypot(screenWorld(u,input).x-p.x,screenWorld(u,input).y-p.y)<28);if(b)order({type:b.built<1?'construct':'repair',target:b.id});else message('Select a friendly building');}else order({...armed,x:w.x,z:w.z});if(armed.type!=='build'||!held('ShiftLeft')&&!held('ShiftRight'))armed=null;}else drag={start:p,end:p};}
+      if(['playing','editor'].includes(mode)&&p.y<175&&p.y>-305&&!paused){if(mode==='editor'){paintCell=-1;paintPointer=[p.x,p.y];paint(w);}else if(armed){if(armed.type==='repair'){const b=state.units.find(u=>u.team===team&&u.hp>0&&!S.types[u.kind].speed&&Math.hypot(screenWorld(u,input).x-p.x,screenWorld(u,input).y-p.y)<28);if(b)order({type:b.built<1?'construct':'repair',target:b.id});else message('Select a friendly building');}else if(armed.type==='attackMove'){const target=attackAt(input,p,true);order(target?{type:'attack',target:target.id}:{...armed,x:w.x,z:w.z});}else order({...armed,x:w.x,z:w.z});if(armed.type!=='build'||!held('ShiftLeft')&&!held('ShiftRight'))armed=null;}else drag={start:p,end:p};}
     }
     if(mode==='editor'&&![2,4].includes(editorPage)&&input.buttons.includes(0)&&p.y<175&&p.y>-305&&(!paintPointer||Math.hypot(p.x-paintPointer[0],p.y-paintPointer[1])>2)){paintPointer=[p.x,p.y];paint(w);}
     if(drag){drag.end=p;if(input.releasedButtons.includes(0)){
@@ -189,7 +191,7 @@ var FrostClient=(()=>{
       else {let nearest=null,best=25;for(const u of state.units){if(u.hp<=0||!S.isVisible(state,team,u))continue;const a=screenWorld(u,input),d=Math.hypot(a.x-p.x,a.y-p.y);if(d<best){nearest=u;best=d;}}if(nearest)ids=[nearest.id];}
       selected=(held('ShiftLeft')?[...new Set([...selected,...ids])]:ids).slice(0,40);drag=null;sound('order');
     }}
-    if(mode==='playing'&&!paused&&input.pressedButtons.includes(2)&&p.y<175){armed=null;const target=state.units.find(u=>u.team!==team&&u.hp>0&&S.isVisible(state,team,u)&&Math.hypot(screenWorld(u,input).x-p.x,screenWorld(u,input).y-p.y)<28),r=state.resources.findIndex(r=>r.kind!=='camp'&&r.amount>0&&Math.hypot(r.x-w.x,r.z-w.z)<2.8),worker=state.units.some(u=>selected.includes(u.id)&&u.kind==='worker');const b=worker&&state.units.find(u=>u.team===team&&u.hp>0&&!S.types[u.kind].speed&&(u.built<1||u.hp<u.maxHp)&&Math.hypot(screenWorld(u,input).x-p.x,screenWorld(u,input).y-p.y)<28);if(target)order({type:'attack',target:target.id});else if(b)order({type:b.built<1?'construct':'repair',target:b.id});else if(r>=0&&worker)order({type:'gather',resource:r});else if(state.units.some(u=>selected.includes(u.id)&&u.kind==='hero')&&state.loot.some(d=>state.visible[team]?.[S.index(d.x,d.z)]&&Math.hypot(d.x-w.x,d.z-w.z)<1.3))order({type:'pickup',loot:state.loot.find(d=>state.visible[team]?.[S.index(d.x,d.z)]&&Math.hypot(d.x-w.x,d.z-w.z)<1.3).id});else order({type:state.units.some(u=>selected.includes(u.id)&&S.trainable(state,u).length)?'rally':'move',x:w.x,z:w.z});}
+    if(mode==='playing'&&!paused&&input.pressedButtons.includes(2)&&p.y<175){armed=null;const target=attackAt(input,p),r=state.resources.findIndex(r=>r.kind!=='camp'&&r.amount>0&&Math.hypot(r.x-w.x,r.z-w.z)<2.8),worker=state.units.some(u=>selected.includes(u.id)&&u.kind==='worker');const b=worker&&state.units.find(u=>u.team===team&&u.hp>0&&!S.types[u.kind].speed&&(u.built<1||u.hp<u.maxHp)&&Math.hypot(screenWorld(u,input).x-p.x,screenWorld(u,input).y-p.y)<28);if(target)order({type:'attack',target:target.id});else if(b)order({type:b.built<1?'construct':'repair',target:b.id});else if(r>=0&&worker)order({type:'gather',resource:r});else if(state.units.some(u=>selected.includes(u.id)&&u.kind==='hero')&&state.loot.some(d=>state.visible[team]?.[S.index(d.x,d.z)]&&Math.hypot(d.x-w.x,d.z-w.z)<1.3))order({type:'pickup',loot:state.loot.find(d=>state.visible[team]?.[S.index(d.x,d.z)]&&Math.hypot(d.x-w.x,d.z-w.z)<1.3).id});else order({type:state.units.some(u=>selected.includes(u.id)&&S.trainable(state,u).length)?'rally':'move',x:w.x,z:w.z});}
   }
   function render(input){
     const playing=['playing','finished','reconnecting'].includes(mode),editing=mode==='editor',world=playing||editing,modal=!['title','playing','editor'].includes(mode),allVisible=!playing;
@@ -229,11 +231,11 @@ var FrostClient=(()=>{
       const c=corpses[i],visual=c&&FrostVisual.corpse(state,c);if(!visual){transform('Corpse '+i,hidden);continue;}
       const {asset,mesh,scale,y,yaw}=visual;set('Corpse '+i,'MeshRenderer',{mesh,material:asset.material});transform('Corpse '+i,[c.x,y,c.z],[scale,scale,scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);
     }
-    if(lastFrame!==state.frame){for(const e of state.events||[]){if(playing&&!state.visible[team]?.[S.index(e.x,e.z)])continue;if(e.type==='damage'){damageText.push({e,until:time+.8});if(damageText.length>12)damageText.shift();continue;}if(e.type==='launch'){if(time-lastBattleSound>.25){sound('battle');lastBattleSound=time;}continue;}if(e.type==='hit'&&e.art==='musket')fx.push({id:fxSerial++%24,e:FrostVisual.muzzle(e),until:time+.5,start:time});const id=fxSerial++%24;fx.push({id,e,until:time+(e.type==='spell'?.65:e.ranged?.35:.22),start:time});if(e.type==='spell')sound('spell');if(e.type==='hit'&&time-lastBattleSound>.25){sound('battle');lastBattleSound=time;}}lastFrame=state.frame;}
+    for(const e of pendingFx){if(playing&&!state.visible[team]?.[S.index(e.x,e.z)])continue;if(e.type==='damage'||e.type==='deny'){damageText.push({e,until:time+.8});if(damageText.length>12)damageText.shift();continue;}if(e.type==='launch'){if(time-lastBattleSound>.25){sound('battle');lastBattleSound=time;}continue;}if(e.type==='hit'&&e.art==='musket')fx.push({id:fxSerial++%24,e:FrostVisual.muzzle(e),until:time+.5,start:time});const id=fxSerial++%24;fx.push({id,e,until:time+(e.type==='spell'?.65:e.ranged?.35:.22),start:time});if(e.type==='spell')sound('spell');if(e.type==='hit'&&time-lastBattleSound>.25){sound('battle');lastBattleSound=time;}}pendingFx=[];
     fx=fx.filter(f=>f.until>time);for(let i=0;i<24;i++){const f=fx.findLast?fx.findLast(f=>f.id===i):[...fx].reverse().find(f=>f.id===i);if(!f){transform('FX '+i,hidden);continue;}const e=f.e,spell=e.type==='spell',muzzle=e.type==='muzzle',flash=muzzle&&time-f.start<.08,style=FrostVisual.projectile(e.art||'arrow'),color=flash?[1,.68,.2,1]:muzzle?[.65,.65,.62,.45]:spell?S.heroes[e.heroClass??0].color:style.color;
       set('FX '+i,'ParticleEmitter3D',{...authored['FX '+i].ParticleEmitter3D,playing:true,seed:f.id+Math.floor(f.start*1000)+1,shape_radius:spell?2:e.art==='stone'?.8:.12,texture:'Assets/Textures/'+(flash?'spark_01':spell?'magic_01':style.trail?'spark_01':'smoke_01')+'.png',...(muzzle?{lifetime_min:.08,lifetime_max:.35,speed_min:.2,speed_max:1.4,gravity:[0,1,0],size_end:flash?.05:1}:{}),size_start:flash?.55:muzzle?.45:spell?.8:style.impactSize,color_start:color,color_end:[color[0]*.5,color[1]*.5,color[2]*.5,0]});transform('FX '+i,[e.x,e.art==='stone'?S.elevation(map,e.x,e.z)+.25:e.y??S.elevation(map,e.x,e.z)+.6,e.z]);}
     damageText=damageText.filter(d=>d.until>time);
-    for(let i=0;i<12;i++){const d=damageText[i];show('Damage '+i,playing&&!!d);if(d){const p=screenWorld(d.e,input),r=authored['Damage '+i].RectTransform;set('Damage '+i,'RectTransform',{...r,anchored_position:[p.x,p.y-36-(.8-d.until+time)*26]});label('Damage '+i,'-'+d.e.amount,d.e.team===team?[1,.46,.35,1]:[1,.87,.52,1]);}}
+    for(let i=0;i<12;i++){const d=damageText[i];show('Damage '+i,playing&&!!d);if(d){const p=screenWorld(d.e,input),r=authored['Damage '+i].RectTransform;set('Damage '+i,'RectTransform',{...r,anchored_position:[p.x,p.y-36-(.8-d.until+time)*26]});label('Damage '+i,d.e.type==='deny'?'DENY':'-'+d.e.amount,d.e.type==='deny'?[.35,.9,1,1]:d.e.team===team?[1,.46,.35,1]:[1,.87,.52,1]);}}
     for(let i=0;i<32;i++)for(let edge=0;edge<4;edge++){const r=editing?map.regions[i]:null,horizontal=edge<2;transform('Region '+i+' '+edge,r?[r.x+(horizontal?0:(edge===2?-1:1)*r.width/2),S.elevation(map,r.x,r.z)+.07,r.z+(horizontal?(edge===0?-1:1)*r.height/2:0)]:hidden,[horizontal?r?.width||1:.2,.035,horizontal?.2:r?.height||1]);if(r)set('Region '+i+' '+edge,'MaterialPropertyBlock',{override_base_color:true,base_color:i===regionIndex?[1,.8,.2,1]:[.2,.7,1,1]});}
     const markers=editing?map.triggers:state.loot||[];for(let i=0;i<S.LIMIT;i++){const m=markers[i];transform('Objective '+i,m&&(editing||state.visible[team]?.[S.index(m.x,m.z)])?[m.x,S.elevation(map,m.x,m.z)+.4+Math.sin(time*2)*.15,m.z]:hidden,[.8,.8,.8],[0,Math.sin(time/2),0,Math.cos(time/2)]);}
     label('Objective text',editing?'[V] '+['Terrain & objects','Units — click ground to place','Triggers / Setup, Conditions, Actions / N name or text / F8 Supply Road','Players & data','Regions / click to select, place, resize or move / N name','Elevation / choose height then ramp direction / F9 Highland Pass'][editorPage]:state.mode==='rpg'?'QUEST '+(state.quest.stage+1)+'/4: '+(S.questNames[state.quest.stage]||'Covenant restored')+(state.quest.stage===0?' ('+state.quest.scouts+'/3)':''):state.announcements?.[team]||state.announcement||'');show('Objective text',world);
@@ -292,7 +294,7 @@ var FrostClient=(()=>{
     missileCount=missiles.length;
   }
   function tick(dt){if(!initialized)init();dt=Math.min(.2,Math.max(0,dt));time+=dt;const input=engine.input||{keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};receive();controls(input,dt);
-    if((mode==='playing'||mode==='finished')&&!online&&!paused){accumulator+=dt;while(accumulator>=S.DT){S.tick(state);accumulator-=S.DT;}if(mode==='playing'&&state.winner!==null){mode='finished';sound('victory');}}
+    if((mode==='playing'||mode==='finished')&&!online&&!paused){accumulator+=dt;while(accumulator>=S.DT){S.tick(state);collectEvents();accumulator-=S.DT;}if(mode==='playing'&&state.winner!==null){mode='finished';sound('victory');}}
     if(time>=renderAt){renderAt=time+.08;render(input);}
     renderMissiles(dt);
   }

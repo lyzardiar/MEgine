@@ -9,6 +9,8 @@ import './test-frost-work-queues.mjs';
 import './test-frost-patrol.mjs';
 import './test-frost-visuals.mjs';
 import './test-frost-projectiles.mjs';
+import './test-frost-denies.mjs';
+import './test-frost-feedback.mjs';
 import './test-frost-corpses.mjs';
 import './test-frost-projectile-art.mjs';
 import './test-frost-cavalry.mjs';
@@ -136,5 +138,13 @@ try{
   rangerResume.socket.destroy();const corpseResume=await peer();next=corpseResume.next(m=>m.type==='joined');corpseResume.send({type:'resume',code:arrowRoom.code,token:arrowRoom.token});const resumedBody=(await next).state.corpses.find(c=>c.id===corpseVictim.id);assert.ok(resumedBody.age>=deadBody.age&&resumedBody.age<2);assert.equal(resumedBody.yaw,deadBody.yaw);
   gunner.x=-28;gunner.z=-28;gunner.order={type:'hold'};await corpseResume.next(m=>m.type==='state'&&!m.state.corpses.some(c=>c.id===corpseVictim.id));gunner.x=0;gunner.z=0;await corpseResume.next(m=>m.type==='state'&&m.state.corpses.some(c=>c.id===corpseVictim.id));console.log('PASS: TCP actual rifle kill, authoritative corpse direction/age, mid-death reconnect and fog disappearance/reappearance');
   authoritative.corpses[0].age=19.8;authoritative.winner=0;const finishedFrame=authoritative.frame,cleared=(await corpseResume.next(m=>m.type==='state'&&m.state.winner===0&&m.state.corpses.length===0)).state;assert.equal(cleared.frame,finishedFrame);console.log('PASS: TCP post-victory corpse expiry without advancing battle time');
+  const denier=await peer();next=denier.next(m=>m.type==='joined');denier.send({type:'create',mode:'moba',heroClass:2});const denyRoom=await next;next=denier.next(m=>m.type==='room'&&m.players.every(p=>p.ready));denier.send({type:'ready',ready:true});await next;next=denier.next(m=>m.type==='state');denier.send({type:'start'});await next;
+  const denyState=app.rooms.get(denyRoom.code).state;denyState.units=[];denyState.map.terrain.fill(0);denyState.resources=[];denyState.nextWave=100000;denyState.teams.forEach(t=>t.ai=false);
+  const denyHero=S.spawn(denyState,'hero',0,0,0,{heroClass:2,damage:80,cd:99,order:{type:'hold'}}),denyTarget=S.spawn(denyState,'creep',0,0,8,{hp:20,damage:0,speed:0}),fullCreep=S.spawn(denyState,'creep',0,3,8,{damage:0,speed:0}),xpReceiver=S.spawn(denyState,'hero',1,15,8,{damage:0,speed:0}),denyGold=denyState.teams[0].gold,denyFrame=denyState.frame;S.visibility(denyState);
+  next=denier.next(m=>m.type==='error');denier.send({type:'order',seq:1,command:{type:'attack',ids:[denyHero.id],target:fullCreep.id}});assert.match((await next).message,/half health/);assert.equal(denyHero.order.type,'hold');
+  next=denier.next(m=>m.type==='state'&&m.state.projectiles.length===1);denyHero.cd=0;denier.send({type:'order',seq:2,command:{type:'attack',ids:[denyHero.id],target:denyTarget.id}});const denyFlight=(await next).state;denyHero.cd=99;assert.ok(denyFlight.units.some(u=>u.id===denyTarget.id&&u.hp===20));const denyShot=denyFlight.projectiles[0].id;
+  denier.socket.destroy();const denyResume=await peer();next=denyResume.next(m=>m.type==='joined');denyResume.send({type:'resume',code:denyRoom.code,token:denyRoom.token});const resumedDeny=(await next).state;assert.ok(resumedDeny.projectiles.some(p=>p.id===denyShot));
+  const denyImpact=(await denyResume.next(m=>m.type==='state'&&m.state.events.some(e=>e.type==='deny'))).state;assert.ok(!denyImpact.units.some(u=>u.id===denyTarget.id));assert.equal(denyImpact.units.find(u=>u.id===denyHero.id).xp,0);assert.equal(denyImpact.teams[0].kills,0);assert.equal(denyImpact.teams[0].gold,denyGold+3*(Math.floor(denyImpact.frame/10)-Math.floor(denyFrame/10)));assert.equal(xpReceiver.xp,17.5);
+  console.log('PASS: TCP half-health rejection, explicit allied attack, in-flight deny reconnect, deny event, no own reward and reduced enemy XP');
   console.log('PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect');
 }finally{for(const p of peers)p.socket.destroy();await app.close();}
