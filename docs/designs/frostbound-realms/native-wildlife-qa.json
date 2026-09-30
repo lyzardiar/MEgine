@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "wildlife": {
+    "fixture": "Flat skirmish clearing with a player-controlled wolf, stationary 150 HP boss bear and passive hero.",
+    "movement": true,
+    "attack": true,
+    "saveRestore": true,
+    "bossDeath": true,
+    "realisticMeshes": 2,
+    "shaderRejections": 0
+  }
+}

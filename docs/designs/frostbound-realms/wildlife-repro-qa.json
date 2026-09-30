@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "repeatGeneratedIdentical": 10,
+  "existingGeneratedIdentical": 123,
+  "regressionManifests": [
+    "cavalry-sources.json",
+    "human-sources.json",
+    "mage-sources.json",
+    "paladin-sources.json",
+    "ranger-sources.json",
+    "rifleman-sources.json",
+    "siege-sources.json"
+  ]
+}

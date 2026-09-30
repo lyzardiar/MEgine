@@ -1,9 +1,9 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "12b9e2384f99e8615e89959374bb980b5c7e80dab54f0c78cc490dc6a42953ac",
+  "sha256": "da43a9f71752cdb7a81ed1769bcbb45b9de37bfc331059c8e487cf446e83a0f7",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
-  "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
   "models": [
     {
       "name": "Demon",
@@ -155,6 +155,25 @@
           -1.7336359024047852
         ],
         "vertices": 7058
+      }
+    },
+    {
+      "name": "RealBear",
+      "mesh": "Assets/Models/RealBear.glb#pose=0:4",
+      "material": "Assets/Materials/RealBear.mmat",
+      "bounds": {
+        "max": [
+          0.6943752765655518,
+          1.9352294206619263,
+          1.831814169883728
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBear.glb#pose=0:4",
+        "min": [
+          -0.7124512195587158,
+          -0.003968191333115101,
+          -1.365095853805542
+        ],
+        "vertices": 2189
       }
     },
     {
@@ -364,6 +383,25 @@
           -2.9775331020355225
         ],
         "vertices": 8952
+      }
+    },
+    {
+      "name": "RealWolf",
+      "mesh": "Assets/Models/RealWolf.glb#pose=0:4",
+      "material": "Assets/Materials/RealWolf.mmat",
+      "bounds": {
+        "max": [
+          0.518007755279541,
+          1.9073286056518555,
+          1.448110580444336
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealWolf.glb#pose=0:4",
+        "min": [
+          -0.38732874393463135,
+          -0.034220241010189056,
+          -1.433369755744934
+        ],
+        "vertices": 792
       }
     },
     {

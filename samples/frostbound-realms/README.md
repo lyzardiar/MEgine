@@ -157,3 +157,5 @@ node scripts/qa-frostbound.mjs
 王国二级兵营可训练写实骑士，使用 0 A.D. 棕色战马与链甲骑手，同步站立、奔跑和挥剑动作，AI 也会训练。61 个源文件与 5 个派生文件哈希见 `cavalry-sources.json`，许可位于 `Assets/Licenses/0ad-cavalry.txt`。当前共 23 个原生单位头像；详情及截图见 [骑兵美术记录](../../docs/designs/frostbound-realms/cavalry-art.md)。
 
 王国圣骑士与黎明圣骑士英雄采用 0 A.D. 铠甲、披风、圆盾和钉锤模块，英雄具有随技能冷却同步的举锤施法动作，主菜单和选择头像同步使用实际模型。37 个源文件、10 个派生文件哈希见 `paladin-sources.json`，许可位于 `Assets/Licenses/0ad-paladins.txt`；[圣骑士美术记录](../../docs/designs/frostbound-realms/paladin-art.md) 包含动作图和实机施法存档验证。
+
+野外守卫采用 0 A.D. 写实灰狼，RPG 终点守卫采用棕熊，包含待机、行走、攻击和死亡动画。`wildlife-sources.json` 保存 20 个来源与 10 个生成文件的哈希，许可随 Player 分发；模型与 28 格实际头像、存档和尸体表现一致。重建命令与原生验收见 [野外守卫美术记录](../../docs/designs/frostbound-realms/wildlife-art.md)。

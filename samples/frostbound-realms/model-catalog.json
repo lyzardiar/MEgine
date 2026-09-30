@@ -3486,5 +3486,83 @@
       1.4422454833984375
     ],
     "attackEvent": 0.5714285714285714
+  },
+  "RealWolf": {
+    "material": "Assets/Materials/RealWolf.mmat",
+    "parts": [
+      {
+        "name": "RealWolf",
+        "mesh": "Assets/Models/RealWolf.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 135
+      },
+      {
+        "name": "Walk",
+        "frames": 24
+      },
+      {
+        "name": "Attack",
+        "frames": 26
+      },
+      {
+        "name": "Death",
+        "frames": 11
+      }
+    ],
+    "size": [
+      0.7040809509593005,
+      2.015244227536858,
+      3.0
+    ],
+    "realistic": true,
+    "attackEvent": 0.42
+  },
+  "RealBear": {
+    "material": "Assets/Materials/RealBear.mmat",
+    "parts": [
+      {
+        "name": "RealBear",
+        "mesh": "Assets/Models/RealBear.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 24
+      },
+      {
+        "name": "Walk",
+        "frames": 16
+      },
+      {
+        "name": "Attack",
+        "frames": 12
+      },
+      {
+        "name": "Death",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1.505314846668354,
+      1.9919111475972542,
+      3.3
+    ],
+    "realistic": true,
+    "attackEvent": 0.48
   }
 }

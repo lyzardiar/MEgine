@@ -1,0 +1,270 @@
+{
+  "author": "Wildfire Games",
+  "upstream": "https://github.com/0ad/0ad",
+  "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "generator": "scripts/import-frost-humans.py --manifest wildlife-sources.json",
+  "models": {
+    "RealWolf": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/wolf.dae",
+          "base": "textures/skins/skeletal/animal_wolf_grey.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": null
+        }
+      ],
+      "width": 3,
+      "attackEvent": 0.42,
+      "animations": {
+        "Idle": "animation/quadraped/wolf_idle_01.dae",
+        "Walk": "animation/quadraped/wolf_walk.dae",
+        "Attack": "animation/quadraped/wolf_attack_01.dae",
+        "Death": "animation/quadraped/wolf_death_01.dae"
+      }
+    },
+    "RealBear": {
+      "parts": [
+        {
+          "mesh": "meshes/skeletal/bear.dae",
+          "base": "textures/skins/skeletal/animal_bear_brown.png",
+          "normal": "textures/skins/default_norm.png",
+          "specular": "textures/skins/null_black.dds",
+          "tint": null,
+          "bone": null
+        }
+      ],
+      "width": 3.3,
+      "attackEvent": 0.48,
+      "animations": {
+        "Idle": "animation/quadraped/bear_idle_01.dae",
+        "Walk": "animation/quadraped/bear_walk.dae",
+        "Attack": "animation/quadraped/bear_attack_01.dae",
+        "Death": "animation/quadraped/bear_death_01.dae"
+      }
+    }
+  },
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/LICENSE.txt",
+      "sha256": "ef98babd771c206032e005f3d440a1e610df409d9a9191f03e64deaa4abefbd9",
+      "bytes": 1426
+    },
+    {
+      "file": "SourceAssets/0ad/actors/fauna/bear_brown.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/fauna/bear_brown.xml",
+      "sha256": "441dd44a1db63e712fcd0b4548474cbefcbb740c762cafd29e359645ea2639fd",
+      "bytes": 664
+    },
+    {
+      "file": "SourceAssets/0ad/actors/fauna/wolf.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/fauna/wolf.xml",
+      "sha256": "9deaede42250ab618272c96615af831ab0ff9870ea6940d55938324eb61797a3",
+      "bytes": 1758
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/bear_attack_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/bear_attack_01.dae",
+      "sha256": "217344abd3c7273876f292b6d5509b0d90c1e1d6efc768231a89a98217c2886c",
+      "bytes": 876263
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/bear_death_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/bear_death_01.dae",
+      "sha256": "5c27d535b59f9630214f0f744e6c41281e625313fc8b49b640053b4f4b0e6be8",
+      "bytes": 1180088
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/bear_idle_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/bear_idle_01.dae",
+      "sha256": "06df336d76cdd0609dffe68c5a47169870e8b26271341455abcc98718abb9841",
+      "bytes": 1156358
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/bear_walk.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/bear_walk.dae",
+      "sha256": "01145ed56b01f910c27e1b3227eee9108d73d8756aa0c4fceb6d6795ac7e5077",
+      "bytes": 965514
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/wolf_attack_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_attack_01.dae",
+      "sha256": "8d739308d6366c39dd043697a844b8add62f7a162615d38e9b059e858bc4e110",
+      "bytes": 474612
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/wolf_death_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_death_01.dae",
+      "sha256": "0425ba5abb3a89b5eb78a6b36fc873de6f63d8b86ba9d843d76130295a35230a",
+      "bytes": 307806
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/wolf_idle_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_idle_01.dae",
+      "sha256": "3ba7316df0b65166bdf9c7a9c412534348a07ab343ddc008fedfe723749f09ba",
+      "bytes": 465223
+    },
+    {
+      "file": "SourceAssets/0ad/animation/quadraped/wolf_walk.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_walk.dae",
+      "sha256": "0ccba7c59abad7ce1e0a8e03fa1b117e7f828f512447674fcf55bae400e0db06",
+      "bytes": 455887
+    },
+    {
+      "file": "SourceAssets/0ad/materials/no_trans_norm_spec.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/materials/no_trans_norm_spec.xml",
+      "sha256": "14161f0846354a5529a5e8ac558cb5c974928d084f5e7e4f605d60387a4f13b1",
+      "bytes": 346
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/bear.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/bear.dae",
+      "sha256": "29a08060bf59a6f2e8ef9f0a86806c03169b8e2fccf863448217316b0b78565c",
+      "bytes": 708178
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/wolf.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/wolf.dae",
+      "sha256": "481ae8021e7e2624e2c20db01d2b17b89eb488a9749eb92e1952f55e4496cf3a",
+      "bytes": 123295
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/default_norm.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/default_norm.png",
+      "sha256": "b1ba25ca729a28c798a99a1a0bcf9310d0994a55b4f9d1a36f163fb31676cecf",
+      "bytes": 69
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/null_black.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/null_black.dds",
+      "sha256": "1b2fefc88f9523c56af637318150f92722e88bf93f3876d38b6c039114b21c7a",
+      "bytes": 152
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/animal_bear_brown.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/animal_bear_brown.png",
+      "sha256": "5b8b79eae61d8c708c9e34c82db58c47a540e3067cb993e02ff986d265ec636e",
+      "bytes": 601899
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/animal_wolf_grey.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/animal_wolf_grey.png",
+      "sha256": "cca1ea8133ae1b51f7e2767b4c68eb7d5cd1c46668774b3e0ce72fb1c989bbb1",
+      "bytes": 166922
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/base_bear.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/base_bear.xml",
+      "sha256": "9b7836fb4e4d8e7ee7e58e8f189e4e38dab174f81d21ac423c79a3c190a19f24",
+      "bytes": 1024
+    },
+    {
+      "file": "SourceAssets/0ad/variants/quadraped/base_bear_death.xml",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/variants/quadraped/base_bear_death.xml",
+      "sha256": "e186c1505585b589b5954b0b9f70bf2fdf82e5f406dd002d19be08c9f9edeb60",
+      "bytes": 268
+    }
+  ],
+  "modelStats": {
+    "RealWolf": {
+      "triangles": 696,
+      "bones": 32,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 135
+        },
+        {
+          "name": "Walk",
+          "frames": 24
+        },
+        {
+          "name": "Attack",
+          "frames": 26
+        },
+        {
+          "name": "Death",
+          "frames": 11
+        }
+      ],
+      "size": [
+        0.7040809509593005,
+        2.015244227536858,
+        3.0
+      ]
+    },
+    "RealBear": {
+      "triangles": 2530,
+      "bones": 75,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 24
+        },
+        {
+          "name": "Walk",
+          "frames": 16
+        },
+        {
+          "name": "Attack",
+          "frames": 12
+        },
+        {
+          "name": "Death",
+          "frames": 20
+        }
+      ],
+      "size": [
+        1.505314846668354,
+        1.9919111475972542,
+        3.3
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealWolf_base.png",
+      "sha256": "75e22eb777cd30ddc7ed2b6fc1f43d3010750424caf8cf8104ee67588da29696"
+    },
+    {
+      "file": "Assets/Textures/RealWolf_normal.png",
+      "sha256": "71ed8661bd9f7c80ffe51e05dd008a6d0d471e5a7c531fb9d0fcf3f2e1ad9aae"
+    },
+    {
+      "file": "Assets/Textures/RealWolf_arm.png",
+      "sha256": "4a2a7a6a5f8dc1af6d9d6d7c851db18435c8ab5a5ba1d13a613cfa2216cb1589"
+    },
+    {
+      "file": "Assets/Models/RealWolf.glb",
+      "sha256": "d931c66321bff8725bffe2fdd49c61c565b0e3c538d51434ada37ef3588067e8"
+    },
+    {
+      "file": "Assets/Materials/RealWolf.mmat",
+      "sha256": "162fc0e9b6bfce3bccae9691f2906bba5184efcc7505743f5864b59c6f230c4a"
+    },
+    {
+      "file": "Assets/Textures/RealBear_base.png",
+      "sha256": "b32f35d8e1084adbbc0497208b5cf23c7556b6ca113bb616511343e233c2eb02"
+    },
+    {
+      "file": "Assets/Textures/RealBear_normal.png",
+      "sha256": "d96ef5db5aba9e4a9e893f3eaa41dba7d1928b3bcfeabdf508a55037186810c4"
+    },
+    {
+      "file": "Assets/Textures/RealBear_arm.png",
+      "sha256": "522f23abd51147d57fe95f035f9d25e49d8dfcf5fe0ca07eecc25ca04e84979e"
+    },
+    {
+      "file": "Assets/Models/RealBear.glb",
+      "sha256": "b48dfba837c39b80feb914b7ebf8e7d3908f86108ff1199fd0520f39b87cf45f"
+    },
+    {
+      "file": "Assets/Materials/RealBear.mmat",
+      "sha256": "a0a13ee601cddbacd8aef07597d9e839b50078753671c6e2802e1c8785f8b2c6"
+    }
+  ]
+}

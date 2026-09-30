@@ -176,12 +176,12 @@ def main():
             body_end=end
             if name in ['Idle','Walk']:end=start+max([end-start]+[extent[1]-extent[0] for _,moving,extent,_ in equipment if moving])
             action=bpy.data.actions.new(name);rig.animation_data.action=action
-            # Collada files can use different rest-bone orientations. Bake deformation matrices into the mesh rig's own rest basis.
+            # Include the authored armature transform before baking deformation into the mesh rig's rest basis.
             for frame in range(int(start),int(end)+1):
                 sample=start+(frame-start)/(end-start)*(body_end-start) if end!=body_end else frame;scene.frame_set(int(sample),subframe=sample-int(sample));desired={}
                 for bone in rig.data.bones:
                     source_bone=animated.pose.bones.get(bone.name)
-                    desired[bone.name]=source_bone.matrix@source_bone.bone.matrix_local.inverted()@bone.matrix_local if source_bone else bone.matrix_local
+                    desired[bone.name]=animated.matrix_world@source_bone.matrix@source_bone.bone.matrix_local.inverted()@bone.matrix_local if source_bone else bone.matrix_local
                 for prop,moving,extent,world in equipment:
                     attach=prop['part']['bone'];deform=desired[attach]@rig.data.bones[attach].matrix_local.inverted();placement=prop['placement']
                     if moving:

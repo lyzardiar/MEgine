@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/wildlife-poses.png",
+  "sha256": "633bb667f066f5a83c87371334a4ca3dfd6957997d2778320c811e9b1525fe5f",
+  "generator": "scripts/render-frost-unit-icons.mjs --wildlife-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "RealWolf Idle 0",
+      "mesh": "Assets/Models/RealWolf.glb#pose=0:0",
+      "material": "Assets/Materials/RealWolf.mmat",
+      "bounds": {
+        "max": [
+          0.35204052925109863,
+          2.0152430534362793,
+          1.6170951128005981
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealWolf.glb#pose=0:0",
+        "min": [
+          -0.35204049944877625,
+          -0.000001047244722940377,
+          -1.3829030990600586
+        ],
+        "vertices": 792
+      }
+    },
+    {
+      "name": "RealWolf Walk 0.25",
+      "mesh": "Assets/Models/RealWolf.glb#pose=1:6",
+      "material": "Assets/Materials/RealWolf.mmat",
+      "bounds": {
+        "max": [
+          0.37534645199775696,
+          1.7842340469360352,
+          1.6461955308914185
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealWolf.glb#pose=1:6",
+        "min": [
+          -0.34674909710884094,
+          -0.015200316905975342,
+          -1.5125112533569336
+        ],
+        "vertices": 792
+      }
+    },
+    {
+      "name": "RealWolf Walk 0.75",
+      "mesh": "Assets/Models/RealWolf.glb#pose=1:18",
+      "material": "Assets/Materials/RealWolf.mmat",
+      "bounds": {
+        "max": [
+          0.34499549865722656,
+          1.784222960472107,
+          1.6461955308914185
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealWolf.glb#pose=1:18",
+        "min": [
+          -0.3725661635398865,
+          -0.018060743808746338,
+          -1.5125175714492798
+        ],
+        "vertices": 792
+      }
+    },
+    {
+      "name": "RealWolf Attack 0.42",
+      "mesh": "Assets/Models/RealWolf.glb#pose=2:10",
+      "material": "Assets/Materials/RealWolf.mmat",
+      "bounds": {
+        "max": [
+          0.3796549439430237,
+          2.610539674758911,
+          1.917879581451416
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealWolf.glb#pose=2:10",
+        "min": [
+          -0.37980201840400696,
+          0.010536789894104004,
+          -1.4402064085006714
+        ],
+        "vertices": 792
+      }
+    },
+    {
+      "name": "RealWolf Death 0.5",
+      "mesh": "Assets/Models/RealWolf.glb#pose=3:5",
+      "material": "Assets/Materials/RealWolf.mmat",
+      "bounds": {
+        "max": [
+          1.1913038492202759,
+          1.7402622699737549,
+          1.004887580871582
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealWolf.glb#pose=3:5",
+        "min": [
+          -0.39496710896492004,
+          -0.017025530338287354,
+          -1.4685417413711548
+        ],
+        "vertices": 792
+      }
+    },
+    {
+      "name": "RealWolf Death 0.99",
+      "mesh": "Assets/Models/RealWolf.glb#pose=3:10",
+      "material": "Assets/Materials/RealWolf.mmat",
+      "bounds": {
+        "max": [
+          1.8511748313903809,
+          0.7484738826751709,
+          1.2052443027496338
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealWolf.glb#pose=3:10",
+        "min": [
+          -0.4511098563671112,
+          -0.07614973187446594,
+          -1.4593825340270996
+        ],
+        "vertices": 792
+      }
+    },
+    {
+      "name": "RealBear Idle 0",
+      "mesh": "Assets/Models/RealBear.glb#pose=0:0",
+      "material": "Assets/Materials/RealBear.mmat",
+      "bounds": {
+        "max": [
+          0.6945987343788147,
+          1.9298655986785889,
+          1.8194833993911743
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBear.glb#pose=0:0",
+        "min": [
+          -0.7123985886573792,
+          -0.003975745290517807,
+          -1.3638356924057007
+        ],
+        "vertices": 2189
+      }
+    },
+    {
+      "name": "RealBear Walk 0.25",
+      "mesh": "Assets/Models/RealBear.glb#pose=1:4",
+      "material": "Assets/Materials/RealBear.mmat",
+      "bounds": {
+        "max": [
+          0.7001093029975891,
+          2.005544424057007,
+          1.7838194370269775
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBear.glb#pose=1:4",
+        "min": [
+          -0.7448810338973999,
+          -0.01609426736831665,
+          -1.4884055852890015
+        ],
+        "vertices": 2189
+      }
+    },
+    {
+      "name": "RealBear Walk 0.75",
+      "mesh": "Assets/Models/RealBear.glb#pose=1:12",
+      "material": "Assets/Materials/RealBear.mmat",
+      "bounds": {
+        "max": [
+          0.7455002069473267,
+          2.0051817893981934,
+          1.781195044517517
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBear.glb#pose=1:12",
+        "min": [
+          -0.7001012563705444,
+          -0.016093730926513672,
+          -1.4884051084518433
+        ],
+        "vertices": 2189
+      }
+    },
+    {
+      "name": "RealBear Attack 0.42",
+      "mesh": "Assets/Models/RealBear.glb#pose=2:5",
+      "material": "Assets/Materials/RealBear.mmat",
+      "bounds": {
+        "max": [
+          0.7536815404891968,
+          2.039870262145996,
+          1.9579375982284546
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBear.glb#pose=2:5",
+        "min": [
+          -1.3018677234649658,
+          -0.0040979646146297455,
+          -1.2385891675949097
+        ],
+        "vertices": 2189
+      }
+    },
+    {
+      "name": "RealBear Death 0.5",
+      "mesh": "Assets/Models/RealBear.glb#pose=3:10",
+      "material": "Assets/Materials/RealBear.mmat",
+      "bounds": {
+        "max": [
+          0.6069622039794922,
+          1.8307193517684937,
+          1.2203224897384644
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBear.glb#pose=3:10",
+        "min": [
+          -0.8426555395126343,
+          -0.014937885105609894,
+          -1.813244104385376
+        ],
+        "vertices": 2189
+      }
+    },
+    {
+      "name": "RealBear Death 0.99",
+      "mesh": "Assets/Models/RealBear.glb#pose=3:19",
+      "material": "Assets/Materials/RealBear.mmat",
+      "bounds": {
+        "max": [
+          0.4553997218608856,
+          1.0923906564712524,
+          1.0394573211669922
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealBear.glb#pose=3:19",
+        "min": [
+          -1.5402017831802368,
+          -0.34282445907592773,
+          -1.9121648073196411
+        ],
+        "vertices": 2189
+      }
+    }
+  ]
+}
