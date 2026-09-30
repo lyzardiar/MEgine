@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "musket": {
+    "muzzleFlash": true,
+    "muzzleSmoke": true,
+    "hitscan": true,
+    "muzzlePosition": [
+      -6.845293998718262,
+      2.14805269241333,
+      18.40142250061035
+    ]
+  },
+  "units": {
+    "models": [
+      "RealRifleman"
+    ],
+    "idleWalkAttack": true,
+    "attackFacing": true,
+    "selectionPortraits": true,
+    "trainingIcons": true,
+    "damage": true,
+    "saveRestore": true,
+    "shaderRejections": 0
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "model": "RealRifleman",
+  "sourceFiles": 19,
+  "sourceBytes": 7820407,
+  "generatedFiles": 5,
+  "reproducibleMusketBake": true,
+  "reproducibleCharacterImport": true,
+  "nativePoses": 48,
+  "rulesAndTcpPassed": true,
+  "nativeReport": "native-rifleman-qa.json",
+  "package": {
+    "files": 533,
+    "contentHash": "6872b0d67d28346a77859eaff08e8e13c5caec8ae816d1f555f5ec5923670c99",
+    "startupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "free3d": {
+    "downloaded": false,
+    "directHttp": 403,
+    "browser": "Two page-creation timeouts; no established page"
+  },
+  "limitations": [
+    "Historical human infantry assembly; dwarf silhouette and full muzzle-loading sequence are not implemented.",
+    "Physical input, audio listening and cross-machine LAN not accepted by these automated checks."
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "c19d73671e955eff7b9a0fcab537f01f730357540cb612d27f5a9736626fbd5a",
+  "sha256": "12b9e2384f99e8615e89959374bb980b5c7e80dab54f0c78cc490dc6a42953ac",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "833474b8836112f4e4dcb30914c9212171f617d0a040d34c10f83d2eb42084f4",
@@ -307,6 +307,25 @@
           -1.7930588722229004
         ],
         "vertices": 1256
+      }
+    },
+    {
+      "name": "RealRifleman",
+      "mesh": "Assets/Models/RealRifleman.glb#pose=0:4",
+      "material": "Assets/Materials/RealRifleman.mmat",
+      "bounds": {
+        "max": [
+          0.49031931161880493,
+          2.824759006500244,
+          1.2438011169433594
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:4",
+        "min": [
+          -0.5987334847450256,
+          0.016818370670080185,
+          -0.6427690982818604
+        ],
+        "vertices": 12347
       }
     },
     {

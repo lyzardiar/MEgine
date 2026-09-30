@@ -24,7 +24,7 @@ for(const disappear of [v=>v.hp=0,v=>v.inside=999]){const {s,v}=launch();disappe
 {
  const {s,u,v}=launch('catapult',10);v.hp=0;const near=S.spawn(s,'soldier',1,1,10,{speed:0,damage:0});step(s,10);assert.ok(near.hp<near.maxHp,'artillery still explodes when its original target dies');
 }
-for(const kind of ['soldier','rifleman']){const {s,u,v}=arena(kind,1);S.tick(s);assert.equal(s.projectiles.length,0);assert.ok(v.hp<v.maxHp,kind+' remains immediate');}
+for(const kind of ['soldier','rifleman']){const {s,u,v}=arena(kind,1);S.tick(s);assert.equal(s.projectiles.length,0);assert.ok(v.hp<v.maxHp,kind+' remains immediate');if(kind==='rifleman'){const e=s.events.find(e=>e.type==='hit');assert.equal(e.art,'musket');assert.equal(e.fromX,u.x);assert.equal(e.fromZ,u.z);s.visible[1].fill(1);assert.ok(S.publicState(s,1).events.some(e=>e.art==='musket'));s.visible[1][S.index(u.x,u.z)]=0;assert.ok(!S.publicState(s,1).events.some(e=>e.art==='musket'),'hidden shooter cannot leak muzzle events');}}
 {
  const {s,u,v}=launch();v.shield=100;v.shieldLeft=10;step(s,4);assert.equal(v.hp,v.maxHp);assert.equal(v.shield,100-S.weaponDamage(u,v,u.damage),'shield at impact absorbs the shot');
 }

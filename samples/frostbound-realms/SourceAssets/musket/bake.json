@@ -1,0 +1,21 @@
+{
+  "generator": "scripts/prepare-frost-musket.py",
+  "generated": [
+    {
+      "file": "musket_base.png",
+      "sha256": "46cdc72018b1a1f61d346a88614ca136a6ed00782d2062a37c26ef591e4a71d5"
+    },
+    {
+      "file": "musket_normal.png",
+      "sha256": "e59797f6ea2198e2fdf905eeb3c52881547978d542bef183f4cd14eeb8bd8091"
+    },
+    {
+      "file": "musket_arm.png",
+      "sha256": "ddcbd30a7a6e22c3ab52fd29c7a134ff1c2640f08690ceb71661a6bf04bb1440"
+    },
+    {
+      "file": "musket.glb",
+      "sha256": "0fcab1618780902a4525a3a5fa655555cb7ba3c4adce18cb99542be7bcce6699"
+    }
+  ]
+}

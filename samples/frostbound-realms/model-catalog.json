@@ -3406,5 +3406,45 @@
     "ammoLoad": 0.72,
     "shotModel": "RealSylvanRangerShoot",
     "loadedModel": "RealSylvanRangerLoaded"
+  },
+  "RealRifleman": {
+    "material": "Assets/Materials/RealRifleman.mmat",
+    "parts": [
+      {
+        "name": "RealRifleman",
+        "mesh": "Assets/Models/RealRifleman.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 24
+      },
+      {
+        "name": "Walk",
+        "frames": 10
+      },
+      {
+        "name": "Rifle_Shoot",
+        "frames": 14
+      }
+    ],
+    "size": [
+      1.3234231966818175,
+      3.0,
+      0.7070992381607331
+    ],
+    "realistic": true,
+    "muzzle": [
+      -0.13616281747817993,
+      2.52712082862854,
+      1.4422454833984375
+    ],
+    "attackEvent": 0.5714285714285714
   }
 }

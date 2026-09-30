@@ -54,7 +54,7 @@ for(const [kind,key] of [['soldier','RealFootman'],['worker','RealWorker']]){
  const map=S.defaultMap();map.terrain.fill(0);map.props=[];const state=S.create('skirmish',{map}),unit=S.spawn(state,'worker',0,0,0),target=S.spawn(state,'neutral',1,1.5,0);unit.order={type:'attack',target:target.id};unit.cd=.7;
  assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),Math.PI/2,'melee slot adjustment after striking keeps facing the victim');target.x=20;assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),0,'out of range pursuit faces movement');
 }
-const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,25);
+const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,26);
 const cavalry=JSON.parse(fs.readFileSync(new URL('cavalry-sources.json',root)));assert.equal(cavalry.license,'CC-BY-SA-3.0');cavalry.sources.forEach(verify);cavalry.generated.forEach(verify);
 {
  const state=S.create('skirmish',{factions:[0,1]}),knight=S.spawn(state,'knight',0,0,0),v=V.model(state,knight);assert.equal(v.key,'RealKnight');assert.ok(v.asset.mountedModel);assert.equal(v.scale,1);assert.ok(portraitKeys.has('RealKnight'));assert.match(V.pose(knight,v.asset,false,.2),/#pose=0:/);assert.match(V.pose(knight,v.asset,true,.2),/#pose=1:/);knight.cd=1.3;assert.match(V.pose(knight,v.asset,false,.2),/#pose=2:8$/);const restored=S.restore(state).units.find(u=>u.id===knight.id);assert.equal(V.pose(restored,v.asset,false,90),V.pose(knight,v.asset,false,.2));assert.notEqual(V.model(state,{kind:'paladin',team:0}).key,'RealKnight');
@@ -70,7 +70,7 @@ for(const [heroClass,key] of [[0,'RealFrostWarden'],[1,'RealEmberSage']])for(let
  const state=S.create('skirmish',{heroes:[heroClass,0],ai:[false,false]}),hero=state.units.find(u=>u.kind==='hero'&&u.team===0),v=V.model(state,hero);assert.equal(v.key,key);assert.equal(V.heroPortrait(heroClass),'Assets/Art/unit-portraits.png#'+key);assert.ok(portraitKeys.has(key));assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Staff_Attack','Cast']);
  assert.match(S.command(state,0,{type:'spell',ids:[hero.id],slot,x:hero.x,z:hero.z}),/Learn/);assert.match(V.pose(hero,v.asset,false,0),/#pose=0:/);hero.level=6;hero.skillPoints=6;assert.equal(S.command(state,0,{type:'learn',ids:[hero.id],slot}),null);assert.equal(S.command(state,0,{type:'spell',ids:[hero.id],slot,x:hero.x,z:hero.z}),null);assert.match(V.pose(hero,v.asset,false,90),/#pose=3:0$/);
  const cooldown=S.unitType(hero).spells[slot].cooldown;hero.spell[slot]=cooldown-.4;const mid=V.pose(hero,v.asset,false,1);assert.match(mid,/#pose=3:24$|#pose=3:25$/);assert.equal(V.pose(S.restore(state).units.find(u=>u.id===hero.id),v.asset,false,80),mid);assert.equal(V.pose(S.publicState(state,0).units.find(u=>u.id===hero.id),v.asset,false,80),mid);assert.match(V.pose(hero,v.asset,true,0),/#pose=1:/);hero.stun=1;assert.match(V.pose(hero,v.asset,false,0),/#pose=0:/);hero.stun=0;hero.spell[slot]=cooldown-1;hero.cd=S.unitType(hero).cooldown;assert.match(V.pose(hero,v.asset,false,0),/#pose=2:12$/);assert.equal(V.pose(hero,v.asset,false,90),V.pose(hero,v.asset,false,0));
- assert.equal(V.model(state,{kind:'mage',team:0}).key,'RealEmberSage');assert.equal(V.model(state,{kind:'rifleman',team:0}).key,'Wizard');assert.equal(V.model(state,{kind:'druid',team:0}).key,'Wizard');
+ assert.equal(V.model(state,{kind:'mage',team:0}).key,'RealEmberSage');assert.equal(V.model(state,{kind:'rifleman',team:0}).key,'RealRifleman');assert.equal(V.model(state,{kind:'druid',team:0}).key,'Wizard');
 }
 const ranger=JSON.parse(fs.readFileSync(new URL('ranger-sources.json',root)));assert.equal(ranger.license,'CC-BY-SA-3.0');ranger.sources.forEach(verify);ranger.generated.forEach(verify);
 for(let slot=0;slot<4;slot++){
@@ -129,3 +129,14 @@ for(const [kind,key] of [['bonearcher','Skeleton_Rogue'],['necromancer','Skeleto
  state.events=[];assert.equal(V.heading(state,unit,{x:0,z:0,yaw:0}),Math.PI/2,'stationary explicit attacks continue tracking their target');unit.order=null;unit.cd=0;assert.equal(V.heading(state,unit,{x:-1,z:0,yaw:0}),Math.PI/2,'marching turns with movement');assert.equal(V.heading(state,{kind:'tower',team:0,x:0,z:0,cd:1},old),0,'buildings retain their authored orientation');
 }
 console.log('PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 25 native unit portraits and pinned source/derived hashes');
+
+{
+ const manifest=JSON.parse(fs.readFileSync(new URL('rifleman-sources.json',root)));manifest.sources.forEach(verify);manifest.generated.forEach(verify);assert.ok(portraitKeys.has('RealRifleman'));
+ const s=S.create('skirmish'),u=S.spawn(s,'rifleman',0,0,0),asset=FrostArt.RealRifleman;
+ assert.equal(V.model(s,u).asset,asset);u.cd=S.unitType(u).cooldown;
+ assert.equal(V.pose(u,asset,false,0),V.pose(u,asset,false,123));assert.match(V.pose(u,asset,false,0),/#pose=2:/);
+ assert.match(V.pose(u,asset,true,0),/#pose=1:/);assert.match(V.pose({...u,stun:1},asset,false,0),/#pose=0:/);
+ for(const [x,z] of [[0,8],[8,0],[0,-8],[-8,0]]){const e={x,z,fromX:0,fromZ:0,fromY:3.6,team:0},m=V.muzzle(e);assert.ok(m.x*x+m.z*z>0);assert.ok(Math.abs(m.y-(2+asset.muzzle[1]*.85))<1e-6);}
+ assert.equal(V.projectile('musket').mesh,null);
+ const restored=S.restore(s).units.find(v=>v.id===u.id);assert.equal(V.pose(restored,asset,false,0),V.pose(u,asset,false,0));
+}

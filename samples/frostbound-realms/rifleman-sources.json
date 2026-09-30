@@ -1,0 +1,271 @@
+{
+  "author": "Wildfire Games; DREAM_SEARCH_REPEAT; MiYu assembly",
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+  "sourceRoot": "SourceAssets",
+  "preparation": "scripts/prepare-frost-musket.py",
+  "generator": "scripts/import-frost-humans.py --manifest rifleman-sources.json",
+  "models": {
+    "RealRifleman": {
+      "parts": [
+        {
+          "mesh": "0ad/meshes/skeletal/new/m_armor_pants.dae",
+          "base": "0ad/textures/skins/skeletal/brit/chainmail_04_01.png",
+          "bone": null,
+          "tint": [
+            0.19,
+            0.27,
+            0.32
+          ],
+          "specular": "0ad/textures/skins/skeletal/celt/chainmail_04_spec.png"
+        },
+        {
+          "mesh": "0ad/meshes/props/new/head_beard.dae",
+          "base": "0ad/textures/skins/props/head/hele_healer_a.dds",
+          "normal": "0ad/textures/skins/default_norm.png",
+          "specular": "0ad/textures/skins/null_black.dds",
+          "bone": "prop-head",
+          "tint": null
+        },
+        {
+          "mesh": "0ad/meshes/props/helmet/old/hele_hood.dae",
+          "base": "0ad/textures/skins/props/helmet/old/hele_hood_1.dds",
+          "normal": "0ad/textures/skins/default_norm.png",
+          "specular": "0ad/textures/skins/null_black.dds",
+          "bone": "prop-helmet",
+          "tint": null
+        },
+        {
+          "mesh": "0ad/meshes/props/new/capes/cape_hd_hoplite.dae",
+          "base": "0ad/textures/skins/props/cape_hd.dds",
+          "normal": "0ad/textures/skins/default_norm.png",
+          "specular": "0ad/textures/skins/null_black.dds",
+          "bone": null,
+          "tint": [
+            0.19,
+            0.27,
+            0.32
+          ]
+        },
+        {
+          "mesh": "musket/musket.glb",
+          "base": "musket/musket_base.png",
+          "normal": "musket/musket_normal.png",
+          "arm": "musket/musket_arm.png",
+          "bone": "prop-weapon_R",
+          "tint": null,
+          "transform": [
+            [
+              0.65,
+              0,
+              0,
+              0.065
+            ],
+            [
+              0,
+              0.65,
+              0,
+              -0.6695000000000001
+            ],
+            [
+              0,
+              0,
+              0.65,
+              -0.0065
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "muzzle": [
+            0,
+            -2.3589155,
+            0.19
+          ]
+        }
+      ],
+      "animations": {
+        "Idle": "0ad/animation/biped/infantry/crossbowman/idle_ready_01.dae",
+        "Walk": "0ad/animation/biped/infantry/crossbowman/jog_ready.dae",
+        "Rifle_Shoot": "0ad/animation/biped/infantry/crossbowman/attack_ranged.dae"
+      },
+      "animationRanges": {
+        "Rifle_Shoot": [
+          0.65,
+          1
+        ]
+      },
+      "attackEvent": 0.5714285714285714,
+      "height": 3
+    }
+  },
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/crossbowman/attack_ranged.dae",
+      "sha256": "46f8a7101beb82c1955d2fa692734d1770dcd8d7d85940c8b794d3a8494e779b",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/crossbowman/attack_ranged.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/crossbowman/idle_ready_01.dae",
+      "sha256": "29bfa04a5c02d5799e567007538f4182c8a3c8884c9b9a753739c8f23bfc1848",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/crossbowman/idle_ready_01.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/crossbowman/jog_ready.dae",
+      "sha256": "efacc3e45b0465fd1904d6d478fa8187997b6364d65bed831daa2fbdfab40251",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/crossbowman/jog_ready.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/helmet/old/hele_hood.dae",
+      "sha256": "d63adb21fc26ce5c89504f3ad64955d443225e45f6bca62de7d4ec0c0ddfb408",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/helmet/old/hele_hood.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/new/capes/cape_hd_hoplite.dae",
+      "sha256": "baca6e0877ab1e971e5fa9d6b5baf3bee4311df19a7e33ee95e8f7d2db4c0f1b",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/new/capes/cape_hd_hoplite.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/new/head_beard.dae",
+      "sha256": "25b48d2749ee0ef52801dd0633f0137ae8bce1db5edf69c6616099d741332ea7",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/new/head_beard.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/new/m_armor_pants.dae",
+      "sha256": "1430b79e186d9a6dd596bd866864b5e67b6ef08a3a006f046ef1bd4726177469",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/new/m_armor_pants.dae"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/default_norm.png",
+      "sha256": "b1ba25ca729a28c798a99a1a0bcf9310d0994a55b4f9d1a36f163fb31676cecf",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/default_norm.png"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/null_black.dds",
+      "sha256": "1b2fefc88f9523c56af637318150f92722e88bf93f3876d38b6c039114b21c7a",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/null_black.dds"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/cape_hd.dds",
+      "sha256": "015695f17334b5439bdbf85ab19a15ab67c29f75f8030446aaaa23efc815d373",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/cape_hd.dds"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/head/hele_healer_a.dds",
+      "sha256": "8324980b483b9beb6fdff5c10de72936ef5e59217d09761809e55168ca735997",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/head/hele_healer_a.dds"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/helmet/old/hele_hood_1.dds",
+      "sha256": "40ccbb17162209f988da95f85a0e735053b589e0d6addd091c18ccd5b34cbd72",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/helmet/old/hele_hood_1.dds"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/brit/chainmail_04_01.png",
+      "sha256": "a080256ca3fc2b5d87c0b7c82279d76960c066328258f5b5cd0520d16adc4bb7",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/brit/chainmail_04_01.png"
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/celt/chainmail_04_spec.png",
+      "sha256": "6ed31aa4fdb6547a1d87e009de5456b69cc486e144c150e140cff0d0a3bacef1",
+      "license": "CC-BY-SA-3.0",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/celt/chainmail_04_spec.png"
+    },
+    {
+      "file": "SourceAssets/musket/musket.glb",
+      "sha256": "0fcab1618780902a4525a3a5fa655555cb7ba3c4adce18cb99542be7bcce6699",
+      "license": "CC0-1.0",
+      "generatedBy": "scripts/prepare-frost-musket.py"
+    },
+    {
+      "file": "SourceAssets/musket/musket_arm.png",
+      "sha256": "ddcbd30a7a6e22c3ab52fd29c7a134ff1c2640f08690ceb71661a6bf04bb1440",
+      "license": "CC0-1.0",
+      "generatedBy": "scripts/prepare-frost-musket.py"
+    },
+    {
+      "file": "SourceAssets/musket/musket_base.png",
+      "sha256": "46cdc72018b1a1f61d346a88614ca136a6ed00782d2062a37c26ef591e4a71d5",
+      "license": "CC0-1.0",
+      "generatedBy": "scripts/prepare-frost-musket.py"
+    },
+    {
+      "file": "SourceAssets/musket/musket_normal.png",
+      "sha256": "e59797f6ea2198e2fdf905eeb3c52881547978d542bef183f4cd14eeb8bd8091",
+      "license": "CC0-1.0",
+      "generatedBy": "scripts/prepare-frost-musket.py"
+    },
+    {
+      "file": "SourceAssets/musket/mosquete.blend",
+      "url": "https://opengameart.org/sites/default/files/mosquete.blend",
+      "page": "https://opengameart.org/content/musket-anquite-rifle",
+      "author": "DREAM_SEARCH_REPEAT",
+      "license": "CC0-1.0",
+      "sha256": "6d198b63da4067a7f5b747db2e1ad10000c0dc14c5f4be4c47d53445a0b19a1a"
+    }
+  ],
+  "modelStats": {
+    "RealRifleman": {
+      "triangles": 14163,
+      "bones": 102,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 24
+        },
+        {
+          "name": "Walk",
+          "frames": 10
+        },
+        {
+          "name": "Rifle_Shoot",
+          "frames": 14
+        }
+      ],
+      "size": [
+        1.3234231966818175,
+        3.0,
+        0.7070992381607331
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealRifleman_base.png",
+      "sha256": "0dbdfe9e35a3abccfd92fb163c1ebfb7553ab27f49fd0991c60e7fd873568d0e"
+    },
+    {
+      "file": "Assets/Textures/RealRifleman_normal.png",
+      "sha256": "d45ed0ca66e94c251bb6d003cf92f24ff2b9851320de50cd432fd2549a31cd16"
+    },
+    {
+      "file": "Assets/Textures/RealRifleman_arm.png",
+      "sha256": "749eda3906104d54fda4aa0711bee892a73df83b45cf2efdd929d9d3c58fe8ec"
+    },
+    {
+      "file": "Assets/Models/RealRifleman.glb",
+      "sha256": "2ae30ce2f5b3d3136de5baf4e2470015bace86a6cc8fc7d84f1a2ffd29516842"
+    },
+    {
+      "file": "Assets/Materials/RealRifleman.mmat",
+      "sha256": "67f5c369111a4d41f79811d27b76092e48268032d7aaf6bc33411d39df1bd2fc"
+    }
+  ]
+}

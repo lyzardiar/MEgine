@@ -1,0 +1,28 @@
+RealRifleman art attribution
+
+Character body, beard, hood, cape, textures and source animations:
+Wildfire Games - https://www.wildfiregames.com/
+https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+Creative Commons Attribution-ShareAlike 3.0 Unported:
+https://creativecommons.org/licenses/by-sa/3.0/
+Original notice: SourceAssets/0ad/LICENSE.txt.
+
+Musket - anquite rifle, by DREAM_SEARCH_REPEAT:
+https://opengameart.org/content/musket-anquite-rifle
+https://opengameart.org/sites/default/files/mosquete.blend
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+The original Blender file and standalone baked musket retain CC0.
+
+Modifications by MEngine contributors: assembled bearded chainmail infantry
+with a hood and animated cape; baked the musket's procedural wood/metal
+materials to PBR textures; attached the gun to the right-hand weapon bone;
+trimmed the crossbow clip to the aiming, firing and recovery segment;
+baked combined atlases and exported skeletal glTF poses. This clip does not
+depict a complete historical muzzle-loading sequence.
+
+RealRifleman model, combined textures, material and its contribution to
+Assets/Art/unit-portraits.png are distributed under CC-BY-SA-3.0.
+Original assets retain the individual licenses above.
+Source URLs, SHA256 and generated hashes: rifleman-sources.json.
+Reproduction: scripts/prepare-frost-musket.py, then
+scripts/import-frost-humans.py --manifest rifleman-sources.json.

@@ -1,0 +1,783 @@
+{
+  "passed": true,
+  "models": {
+    "RealRifleman": {
+      "triangles": 14163,
+      "bones": 102,
+      "nativePoses": 48,
+      "maximumTriggerHandGap": 0.0108468868960484,
+      "maximumSupportHandGap": 0.05149755459201383,
+      "muzzle": [
+        -0.13616281747817993,
+        2.52712082862854,
+        1.4422454833984375
+      ],
+      "muzzleVertexGap": 0.004620283648602662,
+      "movingBones": {
+        "Idle": [
+          "arm_R",
+          "elbow_L",
+          "elbow_R",
+          "foot_L",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hip",
+          "knee_L",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "thigh_L",
+          "thigh_R"
+        ],
+        "Walk": [
+          "arm_L",
+          "arm_R",
+          "cape1",
+          "cape2",
+          "cape3",
+          "chest",
+          "elbow_L",
+          "elbow_R",
+          "footIK_L",
+          "footIK_R",
+          "foot_L",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "hip",
+          "knee_L",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "sheath_01_L",
+          "sheath_01_R",
+          "shoulder_L",
+          "shoulder_R",
+          "spine",
+          "spine1",
+          "thigh_L",
+          "thigh_R"
+        ],
+        "Rifle_Shoot": [
+          "arm_L",
+          "arm_R",
+          "cape1",
+          "cape2",
+          "cape3",
+          "chest",
+          "elbow_R",
+          "finger_L",
+          "finger_R",
+          "fingertip_L",
+          "fingertip_R",
+          "foot_L",
+          "foot_R",
+          "forearm_L",
+          "forearm_R",
+          "handIK_L",
+          "handIK_R",
+          "hand_L",
+          "hand_R",
+          "head",
+          "hip",
+          "knee_R",
+          "leg_L",
+          "leg_R",
+          "sheath_01_L",
+          "shoulder_L",
+          "shoulder_R",
+          "spine",
+          "spine1",
+          "thigh_L",
+          "thigh_R",
+          "weapon_L"
+        ]
+      },
+      "bounds": [
+        {
+          "max": [
+            0.49031925201416016,
+            2.8322036266326904,
+            1.2376409769058228
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:0",
+          "min": [
+            -0.5984795689582825,
+            0.01684035360813141,
+            -0.6432567834854126
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903191328048706,
+            2.8306076526641846,
+            1.238981008529663
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:1",
+          "min": [
+            -0.5985321402549744,
+            0.01683855429291725,
+            -0.6431518793106079
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903189539909363,
+            2.8287928104400635,
+            1.2404725551605225
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:2",
+          "min": [
+            -0.5985966920852661,
+            0.01683812402188778,
+            -0.6430317759513855
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031925201416016,
+            2.8268136978149414,
+            1.242093563079834
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:3",
+          "min": [
+            -0.5986663699150085,
+            0.016829153522849083,
+            -0.6429028511047363
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031931161880493,
+            2.824759006500244,
+            1.2438011169433594
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:4",
+          "min": [
+            -0.5987334847450256,
+            0.016818370670080185,
+            -0.6427690982818604
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903189539909363,
+            2.8227193355560303,
+            1.2455577850341797
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:5",
+          "min": [
+            -0.598791241645813,
+            0.016806289553642273,
+            -0.6426366567611694
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903193414211273,
+            2.8207738399505615,
+            1.2473194599151611
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:6",
+          "min": [
+            -0.5988326668739319,
+            0.016850512474775314,
+            -0.6424959301948547
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903189241886139,
+            2.8190157413482666,
+            1.249044418334961
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:7",
+          "min": [
+            -0.5988527536392212,
+            0.016848420724272728,
+            -0.6423786878585815
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903193712234497,
+            2.817493438720703,
+            1.2506927251815796
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:8",
+          "min": [
+            -0.5988478660583496,
+            0.016846980899572372,
+            -0.6422771215438843
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031925201416016,
+            2.8162808418273926,
+            1.252219319343567
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:9",
+          "min": [
+            -0.5988156199455261,
+            0.016846520826220512,
+            -0.6421961784362793
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903194308280945,
+            2.8153865337371826,
+            1.253603458404541
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:10",
+          "min": [
+            -0.5987572073936462,
+            0.016845058649778366,
+            -0.6421360969543457
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903193712234497,
+            2.814856767654419,
+            1.25480318069458
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:11",
+          "min": [
+            -0.5986708402633667,
+            0.016845576465129852,
+            -0.6421003341674805
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.490319162607193,
+            2.814671039581299,
+            1.2558152675628662
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:12",
+          "min": [
+            -0.5985605716705322,
+            0.01684519648551941,
+            -0.6420880556106567
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031931161880493,
+            2.8148574829101562,
+            1.256605863571167
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:13",
+          "min": [
+            -0.5984257459640503,
+            0.016844239085912704,
+            -0.6421006321907043
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903194308280945,
+            2.8153867721557617,
+            1.25718092918396
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:14",
+          "min": [
+            -0.5982682704925537,
+            0.016845140606164932,
+            -0.6421361565589905
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903193712234497,
+            2.8162808418273926,
+            1.2575185298919678
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:15",
+          "min": [
+            -0.5980870723724365,
+            0.01684720814228058,
+            -0.6421959400177002
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903194308280945,
+            2.817493200302124,
+            1.2576744556427002
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:16",
+          "min": [
+            -0.5978870391845703,
+            0.01684710755944252,
+            -0.6422770023345947
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031928181648254,
+            2.8190155029296875,
+            1.2571978569030762
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:17",
+          "min": [
+            -0.5977201461791992,
+            0.016848189756274223,
+            -0.6423787474632263
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031931161880493,
+            2.8207733631134033,
+            1.255849003791809
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:18",
+          "min": [
+            -0.5976391434669495,
+            0.01685049571096897,
+            -0.6424959301948547
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031907320022583,
+            2.822719097137451,
+            1.2536242008209229
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:19",
+          "min": [
+            -0.5976556539535522,
+            0.0168058630079031,
+            -0.6426365375518799
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903193414211273,
+            2.824758291244507,
+            1.2507268190383911
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:20",
+          "min": [
+            -0.597754716873169,
+            0.01681765541434288,
+            -0.6427693367004395
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.4903193712234497,
+            2.8268136978149414,
+            1.247352957725525
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:21",
+          "min": [
+            -0.5979220271110535,
+            0.01683006063103676,
+            -0.6429029703140259
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031904339790344,
+            2.8287928104400635,
+            1.2438015937805176
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:22",
+          "min": [
+            -0.5981205701828003,
+            0.016837378963828087,
+            -0.6430320739746094
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.49031931161880493,
+            2.8306078910827637,
+            1.2404813766479492
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=0:23",
+          "min": [
+            -0.5983172655105591,
+            0.016838448122143745,
+            -0.6431518793106079
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5740199089050293,
+            2.8759734630584717,
+            1.3950469493865967
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:0",
+          "min": [
+            -0.44188934564590454,
+            0.02829490602016449,
+            -0.8551971316337585
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.6031212210655212,
+            2.800978422164917,
+            1.477408528327942
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:1",
+          "min": [
+            -0.40498897433280945,
+            0.11699728667736053,
+            -0.9281041622161865
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.671737790107727,
+            2.653818130493164,
+            1.5473014116287231
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:2",
+          "min": [
+            -0.3892289698123932,
+            0.07039077579975128,
+            -0.868290901184082
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.6699135303497314,
+            2.656123161315918,
+            1.4766706228256226
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:3",
+          "min": [
+            -0.3968309164047241,
+            0.019607197493314743,
+            -0.6636404991149902
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5536377429962158,
+            2.8098597526550293,
+            1.4037823677062988
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:4",
+          "min": [
+            -0.43182501196861267,
+            0.0010365843772888184,
+            -0.6885992884635925
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5055145025253296,
+            2.8665175437927246,
+            1.3402069807052612
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:5",
+          "min": [
+            -0.4763137102127075,
+            0.04246963560581207,
+            -0.8735065460205078
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5272656083106995,
+            2.7734298706054688,
+            1.3133056163787842
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:6",
+          "min": [
+            -0.4617633521556854,
+            0.1398119330406189,
+            -0.9329270720481873
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5651214122772217,
+            2.664379596710205,
+            1.29823899269104
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:7",
+          "min": [
+            -0.4850430488586426,
+            0.04753962159156799,
+            -0.9429572820663452
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.6056257486343384,
+            2.7428159713745117,
+            1.3157119750976562
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:8",
+          "min": [
+            -0.5387296676635742,
+            0.023633528500795364,
+            -0.8498510718345642
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5321340560913086,
+            2.841719150543213,
+            1.3652995824813843
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=1:9",
+          "min": [
+            -0.47817522287368774,
+            -0.03579459339380264,
+            -0.645608127117157
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5109047293663025,
+            2.9050686359405518,
+            1.5934897661209106
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:0",
+          "min": [
+            -0.5839835405349731,
+            0.01856343261897564,
+            -0.6655917167663574
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5109380483627319,
+            2.904076099395752,
+            1.5880271196365356
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:1",
+          "min": [
+            -0.5840693116188049,
+            0.01844468154013157,
+            -0.6592769026756287
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5109825730323792,
+            2.9009149074554443,
+            1.5659815073013306
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:2",
+          "min": [
+            -0.5839806795120239,
+            0.018360424786806107,
+            -0.6094813346862793
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5115888118743896,
+            2.909027338027954,
+            1.5517470836639404
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:3",
+          "min": [
+            -0.5839812755584717,
+            0.018322832882404327,
+            -0.5586557388305664
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5150517821311951,
+            2.9084014892578125,
+            1.5507925748825073
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:4",
+          "min": [
+            -0.583979606628418,
+            0.018321510404348373,
+            -0.5596812963485718
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5150517821311951,
+            2.9084014892578125,
+            1.5507925748825073
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:5",
+          "min": [
+            -0.583979606628418,
+            0.018321510404348373,
+            -0.5596812963485718
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5150519609451294,
+            2.9084019660949707,
+            1.549686312675476
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:6",
+          "min": [
+            -0.5839797258377075,
+            0.018281370401382446,
+            -0.5608657598495483
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5150519609451294,
+            2.9084160327911377,
+            1.4923176765441895
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:7",
+          "min": [
+            -0.5839853882789612,
+            0.018111804500222206,
+            -0.6176199913024902
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5157290697097778,
+            2.908172130584717,
+            1.4419811964035034
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:8",
+          "min": [
+            -0.5839802622795105,
+            0.01833346113562584,
+            -0.6632001399993896
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5247800350189209,
+            2.9059019088745117,
+            1.4178614616394043
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:9",
+          "min": [
+            -0.5839890241622925,
+            0.018409838899970055,
+            -0.6732596158981323
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5355173349380493,
+            2.9024391174316406,
+            1.445259690284729
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:10",
+          "min": [
+            -0.5839806795120239,
+            0.018533404916524887,
+            -0.6552437543869019
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5401252508163452,
+            2.897686004638672,
+            1.4349919557571411
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:11",
+          "min": [
+            -0.584017276763916,
+            0.018649213016033173,
+            -0.6379789113998413
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5358825922012329,
+            2.890829563140869,
+            1.3864918947219849
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:12",
+          "min": [
+            -0.5839812755584717,
+            0.01878361590206623,
+            -0.6287555694580078
+          ],
+          "vertices": 12347
+        },
+        {
+          "max": [
+            0.5259748101234436,
+            2.8816077709198,
+            1.3207387924194336
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRifleman.glb#pose=2:13",
+          "min": [
+            -0.5840175151824951,
+            0.018879767507314682,
+            -0.6133529543876648
+          ],
+          "vertices": 12347
+        }
+      ]
+    }
+  },
+  "sourceFiles": 19,
+  "generatedFiles": 5
+}

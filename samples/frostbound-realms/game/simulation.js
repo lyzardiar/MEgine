@@ -474,7 +474,7 @@ var Frost = (() => {
     }else{
       damage(s,u,target,weaponDamage(u,target,value));if(types[u.kind].splash)for(const v of s.units)if(v.id!==target.id&&v.team!==u.team&&v.hp>0&&canAttack(u,v)&&distance(v,target)<types[u.kind].splash)damage(s,u,v,weaponDamage(u,v,u.damage*.6));
     }
-    u.cd=unitType(u).cooldown||1;s.events.push({type:speed?'launch':'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,fromY:unitHeight(s,u)+1.6,toY:unitHeight(s,target)+1.6,team:u.team,ranged:unitType(u).range>4});return true;
+    u.cd=unitType(u).cooldown||1;s.events.push({type:speed?'launch':'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,fromY:unitHeight(s,u)+1.6,toY:unitHeight(s,target)+1.6,team:u.team,ranged:unitType(u).range>4,...(u.kind==='rifleman'?{art:'musket'}:{})});return true;
   }
   function advanceProjectiles(s){
     s.projectiles=s.projectiles.filter(p=>{

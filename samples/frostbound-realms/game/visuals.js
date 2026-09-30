@@ -7,7 +7,7 @@ var FrostVisual=(()=>{
     {hall:['Ancient of roots','Ancient of boughs','Elder grove'],barracks:'Sentinel grove',farm:'Living shelter',tower:'Thorn watch',altar:'Moon sanctuary',workshop:'Grove workshop'},
     {hall:['Necropolis','Black citadel','Dread fortress'],barracks:'Crypt',farm:'Grave mound',tower:'Soul obelisk',altar:'Altar of shadows',workshop:'Bone foundry'}
   ];
-  const units={mage:'RealEmberSage',paladin:'RealPaladin',knight:'RealKnight',archer:'RealArcher',raider:'Orc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'Skeleton_Mage',bonearcher:'Skeleton_Rogue'};
+  const units={rifleman:'RealRifleman',mage:'RealEmberSage',paladin:'RealPaladin',knight:'RealKnight',archer:'RealArcher',raider:'Orc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'Skeleton_Mage',bonearcher:'Skeleton_Rogue'};
   const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'Rogue',neutral:'Warrior',ballista:'RealBallista',catapult:'RealCatapult',trebuchet:'RealTrebuchet',ram:'RealRam',dragon:'Dragon'};
   function work(state,u){
     if(u.kind!=='worker'||!u.order||u.hp<=0||u.stun>0||u.inside)return null;
@@ -59,7 +59,9 @@ var FrostVisual=(()=>{
   function heroPortrait(heroClass=0){const art=Frost.heroes[heroClass].art;return FrostArt[art].realistic?'Assets/Art/unit-portraits.png#'+art:'Assets/Art/hero-portraits.png#hero-'+heroClass;}
   function name(state,u){const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??state.teams[u.team]?.tier??1)-1,0,2)]:value||Frost.unitType(u).label;}
   const projectileColors={fire:[1,.32,.055,1],frost:[.35,.8,1,1],nature:[.35,.85,.24,1],shadow:[.57,.22,.8,1],arcane:[.5,.48,1,1]};
+  function muzzle(e){const [x,y,z]=FrostArt.RealRifleman.muzzle,angle=Math.atan2(e.x-e.fromX,e.z-e.fromZ),sin=Math.sin(angle),cos=Math.cos(angle);return {type:'muzzle',art:'musket',team:e.team,x:e.fromX+(x*cos+z*sin)*.85,y:e.fromY-1.6+y*.85,z:e.fromZ+(-x*sin+z*cos)*.85};}
   function projectile(art){
+    if(art==='musket')return {mesh:null,scale:[1,1,1],color:[.74,.67,.5,.7],texture:'smoke_01',trail:false,particleSize:.3,impactSize:.3};
     const color=projectileColors[art],stone=art==='stone',physical=!color,asset=physical?FrostArt[stone?'RealRock07':'RealArrow']:null,size=stone?1.2/Math.max(...asset.size):1;
     return {mesh:asset?{mesh:stone?asset.lods[1]:asset.parts[0].mesh,material:asset.material}:null,scale:stone?[size,size,size]:art==='ballista'?[2.2,2.2,2]:art==='javelin'?[1.4,1.4,1.6]:art==='quarrel'?[1,1,.6]:[1,1,1],color:color||[.53,.43,.3,.7],texture:art==='fire'||art==='shadow'||stone?'smoke_01':art==='frost'?'star_04':'spark_01',trail:!!color,particleSize:art==='fire'?.65:art==='shadow'?.55:art==='frost'?.3:.4,impactSize:stone?1.8:physical?.3:.85};
   }
@@ -71,6 +73,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {model,name,pose,heroPortrait,heading,resource,scenery,projectile,projectileView};
+  return {model,name,pose,heroPortrait,heading,resource,scenery,projectile,projectileView,muzzle};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

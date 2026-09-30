@@ -15,8 +15,10 @@ from mathutils import Matrix, Vector
 ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';SOURCE=SAMPLE/'SourceAssets/0ad';MANIFEST=SAMPLE/'human-sources.json'
 
 def import_dae(path):
+    if path.endswith('.glb'):
+        before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(SOURCE/path));return sorted(set(bpy.data.objects)-before,key=lambda o:o.name)
     document=ET.parse(SOURCE/path);changed=False
-    if path.startswith('animation/'):
+    if 'animation/' in path:
         for texture in document.findall('.//{*}library_effects//{*}texture'):
             if 'texcoord' not in texture.attrib:texture.set('texcoord','UVMap');changed=True
     for scene in document.findall('{*}library_visual_scenes/{*}visual_scene'):
@@ -61,11 +63,15 @@ def attachment_matrices(path):
     return result
 
 def main():
+    global SOURCE
     manifest=json.loads(MANIFEST.read_text())
+    SOURCE=(SAMPLE/manifest.get('sourceRoot','SourceAssets/0ad')).resolve()
+    if not SOURCE.is_relative_to((SAMPLE/'SourceAssets').resolve()):raise ValueError('Source root escapes sample sources')
     for entry in manifest['sources']:
         target=(SAMPLE/entry['file']).resolve()
-        if not target.is_relative_to(SOURCE.resolve()):raise ValueError('Source escapes 0 A.D. directory')
+        if not target.is_relative_to(SOURCE.resolve()):raise ValueError('Source escapes manifest directory')
         if not target.exists():
+            if 'url' not in entry:raise FileNotFoundError('Run the manifest preparation script first: '+entry['file'])
             data=urllib.request.urlopen(entry['url'],timeout=90).read()
             if hashlib.sha256(data).hexdigest()!=entry['sha256']:raise ValueError('Download hash mismatch')
             target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
@@ -100,6 +106,7 @@ def main():
                         assert max(abs(expected[i][j]-actual[i][j]) for i in range(4) for j in range(4))<.001,(bone,expected,actual)
             for obj in [o for o in added if o.type=='MESH']:
                 matrix=obj.matrix_world.copy();obj.parent=None;obj.data.transform(matrix);obj.matrix_world=Matrix.Identity(4)
+                if 'transform' in part:obj.data.transform(Matrix(part['transform']))
                 if index==0:body_points.extend(v.co.copy() for v in obj.data.vertices)
                 if part['bone']:
                     bone=part['bone'];assert bone in rig.data.bones and bone in matrices,(bone,bone in rig.data.bones,bone in matrices)
@@ -123,9 +130,10 @@ def main():
                 arm=nodes.new('ShaderNodeCombineRGB');arm.inputs[0].default_value=1;arm.inputs[1].default_value=.8;arm.inputs[2].default_value=0
                 if part.get('specular'):
                     rough=nodes.new('ShaderNodeMath');rough.operation='MULTIPLY_ADD';rough.inputs[1].default_value=-.5;rough.inputs[2].default_value=.9;links.new(texture(part['specular'],True).outputs['Color'],rough.inputs[0]);links.new(rough.outputs[0],arm.inputs[1])
+                arm_color=texture(part['arm'],True).outputs['Color'] if part.get('arm') else arm.outputs[0]
                 opacity=base.outputs['Alpha'] if part.get('cutout') else nodes.new('ShaderNodeValue').outputs[0]
                 if not part.get('cutout'):opacity.default_value=1
-                emission=nodes.new('ShaderNodeEmission');surfaces[mat.name]=(out,shader,emission,color,arm.outputs[0],opacity);obj.data.materials.clear();obj.data.materials.append(mat);meshes.append(obj)
+                emission=nodes.new('ShaderNodeEmission');surfaces[mat.name]=(out,shader,emission,color,arm_color,opacity);obj.data.materials.clear();obj.data.materials.append(mat);meshes.append(obj)
             for obj in added:
                 if obj.type!='MESH' and obj!=rig:bpy.data.objects.remove(obj,do_unlink=True)
         bpy.ops.object.select_all(action='DESELECT')
@@ -151,9 +159,11 @@ def main():
         for face in mesh.data.polygons:face.material_index=0
         mesh.data.materials.clear();mesh.data.materials.append(bpy.data.materials.new(key+' atlas'))
         points=[v.co for v in mesh.data.vertices];reference=body_points if definition.get('width') else points;low=min(p.z for p in reference);scale=definition['width']/max(max(p[i] for p in reference)-min(p[i] for p in reference) for i in [0,1]) if definition.get('width') else definition.get('height',3)/(max(p.z for p in points)-low);rig.scale=(scale,)*3;rig.location.z=-low*scale;rig.data.pose_position='POSE';rig.animation_data_create()
-        clips=[]
+        clips=[];muzzle=None
         for name,path in definition['animations'].items():
             added=import_dae(path);animated=max((o for o in added if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));source_action=animated.animation_data.action;start,end=source_action.frame_range
+            if name in definition.get('animationRanges',{}):
+                low,high=definition['animationRanges'][name];assert 0<=low<high<=1;start,end=round(start+(end-start)*low),round(start+(end-start)*high)
             weighted={mesh.vertex_groups[g.group].name for v in mesh.data.vertices for g in v.groups if g.weight>0}
             prop_bones={name for prop in props for name in prop['bones']}
             assert all(name in animated.pose.bones for name in weighted-prop_bones),'Animation is missing a weighted body or equipment bone'
@@ -187,6 +197,8 @@ def main():
                     basis=bone.convert_local_to_pose(desired[bone.name],bone.matrix_local,parent_matrix=desired[parent.name] if parent else Matrix.Identity(4),parent_matrix_local=parent.matrix_local if parent else Matrix.Identity(4),invert=True)
                     pose.rotation_mode='QUATERNION';pose.matrix_basis=basis
                     for channel in ['location','rotation_quaternion','scale']:pose.keyframe_insert(channel,frame=frame-int(start))
+                if name=='Rifle_Shoot' and frame==round(start+(end-start)*definition['attackEvent']):
+                    part=next(p for p in definition['parts'] if 'muzzle' in p);bone=part['bone'];point=rig.matrix_world@desired[bone]@rig.data.bones[bone].matrix_local.inverted()@matrices[bone]@Matrix(part['transform'])@Vector(part['muzzle']);muzzle=[point.x,point.z,-point.y]
             for curve in action.fcurves:
                 for point in curve.keyframe_points:point.interpolation='LINEAR'
             rig.animation_data.action=None;track=rig.animation_data.nla_tracks.new();track.name=name;track.strips.new(name,0,action);clips.append({'name':name,'frames':max(1,round((end-start)/scene.render.fps*12))})
@@ -195,10 +207,13 @@ def main():
         bpy.ops.object.select_all(action='DESELECT');mesh.select_set(True);rig.select_set(True);bpy.context.view_layer.objects.active=rig
         model='Assets/Models/'+key+'.glb';bpy.ops.export_scene.gltf(filepath=str(SAMPLE/model),export_format='GLB',use_selection=True,export_materials='NONE',export_animations=True,export_animation_mode='NLA_TRACKS',export_force_sampling=True,export_optimize_animation_size=False,export_extras=False)
         material='Assets/Materials/'+key+'.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':key,'shader':'pbr','base_color':[1,1,1,1],'base_color_texture':textures['base'],'normal_texture':textures['normal'],'normal_scale':1,'metallic_roughness_texture':textures['arm'],'occlusion_texture':textures['arm'],'metallic':0,'roughness':1,'double_sided':True}))
+        if any(p.get('arm') for p in definition['parts']):
+            value=json.loads((SAMPLE/material).read_text());value['metallic']=1;(SAMPLE/material).write_text(json.dumps(value))
         if cutout:
             value=json.loads((SAMPLE/material).read_text());value.update(surface='cutout',alpha_cutoff=.3);(SAMPLE/material).write_text(json.dumps(value))
         generated.extend([model,material]);size=[(max(p[i] for p in points)-min(p[i] for p in points))*scale for i in [0,2,1]]
         catalog[key]={'material':material,'parts':[{'name':key,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True}
+        if muzzle is not None:catalog[key]['muzzle']=muzzle
         if definition.get('workAnimation'):catalog[key]['workAnimation']=definition['workAnimation']
         for field in ['attackEvent','ammoLoad','siegeModel','shotModel','loadedModel','crewCount','mountedModel']:
             if field in definition:catalog[key][field]=definition[field]
