@@ -1,5 +1,5 @@
 {
-  "contentHash": "fdb57cb4157f6e96acd61b31b9eb067d0421ff30512f721586c382080d63ee86",
+  "contentHash": "ca81f028f32910ec4528124009184a6d1b0ef669bd0c92c52628e52f26adff02",
   "windowTitle": "Frostbound Realms",
   "responding": true,
   "audioListening": false,
@@ -8,11 +8,11 @@
   "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
   "alive": true,
   "packageValidationPassed": true,
-  "startedAt": "2026-09-30T23:17:50.3894891+08:00",
-  "processId": 165584,
-  "packagedFiles": 557,
+  "startedAt": "2026-10-01T00:36:24.6752881+08:00",
+  "processId": 57812,
+  "packagedFiles": 561,
   "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
-  "checkedAt": "2026-09-30T23:18:20.4237016+08:00",
+  "checkedAt": "2026-10-01T00:36:54.7302538+08:00",
   "physicalInput": false,
   "loggedErrors": 0
 }

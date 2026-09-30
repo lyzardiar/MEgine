@@ -163,3 +163,5 @@ node scripts/qa-frostbound.mjs
 野外守卫采用 0 A.D. 写实灰狼，RPG 终点守卫采用棕熊，包含待机、行走、攻击和死亡动画。`wildlife-sources.json` 保存 20 个来源与 10 个生成文件的哈希，许可随 Player 分发；模型与 28 格实际头像、存档和尸体表现一致。重建命令与原生验收见 [野外守卫美术记录](../../docs/designs/frostbound-realms/wildlife-art.md)。
 
 自然族树人使用 OpenGameArt 的 Entangled Roots，具备木纹材质、待机/行走/挥爪/死亡动画和实际模型头像。模型、动画及概念分别署名 piacenti、mysterymagination、Misha，遵循 CC-BY 3.0；两份原始 Blender 文件及派生资源哈希记录于 `treant-sources.json`，署名随 Player 分发。重建与原生验收见 [树人美术记录](../../docs/designs/frostbound-realms/treant-art.md)。
+
+部落 Raider 使用 Guillaume “GuieA_7” Englert 的带贴图兽人，保留护甲、战锤和待机/行走/攻击/死亡动画，兵营训练与地图布置共用实际模型头像。原始 Blender、PNG、XCF 及派生文件哈希记录于 `orc-sources.json`，CC-BY-SA 4.0 署名随 Player 分发；重建与原生验收见 [兽人美术记录](../../docs/designs/frostbound-realms/orc-art.md)。

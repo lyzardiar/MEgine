@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "7fbc6d2b2f142d2f23730be57b590e9eddbf620e7e1f8c063201a709a42a9588",
+  "sha256": "7149029072a9410816d0a9c372412d46e35e80f58d6a95ca2e176d9d1fe66094",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -60,25 +60,6 @@
           -0.8488377332687378
         ],
         "vertices": 2408
-      }
-    },
-    {
-      "name": "Orc",
-      "mesh": "Assets/Models/Orc.glb#pose=3:4",
-      "material": "Assets/Materials/Orc.mmat",
-      "bounds": {
-        "max": [
-          1.524283766746521,
-          3.05584716796875,
-          1.021941065788269
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Orc.glb#pose=3:4",
-        "min": [
-          -1.591382622718811,
-          -0.01337142288684845,
-          -0.7611678838729858
-        ],
-        "vertices": 4412
       }
     },
     {
@@ -288,6 +269,25 @@
           -1.300988793373108
         ],
         "vertices": 3883
+      }
+    },
+    {
+      "name": "RealOrc",
+      "mesh": "Assets/Models/RealOrc.glb#pose=0:4",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.482607126235962,
+          3.0853490829467773,
+          1.788536787033081
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=0:4",
+        "min": [
+          -1.3418610095977783,
+          -0.04340863227844238,
+          -0.7283942103385925
+        ],
+        "vertices": 1920
       }
     },
     {

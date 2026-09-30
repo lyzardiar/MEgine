@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "generatedFiles": 3,
+  "byteIdentical": true,
+  "files": [
+    {
+      "file": "Assets/Textures/RealOrc_base.png",
+      "sha256": "27384b1e93360b8d20bf84acb4fc243bc7a1d3eade429f728b654915a08f6923"
+    },
+    {
+      "file": "Assets/Models/RealOrc.glb",
+      "sha256": "1fca88db3dbdc5b39eec07e79be9f2b75828857216dd959729aa8821bb4f7f17"
+    },
+    {
+      "file": "Assets/Materials/RealOrc.mmat",
+      "sha256": "63e6b6df2238210331ad2fd6cdec82bca19f6f456802641cf487f2b9556e86a2"
+    }
+  ]
+}

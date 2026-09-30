@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/orc-poses.png",
+  "sha256": "283b167d5c00e3b88a831648b8a054acd730c238bd27e6ffeb347fc7fa8cb491",
+  "generator": "scripts/render-frost-unit-icons.mjs --orc-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Idle 0",
+      "mesh": "Assets/Models/RealOrc.glb#pose=0:0",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.482607126235962,
+          3.0877368450164795,
+          1.7868140935897827
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=0:0",
+        "min": [
+          -1.3423149585723877,
+          -0.04544854164123535,
+          -0.7378827333450317
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Walk 0",
+      "mesh": "Assets/Models/RealOrc.glb#pose=1:0",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.5059444904327393,
+          3.0877363681793213,
+          2.37304949760437
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=1:0",
+        "min": [
+          -1.255103588104248,
+          -0.007925748825073242,
+          -0.9387913942337036
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Walk 0.5",
+      "mesh": "Assets/Models/RealOrc.glb#pose=1:6",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.4337213039398193,
+          3.0810513496398926,
+          1.6583436727523804
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=1:6",
+        "min": [
+          -1.321474552154541,
+          -0.008511815220117569,
+          -0.9892644286155701
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Attack 0",
+      "mesh": "Assets/Models/RealOrc.glb#pose=2:0",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.5133328437805176,
+          3.111884355545044,
+          2.506721258163452
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=2:0",
+        "min": [
+          -1.4551560878753662,
+          -2.9935591783214477e-7,
+          -0.4955735206604004
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Attack 0.25",
+      "mesh": "Assets/Models/RealOrc.glb#pose=2:2",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.71224045753479,
+          4.330147743225098,
+          1.367016315460205
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=2:2",
+        "min": [
+          -2.4667325019836426,
+          -0.004767671227455139,
+          -0.6613171100616455
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Attack 0.5",
+      "mesh": "Assets/Models/RealOrc.glb#pose=2:5",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.799230694770813,
+          4.644435405731201,
+          1.3819661140441895
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=2:5",
+        "min": [
+          -2.1361167430877686,
+          -0.021448612213134766,
+          -0.6079379916191101
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Attack 0.7",
+      "mesh": "Assets/Models/RealOrc.glb#pose=2:7",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.9575676918029785,
+          3.128268241882324,
+          2.497591972351074
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=2:7",
+        "min": [
+          -1.187046766281128,
+          -0.003340467344969511,
+          -0.5194684267044067
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Attack 0.9",
+      "mesh": "Assets/Models/RealOrc.glb#pose=2:9",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.5282717943191528,
+          3.116802215576172,
+          2.5386359691619873
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=2:9",
+        "min": [
+          -1.3929734230041504,
+          -0.00007536861812695861,
+          -0.39309823513031006
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Death 0",
+      "mesh": "Assets/Models/RealOrc.glb#pose=3:0",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.482607126235962,
+          3.0877368450164795,
+          1.7868140935897827
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=3:0",
+        "min": [
+          -1.3423149585723877,
+          -0.04544854164123535,
+          -0.7378827333450317
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Death 0.33",
+      "mesh": "Assets/Models/RealOrc.glb#pose=3:5",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          1.7541916370391846,
+          2.717118501663208,
+          1.485556721687317
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=3:5",
+        "min": [
+          -2.4022655487060547,
+          -0.000020369430785649456,
+          -2.0587453842163086
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Death 0.66",
+      "mesh": "Assets/Models/RealOrc.glb#pose=3:10",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          2.6889100074768066,
+          1.7699954509735107,
+          0.8088887929916382
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=3:10",
+        "min": [
+          -3.4527862071990967,
+          -0.11499428749084473,
+          -2.6830027103424072
+        ],
+        "vertices": 1920
+      }
+    },
+    {
+      "name": "Death 0.99",
+      "mesh": "Assets/Models/RealOrc.glb#pose=3:15",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "bounds": {
+        "max": [
+          2.6995670795440674,
+          1.7672079801559448,
+          0.8851855993270874
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealOrc.glb#pose=3:15",
+        "min": [
+          -3.618401288986206,
+          -0.13003993034362793,
+          -2.6830027103424072
+        ],
+        "vertices": 1920
+      }
+    }
+  ]
+}

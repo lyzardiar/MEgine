@@ -3603,5 +3603,44 @@
     ],
     "realistic": true,
     "attackEvent": 0.5
+  },
+  "RealOrc": {
+    "material": "Assets/Materials/RealOrc.mmat",
+    "parts": [
+      {
+        "name": "RealOrc",
+        "mesh": "Assets/Models/RealOrc.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 60
+      },
+      {
+        "name": "Walk",
+        "frames": 12
+      },
+      {
+        "name": "Attack",
+        "frames": 11
+      },
+      {
+        "name": "Death",
+        "frames": 16
+      }
+    ],
+    "size": [
+      2.8249218463897705,
+      3.1331859827041626,
+      2.5246967673301697
+    ],
+    "realistic": true,
+    "attackEvent": 0.6363636363636364
   }
 }

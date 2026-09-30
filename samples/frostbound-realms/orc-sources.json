@@ -1,0 +1,81 @@
+{
+  "author": "Guillaume \"GuieA_7\" Englert",
+  "license": "CC-BY-SA-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "page": "https://opengameart.org/content/orc-3d",
+  "archive": {
+    "url": "https://opengameart.org/sites/default/files/orc.zip",
+    "sha256": "2a9d929c49c2f9079e628f198e8ee81df80920c72957ea34a73f745f6d654870"
+  },
+  "generator": "scripts/import-frost-orc.py",
+  "sources": [
+    {
+      "file": "SourceAssets/orc/Orc/orc.blend",
+      "sha256": "43472eee53698265721ac85ee86adeaa632cbbc45bcfe9c53e6397bb626f8b81",
+      "bytes": 1574644
+    },
+    {
+      "file": "SourceAssets/orc/Orc/orc.png",
+      "sha256": "3e2fdb06f774c32cb6bb59d800b9f4c1fdaff133d2dde80a7e8ca149120b32ba",
+      "bytes": 851765
+    },
+    {
+      "file": "SourceAssets/orc/Orc/orc.xcf",
+      "sha256": "5046793cbeb5e5f7a3753fa1e012560fcc1d75ff6682271725668428b2653f48",
+      "bytes": 14314948
+    },
+    {
+      "file": "SourceAssets/orc/Orc/warhammer.png",
+      "sha256": "d20cbc9411dbc019c8766f0a9cc71761ece427b605b5138c5fe1a4969e7025f9",
+      "bytes": 42641
+    },
+    {
+      "file": "SourceAssets/orc/Orc/warhammer.xcf",
+      "sha256": "b258d8393ac0d81f5cfc6dc36fe569ac6d96e4addd42d69dfc6d14f0eb067de5",
+      "bytes": 589118
+    }
+  ],
+  "models": {
+    "RealOrc": {
+      "triangles": 2278,
+      "bones": 40,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 60
+        },
+        {
+          "name": "Walk",
+          "frames": 12
+        },
+        {
+          "name": "Attack",
+          "frames": 11
+        },
+        {
+          "name": "Death",
+          "frames": 16
+        }
+      ],
+      "size": [
+        2.8249218463897705,
+        3.1331859827041626,
+        2.5246967673301697
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealOrc_base.png",
+      "sha256": "27384b1e93360b8d20bf84acb4fc243bc7a1d3eade429f728b654915a08f6923"
+    },
+    {
+      "file": "Assets/Models/RealOrc.glb",
+      "sha256": "1fca88db3dbdc5b39eec07e79be9f2b75828857216dd959729aa8821bb4f7f17"
+    },
+    {
+      "file": "Assets/Materials/RealOrc.mmat",
+      "sha256": "63e6b6df2238210331ad2fd6cdec82bca19f6f456802641cf487f2b9556e86a2"
+    }
+  ]
+}

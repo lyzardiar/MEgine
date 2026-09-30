@@ -1,0 +1,13 @@
+Orc / RealOrc
+Author: Guillaume "GuieA_7" Englert
+https://opengameart.org/content/orc-3d
+Creative Commons Attribution-ShareAlike 4.0 International (CC-BY-SA-4.0)
+https://creativecommons.org/licenses/by-sa/4.0/
+MEngine adaptations: normalized mirrored mesh transforms and four-bone skinning,
+combined body/hammer texture atlas, resized rig, sampled IK and weapon constraints,
+GLB animation export and actual model portrait.
+Derived files: Assets/Models/RealOrc.glb, Assets/Textures/RealOrc_base.png,
+Assets/Materials/RealOrc.mmat and the RealOrc unit portrait in Assets/Art/unit-portraits.png.
+The source and these adaptations remain CC-BY-SA-4.0.
+Original Blender, PNG and editable XCF sources are retained in SourceAssets/orc.
+Source URL and hashes: orc-sources.json. Generator: scripts/import-frost-orc.py.
