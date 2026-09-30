@@ -1,0 +1,138 @@
+{
+  "passed": true,
+  "baselineCommit": "3752439fa2b4e0d0b4f21671aa26f7161bb1f01d",
+  "shader": "samples/frostbound-realms/Assets/Shaders/Ground.mshader",
+  "validation": {
+    "backendCompile": {
+      "passed": 1,
+      "failed": 0,
+      "backends": 4
+    },
+    "assetHashes": {
+      "sources": 16,
+      "packedTextures": 4
+    },
+    "terrainRules": true,
+    "nativeGround": {
+      "chunks": 64,
+      "shaderRejections": 0,
+      "editorRendered": true,
+      "zoom": 12,
+      "profiler": {
+        "intervals": 70,
+        "averagePresentIntervalMs": 70.00285714183535,
+        "p95PresentIntervalMs": 103.30000007152557,
+        "presentedFps": 14.285131219342425,
+        "averageRequestMs": 60.73098592019417,
+        "averageRenderMs": 17.384907042253523,
+        "averageCommandMs": 19.854101408450706,
+        "averageUploadMs": 1.4619718303143139,
+        "averageSimulationMs": 7.352340845070423,
+        "averageSimulationRequestMs": 23.092957750172683
+      }
+    },
+    "packageShaderMatches": true
+  },
+  "performance": {
+    "scope": "Standalone native Player frame-loop intervals from onTick dt; successful render logs checked, physical display presentation is not measured.",
+    "viewport": [
+      2560,
+      1440
+    ],
+    "warmupSeconds": 5,
+    "windowSeconds": 5,
+    "sameExecutableSha256": "a936073a02a8bff35e0dd6cc7c526135c0d5eb5200df2d013c3ae1e7fd65330a",
+    "sameSceneSha256": "832b4d7591a9f2cd32581b87b6c3d513cb96598fed99d91cff4a008d3184f963",
+    "sameScriptSha256": "e1236d6e0ccca7e8e85e47b786f174b2867d18a37064cbaccecdc88fed7b303d",
+    "before": {
+      "measuredAt": "2026-09-30T17:11:11.745Z",
+      "shaderSha256": "a20c6865c72aa308169277a7074f588a65dc0fb12661d00fa10bc862da14de71",
+      "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790788242088\\sample",
+      "runs": [
+        {
+          "samples": 271,
+          "durationMs": 5006.670692935586,
+          "frameLoopFps": 54.12778603201946,
+          "meanMs": 18.47479960492836,
+          "p95Ms": 30.651699751615524,
+          "maxMs": 120.08679658174516
+        },
+        {
+          "samples": 255,
+          "durationMs": 4996.558397542685,
+          "frameLoopFps": 51.03512852474803,
+          "meanMs": 19.594346657030137,
+          "p95Ms": 32.54399821162224,
+          "maxMs": 114.9107962846756
+        },
+        {
+          "samples": 271,
+          "durationMs": 5049.686796497554,
+          "frameLoopFps": 53.66669477163707,
+          "meanMs": 18.633530614382117,
+          "p95Ms": 30.819499865174297,
+          "maxMs": 112.78259754180908
+        }
+      ],
+      "combinedFrameLoopFps": 52.94655241444518
+    },
+    "after": {
+      "measuredAt": "2026-09-30T17:31:18.085Z",
+      "shaderSha256": "9222dc19b949307aa78521d7c539a175cd6386bc606941f97e228e6d7bdb1da0",
+      "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790789448363\\sample",
+      "runs": [
+        {
+          "samples": 269,
+          "durationMs": 5008.160883560777,
+          "frameLoopFps": 53.71233198258247,
+          "meanMs": 18.617698451898796,
+          "p95Ms": 31.89459815621376,
+          "maxMs": 115.21169543266296
+        },
+        {
+          "samples": 255,
+          "durationMs": 5013.987994752824,
+          "frameLoopFps": 50.85772049451642,
+          "meanMs": 19.662698018638526,
+          "p95Ms": 34.568700939416885,
+          "maxMs": 109.17910188436508
+        },
+        {
+          "samples": 269,
+          "durationMs": 5002.232190221548,
+          "frameLoopFps": 53.77599235114395,
+          "meanMs": 18.595658699708355,
+          "p95Ms": 28.19409966468811,
+          "maxMs": 118.84839832782744
+        }
+      ],
+      "combinedFrameLoopFps": 52.78087638902759
+    }
+  },
+  "package": {
+    "contentHash": "00860cf1aff9ebe3a01720fc09348aa93a54ec1a440d456afb368f10b1a89a9f",
+    "files": 561,
+    "bytes": 250508544,
+    "startupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "screenshots": [
+    {
+      "file": "ground-settlement.png",
+      "sha256": "4ef44b746cf3a39e0afcbe3e9ab8fb553f2e61422bd80eb1ab3bf014678a40fe"
+    },
+    {
+      "file": "ground-river.png",
+      "sha256": "e2b8bd9fb061faaa4bd271e4bf1f3ac7c1fcd401c8c66a7eaa12edb2d62bae76"
+    },
+    {
+      "file": "ground-highland.png",
+      "sha256": "cea90c4e15dff8d92f332eefdc7c39918296c9724f08cba5b5b56ff17db6a600"
+    }
+  ],
+  "limitations": [
+    "Material snow has no physical depth, footprints or melting simulation.",
+    "Physical input, audio listening and cross-machine LAN were not verified.",
+    "Full Warcraft III recreation remains incomplete."
+  ]
+}

@@ -21,6 +21,10 @@ fn frost_noise(p: vec2<f32>) -> f32 {
     let values=fract(sin(corners)*43758.5453);
     return mix(mix(values.x,values.y,blend.x),mix(values.z,values.w,blend.x),blend.y);
 }
+// MiYu: shared weights keep color, normal, roughness and scan height registered across translated tiles.
+fn frost_tile_weight(amount: f32, first: vec4<f32>, second: vec4<f32>) -> f32 {
+    return smoothstep(0.18,0.82,amount+(second.a-first.a)*0.35);
+}
 // MiYu: OpenGL normal green points opposite texture V; project detail into each face's tangent plane.
 fn frost_bump(packed: vec4<f32>, geometric: vec3<f32>, axis_u: vec3<f32>, axis_v: vec3<f32>, strength: f32) -> vec3<f32> {
     let xy=packed.rg*2.0-vec2<f32>(1.0);
@@ -34,16 +38,28 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let drift=vec2<f32>(frost_noise(p*0.42),frost_noise(p*0.42+vec2<f32>(37.0,19.0)))-vec2<f32>(0.5);
     let shore_fields=frost_ground(p+drift*1.4);let fields=frost_ground(p);
     let soil_uv=p*0.32;let snow_uv=p*0.5;let stone_uv=p*0.32;
-    let litter=mengine_texture_soil(soil_uv).rgb;let snow=mengine_texture_snow(snow_uv).rgb;let stone=mengine_texture_stone(stone_uv).rgb;
-    let soil_nrh=mengine_texture_soil_nrh(soil_uv);let snow_nrh=mengine_texture_snow_nrh(snow_uv);let stone_nrh=mengine_texture_stone_nrh(stone_uv);
-    let cover=0.46+0.28*sin(p.x*0.19+sin(p.y*0.23))+0.18*sin(p.y*0.31-p.x*0.11);
-    // Relative scan heights break the snow edge around raised litter and stones without changing walkability.
-    let snow_cover=smoothstep(0.32,0.62,cover+(snow_nrh.a-soil_nrh.a)*0.28);
+    let offset=vec2<f32>(0.37,0.61);let tile_amount=frost_noise(p*0.21+vec2<f32>(11.0,7.0));
+    let soil_a=mengine_texture_soil_nrh(soil_uv);let soil_b=mengine_texture_soil_nrh(soil_uv+offset);
+    let snow_a=mengine_texture_snow_nrh(snow_uv);let snow_b=mengine_texture_snow_nrh(snow_uv+offset);
+    let soil_weight=frost_tile_weight(tile_amount,soil_a,soil_b);let snow_weight=frost_tile_weight(tile_amount,snow_a,snow_b);
+    let litter=mix(mengine_texture_soil(soil_uv).rgb,mengine_texture_soil(soil_uv+offset).rgb,soil_weight);
+    let snow=mix(mengine_texture_snow(snow_uv).rgb,mengine_texture_snow(snow_uv+offset).rgb,snow_weight);let stone=mengine_texture_stone(stone_uv).rgb;
+    let soil_nrh=mix(soil_a,soil_b,soil_weight);let snow_nrh=mix(snow_a,snow_b,snow_weight);let stone_nrh=mengine_texture_stone_nrh(stone_uv);
+    let broad=frost_noise(p*0.085+vec2<f32>(4.0,9.0));let medium=frost_noise(p*0.31+vec2<f32>(23.0,5.0));let fine=frost_noise(p*1.2);
+    let cover=smoothstep(0.3,0.7,broad*0.58+medium*0.3+fine*0.12);
+    // MiYu: thin snow settles between raised litter; a narrow wet-soil band follows the melting edge.
+    let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32);
+    let melt=(1.0-snow_cover)*smoothstep(0.18,0.5,cover);
     let road=smoothstep(0.22,0.8,fields.y+(stone_nrh.a-0.5)*0.18);
     let shore=shore_fields.x+(frost_noise(p*2.3)-0.5)*0.065;
     let water=smoothstep(0.46,0.6,shore);let wet=smoothstep(0.18,0.51,shore);let depth=smoothstep(0.57,0.96,shore);
-    let soil=mix(litter*vec3<f32>(0.72,0.76,0.69),snow*vec3<f32>(0.82,0.88,0.93),snow_cover);
-    let dry=mix(soil,stone*vec3<f32>(0.67,0.66,0.62),road);
+    let soil_tint=mix(vec3<f32>(0.64,0.69,0.59),vec3<f32>(0.84,0.79,0.67),medium);
+    let damp=mix(vec3<f32>(1.0),vec3<f32>(0.56,0.61,0.58),melt);
+    let snow_color=snow*vec3<f32>(0.91,0.95,1.0);
+    let soil=mix(litter*soil_tint*damp,snow_color,snow_cover);
+    let road_snow=snow_cover*(1.0-smoothstep(0.2,0.55,stone_nrh.a))*0.6;
+    let road_stone=mix(stone,vec3<f32>(dot(stone,vec3<f32>(0.2126,0.7152,0.0722))),0.65)*vec3<f32>(0.74,0.77,0.78);
+    let dry=mix(soil,mix(road_stone,snow_color,road_snow),road);
     let gravel_mix=0.45+frost_noise(p*1.6)*0.35;let gravel=mix(litter,stone,gravel_mix);
     let bank=mix(dry,gravel*vec3<f32>(0.31,0.34,0.3),wet);
     let wave=sin(p.x*4.2+p.y*2.6+frost_noise(p*0.8)*5.0);
@@ -52,8 +68,9 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     s.base_color=mix(bank,mix(shallow,vec3<f32>(0.019,0.049,0.061),depth)+ripples,water);
     let foam=(smoothstep(0.46,0.51,shore)-smoothstep(0.53,0.59,shore))*smoothstep(0.58,0.82,frost_noise(p*3.7));
     s.base_color=mix(s.base_color,vec3<f32>(0.19,0.25,0.24),foam*0.34);
-    let packed=mix(mix(mix(soil_nrh,snow_nrh,snow_cover),stone_nrh,road),mix(soil_nrh,stone_nrh,gravel_mix),wet);
-    s.roughness=mix(mix(clamp(packed.b,0.48,1.0),0.4,wet),0.23,water);s.metallic=0.0;
+    let packed=mix(mix(mix(soil_nrh,snow_nrh,snow_cover),mix(stone_nrh,snow_nrh,road_snow),road),mix(soil_nrh,stone_nrh,gravel_mix),wet);
+    let dry_roughness=mix(clamp(packed.b,0.48,1.0),0.52,melt*(1.0-road));
+    s.roughness=mix(mix(dry_roughness,0.4,wet),0.23,water);s.metallic=0.0;
     let ground_normal=frost_bump(packed,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),0.7);
     let water_normal=normalize(geometric+vec3<f32>(wave*0.045,0.0,cos(p.y*8.3-p.x*1.1)*0.035));
     s.normal=normalize(mix(ground_normal,water_normal,water));

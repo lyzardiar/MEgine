@@ -165,3 +165,5 @@ node scripts/qa-frostbound.mjs
 自然族树人使用 OpenGameArt 的 Entangled Roots，具备木纹材质、待机/行走/挥爪/死亡动画和实际模型头像。模型、动画及概念分别署名 piacenti、mysterymagination、Misha，遵循 CC-BY 3.0；两份原始 Blender 文件及派生资源哈希记录于 `treant-sources.json`，署名随 Player 分发。重建与原生验收见 [树人美术记录](../../docs/designs/frostbound-realms/treant-art.md)。
 
 部落 Raider 使用 Guillaume “GuieA_7” Englert 的带贴图兽人，保留护甲、战锤和待机/行走/攻击/死亡动画，兵营训练与地图布置共用实际模型头像。原始 Blender、PNG、XCF 及派生文件哈希记录于 `orc-sources.json`，CC-BY-SA 4.0 署名随 Player 分发；重建与原生验收见 [兽人美术记录](../../docs/designs/frostbound-realms/orc-art.md)。
+
+冬季地表使用多尺度积雪分布和扫描高度混合，包含湿土边缘、石缝残雪及地表纹理平移混合。素材沿用 Poly Haven CC0 扫描资产；实际截图、四后端编译和独立 Player 帧耗时见 [冬季地表](../../docs/designs/frostbound-realms/snow-surface.md)。
