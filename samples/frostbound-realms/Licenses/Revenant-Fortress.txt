@@ -1,0 +1,11 @@
+Revenant stone strongholds / RealRevenantHall, RealRevenantHall2, RealRevenantHall3
+Castle / Dungeon Tileset Extended by rubberduck, CC0-1.0.
+https://opengameart.org/content/3d-castle-dungeon-tileset-extended
+https://creativecommons.org/publicdomain/zero/1.0/
+Source textures include CC0 works by scouser and BMacZero, and concrete01
+from Pietextureset. The complete source readme is inside the pinned archive.
+MEngine layout, stepped foundations, roofs, soul windows and atlas adaptations
+by MiYu, CC0-1.0. Derived files: RealRevenantHall*.glb, RealRevenantHall*.png,
+RealRevenantHall*.mmat, and RevenantHall portraits in faction-buildings.png.
+Sources and SHA-256: revenant-fortress-sources.json.
+Rebuild: Blender 4.5.9 with scripts/import-frost-revenant-fortress.py.

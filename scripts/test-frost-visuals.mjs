@@ -30,6 +30,7 @@ for(const kind of ['tree','mine','camp']){
 }
 const buildings=JSON.parse(fs.readFileSync(new URL('faction-sources.json',root)));buildings.sources.forEach(verify);buildings.generated.forEach(verify);
 const temple=JSON.parse(fs.readFileSync(new URL('temple-sources.json',root)));assert.equal(temple.license,'CC0-1.0');temple.sources.forEach(verify);temple.generated.forEach(verify);assert.equal(V.model(S.create(),{kind:'temple',team:0}).key,'RealTemple');assert.ok(FrostArt.RealTemple.factionBuilding);
+const fortress=JSON.parse(fs.readFileSync(new URL('revenant-fortress-sources.json',root)));assert.equal(fortress.license,'CC0-1.0');fortress.sources.forEach(verify);fortress.generated.forEach(verify);for(const key of ['RevenantHall','RevenantHall2','RevenantHall3']){assert.ok(FrostArt[key].realistic);assert.equal(FrostArt[key].parts[0].mesh,'Assets/Models/Real'+key+'.glb');}
 const monsters=JSON.parse(fs.readFileSync(new URL('monster-sources.json',root)));monsters.forEach(m=>{verify(m);m.generated.forEach(verify);assert.ok(m.animations.length>=8);});
 const icons=JSON.parse(fs.readFileSync(new URL('faction-icons.json',root))),slices=JSON.parse(fs.readFileSync(new URL(icons.file+'.sprite.json',root))).slices;verify(icons);assert.equal(slices.length,33);assert.deepEqual(slices.map(s=>s.name).sort(),[...Object.keys(buildings.models),'RealTemple'].sort());
 assert.equal(Object.keys(buildings.models).length,32);assert.equal(monsters.length,5);

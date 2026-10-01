@@ -1,0 +1,65 @@
+{
+  "passed": true,
+  "models": [
+    {
+      "model": "RevenantHall",
+      "triangles": 4044,
+      "vertices": 6163,
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          6.300000190734863,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall.glb",
+        "min": [
+          -3.700000047683716,
+          0.0,
+          -3.700000047683716
+        ],
+        "vertices": 6163
+      },
+      "emissiveTexels": 45655
+    },
+    {
+      "model": "RevenantHall2",
+      "triangles": 4884,
+      "vertices": 7859,
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          7.5,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall2.glb",
+        "min": [
+          -3.700000047683716,
+          0.0,
+          -3.700000047683716
+        ],
+        "vertices": 7859
+      },
+      "emissiveTexels": 49791
+    },
+    {
+      "model": "RevenantHall3",
+      "triangles": 5172,
+      "vertices": 8351,
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          9.699999809265137,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall3.glb",
+        "min": [
+          -3.700000047683716,
+          0.0,
+          -3.700000047683716
+        ],
+        "vertices": 8351
+      },
+      "emissiveTexels": 46336
+    }
+  ]
+}

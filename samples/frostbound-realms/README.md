@@ -184,3 +184,5 @@ node scripts/qa-frostbound.mjs
 神庙 L 研究骷髅寿命、M 研究骷髅精通：新召唤延长至 55 秒，精通后生成一名战士与一名骷髅法师。法师使用解剖骨架、木杖和完整动画，可远程穿刺攻击地面及空中单位；当前联机协议为 17。来源、重建、运行截图与验证见 [骷髅精通](../../docs/designs/frostbound-realms/skeleton-mastery.md)。
 
 诅咒神庙使用 CC0 石质教堂外观 `RealTemple`，包含石墙、侧塔、门廊和塔内绿光，16,560 三角面及四张 2048² 贴图。建筑头像、施工预览和地图编辑器共用该模型；素材来源、可复现导入与六向实拍见 [神庙美术](../../docs/designs/frostbound-realms/temple-art.md)。其他建筑和部分单位仍需统一写实风格。
+
+亡灵主基地的三个等级使用带石砌门洞、柱饰、阶梯基座和绿光窗的 CC0 石质建筑，升级增加塔楼和中央尖塔，保持相同占地。模型、贴图、头像及升级中存档恢复已验证；来源、重建和游戏实拍见 [亡灵主基地](../../docs/designs/frostbound-realms/revenant-fortress.md)。

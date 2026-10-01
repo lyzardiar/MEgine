@@ -1,0 +1,123 @@
+{
+  "file": "docs/designs/frostbound-realms/revenant-fortress-views.png",
+  "sha256": "06ce506e1b5dec41f83711e1bdd61ba1ea1000f3255e4619015f43493f1d9031",
+  "generator": "scripts/render-frost-unit-icons.mjs --fortress-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "RevenantHall -0.39269908169872414",
+      "mesh": "Assets/Models/RealRevenantHall.glb",
+      "material": "Assets/Materials/RealRevenantHall.mmat",
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          6.300000190734863,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall.glb",
+        "min": [
+          -3.700000047683716,
+          0,
+          -3.700000047683716
+        ],
+        "vertices": 6163
+      }
+    },
+    {
+      "name": "RevenantHall2 -0.39269908169872414",
+      "mesh": "Assets/Models/RealRevenantHall2.glb",
+      "material": "Assets/Materials/RealRevenantHall2.mmat",
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          7.5,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall2.glb",
+        "min": [
+          -3.700000047683716,
+          0,
+          -3.700000047683716
+        ],
+        "vertices": 7859
+      }
+    },
+    {
+      "name": "RevenantHall3 -0.39269908169872414",
+      "mesh": "Assets/Models/RealRevenantHall3.glb",
+      "material": "Assets/Materials/RealRevenantHall3.mmat",
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          9.699999809265137,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall3.glb",
+        "min": [
+          -3.700000047683716,
+          0,
+          -3.700000047683716
+        ],
+        "vertices": 8351
+      }
+    },
+    {
+      "name": "RevenantHall 2.356194490192345",
+      "mesh": "Assets/Models/RealRevenantHall.glb",
+      "material": "Assets/Materials/RealRevenantHall.mmat",
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          6.300000190734863,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall.glb",
+        "min": [
+          -3.700000047683716,
+          0,
+          -3.700000047683716
+        ],
+        "vertices": 6163
+      }
+    },
+    {
+      "name": "RevenantHall2 2.356194490192345",
+      "mesh": "Assets/Models/RealRevenantHall2.glb",
+      "material": "Assets/Materials/RealRevenantHall2.mmat",
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          7.5,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall2.glb",
+        "min": [
+          -3.700000047683716,
+          0,
+          -3.700000047683716
+        ],
+        "vertices": 7859
+      }
+    },
+    {
+      "name": "RevenantHall3 2.356194490192345",
+      "mesh": "Assets/Models/RealRevenantHall3.glb",
+      "material": "Assets/Materials/RealRevenantHall3.mmat",
+      "bounds": {
+        "max": [
+          3.700000047683716,
+          9.699999809265137,
+          3.700000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantHall3.glb",
+        "min": [
+          -3.700000047683716,
+          0,
+          -3.700000047683716
+        ],
+        "vertices": 8351
+      }
+    }
+  ]
+}

@@ -1513,11 +1513,11 @@
     "factionBuilding": true
   },
   "RevenantHall": {
-    "material": "Assets/Materials/RevenantHall.mmat",
+    "material": "Assets/Materials/RealRevenantHall.mmat",
     "parts": [
       {
         "name": "RevenantHall",
-        "mesh": "Assets/Models/RevenantHall.glb",
+        "mesh": "Assets/Models/RealRevenantHall.glb",
         "pivot": [
           0,
           0,
@@ -1526,11 +1526,12 @@
       }
     ],
     "size": [
-      4.0,
-      3.5,
-      4.0
+      7.400000095367432,
+      6.300000190734863,
+      7.400000095367432
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "RevenantBarracks": {
     "material": "Assets/Materials/RevenantBarracks.mmat",
@@ -1757,11 +1758,11 @@
     "factionBuilding": true
   },
   "RevenantHall2": {
-    "material": "Assets/Materials/RevenantHall2.mmat",
+    "material": "Assets/Materials/RealRevenantHall2.mmat",
     "parts": [
       {
         "name": "RevenantHall2",
-        "mesh": "Assets/Models/RevenantHall2.glb",
+        "mesh": "Assets/Models/RealRevenantHall2.glb",
         "pivot": [
           0,
           0,
@@ -1770,18 +1771,19 @@
       }
     ],
     "size": [
-      4.0,
-      6.5,
-      4.0
+      7.400000095367432,
+      7.5,
+      7.400000095367432
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "RevenantHall3": {
-    "material": "Assets/Materials/RevenantHall3.mmat",
+    "material": "Assets/Materials/RealRevenantHall3.mmat",
     "parts": [
       {
         "name": "RevenantHall3",
-        "mesh": "Assets/Models/RevenantHall3.glb",
+        "mesh": "Assets/Models/RealRevenantHall3.glb",
         "pivot": [
           0,
           0,
@@ -1790,11 +1792,12 @@
       }
     ],
     "size": [
-      4.0,
-      6.5,
-      4.0
+      7.400000095367432,
+      9.699999809265137,
+      7.400000095367432
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "Orc": {
     "material": "Assets/Materials/Orc.mmat",

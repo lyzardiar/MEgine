@@ -1,0 +1,139 @@
+{
+  "author": "rubberduck; MiYu adaptations",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "generator": "scripts/import-frost-revenant-fortress.py",
+  "sources": [
+    {
+      "file": "SourceAssets/revenant-fortress/dungeon-tileset-extended.zip",
+      "url": "https://opengameart.org/sites/default/files/dungeon-tileset-extended.zip",
+      "sha256": "ffe0deccc0f24006c5ce89632797865e6536d381dc45129bd5f2db6130cad39e",
+      "bytes": 21887093
+    },
+    {
+      "file": "SourceAssets/revenant-fortress/source-page.html",
+      "url": "https://opengameart.org/content/3d-castle-dungeon-tileset-extended",
+      "sha256": "9e2b200e1c177bf2439221c15937bd07cb18cf4198c20189f8ab495cee51ccd8",
+      "bytes": 42397
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/RealRevenantHall_base.png",
+      "sha256": "08473ea37ba3bfc5affaad65cc57ffaba2ca2af5c04833e04a19f23fd6ab9b0d"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall_normal.png",
+      "sha256": "931d4f8997cea861eada09e4028130a7c92697cdc3f1047fae5dc486fe8cf18d"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall_arm.png",
+      "sha256": "5cab415e5c2445c0f245c7a694cf21c6a4239711de1c8b2ac453a1e1723a1d00"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall_emissive.png",
+      "sha256": "4314460c9fb3aea1a9c5324df7e21172f2cd664fff980fd24515db025fc32902"
+    },
+    {
+      "file": "Assets/Models/RealRevenantHall.glb",
+      "sha256": "d32cd271e88dc6f92261fac0a2c4941182de243251a840da9bcb8758a8e482bd"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantHall.mmat",
+      "sha256": "0b3e185ffeeb4f3c8f4218c415d95d287db1500c09ccec6974b86cf7b3c4473a"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall2_base.png",
+      "sha256": "fba0bd3378cd84cf7e2bdac2655dabc1ee02d4ed91cc35abfebe57b8b3e3f31c"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall2_normal.png",
+      "sha256": "3ffed3cd577755da00d57f382a12eb22c3ae544439fff13dadc8859bd8fd43d6"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall2_arm.png",
+      "sha256": "9badc48cd79406451b9d09a154f084b13083f0374ee7027eef9cda44b755d101"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall2_emissive.png",
+      "sha256": "ed7f327cb7c5cd230c7bb079fe1aef400e76b7b4f5e7cf11e8400ffbac55b251"
+    },
+    {
+      "file": "Assets/Models/RealRevenantHall2.glb",
+      "sha256": "60fd8fc735524b3e4a76a742b6c8d66a625766181a873357d1a6eed4f30bc24e"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantHall2.mmat",
+      "sha256": "21680f02ba5dd613f4a9215c9b2b5b8b40928069243dd118376578f7ad995f69"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall3_base.png",
+      "sha256": "bc145770abc78424256baf642f4c910a86bf418ef99e48c67a4cc0c523465948"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall3_normal.png",
+      "sha256": "0c0f5c49581c2b209d0b335b28869ecdd2a68693509e018165e1021cb72d5e87"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall3_arm.png",
+      "sha256": "98323271afb8296710357320ca2b40ca7534213f7bf7d01921b63f22200e46fc"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantHall3_emissive.png",
+      "sha256": "ffb2d524c580b8c7a7ee6bac94cefff26dd98addf5c65e3080945c21f3e8a032"
+    },
+    {
+      "file": "Assets/Models/RealRevenantHall3.glb",
+      "sha256": "2d0aeb7f70c01af7422271008ac6d856bd683ad97c3451165cddd7238ef384b2"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantHall3.mmat",
+      "sha256": "09a6c0daf291facdf7200138a85ae6a28a0015f2b2e4331420abe0387c09577e"
+    },
+    {
+      "file": "Licenses/Revenant-Fortress.txt",
+      "sha256": "f475ea0d6742170be5801ecb01b2de9accf741d4804c4ae6bfdabc0a28fc330d"
+    },
+    {
+      "file": "Assets/Licenses/Revenant-Fortress.txt",
+      "sha256": "f475ea0d6742170be5801ecb01b2de9accf741d4804c4ae6bfdabc0a28fc330d"
+    }
+  ],
+  "modules": [
+    "castle-wall-gate-new",
+    "castle-wall-w-deco-1",
+    "castle-wall-w-window",
+    "edge-column-1",
+    "castle-column",
+    "gate-big-2"
+  ],
+  "models": {
+    "RevenantHall": {
+      "triangles": 4044,
+      "size": [
+        7.400000095367432,
+        6.300000190734863,
+        7.400000095367432
+      ],
+      "modules": 63
+    },
+    "RevenantHall2": {
+      "triangles": 4884,
+      "size": [
+        7.400000095367432,
+        7.5,
+        7.400000095367432
+      ],
+      "modules": 89
+    },
+    "RevenantHall3": {
+      "triangles": 5172,
+      "size": [
+        7.400000095367432,
+        9.699999809265137,
+        7.400000095367432
+      ],
+      "modules": 91
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "fortressArt": {
+    "fixture": "No-AI Revenant stronghold with resources, worker and adjacent Temple; real native UI tier research and training.",
+    "tiers": [
+      1,
+      2,
+      3
+    ],
+    "tierPortraits": true,
+    "midUpgradeSave": true,
+    "completedTierSave": true,
+    "workerTraining": true,
+    "tier3Placement": true,
+    "shaderRejections": 0
+  }
+}
