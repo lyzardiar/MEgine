@@ -679,6 +679,8 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     maskable: { label: 'Maskable' },
     material: materialAsset,
     texture: sprite,
+    render_camera: { kind: 'named-reference', referenceType: 'Camera', allowNone: true },
+    render_root: { kind: 'named-reference', referenceType: 'Entity', allowNone: true },
     uv_rect: { label: 'UV Rect' },
     raycast_padding: {
       label: 'Raycast Padding',

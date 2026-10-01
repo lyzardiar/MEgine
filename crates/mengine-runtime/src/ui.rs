@@ -2234,13 +2234,14 @@ fn walk(
 
     if let Some(raw_image) = raw_image {
         let material_start = primitives.len();
+        let scene_texture = format!("$scene-view:{}", entity.to_u64());
         let mut output = primitive(
             rect,
             multiply_alpha(raw_image.color, state.alpha),
             pivot,
             rotation,
             "ui/raw-image",
-            &raw_image.texture,
+            if raw_image.render_camera.trim().is_empty() { &raw_image.texture } else { &scene_texture },
             clip,
         );
         output.uv = raw_image.uv_rect;
@@ -7851,6 +7852,8 @@ mod tests {
                 maskable: true,
                 material: String::new(),
                 texture: "Assets/UI/avatar.png".into(),
+                render_camera: String::new(),
+                render_root: String::new(),
                 color: [0.5, 0.75, 1.0, 0.8],
                 uv_rect: [0.25, 0.0, 0.5, 1.0],
                 raycast_target: true,

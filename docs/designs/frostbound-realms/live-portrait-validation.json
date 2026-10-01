@@ -1,0 +1,108 @@
+{
+  "checkedAt": "2026-10-01T17:36:17.719393+00:00",
+  "scope": "Classic HUD: live mesh portrait viewport and original carved stone frame",
+  "passed": true,
+  "runtimeTests": {
+    "passed": 210,
+    "failed": 0
+  },
+  "rhiTests": {
+    "passed": 51,
+    "failed": 0,
+    "gpuAdapterUsed": true,
+    "liveViews": "two independent cameras, transform change, resize, hide/reappear, main target restored"
+  },
+  "sceneTests": {
+    "passed": 20,
+    "failed": 0,
+    "liveReferences": "prefab instances and scene reload"
+  },
+  "editorTests": {
+    "passed": 11,
+    "failed": 0
+  },
+  "sampleHostTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "ruleAndTcpSuite": true,
+  "frontendBuild": true,
+  "releaseRuntimeBuild": true,
+  "embeddedReleaseEditorBuild": true,
+  "independentReadonlyReview": true,
+  "nativeAcceptance": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "classicHud": {
+      "fourByThreeCommandCard": true,
+      "fixedCommonSlots": true,
+      "pauseMenuAndResume": true,
+      "pauseMenuSaveLoad": true,
+      "headPortrait": true,
+      "animatedModelPortrait": true,
+      "portraitPause": true,
+      "portraitSelectionSwitch": true,
+      "portraitFallback": true,
+      "portraitResize": true,
+      "independentResources": true,
+      "heroShortcut": true,
+      "sixSlotUseDrop": true,
+      "minimapCamera": true,
+      "constructionSubmenu": true,
+      "gatherAndStop": true,
+      "twelveUnitPortraits": true,
+      "primaryPortraitAndControlGroup": true,
+      "saveRestore": true,
+      "editorControls": true,
+      "shaderRejections": 0
+    }
+  },
+  "pixelAcceptance": {
+    "viewport": [
+      1280,
+      720
+    ],
+    "portraitCrop": [
+      232,
+      541,
+      360,
+      673
+    ],
+    "idleChangedPixels": 6626,
+    "pausedPixelsEqual": true,
+    "passed": true
+  },
+  "playerSmoke": {
+    "contentHash": "241d6c8ea47afe33eb4e65c12eae7b45ef8a7392a15383bdddd18d832246cfec",
+    "windowTitle": "Frostbound Realms",
+    "responding": true,
+    "audioListening": false,
+    "shutdown": "Only this smoke-check process was stopped",
+    "elapsedSeconds": 30,
+    "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+    "alive": true,
+    "packageValidationPassed": true,
+    "startedAt": "2026-10-02T01:28:15.6912585+08:00",
+    "processId": 108276,
+    "packagedFiles": 679,
+    "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+    "checkedAt": "2026-10-02T01:28:45.7357237+08:00",
+    "physicalInput": false,
+    "loggedErrors": 0
+  },
+  "art": {
+    "path": "Assets/Art/royal-stone-frame.png",
+    "sha256": "64282f4d38206b253fc277d0d0f9e9abcca49858d400089c436245ccd7a5d537",
+    "originalGeneratedArt": true
+  },
+  "limitations": [
+    "Not a complete Warcraft III reproduction",
+    "Distinct race frames, original main-menu composition, full localization, alliance/chat and save browsing remain unfinished",
+    "Live portrait metadata covers twelve models; others use static fallback",
+    "Live views render meshes and scene lighting, not world sprites or particle emitters",
+    "Maximum eight live views, 1024 pixels per dimension and 128 parent levels in rooted extraction",
+    "Physical mouse, audio listening and cross-machine LAN acceptance not established"
+  ]
+}

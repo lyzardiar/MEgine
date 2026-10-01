@@ -1,0 +1,10 @@
+Asset: Assets/Art/royal-stone-frame.png
+Original generated game interface art, created for Frostbound Realms by MiYu
+using OpenAI image generation on 2026-10-02.
+No extracted Blizzard artwork is included.
+
+Prompt: realistic orthographic medieval stone panel, blue-gray limestone,
+antique bronze inner trim, carved gryphon corners, empty dark interior,
+no text or icons. Nine-slice borders preserve the corners at runtime.
+Source image dimensions: 1254 x 1254.
+SHA-256: 64282f4d38206b253fc277d0d0f9e9abcca49858d400089c436245ccd7a5d537

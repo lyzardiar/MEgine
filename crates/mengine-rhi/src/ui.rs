@@ -827,6 +827,7 @@ pub(crate) struct UiRenderer {
     sampler: wgpu::Sampler,
     fallback_texture: UiTextureGpu,
     textures: HashMap<String, UiTextureGpu>,
+    external_textures: HashMap<String, wgpu::BindGroup>,
     material_color_textures: HashMap<String, UiTextureGpu>,
     material_data_textures: HashMap<String, UiTextureGpu>,
     material_samplers: HashMap<UiMaterialSamplerKey, wgpu::Sampler>,
@@ -1135,6 +1136,7 @@ impl UiRenderer {
             sampler,
             fallback_texture,
             textures: HashMap::new(),
+            external_textures: HashMap::new(),
             material_color_textures: HashMap::new(),
             material_data_textures: HashMap::new(),
             material_samplers: HashMap::new(),
@@ -1176,7 +1178,19 @@ impl UiRenderer {
     }
 
     pub fn remove_texture(&mut self, key: &str) -> bool {
-        self.textures.remove(key).is_some()
+        let external = self.external_textures.remove(key).is_some();
+        self.textures.remove(key).is_some() || external
+    }
+
+    pub fn bind_texture_view(&mut self, device: &wgpu::Device, key: &str, view: &wgpu::TextureView) {
+        let binding = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("ui_scene_texture"), layout: &self.texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(view) },
+                wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(&self.sampler) },
+            ],
+        });
+        self.external_textures.insert(key.to_owned(), binding);
     }
 
     pub fn upload_material_texture_rgba8(
@@ -1529,7 +1543,7 @@ impl UiRenderer {
                 .textures
                 .get(&batch.key.texture)
                 .unwrap_or(&self.fallback_texture);
-            pass.set_bind_group(1, &texture.bind_group, &[]);
+            pass.set_bind_group(1, self.external_textures.get(&batch.key.texture).unwrap_or(&texture.bind_group), &[]);
             let material_texture_set = if use_error {
                 &self.fallback_material_texture_set
             } else if let Some(material) = material {

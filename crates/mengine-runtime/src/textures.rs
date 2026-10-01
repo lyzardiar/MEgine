@@ -266,6 +266,7 @@ impl RuntimeTextureCache {
             if key.is_empty()
                 || key.eq_ignore_ascii_case("white")
                 || key.starts_with("mengine-font://")
+                || key.starts_with("$scene-view:")
                 || !checked.insert(key)
             {
                 continue;

@@ -1681,7 +1681,7 @@ function onTick(dt, frame) {
                             );
                         }
                     }
-                    for failure in self.meshes.sync(r, &frame.objects) {
+                    for failure in self.meshes.sync(r, &frame.resource_objects()) {
                         log::warn!(
                             "Mesh '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1722,7 +1722,7 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    for failure in self.textures.sync_materials(r, &frame.objects) {
+                    for failure in self.textures.sync_materials(r, &frame.resource_objects()) {
                         log::warn!(
                             "Material texture '{}' could not be loaded from {}: {}",
                             failure.key,

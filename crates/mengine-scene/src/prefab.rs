@@ -321,6 +321,38 @@ mod tests {
     }
 
     #[test]
+    fn live_view_references_survive_prefab_instances_and_scene_reload() {
+        let token = |node| json!({ "$mengine_entity_ref": { "kind":"prefab_node", "node":node } });
+        let prefab = Prefab { version:PREFAB_VERSION, name:"Portrait".into(), root:PrefabNode { id:"root".into(), name:"Portrait".into(), active:true, components:json!({"RawImage":{"render_camera":token("camera"),"render_root":token("model")}}), children:vec![
+            PrefabNode { id:"camera".into(), name:"Camera".into(), active:true, components:json!({"Camera3D":{"primary":false}}), children:vec![] },
+            PrefabNode { id:"model".into(), name:"Model".into(), active:true, components:json!({"MeshRenderer":{"mesh":"cube"}}), children:vec![] },
+        ] } };
+        let mut world = World::new();
+        let first = instantiate_prefab(&prefab, &mut world).unwrap();
+        let second = instantiate_prefab(&prefab, &mut world).unwrap();
+        let snapshot = WorldSnapshot::from_world(&world);
+        for instance in [&first,&second] {
+            let image = &snapshot.entities.iter().find(|e| e.entity == instance.root).unwrap().components["RawImage"];
+            assert_eq!(image["render_camera"], instance.entities[1].to_string());
+            assert_eq!(image["render_root"], instance.entities[2].to_string());
+        }
+        let snapshot: WorldSnapshot = serde_json::from_str(&serde_json::to_string(&snapshot).unwrap()).unwrap();
+        let mut loaded = World::new();
+        for _ in 0..12 { loaded.spawn_empty(); }
+        crate::scene_file::apply_snapshot(&mut loaded, &snapshot);
+        for entity in loaded.iter_entities() {
+            if let Some(image) = loaded.get_component::<mengine_core::generated::RawImage>(entity) {
+                let camera = mengine_core::Entity::from_u64(image.render_camera.parse().unwrap());
+                let model = mengine_core::Entity::from_u64(image.render_root.parse().unwrap());
+                assert!(loaded.get_component::<mengine_core::generated::Camera3D>(camera).is_some());
+                assert!(loaded.get_component::<mengine_core::generated::MeshRenderer>(model).is_some());
+                assert_eq!(loaded.get_component::<mengine_core::Parent>(camera).unwrap().entity, entity);
+                assert_eq!(loaded.get_component::<mengine_core::Parent>(model).unwrap().entity, entity);
+            }
+        }
+    }
+
+    #[test]
     fn round_trips_and_instantiates_hierarchy() {
         let dir = std::env::temp_dir().join(format!("mengine-prefab-{}", Uuid::new_v4()));
         let path = dir.join("button.prefab");

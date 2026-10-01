@@ -1,0 +1,15 @@
+{
+  "viewport": [
+    1280,
+    720
+  ],
+  "portraitCrop": [
+    232,
+    541,
+    360,
+    673
+  ],
+  "idleChangedPixels": 6626,
+  "pausedPixelsEqual": true,
+  "passed": true
+}

@@ -12,6 +12,7 @@ import {
 
 const calls = () => ({
   Canvas: { render_camera: '2' },
+  RawImage: { render_camera: '2', render_root: '99' },
   Button: { on_click: { target: 2, component: 'Menu', method: 'Open' } },
   Toggle: { on_value_changed: { target: 99, component: 'Menu', method: 'Toggle' } },
   InputField: {
@@ -30,6 +31,8 @@ const calls = () => ({
 test('clone remapping changes internal UI event references and preserves external ones', () => {
   const remapped = remapComponentEntityReferences(calls(), new Map([[2, 20]]));
   assert.equal(remapped.Canvas.render_camera, '20');
+  assert.equal(remapped.RawImage.render_camera, '20');
+  assert.equal(remapped.RawImage.render_root, '99');
   assert.equal(remapped.Button.on_click.target, 20);
   assert.equal(remapped.Toggle.on_value_changed.target, 99);
   assert.equal(remapped.InputField.on_submit[0].target, 20);
@@ -38,6 +41,7 @@ test('clone remapping changes internal UI event references and preserves externa
   const multiRoot = remapComponentEntityReferences(calls(), new Map([[2, 20], [99, 990]]));
   assert.equal(multiRoot.Button.on_click.target, 20);
   assert.equal(multiRoot.OpenDoorBehaviour.door, 990);
+  assert.equal(multiRoot.RawImage.render_root, '990');
 });
 
 test('Prefab references use stable node tokens and external scene ids become explicit missing refs', () => {
@@ -58,6 +62,8 @@ test('Prefab references use stable node tokens and external scene ids become exp
   validatePrefabEntityReferences(localized, new Set(['root', 'child']));
   const resolved = resolvePrefabEntityReferences(localized, new Map([['child', 42]]));
   assert.equal(resolved.Canvas.render_camera, '42');
+  assert.equal(resolved.RawImage.render_camera, '42');
+  assert.equal(resolved.RawImage.render_root, '');
   assert.equal(resolved.Button.on_click.target, 42);
   assert.deepEqual(parseSerializedEntityReference(resolved.Toggle.on_value_changed.target), {
     entity: null,

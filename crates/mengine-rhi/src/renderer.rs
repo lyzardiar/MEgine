@@ -354,6 +354,24 @@ pub struct RenderFrame<'a> {
     pub objects: &'a [RenderObject],
     pub lighting: &'a FrameLighting,
     pub ui: Option<&'a UiBatchPlan>,
+    pub scene_views: &'a [SceneTextureFrame],
+}
+
+/// Live scene meshes rendered into an independently sized UI texture before the main frame.
+pub struct SceneTextureFrame {
+    pub key: String,
+    pub size: [u32; 2],
+    pub clear: ClearColor,
+    pub camera: FrameCamera,
+    pub objects: Vec<RenderObject>,
+    pub lighting: FrameLighting,
+}
+
+struct SceneTextureGpu {
+    target: OffscreenRenderTarget,
+    depth_texture: wgpu::Texture,
+    depth_view: wgpu::TextureView,
+    post_process: HdrPostProcess,
 }
 
 /// A renderer-owned color target for editor viewports, capture, and headless rendering.
@@ -641,6 +659,7 @@ pub struct Renderer {
     pub clear: ClearColor,
     pub graph: RenderGraph,
     size: PhysicalSize<u32>,
+    scene_textures: HashMap<String, SceneTextureGpu>,
 }
 
 impl Renderer {
@@ -1264,6 +1283,7 @@ impl Renderer {
             },
             graph: RenderGraph::default_forward(),
             size,
+            scene_textures: HashMap::new(),
         })
     }
 
@@ -1754,6 +1774,11 @@ impl Renderer {
         frame: &RenderFrame<'_>,
         target: RenderTarget<'_>,
     ) -> Result<(), RhiError> {
+        let active: HashSet<&str> = frame.scene_views.iter().map(|view| view.key.as_str()).collect();
+        self.scene_textures.retain(|key, _| {
+            if active.contains(key.as_str()) { true } else { self.ui.remove_texture(key); false }
+        });
+        for view in frame.scene_views { self.render_scene_texture(view)?; }
         self.clear = frame.clear;
         self.render_lit_frame_to_target(
             frame.camera,
@@ -1762,6 +1787,33 @@ impl Renderer {
             frame.ui,
             target,
         )
+    }
+
+    fn render_scene_texture(&mut self, frame: &SceneTextureFrame) -> Result<(), RhiError> {
+        let size = PhysicalSize::new(frame.size[0].clamp(1, 2048), frame.size[1].clamp(1, 2048));
+        let cached = self.scene_textures.remove(&frame.key).filter(|cached| cached.target.size == size);
+        let mut gpu = cached.unwrap_or_else(|| {
+            let target = self.create_offscreen_target(size);
+            let (depth_texture, depth_view) = create_depth(&self.device, size.width, size.height, self.sample_count);
+            let post_process = HdrPostProcess::new(&self.device, self.config.format, size.width, size.height, self.sample_count);
+            self.ui.bind_texture_view(&self.device, &frame.key, &target.view);
+            SceneTextureGpu { target, depth_texture, depth_view, post_process }
+        });
+        let previous_size = self.size;
+        let previous_clear = self.clear;
+        std::mem::swap(&mut self.depth_texture, &mut gpu.depth_texture);
+        std::mem::swap(&mut self.depth_view, &mut gpu.depth_view);
+        std::mem::swap(&mut self.post_process, &mut gpu.post_process);
+        self.size = size;
+        self.clear = frame.clear;
+        let result = self.render_lit_frame_to_target(frame.camera, &frame.objects, &frame.lighting, None, RenderTarget::Offscreen(&gpu.target));
+        std::mem::swap(&mut self.depth_texture, &mut gpu.depth_texture);
+        std::mem::swap(&mut self.depth_view, &mut gpu.depth_view);
+        std::mem::swap(&mut self.post_process, &mut gpu.post_process);
+        self.size = previous_size;
+        self.clear = previous_clear;
+        self.scene_textures.insert(frame.key.clone(), gpu);
+        result
     }
 
     fn ensure_object_capacity(&mut self, required: usize) {
@@ -4003,7 +4055,7 @@ mod tests {
         let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
         for size in [32,48,32] {
             let target = renderer.create_offscreen_target(PhysicalSize::new(size, size));
-            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None }, RenderTarget::Offscreen(&target)).unwrap();
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
             let data = renderer.read_offscreen_rgba8(&target).unwrap();
             assert!(data.chunks_exact(4).any(|pixel| pixel[0] > 0 && pixel[0] < 255), "resolved diagonal has partial coverage");
             let scale = size as f32 / 32.0;
@@ -4016,7 +4068,7 @@ mod tests {
             let mut pop = mask.clone();pop.key.stencil = UiStencilMode::Pop { reference: 1 };
             let overlay = UiPrimitive::solid([8.0,3.0,4.0,4.0].map(|v|v*scale), [1.0,0.0,0.0,1.0]);
             let ui = UiBatchPlan::build(vec![mask,child,pop,overlay]);
-            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: Some(&ui) }, RenderTarget::Offscreen(&target)).unwrap();
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: Some(&ui), scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
             let data = renderer.read_offscreen_rgba8(&target).unwrap();
             let pixel = |x: u32,y: u32| { let i = (((y as f32*scale) as u32*size+(x as f32*scale) as u32)*4) as usize; &data[i..i+3] };
             assert_eq!(pixel(8,16), &[255,255,255], "foreground scene occludes world UI");
@@ -4030,21 +4082,63 @@ mod tests {
         renderer.upload_gltf_static("msaa_needle", &needle, &[0,1,2]);
         objects[0].mesh_key = "msaa_needle".into();
         objects[0].material.surface_shader = Arc::from("fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return select(vec4<f32>(0.0,1.0,0.0,1.0),vec4<f32>(1.0,0.0,0.0,1.0),uv.x < -0.001 || uv.y < -0.001 || uv.x + uv.y > 1.001); }");
-        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None }, RenderTarget::Offscreen(&target)).unwrap();
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
         let needle_pixels = renderer.read_offscreen_rgba8(&target).unwrap();
         assert!(needle_pixels.chunks_exact(4).any(|pixel| pixel[1] > 0), "subpixel geometry remains visible");
         assert!(needle_pixels.chunks_exact(4).all(|pixel| pixel[0] == 0), "centroid UVs stay inside thin triangles");
         objects[0].mesh_key = "msaa_triangle".into();
         objects[0].material.surface_shader = Arc::from("fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return color; }");
-        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None }, RenderTarget::Offscreen(&target)).unwrap();
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
         objects[0].material.is_error = true;
         let mut error_ui = UiPrimitive::solid([0.0,0.0,4.0,4.0], [1.0;4]);
         error_ui.render_material = Some(Arc::new(UiRenderMaterial { is_error: true, ..Default::default() }));
         let ui = UiBatchPlan::build(vec![error_ui]);
-        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: Some(&ui) }, RenderTarget::Offscreen(&target)).unwrap();
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: Some(&ui), scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
         renderer.read_offscreen_rgba8(&target).unwrap();
         let error = pollster::block_on(renderer.device.pop_error_scope());
         assert!(error.is_none(), "scene/UI MSAA validation: {error:?}");
+    }
+
+    #[test]
+    fn live_scene_views_render_independently_and_restore_main_target() {
+        use crate::UiPrimitive;
+        let mut renderer = match pollster::block_on(Renderer::new_headless(PhysicalSize::new(64, 32))) {
+            Ok(renderer) => renderer,
+            Err(RhiError::NoAdapter) => { eprintln!("SKIP: no GPU adapter"); return; }
+            Err(error) => panic!("headless live view renderer: {error}"),
+        };
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let vertices = [[-1.0,-1.0,0.25],[1.0,-1.0,0.25],[-1.0,1.0,0.25],[1.0,1.0,0.25]].map(|position| Vertex { position, normal: [0.0,0.0,1.0], uv: [0.0,0.0] });
+        renderer.upload_gltf_static("portrait_quad", &vertices, &[0,1,2,2,1,3]);
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let mut lighting = FrameLighting::default(); lighting.environment.tone_mapping = false;
+        let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
+        let make_view = |key: &str, color| SceneTextureFrame { key:key.into(), size:[16,16], clear, camera, lighting:lighting.clone(), objects:vec![RenderObject { mesh_key:"portrait_quad".into(), model:Mat4::IDENTITY, material:RenderMaterial { unlit:true, double_sided:true, base_color:color, ..Default::default() }, cast_shadows:false, receive_shadows:false }] };
+        let mut views = vec![make_view("$scene-view:red", [1.0,0.0,0.0,1.0]), make_view("$scene-view:blue", [0.0,0.0,1.0,1.0])];
+        let mut red = UiPrimitive::solid([0.0,0.0,32.0,32.0], [1.0;4]); red.key.texture = views[0].key.clone();
+        let mut blue = UiPrimitive::solid([32.0,0.0,32.0,32.0], [1.0;4]); blue.key.texture = views[1].key.clone();
+        let ui = UiBatchPlan::build(vec![red,blue]);
+        let target = renderer.create_offscreen_target(PhysicalSize::new(64,32));
+        let render = |renderer: &mut Renderer, views: &[SceneTextureFrame]| {
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects:&[], lighting:&lighting, ui:Some(&ui), scene_views:views }, RenderTarget::Offscreen(&target)).unwrap();
+            assert_eq!(renderer.size, PhysicalSize::new(64,32));
+            renderer.read_offscreen_rgba8(&target).unwrap()
+        };
+        let pixel = |data: &[u8], x: usize, y: usize| { let i = (y*64+x)*4; data[i..i+3].to_vec() };
+        let data = render(&mut renderer, &views);
+        assert_eq!(pixel(&data,16,16), [255,0,0]); assert_eq!(pixel(&data,48,16), [0,0,255]);
+        views[0].objects[0].model = Mat4::from_translation(Vec3::new(3.0,0.0,0.0));
+        views[1].size = [24,20];
+        let data = render(&mut renderer, &views);
+        assert_eq!(pixel(&data,16,16), [0,0,0]); assert_eq!(pixel(&data,48,16), [0,0,255]);
+        assert_eq!(renderer.scene_textures["$scene-view:blue"].target.size, PhysicalSize::new(24,20));
+        views[1].camera.view = Mat4::from_translation(Vec3::new(3.0,0.0,0.0));
+        assert_eq!(pixel(&render(&mut renderer, &views),48,16), [0,0,0]);
+        render(&mut renderer, &[]); assert!(renderer.scene_textures.is_empty());
+        views[0].objects[0].model = Mat4::IDENTITY;
+        assert_eq!(pixel(&render(&mut renderer, &views[..1]),16,16), [255,0,0]);
+        assert_eq!(renderer.scene_textures.len(), 1);
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none(), "live view GPU validation");
     }
 
     #[test]

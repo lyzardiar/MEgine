@@ -2266,6 +2266,12 @@
       "raycast_target": {
         "type": "boolean"
       },
+      "render_camera": {
+        "type": "string"
+      },
+      "render_root": {
+        "type": "string"
+      },
       "texture": {
         "type": "string"
       },
@@ -2281,6 +2287,8 @@
       "maskable",
       "material",
       "texture",
+      "render_camera",
+      "render_root",
       "color",
       "uv_rect",
       "raycast_target",

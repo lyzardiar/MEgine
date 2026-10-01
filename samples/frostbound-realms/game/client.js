@@ -5,7 +5,7 @@ var FrostClient=(()=>{
   let editMap=S.defaultMap(),brush=0,undo=[],paintCell=-1,paintPointer=null,slot=1,returnEditor=false,online=false,address='127.0.0.1:7788',edit='',intent='',connected=false,code='',token='',room=null,rooms=[],roomIndex=0,seq=0,lastReceive=0,reconnectUntil=0,retry=0,netStates=0;
   const itemIcons=['blade','heart','boots','edge','storm','charm','heal','frost'];
   const previous={},visibility={},modelNames={},active={},tileState=[];
-  const missileView=FrostVisual.projectileView();let flightTime=0,missileCount=0;
+  const missileView=FrostVisual.projectileView();let flightTime=0,missileCount=0,portraitTime=0;
   let editorPage=0,placeKind='soldier',placeHeroClass=0,placeTeam=0,placeTag='',triggerIndex=-1,triggerPanel=0,entryIndex=0,regionIndex=-1,editorTool='select',heightBrush=1,rampBrush=0,surfaceBrush=0,surfaceRadius=0,rename=null;
   function set(n,c,v){const e=entities[n];if(!e)return;const json=JSON.stringify(v),key=n+'/'+c;if(sent[key]===json)return;sent[key]=json;engine.pushCommandJson('{"op":"setComponent","entity":'+e.entity+',"component":'+JSON.stringify(c)+',"value":'+json+'}');}
   function activate(n,on){const e=entities[n];if(!e||active[n]===on)return;active[n]=on;engine.setActive(e.entity,on);}
@@ -301,6 +301,9 @@ var FrostClient=(()=>{
     }
     show('Tooltip panel',!!hint);show('Tooltip text',!!hint);if(hint)label('Tooltip text',hint);
     set('Portrait','Image',{...authored.Portrait.Image,sprite:u&&!editing?FrostVisual.unitPortrait(state,u):'Assets/Art/command-icons.png#tower'});
+    const portraitVisual=playing&&u?FrostVisual.model(state,u):null,portraitView=portraitVisual&&FrostPortraitViews[portraitVisual.key],livePortrait=!!portraitView;
+    show('Portrait',world&&!livePortrait);show('HUD Live portrait',livePortrait);activate('Portrait model',livePortrait);activate('Portrait camera',livePortrait);
+    if(livePortrait){const {asset}=portraitVisual,position=portraitView.camera.position;set('Portrait model','MeshRenderer',{...authored['Portrait model'].MeshRenderer,mesh:FrostVisual.pose(u,asset,false,portraitTime),material:asset.material});set('Portrait camera','Transform',{...portraitView.camera,position:[1000+position[0],position[1],position[2]]});set('Portrait camera','Camera3D',{...authored['Portrait camera'].Camera3D,orthographic_size:portraitView.size});set('HUD Live portrait','RawImage',{...authored['HUD Live portrait'].RawImage,render_camera:String(entities['Portrait camera'].entity),render_root:String(entities['Portrait model'].entity)});}
     for(const [n,value] of [['Health',u?u.hp/u.maxHp:0],['Mana',u&&['hero','necromancer','shaman'].includes(u.kind)?u.mana/S.maxMana(u):0]]){const a=authored[n+' fill'].RectTransform;set(n+' fill','RectTransform',{...a,size_delta:[132*S.clamp(value,0,1),a.size_delta[1]],anchored_position:[-410+66*S.clamp(value,0,1),a.anchored_position[1]]});show(n+' back',world&&!editing&&!!u);show(n+' fill',world&&!editing&&!!u);}
 
     show('HUD Health value',playing&&!!u);show('HUD Mana value',playing&&!!u&&['hero','necromancer','shaman'].includes(u.kind));label('HUD Health value',u?Math.ceil(u.hp)+' / '+Math.ceil(u.maxHp):'');label('HUD Mana value',u?Math.floor(u.mana)+' / '+S.maxMana(u):'');
@@ -331,6 +334,7 @@ var FrostClient=(()=>{
     missileCount=missiles.length;
   }
   function tick(dt){if(!initialized)init();dt=Math.min(.2,Math.max(0,dt));time+=dt;const input=engine.input||{keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};receive();controls(input,dt);
+    if(mode==='playing'&&(!paused||online))portraitTime+=dt;
     if((mode==='playing'||mode==='finished')&&!online&&!paused){accumulator+=dt;while(accumulator>=S.DT){S.tick(state);collectEvents();accumulator-=S.DT;}if(mode==='playing'&&state.winner!==null){mode='finished';sound('victory');}}
     if(time>=renderAt){renderAt=time+.08;render(input);}
     renderMissiles(dt);

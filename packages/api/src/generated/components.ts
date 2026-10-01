@@ -558,6 +558,8 @@ export interface RawImage {
   maskable: boolean;
   material: string;
   texture: string;
+  renderCamera: string;
+  renderRoot: string;
   color: [number, number, number, number];
   uvRect: [number, number, number, number];
   raycastTarget: boolean;
@@ -1306,6 +1308,8 @@ export type SerializedComponentMap = {
     maskable: boolean;
     material: string;
     texture: string;
+    render_camera: string;
+    render_root: string;
     color: [number, number, number, number];
     uv_rect: [number, number, number, number];
     raycast_target: boolean;

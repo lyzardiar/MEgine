@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 const root=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url)),S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const catalog=JSON.parse(fs.readFileSync(path.join(root,'model-catalog.json'),'utf8'));
+const portraitViews=Object.fromEntries(JSON.parse(fs.readFileSync(path.join(root,'head-portraits.json'),'utf8')).views.map(v=>[v.key,v]));
 for(const dir of ['Scenes','Scripts','Fonts','Maps','Audio'])fs.mkdirSync(path.join(root,'Assets',dir),{recursive:true});
 for(const file of ['Roboto-Regular.ttf','LICENSE.txt'])fs.copyFileSync(fileURLToPath(new URL('../samples/ion-outpost/Assets/Fonts/'+file,import.meta.url)),path.join(root,'Assets/Fonts',file));
 for(const file of ['Cinzel-OFL.txt','NotoSansSC-OFL.txt'])fs.copyFileSync(path.join(root,'Licenses',file),path.join(root,'Assets/Fonts',file));
@@ -58,7 +59,7 @@ button('siege','冬落围城 (F9)',360,89,440,69,'menu','攻城战 · 突破坚�
 button('heroChoice','FROST WARDEN [H]',360,7,440,69,'menu','Control / healing / click to change');
 art('Hero preview','Assets/Art/hero-portraits.png#hero-0',173,7,62,62);
 for(const suffix of [' label',' detail']){const r=E.find(e=>e.name==='heroChoice'+suffix).components.RectTransform;r.anchored_position[0]+=30;r.size_delta[0]-=70;}
-function frame(n,x,y,w,h){metal('HUD Frame '+n,x,y,w,h);panel('HUD Frame '+n+' inset',x,y,w-12,h-12,[.025,.022,.017,1]);for(const [dx,dy,bw,bh] of [[0,-h/2+3,w-4,2],[0,h/2-3,w-4,2],[-w/2+3,0,2,h-4],[w/2-3,0,2,h-4]])panel('HUD Frame '+n+' trim '+dx+' '+dy,x+dx,y+dy,bw,bh,[.42,.34,.19,1]);for(const dx of [-w/2+6,w/2-6])for(const dy of [-h/2+6,h/2-6])panel('HUD Frame '+n+' rivet '+dx+' '+dy,x+dx,y+dy,4,4,[.65,.53,.30,1]);}
+function frame(n,x,y,w,h){ui('HUD Frame '+n,x,y,w,h,{Image:{sprite:'Assets/Art/royal-stone-frame.png',image_type:'Sliced',border:[270,270,270,270],source_size:[1254,1254],pixels_per_unit_multiplier:10,color:[1,1,1,1],raycast_target:false}});}
 metal('Header',0,-340,1280,40);text('Brand','',-513,-338,200,24,15,C.gold);text('Resources','',210,-338,600,24,15,C.white);text('Clock','',0,-332,116,38,13,C.gold,'Center');
 for(const [id,label,x] of [['hudMenu','菜单 (F10)',-550],['hudQuest','任务 (F9)',-426],['hudHero','英雄 (Space)',-294]])button(id,label,x,-339,116,29,'toolbar');
 for(const [name,icon,x] of [['Gold','gold',237],['Lumber','wood',369],['Supply','tower',501]]){art('HUD '+name+' icon','Assets/Art/command-icons.png#'+icon,x,-339,23,23);text('HUD '+name+' value','',x+54,-339,80,26,16,C.gold,'Left');}
@@ -89,7 +90,7 @@ text('Rename title','编辑名称 / 任务公告',0,-143,800,38,26,C.gold);
 text('Rename hint','点击输入框，使用键盘或输入法编辑；点击保存应用到地图。',0,-96,800,32,17,C.muted);
 ui('Rename input',0,-28,800,64,{InputField:{text:'',font:'Assets/Fonts/NotoSansSC.ttf',font_size:22,character_limit:120,multiline:false,interactable:true,background_color:[.06,.1,.14,1],text_color:C.white}});
 button('renameClear','清空',-270,65,220,44,'rename');button('renameSave','保存',0,65,220,44,'rename');button('renameCancel','取消',270,65,220,44,'rename');
-panel('Pause shade',0,0,1280,720,[0,0,0,.58]);metal('Pause frame',0,-20,394,406);panel('Pause inset',0,-20,378,390,[.024,.034,.044,.98]);text('Pause title','游戏菜单',0,-172,330,42,28,C.gold,'Center');
+panel('Pause shade',0,0,1280,720,[0,0,0,.58]);ui('Pause frame',0,-20,394,406,{Image:{sprite:'Assets/Art/royal-stone-frame.png',image_type:'Sliced',border:[270,270,270,270],source_size:[1254,1254],pixels_per_unit_multiplier:8,color:[1,1,1,1],raycast_target:false}});panel('Pause inset',0,-20,326,338,[.024,.034,.044,.98]);text('Pause title','游戏菜单',0,-172,330,42,28,C.gold,'Center');
 for(const [id,label,y] of [['pauseResume','返回游戏 (Esc)',-102],['pauseSave','保存游戏',-37],['pauseLoad','载入游戏',28],['pauseExit','结束游戏 (X)',93]])button(id,label,0,y,298,48,'pause');text('Pause hint','单人游戏暂停 · 联机对局继续运行',0,157,340,24,12,C.muted,'Center');
 // Original deterministic score and layered effects, generated at PCM 22050 Hz.
 function audio(name,duration,sample,loop=false){const count=Math.floor(22050*duration),b=Buffer.alloc(44+count*2);b.write('RIFF');b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(22050,24);b.writeUInt32LE(44100,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(count*2,40);for(let i=0;i<count;i++)b.writeInt16LE(Math.round(Math.max(-1,Math.min(1,sample(i/22050,i)))*24000),44+i*2);fs.writeFileSync(path.join(root,'Assets/Audio',name+'.wav'),b);entity('Sound '+name,{AudioSource:{clip:'Assets/Audio/'+name+'.wav',volume:loop?.12:.25,looped:loop,play_on_awake:loop,playing:loop}});}
@@ -108,7 +109,11 @@ fs.writeFileSync(path.join(root,'Assets/Maps/highland-pass.json'),JSON.stringify
 fs.writeFileSync(path.join(root,'Assets/Maps/supply-road.json'),JSON.stringify(S.eventMap(),null,2)+'\n');
 for(let i=32;i<S.LIMIT;i++)entity('Objective '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['roof-point'].parts[0].mesh,material:catalog['roof-point'].material}});
 for(let i=0;i<S.LIMIT;i++)entity('Unit aura '+i,{Transform:T([0,-100,0]),ParticleEmitter3D:{playing:false,looping:true,rate_over_time:45,max_particles:24,lifetime_min:.12,lifetime_max:.3,speed_min:1,speed_max:3,size_start:.55,size_end:0,color_start:[.45,.65,1,1],color_end:[.2,.25,1,0],gravity:[0,0,0],shape:'sphere',shape_radius:1.15,direction:[0,1,0],spread_degrees:180,simulation_space:'local',texture:'Assets/Textures/spark_01.png',billboard:true,blend_mode:'additive',seed:i+1}});
+const portraitModel=entity('Portrait model',{Transform:T([1000,0,0],[1,1,1],[0,Math.sin(-Math.PI/16),0,Math.cos(-Math.PI/16)]),MeshRenderer:{mesh:portraitViews.RealFrostWarden.mesh,material:portraitViews.RealFrostWarden.material,cast_shadows:false,receive_shadows:false}});
+const portraitCamera=entity('Portrait camera',{Transform:T([1000,2,10]),Camera3D:{primary:false,projection:'orthographic',orthographic_size:1,near:.1,far:100,clear_flags:'solidcolor',background_color:[.025,.04,.055,1]}});
+ui('HUD Live portrait',-344,247,132,136,{RawImage:{render_camera:String(portraitCamera),render_root:String(portraitModel),color:[1,1,1,1],raycast_target:false}});
+E.at(-1).siblingIndex=E.find(e=>e.name==='Portrait').siblingIndex;
 fs.writeFileSync(path.join(root,'Assets/Scenes/Main.mscene'),JSON.stringify({version:1,name:'Frostbound Realms',world:{entities:E,frame:0,sim_frame:0,clear_color:[.08,.13,.18,1]}},null,2)+'\n');
 fs.writeFileSync(path.join(root,'project.json'),JSON.stringify({name:'Frostbound Realms',storageId:'frostbound-realms-2d128968-5677-47b3-8d38-a128a763e15a',version:1,language:'javascript',mainScene:'Assets/Scenes/Main.mscene',buildScenes:['Assets/Scenes/Main.mscene'],startupScript:'Assets/Scripts/Main.js',assetMode:'all'},null,2)+'\n');
-fs.writeFileSync(path.join(root,'Assets/Scripts/Main.js'),'// Generated by scripts/build-frostbound.mjs\nvar FrostArt='+JSON.stringify(catalog)+';\nvar FrostButtons='+JSON.stringify(buttons)+';\n'+['simulation','terrain','visuals','client'].map(n=>fs.readFileSync(path.join(root,'game/'+n+'.js'),'utf8')).join('\n'));
+fs.writeFileSync(path.join(root,'Assets/Scripts/Main.js'),'// Generated by scripts/build-frostbound.mjs\nvar FrostArt='+JSON.stringify(catalog)+';\nvar FrostPortraitViews='+JSON.stringify(portraitViews)+';\nvar FrostButtons='+JSON.stringify(buttons)+';\n'+['simulation','terrain','visuals','client'].map(n=>fs.readFileSync(path.join(root,'game/'+n+'.js'),'utf8')).join('\n'));
 console.log('Built Frostbound Realms:',E.length,'entities;',Object.keys(catalog).length,'model entries');

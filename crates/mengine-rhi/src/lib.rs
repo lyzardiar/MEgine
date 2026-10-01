@@ -16,7 +16,7 @@ pub use renderer::{
     ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting,
     MaterialBlendMode, MaterialFilter, MaterialPipelinePrewarmReport, MaterialPipelineStats,
     MaterialTextureStats, MaterialWrap, OffscreenRenderTarget, PointLightData, RenderFrame,
-    RenderMaterial, RenderObject, RenderTarget, Renderer, SpotLightData,
+    RenderMaterial, RenderObject, RenderTarget, Renderer, SceneTextureFrame, SpotLightData,
     SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic,
 };
 pub use shader_targets::{compile_shader_backends, ShaderBackendArtifact, ShaderCompilationReport};

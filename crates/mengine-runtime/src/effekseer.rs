@@ -947,6 +947,8 @@ mod tests {
             texture_failures: Vec::new(),
             font_failures: Vec::new(),
             has_authored_camera: true,
+            scene_views: Vec::new(),
+            view_resources: Vec::new(),
         }
     }
 

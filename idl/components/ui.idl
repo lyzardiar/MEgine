@@ -149,6 +149,10 @@ component RawImage {
   /// Unity Graphic.material replacement. Empty uses the built-in UI material.
   material:        string = ""
   texture:        string = "white"
+  /// Stable Camera2D/Camera3D entity id. Empty draws texture; nonempty renders a live mesh view.
+  render_camera:  string = ""
+  /// Stable entity id of the mesh subtree to render. Empty includes all active scene meshes.
+  render_root:    string = ""
   color:          float4 = [1, 1, 1, 1]
   uv_rect:        float4 = [0, 0, 1, 1]
   raycast_target: bool   = true

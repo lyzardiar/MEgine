@@ -545,6 +545,8 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       maskable: true,
       material: '',
       texture: 'white',
+      render_camera: '',
+      render_root: '',
       color: [1, 1, 1, 1],
       uv_rect: [0, 0, 1, 1],
       raycast_target: true,

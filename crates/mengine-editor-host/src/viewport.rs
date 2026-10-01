@@ -76,6 +76,7 @@ pub struct EditorViewportProfileCounts {
     pub msaa_samples: u32,
     pub entities: usize,
     pub render_objects: usize,
+    pub scene_views: usize,
     pub ui_primitives: usize,
     pub ui_batches: usize,
     pub ui_draw_calls: u32,
@@ -535,7 +536,7 @@ impl EditorViewportRenderer {
         log_texture_failures(frame.texture_failures.drain(..));
         finish_stage(&mut stages, "Diagnostics.texture_failures", stage_started);
         let stage_started = Instant::now();
-        for failure in self.meshes.sync(&mut self.renderer, &frame.objects) {
+        for failure in self.meshes.sync(&mut self.renderer, &frame.resource_objects()) {
             log::warn!(
                 "viewport mesh '{}' could not be loaded from {}: {}",
                 failure.key,
@@ -571,7 +572,7 @@ impl EditorViewportRenderer {
         let stage_started = Instant::now();
         log_texture_failures(
             self.textures
-                .sync_materials(&mut self.renderer, &frame.objects),
+                .sync_materials(&mut self.renderer, &frame.resource_objects()),
         );
         finish_stage(
             &mut stages,
@@ -671,7 +672,7 @@ fn build_viewport_profile(
         .filter_map(|resource| resource.gpu_bytes_estimate)
         .sum::<u64>();
     let viewport_pixels = u64::from(width) * u64::from(height);
-    let frame_object_bytes = size_of_val(frame.objects.as_slice()) as u64;
+    let frame_object_bytes = size_of_val(frame.objects.as_slice()) as u64 + frame.scene_views.iter().map(|view| size_of_val(view.objects.as_slice()) as u64).sum::<u64>();
     let frame_ui_primitive_bytes = size_of_val(frame.ui.primitives.as_slice()) as u64;
     let frame_ui_batch_bytes = size_of_val(frame.ui.batches.as_slice()) as u64;
     let frame_control_bytes = size_of_val(frame.controls.as_slice()) as u64;
@@ -739,6 +740,11 @@ fn build_viewport_profile(
             certainty: "estimate".into(),
             source: "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded".into(),
         },
+        EditorViewportMemoryCategory {
+            name: "GPU live scene views".into(), domain: "gpu".into(),
+            bytes: frame.scene_views.iter().map(|view| u64::from(view.size[0]) * u64::from(view.size[1])).sum::<u64>() * (12 + 4 * u64::from(renderer.sample_count()) + if renderer.sample_count() > 1 { 12 * u64::from(renderer.sample_count()) } else { 0 }),
+            certainty: "estimate".into(), source: "resolved RGBA8 and RGBA16F, depth/stencil and MSAA color attachments; excludes driver padding".into(),
+        },
     ];
     let total_ms = render_started.elapsed().as_secs_f64() * 1_000.0;
     let child_total = stages.iter().map(|stage| stage.duration_ms).sum::<f64>();
@@ -802,6 +808,7 @@ fn build_viewport_profile(
             msaa_samples: renderer.sample_count(),
             entities: world.iter_entities().count(),
             render_objects: frame.objects.len(),
+            scene_views: frame.scene_views.len(),
             ui_primitives: frame.ui.primitives.len(),
             ui_batches: frame.ui.batches.len(),
             ui_draw_calls: ui_stats.draw_calls,
@@ -836,6 +843,8 @@ fn collect_frame_resources(
     for batch in &frame.ui.batches {
         let texture_kind = if batch.key.texture.starts_with("mengine-font://") {
             "font-atlas"
+        } else if batch.key.texture.starts_with("$scene-view:") {
+            "scene-view"
         } else {
             "texture"
         };
@@ -844,7 +853,7 @@ fn collect_frame_resources(
             add("material", &batch.key.material, "UI batch");
         }
     }
-    for object in &frame.objects {
+    for object in frame.resource_objects().iter() {
         add("mesh", &object.mesh_key, "RenderObject");
         for texture in [
             &object.material.base_color_texture,
@@ -871,6 +880,10 @@ fn collect_frame_resources(
         .into_iter()
         .take(MAX_RESOURCES)
         .map(|((kind, asset), referenced_by)| {
+            if kind == "scene-view" {
+                let dimensions = frame.scene_views.iter().find(|view| view.key == asset).map(|view| view.size);
+                return EditorViewportResource { kind, asset, resolved_path: None, loaded: dimensions.is_some(), source_bytes: None, gpu_bytes_estimate: None, dimensions, referenced_by: referenced_by.into_iter().collect() };
+            }
             if kind == "font-atlas" {
                 return EditorViewportResource {
                     kind,
