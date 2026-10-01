@@ -3924,5 +3924,124 @@
     ],
     "factionBuilding": true,
     "realistic": true
+  },
+  "RealAcolyte": {
+    "material": "Assets/Materials/RealAcolyte.mmat",
+    "parts": [
+      {
+        "name": "RealAcolyte",
+        "mesh": "Assets/Models/RealAcolyte.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Sword_Attack",
+        "frames": 15
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.4410141403265462,
+      3.0,
+      1.068318016668868
+    ],
+    "realistic": true
+  },
+  "RealAcolyteMine": {
+    "material": "Assets/Materials/RealAcolyteMine.mmat",
+    "parts": [
+      {
+        "name": "RealAcolyteMine",
+        "mesh": "Assets/Models/RealAcolyteMine.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Mine",
+        "frames": 50
+      }
+    ],
+    "size": [
+      1.4410141403265462,
+      3.0,
+      0.544732275847266
+    ],
+    "realistic": true,
+    "workAnimation": "Mine"
+  },
+  "RealAcolyteBuild": {
+    "material": "Assets/Materials/RealAcolyteBuild.mmat",
+    "parts": [
+      {
+        "name": "RealAcolyteBuild",
+        "mesh": "Assets/Models/RealAcolyteBuild.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Build",
+        "frames": 50
+      }
+    ],
+    "size": [
+      1.4410141403265462,
+      3.0,
+      0.544732275847266
+    ],
+    "realistic": true,
+    "workAnimation": "Build"
+  },
+  "RealAcolyteWood": {
+    "material": "Assets/Materials/RealAcolyteWood.mmat",
+    "parts": [
+      {
+        "name": "RealAcolyteWood",
+        "mesh": "Assets/Models/RealAcolyteWood.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Wood",
+        "frames": 28
+      }
+    ],
+    "size": [
+      1.593016442719269,
+      3.0,
+      1.6157290188153273
+    ],
+    "realistic": true,
+    "workAnimation": "Wood"
   }
 }

@@ -30,7 +30,7 @@
       ]
     },
     {
-      "name": "Ghost_Skull",
+      "name": "Orc_Skull",
       "rect": [
         512,
         0,
@@ -43,7 +43,7 @@
       ]
     },
     {
-      "name": "Orc_Skull",
+      "name": "Ranger",
       "rect": [
         768,
         0,
@@ -56,7 +56,7 @@
       ]
     },
     {
-      "name": "Ranger",
+      "name": "RealAcolyte",
       "rect": [
         1024,
         0,

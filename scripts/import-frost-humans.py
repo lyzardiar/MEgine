@@ -126,6 +126,8 @@ def main():
                     # Original alpha masks player/object color; it is not cutout opacity.
                     tint=nodes.new('ShaderNodeMixRGB');tint.inputs[1].default_value=(*part['tint'],1);tint.inputs[2].default_value=(1,1,1,1);links.new(base.outputs['Alpha'],tint.inputs[0])
                     mult=nodes.new('ShaderNodeMixRGB');mult.blend_type='MULTIPLY';mult.inputs[0].default_value=1;links.new(color,mult.inputs[1]);links.new(tint.outputs[0],mult.inputs[2]);color=mult.outputs[0]
+                if part.get('colorFactor'):
+                    factor=nodes.new('ShaderNodeMixRGB');factor.blend_type='MULTIPLY';factor.inputs[0].default_value=1;factor.inputs[2].default_value=(*part['colorFactor'],1);links.new(color,factor.inputs[1]);color=factor.outputs[0]
                 links.new(color,shader.inputs['Base Color'])
                 if part.get('normal'):
                     normal=nodes.new('ShaderNodeNormalMap');normal.uv_map='SourceUV';links.new(texture(part['normal'],True).outputs['Color'],normal.inputs['Color']);links.new(normal.outputs['Normal'],shader.inputs['Normal'])

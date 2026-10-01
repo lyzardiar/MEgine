@@ -22,4 +22,4 @@ Validation passed:
 ![Three tiers, front and rear views](revenant-fortress-views.png)
 ![Tier 3 beside the stone Temple](revenant-fortress-tier3.png)
 
-These are original stone stronghold layouts adapted from licensed modules. They improve material detail and faction consistency; they do not reproduce the exact Warcraft Necropolis geometry or animation. Other Revenant buildings and its worker still need an art pass. Native Agent input does not prove physical mouse, audio-listening or cross-machine LAN acceptance.
+These are original stone stronghold layouts adapted from licensed modules. They improve material detail and faction consistency; they do not reproduce the exact Warcraft Necropolis geometry or animation. Other Revenant buildings still need an art pass; the worker uses the [robed Acolyte](acolyte.md). Native Agent input does not prove physical mouse, audio-listening or cross-machine LAN acceptance.

@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "99455e9daf714bde1523704731a93861b642e95c9d3cdcde260dd1f19cfea92f",
+  "sha256": "b2d30ce1428d1aad1c216c9dd74b0c687fc83dbeef5d91cb11dca1ef6d209b70",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -44,25 +44,6 @@
       }
     },
     {
-      "name": "Ghost_Skull",
-      "mesh": "Assets/Models/Ghost_Skull.glb#pose=2:4",
-      "material": "Assets/Materials/Ghost_Skull.mmat",
-      "bounds": {
-        "max": [
-          1.3299297094345093,
-          3.3744165897369385,
-          1.2495994567871094
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Ghost_Skull.glb#pose=2:4",
-        "min": [
-          -1.3696324825286865,
-          0.26673123240470886,
-          -0.8488377332687378
-        ],
-        "vertices": 2408
-      }
-    },
-    {
       "name": "Orc_Skull",
       "mesh": "Assets/Models/Orc_Skull.glb#pose=3:4",
       "material": "Assets/Materials/Orc_Skull.mmat",
@@ -98,6 +79,25 @@
           -0.8838688135147095
         ],
         "vertices": 4531
+      }
+    },
+    {
+      "name": "RealAcolyte",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=0:4",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          0.5284217596054077,
+          2.9594411849975586,
+          0.33128365874290466
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=0:4",
+        "min": [
+          -0.5858855247497559,
+          -0.004602516070008278,
+          -0.4553631544113159
+        ],
+        "vertices": 1302
       }
     },
     {

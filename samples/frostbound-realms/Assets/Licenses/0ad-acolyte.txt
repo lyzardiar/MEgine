@@ -1,0 +1,12 @@
+Revenant Acolyte artwork
+Source: Wildfire Games / 0 A.D., revision 61a3b9507d974084e6badb88a0826bd89a6d5b8b.
+https://github.com/0ad/0ad
+License: Creative Commons Attribution-ShareAlike 3.0 Unported.
+https://creativecommons.org/licenses/by-sa/3.0/
+Adaptations by MiYu: dark cloth material, hood and face combination, short blade,
+work-action assemblies, animation retargeting, PBR atlas and native portraits.
+These adaptations are distributed under CC-BY-SA-3.0.
+Derived files: Assets/Models/RealAcolyte*.glb, Assets/Textures/RealAcolyte*.png,
+Assets/Materials/RealAcolyte*.mmat and RealAcolyte in Assets/Art/unit-portraits.png.
+Sources and hashes: acolyte-sources.json; original sources: SourceAssets/0ad/.
+Rebuild: scripts/import-frost-humans.py --manifest acolyte-sources.json (Blender 4.5.9).

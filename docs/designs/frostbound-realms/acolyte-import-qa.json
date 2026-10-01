@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "models": [
+    {
+      "model": "RealAcolyte",
+      "triangles": 1127,
+      "bones": 102,
+      "nativeSamples": 80,
+      "minimumY": -0.13312745094299316,
+      "maximumY": 3.1884448528289795
+    },
+    {
+      "model": "RealAcolyteMine",
+      "triangles": 1079,
+      "bones": 102,
+      "nativeSamples": 50,
+      "minimumY": -0.048782747238874435,
+      "maximumY": 3.1968510150909424
+    },
+    {
+      "model": "RealAcolyteBuild",
+      "triangles": 1079,
+      "bones": 102,
+      "nativeSamples": 50,
+      "minimumY": -0.048782747238874435,
+      "maximumY": 3.1968510150909424
+    },
+    {
+      "model": "RealAcolyteWood",
+      "triangles": 1183,
+      "bones": 102,
+      "nativeSamples": 28,
+      "minimumY": -0.056561172008514404,
+      "maximumY": 3.0709567070007324
+    }
+  ]
+}

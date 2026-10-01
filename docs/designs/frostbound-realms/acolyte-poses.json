@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/acolyte-poses.png",
+  "sha256": "8c8a0fccb5a8f9f373de913d112880622810d7ed43b1819d0f365818c378b875",
+  "generator": "scripts/render-frost-unit-icons.mjs --acolyte-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "RealAcolyte Idle 0",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=0:0",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          0.5284664034843445,
+          2.9595587253570557,
+          0.33128365874290466
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=0:0",
+        "min": [
+          -0.5846531391143799,
+          -0.004602516070008278,
+          -0.4492811858654022
+        ],
+        "vertices": 1302
+      }
+    },
+    {
+      "name": "RealAcolyte Walk 0.25",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=1:5",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          0.588295578956604,
+          2.902444839477539,
+          0.8861456513404846
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=1:5",
+        "min": [
+          -0.6070926189422607,
+          -0.03535664081573486,
+          -0.8664484024047852
+        ],
+        "vertices": 1302
+      }
+    },
+    {
+      "name": "RealAcolyte Walk 0.75",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=1:15",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          0.6129204034805298,
+          2.902444839477539,
+          0.8868834376335144
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=1:15",
+        "min": [
+          -0.5904258489608765,
+          -0.03528343886137009,
+          -0.8660265207290649
+        ],
+        "vertices": 1302
+      }
+    },
+    {
+      "name": "RealAcolyte Sword_Attack 0.25",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=2:3",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          0.6757163405418396,
+          2.8271687030792236,
+          0.630305290222168
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=2:3",
+        "min": [
+          -0.5841658115386963,
+          -0.08901345729827881,
+          -0.9528214931488037
+        ],
+        "vertices": 1302
+      }
+    },
+    {
+      "name": "RealAcolyte Sword_Attack 0.7",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=2:10",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          0.7277729511260986,
+          2.4796488285064697,
+          1.4921618700027466
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=2:10",
+        "min": [
+          -0.6557374000549316,
+          -0.11521703004837036,
+          -0.5624772310256958
+        ],
+        "vertices": 1302
+      }
+    },
+    {
+      "name": "RealAcolyteMine Mine 0.5",
+      "mesh": "Assets/Models/RealAcolyteMine.glb#pose=0:25",
+      "material": "Assets/Materials/RealAcolyteMine.mmat",
+      "bounds": {
+        "max": [
+          0.540573239326477,
+          3.132061004638672,
+          0.800987184047699
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyteMine.glb#pose=0:25",
+        "min": [
+          -0.9080682396888733,
+          -0.027785228565335274,
+          -0.3211839199066162
+        ],
+        "vertices": 1227
+      }
+    },
+    {
+      "name": "RealAcolyteWood Wood 0.25",
+      "mesh": "Assets/Models/RealAcolyteWood.glb#pose=0:7",
+      "material": "Assets/Materials/RealAcolyteWood.mmat",
+      "bounds": {
+        "max": [
+          0.44449132680892944,
+          3.0709567070007324,
+          0.7415320873260498
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyteWood.glb#pose=0:7",
+        "min": [
+          -0.804908275604248,
+          -0.05655495449900627,
+          -1.2175543308258057
+        ],
+        "vertices": 1363
+      }
+    },
+    {
+      "name": "RealAcolyteWood Wood 0.7",
+      "mesh": "Assets/Models/RealAcolyteWood.glb#pose=0:19",
+      "material": "Assets/Materials/RealAcolyteWood.mmat",
+      "bounds": {
+        "max": [
+          0.5084393620491028,
+          2.8672919273376465,
+          1.5580848455429077
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyteWood.glb#pose=0:19",
+        "min": [
+          -0.6924063563346863,
+          -0.00902598723769188,
+          -0.4971340596675873
+        ],
+        "vertices": 1363
+      }
+    },
+    {
+      "name": "RealAcolyteBuild Build 0.5",
+      "mesh": "Assets/Models/RealAcolyteBuild.glb#pose=0:25",
+      "material": "Assets/Materials/RealAcolyteBuild.mmat",
+      "bounds": {
+        "max": [
+          0.540573239326477,
+          3.132061004638672,
+          0.800987184047699
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyteBuild.glb#pose=0:25",
+        "min": [
+          -0.9080682396888733,
+          -0.027785228565335274,
+          -0.3211839199066162
+        ],
+        "vertices": 1227
+      }
+    },
+    {
+      "name": "RealAcolyte Death 0.1",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=3:1",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          0.5200653672218323,
+          2.793073892593384,
+          0.7294185161590576
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=3:1",
+        "min": [
+          -0.595444917678833,
+          -0.014577445574104786,
+          -0.5390737056732178
+        ],
+        "vertices": 1302
+      }
+    },
+    {
+      "name": "RealAcolyte Death 0.5",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=3:7",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          2.3504481315612793,
+          1.220782995223999,
+          0.5749722719192505
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=3:7",
+        "min": [
+          -0.36168408393859863,
+          0.020381808280944824,
+          -1.5771366357803345
+        ],
+        "vertices": 1302
+      }
+    },
+    {
+      "name": "RealAcolyte Death 0.99",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=3:14",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "bounds": {
+        "max": [
+          2.648197650909424,
+          0.5307400226593018,
+          0.6307511329650879
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAcolyte.glb#pose=3:14",
+        "min": [
+          -0.5230580568313599,
+          -0.024881720542907715,
+          -1.691206693649292
+        ],
+        "vertices": 1302
+      }
+    }
+  ]
+}
