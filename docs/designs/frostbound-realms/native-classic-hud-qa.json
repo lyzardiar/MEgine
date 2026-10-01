@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "classicHud": {
+    "fourByThreeCommandCard": true,
+    "fixedCommonSlots": true,
+    "pauseMenuAndResume": true,
+    "pauseMenuSaveLoad": true,
+    "headPortrait": true,
+    "independentResources": true,
+    "heroShortcut": true,
+    "sixSlotUseDrop": true,
+    "minimapCamera": true,
+    "constructionSubmenu": true,
+    "gatherAndStop": true,
+    "twelveUnitPortraits": true,
+    "primaryPortraitAndControlGroup": true,
+    "saveRestore": true,
+    "editorControls": true,
+    "shaderRejections": 0
+  }
+}

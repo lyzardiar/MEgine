@@ -1,0 +1,295 @@
+{
+  "generator": "scripts/render-frost-head-portraits.mjs",
+  "method": "Native MEngine Release camera close-up of idle in-game meshes",
+  "sha256": "ca0b7d9c7b69f8a31059a5df5b11d6c37331b46f347951035017631c97d1082a",
+  "views": [
+    {
+      "key": "RealFrostWarden",
+      "mesh": "Assets/Models/RealFrostWarden.glb#pose=0:0",
+      "material": "Assets/Materials/RealFrostWarden.mmat",
+      "camera": {
+        "position": [
+          -0.07841816544532776,
+          2.82460410118103,
+          9.995980754494667
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.84926491856575
+    },
+    {
+      "key": "RealEmberSage",
+      "mesh": "Assets/Models/RealEmberSage.glb#pose=0:0",
+      "material": "Assets/Materials/RealEmberSage.mmat",
+      "camera": {
+        "position": [
+          -0.0850335955619812,
+          2.830219163894653,
+          9.996054872870445
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.8497400110960006
+    },
+    {
+      "key": "RealSylvanRanger",
+      "mesh": "Assets/Models/RealSylvanRanger.glb#pose=0:0",
+      "material": "Assets/Materials/RealSylvanRanger.mmat",
+      "camera": {
+        "position": [
+          -0.11450213193893433,
+          2.5399653097242116,
+          10.136142075061798
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.7114413086581044
+    },
+    {
+      "key": "RealDawnPaladin",
+      "mesh": "Assets/Models/RealDawnPaladin.glb#pose=0:0",
+      "material": "Assets/Materials/RealDawnPaladin.mmat",
+      "camera": {
+        "position": [
+          0.07224804162979126,
+          2.6332491493225096,
+          9.917163044214249
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.7379042828083038
+    },
+    {
+      "key": "RealFootman",
+      "mesh": "Assets/Models/RealFootman.glb#pose=0:0",
+      "material": "Assets/Materials/RealFootman.mmat",
+      "camera": {
+        "position": [
+          0.0270078182220459,
+          2.4692403519153596,
+          9.96338900923729
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.6919231176748871
+    },
+    {
+      "key": "RealWorker",
+      "mesh": "Assets/Models/RealWorker.glb#pose=0:0",
+      "material": "Assets/Materials/RealWorker.mmat",
+      "camera": {
+        "position": [
+          -0.061519503593444824,
+          2.485649128779769,
+          9.864082142710686
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.6966997465374879
+    },
+    {
+      "key": "RealArcher",
+      "mesh": "Assets/Models/RealArcher.glb#pose=0:0",
+      "material": "Assets/Materials/RealArcher.mmat",
+      "camera": {
+        "position": [
+          -0.11098995804786682,
+          2.4553663524240252,
+          10.131966710090637
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.6877475236984901
+    },
+    {
+      "key": "RealRifleman",
+      "mesh": "Assets/Models/RealRifleman.glb#pose=0:0",
+      "material": "Assets/Materials/RealRifleman.mmat",
+      "camera": {
+        "position": [
+          -0.05408015847206116,
+          2.381745502948761,
+          10.297192096710205
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.6616103691607713
+    },
+    {
+      "key": "RealOrc",
+      "mesh": "Assets/Models/RealOrc.glb#pose=0:0",
+      "material": "Assets/Materials/RealOrc.mmat",
+      "camera": {
+        "position": [
+          0.07014608383178711,
+          2.586427183151245,
+          10.524465680122375
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.736298565864563
+    },
+    {
+      "key": "RealAcolyte",
+      "mesh": "Assets/Models/RealAcolyte.glb#pose=0:0",
+      "material": "Assets/Materials/RealAcolyte.mmat",
+      "camera": {
+        "position": [
+          -0.0280933678150177,
+          2.485292926728725,
+          9.941001236438751
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.69657789173536
+    },
+    {
+      "key": "RealNecromancer",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=0:0",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "camera": {
+        "position": [
+          -0.08406201004981995,
+          2.771631878018379,
+          10.160344809293747
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.7800736009515822
+    },
+    {
+      "key": "RealShaman",
+      "mesh": "Assets/Models/RealShaman.glb#pose=0:0",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "camera": {
+        "position": [
+          -0.08759486675262451,
+          2.776931546926498,
+          10.108311608433723
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "size": 0.7924592236801982
+    }
+  ]
+}

@@ -71,15 +71,15 @@ fn native_skirmish_editor_and_rpg_modes() {
     for _ in 0..50 {snapshot=tick(snapshot,&mut input);}
     assert_eq!(telemetry(&snapshot)["kind"],"skirmish");assert!(telemetry(&snapshot)["frame"].as_u64().unwrap()>40);
     input.key("Escape".into(),true);snapshot=tick(snapshot,&mut input);input.key("Escape".into(),false);let paused=telemetry(&snapshot)["frame"].clone();for _ in 0..4 {snapshot=tick(snapshot,&mut input);}assert_eq!(telemetry(&snapshot)["frame"],paused);
-    input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);input.key("F4".into(),true);snapshot=tick(snapshot,&mut input);input.key("F4".into(),false);assert_eq!(telemetry(&snapshot)["mode"],"editor");
+    input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);input.key("KeyX".into(),true);snapshot=tick(snapshot,&mut input);input.key("KeyX".into(),false);input.key("F4".into(),true);snapshot=tick(snapshot,&mut input);input.key("F4".into(),false);assert_eq!(telemetry(&snapshot)["mode"],"editor");
     input.key("Digit2".into(),true);snapshot=tick(snapshot,&mut input);input.key("Digit2".into(),false);assert_eq!(telemetry(&snapshot)["brush"],1);
     input.key("F7".into(),true);snapshot=tick(snapshot,&mut input);input.key("F7".into(),false);assert_eq!(telemetry(&snapshot)["mode"],"playing");
-    input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);assert_eq!(telemetry(&snapshot)["mode"],"editor");
+    input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);assert_eq!(telemetry(&snapshot)["paused"],true);input.key("KeyX".into(),true);snapshot=tick(snapshot,&mut input);input.key("KeyX".into(),false);assert_eq!(telemetry(&snapshot)["mode"],"editor");
     input.key("KeyV".into(),true);snapshot=tick(snapshot,&mut input);input.key("KeyV".into(),false);assert_eq!(telemetry(&snapshot)["editorPage"],1);
     for _ in 0..3 { input.key("Tab".into(),true);snapshot=tick(snapshot,&mut input);input.key("Tab".into(),false); }
     assert_eq!(telemetry(&snapshot)["kind"],"rpg");assert_eq!(telemetry(&snapshot)["placedUnits"],5);
     input.key("F7".into(),true);snapshot=tick(snapshot,&mut input);input.key("F7".into(),false);assert_eq!(telemetry(&snapshot)["kind"],"rpg");
-    input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);
+    input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);input.key("KeyX".into(),true);snapshot=tick(snapshot,&mut input);input.key("KeyX".into(),false);
     input.key("F10".into(),true);snapshot=tick(snapshot,&mut input);input.key("F10".into(),false);
     input.key("F8".into(),true);snapshot=tick(snapshot,&mut input);input.key("F8".into(),false);assert_eq!(telemetry(&snapshot)["kind"],"rpg");assert_eq!(telemetry(&snapshot)["quest"]["stage"],0);
     runtime.stop();

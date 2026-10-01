@@ -3,6 +3,7 @@ fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
     let uv=input.uv0;let edge=min(min(uv.x,1.0-uv.x),min(uv.y,1.0-uv.y));
     let grain=fract(sin(dot(floor(uv*vec2<f32>(700.0,300.0)),vec2<f32>(12.9898,78.233)))*43758.5453);
     let bevel=1.0-smoothstep(0.002,0.015,edge);
-    let metal=mix(input.vertex_color.rgb*(0.78+grain*0.11+uv.y*0.08),vec3<f32>(0.30,0.24,0.12),bevel);
+    let stone=vec3<f32>(0.065,0.075,0.085)*(0.85+grain*0.32+uv.y*0.08);
+    let metal=mix(stone,vec3<f32>(0.24,0.20,0.13),bevel);
     return vec4<f32>(metal,input.vertex_color.a);
 }

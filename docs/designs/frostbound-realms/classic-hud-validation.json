@@ -1,0 +1,69 @@
+{
+  "scope": "Classic gameplay HUD layout and interactions; full Warcraft III fidelity remains unfinished",
+  "rulesAndTcp": {
+    "command": "node scripts/test-frostbound.mjs",
+    "exitCode": 0
+  },
+  "nativeHost": {
+    "command": "cargo test -p mengine-editor-host --test frost_sample",
+    "passed": 3,
+    "failed": 0
+  },
+  "nativeHud": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "classicHud": {
+      "fourByThreeCommandCard": true,
+      "fixedCommonSlots": true,
+      "pauseMenuAndResume": true,
+      "pauseMenuSaveLoad": true,
+      "headPortrait": true,
+      "independentResources": true,
+      "heroShortcut": true,
+      "sixSlotUseDrop": true,
+      "minimapCamera": true,
+      "constructionSubmenu": true,
+      "gatherAndStop": true,
+      "twelveUnitPortraits": true,
+      "primaryPortraitAndControlGroup": true,
+      "saveRestore": true,
+      "editorControls": true,
+      "shaderRejections": 0
+    }
+  },
+  "portraits": {
+    "count": 12,
+    "sha256": "ca0b7d9c7b69f8a31059a5df5b11d6c37331b46f347951035017631c97d1082a",
+    "generator": "scripts/render-frost-head-portraits.mjs",
+    "method": "Native MEngine Release camera close-up of idle in-game meshes"
+  },
+  "package": {
+    "contentHash": "195f1ee45f2d433b8d6d98cd75ae3622ac4f1438cd6d9c5d5c41b6a894a3b1eb",
+    "files": 677,
+    "startupSeconds": 30,
+    "responsive": true,
+    "loggedErrors": 0
+  },
+  "screenshots": {
+    "classic-hud-build.png": "b0611ae29605938985a17d7c0f94aa5b6080ddb75f88b8e133d211b3e26ec286",
+    "classic-hud-editor.png": "f9d397150b5682433bb5930c18fe28c6d0e8b0c0db5edcbbb8cd1115474711ed",
+    "classic-hud-group.png": "86a965fb07c9b819b063d988c2b4cc9dfd5e9d43d01714cf9f03fa5ed5547290",
+    "classic-hud-hero.png": "e224ce21a10ec3638bdc586fed5802ac8d968aef82bec23e4cdb3518fc202a95",
+    "classic-hud-items.png": "5ca5654c048ee379df16b68b2c52849dc5b6ce850ce5da21ec137f7a2b1f6f2b",
+    "classic-hud-pause.png": "2043114f65ca9addcfc1ba9a02d8f444f1404f5d29472bedb5cc5e5685531e89",
+    "classic-hud-restored.png": "1c9d1f2952031692e446b31a2070326b0d438a6e5b4496b032056bd8b90efbe9"
+  },
+  "remaining": [
+    "Race-specific sculpted frames",
+    "Animated portrait viewports",
+    "Original main-menu composition",
+    "Full localization",
+    "Alliance and chat panels",
+    "Save-file browsing"
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLan": false
+}

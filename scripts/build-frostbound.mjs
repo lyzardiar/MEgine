@@ -38,38 +38,48 @@ const C={ink:[.025,.04,.057,.96],panel:[.042,.064,.078,.97],gold:[.81,.65,.36,1]
 const ui=(n,x,y,w,h,c)=>entity(n,{RectTransform:{anchor_min:[.5,.5],anchor_max:[.5,.5],pivot:[.5,.5],anchored_position:[x,y],size_delta:[w,h]},...c},canvas);
 const panel=(n,x,y,w,h,c=C.panel)=>ui(n,x,y,w,h,{Image:{color:c,raycast_target:false}});
 const art=(n,sprite,x,y,w,h)=>ui(n,x,y,w,h,{Image:{sprite,color:[1,1,1,1],raycast_target:false}});
-const metal=(n,x,y,w,h)=>ui(n,x,y,w,h,{Image:{material:'Assets/Materials/Panel.mmat',color:[.045,.075,.1,1],raycast_target:false}});
+const metal=(n,x,y,w,h)=>ui(n,x,y,w,h,{Image:{material:'Assets/Materials/Panel.mmat',color:[.20,.17,.11,1],raycast_target:false}});
 const text=(n,value,x,y,w,h,size=18,color=C.white,alignment='Left')=>ui(n,x,y,w,h,{Text:{text:value,font:'Assets/Fonts/NotoSansSC.ttf',font_size:size,color,alignment,vertical_align:'Middle',horizontal_overflow:'Overflow',vertical_overflow:'Overflow',raycast_target:false}});
 const buttons=[];
 function button(id,label,x,y,w,h,group='menu',detail=''){panel(id+' border',x,y,w+2,h+2,[.3,.24,.13,1]);metal(id+' box',x,y,w,h);text(id+' label',label,x,y-(detail?10:0),w-30,h,detail?21:16,C.white);if(detail)text(id+' detail',detail,x,y+19,w-30,24,12,C.muted);buttons.push({id,x,y,w,h,group});}
 art('Menu painting','Assets/Art/winterfall-menu.png',0,0,1280,720);panel('Menu shade',-330,0,620,720,[.008,.019,.032,.32]);panel('Menu line',-570,-275,4,27,C.gold);
-text('Menu eyebrow','THE NORTHERN CHRONICLES',-324,-276,440,30,14,C.gold);
+text('Menu eyebrow','冰封王座 · 北境战役',-324,-276,440,30,18,C.gold);
 text('Menu title','FROSTBOUND\nREALMS',-320,-175,460,150,57);
 E.at(-1).components.Text.font='Assets/Fonts/Cinzel.ttf';E.at(-1).components.Text.font_size=51;E.at(-1).components.Text.color=[.86,.78,.56,1];
-text('Menu subtitle','Raise a kingdom. Command the storm.',-320,-73,460,30,16,C.muted);
-button('solo','I    SKIRMISH',-324,9,452,69,'menu','Harvest, build and lead your army against the AI');
-button('moba','II   ANCIENTS OF THE VALE',-324,91,452,69,'menu','Three lanes, heroes, items and rival strongholds');
-button('td','III  SERPENTINE WATCH',-324,173,452,69,'menu','Tower defense / twelve escalating waves');
-button('editor','WORLD EDITOR',-440,245,220,43);button('network','MULTIPLAYER',-207,245,220,43);
-button('faction','FACTION',-440,298,220,37);button('continue','LOAD GAME',-207,298,220,37);
-text('Menu vista','WINTERFALL BASIN',360,248,440,45,30,C.white,'Right');text('Menu credit','FREE CC0 ART / QUATERNIUS + KENNEY',360,289,440,26,12,C.gold,'Right');
-button('rpg','THE SHATTERED COVENANT [F8]',360,171,440,69,'menu','RPG / quests, relics and the frost sovereign');
-button('siege','SIEGE OF WINTERFALL [F9]',360,89,440,69,'menu','Lead siege engines against the fortified pass');
+text('Menu subtitle','建立王国，统领你的军队。',-320,-73,460,30,16,C.muted);
+button('solo','单人游戏',-324,9,452,69,'menu','遭遇战 · 采集资源、建造基地、指挥军队');
+button('moba','远古遗迹',-324,91,452,69,'menu','三路战场 · 英雄、装备与对立要塞');
+button('td','自定义游戏',-324,173,452,69,'menu','蜿蜒守望 · 十二波塔防挑战');
+button('editor','地图编辑器',-440,245,220,43);button('network','局域网',-207,245,220,43);
+button('faction','种族',-440,298,220,37);button('continue','载入游戏',-207,298,220,37);
+text('Menu vista','冬落盆地',360,248,440,45,30,C.white,'Right');text('Menu credit','FROSTBOUND REALMS',360,289,440,26,12,C.gold,'Right');
+button('rpg','破碎盟约 (F8)',360,171,440,69,'menu','战役 · 任务、遗物与寒霜领主');
+button('siege','冬落围城 (F9)',360,89,440,69,'menu','攻城战 · 突破坚固的山口');
 button('heroChoice','FROST WARDEN [H]',360,7,440,69,'menu','Control / healing / click to change');
 art('Hero preview','Assets/Art/hero-portraits.png#hero-0',173,7,62,62);
 for(const suffix of [' label',' detail']){const r=E.find(e=>e.name==='heroChoice'+suffix).components.RectTransform;r.anchored_position[0]+=30;r.size_delta[0]-=70;}
-metal('Header',0,-333,1250,43);text('Brand','FROSTBOUND',-513,-334,200,30,19,C.gold);text('Resources','',30,-334,650,30,17,C.white);text('Clock','',509,-334,210,34,13,C.cyan,'Right');
-metal('Bottom',0,266,1250,179);panel('Bottom rule',0,177,1250,2,C.gold);
-panel('Minimap',-514,265,174,156,[.04,.11,.12,1]);
-for(let i=0;i<256;i++)panel('Mini tile '+i,-590+(i%16)*10,195+Math.floor(i/16)*9,10,9,[.15,.25,.22,1]);
+function frame(n,x,y,w,h){metal('HUD Frame '+n,x,y,w,h);panel('HUD Frame '+n+' inset',x,y,w-12,h-12,[.025,.022,.017,1]);for(const [dx,dy,bw,bh] of [[0,-h/2+3,w-4,2],[0,h/2-3,w-4,2],[-w/2+3,0,2,h-4],[w/2-3,0,2,h-4]])panel('HUD Frame '+n+' trim '+dx+' '+dy,x+dx,y+dy,bw,bh,[.42,.34,.19,1]);for(const dx of [-w/2+6,w/2-6])for(const dy of [-h/2+6,h/2-6])panel('HUD Frame '+n+' rivet '+dx+' '+dy,x+dx,y+dy,4,4,[.65,.53,.30,1]);}
+metal('Header',0,-340,1280,40);text('Brand','',-513,-338,200,24,15,C.gold);text('Resources','',210,-338,600,24,15,C.white);text('Clock','',0,-332,116,38,13,C.gold,'Center');
+for(const [id,label,x] of [['hudMenu','菜单 (F10)',-550],['hudQuest','任务 (F9)',-426],['hudHero','英雄 (Space)',-294]])button(id,label,x,-339,116,29,'toolbar');
+for(const [name,icon,x] of [['Gold','gold',237],['Lumber','wood',369],['Supply','tower',501]]){art('HUD '+name+' icon','Assets/Art/command-icons.png#'+icon,x,-339,23,23);text('HUD '+name+' value','',x+54,-339,80,26,16,C.gold,'Left');}
+metal('Bottom',0,261,1280,198);panel('Bottom rule',0,162,1280,5,[.33,.27,.15,1]);
+frame('Minimap',-531,263,206,194);frame('Portrait',-344,263,158,194);frame('Info',-26,263,466,194);frame('Inventory',291,263,158,194);frame('Commands',493,263,234,194);
+panel('Minimap',-531,263,180,174,[.025,.06,.04,1]);
+for(let i=0;i<256;i++)panel('Mini tile '+i,-615+(i%16)*11.2,181+Math.floor(i/16)*10.7,11.3,10.8,[.15,.25,.22,1]);
 for(let i=0;i<S.LIMIT;i++)panel('Mini unit '+i,5000,5000,4,4,C.cyan);
 for(let i=0;i<S.LIMIT;i++)text('Sleep '+i,'Zzz',5000,5000,40,22,14,C.cyan);
-art('Portrait','Assets/Art/command-icons.png#hero',-355,257,98,102);text('Selection title','',-238,199,330,25,19,C.gold);text('Selection stats','',-203,252,185,66,14,C.white);text('Selection queue','',-245,327,316,25,11,C.muted);
-panel('Health back',-203,291,182,8,[.025,.04,.06,1]);panel('Health fill',-203,291,182,8,[.14,.63,.4,1]);panel('Mana back',-203,305,182,5,[.025,.04,.06,1]);panel('Mana fill',-203,305,182,5,[.13,.48,.87,1]);
-for(let i=0;i<12;i++){const x=5+(i%4)*147,y=214+Math.floor(i/4)*50;button('action'+i,'',x,y,137,42,'hud');art('action'+i+' icon','Assets/Art/command-icons.png#attack',x-48,y,36,36);const label=E.find(e=>e.name==='action'+i+' label');label.components.RectTransform.anchored_position=[x+21,y];label.components.RectTransform.size_delta=[85,40];label.components.Text.font_size=12;}
+art('Portrait','Assets/Art/command-icons.png#hero',-344,247,132,136);text('Selection title','',-32,190,420,27,19,C.gold,'Center');text('Selection stats','',-53,252,322,72,14,C.white);text('Selection queue','',-32,333,420,32,12,C.muted,'Center');
+for(const [name,icon,x] of [['Attack','attack',-214],['Armor','shield',-8]]){art('HUD Stat '+name+' icon','Assets/Art/command-icons.png#'+icon,x,245,38,38);text('HUD Stat '+name+' value','',x+102,245,155,60,14,C.white);}
+text('HUD Stat rank','',-32,212,400,22,14,C.white,'Center');text('HUD Stat movement','',-32,293,400,22,13,C.white,'Center');panel('HUD Stat experience back',-32,311,390,5,[.02,.01,.04,1]);panel('HUD Stat experience fill',-32,311,390,5,[.55,.22,.72,1]);
+panel('Health back',-344,325,132,10,[.01,.025,.01,1]);panel('Health fill',-344,325,132,10,[.08,.72,.18,1]);panel('Mana back',-344,341,132,8,[.01,.015,.04,1]);panel('Mana fill',-344,341,132,8,[.10,.29,.90,1]);text('HUD Health value','',-344,325,130,12,10,C.white,'Center');text('HUD Mana value','',-344,341,130,12,10,C.white,'Center');
+text('HUD Inventory title','物品栏',291,187,140,22,14,C.gold,'Center');
+for(let i=0;i<6;i++){const x=265+(i%2)*53,y=222+Math.floor(i/2)*51;button('item'+i,'',x,y,42,42,'inventory');art('item'+i+' icon','Assets/Art/command-icons.png#shield',x,y,38,38);text('item'+i+' key',String(i+1),x+14,y+14,12,14,11,C.gold,'Right');}
+for(let i=0;i<12;i++){const x=411+(i%4)*54,y=205+Math.floor(i/4)*59;button('action'+i,'',x,y,46,46,'hud');art('action'+i+' icon','Assets/Art/command-icons.png#attack',x,y,42,42);text('action'+i+' key','',x+15,y+15,14,16,12,C.gold,'Right');const b=buttons.at(-1);b.editor={x:5+(i%4)*147,y:214+Math.floor(i/4)*50,w:137,h:42};const label=E.find(e=>e.name==='action'+i+' label');label.components.Text.font_size=12;}
+for(let i=0;i<12;i++){const x=-218+(i%6)*74,y=237+Math.floor(i/6)*57;art('HUD Selected '+i,'Assets/Art/unit-portraits.png#RealFootman',x,y,43,43);panel('HUD Selected '+i+' health',x,y+24,43,3,[.1,.8,.2,1]);}
+art('HUD Hero portrait','Assets/Art/hero-portraits.png#hero-0',-605,-253,48,48);panel('HUD Hero health',-605,-224,48,4,[.1,.8,.2,1]);panel('HUD Hero mana',-605,-216,48,3,[.1,.3,.9,1]);text('HUD Hero level','',-584,-234,18,18,12,C.gold,'Center');
 for(let i=0;i<12;i++)text('Damage '+i,'',5000,5000,90,28,20,C.gold,'Center');
-metal('Tooltip panel',306,127,590,67);text('Tooltip text','',306,127,558,58,14,C.white);
-text('Status','',0,151,1180,32,15,C.gold,'Center');text('Controls','',60,340,1020,20,12,C.muted,'Right');
+metal('Tooltip panel',386,103,444,100);text('Tooltip text','',386,103,416,86,13,C.white);E.at(-1).components.Text.horizontal_overflow='Wrap';
+text('Status','',0,135,1150,25,14,C.gold,'Center');text('Controls','',60,350,400,16,10,C.muted,'Right');
 text('Objective text','',0,-280,1100,38,18,C.gold,'Center');
 panel('Modal shade',0,0,760,430,C.ink);panel('Modal rule',0,-213,760,2,C.gold);text('Modal title','',0,-164,690,48,34,C.gold);text('Modal text','',0,-13,690,230,19,C.white);button('modalPrimary','',-174,156,320,44,'modal');button('modalBack','BACK',174,156,320,44,'modal');
 panel('Drag box',5000,5000,1,1,[.1,.7,.5,.16]);
@@ -79,6 +89,8 @@ text('Rename title','编辑名称 / 任务公告',0,-143,800,38,26,C.gold);
 text('Rename hint','点击输入框，使用键盘或输入法编辑；点击保存应用到地图。',0,-96,800,32,17,C.muted);
 ui('Rename input',0,-28,800,64,{InputField:{text:'',font:'Assets/Fonts/NotoSansSC.ttf',font_size:22,character_limit:120,multiline:false,interactable:true,background_color:[.06,.1,.14,1],text_color:C.white}});
 button('renameClear','清空',-270,65,220,44,'rename');button('renameSave','保存',0,65,220,44,'rename');button('renameCancel','取消',270,65,220,44,'rename');
+panel('Pause shade',0,0,1280,720,[0,0,0,.58]);metal('Pause frame',0,-20,394,406);panel('Pause inset',0,-20,378,390,[.024,.034,.044,.98]);text('Pause title','游戏菜单',0,-172,330,42,28,C.gold,'Center');
+for(const [id,label,y] of [['pauseResume','返回游戏 (Esc)',-102],['pauseSave','保存游戏',-37],['pauseLoad','载入游戏',28],['pauseExit','结束游戏 (X)',93]])button(id,label,0,y,298,48,'pause');text('Pause hint','单人游戏暂停 · 联机对局继续运行',0,157,340,24,12,C.muted,'Center');
 // Original deterministic score and layered effects, generated at PCM 22050 Hz.
 function audio(name,duration,sample,loop=false){const count=Math.floor(22050*duration),b=Buffer.alloc(44+count*2);b.write('RIFF');b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(22050,24);b.writeUInt32LE(44100,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(count*2,40);for(let i=0;i<count;i++)b.writeInt16LE(Math.round(Math.max(-1,Math.min(1,sample(i/22050,i)))*24000),44+i*2);fs.writeFileSync(path.join(root,'Assets/Audio',name+'.wav'),b);entity('Sound '+name,{AudioSource:{clip:'Assets/Audio/'+name+'.wav',volume:loop?.12:.25,looped:loop,play_on_awake:loop,playing:loop}});}
 const sine=(hz,t)=>Math.sin(hz*t*Math.PI*2),midi=n=>440*2**((n-69)/12);let noiseSeed=71823;const noise=()=>{noiseSeed=(Math.imul(noiseSeed,1664525)+1013904223)>>>0;return noiseSeed/2147483648-1;};

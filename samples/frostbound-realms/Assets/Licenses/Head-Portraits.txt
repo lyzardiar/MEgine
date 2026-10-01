@@ -1,0 +1,23 @@
+Native character close-up atlas: Assets/Art/head-portraits.png
+Adaptation license: Creative Commons Attribution-ShareAlike 4.0 International
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Original character bodies, faces, garments and animation sources: Wildfire Games,
+0 A.D., CC-BY-SA-3.0. https://www.wildfiregames.com/
+https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+See 0ad-humans.txt, 0ad-mages.txt, 0ad-ranger.txt, 0ad-paladins.txt,
+0ad-acolyte.txt and rifleman.txt for each adaptation and original notices.
+
+Orc face/body by Guillaume "GuieA_7" Englert, CC-BY-SA-4.0.
+https://opengameart.org/content/orc-3d
+See GuieA7-Orc.txt and Orc-Shaman.txt for the adapted meshes and source records.
+Necromancer skull by Gord Goodwin, CC0-1.0.
+https://opengameart.org/content/skeleton-with-rig
+See Anatomical-Necromancer.txt for the combined character adaptation.
+
+Modifications by MiYu: isolated native idle-pose renders, camera close-ups,
+directional lighting and a twelve-slice portrait atlas. The source models retain
+their own licenses. This combined atlas is distributed under CC-BY-SA-4.0.
+Generator: scripts/render-frost-head-portraits.mjs
+View settings and output hash: head-portraits.json
+No Blizzard artwork or Free3D download is included in this atlas.
