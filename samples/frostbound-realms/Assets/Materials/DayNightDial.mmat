@@ -1,0 +1,1 @@
+{"version":10,"name":"Day and night clock dial","shader":"custom","custom_shader":"Assets/Shaders/DayNightDial.mshader","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,1]}

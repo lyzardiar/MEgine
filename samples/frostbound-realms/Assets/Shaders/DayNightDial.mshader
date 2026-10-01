@@ -1,0 +1,14 @@
+// MiYu: native clock dial. Vertex red carries the day fraction, green carries daylight.
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let p=(input.uv0-vec2<f32>(0.5))*2.0;let r=length(p);let angle=atan2(p.y,p.x);
+    let daylight=input.vertex_color.g;let hour=input.vertex_color.r*6.2831853;
+    let disk=mix(vec3<f32>(0.018,0.025,0.080),vec3<f32>(0.12,0.24,0.38),daylight)*(1.0-r*0.35);
+    let rim=mix(vec3<f32>(0.12,0.09,0.045),vec3<f32>(0.76,0.62,0.32),clamp(0.55-p.y*0.45,0.0,1.0));
+    let ticks=select(0.0,1.0,cos(angle*24.0)>0.90&&r>0.78&&r<0.9);
+    var color=mix(disk,rim,smoothstep(0.75,0.80,r));color=mix(color,vec3<f32>(0.96,0.86,0.58),ticks);
+    let sun=1.0-smoothstep(0.23,0.26,r);let rays=(1.0-smoothstep(0.34,0.43,r))*smoothstep(0.20,0.27,r)*pow(max(0.0,cos(angle*10.0)),6.0);
+    let moon=(1.0-smoothstep(0.32,0.34,length(p+vec2<f32>(0.06,0.0))))*smoothstep(0.28,0.30,length(p-vec2<f32>(0.10,-0.09)));
+    color=mix(color,vec3<f32>(0.95,0.72,0.20),max(sun,rays)*daylight);color=mix(color,vec3<f32>(0.75,0.85,1.0),moon*(1.0-daylight));
+    let marker=vec2<f32>(sin(hour),-cos(hour))*0.67;let dot=1.0-smoothstep(0.045,0.07,length(p-marker));color=mix(color,vec3<f32>(1.0,0.94,0.72),dot);
+    return vec4<f32>(color,1.0-smoothstep(0.96,1.0,r));
+}

@@ -1,0 +1,1 @@
+{"version":10,"name":"Race command panel","shader":"custom","custom_shader":"Assets/Shaders/RacePanel.mshader","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,1]}

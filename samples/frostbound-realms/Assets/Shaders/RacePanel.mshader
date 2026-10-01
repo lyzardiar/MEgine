@@ -1,0 +1,7 @@
+// MiYu: dark race-tinted backing keeps command cards and gold text readable.
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let uv=input.uv0;let edge=min(min(uv.x,1.0-uv.x),min(uv.y,1.0-uv.y));
+    let grain=fract(sin(dot(floor(uv*vec2<f32>(700.0,300.0)),vec2<f32>(12.9898,78.233)))*43758.5453);
+    let stone=input.vertex_color.rgb*(0.78+grain*0.25+uv.y*0.08);
+    return vec4<f32>(mix(stone,input.vertex_color.rgb*2.3,1.0-smoothstep(0.002,0.012,edge)),input.vertex_color.a);
+}

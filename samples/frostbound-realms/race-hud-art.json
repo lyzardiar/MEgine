@@ -1,0 +1,66 @@
+[
+  {
+    "race": "human",
+    "asset": "Assets/Art/hud-human-frame.png",
+    "tool": "built-in image_gen",
+    "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\exec-76a55e93-6aed-4631-9301-83cd61d13d43.png",
+    "prompt": "Production square 2D game UI frame sprite, genuinely TRANSPARENT alpha background. A single medieval HUMAN FACTION ornamental picture frame for a classic Warcraft III RTS battle HUD. Front orthographic flat view, square outer outline and square empty FULLY TRANSPARENT inner opening, centered almost filling canvas. Uniform straight rails about 8 percent of canvas width, corners about 19 percent; wide straight middle spans designed for nine-slice stretching to rectangular panels. Detailed pale weathered limestone blocks with inset dark bronze strips, warm gold bevels, small blue royal enamel rivets, carved lion/gryphon motifs ONLY restrained in the four compact corners. Light neutral stone and rich antique gold should be clearly visible at small UI sizes. The frame should be heavy ancient craftsmanship, not a thin modern outline. Realistic carved stone and cast metal texture, Warcraft III classic human HUD aesthetic, no cartoon, no perspective, no writing, no letters, no center fill, no background, no glow, no shadow extending outside. Keep a tiny transparent outer margin, clean straight inner edges; exactly one reusable square frame.",
+    "sha256": "4bf427bcf92b53855e5e7e28ba8b5f5ddec7890fe9deef8fdd0c59975d215787",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaExtrema": [
+      0,
+      255
+    ]
+  },
+  {
+    "race": "orc",
+    "asset": "Assets/Art/hud-orc-frame.png",
+    "tool": "built-in image_gen",
+    "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\exec-b55c7e56-36f1-4853-9528-4b49faff451e.png",
+    "prompt": "Production square 2D game UI frame sprite, genuinely TRANSPARENT alpha background. A single ORC FACTION ornamental picture frame for a classic Warcraft III RTS battle HUD. Front orthographic flat view, square outer outline and square empty FULLY TRANSPARENT inner opening, centered almost filling canvas. Uniform straight rails about 8 percent of canvas width, corners about 19 percent; wide straight middle spans designed for nine-slice stretching to rectangular panels. Heavy reddish-brown rough hewn oak beams wrapped in worn dark leather and thick forged black iron bands, sturdy rivets, short ivory horn/tusk tips in compact corner brackets, red cloth bindings and crude angular tribal carved runes without readable text. Classic Warcraft III orc interface feeling, tough earthy wood and warm red-brown palette, bronze wear highlights. Realistic wood grain, cracked leather and blacksmith craftsmanship, not cartoon. Avoid bright yellow stone, no skull faces, no perspective, no center fill, no writing or letters, no background, no glow or external shadow. Keep a tiny transparent outer margin, clean straight inner edges; exactly one reusable square frame.",
+    "sha256": "057f65636a702f35965c532bdd357815d3c236ff60e976bc1a65f1927052116b",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaExtrema": [
+      0,
+      255
+    ]
+  },
+  {
+    "race": "night-elf",
+    "asset": "Assets/Art/hud-night-elf-frame.png",
+    "tool": "built-in image_gen",
+    "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\exec-824692e4-baae-4fea-8b93-d2807a270fe5.png",
+    "prompt": "Production square 2D game UI frame sprite, genuinely TRANSPARENT alpha background. A single NIGHT ELF FACTION ornamental picture frame for a classic Warcraft III RTS battle HUD. Front orthographic flat view, square outer outline and square empty FULLY TRANSPARENT inner opening, centered almost filling canvas. Uniform straight rails about 8 percent of canvas width, corners about 19 percent; wide straight middle spans designed for nine-slice stretching to rectangular panels. Dense ancient purple-gray living wood carved into elegant curving rails with silver-blue moon filigree, green vines and moss threading along the border, muted violet gemstone accents and curved leaf brackets in compact corners. Subtle crescent moon motifs in the corners, NO moon protruding into empty center. Classic Warcraft III night elf interface feeling, forest purple / moon silver / deep leaf green, mature realistic organic material. Not cartoon, no neon glow, no perspective, no center fill, no writing or letters, no background, no extended shadow. Keep a tiny transparent outer margin, clean straight inner edges; exactly one reusable square frame.",
+    "sha256": "6bbb943006daa4fef0ad8ac665cfebf786b41d9fb7af295a3627ef48fb91925a",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaExtrema": [
+      0,
+      255
+    ]
+  },
+  {
+    "race": "undead",
+    "asset": "Assets/Art/hud-undead-frame.png",
+    "tool": "built-in image_gen",
+    "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\exec-59bef671-2087-4a68-b411-da412404ad91.png",
+    "prompt": "Production square 2D game UI frame sprite, genuinely TRANSPARENT alpha background. A single UNDEAD FACTION ornamental picture frame for a classic Warcraft III RTS battle HUD. Front orthographic flat view, square outer outline and square empty FULLY TRANSPARENT inner opening, centered almost filling canvas. Uniform straight rails about 8 percent of canvas width, corners about 19 percent; wide straight middle spans designed for nine-slice stretching to rectangular panels. A dark weathered crypt stone and oxidized black iron structure lined with pale old ivory bone ribs, compact little skull-shaped corner sockets and small sickly green gem inserts, moss-green patina in crevices. Angular gothic bone architecture, classical Warcraft III undead interface aesthetic, charcoal / desaturated bone / restrained poison-green palette. Realistic texture and craftsmanship, not cartoon; readable in a small game UI, no neon or green fog, no perspective, no center fill, no writing or letters, no background, no external shadow. Keep a tiny transparent outer margin, clean straight inner edges; exactly one reusable square frame.",
+    "sha256": "727f85520be1b62834b8eab70ee61b788336933baead67dd48ed98b0e489d18e",
+    "size": [
+      1254,
+      1254
+    ],
+    "alphaExtrema": [
+      0,
+      255
+    ]
+  }
+]

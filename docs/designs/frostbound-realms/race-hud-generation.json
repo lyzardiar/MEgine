@@ -1,0 +1,11 @@
+{
+  "identical": true,
+  "before": {
+    "Assets/Scenes/Main.mscene": "8cb285298a72726f9aba1b2cd2dc35b5624201e758f98746ddca74a1283eeb2a",
+    "Assets/Scripts/Main.js": "e00f7b9709fc39130dc881f551a7ee648cc82e2201c0eda3b64b282dcd868545"
+  },
+  "after": {
+    "Assets/Scenes/Main.mscene": "8cb285298a72726f9aba1b2cd2dc35b5624201e758f98746ddca74a1283eeb2a",
+    "Assets/Scripts/Main.js": "e00f7b9709fc39130dc881f551a7ee648cc82e2201c0eda3b64b282dcd868545"
+  }
+}

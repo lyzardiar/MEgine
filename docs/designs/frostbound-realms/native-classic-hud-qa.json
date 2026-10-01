@@ -3,6 +3,36 @@
   "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
   "physicalInput": false,
   "audioListening": false,
+  "raceHud": [
+    {
+      "race": "human",
+      "localPlayerSkin": true,
+      "enemySelectionRetainsSkin": false,
+      "dialAndHover": true,
+      "pauseSaveLoad": true
+    },
+    {
+      "race": "orc",
+      "localPlayerSkin": true,
+      "enemySelectionRetainsSkin": true,
+      "dialAndHover": true,
+      "pauseSaveLoad": true
+    },
+    {
+      "race": "night-elf",
+      "localPlayerSkin": true,
+      "enemySelectionRetainsSkin": true,
+      "dialAndHover": true,
+      "pauseSaveLoad": true
+    },
+    {
+      "race": "undead",
+      "localPlayerSkin": true,
+      "enemySelectionRetainsSkin": true,
+      "dialAndHover": true,
+      "pauseSaveLoad": true
+    }
+  ],
   "classicHud": {
     "fourByThreeCommandCard": true,
     "fixedCommonSlots": true,
