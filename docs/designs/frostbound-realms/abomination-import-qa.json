@@ -1,0 +1,1121 @@
+{
+  "passed": true,
+  "sourceFiles": 2,
+  "generatedFiles": 6,
+  "triangles": 6370,
+  "bones": 34,
+  "nativePoseSamples": 76,
+  "movingWeightedBones": {
+    "Idle": [
+      "Bone.001",
+      "Bone.003",
+      "arm.L",
+      "arm.R"
+    ],
+    "Walk": [
+      "Bone.001",
+      "arm.L",
+      "arm.R",
+      "foot.L",
+      "foot.R",
+      "shin.L",
+      "shin.R",
+      "thigh.L",
+      "thigh.R"
+    ],
+    "Attack": [
+      "Bone.001",
+      "Bone.002",
+      "arm.L",
+      "arm.R",
+      "forearm.R"
+    ],
+    "Death": [
+      "Bone.001",
+      "arm.L",
+      "arm.R"
+    ]
+  },
+  "textures": {
+    "base_color_texture": {
+      "size": [
+        3072,
+        2048
+      ],
+      "sha256": "f9f4c4cdbe8205f518eb058df4972ecc924b4091208cd502b49e61858f887639"
+    },
+    "normal_texture": {
+      "size": [
+        3072,
+        2048
+      ],
+      "sha256": "caf10c16e4a5b6fcde708eda81b83b2458d6159f0c93df9eb1c56cf93ac3fe64"
+    }
+  },
+  "bounds": [
+    {
+      "max": [
+        1.665090560913086,
+        3.3000006675720215,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:0",
+      "min": [
+        -1.672239065170288,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090799331665,
+        3.29818058013916,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:1",
+      "min": [
+        -1.672239065170288,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090560913086,
+        3.2964553833007812,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:2",
+      "min": [
+        -1.6722395420074463,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650909185409546,
+        3.295030355453491,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:3",
+      "min": [
+        -1.6722387075424194,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650911569595337,
+        3.2940893173217773,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:4",
+      "min": [
+        -1.672238826751709,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650902032852173,
+        3.293760061264038,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:5",
+      "min": [
+        -1.6722389459609985,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650911569595337,
+        3.2940893173217773,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:6",
+      "min": [
+        -1.6722389459609985,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650909185409546,
+        3.295030355453491,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:7",
+      "min": [
+        -1.6722387075424194,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090560913086,
+        3.2964553833007812,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:8",
+      "min": [
+        -1.6722395420074463,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090799331665,
+        3.29818058013916,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:9",
+      "min": [
+        -1.672239065170288,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090560913086,
+        3.3000006675720215,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:10",
+      "min": [
+        -1.672239065170288,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650904417037964,
+        3.301724433898926,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:11",
+      "min": [
+        -1.6722389459609985,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090560913086,
+        3.303194284439087,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:12",
+      "min": [
+        -1.6722394227981567,
+        4.80571827665699e-07,
+        -0.8792752623558044
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650904417037964,
+        3.3043053150177,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:13",
+      "min": [
+        -1.672238826751709,
+        4.80571827665699e-07,
+        -0.8797076344490051
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650902032852173,
+        3.304992437362671,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:14",
+      "min": [
+        -1.6722387075424194,
+        4.80571827665699e-07,
+        -0.879985511302948
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650910377502441,
+        3.3052241802215576,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:15",
+      "min": [
+        -1.672238826751709,
+        4.80571827665699e-07,
+        -0.8800812363624573
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650902032852173,
+        3.304992437362671,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:16",
+      "min": [
+        -1.6722387075424194,
+        4.80571827665699e-07,
+        -0.879985511302948
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650906801223755,
+        3.304305076599121,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:17",
+      "min": [
+        -1.672238826751709,
+        4.80571827665699e-07,
+        -0.8797076344490051
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650906801223755,
+        3.303194284439087,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:18",
+      "min": [
+        -1.6722394227981567,
+        4.80571827665699e-07,
+        -0.8792752623558044
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650904417037964,
+        3.301724433898926,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:19",
+      "min": [
+        -1.6722389459609985,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650906801223755,
+        3.3000004291534424,
+        0.9177063703536987
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:0",
+      "min": [
+        -1.6722391843795776,
+        1.241660356754437e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6779218912124634,
+        3.3132128715515137,
+        0.9564425349235535
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:1",
+      "min": [
+        -1.662323236465454,
+        -1.9649043679237366e-05,
+        -0.9105342030525208
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.691927194595337,
+        3.3194146156311035,
+        0.9925507307052612
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:2",
+      "min": [
+        -1.6559345722198486,
+        -7.273862138390541e-05,
+        -0.9371415972709656
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7046265602111816,
+        3.3203375339508057,
+        1.0154807567596436
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:3",
+      "min": [
+        -1.6526095867156982,
+        -0.00013926252722740173,
+        -0.9567717909812927
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7134954929351807,
+        3.319032907485962,
+        1.0274369716644287
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:4",
+      "min": [
+        -1.651295781135559,
+        -0.00019347760826349258,
+        -0.9686049222946167
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7166777849197388,
+        3.3182363510131836,
+        1.031046748161316
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:5",
+      "min": [
+        -1.6509909629821777,
+        -0.0002148812636733055,
+        -0.9725342988967896
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7134954929351807,
+        3.319032907485962,
+        1.0274369716644287
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:6",
+      "min": [
+        -1.651295781135559,
+        -0.00019372813403606415,
+        -0.9686049222946167
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7046265602111816,
+        3.3203375339508057,
+        1.015480637550354
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:7",
+      "min": [
+        -1.6526097059249878,
+        -0.0001392667181789875,
+        -0.9567717909812927
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.691927194595337,
+        3.3194146156311035,
+        0.9925507307052612
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:8",
+      "min": [
+        -1.6559345722198486,
+        -7.273536175489426e-05,
+        -0.937141478061676
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6779218912124634,
+        3.3132128715515137,
+        0.9564425349235535
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:9",
+      "min": [
+        -1.6623234748840332,
+        -1.9651371985673904e-05,
+        -0.9105342626571655
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6650906801223755,
+        3.3000004291534424,
+        0.9177064895629883
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:10",
+      "min": [
+        -1.6722391843795776,
+        1.241660356754437e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6551756858825684,
+        3.313236951828003,
+        0.9665683507919312
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:11",
+      "min": [
+        -1.6850687265396118,
+        -1.902109943330288e-05,
+        -0.9105353355407715
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6487891674041748,
+        3.3194470405578613,
+        1.0025665760040283
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:12",
+      "min": [
+        -1.6990699768066406,
+        -7.116002961993217e-05,
+        -0.9371427893638611
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6454683542251587,
+        3.3203742504119873,
+        1.0253669023513794
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:13",
+      "min": [
+        -1.7117645740509033,
+        -0.0001365826465189457,
+        -0.9567731618881226
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6441563367843628,
+        3.319070339202881,
+        1.03722083568573
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:14",
+      "min": [
+        -1.7206305265426636,
+        -0.00019005779176950455,
+        -0.9686061143875122
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6438535451889038,
+        3.3182737827301025,
+        1.0407918691635132
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:15",
+      "min": [
+        -1.7238119840621948,
+        -0.00021043792366981506,
+        -0.9725356101989746
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6441563367843628,
+        3.319070339202881,
+        1.0372209548950195
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:16",
+      "min": [
+        -1.7206305265426636,
+        -0.00018921773880720139,
+        -0.9686062932014465
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6454683542251587,
+        3.3203742504119873,
+        1.025367021560669
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:17",
+      "min": [
+        -1.7117645740509033,
+        -0.00013631442561745644,
+        -0.9567731618881226
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6487891674041748,
+        3.3194470405578613,
+        1.0025665760040283
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:18",
+      "min": [
+        -1.6990699768066406,
+        -7.11558386683464e-05,
+        -0.9371427893638611
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6551756858825684,
+        3.313236951828003,
+        0.9665683507919312
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=1:19",
+      "min": [
+        -1.6850687265396118,
+        -1.9046245142817497e-05,
+        -0.9105353355407715
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090560913086,
+        3.3000006675720215,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:0",
+      "min": [
+        -1.6722389459609985,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.633496642112732,
+        3.304577112197876,
+        1.1414179801940918
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:1",
+      "min": [
+        -1.7247613668441772,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.5920436382293701,
+        3.3082010746002197,
+        1.4800326824188232
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:2",
+      "min": [
+        -1.8114426136016846,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.545375108718872,
+        3.3108394145965576,
+        1.5608347654342651
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:3",
+      "min": [
+        -1.8965932130813599,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.4993284940719604,
+        3.312589406967163,
+        1.4260916709899902
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:4",
+      "min": [
+        -1.9545542001724243,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.4599277973175049,
+        3.3645265102386475,
+        1.2819738388061523
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:5",
+      "min": [
+        -1.9838348627090454,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.4324092864990234,
+        3.285665273666382,
+        1.4310686588287354
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:6",
+      "min": [
+        -2.009584903717041,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.4204416275024414,
+        3.2500922679901123,
+        1.5444093942642212
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:7",
+      "min": [
+        -2.0232632160186768,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.4523706436157227,
+        3.220369338989258,
+        1.5943893194198608
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:8",
+      "min": [
+        -1.9960384368896484,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.4900635480880737,
+        3.217045307159424,
+        1.525283932685852
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:9",
+      "min": [
+        -1.9481101036071777,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.5247275829315186,
+        3.2423155307769775,
+        1.4754571914672852
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:10",
+      "min": [
+        -1.9023511409759521,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.5562820434570312,
+        3.2801132202148438,
+        1.4834693670272827
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:11",
+      "min": [
+        -1.8628432750701904,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.5846538543701172,
+        3.308696985244751,
+        1.5121787786483765
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:12",
+      "min": [
+        -1.8263142108917236,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.609777569770813,
+        3.3068525791168213,
+        1.3650555610656738
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:13",
+      "min": [
+        -1.7744719982147217,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.631592035293579,
+        3.30478572845459,
+        1.1629942655563354
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:14",
+      "min": [
+        -1.7286409139633179,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6500440835952759,
+        3.3025004863739014,
+        0.9286346435546875
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=2:15",
+      "min": [
+        -1.693411111831665,
+        4.80571827665699e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090560913086,
+        3.3000004291534424,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:0",
+      "min": [
+        -1.6722391843795776,
+        3.613625381149177e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.665090560913086,
+        3.3000004291534424,
+        0.9177064299583435
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:1",
+      "min": [
+        -1.6722391843795776,
+        3.613625381149177e-07,
+        -0.8789689540863037
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6651872396469116,
+        3.297919511795044,
+        0.9150854349136353
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:2",
+      "min": [
+        -1.6723353862762451,
+        5.506444722414017e-07,
+        -0.8806722164154053
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6662133932113647,
+        3.2968404293060303,
+        0.8863941431045532
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:3",
+      "min": [
+        -1.6733613014221191,
+        1.1175870895385742e-06,
+        -0.9000269770622253
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6682095527648926,
+        3.3067424297332764,
+        0.8264322280883789
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:4",
+      "min": [
+        -1.6753572225570679,
+        1.3932585716247559e-06,
+        -0.9318882822990417
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6709778308868408,
+        3.293917655944824,
+        0.8030588626861572
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:5",
+      "min": [
+        -1.678125023841858,
+        1.385807991027832e-06,
+        -0.9666541814804077
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6743173599243164,
+        3.2297844886779785,
+        0.9977169036865234
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:6",
+      "min": [
+        -1.681463360786438,
+        9.387731552124023e-07,
+        -0.9938921928405762
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.678033709526062,
+        3.091489315032959,
+        1.2491793632507324
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:7",
+      "min": [
+        -1.685177206993103,
+        1.1175870895385742e-06,
+        -1.004141092300415
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6819401979446411,
+        2.8841183185577393,
+        1.487514853477478
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:8",
+      "min": [
+        -1.689079761505127,
+        9.238719940185547e-07,
+        -0.9906414747238159
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6858652830123901,
+        2.6169345378875732,
+        1.6910451650619507
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:9",
+      "min": [
+        -1.6930009126663208,
+        1.2218952178955078e-06,
+        -1.0505014657974243
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.689651608467102,
+        2.369187831878662,
+        1.8602794408798218
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:10",
+      "min": [
+        -1.696783185005188,
+        9.5367431640625e-07,
+        -1.1072163581848145
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6931617259979248,
+        2.1188268661499023,
+        1.9837732315063477
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:11",
+      "min": [
+        -1.7002882957458496,
+        1.0132789611816406e-06,
+        -1.1402218341827393
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.696270227432251,
+        1.9403928518295288,
+        2.0654168128967285
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:12",
+      "min": [
+        -1.7033915519714355,
+        1.0132789611816406e-06,
+        -1.1467623710632324
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.6988673210144043,
+        1.8527085781097412,
+        2.1109819412231445
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:13",
+      "min": [
+        -1.7059828042984009,
+        1.0132789611816406e-06,
+        -1.1344554424285889
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7008497714996338,
+        1.8116240501403809,
+        2.14125394821167
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:14",
+      "min": [
+        -1.7079616785049438,
+        6.556510925292969e-07,
+        -1.1179537773132324
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7021178007125854,
+        1.801940679550171,
+        2.1580862998962402
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:15",
+      "min": [
+        -1.7092267274856567,
+        8.344650268554688e-07,
+        -1.126706600189209
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7025659084320068,
+        1.7968783378601074,
+        2.168522357940674
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:16",
+      "min": [
+        -1.7096737623214722,
+        5.960464477539062e-07,
+        -1.1312198638916016
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7025659084320068,
+        1.7968783378601074,
+        2.168522357940674
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:17",
+      "min": [
+        -1.7096737623214722,
+        5.960464477539062e-07,
+        -1.1312198638916016
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7025659084320068,
+        1.7968783378601074,
+        2.168522357940674
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:18",
+      "min": [
+        -1.7096737623214722,
+        5.960464477539062e-07,
+        -1.1312198638916016
+      ],
+      "vertices": 3625
+    },
+    {
+      "max": [
+        1.7025659084320068,
+        1.7968783378601074,
+        2.168522357940674
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=3:19",
+      "min": [
+        -1.7096737623214722,
+        5.960464477539062e-07,
+        -1.1312198638916016
+      ],
+      "vertices": 3625
+    }
+  ]
+}

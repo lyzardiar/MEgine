@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "14048044dda07eacf6e0a02ab969735613388c5288a578df0e18dc8e3751b405",
+  "sha256": "965375edf12049e3c1d38f8bdea4b96d8e26107832d869e3fc4fc073782ebf37",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -60,6 +60,25 @@
           -0.8838688135147095
         ],
         "vertices": 4531
+      }
+    },
+    {
+      "name": "RealAbomination",
+      "mesh": "Assets/Models/RealAbomination.glb#pose=0:4",
+      "material": "Assets/Materials/RealAbomination.mmat",
+      "bounds": {
+        "max": [
+          1.6650911569595337,
+          3.2940893173217773,
+          0.9177064299583435
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=0:4",
+        "min": [
+          -1.672238826751709,
+          4.80571827665699e-7,
+          -0.8789689540863037
+        ],
+        "vertices": 3625
       }
     },
     {

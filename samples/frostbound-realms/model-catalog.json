@@ -4152,5 +4152,44 @@
     "attackEvent": 0.5,
     "workAnimation": true,
     "workClip": 4
+  },
+  "RealAbomination": {
+    "material": "Assets/Materials/RealAbomination.mmat",
+    "parts": [
+      {
+        "name": "RealAbomination",
+        "mesh": "Assets/Models/RealAbomination.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 20
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Attack",
+        "frames": 16
+      },
+      {
+        "name": "Death",
+        "frames": 20
+      }
+    ],
+    "size": [
+      3.337329626083374,
+      3.3000000715255737,
+      1.7966757416725159
+    ],
+    "realistic": true,
+    "attackEvent": 0.5
   }
 }

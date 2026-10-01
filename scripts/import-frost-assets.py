@@ -183,4 +183,5 @@ if __name__ == '__main__':
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-revenant-fortress.py'),'--','--mine-only'],check=True,cwd=ROOT)
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-humans.py'),'--','--manifest','acolyte-sources.json'],check=True,cwd=ROOT)
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-ghoul.py')],check=True,cwd=ROOT)
+    subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-abomination.py')],check=True,cwd=ROOT)
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/bake-frost-foliage.py')],check=True,cwd=ROOT)

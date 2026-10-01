@@ -1,0 +1,75 @@
+{
+  "author": "piacenti",
+  "license": "CC-BY-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "page": "https://opengameart.org/content/troll-mauler",
+  "sources": [
+    {
+      "file": "SourceAssets/abomination/troll.blend",
+      "url": "https://opengameart.org/sites/default/files/troll.blend",
+      "bytes": 55714048,
+      "sha256": "83fc5e524d31020d8b7c9641517f965cecd65840b3119582b4e984649f708c51"
+    },
+    {
+      "file": "SourceAssets/abomination/source-page.html",
+      "url": "https://opengameart.org/content/troll-mauler",
+      "bytes": 48435,
+      "sha256": "14076d787a68b568ad6fb883cbd2a59763aa98d8968debd8f874fa215ab1650e"
+    }
+  ],
+  "models": {
+    "RealAbomination": {
+      "triangles": 6370,
+      "bones": 34,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 20
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Attack",
+          "frames": 16
+        },
+        {
+          "name": "Death",
+          "frames": 20
+        }
+      ],
+      "size": [
+        3.337329626083374,
+        3.3000000715255737,
+        1.7966757416725159
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Models/RealAbomination.glb",
+      "sha256": "e54f54e84d15b45dfc38e9647efabb67bf26a6b95b9388459b0047426139881d"
+    },
+    {
+      "file": "Assets/Textures/RealAbomination_base.png",
+      "sha256": "f9f4c4cdbe8205f518eb058df4972ecc924b4091208cd502b49e61858f887639"
+    },
+    {
+      "file": "Assets/Textures/RealAbomination_normal.png",
+      "sha256": "caf10c16e4a5b6fcde708eda81b83b2458d6159f0c93df9eb1c56cf93ac3fe64"
+    },
+    {
+      "file": "Assets/Materials/RealAbomination.mmat",
+      "sha256": "2de1d8c18919215e036d1fd9d003121e014c51539c79fd28a6811254f3ebb743"
+    },
+    {
+      "file": "Licenses/piacenti-Abomination.txt",
+      "sha256": "d0611b3f7000e4b7df4be7e5a42945eb5402ab7dcf9ac5310e3494bc1bef2391"
+    },
+    {
+      "file": "Assets/Licenses/piacenti-Abomination.txt",
+      "sha256": "d0611b3f7000e4b7df4be7e5a42945eb5402ab7dcf9ac5310e3494bc1bef2391"
+    }
+  ]
+}

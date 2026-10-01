@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "nativePoseSamples": 76,
+  "hostTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "rulesAndTcp": "PASS: node scripts/test-frostbound.mjs",
+  "nativeGameplay": {
+    "fixture": "Flat field, controlled textured heavy undead, stationary 80 HP opposing unit of the same kind and passive hero.",
+    "selectionAndPortrait": true,
+    "movement": true,
+    "attackDamage": true,
+    "rangedProjectile": false,
+    "saveRestore": true,
+    "authoredDeath": true,
+    "shaderRejections": 0
+  },
+  "reproducedGeneratedFiles": 6,
+  "reproducedSha256": [
+    {
+      "file": "Assets/Models/RealAbomination.glb",
+      "sha256": "e54f54e84d15b45dfc38e9647efabb67bf26a6b95b9388459b0047426139881d"
+    },
+    {
+      "file": "Assets/Textures/RealAbomination_base.png",
+      "sha256": "f9f4c4cdbe8205f518eb058df4972ecc924b4091208cd502b49e61858f887639"
+    },
+    {
+      "file": "Assets/Textures/RealAbomination_normal.png",
+      "sha256": "caf10c16e4a5b6fcde708eda81b83b2458d6159f0c93df9eb1c56cf93ac3fe64"
+    },
+    {
+      "file": "Assets/Materials/RealAbomination.mmat",
+      "sha256": "2de1d8c18919215e036d1fd9d003121e014c51539c79fd28a6811254f3ebb743"
+    },
+    {
+      "file": "Licenses/piacenti-Abomination.txt",
+      "sha256": "d0611b3f7000e4b7df4be7e5a42945eb5402ab7dcf9ac5310e3494bc1bef2391"
+    },
+    {
+      "file": "Assets/Licenses/piacenti-Abomination.txt",
+      "sha256": "d0611b3f7000e4b7df4be7e5a42945eb5402ab7dcf9ac5310e3494bc1bef2391"
+    }
+  ],
+  "packagedFiles": 653,
+  "contentHash": "1e8165c006bcc3b130780abbe70b6c76cf89d29798c910bfb224c8a0464adedf",
+  "playerStartupSeconds": 30,
+  "playerLoggedErrors": 0,
+  "physicalInput": false,
+  "audioListening": false
+}

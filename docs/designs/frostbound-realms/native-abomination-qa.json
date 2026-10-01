@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "abomination": {
+    "fixture": "Flat field, controlled textured heavy undead, stationary 80 HP opposing unit of the same kind and passive hero.",
+    "selectionAndPortrait": true,
+    "movement": true,
+    "attackDamage": true,
+    "rangedProjectile": false,
+    "saveRestore": true,
+    "authoredDeath": true,
+    "shaderRejections": 0
+  }
+}
