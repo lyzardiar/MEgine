@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "templeArt": {
+    "fixture": "Revenant tier-3 worker with resources; construction and editor placement use native UI input.",
+    "placementPreview": true,
+    "construction": true,
+    "midConstructionSave": true,
+    "nativeMaterialAndPortrait": true,
+    "necromancerTraining": true,
+    "research": true,
+    "editorPlacementSavePlaytest": true,
+    "shaderRejections": 0
+  }
+}

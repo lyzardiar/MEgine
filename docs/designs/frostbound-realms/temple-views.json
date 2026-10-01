@@ -1,0 +1,123 @@
+{
+  "file": "docs/designs/frostbound-realms/temple-views.png",
+  "sha256": "51f4c8d7dc5425b3cbc61824a81492b35a3b78e32a0a9fb2c962c912ef5debc2",
+  "generator": "scripts/render-frost-unit-icons.mjs --temple-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Temple 0",
+      "mesh": "Assets/Models/RealTemple.glb",
+      "material": "Assets/Materials/RealTemple.mmat",
+      "bounds": {
+        "max": [
+          2.7664504051208496,
+          9.430188179016113,
+          4
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTemple.glb",
+        "min": [
+          -2.7664504051208496,
+          0,
+          -4
+        ],
+        "vertices": 28398
+      }
+    },
+    {
+      "name": "Temple 1",
+      "mesh": "Assets/Models/RealTemple.glb",
+      "material": "Assets/Materials/RealTemple.mmat",
+      "bounds": {
+        "max": [
+          2.7664504051208496,
+          9.430188179016113,
+          4
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTemple.glb",
+        "min": [
+          -2.7664504051208496,
+          0,
+          -4
+        ],
+        "vertices": 28398
+      }
+    },
+    {
+      "name": "Temple 2",
+      "mesh": "Assets/Models/RealTemple.glb",
+      "material": "Assets/Materials/RealTemple.mmat",
+      "bounds": {
+        "max": [
+          2.7664504051208496,
+          9.430188179016113,
+          4
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTemple.glb",
+        "min": [
+          -2.7664504051208496,
+          0,
+          -4
+        ],
+        "vertices": 28398
+      }
+    },
+    {
+      "name": "Temple 3",
+      "mesh": "Assets/Models/RealTemple.glb",
+      "material": "Assets/Materials/RealTemple.mmat",
+      "bounds": {
+        "max": [
+          2.7664504051208496,
+          9.430188179016113,
+          4
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTemple.glb",
+        "min": [
+          -2.7664504051208496,
+          0,
+          -4
+        ],
+        "vertices": 28398
+      }
+    },
+    {
+      "name": "Temple 4",
+      "mesh": "Assets/Models/RealTemple.glb",
+      "material": "Assets/Materials/RealTemple.mmat",
+      "bounds": {
+        "max": [
+          2.7664504051208496,
+          9.430188179016113,
+          4
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTemple.glb",
+        "min": [
+          -2.7664504051208496,
+          0,
+          -4
+        ],
+        "vertices": 28398
+      }
+    },
+    {
+      "name": "Temple 5",
+      "mesh": "Assets/Models/RealTemple.glb",
+      "material": "Assets/Materials/RealTemple.mmat",
+      "bounds": {
+        "max": [
+          2.7664504051208496,
+          9.430188179016113,
+          4
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTemple.glb",
+        "min": [
+          -2.7664504051208496,
+          0,
+          -4
+        ],
+        "vertices": 28398
+      }
+    }
+  ]
+}

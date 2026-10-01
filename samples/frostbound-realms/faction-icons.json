@@ -1,9 +1,9 @@
 {
   "file": "Assets/Art/faction-buildings.png",
-  "sha256": "7e11e735cdd986389a36a7561cc1bb07c174a935f1dff5b78d687581dabb8f76",
+  "sha256": "c17961edee4082d13157eef5b18c89de5dda916c346e0a49415a378186b1eb35",
   "generator": "scripts/render-frost-faction-icons.mjs",
   "method": "Native MEngine Release render of the actual building meshes; no generated concept art",
-  "runtimeSha256": "256e9296f027e9fdd79ae218c287209ed28dcac2099d1316036a585287b56a0e",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
   "models": [
     {
       "name": "KingdomHall",
@@ -164,6 +164,11 @@
       "name": "RevenantWorkshop",
       "mesh": "Assets/Models/RevenantWorkshop.glb",
       "material": "Assets/Materials/RevenantWorkshop.mmat"
+    },
+    {
+      "name": "RealTemple",
+      "mesh": "Assets/Models/RealTemple.glb",
+      "material": "Assets/Materials/RealTemple.mmat"
     }
   ]
 }

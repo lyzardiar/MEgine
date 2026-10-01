@@ -1,0 +1,57 @@
+{
+  "passed": true,
+  "sourceLicense": "CC0-1.0",
+  "triangles": 16560,
+  "vertices": 28398,
+  "nativeBounds": {
+    "max": [
+      2.7664504051208496,
+      9.430188179016113,
+      4.0
+    ],
+    "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealTemple.glb",
+    "min": [
+      -2.7664504051208496,
+      0.0,
+      -4.0
+    ],
+    "vertices": 28398
+  },
+  "atlas": {
+    "base_color_texture": {
+      "size": [
+        2048,
+        2048
+      ],
+      "std": 32.39895414397301
+    },
+    "normal_texture": {
+      "size": [
+        2048,
+        2048
+      ],
+      "std": 59.89277340373385
+    },
+    "metallic_roughness_texture": {
+      "size": [
+        2048,
+        2048
+      ],
+      "std": 85.64745095151736
+    },
+    "emissive_texture": {
+      "size": [
+        2048,
+        2048
+      ],
+      "std": 6.217121758989212
+    }
+  },
+  "emissiveTexels": 9269,
+  "removedInterior": [
+    "Innansorra",
+    "Bell",
+    "ClockHolder",
+    "SunSymbol"
+  ]
+}

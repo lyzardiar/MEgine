@@ -13,7 +13,7 @@ for(let f=0;f<4;f++){
   s.teams[0].gold=2000;s.teams[0].wood=2000;
   for(const tier of [2,3]){assert.equal(S.command(s,0,{type:'tech',ids:[hall.id]}),null);for(let i=0;i<(tier-1)*200+2;i++)S.tick(s);assert.equal(s.teams[0].tier,tier);assert.equal(V.model(s,hall).key,S.factions[f]+'Hall'+tier);}
   assert.equal(V.model(S.restore(s),hall).key,S.factions[f]+'Hall3');s.visible[1].fill(1);const view=S.publicState(s,1),seen=view.units.find(u=>u.id===hall.id);assert.equal(V.model(view,seen).key,S.factions[f]+'Hall3');assert.equal(V.name(view,seen),V.name(s,hall));assert.equal(view.teams[0].tier,undefined,'global enemy tech stays private');s.visible[1].fill(0);assert.ok(!S.publicState(s,1).units.some(u=>u.id===hall.id));
-  for(const kind of ['hall','barracks','farm','tower','altar','workshop']){const {asset,scale}=V.model(s,{kind,team:0});assert.ok(Math.max(asset.size[0],asset.size[2])*scale<=S.types[kind].radius*2,'art stays inside gameplay footprint');}
+  for(const kind of ['hall','barracks','farm','tower','altar','workshop','temple']){const {asset,scale}=V.model(s,{kind,team:0});assert.ok(Math.max(asset.size[0],asset.size[2])*scale<=S.types[kind].radius*2,'art stays inside gameplay footprint');}
 }
 assert.equal(halls.size,4);
 const verify=entry=>{const data=fs.readFileSync(new URL(entry.file,root));assert.equal(crypto.createHash('sha256').update(data).digest('hex'),entry.sha256,entry.file);};
@@ -29,8 +29,9 @@ for(const kind of ['tree','mine','camp']){
  if(kind==='tree'){assert.match(far.mesh,/-card.glb$/);assert.equal(far.yaw,0,'card faces the fixed camera');const material=JSON.parse(fs.readFileSync(new URL(far.asset.material,root)));assert.equal(material.surface,'cutout');}
 }
 const buildings=JSON.parse(fs.readFileSync(new URL('faction-sources.json',root)));buildings.sources.forEach(verify);buildings.generated.forEach(verify);
+const temple=JSON.parse(fs.readFileSync(new URL('temple-sources.json',root)));assert.equal(temple.license,'CC0-1.0');temple.sources.forEach(verify);temple.generated.forEach(verify);assert.equal(V.model(S.create(),{kind:'temple',team:0}).key,'RealTemple');assert.ok(FrostArt.RealTemple.factionBuilding);
 const monsters=JSON.parse(fs.readFileSync(new URL('monster-sources.json',root)));monsters.forEach(m=>{verify(m);m.generated.forEach(verify);assert.ok(m.animations.length>=8);});
-const icons=JSON.parse(fs.readFileSync(new URL('faction-icons.json',root))),slices=JSON.parse(fs.readFileSync(new URL(icons.file+'.sprite.json',root))).slices;verify(icons);assert.equal(slices.length,32);assert.deepEqual(slices.map(s=>s.name).sort(),Object.keys(buildings.models).sort());
+const icons=JSON.parse(fs.readFileSync(new URL('faction-icons.json',root))),slices=JSON.parse(fs.readFileSync(new URL(icons.file+'.sprite.json',root))).slices;verify(icons);assert.equal(slices.length,33);assert.deepEqual(slices.map(s=>s.name).sort(),[...Object.keys(buildings.models),'RealTemple'].sort());
 assert.equal(Object.keys(buildings.models).length,32);assert.equal(monsters.length,5);
 const skeletons=JSON.parse(fs.readFileSync(new URL('skeleton-sources.json',root)));assert.equal(skeletons.license,'CC0-1.0');skeletons.sources.forEach(verify);skeletons.generated.forEach(verify);
 const humans=JSON.parse(fs.readFileSync(new URL('human-sources.json',root)));assert.equal(humans.license,'CC-BY-SA-3.0');assert.equal(humans.author,'Wildfire Games');humans.sources.forEach(verify);humans.generated.forEach(verify);
@@ -156,7 +157,7 @@ for(let faction=0;faction<4;faction++){const state=S.create('skirmish',{factions
  unit.cd=S.unitType(unit).cooldown;assert.equal(V.pose(unit,asset,false,0),V.pose(unit,asset,false,100));assert.match(V.pose(unit,asset,false,0),/#pose=2:12$/);assert.match(V.pose({...unit,stun:1},asset,false,0),/#pose=0:/);
  assert.ok(V.corpse(state,{...unit,cd:0,x:0,z:0,y:0,age:1,yaw:0}).mesh.includes('#pose=3:'));assert.equal(S.projectileArt(unit),'shadow');
 }
-console.log('PASS: four faction rosters, 32 building meshes, real tier upgrades/save restore, footprints, five animated monsters, two armed skeletons, 28 native unit portraits and pinned source/derived hashes');
+console.log('PASS: four faction rosters, 33 building portraits, tier upgrades/save restore, footprints, animated monsters and skeletons, native unit portraits and pinned source/derived hashes');
 
 {
  const manifest=JSON.parse(fs.readFileSync(new URL('rifleman-sources.json',root)));manifest.sources.forEach(verify);manifest.generated.forEach(verify);assert.ok(portraitKeys.has('RealRifleman'));

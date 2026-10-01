@@ -1,0 +1,88 @@
+{
+  "author": "Daniel Andersson; AnyRPG; MiYu adaptations",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "generator": "scripts/import-frost-temple.py",
+  "sources": [
+    {
+      "file": "SourceAssets/medieval-temple/church.blend",
+      "url": "https://opengameart.org/sites/default/files/church.blend",
+      "sha256": "bcc2f59154473dcb46d580d1a60f1358fe6a0339d2d602c9f8cd3d31ef03e393",
+      "bytes": 9703648
+    },
+    {
+      "file": "SourceAssets/medieval-temple/source-page.html",
+      "url": "https://opengameart.org/content/medieval-church-interior",
+      "sha256": "f472f7bb7e9028d3c04fa1e1571a6387af598b8ab579d0f9d51774110eeaa182",
+      "bytes": 23928
+    },
+    {
+      "file": "SourceAssets/medieval-temple/original-page.html",
+      "url": "https://opengameart.org/content/medieval-church",
+      "sha256": "16cd7160752ce5a5f2ccc93c83dc7b13bba119e42a3d902d34e352df66be6641",
+      "bytes": 36389
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/RealTemple_base.png",
+      "sha256": "a48e2502a62e4971d86ac3c9a4bd9e4920c503d3f453354c20b7ca029fc7ae6c"
+    },
+    {
+      "file": "Assets/Textures/RealTemple_normal.png",
+      "sha256": "716e0b125a07b53b102d8ebf1384503002f7d16fd2189f419230dea4a779229c"
+    },
+    {
+      "file": "Assets/Textures/RealTemple_arm.png",
+      "sha256": "a09eaf41e7ab412afe6bc8a34667ca3db70b45dd74cb598823df4b0184c2c5f3"
+    },
+    {
+      "file": "Assets/Textures/RealTemple_emissive.png",
+      "sha256": "eb93179b422f0efa65485b7b3839ddb984d77aba83599dbb3d95fe0a49e911df"
+    },
+    {
+      "file": "Assets/Models/RealTemple.glb",
+      "sha256": "82141465a58aaa3ffb7b75f87f60976efe43bbf9cd31a1fb5c000f89b9a64281"
+    },
+    {
+      "file": "Assets/Materials/RealTemple.mmat",
+      "sha256": "2efda2ebb4239a88ddb19c4176845b61cf45593cefbf9c1d8359d3d5f5b053f0"
+    },
+    {
+      "file": "Licenses/Medieval-Temple.txt",
+      "sha256": "18ed51d385ff35b7a30517d9f22b47499b7befcde52e18894f8e1ce00551605d"
+    },
+    {
+      "file": "Assets/Licenses/Medieval-Temple.txt",
+      "sha256": "18ed51d385ff35b7a30517d9f22b47499b7befcde52e18894f8e1ce00551605d"
+    }
+  ],
+  "model": {
+    "key": "RealTemple",
+    "triangles": 16560,
+    "size": [
+      5.532900810241699,
+      9.430188179016113,
+      8.0
+    ],
+    "keptObjects": [
+      "CopperRoof",
+      "StoneBeams",
+      "StoneRoof",
+      "WindowBars",
+      "StoneBrickWalls",
+      "SideDoor",
+      "SideStairs",
+      "FrontDoorFrame",
+      "StairsRailing",
+      "FrontDoorLeft",
+      "FrontDoorRight"
+    ],
+    "removedObjects": [
+      "Innansorra",
+      "Bell",
+      "ClockHolder",
+      "SunSymbol"
+    ]
+  }
+}

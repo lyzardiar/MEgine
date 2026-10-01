@@ -3900,5 +3900,26 @@
     ],
     "realistic": true,
     "attackEvent": 0.25
+  },
+  "RealTemple": {
+    "material": "Assets/Materials/RealTemple.mmat",
+    "parts": [
+      {
+        "name": "RealTemple",
+        "mesh": "Assets/Models/RealTemple.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.532900810241699,
+      9.430188179016113,
+      8.0
+    ],
+    "factionBuilding": true,
+    "realistic": true
   }
 }

@@ -1,0 +1,12 @@
+Medieval Revenant Temple / RealTemple
+Original Medieval Church: Daniel Andersson, CC0-1.0.
+https://opengameart.org/content/medieval-church
+Cathedral interior adaptation: AnyRPG, CC0-1.0.
+https://opengameart.org/content/medieval-church-interior
+https://creativecommons.org/publicdomain/zero/1.0/
+MEngine adaptations by MiYu, CC0-1.0: exterior selection, stone/roof tint,
+UV atlas, baked occlusion, texture-derived relief normals, material channels and recessed soul lantern.
+Derived files: Assets/Models/RealTemple.glb, Assets/Textures/RealTemple_*.png,
+Assets/Materials/RealTemple.mmat and RealTemple building portrait.
+Source model contains its original packed textures. Source URLs and hashes:
+temple-sources.json. Rebuild with scripts/import-frost-temple.py in Blender 4.5.9.
