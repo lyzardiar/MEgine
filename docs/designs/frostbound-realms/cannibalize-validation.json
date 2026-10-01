@@ -1,0 +1,114 @@
+{
+  "passed": true,
+  "protocol": 19,
+  "rulesAndTcp": "PASS: node scripts/test-frostbound.mjs, including Cannibalize research and feeding reconnects",
+  "nativeGameplay": {
+    "researchCost": 75,
+    "researchSeconds": 30,
+    "researchSaveRestore": true,
+    "realKillCorpses": 2,
+    "twoAuthoredFeedingClips": true,
+    "healingSaveRestore": true,
+    "individualStopRestart": true,
+    "fullHealthCompletion": true,
+    "thirtyThreeSecondCompletion": true,
+    "consumedCorpses": 2,
+    "shaderRejections": 0
+  },
+  "hostTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "nativePoseSamples": {
+    "ghoul": 120,
+    "abomination": 96
+  },
+  "unchangedExistingPoseBounds": {
+    "ghoul": 100,
+    "abomination": 76,
+    "maximumAbsoluteDifference": 0
+  },
+  "reproducedGenerated": {
+    "ghoul": [
+      {
+        "file": "Assets/Models/RealGhoul.glb",
+        "sha256": "a69ddca9b24eabfcadfcf2c25b075b9cd06f513475f69f3901fa7f4407fc2639"
+      },
+      {
+        "file": "Assets/Textures/RealGhoul_base.png",
+        "sha256": "9988caf7bb29fd811292d44f274558059dffc54781ea5f61823ce25108521073"
+      },
+      {
+        "file": "Assets/Materials/RealGhoul.mmat",
+        "sha256": "e4a5e36de5710710c9d8ac12eafa5ae589682b9f3a405a54852ce99619031282"
+      },
+      {
+        "file": "Licenses/Rosswet-Ghoul.txt",
+        "sha256": "d7c129c891a7a00938682f8ccabea8c010636fe1aa8161912b038eac725a3d4a"
+      },
+      {
+        "file": "Assets/Licenses/Rosswet-Ghoul.txt",
+        "sha256": "d7c129c891a7a00938682f8ccabea8c010636fe1aa8161912b038eac725a3d4a"
+      }
+    ],
+    "abomination": [
+      {
+        "file": "Assets/Models/RealAbomination.glb",
+        "sha256": "11a99f3b21449102418b45d8d868be0ef06671c5bbaf2a93b2381f1f7bf1867f"
+      },
+      {
+        "file": "Assets/Textures/RealAbomination_base.png",
+        "sha256": "b354214817ff1447bb8c0410378a06cdbbcb3ab6b5926c89f75844174d770ea1"
+      },
+      {
+        "file": "Assets/Textures/RealAbomination_normal.png",
+        "sha256": "caf10c16e4a5b6fcde708eda81b83b2458d6159f0c93df9eb1c56cf93ac3fe64"
+      },
+      {
+        "file": "Assets/Textures/RealAbomination_arm.png",
+        "sha256": "d38870e6a100e89667851862c38fef8775a47b88b533afc528568b1d5d4f2f04"
+      },
+      {
+        "file": "Assets/Materials/RealAbomination.mmat",
+        "sha256": "2b24b727662135c62d312ecfc71cf74343c17c16ae23227867cb817ffd3c7f9c"
+      },
+      {
+        "file": "Licenses/piacenti-Abomination.txt",
+        "sha256": "0bbe21dea6e08127695ba6438de2470daf14a0cfa6ff886693b6088f87ba54a6"
+      },
+      {
+        "file": "Assets/Licenses/piacenti-Abomination.txt",
+        "sha256": "0bbe21dea6e08127695ba6438de2470daf14a0cfa6ff886693b6088f87ba54a6"
+      }
+    ]
+  },
+  "packagedFiles": 654,
+  "contentHash": "5f7a98c5fa1f718b7b679c0a157cf4abf06097b8caa046a37fa8c7d3e9e7c62f",
+  "playerStartupSeconds": 30,
+  "playerLoggedErrors": 0,
+  "physicalInput": false,
+  "audioListening": false,
+  "screenshots": [
+    {
+      "file": "cannibalize-poses.png",
+      "sha256": "39ccee256048b9d9b6f450e4b8bffa69583d3e8a980e932d8d9ec055629cac30"
+    },
+    {
+      "file": "cannibalize-research.png",
+      "sha256": "854a8159065429d55dec329a13d045331c3be3200ac7b7635d431643e92ae2e6"
+    },
+    {
+      "file": "cannibalize-feeding.png",
+      "sha256": "8fb6f98f0b366bf762985ebfe3c5aca47a8c8307f453a39f3d0bb08097962e9d"
+    },
+    {
+      "file": "cannibalize-complete.png",
+      "sha256": "d1411ad86d10a9668f4d5f5a4fa19c39199e9ec152ff19c751300241365fba4f"
+    }
+  ],
+  "nativeTwoClientNetwork": {
+    "passed": true,
+    "protocol": 19,
+    "report": "native-network-qa.json"
+  }
+}

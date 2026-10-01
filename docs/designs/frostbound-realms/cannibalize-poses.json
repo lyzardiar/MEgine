@@ -1,0 +1,123 @@
+{
+  "file": "docs/designs/frostbound-realms/cannibalize-poses.png",
+  "sha256": "39ccee256048b9d9b6f450e4b8bffa69583d3e8a980e932d8d9ec055629cac30",
+  "generator": "scripts/render-frost-unit-icons.mjs --cannibalize-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "RealGhoul Cannibalize 0",
+      "mesh": "Assets/Models/RealGhoul.glb#pose=5:0",
+      "material": "Assets/Materials/RealGhoul.mmat",
+      "bounds": {
+        "max": [
+          0.7078884840011597,
+          1.938056230545044,
+          1.184821367263794
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=5:0",
+        "min": [
+          -0.6993520259857178,
+          6.7715291152126156e-9,
+          -0.4149949848651886
+        ],
+        "vertices": 10020
+      }
+    },
+    {
+      "name": "RealGhoul Cannibalize 0.33",
+      "mesh": "Assets/Models/RealGhoul.glb#pose=5:6",
+      "material": "Assets/Materials/RealGhoul.mmat",
+      "bounds": {
+        "max": [
+          0.7031280398368835,
+          1.920514702796936,
+          1.201520562171936
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=5:6",
+        "min": [
+          -0.700194239616394,
+          6.7715291152126156e-9,
+          -0.4149949848651886
+        ],
+        "vertices": 10020
+      }
+    },
+    {
+      "name": "RealGhoul Cannibalize 0.67",
+      "mesh": "Assets/Models/RealGhoul.glb#pose=5:13",
+      "material": "Assets/Materials/RealGhoul.mmat",
+      "bounds": {
+        "max": [
+          0.7093530297279358,
+          1.9517364501953125,
+          1.167478322982788
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=5:13",
+        "min": [
+          -0.696245014667511,
+          6.7715291152126156e-9,
+          -0.4149949848651886
+        ],
+        "vertices": 10020
+      }
+    },
+    {
+      "name": "RealAbomination Cannibalize 0",
+      "mesh": "Assets/Models/RealAbomination.glb#pose=4:0",
+      "material": "Assets/Materials/RealAbomination.mmat",
+      "bounds": {
+        "max": [
+          1.999153733253479,
+          2.801548957824707,
+          0.9967288970947266
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=4:0",
+        "min": [
+          -1.6722404956817627,
+          -0.20979322493076324,
+          -0.8959959149360657
+        ],
+        "vertices": 6267
+      }
+    },
+    {
+      "name": "RealAbomination Cannibalize 0.33",
+      "mesh": "Assets/Models/RealAbomination.glb#pose=4:6",
+      "material": "Assets/Materials/RealAbomination.mmat",
+      "bounds": {
+        "max": [
+          1.9991527795791626,
+          2.71506404876709,
+          1.0327552556991577
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=4:6",
+        "min": [
+          -1.6722419261932373,
+          -0.25342756509780884,
+          -0.8883958458900452
+        ],
+        "vertices": 6267
+      }
+    },
+    {
+      "name": "RealAbomination Cannibalize 0.67",
+      "mesh": "Assets/Models/RealAbomination.glb#pose=4:13",
+      "material": "Assets/Materials/RealAbomination.mmat",
+      "bounds": {
+        "max": [
+          1.9991540908813477,
+          2.872779130935669,
+          0.9531236886978149
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealAbomination.glb#pose=4:13",
+        "min": [
+          -1.672239899635315,
+          -0.16515885293483734,
+          -0.9022108316421509
+        ],
+        "vertices": 6267
+      }
+    }
+  ]
+}

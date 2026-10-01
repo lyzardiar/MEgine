@@ -37,6 +37,10 @@
         {
           "name": "Death",
           "frames": 20
+        },
+        {
+          "name": "Cannibalize",
+          "frames": 20
         }
       ],
       "size": [
@@ -131,7 +135,7 @@
   "generated": [
     {
       "file": "Assets/Models/RealAbomination.glb",
-      "sha256": "c8f2959cfd8b23317fa84ae788a8a8635f17d0e3934176b4e96f66fb22ed08bf"
+      "sha256": "11a99f3b21449102418b45d8d868be0ef06671c5bbaf2a93b2381f1f7bf1867f"
     },
     {
       "file": "Assets/Textures/RealAbomination_base.png",
@@ -151,11 +155,11 @@
     },
     {
       "file": "Licenses/piacenti-Abomination.txt",
-      "sha256": "d061d4c4c90efb1437464a3c50e33fd806768f8a4aafea08377a7d29bf74fd7c"
+      "sha256": "0bbe21dea6e08127695ba6438de2470daf14a0cfa6ff886693b6088f87ba54a6"
     },
     {
       "file": "Assets/Licenses/piacenti-Abomination.txt",
-      "sha256": "d061d4c4c90efb1437464a3c50e33fd806768f8a4aafea08377a7d29bf74fd7c"
+      "sha256": "0bbe21dea6e08127695ba6438de2470daf14a0cfa6ff886693b6088f87ba54a6"
     }
   ]
 }

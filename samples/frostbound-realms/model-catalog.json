@@ -4098,6 +4098,10 @@
       {
         "name": "Harvest",
         "frames": 20
+      },
+      {
+        "name": "Cannibalize",
+        "frames": 20
       }
     ],
     "size": [
@@ -4141,6 +4145,10 @@
       {
         "name": "Harvest",
         "frames": 20
+      },
+      {
+        "name": "Cannibalize",
+        "frames": 20
       }
     ],
     "size": [
@@ -4181,6 +4189,10 @@
       },
       {
         "name": "Death",
+        "frames": 20
+      },
+      {
+        "name": "Cannibalize",
         "frames": 20
       }
     ],

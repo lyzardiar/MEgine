@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "cannibalize": {
+    "researchCost": 75,
+    "researchSeconds": 30,
+    "researchSaveRestore": true,
+    "realKillCorpses": 2,
+    "twoAuthoredFeedingClips": true,
+    "healingSaveRestore": true,
+    "individualStopRestart": true,
+    "fullHealthCompletion": true,
+    "thirtyThreeSecondCompletion": true,
+    "consumedCorpses": 2,
+    "shaderRejections": 0
+  }
+}

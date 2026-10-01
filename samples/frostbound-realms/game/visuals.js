@@ -42,6 +42,7 @@ var FrostVisual=(()=>{
   }
   function heading(state,u,old){
     if(!Frost.types[u.kind].speed)return 0;
+    if(Frost.feeding(u))return u.yaw??0;
     const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;
     if(['hero','necromancer','shaman'].includes(u.kind)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[units[u.kind]||Frost.unitType(u).art],moved)!==null)return u.castYaw;
     const attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>['hit','launch'].includes(e.type)&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy))<=Frost.unitType(u).range+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
@@ -55,6 +56,7 @@ var FrostVisual=(()=>{
   }
   function pose(u,asset,walking,time){
     if(!asset.animations?.length)return asset.parts[0].mesh;
+    const eat=asset.animations.findIndex(a=>a.name==='Cannibalize');if(Frost.feeding(u)&&eat>=0)return asset.parts[0].mesh+'#pose='+eat+':'+Math.floor((Frost.cannibalize.duration-Frost.feeding(u))*12)%asset.animations[eat].frames;
     if(asset.workAnimation){const clip=asset.workClip??0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;}
     const cast=asset.animations.findIndex(a=>a.name===(['necromancer','shaman'].includes(u.kind)?'Staff_Attack':'Cast')),casting=castPhase(u,asset,walking);
     if(cast>=0&&casting!==null)return asset.parts[0].mesh+'#pose='+cast+':'+Math.min(asset.animations[cast].frames-1,Math.floor(casting*asset.animations[cast].frames));

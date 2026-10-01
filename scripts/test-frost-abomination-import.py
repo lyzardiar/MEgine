@@ -23,7 +23,7 @@ for finish,(u,v) in {'iron':(.86,.76),'edge':(.94,.76),'wood':(.86,.84),'scar':(
     if finish in ['iron','edge','wood']:
         assert names<=({'hand.R'} if finish=='edge' else {'hand.R','hand.L'}),(finish,names);np.testing.assert_allclose(weights[selected].max(axis=1),1,atol=1e-5)
     else:assert not names&{'hand.R','hand.L'},(finish,names)
-assert [a['name'] for a in doc['animations']]==['Idle','Walk','Attack','Death'];weighted={doc['skins'][0]['joints'][int(j)] for j in joints[weights>0]};references=[];motion={}
+assert [a['name'] for a in doc['animations']]==['Idle','Walk','Attack','Death','Cannibalize'];weighted={doc['skins'][0]['joints'][int(j)] for j in joints[weights>0]};references=[];motion={}
 for i,clip in enumerate(doc['animations']):
     assert all(s.get('interpolation','LINEAR') in ['LINEAR','STEP'] for s in clip['samplers'])
     moving={doc['nodes'][c['target']['node']]['name'] for c in clip['channels'] if c['target']['node'] in weighted and np.ptp(adapter.accessor(doc,blob,clip['samplers'][c['sampler']]['output']),axis=0).max()>.005};motion[clip['name']]=sorted(moving);assert moving,clip['name']

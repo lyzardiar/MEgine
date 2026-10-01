@@ -1,7 +1,7 @@
 """Author: MiYu. Import Rosswet Mobile's textured, animated Thin Zombie as the Revenant ghoul."""
-import bpy, hashlib, json, urllib.request, zipfile
+import bpy, hashlib, json, math, urllib.request, zipfile
 from pathlib import Path
-from mathutils import Matrix
+from mathutils import Matrix, Quaternion, Vector
 
 ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';SOURCE=SAMPLE/'SourceAssets/ghoul';KEY='RealGhoul'
 CLIPS=[('Idle','idle'),('Walk','run'),('Attack','attack2'),('Death','dead1'),('Harvest','attack1_r')]
@@ -27,7 +27,19 @@ def main():
     rig.data.pose_position='POSE';rig.animation_data.action=actions['Idle'];rig.animation_data.action_slot=actions['Idle'].slots[0];scene.frame_set(0)
     evaluated=mesh.evaluated_get(bpy.context.evaluated_depsgraph_get());points=[evaluated.matrix_world@v.co for v in evaluated.data.vertices];low=min(p.z for p in points);factor=2.5/(max(p.z for p in points)-low);rig.scale*=factor;rig.location*=factor;rig.location.z-=low*factor;bpy.context.view_layer.update()
     evaluated=mesh.evaluated_get(bpy.context.evaluated_depsgraph_get());points=[evaluated.matrix_world@v.co for v in evaluated.data.vertices];size=[max(p[i] for p in points)-min(p[i] for p in points) for i in [0,2,1]];rig.animation_data.action=None;clips=[]
-    for name,_ in CLIPS:
+    rig.animation_data.action=actions['Idle'];rig.animation_data.action_slot=actions['Idle'].slots[0];scene.frame_set(0);rest={b.name:b.matrix_basis.copy() for b in rig.pose.bones};rig.animation_data.action=None
+    eating=bpy.data.actions.new(KEY+' Cannibalize');rig.animation_data.action=eating
+    for frame in range(41):
+        scene.frame_set(frame)
+        for bone in rig.pose.bones:bone.matrix_basis=rest[bone.name]
+        chew=math.sin(frame/40*math.tau)
+        for name,angle in [('hips',.55),('spine',.25+.04*chew),('ribs',.1),('head',.12*chew),('upper_arm.L',-.45+.12*chew),('upper_arm.R',-.45-.12*chew),('forearm.L',-.4),('forearm.R',-.4)]:
+            bone=rig.pose.bones[name];basis=bone.bone.matrix_local.to_quaternion();bone.rotation_mode='QUATERNION';bone.rotation_quaternion=bone.rotation_quaternion@basis.inverted()@Quaternion((1,0,0),angle)@basis
+        bpy.context.view_layer.update()
+        for bone in rig.pose.bones:
+            bone.keyframe_insert(data_path='location',frame=frame);bone.keyframe_insert(data_path='rotation_quaternion' if bone.rotation_mode=='QUATERNION' else 'rotation_euler',frame=frame);bone.keyframe_insert(data_path='scale',frame=frame)
+    actions['Cannibalize']=eating;rig.animation_data.action=None
+    for name,_ in CLIPS+[('Cannibalize',None)]:
         action=actions[name];action.name=KEY+' '+name;start,end=action.frame_range;rig.animation_data.action=action;rig.animation_data.action_slot=action.slots[0];rig.animation_data.action=None
         track=rig.animation_data.nla_tracks.new();track.name=name;strip=track.strips.new(name,0,action);strip.action_frame_start=start;strip.action_frame_end=end;strip.frame_start=0;strip.frame_end=end-start;clips.append({'name':name,'frames':max(1,round((end-start)/scene.render.fps*12))})
     bpy.ops.object.select_all(action='DESELECT');mesh.select_set(True);rig.select_set(True);bpy.context.view_layer.objects.active=rig
@@ -41,7 +53,7 @@ https://opengameart.org/content/thin-zombie-awake-zombie-asset
 Creative Commons Attribution 3.0 Unported (CC-BY-3.0).
 https://creativecommons.org/licenses/by/3.0/
 MEngine adaptations by MiYu: normalized transforms and scale, four-weight skinning,
-sampled IK animations, GLB export and native model portraits.
+sampled IK animations, authored Cannibalize clip, GLB export and native model portraits.
 Derived files: RealGhoul.glb, RealGhoul_base.png, RealGhoul.mmat and the
 RealGhoul portrait in Assets/Art/unit-portraits.png.
 Original model, texture, archive and attribution page: SourceAssets/ghoul.

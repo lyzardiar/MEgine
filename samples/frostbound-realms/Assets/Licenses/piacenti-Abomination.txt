@@ -3,7 +3,7 @@ Author: piacenti
 https://opengameart.org/content/troll-mauler
 CC-BY-3.0
 https://creativecommons.org/licenses/by/3.0/
-MEngine adaptations by MiYu: normalized rig, authored Idle/Walk/Attack/Death,
+MEngine adaptations by MiYu: normalized rig, authored Idle/Walk/Attack/Death/Cannibalize,
 body/cloth/eye texture atlases, authored cleaver/hook/sutures and surface materials,
 four-weight skinning, GLB and native unit portrait.
 Derived files: RealAbomination.glb, RealAbomination_base.png, RealAbomination_normal.png,

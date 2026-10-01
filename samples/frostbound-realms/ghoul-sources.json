@@ -52,6 +52,10 @@
         {
           "name": "Harvest",
           "frames": 20
+        },
+        {
+          "name": "Cannibalize",
+          "frames": 20
         }
       ],
       "size": [
@@ -64,7 +68,7 @@
   "generated": [
     {
       "file": "Assets/Models/RealGhoul.glb",
-      "sha256": "966803166f51baa971101df0aa95a4fa82f65f303c5cce861a070d9ac369423b"
+      "sha256": "a69ddca9b24eabfcadfcf2c25b075b9cd06f513475f69f3901fa7f4407fc2639"
     },
     {
       "file": "Assets/Textures/RealGhoul_base.png",
@@ -76,11 +80,11 @@
     },
     {
       "file": "Licenses/Rosswet-Ghoul.txt",
-      "sha256": "fa3defe21623c4e78a21d32220e01f1a7d2cf844f544bae15aec2eae5d044e67"
+      "sha256": "d7c129c891a7a00938682f8ccabea8c010636fe1aa8161912b038eac725a3d4a"
     },
     {
       "file": "Assets/Licenses/Rosswet-Ghoul.txt",
-      "sha256": "fa3defe21623c4e78a21d32220e01f1a7d2cf844f544bae15aec2eae5d044e67"
+      "sha256": "d7c129c891a7a00938682f8ccabea8c010636fe1aa8161912b038eac725a3d4a"
     }
   ]
 }

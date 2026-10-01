@@ -16,7 +16,7 @@ assert len(doc['meshes'])==len(doc['skins'])==1 and len(doc['skins'][0]['joints'
 primitive=doc['meshes'][0]['primitives'][0];attrs=primitive['attributes'];points=adapter.accessor(doc,blob,attrs['POSITION']);uv=adapter.accessor(doc,blob,attrs['TEXCOORD_0']);weights=adapter.accessor(doc,blob,attrs['WEIGHTS_0']);joints=adapter.accessor(doc,blob,attrs['JOINTS_0']);indices=adapter.accessor(doc,blob,primitive['indices']).ravel()
 assert all(np.isfinite(a).all() for a in [points,uv,weights]);assert weights.shape==(len(points),4) and weights.min()>=0;np.testing.assert_allclose(weights.sum(axis=1),1,atol=1e-5)
 assert joints.max()<41 and uv.min()>=-1e-6 and uv.max()<=1.000001;assert indices.min()>=0 and indices.max()<len(points) and len(indices)%3==0
-assert [a['name'] for a in doc['animations']]==['Idle','Walk','Attack','Death','Harvest'];weighted={doc['skins'][0]['joints'][int(j)] for j in joints[weights>0]};references=[];motion={}
+assert [a['name'] for a in doc['animations']]==['Idle','Walk','Attack','Death','Harvest','Cannibalize'];weighted={doc['skins'][0]['joints'][int(j)] for j in joints[weights>0]};references=[];motion={}
 for i,clip in enumerate(doc['animations']):
     assert all(s.get('interpolation','LINEAR') in ['LINEAR','STEP'] for s in clip['samplers'])
     moving={doc['nodes'][c['target']['node']]['name'] for c in clip['channels'] if c['target']['node'] in weighted and np.ptp(adapter.accessor(doc,blob,clip['samplers'][c['sampler']]['output']),axis=0).max()>.005};motion[clip['name']]=sorted(moving);assert moving,clip['name']

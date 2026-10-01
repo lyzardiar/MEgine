@@ -83,7 +83,7 @@ def main():
     def turn(name,axis,angle):
         bone=rig.pose.bones[name];rest=bone.bone.matrix_local.to_quaternion();bone.rotation_mode='QUATERNION';bone.rotation_quaternion=rest.inverted()@Quaternion(axis,angle)@rest
     actions={};clips=[]
-    for name,last in [('Idle',40),('Walk',40),('Attack',32),('Death',40)]:
+    for name,last in [('Idle',40),('Walk',40),('Attack',32),('Death',40),('Cannibalize',40)]:
         action=bpy.data.actions.new(KEY+' '+name);rig.animation_data.action=action
         for frame in range(last+1):
             scene.frame_set(frame)
@@ -100,6 +100,8 @@ def main():
                 wind=math.sin(min(t/.45,1)*math.pi/2) if t<.45 else max(0,1-(t-.45)/.55)
                 strike=math.sin((t-.3)/.45*math.pi) if .3<t<.75 else 0
                 turn('Bone.001',(1,0,0),-.1*wind+.3*strike);turn('Bone.002',(0,0,1),-.22*wind);turn('arm.R',(1,0,0),-1.5*wind+.45*strike);turn('forearm.R',(1,0,0),-.55*wind);turn('arm.L',(1,0,0),-.25*wind)
+            elif name=='Cannibalize':
+                chew=math.sin(t*math.tau);turn('Bone.001',(1,0,0),.6+.05*chew);turn('Bone.002',(1,0,0),.16);turn('Bone.003',(1,0,0),.12*chew);turn('arm.R',(1,0,0),-.3-.12*chew);turn('arm.L',(1,0,0),-.3+.12*chew)
             else:
                 fall=min(1,max(0,(t-.08)/.72));ease=fall*fall*(3-2*fall)
                 turn('UndeadRoot',(1,0,0),1.57*ease);turn('Bone.001',(1,0,0),.15*math.sin(fall*math.pi));turn('arm.L',(0,0,1),.1*ease);turn('arm.R',(0,0,1),-.1*ease)
@@ -111,7 +113,7 @@ def main():
             for key in curve.keyframe_points:key.interpolation='LINEAR'
         actions[name]=action;rig.animation_data.action=None
     rig.animation_data.action=actions['Idle'];scene.frame_set(0);bpy.context.view_layer.update();obj=mesh.evaluated_get(bpy.context.evaluated_depsgraph_get());points=[obj.matrix_world@v.co for v in obj.data.vertices];size=[max(p[i] for p in points)-min(p[i] for p in points) for i in [0,2,1]];rig.animation_data.action=None
-    for name in ['Idle','Walk','Attack','Death']:
+    for name in ['Idle','Walk','Attack','Death','Cannibalize']:
         action=actions[name];start,end=action.frame_range;track=rig.animation_data.nla_tracks.new();track.name=name;strip=track.strips.new(name,0,action);strip.action_frame_start=start;strip.action_frame_end=end;strip.frame_start=0;strip.frame_end=end-start;clips.append({'name':name,'frames':max(1,round((end-start)/scene.render.fps*12))})
     mesh.select_set(True);model='Assets/Models/'+KEY+'.glb';bpy.ops.export_scene.gltf(filepath=str(SAMPLE/model),export_format='GLB',use_selection=True,export_materials='NONE',export_animations=True,export_animation_mode='NLA_TRACKS',export_force_sampling=True,export_optimize_animation_size=False,export_extras=False);generated.append(model)
     finishes={'iron':([.22,.24,.23],.8,.6),'edge':([.52,.55,.53],.9,.35),'wood':([.12,.055,.022],0,.85),'scar':([.12,.022,.017],0,.82),'thread':([.055,.042,.025],0,.9)}
@@ -127,7 +129,7 @@ def main():
         atlas=bpy.data.images.new(KEY+' '+channel,width=3072,height=2048);atlas.colorspace_settings.name='sRGB' if channel=='base' else 'Non-Color';atlas.pixels.foreach_set(pixels.ravel());relative='Assets/Textures/'+KEY+'_'+channel+'.png';atlas.filepath_raw=str(SAMPLE/relative);atlas.file_format='PNG';atlas.save();generated.append(relative)
     material='Assets/Materials/'+KEY+'.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':'Revenant abomination','shader':'pbr','base_color':[1,1,1,1],'base_color_texture':'Assets/Textures/'+KEY+'_base.png','normal_texture':'Assets/Textures/'+KEY+'_normal.png','normal_scale':.65,'metallic_roughness_texture':'Assets/Textures/'+KEY+'_arm.png','metallic':1,'roughness':1,'double_sided':True}));generated.append(material)
     catalog_path=SAMPLE/'model-catalog.json';catalog=json.loads(catalog_path.read_text());catalog[KEY]={'material':material,'parts':[{'name':KEY,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True,'attackEvent':.5};catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')
-    license_text='Troll Mauler / RealAbomination\nAuthor: piacenti\n'+manifest['page']+'\nCC-BY-3.0\n'+manifest['licenseUrl']+'\nMEngine adaptations by MiYu: normalized rig, authored Idle/Walk/Attack/Death,\nbody/cloth/eye texture atlases, authored cleaver/hook/sutures and surface materials,\nfour-weight skinning, GLB and native unit portrait.\nDerived files: RealAbomination.glb, RealAbomination_base.png, RealAbomination_normal.png,\nRealAbomination_arm.png, RealAbomination.mmat and the RealAbomination portrait in Assets/Art/unit-portraits.png.\nSource: SourceAssets/abomination/troll.blend. Hashes: abomination-sources.json.\nRebuild: Blender 4.5.9 with scripts/import-frost-abomination.py.\n'
+    license_text='Troll Mauler / RealAbomination\nAuthor: piacenti\n'+manifest['page']+'\nCC-BY-3.0\n'+manifest['licenseUrl']+'\nMEngine adaptations by MiYu: normalized rig, authored Idle/Walk/Attack/Death/Cannibalize,\nbody/cloth/eye texture atlases, authored cleaver/hook/sutures and surface materials,\nfour-weight skinning, GLB and native unit portrait.\nDerived files: RealAbomination.glb, RealAbomination_base.png, RealAbomination_normal.png,\nRealAbomination_arm.png, RealAbomination.mmat and the RealAbomination portrait in Assets/Art/unit-portraits.png.\nSource: SourceAssets/abomination/troll.blend. Hashes: abomination-sources.json.\nRebuild: Blender 4.5.9 with scripts/import-frost-abomination.py.\n'
     for folder in ['Licenses','Assets/Licenses']:
         relative=folder+'/piacenti-Abomination.txt';(SAMPLE/relative).write_bytes(license_text.encode());generated.append(relative)
     manifest['models']={KEY:{'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size,'attachments':attachment_stats}};manifest['generated']=[{'file':p,'sha256':hashlib.sha256((SAMPLE/p).read_bytes()).hexdigest()} for p in generated];manifest_path.write_text(json.dumps(manifest,indent=2)+'\n');print('Imported',KEY,manifest['models'][KEY],flush=True)
