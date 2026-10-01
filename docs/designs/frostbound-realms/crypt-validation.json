@@ -1,0 +1,101 @@
+{
+  "passed": true,
+  "protocol": 19,
+  "model": {
+    "triangles": 4316,
+    "size": [
+      6.400000095367432,
+      4.800000190734863,
+      6.400000095367432
+    ],
+    "modules": 90
+  },
+  "sourceManifest": "samples/frostbound-realms/crypt-sources.json",
+  "rulesAndTcp": "PASS: node scripts/test-frostbound.mjs",
+  "hostTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "nativeGameplay": {
+    "fixture": "Revenant tier-3 worker with resources; construction and editor placement use native UI input.",
+    "placementPreview": true,
+    "construction": true,
+    "midConstructionSave": true,
+    "nativeMaterialAndPortrait": true,
+    "unitTraining": true,
+    "research": true,
+    "editorPlacementSavePlaytest": true,
+    "shaderRejections": 0
+  },
+  "reproducedGenerated": [
+    {
+      "file": "Assets/Textures/RealRevenantBarracks_base.png",
+      "sha256": "0a129d7a088970269d45eb41110ad62c1ed74f911e0652e18aca364cd5d7bda9"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantBarracks_normal.png",
+      "sha256": "1ba9fa06d4de2686ba77eb2b9b8b2f4a73fd2cc44930fdce1596d10e628e49b8"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantBarracks_arm.png",
+      "sha256": "fd2147181c3f8d93d02ece3336b30eead8648e11b227f23fe376ac8133c61de7"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantBarracks_emissive.png",
+      "sha256": "fe5d5953629a1fb879c77df0457f4f957a93dff85222447f84c7c73597ce2482"
+    },
+    {
+      "file": "Assets/Models/RealRevenantBarracks.glb",
+      "sha256": "61d9a2eedf9e6fdeb1d45e9f60dbec073b91dd08b11ee0240b5ee779a2f85676"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantBarracks.mmat",
+      "sha256": "3466a0cb09c4b70920754c33a1534eba64dd5827de6ba0782e67a99350322fd1"
+    },
+    {
+      "file": "Licenses/Revenant-Crypt.txt",
+      "sha256": "8480f6307aa9894bd985f971a21dbd61040d3fdceef0ddc31e76417e1a6830b1"
+    },
+    {
+      "file": "Assets/Licenses/Revenant-Crypt.txt",
+      "sha256": "8480f6307aa9894bd985f971a21dbd61040d3fdceef0ddc31e76417e1a6830b1"
+    }
+  ],
+  "package": {
+    "contentHash": "3d10d0c6380825e9b5a137c1351c46ed332a1c774ab05570713ac63293ae77c1",
+    "files": 661,
+    "startupSeconds": 30,
+    "loggedErrors": 0,
+    "responding": true
+  },
+  "screenshots": [
+    {
+      "file": "crypt-views.png",
+      "sha256": "289b016b36e6963b5a156b1591a0f6236d4f7e0e7f7417dcab9abd94f81cf5fe"
+    },
+    {
+      "file": "crypt-placement.png",
+      "sha256": "656816b41b16c258d5ced8a6d7463b062fc3464de9299f6aa8162542b7f5d0b5"
+    },
+    {
+      "file": "crypt-construction.png",
+      "sha256": "bb77b8c7f017b1992f0f164b8e0f872322c25e15370aff69a627f4f0ee5e6bf2"
+    },
+    {
+      "file": "crypt-complete.png",
+      "sha256": "2c5742aa552ff0a0beee115175a2029be57adc27e35e20bb7fa279ffbd061df8"
+    },
+    {
+      "file": "crypt-research.png",
+      "sha256": "acb79c039379326cb8f3ced6bdd8a7c971d3cd4dc2bde7a659548457a444390a"
+    },
+    {
+      "file": "crypt-editor.png",
+      "sha256": "6b419682fcdd3956ba0d8fd8b0b49263c3330e817d86804eff734efeb925fbd5"
+    }
+  ],
+  "captureLimitation": "Initial portrait project.open requests timed out. Capture succeeded using the same isolated project with a manually launched Release editor; cold-start timeout cause is unproven. Focused gameplay QA passed with the standard launcher.",
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLan": false
+}

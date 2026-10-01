@@ -1,0 +1,73 @@
+{
+  "author": "rubberduck; MiYu adaptations",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "sources": [
+    {
+      "file": "SourceAssets/revenant-fortress/dungeon-tileset-extended.zip",
+      "url": "https://opengameart.org/sites/default/files/dungeon-tileset-extended.zip",
+      "sha256": "ffe0deccc0f24006c5ce89632797865e6536d381dc45129bd5f2db6130cad39e",
+      "bytes": 21887093
+    },
+    {
+      "file": "SourceAssets/revenant-fortress/source-page.html",
+      "url": "https://opengameart.org/content/3d-castle-dungeon-tileset-extended",
+      "sha256": "9e2b200e1c177bf2439221c15937bd07cb18cf4198c20189f8ab495cee51ccd8",
+      "bytes": 42397
+    }
+  ],
+  "generator": "scripts/import-frost-revenant-fortress.py --crypt-only",
+  "modules": [
+    "castle-wall-gate-new",
+    "castle-wall-w-deco-1",
+    "castle-wall-w-window",
+    "edge-column-1",
+    "castle-column",
+    "gate-big-2"
+  ],
+  "models": {
+    "RevenantBarracks": {
+      "triangles": 4316,
+      "size": [
+        6.400000095367432,
+        4.800000190734863,
+        6.400000095367432
+      ],
+      "modules": 90
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealRevenantBarracks_base.png",
+      "sha256": "0a129d7a088970269d45eb41110ad62c1ed74f911e0652e18aca364cd5d7bda9"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantBarracks_normal.png",
+      "sha256": "1ba9fa06d4de2686ba77eb2b9b8b2f4a73fd2cc44930fdce1596d10e628e49b8"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantBarracks_arm.png",
+      "sha256": "fd2147181c3f8d93d02ece3336b30eead8648e11b227f23fe376ac8133c61de7"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantBarracks_emissive.png",
+      "sha256": "fe5d5953629a1fb879c77df0457f4f957a93dff85222447f84c7c73597ce2482"
+    },
+    {
+      "file": "Assets/Models/RealRevenantBarracks.glb",
+      "sha256": "61d9a2eedf9e6fdeb1d45e9f60dbec073b91dd08b11ee0240b5ee779a2f85676"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantBarracks.mmat",
+      "sha256": "3466a0cb09c4b70920754c33a1534eba64dd5827de6ba0782e67a99350322fd1"
+    },
+    {
+      "file": "Licenses/Revenant-Crypt.txt",
+      "sha256": "8480f6307aa9894bd985f971a21dbd61040d3fdceef0ddc31e76417e1a6830b1"
+    },
+    {
+      "file": "Assets/Licenses/Revenant-Crypt.txt",
+      "sha256": "8480f6307aa9894bd985f971a21dbd61040d3fdceef0ddc31e76417e1a6830b1"
+    }
+  ]
+}

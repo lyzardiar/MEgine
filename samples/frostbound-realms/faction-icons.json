@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/faction-buildings.png",
-  "sha256": "142f078b38361db6e7e9b4aa38f0e4d8e80e71c5a3119a59b365753bbc25c454",
+  "sha256": "484c7f1f991b462a26d1047a83f64e56cc7a1cdd18797f2134c52b2004e4bddf",
   "generator": "scripts/render-frost-faction-icons.mjs",
   "method": "Native MEngine Release render of the actual building meshes; no generated concept art",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -142,8 +142,8 @@
     },
     {
       "name": "RevenantBarracks",
-      "mesh": "Assets/Models/RevenantBarracks.glb",
-      "material": "Assets/Materials/RevenantBarracks.mmat"
+      "mesh": "Assets/Models/RealRevenantBarracks.glb",
+      "material": "Assets/Materials/RealRevenantBarracks.mmat"
     },
     {
       "name": "RevenantLodge",

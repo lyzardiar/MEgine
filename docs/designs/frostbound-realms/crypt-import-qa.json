@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "models": [
+    {
+      "model": "RevenantBarracks",
+      "triangles": 4316,
+      "vertices": 7175,
+      "bounds": {
+        "max": [
+          3.200000047683716,
+          4.800000190734863,
+          3.200000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantBarracks.glb",
+        "min": [
+          -3.200000047683716,
+          0.0,
+          -3.200000047683716
+        ],
+        "vertices": 7175
+      },
+      "emissiveTexels": 47589
+    }
+  ]
+}

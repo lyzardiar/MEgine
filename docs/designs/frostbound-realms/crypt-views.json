@@ -1,0 +1,123 @@
+{
+  "file": "docs/designs/frostbound-realms/crypt-views.png",
+  "sha256": "289b016b36e6963b5a156b1591a0f6236d4f7e0e7f7417dcab9abd94f81cf5fe",
+  "generator": "scripts/render-frost-unit-icons.mjs --crypt-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Crypt 0",
+      "mesh": "Assets/Models/RealRevenantBarracks.glb",
+      "material": "Assets/Materials/RealRevenantBarracks.mmat",
+      "bounds": {
+        "max": [
+          3.200000047683716,
+          4.800000190734863,
+          3.200000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantBarracks.glb",
+        "min": [
+          -3.200000047683716,
+          0,
+          -3.200000047683716
+        ],
+        "vertices": 7175
+      }
+    },
+    {
+      "name": "Crypt 0.7853981633974483",
+      "mesh": "Assets/Models/RealRevenantBarracks.glb",
+      "material": "Assets/Materials/RealRevenantBarracks.mmat",
+      "bounds": {
+        "max": [
+          3.200000047683716,
+          4.800000190734863,
+          3.200000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantBarracks.glb",
+        "min": [
+          -3.200000047683716,
+          0,
+          -3.200000047683716
+        ],
+        "vertices": 7175
+      }
+    },
+    {
+      "name": "Crypt 1.5707963267948966",
+      "mesh": "Assets/Models/RealRevenantBarracks.glb",
+      "material": "Assets/Materials/RealRevenantBarracks.mmat",
+      "bounds": {
+        "max": [
+          3.200000047683716,
+          4.800000190734863,
+          3.200000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantBarracks.glb",
+        "min": [
+          -3.200000047683716,
+          0,
+          -3.200000047683716
+        ],
+        "vertices": 7175
+      }
+    },
+    {
+      "name": "Crypt 3.141592653589793",
+      "mesh": "Assets/Models/RealRevenantBarracks.glb",
+      "material": "Assets/Materials/RealRevenantBarracks.mmat",
+      "bounds": {
+        "max": [
+          3.200000047683716,
+          4.800000190734863,
+          3.200000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantBarracks.glb",
+        "min": [
+          -3.200000047683716,
+          0,
+          -3.200000047683716
+        ],
+        "vertices": 7175
+      }
+    },
+    {
+      "name": "Crypt 3.9269908169872414",
+      "mesh": "Assets/Models/RealRevenantBarracks.glb",
+      "material": "Assets/Materials/RealRevenantBarracks.mmat",
+      "bounds": {
+        "max": [
+          3.200000047683716,
+          4.800000190734863,
+          3.200000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantBarracks.glb",
+        "min": [
+          -3.200000047683716,
+          0,
+          -3.200000047683716
+        ],
+        "vertices": 7175
+      }
+    },
+    {
+      "name": "Crypt 4.71238898038469",
+      "mesh": "Assets/Models/RealRevenantBarracks.glb",
+      "material": "Assets/Materials/RealRevenantBarracks.mmat",
+      "bounds": {
+        "max": [
+          3.200000047683716,
+          4.800000190734863,
+          3.200000047683716
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantBarracks.glb",
+        "min": [
+          -3.200000047683716,
+          0,
+          -3.200000047683716
+        ],
+        "vertices": 7175
+      }
+    }
+  ]
+}
