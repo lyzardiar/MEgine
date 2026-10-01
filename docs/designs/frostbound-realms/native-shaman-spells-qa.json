@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "shamanSpells": {
+    "fixture": "Native Agent inputs in a Spirit Lodge practice arena; master research, mixed-team shield targets and an allied fighter with held attack cooldown.",
+    "adeptAndMaster": true,
+    "midResearchSave": true,
+    "lightningFriendlyDamage": true,
+    "persistentAura": true,
+    "bloodlustTint": true,
+    "effectSave": true,
+    "purgeCleanup": true,
+    "autocastToggleAndBuff": true,
+    "shaderRejections": 0
+  }
+}
