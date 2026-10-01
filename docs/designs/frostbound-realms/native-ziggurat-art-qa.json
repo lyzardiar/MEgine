@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "zigguratArt": {
+    "fixture": "Revenant worker builds supply and defense structures; stationary hostile target receives the tower projectile.",
+    "twoPlacementPreviews": true,
+    "twoConstructionSaves": true,
+    "nativeMaterialsAndPortraits": true,
+    "supplyAfterCompletion": 8,
+    "towerUpgradeAndSave": true,
+    "projectileAndDamage": true,
+    "editorPlacementSavePlaytest": true,
+    "shaderRejections": 0
+  }
+}

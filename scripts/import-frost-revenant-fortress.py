@@ -4,7 +4,7 @@ from pathlib import Path
 from mathutils import Vector, Matrix
 import numpy as np
 
-ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';MINE='--mine-only' in sys.argv;CRYPT='--crypt-only' in sys.argv;MANIFEST=SAMPLE/('crypt-sources.json' if CRYPT else 'haunted-mine-sources.json' if MINE else 'revenant-fortress-sources.json');manifest=json.loads(MANIFEST.read_text());folder=ROOT/'tmp/revenant-fortress';folder.mkdir(parents=True,exist_ok=True)
+ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';MINE='--mine-only' in sys.argv;CRYPT='--crypt-only' in sys.argv;ZIGGURAT='--ziggurat-only' in sys.argv;MANIFEST=SAMPLE/('ziggurat-sources.json' if ZIGGURAT else 'crypt-sources.json' if CRYPT else 'haunted-mine-sources.json' if MINE else 'revenant-fortress-sources.json');manifest=json.loads(MANIFEST.read_text());folder=ROOT/'tmp/revenant-fortress';folder.mkdir(parents=True,exist_ok=True)
 for entry in manifest['sources']:
     target=SAMPLE/entry['file']
     if not target.exists():target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(urllib.request.urlopen(entry['url'],timeout=90).read())
@@ -73,9 +73,42 @@ def vault_end(radius,depth,at,mat):
         for loop in face.loop_indices:uv.data[loop].uv=[mesh.vertices[mesh.loops[loop].vertex_index].co[i]/2 for i in axes]
     return obj
 
-for tier in ([0] if MINE or CRYPT else [1,2,3]):
-    key='RevenantBarracks' if CRYPT else 'HauntedMine' if MINE else 'RevenantHall'+(str(tier) if tier>1 else '');parts=[];stone=bpy.data.materials['concrete'];height=3.7+(tier-1)*.55
-    if CRYPT:
+for tier in ([0,1] if ZIGGURAT else [0] if MINE or CRYPT else [1,2,3]):
+    key=('RevenantTower' if tier else 'RevenantLodge') if ZIGGURAT else 'RevenantBarracks' if CRYPT else 'HauntedMine' if MINE else 'RevenantHall'+(str(tier) if tier>1 else '');parts=[];stone=bpy.data.materials['concrete'];height=3.7+(tier-1)*.55
+    if ZIGGURAT:
+        # Broad masonry terraces and four arched facades form the shared ritual base.
+        for level,width in enumerate([5.0,4.6,4.2]):parts.append(block((width,width,.2),(0,0,.1+level*.2),stone))
+        for i in range(4):
+            angle=i*math.pi/2;parts.append(module('castle-wall-gate-new',(3.5,.4,1.7),(math.sin(angle)*1.7,-math.cos(angle)*1.7,.6),angle))
+        parts.append(block((2.8,2.8,.18),(0,0,2.22),stone))
+        parts.append(block((2.3,2.3,.08),(0,0,.65),bpy.data.materials['dark_wall']))
+        for x in [-1.6,1.6]:
+            for y in [-1.6,1.6]:
+                parts.append(module('edge-column-1',(.6,.6,2.5),(x,y,.5)));parts.append(spire(.8,.65,(x,y,3.0)))
+                parts.append(block((.14,.14,.35),(x,y,2.85),glow))
+        for step,width in enumerate([2.9,2.5,2.1]):parts.append(block((width,width,.18),(0,0,2.39+step*.18),roof))
+        if tier:
+            # A caged soul core rises above the same base, supported by carved columns.
+            for x in [-.72,.72]:
+                for y in [-.72,.72]:
+                    parts.append(module('castle-column',(.42,.42,3.5),(x,y,2.8)));parts.append(spire(.65,1.2,(x,y,6.3)))
+            for z in [3.05,4.2,6.25]:
+                for side in [-1,1]:
+                    parts.append(block((1.95,.16,.18),(0,side*.8,z),stone));parts.append(block((.16,1.6,.18),(side*.8,0,z),stone))
+            parts.append(module('castle-column',(.72,.72,.9),(0,0,2.85)))
+            parts.append(block((.95,.95,.16),(0,0,4.15),stone))
+            bpy.ops.mesh.primitive_torus_add(major_segments=32,minor_segments=8,major_radius=.61,minor_radius=.07,location=(0,0,4.85));ring=bpy.context.object;bpy.ops.object.transform_apply(location=True,rotation=True,scale=True);ring.data.materials.append(stone);ring.data.uv_layers.active.name='SourceUV';parts.append(ring)
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3,radius=.42,location=(0,0,4.9));core=bpy.context.object;core.scale=(1,1,1.4);bpy.ops.object.transform_apply(location=True,rotation=True,scale=True);core.data.materials.append(glow);core.data.uv_layers.new(name='SourceUV');parts.append(core)
+            for face in core.data.polygons:face.use_smooth=True
+        else:
+            for x in [-.65,.65]:
+                for y in [-.65,.65]:parts.append(module('castle-column',(.25,.25,.75),(x,y,2.85)))
+            parts.append(block((1.5,1.5,.16),(0,0,3.62),stone));parts.append(spire(1.75,.85,(0,0,3.7)))
+            parts.append(block((.36,.36,.48),(0,0,3.15),glow))
+            for x in [-.22,.22]:
+                for y in [-.22,.22]:parts.append(block((.09,.09,.6),(x,y,3.15),roof))
+            for z in [2.83,3.47]:parts.append(block((.6,.6,.1),(0,0,z),stone))
+    elif CRYPT:
         # A recessed mausoleum entrance, ribbed barrel vault and six buttressed pinnacles.
         for level,width in enumerate([6.4,6.0,5.6]):parts.append(block((width,width,.22),(0,0,.11+level*.22),stone))
         for side in [-1,1]:parts.append(block((.4,4.6,2.05),(side*1.9,.15,1.685),bpy.data.materials['wall-1']))
@@ -161,7 +194,7 @@ for tier in ([0] if MINE or CRYPT else [1,2,3]):
     for face in obj.data.polygons:face.material_index=0
     obj.data.materials.clear();obj.data.materials.append(bpy.data.materials.new('Real'+key+' atlas'))
     mesh='Assets/Models/Real'+key+'.glb';bpy.ops.export_scene.gltf(filepath=str(SAMPLE/mesh),export_format='GLB',use_selection=True,export_materials='NONE',export_animations=False,export_extras=False);generated.append(mesh)
-    material='Assets/Materials/Real'+key+'.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':'Stone '+key,'shader':'pbr','base_color':[1,1,1,1],'base_color_texture':maps['base'],'normal_texture':maps['normal'],'normal_scale':.7,'metallic_roughness_texture':maps['arm'],'roughness':1,'metallic':1,'emissive_texture':maps['emissive'],'emissive':[1,1,1],'emissive_strength':.65 if CRYPT else 1,'double_sided':True}));generated.append(material)
+    material='Assets/Materials/Real'+key+'.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':'Stone '+key,'shader':'pbr','base_color':[1,1,1,1],'base_color_texture':maps['base'],'normal_texture':maps['normal'],'normal_scale':.7,'metallic_roughness_texture':maps['arm'],'roughness':1,'metallic':1,'emissive_texture':maps['emissive'],'emissive':[1,1,1],'emissive_strength':.45 if ZIGGURAT else .65 if CRYPT else 1,'double_sided':True}));generated.append(material)
     points=[v.co for v in obj.data.vertices];size=[max(p[i] for p in points)-min(p[i] for p in points) for i in [0,2,1]];catalog[key]={'material':material,'parts':[{'name':key,'mesh':mesh,'pivot':[0,0,0]}],'size':size,'factionBuilding':True,'realistic':True};stats[key]={'triangles':len(obj.data.polygons),'size':size,'modules':len(parts)};bpy.data.objects.remove(obj,do_unlink=True);print('Imported',key,stats[key],flush=True)
 license_text='''Revenant stone strongholds / RealRevenantHall, RealRevenantHall2, RealRevenantHall3
 Castle / Dungeon Tileset Extended by rubberduck, CC0-1.0.
@@ -177,5 +210,7 @@ Rebuild: Blender 4.5.9 with scripts/import-frost-revenant-fortress.py.
 '''
 if MINE:license_text=license_text.replace('Revenant stone strongholds / RealRevenantHall, RealRevenantHall2, RealRevenantHall3','Haunted Gold Mine / RealHauntedMine').replace('RealRevenantHall*','RealHauntedMine*').replace('RevenantHall portraits','HauntedMine portrait').replace('revenant-fortress-sources.json','haunted-mine-sources.json').replace('scripts/import-frost-revenant-fortress.py.','scripts/import-frost-revenant-fortress.py --mine-only.')
 if CRYPT:license_text=license_text.replace('Revenant stone strongholds / RealRevenantHall, RealRevenantHall2, RealRevenantHall3','Revenant Crypt / RealRevenantBarracks').replace('RealRevenantHall*','RealRevenantBarracks*').replace('RevenantHall portraits','RevenantBarracks portrait').replace('revenant-fortress-sources.json','crypt-sources.json').replace('scripts/import-frost-revenant-fortress.py.','scripts/import-frost-revenant-fortress.py --crypt-only.').replace('stepped foundations, roofs, soul windows','stepped foundations, ribbed vaults, soul windows')
-for location in (['Licenses/Revenant-Crypt.txt','Assets/Licenses/Revenant-Crypt.txt'] if CRYPT else ['Licenses/Haunted-Mine.txt','Assets/Licenses/Haunted-Mine.txt'] if MINE else ['Licenses/Revenant-Fortress.txt','Assets/Licenses/Revenant-Fortress.txt']):(SAMPLE/location).write_bytes(license_text.encode());generated.append(location)
+if ZIGGURAT:license_text=license_text.replace('Revenant stone strongholds / RealRevenantHall, RealRevenantHall2, RealRevenantHall3','Revenant Ziggurat and Soul Tower / RealRevenantLodge, RealRevenantTower').replace('RealRevenantHall*','RealRevenantLodge* and RealRevenantTower*').replace('RevenantHall portraits','RevenantLodge and RevenantTower portraits').replace('revenant-fortress-sources.json','ziggurat-sources.json').replace('scripts/import-frost-revenant-fortress.py.','scripts/import-frost-revenant-fortress.py --ziggurat-only.')
+if ZIGGURAT:license_text=license_text.replace('Derived files: RealRevenantLodge* and RealRevenantTower*.glb, RealRevenantLodge* and RealRevenantTower*.png,\nRealRevenantLodge* and RealRevenantTower*.mmat,','Derived files: RealRevenantLodge and RealRevenantTower models, textures and materials,')
+for location in (['Licenses/Revenant-Ziggurat.txt','Assets/Licenses/Revenant-Ziggurat.txt'] if ZIGGURAT else ['Licenses/Revenant-Crypt.txt','Assets/Licenses/Revenant-Crypt.txt'] if CRYPT else ['Licenses/Haunted-Mine.txt','Assets/Licenses/Haunted-Mine.txt'] if MINE else ['Licenses/Revenant-Fortress.txt','Assets/Licenses/Revenant-Fortress.txt']):(SAMPLE/location).write_bytes(license_text.encode());generated.append(location)
 manifest['modules']=names;manifest['models']=stats;manifest['generated']=[{'file':p,'sha256':hashlib.sha256((SAMPLE/p).read_bytes()).hexdigest()} for p in generated];MANIFEST.write_text(json.dumps(manifest,indent=2)+'\n');catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')

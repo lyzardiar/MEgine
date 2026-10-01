@@ -187,6 +187,8 @@ node scripts/qa-frostbound.mjs
 
 亡灵兵营使用石砌陵墓 `RealRevenantBarracks`：凹入入口、封闭拱顶、石肋、六座扶壁尖塔及带窗棂的绿光窗，4,316 三角面及四张 2048² 贴图。改编自 rubberduck 的 CC0 城堡模块，八个派生文件的哈希可重复生成；施工、头像及地图编辑器共用该模型。来源、原生实拍和验证见 [兵营美术](../../docs/designs/frostbound-realms/crypt-art.md)。
 
+亡灵补给与防御建筑采用同源 CC0 石材的 `RealRevenantLodge`、`RealRevenantTower`，显示为 Ziggurat 和 Soul tower，具有阶梯基座、拱门、扶壁以及灯笼或上层魂火核心。两种建筑的模型、四通道贴图及许可共 14 个文件可复现；来源与原生施工、攻击、编辑器截图见 [通灵塔建筑美术](../../docs/designs/frostbound-realms/ziggurat-art.md)。目前仍使用原有补给和防御塔规则，原版两条升级分支尚待实现。
+
 亡灵主基地的三个等级使用带石砌门洞、柱饰、阶梯基座和绿光窗的 CC0 石质建筑，升级增加塔楼和中央尖塔，保持相同占地。模型、贴图、头像及升级中存档恢复已验证；来源、重建和游戏实拍见 [亡灵主基地](../../docs/designs/frostbound-realms/revenant-fortress.md)。
 
 亡灵工人采用带兜帽、暗色长袍和短刃的 `RealAcolyte` 人形模型，采金/修理播放仪式动作，伐木使用斧头，保留现有工人经济规则。四组模型共 208 个原生动作采样已验证；来源、动作图、存档和召唤建造验证见 [亡灵工人美术](../../docs/designs/frostbound-realms/acolyte.md)。

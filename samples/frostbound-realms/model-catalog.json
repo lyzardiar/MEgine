@@ -1555,11 +1555,11 @@
     "realistic": true
   },
   "RevenantLodge": {
-    "material": "Assets/Materials/RevenantLodge.mmat",
+    "material": "Assets/Materials/RealRevenantLodge.mmat",
     "parts": [
       {
         "name": "RevenantLodge",
-        "mesh": "Assets/Models/RevenantLodge.glb",
+        "mesh": "Assets/Models/RealRevenantLodge.glb",
         "pivot": [
           0,
           0,
@@ -1568,18 +1568,19 @@
       }
     ],
     "size": [
-      2.4,
-      2.5,
-      2.4
+      5.0,
+      4.550000190734863,
+      5.0
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "RevenantTower": {
-    "material": "Assets/Materials/RevenantTower.mmat",
+    "material": "Assets/Materials/RealRevenantTower.mmat",
     "parts": [
       {
         "name": "RevenantTower",
-        "mesh": "Assets/Models/RevenantTower.glb",
+        "mesh": "Assets/Models/RealRevenantTower.glb",
         "pivot": [
           0,
           0,
@@ -1588,11 +1589,12 @@
       }
     ],
     "size": [
-      1.8,
-      4.4,
-      1.8
+      5.0,
+      7.5,
+      5.0
     ],
-    "factionBuilding": true
+    "factionBuilding": true,
+    "realistic": true
   },
   "RevenantAltar": {
     "material": "Assets/Materials/RevenantAltar.mmat",

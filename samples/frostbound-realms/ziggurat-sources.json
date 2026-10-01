@@ -1,0 +1,106 @@
+{
+  "author": "rubberduck; MiYu adaptations",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "sources": [
+    {
+      "file": "SourceAssets/revenant-fortress/dungeon-tileset-extended.zip",
+      "url": "https://opengameart.org/sites/default/files/dungeon-tileset-extended.zip",
+      "sha256": "ffe0deccc0f24006c5ce89632797865e6536d381dc45129bd5f2db6130cad39e",
+      "bytes": 21887093
+    },
+    {
+      "file": "SourceAssets/revenant-fortress/source-page.html",
+      "url": "https://opengameart.org/content/3d-castle-dungeon-tileset-extended",
+      "sha256": "9e2b200e1c177bf2439221c15937bd07cb18cf4198c20189f8ab495cee51ccd8",
+      "bytes": 42397
+    }
+  ],
+  "generator": "scripts/import-frost-revenant-fortress.py --ziggurat-only",
+  "modules": [
+    "castle-wall-gate-new",
+    "castle-wall-w-deco-1",
+    "castle-wall-w-window",
+    "edge-column-1",
+    "castle-column",
+    "gate-big-2"
+  ],
+  "models": {
+    "RevenantLodge": {
+      "triangles": 3870,
+      "size": [
+        5.0,
+        4.550000190734863,
+        5.0
+      ],
+      "modules": 37
+    },
+    "RevenantTower": {
+      "triangles": 5062,
+      "size": [
+        5.0,
+        7.5,
+        5.0
+      ],
+      "modules": 48
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealRevenantLodge_base.png",
+      "sha256": "2b4692bd15a7a6c133036871df905cc3bea0b5034deb3d618018fad87817f463"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantLodge_normal.png",
+      "sha256": "522f379fb1920d2425f3703d0721a2da18c77a7bf232d72f4c127d2c4af96c8e"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantLodge_arm.png",
+      "sha256": "056b0493357c6b9ead0dd01abf12908437ebbea0366eee8c4e10e581cfa70a7d"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantLodge_emissive.png",
+      "sha256": "244d765eebd37a5200c3791c8ae962684fdcaabeec18ecebd30ad598df10a906"
+    },
+    {
+      "file": "Assets/Models/RealRevenantLodge.glb",
+      "sha256": "2a42e065ec34c6e13cfe2718c89f4a091e4b7262a6262615c0186e53d4b1c161"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantLodge.mmat",
+      "sha256": "c59ddf9624aea5feab472a70d96b8504f06044bb6f3a10be8d7ad5422623683b"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantTower_base.png",
+      "sha256": "5d1a0fb2693a6cd9bf0af234f7e4f17a8189e41eb3dfd184bd791e2d5d000bd8"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantTower_normal.png",
+      "sha256": "cd5e1b3cd1853a3418d99e172a1425f24053510a9ba1f8416fe536b712663d0e"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantTower_arm.png",
+      "sha256": "3a5f7b12003508def9e2583db8b32482e33309cedc3427d283072ac817f4a0e0"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantTower_emissive.png",
+      "sha256": "095b919372126984aefc2398200d19fbe73f98edb32258e2586c2035ba15832e"
+    },
+    {
+      "file": "Assets/Models/RealRevenantTower.glb",
+      "sha256": "4b4928ac500a67180a98ac5b4b0dbb7578ac0831f0c23fc915bf951a359bf010"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantTower.mmat",
+      "sha256": "9af09da1a0fd2ec0fee93faff9166aee530521150ab211773f754fe5d6dfe510"
+    },
+    {
+      "file": "Licenses/Revenant-Ziggurat.txt",
+      "sha256": "e6eb6995eabc842d4a2dbaa3d9943ecd88532bcd23c832ecb32b8fc257f4fbbc"
+    },
+    {
+      "file": "Assets/Licenses/Revenant-Ziggurat.txt",
+      "sha256": "e6eb6995eabc842d4a2dbaa3d9943ecd88532bcd23c832ecb32b8fc257f4fbbc"
+    }
+  ]
+}

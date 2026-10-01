@@ -1,0 +1,123 @@
+{
+  "file": "docs/designs/frostbound-realms/ziggurat-views.png",
+  "sha256": "9e576b22f42a0fc6e5c2c1bfc2a824c39bff35610fdd2a529b1b92c48e84dbc7",
+  "generator": "scripts/render-frost-unit-icons.mjs --ziggurat-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "RevenantLodge 0",
+      "mesh": "Assets/Models/RealRevenantLodge.glb",
+      "material": "Assets/Materials/RealRevenantLodge.mmat",
+      "bounds": {
+        "max": [
+          2.5,
+          4.550000190734863,
+          2.5
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantLodge.glb",
+        "min": [
+          -2.5,
+          0,
+          -2.5
+        ],
+        "vertices": 6336
+      }
+    },
+    {
+      "name": "RevenantLodge 0.7853981633974483",
+      "mesh": "Assets/Models/RealRevenantLodge.glb",
+      "material": "Assets/Materials/RealRevenantLodge.mmat",
+      "bounds": {
+        "max": [
+          2.5,
+          4.550000190734863,
+          2.5
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantLodge.glb",
+        "min": [
+          -2.5,
+          0,
+          -2.5
+        ],
+        "vertices": 6336
+      }
+    },
+    {
+      "name": "RevenantLodge 1.5707963267948966",
+      "mesh": "Assets/Models/RealRevenantLodge.glb",
+      "material": "Assets/Materials/RealRevenantLodge.mmat",
+      "bounds": {
+        "max": [
+          2.5,
+          4.550000190734863,
+          2.5
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantLodge.glb",
+        "min": [
+          -2.5,
+          0,
+          -2.5
+        ],
+        "vertices": 6336
+      }
+    },
+    {
+      "name": "RevenantTower 0",
+      "mesh": "Assets/Models/RealRevenantTower.glb",
+      "material": "Assets/Materials/RealRevenantTower.mmat",
+      "bounds": {
+        "max": [
+          2.5,
+          7.5,
+          2.5
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantTower.glb",
+        "min": [
+          -2.5,
+          0,
+          -2.5
+        ],
+        "vertices": 8186
+      }
+    },
+    {
+      "name": "RevenantTower 0.7853981633974483",
+      "mesh": "Assets/Models/RealRevenantTower.glb",
+      "material": "Assets/Materials/RealRevenantTower.mmat",
+      "bounds": {
+        "max": [
+          2.5,
+          7.5,
+          2.5
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantTower.glb",
+        "min": [
+          -2.5,
+          0,
+          -2.5
+        ],
+        "vertices": 8186
+      }
+    },
+    {
+      "name": "RevenantTower 1.5707963267948966",
+      "mesh": "Assets/Models/RealRevenantTower.glb",
+      "material": "Assets/Materials/RealRevenantTower.mmat",
+      "bounds": {
+        "max": [
+          2.5,
+          7.5,
+          2.5
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantTower.glb",
+        "min": [
+          -2.5,
+          0,
+          -2.5
+        ],
+        "vertices": 8186
+      }
+    }
+  ]
+}

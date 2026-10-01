@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "models": [
+    {
+      "model": "RevenantLodge",
+      "triangles": 3870,
+      "vertices": 6336,
+      "bounds": {
+        "max": [
+          2.5,
+          4.550000190734863,
+          2.5
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantLodge.glb",
+        "min": [
+          -2.5,
+          0.0,
+          -2.5
+        ],
+        "vertices": 6336
+      },
+      "emissiveTexels": 29747
+    },
+    {
+      "model": "RevenantTower",
+      "triangles": 5062,
+      "vertices": 8186,
+      "bounds": {
+        "max": [
+          2.5,
+          7.5,
+          2.5
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealRevenantTower.glb",
+        "min": [
+          -2.5,
+          0.0,
+          -2.5
+        ],
+        "vertices": 8186
+      },
+      "emissiveTexels": 40319
+    }
+  ]
+}

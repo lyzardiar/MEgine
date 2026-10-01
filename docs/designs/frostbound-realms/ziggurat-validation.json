@@ -1,0 +1,152 @@
+{
+  "passed": true,
+  "protocol": 19,
+  "models": {
+    "RevenantLodge": {
+      "triangles": 3870,
+      "size": [
+        5.0,
+        4.550000190734863,
+        5.0
+      ],
+      "modules": 37
+    },
+    "RevenantTower": {
+      "triangles": 5062,
+      "size": [
+        5.0,
+        7.5,
+        5.0
+      ],
+      "modules": 48
+    }
+  },
+  "sourceManifest": "samples/frostbound-realms/ziggurat-sources.json",
+  "rulesAndTcp": "PASS: node scripts/test-frostbound.mjs",
+  "hostTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "nativeGameplay": {
+    "fixture": "Revenant worker builds supply and defense structures; stationary hostile target receives the tower projectile.",
+    "twoPlacementPreviews": true,
+    "twoConstructionSaves": true,
+    "nativeMaterialsAndPortraits": true,
+    "supplyAfterCompletion": 8,
+    "towerUpgradeAndSave": true,
+    "projectileAndDamage": true,
+    "editorPlacementSavePlaytest": true,
+    "shaderRejections": 0
+  },
+  "reproducedGenerated": [
+    {
+      "file": "Assets/Textures/RealRevenantLodge_base.png",
+      "sha256": "2b4692bd15a7a6c133036871df905cc3bea0b5034deb3d618018fad87817f463"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantLodge_normal.png",
+      "sha256": "522f379fb1920d2425f3703d0721a2da18c77a7bf232d72f4c127d2c4af96c8e"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantLodge_arm.png",
+      "sha256": "056b0493357c6b9ead0dd01abf12908437ebbea0366eee8c4e10e581cfa70a7d"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantLodge_emissive.png",
+      "sha256": "244d765eebd37a5200c3791c8ae962684fdcaabeec18ecebd30ad598df10a906"
+    },
+    {
+      "file": "Assets/Models/RealRevenantLodge.glb",
+      "sha256": "2a42e065ec34c6e13cfe2718c89f4a091e4b7262a6262615c0186e53d4b1c161"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantLodge.mmat",
+      "sha256": "c59ddf9624aea5feab472a70d96b8504f06044bb6f3a10be8d7ad5422623683b"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantTower_base.png",
+      "sha256": "5d1a0fb2693a6cd9bf0af234f7e4f17a8189e41eb3dfd184bd791e2d5d000bd8"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantTower_normal.png",
+      "sha256": "cd5e1b3cd1853a3418d99e172a1425f24053510a9ba1f8416fe536b712663d0e"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantTower_arm.png",
+      "sha256": "3a5f7b12003508def9e2583db8b32482e33309cedc3427d283072ac817f4a0e0"
+    },
+    {
+      "file": "Assets/Textures/RealRevenantTower_emissive.png",
+      "sha256": "095b919372126984aefc2398200d19fbe73f98edb32258e2586c2035ba15832e"
+    },
+    {
+      "file": "Assets/Models/RealRevenantTower.glb",
+      "sha256": "4b4928ac500a67180a98ac5b4b0dbb7578ac0831f0c23fc915bf951a359bf010"
+    },
+    {
+      "file": "Assets/Materials/RealRevenantTower.mmat",
+      "sha256": "9af09da1a0fd2ec0fee93faff9166aee530521150ab211773f754fe5d6dfe510"
+    },
+    {
+      "file": "Licenses/Revenant-Ziggurat.txt",
+      "sha256": "e6eb6995eabc842d4a2dbaa3d9943ecd88532bcd23c832ecb32b8fc257f4fbbc"
+    },
+    {
+      "file": "Assets/Licenses/Revenant-Ziggurat.txt",
+      "sha256": "e6eb6995eabc842d4a2dbaa3d9943ecd88532bcd23c832ecb32b8fc257f4fbbc"
+    }
+  ],
+  "gitIndexAndCheckoutHashes": {
+    "passed": true,
+    "files": 14
+  },
+  "package": {
+    "contentHash": "3152fb2f3c2a85800f8403d0ab29642eccd3524057a0a2285102012149b98f29",
+    "files": 674,
+    "startupSeconds": 30,
+    "loggedErrors": 0,
+    "responding": true
+  },
+  "screenshots": [
+    {
+      "file": "ziggurat-views.png",
+      "sha256": "9e576b22f42a0fc6e5c2c1bfc2a824c39bff35610fdd2a529b1b92c48e84dbc7"
+    },
+    {
+      "file": "ziggurat-farm-placement.png",
+      "sha256": "f6d44d5f194ff80017aebe2af5ec5dc7e5f219084731d3c3d5674c2441a3990c"
+    },
+    {
+      "file": "ziggurat-farm-construction.png",
+      "sha256": "6e5fa0787f40e6107b45bdc43aa949d9bead4be247ff7089581066aabb03eaf6"
+    },
+    {
+      "file": "ziggurat-farm-complete.png",
+      "sha256": "74e262d27e1db6f2e41cbf44678b6654d1a48d27268694ef69bc656f2c88004b"
+    },
+    {
+      "file": "ziggurat-tower-placement.png",
+      "sha256": "e994c62e39da76bebfe2e3e9cd1ffe92a36747006d8a5756366c7a77b7371cde"
+    },
+    {
+      "file": "ziggurat-tower-construction.png",
+      "sha256": "4dc9a61114570cf364ea6931dabe3d3feecc445c4ce57a20ba7970b5147845ff"
+    },
+    {
+      "file": "ziggurat-tower-complete.png",
+      "sha256": "dbde556d155319b819bf1726c37a6a003c5ddc61ffcbdfeb5209955bba2f4aa6"
+    },
+    {
+      "file": "ziggurat-tower-attack.png",
+      "sha256": "83b9ae8c71725c7c9b1c52964e1bcd9ac331aa30c27c1882b574d197dfb5d4a5"
+    },
+    {
+      "file": "ziggurat-editor.png",
+      "sha256": "7432ac2ccfb8d0a838fde77f75c24cd3528a02bf0b3762ccdcc748fc59e154b9"
+    }
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLan": false,
+  "remainingFidelity": "Original Ziggurat upgrade branches, prerequisites and exact supply/economy values remain unfinished."
+}

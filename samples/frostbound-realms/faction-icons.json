@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/faction-buildings.png",
-  "sha256": "484c7f1f991b462a26d1047a83f64e56cc7a1cdd18797f2134c52b2004e4bddf",
+  "sha256": "3f2d5241faad7c8c2e6b0474cbfa835c808d4d7fe49195796e6e37c852e357fe",
   "generator": "scripts/render-frost-faction-icons.mjs",
   "method": "Native MEngine Release render of the actual building meshes; no generated concept art",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -147,13 +147,13 @@
     },
     {
       "name": "RevenantLodge",
-      "mesh": "Assets/Models/RevenantLodge.glb",
-      "material": "Assets/Materials/RevenantLodge.mmat"
+      "mesh": "Assets/Models/RealRevenantLodge.glb",
+      "material": "Assets/Materials/RealRevenantLodge.mmat"
     },
     {
       "name": "RevenantTower",
-      "mesh": "Assets/Models/RevenantTower.glb",
-      "material": "Assets/Materials/RevenantTower.mmat"
+      "mesh": "Assets/Models/RealRevenantTower.glb",
+      "material": "Assets/Materials/RealRevenantTower.mmat"
     },
     {
       "name": "RevenantAltar",
