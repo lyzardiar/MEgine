@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "610dbf81705988c78c58a45bafab7f0740afa070de2f40d9afa52dff415e2d3f",
+  "sha256": "7df0d657b01806e635f0001c05edeb4e50581f2135428dd0fbbec29251c8b97b",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -291,6 +291,25 @@
       }
     },
     {
+      "name": "RealNecromancer",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=0:4",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.6064163446426392,
+          3.302206516265869,
+          0.6646506786346436
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=0:4",
+        "min": [
+          -0.774537980556488,
+          -0.017280681058764458,
+          -0.34377288818359375
+        ],
+        "vertices": 17940
+      }
+    },
+    {
       "name": "RealOrc",
       "mesh": "Assets/Models/RealOrc.glb#pose=0:4",
       "material": "Assets/Materials/RealOrc.mmat",
@@ -478,25 +497,6 @@
           -0.8609089851379395
         ],
         "vertices": 2279
-      }
-    },
-    {
-      "name": "Skeleton_Mage",
-      "mesh": "Assets/Models/Skeleton_Mage.glb#pose=0:4",
-      "material": "Assets/Materials/Skeleton_Mage.mmat",
-      "bounds": {
-        "max": [
-          0.8821272253990173,
-          2.600192070007324,
-          0.8928455114364624
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Skeleton_Mage.glb#pose=0:4",
-        "min": [
-          -0.9158181548118591,
-          -0.21321511268615723,
-          -0.8532806038856506
-        ],
-        "vertices": 5935
       }
     },
     {

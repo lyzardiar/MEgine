@@ -3744,5 +3744,44 @@
     "attackEvent": 0.85,
     "ammoLoad": 0.47,
     "shotModel": "RealBoneArcherShoot"
+  },
+  "RealNecromancer": {
+    "material": "Assets/Materials/RealNecromancer.mmat",
+    "parts": [
+      {
+        "name": "RealNecromancer",
+        "mesh": "Assets/Models/RealNecromancer.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Staff_Attack",
+        "frames": 50
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.655487838222771,
+      3.3,
+      2.1970465987386048
+    ],
+    "realistic": true,
+    "attackEvent": 0.25
   }
 }

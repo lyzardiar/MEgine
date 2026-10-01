@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/necromancer-poses.png",
+  "sha256": "87a3c3effb68d3d80d5ca971078c3f38f8a990ab03e74181762a8461776389a0",
+  "generator": "scripts/render-frost-unit-icons.mjs --necromancer-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Idle 0",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=0:0",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.606541097164154,
+          3.302745819091797,
+          0.6644138097763062
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=0:0",
+        "min": [
+          -0.774665117263794,
+          -0.016716312617063522,
+          -0.34372419118881226
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Walk 0.25",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=1:5",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.526323676109314,
+          3.2212657928466797,
+          0.7086492776870728
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=1:5",
+        "min": [
+          -0.6792342662811279,
+          -0.018619956448674202,
+          -0.8017657399177551
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Walk 0.75",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=1:15",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.755084753036499,
+          3.221006155014038,
+          0.7086620330810547
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=1:15",
+        "min": [
+          -0.5854083299636841,
+          -0.01864834502339363,
+          -0.8823423385620117
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Staff_Attack 0.1",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=2:5",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.8134191632270813,
+          3.8745384216308594,
+          0.9200448989868164
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=2:5",
+        "min": [
+          -1.4469220638275146,
+          -0.006692633032798767,
+          -0.27965712547302246
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Staff_Attack 0.25",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=2:12",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.5537749528884888,
+          4.543268203735352,
+          0.8192081451416016
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=2:12",
+        "min": [
+          -1.1195452213287354,
+          -0.004109201952815056,
+          -0.8041844367980957
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Staff_Attack 0.5",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=2:25",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.5511980056762695,
+          4.576622486114502,
+          0.8579721450805664
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=2:25",
+        "min": [
+          -1.065310001373291,
+          -0.016565151512622833,
+          -0.6473045349121094
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Staff_Attack 0.75",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=2:37",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.5390934944152832,
+          4.52681303024292,
+          0.8790974020957947
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=2:37",
+        "min": [
+          -0.9168744683265686,
+          -0.02371365949511528,
+          -0.7973198890686035
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Staff_Attack 0.9",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=2:45",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.808297336101532,
+          3.8500661849975586,
+          0.9188156723976135
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=2:45",
+        "min": [
+          -1.4529370069503784,
+          -0.00772318709641695,
+          -0.279657244682312
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Death 0",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=3:0",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          1.138566017150879,
+          3.055837631225586,
+          0.7674864530563354
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=3:0",
+        "min": [
+          -0.6297614574432373,
+          -0.000004088040441274643,
+          -1.274418830871582
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Death 0.3",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=3:4",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          0.9657202959060669,
+          2.9116382598876953,
+          0.9692198038101196
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=3:4",
+        "min": [
+          -0.9486569166183472,
+          0.0000029709190130233765,
+          -0.8374233841896057
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Death 0.6",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=3:9",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          2.668837785720825,
+          0.9274431467056274,
+          0.547927737236023
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=3:9",
+        "min": [
+          -0.48720771074295044,
+          0.0000055730342864990234,
+          -2.445769786834717
+        ],
+        "vertices": 17940
+      }
+    },
+    {
+      "name": "Death 0.99",
+      "mesh": "Assets/Models/RealNecromancer.glb#pose=3:14",
+      "material": "Assets/Materials/RealNecromancer.mmat",
+      "bounds": {
+        "max": [
+          2.981165885925293,
+          0.611042320728302,
+          0.547927737236023
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealNecromancer.glb#pose=3:14",
+        "min": [
+          -0.5030708312988281,
+          0.0000055730342864990234,
+          -2.46781063079834
+        ],
+        "vertices": 17940
+      }
+    }
+  ]
+}

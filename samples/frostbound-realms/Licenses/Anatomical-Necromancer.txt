@@ -1,0 +1,15 @@
+Anatomical robed necromancer / RealNecromancer
+Body extremities and staff skull: Gord Goodwin, Skeleton with rig, CC0-1.0.
+https://opengameart.org/content/skeleton-with-rig
+Garment, hood, staff, rig and animations: Wildfire Games, 0 A.D., CC-BY-SA-3.0.
+https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+https://creativecommons.org/licenses/by-sa/3.0/
+Adaptations by MiYu: skeletal face/hands/feet fitted to the caster skeleton,
+removed human neck/hands/shoes, dyed fabric, skull staff cap, staff grip placement,
+UV atlas, animation sampling, native PBR materials and unit portrait.
+These adaptations are CC-BY-SA-3.0. Sources and hashes: necromancer-sources.json.
+Original sources: SourceAssets/anatomical-skeleton and SourceAssets/0ad.
+Prepared sources: SourceAssets/necromancer/body.glb and body_base.png.
+Runtime derivatives: Assets/Models/RealNecromancer.glb,
+Assets/Textures/RealNecromancer_*.png, Assets/Materials/RealNecromancer.mmat,
+and the RealNecromancer portrait in Assets/Art/unit-portraits.png.

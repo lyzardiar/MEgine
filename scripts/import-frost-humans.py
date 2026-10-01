@@ -82,7 +82,7 @@ def main():
         for action in list(bpy.data.actions):bpy.data.actions.remove(action)
         scene=bpy.context.scene;scene.frame_start=0;scene.render.engine='CYCLES';scene.cycles.samples=1;scene.cycles.seed=0;scene.render.threads_mode='FIXED';scene.render.threads=1;scene.render.bake.margin=12
         body=definition['parts'][0];objects=import_dae(body['mesh']);rig=max((o for o in objects if o.type=='ARMATURE'),key=lambda o:len(o.data.bones));rig.name=key+'Rig';rig.data.pose_position='REST'
-        matrices=attachment_matrices(body['mesh']);meshes=[];surfaces={};props=[];body_points=[]
+        matrices=attachment_matrices(body.get('attachmentSource',body['mesh']));meshes=[];surfaces={};props=[];body_points=[]
         for index,part in enumerate(definition['parts']):
             added=objects if index==0 else import_dae(part['mesh'])
             assert any(o.type=='MESH' and len(o.data.polygons)>0 for o in added),'Missing mesh geometry: '+part['mesh']
@@ -197,6 +197,12 @@ def main():
                     basis=bone.convert_local_to_pose(desired[bone.name],bone.matrix_local,parent_matrix=desired[parent.name] if parent else Matrix.Identity(4),parent_matrix_local=parent.matrix_local if parent else Matrix.Identity(4),invert=True)
                     pose.rotation_mode='QUATERNION';pose.matrix_basis=basis
                     for channel in ['location','rotation_quaternion','scale']:pose.keyframe_insert(channel,frame=frame-int(start))
+                if name in definition.get('groundClips',[]):
+                    bpy.context.view_layer.update();evaluated=mesh.evaluated_get(bpy.context.evaluated_depsgraph_get());lift=max(0,-min((evaluated.matrix_world@v.co).z for v in evaluated.data.vertices))/rig.scale.z
+                    for matrix in desired.values():matrix.translation.z+=lift
+                    for pose in rig.pose.bones:
+                        bone=pose.bone;parent=bone.parent;pose.matrix_basis=bone.convert_local_to_pose(desired[bone.name],bone.matrix_local,parent_matrix=desired[parent.name] if parent else Matrix.Identity(4),parent_matrix_local=parent.matrix_local if parent else Matrix.Identity(4),invert=True)
+                        pose.keyframe_insert('location',frame=frame-int(start))
                 if name=='Rifle_Shoot' and frame==round(start+(end-start)*definition['attackEvent']):
                     part=next(p for p in definition['parts'] if 'muzzle' in p);bone=part['bone'];point=rig.matrix_world@desired[bone]@rig.data.bones[bone].matrix_local.inverted()@matrices[bone]@Matrix(part['transform'])@Vector(part['muzzle']);muzzle=[point.x,point.z,-point.y]
             for curve in action.fcurves:

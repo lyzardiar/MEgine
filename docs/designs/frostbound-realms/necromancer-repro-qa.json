@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "identicalFiles": [
+    {
+      "file": "SourceAssets/necromancer/body.glb",
+      "sha256": "5b87bc61384eda4da7b54cb63a2b74b69226d614c0903ee9701a5e94144c20a6"
+    },
+    {
+      "file": "SourceAssets/necromancer/body_base.png",
+      "sha256": "f301553ea97c3d1a1da8a782ebeb3d6426eaf4113601beea2100250adefd2a6c"
+    },
+    {
+      "file": "Assets/Textures/RealNecromancer_base.png",
+      "sha256": "22b22214a2aecea983eb732a02e8a765a372ffc7ea4dbc13d381e82aa7356fba"
+    },
+    {
+      "file": "Assets/Textures/RealNecromancer_normal.png",
+      "sha256": "12463c7f27847d0a53ae20a302b5214bb0c8c8180b91f67f94f6f1bcdb4d0362"
+    },
+    {
+      "file": "Assets/Textures/RealNecromancer_arm.png",
+      "sha256": "5ddc0578df84841795420a682a18080094357ffaddb4d03652329d8be6e1089a"
+    },
+    {
+      "file": "Assets/Models/RealNecromancer.glb",
+      "sha256": "d5f58bc40c6750ef9d853befbf2d2bd24df5338837e96797825cbba5b2da88e7"
+    },
+    {
+      "file": "Assets/Materials/RealNecromancer.mmat",
+      "sha256": "5e91c370bdd3fe1e7baa1954e23990a48ffa52a53fbc61a28d1f525f1ce0f36d"
+    }
+  ]
+}
