@@ -1,0 +1,108 @@
+{
+  "author": "Gord Goodwin; Wildfire Games; MiYu retargeting",
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "generator": "scripts/import-frost-skeleton-warrior.py -- --mage",
+  "dependencies": [
+    "anatomical-skeleton-sources.json",
+    "necromancer-sources.json"
+  ],
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/healing_m.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/healing_m.dae",
+      "sha256": "676bb948f7fc5fdbb921ef5e1ea18d0a95287c7cb54fd6a35d9b5c2f91c7abd4",
+      "size": 2277439
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/idle_relax_h_m.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/idle_relax_h_m.dae",
+      "sha256": "2364960f9cc23ec38ba9fda120bbe53687993a7fe5c7f7b9910c33d968fd4a68",
+      "size": 1313314
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/walk_relax_h_m.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/walk_relax_h_m.dae",
+      "sha256": "53cee8a5e0b311c04118acae0145f122766140163484cdec045eceb4e7b514be",
+      "size": 1024900
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/m_staff.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/m_staff.dae",
+      "sha256": "6a682bddd3fca9d80386b95791b46981971868a05b4e44a9952cd1f596194e6b",
+      "size": 12985
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_struct_1.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_struct_1.dds",
+      "sha256": "704dcb25bef11e3ca5c2d77cf014f136bc26cca66763633f75f4893f76e74e86",
+      "size": 349680
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
+    }
+  ],
+  "inputs": [
+    {
+      "file": "Assets/Models/SkeletonBody.glb",
+      "sha256": "26d3543bfaa16e5639eb369963a471134aa00e307601a5f41d3fdc3c787bb8dc"
+    },
+    {
+      "file": "Assets/Textures/SkeletonBody_ao.png",
+      "sha256": "58fdf8809fb0e46ac3a03c0167c17fad7f57626fcff827cd2e34f62179ded7ff"
+    },
+    {
+      "file": "Assets/Models/RealNecromancer.glb",
+      "sha256": "d5f58bc40c6750ef9d853befbf2d2bd24df5338837e96797825cbba5b2da88e7"
+    },
+    {
+      "file": "necromancer-sources.json",
+      "sha256": "7bc5d49251a86d0cd419549a8ea64eeb784b6962185b5c41b1bdae1f047a6008"
+    }
+  ],
+  "model": {
+    "key": "RealSkeletonMage",
+    "triangles": 15615,
+    "bones": 117,
+    "clips": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Staff_Attack",
+        "frames": 50
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.2746673226356506,
+      3.1313097774982452,
+      0.8236465156078339
+    ]
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealSkeletonMage_base.png",
+      "sha256": "ac597610f0b859914ae37de31bbb255a59136ac6f2cea5b355d9fd0e085efdc5"
+    },
+    {
+      "file": "Assets/Models/RealSkeletonMage.glb",
+      "sha256": "66dac5a96b46d451a995fbea9c6c3a47445a07bfd3de82c400d8dc9810ca6e21"
+    },
+    {
+      "file": "Assets/Materials/RealSkeletonMage.mmat",
+      "sha256": "dd84c5b5c0d6a715af1bae7fc7ef96a19d5c246665c147c4bd55a785c9268be6"
+    }
+  ]
+}

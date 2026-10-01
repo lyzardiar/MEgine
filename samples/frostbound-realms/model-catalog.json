@@ -3861,5 +3861,44 @@
     ],
     "realistic": true,
     "attackEvent": 0.25
+  },
+  "RealSkeletonMage": {
+    "material": "Assets/Materials/RealSkeletonMage.mmat",
+    "parts": [
+      {
+        "name": "RealSkeletonMage",
+        "mesh": "Assets/Models/RealSkeletonMage.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Staff_Attack",
+        "frames": 50
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.2746673226356506,
+      3.1313097774982452,
+      0.8236465156078339
+    ],
+    "realistic": true,
+    "attackEvent": 0.25
   }
 }

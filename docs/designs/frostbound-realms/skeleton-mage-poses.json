@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/skeleton-mage-poses.png",
+  "sha256": "b6759944b3f9b28fc0ca082f74709befa81a5631a07be2ee9d0201fc546b8184",
+  "generator": "scripts/render-frost-unit-icons.mjs --skeleton-mage-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Idle 0",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=0:0",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.5811252593994141,
+          3.1313085556030273,
+          0.4871981143951416
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=0:0",
+        "min": [
+          -0.6935415267944336,
+          3.0547380447387695e-7,
+          -0.336448609828949
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Walk 0.25",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=1:5",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.48145145177841187,
+          3.063021183013916,
+          0.609138011932373
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=1:5",
+        "min": [
+          -0.6356390118598938,
+          -0.000035762786865234375,
+          -0.6653622984886169
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Walk 0.75",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=1:15",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.7350001335144043,
+          3.0677576065063477,
+          0.609210729598999
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=1:15",
+        "min": [
+          -0.46800297498703003,
+          -0.0000362396240234375,
+          -1.0187315940856934
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Staff_Attack 0.1",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=2:5",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.7926585674285889,
+          3.8748886585235596,
+          0.7401722073554993
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=2:5",
+        "min": [
+          -1.3948194980621338,
+          -0.000042825937271118164,
+          -0.2169196605682373
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Staff_Attack 0.25",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=2:12",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.5888739824295044,
+          4.667172908782959,
+          0.7680788636207581
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=2:12",
+        "min": [
+          -1.1030685901641846,
+          1.1175870895385742e-7,
+          -0.6374093294143677
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Staff_Attack 0.5",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=2:25",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.6038500666618347,
+          4.713766098022461,
+          0.7557839155197144
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=2:25",
+        "min": [
+          -0.9817873239517212,
+          -0.00003205239772796631,
+          -0.4645054340362549
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Staff_Attack 0.75",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=2:37",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.6105390787124634,
+          4.6316399574279785,
+          0.7605240345001221
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=2:37",
+        "min": [
+          -0.9124679565429688,
+          -0.00008490681648254395,
+          -0.6388504505157471
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Staff_Attack 0.9",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=2:45",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.7892518043518066,
+          3.8475143909454346,
+          0.7389161586761475
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=2:45",
+        "min": [
+          -1.399346113204956,
+          -0.000054858624935150146,
+          -0.2169191837310791
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Death 0",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=3:0",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          1.196580171585083,
+          2.8760483264923096,
+          0.7266099452972412
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=3:0",
+        "min": [
+          -0.7168388366699219,
+          5.140900611877441e-7,
+          -1.417393445968628
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Death 0.3",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=3:4",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          0.8492491245269775,
+          2.74843692779541,
+          0.844021201133728
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=3:4",
+        "min": [
+          -1.1222736835479736,
+          3.129243850708008e-7,
+          -0.9602333307266235
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Death 0.6",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=3:9",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          2.5745484828948975,
+          0.8298696279525757,
+          0.4851420521736145
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=3:9",
+        "min": [
+          -0.3442554175853729,
+          0.001797407865524292,
+          -2.549318790435791
+        ],
+        "vertices": 22033
+      }
+    },
+    {
+      "name": "Death 0.99",
+      "mesh": "Assets/Models/RealSkeletonMage.glb#pose=3:14",
+      "material": "Assets/Materials/RealSkeletonMage.mmat",
+      "bounds": {
+        "max": [
+          3.023365020751953,
+          0.5893046259880066,
+          0.485958456993103
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonMage.glb#pose=3:14",
+        "min": [
+          -0.37466296553611755,
+          6.556510925292969e-7,
+          -2.5525500774383545
+        ],
+        "vertices": 22033
+      }
+    }
+  ]
+}

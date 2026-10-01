@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "skeletonMastery": {
+    "fixture": "Tier-3 Temple and necromancer; a rifle kill produces a corpse after research, with an airborne target nearby.",
+    "longevityAndMastery": true,
+    "midResearchSave": true,
+    "mixedSummons": true,
+    "lifetime55": true,
+    "nativeMageAndPortrait": true,
+    "shadowFlightAndAirImpact": true,
+    "summonSave": true,
+    "expiryWithoutCorpses": true,
+    "shaderRejections": 0
+  }
+}

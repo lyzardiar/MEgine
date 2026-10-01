@@ -1,10 +1,10 @@
-"""Author: MiYu. Retarget licensed sword and shield actions to the anatomical skeleton."""
-import bpy, math, json, hashlib, importlib.util, urllib.request
+"""Author: MiYu. Retarget licensed warrior or staff actions and equipment to the anatomical skeleton."""
+import bpy, math, json, hashlib, importlib.util, urllib.request, sys
 import numpy as np
 from pathlib import Path
 from mathutils import Matrix, Vector, Quaternion
-ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';KEY='RealSkeletonWarrior'
-manifest_path=SAMPLE/'skeleton-warrior-sources.json';manifest=json.loads(manifest_path.read_text());generated=[]
+ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';MAGE='--mage' in sys.argv;KEY='RealSkeletonMage' if MAGE else 'RealSkeletonWarrior'
+manifest_path=SAMPLE/('skeleton-mage-sources.json' if MAGE else 'skeleton-warrior-sources.json');manifest=json.loads(manifest_path.read_text());generated=[]
 for entry in manifest['sources']+manifest['inputs']:
     path=SAMPLE/entry['file']
     if not path.exists():
@@ -32,18 +32,21 @@ for side in ['L','R']:
     for name,parent in [('CLAVICLE','STERNUM'),('SCAPULA','CLAVICLE'),('HUMERUS','CLAVICLE'),('ULNA','HUMERUS'),('RADIUS','ULNA'),('HAND','ULNA'),('FEMUR','PELVIS'),('TIBIA','FEMUR'),('FOOT','TIBIA')]:eb[name+'.'+side].parent=eb[parent+'.'+side] if parent not in ['STERNUM','PELVIS'] else eb[parent]
 bpy.ops.object.mode_set(mode='OBJECT')
 rest={b.name:b.matrix_local.copy() for b in rig.data.bones};ordered=sorted(rig.data.bones,key=lambda b:len(b.parent_recursive))
-old=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(SAMPLE/'Assets/Models/RealFootman.glb'))
+old=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(SAMPLE/('Assets/Models/RealNecromancer.glb' if MAGE else 'Assets/Models/RealFootman.glb')))
 src=next(o for o in bpy.data.objects if o not in old and o.type=='ARMATURE');src.animation_data_clear();src.animation_data_create()
-definition=json.loads((SAMPLE/'human-sources.json').read_text())['models']['RealFootman']
-actions=definition['animations']
+definition=json.loads((SAMPLE/('necromancer-sources.json' if MAGE else 'human-sources.json')).read_text())['models']['RealNecromancer' if MAGE else 'RealFootman']
+actions={name:path.removeprefix('0ad/') for name,path in definition['animations'].items()}
 sr={b.name:src.matrix_world@b.matrix_local for b in src.data.bones};sp=lambda n:sr[n].translation
 weapon_scale=1.05;equipment=[];weapon_meshes=[]
-for part,hand in [(definition['parts'][2],'R'),(definition['parts'][3],'L')]:
+parts=[({'mesh':'meshes/props/m_staff.dae','base':'textures/skins/structural/celt_struct_1.dds','bone':'prop-weapon_R'},'R')] if MAGE else [(definition['parts'][2],'R'),(definition['parts'][3],'L')]
+for part,hand in parts:
     name=part['bone'];objects=humans.import_dae(part['mesh']);objects=[o for o in objects if o.type=='MESH']
     placement=Matrix.Translation(rest['HAND.'+hand].translation-sp('hand_'+hand)*weapon_scale)@Matrix.Scale(weapon_scale,4)@sr[name]
     bpy.context.view_layer.objects.active=rig;bpy.ops.object.mode_set(mode='EDIT');bone=rig.data.edit_bones.new(name);bone.matrix=sr[name].normalized();bone.head=rest['HAND.'+hand].translation+(sp(name)-sp('hand_'+hand))*weapon_scale;bone.tail=bone.head+Vector((0,0,.2));bone.parent=rig.data.edit_bones['HAND.'+hand];bpy.ops.object.mode_set(mode='OBJECT')
     for obj in objects:
         obj.data.transform(placement@obj.matrix_world);obj.parent=rig;obj.matrix_parent_inverse=Matrix.Identity(4);obj.matrix_basis=Matrix.Identity(4);obj.vertex_groups.clear();obj.vertex_groups.new(name=name).add(list(range(len(obj.data.vertices))),1,'REPLACE');obj.modifiers.clear();obj.modifiers.new('Equipment attachment','ARMATURE').object=rig
+        if MAGE:
+            tip=max((v.co for v in obj.data.vertices),key=lambda p:p.z);base=min((v.co for v in obj.data.vertices),key=lambda p:p.z);obj.data.transform(Matrix.Translation((tip-base).normalized()*.55))
     equipment.append((part,hand,objects));weapon_meshes.extend(objects)
 rest={b.name:b.matrix_local.copy() for b in rig.data.bones};ordered=sorted(rig.data.bones,key=lambda b:len(b.parent_recursive))
 mapping={'PELVIS':'hip','HEAD':'head','JAW':'head'}
@@ -96,15 +99,15 @@ for o in list(bpy.data.objects):
     if o not in [rig,mesh,*weapon_meshes]:bpy.data.objects.remove(o,do_unlink=True)
 tiles=[]
 for index,path in enumerate(['Assets/Textures/SkeletonBody_ao.png',*['SourceAssets/0ad/'+part['base'] for part,hand,objects in equipment]]):
-    width=1024 if index==0 else 512;image=bpy.data.images.load(str(SAMPLE/path),check_existing=False);image.scale(width,1024);pixels=np.empty(width*1024*4,dtype=np.float32);image.pixels.foreach_get(pixels);pixels=pixels.reshape((1024,width,4))
+    width=1024 if index==0 or MAGE else 512;image=bpy.data.images.load(str(SAMPLE/path),check_existing=False);image.scale(width,1024);pixels=np.empty(width*1024*4,dtype=np.float32);image.pixels.foreach_get(pixels);pixels=pixels.reshape((1024,width,4))
     if index==0:pixels[:,:,:3]*=np.array([.7,.66,.55])
     if index==2:pixels[:,:,:3]*=pixels[:,:,3:4]+(1-pixels[:,:,3:4])*np.array([.3,.22,.36])
     pixels[:,:,3]=1;tiles.append(pixels)
 texture='Assets/Textures/'+KEY+'_base.png';atlas=bpy.data.images.new(KEY,width=2048,height=1024,alpha=False);atlas.pixels.foreach_set(np.concatenate(tiles,axis=1).ravel());atlas.filepath_raw=str(SAMPLE/texture);atlas.file_format='PNG';atlas.save();generated.append(texture)
-for index,objects in enumerate([[mesh],equipment[0][2],equipment[1][2]]):
+for index,objects in enumerate([[mesh],*[objects for part,hand,objects in equipment]]):
     for obj in objects:
         obj.data.uv_layers.active.name='UVMap'
-        for uv in obj.data.uv_layers.active.data:uv.uv.x=min(.9995,max(.0005,uv.uv.x))*(.5 if index==0 else .25)+[0,.5,.75][index];uv.uv.y=min(.9995,max(.0005,uv.uv.y))
+        for uv in obj.data.uv_layers.active.data:uv.uv.x=min(.9995,max(.0005,uv.uv.x))*(.5 if index==0 or MAGE else .25)+[0,.5,.75][index];uv.uv.y=min(.9995,max(.0005,uv.uv.y))
 bpy.ops.object.select_all(action='DESELECT')
 for obj in [mesh,*weapon_meshes]:obj.select_set(True)
 bpy.context.view_layer.objects.active=mesh;bpy.ops.object.join();mesh.name=KEY;bpy.ops.object.vertex_group_limit_total(limit=4);bpy.ops.object.vertex_group_normalize_all(lock_active=False);modifier=mesh.modifiers.new('Stable triangles','TRIANGULATE');bpy.ops.object.modifier_apply(modifier=modifier.name)
@@ -115,7 +118,7 @@ model='Assets/Models/'+KEY+'.glb';bpy.ops.export_scene.gltf(filepath=str(SAMPLE/
 for track in rig.animation_data.nla_tracks:track.mute=track.name!='Idle'
 scene.frame_set(0);bpy.context.view_layer.update();evaluated=mesh.evaluated_get(bpy.context.evaluated_depsgraph_get());points=[evaluated.matrix_world@v.co for v in evaluated.data.vertices];size=[max(p[i] for p in points)-min(p[i] for p in points) for i in [0,2,1]]
 material='Assets/Materials/'+KEY+'.mmat';(SAMPLE/material).write_text(json.dumps({'version':8,'name':KEY,'shader':'pbr','base_color':[1,1,1,1],'base_color_texture':texture,'metallic':0,'roughness':.82,'double_sided':True}));generated.extend([model,material])
-catalog_path=SAMPLE/'model-catalog.json';catalog=json.loads(catalog_path.read_text());catalog[KEY]={'material':material,'parts':[{'name':KEY,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True,'attackEvent':.45};catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')
+catalog_path=SAMPLE/'model-catalog.json';catalog=json.loads(catalog_path.read_text());catalog[KEY]={'material':material,'parts':[{'name':KEY,'mesh':model,'pivot':[0,0,0]}],'animations':clips,'size':size,'realistic':True,'attackEvent':.25 if MAGE else .45};catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')
 manifest['model']={'key':KEY,'triangles':len(mesh.data.polygons),'bones':len(rig.data.bones),'clips':clips,'size':size};manifest['generated']=[{'file':p,'sha256':hashlib.sha256((SAMPLE/p).read_bytes()).hexdigest()} for p in generated];manifest_path.write_text(json.dumps(manifest,indent=2)+'\n')
 print('Imported',KEY,manifest['model'])
 
@@ -136,4 +139,5 @@ Original sources: SourceAssets/anatomical-skeleton and SourceAssets/0ad.
 Source URLs, dependency manifests and hashes: skeleton-warrior-sources.json.
 Rebuild: scripts/import-frost-skeleton-warrior.py using Blender 4.5.9.
 """
-for folder in ['Licenses','Assets/Licenses']:(SAMPLE/folder/'Anatomical-Skeleton-Warrior.txt').write_bytes(license_text.encode())
+if MAGE:license_text=license_text.replace('skeleton warrior','skeleton mage').replace('RealSkeletonWarrior','RealSkeletonMage').replace('sword/shield and melee actions','staff and casting actions').replace('skeleton-warrior-sources.json','skeleton-mage-sources.json').replace('using Blender 4.5.9','-- --mage using Blender 4.5.9')
+for folder in ['Licenses','Assets/Licenses']:(SAMPLE/folder/('Anatomical-Skeleton-Mage.txt' if MAGE else 'Anatomical-Skeleton-Warrior.txt')).write_bytes(license_text.encode())

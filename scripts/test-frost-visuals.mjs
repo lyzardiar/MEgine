@@ -55,7 +55,7 @@ for(const [kind,key] of [['soldier','RealFootman'],['worker','RealWorker']]){
  const map=S.defaultMap();map.terrain.fill(0);map.props=[];const state=S.create('skirmish',{map}),unit=S.spawn(state,'worker',0,0,0),target=S.spawn(state,'neutral',1,1.5,0);unit.order={type:'attack',target:target.id};unit.cd=.7;
  assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),Math.PI/2,'melee slot adjustment after striking keeps facing the victim');target.x=20;assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),0,'out of range pursuit faces movement');
 }
-const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,30);assert.ok(portraitKeys.has('RealShaman'));
+const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,31);assert.ok(portraitKeys.has('RealSkeletonMage'));assert.ok(portraitKeys.has('RealShaman'));
 const shaman=JSON.parse(fs.readFileSync(new URL('shaman-sources.json',root)));assert.equal(shaman.license,'CC-BY-SA-4.0');shaman.sources.forEach(verify);shaman.generated.forEach(verify);
 const orc=JSON.parse(fs.readFileSync(new URL('orc-sources.json',root)));assert.equal(orc.license,'CC-BY-SA-4.0');orc.sources.forEach(verify);orc.generated.forEach(verify);
 {
