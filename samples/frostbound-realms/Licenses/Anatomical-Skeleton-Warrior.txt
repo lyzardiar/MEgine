@@ -1,0 +1,15 @@
+Anatomical skeleton warrior / RealSkeletonWarrior
+Body: Gord Goodwin, Skeleton with rig, CC0-1.0.
+https://opengameart.org/content/skeleton-with-rig
+Rig reference, sword/shield and melee actions: Wildfire Games, 0 A.D., CC-BY-SA-3.0.
+https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+https://creativecommons.org/licenses/by-sa/3.0/
+MEngine adaptations by MiYu: anatomical FK hierarchy, pose retargeting,
+finger grip, ground contact, equipment attachment, texture atlas and portrait.
+These adaptations are CC-BY-SA-3.0.
+Derived files: Assets/Models/RealSkeletonWarrior.glb,
+Assets/Textures/RealSkeletonWarrior_base.png, Assets/Materials/RealSkeletonWarrior.mmat
+and RealSkeletonWarrior portrait in Assets/Art/unit-portraits.png.
+Original sources: SourceAssets/anatomical-skeleton and SourceAssets/0ad.
+Source URLs, dependency manifests and hashes: skeleton-warrior-sources.json.
+Rebuild: scripts/import-frost-skeleton-warrior.py using Blender 4.5.9.

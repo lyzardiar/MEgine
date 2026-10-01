@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "raiseDead": {
+    "fixture": "Two corpses from actual rifle kills, a necromancer with default autocast disabled and an enemy swordsman. Native Agent input and fixed stepping.",
+    "manualRaise": true,
+    "corpseConsumed": true,
+    "twoAnatomicalWarriors": true,
+    "manaCooldown": true,
+    "castingPose": true,
+    "saveRestore": true,
+    "autocastSecondPair": true,
+    "selectionMovementPortrait": true,
+    "summonedMeleeKill": true,
+    "lifetimeExpiry": true,
+    "noSummonedCorpse": true,
+    "shaderRejections": 0
+  }
+}

@@ -3783,5 +3783,44 @@
     ],
     "realistic": true,
     "attackEvent": 0.25
+  },
+  "RealSkeletonWarrior": {
+    "material": "Assets/Materials/RealSkeletonWarrior.mmat",
+    "parts": [
+      {
+        "name": "RealSkeletonWarrior",
+        "mesh": "Assets/Models/RealSkeletonWarrior.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Sword_Attack",
+        "frames": 12
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.4529550075531006,
+      3.0470342487096786,
+      1.0221748054027557
+    ],
+    "realistic": true,
+    "attackEvent": 0.45
   }
 }

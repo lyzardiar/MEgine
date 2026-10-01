@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "generator": "scripts/import-frost-skeleton-warrior.py",
+  "outputs": [
+    {
+      "file": "Assets/Textures/RealSkeletonWarrior_base.png",
+      "sha256": "7efec5e163e4b91332c045e769752d4344907a55f1338539c0cfa62471dba16c"
+    },
+    {
+      "file": "Assets/Models/RealSkeletonWarrior.glb",
+      "sha256": "5dcc6eeaf09bee059f1140a1d2d9ad45701bf7b6924494cc18e2f8a9c64333ae"
+    },
+    {
+      "file": "Assets/Materials/RealSkeletonWarrior.mmat",
+      "sha256": "664eae0b5a5552521bcc25509a9e4c050d998beea335a3f3844b80d665ecafbb"
+    }
+  ]
+}

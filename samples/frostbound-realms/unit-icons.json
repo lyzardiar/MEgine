@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "7df0d657b01806e635f0001c05edeb4e50581f2135428dd0fbbec29251c8b97b",
+  "sha256": "60ca8dac967d7c1debcf51cd393b685fa7a4808fbb425ea0356051c74967bebf",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -383,6 +383,25 @@
           -0.6427690982818604
         ],
         "vertices": 12347
+      }
+    },
+    {
+      "name": "RealSkeletonWarrior",
+      "mesh": "Assets/Models/RealSkeletonWarrior.glb#pose=0:4",
+      "material": "Assets/Materials/RealSkeletonWarrior.mmat",
+      "bounds": {
+        "max": [
+          0.7535906434059143,
+          3.0517423152923584,
+          0.3866099417209625
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:4",
+        "min": [
+          -0.7019816637039185,
+          -8.195638656616211e-8,
+          -0.6359301805496216
+        ],
+        "vertices": 22009
       }
     },
     {

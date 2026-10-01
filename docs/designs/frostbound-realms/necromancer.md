@@ -23,7 +23,7 @@ Run `node scripts/render-frost-unit-icons.mjs` and `node scripts/build-frostboun
 - `node scripts/qa-frostbound.mjs --necromancer-only`: native selection/portrait, movement, shadow flight before impact damage, save/restore and death passed; zero rejected material pipelines.
 - Windows package: 576 files, 263,247,396 bytes; content SHA-256 `5abd967d216f91b97b53384e582d066280da80d87fe2b5ea9201a793d2915e9a`. The 30-second Player startup check passed with zero logged errors.
 
-Native interaction evidence uses Agent input. Physical mouse/keyboard, audio listening and a new cross-machine LAN run are not covered by this stage. This replaces the caster's artwork and animation; corpse raising, the remaining faction artwork and the full Warcraft-style game remain unfinished.
+Native interaction evidence uses Agent input. Physical mouse/keyboard, audio listening and a new cross-machine LAN run are not covered by this stage. Corpse raising is now documented in [Raise Dead](raise-dead.md). The remaining faction artwork and full Warcraft-style game are still unfinished.
 
 ![Native pose sheet](necromancer-poses.png)
 ![Native shadow combat](necromancer-combat.png)

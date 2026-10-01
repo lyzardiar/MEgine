@@ -1,0 +1,120 @@
+{
+  "author": "Gord Goodwin; Wildfire Games; MiYu retargeting",
+  "license": "CC-BY-SA-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "generator": "scripts/import-frost-skeleton-warrior.py",
+  "dependencies": [
+    "anatomical-skeleton-sources.json",
+    "human-sources.json"
+  ],
+  "sources": [
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/swordsman/attack_melee_shield_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/swordsman/attack_melee_shield_01.dae",
+      "sha256": "752ba49975601518ce9c46673e2adfa014e234deebba6718b521da272320a87a",
+      "size": 914509
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/swordsman/idle_relax_shield_celt_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/swordsman/idle_relax_shield_celt_01.dae",
+      "sha256": "440f9efd65cd09969755457f8cbf72017f882e577d49e5eb610ae872e73eba40",
+      "size": 1467306
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/swordsman/walk_relax_shield.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/swordsman/walk_relax_shield.dae",
+      "sha256": "a8b9ab35ac7cfe32d75524b72d440022500fb36129950c5da933f24ba162c873",
+      "size": 1141056
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/shield/oval_01.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/shield/oval_01.dae",
+      "sha256": "9e0151fa3333fe701b8a223e505d8573d78791ba91d43c26bdf81ec9c8470d73",
+      "size": 6855
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/weap_csword_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/weap_csword_a.dae",
+      "sha256": "7f8f8f38d394238ea1d62ac47e1eee7a4594d834c20bf2378431723cbe5f1490",
+      "size": 7190
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/prop_weap.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/prop_weap.dds",
+      "sha256": "761a9987655353d96cf5093d3d713a62dca98f5f605c8fef52311eac0b3a1bde",
+      "size": 87536
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/props/shield/celt_shield_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/shield/celt_shield_01.png",
+      "sha256": "d860c674693038e4415e89cfcf46233342ec2ca6ad63472d94831cfa636a60ca",
+      "size": 31520
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
+    }
+  ],
+  "inputs": [
+    {
+      "file": "Assets/Models/SkeletonBody.glb",
+      "sha256": "26d3543bfaa16e5639eb369963a471134aa00e307601a5f41d3fdc3c787bb8dc"
+    },
+    {
+      "file": "Assets/Textures/SkeletonBody_ao.png",
+      "sha256": "58fdf8809fb0e46ac3a03c0167c17fad7f57626fcff827cd2e34f62179ded7ff"
+    },
+    {
+      "file": "Assets/Models/RealFootman.glb",
+      "sha256": "42b7f4a537cac036709828e1ce8b612ac721a4bd89cb46488e6c7a00c2010026"
+    },
+    {
+      "file": "human-sources.json",
+      "sha256": "9946e83d10db6546e2367359dd55aaaf5053dbf51b0fefbdb7a1d859ef078bfa"
+    }
+  ],
+  "model": {
+    "key": "RealSkeletonWarrior",
+    "triangles": 15649,
+    "bones": 118,
+    "clips": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Sword_Attack",
+        "frames": 12
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.4529550075531006,
+      3.0470342487096786,
+      1.0221748054027557
+    ]
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealSkeletonWarrior_base.png",
+      "sha256": "7efec5e163e4b91332c045e769752d4344907a55f1338539c0cfa62471dba16c"
+    },
+    {
+      "file": "Assets/Models/RealSkeletonWarrior.glb",
+      "sha256": "5dcc6eeaf09bee059f1140a1d2d9ad45701bf7b6924494cc18e2f8a9c64333ae"
+    },
+    {
+      "file": "Assets/Materials/RealSkeletonWarrior.mmat",
+      "sha256": "664eae0b5a5552521bcc25509a9e4c050d998beea335a3f3844b80d665ecafbb"
+    }
+  ]
+}

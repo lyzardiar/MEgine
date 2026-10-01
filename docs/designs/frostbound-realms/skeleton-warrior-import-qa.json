@@ -1,0 +1,1177 @@
+{
+  "passed": true,
+  "variants": {
+    "RealSkeletonWarrior": {
+      "triangles": 15649,
+      "bones": 118,
+      "nativeSamples": 77,
+      "movingBones": {
+        "Idle": [
+          "HAND.L",
+          "HAND.R",
+          "HEAD",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "RIB_T11",
+          "RIB_T12",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_L5",
+          "VERTEBRAE_T12",
+          "VERTEBRAE_T6"
+        ],
+        "Walk": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.L",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HEAD",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "PELVIS",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_C7",
+          "VERTEBRAE_L5",
+          "VERTEBRAE_T12",
+          "VERTEBRAE_T6"
+        ],
+        "Sword_Attack": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.L",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HEAD",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "PELVIS",
+          "RIB_T1",
+          "RIB_T11",
+          "RIB_T12",
+          "RIB_T4",
+          "RIB_T9",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_C7",
+          "VERTEBRAE_L5",
+          "VERTEBRAE_T12",
+          "VERTEBRAE_T6",
+          "prop-shield",
+          "prop-weapon_R"
+        ],
+        "Death": [
+          "FEMUR.L",
+          "FEMUR.R",
+          "FOOT.R",
+          "HAND.L",
+          "HAND.R",
+          "HUMERUS.L",
+          "HUMERUS.R",
+          "JAW",
+          "PELVIS",
+          "RIB_T1",
+          "RIB_T11",
+          "RIB_T4",
+          "RIB_T5",
+          "RIB_T9",
+          "STERNUM",
+          "TIBIA.L",
+          "TIBIA.R",
+          "ULNA.L",
+          "ULNA.R",
+          "VERTEBRAE_C7",
+          "VERTEBRAE_T6",
+          "prop-shield"
+        ]
+      },
+      "bounds": [
+        {
+          "max": [
+            0.7508400678634644,
+            3.0470337867736816,
+            0.3833469748497009
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:0",
+          "min": [
+            -0.7021153569221497,
+            -8.195638656616211e-08,
+            -0.6388293504714966
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7512068748474121,
+            3.048079013824463,
+            0.3840560019016266
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:1",
+          "min": [
+            -0.7020817995071411,
+            -8.195638656616211e-08,
+            -0.6382278203964233
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7519392967224121,
+            3.0492262840270996,
+            0.38483870029449463
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:2",
+          "min": [
+            -0.7020478248596191,
+            -8.195638656616211e-08,
+            -0.6375381946563721
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7527427673339844,
+            3.050466299057007,
+            0.38570061326026917
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:3",
+          "min": [
+            -0.7020143866539001,
+            1.2665987014770508e-07,
+            -0.6367626190185547
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7535906434059143,
+            3.0517423152923584,
+            0.3866099417209625
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:4",
+          "min": [
+            -0.7019816637039185,
+            -8.195638656616211e-08,
+            -0.6359301805496216
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7544808983802795,
+            3.053032159805298,
+            0.38754597306251526
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:5",
+          "min": [
+            -0.7019491195678711,
+            -2.2351741790771484e-07,
+            -0.635064959526062
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7553937435150146,
+            3.0542948246002197,
+            0.38848575949668884
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:6",
+          "min": [
+            -0.7019180059432983,
+            -8.195638656616211e-08,
+            -0.6341924667358398
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7563174366950989,
+            3.055490732192993,
+            0.38939452171325684
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:7",
+          "min": [
+            -0.7018872499465942,
+            -8.195638656616211e-08,
+            -0.6333444118499756
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7572343349456787,
+            3.0565998554229736,
+            0.39025741815567017
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:8",
+          "min": [
+            -0.7018583416938782,
+            -8.195638656616211e-08,
+            -0.6325403451919556
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7581285834312439,
+            3.057588577270508,
+            0.3910389244556427
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:9",
+          "min": [
+            -0.701830267906189,
+            -8.195638656616211e-08,
+            -0.6318131685256958
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7589948177337646,
+            3.05845308303833,
+            0.3917354345321655
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:10",
+          "min": [
+            -0.7018057107925415,
+            -8.195638656616211e-08,
+            -0.6311711072921753
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7598060369491577,
+            3.0591607093811035,
+            0.3923095762729645
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:11",
+          "min": [
+            -0.7017818093299866,
+            -8.195638656616211e-08,
+            -0.6306463479995728
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7605648040771484,
+            3.0597245693206787,
+            0.3927733600139618
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:12",
+          "min": [
+            -0.7017595767974854,
+            -8.195638656616211e-08,
+            -0.6302316188812256
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7612475156784058,
+            3.060114860534668,
+            0.3930951654911041
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:13",
+          "min": [
+            -0.7017416954040527,
+            -8.195638656616211e-08,
+            -0.6299551725387573
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7618616223335266,
+            3.0603654384613037,
+            0.39329537749290466
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:14",
+          "min": [
+            -0.7017253637313843,
+            -8.195638656616211e-08,
+            -0.6298003196716309
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7623822689056396,
+            3.0604333877563477,
+            0.3933427035808563
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:15",
+          "min": [
+            -0.7017127275466919,
+            -8.195638656616211e-08,
+            -0.6297930479049683
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7628229856491089,
+            3.0603644847869873,
+            0.3932693898677826
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:16",
+          "min": [
+            -0.7017022371292114,
+            -8.195638656616211e-08,
+            -0.629905104637146
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7631608247756958,
+            3.0601158142089844,
+            0.3930450975894928
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:17",
+          "min": [
+            -0.7016940712928772,
+            -8.195638656616211e-08,
+            -0.630164623260498
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7634137868881226,
+            3.0597240924835205,
+            0.3926985561847687
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:18",
+          "min": [
+            -0.7016886472702026,
+            -8.195638656616211e-08,
+            -0.6305434703826904
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7635599374771118,
+            3.0591623783111572,
+            0.39221081137657166
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:19",
+          "min": [
+            -0.7016888856887817,
+            -8.195638656616211e-08,
+            -0.6310586929321289
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7636185884475708,
+            3.058455228805542,
+            0.3916126787662506
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:20",
+          "min": [
+            -0.7016898393630981,
+            -8.195638656616211e-08,
+            -0.6316808462142944
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7635252475738525,
+            3.057589054107666,
+            0.39089617133140564
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:21",
+          "min": [
+            -0.7016998529434204,
+            -8.195638656616211e-08,
+            -0.63239586353302
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7631381750106812,
+            3.0565972328186035,
+            0.3900991976261139
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:22",
+          "min": [
+            -0.7017182111740112,
+            -8.195638656616211e-08,
+            -0.633165717124939
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7623594403266907,
+            3.055488348007202,
+            0.38923195004463196
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:23",
+          "min": [
+            -0.7017470002174377,
+            -8.195638656616211e-08,
+            -0.6339749097824097
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7612775564193726,
+            3.054292678833008,
+            0.38832613825798035
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:24",
+          "min": [
+            -0.7017818689346313,
+            -8.195638656616211e-08,
+            -0.6348025798797607
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7598740458488464,
+            3.0530312061309814,
+            0.38739898800849915
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:25",
+          "min": [
+            -0.7018264532089233,
+            -8.195638656616211e-08,
+            -0.6356236934661865
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7582683563232422,
+            3.051741600036621,
+            0.3864811360836029
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:26",
+          "min": [
+            -0.7018753290176392,
+            -8.195638656616211e-08,
+            -0.6364160776138306
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7565144300460815,
+            3.0504658222198486,
+            0.38559481501579285
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:27",
+          "min": [
+            -0.7019302248954773,
+            -8.195638656616211e-08,
+            -0.6371520757675171
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.754729688167572,
+            3.049225091934204,
+            0.3847600221633911
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:28",
+          "min": [
+            -0.7019887566566467,
+            -8.195638656616211e-08,
+            -0.6378144025802612
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7530310153961182,
+            3.048079490661621,
+            0.384003221988678
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=0:29",
+          "min": [
+            -0.7020514011383057,
+            -8.195638656616211e-08,
+            -0.638373851776123
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5924057960510254,
+            2.9925403594970703,
+            0.7640446424484253
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:0",
+          "min": [
+            -0.7699888348579407,
+            4.917383193969727e-07,
+            -0.84581458568573
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5958132743835449,
+            3.0090134143829346,
+            0.8645075559616089
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:1",
+          "min": [
+            -0.7374712824821472,
+            -6.506592035293579e-05,
+            -0.8425110578536987
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5963720679283142,
+            3.0236706733703613,
+            0.9659437537193298
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:2",
+          "min": [
+            -0.7099674344062805,
+            4.470348358154297e-07,
+            -0.8711433410644531
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5812620520591736,
+            3.0235114097595215,
+            1.0859156847000122
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:3",
+          "min": [
+            -0.6984174251556396,
+            -0.00023370236158370972,
+            -0.9055899381637573
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5839039087295532,
+            3.009711980819702,
+            1.1917685270309448
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:4",
+          "min": [
+            -0.6983327269554138,
+            5.513429641723633e-07,
+            -0.9424440860748291
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5810770392417908,
+            2.9876174926757812,
+            1.240959882736206
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:5",
+          "min": [
+            -0.6909828186035156,
+            -0.0004818364977836609,
+            -0.9716137647628784
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5817054510116577,
+            2.955810308456421,
+            1.2682867050170898
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:6",
+          "min": [
+            -0.6631646752357483,
+            5.513429641723633e-07,
+            -0.9737920761108398
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.6045441031455994,
+            2.972288131713867,
+            1.26314377784729
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:7",
+          "min": [
+            -0.6309734582901001,
+            -0.004723343998193741,
+            -1.0463236570358276
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.6505795121192932,
+            2.9526312351226807,
+            1.224967360496521
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:8",
+          "min": [
+            -0.609424889087677,
+            5.289912223815918e-07,
+            -1.0640827417373657
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7108957767486572,
+            2.974290609359741,
+            1.1384615898132324
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:9",
+          "min": [
+            -0.5706037282943726,
+            -0.0002879425883293152,
+            -0.9318831562995911
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7723041772842407,
+            2.9925591945648193,
+            1.0408952236175537
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:10",
+          "min": [
+            -0.5322695970535278,
+            3.0547380447387695e-07,
+            -0.8378729224205017
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.8077632784843445,
+            3.01092529296875,
+            1.0278246402740479
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:11",
+          "min": [
+            -0.5341547131538391,
+            -6.302446126937866e-05,
+            -0.7896662950515747
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.8289155960083008,
+            3.0239131450653076,
+            0.9960827231407166
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:12",
+          "min": [
+            -0.5576949119567871,
+            -3.8743019104003906e-07,
+            -0.739856481552124
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.8470527529716492,
+            3.0265448093414307,
+            0.9057363271713257
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:13",
+          "min": [
+            -0.5818589925765991,
+            -0.00038967281579971313,
+            -0.7306410074234009
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.8609346151351929,
+            3.013669013977051,
+            0.8177956342697144
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:14",
+          "min": [
+            -0.6213483214378357,
+            -1.1920928955078125e-07,
+            -0.8136561512947083
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.8529300093650818,
+            2.9586799144744873,
+            0.7269037961959839
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:15",
+          "min": [
+            -0.6394861936569214,
+            -0.0007597580552101135,
+            -0.889089822769165
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.8247315287590027,
+            2.951594352722168,
+            0.6586829423904419
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:16",
+          "min": [
+            -0.6313601136207581,
+            6.258487701416016e-07,
+            -0.9661967158317566
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7791557908058167,
+            2.9577555656433105,
+            0.6346384286880493
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:17",
+          "min": [
+            -0.6260107755661011,
+            0.0040164515376091,
+            -1.0744829177856445
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7317364811897278,
+            2.951296091079712,
+            0.6538783311843872
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:18",
+          "min": [
+            -0.6448229551315308,
+            6.705522537231445e-08,
+            -1.016226053237915
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.6640273332595825,
+            2.970454216003418,
+            0.7067296504974365
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=1:19",
+          "min": [
+            -0.7053288817405701,
+            -0.0003148093819618225,
+            -0.8838399648666382
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.4754367172718048,
+            2.851625680923462,
+            0.7101030945777893
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:0",
+          "min": [
+            -0.8815093040466309,
+            4.0978193283081055e-07,
+            -0.9960969686508179
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.34720271825790405,
+            2.888864278793335,
+            0.720487654209137
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:1",
+          "min": [
+            -1.044750452041626,
+            -6.326287984848022e-05,
+            -1.1325594186782837
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.2972179055213928,
+            2.9007575511932373,
+            0.7547935247421265
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:2",
+          "min": [
+            -1.3363171815872192,
+            5.364418029785156e-07,
+            -1.587039589881897
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.3712977170944214,
+            2.8701772689819336,
+            0.6521422863006592
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:3",
+          "min": [
+            -0.8780370950698853,
+            -0.00014988332986831665,
+            -1.795837640762329
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.6253025531768799,
+            2.8425421714782715,
+            0.8338568210601807
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:4",
+          "min": [
+            -0.8345115184783936,
+            2.086162567138672e-07,
+            -1.2729580402374268
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7692136168479919,
+            2.7948713302612305,
+            1.5265077352523804
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:5",
+          "min": [
+            -0.8371422290802002,
+            -0.0014883577823638916,
+            -0.9077068567276001
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7619434595108032,
+            2.7285847663879395,
+            2.662700653076172
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:6",
+          "min": [
+            -0.6352490186691284,
+            5.587935447692871e-07,
+            -0.8598145842552185
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7649539709091187,
+            2.657320737838745,
+            2.8428635597229004
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:7",
+          "min": [
+            -0.6850041151046753,
+            -0.00017821788787841797,
+            -0.8402719497680664
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7641841769218445,
+            2.6587657928466797,
+            2.7146096229553223
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:8",
+          "min": [
+            -0.7284520864486694,
+            -2.4586915969848633e-07,
+            -0.8409112691879272
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7459771037101746,
+            2.6933066844940186,
+            2.224424362182617
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:9",
+          "min": [
+            -0.8978402614593506,
+            -0.0004163086414337158,
+            -0.8549215793609619
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.6941675543785095,
+            2.750081777572632,
+            1.7538124322891235
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:10",
+          "min": [
+            -0.7244240045547485,
+            4.470348358154297e-08,
+            -0.8953227400779724
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5956994295120239,
+            2.8096258640289307,
+            1.266457200050354
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=2:11",
+          "min": [
+            -0.6904903650283813,
+            -0.0006519779562950134,
+            -0.9500495791435242
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            1.8894258737564087,
+            2.8760454654693604,
+            1.1486691236495972
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:0",
+          "min": [
+            -0.7168054580688477,
+            6.705522537231445e-08,
+            -0.68214350938797
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.7276368737220764,
+            2.9035732746124268,
+            1.0999679565429688
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:1",
+          "min": [
+            -0.7169767618179321,
+            -3.0085444450378418e-05,
+            -0.649863600730896
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5493761301040649,
+            2.9378576278686523,
+            1.0469688177108765
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:2",
+          "min": [
+            -1.0856475830078125,
+            2.8312206268310547e-07,
+            -0.7319684028625488
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.5226955413818359,
+            2.900947093963623,
+            1.2972999811172485
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:3",
+          "min": [
+            -1.5020395517349243,
+            -7.29188323020935e-05,
+            -0.7915106415748596
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            0.8493243455886841,
+            2.8450939655303955,
+            1.1580404043197632
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:4",
+          "min": [
+            -1.4706664085388184,
+            5.811452865600586e-07,
+            -0.9603108763694763
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            1.4342403411865234,
+            2.5222814083099365,
+            0.5998949408531189
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:5",
+          "min": [
+            -0.7277030944824219,
+            -0.004608906805515289,
+            -1.2251183986663818
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            2.0993564128875732,
+            2.1134328842163086,
+            0.5265696048736572
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:6",
+          "min": [
+            -0.4551715552806854,
+            5.513429641723633e-07,
+            -1.5661460161209106
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            2.485069751739502,
+            1.6640007495880127,
+            0.4627784788608551
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:7",
+          "min": [
+            -0.33238476514816284,
+            0.01728042960166931,
+            -1.8067848682403564
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            2.594851493835449,
+            1.4401719570159912,
+            0.504881739616394
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:8",
+          "min": [
+            -0.31648439168930054,
+            -3.5762786865234375e-07,
+            -1.963252305984497
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            2.6431808471679688,
+            1.2568423748016357,
+            0.548751711845398
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:9",
+          "min": [
+            -0.3437017798423767,
+            0.011883944272994995,
+            -2.0253255367279053
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            2.97477388381958,
+            0.9706945419311523,
+            0.6538477540016174
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:10",
+          "min": [
+            -0.3408028483390808,
+            4.76837158203125e-07,
+            -2.027099132537842
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            3.3282368183135986,
+            0.6885066628456116,
+            0.7239189147949219
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:11",
+          "min": [
+            -0.324797123670578,
+            4.76837158203125e-07,
+            -2.0270988941192627
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            3.381587505340576,
+            0.6354562044143677,
+            0.6917566061019897
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:12",
+          "min": [
+            -0.3486819863319397,
+            2.384185791015625e-07,
+            -2.027099132537842
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            3.4416239261627197,
+            0.5910240411758423,
+            0.6483081579208374
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:13",
+          "min": [
+            -0.3721557855606079,
+            2.384185791015625e-07,
+            -2.027099132537842
+          ],
+          "vertices": 22009
+        },
+        {
+          "max": [
+            3.4507951736450195,
+            0.589304506778717,
+            0.640291690826416
+          ],
+          "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealSkeletonWarrior.glb#pose=3:14",
+          "min": [
+            -0.3741104304790497,
+            2.384185791015625e-07,
+            -2.027099132537842
+          ],
+          "vertices": 22009
+        }
+      ]
+    }
+  }
+}
