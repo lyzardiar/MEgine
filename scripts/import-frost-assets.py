@@ -175,4 +175,6 @@ if __name__ == '__main__':
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-skeleton-warrior.py')],check=True,cwd=ROOT)
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/prepare-frost-necromancer.py')],check=True,cwd=ROOT)
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-humans.py'),'--','--manifest','necromancer-sources.json'],check=True,cwd=ROOT)
+    subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/prepare-frost-shaman.py')],check=True,cwd=ROOT)
+    subprocess.run([os.environ.get('BLENDER','blender'),'--background','--disable-autoexec','--python-exit-code','1','--python',str(ROOT/'scripts/import-frost-humans.py'),'--','--manifest','shaman-sources.json'],check=True,cwd=ROOT)
     subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/bake-frost-foliage.py')],check=True,cwd=ROOT)

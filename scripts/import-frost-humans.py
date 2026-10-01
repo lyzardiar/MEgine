@@ -16,7 +16,9 @@ ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms'
 
 def import_dae(path):
     if path.endswith('.glb'):
-        before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(SOURCE/path));return sorted(set(bpy.data.objects)-before,key=lambda o:o.name)
+        before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(SOURCE/path));bpy.context.view_layer.update()
+        # Blender can create hidden custom bone-shape meshes while importing a skin.
+        return sorted((o for o in set(bpy.data.objects)-before if o.type!='MESH' or o.visible_get()),key=lambda o:o.name)
     document=ET.parse(SOURCE/path);changed=False
     if 'animation/' in path:
         for texture in document.findall('.//{*}library_effects//{*}texture'):

@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "60ca8dac967d7c1debcf51cd393b685fa7a4808fbb425ea0356051c74967bebf",
+  "sha256": "754ec22d9e0f3fcb4e66db0db9942fa708bdd1bc0f47be624f17c1e07e28d7d4",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -383,6 +383,25 @@
           -0.6427690982818604
         ],
         "vertices": 12347
+      }
+    },
+    {
+      "name": "RealShaman",
+      "mesh": "Assets/Models/RealShaman.glb#pose=0:4",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.6842817068099976,
+          3.315861225128174,
+          0.5973789691925049
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=0:4",
+        "min": [
+          -0.8593554496765137,
+          -0.05630470812320709,
+          -0.3752717673778534
+        ],
+        "vertices": 1750
       }
     },
     {

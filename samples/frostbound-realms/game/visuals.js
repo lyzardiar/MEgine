@@ -7,7 +7,7 @@ var FrostVisual=(()=>{
     {hall:['Ancient of roots','Ancient of boughs','Elder grove'],barracks:'Sentinel grove',farm:'Living shelter',tower:'Thorn watch',altar:'Moon sanctuary',workshop:'Grove workshop'},
     {hall:['Necropolis','Black citadel','Dread fortress'],barracks:'Crypt',farm:'Grave mound',tower:'Soul obelisk',altar:'Altar of shadows',workshop:'Bone foundry'}
   ];
-  const units={skeletonwarrior:'RealSkeletonWarrior',treant:'RealTreant',rifleman:'RealRifleman',mage:'RealEmberSage',paladin:'RealPaladin',knight:'RealKnight',archer:'RealArcher',raider:'RealOrc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'Tribal',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'RealNecromancer',bonearcher:'RealBoneArcher'};
+  const units={skeletonwarrior:'RealSkeletonWarrior',treant:'RealTreant',rifleman:'RealRifleman',mage:'RealEmberSage',paladin:'RealPaladin',knight:'RealKnight',archer:'RealArcher',raider:'RealOrc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'RealShaman',ghoul:'Demon',abomination:'Orc_Skull',necromancer:'RealNecromancer',bonearcher:'RealBoneArcher'};
   const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'RealFootman',rangedcreep:'RealArcher',siegecreep:'RealCatapult',neutral:'RealWolf',ballista:'RealBallista',catapult:'RealCatapult',trebuchet:'RealTrebuchet',ram:'RealRam',dragon:'Dragon'};
   function work(state,u){
     if(u.kind!=='worker'||!u.order||u.hp<=0||u.stun>0||u.inside)return null;
@@ -26,6 +26,7 @@ var FrostVisual=(()=>{
   }
   function attackPhase(u,asset){return (asset.attackEvent+Frost.clamp(1-u.cd/(Frost.unitType(u).cooldown||1),0,1))%1;}
   function castPhase(u,asset,walking){
+    if(u.kind==='shaman')return !walking&&!u.stun&&u.castLeft>0?1-u.castLeft/.8:null;
     if(u.kind==='necromancer')return !walking&&!u.stun&&(u.castLeft>0||u.raiseDeadCd>Frost.raiseDead.cooldown-.8)?u.castLeft>0?1-u.castLeft/.8:(Frost.raiseDead.cooldown-u.raiseDeadCd)/.8:null;
     if(u.kind!=='hero'||walking||u.stun||!asset.animations?.some(a=>a.name==='Cast'))return null;
     const elapsed=Math.min(...Frost.unitType(u).spells.map((s,i)=>u.spell?.[i]>0?s.cooldown-u.spell[i]:Infinity));
@@ -41,7 +42,7 @@ var FrostVisual=(()=>{
   function heading(state,u,old){
     if(!Frost.types[u.kind].speed)return 0;
     const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;
-    if(['hero','necromancer'].includes(u.kind)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[u.kind==='necromancer'?'RealNecromancer':Frost.unitType(u).art],moved)!==null)return u.castYaw;
+    if(['hero','necromancer','shaman'].includes(u.kind)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[units[u.kind]||Frost.unitType(u).art],moved)!==null)return u.castYaw;
     const attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>['hit','launch'].includes(e.type)&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy))<=Frost.unitType(u).range+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
     return target?Math.atan2(target.x-u.x,target.z-u.z):moved?Math.atan2(u.x-old.x,u.z-old.z):old?.yaw??u.yaw??0;
   }
@@ -54,7 +55,7 @@ var FrostVisual=(()=>{
   function pose(u,asset,walking,time){
     if(!asset.animations?.length)return asset.parts[0].mesh;
     if(asset.workAnimation)return asset.parts[0].mesh+'#pose=0:'+Math.floor(time*12)%asset.animations[0].frames;
-    const cast=asset.animations.findIndex(a=>a.name===(u.kind==='necromancer'?'Staff_Attack':'Cast')),casting=castPhase(u,asset,walking);
+    const cast=asset.animations.findIndex(a=>a.name===(['necromancer','shaman'].includes(u.kind)?'Staff_Attack':'Cast')),casting=castPhase(u,asset,walking);
     if(cast>=0&&casting!==null)return asset.parts[0].mesh+'#pose='+cast+':'+Math.min(asset.animations[cast].frames-1,Math.floor(casting*asset.animations[cast].frames));
     if(asset.attackEvent!==undefined){const clip=walking?1:u.cd>0&&!u.stun?2:0,frame=clip===2?Math.floor(attackPhase(u,asset)*asset.animations[clip].frames):Math.floor(time*12)%asset.animations[clip].frames;return asset.parts[0].mesh+'#pose='+clip+':'+frame;}
     const attack=u.cd>.25&&(u.kind!=='worker'||asset===FrostArt.RealWorker&&!['gather','build','construct','repair'].includes(u.order?.type)),desired=asset===FrostArt.Skeleton_Rogue?(attack?/^2H_Ranged_Shooting$/:walking?/^Walking_A$/:/^Idle$/):asset===FrostArt.Skeleton_Mage?(attack?/^Spellcast_Shoot$/:walking?/^Walking_A$/:/^Idle$/):Frost.types[u.kind].flying?(attack?/Dragon_Attack$/:/Dragon_Flying/):attack?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch|Headbutt/:walking?/^Run$|^Walk$|Fast_Flying/:/^Idle$|Flying_Idle/;

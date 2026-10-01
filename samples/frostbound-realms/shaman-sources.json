@@ -1,0 +1,175 @@
+{
+  "author": "Guillaume GuieA_7 Englert; Wildfire Games; MiYu assembly",
+  "license": "CC-BY-SA-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "sourceRoot": "SourceAssets",
+  "preparation": "scripts/prepare-frost-shaman.py",
+  "generator": "scripts/import-frost-humans.py --manifest shaman-sources.json",
+  "dependencies": [
+    "orc-sources.json",
+    "mage-sources.json"
+  ],
+  "preparationStats": {
+    "garmentVertices": 318,
+    "orcVertices": 413,
+    "removedHumanSkinVertices": 131
+  },
+  "models": {
+    "RealShaman": {
+      "parts": [
+        {
+          "mesh": "shaman/body.glb",
+          "attachmentSource": "0ad/meshes/skeletal/new/m_dress_sleeves.dae",
+          "base": "shaman/body_base.png",
+          "bone": null,
+          "tint": null
+        }
+      ],
+      "animations": {
+        "Idle": "0ad/animation/biped/citizen/idle_relax_h_m.dae",
+        "Walk": "0ad/animation/biped/citizen/walk_relax_h_m.dae",
+        "Staff_Attack": "0ad/animation/biped/citizen/healing_m.dae",
+        "Death": "0ad/animation/biped/infantry/death_a.dae"
+      },
+      "height": 3.3,
+      "attackEvent": 0.25,
+      "groundClips": [
+        "Death"
+      ]
+    }
+  },
+  "sources": [
+    {
+      "file": "SourceAssets/orc/Orc/orc.blend",
+      "sha256": "43472eee53698265721ac85ee86adeaa632cbbc45bcfe9c53e6397bb626f8b81",
+      "bytes": 1574644
+    },
+    {
+      "file": "SourceAssets/orc/Orc/orc.png",
+      "sha256": "3e2fdb06f774c32cb6bb59d800b9f4c1fdaff133d2dde80a7e8ca149120b32ba",
+      "bytes": 851765
+    },
+    {
+      "file": "SourceAssets/orc/Orc/orc.xcf",
+      "sha256": "5046793cbeb5e5f7a3753fa1e012560fcc1d75ff6682271725668428b2653f48",
+      "bytes": 14314948
+    },
+    {
+      "file": "SourceAssets/orc/Orc/warhammer.png",
+      "sha256": "d20cbc9411dbc019c8766f0a9cc71761ece427b605b5138c5fe1a4969e7025f9",
+      "bytes": 42641
+    },
+    {
+      "file": "SourceAssets/orc/Orc/warhammer.xcf",
+      "sha256": "b258d8393ac0d81f5cfc6dc36fe569ac6d96e4addd42d69dfc6d14f0eb067de5",
+      "bytes": 589118
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/healing_m.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/healing_m.dae",
+      "sha256": "676bb948f7fc5fdbb921ef5e1ea18d0a95287c7cb54fd6a35d9b5c2f91c7abd4",
+      "size": 2277439
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/idle_relax_h_m.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/idle_relax_h_m.dae",
+      "sha256": "2364960f9cc23ec38ba9fda120bbe53687993a7fe5c7f7b9910c33d968fd4a68",
+      "size": 1313314
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/citizen/walk_relax_h_m.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/citizen/walk_relax_h_m.dae",
+      "sha256": "53cee8a5e0b311c04118acae0145f122766140163484cdec045eceb4e7b514be",
+      "size": 1024900
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/props/m_staff.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/m_staff.dae",
+      "sha256": "6a682bddd3fca9d80386b95791b46981971868a05b4e44a9952cd1f596194e6b",
+      "size": 12985
+    },
+    {
+      "file": "SourceAssets/0ad/meshes/skeletal/new/m_dress_sleeves.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/new/m_dress_sleeves.dae",
+      "sha256": "8c3646b2252d7f9d891515031842facd0fdfcbe81cc8856823f5b12e55aa15c0",
+      "size": 210874
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/skeletal/pers/robes_healer_01.png",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/pers/robes_healer_01.png",
+      "sha256": "52e951e9ece2b63be048b91164b3164517db7c0412b38f8e139e22da0bc8f710",
+      "size": 87300
+    },
+    {
+      "file": "SourceAssets/0ad/textures/skins/structural/celt_struct_1.dds",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/structural/celt_struct_1.dds",
+      "sha256": "704dcb25bef11e3ca5c2d77cf014f136bc26cca66763633f75f4893f76e74e86",
+      "size": 349680
+    },
+    {
+      "file": "SourceAssets/0ad/animation/biped/infantry/death_a.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/biped/infantry/death_a.dae",
+      "sha256": "78802e0531e0881c38ffa28fb6b281ea18edcd8c95f3acfa2a883e287f1f8df4",
+      "license": "CC-BY-SA-3.0"
+    },
+    {
+      "file": "SourceAssets/shaman/body.glb",
+      "sha256": "fe65f9241b861648beb893ba4467c788b77147754ca095c964d86b53c4e223ce"
+    },
+    {
+      "file": "SourceAssets/shaman/body_base.png",
+      "sha256": "c9aaf0a89d64554dd86bf7181df043d8192a682f5e999c172cd7979c642dd732"
+    }
+  ],
+  "modelStats": {
+    "RealShaman": {
+      "triangles": 1340,
+      "bones": 102,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 30
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Staff_Attack",
+          "frames": 50
+        },
+        {
+          "name": "Death",
+          "frames": 15
+        }
+      ],
+      "size": [
+        1.758277385607746,
+        3.3,
+        2.421990806388341
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealShaman_base.png",
+      "sha256": "2ee431590b158e1364294b170250cf6a1ca3d15b69267b06d59583eb5595b1fc"
+    },
+    {
+      "file": "Assets/Textures/RealShaman_normal.png",
+      "sha256": "12463c7f27847d0a53ae20a302b5214bb0c8c8180b91f67f94f6f1bcdb4d0362"
+    },
+    {
+      "file": "Assets/Textures/RealShaman_arm.png",
+      "sha256": "d28f2c2ecebd4d3bf7414b574fb497e5ab6a8a2af208de4a96ab81d5ea51c107"
+    },
+    {
+      "file": "Assets/Models/RealShaman.glb",
+      "sha256": "54cfdc5bc67a0e1a13fe1721516dcdafe9a5c83877c3aeaa38116cefd0c4a63f"
+    },
+    {
+      "file": "Assets/Materials/RealShaman.mmat",
+      "sha256": "45bf4b3fb9a2f397bba806431edbfd05a4f96505e4bc01d7492320f9e6510bb1"
+    }
+  ]
+}

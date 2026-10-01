@@ -3822,5 +3822,44 @@
     ],
     "realistic": true,
     "attackEvent": 0.45
+  },
+  "RealShaman": {
+    "material": "Assets/Materials/RealShaman.mmat",
+    "parts": [
+      {
+        "name": "RealShaman",
+        "mesh": "Assets/Models/RealShaman.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 30
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Staff_Attack",
+        "frames": 50
+      },
+      {
+        "name": "Death",
+        "frames": 15
+      }
+    ],
+    "size": [
+      1.758277385607746,
+      3.3,
+      2.421990806388341
+    ],
+    "realistic": true,
+    "attackEvent": 0.25
   }
 }

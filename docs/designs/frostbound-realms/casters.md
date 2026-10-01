@@ -14,7 +14,7 @@ Base ability/training values were checked against Blizzard's classic [Necromance
 
 Attack cooldown stores nominal attack work; Frenzy and Cripple change the rate at which that work advances, including an attack already in progress. Their attack-rate bonuses add (+.75-.5 gives 1.25 total), avoiding double application. Cripple damage is captured when a projectile launches, so subsequent dispel cannot change a shot in flight. Cripple movement multiplies the existing slow/haste modifiers. Life drain bypasses shields and uses the shared death/corpse/respawn path without on-hit lifesteal or slows. Friendly drain gives no deny event, gold or XP; enemy drain credits the original caster even after their death. Attribution remains server-private.
 
-The native command panel exposes training, rank locks, cooldowns and target selection; selected affected units show remaining durations. Necromancer spells reuse the authored staff gesture and spell particles. AI builds Temples, researches available ranks, casts targeted magic and uses Purge against debuffs or summons. The server validates caster ownership/readiness, rank, mana, cooldown, target class, range, visibility and terrain before changing state. Protocol 15 is required on both sides. Save validation covers training, ranks, timers and drain source data.
+The native command panel exposes training, rank locks, cooldowns and target selection; selected affected units show remaining durations. Necromancer and Shaman spells use authored staff gestures facing their targets. The [robed orc shaman](shaman.md) has a textured face, gloves and robe; Purge casting also resumes after saving and loading. AI builds Temples, researches available ranks, casts targeted magic and uses Purge against debuffs or summons. The server validates caster ownership/readiness, rank, mana, cooldown, target class, range, visibility and terrain before changing state. Protocol 15 is required on both sides. Save validation covers training, ranks, timers and drain source data.
 
 Validation:
 
@@ -22,7 +22,7 @@ Validation:
 - `node scripts/test-frostbound.mjs`: full rule/TCP suite passed, including Temple research and targeted Frenzy across real TCP reconnect, with private damage provenance.
 - `cargo test -p mengine-editor-host --test frost_sample`: 3 passed,0 failed.
 - `node scripts/qa-frostbound.mjs --casters-only`: native Adept/Master research, research save, spell targeting, health drain, Cripple, effect save, Purge and expiry passed. Zero rejected material pipelines (`native-casters-qa.json`).
-- Windows package:580 files / 267,569,399 bytes; content SHA-256 `a390eacde41d5dad3b92fe5f3acaaa00daf9fd49cb364a79facbab3798ffbc9a`. Hash validation and 30-second Player startup passed; responsive,zero logged errors (`player-smoke.json`).
+- Windows package:586 files / 270,092,806 bytes; content SHA-256 `831ddde4e26aae0936a2186edaf0ffeea63a281cdb9fd2717056f75f23c85eee`. Hash validation and 30-second Player startup passed; responsive,zero logged errors (`player-smoke.json`).
 
 Native inputs use the Agent bridge. Physical input, audio listening and cross-machine LAN acceptance are not covered. The full requested game remains incomplete.
 

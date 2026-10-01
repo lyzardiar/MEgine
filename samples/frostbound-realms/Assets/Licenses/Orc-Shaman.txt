@@ -1,0 +1,14 @@
+Orc robed shaman / RealShaman
+Orc face, hands and skin: Guillaume "GuieA_7" Englert, CC-BY-SA-4.0.
+https://opengameart.org/content/orc-3d
+https://creativecommons.org/licenses/by-sa/4.0/
+Garment, staff, rig and animations: Wildfire Games, 0 A.D., CC-BY-SA-3.0.
+https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art
+https://creativecommons.org/licenses/by-sa/3.0/
+Adaptations by MiYu: fitted orc face and hands to caster joints, removed human skin,
+dyed fabric, UV atlas, native PBR surfaces, animation sampling and unit portrait.
+Combined adaptation licensed under CC-BY-SA-4.0; original sources retain their licenses.
+Sources, hashes and generation instructions: shaman-sources.json.
+Originals: SourceAssets/orc and SourceAssets/0ad. Prepared: SourceAssets/shaman.
+Derivatives: Assets/Models/RealShaman.glb, Assets/Textures/RealShaman_*.png,
+Assets/Materials/RealShaman.mmat and RealShaman in Assets/Art/unit-portraits.png.

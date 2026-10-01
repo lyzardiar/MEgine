@@ -1,5 +1,6 @@
 // Author: MiYu. Caster research, targeted magic, attack progress, health drain and dispel.
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
@@ -39,4 +40,10 @@ for(const setup of [({n})=>n.casterRank=0,({n})=>n.mana=49,({n})=>n.stun=1,({n})
 {
  const {s,n,v}=arena();s.teams[0].ai=true;s.teams[0].necromancy=2;v.hp=v.maxHp=5000;step(s,40);assert.ok(v.cripple>0,'AI uses trained Cripple');assert.equal(n.raiseDeadAuto,true,'AI enables raising during combat');
 }
-console.log('PASS: caster training/research/refunds; target and rank gates; Frenzy additive attack progress, friendly/enemy drain deaths; Cripple damage/movement/hero duration; Purge dispel and summons; save continuity');
+{
+ const {s,h,v}=arena();globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/model-catalog.json',import.meta.url)));const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
+ assert.equal(cast(s,h,'purge',v),null);const {key,asset}=V.model(s,h);assert.equal(key,'RealShaman');assert.equal(V.heading(s,h,{x:h.x,z:h.z,yaw:0}),Math.atan2(v.x-h.x,v.z-h.z));assert.match(V.pose(h,asset,false,0),/#pose=2:0$/);
+ step(s,4);const restored=S.restore(S.clone(s)),saved=restored.units.find(u=>u.id===h.id);assert.equal(V.pose(saved,asset,false,0),V.pose(h,asset,false,0));assert.equal(V.heading(restored,saved),h.castYaw);
+ assert.match(V.pose(h,asset,true,0),/#pose=1:0$/);h.stun=1;assert.match(V.pose(h,asset,false,0),/#pose=0:0$/);h.stun=0;step(s,8);assert.match(V.pose(h,asset,false,0),/#pose=0:0$/);
+}
+console.log('PASS: caster rules and saves; realistic shaman cast pose/direction, movement/stun interruption and restored animation');

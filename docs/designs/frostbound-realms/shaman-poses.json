@@ -1,0 +1,237 @@
+{
+  "file": "docs/designs/frostbound-realms/shaman-poses.png",
+  "sha256": "a216580fcc5d8bf503b543477d75cb93a58cbcb66f38aae0c8728f54b47466f9",
+  "generator": "scripts/render-frost-unit-icons.mjs --shaman-sheet",
+  "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
+  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "models": [
+    {
+      "name": "Idle 0",
+      "mesh": "Assets/Models/RealShaman.glb#pose=0:0",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.6843066215515137,
+          3.3164782524108887,
+          0.5918604135513306
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=0:0",
+        "min": [
+          -0.8594963550567627,
+          -0.055688656866550446,
+          -0.37523719668388367
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Walk 0.25",
+      "mesh": "Assets/Models/RealShaman.glb#pose=1:5",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.5484114289283752,
+          3.201568126678467,
+          0.9237387776374817
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=1:5",
+        "min": [
+          -0.7536153197288513,
+          -0.027276553213596344,
+          -0.8273336887359619
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Walk 0.75",
+      "mesh": "Assets/Models/RealShaman.glb#pose=1:15",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.8377715945243835,
+          3.201662063598633,
+          0.9237506985664368
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=1:15",
+        "min": [
+          -0.64951491355896,
+          -0.027322333306074142,
+          -0.9789648056030273
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Staff_Attack 0.1",
+      "mesh": "Assets/Models/RealShaman.glb#pose=2:5",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.9024940729141235,
+          4.297953128814697,
+          1.0207957029342651
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=2:5",
+        "min": [
+          -1.6053699254989624,
+          -0.027130642905831337,
+          -0.24030911922454834
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Staff_Attack 0.25",
+      "mesh": "Assets/Models/RealShaman.glb#pose=2:12",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.6610282063484192,
+          5.039913177490234,
+          0.9759533405303955
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=2:12",
+        "min": [
+          -1.2168811559677124,
+          -0.014557359740138054,
+          -0.7082245349884033
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Staff_Attack 0.5",
+      "mesh": "Assets/Models/RealShaman.glb#pose=2:25",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.6595906615257263,
+          5.076920509338379,
+          0.977329432964325
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=2:25",
+        "min": [
+          -1.1200687885284424,
+          -0.03390409052371979,
+          -0.5410788059234619
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Staff_Attack 0.75",
+      "mesh": "Assets/Models/RealShaman.glb#pose=2:37",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.6428095102310181,
+          5.021656513214111,
+          0.9826810956001282
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=2:37",
+        "min": [
+          -0.9774819612503052,
+          -0.05007702112197876,
+          -0.6929787397384644
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Staff_Attack 0.9",
+      "mesh": "Assets/Models/RealShaman.glb#pose=2:45",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.896811306476593,
+          4.270801067352295,
+          1.0194323062896729
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=2:45",
+        "min": [
+          -1.6120434999465942,
+          -0.028275372460484505,
+          -0.24034875631332397
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Death 0",
+      "mesh": "Assets/Models/RealShaman.glb#pose=3:0",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          1.3403187990188599,
+          3.0413689613342285,
+          0.851531445980072
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=3:0",
+        "min": [
+          -0.7260937690734863,
+          -0.000005009584128856659,
+          -1.4139761924743652
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Death 0.3",
+      "mesh": "Assets/Models/RealShaman.glb#pose=3:4",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          0.8208593130111694,
+          3.198580503463745,
+          1.0543174743652344
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=3:4",
+        "min": [
+          -1.0525401830673218,
+          0.000002905726432800293,
+          -0.92912757396698
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Death 0.6",
+      "mesh": "Assets/Models/RealShaman.glb#pose=3:9",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          2.789313793182373,
+          1.1859586238861084,
+          0.769615888595581
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=3:9",
+        "min": [
+          -0.6090699434280396,
+          0.000005304813385009766,
+          -2.713597536087036
+        ],
+        "vertices": 1750
+      }
+    },
+    {
+      "name": "Death 0.99",
+      "mesh": "Assets/Models/RealShaman.glb#pose=3:14",
+      "material": "Assets/Materials/RealShaman.mmat",
+      "bounds": {
+        "max": [
+          3.375509023666382,
+          1.09531831741333,
+          0.7696160078048706
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealShaman.glb#pose=3:14",
+        "min": [
+          -0.6382157206535339,
+          3.5762786865234375e-7,
+          -2.738053321838379
+        ],
+        "vertices": 1750
+      }
+    }
+  ]
+}

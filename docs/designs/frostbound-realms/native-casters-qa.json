@@ -12,6 +12,9 @@
     "targetedCripple": true,
     "midEffectSave": true,
     "purgeDispel": true,
+    "shamanModelAndPortrait": true,
+    "directedStaffGesture": true,
+    "midPurgeCastSave": true,
     "purgeExpiry": true,
     "shaderRejections": 0
   }
