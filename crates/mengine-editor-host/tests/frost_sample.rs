@@ -5,6 +5,33 @@ use serde_json::Value;
 use std::path::PathBuf;
 fn telemetry(s: &WorldSnapshot) -> Value { serde_json::from_str(s.entities.iter().find(|e|e.name.as_deref()==Some("Frost telemetry")).unwrap().components["Text"]["text"].as_str().unwrap()).unwrap() }
 #[test]
+fn classic_menu_clicks_route_maps_settings_save_and_quit() {
+    let source_root=PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let root=std::env::temp_dir().join(format!("mengine-classic-menu-{}-{}",std::process::id(),std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));std::fs::create_dir_all(&root).unwrap();
+    let source=std::fs::read_to_string(source_root.join("Assets/Scripts/Main.js")).unwrap();
+    let scene:Value=serde_json::from_slice(&std::fs::read(source_root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let runtime=EditorPlayRuntime::default();let mut snapshot=runtime.start(runtime.begin(),source.clone(),serde_json::from_value(scene["world"].clone()).unwrap(),PlayProject{root:Some(root.clone()),..Default::default()}).unwrap();
+    let mut input=ScriptInput::default();input.viewport=[1280,720];
+    let tick=|snapshot:WorldSnapshot,input:&mut ScriptInput| {let next=runtime.step(runtime.generation(),snapshot,input.clone(),0.1).unwrap();input.finish_frame();next};
+    let click=|mut snapshot:WorldSnapshot,input:&mut ScriptInput,id:&str| {let r=&snapshot.entities.iter().find(|e|e.name.as_deref()==Some(&format!("{id} box"))).unwrap().components["RectTransform"];input.pointer=[640.0+r["anchored_position"][0].as_f64().unwrap() as f32,360.0+r["anchored_position"][1].as_f64().unwrap() as f32];input.button(0,true);snapshot=tick(snapshot,input);input.button(0,false);tick(snapshot,input)};
+    let key=|mut snapshot:WorldSnapshot,input:&mut ScriptInput,k:&str| {input.key(k.into(),true);snapshot=tick(snapshot,input);input.key(k.into(),false);tick(snapshot,input)};
+    let visible=|s:&WorldSnapshot,n:&str|s.entities.iter().find(|e|e.name.as_deref()==Some(n)).unwrap().active;
+    snapshot=tick(snapshot,&mut input);assert!(visible(&snapshot,"solo box"));assert!(!visible(&snapshot,"mapStart box"));
+    snapshot=click(snapshot,&mut input,"solo");assert_eq!(telemetry(&snapshot)["mode"],"single");assert!(!visible(&snapshot,"solo box"));assert!(visible(&snapshot,"continue box"));
+    snapshot=click(snapshot,&mut input,"custom");assert_eq!(telemetry(&snapshot)["mode"],"custom");
+    for (i,kind) in ["skirmish","moba","td","rpg","skirmish"].iter().enumerate() {
+        snapshot=click(snapshot,&mut input,&format!("map{i}"));assert_eq!(telemetry(&snapshot)["mapChoice"],i);snapshot=click(snapshot,&mut input,"mapStart");assert_eq!(telemetry(&snapshot)["kind"],*kind);assert_eq!(telemetry(&snapshot)["mode"],"playing");assert!(!visible(&snapshot,"Menu painting"));
+        snapshot=key(snapshot,&mut input,"F10");snapshot=key(snapshot,&mut input,"KeyX");snapshot=click(snapshot,&mut input,"solo");snapshot=click(snapshot,&mut input,"custom");
+    }
+    snapshot=click(snapshot,&mut input,"faction");snapshot=click(snapshot,&mut input,"heroChoice");assert_eq!(telemetry(&snapshot)["faction"],1);assert_eq!(telemetry(&snapshot)["heroChoice"],1);snapshot=click(snapshot,&mut input,"map0");snapshot=click(snapshot,&mut input,"mapStart");assert_eq!(telemetry(&snapshot)["hero"]["heroClass"],1);
+    snapshot=key(snapshot,&mut input,"F5");let hero=telemetry(&snapshot)["hero"]["id"].clone();snapshot=key(snapshot,&mut input,"F10");snapshot=key(snapshot,&mut input,"KeyX");snapshot=click(snapshot,&mut input,"solo");snapshot=click(snapshot,&mut input,"continue");assert_eq!(telemetry(&snapshot)["hero"]["id"],hero);assert_eq!(telemetry(&snapshot)["mode"],"playing");
+    snapshot=key(snapshot,&mut input,"F10");snapshot=key(snapshot,&mut input,"KeyX");snapshot=click(snapshot,&mut input,"options");for _ in 0..4 {snapshot=click(snapshot,&mut input,"musicVolume");}snapshot=click(snapshot,&mut input,"sfxVolume");snapshot=click(snapshot,&mut input,"menuSnow");assert_eq!(telemetry(&snapshot)["settings"],serde_json::json!({"music":0,"sfx":0.75,"snow":false}));assert!(!visible(&snapshot,"Menu snow 0"));assert_eq!(snapshot.entities.iter().find(|e|e.name.as_deref()==Some("Sound winter-theme")).unwrap().components["AudioSource"]["volume"].as_f64().unwrap(),0.0);
+    runtime.stop();snapshot=runtime.start(runtime.begin(),source,serde_json::from_value(scene["world"].clone()).unwrap(),PlayProject{root:Some(root.clone()),..Default::default()}).unwrap();snapshot=tick(snapshot,&mut input);assert_eq!(telemetry(&snapshot)["settings"]["snow"],false);assert_eq!(telemetry(&snapshot)["settings"]["music"],0);
+    snapshot=click(snapshot,&mut input,"credits");assert!(visible(&snapshot,"Credits text"));snapshot=key(snapshot,&mut input,"Escape");snapshot=click(snapshot,&mut input,"network");assert_eq!(telemetry(&snapshot)["mode"],"network");snapshot=click(snapshot,&mut input,"netAddress");snapshot=click(snapshot,&mut input,"modalBack");assert_eq!(telemetry(&snapshot)["mode"],"network");snapshot=click(snapshot,&mut input,"modalBack");snapshot=click(snapshot,&mut input,"quit");snapshot=click(snapshot,&mut input,"quitCancel");assert_eq!(telemetry(&snapshot)["mode"],"title");
+    snapshot=click(snapshot,&mut input,"quit");let r=&snapshot.entities.iter().find(|e|e.name.as_deref()==Some("quitConfirm box")).unwrap().components["RectTransform"];input.pointer=[640.0+r["anchored_position"][0].as_f64().unwrap() as f32,360.0+r["anchored_position"][1].as_f64().unwrap() as f32];input.button(0,true);let update=runtime.advance_update(runtime.generation(),Some(snapshot),input,0.1).unwrap();assert!(update.quit_requested);
+    runtime.stop();
+}
+#[test]
 fn unicode_map_input_save_cancel_and_undo() {
     let root=PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
     let source=std::fs::read_to_string(root.join("Assets/Scripts/Main.js")).unwrap();

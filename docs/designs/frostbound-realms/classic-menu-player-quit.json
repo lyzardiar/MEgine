@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "method": "Real standalone Player, scripted pointer clicks on Quit and confirmation, application event loop exit",
+  "exitCode": 0,
+  "loggedErrors": 0,
+  "physicalInput": false
+}

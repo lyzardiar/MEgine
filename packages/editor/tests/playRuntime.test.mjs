@@ -3,6 +3,28 @@ import test from 'node:test';
 import { createServer } from 'vite';
 import { fileURLToPath } from 'node:url';
 
+test('script quit stops Editor Play, preserves the edit scene and resets on restart', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  const savedWindow = globalThis.window; globalThis.window = {};
+  try {
+    const { mockIPC, clearMocks } = await server.ssrLoadModule('@tauri-apps/api/mocks');
+    const { createNativePlayRuntime } = await server.ssrLoadModule('/src/playRuntime.ts');
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const snapshot = { entities: [], frame: 0, sim_frame: 0, clear_color: [0, 0, 0, 1] };
+    let stopped = 0;
+    mockIPC(async cmd => {
+      if (cmd === 'start_editor_play') return { sessionId: 1, snapshot };
+      if (cmd === 'step_editor_play') return { snapshot, entityOrder: [], baseRevision: 0, revision: 1, reset: false, quitRequested: true };
+      if (cmd === 'stop_editor_play') stopped++;
+    });
+    const runtime = createNativePlayRuntime(error => { throw error; });
+    const store = createEditorStore(), original = store.snapshot().entities;
+    store.setPlayRuntime(runtime); store.play(); await store.waitForPlayRuntime(); store.pause(); assert.equal(store.step(.1), true); await store.waitForPlayRuntime();
+    assert.equal(store.mode, 'edit'); assert.deepEqual(store.snapshot().entities, original); assert.equal(runtime.quitRequested, false);
+    store.play(); await store.waitForPlayRuntime(); assert.equal(store.mode, 'play'); assert.equal(stopped, 1); assert.equal(runtime.quitRequested, false); store.stop(); await new Promise(resolve => setImmediate(resolve)); clearMocks();
+  } finally { globalThis.window = savedWindow; await server.close(); }
+});
+
 test('native Play serializes pending startup and stop before restart and rejects stale steps', async () => {
   const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
   const savedWindow = globalThis.window;

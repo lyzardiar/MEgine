@@ -247,6 +247,23 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     }).finally(() => { if (generation === playGeneration) playBusy = false; });
   };
 
+  const stopPlay = () => {
+    playGeneration++;
+    playRuntime?.stop();
+    playBusy = false;
+    playError = null;
+    playInput = emptyPlayInput();
+    playClearColor = null;
+    remotePlaySessionId = undefined;
+    playSyncedFingerprint = '';
+    behaviourRunner.unmount();
+    playEntities = null;
+    mode = 'edit';
+    playSpin = 0;
+    animationPreview = null;
+    timelinePreview = null;
+  };
+
   const runPlayFrame = (dt: number) => {
     if (!playRuntime || !playEntities) return;
     const started = performance.now();
@@ -257,6 +274,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     const snapshot = playRuntime.retainsWorld && playFingerprint() === playSyncedFingerprint ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: playClearColor ?? clearColor, selected: primarySelected() };
     trackPlayOperation(playRuntime.step(snapshot, input, dt).then((result) => {
       if (generation !== playGeneration || mode === 'edit') return;
+      if (playRuntime?.quitRequested) { stopPlay(); return; }
       playEntities = result.entities.map(normalizeEntity);
       playClearColor = result.clearColor;
       playSpin = result.simulationTime ?? playSpin;
@@ -1575,22 +1593,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         }
       }), generation);
     },
-    stop() {
-      playGeneration++;
-      playRuntime?.stop();
-      playBusy = false;
-      playError = null;
-      playInput = emptyPlayInput();
-      playClearColor = null;
-      remotePlaySessionId = undefined;
-      playSyncedFingerprint = '';
-      behaviourRunner.unmount();
-      playEntities = null;
-      mode = 'edit';
-      playSpin = 0;
-      animationPreview = null;
-      timelinePreview = null;
-    },
+    stop: stopPlay,
     pause() {
       mode = mode === 'play' ? 'pause' : mode === 'pause' ? 'play' : mode;
     },

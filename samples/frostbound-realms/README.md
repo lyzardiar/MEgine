@@ -13,7 +13,7 @@ node scripts/build-frostbound.mjs
 node packages/cli/dist/cli.js build samples/frostbound-realms --runtime target/release/mengine-runtime.exe --skip-runtime-build --out samples/frostbound-realms/Builds/windows-x64 --clean
 ```
 
-生成后运行 `Builds/windows-x64/Frostbound Realms.exe`。菜单支持鼠标点击和 F1/F2/F3/F4/F8/F9 快捷键。
+生成后运行 `Builds/windows-x64/Frostbound Realms.exe`。主菜单采用右侧悬链铁框、蓝底金字按钮、冰冠背景与浮雕标题。单人游戏 → 自定义游戏中选择地图、种族与英雄；载入游戏、地图编辑器、局域网、选项、制作人员和退出均有实际入口。选项保存音乐/音效音量与背景飘雪设置。保留 F1/F2/F3/F4/F8/F9 直接进入玩法的快捷键。
 
 ## 玩法
 
@@ -47,7 +47,7 @@ Skirmish 建筑由工人到场启动：Kingdom 工人持续施工，可多工协
 | 塔防 | 工人 T 守卫塔、G 冰塔、Y 火塔；选塔点击升级或出售 |
 | 出兵 / 研究 | 选建筑后点底部按钮；兵营 U 研究 |
 | 集结 / 取消生产 | 选生产建筑后右键地面或点 Rally；Cancel last 取消队尾并全额退还、释放预留人口 |
-| 选择英雄 | 主菜单或联机大厅 H / 英雄按钮 |
+| 选择英雄 | 自定义游戏选择页或联机大厅 H / 英雄按钮 |
 | 学习技能 | K 切换学习页，Q/W/E/R 学习；Shift+Q/W/E/R 直接加点 |
 | 技能 | Q/W/E/R，目标技能随后左键指定；自身技能立即施放 |
 | 商店 | O 切换商店页；英雄回主基地附近，点击装备按钮 |
@@ -94,7 +94,7 @@ node samples/frostbound-realms/server.mjs
 node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 ```
 
-多人菜单按 I 编辑服务器 `IPv4:端口`，F1 创建 RTS 房间、F2 创建 MOBA 房间、F3 浏览房间。大厅 H 更换英雄，更换后双方需要重新准备。双方 Enter 准备，房主再次 Enter 开局。协议版本为 19，客户端和服务器必须配套更新，旧协议连接会被拒绝。服务器以 10 Hz 推进模拟，客户端仅提交命令；拒绝重复序号、操作敌方单位、不可见目标与非法坐标，限制连接、请求大小和发送频率。未提供公网匹配、NAT 穿透、账户系统或加密传输；当前目标为本机与可信局域网。
+局域网菜单可点击创建、加入与服务器地址，房间列表可点击选择，准备按钮连接实际 TCP 对局。也可按 I 编辑服务器 `IPv4:端口`，F1 创建 RTS 房间、F2 创建 MOBA 房间、F3 浏览房间。大厅 H 更换英雄，更换后双方需要重新准备。双方 Enter 准备，房主再次 Enter 开局。协议版本为 19，客户端和服务器必须配套更新，旧协议连接会被拒绝。服务器以 10 Hz 推进模拟，客户端仅提交命令；拒绝重复序号、操作敌方单位、不可见目标与非法坐标，限制连接、请求大小和发送频率。未提供公网匹配、NAT 穿透、账户系统或加密传输；当前目标为本机与可信局域网。
 
 ## 资源与引擎扩展
 
@@ -107,6 +107,8 @@ node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 `environment-sources.json` 记录新增 [Kenney Castle Kit](https://kenney.nl/assets/castle-kit)、[Nature Kit](https://kenney.nl/assets/nature-kit) 原始 ZIP，以及 [Poly Haven](https://polyhaven.com/license) 的 snow_02 / rocky_terrain 贴图，共 20 个源模型及两张地表贴图，含四种攻城器械。三种塔由下载的模块离线组装；加上 Dragon，目录合计 39 个来源模型和 3 个组合模型。冬季调色和积雪材质由代码适配，下载原件不改动。`font-sources.json` 保留 Cinzel、Noto Sans SC 字体及 OFL 许可校验值，许可随 Player 打包。中文字体原件位于 `SourceAssets/NotoSansSC-VF.ttf`；安装 fonttools==4.61.1 后运行 `python scripts/import-frost-font.py` 生成静态 400 字重，再运行构建脚本。
 
 `dragon-sources.json` 记录 [Quaternius Ultimate Monsters](https://quaternius.com/packs/ultimatemonsters.html) 的 CC0 Dragon FBX 镜像、原件哈希和固定版本 FBX2glTF 转换器归档哈希。原 FBX、派生 glTF、骨架与五个动画都保留；Windows 导入器在项目 tmp 目录提取转换工具，不修改系统安装。官方 glTF 文件本次遇到 Drive 配额限制，因此使用可取得的 FBX 源模型转换。
+
+`classic-menu-art.json` 与 `Assets/Licenses/Classic-Menu-Art.txt` 保存经典菜单三张原创素材的提示词、参考来源与 SHA-256。
 
 `generated-art.json` 保存内置 image_gen 生成菜单背景与 4×4 技能图集的完整提示词和 SHA-256；这两张原创插画位于 `Assets/Art/`，战场由引擎实时渲染。uuu9 当前主站跳转至资讯站，旧 war3.uuu9.com 未取得可用下载或明确再分发许可，本次没有纳入该站素材。
 

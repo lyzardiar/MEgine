@@ -1,0 +1,1 @@
+{"version":10,"name":"Classic cobalt menu button","shader":"custom","custom_shader":"Assets/Shaders/ClassicButton.mshader","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,1]}

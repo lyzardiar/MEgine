@@ -1623,6 +1623,7 @@ function onTick(dt, frame) {
                 self.script_input.finish_frame();
                 if self.script_input.pointer_locked && !self.pointer_capture_requested() { self.release_pointer(); }
                 for request in runtime_requests {
+                    if request == ScriptRuntimeRequest::Quit { event_loop.exit(); return; }
                     self.apply_runtime_request(request);
                 }
 

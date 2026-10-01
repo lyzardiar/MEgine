@@ -1,0 +1,5 @@
+// MiYu: dark forged iron for classic menu panels.
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let uv=input.uv0;let grain=fract(sin(dot(floor(uv*vec2<f32>(700.0,500.0)),vec2<f32>(12.9898,78.233)))*43758.5453);
+    return vec4<f32>(vec3<f32>(0.013,0.017,0.023)*(0.85+grain*0.20),input.vertex_color.a);
+}

@@ -13,6 +13,7 @@ export const emptyPlayInput = (): PlayInput => ({ keys: [], pressedKeys: [], rel
 export type PlayRuntimeDriver = {
   readonly retainsWorld?: boolean;
   readonly sessionId?: number | null;
+  readonly quitRequested?: boolean;
   start(snapshot: WorldSnapshotView): Promise<WorldSnapshotView | void>;
   step(snapshot: WorldSnapshotView | undefined, input: PlayInput, dt: number): Promise<WorldSnapshotView>;
   stop(): void;
@@ -25,6 +26,7 @@ export type PlayWorldUpdate = {
   baseRevision: number;
   revision: number;
   reset: boolean;
+  quitRequested?: boolean;
 };
 
 export function applyPlayWorldUpdate(previous: WorldSnapshotView, revision: number, update: PlayWorldUpdate): WorldSnapshotView {
@@ -48,10 +50,13 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
   let revision = 0;
   let backendSessionId: number | null = null;
   let lifecycle: Promise<void> = Promise.resolve();
+  let quitRequested = false;
   return {
     retainsWorld: true,
     get sessionId() { return sessionId; },
+    get quitRequested() { return quitRequested; },
     async start(snapshot) {
+      quitRequested = false;
       const current = ++generation;
       const starting = lifecycle.then(async () => {
         if (current !== generation) return;
@@ -70,9 +75,11 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
       if (current !== generation || world === null) throw new Error('Play session expired');
       world = applyPlayWorldUpdate(world, revision, update);
       revision = update.revision;
+      quitRequested = update.quitRequested === true;
       return world;
     },
     stop() {
+      quitRequested = false;
       generation++; sessionId = null; world = null; revision = 0;
       lifecycle = lifecycle.then(async () => {
         const stopped = backendSessionId;

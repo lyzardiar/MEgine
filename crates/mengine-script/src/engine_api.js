@@ -3,6 +3,7 @@
   let valueRevision = -1, value, jsonRevision = -1, json;
   const api = {
     scene: null,
+    quit: () => request('quit', '[]'),
     storage: Object.freeze({
       load(key) { const r = JSON.parse(storage('load', String(key), '')); if (!r.ok) throw new Error(r.error); return r.value; },
       save(key, value) { const r = JSON.parse(storage('save', String(key), JSON.stringify(value))); if (!r.ok) throw new Error(r.error); return r.value; },

@@ -16,6 +16,7 @@ pub struct ScriptRequestContext<'a> {
 impl ScriptRequestContext<'_> {
     pub fn apply(&mut self, request: ScriptRuntimeRequest) -> Option<SceneSelector> {
         match &request {
+            ScriptRuntimeRequest::Quit => return None, // MiYu: the owning Player or Editor handles its lifecycle.
             ScriptRuntimeRequest::SetAnimatorParameter {
                 entity,
                 name,
@@ -242,6 +243,7 @@ impl ScriptRequestContext<'_> {
             _ => {}
         }
         let selector = match request {
+            ScriptRuntimeRequest::Quit => unreachable!(),
             ScriptRuntimeRequest::LoadSceneByIndex(index) => SceneSelector::Index(index),
             ScriptRuntimeRequest::LoadScene(reference) => SceneSelector::PathOrName(reference),
             ScriptRuntimeRequest::ReloadScene => SceneSelector::Reload,

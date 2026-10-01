@@ -23,6 +23,7 @@ pub struct PlayProject {
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayWorldUpdate {
+    pub quit_requested: bool,
     pub snapshot: WorldSnapshot,
     pub entity_order: Vec<u64>,
     pub base_revision: u64,
@@ -50,7 +51,7 @@ impl PlaySnapshotStream {
         }
         self.entities = current;
         snapshot.entities = changed;
-        PlayWorldUpdate { snapshot: snapshot.into_owned(), entity_order, base_revision, revision: self.revision, reset }
+        PlayWorldUpdate { snapshot: snapshot.into_owned(), entity_order, base_revision, revision: self.revision, reset, quit_requested: false }
     }
 }
 
@@ -95,7 +96,8 @@ impl Default for EditorPlayRuntime {
                         let result = session.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play Mode is not initialized".to_string()).and_then(|(_, session)| {
                             let snapshot = session.step(snapshot, input, dt)?;
                             let started = Instant::now();
-                            let update = session.snapshot_stream.update(snapshot, reset);
+                            let mut update = session.snapshot_stream.update(snapshot, reset);
+                            update.quit_requested = session.quit_requested;
                             let total_ms = started.elapsed().as_secs_f64() * 1000.0;
                             session.step_ms += total_ms;
                             session.step_stages.push(EditorViewportProfileNode { name: "Snapshot delta".into(), total_ms, self_ms: total_ms, calls: 1, children: Vec::new() });
@@ -173,6 +175,7 @@ impl EditorPlayRuntime {
 }
 
 struct PlaySession {
+    quit_requested: bool,
     world: World,
     script: ScriptHost,
     initial: WorldSnapshot,
@@ -202,7 +205,7 @@ impl PlaySession {
         script.inject_snapshot_json(&serde_json::to_string(&initial).map_err(|error| error.to_string())?).map_err(|error| error.to_string())?;
         script.eval(source).map_err(|error| error.to_string())?;
         script.notify_scene_loaded(&initial_scene.name, &initial_scene.path.to_string_lossy().replace('\\', "/"), initial_scene.build_index, initial_scene.build_scene_count).map_err(|error| error.to_string())?;
-        Ok(Self { world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default(), snapshot_cache: WorldSnapshotCache::default() })
+        Ok(Self { quit_requested: false, world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default(), snapshot_cache: WorldSnapshotCache::default() })
     }
 
     fn step(&mut self, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<SharedWorldSnapshot, String> {
@@ -257,6 +260,7 @@ impl PlaySession {
         stage("Animation, timeline and audio");
         self.script.tick(world, dt).map_err(|error| error.to_string())?;
         for request in self.script.take_runtime_requests() {
+            if request == mengine_script::ScriptRuntimeRequest::Quit { self.quit_requested = true; break; }
             let Some(selector) = (ScriptRequestContext { world, project_root: self.root.as_deref(), animations: &mut self.animations, timelines: &mut self.timelines, audio: &mut self.audio }).apply(request) else { continue; };
             let loaded = if selector == SceneSelector::Reload && self.scenes.current() == Some(self.initial_scene.path.as_path()) {
                 mengine_scene::apply_snapshot(world, &self.initial);

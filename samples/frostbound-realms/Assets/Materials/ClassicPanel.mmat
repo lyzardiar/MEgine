@@ -1,0 +1,1 @@
+{"version":10,"name":"Classic dark iron menu panel","shader":"custom","custom_shader":"Assets/Shaders/ClassicPanel.mshader","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,1]}

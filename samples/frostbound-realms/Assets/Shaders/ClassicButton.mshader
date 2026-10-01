@@ -1,0 +1,9 @@
+// MiYu: inset cobalt menu button with worn bevels and pointer highlight.
+fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+    let uv=input.uv0;let edge=min(min(uv.x,1.0-uv.x)*8.0,min(uv.y,1.0-uv.y));
+    let grain=fract(sin(dot(floor(uv*vec2<f32>(700.0,80.0)),vec2<f32>(12.9898,78.233)))*43758.5453);
+    let base=vec3<f32>(0.045,0.080,0.19)*(0.85+grain*0.25)+vec3<f32>(0.025,0.04,0.08)*(1.0-abs(uv.y*2.0-1.0));
+    let bevel=mix(vec3<f32>(0.018,0.023,0.038),vec3<f32>(0.31,0.34,0.40),select(0.15,1.0,uv.y<0.5));
+    let color=mix(base,bevel,1.0-smoothstep(0.012,0.095,edge));
+    return vec4<f32>(color*input.vertex_color.rgb,input.vertex_color.a);
+}

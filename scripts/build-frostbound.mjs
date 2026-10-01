@@ -43,22 +43,31 @@ const metal=(n,x,y,w,h)=>ui(n,x,y,w,h,{Image:{material:'Assets/Materials/Panel.m
 const text=(n,value,x,y,w,h,size=18,color=C.white,alignment='Left')=>ui(n,x,y,w,h,{Text:{text:value,font:'Assets/Fonts/NotoSansSC.ttf',font_size:size,color,alignment,vertical_align:'Middle',horizontal_overflow:'Overflow',vertical_overflow:'Overflow',raycast_target:false}});
 const buttons=[];
 function button(id,label,x,y,w,h,group='menu',detail=''){panel(id+' border',x,y,w+2,h+2,[.3,.24,.13,1]);metal(id+' box',x,y,w,h);text(id+' label',label,x,y-(detail?10:0),w-30,h,detail?21:16,C.white);if(detail)text(id+' detail',detail,x,y+19,w-30,24,12,C.muted);buttons.push({id,x,y,w,h,group});}
-art('Menu painting','Assets/Art/winterfall-menu.png',0,0,1280,720);panel('Menu shade',-330,0,620,720,[.008,.019,.032,.32]);panel('Menu line',-570,-275,4,27,C.gold);
-text('Menu eyebrow','冰封王座 · 北境战役',-324,-276,440,30,18,C.gold);
-text('Menu title','FROSTBOUND\nREALMS',-320,-175,460,150,57);
-E.at(-1).components.Text.font='Assets/Fonts/Cinzel.ttf';E.at(-1).components.Text.font_size=51;E.at(-1).components.Text.color=[.86,.78,.56,1];
-text('Menu subtitle','建立王国，统领你的军队。',-320,-73,460,30,16,C.muted);
-button('solo','单人游戏',-324,9,452,69,'menu','遭遇战 · 采集资源、建造基地、指挥军队');
-button('moba','远古遗迹',-324,91,452,69,'menu','三路战场 · 英雄、装备与对立要塞');
-button('td','自定义游戏',-324,173,452,69,'menu','蜿蜒守望 · 十二波塔防挑战');
-button('editor','地图编辑器',-440,245,220,43);button('network','局域网',-207,245,220,43);
-button('faction','种族',-440,298,220,37);button('continue','载入游戏',-207,298,220,37);
-text('Menu vista','冬落盆地',360,248,440,45,30,C.white,'Right');text('Menu credit','FROSTBOUND REALMS',360,289,440,26,12,C.gold,'Right');
-button('rpg','破碎盟约 (F8)',360,171,440,69,'menu','战役 · 任务、遗物与寒霜领主');
-button('siege','冬落围城 (F9)',360,89,440,69,'menu','攻城战 · 突破坚固的山口');
-button('heroChoice','FROST WARDEN [H]',360,7,440,69,'menu','Control / healing / click to change');
-art('Hero preview','Assets/Art/hero-portraits.png#hero-0',173,7,62,62);
-for(const suffix of [' label',' detail']){const r=E.find(e=>e.name==='heroChoice'+suffix).components.RectTransform;r.anchored_position[0]+=30;r.size_delta[0]-=70;}
+const menuMetal=(n,x,y,w,h)=>ui(n,x,y,w,h,{Image:{material:'Assets/Materials/ClassicPanel.mmat',color:[1,1,1,1],raycast_target:false}});
+const iron=(n,x,y,w,h,density=10)=>ui(n,x,y,w,h,{Image:{sprite:'Assets/Art/classic-iron-frame.png',image_type:'Sliced',border:[250,250,250,250],source_size:[1254,1254],pixels_per_unit_multiplier:density,color:[1,1,1,1],raycast_target:false}});
+function classicButton(id,label,x,y,w,h,group){panel(id+' border',x,y,w+4,h+4,[.035,.043,.057,1]);ui(id+' box',x,y,w,h,{Image:{material:'Assets/Materials/ClassicButton.mmat',color:[1,1,1,1],raycast_target:false}});text(id+' label',label,x,y,w-12,h,20,[.92,.79,.45,1],'Center');buttons.push({id,x,y,w,h,group});}
+art('Menu painting','Assets/Art/frozen-throne-menu.png',0,0,1280,720);
+for(let i=0;i<70;i++)art('Menu snow '+i,'Assets/Textures/spark_01.png',-640+(i*197%1280),-360+(i*149%720),2+i%3,2+i%3);
+// Suspension links remain native geometry; panel and button labels stay independent and interactive.
+for(const x of [343,557])for(let i=0;i<35;i++){const y=-352+i*10;panel('Title chain '+x+' '+i,x,y,i%2?5:9,12,[.055,.063,.075,1]);panel('Title chain glint '+x+' '+i,x-2,y,i%2?1:2,9,[.32,.34,.37,1]);panel('Title chain hole '+x+' '+i,x,y,i%2?1:4,7,[.008,.012,.018,1]);}
+for(const [n,x,y,w,h,d] of [['outer',0,0,1280,720,20],['panel',450,-30,330,372,9],['quit',450,268,330,90,10]]){if(n!=='outer')menuMetal('Title '+n+' backing',x,y,w-14,h-14);iron((n==='outer'?'Menu ':'Title ')+n+' frame',x,y,w,h,d);}
+art('Menu logo','Assets/Art/classic-title-logo.png',-388,-270,460,160);
+text('Menu subtitle','THE FROZEN THRONE',-388,-182,450,34,19,[.59,.74,.83,1],'Center');E.at(-1).components.Text.font='Assets/Fonts/Cinzel.ttf';text('Menu subtitle cn','冰 封 王 座',-388,-148,450,30,22,[.79,.84,.85,1],'Center');
+for(const [id,label,y] of [['solo','单人游戏',-154],['multiplayer','多人游戏',-96],['network','局域网',-38],['options','选项',20],['credits','制作人员',78]])classicButton(id,label,450,y,270,40,'menu');classicButton('quit','退出游戏',450,268,270,40,'menu');
+text('Menu version','v0.2  ·  MEngine',488,335,228,20,12,C.muted,'Right');
+menuMetal('Solo backing',450,-30,316,358);iron('Solo frame',450,-30,330,372,9);text('Solo title','单人游戏',450,-172,290,36,23,C.gold,'Center');
+for(const [id,label,y] of [['rpg','战役',-113],['custom','自定义游戏',-55],['continue','载入游戏',3],['editor','地图编辑器',61],['soloBack','返回',119]])classicButton(id,label,450,y,270,40,'single');
+menuMetal('Front backing',0,20,1000,570);iron('Front frame',0,20,1020,590,12);text('Front title','自定义游戏',0,-230,860,44,32,C.gold,'Center');
+menuMetal('Map list backing',-273,-13,410,380);iron('Map list frame',-273,-13,422,392,16);text('Map list title','地图',-273,-173,370,30,20,C.gold,'Center');
+for(const [i,name] of ['冬落盆地','远古遗迹 · Dota','蜿蜒守望 · 塔防','破碎盟约 · 战役','冬落围城'].entries())classicButton('map'+i,name,-273,-120+i*59,360,43,'custom');
+panel('Map preview backing',15,-81,198,198,[.015,.025,.029,1]);iron('Map preview frame',15,-81,214,214,16);
+for(let i=0;i<256;i++)panel('Map tile '+i,-75+(i%16)*12,-171+Math.floor(i/16)*12,12.2,12.2,[.2,.3,.28,1]);
+text('Map name','',280,-173,290,34,23,C.gold,'Center');text('Map description','',280,-76,290,150,17,C.white);E.at(-1).components.Text.horizontal_overflow='Wrap';
+classicButton('faction','人类',247,50,350,42,'custom');classicButton('heroChoice','英雄',247,108,350,42,'custom');art('Hero preview','Assets/Art/hero-portraits.png#hero-0',102,108,36,36);
+text('Map settings hint','玩家 1：指挥官       玩家 2：电脑',245,163,350,28,16,C.muted,'Center');classicButton('mapStart','开始游戏',-166,245,270,42,'custom');classicButton('mapBack','返回',166,245,270,42,'custom');
+text('Options heading','声音与环境',0,-150,830,42,25,C.gold,'Center');classicButton('musicVolume','音乐音量',0,-73,580,50,'options');classicButton('sfxVolume','音效音量',0,2,580,50,'options');classicButton('menuSnow','背景飘雪',0,77,580,50,'options');classicButton('optionsBack','确定',0,245,270,42,'options');
+text('Credits text','FROSTBOUND REALMS\n\n基于 MEngine 的经典即时战略游戏复刻项目\n程序、引擎与地图：MiYu\n\n免费模型与材质：详见随包 Sources 与 Licenses\n冰冠背景 / 金属边框：原创生成素材\n字体：Cinzel / Noto Sans SC（OFL）',0,4,850,300,22,C.white,'Center');classicButton('creditsBack','返回',0,245,270,42,'credits');
+text('Quit text','是否退出游戏？',0,-30,850,120,30,C.gold,'Center');classicButton('quitConfirm','退出',-166,150,270,42,'quit');classicButton('quitCancel','取消',166,150,270,42,'quit');
 function frame(n,x,y,w,h){ui('HUD Frame '+n,x,y,w,h,{Image:{sprite:'Assets/Art/royal-stone-frame.png',image_type:'Sliced',border:[270,270,270,270],source_size:[1254,1254],pixels_per_unit_multiplier:10,color:[1,1,1,1],raycast_target:false}});}
 metal('Header',0,-340,1280,40);text('Brand','',-513,-338,200,24,15,C.gold);text('Resources','',210,-338,600,24,15,C.white);text('Clock','',0,-332,116,38,13,C.gold,'Center');
 for(const [id,label,x] of [['hudMenu','菜单 (F10)',-550],['hudQuest','任务 (F9)',-426],['hudHero','英雄 (Space)',-294]])button(id,label,x,-339,116,29,'toolbar');
@@ -82,7 +91,10 @@ for(let i=0;i<12;i++)text('Damage '+i,'',5000,5000,90,28,20,C.gold,'Center');
 metal('Tooltip panel',386,103,444,100);text('Tooltip text','',386,103,416,86,13,C.white);E.at(-1).components.Text.horizontal_overflow='Wrap';
 text('Status','',0,135,1150,25,14,C.gold,'Center');text('Controls','',60,350,400,16,10,C.muted,'Right');
 text('Objective text','',0,-280,1100,38,18,C.gold,'Center');
-panel('Modal shade',0,0,760,430,C.ink);panel('Modal rule',0,-213,760,2,C.gold);text('Modal title','',0,-164,690,48,34,C.gold);text('Modal text','',0,-13,690,230,19,C.white);button('modalPrimary','',-174,156,320,44,'modal');button('modalBack','BACK',174,156,320,44,'modal');
+menuMetal('Modal shade',0,10,1000,552);iron('Modal frame',0,10,1020,570,12);text('Modal title','',0,-222,870,48,32,C.gold,'Center');text('Modal text','',0,-30,870,294,19,C.white);classicButton('modalPrimary','',-166,245,270,42,'modal');classicButton('modalBack','返回',166,245,270,42,'modal');
+for(const [id,label,x,y] of [['netSkirmish','创建遭遇战',-230,-87],['netMoba','创建 Dota',230,-87],['netBrowse','加入游戏',-230,-18],['netAddress','服务器地址',230,-18]])classicButton(id,label,x,y,400,46,'network');
+classicButton('roomRefresh','刷新列表',0,162,270,36,'rooms');classicButton('lobbyHero','选择英雄',0,162,400,36,'lobby');
+for(let i=0;i<8;i++)classicButton('room'+i,'',0,-143+i*35,870,30,'rooms');
 panel('Drag box',5000,5000,1,1,[.1,.7,.5,.16]);
 text('Frost telemetry','{}',5000,5000,1,1,1);
 panel('Rename shade',0,-35,880,300,C.ink);panel('Rename rule',0,-184,880,2,C.gold);

@@ -14,6 +14,7 @@ struct ScriptSnapshot {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ScriptRuntimeRequest {
+    Quit,
     LoadSceneByIndex(usize),
     LoadScene(String),
     ReloadScene,
@@ -474,6 +475,7 @@ fn runtime_request(operation: &str, args: &[JsonValue]) -> Option<ScriptRuntimeR
     let time = || arg(1).as_f64().filter(|time| *time >= 0.0 && *time <= f64::from(f32::MAX)).map(|time| time as f32);
     let restart = || arg(1).as_bool().unwrap_or(false);
     Some(match operation {
+        "quit" => Quit,
         "loadScene" if arg(0).is_number() => LoadSceneByIndex(usize::try_from(entity()?).ok()?),
         "loadScene" => LoadScene(text(0)?),
         "reloadScene" => ReloadScene,
@@ -502,6 +504,14 @@ fn runtime_request(operation: &str, args: &[JsonValue]) -> Option<ScriptRuntimeR
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn application_quit_is_queued_and_consumed_once() {
+        let mut host = ScriptHost::new().unwrap();
+        host.eval("engine.quit();").unwrap();
+        assert_eq!(host.take_runtime_requests(), vec![ScriptRuntimeRequest::Quit]);
+        assert!(host.take_runtime_requests().is_empty());
+    }
 
     #[test]
     fn script_activation_preserves_entity_and_updates_descendant_hierarchy() {
