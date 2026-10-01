@@ -1,0 +1,74 @@
+{
+  "author": "rubberduck; MiYu adaptations",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "generator": "scripts/import-frost-revenant-fortress.py --mine-only",
+  "sources": [
+    {
+      "file": "SourceAssets/revenant-fortress/dungeon-tileset-extended.zip",
+      "url": "https://opengameart.org/sites/default/files/dungeon-tileset-extended.zip",
+      "sha256": "ffe0deccc0f24006c5ce89632797865e6536d381dc45129bd5f2db6130cad39e",
+      "bytes": 21887093
+    },
+    {
+      "file": "SourceAssets/revenant-fortress/source-page.html",
+      "url": "https://opengameart.org/content/3d-castle-dungeon-tileset-extended",
+      "sha256": "9e2b200e1c177bf2439221c15937bd07cb18cf4198c20189f8ab495cee51ccd8",
+      "bytes": 42397
+    }
+  ],
+  "generated": [
+    {
+      "file": "Assets/Textures/RealHauntedMine_base.png",
+      "sha256": "c0635d94f35ddc072a74e747837e1fa61466efbfb29b50e84c26132347b49063"
+    },
+    {
+      "file": "Assets/Textures/RealHauntedMine_normal.png",
+      "sha256": "5a847da7315d18a4e73d06ec823e9011b2325e06abec310b0787a59f849a1cf4"
+    },
+    {
+      "file": "Assets/Textures/RealHauntedMine_arm.png",
+      "sha256": "d3c90cc6e5c7b3ec123976079c8b916d7640761be1c2cd1b75f4505af5594651"
+    },
+    {
+      "file": "Assets/Textures/RealHauntedMine_emissive.png",
+      "sha256": "3ef216adb221630629dbf08704b27e077e8e033f4e495c36b708ba9a2b102485"
+    },
+    {
+      "file": "Assets/Models/RealHauntedMine.glb",
+      "sha256": "7ad95df23e8b76043f14349291dc9c8762c69b68cef3806104aee10a2e6e4448"
+    },
+    {
+      "file": "Assets/Materials/RealHauntedMine.mmat",
+      "sha256": "8e3f37e23e080a6b5a9e8831b90de2c7e6cea472bef53d3e0696759c44a4db6c"
+    },
+    {
+      "file": "Licenses/Haunted-Mine.txt",
+      "sha256": "9e9d248152b1b1134fdbfc1ab39eeb6069294ed609d5d5b84dbc1c8837c41327"
+    },
+    {
+      "file": "Assets/Licenses/Haunted-Mine.txt",
+      "sha256": "9e9d248152b1b1134fdbfc1ab39eeb6069294ed609d5d5b84dbc1c8837c41327"
+    }
+  ],
+  "modules": [
+    "castle-wall-gate-new",
+    "castle-wall-w-deco-1",
+    "castle-wall-w-window",
+    "edge-column-1",
+    "castle-column",
+    "gate-big-2"
+  ],
+  "models": {
+    "HauntedMine": {
+      "triangles": 2304,
+      "size": [
+        3.634877920150757,
+        2.75,
+        3.7884864807128906
+      ],
+      "modules": 22
+    }
+  },
+  "description": "Pentagonal stone Haunted Gold Mine with recessed green excavation"
+}

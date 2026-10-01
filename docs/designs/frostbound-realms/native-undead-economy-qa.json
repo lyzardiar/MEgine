@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "undeadEconomy": {
+    "nativePlacement": true,
+    "summoning": true,
+    "constructionSave": true,
+    "buildingPortrait": true,
+    "fiveRitualPoses": true,
+    "directGold": true,
+    "ghoulLumber": true,
+    "occupiedSave": true,
+    "stopReleasesStation": true,
+    "shaderRejections": 0
+  }
+}

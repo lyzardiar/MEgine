@@ -4043,5 +4043,26 @@
     ],
     "realistic": true,
     "workAnimation": "Wood"
+  },
+  "HauntedMine": {
+    "material": "Assets/Materials/RealHauntedMine.mmat",
+    "parts": [
+      {
+        "name": "HauntedMine",
+        "mesh": "Assets/Models/RealHauntedMine.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.634877920150757,
+      2.75,
+      3.7884864807128906
+    ],
+    "factionBuilding": true,
+    "realistic": true
   }
 }

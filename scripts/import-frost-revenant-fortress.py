@@ -1,10 +1,10 @@
 """Author: MiYu. Build three textured Revenant strongholds from rubberduck's CC0 castle modules."""
-import bpy, bmesh, hashlib, json, math, urllib.request, zipfile
+import bpy, bmesh, hashlib, json, math, sys, urllib.request, zipfile
 from pathlib import Path
 from mathutils import Vector, Matrix
 import numpy as np
 
-ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';MANIFEST=SAMPLE/'revenant-fortress-sources.json';manifest=json.loads(MANIFEST.read_text());folder=ROOT/'tmp/revenant-fortress';folder.mkdir(parents=True,exist_ok=True)
+ROOT=Path(__file__).resolve().parents[1];SAMPLE=ROOT/'samples/frostbound-realms';MINE='--mine-only' in sys.argv;MANIFEST=SAMPLE/('haunted-mine-sources.json' if MINE else 'revenant-fortress-sources.json');manifest=json.loads(MANIFEST.read_text());folder=ROOT/'tmp/revenant-fortress';folder.mkdir(parents=True,exist_ok=True)
 for entry in manifest['sources']:
     target=SAMPLE/entry['file']
     if not target.exists():target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(urllib.request.urlopen(entry['url'],timeout=90).read())
@@ -49,33 +49,45 @@ def block(size,at,mat):
 def spire(width,height,at):
     bpy.ops.mesh.primitive_cone_add(vertices=4,radius1=width/math.sqrt(2),radius2=0,depth=height,location=(at[0],at[1],at[2]+height/2),rotation=(0,0,math.pi/4));obj=bpy.context.object;bpy.ops.object.transform_apply(location=True,rotation=True,scale=True);obj.data.materials.append(roof);obj.data.uv_layers.active.name='SourceUV';return obj
 
-for tier in [1,2,3]:
-    key='RevenantHall'+(str(tier) if tier>1 else '');parts=[];stone=bpy.data.materials['concrete'];height=3.7+(tier-1)*.55
-    for level,width in enumerate([7.4,7,6.6]):parts.append(block((width,width,.22),(0,0,.11+level*.22),stone))
-    parts.append(block((4.8,4.8,height-.5),(0,0,.65+(height-.5)/2),bpy.data.materials['wall-1']))
-    parts.append(module('castle-wall-gate-new',(4.4,.75,height),(0,-2.2,.65)))
-    parts.append(module('gate-big-2',(2,.08,2.75),(0,-2.58,.65)))
-    for x in [-1.15,1.15]:parts.append(module('castle-wall-w-deco-1',(2.3,.65,height),(x,2.2,.65),math.pi))
-    for side in [-1,1]:
-        for y in [-1.15,1.15]:parts.append(module('castle-wall-w-window',(2.3,.65,height),(side*2.2,y,.65),side*math.pi/2))
-    for x in [-2.25,2.25]:
-        for y in [-2.25,2.25]:parts.append(module('edge-column-1',(.7,.7,height+.45),(x,y,.65)))
-    parts.append(spire(5.15,2.1+(tier-1)*.65,(0,0,height+.5)))
-    # Four slim framed soul windows sit on each facade; the door remains unobstructed.
-    for side in [-1,1]:
-        for y in [-.85,.85]:
-            parts.append(block((.06,.32,1.25),(side*2.57,y,2.3),glow))
-            for offset in [-.22,.22]:parts.append(block((.16,.1,1.5),(side*2.61,y+offset,2.3),stone))
-            for z in [1.57,3.03]:parts.append(block((.16,.54,.1),(side*2.61,y,z),stone))
-    corners=[(-2.9,2.9),(2.9,2.9)]+([(-2.9,-2.9),(2.9,-2.9)] if tier>1 else [])
-    for x,y in corners:
-        tower_height=3.2+tier*.6;parts.append(module('castle-column',(1.1,1.1,tower_height),(x,y,.55)));parts.append(block((.86,.86,.3),(x,y,tower_height+.7),stone));parts.append(spire(1.5,1.1+tier*.35,(x,y,tower_height+.85)))
-        for offset in [-1,1]:
-            parts.append(block((.06,.23,.85),(x+offset*.57,y,tower_height-.05),glow))
-            for shift in [-.17,.17]:parts.append(block((.14,.1,1.05),(x+offset*.61,y+shift,tower_height-.05),stone))
-            for z in [tower_height-.53,tower_height+.43]:parts.append(block((.14,.44,.1),(x+offset*.61,y,z),stone))
-    if tier==3:
-        parts.append(module('castle-column',(1,1,1.6),(0,0,height+1.6)));parts.append(spire(1.35,1.8,(0,0,height+3.1)))
+for tier in ([0] if MINE else [1,2,3]):
+    key='HauntedMine' if MINE else 'RevenantHall'+(str(tier) if tier>1 else '');parts=[];stone=bpy.data.materials['concrete'];height=3.7+(tier-1)*.55
+    if MINE:
+        # Pentagonal masonry supports surround a recessed soul-lit excavation.
+        parts.append(block((2.5,2.5,.12),(0,0,.06),bpy.data.materials['dark_wall']))
+        parts.append(block((1.5,1.5,.025),(0,0,.13),glow))
+        for i in range(5):
+            angle=i*math.tau/5;x,y=math.cos(angle)*1.65,math.sin(angle)*1.65
+            parts.append(module('castle-column',(.5,.5,2.2),(x,y,0)))
+            parts.append(spire(.65,.55,(x,y,2.2)))
+            parts.append(block((.2,.2,.16),(x,y,2.13),glow))
+            midpoint=angle+math.pi/5
+            parts.append(module('castle-wall-w-deco-1',(1.65,.3,.65),(math.cos(midpoint)*1.35,math.sin(midpoint)*1.35,0),midpoint+math.pi/2))
+    else:
+        for level,width in enumerate([7.4,7,6.6]):parts.append(block((width,width,.22),(0,0,.11+level*.22),stone))
+        parts.append(block((4.8,4.8,height-.5),(0,0,.65+(height-.5)/2),bpy.data.materials['wall-1']))
+        parts.append(module('castle-wall-gate-new',(4.4,.75,height),(0,-2.2,.65)))
+        parts.append(module('gate-big-2',(2,.08,2.75),(0,-2.58,.65)))
+        for x in [-1.15,1.15]:parts.append(module('castle-wall-w-deco-1',(2.3,.65,height),(x,2.2,.65),math.pi))
+        for side in [-1,1]:
+            for y in [-1.15,1.15]:parts.append(module('castle-wall-w-window',(2.3,.65,height),(side*2.2,y,.65),side*math.pi/2))
+        for x in [-2.25,2.25]:
+            for y in [-2.25,2.25]:parts.append(module('edge-column-1',(.7,.7,height+.45),(x,y,.65)))
+        parts.append(spire(5.15,2.1+(tier-1)*.65,(0,0,height+.5)))
+        # Four slim framed soul windows sit on each facade; the door remains unobstructed.
+        for side in [-1,1]:
+            for y in [-.85,.85]:
+                parts.append(block((.06,.32,1.25),(side*2.57,y,2.3),glow))
+                for offset in [-.22,.22]:parts.append(block((.16,.1,1.5),(side*2.61,y+offset,2.3),stone))
+                for z in [1.57,3.03]:parts.append(block((.16,.54,.1),(side*2.61,y,z),stone))
+        corners=[(-2.9,2.9),(2.9,2.9)]+([(-2.9,-2.9),(2.9,-2.9)] if tier>1 else [])
+        for x,y in corners:
+            tower_height=3.2+tier*.6;parts.append(module('castle-column',(1.1,1.1,tower_height),(x,y,.55)));parts.append(block((.86,.86,.3),(x,y,tower_height+.7),stone));parts.append(spire(1.5,1.1+tier*.35,(x,y,tower_height+.85)))
+            for offset in [-1,1]:
+                parts.append(block((.06,.23,.85),(x+offset*.57,y,tower_height-.05),glow))
+                for shift in [-.17,.17]:parts.append(block((.14,.1,1.05),(x+offset*.61,y+shift,tower_height-.05),stone))
+                for z in [tower_height-.53,tower_height+.43]:parts.append(block((.14,.44,.1),(x+offset*.61,y,z),stone))
+        if tier==3:
+            parts.append(module('castle-column',(1,1,1.6),(0,0,height+1.6)));parts.append(spire(1.35,1.8,(0,0,height+3.1)))
     bpy.ops.object.select_all(action='DESELECT')
     for obj in parts:obj.select_set(True)
     obj=parts[0];bpy.context.view_layer.objects.active=obj;bpy.ops.object.join();obj.name='Real'+key
@@ -113,5 +125,6 @@ RealRevenantHall*.mmat, and RevenantHall portraits in faction-buildings.png.
 Sources and SHA-256: revenant-fortress-sources.json.
 Rebuild: Blender 4.5.9 with scripts/import-frost-revenant-fortress.py.
 '''
-for location in ['Licenses/Revenant-Fortress.txt','Assets/Licenses/Revenant-Fortress.txt']:(SAMPLE/location).write_bytes(license_text.encode());generated.append(location)
+if MINE:license_text=license_text.replace('Revenant stone strongholds / RealRevenantHall, RealRevenantHall2, RealRevenantHall3','Haunted Gold Mine / RealHauntedMine').replace('RealRevenantHall*','RealHauntedMine*').replace('RevenantHall portraits','HauntedMine portrait').replace('revenant-fortress-sources.json','haunted-mine-sources.json').replace('scripts/import-frost-revenant-fortress.py.','scripts/import-frost-revenant-fortress.py --mine-only.')
+for location in (['Licenses/Haunted-Mine.txt','Assets/Licenses/Haunted-Mine.txt'] if MINE else ['Licenses/Revenant-Fortress.txt','Assets/Licenses/Revenant-Fortress.txt']):(SAMPLE/location).write_bytes(license_text.encode());generated.append(location)
 manifest['modules']=names;manifest['models']=stats;manifest['generated']=[{'file':p,'sha256':hashlib.sha256((SAMPLE/p).read_bytes()).hexdigest()} for p in generated];MANIFEST.write_text(json.dumps(manifest,indent=2)+'\n');catalog_path.write_text(json.dumps(catalog,indent=2)+'\n')

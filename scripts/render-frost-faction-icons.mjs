@@ -9,7 +9,7 @@ process.env.MENGINE_AGENT_EDITOR_MODE='auto-background';process.env.MENGINE_EDIT
 process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows';
 fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});fs.cpSync(source,sample,{recursive:true,filter:p=>!['SourceAssets','Builds'].includes(path.basename(p))});
 const catalog=JSON.parse(fs.readFileSync(path.join(source,'model-catalog.json'))),original=JSON.parse(fs.readFileSync(path.join(source,'Assets/Scenes/Main.mscene'))),entities=[],slices=[],models=[];
-const buildingKeys=['Kingdom','Warclans','Wildwood','Revenant'].flatMap(faction=>['Hall','Hall2','Hall3','Barracks','Lodge','Tower','Altar','Workshop'].map(kind=>faction+kind)).concat('RealTemple'),rows=Math.ceil(buildingKeys.length/8);
+const buildingKeys=['Kingdom','Warclans','Wildwood','Revenant'].flatMap(faction=>['Hall','Hall2','Hall3','Barracks','Lodge','Tower','Altar','Workshop'].map(kind=>faction+kind)).concat('RealTemple','HauntedMine'),rows=Math.ceil(buildingKeys.length/8);
 const add=(name,components)=>entities.push({entity:entities.length+1,name,parent:null,siblingIndex:entities.length,active:true,components}),transform=(position,scale=[1,1,1],rotation=[0,0,0,1])=>({position,scale,rotation}),sin=Math.SQRT1_2;
 add('Icon camera',{Transform:transform([0,80,80],[1,1,1],[Math.sin(-Math.PI/8),0,0,Math.cos(-Math.PI/8)]),Camera3D:{primary:true,projection:'orthographic',orthographic_size:rows*4,near:.1,far:220}});
 for(const name of ['Winter sun','Northern sky'])add(name,original.world.entities.find(e=>e.name===name).components);

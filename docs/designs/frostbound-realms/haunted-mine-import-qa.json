@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "models": [
+    {
+      "model": "HauntedMine",
+      "triangles": 2304,
+      "vertices": 4202,
+      "bounds": {
+        "max": [
+          1.9749999046325684,
+          2.75,
+          1.8942432403564453
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealHauntedMine.glb",
+        "min": [
+          -1.6598780155181885,
+          0.0,
+          -1.8942432403564453
+        ],
+        "vertices": 4202
+      },
+      "emissiveTexels": 329222
+    }
+  ]
+}

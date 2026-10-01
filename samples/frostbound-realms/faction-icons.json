@@ -1,6 +1,6 @@
 {
   "file": "Assets/Art/faction-buildings.png",
-  "sha256": "d240537a9b0e625faab4880ee023c4a09a1b3496d9ec066e69db469ff46f13c5",
+  "sha256": "142f078b38361db6e7e9b4aa38f0e4d8e80e71c5a3119a59b365753bbc25c454",
   "generator": "scripts/render-frost-faction-icons.mjs",
   "method": "Native MEngine Release render of the actual building meshes; no generated concept art",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
@@ -169,6 +169,11 @@
       "name": "RealTemple",
       "mesh": "Assets/Models/RealTemple.glb",
       "material": "Assets/Materials/RealTemple.mmat"
+    },
+    {
+      "name": "HauntedMine",
+      "mesh": "Assets/Models/RealHauntedMine.glb",
+      "material": "Assets/Materials/RealHauntedMine.mmat"
     }
   ]
 }
