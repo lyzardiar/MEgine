@@ -4,8 +4,9 @@ https://opengameart.org/content/troll-mauler
 CC-BY-3.0
 https://creativecommons.org/licenses/by/3.0/
 MEngine adaptations by MiYu: normalized rig, authored Idle/Walk/Attack/Death,
-body/cloth/eye texture atlases, four-weight skinning, GLB and native unit portrait.
+body/cloth/eye texture atlases, authored cleaver/hook/sutures and surface materials,
+four-weight skinning, GLB and native unit portrait.
 Derived files: RealAbomination.glb, RealAbomination_base.png, RealAbomination_normal.png,
-RealAbomination.mmat and the RealAbomination portrait in Assets/Art/unit-portraits.png.
+RealAbomination_arm.png, RealAbomination.mmat and the RealAbomination portrait in Assets/Art/unit-portraits.png.
 Source: SourceAssets/abomination/troll.blend. Hashes: abomination-sources.json.
 Rebuild: Blender 4.5.9 with scripts/import-frost-abomination.py.

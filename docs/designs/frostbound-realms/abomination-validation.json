@@ -16,35 +16,39 @@
     "authoredDeath": true,
     "shaderRejections": 0
   },
-  "reproducedGeneratedFiles": 6,
+  "reproducedGeneratedFiles": 7,
   "reproducedSha256": [
     {
       "file": "Assets/Models/RealAbomination.glb",
-      "sha256": "e54f54e84d15b45dfc38e9647efabb67bf26a6b95b9388459b0047426139881d"
+      "sha256": "c8f2959cfd8b23317fa84ae788a8a8635f17d0e3934176b4e96f66fb22ed08bf"
     },
     {
       "file": "Assets/Textures/RealAbomination_base.png",
-      "sha256": "f9f4c4cdbe8205f518eb058df4972ecc924b4091208cd502b49e61858f887639"
+      "sha256": "b354214817ff1447bb8c0410378a06cdbbcb3ab6b5926c89f75844174d770ea1"
     },
     {
       "file": "Assets/Textures/RealAbomination_normal.png",
       "sha256": "caf10c16e4a5b6fcde708eda81b83b2458d6159f0c93df9eb1c56cf93ac3fe64"
     },
     {
+      "file": "Assets/Textures/RealAbomination_arm.png",
+      "sha256": "d38870e6a100e89667851862c38fef8775a47b88b533afc528568b1d5d4f2f04"
+    },
+    {
       "file": "Assets/Materials/RealAbomination.mmat",
-      "sha256": "2de1d8c18919215e036d1fd9d003121e014c51539c79fd28a6811254f3ebb743"
+      "sha256": "2b24b727662135c62d312ecfc71cf74343c17c16ae23227867cb817ffd3c7f9c"
     },
     {
       "file": "Licenses/piacenti-Abomination.txt",
-      "sha256": "d0611b3f7000e4b7df4be7e5a42945eb5402ab7dcf9ac5310e3494bc1bef2391"
+      "sha256": "d061d4c4c90efb1437464a3c50e33fd806768f8a4aafea08377a7d29bf74fd7c"
     },
     {
       "file": "Assets/Licenses/piacenti-Abomination.txt",
-      "sha256": "d0611b3f7000e4b7df4be7e5a42945eb5402ab7dcf9ac5310e3494bc1bef2391"
+      "sha256": "d061d4c4c90efb1437464a3c50e33fd806768f8a4aafea08377a7d29bf74fd7c"
     }
   ],
-  "packagedFiles": 653,
-  "contentHash": "1e8165c006bcc3b130780abbe70b6c76cf89d29798c910bfb224c8a0464adedf",
+  "packagedFiles": 654,
+  "contentHash": "55d6a3a9ca41e641c7d8890f8e1eb45e2dbf4efee3aeb6dd92920a75cab5699a",
   "playerStartupSeconds": 30,
   "playerLoggedErrors": 0,
   "physicalInput": false,
