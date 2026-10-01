@@ -1,0 +1,12 @@
+Thin Zombie / RealGhoul
+Author: Rosswet Mobile; submitted to OpenGameArt by dogchicken.
+https://opengameart.org/content/thin-zombie-awake-zombie-asset
+Creative Commons Attribution 3.0 Unported (CC-BY-3.0).
+https://creativecommons.org/licenses/by/3.0/
+MEngine adaptations by MiYu: normalized transforms and scale, four-weight skinning,
+sampled IK animations, GLB export and native model portraits.
+Derived files: RealGhoul.glb, RealGhoul_base.png, RealGhoul.mmat and the
+RealGhoul portrait in Assets/Art/unit-portraits.png.
+Original model, texture, archive and attribution page: SourceAssets/ghoul.
+Source and generated SHA-256: ghoul-sources.json.
+Rebuild: Blender 4.5.9 with scripts/import-frost-ghoul.py.

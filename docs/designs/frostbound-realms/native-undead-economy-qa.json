@@ -11,6 +11,10 @@
     "fiveRitualPoses": true,
     "directGold": true,
     "ghoulLumber": true,
+    "ghoulHarvestPose": true,
+    "ghoulReturnPose": true,
+    "ghoulDelivery": true,
+    "ghoulStopIdle": true,
     "occupiedSave": true,
     "stopReleasesStation": true,
     "shaderRejections": 0

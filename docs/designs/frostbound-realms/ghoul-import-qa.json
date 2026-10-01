@@ -1,0 +1,1535 @@
+{
+  "passed": true,
+  "sourceFiles": 4,
+  "generatedFiles": 5,
+  "triangles": 3340,
+  "bones": 41,
+  "nativePoseSamples": 100,
+  "movingWeightedBones": {
+    "Idle": [
+      "forearm.L",
+      "forearm.R",
+      "hand.L",
+      "hand.R",
+      "head",
+      "hips",
+      "neck",
+      "ribs",
+      "shin.L",
+      "shin.R",
+      "shoulder.L",
+      "shoulder.R",
+      "spine",
+      "thigh.L",
+      "thigh.R",
+      "upper_arm.L",
+      "upper_arm.R"
+    ],
+    "Walk": [
+      "finger_index.01.L",
+      "finger_index.01.R",
+      "finger_middle.01.L",
+      "finger_middle.01.R",
+      "finger_ring.01.L",
+      "finger_ring.01.R",
+      "foot.L",
+      "foot.R",
+      "forearm.L",
+      "forearm.R",
+      "hand.L",
+      "hand.R",
+      "head",
+      "heel.L",
+      "heel.R",
+      "hips",
+      "lk_foot.L",
+      "lk_foot.R",
+      "neck",
+      "ribs",
+      "shin.L",
+      "shin.R",
+      "shoulder.L",
+      "shoulder.R",
+      "spine",
+      "thigh.L",
+      "thigh.R",
+      "thumb.02.L",
+      "thumb.02.R",
+      "toe.L",
+      "toe.R",
+      "upper_arm.L",
+      "upper_arm.R"
+    ],
+    "Attack": [
+      "forearm.L",
+      "forearm.R",
+      "hand.R",
+      "head",
+      "hips",
+      "lk_foot.L",
+      "lk_foot.R",
+      "neck",
+      "ribs",
+      "shin.L",
+      "shin.R",
+      "shoulder.L",
+      "shoulder.R",
+      "spine",
+      "thigh.L",
+      "thigh.R",
+      "upper_arm.L",
+      "upper_arm.R"
+    ],
+    "Death": [
+      "foot.L",
+      "forearm.L",
+      "forearm.R",
+      "head",
+      "hips",
+      "lk_foot.L",
+      "lk_foot.R",
+      "neck",
+      "ribs",
+      "shin.L",
+      "shin.R",
+      "shoulder.L",
+      "shoulder.R",
+      "spine",
+      "thigh.L",
+      "thigh.R",
+      "toe.L",
+      "toe.R",
+      "upper_arm.L",
+      "upper_arm.R"
+    ],
+    "Harvest": [
+      "forearm.L",
+      "forearm.R",
+      "hand.R",
+      "head",
+      "hips",
+      "lk_foot.L",
+      "neck",
+      "ribs",
+      "shin.L",
+      "shin.R",
+      "shoulder.R",
+      "spine",
+      "thigh.L",
+      "thigh.R",
+      "upper_arm.L",
+      "upper_arm.R"
+    ]
+  },
+  "textures": {
+    "base_color_texture": {
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "9988caf7bb29fd811292d44f274558059dffc54781ea5f61823ce25108521073"
+    }
+  },
+  "bounds": [
+    {
+      "max": [
+        0.7230796217918396,
+        2.5000009536743164,
+        0.5697872042655945
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:0",
+      "min": [
+        -0.7307068109512329,
+        6.7715291152126156e-09,
+        -0.3376726508140564
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6601535677909851,
+        2.4985625743865967,
+        0.5579659342765808
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:1",
+      "min": [
+        -0.7549697160720825,
+        6.7715291152126156e-09,
+        -0.31883174180984497
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5565391778945923,
+        2.482079029083252,
+        0.5369114875793457
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:2",
+      "min": [
+        -0.7652982473373413,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5120269060134888,
+        2.4601292610168457,
+        0.536058783531189
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:3",
+      "min": [
+        -0.6827385425567627,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5235220193862915,
+        2.4421322345733643,
+        0.5364487767219543
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:4",
+      "min": [
+        -0.5447375178337097,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5377812385559082,
+        2.404278039932251,
+        0.5369026064872742
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:5",
+      "min": [
+        -0.46386653184890747,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5760155916213989,
+        2.393670082092285,
+        0.5374300479888916
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:6",
+      "min": [
+        -0.4720475673675537,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6285039186477661,
+        2.372293472290039,
+        0.5401813983917236
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:7",
+      "min": [
+        -0.5145522952079773,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6797720789909363,
+        2.3547985553741455,
+        0.5434619188308716
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:8",
+      "min": [
+        -0.6012054681777954,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.692028820514679,
+        2.3415908813476562,
+        0.5467450618743896
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:9",
+      "min": [
+        -0.6939306855201721,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6547819972038269,
+        2.335709571838379,
+        0.549879789352417
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:10",
+      "min": [
+        -0.7300059795379639,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5938742160797119,
+        2.3346259593963623,
+        0.55331951379776
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:11",
+      "min": [
+        -0.6657068133354187,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5561014413833618,
+        2.334735155105591,
+        0.5570168495178223
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:12",
+      "min": [
+        -0.5901383757591248,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5374190807342529,
+        2.344325542449951,
+        0.5602502226829529
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:13",
+      "min": [
+        -0.5507721304893494,
+        6.7715291152126156e-09,
+        -0.3037393093109131
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5853979587554932,
+        2.3978700637817383,
+        0.5627411007881165
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:14",
+      "min": [
+        -0.5125516653060913,
+        6.7715291152126156e-09,
+        -0.316338449716568
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6308138370513916,
+        2.423994779586792,
+        0.5643950700759888
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:15",
+      "min": [
+        -0.46807989478111267,
+        6.7715291152126156e-09,
+        -0.3400644063949585
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5963058471679688,
+        2.4494149684906006,
+        0.5667080283164978
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:16",
+      "min": [
+        -0.5422179698944092,
+        6.7715291152126156e-09,
+        -0.3292643427848816
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5893304347991943,
+        2.4439032077789307,
+        0.5677860379219055
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:17",
+      "min": [
+        -0.6277751922607422,
+        6.7715291152126156e-09,
+        -0.3176567554473877
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6586402058601379,
+        2.4751758575439453,
+        0.5683370232582092
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:18",
+      "min": [
+        -0.6606029868125916,
+        6.7715291152126156e-09,
+        -0.3245410919189453
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.7091677188873291,
+        2.4976515769958496,
+        0.5693038105964661
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:19",
+      "min": [
+        -0.6987686157226562,
+        6.7715291152126156e-09,
+        -0.33390742540359497
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1945068836212158,
+        2.4261858463287354,
+        0.7116417288780212
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:0",
+      "min": [
+        -0.8739800453186035,
+        -0.00436430424451828,
+        -0.6554571986198425
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1653079986572266,
+        2.126159429550171,
+        0.8921294212341309
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:1",
+      "min": [
+        -1.0710970163345337,
+        -0.031768642365932465,
+        -0.926582396030426
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8147261142730713,
+        1.76966392993927,
+        1.0986745357513428
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:2",
+      "min": [
+        -1.031696081161499,
+        0.005379104986786842,
+        -1.2135722637176514
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9530177116394043,
+        1.846099853515625,
+        0.8542317152023315
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:3",
+      "min": [
+        -1.395772933959961,
+        -0.0036626914516091347,
+        -0.6627465486526489
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8747794032096863,
+        2.3860116004943848,
+        0.5829147696495056
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:4",
+      "min": [
+        -1.3858166933059692,
+        -0.013946441933512688,
+        -0.4606243968009949
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9557995200157166,
+        2.417062997817993,
+        0.813917338848114
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:5",
+      "min": [
+        -1.1996971368789673,
+        -0.01013994961977005,
+        -0.7953659296035767
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0583436489105225,
+        2.0422163009643555,
+        1.0147652626037598
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:6",
+      "min": [
+        -1.0193257331848145,
+        -0.031134694814682007,
+        -0.9692063927650452
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0061020851135254,
+        2.082542657852173,
+        0.9384625554084778
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:7",
+      "min": [
+        -0.9061853885650635,
+        0.002788284793496132,
+        -0.9892693758010864
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1546614170074463,
+        2.0556015968322754,
+        0.8204686641693115
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:8",
+      "min": [
+        -0.9618385434150696,
+        -0.0034239860251545906,
+        -0.5674521923065186
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1429533958435059,
+        2.3433737754821777,
+        0.6710034608840942
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:9",
+      "min": [
+        -0.7753154039382935,
+        -0.013044336810708046,
+        -0.43375200033187866
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9434912204742432,
+        2.332362174987793,
+        0.9138592481613159
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:10",
+      "min": [
+        -0.8357152938842773,
+        -0.011803977191448212,
+        -0.8223029375076294
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8118054866790771,
+        2.0667829513549805,
+        1.3510955572128296
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:11",
+      "min": [
+        -1.1311033964157104,
+        -0.0182875394821167,
+        -1.0427730083465576
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5353402495384216,
+        1.899245262145996,
+        1.591634750366211
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:12",
+      "min": [
+        -1.085648536682129,
+        0.0023821908980607986,
+        -1.1099485158920288
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8919175863265991,
+        1.9486584663391113,
+        1.159442663192749
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:13",
+      "min": [
+        -1.293312430381775,
+        -0.013020102865993977,
+        -0.5387479662895203
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8744877576828003,
+        2.37402606010437,
+        0.6252946853637695
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:14",
+      "min": [
+        -1.3098764419555664,
+        -0.02261507324874401,
+        -0.4670388102531433
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9319241642951965,
+        2.406658887863159,
+        0.8624683618545532
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:15",
+      "min": [
+        -1.1176738739013672,
+        0.005246985703706741,
+        -0.7860954403877258
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0211703777313232,
+        2.099745273590088,
+        1.2223117351531982
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:16",
+      "min": [
+        -0.8439629077911377,
+        0.06920044124126434,
+        -0.9317547082901001
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0035779476165771,
+        1.9110713005065918,
+        1.2974767684936523
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:17",
+      "min": [
+        -0.5438470244407654,
+        0.002225993201136589,
+        -1.0051995515823364
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.3148068189620972,
+        1.9448455572128296,
+        1.0248725414276123
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:18",
+      "min": [
+        -0.8397839069366455,
+        0.0019095372408628464,
+        -0.5068890452384949
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.2612718343734741,
+        2.364290237426758,
+        0.6237788200378418
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=1:19",
+      "min": [
+        -0.9318104982376099,
+        -0.004380283877253532,
+        -0.5567774772644043
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.7230796217918396,
+        2.5000009536743164,
+        0.5697872042655945
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:0",
+      "min": [
+        -0.7307069301605225,
+        6.7715291152126156e-09,
+        -0.3376726508140564
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9636436700820923,
+        2.323207378387451,
+        0.4943624436855316
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:1",
+      "min": [
+        -0.9446098804473877,
+        1.7947400010598358e-08,
+        -0.4798492193222046
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8801389932632446,
+        2.1063849925994873,
+        0.41617459058761597
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:2",
+      "min": [
+        -1.1435184478759766,
+        2.5397980607522186e-08,
+        -0.8512976765632629
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8513872027397156,
+        2.1890177726745605,
+        0.6385128498077393
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:3",
+      "min": [
+        -0.9412707090377808,
+        -7.67937535783858e-08,
+        -0.4466940760612488
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1317965984344482,
+        2.6686508655548096,
+        0.4462417960166931
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:4",
+      "min": [
+        -0.5835375785827637,
+        -6.586572176559002e-09,
+        -0.9146198630332947
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1406047344207764,
+        2.849255084991455,
+        0.5485165119171143
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:5",
+      "min": [
+        -0.5787045955657959,
+        2.8177387534356058e-08,
+        -1.0373907089233398
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.095922589302063,
+        2.9119977951049805,
+        0.817023515701294
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:6",
+      "min": [
+        -0.5651590824127197,
+        -3.6322340690730925e-08,
+        -1.2639274597167969
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0568819046020508,
+        2.7233645915985107,
+        1.0934929847717285
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:7",
+      "min": [
+        -0.5463887453079224,
+        -1.8468211848698957e-08,
+        -1.3401743173599243
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1522459983825684,
+        2.6689321994781494,
+        1.086982250213623
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:8",
+      "min": [
+        -0.5779120326042175,
+        3.2998723753507875e-09,
+        -1.2571673393249512
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.5036776065826416,
+        3.041487455368042,
+        0.4283599555492401
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:9",
+      "min": [
+        -1.1338913440704346,
+        -5.641834377456689e-08,
+        -0.44748246669769287
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5626249313354492,
+        2.083632469177246,
+        1.9257922172546387
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:10",
+      "min": [
+        -0.6958568096160889,
+        1.4626549749152673e-08,
+        -1.1001874208450317
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5675727128982544,
+        1.7075265645980835,
+        0.8489742875099182
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:11",
+      "min": [
+        -1.0340831279754639,
+        1.2317255482230394e-07,
+        -1.0645976066589355
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5441370606422424,
+        1.788492202758789,
+        1.0107858180999756
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:12",
+      "min": [
+        -0.7266603112220764,
+        -3.0129363448594404e-09,
+        -1.037370204925537
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5126098990440369,
+        1.939172387123108,
+        1.127380609512329
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:13",
+      "min": [
+        -0.732952892780304,
+        -5.520944057479937e-08,
+        -0.9228360652923584
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5036816596984863,
+        2.117048740386963,
+        1.0443493127822876
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:14",
+      "min": [
+        -0.8540972471237183,
+        -1.2297567408836585e-08,
+        -0.7249186038970947
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.809647262096405,
+        2.280609607696533,
+        0.7802786827087402
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:15",
+      "min": [
+        -0.9327133297920227,
+        -1.1115020015495247e-09,
+        -0.6003596186637878
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.904250979423523,
+        2.4130196571350098,
+        0.4817010164260864
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:16",
+      "min": [
+        -0.9325424432754517,
+        5.233488309386303e-09,
+        -0.549258828163147
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8837858438491821,
+        2.5051748752593994,
+        0.34291383624076843
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:17",
+      "min": [
+        -0.886673092842102,
+        2.3488048839226394e-08,
+        -0.47952717542648315
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8208229541778564,
+        2.5487327575683594,
+        0.3569849729537964
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:18",
+      "min": [
+        -0.8205386996269226,
+        -9.263205313914114e-09,
+        -0.40437376499176025
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.749663770198822,
+        2.52896785736084,
+        0.4930018484592438
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=2:19",
+      "min": [
+        -0.7545504570007324,
+        -1.9703957576666653e-08,
+        -0.3429286479949951
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.7230795621871948,
+        2.5000009536743164,
+        0.5697872042655945
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:0",
+      "min": [
+        -0.7307068705558777,
+        6.7715291152126156e-09,
+        -0.33767271041870117
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8176355361938477,
+        2.3310670852661133,
+        0.38949742913246155
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:1",
+      "min": [
+        -0.7488613724708557,
+        1.8155045836465433e-05,
+        -0.9616680145263672
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6543982028961182,
+        1.3635064363479614,
+        0.5355274677276611
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:2",
+      "min": [
+        -0.7192704081535339,
+        -0.00535690737888217,
+        -0.850830078125
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8073325157165527,
+        1.0410798788070679,
+        0.8371120095252991
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:3",
+      "min": [
+        -0.7118438482284546,
+        -0.020179152488708496,
+        -0.597162663936615
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8094661831855774,
+        1.1402956247329712,
+        1.0617713928222656
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:4",
+      "min": [
+        -0.7183994054794312,
+        0.005169868469238281,
+        -0.5189166069030762
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.8089298009872437,
+        1.412078857421875,
+        1.1377463340759277
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:5",
+      "min": [
+        -0.7225050926208496,
+        0.11607804149389267,
+        -0.4882977604866028
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.7874550819396973,
+        1.4801055192947388,
+        1.3251079320907593
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:6",
+      "min": [
+        -0.6771165132522583,
+        -0.11528480052947998,
+        -0.39138710498809814
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9067805409431458,
+        1.519837498664856,
+        1.636716365814209
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:7",
+      "min": [
+        -0.7242083549499512,
+        0.009519204497337341,
+        -0.821194052696228
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1082849502563477,
+        0.5677230358123779,
+        1.7195833921432495
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:8",
+      "min": [
+        -0.7920415997505188,
+        -0.11350119113922119,
+        -1.5117015838623047
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1399418115615845,
+        0.4621705412864685,
+        1.7060105800628662
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:9",
+      "min": [
+        -0.8012577295303345,
+        -0.04226358234882355,
+        -1.6745145320892334
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1399412155151367,
+        0.4621705412864685,
+        1.7063446044921875
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:10",
+      "min": [
+        -0.8014202117919922,
+        -0.042028576135635376,
+        -1.6745145320892334
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.139941930770874,
+        0.4621705412864685,
+        1.7118141651153564
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:11",
+      "min": [
+        -0.8014202117919922,
+        -0.026443347334861755,
+        -1.6745145320892334
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.139941930770874,
+        0.4621705412864685,
+        1.7118141651153564
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:12",
+      "min": [
+        -0.8014202117919922,
+        -0.026443347334861755,
+        -1.6745145320892334
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1298737525939941,
+        0.4635578989982605,
+        1.7120150327682495
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:13",
+      "min": [
+        -0.8014158606529236,
+        -0.02563488483428955,
+        -1.671295404434204
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0586801767349243,
+        0.4735112190246582,
+        1.7121241092681885
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:14",
+      "min": [
+        -0.8013948798179626,
+        -0.03178629279136658,
+        -1.6484594345092773
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9999457001686096,
+        0.487004816532135,
+        1.7080004215240479
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:15",
+      "min": [
+        -0.801398515701294,
+        -0.03896865248680115,
+        -1.625623106956482
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0034908056259155,
+        0.5019695162773132,
+        1.7029634714126587
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:16",
+      "min": [
+        -0.8031091094017029,
+        -0.03928746283054352,
+        -1.624212622642517
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0228244066238403,
+        0.5019693970680237,
+        1.7029634714126587
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:17",
+      "min": [
+        -0.8031091094017029,
+        -0.03396867215633392,
+        -1.6381078958511353
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.0881898403167725,
+        0.4833138585090637,
+        1.7097761631011963
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:18",
+      "min": [
+        -0.8025966286659241,
+        -0.027322158217430115,
+        -1.6588104963302612
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        1.1342284679412842,
+        0.46512967348098755,
+        1.7124035358428955
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=3:19",
+      "min": [
+        -0.8015934228897095,
+        -0.025990083813667297,
+        -1.6727063655853271
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5914214253425598,
+        2.608956813812256,
+        0.3798817992210388
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:0",
+      "min": [
+        -0.6075392365455627,
+        -0.009766839444637299,
+        -0.393028199672699
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.578240156173706,
+        2.592576026916504,
+        0.3798817992210388
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:1",
+      "min": [
+        -0.7267205715179443,
+        -0.009766839444637299,
+        -0.4013006091117859
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5964914560317993,
+        2.5433950424194336,
+        0.5541510581970215
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:2",
+      "min": [
+        -1.0464825630187988,
+        -0.009766839444637299,
+        -0.42537587881088257
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6191861033439636,
+        2.4745538234710693,
+        0.9625941514968872
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:3",
+      "min": [
+        -1.225473165512085,
+        -0.009766839444637299,
+        -0.45998460054397583
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6487995982170105,
+        2.421769380569458,
+        1.209355115890503
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:4",
+      "min": [
+        -0.9416221380233765,
+        -0.009766839444637299,
+        -0.4945927858352661
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6946727633476257,
+        3.1015284061431885,
+        1.104117751121521
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:5",
+      "min": [
+        -0.32481613755226135,
+        -0.009766839444637299,
+        -0.5186668634414673
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.7806516289710999,
+        3.1997742652893066,
+        1.083451509475708
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:6",
+      "min": [
+        -0.3168923258781433,
+        -0.009766839444637299,
+        -0.526938796043396
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9320497512817383,
+        2.48683500289917,
+        1.331238865852356
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:7",
+      "min": [
+        -0.3021705150604248,
+        -0.009766839444637299,
+        -0.5254285931587219
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.9444229006767273,
+        2.4926671981811523,
+        0.5318710803985596
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:8",
+      "min": [
+        -0.2963007688522339,
+        -0.009766839444637299,
+        -0.5208641886711121
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.871623158454895,
+        2.5114049911499023,
+        0.5559269189834595
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:9",
+      "min": [
+        -0.2963007688522339,
+        -0.009766839444637299,
+        -0.5132856965065002
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.7390972971916199,
+        2.5351834297180176,
+        0.6222807765007019
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:10",
+      "min": [
+        -0.2963007688522339,
+        -0.009766839444637299,
+        -0.5028931498527527
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6594939231872559,
+        2.5623059272766113,
+        0.6480366587638855
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:11",
+      "min": [
+        -0.2963007688522339,
+        -0.009766839444637299,
+        -0.49009186029434204
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.6103149652481079,
+        2.586275100708008,
+        0.7438368797302246
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:12",
+      "min": [
+        -0.41908761858940125,
+        -0.009766839444637299,
+        -0.4755120873451233
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5944238305091858,
+        2.60367488861084,
+        0.7871658802032471
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:13",
+      "min": [
+        -0.5471135973930359,
+        -0.009766839444637299,
+        -0.4599836468696594
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5712929368019104,
+        2.614123582839966,
+        0.7355097532272339
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:14",
+      "min": [
+        -0.6311724781990051,
+        -0.009766839444637299,
+        -0.444455087184906
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5548867583274841,
+        2.619556188583374,
+        0.6775696277618408
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:15",
+      "min": [
+        -0.6223716735839844,
+        -0.009766839444637299,
+        -0.42987531423568726
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5453507304191589,
+        2.621819496154785,
+        0.6119422912597656
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:16",
+      "min": [
+        -0.6222302913665771,
+        -0.009766839444637299,
+        -0.4170740842819214
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5403642058372498,
+        2.622494697570801,
+        0.5024001002311707
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:17",
+      "min": [
+        -0.6513675451278687,
+        -0.009766839444637299,
+        -0.4066814184188843
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5495373606681824,
+        2.6193149089813232,
+        0.3798817992210388
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:18",
+      "min": [
+        -0.6433408260345459,
+        -0.009766839444637299,
+        -0.3991028070449829
+      ],
+      "vertices": 10020
+    },
+    {
+      "max": [
+        0.5652186274528503,
+        2.612748622894287,
+        0.3798817992210388
+      ],
+      "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=4:19",
+      "min": [
+        -0.6170514822006226,
+        -0.009766839444637299,
+        -0.3945384621620178
+      ],
+      "vertices": 10020
+    }
+  ]
+}

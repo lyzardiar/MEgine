@@ -4064,5 +4064,93 @@
     ],
     "factionBuilding": true,
     "realistic": true
+  },
+  "RealGhoul": {
+    "material": "Assets/Materials/RealGhoul.mmat",
+    "parts": [
+      {
+        "name": "RealGhoul",
+        "mesh": "Assets/Models/RealGhoul.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 20
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Attack",
+        "frames": 20
+      },
+      {
+        "name": "Death",
+        "frames": 20
+      },
+      {
+        "name": "Harvest",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1.4537869095802307,
+      2.5,
+      0.9074593782424927
+    ],
+    "realistic": true,
+    "attackEvent": 0.5
+  },
+  "RealGhoulWood": {
+    "material": "Assets/Materials/RealGhoul.mmat",
+    "parts": [
+      {
+        "name": "RealGhoul",
+        "mesh": "Assets/Models/RealGhoul.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "animations": [
+      {
+        "name": "Idle",
+        "frames": 20
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Attack",
+        "frames": 20
+      },
+      {
+        "name": "Death",
+        "frames": 20
+      },
+      {
+        "name": "Harvest",
+        "frames": 20
+      }
+    ],
+    "size": [
+      1.4537869095802307,
+      2.5,
+      0.9074593782424927
+    ],
+    "realistic": true,
+    "attackEvent": 0.5,
+    "workAnimation": true,
+    "workClip": 4
   }
 }

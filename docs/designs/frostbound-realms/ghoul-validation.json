@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "nativePoseSamples": 100,
+  "hostTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "rulesAndTcp": "PASS: node scripts/test-frostbound.mjs",
+  "reproducedGeneratedFiles": 5,
+  "reproducedSha256": [
+    {
+      "file": "Assets/Models/RealGhoul.glb",
+      "sha256": "966803166f51baa971101df0aa95a4fa82f65f303c5cce861a070d9ac369423b"
+    },
+    {
+      "file": "Assets/Textures/RealGhoul_base.png",
+      "sha256": "9988caf7bb29fd811292d44f274558059dffc54781ea5f61823ce25108521073"
+    },
+    {
+      "file": "Assets/Materials/RealGhoul.mmat",
+      "sha256": "e4a5e36de5710710c9d8ac12eafa5ae589682b9f3a405a54852ce99619031282"
+    },
+    {
+      "file": "Licenses/Rosswet-Ghoul.txt",
+      "sha256": "fa3defe21623c4e78a21d32220e01f1a7d2cf844f544bae15aec2eae5d044e67"
+    },
+    {
+      "file": "Assets/Licenses/Rosswet-Ghoul.txt",
+      "sha256": "fa3defe21623c4e78a21d32220e01f1a7d2cf844f544bae15aec2eae5d044e67"
+    }
+  ],
+  "packagedFiles": 648,
+  "contentHash": "d5d30ce614b666f50f751f6ccb8f92a755621d0c7dab31dde4a2f48d78491c23",
+  "playerStartupSeconds": 30,
+  "playerLoggedErrors": 0,
+  "physicalInput": false,
+  "audioListening": false,
+  "nativeGameplay": {
+    "native-ghoul-qa.json": true,
+    "native-undead-economy-qa.json": true
+  }
+}

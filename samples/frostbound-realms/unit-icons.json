@@ -1,29 +1,10 @@
 {
   "file": "Assets/Art/unit-portraits.png",
-  "sha256": "b2d30ce1428d1aad1c216c9dd74b0c687fc83dbeef5d91cb11dca1ef6d209b70",
+  "sha256": "14048044dda07eacf6e0a02ab969735613388c5288a578df0e18dc8e3751b405",
   "generator": "scripts/render-frost-unit-icons.mjs",
   "method": "Native MEngine Release render, fitted to native sampled geometry bounds",
   "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
   "models": [
-    {
-      "name": "Demon",
-      "mesh": "Assets/Models/Demon.glb#pose=3:4",
-      "material": "Assets/Materials/Demon.mmat",
-      "bounds": {
-        "max": [
-          1.8491877317428589,
-          2.9682421684265137,
-          0.8942006826400757
-        ],
-        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\Demon.glb#pose=3:4",
-        "min": [
-          -1.5590744018554688,
-          -0.01548854075372219,
-          -1.2761752605438232
-        ],
-        "vertices": 4261
-      }
-    },
     {
       "name": "Dragon",
       "mesh": "Assets/Models/Dragon.glb#pose=3:4",
@@ -269,6 +250,25 @@
           -0.3961750566959381
         ],
         "vertices": 1675
+      }
+    },
+    {
+      "name": "RealGhoul",
+      "mesh": "Assets/Models/RealGhoul.glb#pose=0:4",
+      "material": "Assets/Materials/RealGhoul.mmat",
+      "bounds": {
+        "max": [
+          0.5235220193862915,
+          2.4421322345733643,
+          0.5364487767219543
+        ],
+        "mesh": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Assets\\Models\\RealGhoul.glb#pose=0:4",
+        "min": [
+          -0.5447375178337097,
+          6.7715291152126156e-9,
+          -0.3037393093109131
+        ],
+        "vertices": 10020
       }
     },
     {

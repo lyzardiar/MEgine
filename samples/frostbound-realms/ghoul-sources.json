@@ -1,0 +1,86 @@
+{
+  "author": "Rosswet Mobile",
+  "license": "CC-BY-3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "page": "https://opengameart.org/content/thin-zombie-awake-zombie-asset",
+  "generator": "scripts/import-frost-ghoul.py",
+  "sources": [
+    {
+      "file": "SourceAssets/ghoul/new_thin_zom.zip",
+      "sha256": "ba9a8d2a444f36b77f838251103f2c9c3a3d570db3bf1e10fb38b80f4f480b40",
+      "bytes": 1621462,
+      "url": "https://opengameart.org/sites/default/files/new_thin_zom.zip"
+    },
+    {
+      "file": "SourceAssets/ghoul/new_thin_zombie.blend",
+      "sha256": "37e26b0c7f680baf474c25cf4f8459f364bb212a5f71226f8a700801851d7647",
+      "bytes": 4388688
+    },
+    {
+      "file": "SourceAssets/ghoul/new_thin_zombie.png",
+      "sha256": "9988caf7bb29fd811292d44f274558059dffc54781ea5f61823ce25108521073",
+      "bytes": 904184
+    },
+    {
+      "file": "SourceAssets/ghoul/source-page.html",
+      "sha256": "c88f4f0ab43786ff828497baf738bfaddec68bfdd50ede0664c7dac497060c23",
+      "bytes": 39379,
+      "url": "https://opengameart.org/content/thin-zombie-awake-zombie-asset"
+    }
+  ],
+  "models": {
+    "RealGhoul": {
+      "triangles": 3340,
+      "bones": 41,
+      "clips": [
+        {
+          "name": "Idle",
+          "frames": 20
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Attack",
+          "frames": 20
+        },
+        {
+          "name": "Death",
+          "frames": 20
+        },
+        {
+          "name": "Harvest",
+          "frames": 20
+        }
+      ],
+      "size": [
+        1.4537869095802307,
+        2.5,
+        0.9074593782424927
+      ]
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Models/RealGhoul.glb",
+      "sha256": "966803166f51baa971101df0aa95a4fa82f65f303c5cce861a070d9ac369423b"
+    },
+    {
+      "file": "Assets/Textures/RealGhoul_base.png",
+      "sha256": "9988caf7bb29fd811292d44f274558059dffc54781ea5f61823ce25108521073"
+    },
+    {
+      "file": "Assets/Materials/RealGhoul.mmat",
+      "sha256": "e4a5e36de5710710c9d8ac12eafa5ae589682b9f3a405a54852ce99619031282"
+    },
+    {
+      "file": "Licenses/Rosswet-Ghoul.txt",
+      "sha256": "fa3defe21623c4e78a21d32220e01f1a7d2cf844f544bae15aec2eae5d044e67"
+    },
+    {
+      "file": "Assets/Licenses/Rosswet-Ghoul.txt",
+      "sha256": "fa3defe21623c4e78a21d32220e01f1a7d2cf844f544bae15aec2eae5d044e67"
+    }
+  ]
+}
