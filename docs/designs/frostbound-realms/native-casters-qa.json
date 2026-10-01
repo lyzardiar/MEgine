@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "casters": {
+    "fixture": "Revenant tier-3 practice arena with a completed Temple, base necromancer, shaman and stationary enemy swordsman. Research and spells use native UI input.",
+    "adeptAndMasterResearch": true,
+    "midResearchSave": true,
+    "rankAndMana": true,
+    "targetedFrenzyDrain": true,
+    "targetedCripple": true,
+    "midEffectSave": true,
+    "purgeDispel": true,
+    "purgeExpiry": true,
+    "shaderRejections": 0
+  }
+}
