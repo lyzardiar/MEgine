@@ -9,7 +9,7 @@ const ridge=S.defaultMap();assert.ok(ridge.heights.filter(h=>h>0).length>=100);f
 const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;delete legacy.surfaces;delete legacy.relief;
 delete legacy.cliffStyle;assert.equal(S.validateMap(legacy).cliffStyle,0);
 for(const cliffStyle of [-1,3,.5,null,'1'])assert.throws(()=>S.validateMap({...legacy,cliffStyle}));
-for(let cliffStyle=0;cliffStyle<3;cliffStyle++){const map=S.validateMap({...legacy,cliffStyle}),s=S.create('skirmish',{map});assert.equal(S.restore(JSON.parse(JSON.stringify(s))).map.cliffStyle,cliffStyle);assert.equal(S.publicState(s,0).map.cliffStyle,cliffStyle);assert.equal(T.material(map),'Assets/Materials/'+['Ground','GroundIce','GroundMasonry'][cliffStyle]+'.mmat');assert.equal(T.mesh(map,3,3),T.mesh(S.validateMap(legacy),3,3),'cliff art preserves surface geometry');}
+for(let cliffStyle=0;cliffStyle<3;cliffStyle++){const map=S.validateMap({...legacy,cliffStyle}),s=S.create('skirmish',{map});assert.equal(S.restore(JSON.parse(JSON.stringify(s))).map.cliffStyle,cliffStyle);assert.equal(S.publicState(s,0).map.cliffStyle,cliffStyle);assert.equal(T.material(map),'Assets/Materials/'+['Ground','GroundIce','GroundMasonry'][cliffStyle]+'.mmat');assert.equal(T.mesh(map,3,3),T.mesh(S.validateMap(legacy),3,3)+(cliffStyle?cliffStyle:''),'cliff geometry style preserves the encoded surface heights');}
 assert.equal(S.validateMap(legacy).heights.reduce((a,b)=>a+b),0);
 assert.deepEqual(S.validateMap(legacy).surfaces,Array(1024).fill(0));
 for(const surfaces of [[0],Array(1024).fill(3),Array(1024).fill(-1),Array(1024).fill(.5),Array(1024).fill(NaN),null])assert.throws(()=>S.validateMap({...legacy,surfaces}));

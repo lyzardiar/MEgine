@@ -7,6 +7,7 @@ use crate::MeshData;
 /// `terrain4r:` adds two hexadecimal chunk coordinates and a six-by-six corner-height halo
 /// for subdivided tops, connected rock faces and shelf/contact material weights in UVs.
 /// `terrain4h:` adds a seven-by-seven signed relief field encoded as 128 + height * 16.
+/// An optional final 0/1/2 selects rock, faceted ice or coursed masonry cliff geometry.
 pub fn terrain_mesh(key: &str) -> Result<MeshData, &'static str> {
     if let Some(data) = key.strip_prefix("terrain4h:") { return rocky_terrain(data,true); }
     if let Some(data) = key.strip_prefix("terrain4r:") { return rocky_terrain(data,false); }
@@ -35,6 +36,8 @@ pub fn terrain_mesh(key: &str) -> Result<MeshData, &'static str> {
 
 // MiYu: a one-tile halo exposes only height discontinuities; world coordinates weld chunk borders.
 fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
+    let style=if sculpted&&data.len()==245 {let digit=data.as_bytes()[244];if !(b'0'..=b'2').contains(&digit) {return Err("invalid cliff geometry style");}digit-b'0'}else{0};
+    let data=if sculpted&&data.len()==245 {&data[..244]}else{data};
     if data.len()!=(if sculpted {244} else {146}) || !data.bytes().all(|v| v.is_ascii_hexdigit()) { return Err("invalid rock terrain height payload"); }
     let digits:Vec<f32>=data[..146].chars().map(|v| v.to_digit(16).unwrap() as f32).collect();
     if digits[0]>7. || digits[1]>7. { return Err("rock terrain chunk coordinate exceeds eight patches"); }
@@ -103,16 +106,33 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
             let side=|t:f32,depth:f32| {
                 let upper=lerp(h[a],h[b],t);let lower=lerp(nh[na],nh[nb],t).min(upper);let y=lerp(upper,lower,depth);
                 let upper_point=boundary(vertices[a],h[a],vertices[b],h[b],t);let px=upper_point[0];let pz=upper_point[2];
-                let bulge=(std::f32::consts::PI*t).sin()*(std::f32::consts::PI*depth).sin()*(0.12+0.07*((px+origin[0])*2.1+(pz+origin[1])*0.8+y*3.7).sin());
-                let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,upper-y])
+                let taper=(std::f32::consts::PI*t).sin()*(std::f32::consts::PI*depth).sin();
+                // MiYu: all styles keep their top, foot and vertical joints on the shared contour.
+                let bulge=match style {
+                    1=>{let peak=0.35+0.2*((px+origin[0])*0.7+(pz+origin[1])*0.9).sin();let ridge=if depth<peak {depth/peak}else{(1.-depth)/(1.-peak)};0.32*(1.-(t*2.-1.).abs())*ridge},
+                    2=>{let row=(depth*4.).floor();let course=(depth*4.).rem_euclid(1.);let block=(t*4.+row.rem_euclid(2.)*0.5).rem_euclid(1.);let bevel=|v:f32|(v*8.).min((1.-v)*8.).clamp(0.,1.);0.06*bevel(course)*bevel(block)*bevel(t)},
+                    _=>taper*(0.12+0.07*((px+origin[0])*2.1+(pz+origin[1])*0.8+y*3.7).sin())
+                };
+                let bulge=bulge*if style==0 {1.}else{((upper-lower)*4.).clamp(0.,1.)};let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if style==0 {upper-y}else{-1.-(upper-y)}])
             };
             // MiYu: common height subdivisions weld vertical corners between different cliff levels.
             let depths=|upper:f32,lower:f32| {let mut cuts=Vec::new();if (upper-lower).abs()>0.001 {for level in (upper.min(lower)*4.).floor() as i32..=(upper.max(lower)*4.).ceil() as i32 {let d=(upper-level as f32/4.)/(upper-lower);if d>0.&&d<1. {cuts.push(d);}}cuts.sort_by(f32::total_cmp);}cuts};let ca=depths(h[a],nh[na]);let cb=depths(h[b],nh[nb]);
             let mut side_triangle=|params:[[f32;2];3]| {let mut polygon=Vec::new();for i in 0..3 {let a=params[i];let b=params[(i+1)%3];polygon.push(side(a[0],a[1]));if a[0]==b[0]&&(a[0]==0.||a[0]==1.) {let cuts=if a[0]==0. {&ca}else{&cb};let mut extra:Vec<_>=cuts.iter().copied().filter(|d|*d>a[1].min(b[1])+1e-6&&*d<a[1].max(b[1])-1e-6).collect();if a[1]>b[1] {extra.reverse();}for d in extra {polygon.push(side(a[0],d));}}}
                 if polygon.len()==3 {triangle([polygon[0].0,polygon[1].0,polygon[2].0],[polygon[0].1,polygon[1].1,polygon[2].1],false);}else{let center=side(params.iter().map(|p|p[0]).sum::<f32>()/3.,params.iter().map(|p|p[1]).sum::<f32>()/3.);for i in 0..polygon.len() {let next=(i+1)%polygon.len();triangle([center.0,polygon[i].0,polygon[next].0],[center.1,polygon[i].1,polygon[next].1],false);}}
             };
-            for along in 0..4 { for band in 0..4 {
-                let t=(along as f32/4.).max(first);let end=((along+1) as f32/4.).min(last);if t>=end {continue;}let d=band as f32/4.;side_triangle([[t,d],[end,d],[end,d+0.25]]);side_triangle([[t,d],[end,d+0.25],[t,d+0.25]]);
+            let columns=4;let bands=4;
+            for along in 0..columns { for band in 0..bands {
+                let t=(along as f32/columns as f32).max(first);let end=((along+1) as f32/columns as f32).min(last);if t>=end {continue;}let d=band as f32/bands as f32;let next=(band+1) as f32/bands as f32;
+                if style==2 {
+                    let mid=(t+end)*0.5;let mut polygon=vec![[t,d]];if band>0 {polygon.push([mid,d]);}polygon.extend([[end,d],[end,next]]);if band+1<bands {polygon.push([mid,next]);}polygon.push([t,next]);
+                    // MiYu: a ramp tip collapses several wall vertices into one; inset only the unique contour.
+                    let coincident=|a:[f32;2],b:[f32;2]|(glam::Vec3::from_array(side(a[0],a[1]).0)-glam::Vec3::from_array(side(b[0],b[1]).0)).length_squared()<1e-10;
+                    polygon.dedup_by(|a,b|coincident(*a,*b));if polygon.len()>1&&coincident(polygon[0],*polygon.last().unwrap()) {polygon.pop();}
+                    let center=[mid,(d+next)*0.5];let inner:Vec<_>=polygon.iter().map(|p|[lerp(center[0],p[0],0.5),lerp(center[1],p[1],0.5)]).collect();
+                    for i in 0..polygon.len() {let j=(i+1)%polygon.len();side_triangle([polygon[i],polygon[j],inner[j]]);side_triangle([polygon[i],inner[j],inner[i]]);}
+                    for i in 0..inner.len() {side_triangle([center,inner[i],inner[(i+1)%inner.len()]]);}
+                }
+                else {side_triangle([[t,d],[end,d],[end,next]]);side_triangle([[t,d],[end,next],[t,next]]);}
             }}
         }
     }}
@@ -123,10 +143,18 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
 mod tests {
     use super::*;
     #[test]
+    fn cliff_styles_change_wall_geometry_and_preserve_shelves() {
+        let mut h=vec!['0';144];for i in 0..4 {h[(2*6+2)*4+i]='2';}let key=format!("terrain4h:00{}{}",h.into_iter().collect::<String>(),"80".repeat(49));
+        let rock=terrain_mesh(&key).unwrap();assert_eq!(rock.positions,terrain_mesh(&(key.clone()+"0")).unwrap().positions);
+        let tops=|mesh:&MeshData|mesh.positions.iter().zip(&mesh.normals).filter(|(_,n)|n[1]>0.999).map(|(p,_)|*p).collect::<Vec<_>>();
+        for style in [1,2] {let mesh=terrain_mesh(&format!("{key}{style}")).unwrap();assert_ne!(mesh.positions,rock.positions);assert_eq!(tops(&mesh),tops(&rock));assert!(mesh.positions.iter().flatten().all(|v|v.is_finite()));assert!(mesh.normals.iter().all(|n|(glam::Vec3::from_array(*n).length()-1.).abs()<0.0001));if style==2 {assert!(mesh.indices.len()>rock.indices.len());}}
+        for suffix in ["3","f","12"] {assert!(terrain_mesh(&(key.clone()+suffix)).is_err());}
+    }
+    #[test]
     fn javascript_floor_triangles_match_native_cliff_surfaces() {
         let cases:serde_json::Value=serde_json::from_str(include_str!("../../../docs/designs/frostbound-realms/cliff-surface-fixtures.json")).unwrap();
-        for case in cases.as_array().unwrap() {
-            let key=case["key"].as_str().unwrap();let mesh=terrain_mesh(key).unwrap();let origin=[key[10..11].parse::<f32>().unwrap()*8.-28.,key[11..12].parse::<f32>().unwrap()*8.-28.];
+        for style in 0..=2 {for case in cases.as_array().unwrap() {
+            let key=case["key"].as_str().unwrap();let mesh=terrain_mesh(&format!("{key}{style}")).unwrap();let origin=[key[10..11].parse::<f32>().unwrap()*8.-28.,key[11..12].parse::<f32>().unwrap()*8.-28.];
             for triangle in case["triangles"].as_array().unwrap() {
                 let matched=mesh.indices.chunks_exact(3).any(|indices|indices.iter().enumerate().all(|(vertex,index)| {
                     let p=mesh.positions[*index as usize];let world=[p[0]+origin[0],p[1],p[2]+origin[1]];
@@ -134,7 +162,7 @@ mod tests {
                 }));
                 assert!(matched,"JavaScript floor differs from native surface: mask={} mode={}",case["mask"],case["mode"]);
             }
-        }
+        }}
     }
     #[test]
     fn sculpted_height_matches_world_plane_and_patch_seams() {
@@ -169,18 +197,18 @@ mod tests {
     #[test]
     fn all_corner_patterns_are_watertight_across_four_patches() {
         use std::collections::BTreeMap;
-        for ramp in 0..=3 {for mask in 0..16 {
+        for style in 0..=2 {for ramp in 0..=3 {for mask in 0..16 {
             let mut edges=BTreeMap::<([i32;3],[i32;3]),u32>::new();let mut points=Vec::new();
             for cz in 3..=4 {for cx in 3..=4 {
                 let mut key=format!("terrain4h:{cx}{cz}");for dz in -1..=4 {for dx in -1..=4 {let x=cx*4+dx;let z=cz*4+dz;let quadrant=match (x>=16,z>=16) {(false,false)=>0,(true,false)=>1,(true,true)=>2,(false,true)=>3};for [vx,_vz] in [[x,z],[x+1,z],[x+1,z+1],[x,z+1]] {let h=if mask&(1<<quadrant)!=0 {2}else{0};let rise=if ramp==0 {0}else if ramp>=2&&z>=16 {let rise=if ramp==3 {1}else{2};rise-(vx-16).clamp(0,1)*rise}else{(vx-16).clamp(0,1)*2};key.push(char::from_digit((h+rise) as u32,16).unwrap());}}}key.push_str(&"80".repeat(49));
-                let mesh=terrain_mesh(&key).unwrap();assert!(mesh.normals.iter().flatten().all(|v|v.is_finite()));assert_eq!(mesh.positions.len(),mesh.normals.len());
+                key.push(char::from_digit(style,16).unwrap());let mesh=terrain_mesh(&key).unwrap();assert!(mesh.normals.iter().flatten().all(|v|v.is_finite()));assert_eq!(mesh.positions.len(),mesh.normals.len());
                 let world:Vec<_>=mesh.positions.iter().map(|p|[p[0]+(cx*8-28) as f32,p[1],p[2]+(cz*8-28) as f32]).collect();points.extend(world.iter().copied());
                 for triangle in mesh.indices.chunks_exact(3) {for i in 0..3 {let a=world[triangle[i] as usize].map(|v|(v*10000.).round() as i32);let b=world[triangle[(i+1)%3] as usize].map(|v|(v*10000.).round() as i32);if a!=b {*edges.entry(if a<b {(a,b)}else{(b,a)}).or_default()+=1;}}}
             }}
-            for ((a,b),count) in edges {if count==1 {assert!([a,b].iter().all(|p|p[0].abs()>72500||p[2].abs()>72500),"unclosed interior edge for corner mask {mask}: {a:?} -> {b:?}");}}
+            for ((a,b),count) in edges {if count==1 {assert!([a,b].iter().all(|p|p[0].abs()>72500||p[2].abs()>72500),"unclosed interior edge for style {style}, ramp {ramp}, mask {mask}: {a:?} -> {b:?}");}}
             if mask==4&&ramp<2 {let inset=0.3/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"convex corner uses the shared curved joint");}
             if mask==11&&ramp<2 {let inset= -0.3/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"concave corner uses the shared curved joint");}
-        }}
+        }}}
     }
     #[test]
     fn bounded_patch_has_upward_tops_and_outward_cliffs() {

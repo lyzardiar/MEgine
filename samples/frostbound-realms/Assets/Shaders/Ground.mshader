@@ -53,7 +53,8 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let natural_cover=smoothstep(0.3,0.7,broad*0.58+medium*0.3+fine*0.12);
     let cover=natural_cover*(1.0-fields.z-fields.w)+fields.w;
     // MiYu: thin snow settles between raised litter; a narrow wet-soil band follows the melting edge.
-    let shelf=smoothstep(0.65,0.95,abs(geometric.y));
+    let wall=uv.y<0.0;let wall_depth=select(uv.y,-uv.y-1.0,wall);
+    let shelf=smoothstep(0.65,0.95,abs(geometric.y))*select(1.0,0.0,wall);
     let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32)*(1.0-smoothstep(0.06,0.6,uv.y)*shelf*0.85);
     let melt=(1.0-snow_cover)*smoothstep(0.18,0.5,cover);
     let road=smoothstep(0.22,0.8,fields.y+(stone_nrh.a-0.5)*0.18);
@@ -80,7 +81,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let ground_normal=frost_bump(packed,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),0.7);
     let water_normal=normalize(geometric+vec3<f32>(wave*0.045,0.0,cos(p.y*8.3-p.x*1.1)*0.035));
     s.normal=normalize(mix(ground_normal,water_normal,water));
-    let cliff=1.0-smoothstep(0.3,0.85,abs(geometric.y));
+    let cliff=select(1.0-smoothstep(0.3,0.85,abs(geometric.y)),1.0,wall);
     let mapping=mengine_param_cliff_mapping();
     let side_x=vec2<f32>(p.y,-world_position.y)*mapping.xy;let side_z=vec2<f32>(p.x,-world_position.y)*mapping.xy;
     let side_weight=abs(geometric.x)/max(abs(geometric.x)+abs(geometric.z),0.0001);
@@ -89,7 +90,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let side_color=mix(textureSample(base_color_texture,material_sampler,side_z).rgb,textureSample(base_color_texture,material_sampler,side_x).rgb,side_weight);
     let side_normal=normalize(mix(frost_bump(side_nz,geometric,vec3<f32>(1,0,0),vec3<f32>(0,-1,0),mapping.z),frost_bump(side_nx,geometric,vec3<f32>(0,0,1),vec3<f32>(0,-1,0),mapping.z),side_weight));
     // MiYu: mesh UVs carry cliff depth; exposed shelves keep a soil cap and shaded rock foot.
-    let cap=1.0-smoothstep(0.04,0.32,uv.y);
+    let cap=1.0-smoothstep(0.04,0.32,wall_depth);
     let foot=mix(1.0,0.67,smoothstep(0.55,1.0,uv.x));
     let cliff_color=mix(side_color*vec3<f32>(0.78,0.82,0.86),dry,cap)*foot;
     s.base_color=mix(s.base_color,cliff_color,cliff);

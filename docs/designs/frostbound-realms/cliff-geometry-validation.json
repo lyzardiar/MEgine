@@ -1,0 +1,79 @@
+{
+  "stage": "Faceted ice and beveled masonry cliff meshes",
+  "author": "MiYu",
+  "protocol": 25,
+  "tests": {
+    "terrain_mesh": {
+      "passed": 6,
+      "failed": 0,
+      "seamConfigurations": 192,
+      "floorParityTriangles": 2304
+    },
+    "frost_ground_shader_compiles_for_all_backends": {
+      "passed": 1,
+      "failed": 0,
+      "backends": [
+        "WebGPU",
+        "Vulkan",
+        "D3D12",
+        "Metal"
+      ]
+    },
+    "node scripts/test-frostbound.mjs": {
+      "passed": true
+    }
+  },
+  "native": {
+    "report": "cliff-geometry-native.json",
+    "passed": true,
+    "styles": [
+      "rock",
+      "ice",
+      "masonry"
+    ],
+    "chunks": 64,
+    "sameTopSurface": true,
+    "distinctCliffGeometry": true,
+    "editorSelection": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "playtest": true,
+    "gameSaveRestore": true,
+    "shaderRejections": 0,
+    "method": "Native Release editor, QuickJS and Agent frame input"
+  },
+  "package": {
+    "files": 724,
+    "contentHash": "4f45e773f2735f2573c50324358bba6a0ee78862a82bd87aa7570915a495364f",
+    "manifestValidated": true,
+    "smokeSeconds": 30,
+    "loggedErrors": 0,
+    "responding": true
+  },
+  "runtime": {
+    "path": "D:\\MEngineNativeQA\\tile-build-1790939800003\\release\\mengine-runtime.exe",
+    "sha256": "25e65dfa4edd9051844641cd0e80c20e85026bc5129368f22e0888e5e3e3c7b5",
+    "nativeSourceChanged": true
+  },
+  "editor": {
+    "sha256": "f9d4f7b1b2cb9746bbbaaa342c7077e624849037a1824486b25c85c692de3bb2"
+  },
+  "sourceHashes": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "dfaa4c2531682e71794708ad76e77ada96c283caf2bed45372624396cfe1fa1e",
+    "samples/frostbound-realms/game/terrain.js": "ecf9bcff50b08d1208aad523bdfb30c406815a5bf5df4b545ac2f337e2af5e72",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "75bd4ccd1ba89e3452ff9878b4e15e9d5ba891dcffdf235d22e5304696ebbc98"
+  },
+  "screenshots": [
+    "cliffshape-cliff-rock.png",
+    "cliffshape-cliff-ice.png",
+    "cliffshape-cliff-masonry.png",
+    "cliffshape-cliff-playtest.png"
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "steadyGameplayPerformanceAccepted": false,
+  "remaining": [
+    "Complete original terrain sets and cliff shape variants",
+    "Full requested game recreation"
+  ]
+}
