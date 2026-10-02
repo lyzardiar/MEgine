@@ -66,6 +66,38 @@
         "Displacement": "SourceAssets/polyhaven/ground/rock_face_03_disp_1k.png"
       },
       "output": "Assets/Textures/rock_face_03_nrh_1k.png"
+    },
+    {
+      "id": "castle_brick_07",
+      "page": "https://polyhaven.com/a/castle_brick_07",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "albedo": "Assets/Textures/castle_brick_07_diff_1k.jpg",
+      "channels": {
+        "nor_gl": "SourceAssets/polyhaven/ground/castle_brick_07_nor_gl_1k.png",
+        "Rough": "SourceAssets/polyhaven/ground/castle_brick_07_rough_1k.png",
+        "Displacement": "SourceAssets/polyhaven/ground/castle_brick_07_disp_1k.png"
+      },
+      "output": "Assets/Textures/castle_brick_07_nrh_1k.png"
+    },
+    {
+      "id": "Ice001",
+      "page": "https://ambientcg.com/a/Ice001",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://docs.ambientcg.com/license/",
+      "authors": {
+        "Lennart Demes": "ambientCG"
+      },
+      "albedo": "Assets/Textures/Ice001_Color_1k.jpg",
+      "channels": {
+        "nor_gl": "SourceAssets/ambientcg/ground/Ice001_NormalGL_1k.jpg",
+        "Rough": "SourceAssets/ambientcg/ground/Ice001_Roughness_1k.jpg",
+        "Displacement": "SourceAssets/ambientcg/ground/Ice001_Displacement_1k.jpg"
+      },
+      "output": "Assets/Textures/Ice001_nrh_1k.png"
     }
   ],
   "sources": [
@@ -148,6 +180,53 @@
       "file": "SourceAssets/polyhaven/ground/rock_face_03_disp_1k.png",
       "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rock_face_03/rock_face_03_disp_1k.png",
       "sha256": "db8c173dd33a21d6eaa1c16f1f369bde045260a10c0576016d08a3f89f97bbd6"
+    },
+    {
+      "file": "Assets/Textures/castle_brick_07_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/castle_brick_07/castle_brick_07_diff_1k.jpg",
+      "sha256": "86c90b92c19922e8f051f1130e45dbf1adc72aa0f51d7cb8aafa275dbec63937"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/castle_brick_07_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/castle_brick_07/castle_brick_07_nor_gl_1k.png",
+      "sha256": "6a40cb991ea1a35625b35a883bb6f23f678dbad8bd6d71a8620df48625a406d3"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/castle_brick_07_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/castle_brick_07/castle_brick_07_rough_1k.png",
+      "sha256": "52e3d8dffa11ab8f905bc17aff3e555ea4047b0dd9eaa663febdd7f5d325be5e"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/castle_brick_07_disp_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/castle_brick_07/castle_brick_07_disp_1k.png",
+      "sha256": "dca15a815402cc7a7661efa9e253e442264c27781773513149aacdbd08780dc8"
+    },
+    {
+      "file": "SourceAssets/ambientcg/Ice001_1K-JPG.zip",
+      "url": "https://ambientcg.com/get?file=Ice001_1K-JPG.zip",
+      "sha256": "721e7fc523524a7f09a90518be17205a2f4f8f99a48e481821e1b6c482ecdf25",
+      "members": [
+        {
+          "name": "Ice001_1K-JPG_Color.jpg",
+          "file": "Assets/Textures/Ice001_Color_1k.jpg",
+          "sha256": "f2b19e3895130f904bce60072ce2418c4e83a0d7376f10ec5c06e28bc2495c6e"
+        },
+        {
+          "name": "Ice001_1K-JPG_NormalGL.jpg",
+          "file": "SourceAssets/ambientcg/ground/Ice001_NormalGL_1k.jpg",
+          "sha256": "42f478a473bd8db8b3114b753b42b65d9c2e55018dd1e6eeb2626faa78a4b230"
+        },
+        {
+          "name": "Ice001_1K-JPG_Roughness.jpg",
+          "file": "SourceAssets/ambientcg/ground/Ice001_Roughness_1k.jpg",
+          "sha256": "73a6e59e225ef6c8d96443adafbe3515defaa0ac03f90102796b722610990c6a"
+        },
+        {
+          "name": "Ice001_1K-JPG_Displacement.jpg",
+          "file": "SourceAssets/ambientcg/ground/Ice001_Displacement_1k.jpg",
+          "sha256": "8df9c3343fd76313865b5304e56155184a71a8ffcc0847112e21cbfb0c4d3dc1"
+        }
+      ]
     }
   ],
   "generated": [
@@ -166,6 +245,14 @@
     {
       "file": "Assets/Textures/rock_face_03_nrh_1k.png",
       "sha256": "c384fb53fabe9bfc45f9d7acff9220b8458fc561d9a5407cd5702c9e5e04a4a7"
+    },
+    {
+      "file": "Assets/Textures/castle_brick_07_nrh_1k.png",
+      "sha256": "7e5d1e8b37d4bfc1b7269abef26c40350d726c0743b6cc51891ad2bd2c1b4d7b"
+    },
+    {
+      "file": "Assets/Textures/Ice001_nrh_1k.png",
+      "sha256": "28376a54134cf3db11458dba61442d287f826d6c7c2f39ba2e472b3937db9c32"
     }
   ]
 }

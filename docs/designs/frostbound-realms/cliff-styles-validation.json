@@ -1,0 +1,77 @@
+{
+  "stage": "Authored rock, ice and masonry cliff material kits",
+  "author": "MiYu",
+  "protocol": 25,
+  "tests": {
+    "node scripts/test-frostbound.mjs": {
+      "passed": true,
+      "authoritativeCliffStyleOnStartStateAndResume": true,
+      "legacyProtocol24Rejected": true
+    },
+    "python scripts/test-frost-ground.py": {
+      "passed": true,
+      "sourceFiles": 21,
+      "archiveMembers": 4,
+      "packedOutputs": 6,
+      "exactChannels": true,
+      "normalOrientationAgainstHeight": true
+    },
+    "cargo test -p mengine-rhi frost_ground_shader_compiles_for_all_backends": {
+      "passed": 1,
+      "failed": 0,
+      "backends": [
+        "WebGPU",
+        "Vulkan",
+        "D3D12",
+        "Metal"
+      ]
+    }
+  },
+  "native": {
+    "report": "cliff-styles-native.json",
+    "passed": true,
+    "styles": [
+      "rock",
+      "ice",
+      "masonry"
+    ],
+    "chunks": 64,
+    "sameGeometry": true,
+    "editorSelection": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "playtest": true,
+    "gameSaveRestore": true,
+    "shaderRejections": 0,
+    "method": "One independent native Release editor, QuickJS, Agent input and paused native frame stepping"
+  },
+  "package": {
+    "files": 724,
+    "contentHash": "956b33826e1d446421def62d2c3035037f8246e5178d39b0f8115bd23ca412f2",
+    "manifestValidated": true,
+    "smokeSeconds": 30,
+    "loggedErrors": 0,
+    "responding": true
+  },
+  "runtime": {
+    "path": "D:/MEngineNativeQA/tile-build-1790939800003/release/mengine-runtime.exe",
+    "sha256": "1208f0b1618af9e5c0d451237625f286fc30564e39410939dd9e80085eb5aa3f",
+    "reusedReleaseBuild": true,
+    "nativeSourceChanged": false
+  },
+  "generatedScriptSha256": "781ef27931380e600f349d78d6b2b50a7b25a18246d00d8c8ce564177f55a773",
+  "screenshots": [
+    "cliffkit-cliff-rock.png",
+    "cliffkit-cliff-ice.png",
+    "cliffkit-cliff-masonry.png",
+    "cliffkit-cliff-playtest.png"
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "steadyGameplayPerformanceAccepted": false,
+  "remaining": [
+    "Separate city and ice cliff geometry kits",
+    "Complete original terrain sets and classic maps",
+    "Full requested game recreation"
+  ]
+}

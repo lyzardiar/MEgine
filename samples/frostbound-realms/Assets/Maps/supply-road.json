@@ -3,6 +3,7 @@
   "name": "Winterfall Supply Road",
   "mode": "skirmish",
   "startingHour": 8,
+  "cliffStyle": 0,
   "terrain": [
     0,
     1,

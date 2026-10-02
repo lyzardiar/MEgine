@@ -72,6 +72,42 @@
         0,
         254
       ]
+    },
+    "castle_brick_07": {
+      "size": [
+        1024,
+        1024
+      ],
+      "normalSlopeHeightCorrelation": [
+        0.8774575222184735,
+        0.8858196800514162
+      ],
+      "roughnessRange": [
+        48,
+        255
+      ],
+      "heightRange": [
+        0,
+        255
+      ]
+    },
+    "Ice001": {
+      "size": [
+        1024,
+        1024
+      ],
+      "normalSlopeHeightCorrelation": [
+        0.855738949645857,
+        0.858509618475166
+      ],
+      "roughnessRange": [
+        2,
+        147
+      ],
+      "heightRange": [
+        0,
+        255
+      ]
     }
   }
 }

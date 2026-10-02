@@ -8,6 +8,7 @@ from PIL import Image
 s=Path(__file__).resolve().parents[1]/'samples/frostbound-realms';manifest=json.loads((s/'ground-sources.json').read_text());report={'passed':True,'materials':{}}
 for entry in manifest['sources']+manifest['generated']:
     assert hashlib.sha256((s/entry['file']).read_bytes()).hexdigest()==entry['sha256'],entry['file']
+    for member in entry.get('members',[]):assert hashlib.sha256((s/member['file']).read_bytes()).hexdigest()==member['sha256'],member['file']
 for asset in manifest['assets']:
     packed=np.asarray(Image.open(s/asset['output']));assert packed.shape==(1024,1024,4)
     normal=np.asarray(Image.open(s/asset['channels']['nor_gl']).convert('RGB'));assert np.array_equal(packed[:,:,:2],normal[:,:,:2])
@@ -28,5 +29,9 @@ for texture in schema['textures']:assert (s/texture['default']).is_file()
 material=json.loads((s/'Assets/Materials/Ground.mmat').read_text());cliff=next(a for a in manifest['assets'] if a['id']=='rock_face_03')
 assert material['base_color_texture']==cliff['albedo']
 assert material['metallic_roughness_texture']==cliff['output']
+for name,asset in [('Ice','Ice001'),('Masonry','castle_brick_07')]:
+    material=json.loads((s/('Assets/Materials/Ground'+name+'.mmat')).read_text());cliff=next(a for a in manifest['assets'] if a['id']==asset)
+    assert material['base_color_texture']==cliff['albedo'] and material['metallic_roughness_texture']==cliff['output']
+    assert len(material['custom_parameters']['cliff_mapping'])==4 and material['custom_parameters']['cliff_mapping'][0]>0
 (s.parents[1]/'docs/designs/frostbound-realms/ground-import-qa.json').write_text(json.dumps(report,indent=2)+'\n')
 print(f"PASS: {len(manifest['sources'])} source hashes, {len(manifest['generated'])} packed outputs, exact linear channels, 16-bit heights, normal orientation and cliff material bindings")

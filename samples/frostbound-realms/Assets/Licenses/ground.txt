@@ -10,6 +10,8 @@ rocky_terrain: Amal Kumar
 https://polyhaven.com/a/rocky_terrain
 rock_face_03: Dario Barresi (Photography), Rico Cilliers (Processing)
 https://polyhaven.com/a/rock_face_03
+castle_brick_07: Rob Tuytel
+https://polyhaven.com/a/castle_brick_07
 
 Original diffuse, OpenGL normal, roughness and displacement sources are pinned
 with URLs and SHA-256 in ground-sources.json. Derived textures pack normal X/Y,

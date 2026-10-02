@@ -3,6 +3,7 @@
   "name": "Ancients of the Vale",
   "mode": "moba",
   "startingHour": 8,
+  "cliffStyle": 0,
   "terrain": [
     0,
     1,

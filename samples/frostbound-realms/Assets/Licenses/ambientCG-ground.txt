@@ -1,0 +1,8 @@
+ambientCG Ice 001
+Author: Lennart Demes / ambientCG
+License: Creative Commons Zero 1.0 Universal (CC0)
+https://creativecommons.org/publicdomain/zero/1.0/
+https://docs.ambientcg.com/license/
+https://ambientcg.com/a/Ice001
+
+Original archive URL, SHA-256, extracted member hashes and linear channel packing are recorded in ground-sources.json.

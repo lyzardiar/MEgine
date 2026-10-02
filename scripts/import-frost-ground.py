@@ -2,6 +2,7 @@
 import hashlib
 import json
 import urllib.request
+import zipfile
 from pathlib import Path
 import numpy as np
 from PIL import Image
@@ -25,6 +26,12 @@ def main():
             if hashlib.sha256(data).hexdigest()!=source['sha256']:raise ValueError('Downloaded source hash mismatch: '+source['file'])
             target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
         if hashlib.sha256(target.read_bytes()).hexdigest()!=source['sha256']:raise ValueError('Source hash mismatch: '+source['file'])
+        if source.get('members'):
+            with zipfile.ZipFile(target) as archive:
+                for member in source['members']:
+                    data=archive.read(member['name'])
+                    if hashlib.sha256(data).hexdigest()!=member['sha256']:raise ValueError('Archive member hash mismatch: '+member['name'])
+                    output=SAMPLE/member['file'];output.parent.mkdir(parents=True,exist_ok=True);output.write_bytes(data)
     for asset in manifest['assets']:
         paths={key:SAMPLE/value for key,value in asset['channels'].items()}
         normal=Image.open(paths['nor_gl']).convert('RGB');rough=scalar(paths['Rough']);height=scalar(paths['Displacement'])
