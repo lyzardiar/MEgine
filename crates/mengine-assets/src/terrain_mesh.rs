@@ -6,8 +6,10 @@ use crate::MeshData;
 /// Independent corners preserve vertical cliffs; skirts extend to -0.25. No file IO is needed.
 /// `terrain4r:` adds two hexadecimal chunk coordinates and a six-by-six corner-height halo
 /// for subdivided tops, connected rock faces and shelf/contact material weights in UVs.
+/// `terrain4h:` adds a seven-by-seven signed relief field encoded as 128 + height * 16.
 pub fn terrain_mesh(key: &str) -> Result<MeshData, &'static str> {
-    if let Some(data) = key.strip_prefix("terrain4r:") { return rocky_terrain(data); }
+    if let Some(data) = key.strip_prefix("terrain4h:") { return rocky_terrain(data,true); }
+    if let Some(data) = key.strip_prefix("terrain4r:") { return rocky_terrain(data,false); }
     let data = key.strip_prefix("terrain4:").ok_or("invalid terrain prefix")?;
     if data.len() != 64 || !data.bytes().all(|v| v.is_ascii_hexdigit()) { return Err("terrain patch requires 64 hexadecimal heights"); }
     let heights: Vec<f32> = data.chars().map(|v| v.to_digit(16).unwrap() as f32).collect();
@@ -32,16 +34,24 @@ pub fn terrain_mesh(key: &str) -> Result<MeshData, &'static str> {
 }
 
 // MiYu: a one-tile halo exposes only height discontinuities; world coordinates weld chunk borders.
-fn rocky_terrain(data: &str) -> Result<MeshData, &'static str> {
-    if data.len()!=146 || !data.bytes().all(|v| v.is_ascii_hexdigit()) { return Err("rock terrain requires chunk coordinates and 144 hexadecimal heights"); }
-    let digits:Vec<f32>=data.chars().map(|v| v.to_digit(16).unwrap() as f32).collect();
+fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
+    if data.len()!=(if sculpted {244} else {146}) || !data.bytes().all(|v| v.is_ascii_hexdigit()) { return Err("invalid rock terrain height payload"); }
+    let digits:Vec<f32>=data[..146].chars().map(|v| v.to_digit(16).unwrap() as f32).collect();
     if digits[0]>7. || digits[1]>7. { return Err("rock terrain chunk coordinate exceeds eight patches"); }
     let origin=[digits[0]*8.-28.,digits[1]*8.-28.];let heights=&digits[2..];
+    let mut relief=[0.;49];if sculpted {for (i,value) in relief.iter_mut().enumerate() {*value=(u8::from_str_radix(&data[146+i*2..148+i*2],16).unwrap() as f32-128.)/16.;if value.abs()>1. {return Err("sculpted relief exceeds one world unit");}}}
+    let relief_height=|x:f32,z:f32| {
+        let u=((x+6.)/2.).clamp(0.,6.);let v=((z+6.)/2.).clamp(0.,6.);let ix=(u.floor() as usize).min(5);let iz=(v.floor() as usize).min(5);let fx=u-ix as f32;let fz=v-iz as f32;let i=iz*7+ix;
+        (relief[i]*(1.-fx)+relief[i+1]*fx)*(1.-fz)+(relief[i+7]*(1.-fx)+relief[i+8]*fx)*fz
+    };
     let mut mesh=MeshData { positions:Vec::new(),normals:Vec::new(),uvs:Vec::new(),indices:Vec::new() };
-    let mut triangle=|p:[[f32;3];3],uv:[[f32;2];3]| {
+    let mut triangle=|mut p:[[f32;3];3],uv:[[f32;2];3],top:bool| {
+        let base=(glam::Vec3::from_array(p[1])-glam::Vec3::from_array(p[0])).cross(glam::Vec3::from_array(p[2])-glam::Vec3::from_array(p[0])).normalize_or_zero();
+        for vertex in &mut p {vertex[1]+=relief_height(vertex[0],vertex[2]);}
         let a=glam::Vec3::from_array(p[1])-glam::Vec3::from_array(p[0]);let b=glam::Vec3::from_array(p[2])-glam::Vec3::from_array(p[0]);let cross=a.cross(b);
         if cross.length_squared()<1e-10 { return; }
-        let first=mesh.positions.len() as u32;mesh.positions.extend(p);mesh.normals.extend([cross.normalize().to_array();3]);mesh.uvs.extend(uv);mesh.indices.extend([first,first+1,first+2]);
+        let normals=p.map(|v|if top&&sculpted&&base.y>0.01 {let dx=(relief_height(v[0]+0.25,v[2])-relief_height(v[0]-0.25,v[2]))*2.;let dz=(relief_height(v[0],v[2]+0.25)-relief_height(v[0],v[2]-0.25))*2.;glam::Vec3::new(base.x/base.y-dx,1.,base.z/base.y-dz).normalize().to_array()}else{cross.normalize().to_array()});
+        let first=mesh.positions.len() as u32;mesh.positions.extend(p);mesh.normals.extend(normals);mesh.uvs.extend(uv);mesh.indices.extend([first,first+1,first+2]);
     };
     let point=|x:f32,y:f32,z:f32| { let wx=x+origin[0];let wz=z+origin[1];[x+(wx*1.13+wz*0.71).sin()*0.12,y,z+(wz*1.07-wx*0.83).sin()*0.12] };
     let lerp=|a:f32,b:f32,t:f32| a+(b-a)*t;
@@ -64,7 +74,7 @@ fn rocky_terrain(data: &str) -> Result<MeshData, &'static str> {
         };
         for vz in 0..4 { for vx in 0..4 {
             let u=vx as f32/4.;let v=vz as f32/4.;let d=0.25;let p=[top(u,v),top(u,v+d),top(u+d,v+d),top(u+d,v)];
-            triangle([p[0].0,p[1].0,p[2].0],[p[0].1,p[1].1,p[2].1]);triangle([p[0].0,p[2].0,p[3].0],[p[0].1,p[2].1,p[3].1]);
+            triangle([p[0].0,p[1].0,p[2].0],[p[0].1,p[1].1,p[2].1],true);triangle([p[0].0,p[2].0,p[3].0],[p[0].1,p[2].1,p[3].1],true);
         }}
         for (neighbor,a,b,na,nb,outward) in edges {
             let nh=&heights[neighbor*4..neighbor*4+4];if h[a]<=nh[na] && h[b]<=nh[nb] { continue; }
@@ -77,7 +87,7 @@ fn rocky_terrain(data: &str) -> Result<MeshData, &'static str> {
             };
             for along in 0..4 { for band in 0..4 {
                 let t=along as f32/4.;let d=band as f32/4.;let p=[side(t,d),side(t+0.25,d),side(t+0.25,d+0.25),side(t,d+0.25)];
-                triangle([p[0].0,p[1].0,p[2].0],[p[0].1,p[1].1,p[2].1]);triangle([p[0].0,p[2].0,p[3].0],[p[0].1,p[2].1,p[3].1]);
+                triangle([p[0].0,p[1].0,p[2].0],[p[0].1,p[1].1,p[2].1],false);triangle([p[0].0,p[2].0,p[3].0],[p[0].1,p[2].1,p[3].1],false);
             }}
         }
     }}
@@ -87,6 +97,17 @@ fn rocky_terrain(data: &str) -> Result<MeshData, &'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn sculpted_height_matches_world_plane_and_patch_seams() {
+        let key=|x:u32| {let mut payload=format!("terrain4h:{x}3{}","0000".repeat(36));for _z in 0..7 {for vx in 0..7 {let world_x=x as i32*8-34+vx*2;payload.push_str(&format!("{:02x}",128+world_x/2));}}payload};
+        let left=terrain_mesh(&key(3)).unwrap();let right=terrain_mesh(&key(4)).unwrap();
+        for p in &left.positions {assert!((p[1]-(p[0]-4.)/32.).abs()<0.00001);}
+        for a in left.positions.iter().filter(|p|p[0]>3.8) {assert!(right.positions.iter().any(|b|(a[0]-b[0]-8.).abs()<0.00001&&(a[1]-b[1]).abs()<0.00001&&(a[2]-b[2]).abs()<0.00001));}
+        assert!(left.normals.iter().all(|n|n[1]>0.99&&n[0]< -0.02));
+        let flat=terrain_mesh(&format!("terrain4h:00{}{}","0000".repeat(36),"88".repeat(49))).unwrap();assert!(flat.positions.iter().all(|p|p[1]==0.5));
+        assert!(terrain_mesh(&format!("terrain4h:00{}{}","0000".repeat(36),"ff".repeat(49))).is_err());
+        assert!(terrain_mesh(&format!("terrain4h:00{}{}","0000".repeat(36),"80".repeat(48))).is_err());
+    }
     #[test]
     fn rocky_tiles_weld_and_emit_only_exposed_cliffs() {
         let flat=terrain_mesh(&format!("terrain4r:00{}","2222".repeat(36))).unwrap();

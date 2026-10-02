@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
-function game(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.units=[];map.triggers=[];const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];return s;}
+function game(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.units=[];map.triggers=[];const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];return s;}
 const radius=u=>S.types[u.kind].flying?1:S.types[u.kind].attack==='siege'?.9:S.types[u.kind].model==='knight'?.7:.5;
 const order=(s,us,x,z)=>{assert.equal(S.command(s,0,{type:'move',ids:us.map(u=>u.id),x,z}),null);return us.map(u=>({id:u.id,x:u.order.x,z:u.order.z}));};
 function separate(us,frame){for(let i=0;i<us.length;i++)for(let j=0;j<i;j++)if(!!S.types[us[i].kind].flying===!!S.types[us[j].kind].flying)assert.ok(S.distance(us[i],us[j])>=radius(us[i])+radius(us[j])-.001,JSON.stringify({overlap:[us[i].id,us[j].id],distance:S.distance(us[i],us[j]),frame}));}

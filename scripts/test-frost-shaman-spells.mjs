@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
-function arena(rank=2){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[1,0]});s.units=[];Object.assign(s.teams[0],{gold:3000,wood:3000,tier:3,shamanism:rank});const h=S.spawn(s,'shaman',0,-4,0,{damage:0,mana:200+rank*100,bloodlustAuto:false,order:{type:'hold'}}),v=S.spawn(s,'soldier',1,0,0,{damage:0,hp:1000,maxHp:1000,order:{type:'hold'}});S.visibility(s);return {s,h,v};}
+function arena(rank=2){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[1,0]});s.units=[];Object.assign(s.teams[0],{gold:3000,wood:3000,tier:3,shamanism:rank});const h=S.spawn(s,'shaman',0,-4,0,{damage:0,mana:200+rank*100,bloodlustAuto:false,order:{type:'hold'}}),v=S.spawn(s,'soldier',1,0,0,{damage:0,hp:1000,maxHp:1000,order:{type:'hold'}});S.visibility(s);return {s,h,v};}
 const cast=(s,h,spell,v)=>S.command(s,h.team,{type:'casterSpell',ids:[h.id],spell,target:v.id});
 {
  const {s,h}=arena(0),lodge=S.spawn(s,'spiritlodge',0,-10,8),other=S.spawn(s,'spiritlodge',0,-16,8),barracks=S.spawn(s,'barracks',0,-22,8),hp=h.maxHp;S.spawn(s,'farm',0,-10,15);

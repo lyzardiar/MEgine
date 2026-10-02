@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "checkedAt": "2026-10-02T14:55:18.669873+00:00",
+  "baselineRevision": "445c18cf92cd4d6f6773eec7cedc93e7969a9399",
+  "ruleSuite": "scripts/test-frostbound.mjs: passed, including exact authored relief for both clients and reconnect",
+  "meshTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "nativeQuickJs": {
+    "passed": 4,
+    "failed": 0
+  },
+  "sculpt": {
+    "report": "native-sculpt-qa.json",
+    "raise": true,
+    "lower": true,
+    "smooth": true,
+    "plateau": true,
+    "radiusStrength": true,
+    "strokeUndo": true,
+    "negativePicking": true,
+    "mapSaveLoad": true,
+    "gameSaveRestore": true,
+    "groundUnitFollowsHeight": true,
+    "reliefRange": [
+      -1,
+      0.75
+    ],
+    "shaderRejections": 0,
+    "fixture": "Highland Pass with zero initial relief, AI disabled and one authored friendly hero outside the base."
+  },
+  "nativeRender": {
+    "report": "terrain-relief-native.json",
+    "chunks": 64,
+    "shaderRejections": 0
+  },
+  "nativeExecutable": "D:/MEngineNativeQA/tile-build-1790939800003/release/mengine-editor-tauri.exe",
+  "nativeExecutableSha256": "9896be68e415cff0fa4b5c40900cf9e647b11b9ccaf127e59e6c20e32d3161a0",
+  "sourceScriptSha256": "991de12668767c7f87a9259d2e90b184f15c9950891004bd2a48823f3ec59caa",
+  "package": {
+    "files": 717,
+    "contentHash": "7b519adbde446ea3308a60b89277300398644b5db06b9585ea5f60924133ea01",
+    "runtimeSha256": "62f540d79b449c5d278bacb6d14a41140ced63954ff22409cee70a3f3a9a88b3",
+    "hashValidationPassed": true,
+    "responding": true,
+    "loggedErrors": 0,
+    "startupSeconds": 30
+  },
+  "physicalInput": false,
+  "audioListening": false,
+  "originalTerrainSetComplete": false
+}

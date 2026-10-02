@@ -126,7 +126,7 @@
           "Transform": {
             "position": [
               0,
-              -0.7,
+              -1.95,
               0
             ],
             "scale": [
@@ -146417,6 +146417,1286 @@
               1
             ],
             "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 3557,
+        "name": "Sculpt outline 0",
+        "parent": null,
+        "siblingIndex": 3556,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3558,
+        "name": "Sculpt outline 1",
+        "parent": null,
+        "siblingIndex": 3557,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3559,
+        "name": "Sculpt outline 2",
+        "parent": null,
+        "siblingIndex": 3558,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3560,
+        "name": "Sculpt outline 3",
+        "parent": null,
+        "siblingIndex": 3559,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3561,
+        "name": "Sculpt outline 4",
+        "parent": null,
+        "siblingIndex": 3560,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3562,
+        "name": "Sculpt outline 5",
+        "parent": null,
+        "siblingIndex": 3561,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3563,
+        "name": "Sculpt outline 6",
+        "parent": null,
+        "siblingIndex": 3562,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3564,
+        "name": "Sculpt outline 7",
+        "parent": null,
+        "siblingIndex": 3563,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3565,
+        "name": "Sculpt outline 8",
+        "parent": null,
+        "siblingIndex": 3564,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3566,
+        "name": "Sculpt outline 9",
+        "parent": null,
+        "siblingIndex": 3565,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3567,
+        "name": "Sculpt outline 10",
+        "parent": null,
+        "siblingIndex": 3566,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3568,
+        "name": "Sculpt outline 11",
+        "parent": null,
+        "siblingIndex": 3567,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3569,
+        "name": "Sculpt outline 12",
+        "parent": null,
+        "siblingIndex": 3568,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3570,
+        "name": "Sculpt outline 13",
+        "parent": null,
+        "siblingIndex": 3569,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3571,
+        "name": "Sculpt outline 14",
+        "parent": null,
+        "siblingIndex": 3570,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3572,
+        "name": "Sculpt outline 15",
+        "parent": null,
+        "siblingIndex": 3571,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3573,
+        "name": "Sculpt outline 16",
+        "parent": null,
+        "siblingIndex": 3572,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3574,
+        "name": "Sculpt outline 17",
+        "parent": null,
+        "siblingIndex": 3573,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3575,
+        "name": "Sculpt outline 18",
+        "parent": null,
+        "siblingIndex": 3574,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3576,
+        "name": "Sculpt outline 19",
+        "parent": null,
+        "siblingIndex": 3575,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3577,
+        "name": "Sculpt outline 20",
+        "parent": null,
+        "siblingIndex": 3576,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3578,
+        "name": "Sculpt outline 21",
+        "parent": null,
+        "siblingIndex": 3577,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3579,
+        "name": "Sculpt outline 22",
+        "parent": null,
+        "siblingIndex": 3578,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3580,
+        "name": "Sculpt outline 23",
+        "parent": null,
+        "siblingIndex": 3579,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3581,
+        "name": "Sculpt outline 24",
+        "parent": null,
+        "siblingIndex": 3580,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3582,
+        "name": "Sculpt outline 25",
+        "parent": null,
+        "siblingIndex": 3581,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3583,
+        "name": "Sculpt outline 26",
+        "parent": null,
+        "siblingIndex": 3582,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3584,
+        "name": "Sculpt outline 27",
+        "parent": null,
+        "siblingIndex": 3583,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3585,
+        "name": "Sculpt outline 28",
+        "parent": null,
+        "siblingIndex": 3584,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3586,
+        "name": "Sculpt outline 29",
+        "parent": null,
+        "siblingIndex": 3585,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3587,
+        "name": "Sculpt outline 30",
+        "parent": null,
+        "siblingIndex": 3586,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
+          }
+        }
+      },
+      {
+        "entity": 3588,
+        "name": "Sculpt outline 31",
+        "parent": null,
+        "siblingIndex": 3587,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              0.4,
+              0.04,
+              0.06
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "PbrMaterial": {
+            "base_color": [
+              0.25,
+              0.85,
+              1,
+              1
+            ],
+            "roughness": 0.95
           }
         }
       }

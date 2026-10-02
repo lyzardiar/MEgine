@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[3,0]});s.units=[];Object.assign(s.teams[0],{gold:3000,wood:3000,tier:3});const temple=S.spawn(s,'temple',0,-10,8),other=S.spawn(s,'temple',0,-18,8),n=S.spawn(s,'necromancer',0,0,0,{damage:0,order:{type:'hold'}});S.spawn(s,'farm',0,-10,15);S.visibility(s);return {s,temple,other,n};}
+function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[3,0]});s.units=[];Object.assign(s.teams[0],{gold:3000,wood:3000,tier:3});const temple=S.spawn(s,'temple',0,-10,8),other=S.spawn(s,'temple',0,-18,8),n=S.spawn(s,'necromancer',0,0,0,{damage:0,order:{type:'hold'}});S.spawn(s,'farm',0,-10,15);S.visibility(s);return {s,temple,other,n};}
 const research=(s,u,upgrade)=>S.command(s,0,{type:'skeletonResearch',ids:[u.id],upgrade});
 function corpse(s,n){const v=S.spawn(s,'soldier',1,2,2,{hp:1,damage:0,speed:0}),gun=S.spawn(s,'rifleman',0,2,0,{damage:100000,order:{type:'attack',target:v.id}});S.visibility(s);step(s,1);assert.equal(v.hp,0);s.units=s.units.filter(u=>u.id!==gun.id);n.raiseDeadCd=0;n.mana=200;return v.id;}
 {

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
-function game(map){const flat=!map;map=S.clone(map||S.defaultMap());map.terrain.fill(0);if(flat){map.heights.fill(0);map.ramps.fill(0);}map.props=[];map.units=[];map.triggers=[];const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];return s;}
+function game(map){const flat=!map;map=S.clone(map||S.defaultMap());map.terrain.fill(0);map.relief.fill(0);if(flat){map.heights.fill(0);map.ramps.fill(0);}map.props=[];map.units=[];map.triggers=[];const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];return s;}
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 const order=(s,us,type,x,z)=>S.command(s,0,{type,ids:us.map(u=>u.id),x,z});
 {

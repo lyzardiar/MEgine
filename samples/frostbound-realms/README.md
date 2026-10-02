@@ -205,11 +205,11 @@ node scripts/qa-frostbound.mjs
 
 ### 分层 3D 地块
 
-地形使用邻接拼接的分层 3D 地块，包含高地收边、岩壁起伏、土层顶沿和崖脚阴影。几何与编辑、登坡验证见 [分层地块](../../docs/designs/frostbound-realms/terrain-tiles.md)。
+地形使用共享顶点的连续起伏与分层 3D 地块，包含可编辑丘陵、凹地、高地收边、岩壁起伏、土层顶沿和崖脚阴影。抬高、降低、平滑、平台笔刷及验证见 [连续地表](../../docs/designs/frostbound-realms/terrain-sculpt.md)。几何与编辑、登坡验证见 [分层地块](../../docs/designs/frostbound-realms/terrain-tiles.md)。
 
 ### 默认对战开局
 
-Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各有五名闲置工人，Revenant 有三名侍僧、一名食尸鬼及诅咒金矿。主基地提供的人口分别为 12 / 10 / 10 / 10，住房为 6 / 10 / 10 / 10，总上限 100。客户端先选择工人，玩家自行下达采集、建造和祭坛招募命令。AI 会建设祭坛、住房和兵营，安排金矿/伐木并优先招募所选英雄类型。客户端和服务器使用协议 22。实际默认开局及剩余差距见 [开局验证记录](../../docs/designs/frostbound-realms/melee-opening.md)。
+Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各有五名闲置工人，Revenant 有三名侍僧、一名食尸鬼及诅咒金矿。主基地提供的人口分别为 12 / 10 / 10 / 10，住房为 6 / 10 / 10 / 10，总上限 100。客户端先选择工人，玩家自行下达采集、建造和祭坛招募命令。AI 会建设祭坛、住房和兵营，安排金矿/伐木并优先招募所选英雄类型。客户端和服务器使用协议 23。实际默认开局及剩余差距见 [开局验证记录](../../docs/designs/frostbound-realms/melee-opening.md)。
 
 ### 回城卷轴
 

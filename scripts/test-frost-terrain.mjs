@@ -6,7 +6,7 @@ const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simula
 globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 const ridge=S.defaultMap();assert.ok(ridge.heights.filter(h=>h>0).length>=100);for(let i=0;i<1024;i++){assert.equal(ridge.heights[i],ridge.heights[1023-i]);}for(const spawn of ridge.spawns)assert.ok(S.flatSite(ridge,...spawn,3));assert.ok(S.traversable(ridge,-5,-7,-11,-7),'west ridge is reached over its ramp');assert.ok(S.traversable(ridge,5,7,11,7),'east ridge is reached over its mirrored ramp');assert.ok(!S.traversable(ridge,-19,-9,-17,-9),'cliff face blocks ground travel');
-const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;delete legacy.surfaces;
+const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;delete legacy.surfaces;delete legacy.relief;
 assert.equal(S.validateMap(legacy).heights.reduce((a,b)=>a+b),0);
 assert.deepEqual(S.validateMap(legacy).surfaces,Array(1024).fill(0));
 for(const surfaces of [[0],Array(1024).fill(3),Array(1024).fill(-1),Array(1024).fill(.5),Array(1024).fill(NaN),null])assert.throws(()=>S.validateMap({...legacy,surfaces}));
@@ -29,16 +29,16 @@ for(const surfaces of [[0],Array(1024).fill(3),Array(1024).fill(-1),Array(1024).
 }
 for(const bad of [{heights:[0]},{ramps:Array(1024).fill(5)},{heights:Array(1024).fill(NaN)},{heights:Array(1024).fill(3),ramps:Array(1024).fill(1)}])assert.throws(()=>S.validateMap({...legacy,...bad}));
 for(const [r,delta] of [[1,1],[2,-1],[3,32],[4,-32]]){
-  const m=S.defaultMap(),i=16*32+16;m.heights.fill(1);m.ramps[i]=r;m.heights[i+delta]=2;
+  const m=S.defaultMap(),i=16*32+16;m.relief.fill(0);m.heights.fill(1);m.ramps[i]=r;m.heights[i+delta]=2;
   assert.ok(S.terrainEdge(m,i-delta,i));assert.ok(S.terrainEdge(m,i,i+delta));assert.ok(S.terrainEdge(m,i+delta,i));
   assert.equal(S.elevation(m,1,1),3);assert.ok(!S.terrainEdge(m,i,i+(Math.abs(delta)===1?32:1)));
 }
-const map=S.highlandMap();assert.equal(S.elevation(map,5,-5),4);assert.equal(S.elevation(map,-13,7),1);assert.equal(S.elevation(map,-12,7),2);
+const map=S.highlandMap();map.relief.fill(0);assert.equal(S.elevation(map,5,-5),4);assert.equal(S.elevation(map,-13,7),1);assert.equal(S.elevation(map,-12,7),2);
 assert.ok(S.terrainEdge(map,S.index(-15,7),S.index(-13,7)));assert.ok(S.terrainEdge(map,S.index(-13,7),S.index(-11,7)));
 assert.ok(!S.terrainEdge(map,S.index(-13,3),S.index(-11,3)));assert.ok(!S.terrainEdge(map,S.index(-13,3),S.index(-13,5)),'cannot enter the side of a ramp');
 assert.ok(S.flatSite(map,5,-5,1));assert.ok(!S.flatSite(map,-12,7,1));
 for(let z=0;z<8;z++)for(let x=0;x<8;x++){
-  const key=T.mesh(map,x,z);assert.match(key,/^terrain4r:[0-7]{2}[0-6]{144}$/);
+  const key=T.mesh(map,x,z);assert.match(key,/^terrain4h:[0-7]{2}[0-6]{144}[0-9a-f]{98}$/);
   for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++){const offset=12+((dz+1)*6+dx+1)*4,corners=key.slice(offset,offset+4).split('').map(Number);assert.equal(corners.reduce((a,b)=>a+b)/4,S.elevation(map,(x*4+dx)*2-31,(z*4+dz)*2-31));}
 }
 {

@@ -4,9 +4,9 @@ import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 function game(map=S.defaultMap()){
   map=S.clone(map);map.props=[];map.units=[];map.triggers=[];
-  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];return s;
+  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];s.map.relief.fill(0);return s;
 }
-function flat(){const m=S.defaultMap();m.terrain.fill(0);m.heights.fill(0);m.ramps.fill(0);return game(m);}
+function flat(){const m=S.defaultMap();m.terrain.fill(0);m.heights.fill(0);m.relief.fill(0);m.ramps.fill(0);return game(m);}
 const advance=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 const issue=(s,us,x,z,type='move')=>S.command(s,0,{type,ids:us.map(u=>u.id),x,z});
 const goals=us=>us.map(u=>({id:u.id,x:u.order.x,z:u.order.z}));

@@ -4,7 +4,7 @@ import {battleFixture} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 for(let faction=0;faction<4;faction++){
- const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];const state=battleFixture(S,'skirmish',{map,factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),barracks=state.units.find(u=>u.team===0&&u.kind==='barracks'),hall=state.units.find(u=>u.team===0&&u.kind==='hall');state.teams[0].gold=5000;state.teams[0].wood=5000;S.spawn(state,'farm',0,-27,25);
+ const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];const state=battleFixture(S,'skirmish',{map,factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),barracks=state.units.find(u=>u.team===0&&u.kind==='barracks'),hall=state.units.find(u=>u.team===0&&u.kind==='hall');state.teams[0].gold=5000;state.teams[0].wood=5000;S.spawn(state,'farm',0,-27,25);
  assert.equal(S.trainable(state,barracks).includes('knight'),faction===0);assert.ok(S.command(state,0,{type:'train',ids:[barracks.id],kind:'knight'}));assert.equal(barracks.queue.length,0);
  if(faction)continue;
  assert.equal(S.command(state,0,{type:'tech',ids:[hall.id]}),null);step(state,201);assert.equal(state.teams[0].tier,2);assert.equal(S.command(state,0,{type:'rally',ids:[barracks.id],x:-8,z:10}),null);

@@ -121,7 +121,21 @@ var Frost = (() => {
   const cell = (x,z) => [clamp(Math.floor((x+32)/2),0,31),clamp(Math.floor((z+32)/2),0,31)];
   const index = (x,z) => {const p=cell(x,z);return p[1]*32+p[0];};
   const distance = (a,b) => Math.hypot(a.x-b.x,a.z-b.z);
-  const tileHeight=(map,i,x,z)=>{const h=(map.heights?.[i]||0)*2,r=map.ramps?.[i]||0;return h+(r===1?x:r===2?2-x:r===3?z:r===4?2-z:0);};
+  const tierHeight=(map,i,x,z)=>{const h=(map.heights?.[i]||0)*2,r=map.ramps?.[i]||0;return h+(r===1?x:r===2?2-x:r===3?z:r===4?2-z:0);};
+  function reliefHeight(map,x,z){if(!map.relief)return 0;const px=clamp((x+32)/2,0,32),pz=clamp((z+32)/2,0,32),cx=Math.min(31,Math.floor(px)),cz=Math.min(31,Math.floor(pz)),u=px-cx,v=pz-cz,i=cz*33+cx;return (map.relief[i]*(1-u)+map.relief[i+1]*u)*(1-v)+(map.relief[i+33]*(1-u)+map.relief[i+34]*u)*v;}
+  const tileHeight=(map,i,x,z)=>tierHeight(map,i,x,z)+reliefHeight(map,i%32*2-32+x,Math.floor(i/32)*2-32+z);
+  function sculptRelief(map,x,z,tool,radius=4,strength=.25,target){
+    if(!['raise','lower','smooth','flatten'].includes(tool)||![x,z,radius,strength].every(Number.isFinite)||Math.abs(x)>30||Math.abs(z)>30||![2,4,6].includes(radius)||![.125,.25,.5].includes(strength)||target!==undefined&&(!Number.isFinite(target)||Math.abs(target)>1))throw Error('Invalid sculpt brush');
+    map.relief??=Array(1089).fill(0);const before=[...map.relief],cx=Math.round((x+32)/2),cz=Math.round((z+32)/2);target??=before[cz*33+cx];
+    for(let vz=Math.max(1,cz-radius/2);vz<=Math.min(31,cz+radius/2);vz++)for(let vx=Math.max(1,cx-radius/2);vx<=Math.min(31,cx+radius/2);vx++){
+      if([0,1].some(dz=>[0,1].some(dx=>map.terrain[(vz-dz)*32+vx-dx]===1)))continue;
+      const d=Math.hypot(vx-cx,vz-cz)*2/radius;if(d>=1)continue;const weight=1-d*d*(3-2*d),i=vz*33+vx;
+      let value=before[i];if(tool==='smooth'){let sum=0;for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++)sum+=before[(vz+dz)*33+vx+dx];value+=(sum/9-value)*weight;}
+      else if(tool==='flatten')value+=(target-value)*weight;else value+=(tool==='raise'?strength:-strength)*weight;
+      map.relief[i]=clamp(Math.round(value*16)/16,-1,1)||0;
+    }
+    return map;
+  }
   function elevation(map,x,z){const [cx,cz]=cell(x,z);return tileHeight(map,cz*32+cx,clamp(x-(cx*2-32),0,2),clamp(z-(cz*2-32),0,2));}
   function terrainEdge(map,a,b){
     if(a===b)return true;const dx=b%32-a%32,dz=Math.floor(b/32)-Math.floor(a/32);if(Math.abs(dx)+Math.abs(dz)!==1)return false;
@@ -132,21 +146,21 @@ var Frost = (() => {
     for(let k=1;k<=n;k++){const next=index(ax+(bx-ax)*k/n,az+(bz-az)*k/n);if(next!==previous){const dx=next%32-previous%32,dz=Math.floor(next/32)-Math.floor(previous/32);if(dx&&dz){const mid=previous+dx,other=previous+dz*32;if(!terrainEdge(map,previous,mid)||!terrainEdge(map,mid,next)||!terrainEdge(map,previous,other)||!terrainEdge(map,other,next))return false;}else if(!terrainEdge(map,previous,next))return false;}previous=next;}return true;
   }
   function flatSite(map,x,z,radius){
-    const level=elevation(map,x,z),a=cell(x-radius,z-radius),b=cell(x+radius,z+radius);if(Math.abs(x)+radius>30||Math.abs(z)+radius>30)return false;
-    for(let cz=a[1];cz<=b[1];cz++)for(let cx=a[0];cx<=b[0];cx++){const i=cz*32+cx;if(map.terrain[i]===1||map.ramps?.[i]||Math.abs((map.heights?.[i]||0)*2-level)>.01)return false;}return true;
+    const level=map.heights?.[index(x,z)]||0,a=cell(x-radius,z-radius),b=cell(x+radius,z+radius);if(Math.abs(x)+radius>30||Math.abs(z)+radius>30)return false;let low=Infinity,high=-Infinity;
+    for(let cz=a[1];cz<=b[1];cz++)for(let cx=a[0];cx<=b[0];cx++){const i=cz*32+cx;if(map.terrain[i]===1||map.ramps?.[i]||(map.heights?.[i]||0)!==level)return false;for(const [dx,dz] of [[0,0],[2,0],[2,2],[0,2]]){const h=tileHeight(map,i,dx,dz);low=Math.min(low,h);high=Math.max(high,h);}}return high-low<=.25;
   }
   const unitHeight=(s,u)=>elevation(s.map,u.x,u.z)+(types[u.kind]?.flying?4:0);
   function attackClear(s,u,v){
     if(unitType(u).range<=2&&!types[u.kind].flying&&!traversable(s.map,u.x,u.z,v.x,v.z))return false;
     const ay=unitHeight(s,u)+1.6,by=unitHeight(s,v)+1.6,dx=v.x-u.x,dz=v.z-u.z,cuts=[0,1];
     for(let i=1;i<32;i++)for(const [a,d] of [[u.x,dx],[u.z,dz]])if(d){const t=(i*2-32-a)/d;if(t>0&&t<1)cuts.push(t);}cuts.sort((a,b)=>a-b);
-    // Each tile is a plane. Both ends of every crossed interval also test vertical cliff faces.
-    for(let k=1;k<cuts.length;k++){const mid=(cuts[k-1]+cuts[k])/2,[cx,cz]=cell(u.x+dx*mid,u.z+dz*mid),i=cz*32+cx;for(const t of [cuts[k-1],cuts[k]])if(tileHeight(s.map,i,u.x+dx*t-(cx*2-32),u.z+dz*t-(cz*2-32))>ay+(by-ay)*t+.001)return false;}return true;
+    // MiYu: bilinear relief along a ray is quadratic; include its interior peak and both cliff endpoints.
+    for(let k=1;k<cuts.length;k++){const first=cuts[k-1],last=cuts[k],mid=(first+last)/2,[cx,cz]=cell(u.x+dx*mid,u.z+dz*mid),i=cz*32+cx,difference=t=>tileHeight(s.map,i,u.x+dx*t-(cx*2-32),u.z+dz*t-(cz*2-32))-(ay+(by-ay)*t),start=difference(first),end=difference(last),center=difference(mid),a=2*(start+end-2*center),b=end-start-a,peak=a<0?-b/(2*a):-1;if(start>.001||end>.001||peak>0&&peak<1&&difference(first+(last-first)*peak)>.001)return false;}return true;
   }
   function highlandMap(){
     const map=defaultMap();map.name='Winterfall Highland Pass';map.players[1].ai=false;map.heights=Array(1024).fill(0);map.ramps=Array(1024).fill(0);
-    for(let z=7;z<=23;z++)for(let x=10;x<=21;x++){const i=z*32+x;map.heights[i]=1;map.terrain[i]=0;}
-    for(let z=10;z<=16;z++)for(let x=15;x<=20;x++)map.heights[z*32+x]=2;
+    for(let z=7;z<=23;z++)for(let x=10;x<=21;x++){if(Math.hypot(x-clamp(x,13,18),z-clamp(z,11,19))>4)continue;const i=z*32+x;map.heights[i]=1;map.terrain[i]=0;}
+    for(let z=10;z<=16;z++)for(let x=15;x<=20;x++)if(Math.hypot(x-clamp(x,16,19),z-clamp(z,11,15))<=1)map.heights[z*32+x]=2;
     for(let z=18;z<=21;z++){map.ramps[z*32+9]=1;map.terrain[z*32+9]=2;for(let x=10;x<=21;x++)map.terrain[z*32+x]=2;map.ramps[z*32+22]=2;map.terrain[z*32+22]=2;}
     for(let z=12;z<=14;z++){map.ramps[z*32+14]=1;map.terrain[z*32+14]=2;}
     map.units=[{kind:'tower',team:1,x:5,z:-5},{kind:'archer',team:1,x:7,z:-7},{kind:'ballista',team:0,x:-19,z:11}];
@@ -178,16 +192,21 @@ var Frost = (() => {
       map.units=[{kind:'neutral',team:1,x:-12,z:14,tag:'scout'},{kind:'neutral',team:1,x:-7,z:10,tag:'scout'},{kind:'neutral',team:1,x:-13,z:5,tag:'scout'},{kind:'neutral',team:1,x:5,z:0,tag:'keeper'},{kind:'neutral',team:1,x:20,z:-18,tag:'boss'}];
       for(let z=0;z<32;z++)for(let x=0;x<32;x++)if(Math.abs(x+z-31)<2&&map.terrain[z*32+x]!==1)map.terrain[z*32+x]=2;
     }
+    map.relief=Array(1089).fill(0);if(mode==='skirmish')for(let vz=1;vz<32;vz++)for(let vx=1;vx<32;vx++){
+      const x=vx*2-32,z=vz*2-32,baseDistance=Math.min(...map.spawns.map(p=>Math.hypot(x-p[0],z-p[1])));if(baseDistance<16||[0,1].some(dz=>[0,1].some(dx=>map.terrain[(vz-dz)*32+vx-dx]===1)))continue;
+      const edge=Math.min(vx,vz,32-vx,32-vz)/2,weight=clamp((baseDistance-16)/6,0,1)*Math.min(1,edge);map.relief[vz*33+vx]=Math.round((Math.cos(x*.33+z*.17)+Math.cos(z*.31-x*.21))*.375*weight*16)/16||0;
+    }
     return map;
   }
   function validateMap(raw) {
     if(!raw||raw.version!==1||!['skirmish','moba','td','rpg'].includes(raw.mode)||!Array.isArray(raw.terrain)||raw.terrain.length!==1024||raw.terrain.some(v=>!Number.isInteger(v)||v<0||v>2))throw Error('Invalid map terrain or mode');
     for(const [key,max] of [['heights',3],['ramps',4],['surfaces',2]])if(raw[key]!==undefined&&(!Array.isArray(raw[key])||raw[key].length!==1024||raw[key].some(v=>!Number.isInteger(v)||v<0||v>max)))throw Error('Invalid terrain '+key);
+    if(raw.relief!==undefined&&(!Array.isArray(raw.relief)||raw.relief.length!==1089||Array.from(raw.relief).some(v=>!Number.isFinite(v)||Math.abs(v)>1||!Number.isInteger(v*16))))throw Error('Invalid terrain relief');
     if(raw.startingHour!==undefined&&(!Number.isInteger(raw.startingHour)||raw.startingHour<0||raw.startingHour>23))throw Error('Invalid starting hour');
     const point=p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&Math.abs(v)<=27);
     if(!Array.isArray(raw.spawns)||raw.spawns.length!==2||!raw.spawns.every(point)||Math.hypot(raw.spawns[0][0]-raw.spawns[1][0],raw.spawns[0][1]-raw.spawns[1][1])<20)throw Error('Two separated spawn points are required');
     if(!Array.isArray(raw.props)||raw.props.length>100||raw.props.some(p=>!p||!['tree','mine','camp'].includes(p.kind)||!Number.isFinite(p.x)||!Number.isFinite(p.z)||Math.abs(p.x)>29||Math.abs(p.z)>29))throw Error('Invalid map objects');
-    const map={version:1,name:Array.from(String(raw.name||'Custom battlefield')).slice(0,40).join(''),mode:raw.mode,startingHour:raw.startingHour??8,terrain:[...raw.terrain],surfaces:raw.surfaces?[...raw.surfaces]:Array(1024).fill(0),heights:raw.heights?[...raw.heights]:Array(1024).fill(0),ramps:raw.ramps?[...raw.ramps]:Array(1024).fill(0),spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),startingWood:clamp(Number.isFinite(raw.startingWood)?Math.round(raw.startingWood):raw.mode==='skirmish'?150:250,0,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:raw.mode==='moba'?30:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
+    const map={version:1,name:Array.from(String(raw.name||'Custom battlefield')).slice(0,40).join(''),mode:raw.mode,startingHour:raw.startingHour??8,terrain:[...raw.terrain],surfaces:raw.surfaces?[...raw.surfaces]:Array(1024).fill(0),heights:raw.heights?[...raw.heights]:Array(1024).fill(0),ramps:raw.ramps?[...raw.ramps]:Array(1024).fill(0),relief:raw.relief?raw.relief.map(v=>v||0):Array(1089).fill(0),spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),startingWood:clamp(Number.isFinite(raw.startingWood)?Math.round(raw.startingWood):raw.mode==='skirmish'?150:250,0,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:raw.mode==='moba'?30:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
     const at=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<=27&&Math.abs(p.z)<=27;
     if(raw.players!==undefined&&(!Array.isArray(raw.players)||raw.players.length!==2||raw.players.some(p=>!p||!Number.isInteger(p.faction)||p.faction<0||p.faction>3||typeof p.ai!=='boolean'||p.heroClass!==undefined&&!validHero(p.heroClass))))throw Error('Invalid player settings');
     map.players=clone(raw.players||[{faction:0,ai:false},{faction:1,ai:true}]);for(const p of map.players)p.heroClass??=0;
@@ -893,6 +912,6 @@ var Frost = (() => {
     s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
   function publicState(s,team){const state=clone(s);for(const u of state.units){u.sleeping=asleep(s,u);u.feeding=feeding(u);u.portalLeft=portalLeft(u);delete u.frenzySource;delete u.lightningSource;}state.corpses=s.corpses.filter(c=>c.team===team||s.visible[team][index(c.x,c.z)]).map(({id,kind,heroClass,team,x,y,z,yaw,age,boss,large})=>({id,kind,heroClass,team,x,y,z,yaw,age,boss,large}));state.projectiles=s.projectiles.filter(p=>s.visible[team][index(p.x,p.z)]).map(({id,x,y,z,vx,vy,vz,team,art})=>({id,x,y,z,vx,vy,vz,team,art}));delete state.projectileSerial;delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){const r=miningTarget(s,u);if(r)u.miningTarget={x:r.x,z:r.z};u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;delete u.casterResearch;delete u.cannibalizeResearch;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]&&(e.fromX===undefined||s.visible[team][index(e.fromX,e.fromZ)]));state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  return {sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;
