@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fork} from 'node:child_process';
+import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
@@ -16,6 +17,7 @@ if(process.argv.includes('--peer')){
 }else{
   fs.mkdirSync(out,{recursive:true});const peers=[],tag=Number(process.env.MENGINE_QA_TAG)||Date.now(),app=createServer({port:process.argv.includes('--hud-only')?0:7788});await app.listening;
   const sample=path.join(process.env.MENGINE_QA_ROOT||path.join(repo,'tmp'),'frost-qa-'+tag,'sample');fs.cpSync(source,sample,{recursive:true,filter:p=>!['SourceAssets','Builds'].includes(path.basename(p))});const project=JSON.parse(fs.readFileSync(path.join(sample,'project.json')));project.storageId='frost-qa-'+tag;fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(project));
+  if(process.argv.includes('--tile-baseline')){fs.writeFileSync(path.join(sample,'Assets/Shaders/Ground.mshader'),execFileSync('git',['show','6f3c306:samples/frostbound-realms/Assets/Shaders/Ground.mshader'],{cwd:repo}));fs.appendFileSync(path.join(sample,'Assets/Scripts/Main.js'),'\n'+execFileSync('git',['show','6f3c306:samples/frostbound-realms/game/terrain.js'],{cwd:repo}).toString());}
   const economyOnly=process.argv.includes('--undead-economy-only');
   const fortressArtOnly=process.argv.includes('--fortress-art-only');
   const menuOnly=process.argv.includes('--menu-only');
@@ -116,13 +118,14 @@ const daylightMap=Frost.defaultMap;Frost.defaultMap=(mode='skirmish')=>{const ma
   const until=async(check,label)=>{const end=Date.now()+20000;while(Date.now()<end){const v=await check();if(v)return v;await sleep(250);}throw Error('Timed out '+label);};
   const press=async(p,key)=>{await p.execute('playback.input',{keys:[key],viewport:[1280,720]});await sleep(220);await p.execute('playback.input',{keys:[]});await sleep(150);};
   const click=async(p,x,y,button=0)=>{await p.execute('playback.input',{pointer:[x,y],viewport:[1280,720],buttons:[button]});await sleep(300);await p.execute('playback.input',{buttons:[]});await sleep(300);};
-  const capture=async(p,name)=>{await sleep(400);const shot=await p.query('view.screenshot',{target:'game'});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));};
+  const capture=async(p,name)=>{await sleep(400);const shot=await p.query('view.screenshot',{target:'game'});fs.writeFileSync(path.join(out,(process.env.MENGINE_QA_CAPTURE_PREFIX||'')+name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));};
   const cameraView=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js').camera;
   const projectPoint=(s,p)=>[640+(p.x-s.camera[0])/s.zoom*360,360+((p.z-s.camera[1])*Math.sin(Math.atan2(cameraView.height,cameraView.depth))-(p.y||0)*Math.cos(Math.atan2(cameraView.height,cameraView.depth)))/s.zoom*360];
   async function open(p){let boot;for(let attempt=0;;attempt++){try{boot=await p.query('project.state');break;}catch(e){if(attempt>=2||!e.message.includes('BridgeConnectionError'))throw e;}}if(!boot.ready||path.resolve(boot.project.root)!==path.resolve(sample))for(let attempt=0;;attempt++){try{await p.execute('project.open',{root:sample});break;}catch(e){if(e.message.includes('workspace is still loading')||e.message.includes('A project is already open')||e.message.includes('BridgeConnectionError'))break;if(attempt>=5||!e.message.includes('lifecycle is busy'))throw e;await sleep(500);}}await until(async()=>{try{const ready=await p.query('project.state');if(!ready.ready||!ready.editorReady)return false;assert.equal(path.resolve(ready.project.root),path.resolve(sample));return true;}catch(e){if(e.message.includes('workspace is still loading'))return false;throw e;}},'native project ready');await p.execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await p.execute('panel.focus',{kind:'game'});await p.execute('playback.play');await until(async()=>(await state(p)).mode==='title','title');}
   const surfaceOnly=process.argv.includes('--surface-only'),groundOnly=surfaceOnly||process.argv.includes('--ground-only'),realisticOnly=process.argv.includes('--realistic-only');
   const factionsOnly=process.argv.includes('--factions-only');
   const terrainOnly=process.argv.includes('--terrain-only');
+  if(terrainOnly)fs.appendFileSync(path.join(sample,'Assets/Scripts/Main.js'),'\nconst terrainQaHighland=Frost.highlandMap;Frost.highlandMap=()=>{const map=terrainQaHighland();map.units.push({kind:"hero",heroClass:0,team:0,x:-17,z:7});return map;};');
   const triggersOnly=process.argv.includes('--triggers-only'),constructionOnly=process.argv.includes('--construction-only'),performanceOnly=process.argv.includes('--performance-only'),tacticsOnly=process.argv.includes('--tactics-only'),heroesOnly=process.argv.includes('--heroes-only'),networkOnly=largeMapOnly||process.argv.includes('--network-only'),focused=menuOnly||hudOnly||zigguratArtOnly||cryptArtOnly||cannibalizeOnly||abominationOnly||ghoulOnly||economyOnly||fortressArtOnly||templeArtOnly||skeletonMasteryOnly||shamanSpellsOnly||castersOnly||raiseDeadOnly||rangedCreature||orcOnly||treantOnly||daynightOnly||wildlifeOnly||lanesOnly||deniesOnly||groundOnly||realisticOnly||workQueuesOnly||inventoryOnly||unitsOnly||avoidanceOnly||patrolOnly||waypointsOnly||formationsOnly||factionsOnly||terrainOnly||triggersOnly||constructionOnly||performanceOnly||tacticsOnly||heroesOnly||networkOnly;
   const report={passed:false,scope:menuOnly?'Two native Release editors, menu pointer input, rendered captures, real TCP and application quit':focused&&!networkOnly?'One native Release editor, QuickJS and Agent input for focused gameplay acceptance':'Two independent native Release editor processes, each with QuickJS, Agent input and real TCP server',physicalInput:false,audioListening:false};
   try{
@@ -296,7 +299,7 @@ const daylightMap=Frost.defaultMap;Frost.defaultMap=(mode='skirmish')=>{const ma
       await click(a,81,658);await capture(a,'ground-settlement');
       await click(a,126,622);await capture(a,'ground-river');
       await press(a,'F9');await click(a,111,638);await capture(a,'ground-highland');
-      const scene=await a.query('scene.snapshot'),chunks=scene.entities.filter(e=>e.name?.startsWith('Ground '));assert.equal(chunks.length,64);assert.ok(chunks.every(e=>e.components.MeshRenderer.material==='Assets/Materials/Ground.mmat'));
+      const scene=await a.query('scene.snapshot'),chunks=scene.entities.filter(e=>e.name?.startsWith('Ground '));assert.equal(chunks.length,64);assert.ok(chunks.every(e=>e.components.MeshRenderer.material==='Assets/Materials/Ground.mmat'));if(!process.argv.includes('--tile-baseline'))assert.ok(chunks.every(e=>/^terrain4r:[0-7]{2}[0-6]{144}$/.test(e.components.MeshRenderer.mesh)));
       await a.execute('profiler.clear');await sleep(5000);const samples=await a.query('profiler.get_samples',{source:'game',limit:120});assert.ok(samples.nativeProfileCount>=10);assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);
       report.ground={chunks:64,shaderRejections:0,editorRendered:true,zoom:(await state(a)).zoom,profiler:samples.nativeSummary};
       if(surfaceOnly){
@@ -507,7 +510,7 @@ const daylightMap=Frost.defaultMap;Frost.defaultMap=(mode='skirmish')=>{const ma
     if(terrainOnly){
       const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
       await press(a,'F4');await press(a,'F9');let s=await state(a);assert.equal(s.editorPage,5);assert.equal(s.map,'Winterfall Highland Pass');assert.ok(s.terrainRaised>100);assert.equal(s.terrainRamps,11);
-      const scene=await a.query('scene.snapshot'),chunks=scene.entities.filter(e=>e.name?.startsWith('Ground '));assert.equal(chunks.length,64);assert.ok(chunks.some(e=>/[246]/.test(e.components.MeshRenderer.mesh.slice(9))));
+      const scene=await a.query('scene.snapshot'),chunks=scene.entities.filter(e=>e.name?.startsWith('Ground '));assert.equal(chunks.length,64);assert.ok(chunks.every(e=>/^terrain4r:[0-7]{2}[0-6]{144}$/.test(e.components.MeshRenderer.mesh)));assert.ok(chunks.some(e=>/[246]/.test(e.components.MeshRenderer.mesh.slice(12))));
       await capture(a,'highland-editor');const count=s.terrainRaised;
       await click(a,939,574);await click(a,...projectPoint(await state(a),{x:19,z:9}));assert.equal((await state(a)).terrainRaised,count+1);await capture(a,'highland-brush');
       await a.execute('playback.input',{keys:['ControlLeft','KeyZ'],viewport:[1280,720]});await sleep(220);await a.execute('playback.input',{keys:[]});await sleep(200);assert.equal((await state(a)).terrainRaised,count);
@@ -516,7 +519,7 @@ const daylightMap=Frost.defaultMap;Frost.defaultMap=(mode='skirmish')=>{const ma
       await click(a,96,663);await click(a,...projectPoint(await state(a),{x:-5,z:7,y:2}),2);await until(async()=>(await state(a)).heroElevation>1.9,'hero ascends ramp');await capture(a,'highland-ascent');
       const hero=(await state(a)).hero;assert.ok(hero.x>-12);assert.ok(S.elevation(S.highlandMap(),hero.x,hero.z)>1.9);
       await press(a,'F5');await press(a,'F10');await press(a,'KeyX');await until(async()=>(await state(a)).mode==='editor','return to highland editor');await until(async()=>{if((await state(a)).mode==='playing')return true;await press(a,'F7');return false;},'repeat highland playtest');await press(a,'F10');await press(a,'KeyX');await until(async()=>(await state(a)).mode==='editor','second highland editor return');
-      report.terrain={chunks:64,raisedCells:count,ramps:11,brushUndoSaveLoad:true,groundUnitClimbed:true,hero};
+      report.terrain={chunks:64,raisedCells:count,ramps:11,brushUndoSaveLoad:true,groundUnitClimbed:true,hero,fixture:'Highland Pass with one authored friendly hero for ramp movement; default melee opening is unchanged'};
       const samples=await a.query('profiler.get_samples',{source:'game',limit:30});assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);report.terrain.profile=samples.nativeSummary;
     }
     if(performanceOnly){

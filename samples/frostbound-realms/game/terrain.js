@@ -14,7 +14,7 @@ var FrostTerrain=(()=>{
     const packed=[];for(let dz=-1;dz<=4;dz++)for(let dx=-1;dx<=4;dx++)packed.push(data[Frost.clamp(z*4+dz,0,31)*32+Frost.clamp(x*4+dx,0,31)]);
     return Array.from({length:9},(_,i)=>packed.slice(i*4,i*4+4));
   }
-  function mesh(map,x,z){let cache=meshes.get(map);if(!cache){cache=[];meshes.set(map,cache);}const slot=z*8+x;if(cache[slot])return cache[slot];let data='';for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++){const i=(z*4+dz)*32+x*4+dx;for(const [cx,cz] of [[0,0],[2,0],[2,2],[0,2]])data+=Frost.tileHeight(map,i,cx,cz).toString(16);}return cache[slot]='terrain4:'+data;}
+  function mesh(map,x,z){let cache=meshes.get(map);if(!cache){cache=[];meshes.set(map,cache);}const slot=z*8+x;if(cache[slot])return cache[slot];let data='';for(let dz=-1;dz<=4;dz++)for(let dx=-1;dx<=4;dx++){const i=Frost.clamp(z*4+dz,0,31)*32+Frost.clamp(x*4+dx,0,31);for(const [cx,cz] of [[0,0],[2,0],[2,2],[0,2]])data+=Frost.tileHeight(map,i,cx,cz).toString(16);}return cache[slot]='terrain4r:'+x.toString(16)+z.toString(16)+data;}
   return {names,cells,chunk,mesh};
 })();
 if(typeof module!=='undefined')module.exports=FrostTerrain;

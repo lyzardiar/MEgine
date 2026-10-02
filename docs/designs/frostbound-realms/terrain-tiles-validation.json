@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "checkedAt": "2026-10-02T12:44:57.9120087Z",
+  "baselineRevision": "6f3c306badf5443a20dedb5b2549cd8e70f2ac0c",
+  "meshTests": {
+    "checks": [
+      "legacy format",
+      "bounded input",
+      "flat and cliff patch seams",
+      "exposed walls",
+      "soil rim and foot shade",
+      "finite geometry"
+    ],
+    "failed": 0,
+    "passed": 2
+  },
+  "terrainRules": true,
+  "shaderBackends": {
+    "targets": [
+      "WebGPU",
+      "Vulkan",
+      "D3D12",
+      "Metal"
+    ],
+    "failed": 0,
+    "passed": 1
+  },
+  "nativeQuickJs": {
+    "passed": 4,
+    "failed": 0
+  },
+  "nativeRender": {
+    "shaderRejections": 0,
+    "rockMeshKeys": true,
+    "chunks": 64,
+    "report": "tile-after-native.json",
+    "passed": true
+  },
+  "nativeTerrain": {
+    "groundUnitClimbed": true,
+    "brushUndoSaveLoad": true,
+    "report": "tile-terrain-native.json",
+    "fixture": "Highland Pass with one authored friendly hero for ramp movement; default melee opening is unchanged",
+    "passed": true
+  },
+  "nativeExecutable": "D:/MEngineNativeQA/tile-build-1790939800003/release/mengine-editor-tauri.exe",
+  "nativeExecutableSha256": "f4d40e10f7e66c9beff0dc34f8d5b99ef3dfeb831e9f2fe1ac4bfdd727119727",
+  "sourceScriptSha256": "271506f9e8653ea29194b5a2625e8afae078e69f3c0d891da844e5b16bcf7873",
+  "groundShaderSha256": "994d404a478dc77f21a4eea565ed791de70e3524ca3a629cef7976fbd552abb0",
+  "package": {
+    "files": 717,
+    "contentHash": "d408f29b06a10d6a1c003c636b3113ba3beb557fd30a7eba8cc2e7bb0b63e222",
+    "responding": true,
+    "hashValidationPassed": true,
+    "runtimeSha256": "845da0fcfa0f67c7408df4c6075cb1f00df60ce054505d42ba16722d319024ed",
+    "loggedErrors": 0,
+    "startupSeconds": 30
+  },
+  "physicalInput": false,
+  "audioListening": false,
+  "originalTerrainSetComplete": false
+}

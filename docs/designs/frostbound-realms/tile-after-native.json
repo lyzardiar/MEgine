@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "ground": {
+    "chunks": 64,
+    "shaderRejections": 0,
+    "editorRendered": true,
+    "zoom": 12,
+    "profiler": {
+      "intervals": 35,
+      "averagePresentIntervalMs": 136.89142856938497,
+      "p95PresentIntervalMs": 272.7000000476837,
+      "presentedFps": 7.305059275447174,
+      "averageRequestMs": 95.01111109720335,
+      "averageRenderMs": 21.98247777777778,
+      "averageCommandMs": 27.184847222222224,
+      "averageUploadMs": 1.5500000019868214,
+      "averageSimulationMs": 14.644227777777779,
+      "averageSimulationRequestMs": 52.3444444404708
+    }
+  }
+}

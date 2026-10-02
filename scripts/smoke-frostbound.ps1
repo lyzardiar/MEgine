@@ -1,4 +1,5 @@
 # Author: MiYu. Verify the packaged Release files, then check Player startup for 30 seconds.
+param([string]$RuntimePath = '')
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $packageDir = Join-Path $repo 'samples/frostbound-realms/Builds/windows-x64'
@@ -9,7 +10,8 @@ foreach ($entry in $manifest.files) {
     if ((Get-Item -LiteralPath $file).Length -ne $entry.size -or (Get-FileHash -LiteralPath $file).Hash.ToLowerInvariant() -ne $entry.sha256) { throw "Package mismatch: $($entry.path)" }
 }
 $executable = Join-Path $packageDir $manifest.executable
-if ((Get-FileHash -LiteralPath $executable).Hash -ne (Get-FileHash -LiteralPath (Join-Path $repo 'target/release/mengine-runtime.exe')).Hash) { throw 'Runtime mismatch' }
+if (!$RuntimePath) { $RuntimePath = Join-Path $repo 'target/release/mengine-runtime.exe' }
+if ((Get-FileHash -LiteralPath $executable).Hash -ne (Get-FileHash -LiteralPath $RuntimePath).Hash) { throw 'Runtime mismatch' }
 $stdout = Join-Path $evidence 'player-stdout.txt'
 $stderr = Join-Path $evidence 'player-stderr.txt'
 $started = Get-Date

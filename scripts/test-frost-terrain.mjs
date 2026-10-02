@@ -38,8 +38,8 @@ assert.ok(S.terrainEdge(map,S.index(-15,7),S.index(-13,7)));assert.ok(S.terrainE
 assert.ok(!S.terrainEdge(map,S.index(-13,3),S.index(-11,3)));assert.ok(!S.terrainEdge(map,S.index(-13,3),S.index(-13,5)),'cannot enter the side of a ramp');
 assert.ok(S.flatSite(map,5,-5,1));assert.ok(!S.flatSite(map,-12,7,1));
 for(let z=0;z<8;z++)for(let x=0;x<8;x++){
-  const key=T.mesh(map,x,z);assert.match(key,/^terrain4:[0-6]{64}$/);
-  for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++){const corners=key.slice(9+(dz*4+dx)*4,13+(dz*4+dx)*4).split('').map(Number);assert.equal(corners.reduce((a,b)=>a+b)/4,S.elevation(map,(x*4+dx)*2-31,(z*4+dz)*2-31));}
+  const key=T.mesh(map,x,z);assert.match(key,/^terrain4r:[0-7]{2}[0-6]{144}$/);
+  for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++){const offset=12+((dz+1)*6+dx+1)*4,corners=key.slice(offset,offset+4).split('').map(Number);assert.equal(corners.reduce((a,b)=>a+b)/4,S.elevation(map,(x*4+dx)*2-31,(z*4+dz)*2-31));}
 }
 {
   let s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const u=S.spawn(s,'worker',0,-17,7);u.order={type:'move',x:-5,z:7};
