@@ -89,15 +89,14 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
             }
             (p,[shade.min(1.),rim.min(1.)])
         };
-        let vertices=[[ix,iz],[ix+1,iz],[ix+1,iz+1],[ix,iz+1]];let cuts=[crossing(vertices[0],vertices[1]),crossing(vertices[1],vertices[2]),crossing(vertices[2],vertices[3]),crossing(vertices[3],vertices[0])];
-        let mut top_triangle=|params:[[f32;2];3]| {
-            let mut polygon=Vec::with_capacity(5);for i in 0..3 {let a=params[i];let b=params[(i+1)%3];polygon.push(top(a[0],a[1]));
-                let cut=if a[1]==0.&&b[1]==0. {cuts[0].map(|t|[t,0.])}else if a[0]==1.&&b[0]==1. {cuts[1].map(|t|[1.,t])}else if a[1]==1.&&b[1]==1. {cuts[2].map(|t|[1.-t,1.])}else if a[0]==0.&&b[0]==0. {cuts[3].map(|t|[0.,1.-t])}else{None};
-                if let Some(p)=cut {let axis=if a[0]==b[0] {1}else{0};if p[axis]>a[axis].min(b[axis])+1e-6&&p[axis]<a[axis].max(b[axis])-1e-6 {polygon.push(top(p[0],p[1]));}}
-            }
-            if polygon.len()==3 {triangle([polygon[0].0,polygon[1].0,polygon[2].0],[polygon[0].1,polygon[1].1,polygon[2].1],true);}else{let center=top(params.iter().map(|p|p[0]).sum::<f32>()/3.,params.iter().map(|p|p[1]).sum::<f32>()/3.);for i in 0..polygon.len() {let next=(i+1)%polygon.len();triangle([center.0,polygon[i].0,polygon[next].0],[center.1,polygon[i].1,polygon[next].1],true);}}
-        };
-        for vz in 0..4 {for vx in 0..4 {let u=vx as f32/4.;let v=vz as f32/4.;let d=0.25;top_triangle([[u,v],[u,v+d],[u+d,v+d]]);top_triangle([[u,v],[u+d,v+d],[u+d,v]]);}}
+        let vertices=[[ix,iz],[ix+1,iz],[ix+1,iz+1],[ix,iz+1]];
+        // MiYu: concentric surface rings share the cliff outline and keep all top triangles upward.
+        let center=top(0.5,0.5);let mut outline=Vec::new();let mut inner=Vec::new();
+        for (a,b) in [(0,3),(3,2),(2,1),(1,0)] {
+            let cut=crossing(vertices[a],vertices[b]);let mut steps=vec![0.,0.25,0.5,0.75];if let Some(t)=cut {if t>1e-6&&t<1.-1e-6&&!steps.iter().any(|v:&f32|(*v-t).abs()<1e-6) {steps.push(t);}}steps.sort_by(f32::total_cmp);
+            for t in steps {let u=lerp(vertices[a][0] as f32,vertices[b][0] as f32,t);let v=lerp(vertices[a][1] as f32,vertices[b][1] as f32,t);let outer=top(u-ix as f32,v-iz as f32);let p=std::array::from_fn(|axis|lerp(center.0[axis],outer.0[axis],0.5));let uv=top((u-ix as f32+0.5)*0.5,(v-iz as f32+0.5)*0.5).1;outline.push(outer);inner.push((p,uv));}
+        }
+        for i in 0..outline.len() {let j=(i+1)%outline.len();triangle([center.0,inner[i].0,inner[j].0],[center.1,inner[i].1,inner[j].1],true);triangle([inner[i].0,outline[i].0,outline[j].0],[inner[i].1,outline[i].1,outline[j].1],true);triangle([inner[i].0,outline[j].0,inner[j].0],[inner[i].1,outline[j].1,inner[j].1],true);}
         for (neighbor,a,b,na,nb,outward) in edges {
             let nh=&heights[neighbor*4..neighbor*4+4];if h[a]<=nh[na] && h[b]<=nh[nb] { continue; }
             let da=h[a]-nh[na];let db=h[b]-nh[nb];let first=if da<=0. {da/(da-db)}else{0.};let last=if db<=0. {da/(da-db)}else{1.};
@@ -124,6 +123,20 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
 mod tests {
     use super::*;
     #[test]
+    fn javascript_floor_triangles_match_native_cliff_surfaces() {
+        let cases:serde_json::Value=serde_json::from_str(include_str!("../../../docs/designs/frostbound-realms/cliff-surface-fixtures.json")).unwrap();
+        for case in cases.as_array().unwrap() {
+            let key=case["key"].as_str().unwrap();let mesh=terrain_mesh(key).unwrap();let origin=[key[10..11].parse::<f32>().unwrap()*8.-28.,key[11..12].parse::<f32>().unwrap()*8.-28.];
+            for triangle in case["triangles"].as_array().unwrap() {
+                let matched=mesh.indices.chunks_exact(3).any(|indices|indices.iter().enumerate().all(|(vertex,index)| {
+                    let p=mesh.positions[*index as usize];let world=[p[0]+origin[0],p[1],p[2]+origin[1]];
+                    (0..3).all(|axis|(world[axis]-triangle[vertex][axis].as_f64().unwrap() as f32).abs()<0.00002)
+                }));
+                assert!(matched,"JavaScript floor differs from native surface: mask={} mode={}",case["mask"],case["mode"]);
+            }
+        }
+    }
+    #[test]
     fn sculpted_height_matches_world_plane_and_patch_seams() {
         let key=|x:u32| {let mut payload=format!("terrain4h:{x}3{}","0000".repeat(36));for _z in 0..7 {for vx in 0..7 {let world_x=x as i32*8-34+vx*2;payload.push_str(&format!("{:02x}",128+world_x/2));}}payload};
         let left=terrain_mesh(&key(3)).unwrap();let right=terrain_mesh(&key(4)).unwrap();
@@ -137,7 +150,7 @@ mod tests {
     #[test]
     fn rocky_tiles_weld_and_emit_only_exposed_cliffs() {
         let flat=terrain_mesh(&format!("terrain4r:00{}","2222".repeat(36))).unwrap();
-        assert_eq!(flat.indices.len(),1536);assert!(flat.normals.iter().all(|n|n[1]>0.999));assert!(flat.positions.iter().all(|p|p[1]==2.));
+        assert_eq!(flat.indices.len(),2304);assert!(flat.normals.iter().all(|n|n[1]>0.999));assert!(flat.positions.iter().all(|p|p[1]==2.));
         let next=terrain_mesh(&format!("terrain4r:10{}","2222".repeat(36))).unwrap();
         let edge:Vec<_>=flat.positions.iter().filter(|p|p[0]>3.8).collect();
         for a in edge {assert!(next.positions.iter().any(|b|(a[0]-b[0]-8.).abs()<0.00001&&(a[2]-b[2]).abs()<0.00001));}
@@ -146,7 +159,7 @@ mod tests {
         for a in left.positions.iter().filter(|p|p[0]>3.8&&(p[1]==0.||p[1]==2.)) {assert!(right.positions.iter().any(|b|(a[0]-b[0]-8.).abs()<0.00001&&(a[1]-b[1]).abs()<0.00001&&(a[2]-b[2]).abs()<0.00001),"cliff contours weld across patches");}
         let mut h=vec!['0';144];for i in 0..4 {h[(2*6+2)*4+i]='2';}
         let cliff=terrain_mesh(&format!("terrain4r:00{}",h.into_iter().collect::<String>())).unwrap();
-        assert!(cliff.indices.len()>1536&&cliff.indices.len()<4096);assert!(cliff.normals.iter().any(|n|n[1].abs()<0.2));
+        assert!(cliff.indices.len()>2304&&cliff.indices.len()<4096);assert!(cliff.normals.iter().any(|n|n[1].abs()<0.2));
         assert!(cliff.positions.iter().zip(&cliff.uvs).any(|(p,uv)|p[1]==0. && uv[0]>0.9),"lower shelf receives contact shade");
         assert!(cliff.positions.iter().zip(&cliff.uvs).any(|(p,uv)|p[1]==2. && uv[1]>0.9),"upper shelf receives exposed rim weight");
         assert!(cliff.uvs.iter().any(|uv|uv[1]>1.5));assert!(cliff.positions.iter().flatten().all(|v|v.is_finite()));

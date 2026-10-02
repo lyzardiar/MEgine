@@ -31,15 +31,15 @@ for(const bad of [{heights:[0]},{ramps:Array(1024).fill(5)},{heights:Array(1024)
 for(const [r,delta] of [[1,1],[2,-1],[3,32],[4,-32]]){
   const m=S.defaultMap(),i=16*32+16;m.relief.fill(0);m.heights.fill(1);m.ramps[i]=r;m.heights[i+delta]=2;
   assert.ok(S.terrainEdge(m,i-delta,i));assert.ok(S.terrainEdge(m,i,i+delta));assert.ok(S.terrainEdge(m,i+delta,i));
-  assert.equal(S.elevation(m,1,1),3);assert.ok(!S.terrainEdge(m,i,i+(Math.abs(delta)===1?32:1)));
+  assert.equal(S.tileHeight(m,i,1,1),3);assert.ok(S.elevation(m,1,1)>2&&S.elevation(m,1,1)<4);assert.ok(!S.terrainEdge(m,i,i+(Math.abs(delta)===1?32:1)));
 }
-const map=S.highlandMap();map.relief.fill(0);assert.equal(S.elevation(map,5,-5),4);assert.equal(S.elevation(map,-13,7),1);assert.equal(S.elevation(map,-12,7),2);
+const map=S.highlandMap();map.relief.fill(0);assert.equal(S.elevation(map,5,-5),4);assert.equal(S.tileHeight(map,S.index(-13,7),1,1),1);assert.equal(S.tileHeight(map,S.index(-11,7),0,1),2);assert.ok(S.elevation(map,-13,7)>0&&S.elevation(map,-13,7)<2);
 assert.ok(S.terrainEdge(map,S.index(-15,7),S.index(-13,7)));assert.ok(S.terrainEdge(map,S.index(-13,7),S.index(-11,7)));
 assert.ok(!S.terrainEdge(map,S.index(-13,3),S.index(-11,3)));assert.ok(!S.terrainEdge(map,S.index(-13,3),S.index(-13,5)),'cannot enter the side of a ramp');
 assert.ok(S.flatSite(map,5,-5,1));assert.ok(!S.flatSite(map,-12,7,1));
 for(let z=0;z<8;z++)for(let x=0;x<8;x++){
   const key=T.mesh(map,x,z);assert.match(key,/^terrain4h:[0-7]{2}[0-6]{144}[0-9a-f]{98}$/);
-  for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++){const offset=12+((dz+1)*6+dx+1)*4,corners=key.slice(offset,offset+4).split('').map(Number);assert.equal(corners.reduce((a,b)=>a+b)/4,S.elevation(map,(x*4+dx)*2-31,(z*4+dz)*2-31));}
+  for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++){const offset=12+((dz+1)*6+dx+1)*4,corners=key.slice(offset,offset+4).split('').map(Number);assert.equal(corners.reduce((a,b)=>a+b)/4,S.tileHeight(map,(z*4+dz)*32+x*4+dx,1,1));}
 }
 {
   let s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const u=S.spawn(s,'worker',0,-17,7);u.order={type:'move',x:-5,z:7};
@@ -63,6 +63,6 @@ for(let z=0;z<8;z++)for(let x=0;x<8;x++){
   const s=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']);s.map.heights[S.index(.1,-1)]=3;const a={kind:'archer',x:-.1,z:-1},b={kind:'archer',x:.1,z:-1};assert.equal(S.attackClear(s,a,b),false,'short rays test the vertical cliff crossing');assert.equal(S.attackClear(s,b,a),false);
 }
 {
-  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const w=S.spawn(s,'worker',0,-12.5,1);assert.equal(S.command(s,0,{type:'build',ids:[w.id],kind:'tower',x:-11,z:1}),null);const b=s.units.at(-1);step(s,5);assert.equal(b.built,.01,'workers cannot start construction through a cliff');
+  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const w=S.spawn(s,'worker',0,-12.5,1);assert.equal(S.command(s,0,{type:'build',ids:[w.id],kind:'tower',x:-9,z:1}),null);const b=s.units.at(-1);step(s,5);assert.equal(b.built,.01,'workers cannot start construction through a cliff');
 }
 console.log('PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion');

@@ -139,7 +139,7 @@ cargo test -p mengine-editor-host --test frost_sample
 node scripts/qa-frostbound.mjs
 ```
 
-游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个 `terrain4:` 网格区块和自定义材质绘制。每格 2 世界单位，高度 0/2/4/6，坡道连接相邻高度；崖壁与坡道具有实际几何，旧地图默认平地。寻路及逐步移动检查地块边界，建造要求整块地基平坦且干燥，施工和采集不能隔崖进行，射线在每个经过的地块边界检测地形遮挡。单位、资源、弹道与点击坐标使用同一高度数据。邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境、Dragon、阵营建筑、怪物和写实资产导入；写实阶段另需 meshoptimizer 0.24.0 与 Blender 4.5.9，见写实美术记录）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
+游戏规则位于 `game/simulation.js`，原生交互位于 `game/client.js`，地形数据打包位于 `game/terrain.js`；修改后执行生成器。地表通过 64 个 `terrain4h:` 网格区块和自定义材质绘制。每格 2 世界单位，高度 0/2/4/6，坡道连接相邻高度；崖壁与坡道具有实际几何，旧地图默认平地。寻路、编队落点及逐步移动检查实际崖沿与兵种半径，建造要求整块地基平坦且干燥，施工和采集不能隔崖进行，射线在每个经过的地块边界检测地形遮挡。单位与点击坐标查询实际地表三角面高度，资源与弹道使用同一地形数据。邻块共享一格边界，使贴图与迷雾连续。免费素材可通过 `scripts/import-frost-assets.py` 重新获取和适配（需 numpy、Pillow，自动接续环境、Dragon、阵营建筑、怪物和写实资产导入；写实阶段另需 meshoptimizer 0.24.0 与 Blender 4.5.9，见写实美术记录）；仅刷新环境可执行 `scripts/import-frost-environment.py`。原生截图与验收记录输出至 `docs/designs/frostbound-realms/`。
 
 ## 当前边界
 
@@ -205,11 +205,11 @@ node scripts/qa-frostbound.mjs
 
 ### 分层 3D 地块
 
-地形使用共享顶点的连续起伏与分层 3D 地块，包含可编辑丘陵、凹地、高地收边、岩壁起伏、土层顶沿和崖脚阴影。抬高、降低、平滑、平台笔刷及验证见 [连续地表](../../docs/designs/frostbound-realms/terrain-sculpt.md)。凸角与凹角的连续轮廓见 [悬崖转角](../../docs/designs/frostbound-realms/terrain-corners.md)。几何与编辑、登坡验证见 [分层地块](../../docs/designs/frostbound-realms/terrain-tiles.md)。
+地形使用共享顶点的连续起伏与分层 3D 地块，包含可编辑丘陵、凹地、高地收边、岩壁起伏、土层顶沿和崖脚阴影。抬高、降低、平滑、平台笔刷及验证见 [连续地表](../../docs/designs/frostbound-realms/terrain-sculpt.md)。凸角与凹角的连续轮廓见 [悬崖转角](../../docs/designs/frostbound-realms/terrain-corners.md)。兵种半径、地表高度和窄坡道验证见 [通行轮廓](../../docs/designs/frostbound-realms/cliff-clearance.md)。几何与编辑、登坡验证见 [分层地块](../../docs/designs/frostbound-realms/terrain-tiles.md)。
 
 ### 默认对战开局
 
-Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各有五名闲置工人，Revenant 有三名侍僧、一名食尸鬼及诅咒金矿。主基地提供的人口分别为 12 / 10 / 10 / 10，住房为 6 / 10 / 10 / 10，总上限 100。客户端先选择工人，玩家自行下达采集、建造和祭坛招募命令。AI 会建设祭坛、住房和兵营，安排金矿/伐木并优先招募所选英雄类型。客户端和服务器使用协议 23。实际默认开局及剩余差距见 [开局验证记录](../../docs/designs/frostbound-realms/melee-opening.md)。
+Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各有五名闲置工人，Revenant 有三名侍僧、一名食尸鬼及诅咒金矿。主基地提供的人口分别为 12 / 10 / 10 / 10，住房为 6 / 10 / 10 / 10，总上限 100。客户端先选择工人，玩家自行下达采集、建造和祭坛招募命令。AI 会建设祭坛、住房和兵营，安排金矿/伐木并优先招募所选英雄类型。客户端和服务器使用协议 24。实际默认开局及剩余差距见 [开局验证记录](../../docs/designs/frostbound-realms/melee-opening.md)。
 
 ### 回城卷轴
 

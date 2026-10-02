@@ -136,20 +136,76 @@ var Frost = (() => {
     }
     return map;
   }
-  function elevation(map,x,z){const [cx,cz]=cell(x,z);return tileHeight(map,cz*32+cx,clamp(x-(cx*2-32),0,2),clamp(z-(cz*2-32),0,2));}
+  const groundMeshes=new WeakMap(),groundFrames=new WeakMap(),groundGraphs=new WeakMap();
+  const mix=(a,b,t)=>a+(b-a)*t;
+  const tierCorners=(map,x,z)=>{const i=clamp(z,0,31)*32+clamp(x,0,31);return [[0,0],[2,0],[2,2],[0,2]].map(([u,v])=>tierHeight(map,i,u,v));};
+  // MiYu: these boundaries and triangle subdivisions mirror mengine-assets/terrain_mesh.rs.
+  function groundTile(map,cx,cz,trusted=false){
+    let cache=groundMeshes.get(map);if(!cache){cache=[];groundMeshes.set(map,cache);}const i=cz*32+cx,heights=[];if(trusted&&cache[i])return cache[i];
+    for(let z=cz-1;z<=cz+1;z++)for(let x=cx-1;x<=cx+1;x++)heights.push(...tierCorners(map,x,z));
+    const relief=[];for(let z=cz-1;z<=cz+2;z++)for(let x=cx-1;x<=cx+2;x++)relief.push(map.relief?.[clamp(z,0,32)*33+clamp(x,0,32)]||0);
+    const key=heights.join(',')+';'+relief.join(',');if(cache[i]?.key===key)return cache[i];
+    const h=heights.slice(16,20),at=(x,z)=>heights.slice((z*3+x)*4,(z*3+x)*4+4),point=(x,y,z)=>{const wx=(cx+x)*2-32,wz=(cz+z)*2-32;return [wx+Math.sin(wx*1.13+wz*.71)*.12,y,wz+Math.sin(wz*1.07-wx*.83)*.12];};
+    const levels=(x,z)=>[at(x,z)[2],at(x+1,z)[3],at(x,z+1)[1],at(x+1,z+1)[0]];
+    const joints=new Map(),boundaries=new Map();
+    const corner=(x,z,y)=>{
+      const key=x+','+z+','+y;if(joints.has(key))return joints.get(key);const high=levels(x,z).map(v=>v>=y-.01),directions=[[-1,-1],[1,-1],[-1,1],[1,1]],offset=[0,0],rays=[];
+      high.forEach((v,k)=>{if(!v){offset[0]-=directions[k][0];offset[1]-=directions[k][1];}});const length=Math.hypot(...offset),p=point(x,y,z);if(length){p[0]+=offset[0]/length*.3;p[2]+=offset[1]/length*.3;}
+      for(const [a,b,ray] of [[0,1,[0,-1]],[1,3,[1,0]],[3,2,[0,1]],[2,0,[-1,0]]])if(high[a]!==high[b])rays.push(ray);
+      const result={p,rays:rays.length===2&&Math.abs(rays[0][0]*rays[1][0]+rays[0][1]*rays[1][1])<=.01?rays:[[0,0],[0,0]]};joints.set(key,result);return result;
+    };
+    const joint=(x,z,y)=>{const data=corner(x,z,y),p=[...data.p],rays=data.rays;p[0]+=(rays[0][0]+rays[1][0])*.2;p[2]+=(rays[0][1]+rays[1][1])*.2;return p;};
+    const crossing=(a,b)=>{let first,last;if(a[1]===b[1]){const x=Math.min(a[0],b[0]),z=a[1],upper=at(x+1,z),lower=at(x+1,z+1);[first,last]=[upper[3]-lower[0],upper[2]-lower[1]];if(a[0]>b[0])[first,last]=[last,first];}else{const x=a[0],z=Math.min(a[1],b[1]),left=at(x,z+1),right=at(x+1,z+1);[first,last]=[left[1]-right[0],left[2]-right[3]];if(a[1]>b[1])[first,last]=[last,first];}return first*last<0?first/(first-last):null;};
+    const round=(rays,ray,f)=>{const sum=rays[0].map((v,k)=>v+rays[1][k]);if(rays.some(r=>r[0]*ray[0]+r[1]*ray[1]>.99)){if(f>=.4)return [0,0];const q=.5+f/.8;return sum.map((v,k)=>((v-ray[k])*(1-q)**2+ray[k]*q*q)*.8-ray[k]*f*2);}return sum.map(v=>v*.2*(1-f));};
+    const sample=(a,y,ray,f)=>{const hs=levels(...a),lo=Math.max(...hs.filter(v=>v<=y)),hi=Math.min(...hs.filter(v=>v>=y)),low=Number.isFinite(lo)?lo:y,upper=Number.isFinite(hi)?hi:y,A=corner(...a,low),B=corner(...a,upper),blend=upper-low<.001?0:(y-low)/(upper-low),oa=round(A.rays,ray,f),ob=round(B.rays,ray,f);return {p:A.p.map((v,k)=>mix(v,B.p[k],blend)),offset:oa.map((v,k)=>mix(v,ob[k],blend))};};
+    const boundary=(a,ha,b,hb,t)=>{const key=a+','+ha+','+b+','+hb+','+t;if(boundaries.has(key))return boundaries.get(key);const ray=[b[0]-a[0],b[1]-a[1]],A=sample(a,ha,ray,t),B=sample(b,hb,ray.map(v=>-v),1-t),p=A.p.map((v,k)=>mix(v,B.p[k],t));p[0]+=A.offset[0]+B.offset[0];p[2]+=A.offset[1]+B.offset[1];const cut=crossing(a,b);if(cut!==null){const factor=t<cut?(cut-t)/cut:(t-cut)/(1-cut),pa=point(...[a[0],ha,a[1]]),pb=point(...[b[0],hb,b[1]]);for(const k of [0,2])p[k]=mix(mix(pa[k],pb[k],t),p[k],factor);}boundaries.set(key,p);return p;};
+    const vertices=[[0,0],[1,0],[1,1],[0,1]],corners=vertices.map(([x,z],k)=>joint(x,z,h[k])),cuts=vertices.map((a,k)=>crossing(a,vertices[(k+1)%4])),samples=new Map();
+    const top=(u,v)=>{const key=u+','+v;if(samples.has(key))return samples.get(key);const n=boundary(vertices[0],h[0],vertices[1],h[1],u),s=boundary(vertices[3],h[3],vertices[2],h[2],u),w=boundary(vertices[0],h[0],vertices[3],h[3],v),e=boundary(vertices[1],h[1],vertices[2],h[2],v),p=n.map((a,k)=>mix(a,s[k],v)+mix(w[k],e[k],u)-mix(mix(corners[0][k],corners[1][k],u),mix(corners[3][k],corners[2][k],u),v));p[1]+=reliefHeight(map,p[0],p[2]);samples.set(key,p);return p;};
+    const triangles=[],edges=[];
+    const center=top(.5,.5),outline=[],inner=[];
+    for(const [a,b] of [[0,3],[3,2],[2,1],[1,0]]){const cut=crossing(vertices[a],vertices[b]),steps=[0,.25,.5,.75];if(cut!==null&&cut>1e-6&&cut<1-1e-6&&!steps.some(v=>Math.abs(v-cut)<1e-6))steps.push(cut);steps.sort((a,b)=>a-b);for(const t of steps){const p=top(mix(vertices[a][0],vertices[b][0],t),mix(vertices[a][1],vertices[b][1],t)),q=center.map((v,axis)=>mix(axis===1?v-reliefHeight(map,center[0],center[2]):v,axis===1?p[1]-reliefHeight(map,p[0],p[2]):p[axis],.5));q[1]+=reliefHeight(map,q[0],q[2]);outline.push(p);inner.push(q);}}
+    for(let k=0;k<outline.length;k++){const j=(k+1)%outline.length;triangles.push([center,inner[k],inner[j]],[inner[k],outline[k],outline[j]],[inner[k],outline[j],inner[j]]);}
+    for(const [dx,dz,a,b,na,nb] of [[0,-1,0,1,3,2],[1,0,1,2,0,3],[0,1,2,3,1,0],[-1,0,3,0,2,1]]){const nx=clamp(cx+dx,0,31),nz=clamp(cz+dz,0,31),nh=tierCorners(map,nx,nz);if(Math.abs(h[a]-nh[na])<.01&&Math.abs(h[b]-nh[nb])<.01)continue;const ts=[0,.25,.5,.75,1],cut=cuts[a];if(cut!==null&&!ts.includes(cut))ts.push(cut);ts.sort((a,b)=>a-b);for(let k=1;k<ts.length;k++)edges.push([boundary(vertices[a],h[a],vertices[b],h[b],ts[k-1]),boundary(vertices[a],h[a],vertices[b],h[b],ts[k])]);}
+    return cache[i]={key,triangles,edges};
+  }
+  function groundPlane(map,cx,cz){
+    const height=map.heights?.[cz*32+cx]||0;for(let z=cz-1;z<=cz+1;z++)for(let x=cx-1;x<=cx+1;x++){const i=clamp(z,0,31)*32+clamp(x,0,31);if((map.heights?.[i]||0)!==height||map.ramps?.[i])return null;}
+    const value=(x,z)=>map.relief?.[clamp(cz+z-1,0,32)*33+clamp(cx+x-1,0,32)]||0,a=value(0,0),dx=value(1,0)-a,dz=value(0,1)-a;for(let z=0;z<4;z++)for(let x=0;x<4;x++)if(Math.abs(value(x,z)-a-x*dx-z*dz)>1e-7)return null;return height*2;
+  }
+  function groundSample(map,x,z,trusted=false){
+    const [cx,cz]=cell(x,z),plane=groundPlane(map,cx,cz);if(plane!==null&&Math.abs(x)<30&&Math.abs(z)<30)return {i:cz*32+cx,y:plane+reliefHeight(map,x,z)};const px=x-(cx*2-32),pz=z-(cz*2-32),xs=px<.75?[-1,0]:px>1.25?[0,1]:[0],zs=pz<.75?[-1,0]:pz>1.25?[0,1]:[0];let found=null;
+    for(const dz of zs)for(const dx of xs){const ix=cx+dx,iz=cz+dz;if(ix<0||iz<0||ix>31||iz>31)continue;const i=iz*32+ix;for(const [a,b,c] of groundTile(map,ix,iz,trusted).triangles){const det=(b[2]-c[2])*(a[0]-c[0])+(c[0]-b[0])*(a[2]-c[2]);if(Math.abs(det)<1e-10)continue;const u=((b[2]-c[2])*(x-c[0])+(c[0]-b[0])*(z-c[2]))/det,v=((c[2]-a[2])*(x-c[0])+(a[0]-c[0])*(z-c[2]))/det;if(u< -1e-7||v< -1e-7||u+v>1+1e-7)continue;const y=u*a[1]+v*b[1]+(1-u-v)*c[1];if(!found||y>found.y+1e-7)found={i,y};}}
+    return found;
+  }
+  function elevation(map,x,z){const surface=Math.abs(x)<=32&&Math.abs(z)<=32?groundSample(map,x,z):null;if(surface)return surface.y;const [cx,cz]=cell(x,z);return tileHeight(map,cz*32+cx,clamp(x-(cx*2-32),0,2),clamp(z-(cz*2-32),0,2));}
   function terrainEdge(map,a,b){
     if(a===b)return true;const dx=b%32-a%32,dz=Math.floor(b/32)-Math.floor(a/32);if(Math.abs(dx)+Math.abs(dz)!==1)return false;
     for(const t of [0,2]){const x=dx?dx>0?2:0:t,z=dz?dz>0?2:0:t;if(Math.abs(tileHeight(map,a,x,z)-tileHeight(map,b,x-dx*2,z-dz*2))>.01)return false;}return true;
   }
-  function traversable(map,ax,az,bx,bz){
-    const n=Math.max(1,Math.ceil(Math.hypot(bx-ax,bz-az)/.2));let previous=index(ax,az);
-    for(let k=1;k<=n;k++){const next=index(ax+(bx-ax)*k/n,az+(bz-az)*k/n);if(next!==previous){const dx=next%32-previous%32,dz=Math.floor(next/32)-Math.floor(previous/32);if(dx&&dz){const mid=previous+dx,other=previous+dz*32;if(!terrainEdge(map,previous,mid)||!terrainEdge(map,mid,next)||!terrainEdge(map,previous,other)||!terrainEdge(map,other,next))return false;}else if(!terrainEdge(map,previous,next))return false;}previous=next;}return true;
+  function groundRegions(map,key=(map.heights||[]).join(',')+';'+(map.ramps||[]).join(',')){
+    const old=groundGraphs.get(map);if(old?.key===key)return old.regions;const regions=new Int16Array(1024);regions.fill(-1);regions.cliffs=false;
+    for(let i=0;i<1024;i++){if(regions[i]!==-1)continue;regions[i]=i;const cells=[i];for(let k=0;k<cells.length;k++){const n=cells[k];for(const d of [-32,-1,1,32]){const j=n+d;if(j<0||j>1023||Math.abs(j%32-n%32)+Math.abs(Math.floor(j/32)-Math.floor(n/32))!==1)continue;if(!terrainEdge(map,n,j)){regions.cliffs=true;continue;}if(regions[j]!==-1)continue;regions[j]=i;cells.push(j);}}}
+    groundGraphs.set(map,{key,regions});return regions;
   }
+  function groundNavigation(s){
+    let cache=groundFrames.get(s);if(!cache||cache.map!==s.map||cache.frame!==s.frame){const tiers=(s.map.heights||[]).join(',')+';'+(s.map.ramps||[]).join(','),key=tiers+';'+(s.map.relief||[]).join(','),same=cache?.map===s.map&&cache.key===key;if(!same)groundMeshes.delete(s.map);cache={map:s.map,frame:s.frame,key,regions:same?cache.regions:groundRegions(s.map,tiers),routeEdges:same?cache.routeEdges:new Map()};groundFrames.set(s,cache);}return cache.regions;
+  }
+  function groundClear(map,ax,az,bx,bz,radius=0,regions){
+    const trusted=!!regions;regions??=groundRegions(map);
+    if(map.terrain[index(ax,az)]===1||map.terrain[index(bx,bz)]===1)return false;
+    const dx=bx-ax,dz=bz-az,cuts=[0,1];for(let i=1;i<32;i++)for(const [a,d] of [[ax,dx],[az,dz]])if(d){const t=(i*2-32-a)/d;if(t>0&&t<1)cuts.push(t);}cuts.sort((a,b)=>a-b);for(let i=1;i<cuts.length;i++){const t=(cuts[i-1]+cuts[i])/2;if(map.terrain[index(ax+dx*t,az+dz*t)]===1)return false;}
+    if(!regions.cliffs)return true;
+    const start=groundSample(map,ax,az,trusted),end=groundSample(map,bx,bz,trusted);if(!start||!end||regions[start.i]!==regions[end.i])return false;
+    const first=cell(Math.min(ax,bx)-radius-1,Math.min(az,bz)-radius-1),last=cell(Math.max(ax,bx)+radius+1,Math.max(az,bz)+radius+1),group=regions[start.i];
+    for(let z=first[1];z<=last[1];z++)for(let x=first[0];x<=last[0];x++){if(regions[z*32+x]!==group||segmentDistance(x*2-31,z*2-31,[ax,az],[bx,bz])>radius+2.2||groundPlane(map,x,z)!==null)continue;for(const [a,b] of groundTile(map,x,z,trusted).edges){const A=[a[0],a[2]],B=[b[0],b[2]],C=[ax,az],D=[bx,bz],cross=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),ab=cross(A,B,C)*cross(A,B,D),cd=cross(C,D,A)*cross(C,D,B);if(ab<0&&cd<0)return false;const before=segmentDistance(...C,A,B),after=segmentDistance(...D,A,B),distance=Math.min(before,after,segmentDistance(...A,C,D),segmentDistance(...B,C,D));if(distance<Math.max(radius,1e-5)-1e-7&&!(before<radius&&distance>=before-1e-7&&after>before+.0001))return false;}}
+    return true;
+  }
+  const traversable=(map,ax,az,bx,bz)=>groundClear(map,ax,az,bx,bz);
   function flatSite(map,x,z,radius){
     const level=map.heights?.[index(x,z)]||0,a=cell(x-radius,z-radius),b=cell(x+radius,z+radius);if(Math.abs(x)+radius>30||Math.abs(z)+radius>30)return false;let low=Infinity,high=-Infinity;
-    for(let cz=a[1];cz<=b[1];cz++)for(let cx=a[0];cx<=b[0];cx++){const i=cz*32+cx;if(map.terrain[i]===1||map.ramps?.[i]||(map.heights?.[i]||0)!==level)return false;for(const [dx,dz] of [[0,0],[2,0],[2,2],[0,2]]){const h=tileHeight(map,i,dx,dz);low=Math.min(low,h);high=Math.max(high,h);}}return high-low<=.25;
+    for(let cz=a[1];cz<=b[1];cz++)for(let cx=a[0];cx<=b[0];cx++){const i=cz*32+cx;if(map.terrain[i]===1||map.ramps?.[i]||(map.heights?.[i]||0)!==level)return false;for(const [dx,dz] of [[0,0],[2,0],[2,2],[0,2]]){const h=tileHeight(map,i,dx,dz);low=Math.min(low,h);high=Math.max(high,h);}}return high-low<=.25&&groundClear(map,x,z,x,z,radius);
   }
-  const unitHeight=(s,u)=>elevation(s.map,u.x,u.z)+(types[u.kind]?.flying?4:0);
+  const unitHeight=(s,u)=>{groundNavigation(s);return (groundSample(s.map,u.x,u.z,true)?.y??elevation(s.map,u.x,u.z))+(types[u.kind]?.flying?4:0);};
   function attackClear(s,u,v){
     if(unitType(u).range<=2&&!types[u.kind].flying&&!traversable(s.map,u.x,u.z,v.x,v.z))return false;
     const ay=unitHeight(s,u)+1.6,by=unitHeight(s,v)+1.6,dx=v.x-u.x,dz=v.z-u.z,cuts=[0,1];
@@ -278,7 +334,7 @@ var Frost = (() => {
     for(const u of planned)spawn(s,u.kind,u.team,u.x,u.z,{route:u.route,waypoint:1,lane:u.lane});return true;
   }
   const tdPath=[[-25,-24],[23,-24],[23,-8],[-21,-8],[-21,7],[20,7],[20,20],[-23,23]];
-  function solid(s,x,z,ignore=0,team=-1){if(Math.abs(x)>30||Math.abs(z)>30||s.map.terrain[index(x,z)]===1)return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
+  function solid(s,x,z,ignore=0,team=-1,radius=.35){if(Math.abs(x)+radius>30||Math.abs(z)+radius>30||!groundClear(s.map,x,z,x,z,radius,groundNavigation(s)))return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
   const navigationCache=new WeakMap();
   function navigation(s,team=-1){
     let cache=navigationCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,blocked:[]};navigationCache.set(s,cache);}if(cache.blocked[team+1])return cache.blocked[team+1];
@@ -287,9 +343,9 @@ var Frost = (() => {
     cache.blocked[team+1]=blocked;return blocked;
   }
   function routeSearch(s,u,goal=-1){
-    const start=index(u.x,u.z),blocked=navigation(s,u.team),prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const cells=[start];
+    const start=index(u.x,u.z),blocked=navigation(s,u.team),regions=groundNavigation(s),edgeCache=groundFrames.get(s).routeEdges,radius=movementRadius(u);let edges=edgeCache.get(radius);if(!edges){edges=new Uint8Array(4096);edgeCache.set(radius,edges);}const prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const cells=[start];
     for(let k=0;k<cells.length;k++){const n=cells[k],x=n%32,z=Math.floor(n/32);if(n===goal)break;
-      for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;prev[j]=n;cells.push(j);}}
+      for(const [direction,[dx,dz]] of [[1,0],[-1,0],[0,1],[0,-1]].entries()){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;const edge=n*4+direction;edges[edge]||=groundClear(s.map,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,regions)?1:2;if(edges[edge]===2)continue;prev[j]=n;cells.push(j);}}
     return {start,prev,cells};
   }
   function path(s,u,tx,tz){
@@ -297,7 +353,7 @@ var Frost = (() => {
     for(const n of cells){const d=Math.hypot(n%32-goal%32,Math.floor(n/32)-Math.floor(goal/32));if(d<best){best=d;found=n;}}
     const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%32*2-31,Math.floor(n/32)*2-31]);return result.reverse();
   }
-  function movementRadius(u){return types[u.kind].flying?1:types[u.kind].attack==='siege'?.9:types[u.kind].model==='knight'?.7:.5;}
+  function movementRadius(u){return types[u.kind]?.flying?1:types[u.kind]?.attack==='siege'?.9:types[u.kind]?.model==='knight'?.7:.5;}
   // ponytail: each selected unit scans the 32x32 grid (max 40); share reachability fields when maps grow.
   function orderPoint(s,u,o){return o?.type==='gather'?s.resources[o.resource]||u:['construct','repair'].includes(o?.type)?s.units.find(b=>b.id===o.target)||u:Number.isFinite(o?.x)&&Number.isFinite(o?.z)?o:u;}
   function queueable(u,o){return ['move','attackMove'].includes(o?.type)||u.kind==='ghoul'&&o?.type==='gather'||u.kind==='worker'&&['build','construct','repair','gather'].includes(o?.type);}
@@ -311,11 +367,11 @@ var Frost = (() => {
       const reserved=s.units.filter(u=>u.hp>0&&!u.inside&&u.speed&&u.team===members[0].team&&!units.some(v=>v.id===u.id)&&!!types[u.kind].flying===flying).map(u=>{const p=orderPoint(s,u,u.waypoints?.at(-1)||(['move','attackMove','patrol'].includes(u.order?.type)?u.order:u));return {x:p.x,z:p.z,r:movementRadius(u)};});
       for(let i=0;i<members.length;i++){
         const u=members[i],row=Math.floor(i/columns),width=Math.min(columns,members.length-row*columns),side=(i%columns-(width-1)/2)*spacing,forward=((rows-1)/2-row)*spacing,ideal=[clamp(x+fz*side+fx*forward,-30,30),clamp(z-fx*side+fz*forward,-30,30)],r=movementRadius(u),search=flying?null:routeSearch(s,u),cells=flying?Array.from({length:1024},(_,j)=>j):search.cells;
-        const available=(px,pz)=>Math.abs(px)<=30&&Math.abs(pz)<=30&&(flying||!solid(s,px,pz,u.id,u.team))&&reserved.every(v=>Math.hypot(px-v.x,pz-v.z)>=r+v.r+.3);
+        const available=(px,pz)=>Math.abs(px)+r<=30&&Math.abs(pz)+r<=30&&(flying||!solid(s,px,pz,u.id,u.team,r))&&reserved.every(v=>Math.hypot(px-v.x,pz-v.z)>=r+v.r+.3);
         let dest=null,best=Infinity;
         const consider=(px,pz)=>{const score=(px-ideal[0])**2+(pz-ideal[1])**2;if(score<best&&available(px,pz)){dest=[px,pz];best=score;}};
         const cellX=cell(...ideal)[0]*2-31,cellZ=cell(...ideal)[1]*2-31;
-        if(flying||search.prev[index(...ideal)]!==-1&&traversable(s.map,cellX,cellZ,...ideal))consider(...ideal);
+        if(flying||search.prev[index(...ideal)]!==-1&&groundClear(s.map,cellX,cellZ,...ideal,r,groundNavigation(s)))consider(...ideal);
         for(const j of cells)consider(j%32*2-31,Math.floor(j/32)*2-31);
         if(!dest)return null;
         reserved.push({x:dest[0],z:dest[1],r});orders.set(u.id,dest);
@@ -324,10 +380,8 @@ var Frost = (() => {
     return orders;
   }
   function walkClear(s,u,x,z){
-    if(Math.abs(x)>30||Math.abs(z)>30)return false;if(types[u.kind].flying)return true;
-    if(!traversable(s.map,u.x,u.z,x,z)||s.map.terrain[index(x,z)]===1)return false;
-    const dx=x-u.x,dz=z-u.z,cuts=[0,1];for(let i=1;i<32;i++)for(const [a,d] of [[u.x,dx],[u.z,dz]])if(d){const t=(i*2-32-a)/d;if(t>0&&t<1)cuts.push(t);}cuts.sort((a,b)=>a-b);
-    for(let i=1;i<cuts.length;i++){const t=(cuts[i-1]+cuts[i])/2;if(s.map.terrain[index(u.x+dx*t,u.z+dz*t)]===1)return false;}
+    const radius=movementRadius(u);if(Math.abs(x)+radius>30||Math.abs(z)+radius>30)return false;if(types[u.kind].flying)return true;
+    if(!groundClear(s.map,u.x,u.z,x,z,radius,groundNavigation(s)))return false;
     return !s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&(distance(u,v)<(types[v.kind].radius||1)+.35?Math.hypot(x-v.x,z-v.z)<=distance(u,v)+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])<(types[v.kind].radius||1)+.35));
   }
   function traffic(s,u){return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&types[v.kind].speed&&!!types[v.kind].flying===!!types[u.kind].flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(types[u.kind].flying||Math.abs(unitHeight(s,u)-unitHeight(s,v))<1.5||traversable(s.map,u.x,u.z,v.x,v.z)));}
@@ -336,7 +390,7 @@ var Frost = (() => {
   }
   const trafficCache=new WeakMap();
   function trafficGrid(s,u){
-    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,teams:[],edges:new Uint8Array(121*121*8)};trafficCache.set(s,cache);}const key=types[u.kind].flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
+    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,teams:[],edges:new Map()};trafficCache.set(s,cache);}const key=types[u.kind].flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
     const grid=new Uint8Array(121*121);if(!types[u.kind].flying){for(let z=0;z<=120;z++)for(let x=0;x<=120;x++)if(s.map.terrain[Math.floor((z+4)/4)*32+Math.floor((x+4)/4)]===1)grid[z*121+x]=1;
       for(const v of s.units)if(v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))){const r=(types[v.kind].radius||1)+.4;for(let z=Math.max(0,Math.floor((v.z-r)*2)+60);z<=Math.min(120,Math.ceil((v.z+r)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-r)*2)+60);x<=Math.min(120,Math.ceil((v.x+r)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<r)grid[z*121+x]=1;}}
     return cache.teams[key]=grid;
@@ -353,7 +407,7 @@ var Frost = (() => {
   function trafficPath(s,u,x,z,near,stop){
     const size=121,start=(Math.round(u.z*2)+60)*size+Math.round(u.x*2)+60,blocked=trafficGrid(s,u).slice(),field=trafficField(s,u,near),prev=new Int16Array(size*size),cost=new Float64Array(size*size);prev.fill(-1);cost.fill(Infinity);cost[start]=0;prev[start]=start;
     // Fixed grid edges depend only on this frame's map; each caller subtracts its own body below.
-    const r=movementRadius(u),edges=trafficCache.get(s).edges;
+    const r=movementRadius(u),edgeCache=trafficCache.get(s).edges;let edges=edgeCache.get(r);if(!edges){edges=new Uint8Array(121*121*8);edgeCache.set(r,edges);}
     const heap=[];
     const push=(node,score)=>{let i=heap.length;heap.push([node,score]);while(i){const p=(i-1)>>1;if(heap[p][1]<=score)break;heap[i]=heap[p];i=p;}heap[i]=[node,score];};
     const pop=()=>{const first=heap[0],last=heap.pop();if(heap.length){let i=0;while(i*2+1<heap.length){let c=i*2+1;if(c+1<heap.length&&heap[c+1][1]<heap[c][1])c++;if(heap[c][1]>=last[1])break;heap[i]=heap[c];i=c;}heap[i]=last;}return first[0];};
@@ -363,7 +417,7 @@ var Frost = (() => {
       const n=pop();if(blocked[n]===2)continue;blocked[n]=2;const cx=(n%size)/2-30,cz=Math.floor(n/size)/2-30,point=n===start?u:{id:u.id,kind:u.kind,team:u.team,x:cx,z:cz},d=Math.hypot(point.x-x,point.z-z);if(d<best){best=d;found=n;}if(d<=stop&&(types[u.kind].flying||traversable(s.map,point.x,point.z,x,z))||d<=.75&&walkClear(s,point,x,z)&&trafficClear(point,near,x,z)){found=n;break;}
       for(let direction=0;direction<8;direction++){
         const [dx,dz]=trafficDirections[direction],nx=cx+dx/2,nz=cz+dz/2,j=(nz*2+60)*size+nx*2+60,next=cost[n]+Math.hypot(dx,dz)/2;if(nx<-30||nz<-30||nx>30||nz>30||blocked[j]||field.counts[j]>(Math.hypot(nx-u.x,nz-u.z)<r*2-.0001?1:0)||next>=cost[j])continue;
-        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=traversable(s.map,cx,cz,nx,nz)?1:2;if(edges[edge]===2)continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
+        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=groundClear(s.map,cx,cz,nx,nz,r,groundNavigation(s))?1:2;if(edges[edge]===2)continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
       }
     }
     const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%size/2-30,Math.floor(n/size)/2-30]);result.reverse();const last=result.at(-1),end=last?{...u,x:last[0],z:last[1]}:u;if(walkClear(s,end,x,z)&&trafficClear(end,near,x,z))result.push([x,z]);return result.slice(0,1024);
@@ -561,7 +615,7 @@ var Frost = (() => {
     if(c.type==='spell'){
       if(!u||u.kind!=='hero'||!Number.isInteger(c.slot)||c.slot<0||c.slot>3||!point)return 'Select your hero';const spell=unitType(u).spells[c.slot],rank=u.skills[c.slot];
       if(!rank)return 'Learn this skill first';if(u.stun>0||u.spell[c.slot]>0||u.mana<spell.cost)return 'Spell is not ready';const target=spell.range===0?u:c;
-      if(distance(u,target)>spell.range)return 'Target outside spell range';if(spell.kind==='blink'&&(u.root>0||solid(s,c.x,c.z)))return 'Blink destination is blocked or hero is rooted';
+      if(distance(u,target)>spell.range)return 'Target outside spell range';if(spell.kind==='blink'&&(u.root>0||solid(s,c.x,c.z,u.id,u.team,movementRadius(u))))return 'Blink destination is blocked or hero is rooted';
       if(!s.visible[team][index(target.x,target.z)])return 'Spell target is not visible';if(spell.kind==='summon'&&s.units.length>=LIMIT)return 'Unit capacity reached';
       const eventStart=s.events.length,power=(spell.power||0)+(rank-1)*(spell.growth||0);u.mana-=spell.cost;u.spell[c.slot]=spell.cooldown;
       if(distance(u,target)>.01)u.yaw=u.castYaw=Math.atan2(target.x-u.x,target.z-u.z);else delete u.castYaw;
@@ -716,7 +770,7 @@ var Frost = (() => {
     const o=u.order,base=s.units.find(v=>v.id===o.target&&v.kind==='hall'&&v.team===u.team&&v.hp>0&&v.built===1);if(!base){u.order=null;s.announcements[u.team]='Town Portal cancelled: destination base was destroyed';return;}
     const passengers=[u,...s.units.filter(v=>v.id!==u.id&&v.team===u.team&&v.hp>0&&!v.inside&&v.built===1&&types[v.kind].speed&&(!v.summoned||s.frame<v.expires)&&!v.root&&distance(u,v)<=townPortal.radius&&(!['worker','ghoul'].includes(v.kind)||!['gather','build','construct','repair'].includes(v.order?.type)))],slots=new Map(),reserved=s.units.filter(v=>v.hp>0&&!v.inside&&types[v.kind].speed&&!passengers.includes(v)).map(v=>({x:v.x,z:v.z,r:movementRadius(v),flying:!!types[v.kind].flying}));
     const cells=[{x:o.x,z:o.z},...Array.from({length:1024},(_,i)=>({x:i%32*2-31,z:Math.floor(i/32)*2-31}))].filter(p=>Math.abs(p.x)<=30&&Math.abs(p.z)<=30).sort((a,b)=>distance(a,o)-distance(b,o)||a.z-b.z||a.x-b.x);
-    for(const v of passengers){const flying=!!types[v.kind].flying,r=movementRadius(v),p=cells.find(p=>(flying||!solid(s,p.x,p.z))&&reserved.every(b=>b.flying!==flying||distance(p,b)>=r+b.r+.1));if(!p){if(v===u){u.order=null;s.announcements[u.team]='Town Portal failed: no free arrival space';return;}continue;}slots.set(v.id,p);reserved.push({...p,r,flying});}
+    for(const v of passengers){const flying=!!types[v.kind].flying,r=movementRadius(v),p=cells.find(p=>(flying||!solid(s,p.x,p.z,0,-1,r))&&reserved.every(b=>b.flying!==flying||distance(p,b)>=r+b.r+.1));if(!p){if(v===u){u.order=null;s.announcements[u.team]='Town Portal failed: no free arrival space';return;}continue;}slots.set(v.id,p);reserved.push({...p,r,flying});}
     const from={x:u.x,z:u.z};for(const v of passengers){const p=slots.get(v.id);if(!p)continue;v.x=p.x;v.z=p.z;v.order=null;v.waypoints=[];v.path=[];v.pathAt=-100;delete v.dest;delete v.workResume;}
     s.announcements[u.team]='Town Portal transported '+slots.size+' units';s.events.push({type:'spell',slot:2,heroClass:u.heroClass,...from,team:u.team},{type:'spell',slot:2,heroClass:u.heroClass,x:u.x,z:u.z,team:u.team});visibility(s);
   }
@@ -751,7 +805,7 @@ var Frost = (() => {
       if(u.queue.length){
         const q=u.queue[0];q.left=Math.max(0,q.left-DT);
         if(q.left===0&&(q.revive||s.units.length<LIMIT)){
-          let p=null;for(let a=0;a<12;a++){const x=u.x+Math.cos(a*Math.PI/6)*4,z=u.z+Math.sin(a*Math.PI/6)*4;if(Math.abs(x)<=30&&Math.abs(z)<=30&&(types[q.kind].flying||!solid(s,x,z))&&s.units.every(v=>v.hp<=0||v.inside||!types[v.kind].speed||!!types[v.kind].flying!==!!types[q.kind].flying||Math.hypot(x-v.x,z-v.z)>=movementRadius(v)+movementRadius({kind:q.kind})+.05)){p=[x,z];break;}}
+          let p=null;for(let a=0;a<12;a++){const x=u.x+Math.cos(a*Math.PI/6)*4,z=u.z+Math.sin(a*Math.PI/6)*4;if(Math.abs(x)<=30&&Math.abs(z)<=30&&(types[q.kind].flying||!solid(s,x,z,0,-1,movementRadius({kind:q.kind})))&&s.units.every(v=>v.hp<=0||v.inside||!types[v.kind].speed||!!types[v.kind].flying!==!!types[q.kind].flying||Math.hypot(x-v.x,z-v.z)>=movementRadius(v)+movementRadius({kind:q.kind})+.05)){p=[x,z];break;}}
           if(p){const v=q.revive?s.units.find(v=>v.id===q.revive&&v.team===u.team&&v.kind==='hero'&&v.hp<=0):spawn(s,q.kind,u.team,...p,q.kind==='hero'?{heroClass:q.heroClass}:{});if(v){u.queue.shift();if(q.kind==='hero'&&!q.revive&&!s.teams[u.team].portalGranted){setInventory(v,[...v.inventory,townPortal.item]);s.teams[u.team].portalGranted=true;}if(q.revive){[v.x,v.z]=p;v.hp=v.maxHp;v.mana=100;v.respawn=0;v.order=null;v.waypoints=[];v.path=[];v.pathAt=-100;delete v.dest;for(const effect of ['stun','root','slow','haste','avatar','shieldLeft','shield','frenzy','cripple','purgeLeft','castLeft','bloodlust','lightningShield'])v[effect]=0;delete v.frenzySource;delete v.lightningSource;delete v.castYaw;delete v.workResume;s.announcements[v.team]=unitType(v).label+' (level '+v.level+') has been revived.';s.events.push({type:'spell',slot:1,heroClass:v.heroClass,x:v.x,z:v.z,team:v.team});}if(u.rally)v.order={type:v.kind==='worker'?'move':'attackMove',...u.rally};}}
         }
       }
@@ -912,6 +966,6 @@ var Frost = (() => {
     s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
   function publicState(s,team){const state=clone(s);for(const u of state.units){u.sleeping=asleep(s,u);u.feeding=feeding(u);u.portalLeft=portalLeft(u);delete u.frenzySource;delete u.lightningSource;}state.corpses=s.corpses.filter(c=>c.team===team||s.visible[team][index(c.x,c.z)]).map(({id,kind,heroClass,team,x,y,z,yaw,age,boss,large})=>({id,kind,heroClass,team,x,y,z,yaw,age,boss,large}));state.projectiles=s.projectiles.filter(p=>s.visible[team][index(p.x,p.z)]).map(({id,x,y,z,vx,vy,vz,team,art})=>({id,x,y,z,vx,vy,vz,team,art}));delete state.projectileSerial;delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){const r=miningTarget(s,u);if(r)u.miningTarget={x:r.x,z:r.z};u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;delete u.casterResearch;delete u.cannibalizeResearch;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]&&(e.fromX===undefined||s.visible[team][index(e.fromX,e.fromZ)]));state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  return {groundTile,groundSample,groundClear,walkClear,movementRadius,sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

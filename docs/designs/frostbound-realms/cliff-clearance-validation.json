@@ -1,0 +1,135 @@
+{
+  "stage": "Rendered cliff surface and ground-unit clearance",
+  "author": "MiYu",
+  "protocol": 24,
+  "tests": {
+    "node scripts/test-frostbound.mjs": "passed",
+    "node scripts/test-frost-cliff-clearance.mjs": {
+      "passed": true,
+      "fixtureCases": 64
+    },
+    "cargo test -p mengine-assets terrain_mesh": {
+      "passed": 5,
+      "failed": 0,
+      "fixtureTriangles": 768,
+      "toleranceWorldUnits": 2e-05
+    }
+  },
+  "releaseBuild": {
+    "passed": true,
+    "targets": [
+      "mengine-editor-tauri",
+      "mengine-runtime"
+    ],
+    "features": [
+      "tauri/custom-protocol"
+    ],
+    "targetDir": "D:/MEngineNativeQA/tile-build-1790939800003"
+  },
+  "package": {
+    "contentHash": "37606e5d27e32ff9018b694f86f1bc02e05dc086d335cd100db4c1833f3a4d20",
+    "files": 717,
+    "manifestValidated": true,
+    "smokeSeconds": 30,
+    "loggedErrors": 0
+  },
+  "hashesSha256": {
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "07ac59d96c2adfd5b42037ff1fad9adaa17d6c385d0c755e5b389c4a850b9d6c",
+    "docs/designs/frostbound-realms/cliff-surface-fixtures.json": "a1b29afc47dcc84343319104709814bcb96af6904c512feb7b25768e717fb2c4"
+  },
+  "nativeTerrain": {
+    "report": "clearance-terrain-native.json",
+    "passed": true,
+    "chunks": 64,
+    "materialPipelineRejections": 0,
+    "brushUndoSaveLoad": true,
+    "groundUnitClimbed": true,
+    "cliffClearance": {
+      "requested": {
+        "x": -9.92,
+        "z": 11.92
+      },
+      "arrived": {
+        "id": 18,
+        "kind": "hero",
+        "team": 0,
+        "x": -9,
+        "z": 11,
+        "hp": 700,
+        "maxHp": 700,
+        "damage": 38,
+        "speed": 4.5,
+        "cd": 0,
+        "order": null,
+        "waypoints": [],
+        "path": [],
+        "pathAt": -100,
+        "built": 1,
+        "queue": [],
+        "level": 1,
+        "xp": 0,
+        "mana": 159.59999999999945,
+        "spell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "inventory": [],
+        "cargo": 0,
+        "respawn": 0,
+        "heroClass": 0,
+        "skills": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "skillPoints": 1,
+        "itemCooldown": 0,
+        "shield": 0,
+        "slow": 0,
+        "yaw": -0.7773880957612123
+      },
+      "radius": 0.5,
+      "safeArrival": true
+    }
+  },
+  "nativeNetwork": {
+    "report": "clearance-network-native.json",
+    "passed": true,
+    "clients": 2,
+    "firstAltars": {
+      "altars": [
+        15,
+        16
+      ],
+      "heroes": [
+        3,
+        1
+      ],
+      "authoredStartingHeroes": false
+    },
+    "networkWorkQueueRestored": true,
+    "networkWaypoints": true,
+    "reconnected": true,
+    "reconnectViewPreserved": true,
+    "networkPatrolRestored": true
+  },
+  "inputMethod": "Native Release editors running QuickJS; Agent playback input and paused native frame stepping; real TCP server",
+  "physicalInput": false,
+  "audioListening": false,
+  "steadyGameplayPerformanceAccepted": false,
+  "screenshots": [
+    "clearance-highland-editor.png",
+    "clearance-cliff-clearance.png",
+    "clearance-network-multiplayer-route.png"
+  ],
+  "remaining": [
+    "Full three-dimensional collision with wall bulges",
+    "Migration of old saved positions in gaps without a top surface",
+    "Radius-based water clearance",
+    "Triangle-based attack occlusion",
+    "Original cliff variants and complete game content"
+  ]
+}
