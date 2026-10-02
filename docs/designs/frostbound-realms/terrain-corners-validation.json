@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "checkedAt": "2026-10-02T17:59:54.553496+00:00",
+  "baselineRevision": "2ca1de0dbee7ac030c1ff0aa5d1966aea5d989b8",
+  "meshTests": {
+    "passed": 4,
+    "failed": 0,
+    "cornerCases": 64,
+    "checks": [
+      "legacy geometry",
+      "bounded signed relief",
+      "plane height",
+      "four-patch welded edges",
+      "convex and concave joints",
+      "ramp variants",
+      "finite normals",
+      "opposing ramp intersections",
+      "mixed ramp grades",
+      "multi-height vertical corner seams",
+      "positive top winding"
+    ]
+  },
+  "terrainRules": true,
+  "sculptRules": true,
+  "nativeRender": {
+    "before": "corner-before-native.json",
+    "after": "corner-after-native.json",
+    "chunks": 64,
+    "shaderRejections": 0
+  },
+  "nativeTerrain": {
+    "report": "corner-terrain-native.json",
+    "brushUndoSaveLoad": true,
+    "groundUnitClimbed": true
+  },
+  "nativeExecutable": "D:/MEngineNativeQA/tile-build-1790939800003/release/mengine-editor-tauri.exe",
+  "nativeExecutableSha256": "33b75314583cc2ab64146f3d1ae5e88d38cd0ca281b99dfd783b905e7f5bab1e",
+  "baselineExecutableSha256": "9896be68e415cff0fa4b5c40900cf9e647b11b9ccaf127e59e6c20e32d3161a0",
+  "sourceScriptSha256": "991de12668767c7f87a9259d2e90b184f15c9950891004bd2a48823f3ec59caa",
+  "package": {
+    "files": 717,
+    "contentHash": "bee62c0cbf144ba644185db8329714bf418fb683823f4884e9b57211bdde08b1",
+    "runtimeSha256": "6b4b5f569cd868e0e34bb35980a00731db607d5802525e585c3090af2fb21724",
+    "hashValidationPassed": true,
+    "responding": true,
+    "loggedErrors": 0,
+    "startupSeconds": 30
+  },
+  "physicalInput": false,
+  "audioListening": false,
+  "exactCliffEdgeCollision": false,
+  "originalTerrainSetComplete": false
+}

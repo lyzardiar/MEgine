@@ -1,0 +1,68 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "terrain": {
+    "chunks": 64,
+    "raisedCells": 188,
+    "ramps": 11,
+    "brushUndoSaveLoad": true,
+    "groundUnitClimbed": true,
+    "hero": {
+      "id": 18,
+      "kind": "hero",
+      "team": 0,
+      "x": -5.000000000000002,
+      "z": 6.934580319506682,
+      "hp": 700,
+      "maxHp": 700,
+      "damage": 38,
+      "speed": 4.5,
+      "cd": 0,
+      "order": null,
+      "waypoints": [],
+      "path": [],
+      "pathAt": -100,
+      "built": 1,
+      "queue": [],
+      "level": 1,
+      "xp": 0,
+      "mana": 160,
+      "spell": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "inventory": [],
+      "cargo": 0,
+      "respawn": 0,
+      "heroClass": 0,
+      "skills": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "skillPoints": 1,
+      "itemCooldown": 0,
+      "shield": 0,
+      "slow": 0,
+      "yaw": 1.576247912828698
+    },
+    "fixture": "Highland Pass with one authored friendly hero for ramp movement; default melee opening is unchanged",
+    "profile": {
+      "intervals": 112,
+      "averagePresentIntervalMs": 178.38571428507566,
+      "p95PresentIntervalMs": 273.10000002384186,
+      "presentedFps": 5.6058300632858655,
+      "averageRequestMs": 186.99203539949602,
+      "averageRenderMs": 63.055382300884965,
+      "averageCommandMs": 109.64394955752203,
+      "averageUploadMs": 1.5699115052687382,
+      "averageSimulationMs": 18.411924107142863,
+      "averageSimulationRequestMs": 149.591964289546
+    }
+  }
+}

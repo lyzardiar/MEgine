@@ -50,44 +50,70 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
         for vertex in &mut p {vertex[1]+=relief_height(vertex[0],vertex[2]);}
         let a=glam::Vec3::from_array(p[1])-glam::Vec3::from_array(p[0]);let b=glam::Vec3::from_array(p[2])-glam::Vec3::from_array(p[0]);let cross=a.cross(b);
         if cross.length_squared()<1e-10 { return; }
+        debug_assert!(!top||cross.y>0.,"terrain top winding");
         let normals=p.map(|v|if top&&sculpted&&base.y>0.01 {let dx=(relief_height(v[0]+0.25,v[2])-relief_height(v[0]-0.25,v[2]))*2.;let dz=(relief_height(v[0],v[2]+0.25)-relief_height(v[0],v[2]-0.25))*2.;glam::Vec3::new(base.x/base.y-dx,1.,base.z/base.y-dz).normalize().to_array()}else{cross.normalize().to_array()});
         let first=mesh.positions.len() as u32;mesh.positions.extend(p);mesh.normals.extend(normals);mesh.uvs.extend(uv);mesh.indices.extend([first,first+1,first+2]);
     };
     let point=|x:f32,y:f32,z:f32| { let wx=x+origin[0];let wz=z+origin[1];[x+(wx*1.13+wz*0.71).sin()*0.12,y,z+(wz*1.07-wx*0.83).sin()*0.12] };
     let lerp=|a:f32,b:f32,t:f32| a+(b-a)*t;
     let corner=|vx:usize,vz:usize,height:f32| {
-        let touching=[(vz*6+vx,2,[-1.,-1.]),(vz*6+vx+1,3,[1.,-1.]),((vz+1)*6+vx,1,[-1.,1.]),((vz+1)*6+vx+1,0,[1.,1.])];let mut inward=glam::Vec2::ZERO;
-        for (cell,index,direction) in touching {if heights[cell*4+index]<height-0.01 {inward-=glam::Vec2::from_array(direction);}}
-        let offset=inward.normalize_or_zero()*0.3;let mut p=point(vx as f32*2.-4.,height,vz as f32*2.-4.);p[0]+=offset.x;p[2]+=offset.y;p
+        let touching=[(vz*6+vx,2,[-1.,-1.]),(vz*6+vx+1,3,[1.,-1.]),((vz+1)*6+vx,1,[-1.,1.]),((vz+1)*6+vx+1,0,[1.,1.])];let mut inward=glam::Vec2::ZERO;let mut high=[false;4];
+        for (i,(cell,index,direction)) in touching.iter().enumerate() {high[i]=heights[cell*4+index]>=height-0.01;if !high[i] {inward-=glam::Vec2::from_array(*direction);}}
+        let offset=inward.normalize_or_zero()*0.3;let mut p=point(vx as f32*2.-4.,height,vz as f32*2.-4.);p[0]+=offset.x;p[2]+=offset.y;
+        let mut rays=[glam::Vec2::ZERO;2];let mut count=0;for (a,b,ray) in [(0,1,[0.,-1.]),(1,3,[1.,0.]),(3,2,[0.,1.]),(2,0,[-1.,0.])] {if high[a]!=high[b] {if count<2 {rays[count]=glam::Vec2::from_array(ray);}count+=1;}}
+        if count!=2 || rays[0].dot(rays[1]).abs()>0.01 {rays=[glam::Vec2::ZERO;2];}(p,rays)
+    };
+    let crossing=|a:[usize;2],b:[usize;2]| {
+        let (first,last)=if a[1]==b[1] {let cell=a[1]*6+a[0].min(b[0])+1;let d=[heights[cell*4+3]-heights[(cell+6)*4],heights[cell*4+2]-heights[(cell+6)*4+1]];if a[0]<b[0] {(d[0],d[1])}else{(d[1],d[0])}}else{let cell=(a[1].min(b[1])+1)*6+a[0];let d=[heights[cell*4+1]-heights[(cell+1)*4],heights[cell*4+2]-heights[(cell+1)*4+3]];if a[1]<b[1] {(d[0],d[1])}else{(d[1],d[0])}};
+        if first*last<0. {Some(first/(first-last))}else{None}
+    };
+    // MiYu: each height layer shares one curved corner; all touching tops and cliff walls use its boundary.
+    let joint=|vx:usize,vz:usize,height:f32| {let (mut p,rays)=corner(vx,vz,height);let offset=(rays[0]+rays[1])*0.2;p[0]+=offset.x;p[2]+=offset.y;p};
+    let boundary=|a:[usize;2],ha:f32,b:[usize;2],hb:f32,t:f32| {
+        let direction=glam::Vec2::new(b[0] as f32-a[0] as f32,b[1] as f32-a[1] as f32);
+        let round=|rays:[glam::Vec2;2],ray:glam::Vec2,f:f32| {let sum=rays[0]+rays[1];if rays.iter().any(|r|r.dot(ray)>0.99) {if f>=0.4 {glam::Vec2::ZERO}else{let q=0.5+f/0.8;((sum-ray)*(1.-q).powi(2)+ray*q*q)*0.8-ray*f*2.}}else{sum*0.2*(1.-f)}};
+        let sample=|v:[usize;2],height:f32,ray:glam::Vec2,f:f32| {let i=v[1]*6+v[0];let levels=[heights[i*4+2],heights[(i+1)*4+3],heights[(i+6)*4+1],heights[(i+7)*4]];let lo=levels.iter().copied().filter(|h|*h<=height).fold(f32::NEG_INFINITY,f32::max);let hi=levels.iter().copied().filter(|h|*h>=height).fold(f32::INFINITY,f32::min);let lo=if lo.is_finite() {lo}else{height};let hi=if hi.is_finite() {hi}else{height};let (pa,ra)=corner(v[0],v[1],lo);if hi-lo<0.001 {(pa,round(ra,ray,f))}else{let (pb,rb)=corner(v[0],v[1],hi);let blend=(height-lo)/(hi-lo);(std::array::from_fn::<_,3,_>(|axis|lerp(pa[axis],pb[axis],blend)),round(ra,ray,f).lerp(round(rb,ray,f),blend))}};
+        let (pa,oa)=sample(a,ha,direction,t);let (pb,ob)=sample(b,hb,-direction,1.-t);let offset=oa+ob;let mut p=std::array::from_fn::<_,3,_>(|i|lerp(pa[i],pb[i],t));p[0]+=offset.x;p[2]+=offset.y;
+        if let Some(cut)=crossing(a,b) {let factor=if t<cut {(cut-t)/cut}else{(t-cut)/(1.-cut)};let raw_a=point(a[0] as f32*2.-4.,ha,a[1] as f32*2.-4.);let raw_b=point(b[0] as f32*2.-4.,hb,b[1] as f32*2.-4.);for axis in [0,2] {let raw=lerp(raw_a[axis],raw_b[axis],t);p[axis]=lerp(raw,p[axis],factor);}}p
     };
     for iz in 0..4 { for ix in 0..4 {
         let cell=(iz+1)*6+ix+1;let h=&heights[cell*4..cell*4+4];
-        let corners=[corner(ix,iz,h[0]),corner(ix+1,iz,h[1]),corner(ix+1,iz+1,h[2]),corner(ix,iz+1,h[3])];
+        let corners=[joint(ix,iz,h[0]),joint(ix+1,iz,h[1]),joint(ix+1,iz+1,h[2]),joint(ix,iz+1,h[3])];
         let edges=[(cell-6,0,1,3,2,[0.,-1.]),(cell+1,1,2,0,3,[1.,0.]),(cell+6,2,3,1,0,[0.,1.]),(cell-1,3,0,2,1,[-1.,0.])];
         let top=|u:f32,v:f32| {
-            let p=std::array::from_fn(|axis|lerp(lerp(corners[0][axis],corners[1][axis],u),lerp(corners[3][axis],corners[2][axis],u),v));let mut shade:f32=0.;let mut rim:f32=0.;
+            let north=boundary([ix,iz],h[0],[ix+1,iz],h[1],u);let south=boundary([ix,iz+1],h[3],[ix+1,iz+1],h[2],u);let west=boundary([ix,iz],h[0],[ix,iz+1],h[3],v);let east=boundary([ix+1,iz],h[1],[ix+1,iz+1],h[2],v);
+            let p=std::array::from_fn(|axis|lerp(north[axis],south[axis],v)+lerp(west[axis],east[axis],u)-lerp(lerp(corners[0][axis],corners[1][axis],u),lerp(corners[3][axis],corners[2][axis],u),v));let mut shade:f32=0.;let mut rim:f32=0.;
             for (j,(neighbor,a,b,na,nb,_)) in edges.iter().enumerate() {
                 let t=[u,v,1.-u,1.-v][j];let distance=[v,1.-u,1.-v,u][j]*2.;let nh=&heights[neighbor*4..neighbor*4+4];let delta=lerp(nh[*na],nh[*nb],t)-lerp(h[*a],h[*b],t);let weight=(-distance*4.).exp()*0.5;
                 shade=shade.max(delta.max(0.)*weight);rim=rim.max((-delta).max(0.)*weight);
             }
             (p,[shade.min(1.),rim.min(1.)])
         };
-        for vz in 0..4 { for vx in 0..4 {
-            let u=vx as f32/4.;let v=vz as f32/4.;let d=0.25;let p=[top(u,v),top(u,v+d),top(u+d,v+d),top(u+d,v)];
-            triangle([p[0].0,p[1].0,p[2].0],[p[0].1,p[1].1,p[2].1],true);triangle([p[0].0,p[2].0,p[3].0],[p[0].1,p[2].1,p[3].1],true);
-        }}
+        let vertices=[[ix,iz],[ix+1,iz],[ix+1,iz+1],[ix,iz+1]];let cuts=[crossing(vertices[0],vertices[1]),crossing(vertices[1],vertices[2]),crossing(vertices[2],vertices[3]),crossing(vertices[3],vertices[0])];
+        let mut top_triangle=|params:[[f32;2];3]| {
+            let mut polygon=Vec::with_capacity(5);for i in 0..3 {let a=params[i];let b=params[(i+1)%3];polygon.push(top(a[0],a[1]));
+                let cut=if a[1]==0.&&b[1]==0. {cuts[0].map(|t|[t,0.])}else if a[0]==1.&&b[0]==1. {cuts[1].map(|t|[1.,t])}else if a[1]==1.&&b[1]==1. {cuts[2].map(|t|[1.-t,1.])}else if a[0]==0.&&b[0]==0. {cuts[3].map(|t|[0.,1.-t])}else{None};
+                if let Some(p)=cut {let axis=if a[0]==b[0] {1}else{0};if p[axis]>a[axis].min(b[axis])+1e-6&&p[axis]<a[axis].max(b[axis])-1e-6 {polygon.push(top(p[0],p[1]));}}
+            }
+            if polygon.len()==3 {triangle([polygon[0].0,polygon[1].0,polygon[2].0],[polygon[0].1,polygon[1].1,polygon[2].1],true);}else{let center=top(params.iter().map(|p|p[0]).sum::<f32>()/3.,params.iter().map(|p|p[1]).sum::<f32>()/3.);for i in 0..polygon.len() {let next=(i+1)%polygon.len();triangle([center.0,polygon[i].0,polygon[next].0],[center.1,polygon[i].1,polygon[next].1],true);}}
+        };
+        for vz in 0..4 {for vx in 0..4 {let u=vx as f32/4.;let v=vz as f32/4.;let d=0.25;top_triangle([[u,v],[u,v+d],[u+d,v+d]]);top_triangle([[u,v],[u+d,v+d],[u+d,v]]);}}
         for (neighbor,a,b,na,nb,outward) in edges {
             let nh=&heights[neighbor*4..neighbor*4+4];if h[a]<=nh[na] && h[b]<=nh[nb] { continue; }
-            let vertices=[[ix,iz],[ix+1,iz],[ix+1,iz+1],[ix,iz+1]];let bottom_a=corner(vertices[a][0],vertices[a][1],nh[na]);let bottom_b=corner(vertices[b][0],vertices[b][1],nh[nb]);
+            let da=h[a]-nh[na];let db=h[b]-nh[nb];let first=if da<=0. {da/(da-db)}else{0.};let last=if db<=0. {da/(da-db)}else{1.};
             let side=|t:f32,depth:f32| {
                 let upper=lerp(h[a],h[b],t);let lower=lerp(nh[na],nh[nb],t).min(upper);let y=lerp(upper,lower,depth);
-                let upper_point=std::array::from_fn::<_,3,_>(|axis|lerp(corners[a][axis],corners[b][axis],t));let lower_point=std::array::from_fn::<_,3,_>(|axis|lerp(bottom_a[axis],bottom_b[axis],t));let px=upper_point[0];let pz=upper_point[2];
+                let upper_point=boundary(vertices[a],h[a],vertices[b],h[b],t);let px=upper_point[0];let pz=upper_point[2];
                 let bulge=(std::f32::consts::PI*t).sin()*(std::f32::consts::PI*depth).sin()*(0.12+0.07*((px+origin[0])*2.1+(pz+origin[1])*0.8+y*3.7).sin());
-                let mut p=std::array::from_fn::<_,3,_>(|axis|lerp(upper_point[axis],lower_point[axis],depth));p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,upper-y])
+                let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,upper-y])
+            };
+            // MiYu: common height subdivisions weld vertical corners between different cliff levels.
+            let depths=|upper:f32,lower:f32| {let mut cuts=Vec::new();if (upper-lower).abs()>0.001 {for level in (upper.min(lower)*4.).floor() as i32..=(upper.max(lower)*4.).ceil() as i32 {let d=(upper-level as f32/4.)/(upper-lower);if d>0.&&d<1. {cuts.push(d);}}cuts.sort_by(f32::total_cmp);}cuts};let ca=depths(h[a],nh[na]);let cb=depths(h[b],nh[nb]);
+            let mut side_triangle=|params:[[f32;2];3]| {let mut polygon=Vec::new();for i in 0..3 {let a=params[i];let b=params[(i+1)%3];polygon.push(side(a[0],a[1]));if a[0]==b[0]&&(a[0]==0.||a[0]==1.) {let cuts=if a[0]==0. {&ca}else{&cb};let mut extra:Vec<_>=cuts.iter().copied().filter(|d|*d>a[1].min(b[1])+1e-6&&*d<a[1].max(b[1])-1e-6).collect();if a[1]>b[1] {extra.reverse();}for d in extra {polygon.push(side(a[0],d));}}}
+                if polygon.len()==3 {triangle([polygon[0].0,polygon[1].0,polygon[2].0],[polygon[0].1,polygon[1].1,polygon[2].1],false);}else{let center=side(params.iter().map(|p|p[0]).sum::<f32>()/3.,params.iter().map(|p|p[1]).sum::<f32>()/3.);for i in 0..polygon.len() {let next=(i+1)%polygon.len();triangle([center.0,polygon[i].0,polygon[next].0],[center.1,polygon[i].1,polygon[next].1],false);}}
             };
             for along in 0..4 { for band in 0..4 {
-                let t=along as f32/4.;let d=band as f32/4.;let p=[side(t,d),side(t+0.25,d),side(t+0.25,d+0.25),side(t,d+0.25)];
-                triangle([p[0].0,p[1].0,p[2].0],[p[0].1,p[1].1,p[2].1],false);triangle([p[0].0,p[2].0,p[3].0],[p[0].1,p[2].1,p[3].1],false);
+                let t=(along as f32/4.).max(first);let end=((along+1) as f32/4.).min(last);if t>=end {continue;}let d=band as f32/4.;side_triangle([[t,d],[end,d],[end,d+0.25]]);side_triangle([[t,d],[end,d+0.25],[t,d+0.25]]);
             }}
         }
     }}
@@ -102,7 +128,7 @@ mod tests {
         let key=|x:u32| {let mut payload=format!("terrain4h:{x}3{}","0000".repeat(36));for _z in 0..7 {for vx in 0..7 {let world_x=x as i32*8-34+vx*2;payload.push_str(&format!("{:02x}",128+world_x/2));}}payload};
         let left=terrain_mesh(&key(3)).unwrap();let right=terrain_mesh(&key(4)).unwrap();
         for p in &left.positions {assert!((p[1]-(p[0]-4.)/32.).abs()<0.00001);}
-        for a in left.positions.iter().filter(|p|p[0]>3.8) {assert!(right.positions.iter().any(|b|(a[0]-b[0]-8.).abs()<0.00001&&(a[1]-b[1]).abs()<0.00001&&(a[2]-b[2]).abs()<0.00001));}
+        for a in left.positions.iter().filter(|p|p[0]>3.8&&(p[1]==0.||p[1]==2.)) {assert!(right.positions.iter().any(|b|(a[0]-b[0]-8.).abs()<0.00001&&(a[1]-b[1]).abs()<0.00001&&(a[2]-b[2]).abs()<0.00001));}
         assert!(left.normals.iter().all(|n|n[1]>0.99&&n[0]< -0.02));
         let flat=terrain_mesh(&format!("terrain4h:00{}{}","0000".repeat(36),"88".repeat(49))).unwrap();assert!(flat.positions.iter().all(|p|p[1]==0.5));
         assert!(terrain_mesh(&format!("terrain4h:00{}{}","0000".repeat(36),"ff".repeat(49))).is_err());
@@ -117,15 +143,31 @@ mod tests {
         for a in edge {assert!(next.positions.iter().any(|b|(a[0]-b[0]-8.).abs()<0.00001&&(a[2]-b[2]).abs()<0.00001));}
         let stripe:String=(0..36).map(|i|if i/6==2||i/6==3 {"2222"} else {"0000"}).collect();
         let left=terrain_mesh(&format!("terrain4r:00{stripe}")).unwrap();let right=terrain_mesh(&format!("terrain4r:10{stripe}")).unwrap();
-        for a in left.positions.iter().filter(|p|p[0]>3.8) {assert!(right.positions.iter().any(|b|(a[0]-b[0]-8.).abs()<0.00001&&(a[1]-b[1]).abs()<0.00001&&(a[2]-b[2]).abs()<0.00001),"cliff contours weld across patches");}
+        for a in left.positions.iter().filter(|p|p[0]>3.8&&(p[1]==0.||p[1]==2.)) {assert!(right.positions.iter().any(|b|(a[0]-b[0]-8.).abs()<0.00001&&(a[1]-b[1]).abs()<0.00001&&(a[2]-b[2]).abs()<0.00001),"cliff contours weld across patches");}
         let mut h=vec!['0';144];for i in 0..4 {h[(2*6+2)*4+i]='2';}
         let cliff=terrain_mesh(&format!("terrain4r:00{}",h.into_iter().collect::<String>())).unwrap();
-        assert_eq!(cliff.indices.len(),1920);assert!(cliff.normals.iter().any(|n|n[1].abs()<0.2));
+        assert!(cliff.indices.len()>1536&&cliff.indices.len()<4096);assert!(cliff.normals.iter().any(|n|n[1].abs()<0.2));
         assert!(cliff.positions.iter().zip(&cliff.uvs).any(|(p,uv)|p[1]==0. && uv[0]>0.9),"lower shelf receives contact shade");
         assert!(cliff.positions.iter().zip(&cliff.uvs).any(|(p,uv)|p[1]==2. && uv[1]>0.9),"upper shelf receives exposed rim weight");
         assert!(cliff.uvs.iter().any(|uv|uv[1]>1.5));assert!(cliff.positions.iter().flatten().all(|v|v.is_finite()));
         for key in ["terrain4r:00","terrain4r:80", "terrain4r:gg"] {assert!(terrain_mesh(key).is_err());}
         assert!(terrain_mesh(&format!("terrain4r:80{}","0000".repeat(36))).is_err());
+    }
+    #[test]
+    fn all_corner_patterns_are_watertight_across_four_patches() {
+        use std::collections::BTreeMap;
+        for ramp in 0..=3 {for mask in 0..16 {
+            let mut edges=BTreeMap::<([i32;3],[i32;3]),u32>::new();let mut points=Vec::new();
+            for cz in 3..=4 {for cx in 3..=4 {
+                let mut key=format!("terrain4h:{cx}{cz}");for dz in -1..=4 {for dx in -1..=4 {let x=cx*4+dx;let z=cz*4+dz;let quadrant=match (x>=16,z>=16) {(false,false)=>0,(true,false)=>1,(true,true)=>2,(false,true)=>3};for [vx,_vz] in [[x,z],[x+1,z],[x+1,z+1],[x,z+1]] {let h=if mask&(1<<quadrant)!=0 {2}else{0};let rise=if ramp==0 {0}else if ramp>=2&&z>=16 {let rise=if ramp==3 {1}else{2};rise-(vx-16).clamp(0,1)*rise}else{(vx-16).clamp(0,1)*2};key.push(char::from_digit((h+rise) as u32,16).unwrap());}}}key.push_str(&"80".repeat(49));
+                let mesh=terrain_mesh(&key).unwrap();assert!(mesh.normals.iter().flatten().all(|v|v.is_finite()));assert_eq!(mesh.positions.len(),mesh.normals.len());
+                let world:Vec<_>=mesh.positions.iter().map(|p|[p[0]+(cx*8-28) as f32,p[1],p[2]+(cz*8-28) as f32]).collect();points.extend(world.iter().copied());
+                for triangle in mesh.indices.chunks_exact(3) {for i in 0..3 {let a=world[triangle[i] as usize].map(|v|(v*10000.).round() as i32);let b=world[triangle[(i+1)%3] as usize].map(|v|(v*10000.).round() as i32);if a!=b {*edges.entry(if a<b {(a,b)}else{(b,a)}).or_default()+=1;}}}
+            }}
+            for ((a,b),count) in edges {if count==1 {assert!([a,b].iter().all(|p|p[0].abs()>72500||p[2].abs()>72500),"unclosed interior edge for corner mask {mask}: {a:?} -> {b:?}");}}
+            if mask==4&&ramp<2 {let inset=0.3/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"convex corner uses the shared curved joint");}
+            if mask==11&&ramp<2 {let inset= -0.3/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"concave corner uses the shared curved joint");}
+        }}
     }
     #[test]
     fn bounded_patch_has_upward_tops_and_outward_cliffs() {

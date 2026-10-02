@@ -205,7 +205,7 @@ node scripts/qa-frostbound.mjs
 
 ### 分层 3D 地块
 
-地形使用共享顶点的连续起伏与分层 3D 地块，包含可编辑丘陵、凹地、高地收边、岩壁起伏、土层顶沿和崖脚阴影。抬高、降低、平滑、平台笔刷及验证见 [连续地表](../../docs/designs/frostbound-realms/terrain-sculpt.md)。几何与编辑、登坡验证见 [分层地块](../../docs/designs/frostbound-realms/terrain-tiles.md)。
+地形使用共享顶点的连续起伏与分层 3D 地块，包含可编辑丘陵、凹地、高地收边、岩壁起伏、土层顶沿和崖脚阴影。抬高、降低、平滑、平台笔刷及验证见 [连续地表](../../docs/designs/frostbound-realms/terrain-sculpt.md)。凸角与凹角的连续轮廓见 [悬崖转角](../../docs/designs/frostbound-realms/terrain-corners.md)。几何与编辑、登坡验证见 [分层地块](../../docs/designs/frostbound-realms/terrain-tiles.md)。
 
 ### 默认对战开局
 
