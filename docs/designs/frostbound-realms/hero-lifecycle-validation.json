@@ -1,0 +1,63 @@
+{
+  "checkedAt": "2026-10-02T07:32:05.093197+00:00",
+  "scope": "Altar hero recruitment/revival and three shortcuts; full Warcraft III recreation remains incomplete",
+  "nodeRulesAndRealTcp": {
+    "passed": true,
+    "commands": [
+      "node scripts/test-frost-hero-lifecycle.mjs",
+      "node scripts/test-frostbound.mjs"
+    ],
+    "tcpTimers": "Controlled authoritative timers; native UI exercises full durations",
+    "logSha256": "1e3049b0b5de16a34006151011cf095538be9c04a272d995ea3b978e05ca20df"
+  },
+  "nativeQuickJs": {
+    "passed": 4,
+    "failed": 0,
+    "command": "cargo test -p mengine-editor-host --test frost_sample"
+  },
+  "nativeEditor": {
+    "passed": true,
+    "scope": "Native Release editor, actual UI input and rendering; controlled tier-3 altar arena",
+    "physicalInput": false,
+    "executable": "D:/MEngineNativeQA/pose-runtime/mengine-editor-tauri.exe",
+    "sourceScriptSha256": "96817c5b3813ea2c2a091f10efcc70754683e3fb918bc211f5095c39dbf4cce9",
+    "startedAt": "2026-10-02T07:16:21.868Z",
+    "thirdHeroShortcut": true,
+    "recruitmentAndSave": true,
+    "heroShortcutAndCycling": true,
+    "learnAndPurchase": true,
+    "realEnemyKill": true,
+    "noHeroCorpse": true,
+    "retainedItemsAndSkills": true,
+    "revivalAndSave": true,
+    "sameHeroId": 26,
+    "shaderRejections": 0,
+    "finishedAt": "2026-10-02T07:18:31.363Z",
+    "executableSha256": "a8f19fdedcc808c6a2e9030f16583cea0f379e84ad1d5a3e54419b1c2bf2e02b"
+  },
+  "releasePlayer": {
+    "contentHash": "96aca54725b897bde56c5e1b7d281de6a1cdc565105e70c807ccd9c92f201755",
+    "windowTitle": "Frostbound Realms",
+    "responding": true,
+    "audioListening": false,
+    "shutdown": "Only this smoke-check process was stopped",
+    "elapsedSeconds": 30,
+    "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+    "alive": true,
+    "packageValidationPassed": true,
+    "startedAt": "2026-10-02T15:25:02.1340527+08:00",
+    "processId": 155112,
+    "packagedFiles": 715,
+    "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+    "checkedAt": "2026-10-02T15:25:32.2060266+08:00",
+    "physicalInput": false,
+    "loggedErrors": 0
+  },
+  "remaining": [
+    "Original faction hero rosters and abilities",
+    "Default melee opening and first Town Portal Scroll",
+    "Tavern revival",
+    "Physical input, audio and cross-machine LAN acceptance",
+    "Original campaigns, Dota and classic TD map/content fidelity"
+  ]
+}

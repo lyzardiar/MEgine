@@ -26,9 +26,9 @@ function kill(s,kind='soldier',extra={}){const u=S.spawn(s,'rifleman',0,0,0,{dam
  s.visible[0][S.index(0,1)]=1;s.corpses[0].inventory=[0];const view=S.publicState(s,0);assert.equal(view.corpses.length,S.CORPSE_LIMIT);assert.equal(view.corpses[0].inventory,undefined);view.corpses[0].age=19;assert.notEqual(view.corpses[0].age,s.corpses[0].age);
 }
 {
- const s=arena('moba'),{v,c}=kill(s,'hero');assert.ok(c&&v.respawn>0);const copy=S.restore(s);step(copy,141);assert.ok(copy.units.find(u=>u.id===v.id).hp>0);assert.ok(!copy.corpses.some(c=>c.id===v.id),'reviving hero removes old body');
+ const s=arena('moba'),{v,c}=kill(s,'hero');assert.ok(!c&&v.respawn>0);const copy=S.restore(s);step(copy,141);assert.ok(copy.units.find(u=>u.id===v.id).hp>0);assert.ok(!copy.corpses.some(c=>c.id===v.id),'reviving hero removes old body');
 }
-for(const kind of Object.keys(S.types).filter(k=>S.types[k].speed&&S.types[k].attack!=='siege')){
+for(const kind of Object.keys(S.types).filter(k=>S.types[k].speed&&S.types[k].attack!=='siege'&&k!=='hero')){
  for(const heroClass of kind==='hero'?[0,1,2,3]:[0]){const s=arena(),{c}=kill(s,kind,{heroClass});assert.ok(c,kind);for(let faction=0;faction<4;faction++){s.teams[1].faction=faction;assert.ok(V.corpse(s,c),kind+' faction '+faction+' has an authored death clip');}S.restore(s);if(S.types[kind].flying)assert.ok(V.corpse(s,{...c,age:4}).y<=.01,'flying body reaches ground');}
 }
 for(const kind of ['ballista','catapult','trebuchet','ram']){const s=arena();assert.equal(kill(s,kind).c,undefined,'siege engine does not create a biological corpse');}

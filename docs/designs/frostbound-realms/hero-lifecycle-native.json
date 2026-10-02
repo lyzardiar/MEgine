@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "scope": "Native Release editor, actual UI input and rendering; controlled tier-3 altar arena",
+  "physicalInput": false,
+  "executable": "D:/MEngineNativeQA/pose-runtime/mengine-editor-tauri.exe",
+  "sourceScriptSha256": "96817c5b3813ea2c2a091f10efcc70754683e3fb918bc211f5095c39dbf4cce9",
+  "startedAt": "2026-10-02T07:16:21.868Z",
+  "thirdHeroShortcut": true,
+  "recruitmentAndSave": true,
+  "heroShortcutAndCycling": true,
+  "learnAndPurchase": true,
+  "realEnemyKill": true,
+  "noHeroCorpse": true,
+  "retainedItemsAndSkills": true,
+  "revivalAndSave": true,
+  "sameHeroId": 26,
+  "shaderRejections": 0,
+  "finishedAt": "2026-10-02T07:18:31.363Z",
+  "executableSha256": "a8f19fdedcc808c6a2e9030f16583cea0f379e84ad1d5a3e54419b1c2bf2e02b"
+}
