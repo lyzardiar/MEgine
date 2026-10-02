@@ -15,7 +15,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
   function join(c,r,p){leave(c);p.client=c;p.expires=0;c.room=r;c.player=p;c.lastSeq=0;send(c,{type:'joined',team:p.team,token:p.token,code:r.code,state:r.state?view(r,p):null});publish(r);}
   function handle(c,m){
     if(!m||typeof m!=='object'||Array.isArray(m))return fail(c,'Invalid message');
-    if(m.type==='hello'){if(m.protocol!==21)return fail(c,'Protocol version mismatch');c.hello=true;c.name=String(m.name||'Commander').replace(/[\r\n]/g,'').slice(0,20);return send(c,{type:'welcome',protocol:21});}
+    if(m.type==='hello'){if(m.protocol!==22)return fail(c,'Protocol version mismatch');c.hello=true;c.name=String(m.name||'Commander').replace(/[\r\n]/g,'').slice(0,20);return send(c,{type:'welcome',protocol:22});}
     if(!c.hello)return fail(c,'Handshake required');
     if(m.type==='ping')return send(c,{type:'pong',nonce:typeof m.nonce==='number'?m.nonce:0});
     if(m.type==='list')return send(c,{type:'rooms',rooms:[...rooms.values()].map(roomInfo)});

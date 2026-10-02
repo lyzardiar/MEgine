@@ -32,7 +32,7 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
  assert.equal(S.command(s,0,{type:'cancelTrain',ids:[altar.id],index:0}),null);assert.equal(s.teams[0].gold,2000);assert.equal(h.hp,0);assert.equal(revive(h,other),null);
  other.hp=0;step(s,1);assert.ok(!s.units.includes(other));assert.equal(revive(h),null,'another altar can resume a hero after the original altar is destroyed');
  const restored=S.restore(s);step(s,1101);step(restored,1101);const copy=restored.units.find(u=>u.id===h.id);
- assert.equal(h.hp,h.maxHp);assert.ok(h.mana>=100&&h.mana<101);assert.equal(h.level,4);assert.equal(h.xp,70);assert.deepEqual(h.skills,[1,0,0,0]);assert.equal(h.skillPoints,3);assert.deepEqual(h.inventory,[0]);assert.equal(h.slow,0);assert.equal(h.spell[0],0);assert.equal(h.itemCooldown,0);assert.deepEqual(copy.inventory,h.inventory);assert.equal(copy.id,h.id);assert.equal(S.population(s,0).used,5);
+ assert.equal(h.hp,h.maxHp);assert.ok(h.mana>=100&&h.mana<101);assert.equal(h.level,4);assert.equal(h.xp,70);assert.deepEqual(h.skills,[1,0,0,0]);assert.equal(h.skillPoints,3);assert.deepEqual(h.inventory,[8,0]);assert.equal(h.slow,0);assert.equal(h.spell[0],0);assert.equal(h.itemCooldown,0);assert.deepEqual(copy.inventory,h.inventory);assert.equal(copy.id,h.id);assert.equal(S.population(s,0).used,5);
 }
 {
  const {s,altar,train}=arena();assert.equal(train(0),null);const old=S.clone(s);delete old.heroLifecycleVersion;delete old.units.find(u=>u.id===altar.id).queue[0].heroClass;delete old.units.find(u=>u.id===altar.id).queue[0].paidGold;delete old.units.find(u=>u.id===altar.id).queue[0].paidWood;old.units.find(u=>u.id===altar.id).queue[0].left=10;

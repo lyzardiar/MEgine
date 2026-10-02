@@ -6,7 +6,7 @@ Default skirmishes start with 500 gold and 150 lumber. Kingdom, Warclan and Wild
 
 Completed halls provide 12/10/10/10 food by faction, supply buildings provide 6/10/10/10, and the melee cap is 100. Other game modes keep their existing opening resources and supply. Maps serialize `startingWood`, clamped to 0–2000; missing values default to 150 in melee and 250 in other modes. Save restoration retains team treasuries and active worker/production orders.
 
-The AI searches legal sites for its altar, supply building and barracks, assigns gold miners and lumber workers, and recruits the selected hero class first. Four-faction default-map tests exercise the opening without adding battle actors or increasing resources. Combat tests declare their authored units and lumber budgets using `scripts/frost-battle-fixture.mjs`; this helper never replaces `Frost.create` globally. The client and server require protocol 21.
+The AI searches legal sites for its altar, supply building and barracks, assigns gold miners and lumber workers, and recruits the selected hero class first. Four-faction default-map tests exercise the opening without adding battle actors or increasing resources. Combat tests declare their authored units and lumber budgets using `scripts/frost-battle-fixture.mjs`; this helper never replaces `Frost.create` globally. The client and server require protocol 22.
 
 ## References
 
@@ -15,7 +15,7 @@ The AI searches legal sites for its altar, supply building and barracks, assigns
 
 ## Scope still required for the full recreation
 
-Town Portal Scrolls and their channels, Night Elf entangled mines, original faction-specific worker statistics and building costs/times, the full original hero roster, campaigns and complete classic TD/Dota maps remain unfinished. The faction and hero names currently use the sample roster. The existing terrain, foliage and building assets are real 3D meshes, but their visual fidelity still varies by asset. This stage completes the default opening described above; the full Warcraft III recreation remains active.
+Night Elf entangled mines, original faction-specific worker statistics and building costs/times, the full original hero roster, campaigns and complete classic TD/Dota maps remain unfinished. The faction and hero names currently use the sample roster. The existing terrain, foliage and building assets are real 3D meshes, but their visual fidelity still varies by asset. This stage completes the default opening described above; the full Warcraft III recreation remains active.
 
 ## Validation
 

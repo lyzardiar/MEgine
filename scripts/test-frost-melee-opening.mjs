@@ -14,7 +14,7 @@ for(let faction=0;faction<4;faction++){
  const worker=workers[0];assert.equal(S.command(s,0,{type:'build',ids:[worker.id],kind:'altar',x:-14,z:16}),null);step(s,250);
  const altar=own().find(u=>u.kind==='altar');assert.ok(altar);assert.equal(altar.built,1);assert.equal(own().filter(u=>u.kind==='worker').length,workers.length);
  const gold=s.teams[0].gold,wood=s.teams[0].wood;assert.equal(S.command(s,0,{type:'train',ids:[altar.id],kind:'hero',heroClass:2}),null);assert.equal(s.teams[0].gold,gold);assert.equal(s.teams[0].wood,wood);assert.equal(altar.queue[0].left,55);
- const restored=S.restore(s);step(s,551);step(restored,551);assert.deepEqual(restored,s);assert.equal(S.heroRoster(s,0).length,1);assert.equal(S.heroRoster(s,0)[0].heroClass,2);
+ const restored=S.restore(s);step(s,551);step(restored,551);assert.deepEqual(restored,s);assert.equal(S.heroRoster(s,0).length,1);assert.equal(S.heroRoster(s,0)[0].heroClass,2);assert.deepEqual(S.heroRoster(s,0)[0].inventory,[8]);
  const ai=S.create('skirmish',{factions:[faction,0],heroes:[2,0],ai:[true,false]});step(ai,2000);const army=ai.units.filter(u=>u.team===0);
  for(const kind of ['altar','farm','barracks','hero'])assert.ok(army.some(u=>u.kind===kind&&u.built===1),'AI opening '+faction+' '+kind);
  assert.equal(army.find(u=>u.kind==='hero').heroClass,2);assert.ok(army.some(u=>S.armies[faction].units.includes(u.kind)));assert.ok(ai.resources.some((r,i)=>r.kind==='mine'&&r.amount<ai.map.props[i].amount));assert.ok(ai.resources.some((r,i)=>r.kind==='tree'&&r.amount<ai.map.props[i].amount));

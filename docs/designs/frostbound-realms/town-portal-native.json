@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "scope": "Native Release UI and rendering in an explicit altar/army/attacker practice arena; real recruitment and full channel durations",
+  "physicalInput": false,
+  "executable": "D:/MEngineNativeQA/pose-runtime/mengine-editor-tauri.exe",
+  "executableSha256": "a8f19fdedcc808c6a2e9030f16583cea0f379e84ad1d5a3e54419b1c2bf2e02b",
+  "sourceScriptSha256": "c53d2b14404b34b4e72cf9a03bf5880889fd7406871919d659a4d7987aea3916",
+  "startedAt": "2026-10-02T10:57:27.316Z",
+  "firstAltarScroll": true,
+  "minimapTargeting": true,
+  "worldTargeting": true,
+  "invulnerableHero": true,
+  "survivorsOnly": true,
+  "busyWorkerLeftBehind": true,
+  "actionLock": true,
+  "savedChannel": true,
+  "repurchaseAndDoubleClick": true,
+  "stopCancellation": true,
+  "shaderRejections": 0,
+  "finishedAt": "2026-10-02T10:58:58.043Z"
+}

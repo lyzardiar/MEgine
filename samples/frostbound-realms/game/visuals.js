@@ -30,6 +30,7 @@ var FrostVisual=(()=>{
     if(u.kind==='shaman')return !walking&&!u.stun&&u.castLeft>0?1-u.castLeft/.8:null;
     if(u.kind==='necromancer')return !walking&&!u.stun&&(u.castLeft>0||u.raiseDeadCd>Frost.raiseDead.cooldown-.8)?u.castLeft>0?1-u.castLeft/.8:(Frost.raiseDead.cooldown-u.raiseDeadCd)/.8:null;
     if(u.kind!=='hero'||walking||u.stun||!asset.animations?.some(a=>a.name==='Cast'))return null;
+    if(Frost.portalLeft(u)>0)return Math.min(.65,(Frost.townPortal.time-Frost.portalLeft(u))/.8*.65);
     const elapsed=Math.min(...Frost.unitType(u).spells.map((s,i)=>u.spell?.[i]>0?s.cooldown-u.spell[i]:Infinity));
     return elapsed>=0&&elapsed<.8?(asset.loadedModel?asset.attackEvent+(1-asset.attackEvent)*elapsed/.8:elapsed/.8):null;
   }

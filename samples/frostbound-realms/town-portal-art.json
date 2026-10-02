@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "author": "MiYu",
+  "source": "Built-in image_gen",
+  "kind": "AI-generated original raster icon",
+  "prompt": "Use case: stylized-concept. Asset type: single square inventory icon for a realistic medieval fantasy RTS game, viewed at 48x48 pixels. Primary request: depict one recognizable aged parchment Town Portal Scroll, unrolled diagonally with curled wooden rollers, a bright cobalt blue magical portal sigil on the parchment and restrained cyan glow. Rich hand-painted game icon, convincing three-dimensional parchment and carved wood, fine worn material texture, strong readable silhouette, cinematic directional lighting. The scroll fills approximately 80 percent of the square. Backdrop: very dark charcoal blue with subtle vignette, opaque full square. No frame, no border, no letters, no words, no numbers, no watermark, no other objects, no UI mockup. Deliver only the icon.",
+  "generated": [
+    {
+      "path": "Assets/Art/town-portal-scroll.png",
+      "sha256": "958a45814cec10a0e751fbccd2ede2cbb6c714aa1ba5b34ae83f059e62b45737"
+    }
+  ],
+  "reproducibility": "The checked-in image and prompt preserve the exact delivered asset; generation itself is nondeterministic."
+}
