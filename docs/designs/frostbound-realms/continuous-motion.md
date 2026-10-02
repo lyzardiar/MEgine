@@ -12,7 +12,7 @@ Standalone native component observations compare the client from `71076ce` with 
 
 Separate Player measurements without per-frame scene observation were 53.013 / 48.662 / 51.519 FPS before the movement change and 51.092 / 49.158 / 50.135 FPS after it, at the same resolution. These short runs support continuous movement at approximately the same frame rate, not an FPS improvement or whole-match performance guarantee. Physical display presentation, mouse operation and audio listening are not measured by these fixtures.
 
-Evidence: `continuous-motion-before-player.json`, `native-player-performance-skirmish.json`, `native-player-motion-before-skirmish.json`, `native-player-motion-skirmish.json`, `native-classic-hud-qa.json` and `player-smoke.json`. Raw native motion traces and logs remain in the isolated directories recorded by the motion reports.
+Evidence: `continuous-motion-before-player.json`, `continuous-motion-after-player.json`, `native-player-motion-before-skirmish.json`, `native-player-motion-skirmish.json`, `native-classic-hud-qa.json` and `player-smoke.json`. Raw native motion traces and logs remain in the isolated directories recorded by the motion reports.
 
 The Release package contains 715 hash-validated files. Content SHA-256: `a9ad634fec72c04904e9520aee142a9b22762687768274c240f7e49a3c2c10a5`.
 

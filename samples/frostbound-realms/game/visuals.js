@@ -54,15 +54,16 @@ var FrostVisual=(()=>{
     const frames=asset.animations[clip].frames,ground=Frost.elevation(state.map,c.x,c.z),fall=Frost.clamp(c.age/(frames/12),0,1),decay=Frost.clamp((c.age-(Frost.CORPSE_LIFETIME-4))/4,0,1);
     return {...visual,mesh:asset.parts[0].mesh+'#pose='+clip+':'+Math.min(frames-1,Math.floor(c.age*12)),y:ground+(c.y-ground)*(1-fall)-decay*Math.max(2,asset.size[1]*scale),yaw:c.yaw};
   }
-  function pose(u,asset,walking,time){
+  function pose(u,asset,walking,time,rate=12){
     if(!asset.animations?.length)return asset.parts[0].mesh;
-    const eat=asset.animations.findIndex(a=>a.name==='Cannibalize');if(Frost.feeding(u)&&eat>=0)return asset.parts[0].mesh+'#pose='+eat+':'+Math.floor((Frost.cannibalize.duration-Frost.feeding(u))*12)%asset.animations[eat].frames;
-    if(asset.workAnimation){const clip=asset.workClip??0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;}
+    const frames=clip=>asset.animations[clip].frames*rate/12,mesh=(clip,frame)=>asset.parts[0].mesh+'#pose='+clip+':'+Math.min(Math.ceil(frames(clip))-1,Math.floor(frame))+(rate===12?'':'@'+rate),loop=(clip,time)=>time*rate%frames(clip);
+    const eat=asset.animations.findIndex(a=>a.name==='Cannibalize');if(Frost.feeding(u)&&eat>=0)return mesh(eat,loop(eat,Frost.cannibalize.duration-Frost.feeding(u)));
+    if(asset.workAnimation){const clip=asset.workClip??0;return mesh(clip,loop(clip,time));}
     const cast=asset.animations.findIndex(a=>a.name===(['necromancer','shaman'].includes(u.kind)?'Staff_Attack':'Cast')),casting=castPhase(u,asset,walking);
-    if(cast>=0&&casting!==null)return asset.parts[0].mesh+'#pose='+cast+':'+Math.min(asset.animations[cast].frames-1,Math.floor(casting*asset.animations[cast].frames));
-    if(asset.attackEvent!==undefined){const clip=walking?1:u.cd>0&&!u.stun?2:0,frame=clip===2?Math.floor(attackPhase(u,asset)*asset.animations[clip].frames):Math.floor(time*12)%asset.animations[clip].frames;return asset.parts[0].mesh+'#pose='+clip+':'+frame;}
+    if(cast>=0&&casting!==null)return mesh(cast,casting*frames(cast));
+    if(asset.attackEvent!==undefined){const clip=walking?1:u.cd>0&&!u.stun?2:0,frame=clip===2?attackPhase(u,asset)*frames(clip):loop(clip,time);return mesh(clip,frame);}
     const attack=(u.cd>.25)&&(u.kind!=='worker'||[FrostArt.RealWorker,FrostArt.RealAcolyte].includes(asset)&&!['gather','build','construct','repair'].includes(u.order?.type)),desired=asset===FrostArt.Skeleton_Rogue?(attack?/^2H_Ranged_Shooting$/:walking?/^Walking_A$/:/^Idle$/):asset===FrostArt.Skeleton_Mage?(attack?/^Spellcast_Shoot$/:walking?/^Walking_A$/:/^Idle$/):Frost.types[u.kind].flying?(attack?/Dragon_Attack$/:/Dragon_Flying/):attack?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch|Headbutt/:walking?/^Run$|^Walk$|Fast_Flying/:/^Idle$|Flying_Idle/;
-    let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;
+    let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return mesh(clip,loop(clip,time));
   }
   function environment(key,height,yaw,far,width=Infinity){const asset=FrostArt[key];return {key,asset,mesh:asset.lods[far?1:0],scale:Math.min(height/asset.size[1],width/Math.max(asset.size[0],asset.size[2])),yaw};}
   function resource(r,zoom=27){const seed=(Math.imul(Math.round(r.x*100),73856093)^Math.imul(Math.round(r.z*100),19349663))>>>0,key=r.kind==='tree'?['RealSpruceA','RealSpruceB','RealSpruceC'][seed%3]:r.kind==='mine'?'RealRock07':'RealFirePit';return environment(key,r.kind==='tree'?4.7+(seed%12)/10:r.kind==='mine'?2.5:.65,seed%628/100,zoom>14,r.kind==='tree'?5:r.kind==='mine'?4.5:1.4);}

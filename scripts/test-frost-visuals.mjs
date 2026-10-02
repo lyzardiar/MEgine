@@ -174,6 +174,7 @@ for(let faction=0;faction<4;faction++){const state=S.create('skirmish',{factions
  unit.cd=S.unitType(unit).cooldown;assert.equal(V.pose(unit,asset,false,0),V.pose(unit,asset,false,100));assert.match(V.pose(unit,asset,false,0),/#pose=2:12$/);assert.match(V.pose({...unit,stun:1},asset,false,0),/#pose=0:/);
  assert.ok(V.corpse(state,{...unit,cd:0,x:0,z:0,y:0,age:1,yaw:0}).mesh.includes('#pose=3:'));assert.equal(S.projectileArt(unit),'shadow');
 }
+{const asset={parts:[{mesh:'odd.glb'}],animations:[{name:'Idle',frames:15},{name:'Walk',frames:15}]},u={kind:'hero',cd:0};assert.equal(V.pose(u,asset,true,.5,30),'odd.glb#pose=1:15@30');assert.equal(V.pose(u,asset,true,1.25,30),'odd.glb#pose=1:0@30','higher rates retain the original loop period');assert.equal(V.pose(u,asset,true,1.24,30),'odd.glb#pose=1:37@30');}
 console.log('PASS: four faction rosters, 34 building portraits, tier upgrades/save restore, footprints, animated monsters and skeletons, native unit portraits and pinned source/derived hashes');
 
 {

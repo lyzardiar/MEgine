@@ -1,0 +1,104 @@
+{
+  "validatedAt": "2026-10-02T06:11:11.812828+00:00",
+  "scope": "30 Hz world-body skeletal sampling; full Warcraft III recreation remains incomplete.",
+  "worldPoseSamplingHz": 30,
+  "portraitAndCorpsePoseSamplingHz": 12,
+  "combatTimers": "Authoritative simulation cadence unchanged",
+  "nodeRulesAndRealTcp": true,
+  "assetLibrary": {
+    "passed": 55,
+    "failed": 0
+  },
+  "characterGeometry": {
+    "passed": 3,
+    "failed": 0
+  },
+  "nativeQuickJs": {
+    "passed": 4,
+    "failed": 0
+  },
+  "runtimeMeshChecks": {
+    "passed": 5,
+    "failed": 0
+  },
+  "nativeEditor": {
+    "passed": true,
+    "scope": "Native Release editor, actual meshes and Agent input",
+    "physicalInput": false,
+    "before": false,
+    "executable": "D:/MEngineNativeQA/pose-runtime/mengine-editor-tauri.exe",
+    "executableSha256": "a8f19fdedcc808c6a2e9030f16583cea0f379e84ad1d5a3e54419b1c2bf2e02b",
+    "sourceScriptSha256": "659798a3e595efeb4cbdd2d4ece4896e9a68bdff78ac8d758cee391ee9d6c846",
+    "measuredAt": "2026-10-02T05:51:41.023Z",
+    "defaultRaisedCells": 104,
+    "visible3dTrees": 65,
+    "workerSelectionMovement": true,
+    "wildwoodMeshes": 3,
+    "profiler": {
+      "intervals": 164,
+      "averagePresentIntervalMs": 181.95914634117267,
+      "p95PresentIntervalMs": 271.5,
+      "presentedFps": 5.495739126655408,
+      "averageRequestMs": 169.07090909481047,
+      "averageRenderMs": 63.31577757575756,
+      "averageCommandMs": 96.23983939393948,
+      "averageUploadMs": 1.4933333339113177,
+      "averageSimulationMs": 17.76105853658536,
+      "averageSimulationRequestMs": 155.66829268597974
+    }
+  },
+  "nativePoseObservation": {
+    "baseline": false,
+    "samples": 396,
+    "movementChanges": 25,
+    "authorityChanges": 17,
+    "changesBetweenSimulationTicks": 8,
+    "pausedSamples": 14,
+    "pausedPosesEqual": true,
+    "walkingMeshChanges": 25,
+    "requestedPoseRate": 30,
+    "nativeComponentObservation": true
+  },
+  "playerMedianFps": {
+    "skirmish": {
+      "before": 51.14057665505696,
+      "after": 51.26184825030851
+    },
+    "moba": {
+      "before": 44.8667742106611,
+      "after": 43.73138845141272
+    },
+    "td": {
+      "before": 53.149841566855756,
+      "after": 54.15292085175726
+    }
+  },
+  "package": {
+    "contentHash": "c110f6ddd3f95e24d3716de0e74be4053e24bf1b3d6b25fb1618149469f8bd80",
+    "windowTitle": "Frostbound Realms",
+    "responding": true,
+    "audioListening": false,
+    "shutdown": "Only this smoke-check process was stopped",
+    "elapsedSeconds": 30,
+    "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+    "alive": true,
+    "packageValidationPassed": true,
+    "startedAt": "2026-10-02T14:02:52.6393849+08:00",
+    "processId": 87016,
+    "packagedFiles": 715,
+    "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+    "checkedAt": "2026-10-02T14:03:22.6762535+08:00",
+    "physicalInput": false,
+    "loggedErrors": 0
+  },
+  "sourceSha256": {
+    "crates/mengine-assets/src/gltf_pose.rs": "9520699a5176b4d8188c5a60a5c184ce640ccac9cb249c680b8de4db54e26988",
+    "crates/mengine-assets/src/lib.rs": "b5e033f66f6f60de33b71f3697193897845aa170e6d4fc8214021665077e90d0",
+    "crates/mengine-runtime/src/meshes.rs": "480bf2588755cfa7717a62278cc830ea0ed85958aae760c49dbbc98be7a7fb12",
+    "crates/mengine-runtime/src/main.rs": "9c65cb9114c2bf5c35ec864fa28cb311d26c4eac84599e88228da3541a83d2a5",
+    "samples/frostbound-realms/game/visuals.js": "ea8e37bfc90db511e5fa60d9c70903b51171493f8bd2561e0429d6d1515a6989",
+    "samples/frostbound-realms/game/client.js": "ca081fb0dcbec80dc267689f547d3dcdb7aa6fdf9a7fcd1728743321b2588254",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "659798a3e595efeb4cbdd2d4ece4896e9a68bdff78ac8d758cee391ee9d6c846"
+  },
+  "mainEditor": "Existing process 84940 preserved; final native editor acceptance uses isolated executable recorded in nativeEditor."
+}

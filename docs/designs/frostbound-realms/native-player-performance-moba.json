@@ -6,24 +6,24 @@
   "audioListening": false,
   "fixture": "Isolated source project; scripted F2, two Home presses, centered pointer; game rules and assets unchanged.",
   "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\target\\release\\mengine-runtime.exe",
-  "executableSha256": "4f925b9bd5796415af74d2b24ddf27059fd6aac9fd202825fff173e78fbb435a",
+  "executableSha256": "c8b089150a2ca475c3903c8a46602e693951650aa804195e4735ef9ceac44311",
   "sourceSceneSha256": "c36c0b33307d52668e32f160f9f06208bc46b81d767ee8e4e6703a6245d640f2",
-  "sourceScriptSha256": "ecdac4b66c6701b9ac11e09dc8207f2c3dea016dc76fcdf4639f85a107fb27e2",
-  "fixtureScriptSha256": "89c6833a199c333df3f0bdecd5d7ec4efd06cf0f731e6e24349c5770d3febe3c",
-  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-moba-1790916436527\\sample",
-  "processId": 163208,
+  "sourceScriptSha256": "659798a3e595efeb4cbdd2d4ece4896e9a68bdff78ac8d758cee391ee9d6c846",
+  "fixtureScriptSha256": "aa051b4155d6d45a4d077cc26a7f9e1d0193f6ef3e727b2eaffa6cd038d6ac9c",
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-moba-1790920702038\\sample",
+  "processId": 64388,
   "warmupSeconds": 5,
   "sampleWindowSeconds": 5,
   "loggedErrors": [],
   "materialPipelineRejections": 0,
   "runs": [
     {
-      "samples": 223,
-      "durationMs": 4983.205110765994,
-      "frameLoopFps": 44.75031531778983,
-      "meanMs": 22.34621125904033,
-      "p95Ms": 44.87289860844612,
-      "maxMs": 141.55520498752594,
+      "samples": 218,
+      "durationMs": 4984.977786429226,
+      "frameLoopFps": 43.73138845141272,
+      "meanMs": 22.86687057995058,
+      "p95Ms": 45.10990157723427,
+      "maxMs": 125.4315972328186,
       "state": {
         "mode": "playing",
         "kind": "moba",
@@ -48,16 +48,16 @@
       }
     },
     {
-      "samples": 199,
-      "durationMs": 4997.589888982475,
-      "frameLoopFps": 39.81919373550618,
-      "meanMs": 25.113517030062688,
-      "p95Ms": 58.0970011651516,
-      "maxMs": 145.9396928548813,
+      "samples": 188,
+      "durationMs": 5012.7068078145385,
+      "frameLoopFps": 37.504687029953196,
+      "meanMs": 26.663334084119885,
+      "p95Ms": 63.18479776382446,
+      "maxMs": 145.43510973453522,
       "state": {
         "mode": "playing",
         "kind": "moba",
-        "frame": 152,
+        "frame": 153,
         "camera": [
           -20,
           23
@@ -79,15 +79,15 @@
     },
     {
       "samples": 220,
-      "durationMs": 5002.880097366869,
-      "frameLoopFps": 43.97466973389809,
-      "meanMs": 22.740364078940317,
-      "p95Ms": 42.952198535203934,
-      "maxMs": 130.71390986442566,
+      "durationMs": 4988.331493921578,
+      "frameLoopFps": 44.10292304512564,
+      "meanMs": 22.6742340632799,
+      "p95Ms": 43.9985990524292,
+      "maxMs": 126.17680430412292,
       "state": {
         "mode": "playing",
         "kind": "moba",
-        "frame": 203,
+        "frame": 202,
         "camera": [
           -20,
           23
@@ -113,5 +113,5 @@
     "Assets/Materials/Ground.mmat": "8d6199382958aa3712bb8beae0ab9e08831089d60100ad3ef6fd692f9fb396f3",
     "Assets/Shaders/Ground.mshader": "bbd4074e8b890b01e509c6dd06c0cb132ae890188f40bc5e767a1d08dbab06db"
   },
-  "measuredAt": "2026-10-02T04:47:46.869Z"
+  "measuredAt": "2026-10-02T05:58:52.762Z"
 }

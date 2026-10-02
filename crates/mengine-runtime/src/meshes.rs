@@ -1,5 +1,5 @@
 use crate::textures::resolve_project_asset_path;
-use mengine_assets::{load_gltf_mesh_data, terrain_mesh, parse_gltf_pose, GltfPoseSource, MeshData};
+use mengine_assets::{load_gltf_mesh_data, terrain_mesh, parse_gltf_pose_sample, GltfPoseSource, MeshData};
 use mengine_rhi::{RenderObject, Renderer, Vertex};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -58,7 +58,7 @@ impl RuntimeMeshCache {
         self.attempted.remove(key.trim());
         self.poses.remove(key.split('#').next().unwrap_or(key).trim());
         let asset = key.split('#').next().unwrap_or(key).trim();
-        self.attempted.retain(|k, _| parse_gltf_pose(k).is_none_or(|p| p.0 != asset));
+        self.attempted.retain(|k, _| parse_gltf_pose_sample(k).is_none_or(|p| p.0 != asset));
     }
 
     pub fn sync(
@@ -87,7 +87,7 @@ impl RuntimeMeshCache {
                 }
                 continue;
             }
-            let pose = parse_gltf_pose(key);
+            let pose = parse_gltf_pose_sample(key);
             if pose.is_some() { self.pose_usage.insert(key.to_owned(), self.frame); }
             let asset_key = pose.map(|p| p.0).unwrap_or(key);
             let lower = asset_key.to_ascii_lowercase();
@@ -112,14 +112,14 @@ impl RuntimeMeshCache {
             if !should_attempt(&mut self.attempted, key, stamp) {
                 continue;
             }
-            let mesh = if let Some((asset, clip, frame)) = pose {
+            let mesh = if let Some((asset, clip, frame, rate)) = pose {
                 if self.poses.get(asset).is_none_or(|(old, _)| *old != stamp) {
                     match GltfPoseSource::load(&path) {
                         Ok(source) => { self.poses.insert(asset.to_owned(), (stamp, source)); }
                         Err(error) => { failures.push(MeshLoadFailure { key:key.into(), path, error:error.to_string() }); continue; }
                     }
                 }
-                self.poses[asset].1.sample(clip, frame)
+                self.poses[asset].1.sample_at_rate(clip, frame, rate)
             } else { load_gltf_mesh_data(&path) };
             match mesh {
                 Ok(mesh) => renderer.upload_gltf_static(
@@ -139,7 +139,7 @@ impl RuntimeMeshCache {
             stale.sort_by_key(|(_, used)| *used);
             for (key, _) in stale.into_iter().take(self.pose_usage.len() - 256) { self.pose_usage.remove(&key); self.attempted.remove(&key); renderer.remove_mesh(&key); }
         }
-        self.poses.retain(|asset, _| self.pose_usage.keys().any(|key| parse_gltf_pose(key).is_some_and(|p| p.0 == asset)));
+        self.poses.retain(|asset, _| self.pose_usage.keys().any(|key| parse_gltf_pose_sample(key).is_some_and(|p| p.0 == asset)));
         failures
     }
 }
@@ -177,6 +177,14 @@ fn should_attempt(cache: &mut HashMap<String, FileStamp>, key: &str, stamp: File
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn invalidation_removes_every_sampling_rate_for_the_changed_asset() {
+        let mut cache = RuntimeMeshCache::new(None);
+        for key in ["a.glb", "a.glb#pose=0:4", "a.glb#pose=0:10@30", "a.glb#pose=1:20@60", "b.glb#pose=0:10@30"] { cache.attempted.insert(key.into(), FileStamp::default()); }
+        cache.invalidate("a.glb");
+        assert_eq!(cache.attempted.keys().cloned().collect::<Vec<_>>(), vec!["b.glb#pose=0:10@30"]);
+    }
 
     #[test]
     fn converts_imported_channels_to_rhi_vertices() {

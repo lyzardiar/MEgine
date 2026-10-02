@@ -3,14 +3,22 @@ use crate::{AssetError, MeshData};
 use glam::{Mat4, Quat, Vec3, Vec4};
 use std::path::Path;
 
-/// `model.glb#pose=clip:frame` uses a bounded 12 Hz pose index. Identical poses share GPU geometry.
+/// Legacy 12 Hz references. Use `parse_gltf_pose_sample` for an explicit rate.
 pub fn parse_gltf_pose(reference: &str) -> Option<(&str, usize, u32)> {
+    let (path, clip, frame, rate) = parse_gltf_pose_sample(reference)?;
+    (rate == 12).then_some((path, clip, frame))
+}
+
+/// MiYu: `model.glb#pose=clip:frame@rate` selects 1–60 Hz; omitted rates use 12 Hz.
+pub fn parse_gltf_pose_sample(reference: &str) -> Option<(&str, usize, u32, u32)> {
     let (path, suffix) = reference.split_once("#pose=")?;
     let (clip, frame) = suffix.split_once(':')?;
+    let (frame, rate) = frame.split_once('@').map_or((frame, "12"), |v| v);
     let clip = clip.parse::<usize>().ok()?;
     let frame = frame.parse::<u32>().ok()?;
-    if clip > 255 || frame > 1199 || !(path.ends_with(".gltf") || path.ends_with(".glb")) { return None; }
-    Some((path, clip, frame))
+    let rate = rate.parse::<u32>().ok()?;
+    if clip > 255 || !(1..=60).contains(&rate) || frame >= rate*100 || !(path.ends_with(".gltf") || path.ends_with(".glb")) { return None; }
+    Some((path, clip, frame, rate))
 }
 
 pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data> }
@@ -25,12 +33,16 @@ impl GltfPoseSource {
         Ok(Self { document, buffers })
     }
     pub fn sample(&self, clip: usize, frame: u32) -> Result<MeshData, AssetError> {
+        self.sample_at_rate(clip, frame, 12)
+    }
+    pub fn sample_at_rate(&self, clip: usize, frame: u32, rate: u32) -> Result<MeshData, AssetError> {
         let fail = |s: &str| AssetError::Gltf(s.into());
+        if !(1..=60).contains(&rate) { return Err(fail("skeletal sample rate must be between 1 and 60 Hz")); }
         let nodes = self.document.nodes().collect::<Vec<_>>();
         let mut trs = nodes.iter().map(|n| { let (t,r,s) = n.transform().decomposed(); (Vec3::from(t), Quat::from_array(r), Vec3::from(s)) }).collect::<Vec<_>>();
         let animation = self.document.animations().nth(clip).ok_or_else(|| fail("animation clip index out of bounds"))?;
         let duration = animation.channels().filter_map(|c| c.reader(|b| Some(&self.buffers[b.index()])).read_inputs().and_then(|v| v.last())).fold(0.0_f32, f32::max);
-        let time = if duration > 0.0 { (frame as f32 / 12.0) % duration } else { 0.0 };
+        let time = if duration > 0.0 { (frame as f32 / rate as f32) % duration } else { 0.0 };
         for channel in animation.channels() {
             let reader = channel.reader(|b| Some(&self.buffers[b.index()]));
             let times = reader.read_inputs().ok_or_else(|| fail("animation has no times"))?.collect::<Vec<_>>();
@@ -98,6 +110,10 @@ mod tests {
     #[test]
     fn pose_references_are_bounded() {
         assert_eq!(parse_gltf_pose("Assets/hero.glb#pose=2:12"),Some(("Assets/hero.glb",2,12)));
+        assert_eq!(parse_gltf_pose_sample("Assets/hero.glb#pose=2:30@30"),Some(("Assets/hero.glb",2,30,30)));
+        assert!(parse_gltf_pose("Assets/hero.glb#pose=2:30@30").is_none(),"legacy consumers must not interpret a 30 Hz frame at 12 Hz");
+        assert_eq!(parse_gltf_pose_sample("a.gltf#pose=255:5999@60"),Some(("a.gltf",255,5999,60)));
+        for key in ["a.glb#pose=0:3000@30","a.glb#pose=0:0@0","a.glb#pose=0:0@61","a.glb#pose=0:0@-1","a.glb#pose=0:0@NaN","a.glb#pose=0:0@30@30"] { assert!(parse_gltf_pose_sample(key).is_none()); }
         for key in ["a.glb#pose=0:1200","a.glb#pose=256:0","a.glb#pose=-1:0","a.glb#pose=0:NaN","a.png#pose=0:0"] { assert!(parse_gltf_pose(key).is_none()); }
     }
     #[test]

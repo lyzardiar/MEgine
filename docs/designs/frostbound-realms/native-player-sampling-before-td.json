@@ -9,21 +9,21 @@
   "executableSha256": "c8b089150a2ca475c3903c8a46602e693951650aa804195e4735ef9ceac44311",
   "sourceSceneSha256": "c36c0b33307d52668e32f160f9f06208bc46b81d767ee8e4e6703a6245d640f2",
   "sourceScriptSha256": "659798a3e595efeb4cbdd2d4ece4896e9a68bdff78ac8d758cee391ee9d6c846",
-  "fixtureScriptSha256": "1039d7831967a01572e59054e98654c2c07ec435adacba1c88e4c57c5d73b167",
-  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-td-1790920763448\\sample",
-  "processId": 70480,
+  "fixtureScriptSha256": "b70240c929b4b157dbfa08ca75aa0353a62e7442ec22fea1bd6ea1741a955be2",
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-td-1790920732965\\sample",
+  "processId": 47004,
   "warmupSeconds": 5,
   "sampleWindowSeconds": 5,
   "loggedErrors": [],
   "materialPipelineRejections": 0,
   "runs": [
     {
-      "samples": 284,
-      "durationMs": 4998.622709419578,
-      "frameLoopFps": 56.81565033200456,
-      "meanMs": 17.600784188097105,
-      "p95Ms": 28.8683008402586,
-      "maxMs": 48.582300543785095,
+      "samples": 286,
+      "durationMs": 5001.016499474645,
+      "frameLoopFps": 57.188373609654,
+      "meanMs": 17.486071676484773,
+      "p95Ms": 29.050199314951897,
+      "maxMs": 32.84719958901405,
       "state": {
         "mode": "playing",
         "kind": "td",
@@ -48,12 +48,12 @@
       }
     },
     {
-      "samples": 272,
-      "durationMs": 5022.81309524551,
-      "frameLoopFps": 54.15292085175726,
-      "meanMs": 18.466224614873198,
-      "p95Ms": 31.59959986805916,
-      "maxMs": 110.76590418815611,
+      "samples": 266,
+      "durationMs": 5004.718587268144,
+      "frameLoopFps": 53.149841566855756,
+      "meanMs": 18.814731531083247,
+      "p95Ms": 31.67479857802391,
+      "maxMs": 141.46248996257782,
       "state": {
         "mode": "playing",
         "kind": "td",
@@ -78,12 +78,12 @@
       }
     },
     {
-      "samples": 262,
-      "durationMs": 4982.048298697919,
-      "frameLoopFps": 52.58881172799447,
-      "meanMs": 19.01545152174778,
-      "p95Ms": 33.26069936156273,
-      "maxMs": 79.2464017868042,
+      "samples": 264,
+      "durationMs": 5002.664892934263,
+      "frameLoopFps": 52.77187372131845,
+      "meanMs": 18.9494882308116,
+      "p95Ms": 31.319499015808105,
+      "maxMs": 64.10349905490875,
       "state": {
         "mode": "playing",
         "kind": "td",
@@ -113,5 +113,5 @@
     "Assets/Materials/Ground.mmat": "8d6199382958aa3712bb8beae0ab9e08831089d60100ad3ef6fd692f9fb396f3",
     "Assets/Shaders/Ground.mshader": "bbd4074e8b890b01e509c6dd06c0cb132ae890188f40bc5e767a1d08dbab06db"
   },
-  "measuredAt": "2026-10-02T05:59:54.017Z"
+  "measuredAt": "2026-10-02T05:59:23.240Z"
 }

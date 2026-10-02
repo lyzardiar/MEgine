@@ -2019,13 +2019,13 @@ fn validate_world_assets(
     for entity in world.iter_entities() {
         if let Some(renderer) = world.get_component::<MeshRenderer>(entity) {
             let mesh = renderer.mesh.trim();
-            let pose = mengine_assets::parse_gltf_pose(mesh);
+            let pose = mengine_assets::parse_gltf_pose_sample(mesh);
             let mesh = pose.map(|p| p.0).unwrap_or(mesh);
             if mesh.to_ascii_lowercase().ends_with(".gltf")
                 || mesh.to_ascii_lowercase().ends_with(".glb")
             {
                 let path = resolve(mesh, "model")?;
-                if let Some((_, clip, frame)) = pose { mengine_assets::GltfPoseSource::load(&path)?.sample(clip, frame)?; }
+                if let Some((_, clip, frame, rate)) = pose { mengine_assets::GltfPoseSource::load(&path)?.sample_at_rate(clip, frame, rate)?; }
                 if validated.insert(path.clone()) {
                     mengine_assets::load_gltf_mesh_data(&path)
                         .with_context(|| format!("invalid model {}", path.display()))?;
