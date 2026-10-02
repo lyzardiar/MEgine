@@ -8,26 +8,26 @@
   "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\target\\release\\mengine-runtime.exe",
   "executableSha256": "4f925b9bd5796415af74d2b24ddf27059fd6aac9fd202825fff173e78fbb435a",
   "sourceSceneSha256": "c36c0b33307d52668e32f160f9f06208bc46b81d767ee8e4e6703a6245d640f2",
-  "sourceScriptSha256": "ecdac4b66c6701b9ac11e09dc8207f2c3dea016dc76fcdf4639f85a107fb27e2",
-  "fixtureScriptSha256": "245129b9c827884c46dcd81c36590a2961fde0ce99b122f7c58d014006f3d05e",
-  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790916406091\\sample",
-  "processId": 76196,
+  "sourceScriptSha256": "493082bec2c7109b03a729d9aeb8df15850401d7f5736a0c7036890be787e965",
+  "fixtureScriptSha256": "1d5e650e707ab0eed85cbc830af5fa67fc72ed352867ea2de9aac691463c0748",
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790912995709\\sample",
+  "processId": 43320,
   "warmupSeconds": 5,
   "sampleWindowSeconds": 5,
   "loggedErrors": [],
   "materialPipelineRejections": 0,
   "runs": [
     {
-      "samples": 255,
-      "durationMs": 4990.977904759347,
-      "frameLoopFps": 51.09219172395745,
-      "meanMs": 19.572462371605283,
-      "p95Ms": 30.25040030479431,
-      "maxMs": 127.45510041713716,
+      "samples": 265,
+      "durationMs": 4998.773110564798,
+      "frameLoopFps": 53.01300821994266,
+      "meanMs": 18.863294756848294,
+      "p95Ms": 29.230600222945213,
+      "maxMs": 121.45790457725523,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
-        "frame": 104,
+        "frame": 105,
         "camera": [
           -16,
           25
@@ -48,16 +48,16 @@
       }
     },
     {
-      "samples": 246,
-      "durationMs": 5004.244274925441,
-      "frameLoopFps": 49.158271755961636,
-      "meanMs": 20.342456402135937,
-      "p95Ms": 34.18729826807976,
-      "maxMs": 118.4571012854576,
+      "samples": 243,
+      "durationMs": 4993.669719900936,
+      "frameLoopFps": 48.66160832215003,
+      "meanMs": 20.550081151855704,
+      "p95Ms": 31.935401260852817,
+      "maxMs": 148.86949956417084,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
-        "frame": 154,
+        "frame": 155,
         "camera": [
           -16,
           25
@@ -78,23 +78,23 @@
       }
     },
     {
-      "samples": 252,
-      "durationMs": 5026.425297372043,
-      "frameLoopFps": 50.13503336690445,
-      "meanMs": 19.946132132428744,
-      "p95Ms": 32.41780027747154,
-      "maxMs": 129.00009751319885,
+      "samples": 257,
+      "durationMs": 4988.439900800586,
+      "frameLoopFps": 51.51911321187904,
+      "meanMs": 19.410271987550917,
+      "p95Ms": 31.814198940992355,
+      "maxMs": 119.16209757328032,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
-        "frame": 203,
+        "frame": 206,
         "camera": [
           -16,
           25
         ],
         "zoom": 12,
         "units": 22,
-        "gold": 720,
+        "gold": 740,
         "selected": [
           8
         ],
@@ -113,5 +113,5 @@
     "Assets/Materials/Ground.mmat": "8d6199382958aa3712bb8beae0ab9e08831089d60100ad3ef6fd692f9fb396f3",
     "Assets/Shaders/Ground.mshader": "bbd4074e8b890b01e509c6dd06c0cb132ae890188f40bc5e767a1d08dbab06db"
   },
-  "measuredAt": "2026-10-02T04:47:16.312Z"
+  "measuredAt": "2026-10-02T03:50:26.663Z"
 }

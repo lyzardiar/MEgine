@@ -1,42 +1,42 @@
 {
   "passed": true,
-  "kind": "skirmish",
+  "kind": "moba",
   "scope": "Standalone native Player frame-loop intervals from onTick dt; successful render logs checked, physical display presentation is not measured.",
   "physicalInput": false,
   "audioListening": false,
-  "fixture": "Isolated source project; scripted F1, two Home presses, centered pointer; game rules and assets unchanged.",
+  "fixture": "Isolated source project; scripted F2, two Home presses, centered pointer; game rules and assets unchanged.",
   "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\target\\release\\mengine-runtime.exe",
   "executableSha256": "4f925b9bd5796415af74d2b24ddf27059fd6aac9fd202825fff173e78fbb435a",
   "sourceSceneSha256": "c36c0b33307d52668e32f160f9f06208bc46b81d767ee8e4e6703a6245d640f2",
   "sourceScriptSha256": "ecdac4b66c6701b9ac11e09dc8207f2c3dea016dc76fcdf4639f85a107fb27e2",
-  "fixtureScriptSha256": "245129b9c827884c46dcd81c36590a2961fde0ce99b122f7c58d014006f3d05e",
-  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790916406091\\sample",
-  "processId": 76196,
+  "fixtureScriptSha256": "307f7317251849af0050b507750753f35f87628d55d0157b3a3d126765e61d37",
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-moba-1790916582721\\sample",
+  "processId": 123732,
   "warmupSeconds": 5,
   "sampleWindowSeconds": 5,
   "loggedErrors": [],
   "materialPipelineRejections": 0,
   "runs": [
     {
-      "samples": 255,
-      "durationMs": 4990.977904759347,
-      "frameLoopFps": 51.09219172395745,
-      "meanMs": 19.572462371605283,
-      "p95Ms": 30.25040030479431,
-      "maxMs": 127.45510041713716,
+      "samples": 224,
+      "durationMs": 5011.052101384848,
+      "frameLoopFps": 44.701191579727464,
+      "meanMs": 22.37076830975379,
+      "p95Ms": 46.44779860973358,
+      "maxMs": 123.25400114059448,
       "state": {
         "mode": "playing",
-        "kind": "skirmish",
+        "kind": "moba",
         "frame": 104,
         "camera": [
-          -16,
-          25
+          -20,
+          23
         ],
         "zoom": 12,
-        "units": 20,
-        "gold": 600,
+        "units": 42,
+        "gold": 530,
         "selected": [
-          8
+          2
         ],
         "paused": false,
         "online": false,
@@ -48,25 +48,25 @@
       }
     },
     {
-      "samples": 246,
-      "durationMs": 5004.244274925441,
-      "frameLoopFps": 49.158271755961636,
-      "meanMs": 20.342456402135937,
-      "p95Ms": 34.18729826807976,
-      "maxMs": 118.4571012854576,
+      "samples": 191,
+      "durationMs": 4977.646816987544,
+      "frameLoopFps": 38.37154523462004,
+      "meanMs": 26.060978099411226,
+      "p95Ms": 69.06870752573013,
+      "maxMs": 136.31929457187653,
       "state": {
         "mode": "playing",
-        "kind": "skirmish",
-        "frame": 154,
+        "kind": "moba",
+        "frame": 153,
         "camera": [
-          -16,
-          25
+          -20,
+          23
         ],
         "zoom": 12,
-        "units": 21,
-        "gold": 660,
+        "units": 38,
+        "gold": 570,
         "selected": [
-          8
+          2
         ],
         "paused": false,
         "online": false,
@@ -78,25 +78,25 @@
       }
     },
     {
-      "samples": 252,
-      "durationMs": 5026.425297372043,
-      "frameLoopFps": 50.13503336690445,
-      "meanMs": 19.946132132428744,
-      "p95Ms": 32.41780027747154,
-      "maxMs": 129.00009751319885,
+      "samples": 214,
+      "durationMs": 4992.981220595539,
+      "frameLoopFps": 42.860165208968105,
+      "meanMs": 23.331687946708126,
+      "p95Ms": 43.94099861383438,
+      "maxMs": 141.33501052856445,
       "state": {
         "mode": "playing",
-        "kind": "skirmish",
-        "frame": 203,
+        "kind": "moba",
+        "frame": 204,
         "camera": [
-          -16,
-          25
+          -20,
+          23
         ],
         "zoom": 12,
-        "units": 22,
-        "gold": 720,
+        "units": 34,
+        "gold": 610,
         "selected": [
-          8
+          2
         ],
         "paused": false,
         "online": false,
@@ -113,5 +113,5 @@
     "Assets/Materials/Ground.mmat": "8d6199382958aa3712bb8beae0ab9e08831089d60100ad3ef6fd692f9fb396f3",
     "Assets/Shaders/Ground.mshader": "bbd4074e8b890b01e509c6dd06c0cb132ae890188f40bc5e767a1d08dbab06db"
   },
-  "measuredAt": "2026-10-02T04:47:16.312Z"
+  "measuredAt": "2026-10-02T04:50:13.477Z"
 }

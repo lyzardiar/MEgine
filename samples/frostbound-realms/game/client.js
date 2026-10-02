@@ -9,7 +9,7 @@ var FrostClient=(()=>{
   function menuMap(){return mapChoice===4?S.siegeMap():S.defaultMap(menuMaps[mapChoice][1]);}
   function applySettings(){for(const n of Object.keys(entities))if(n.startsWith('Sound ')){const a=authored[n].AudioSource;set(n,'AudioSource',{...a,volume:a.volume*(a.looped?settings.music:settings.sfx)});}}
   const previous={},visibility={},modelNames={},active={},tileState=[];
-  const missileView=FrostVisual.projectileView();let flightTime=0,missileCount=0,portraitTime=0;
+  const missileView=FrostVisual.projectileView(),unitView=FrostVisual.projectileView(3);let flightTime=0,missileCount=0,portraitTime=0,unitTime=0,unitPositions=new Map();
   let editorPage=0,placeKind='soldier',placeHeroClass=0,placeTeam=0,placeTag='',triggerIndex=-1,triggerPanel=0,entryIndex=0,regionIndex=-1,editorTool='select',heightBrush=1,rampBrush=0,surfaceBrush=0,surfaceRadius=0,rename=null;
   function set(n,c,v){const e=entities[n];if(!e)return;const json=JSON.stringify(v),key=n+'/'+c;if(sent[key]===json)return;sent[key]=json;engine.pushCommandJson('{"op":"setComponent","entity":'+e.entity+',"component":'+JSON.stringify(c)+',"value":'+json+'}');}
   function activate(n,on){const e=entities[n];if(!e||active[n]===on)return;active[n]=on;engine.setActive(e.entity,on);}
@@ -21,7 +21,7 @@ var FrostClient=(()=>{
   function init(){for(const e of engine.snapshot.entities)if(e.name){entities[e.name]=e;authored[e.name]=e.components;}activate('Frost telemetry',false);for(let i=0;i<S.PROJECTILE_LIMIT;i++){activate('Missile '+i,false);activate('Missile aura '+i,false);}try{const saved=engine.storage.load('settings');if(saved){for(const k of ['music','sfx'])if(Number.isFinite(saved[k]))settings[k]=S.clamp(saved[k],0,1);if(typeof saved.snow==='boolean')settings.snow=saved.snow;}}catch{}applySettings();state=S.create();initialized=true;}
   function persist(key,value){try{engine.storage.save(key,value);message('Saved '+key+' to your project user-data folder');return true;}catch(e){message('Save failed: '+e.message);return false;}}
   function load(key){try{return engine.storage.load(key);}catch(e){message('Load failed: '+e.message);return null;}}
-  function stopNetwork(){if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';missileView.reset();fx=[];damageText=[];pendingFx=[];lastFrame=-1;}
+  function stopNetwork(){if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';missileView.reset();unitView.reset();unitPositions.clear();for(const id of Object.keys(previous))delete previous[id];fx=[];damageText=[];pendingFx=[];lastFrame=-1;}
   function solo(kind,map){stopNetwork();state=S.create(kind,{map,...(map?{}:{factions:[faction,(faction+1)%4],heroes:[heroClass,(heroClass+1)%S.heroes.length]})});team=0;mode='playing';heroPanel='skills';paused=false;selected=state.units.filter(u=>u.team===0&&u.kind==='hero').map(u=>u.id);camera=state.map.spawns[0].map(v=>S.clamp(v,-18,18));zoom=16;accumulator=0;lastFrame=-1;armed=null;groups={};notice='';selectHero();}
   function title(){stopNetwork();mode='title';state=S.create();camera=[0,0];zoom=27;paused=false;selected=[];armed=null;returnEditor=false;}
   function order(command){const c={ids:[...selected],...command};if(['move','attackMove','build','construct','repair','gather'].includes(c.type)&&(engine.input?.keys||[]).some(k=>k==='ShiftLeft'||k==='ShiftRight'))c.append=true;if(online){if(connected)engine.network.send({type:'order',seq:++seq,command:c});else message('Reconnecting; orders are paused');}else{const error=S.command(state,team,c);if(error)message(error);else{sound('order');if(Number.isFinite(c.x)&&Number.isFinite(c.z))commandMarker={x:c.x,z:c.z,until:time+1.2};}}}
@@ -75,7 +75,7 @@ var FrostClient=(()=>{
         if(intent==='resume')engine.network.send({type:'resume',code,token});
       }
       if(m.type==='joined'){
-        missileView.reset();
+        missileView.reset();unitView.reset();unitPositions.clear();for(const id of Object.keys(previous))delete previous[id];
         const resumed=intent==='resume'&&!!m.state;team=m.team;token=m.token;code=m.code;seq=0;if(m.state){state=m.state;collectEvents();mode=state.winner===null?'playing':'finished';}else mode='lobby';
         if(resumed){selected=selected.filter(id=>state.units.some(u=>u.id===id&&S.canControl(state,team,u)&&u.hp>0&&!u.inside));message('Connection restored.');}
         else{selected=[];camera=[...(m.state?.map.spawns[team]||[team?23:-23,team?-23:23])];zoom=18;notice='';noticeUntil=0;}
@@ -98,7 +98,7 @@ var FrostClient=(()=>{
     for(;y>=0;y-=.04){z=base+y*Math.cos(pitch)/sin;if(y<=S.elevation(map,x,z)){let lo=y,hi=y+.04;for(let k=0;k<8;k++){const mid=(lo+hi)/2;if(mid<=S.elevation(map,x,base+mid*Math.cos(pitch)/sin))lo=mid;else hi=mid;}z=base+hi*Math.cos(pitch)/sin;break;}}
     if(y<0)z=base;return {x:S.clamp(x,-30,30),z:S.clamp(z,-30,30)};
   }
-  function screenWorld(u,input){const [w,h]=input.viewport?.every(v=>v>1)?input.viewport:[1280,720],scale=Math.sqrt(w/1280*h/720);return {x:(u.x-camera[0])/zoom*h/2/scale,y:((u.z-camera[1])*sin-(u.y??S.unitHeight(state,u))*Math.cos(pitch))/zoom*h/2/scale};}
+  function screenWorld(u,input){const position=S.types[u.kind]&&unitPositions.get(u.id)||u;const [w,h]=input.viewport?.every(v=>v>1)?input.viewport:[1280,720],scale=Math.sqrt(w/1280*h/720);return {x:(position.x-camera[0])/zoom*h/2/scale,y:((position.z-camera[1])*sin-(u.y??position.y??S.unitHeight(state,u))*Math.cos(pitch))/zoom*h/2/scale};}
   function attackAt(input,p,includeAllies=false){let target=null,best=28;for(const u of state.units){if(u.hp<=0||!S.isVisible(state,team,u)||u.team===team&&!includeAllies&&!S.canDeny(state,team,u))continue;const point=screenWorld(u,input),distance=Math.hypot(point.x-p.x,point.y-p.y);if(distance<best){target=u;best=distance;}}return target;}
   function hovered(button,p){return !!button&&Math.abs(p.x-button.x)<button.w/2&&Math.abs(p.y-button.y)<button.h/2;}
   function saveMap(){try{editMap=S.validateMap(editMap);persist('map'+slot,editMap);}catch(e){message(e.message);}}
@@ -253,7 +253,7 @@ var FrostClient=(()=>{
     for(const n of ['Gold','Lumber','Supply']){show('HUD '+n+' icon',world&&!editing);show('HUD '+n+' value',world&&!editing);}
     show('Hero preview',mode==='custom');set('Hero preview','Image',{...authored['Hero preview'].Image,sprite:FrostVisual.heroPortrait(heroClass)});
     label('heroChoice label','英雄：'+S.heroes[heroClass].label);label('faction label','种族：'+['人类','兽人','暗夜精灵','不死族'][faction]);
-    transform('Strategy camera',[camera[0],FrostVisual.camera.height,camera[1]+FrostVisual.camera.depth],[1,1,1],[Math.sin(pitch/2),0,0,Math.cos(pitch/2)]);set('Strategy camera','Camera3D',{...authored['Strategy camera'].Camera3D,orthographic_size:zoom});
+
     const map=editing?editMap:state.map;
     const ground=FrostTerrain.cells(state,team,allVisible);
     for(let z=0;z<8;z++)for(let x=0;x<8;x++){const name='Ground '+(z*8+x);set(name,'MaterialPropertyBlock',{custom_parameter_names:FrostTerrain.names,custom_parameter_values:FrostTerrain.chunk(ground,x,z)});set(name,'MeshRenderer',{mesh:FrostTerrain.mesh(map,x,z),material:'Assets/Materials/Ground.mmat'});}
@@ -270,16 +270,7 @@ var FrostClient=(()=>{
     for(let i=0;i<100;i++){const r=(editing?map.props:state.resources)[i],visible=r&&r.amount>0&&(allVisible||state.explored[team]?.[S.index(r.x,r.z)]);if(!visible){transform('Prop '+i,hidden);continue;}if(!editing&&r.kind==='mine'&&S.hauntedMine(state,r)){transform('Prop '+i,hidden);continue;}const {asset,mesh,scale,yaw}=FrostVisual.resource(r,zoom);set('Prop '+i,'MeshRenderer',{mesh,material:asset.material});transform('Prop '+i,[r.x,S.elevation(map,r.x,r.z),r.z],[scale,scale,scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);}
     const sites=state.units.filter(u=>u.hp>0&&u.built<1&&(allVisible||S.isVisible(state,team,u)));
     for(let i=0;i<32;i++){const b=sites[i],r=b?(S.types[b.kind].radius+.5)*2:1;transform('Foundation '+i,b?[b.x,S.elevation(map,b.x,b.z)-.03,b.z]:hidden,[r,.18,r]);set('Foundation '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:b?[ [.75,.61,.4,1],[.65,.4,.22,1],[.3,.65,.38,1],[.5,.35,.7,1] ][state.teams[b.team]?.faction||0]:[1,1,1,1]});}
-    for(let i=0;i<S.LIMIT;i++){
-      const u=state.units[i],visible=u&&u.hp>0&&!u.inside&&(allVisible||S.isVisible(state,team,u));if(!visible){for(const n of ['Unit ','Ring ','HP ','Flag '])transform(n+i,hidden);show('Mini unit '+i,false);show('Sleep '+i,false);show('Unit aura '+i,false);continue;}
-      const old=previous[u.id],walking=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008,visual=FrostVisual.model(state,u,walking),{key,asset}=visual,scale=visual.scale*(u.bloodlust>0?1.15:1),yaw=FrostVisual.heading(state,u,old);previous[u.id]={x:u.x,z:u.z,yaw};
-      const sleeping=playing&&(online?u.sleeping:S.asleep(state,u));show('Sleep '+i,sleeping);if(sleeping){const p=screenWorld({...u,y:S.unitHeight(state,u)+visual.height+.4},input),r=authored['Sleep '+i].RectTransform;set('Sleep '+i,'RectTransform',{...r,anchored_position:[p.x,p.y]});}
-      const mesh=FrostVisual.pose(u,asset,walking,time);
-      set('Unit '+i,'MeshRenderer',{mesh,material:asset.material});set('Unit '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:u.kind==='frosttower'?[.5,.85,1,1]:u.kind==='flametower'?[1,.58,.3,1]:u.bloodlust>0?[1,.62,.5,1]:[1,1,1,1]});transform('Unit '+i,[u.x,S.unitHeight(state,u),u.z],[scale,scale*Math.max(.15,u.built),scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);
-      const healing=S.feeding(u)>0;show('Unit aura '+i,u.lightningShield>0||healing);if(u.lightningShield>0||healing){set('Unit aura '+i,'ParticleEmitter3D',{...authored['Unit aura '+i].ParticleEmitter3D,...(healing&&!u.lightningShield?{rate_over_time:14,lifetime_min:.4,lifetime_max:.7,speed_min:.3,speed_max:.8,size_start:.18,shape_radius:.7,spread_degrees:20,color_start:[.3,.85,.15,.8],color_end:[.2,.6,.05,0]}:{}),playing:!paused||online,seed:u.id});transform('Unit aura '+i,[u.x,S.unitHeight(state,u)+(healing?.5:1.3),u.z]);}
-      const picked=selected.includes(u.id),height=S.types[u.kind].flying?7:asset.factionBuilding||asset.mountedModel||u.kind==='treant'||asset.realistic&&u.kind==='hero'||S.types[u.kind].attack==='siege'?visual.height:S.types[u.kind].speed?3.25:4.3,span=S.types[u.kind].speed?2.5:(S.types[u.kind].radius+.2)*2;transform('Ring '+i,picked?[u.x,S.elevation(map,u.x,u.z)+.04,u.z]:hidden,[span,.012,span]);transform('HP '+i,[u.x,S.elevation(map,u.x,u.z)+height,u.z],[1.7*u.hp/u.maxHp,.1,.17]);set('HP '+i,'PbrMaterial',{base_color:u.team===team?[.18,.82,.47,1]:[.9,.2,.18,1],roughness:1});transform('Flag '+i,S.types[u.kind].speed?hidden:[u.x+.5,S.elevation(map,u.x,u.z)+height-.6,u.z],[1.5,1.5,1.5]);set('Flag '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:u.team===0?[.35,.68,1,1]:[1,.3,.2,1]});
-      show('Mini unit '+i,world);const r=authored['Mini unit '+i].RectTransform;set('Mini unit '+i,'RectTransform',{...r,anchored_position:world?[-621+(u.x+32)/64*180,176+(u.z+32)/64*174]:[5000,5000]});set('Mini unit '+i,'Image',{color:u.team===team?[.2,.7,1,1]:[1,.25,.15,1],raycast_target:false});
-    }
+    for(let i=0;i<S.LIMIT;i++){const u=state.units[i],visible=u&&u.hp>0&&!u.inside&&(allVisible||S.isVisible(state,team,u));if(!visible){show('Mini unit '+i,false);continue;}show('Mini unit '+i,world);const r=authored['Mini unit '+i].RectTransform;set('Mini unit '+i,'RectTransform',{...r,anchored_position:world?[-621+(u.x+32)/64*180,176+(u.z+32)/64*174]:[5000,5000]});set('Mini unit '+i,'Image',{color:u.team===team?[.2,.7,1,1]:[1,.25,.15,1],raycast_target:false});}
     const corpses=(state.corpses||[]).filter(c=>allVisible||c.team===team||state.visible[team]?.[S.index(c.x,c.z)]);
     for(let i=0;i<S.CORPSE_LIMIT;i++){
       const c=corpses[i],visual=c&&FrostVisual.corpse(state,c);if(!visual){transform('Corpse '+i,hidden);continue;}
@@ -350,6 +341,22 @@ var FrostClient=(()=>{
     show('Drag box',!!drag);if(drag){const a=authored['Drag box'].RectTransform;set('Drag box','RectTransform',{...a,anchored_position:[(drag.start.x+drag.end.x)/2,(drag.start.y+drag.end.y)/2],size_delta:[Math.abs(drag.start.x-drag.end.x),Math.abs(drag.start.y-drag.end.y)]});}
     label('Frost telemetry',JSON.stringify({mode,hudSkin,mapChoice,settings,heroChoice:heroClass,heroPanel,faction,camera,zoom,flyers:state.units.filter(u=>S.types[u.kind].flying),construction:state.units.filter(u=>u.team===team&&u.built<1),production:state.units.filter(u=>u.team===team&&S.trainable(state,u).length),worker:state.units.find(u=>u.team===team&&u.kind==='worker'),gatherers:state.units.filter(u=>u.team===team&&['worker','ghoul'].includes(u.kind)),mines:state.units.filter(u=>u.kind==='hauntedmine'),resources:state.resources,corpses:state.corpses||[],necromancers:state.units.filter(u=>u.kind==='necromancer'),casterResearch:state.teams[team].necromancy||0,shamanResearch:state.teams[team].shamanism||0,cannibalizeResearch:state.teams[team].cannibalize||0,cannibals:state.units.filter(u=>['ghoul','abomination'].includes(u.kind)),skeletonResearch:[state.teams[team].skeletalLongevity||0,state.teams[team].skeletalMastery||0],affected:state.units.filter(u=>u.frenzy>0||u.cripple>0||u.purgeLeft>0||u.bloodlust>0||u.lightningShield>0),shamans:state.units.filter(u=>u.kind==='shaman'),summons:state.units.filter(u=>u.summoned),projectiles:state.projectiles?.map(({id,x,y,z,art})=>({id,x,y,z,art})),hour:S.timeOfDay(state),night:S.isNight(state),sleeping:state.units.filter(u=>(online?u.sleeping:S.asleep(state,u))).map(u=>u.id),raiders:state.units.filter(u=>u.kind==='raider'),treants:state.units.filter(u=>u.kind==='treant'),wildlife:state.units.filter(u=>u.kind==='neutral'),wave:state.wave,laneUnits:state.units.filter(u=>S.types[u.kind].laneCreep),frame:state.frame,kind:state.mode,team,units:state.units.length,gold:state.teams[team].gold,selected,hero:state.units.find(u=>u.team===team&&u.kind==='hero'),paused,online,room:code,netStates,brush,slot,editorPage,placedHeroes:map.units.filter(u=>u.kind==='hero').map(u=>({heroClass:u.heroClass??map.players[u.team]?.heroClass??0,team:u.team})),placedUnits:map.units.length,triggers:map.triggers.length,regions:map.regions?.length||0,editorTrigger:editing?map.triggers[triggerIndex]:null,editorRegion:editing?map.regions[regionIndex]:null,triggerPanel,triggered:state.triggered,triggerState:state.triggerState,announcement:state.announcements?.[team]||state.announcement,undoDepth:undo.length,quest:state.quest,loot:state.loot.length,map:map.name,terrainRaised:map.heights.filter(v=>v>0).length,terrainRamps:map.ramps.filter(v=>v>0).length,heroElevation:state.units.some(u=>u.team===team&&u.kind==='hero')?S.unitHeight(state,state.units.find(u=>u.team===team&&u.kind==='hero')):0,heightBrush,rampBrush,surfaceBrush,surfaceRadius,terrainSurfaces:[0,1,2].map(v=>map.surfaces.filter(n=>n===v).length),terrainWater:map.terrain.filter(v=>v===1).length,winner:state.winner,notice}));
   }
+  function renderUnits(input){
+    const playing=['playing','finished','reconnecting'].includes(mode),allVisible=!playing;
+    if(!playing)unitView.reset();
+    const visible=state.units.filter(u=>u.hp>0&&!u.inside&&(allVisible||S.isVisible(state,team,u)));
+    unitPositions=new Map(unitView.sample(visible.map(u=>({id:u.id,x:u.x,y:S.unitHeight(state,u),z:u.z})),state.frame,unitTime).map(p=>[p.id,p]));
+    for(let i=0;i<S.LIMIT;i++){
+      const u=state.units[i],visible=u&&u.hp>0&&!u.inside&&(allVisible||S.isVisible(state,team,u));if(!visible){for(const n of ['Unit ','Ring ','HP ','Flag '])transform(n+i,hidden);show('Sleep '+i,false);show('Unit aura '+i,false);continue;}
+      const old=previous[u.id],walking=playing&&(old?.frame===state.frame?old.walking:!!old&&Math.hypot(u.x-old.x,u.z-old.z)>.008),position=unitPositions.get(u.id)||{x:u.x,y:S.unitHeight(state,u),z:u.z},visual=FrostVisual.model(state,u,walking),{key,asset}=visual,scale=visual.scale*(u.bloodlust>0?1.15:1),yaw=FrostVisual.heading(state,u,old);previous[u.id]={x:u.x,z:u.z,yaw,frame:state.frame,walking};
+      const sleeping=playing&&(online?u.sleeping:S.asleep(state,u));show('Sleep '+i,sleeping);if(sleeping){const p=screenWorld({...u,y:position.y+visual.height+.4},input),r=authored['Sleep '+i].RectTransform;set('Sleep '+i,'RectTransform',{...r,anchored_position:[p.x,p.y]});}
+      const mesh=FrostVisual.pose(u,asset,walking,playing?portraitTime:time);
+      set('Unit '+i,'MeshRenderer',{mesh,material:asset.material});set('Unit '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:u.kind==='frosttower'?[.5,.85,1,1]:u.kind==='flametower'?[1,.58,.3,1]:u.bloodlust>0?[1,.62,.5,1]:[1,1,1,1]});transform('Unit '+i,[position.x,position.y,position.z],[scale,scale*Math.max(.15,u.built),scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);
+      const healing=S.feeding(u)>0;show('Unit aura '+i,u.lightningShield>0||healing);if(u.lightningShield>0||healing){set('Unit aura '+i,'ParticleEmitter3D',{...authored['Unit aura '+i].ParticleEmitter3D,...(healing&&!u.lightningShield?{rate_over_time:14,lifetime_min:.4,lifetime_max:.7,speed_min:.3,speed_max:.8,size_start:.18,shape_radius:.7,spread_degrees:20,color_start:[.3,.85,.15,.8],color_end:[.2,.6,.05,0]}:{}),playing:!paused||online,seed:u.id});transform('Unit aura '+i,[position.x,position.y+(healing?.5:1.3),position.z]);}
+      const picked=selected.includes(u.id),height=S.types[u.kind].flying?7:asset.factionBuilding||asset.mountedModel||u.kind==='treant'||asset.realistic&&u.kind==='hero'||S.types[u.kind].attack==='siege'?visual.height:S.types[u.kind].speed?3.25:4.3,span=S.types[u.kind].speed?2.5:(S.types[u.kind].radius+.2)*2;transform('Ring '+i,picked?[position.x,position.y-(S.types[u.kind].flying?4:0)+.04,position.z]:hidden,[span,.012,span]);transform('HP '+i,[position.x,position.y-(S.types[u.kind].flying?4:0)+height,position.z],[1.7*u.hp/u.maxHp,.1,.17]);set('HP '+i,'PbrMaterial',{base_color:u.team===team?[.18,.82,.47,1]:[.9,.2,.18,1],roughness:1});transform('Flag '+i,S.types[u.kind].speed?hidden:[position.x+.5,position.y+height-.6,position.z],[1.5,1.5,1.5]);set('Flag '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:u.team===0?[.35,.68,1,1]:[1,.3,.2,1]});
+
+    }
+  }
   function renderMissiles(dt){
     if(mode==='playing'&&(!paused||online))flightTime+=dt;
     if(mode!=='playing')missileView.reset();
@@ -363,9 +370,11 @@ var FrostClient=(()=>{
     missileCount=missiles.length;
   }
   function tick(dt){if(!initialized)init();dt=Math.min(.2,Math.max(0,dt));time+=dt;const input=engine.input||{keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};receive();controls(input,dt);
-    if(mode==='playing'&&(!paused||online))portraitTime+=dt;
+    if(mode==='playing'&&(!paused||online)){portraitTime+=dt;unitTime+=dt;}
     if((mode==='playing'||mode==='finished')&&!online&&!paused){accumulator+=dt;while(accumulator>=S.DT){S.tick(state);collectEvents();accumulator-=S.DT;}if(mode==='playing'&&state.winner!==null){mode='finished';sound('victory');}}
-    if(time>=renderAt){renderAt=time+.08;render(input);}
+    transform('Strategy camera',[camera[0],FrostVisual.camera.height,camera[1]+FrostVisual.camera.depth],[1,1,1],[Math.sin(pitch/2),0,0,Math.cos(pitch/2)]);set('Strategy camera','Camera3D',{...authored['Strategy camera'].Camera3D,orthographic_size:zoom});
+    renderUnits(input);
+    if(time>=renderAt||input.pressedKeys.length||input.pressedButtons.length||input.releasedButtons.length||armed?.type==='build'||drag){renderAt=time+.08;render(input);}
     renderMissiles(dt);
   }
   return {tick};

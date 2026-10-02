@@ -77,10 +77,11 @@ var FrostVisual=(()=>{
     const color=projectileColors[art],stone=art==='stone',physical=!color,asset=physical?FrostArt[stone?'RealRock07':'RealArrow']:null,size=stone?1.2/Math.max(...asset.size):1;
     return {mesh:asset?{mesh:stone?asset.lods[1]:asset.parts[0].mesh,material:asset.material}:null,scale:stone?[size,size,size]:art==='ballista'?[2.2,2.2,2]:art==='javelin'?[1.4,1.4,1.6]:art==='quarrel'?[1,1,.6]:[1,1,1],color:color||[.53,.43,.3,.7],texture:art==='fire'||art==='shadow'||stone?'smoke_01':art==='frost'?'star_04':'spark_01',trail:!!color,particleSize:art==='fire'?.65:art==='shadow'?.55:art==='frost'?.3:.4,impactSize:stone?1.8:physical?.3:.85};
   }
-  function projectileView(){
+  function projectileView(maxStep=Infinity){
     let frame=-1,tracks=new Map();
     const position=(v,clock)=>{const t=Frost.clamp((clock-v.at)/Frost.DT,0,1);return {...v.target,x:v.from.x+(v.target.x-v.from.x)*t,y:v.from.y+(v.target.y-v.from.y)*t,z:v.from.z+(v.target.z-v.from.z)*t};};
     return {reset(){frame=-1;tracks.clear();},sample(shots,nextFrame,clock){
+      if(Number.isFinite(maxStep))for(const p of shots){const old=tracks.get(p.id);if(old&&Math.hypot(p.x-old.target.x,p.y-old.target.y,p.z-old.target.z)>maxStep)tracks.set(p.id,{from:{...p},target:{...p},at:clock});}
       if(nextFrame!==frame){const fresh=new Map();for(const p of shots){const old=nextFrame>frame&&nextFrame-frame<=2?tracks.get(p.id):null;fresh.set(p.id,{from:old?position(old,clock):{...p},target:{...p},at:clock});}tracks=fresh;frame=nextFrame;}
       return [...tracks.values()].map(v=>position(v,clock));
     }};

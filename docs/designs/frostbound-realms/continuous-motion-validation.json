@@ -1,0 +1,51 @@
+{
+  "validatedAt": "2026-10-02T04:51:37.071359+00:00",
+  "scope": "Continuous unit presentation following the volumetric scene stage; full Warcraft III recreation remains incomplete.",
+  "nodeRulesAndRealTcp": true,
+  "nativeQuickJs": {
+    "passed": 4,
+    "failed": 0
+  },
+  "nativeHud": {
+    "passed": true,
+    "physicalInput": false,
+    "report": "native-classic-hud-qa.json"
+  },
+  "nativeMotion": {
+    "baseline": false,
+    "samples": 400,
+    "movementChanges": 25,
+    "authorityChanges": 17,
+    "changesBetweenSimulationTicks": 8,
+    "pausedSamples": 14,
+    "pausedPosesEqual": true,
+    "nativeComponentObservation": true
+  },
+  "package": {
+    "contentHash": "a9ad634fec72c04904e9520aee142a9b22762687768274c240f7e49a3c2c10a5",
+    "windowTitle": "Frostbound Realms",
+    "responding": true,
+    "audioListening": false,
+    "shutdown": "Only this smoke-check process was stopped",
+    "elapsedSeconds": 30,
+    "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+    "alive": true,
+    "packageValidationPassed": true,
+    "startedAt": "2026-10-02T12:45:46.3758095+08:00",
+    "processId": 71100,
+    "packagedFiles": 715,
+    "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+    "checkedAt": "2026-10-02T12:46:16.4276557+08:00",
+    "physicalInput": false,
+    "loggedErrors": 0
+  },
+  "sourceSha256": {
+    "samples/frostbound-realms/game/client.js": "9076c9a3d0fa1b410965ebc1cb0c35bc4052542686f0d6d709add053c6922b80",
+    "samples/frostbound-realms/game/visuals.js": "4238f453813c53162f228bbe02870aed231c858de90d6c5761e28d051a18e5e5",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "ecdac4b66c6701b9ac11e09dc8207f2c3dea016dc76fcdf4639f85a107fb27e2",
+    "scripts/test-frost-motion.mjs": "15a2d61cf65fcf3b15aa3f9569a2feaede1dd54ec109c74fda06ca199cc810d0",
+    "scripts/qa-frost-player.mjs": "4047cc67fb50ce67677fb5d7f0d84c449f872461b0fa478c9c0bacf6eca93459"
+  },
+  "skeletalSamplingHz": 12,
+  "terrain": "Tile-based terraces and real slope meshes; continuous heightfield not implemented."
+}

@@ -1,29 +1,38 @@
 {
   "passed": true,
   "kind": "skirmish",
+  "motion": {
+    "baseline": true,
+    "samples": 400,
+    "movementChanges": 13,
+    "changesBetweenSimulationTicks": 3,
+    "pausedSamples": 14,
+    "pausedPosesEqual": false,
+    "nativeComponentObservation": true
+  },
   "scope": "Standalone native Player frame-loop intervals from onTick dt; successful render logs checked, physical display presentation is not measured.",
   "physicalInput": false,
   "audioListening": false,
-  "fixture": "Isolated source project; scripted F1, two Home presses, centered pointer; game rules and assets unchanged.",
+  "fixture": "Scripted native pointer movement and one-second pause; Isolated source project; scripted F1, two Home presses, centered pointer; game rules and assets unchanged.",
   "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\target\\release\\mengine-runtime.exe",
   "executableSha256": "4f925b9bd5796415af74d2b24ddf27059fd6aac9fd202825fff173e78fbb435a",
   "sourceSceneSha256": "c36c0b33307d52668e32f160f9f06208bc46b81d767ee8e4e6703a6245d640f2",
-  "sourceScriptSha256": "ecdac4b66c6701b9ac11e09dc8207f2c3dea016dc76fcdf4639f85a107fb27e2",
-  "fixtureScriptSha256": "245129b9c827884c46dcd81c36590a2961fde0ce99b122f7c58d014006f3d05e",
-  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790916406091\\sample",
-  "processId": 76196,
+  "sourceScriptSha256": "b3453f039c5b411aaa332a92ebbd20d7d57ae7fffb4de927151755c80413ca11",
+  "fixtureScriptSha256": "f854111337c810e38f4a4fb92a5bc4e39d8e7e4c6d4f247286543833ecac1537",
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790915607268\\sample",
+  "processId": 65228,
   "warmupSeconds": 5,
   "sampleWindowSeconds": 5,
   "loggedErrors": [],
   "materialPipelineRejections": 0,
   "runs": [
     {
-      "samples": 255,
-      "durationMs": 4990.977904759347,
-      "frameLoopFps": 51.09219172395745,
-      "meanMs": 19.572462371605283,
-      "p95Ms": 30.25040030479431,
-      "maxMs": 127.45510041713716,
+      "samples": 104,
+      "durationMs": 5022.712804377079,
+      "frameLoopFps": 20.705941997991296,
+      "meanMs": 48.295315426702686,
+      "p95Ms": 140.38929343223572,
+      "maxMs": 144.2101001739502,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
@@ -34,7 +43,7 @@
         ],
         "zoom": 12,
         "units": 20,
-        "gold": 600,
+        "gold": 620,
         "selected": [
           8
         ],
@@ -48,22 +57,22 @@
       }
     },
     {
-      "samples": 246,
-      "durationMs": 5004.244274925441,
-      "frameLoopFps": 49.158271755961636,
-      "meanMs": 20.342456402135937,
-      "p95Ms": 34.18729826807976,
-      "maxMs": 118.4571012854576,
+      "samples": 108,
+      "durationMs": 4973.372928798199,
+      "frameLoopFps": 21.715644804078245,
+      "meanMs": 46.04974934072406,
+      "p95Ms": 57.110898196697235,
+      "maxMs": 144.6043998003006,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
-        "frame": 154,
+        "frame": 144,
         "camera": [
           -16,
           25
         ],
         "zoom": 12,
-        "units": 21,
+        "units": 20,
         "gold": 660,
         "selected": [
           8
@@ -78,23 +87,23 @@
       }
     },
     {
-      "samples": 252,
-      "durationMs": 5026.425297372043,
-      "frameLoopFps": 50.13503336690445,
-      "meanMs": 19.946132132428744,
-      "p95Ms": 32.41780027747154,
-      "maxMs": 129.00009751319885,
+      "samples": 103,
+      "durationMs": 5006.231002509594,
+      "frameLoopFps": 20.574360221964728,
+      "meanMs": 48.604184490384405,
+      "p95Ms": 139.57160711288452,
+      "maxMs": 141.52559638023376,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
-        "frame": 203,
+        "frame": 194,
         "camera": [
           -16,
           25
         ],
         "zoom": 12,
-        "units": 22,
-        "gold": 720,
+        "units": 20,
+        "gold": 740,
         "selected": [
           8
         ],
@@ -113,5 +122,5 @@
     "Assets/Materials/Ground.mmat": "8d6199382958aa3712bb8beae0ab9e08831089d60100ad3ef6fd692f9fb396f3",
     "Assets/Shaders/Ground.mshader": "bbd4074e8b890b01e509c6dd06c0cb132ae890188f40bc5e767a1d08dbab06db"
   },
-  "measuredAt": "2026-10-02T04:47:16.312Z"
+  "measuredAt": "2026-10-02T04:33:57.635Z"
 }

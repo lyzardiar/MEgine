@@ -1,29 +1,39 @@
 {
   "passed": true,
   "kind": "skirmish",
+  "motion": {
+    "baseline": false,
+    "samples": 400,
+    "movementChanges": 25,
+    "authorityChanges": 17,
+    "changesBetweenSimulationTicks": 8,
+    "pausedSamples": 14,
+    "pausedPosesEqual": true,
+    "nativeComponentObservation": true
+  },
   "scope": "Standalone native Player frame-loop intervals from onTick dt; successful render logs checked, physical display presentation is not measured.",
   "physicalInput": false,
   "audioListening": false,
-  "fixture": "Isolated source project; scripted F1, two Home presses, centered pointer; game rules and assets unchanged.",
+  "fixture": "Scripted native pointer movement and one-second pause; Isolated source project; scripted F1, two Home presses, centered pointer; game rules and assets unchanged.",
   "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\target\\release\\mengine-runtime.exe",
   "executableSha256": "4f925b9bd5796415af74d2b24ddf27059fd6aac9fd202825fff173e78fbb435a",
   "sourceSceneSha256": "c36c0b33307d52668e32f160f9f06208bc46b81d767ee8e4e6703a6245d640f2",
   "sourceScriptSha256": "ecdac4b66c6701b9ac11e09dc8207f2c3dea016dc76fcdf4639f85a107fb27e2",
-  "fixtureScriptSha256": "245129b9c827884c46dcd81c36590a2961fde0ce99b122f7c58d014006f3d05e",
-  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790916406091\\sample",
-  "processId": 76196,
+  "fixtureScriptSha256": "b289e33dc115a152c8bf0b0deac285466474240dc4b12ad11278ba4c90eb8010",
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1790916062666\\sample",
+  "processId": 150224,
   "warmupSeconds": 5,
   "sampleWindowSeconds": 5,
   "loggedErrors": [],
   "materialPipelineRejections": 0,
   "runs": [
     {
-      "samples": 255,
-      "durationMs": 4990.977904759347,
-      "frameLoopFps": 51.09219172395745,
-      "meanMs": 19.572462371605283,
-      "p95Ms": 30.25040030479431,
-      "maxMs": 127.45510041713716,
+      "samples": 104,
+      "durationMs": 4989.113997668028,
+      "frameLoopFps": 20.845384581031993,
+      "meanMs": 47.97224997757719,
+      "p95Ms": 56.77999928593635,
+      "maxMs": 145.7711011171341,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
@@ -48,22 +58,22 @@
       }
     },
     {
-      "samples": 246,
-      "durationMs": 5004.244274925441,
-      "frameLoopFps": 49.158271755961636,
-      "meanMs": 20.342456402135937,
-      "p95Ms": 34.18729826807976,
-      "maxMs": 118.4571012854576,
+      "samples": 108,
+      "durationMs": 5024.766314774752,
+      "frameLoopFps": 21.493536860100008,
+      "meanMs": 46.52561402569214,
+      "p95Ms": 53.22689935564995,
+      "maxMs": 143.19010078907013,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
-        "frame": 154,
+        "frame": 144,
         "camera": [
           -16,
           25
         ],
         "zoom": 12,
-        "units": 21,
+        "units": 20,
         "gold": 660,
         "selected": [
           8
@@ -78,23 +88,23 @@
       }
     },
     {
-      "samples": 252,
-      "durationMs": 5026.425297372043,
-      "frameLoopFps": 50.13503336690445,
-      "meanMs": 19.946132132428744,
-      "p95Ms": 32.41780027747154,
-      "maxMs": 129.00009751319885,
+      "samples": 101,
+      "durationMs": 4994.111690670252,
+      "frameLoopFps": 20.223816817850334,
+      "meanMs": 49.44665040267576,
+      "p95Ms": 132.5508952140808,
+      "maxMs": 143.02369952201843,
       "state": {
         "mode": "playing",
         "kind": "skirmish",
-        "frame": 203,
+        "frame": 194,
         "camera": [
           -16,
           25
         ],
         "zoom": 12,
-        "units": 22,
-        "gold": 720,
+        "units": 20,
+        "gold": 740,
         "selected": [
           8
         ],
@@ -113,5 +123,5 @@
     "Assets/Materials/Ground.mmat": "8d6199382958aa3712bb8beae0ab9e08831089d60100ad3ef6fd692f9fb396f3",
     "Assets/Shaders/Ground.mshader": "bbd4074e8b890b01e509c6dd06c0cb132ae890188f40bc5e767a1d08dbab06db"
   },
-  "measuredAt": "2026-10-02T04:47:16.312Z"
+  "measuredAt": "2026-10-02T04:41:32.998Z"
 }
