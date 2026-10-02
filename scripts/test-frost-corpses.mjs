@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/model-catalog.json',import.meta.url)));const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-function arena(mode='skirmish'){const map=S.defaultMap(mode);map.terrain.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create(mode,{map});s.units=[];return s;}
+function arena(mode='skirmish'){const map=S.defaultMap(mode);map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create(mode,{map});s.units=[];return s;}
 function kill(s,kind='soldier',extra={}){const u=S.spawn(s,'rifleman',0,0,0,{damage:100000,range:12}),v=S.spawn(s,kind,1,0,1,{hp:1,damage:0,speed:0,yaw:1.1,...extra});u.order={type:'attack',target:v.id};S.visibility(s);S.tick(s);assert.equal(v.hp,0);u.damage=0;u.order={type:'hold'};return {u,v,c:s.corpses.find(c=>c.id===v.id)};}
 {
  const s=arena(),{v,c}=kill(s);assert.ok(c);assert.equal(c.yaw,1.1);assert.equal(c.age,0);assert.ok(!s.units.some(u=>u.id===v.id));assert.equal(S.population(s,1).used,0);const body=S.clone(c);S.command(s,1,{type:'move',ids:[v.id],x:5,z:5});assert.deepEqual(c,body);

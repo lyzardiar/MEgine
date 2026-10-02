@@ -154,6 +154,15 @@ var Frost = (() => {
     }else if(mode!=='td')for(let z=9;z<23;z++)if(z<14||z>18)map.terrain[z*32+15]=map.terrain[z*32+16]=1;
     if(mode==='skirmish')for(let z=3;z<29;z++)for(let x=3;x<29;x++)if(Math.abs(x+z-31)<1.5&&map.terrain[z*32+x]===0)map.terrain[z*32+x]=2;
     if(mode==='moba')for(let z=3;z<29;z++)for(let x=3;x<29;x++)if(map.terrain[z*32+x]===0&&[0,1,2].some(lane=>{const route=lanePath(0,lane);return route.slice(1).some((p,i)=>segmentDistance(x*2-31,z*2-31,route[i],p)<1.8);}))map.terrain[z*32+x]=2;
+    if(mode==='skirmish'){
+      // MiYu: two mirrored wooded ridges retain flat bases, roads and the central crossing.
+      const ridge=(x,z,h,r=0)=>{const i=z*32+x,j=(31-z)*32+31-x;map.heights[i]=map.heights[j]=h;map.ramps[i]=r;map.ramps[j]=r===1?2:r===2?1:r===3?4:r===4?3:0;};
+      for(let z=8;z<=15;z++)for(let x=5;x<=11;x++)if(((x-8.5)/3.5)**2+((z-11.5)/4)**2<=1.3)ridge(x,z,1);
+      for(let z=7;z<=16;z++)for(let x=4;x<=12;x++){const i=z*32+x;if(map.heights[i]||map.terrain[i]===1)continue;for(const [dx,dz,r] of [[1,0,1],[-1,0,2],[0,1,3],[0,-1,4]])if(map.heights[(z+dz)*32+x+dx]===1&&!map.ramps[(z+dz)*32+x+dx]){ridge(x,z,0,r);break;}}
+      for(let z=10;z<=12;z++)for(let x=7;x<=9;x++)ridge(x,z,2);
+      for(let z=11;z<=13;z++)ridge(12,z,0,2);
+      ridge(10,11,1,2);
+    }
     for(const team of [0,1]){const [x,z]=map.spawns[team];map.props.push({kind:'mine',x:x+(team?-6:6),z,amount:9000});for(let i=0;i<8;i++)map.props.push({kind:'tree',x:x+(team?-1:1)*(2+i%4*2),z:z+(team?1:-1)*(6+Math.floor(i/4)*2),amount:600});}
     for(let i=0;i<24;i++){const x=((i*17)%50)-25,z=((i*29)%48)-24;if(Math.hypot(x,z)>12&&map.spawns.every(p=>Math.hypot(p[0]-x,p[1]-z)>12))map.props.push({kind:'tree',x,z,amount:600});}
     if(mode==='moba')map.props=map.props.filter(p=>p.kind!=='mine'&&[0,1,2].every(lane=>{const route=lanePath(0,lane);return route.slice(1).every((v,i)=>segmentDistance(p.x,p.z,route[i],v)>3.5);}));

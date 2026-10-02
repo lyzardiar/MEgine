@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 function arena(heroClass=3,range=1,mode='moba'){
-  const map=S.defaultMap(mode);map.terrain.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create(mode,{map});s.units=[];s.nextWave=100000;
+  const map=S.defaultMap(mode);map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create(mode,{map});s.units=[];s.nextWave=100000;
   const hero=S.spawn(s,'hero',0,0,0,{heroClass}),creep=S.spawn(s,'creep',0,0,range,{hp:20,damage:0,speed:0}),enemy=S.spawn(s,'hero',1,5,range,{damage:0,speed:0});enemy.order={type:'hold'};S.visibility(s);return {s,hero,creep,enemy};
 }
 const attack=({s,hero,creep})=>S.command(s,0,{type:'attack',ids:[hero.id],target:creep.id});

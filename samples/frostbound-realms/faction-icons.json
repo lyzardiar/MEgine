@@ -1,9 +1,9 @@
 {
   "file": "Assets/Art/faction-buildings.png",
-  "sha256": "3f2d5241faad7c8c2e6b0474cbfa835c808d4d7fe49195796e6e37c852e357fe",
+  "sha256": "aabb3c84e8f93c356ec14b869b18b783f7d2da0a653648873c571a198cfd04c3",
   "generator": "scripts/render-frost-faction-icons.mjs",
   "method": "Native MEngine Release render of the actual building meshes; no generated concept art",
-  "runtimeSha256": "d7ba4e113a68ecdf7808921aec970f11979096a0264ecd8a1a25db7de1e75116",
+  "runtimeSha256": "7b1e20a4b7a64759f62765bb8c6d0092bbed91dd56a2f8ef5d506cf2380c2892",
   "models": [
     {
       "name": "KingdomHall",
@@ -87,43 +87,43 @@
     },
     {
       "name": "WildwoodHall",
-      "mesh": "Assets/Models/WildwoodHall.glb",
-      "material": "Assets/Materials/WildwoodHall.mmat"
+      "mesh": "Assets/Models/RealWildwoodHall.glb",
+      "material": "Assets/Materials/RealWildwood.mmat"
     },
     {
       "name": "WildwoodHall2",
-      "mesh": "Assets/Models/WildwoodHall2.glb",
-      "material": "Assets/Materials/WildwoodHall2.mmat"
+      "mesh": "Assets/Models/RealWildwoodHall2.glb",
+      "material": "Assets/Materials/RealWildwood.mmat"
     },
     {
       "name": "WildwoodHall3",
-      "mesh": "Assets/Models/WildwoodHall3.glb",
-      "material": "Assets/Materials/WildwoodHall3.mmat"
+      "mesh": "Assets/Models/RealWildwoodHall3.glb",
+      "material": "Assets/Materials/RealWildwood.mmat"
     },
     {
       "name": "WildwoodBarracks",
-      "mesh": "Assets/Models/WildwoodBarracks.glb",
-      "material": "Assets/Materials/WildwoodBarracks.mmat"
+      "mesh": "Assets/Models/RealWildwoodBarracks.glb",
+      "material": "Assets/Materials/RealWildwood.mmat"
     },
     {
       "name": "WildwoodLodge",
-      "mesh": "Assets/Models/WildwoodLodge.glb",
-      "material": "Assets/Materials/WildwoodLodge.mmat"
+      "mesh": "Assets/Models/RealWildwoodLodge.glb",
+      "material": "Assets/Materials/RealWildwood.mmat"
     },
     {
       "name": "WildwoodTower",
-      "mesh": "Assets/Models/WildwoodTower.glb",
-      "material": "Assets/Materials/WildwoodTower.mmat"
+      "mesh": "Assets/Models/RealWildwoodTower.glb",
+      "material": "Assets/Materials/RealWildwood.mmat"
     },
     {
       "name": "WildwoodAltar",
-      "mesh": "Assets/Models/WildwoodAltar.glb",
-      "material": "Assets/Materials/WildwoodAltar.mmat"
+      "mesh": "Assets/Models/RealWildwoodAltar.glb",
+      "material": "Assets/Materials/RealWildwood.mmat"
     },
     {
       "name": "WildwoodWorkshop",
-      "mesh": "Assets/Models/WildwoodWorkshop.glb",
-      "material": "Assets/Materials/WildwoodWorkshop.mmat"
+      "mesh": "Assets/Models/RealWildwoodWorkshop.glb",
+      "material": "Assets/Materials/RealWildwood.mmat"
     },
     {
       "name": "RevenantHall",

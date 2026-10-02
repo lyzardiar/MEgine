@@ -1,0 +1,43 @@
+{
+  "source": "Native MEngine Release render and Agent input",
+  "scope": "Volumetric Frostbound scene presentation",
+  "rulesAndTcp": "node scripts/test-frostbound.mjs passed",
+  "nativeQuickJS": {
+    "passed": 4,
+    "failed": 0
+  },
+  "package": {
+    "contentHash": "4ccc5b02ea2d667830f7c3931a2625dfacc7f056fa516b4983d5649ab4056aca",
+    "windowTitle": "Frostbound Realms",
+    "responding": true,
+    "audioListening": false,
+    "shutdown": "Only this smoke-check process was stopped",
+    "elapsedSeconds": 30,
+    "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+    "alive": true,
+    "packageValidationPassed": true,
+    "startedAt": "2026-10-02T09:58:21.8096557+08:00",
+    "processId": 604,
+    "packagedFiles": 715,
+    "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+    "checkedAt": "2026-10-02T09:58:51.8522336+08:00",
+    "physicalInput": false,
+    "loggedErrors": 0
+  },
+  "scene": {
+    "report": "native-3d-qa.json",
+    "passed": true
+  },
+  "baseline": {
+    "report": "native-3d-before-qa.json",
+    "passed": true
+  },
+  "terrain": {
+    "report": "native-terrain-qa.json",
+    "passed": true
+  },
+  "factions": {
+    "report": "native-factions-qa.json",
+    "passed": true
+  }
+}

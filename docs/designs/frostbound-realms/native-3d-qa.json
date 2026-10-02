@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "scope": "Native Release editor, actual meshes and Agent input",
+  "physicalInput": false,
+  "before": false,
+  "defaultRaisedCells": 104,
+  "visible3dTrees": 65,
+  "workerSelectionMovement": true,
+  "wildwoodMeshes": 3,
+  "profiler": {
+    "intervals": 177,
+    "averagePresentIntervalMs": 171.2129943505519,
+    "p95PresentIntervalMs": 293.2000000476837,
+    "presentedFps": 5.8406781786231665,
+    "averageRequestMs": 164.79101124104488,
+    "averageRenderMs": 57.92499831460671,
+    "averageCommandMs": 89.16877696629214,
+    "averageUploadMs": 1.5084269642829895,
+    "averageSimulationMs": 17.685631638418077,
+    "averageSimulationRequestMs": 165.572881359165
+  }
+}

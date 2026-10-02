@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-function arena(kind='archer',distance=8){const map=S.defaultMap();map.terrain.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map});s.units=[];const u=S.spawn(s,kind,0,0,0),v=S.spawn(s,'neutral',1,0,distance,{speed:0,damage:0});u.order={type:'attack',target:v.id};S.visibility(s);return {s,u,v};}
+function arena(kind='archer',distance=8){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map});s.units=[];const u=S.spawn(s,kind,0,0,0),v=S.spawn(s,'neutral',1,0,distance,{speed:0,damage:0});u.order={type:'attack',target:v.id};S.visibility(s);return {s,u,v};}
 function launch(kind='archer',distance=8){const a=arena(kind,distance);S.tick(a.s);assert.equal(a.v.hp,a.v.maxHp,'release does not apply damage');assert.equal(a.s.projectiles.length,1);a.u.cd=99;return a;}
 {
  const {s,u,v}=launch(),hp=v.hp;assert.equal(s.events.filter(e=>e.type==='launch').length,1);assert.ok(!s.events.some(e=>e.type==='damage'||e.type==='impact'));step(s,3);assert.equal(v.hp,hp);assert.equal(s.projectiles.length,1);S.tick(s);assert.equal(v.hp,hp-S.weaponDamage(u,v,u.damage));assert.equal(s.projectiles.length,0);assert.equal(s.events.filter(e=>e.type==='impact').length,1);step(s,10);assert.equal(v.hp,hp-S.weaponDamage(u,v,u.damage),'one impact only');

@@ -37,11 +37,11 @@ var FrostVisual=(()=>{
     const d=Frost.types[u.kind],f=state.teams[u.team]?.faction||0,tier=Frost.clamp(u.upgradeTier??state.teams[u.team]?.tier??1,1,3);
     let key=u.kind==='hauntedmine'?'HauntedMine':u.kind==='temple'?'RealTemple':u.kind==='spiritlodge'?'WarclansAltar':buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'RealBear':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','Tribal','Rogue','RealAcolyte'][f]:units[u.kind]||base[u.kind]||base[d.model];
     const original=FrostArt[key],activity=['RealWorker','RealAcolyte','RealGhoul'].includes(key)?work(state,u):null,phase=(key==='RealArcher'||original.shotModel)&&!walking&&!u.stun?(castPhase(u,original,walking)??(u.cd>0?attackPhase(u,original):null)):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?original.loadedModel||key:original.shotModel):key+(loaded?'Loaded':'Shoot');
-    const asset=FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?(d.radius*2*.92)/Math.max(asset.size[0],asset.size[2]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
+    const asset=FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?(d.radius*2*.92)/Math.hypot(asset.size[0],asset.size[2]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
     return {key,asset,scale,height:asset.size[1]*scale+.5};
   }
   function heading(state,u,old){
-    if(!Frost.types[u.kind].speed)return 0;
+    if(!Frost.types[u.kind].speed)return Math.PI/6;
     if(Frost.feeding(u))return u.yaw??0;
     const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;
     if(['hero','necromancer','shaman'].includes(u.kind)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[units[u.kind]||Frost.unitType(u).art],moved)!==null)return u.castYaw;
@@ -64,7 +64,7 @@ var FrostVisual=(()=>{
     const attack=(u.cd>.25)&&(u.kind!=='worker'||[FrostArt.RealWorker,FrostArt.RealAcolyte].includes(asset)&&!['gather','build','construct','repair'].includes(u.order?.type)),desired=asset===FrostArt.Skeleton_Rogue?(attack?/^2H_Ranged_Shooting$/:walking?/^Walking_A$/:/^Idle$/):asset===FrostArt.Skeleton_Mage?(attack?/^Spellcast_Shoot$/:walking?/^Walking_A$/:/^Idle$/):Frost.types[u.kind].flying?(attack?/Dragon_Attack$/:/Dragon_Flying/):attack?/Sword_Attack|Bow_Shoot|Staff_Attack|Punch|Headbutt/:walking?/^Run$|^Walk$|Fast_Flying/:/^Idle$|Flying_Idle/;
     let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return asset.parts[0].mesh+'#pose='+clip+':'+Math.floor(time*12)%asset.animations[clip].frames;
   }
-  function environment(key,height,yaw,far,width=Infinity){const original=FrostArt[key],card=far&&original.impostor,asset=card?{...original,material:card.material}:original;return {key,asset,mesh:card?card.mesh:asset.lods[far?1:0],scale:Math.min(height/asset.size[1],width/Math.max(asset.size[0],asset.size[2])),yaw:card?0:yaw};}
+  function environment(key,height,yaw,far,width=Infinity){const asset=FrostArt[key];return {key,asset,mesh:asset.lods[far?1:0],scale:Math.min(height/asset.size[1],width/Math.max(asset.size[0],asset.size[2])),yaw};}
   function resource(r,zoom=27){const seed=(Math.imul(Math.round(r.x*100),73856093)^Math.imul(Math.round(r.z*100),19349663))>>>0,key=r.kind==='tree'?['RealSpruceA','RealSpruceB','RealSpruceC'][seed%3]:r.kind==='mine'?'RealRock07':'RealFirePit';return environment(key,r.kind==='tree'?4.7+(seed%12)/10:r.kind==='mine'?2.5:.65,seed%628/100,zoom>14,r.kind==='tree'?5:r.kind==='mine'?4.5:1.4);}
   function scenery(i,edge,zoom=27){const tree=edge?i%4!==0:i%5===0,shrub=!tree&&i%3===0,key=tree?['RealSpruceA','RealSpruceB','RealSpruceC'][i%3]:shrub?'RealShrub':'RealMossRock'+(i%6+1);return environment(key,tree?(edge?7+i%4:3.8+i%3*.5):shrub?1.2:edge?2.1+i%3*.4:.35+i%4*.2,i*2.399963,edge||zoom>14,tree?6:edge?4.5:1.7);}
   function heroPortrait(heroClass=0,closeup=false){const art=Frost.heroes[heroClass].art;return FrostArt[art].realistic?'Assets/Art/'+(closeup?'head-portraits':'unit-portraits')+'.png#'+art:'Assets/Art/hero-portraits.png#hero-'+heroClass;}
@@ -85,6 +85,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {model,name,pose,corpse,heroPortrait,unitPortrait,heading,resource,scenery,projectile,projectileView,muzzle};
+  return {camera:{height:32,depth:42},model,name,pose,corpse,heroPortrait,unitPortrait,heading,resource,scenery,projectile,projectileView,muzzle};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-function game(hour=8){const map=S.defaultMap();map.startingHour=hour;map.terrain.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map});s.units=[];return s;}
+function game(hour=8){const map=S.defaultMap();map.startingHour=hour;map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map});s.units=[];return s;}
 for(const [frame,hour,night] of [[0,8,false],[1999,17.995,false],[2000,18,true],[3200,0,true],[4399,5.995,true],[4400,6,false],[4800,8,false]]){const s=game();s.frame=frame;assert.ok(Math.abs(S.timeOfDay(s)-hour)<1e-9);assert.equal(S.isNight(s),night);assert.ok(S.daylight(s)>=0&&S.daylight(s)<=1);}
 for(const bad of [-1,24,8.5,NaN,'8'])assert.throws(()=>S.validateMap({...S.defaultMap(),startingHour:bad}),/starting hour/);
 {const old=S.defaultMap();delete old.startingHour;assert.equal(S.validateMap(old).startingHour,8);assert.equal(S.timeOfDay(S.create('skirmish',{map:{...old,startingHour:22}})),22);}

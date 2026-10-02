@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 const root=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url)),S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
+const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
 const catalog=JSON.parse(fs.readFileSync(path.join(root,'model-catalog.json'),'utf8'));
 const portraitViews=Object.fromEntries(JSON.parse(fs.readFileSync(path.join(root,'head-portraits.json'),'utf8')).views.map(v=>[v.key,v]));
 for(const dir of ['Scenes','Scripts','Fonts','Maps','Audio'])fs.mkdirSync(path.join(root,'Assets',dir),{recursive:true});
@@ -12,7 +13,7 @@ for(const file of ['Cinzel-OFL.txt','NotoSansSC-OFL.txt'])fs.copyFileSync(path.j
 const E=[],T=(position=[0,0,0],scale=[1,1,1],rotation=[0,0,0,1])=>({position,scale,rotation}),q=p=>[Math.sin(p/2),0,0,Math.cos(p/2)];
 const entity=(name,components,parent=null)=>{const id=E.length+1;E.push({entity:id,name,parent,siblingIndex:id-1,active:true,components});return id;};
 const box=(name,p,size,color)=>entity(name,{Transform:T(p,size),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:color,roughness:.95}});
-entity('Strategy camera',{Transform:T([0,42,32],[1,1,1],q(-Math.atan2(42,32))),Camera3D:{primary:true,projection:'orthographic',orthographic_size:27,near:.1,far:220,capture_pointer:false},AudioListener:{primary:true}});
+entity('Strategy camera',{Transform:T([0,V.camera.height,V.camera.depth],[1,1,1],q(-Math.atan2(V.camera.height,V.camera.depth))),Camera3D:{primary:true,projection:'orthographic',orthographic_size:27,near:.1,far:220,capture_pointer:false},AudioListener:{primary:true}});
 entity('Winter sun',{Transform:T([0,0,0],[1,1,1],[-.45,-.25,-.12,.84]),DirectionalLight:{color:[1,.91,.78,1],intensity:2,cast_shadows:true,shadow_distance:90,shadow_strength:.5,shadow_bias:.005,shadow_normal_bias:.08}});
 entity('Northern sky',{EnvironmentLight:{sky_color:[.09,.15,.24,1],equator_color:[.23,.32,.37,1],ground_color:[.13,.19,.18,1],diffuse_intensity:.85,specular_intensity:.4,background_enabled:true,tone_mapping:true,exposure:.1}});
 entity('Terrain bed',{Transform:T([0,-.7,0],[180,1.2,180]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Ground.mmat'}});

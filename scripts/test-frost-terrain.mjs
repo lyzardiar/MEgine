@@ -4,6 +4,7 @@ import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
+const ridge=S.defaultMap();assert.ok(ridge.heights.filter(h=>h>0).length>=100);for(let i=0;i<1024;i++){assert.equal(ridge.heights[i],ridge.heights[1023-i]);}for(const spawn of ridge.spawns)assert.ok(S.flatSite(ridge,...spawn,3));assert.ok(S.traversable(ridge,-5,-7,-11,-7),'west ridge is reached over its ramp');assert.ok(S.traversable(ridge,5,7,11,7),'east ridge is reached over its mirrored ramp');assert.ok(!S.traversable(ridge,-19,-9,-17,-9),'cliff face blocks ground travel');
 const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;delete legacy.surfaces;
 assert.equal(S.validateMap(legacy).heights.reduce((a,b)=>a+b),0);
 assert.deepEqual(S.validateMap(legacy).surfaces,Array(1024).fill(0));

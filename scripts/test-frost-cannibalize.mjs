@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
-function arena(){const map=S.defaultMap();map.terrain.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[3,0]});s.units=[];s.corpses=[];const crypt=S.spawn(s,'barracks',0,-12,-10),h=S.spawn(s,'ghoul',0,0,0,{hp:10,damage:0,order:{type:'hold'}}),a=S.spawn(s,'abomination',0,0,5,{hp:100,damage:0,order:{type:'hold'}});S.visibility(s);return {s,crypt,h,a};}
+function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[3,0]});s.units=[];s.corpses=[];const crypt=S.spawn(s,'barracks',0,-12,-10),h=S.spawn(s,'ghoul',0,0,0,{hp:10,damage:0,order:{type:'hold'}}),a=S.spawn(s,'abomination',0,0,5,{hp:100,damage:0,order:{type:'hold'}});S.visibility(s);return {s,crypt,h,a};}
 function corpse(s,x,z){const c={id:++s.serial,kind:'soldier',heroClass:0,team:1,x,y:0,z,yaw:0,age:0,boss:false,large:false};s.corpses.push(c);return c;}
 const eat=(s,...units)=>S.command(s,0,{type:'cannibalize',ids:units.map(u=>u.id)});
 {

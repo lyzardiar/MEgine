@@ -1,0 +1,696 @@
+{
+  "generator": "scripts/import-frost-wildwood.py",
+  "licenses": [
+    "CC0-1.0",
+    "CC-BY-3.0"
+  ],
+  "attributionManifests": [
+    "realistic-sources.json",
+    "house-sources.json",
+    "treant-sources.json"
+  ],
+  "sources": [
+    {
+      "file": "Assets/Models/RealTreant.glb",
+      "sha256": "65267ef386332de25244e1e09158dcdc29c4ef80af8e141c0ca7c9e11e97c1ff"
+    },
+    {
+      "file": "Assets/Materials/RealTreant.mmat",
+      "sha256": "c47728d28ef34cb8311856deea898500d3b29227fa3d888d7d8251697ea35658"
+    },
+    {
+      "file": "Assets/Textures/RealTreant_base.png",
+      "sha256": "eca5a1c12f458a6b684bcd9fb650a5861445adcb013c4023f51a07e01414f2dc"
+    },
+    {
+      "file": "Assets/Textures/RealTreant_normal.png",
+      "sha256": "3f971dbad5163ca7ff8b2d5d14482b0d992574f5c3c2748c0c37323847624fe0"
+    },
+    {
+      "file": "Assets/Textures/RealTreant_arm.png",
+      "sha256": "b56279b36aaec56ca55422c2a2fbd82a494fb5e841d58591b9a29e7218350e64"
+    },
+    {
+      "file": "Assets/Models/RealSpruceA.glb",
+      "sha256": "349f5dabbd21a673288b1c7a55b24028b69c89c625d42b4b1aa22b8fca551e40"
+    },
+    {
+      "file": "Assets/Materials/Real_fir_sapling_medium.mmat",
+      "sha256": "bac3f5a16a34bee1ec162e32af497a49f23a48d7ed573636721c3c8793663ea5"
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_base.png",
+      "sha256": "be684180f2ac3a001a7cd4330589d1d3eb648999dc9a2cc55f646cd19f195f2c"
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_normal.png",
+      "sha256": "e3ea0f6d424780002b6b918be330c5195eaf2e3410c8fa256bb7fef946acea42"
+    },
+    {
+      "file": "Assets/Textures/Real_fir_sapling_medium_arm.png",
+      "sha256": "f5c837062505da5f06a33274e964a882af3d26fa43b14aff094c42164b165979"
+    },
+    {
+      "file": "Assets/Models/RealMossRock1.glb",
+      "sha256": "945268e84e4f6d9074b58c1b4f5ac6c2ac8b3f13e7d7d1594094cdb37551af12"
+    },
+    {
+      "file": "Assets/Materials/Real_rock_moss_set_01.mmat",
+      "sha256": "1ae6abfb72f0944d3339490d00f464e0ba296cf7481bdb3dae04cd47934ef276"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_moss_set_01_base.png",
+      "sha256": "d3055b67dd380693ace6cd55255c7f62e5435c3da02391500489b2af6b283838"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_moss_set_01_normal.png",
+      "sha256": "4a23b787d86875a89b9d0458dafa5b62da62178dbdb29fe15b1d2c21efda505b"
+    },
+    {
+      "file": "Assets/Textures/Real_rock_moss_set_01_arm.png",
+      "sha256": "223c30472c5ea3f33bef84ec797e3ca6cabb61277d37a7530da865f5281f1f0e"
+    },
+    {
+      "file": "Assets/Models/RealKingdomLodge.glb",
+      "sha256": "4a15a2f18664bd9e24d23a795c1b4a9321354a49630891929f79fbc97f0c6af1"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomLodge.mmat",
+      "sha256": "73b607c45ca334ab7b5adb270986b864319e8d4f9a8decb0240402f9488c2c65"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomLodge.png",
+      "sha256": "6430f52c27079dfbd10bb88440058899bb8d7858a08ce8b8a83f0e851c3bf4a4"
+    },
+    {
+      "file": "Assets/Models/RealKingdomTower.glb",
+      "sha256": "00e8dd2fb02aab562b6a69247bf6c358f21a7737c5309f9e5057392dace10c0d"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomTower.mmat",
+      "sha256": "f54ba47fd5e3bb5e9141d4f90ea784a21fd5fbb25e79d08e34823b6928df158f"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomTower.png",
+      "sha256": "48a08494ced7365bb94f14bdc5f4790acc046930e4e5b3f9b90aec62b74cefb3"
+    },
+    {
+      "file": "Assets/Models/RealKingdomWorkshop.glb",
+      "sha256": "6a5415de1326b86a161e569137389db9403d7b8eccedad00c867d9df3ff209c2"
+    },
+    {
+      "file": "Assets/Materials/RealKingdomWorkshop.mmat",
+      "sha256": "0d5a3075836a8858c46f3dba06f1263962013264e5f249e9cc7c19c11e9aeac5"
+    },
+    {
+      "file": "Assets/Textures/RealKingdomWorkshop.png",
+      "sha256": "bb008486447ba60322f980c19ee0186d5dac4fb2375dfc55f409f5c41bc27a09"
+    }
+  ],
+  "models": {
+    "WildwoodHall": [
+      {
+        "key": "RealTreant",
+        "size": [
+          4,
+          4.8,
+          2.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          2.4,
+          6,
+          2.4
+        ],
+        "position": [
+          0,
+          1,
+          -0.5
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          -1.5,
+          0,
+          1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          1.5,
+          0,
+          1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          -1.5,
+          0,
+          -1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          1.5,
+          0,
+          -1
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodHall2": [
+      {
+        "key": "RealTreant",
+        "size": [
+          4,
+          4.8,
+          2.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          2.4,
+          6,
+          2.4
+        ],
+        "position": [
+          0,
+          1,
+          -0.5
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          -1.5,
+          0,
+          1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          1.5,
+          0,
+          1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          -1.5,
+          0,
+          -1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          1.5,
+          0,
+          -1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          1.6,
+          5,
+          1.6
+        ],
+        "position": [
+          -1.4,
+          0,
+          -1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          1.6,
+          5,
+          1.6
+        ],
+        "position": [
+          1.4,
+          0,
+          -1
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodHall3": [
+      {
+        "key": "RealTreant",
+        "size": [
+          4,
+          4.8,
+          2.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          2.4,
+          6,
+          2.4
+        ],
+        "position": [
+          0,
+          1,
+          -0.5
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          -1.5,
+          0,
+          1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          1.5,
+          0,
+          1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          -1.5,
+          0,
+          -1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.5,
+          0.6,
+          1.3
+        ],
+        "position": [
+          1.5,
+          0,
+          -1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          2,
+          6.8,
+          2
+        ],
+        "position": [
+          -1.5,
+          0,
+          -1
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          2,
+          6.8,
+          2
+        ],
+        "position": [
+          1.5,
+          0,
+          -1
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodBarracks": [
+      {
+        "key": "KingdomLodge",
+        "size": [
+          3.5,
+          2.8,
+          2.5
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          1.9,
+          4.6,
+          1.9
+        ],
+        "position": [
+          -1.9,
+          0,
+          -0.7
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          1.9,
+          4.6,
+          1.9
+        ],
+        "position": [
+          1.9,
+          0,
+          -0.7
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodLodge": [
+      {
+        "key": "KingdomLodge",
+        "size": [
+          2.3,
+          2.2,
+          1.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          2.3,
+          4.6,
+          2.3
+        ],
+        "position": [
+          0,
+          0,
+          -0.7
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodTower": [
+      {
+        "key": "KingdomTower",
+        "size": [
+          1.4,
+          4,
+          1.4
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          2.1,
+          5.8,
+          2.1
+        ],
+        "position": [
+          0,
+          0,
+          -0.4
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          2,
+          0.6,
+          1.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodAltar": [
+      {
+        "key": "RealTreant",
+        "size": [
+          2.1,
+          2.8,
+          1.6
+        ],
+        "position": [
+          0,
+          0.4,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          3,
+          0.7,
+          2.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          1.3,
+          3.6,
+          1.3
+        ],
+        "position": [
+          -1.2,
+          0,
+          -0.6
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          1.3,
+          3.6,
+          1.3
+        ],
+        "position": [
+          1.2,
+          0,
+          -0.6
+        ],
+        "yaw": 0
+      }
+    ],
+    "WildwoodWorkshop": [
+      {
+        "key": "KingdomWorkshop",
+        "size": [
+          3.2,
+          3,
+          2.8
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealSpruceA",
+        "size": [
+          2.5,
+          5.2,
+          2.5
+        ],
+        "position": [
+          -1,
+          0,
+          -0.5
+        ],
+        "yaw": 0
+      },
+      {
+        "key": "RealMossRock1",
+        "size": [
+          1.2,
+          0.9,
+          1.1
+        ],
+        "position": [
+          1.4,
+          0,
+          1
+        ],
+        "yaw": 0
+      }
+    ]
+  },
+  "generated": [
+    {
+      "file": "Assets/Textures/RealWildwood_base.png",
+      "sha256": "d30d932c1362310440948b5448ff5aede39702151afe189c36c2ee6d4d8828a3"
+    },
+    {
+      "file": "Assets/Textures/RealWildwood_normal.png",
+      "sha256": "af2e486f7774fd961c2690fe78fdfbabd5b538a451a8f2d8c2f174c21f48a870"
+    },
+    {
+      "file": "Assets/Textures/RealWildwood_arm.png",
+      "sha256": "097b0f681edc69ffc6c4cb48b902bb59ba15a2793ab2ba756aba4e91406c7de5"
+    },
+    {
+      "file": "Assets/Materials/RealWildwood.mmat",
+      "sha256": "0b86a258016ef60f7c5b551582879d876c60cd5879be461798b82678e21de338"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodHall.glb",
+      "sha256": "af2bf0e04f92ca76a5933a0504e8e240af7af6646359c99b64d4b9469755ce3f"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodHall2.glb",
+      "sha256": "24fb82525c2023c83128e57e50df8ef1e7a565ad6df564bef748c1d17f1fc7a8"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodHall3.glb",
+      "sha256": "3a20c8fc6eba20389bb4765e9c1c58305ba31310dfb77cd898f049c6b39c71f0"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodBarracks.glb",
+      "sha256": "815589c66521d2657cca10da213ab31d453a49835001f0055fba7fe12f875836"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodLodge.glb",
+      "sha256": "6d374482bbbcc50796c7de07566bf11ad8a98543fbfe10a3ca0e091d866d6075"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodTower.glb",
+      "sha256": "18e8277db64785af5c44cdb560485b3c892c902b406765202664c60d624b6c7f"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodAltar.glb",
+      "sha256": "c81a84c5a9d8975a74a8ac2227a76beabd62289d67830ba3e8d153acc6b581b6"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodWorkshop.glb",
+      "sha256": "05c6a9d794cc7eefe3af8dbb625be209734f8ef8551a130f0211582cec05bc65"
+    }
+  ]
+}
