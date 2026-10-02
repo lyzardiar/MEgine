@@ -34,6 +34,9 @@
     }
   ],
   "classicHud": {
+    "continuousSkyline": true,
+    "skylineBlocksOrdersAndSelection": true,
+    "skylineBlocksPlacement": true,
     "fourByThreeCommandCard": true,
     "fixedCommonSlots": true,
     "pauseMenuAndResume": true,

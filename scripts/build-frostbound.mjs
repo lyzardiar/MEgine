@@ -70,7 +70,7 @@ text('Credits text','FROSTBOUND REALMS\n\n基于 MEngine 的经典即时战略�
 text('Quit text','是否退出游戏？',0,-30,850,120,30,C.gold,'Center');classicButton('quitConfirm','退出',-166,150,270,42,'quit');classicButton('quitCancel','取消',166,150,270,42,'quit');
 function frame(n,x,y,w,h){ui('HUD Frame '+n,x,y,w,h,{Image:{sprite:'Assets/Art/hud-human-frame.png',image_type:'Sliced',border:[350,350,350,350],source_size:[1254,1254],pixels_per_unit_multiplier:10,color:[1,1,1,1],raycast_target:false}});}
 metal('Header',0,-340,1280,40);text('Brand','',-513,-338,200,24,15,C.gold);text('Resources','',210,-338,600,24,15,C.white);text('Clock','',0,-284,140,24,11,C.gold,'Center');
-for(const [id,label,x] of [['hudMenu','菜单 (F10)',-550],['hudQuest','任务 (F9)',-426],['hudHero','英雄 (Space)',-294]])button(id,label,x,-339,116,29,'toolbar');
+for(const [id,label,x] of [['hudMenu','菜单 (F10)',-550],['hudQuest','任务 (F9)',-426],['hudHero','英雄 (Space)',-294]]){classicButton(id,label,x,-339,116,29,'toolbar');E.at(-1).components.Text.font_size=13;}
 for(const [name,icon,x] of [['Gold','gold',237],['Lumber','wood',369],['Supply','tower',501]]){art('HUD '+name+' icon','Assets/Art/command-icons.png#'+icon,x,-339,23,23);text('HUD '+name+' value','',x+54,-339,80,26,16,C.gold,'Left');}
 metal('Bottom',0,261,1280,198);panel('Bottom rule',0,162,1280,5,[.33,.27,.15,1]);
 frame('Minimap',-531,263,206,194);frame('Portrait',-344,263,158,194);frame('Info',-26,263,466,194);frame('Inventory',291,263,158,194);frame('Commands',493,263,234,194);
@@ -125,6 +125,7 @@ const portraitModel=entity('Portrait model',{Transform:T([1000,0,0],[1,1,1],[0,M
 const portraitCamera=entity('Portrait camera',{Transform:T([1000,2,10]),Camera3D:{primary:false,projection:'orthographic',orthographic_size:1,near:.1,far:100,clear_flags:'solidcolor',background_color:[.025,.04,.055,1]}});
 ui('HUD Live portrait',-344,247,132,136,{RawImage:{render_camera:String(portraitCamera),render_root:String(portraitModel),color:[1,1,1,1],raycast_target:false}});
 E.at(-1).siblingIndex=E.find(e=>e.name==='Portrait').siblingIndex;
+art('HUD Skyline','Assets/Art/hud-human-battlements.png#skyline',0,154,1280,57);E.at(-1).siblingIndex=E.find(e=>e.name==='HUD Frame Minimap').siblingIndex-1;
 ui('HUD Daynight dial',0,-328,64,64,{Image:{material:'Assets/Materials/DayNightDial.mmat',color:[8/24,1,0,1],raycast_target:false}});
 fs.writeFileSync(path.join(root,'Assets/Scenes/Main.mscene'),JSON.stringify({version:1,name:'Frostbound Realms',world:{entities:E,frame:0,sim_frame:0,clear_color:[.08,.13,.18,1]}},null,2)+'\n');
 fs.writeFileSync(path.join(root,'project.json'),JSON.stringify({name:'Frostbound Realms',storageId:'frostbound-realms-2d128968-5677-47b3-8d38-a128a763e15a',version:1,language:'javascript',mainScene:'Assets/Scenes/Main.mscene',buildScenes:['Assets/Scenes/Main.mscene'],startupScript:'Assets/Scripts/Main.js',assetMode:'all'},null,2)+'\n');

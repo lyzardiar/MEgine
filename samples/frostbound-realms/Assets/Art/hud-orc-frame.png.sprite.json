@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "mode": "multiple",
+  "pixels_per_unit": 1,
+  "slices": [
+    {
+      "name": "skyline",
+      "rect": [
+        0,
+        0,
+        1254,
+        350
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    }
+  ]
+}

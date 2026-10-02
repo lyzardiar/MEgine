@@ -1,0 +1,111 @@
+{
+  "scope": "Continuous battle frame, cobalt toolbar and twelve closer native portrait views",
+  "passed": true,
+  "nativeHud": {
+    "passed": true,
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "raceHud": [
+      {
+        "race": "human",
+        "localPlayerSkin": true,
+        "enemySelectionRetainsSkin": false,
+        "dialAndHover": true,
+        "pauseSaveLoad": true
+      },
+      {
+        "race": "orc",
+        "localPlayerSkin": true,
+        "enemySelectionRetainsSkin": true,
+        "dialAndHover": true,
+        "pauseSaveLoad": true
+      },
+      {
+        "race": "night-elf",
+        "localPlayerSkin": true,
+        "enemySelectionRetainsSkin": true,
+        "dialAndHover": true,
+        "pauseSaveLoad": true
+      },
+      {
+        "race": "undead",
+        "localPlayerSkin": true,
+        "enemySelectionRetainsSkin": true,
+        "dialAndHover": true,
+        "pauseSaveLoad": true
+      }
+    ],
+    "classicHud": {
+      "continuousSkyline": true,
+      "skylineBlocksOrdersAndSelection": true,
+      "skylineBlocksPlacement": true,
+      "fourByThreeCommandCard": true,
+      "fixedCommonSlots": true,
+      "pauseMenuAndResume": true,
+      "pauseMenuSaveLoad": true,
+      "headPortrait": true,
+      "animatedModelPortrait": true,
+      "portraitPause": true,
+      "portraitSelectionSwitch": true,
+      "portraitFallback": true,
+      "portraitResize": true,
+      "independentResources": true,
+      "heroShortcut": true,
+      "sixSlotUseDrop": true,
+      "minimapCamera": true,
+      "constructionSubmenu": true,
+      "gatherAndStop": true,
+      "twelveUnitPortraits": true,
+      "primaryPortraitAndControlGroup": true,
+      "saveRestore": true,
+      "editorControls": true,
+      "shaderRejections": 0
+    }
+  },
+  "portraitPixels": {
+    "viewport": [
+      1280,
+      720
+    ],
+    "portraitCrop": [
+      232,
+      541,
+      360,
+      673
+    ],
+    "idleChangedPixels": 6853,
+    "pausedPixelsEqual": true,
+    "passed": true
+  },
+  "nativeHost": {
+    "passed": 4,
+    "failed": 0
+  },
+  "rulesAndTcpSuite": true,
+  "headAtlas": "210db49fde02a12ce91f382ccda32c04adf95f298c64757d49231174a2e4acdc",
+  "package": {
+    "contentHash": "9b445e3a921c2cf129b237beb466a8d9be763ea9258cb74278fd468a6c6d31fe",
+    "windowTitle": "Frostbound Realms",
+    "responding": true,
+    "audioListening": false,
+    "shutdown": "Only this smoke-check process was stopped",
+    "elapsedSeconds": 30,
+    "scope": "Packaged Release startup and responsiveness; gameplay interaction is verified in separate native QA reports",
+    "alive": true,
+    "packageValidationPassed": true,
+    "startedAt": "2026-10-02T08:39:37.0224184+08:00",
+    "processId": 119652,
+    "packagedFiles": 702,
+    "executable": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\samples\\frostbound-realms\\Builds\\windows-x64\\Frostbound Realms.exe",
+    "checkedAt": "2026-10-02T08:40:07.0986176+08:00",
+    "physicalInput": false,
+    "loggedErrors": 0
+  },
+  "referenceOnly": [
+    "https://classic.battle.net/war3/basics/daynight.shtml",
+    "https://classic.battle.net/war3/basics/resources.shtml"
+  ],
+  "allTwelvePortraitsVisuallyInspected": true,
+  "remaining": "Remaining races need fuller sculpted silhouettes; alliance/chat, save browsing, localization and full recreation remain unfinished."
+}

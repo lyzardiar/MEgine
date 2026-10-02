@@ -87722,15 +87722,15 @@
               -339
             ],
             "size_delta": [
-              118,
-              31
+              120,
+              33
             ]
           },
           "Image": {
             "color": [
-              0.3,
-              0.24,
-              0.13,
+              0.035,
+              0.043,
+              0.057,
               1
             ],
             "raycast_target": false
@@ -87767,11 +87767,11 @@
             ]
           },
           "Image": {
-            "material": "Assets/Materials/Panel.mmat",
+            "material": "Assets/Materials/ClassicButton.mmat",
             "color": [
-              0.2,
-              0.17,
-              0.11,
+              1,
+              1,
+              1,
               1
             ],
             "raycast_target": false
@@ -87803,21 +87803,21 @@
               -339
             ],
             "size_delta": [
-              86,
+              104,
               29
             ]
           },
           "Text": {
             "text": "菜单 (F10)",
             "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 16,
+            "font_size": 13,
             "color": [
-              0.84,
-              0.9,
-              0.91,
+              0.92,
+              0.79,
+              0.45,
               1
             ],
-            "alignment": "Left",
+            "alignment": "Center",
             "vertical_align": "Middle",
             "horizontal_overflow": "Overflow",
             "vertical_overflow": "Overflow",
@@ -87850,15 +87850,15 @@
               -339
             ],
             "size_delta": [
-              118,
-              31
+              120,
+              33
             ]
           },
           "Image": {
             "color": [
-              0.3,
-              0.24,
-              0.13,
+              0.035,
+              0.043,
+              0.057,
               1
             ],
             "raycast_target": false
@@ -87895,11 +87895,11 @@
             ]
           },
           "Image": {
-            "material": "Assets/Materials/Panel.mmat",
+            "material": "Assets/Materials/ClassicButton.mmat",
             "color": [
-              0.2,
-              0.17,
-              0.11,
+              1,
+              1,
+              1,
               1
             ],
             "raycast_target": false
@@ -87931,21 +87931,21 @@
               -339
             ],
             "size_delta": [
-              86,
+              104,
               29
             ]
           },
           "Text": {
             "text": "任务 (F9)",
             "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 16,
+            "font_size": 13,
             "color": [
-              0.84,
-              0.9,
-              0.91,
+              0.92,
+              0.79,
+              0.45,
               1
             ],
-            "alignment": "Left",
+            "alignment": "Center",
             "vertical_align": "Middle",
             "horizontal_overflow": "Overflow",
             "vertical_overflow": "Overflow",
@@ -87978,15 +87978,15 @@
               -339
             ],
             "size_delta": [
-              118,
-              31
+              120,
+              33
             ]
           },
           "Image": {
             "color": [
-              0.3,
-              0.24,
-              0.13,
+              0.035,
+              0.043,
+              0.057,
               1
             ],
             "raycast_target": false
@@ -88023,11 +88023,11 @@
             ]
           },
           "Image": {
-            "material": "Assets/Materials/Panel.mmat",
+            "material": "Assets/Materials/ClassicButton.mmat",
             "color": [
-              0.2,
-              0.17,
-              0.11,
+              1,
+              1,
+              1,
               1
             ],
             "raycast_target": false
@@ -88059,21 +88059,21 @@
               -339
             ],
             "size_delta": [
-              86,
+              104,
               29
             ]
           },
           "Text": {
             "text": "英雄 (Space)",
             "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 16,
+            "font_size": 13,
             "color": [
-              0.84,
-              0.9,
-              0.91,
+              0.92,
+              0.79,
+              0.45,
               1
             ],
-            "alignment": "Left",
+            "alignment": "Center",
             "vertical_align": "Middle",
             "horizontal_overflow": "Overflow",
             "vertical_overflow": "Overflow",
@@ -146004,9 +146004,50 @@
       },
       {
         "entity": 3547,
+        "name": "HUD Skyline",
+        "parent": 1585,
+        "siblingIndex": 2250,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              154
+            ],
+            "size_delta": [
+              1280,
+              57
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/hud-human-battlements.png#skyline",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 3548,
         "name": "HUD Daynight dial",
         "parent": 1585,
-        "siblingIndex": 3546,
+        "siblingIndex": 3547,
         "active": true,
         "components": {
           "RectTransform": {

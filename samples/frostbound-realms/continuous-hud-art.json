@@ -1,0 +1,12 @@
+{
+  "prompt": "Generate an ORIGINAL production transparent 2D HUMAN RTS HUD bottom FRAME sprite. Reference image is ONLY for classic Warcraft III layout and material design, never copy text or icons. Output a very wide horizontal image, exactly 1280x230 pixels if possible. The frame fills the entire output image bounds with no blank padding. Flat orthographic front view, heavy realistic weathered grey castle stone and dark bronze with compact gryphon heraldic accents. Continuous single sculpted architecture, not five separate thin picture frames. Lower edge straight; upper edge has substantial irregular STONE BATTLEMENT crenellations, raised minimap left and command panel right shoulders and a lower central sill. Arrange EMPTY fully transparent windows in these exact positions relative to the 1280x230 canvas: minimap opening x20..204 y37..211; character portrait opening x230..362 y52..188; central unit information opening x408..820 y46..210; inventory opening x879..998 y54..210; command card opening x1028..1240 y32..212. Solid thick stone separators in between openings, arch above the portrait, thick carved side columns and lower bars, sculpted gryphon relief principally near x848 at top. These five interior windows MUST be entirely empty transparent alpha, no center fills. Keep rails opaque and detailed with chipped grey stone, blue heraldry small insets, warm worn bronze bevels and realistic material variation. Bottom silhouette has a high left platform (top y8), low middle platform (top y28), high right platform (top y12). No writing, no numbers, no pictures inside windows, no icons, no game scene, no glow or extending shadows. This is a reusable ornate game frame intended to sit over fully functional live native UI.",
+  "reference": "https://classic.battle.net/war3/images/human/screens/screen-day.jpg",
+  "tool": "built-in image_gen",
+  "asset": "Assets/Art/hud-human-battlements.png",
+  "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\exec-dc309724-e4f3-4711-81c4-cc939fb36843.png",
+  "sha256": "8c549305951986730930c65a8fedf6c6b6ea5cfaf9b45a30e4f4e00dfcccc92e",
+  "size": [
+    1983,
+    793
+  ]
+}
