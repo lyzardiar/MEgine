@@ -4174,6 +4174,7 @@
     ]
   ],
   "startingGold": 500,
+  "startingWood": 250,
   "waveInterval": 30,
   "waves": 12,
   "players": [

@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "checkedAt": "2026-10-02T09:09:53.519104+00:00",
+  "rulesAndRealTcp": true,
+  "actualFourFactionOpeningRules": true,
+  "nativeQuickJs": {
+    "passed": 4,
+    "failed": 0
+  },
+  "nativeUi": {
+    "passed": true,
+    "scope": "Native Release editor, untouched default map/armies/resources/AI, actual UI input and rendering",
+    "physicalInput": false,
+    "executable": "D:/MEngineNativeQA/pose-runtime/mengine-editor-tauri.exe",
+    "executableSha256": "a8f19fdedcc808c6a2e9030f16583cea0f379e84ad1d5a3e54419b1c2bf2e02b",
+    "sourceScriptSha256": "442190cf787c53fc39b7730d133b618ce4585dbf6288f94a7678ba02581f8dfe",
+    "startedAt": "2026-10-02T09:02:11.508Z",
+    "fourFactionDefaultStarts": true,
+    "workerSelection": true,
+    "explicitGoldAndLumber": true,
+    "actualAltarConstruction": true,
+    "freeFirstHero": true,
+    "savedProduction": true,
+    "heroShortcut": true,
+    "defaultAiOpening": true,
+    "shaderRejections": 0,
+    "finishedAt": "2026-10-02T09:04:05.507Z"
+  },
+  "package": {
+    "files": 715,
+    "contentHash": "fab4e3d8d02cb5582d45a8e26d8d67643e129a3a7f5b56f7a1ab54372786ad45",
+    "startupSeconds": 30,
+    "loggedErrors": 0,
+    "responding": true
+  },
+  "physicalInput": false
+}

@@ -1,12 +1,13 @@
 // Author: MiYu. Event chains, atomic actions, repeating schedules and authored regions.
 import assert from 'node:assert/strict';
+import {battleFixture} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 const c=(when='timer',value=1,extra={})=>({when,value,team:0,region:-1,kind:'*',...extra});
 const a=(action='gold',value=10,extra={})=>({action,value,team:0,region:-1,kind:'archer',text:'Event fired',...extra});
 const t=(conditions=[c()],actions=[a()],extra={})=>({name:'Test',x:-10,z:15,after:-1,conditions,actions,...extra});
-const game=triggers=>{const map=S.defaultMap();map.triggers=triggers;map.regions=[{name:'Pass',x:-10,z:15,width:8,height:8}];const s=S.create('skirmish',{map,ai:[false,false]});for(const u of s.units)u.order=null;return s;};
+const game=triggers=>{const map=S.defaultMap();map.triggers=triggers;map.regions=[{name:'Pass',x:-10,z:15,width:8,height:8}];const s=battleFixture(S,'skirmish',{map,ai:[false,false]},['hero','barracks','farm','guard','harvest']);for(const u of s.units)u.order=null;return s;};
 {
   const s=game([t([c('timer',1),c('gold',550)],[a('gold',100),a('wood',50)]),t([c('delay',2)],[a('message',1,{text:'Chain complete'})],{after:0})]);step(s,20);assert.equal(s.triggered.length,0,'all conditions must pass');s.teams[0].gold=550;S.tick(s);assert.equal(s.teams[0].gold,650);assert.equal(s.teams[0].wood,300);step(s,19);assert.equal(s.triggered.length,1,'delay is relative to prerequisite firing');S.tick(s);assert.equal(s.announcements[0],'Chain complete');assert.deepEqual(s.triggered,[0,1]);
 }
@@ -29,7 +30,7 @@ const game=triggers=>{const map=S.defaultMap();map.triggers=triggers;map.regions
   const legacy=game([]);legacy.map.triggers=[{when:'timer',action:'gold',team:0,value:1,after:-1,x:0,z:0}];delete legacy.triggerState;const migrated=S.restore(legacy);step(migrated,15);assert.equal(migrated.teams[0].gold,501);
 }
 {
-  const s=S.create('skirmish',{map:S.eventMap(),ai:[false,false]}),h=s.units.find(u=>u.kind==='hero'&&u.team===0);step(s,60);assert.equal(S.command(s,0,{type:'move',ids:[h.id],x:-8,z:4}),null);step(s,200);assert.deepEqual(s.triggered,[0,1,2],'Supply Road chain completes using legal movement and authored orders');assert.match(s.announcements[0],/Escort complete/);
+  const s=battleFixture(S,'skirmish',{map:S.eventMap(),ai:[false,false]},['hero','barracks','farm','guard','harvest']),h=s.units.find(u=>u.kind==='hero'&&u.team===0);step(s,60);assert.equal(S.command(s,0,{type:'move',ids:[h.id],x:-8,z:4}),null);step(s,200);assert.deepEqual(s.triggered,[0,1,2],'Supply Road chain completes using legal movement and authored orders');assert.match(s.announcements[0],/Escort complete/);
 }
 console.log('PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain');
 

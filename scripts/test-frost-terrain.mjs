@@ -1,5 +1,6 @@
 // Author: MiYu. Terrain persistence, geometric continuity and real movement/combat rules.
 import assert from 'node:assert/strict';
+import {battleFixture} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
@@ -10,7 +11,7 @@ assert.equal(S.validateMap(legacy).heights.reduce((a,b)=>a+b),0);
 assert.deepEqual(S.validateMap(legacy).surfaces,Array(1024).fill(0));
 for(const surfaces of [[0],Array(1024).fill(3),Array(1024).fill(-1),Array(1024).fill(.5),Array(1024).fill(NaN),null])assert.throws(()=>S.validateMap({...legacy,surfaces}));
 {
-  const s=S.create(),unit={id:0,x:-23,z:23},route=S.path(s,unit,23,-23),site=S.flatSite(s.map,-5,5,1);
+  const s=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']),unit={id:0,x:-23,z:23},route=S.path(s,unit,23,-23),site=S.flatSite(s.map,-5,5,1);
   s.map.surfaces=s.map.surfaces.map((_,i)=>i%3);
   const restored=S.restore(JSON.parse(JSON.stringify(s)));
   assert.deepEqual(restored.map.surfaces,s.map.surfaces);assert.deepEqual(S.publicState(s,0).map.surfaces,s.map.surfaces);
@@ -59,7 +60,7 @@ for(let z=0;z<8;z++)for(let x=0;x<8;x++){
   const archer=S.spawn(s,'archer',0,-13,1),target=S.spawn(s,'archer',1,13,1);assert.equal(S.attackClear(s,archer,target),false,'plateau blocks line of fire');
 }
 {
-  const s=S.create();s.map.heights[S.index(.1,-1)]=3;const a={kind:'archer',x:-.1,z:-1},b={kind:'archer',x:.1,z:-1};assert.equal(S.attackClear(s,a,b),false,'short rays test the vertical cliff crossing');assert.equal(S.attackClear(s,b,a),false);
+  const s=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']);s.map.heights[S.index(.1,-1)]=3;const a={kind:'archer',x:-.1,z:-1},b={kind:'archer',x:.1,z:-1};assert.equal(S.attackClear(s,a,b),false,'short rays test the vertical cliff crossing');assert.equal(S.attackClear(s,b,a),false);
 }
 {
   const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const w=S.spawn(s,'worker',0,-12.5,1);assert.equal(S.command(s,0,{type:'build',ids:[w.id],kind:'tower',x:-11,z:1}),null);const b=s.units.at(-1);step(s,5);assert.equal(b.built,.01,'workers cannot start construction through a cliff');

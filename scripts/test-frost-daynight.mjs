@@ -1,5 +1,6 @@
 // Author: MiYu. Authoritative clock, visibility transitions, neutral rest and persistence.
 import assert from 'node:assert/strict';
+import {battleFixture} from './frost-battle-fixture.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
@@ -7,7 +8,7 @@ const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simula
 function game(hour=8){const map=S.defaultMap();map.startingHour=hour;map.terrain.fill(0);map.heights.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map});s.units=[];return s;}
 for(const [frame,hour,night] of [[0,8,false],[1999,17.995,false],[2000,18,true],[3200,0,true],[4399,5.995,true],[4400,6,false],[4800,8,false]]){const s=game();s.frame=frame;assert.ok(Math.abs(S.timeOfDay(s)-hour)<1e-9);assert.equal(S.isNight(s),night);assert.ok(S.daylight(s)>=0&&S.daylight(s)<=1);}
 for(const bad of [-1,24,8.5,NaN,'8'])assert.throws(()=>S.validateMap({...S.defaultMap(),startingHour:bad}),/starting hour/);
-{const old=S.defaultMap();delete old.startingHour;assert.equal(S.validateMap(old).startingHour,8);assert.equal(S.timeOfDay(S.create('skirmish',{map:{...old,startingHour:22}})),22);}
+{const old=S.defaultMap();delete old.startingHour;assert.equal(S.validateMap(old).startingHour,8);assert.equal(S.timeOfDay(battleFixture(S,'skirmish',{map:{...old,startingHour:22}},['hero','barracks','farm','guard','harvest'])),22);}
 {
  const s=game(),hero=S.spawn(s,'hero',0,-6,0,{damage:0,order:{type:'hold'}}),enemy=S.spawn(s,'hero',1,4,0,{damage:0,order:{type:'hold'}});s.frame=1999;S.visibility(s);assert.ok(S.isVisible(s,0,enemy));S.tick(s);assert.ok(!S.isVisible(s,0,enemy),'dusk updates sight on the first night tick');assert.equal(s.explored[0][S.index(enemy.x,enemy.z)],1);assert.ok(!S.publicState(s,0).units.some(u=>u.id===enemy.id));assert.ok(S.command(s,0,{type:'attack',ids:[hero.id],target:enemy.id}));
  s.frame=4399;S.visibility(s);S.tick(s);assert.ok(S.isVisible(s,0,enemy),'dawn updates sight on the first day tick');

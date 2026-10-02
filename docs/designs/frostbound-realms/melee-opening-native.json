@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "scope": "Native Release editor, untouched default map/armies/resources/AI, actual UI input and rendering",
+  "physicalInput": false,
+  "executable": "D:/MEngineNativeQA/pose-runtime/mengine-editor-tauri.exe",
+  "executableSha256": "a8f19fdedcc808c6a2e9030f16583cea0f379e84ad1d5a3e54419b1c2bf2e02b",
+  "sourceScriptSha256": "442190cf787c53fc39b7730d133b618ce4585dbf6288f94a7678ba02581f8dfe",
+  "startedAt": "2026-10-02T09:02:11.508Z",
+  "fourFactionDefaultStarts": true,
+  "workerSelection": true,
+  "explicitGoldAndLumber": true,
+  "actualAltarConstruction": true,
+  "freeFirstHero": true,
+  "savedProduction": true,
+  "heroShortcut": true,
+  "defaultAiOpening": true,
+  "shaderRejections": 0,
+  "finishedAt": "2026-10-02T09:04:05.507Z"
+}
