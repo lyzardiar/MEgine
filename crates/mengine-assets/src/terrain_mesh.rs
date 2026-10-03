@@ -154,11 +154,24 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
                 let bulge=bulge*((upper-lower)*4.).clamp(0.,1.);let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if sculpted {-1.-(upper-y)}else{upper-y}])
             };
             // MiYu: common height subdivisions weld vertical corners between different cliff levels.
-            let depths=|upper:f32,lower:f32| {let mut cuts=Vec::new();if (upper-lower).abs()>0.001 {for level in (upper.min(lower)*4.).floor() as i32..=(upper.max(lower)*4.).ceil() as i32 {let d=(upper-level as f32/4.)/(upper-lower);if d>0.&&d<1. {cuts.push(d);}}cuts.sort_by(f32::total_cmp);}cuts};let ca=depths(h[a],nh[na]);let cb=depths(h[b],nh[nb]);
+            let depths=|upper:f32,lower:f32| {let mut cuts=Vec::new();if (upper-lower).abs()>0.001 {for level in (upper.min(lower)*4.).floor() as i32..=(upper.max(lower)*4.).ceil() as i32 {let d=(upper-level as f32/4.)/(upper-lower);if d>0.&&d<1. {cuts.push(d);}}cuts.sort_by(f32::total_cmp);}cuts};
+            if style==0 {
+                // MiYu: unequal ramp columns retain the same absolute height cuts as adjoining straight cliff modules.
+                let column=|t:f32| {let upper=lerp(h[a],h[b],t);let lower=lerp(nh[na],nh[nb],t).min(upper);let mut cuts=vec![0.];cuts.extend(depths(upper,lower));cuts.push(1.);cuts};
+                for along in 0..4 {
+                    let t=(along as f32/4.).max(first);let end=((along+1) as f32/4.).min(last);if t>=end {continue;}let left=column(t);let right=column(end);let mut i=0;let mut j=0;
+                    while i+1<left.len()||j+1<right.len() {
+                        let a=side(t,left[i]);let b=side(end,right[j]);let c=if j+1<right.len()&&(i+1==left.len()||right[j+1]<=left[i+1]) {j+=1;side(end,right[j])}else{i+=1;side(t,left[i])};
+                        triangle([a.0,b.0,c.0],[a.1,b.1,c.1],false,style);
+                    }
+                }
+                continue;
+            }
+            let ca=depths(h[a],nh[na]);let cb=depths(h[b],nh[nb]);
             let mut side_triangle=|params:[[f32;2];3]| {let mut polygon=Vec::new();for i in 0..3 {let a=params[i];let b=params[(i+1)%3];polygon.push(side(a[0],a[1]));if a[0]==b[0]&&(a[0]==0.||a[0]==1.) {let cuts=if a[0]==0. {&ca}else{&cb};let mut extra:Vec<_>=cuts.iter().copied().filter(|d|*d>a[1].min(b[1])+1e-6&&*d<a[1].max(b[1])-1e-6).collect();if a[1]>b[1] {extra.reverse();}for d in extra {polygon.push(side(a[0],d));}}}
                 if polygon.len()==3 {triangle([polygon[0].0,polygon[1].0,polygon[2].0],[polygon[0].1,polygon[1].1,polygon[2].1],false,style);}else{let center=side(params.iter().map(|p|p[0]).sum::<f32>()/3.,params.iter().map(|p|p[1]).sum::<f32>()/3.);for i in 0..polygon.len() {let next=(i+1)%polygon.len();triangle([center.0,polygon[i].0,polygon[next].0],[center.1,polygon[i].1,polygon[next].1],false,style);}}
             };
-            let columns=4;let bands=if style==0&&da==db&&h[a]==h[b] {((da*4.).ceil() as usize).max(4)}else{4};
+            let columns=4;let bands=4;
             for along in 0..columns { for band in 0..bands {
                 let t=(along as f32/columns as f32).max(first);let end=((along+1) as f32/columns as f32).min(last);if t>=end {continue;}let d=band as f32/bands as f32;let next=(band+1) as f32/bands as f32;
                 if style==2 {
@@ -197,6 +210,15 @@ mod tests {
             for t in [0.,1.] {assert_eq!(rock_module(t,distance,6.,variant),0.);}
             for t in [0.25,0.5,0.75] {let value=rock_module(t,distance,6.,variant);assert!((0.0..=0.42).contains(&value));if distance.rem_euclid(2.)==0. {assert_eq!(value,0.);}}
         }assert_ne!(rock_module(0.25,0.5,6.,variant),rock_module(0.25,2.5,6.,variant));}
+    }
+    #[test]
+    fn ramp_cliff_sides_sample_crown_and_foot_at_quarter_unit_heights() {
+        let mut heights=vec!['0';144];for (i,h) in ['6','0','0','6'].into_iter().enumerate() {heights[(2*6+2)*4+i]=h;}
+        let mesh=terrain_mesh(&format!("terrain4h:33{}{}",heights.into_iter().collect::<String>(),"80".repeat(49))).unwrap();
+        let wall:Vec<_>=mesh.positions.iter().zip(&mesh.uvs).filter(|(_,uv)|uv[1]<0.).collect();
+        assert!(wall.iter().any(|(p,uv)|(p[1]-4.25).abs()<1e-5&&(uv[1]+1.25).abs()<1e-5),"the interior ramp column must retain its first crown bevel");
+        assert!(wall.iter().all(|(p,_)|(p[1]*4.-(p[1]*4.).round()).abs()<1e-5),"sloped walls must share the quarter-unit vertical lattice");
+        assert!(mesh.indices.len()<12000&&mesh.normals.iter().flatten().all(|v|v.is_finite()));
     }
     use super::*;
     #[test]

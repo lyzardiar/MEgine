@@ -1,0 +1,67 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "83047e9fc6de7a86224e96222420c58d5fa3d9bf",
+  "protocol": 30,
+  "geometry": {
+    "verticalStepUnits": 0.25,
+    "horizontalColumns": 4,
+    "slopedColumnsRetainIndependentHeightNodes": true,
+    "topSurfacesPreserved": true,
+    "iceAndMasonryPreserved": true
+  },
+  "tests": {
+    "missingCrownReproducedBeforeChange": true,
+    "rustTerrainPassed": 12,
+    "rustTerrainFailed": 0,
+    "seamConfigurations": 192,
+    "nativeJavaScriptTopParity": true
+  },
+  "native": {
+    "steps": 6,
+    "ascent": true,
+    "descent": true,
+    "nativeSummitTransform": true,
+    "tilesets": 3,
+    "levels": [
+      2,
+      4,
+      6
+    ],
+    "mapSaveLoad": true,
+    "playtest": true,
+    "shaderRejections": 0,
+    "identicalBeforeAfterFixture": true,
+    "fixtureExcludedFromProduct": true
+  },
+  "package": {
+    "files": 745,
+    "contentHash": "6d35d53030ddac8b5460d44d9a68e3568f3d8794d0c8d6e8825793660e8d7160",
+    "runtimeSha256": "36b5c630a15ae211df55583da5b7d1f1573360b76d7e26a2d0bfb8e6e968c4d5",
+    "editorSha256": "c603eefc9bdbebf0c7cf20e0d2bfe25ab4a4199c60bd4db5677c015f786e2fb7",
+    "allHashesAndSizesVerified": true,
+    "startupSeconds": 30,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "dcffedb8922cf58e2a89dea57cf16a6cd056d66189e4f348d2e8c39bf610be8e",
+    "scripts/qa-frostbound.mjs": "535e69ed73f073ea1f1f4305db25e1203f94d18e69ab623d16006a700e59221b",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "45310c471c34bba975d709fe3596ab8df095fcb48f789a4779c85688ed7c035c",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "b0d7dd8a01c10c44fb605eb761ec408a695fe2279c3fd54f3bef991852175cfd"
+  },
+  "screenshots": {
+    "ramp-modules-before-tile-courses-forest.png": "e06950317d138d7a2c7fb35c8a29725d876704bd529748606183461e66f84ef2",
+    "ramp-modules-tile-courses-forest.png": "aaadbf36af211035d84509d352eb114b981ad8ce519370ed0b37c3025773d519",
+    "ramp-modules-ramp-modules-ascent.png": "c5b6a751b02395e7a89d04b3fe54993defee334f0e79069eb80eed9e9987febd"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "originalCliffModelsMatched": false,
+    "fullCliffBodyCollision": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}

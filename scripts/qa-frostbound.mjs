@@ -129,7 +129,7 @@ const daylightMap=Frost.defaultMap;Frost.defaultMap=(mode='skirmish')=>{const ma
     for(const e of scene.entities.filter(e=>e.active!==false&&e.components.Transform?.position[1]>-50&&/^(Prop|Scenery) /.test(e.name||''))){const i=Number(e.name.split(' ')[1]),prop=e.name.startsWith('Prop '),tree=prop?s.qaTerrainMap.props[i]?.kind==='tree':i<72?i%4!==0:i%5===0;if(!tree)continue;const art=keys.map(k=>catalog[k]).find(a=>a.lods.includes(e.components.MeshRenderer.mesh));assert.ok(art,e.name+' uses its biome tree');assert.equal(e.components.MeshRenderer.material,art.material);assert.equal(e.components.MeshRenderer.mesh,art.lods[!prop&&i<72||s.zoom>14?1:0]);assert.equal(e.components.PbrMaterial,undefined);if(prop)resources++;else scenery++;}
     assert.ok(resources>0&&scenery>0,'native resource and scenery trees');return {resources,scenery,zoom:s.zoom};
   };
-  const tileCourses=process.argv.includes('--tile-courses');
+  const rampModules=process.argv.includes('--ramp-modules'),tileCourses=rampModules||process.argv.includes('--tile-courses');
   const sculptOnly=process.argv.includes('--sculpt-only'),surfaceOnly=tilesets||cliffTiles||process.argv.includes('--surface-only'),waterOnly=process.argv.includes('--water-only'),ridgeOnly=process.argv.includes('--ridge-layout'),ridgeBaseline=process.argv.includes('--ridge-layout-baseline'),groundOnly=sculptOnly||surfaceOnly||waterOnly||ridgeOnly||process.argv.includes('--ground-only'),realisticOnly=process.argv.includes('--realistic-only');
   if(cliffTiles||tilesets){const script=path.join(sample,'Assets/Scripts/Main.js');fs.writeFileSync(script,fs.readFileSync(script,'utf8').replace('JSON.stringify({mode,','JSON.stringify({qaTerrainMap:map,mode,'));}
   const factionsOnly=process.argv.includes('--factions-only');
@@ -141,6 +141,7 @@ Frost.highlandMap=()=>{const map=Frost.defaultMap();map.name='Cliff tile courses
 for(let z=12;z<20;z++)for(let x=6;x<13;x++)map.heights[z*32+x]=3;
 for(let z=10;z<23;z++)for(let x=17;x<25;x++)map.heights[z*32+x]=z<14?3:z<18?2:1;
 for(let z=23;z<25;z++)for(let x=20;x<23;x++){map.heights[z*32+x]=z===23?.5:0;map.ramps[z*32+x]=8;}
+${rampModules?"for(let z=20;z<26;z++)for(let x=8;x<11;x++){map.heights[z*32+x]=(25-z)*.5;map.ramps[z*32+x]=8;}":""}
 return map;};`);
   if(sculptOnly){const script=path.join(sample,'Assets/Scripts/Main.js'),text=fs.readFileSync(script,'utf8'),marker='var FrostClient=';assert.equal(text.split(marker).length,2);fs.writeFileSync(script,text.replace(marker,'const sculptDefault=Frost.defaultMap;Frost.defaultMap=(mode)=>{const map=sculptDefault(mode);map.relief.fill(0);map.players.forEach(p=>p.ai=false);return map;};\n'+marker).replace('JSON.stringify({mode,','JSON.stringify({qaRelief:map.relief,qaTerrainMap:map,mode,'));fs.appendFileSync(script,'\nconst sculptHighland=Frost.highlandMap;Frost.highlandMap=()=>{const map=sculptHighland();map.relief.fill(0);map.units.push({kind:"hero",heroClass:0,team:0,x:-17,z:7});return map;};');}
   if(ridgeOnly){const script=path.join(sample,'Assets/Scripts/Main.js');if(ridgeBaseline){const old=execFileSync('git',['show','d758eec:samples/frostbound-realms/game/simulation.js'],{cwd:repo}).toString(),prefix=fs.readFileSync(script,'utf8').split('\n').slice(0,4).join('\n');fs.writeFileSync(script,prefix+'\n'+old+'\n'+['terrain','visuals','client'].map(n=>fs.readFileSync(path.join(source,'game',n+'.js'),'utf8')).join('\n'));}const body=fs.readFileSync(script,'utf8'),marker='var FrostClient=';assert.equal(body.split(marker).length,2);fs.writeFileSync(script,body.replace('JSON.stringify({mode,','JSON.stringify({qaTerrainMap:map,mode,').replace(marker,`const ridgeQaMap=Frost.defaultMap;Frost.defaultMap=(mode)=>{const map=ridgeQaMap(mode);map.players.forEach(p=>p.ai=false);if(map.mode==='skirmish')map.units.push({kind:'hero',team:0,x:-5,z:-9});return map;};\n`+marker));}
@@ -324,10 +325,18 @@ return map;};`);
       report.ground={chunks:64,shaderRejections:0,editorRendered:true,zoom:(await state(a)).zoom,profiler:samples.nativeSummary};
       if(tileCourses){
         await click(a,109,635);for(let i=0;i<9&&(await state(a)).editorPage!==8;i++)await press(a,'KeyV');assert.equal((await state(a)).editorPage,8);
+        if(rampModules)assert.equal((await state(a)).terrainRamps,24,'six three-cell-wide descending ramp steps and the existing terrace entrance');
         const scene=await a.query('scene.snapshot');assert.ok(scene.entities.filter(e=>e.name?.startsWith('Ground ')).some(e=>e.components.MeshRenderer.mesh.includes('6666')));
         for(const [i,name] of ['winter','forest','barrens'].entries()){await press(a,'Digit'+(i+1));assert.equal((await state(a)).tileset,i);await capture(a,'tile-courses-'+name);}
         await press(a,'Digit2');await press(a,'F5');await press(a,'Digit3');await press(a,'F6');assert.equal((await state(a)).tileset,1);await press(a,'F7');assert.equal((await state(a)).mode,'playing');assert.equal((await state(a)).tileset,1);await capture(a,'tile-courses-playtest');
-        report.tileCourses={levels:[2,4,6],tilesets:3,mapSaveLoad:true,playtest:true,shaderRejections:0,fixtureOnly:true};fs.writeFileSync(path.join(out,(process.env.MENGINE_QA_CAPTURE_PREFIX||'')+'native-tile-courses-qa.json'),JSON.stringify({...report,passed:true},null,2)+'\n');
+        if(rampModules){
+          await press(a,'Space');for(let i=0;i<3;i++)await press(a,'End');
+          const foot={x:-13,z:21,y:0},summit={x:-13,z:7,y:6},arrive=async point=>{const p=projectPoint(await state(a),point);assert.ok(p[0]>0&&p[0]<1280&&p[1]>40&&p[1]<510,'ramp target is inside the world viewport');await click(a,...p,2);await until(async()=>{const h=(await state(a)).hero;return Math.hypot(h.x-point.x,h.z-point.z)<.3;},'ramp module traversal');};
+          await arrive(foot);assert.ok((await state(a)).heroElevation<.1);await arrive(summit);assert.ok((await state(a)).heroElevation>5.9);
+          const raised=await a.query('scene.snapshot');assert.ok(raised.entities.some(e=>e.active!==false&&/^Unit /.test(e.name||'')&&e.components.MeshRenderer&&Math.abs(e.components.Transform.position[0]+13)<.3&&e.components.Transform.position[1]>5.9&&Math.abs(e.components.Transform.position[2]-7)<.3),'native unit transform reaches the six-unit summit');await capture(a,'ramp-modules-ascent');
+          await arrive(foot);assert.ok((await state(a)).heroElevation<.1);await capture(a,'ramp-modules-descent');report.rampModules={steps:6,ascent:true,descent:true,nativeSummitTransform:true};
+        }
+        report.tileCourses={levels:[2,4,6],tilesets:3,mapSaveLoad:true,playtest:true,shaderRejections:0,fixtureOnly:true,...(rampModules?{gentleRampSteps:6,descendingRampHeight:6}: {})};fs.writeFileSync(path.join(out,(process.env.MENGINE_QA_CAPTURE_PREFIX||'')+'native-tile-courses-qa.json'),JSON.stringify({...report,passed:true},null,2)+'\n');
       }
 
       if(ridgeOnly){
