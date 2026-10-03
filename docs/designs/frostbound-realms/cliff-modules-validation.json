@@ -1,0 +1,85 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "5434e6c03590ed55370b9cdd321a7b152c6039d1",
+  "protocol": 30,
+  "geometry": {
+    "rockVariants": 3,
+    "heightLayerUnits": 2,
+    "maximumProjectionUnits": 0.42,
+    "topSurfacesPreserved": true,
+    "unchangedTriangleBudget": true
+  },
+  "reference": {
+    "sha": "2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+    "url": "https://github.com/flowtsohg/mdx-m3-viewer/commit/2ff0bc00c6363f425016e23d88c0fb2929d3b3cc",
+    "files": [
+      {
+        "url": "https://github.com/flowtsohg/mdx-m3-viewer/blob/2ff0bc00c6363f425016e23d88c0fb2929d3b3cc/src/viewer/handlers/w3x/map.ts",
+        "sha256": "9ffb21a0d21c766f1ced01b3dba751f74f74532897a59f8cd4a8f289058a91b6"
+      },
+      {
+        "url": "https://github.com/flowtsohg/mdx-m3-viewer/blob/2ff0bc00c6363f425016e23d88c0fb2929d3b3cc/src/viewer/handlers/w3x/variations.ts",
+        "sha256": "e80deed8a46879d2f4f359e79f5cb8a8b00b065fbea6644fae561caa9f662239"
+      }
+    ],
+    "purpose": "Corner height combinations and model variations; original game models are not imported"
+  },
+  "tests": {
+    "rustTerrainPassed": 11,
+    "rustTerrainFailed": 0,
+    "seamConfigurations": 192,
+    "nativeJavaScriptTopParity": true,
+    "terrainRules": true,
+    "gentleRamps": true,
+    "bodyClearance": true,
+    "fullJavaScriptTcp": true
+  },
+  "native": {
+    "levels": [
+      2,
+      4,
+      6
+    ],
+    "tilesets": 3,
+    "mapSaveLoad": true,
+    "playtest": true,
+    "brushUndoSaveLoad": true,
+    "heroRampAscent": true,
+    "shaderRejections": 0,
+    "beforeAfterFixtureIdentical": true,
+    "fixtureExcludedFromProduct": true
+  },
+  "package": {
+    "files": 745,
+    "contentHash": "392671be12aecddbd07f6b3dceae65f845aeee2250ee5347c7d54b8050afba79",
+    "runtimeSha256": "ebfa8ebdd93e05d11e8db08029d9ea2f25defab20201496a6fce01db11590879",
+    "editorSha256": "d384d4fa588ad7611c6b2d3fe22c503c5af0bda086288df6a96e399af39185f1",
+    "allHashesAndSizesVerified": true,
+    "startupSeconds": 30,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "562cba58d19485ebf05ef9df7e514ec69c61bfa4de15336a4eea61b4cf4a0866",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "45310c471c34bba975d709fe3596ab8df095fcb48f789a4779c85688ed7c035c",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "b0d7dd8a01c10c44fb605eb761ec408a695fe2279c3fd54f3bef991852175cfd"
+  },
+  "screenshots": {
+    "modules-before-tile-courses-forest.png": "d32b69238064f536110f5724ae1da8bf6e85e817e3ac6453cde73a5ec4f9dc02",
+    "modules-tile-courses-forest.png": "d27763524a54fa70976ad4a26b7d0dec31f50080db6c17e144ac8cb7ecb7b310",
+    "modules-tile-courses-winter.png": "bfd8d99774631e709082b5166fa70a31d1271aeeba12736b12211bc2a7b7fbf0",
+    "modules-tile-courses-barrens.png": "bc6a5193fa10f84c4353a241f0524d49048d0a70afcbbabda746fe84b329a196",
+    "modules-movement-highland-editor.png": "c164fc692622cb75894e81d154d1c9f6deafb3774d28862d2ceb7169d10017ec",
+    "modules-movement-highland-ascent.png": "c299caea82cd875b9de22b309a647ba46ea1803d7fc5b805027c20c6e8b1b6fe"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "originalCliffModelsMatched": false,
+    "fullCliffBodyCollision": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}
