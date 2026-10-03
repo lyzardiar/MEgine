@@ -1,5 +1,7 @@
 # Frostbound Realms 交付证据
 
+最新地形：[五种地表画刷与 MOBA 草地、石质兵线](terrain-palette.md)。
+
 最新亡灵能力：[吞食尸体研究、进食动作与持续治疗](cannibalize.md)。
 
 最新写实美术与 Player 包：[作者三维植被 LOD、原始颜色与透明度](foliage-lods.md)。素材来源与完整重建流程见 [写实美术说明](realistic-art.md)。

@@ -1,0 +1,93 @@
+{
+  "stage": "Five ground brushes and grassy MOBA terrain",
+  "author": "MiYu",
+  "protocol": 26,
+  "tests": {
+    "node scripts/test-frostbound.mjs": {
+      "passed": true,
+      "fiveSurfaceSaveAndAuthoritativeMapRestore": true,
+      "protocol25Rejected": true
+    },
+    "python scripts/test-frost-ground.py": {
+      "passed": true,
+      "sourceFiles": 25,
+      "generatedTextures": 9,
+      "exactAtlasPixelsAndWrappedGutters": true,
+      "normalDirectionVerified": true,
+      "reproducedByteForByte": true
+    },
+    "cargo test -p mengine-rhi frost_ground_shader_compiles_for_all_backends": {
+      "passed": 1,
+      "failed": 0,
+      "backends": [
+        "WebGPU",
+        "Vulkan",
+        "D3D12",
+        "Metal"
+      ]
+    }
+  },
+  "native": {
+    "report": "native-surface-qa.json",
+    "passed": true,
+    "brushes": [
+      "auto",
+      "soil",
+      "snow",
+      "grass",
+      "rock"
+    ],
+    "brushSizes": [
+      1,
+      3,
+      5
+    ],
+    "counts": [
+      979,
+      10,
+      1,
+      25,
+      9
+    ],
+    "waterAndElevationPreserved": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "playtest": true,
+    "newBrushUndo": true,
+    "defaultMobaGrass": true,
+    "twoClientMap": true,
+    "materialOverrides": true,
+    "reconnect": true,
+    "shaderRejections": 0,
+    "method": "Two native Release editors, QuickJS and Agent input",
+    "runTag": "1790983400004",
+    "generatedScriptSha256": "a621f67530e8289aa73927fbdb54c2a30854a1b71f09d109a318778577bf809e"
+  },
+  "package": {
+    "files": 728,
+    "contentHash": "c9589a185e6ea20e121ff16707f9aa8d9591b91a31c820f18ca598235a3f8cec",
+    "manifestValidated": true,
+    "sourceShaderScriptTexturesAndLicenseMatch": true,
+    "smokeSeconds": 30,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "runtime": {
+    "path": "D:\\MEngineNativeQA\\tile-build-1790939800003\\release\\mengine-runtime.exe",
+    "sha256": "25e65dfa4edd9051844641cd0e80c20e85026bc5129368f22e0888e5e3e3c7b5",
+    "reusedReleaseBuild": true,
+    "nativeSourceChanged": false
+  },
+  "screenshots": [
+    "palette-surface-palette.png",
+    "palette-surface-palette-playtest.png",
+    "palette-surface-moba.png"
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "steadyGameplayPerformanceAccepted": false,
+  "remaining": [
+    "Complete original terrain sets and cliff shape variants",
+    "Full requested game recreation"
+  ]
+}

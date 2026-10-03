@@ -108,6 +108,28 @@
         0,
         255
       ]
+    },
+    "aerial_grass_rock": {
+      "size": [
+        1024,
+        1024
+      ],
+      "normalSlopeHeightCorrelation": [
+        0.9117678786047533,
+        0.9109192113299592
+      ],
+      "roughnessRange": [
+        66,
+        241
+      ],
+      "heightRange": [
+        1,
+        253
+      ]
     }
+  },
+  "atlases": {
+    "count": 1,
+    "exactPixelsAndWrappedGutters": true
   }
 }

@@ -9,35 +9,44 @@
     "editorRendered": true,
     "zoom": 12,
     "profiler": {
-      "intervals": 65,
-      "averagePresentIntervalMs": 74.57692307692308,
-      "p95PresentIntervalMs": 150.89999997615814,
-      "presentedFps": 13.408973697782361,
-      "averageRequestMs": 67.43787878209895,
-      "averageRenderMs": 18.172468181818175,
-      "averageCommandMs": 20.61093333333333,
-      "averageUploadMs": 1.4727272680311492,
-      "averageSimulationMs": 7.453459090909092,
-      "averageSimulationRequestMs": 22.77424242099126
+      "intervals": 19,
+      "averagePresentIntervalMs": 71.66315789599167,
+      "p95PresentIntervalMs": 164.80000007152557,
+      "presentedFps": 13.954171562622875,
+      "averageRequestMs": 59.199999982118605,
+      "averageRenderMs": 21.61755,
+      "averageCommandMs": 43.62281,
+      "averageUploadMs": 1.4899999916553497,
+      "averageSimulationMs": 37.630285,
+      "averageSimulationRequestMs": 58.644999992847445
     }
   },
   "surfaces": {
     "brushes": [
       "auto",
       "soil",
-      "snow"
+      "snow",
+      "grass",
+      "rock"
     ],
     "brushSizes": [
       1,
       3,
       5
     ],
-    "soilCells": 24,
-    "snowCells": 10,
+    "counts": [
+      979,
+      10,
+      1,
+      25,
+      9
+    ],
     "waterAndElevationPreserved": true,
     "undo": true,
     "mapSaveLoad": true,
     "playtest": true,
+    "newBrushUndo": true,
+    "defaultMobaGrass": true,
     "twoClientMap": true,
     "materialOverrides": true,
     "reconnect": true

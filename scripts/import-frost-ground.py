@@ -38,7 +38,13 @@ def main():
         if not normal.size==rough.size==height.size==(1024,1024):raise ValueError('Ground channel dimensions differ')
         red,green,_=normal.split();output=SAMPLE/asset['output'];Image.merge('RGBA',(red,green,rough,height)).save(output)
         generated.append({'file':asset['output'],'sha256':hashlib.sha256(output.read_bytes()).hexdigest()})
+    for atlas in manifest.get('atlases',[]):
+        assets=[next(a for a in manifest['assets'] if a['id']==id) for id in atlas['assets']];gutter=atlas['gutter']
+        for key,channel,mode in [('color','albedo','RGB'),('data','output','RGBA')]:
+            panels=[np.pad(np.asarray(Image.open(SAMPLE/a[channel]).convert(mode)),((gutter,gutter),(gutter,gutter),(0,0)),mode='wrap') for a in assets]
+            output=SAMPLE/atlas[key];Image.fromarray(np.concatenate(panels,axis=1)).save(output)
+            generated.append({'file':atlas[key],'sha256':hashlib.sha256(output.read_bytes()).hexdigest()})
     manifest['generated']=generated;MANIFEST.write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
-    print('Packed',len(generated),'linear normal/roughness/height textures from',len(manifest['sources']),'verified sources')
+    print('Generated',len(generated),'ground textures from',len(manifest['sources']),'verified sources')
 
 if __name__=='__main__':main()

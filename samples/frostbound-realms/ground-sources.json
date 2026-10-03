@@ -98,6 +98,22 @@
         "Displacement": "SourceAssets/ambientcg/ground/Ice001_Displacement_1k.jpg"
       },
       "output": "Assets/Textures/Ice001_nrh_1k.png"
+    },
+    {
+      "id": "aerial_grass_rock",
+      "page": "https://polyhaven.com/a/aerial_grass_rock",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "albedo": "Assets/Textures/aerial_grass_rock_diff_1k.jpg",
+      "channels": {
+        "nor_gl": "SourceAssets/polyhaven/ground/aerial_grass_rock_nor_gl_1k.png",
+        "Rough": "SourceAssets/polyhaven/ground/aerial_grass_rock_rough_1k.png",
+        "Displacement": "SourceAssets/polyhaven/ground/aerial_grass_rock_disp_1k.png"
+      },
+      "output": "Assets/Textures/aerial_grass_rock_nrh_1k.png"
     }
   ],
   "sources": [
@@ -227,6 +243,26 @@
           "sha256": "8df9c3343fd76313865b5304e56155184a71a8ffcc0847112e21cbfb0c4d3dc1"
         }
       ]
+    },
+    {
+      "file": "Assets/Textures/aerial_grass_rock_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_grass_rock/aerial_grass_rock_diff_1k.jpg",
+      "sha256": "57b8041bfe0d0f01430e4dbaad45e7ddddf0a9fc97317f90dbc51f7b0d9e1b5d"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/aerial_grass_rock_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/aerial_grass_rock/aerial_grass_rock_nor_gl_1k.png",
+      "sha256": "23bf3adc3f0d2a59eac317718377ca681dab9398fe824eb89925f89a2469f62e"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/aerial_grass_rock_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/aerial_grass_rock/aerial_grass_rock_rough_1k.png",
+      "sha256": "02b7f51dbd09652a5f48630ad6ea791abecb44c7f8e6c87bb4ad7a196426a4c7"
+    },
+    {
+      "file": "SourceAssets/polyhaven/ground/aerial_grass_rock_disp_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/aerial_grass_rock/aerial_grass_rock_disp_1k.png",
+      "sha256": "f8600ff2054d11c57d32ec5634b3b6b6ba3f5f1bc68366a981f0be1fe4736908"
     }
   ],
   "generated": [
@@ -253,6 +289,29 @@
     {
       "file": "Assets/Textures/Ice001_nrh_1k.png",
       "sha256": "28376a54134cf3db11458dba61442d287f826d6c7c2f39ba2e472b3937db9c32"
+    },
+    {
+      "file": "Assets/Textures/aerial_grass_rock_nrh_1k.png",
+      "sha256": "1fe8d360dcd22ac6267ea3eb4b7143f08d4fafcba82ec4e083e5f38b8957fa4c"
+    },
+    {
+      "file": "Assets/Textures/soil_grass_diff.png",
+      "sha256": "75e48bab0370edac6fe47945b1aefd626471eff3b88ab2167f8b080cac9a4953"
+    },
+    {
+      "file": "Assets/Textures/soil_grass_nrh.png",
+      "sha256": "e36c9ae0f08eda50ef6bb53acd6627fc1b1cd3c19e596d2d6f3c84fb45e690d4"
+    }
+  ],
+  "atlases": [
+    {
+      "color": "Assets/Textures/soil_grass_diff.png",
+      "data": "Assets/Textures/soil_grass_nrh.png",
+      "assets": [
+        "forest_ground_04",
+        "aerial_grass_rock"
+      ],
+      "gutter": 4
     }
   ]
 }

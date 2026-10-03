@@ -241,6 +241,7 @@ var Frost = (() => {
     }
     for(const team of [0,1]){const [x,z]=map.spawns[team];map.props.push({kind:'mine',x:x+(team?-6:6),z,amount:9000});for(let i=0;i<8;i++)map.props.push({kind:'tree',x:x+(team?-1:1)*(2+i%4*2),z:z+(team?1:-1)*(6+Math.floor(i/4)*2),amount:600});}
     for(let i=0;i<24;i++){const x=((i*17)%50)-25,z=((i*29)%48)-24;if(Math.hypot(x,z)>12&&map.spawns.every(p=>Math.hypot(p[0]-x,p[1]-z)>12))map.props.push({kind:'tree',x,z,amount:600});}
+    if(mode==='moba')map.surfaces=map.terrain.map(kind=>kind===0?3:kind===2?4:0);
     if(mode==='moba')map.props=map.props.filter(p=>p.kind!=='mine'&&[0,1,2].every(lane=>{const route=lanePath(0,lane);return route.slice(1).every((v,i)=>segmentDistance(p.x,p.z,route[i],v)>3.5);}));
     map.players=[{faction:0,ai:false},{faction:1,ai:true}];map.units=[];map.triggers=[];map.regions=[];
     if(mode==='rpg'){
@@ -257,7 +258,7 @@ var Frost = (() => {
   function validateMap(raw) {
     if(!raw||raw.version!==1||!['skirmish','moba','td','rpg'].includes(raw.mode)||!Array.isArray(raw.terrain)||raw.terrain.length!==1024||raw.terrain.some(v=>!Number.isInteger(v)||v<0||v>2))throw Error('Invalid map terrain or mode');
     if(raw.cliffStyle!==undefined&&(!Number.isInteger(raw.cliffStyle)||raw.cliffStyle<0||raw.cliffStyle>2))throw Error('Invalid cliff style');
-    for(const [key,max] of [['heights',3],['ramps',4],['surfaces',2]])if(raw[key]!==undefined&&(!Array.isArray(raw[key])||raw[key].length!==1024||raw[key].some(v=>!Number.isInteger(v)||v<0||v>max)))throw Error('Invalid terrain '+key);
+    for(const [key,max] of [['heights',3],['ramps',4],['surfaces',4]])if(raw[key]!==undefined&&(!Array.isArray(raw[key])||raw[key].length!==1024||raw[key].some(v=>!Number.isInteger(v)||v<0||v>max)))throw Error('Invalid terrain '+key);
     if(raw.relief!==undefined&&(!Array.isArray(raw.relief)||raw.relief.length!==1089||Array.from(raw.relief).some(v=>!Number.isFinite(v)||Math.abs(v)>1||!Number.isInteger(v*16))))throw Error('Invalid terrain relief');
     if(raw.startingHour!==undefined&&(!Number.isInteger(raw.startingHour)||raw.startingHour<0||raw.startingHour>23))throw Error('Invalid starting hour');
     const point=p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&Math.abs(v)<=27);

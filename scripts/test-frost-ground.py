@@ -24,6 +24,12 @@ for asset in manifest['assets']:
     corr=[float(np.corrcoef(nx.ravel(),-dx.ravel())[0,1]),float(np.corrcoef(ny.ravel(),dy.ravel())[0,1])]
     assert min(corr)>.7,'OpenGL normal X opposes height U; green follows image V, so world tangent V is negated'
     report['materials'][asset['id']]={'size':[1024,1024],'normalSlopeHeightCorrelation':corr,'roughnessRange':[int(packed[:,:,2].min()),int(packed[:,:,2].max())],'heightRange':[int(packed[:,:,3].min()),int(packed[:,:,3].max())]}
+for atlas in manifest.get('atlases',[]):
+    assets=[next(a for a in manifest['assets'] if a['id']==id) for id in atlas['assets']];gutter=atlas['gutter']
+    for key,channel,mode in [('color','albedo','RGB'),('data','output','RGBA')]:
+        panels=[np.pad(np.asarray(Image.open(s/a[channel]).convert(mode)),((gutter,gutter),(gutter,gutter),(0,0)),mode='wrap') for a in assets]
+        assert np.array_equal(np.asarray(Image.open(s/atlas[key])),np.concatenate(panels,axis=1)),'atlas panels and wrap gutters must preserve source pixels'
+report['atlases']={'count':len(manifest.get('atlases',[])),'exactPixelsAndWrappedGutters':True}
 shader=(s/'Assets/Shaders/Ground.mshader').read_text();schema=json.loads(shader.split('/* MENGINE_PARAMETERS',1)[1].split('*/',1)[0]);assert [t['type'] for t in schema['textures']]==['color']*3+['data']*3
 for texture in schema['textures']:assert (s/texture['default']).is_file()
 material=json.loads((s/'Assets/Materials/Ground.mmat').read_text());cliff=next(a for a in manifest['assets'] if a['id']=='rock_face_03')

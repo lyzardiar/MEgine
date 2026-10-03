@@ -6,16 +6,17 @@ const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simula
 globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 const ridge=S.defaultMap();assert.ok(ridge.heights.filter(h=>h>0).length>=100);for(let i=0;i<1024;i++){assert.equal(ridge.heights[i],ridge.heights[1023-i]);}for(const spawn of ridge.spawns)assert.ok(S.flatSite(ridge,...spawn,3));assert.ok(S.traversable(ridge,-5,-7,-11,-7),'west ridge is reached over its ramp');assert.ok(S.traversable(ridge,5,7,11,7),'east ridge is reached over its mirrored ramp');assert.ok(!S.traversable(ridge,-19,-9,-17,-9),'cliff face blocks ground travel');
+const moba=S.defaultMap('moba');assert.ok(moba.surfaces.some(v=>v===3));assert.ok(moba.terrain.every((kind,i)=>moba.surfaces[i]===(kind===0?3:kind===2?4:0)),'MOBA retains stone lanes and water around grass');
 const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;delete legacy.surfaces;delete legacy.relief;
 delete legacy.cliffStyle;assert.equal(S.validateMap(legacy).cliffStyle,0);
 for(const cliffStyle of [-1,3,.5,null,'1'])assert.throws(()=>S.validateMap({...legacy,cliffStyle}));
 for(let cliffStyle=0;cliffStyle<3;cliffStyle++){const map=S.validateMap({...legacy,cliffStyle}),s=S.create('skirmish',{map});assert.equal(S.restore(JSON.parse(JSON.stringify(s))).map.cliffStyle,cliffStyle);assert.equal(S.publicState(s,0).map.cliffStyle,cliffStyle);assert.equal(T.material(map),'Assets/Materials/'+['Ground','GroundIce','GroundMasonry'][cliffStyle]+'.mmat');assert.equal(T.mesh(map,3,3),T.mesh(S.validateMap(legacy),3,3)+(cliffStyle?cliffStyle:''),'cliff geometry style preserves the encoded surface heights');}
 assert.equal(S.validateMap(legacy).heights.reduce((a,b)=>a+b),0);
 assert.deepEqual(S.validateMap(legacy).surfaces,Array(1024).fill(0));
-for(const surfaces of [[0],Array(1024).fill(3),Array(1024).fill(-1),Array(1024).fill(.5),Array(1024).fill(NaN),null])assert.throws(()=>S.validateMap({...legacy,surfaces}));
+for(const surfaces of [[0],Array(1024).fill(5),Array(1024).fill(-1),Array(1024).fill(.5),Array(1024).fill(NaN),null])assert.throws(()=>S.validateMap({...legacy,surfaces}));
 {
   const s=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']),unit={id:0,x:-23,z:23},route=S.path(s,unit,23,-23),site=S.flatSite(s.map,-5,5,1);
-  s.map.surfaces=s.map.surfaces.map((_,i)=>i%3);
+  s.map.surfaces=s.map.surfaces.map((_,i)=>i%5);
   const restored=S.restore(JSON.parse(JSON.stringify(s)));
   assert.deepEqual(restored.map.surfaces,s.map.surfaces);assert.deepEqual(S.publicState(s,0).map.surfaces,s.map.surfaces);
   assert.deepEqual(S.path(restored,unit,23,-23),route);assert.equal(S.flatSite(restored.map,-5,5,1),site);
@@ -30,7 +31,7 @@ for(const surfaces of [[0],Array(1024).fill(3),Array(1024).fill(-1),Array(1024).
     for(let z=0;z<8;z++)for(let x=0;x<7;x++){const a=T.chunk(cells,x,z).flat(),b=T.chunk(cells,x+1,z).flat();for(let row=0;row<6;row++)for(let dx=0;dx<2;dx++)assert.equal(a[row*6+4+dx],b[row*6+dx]);}
   }
 }
-for(const bad of [{heights:[0]},{ramps:Array(1024).fill(5)},{heights:Array(1024).fill(NaN)},{heights:Array(1024).fill(3),ramps:Array(1024).fill(1)}])assert.throws(()=>S.validateMap({...legacy,...bad}));
+for(const bad of [{heights:[0]},{ramps:Array(1024).fill(5)},{heights:Array(1024).fill(NaN)},{heights:Array(1024).fill(5),ramps:Array(1024).fill(1)}])assert.throws(()=>S.validateMap({...legacy,...bad}));
 for(const [r,delta] of [[1,1],[2,-1],[3,32],[4,-32]]){
   const m=S.defaultMap(),i=16*32+16;m.relief.fill(0);m.heights.fill(1);m.ramps[i]=r;m.heights[i+delta]=2;
   assert.ok(S.terrainEdge(m,i-delta,i));assert.ok(S.terrainEdge(m,i,i+delta));assert.ok(S.terrainEdge(m,i+delta,i));
