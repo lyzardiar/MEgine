@@ -66,7 +66,7 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
         for vertex in &mut p {vertex[1]+=relief_height(vertex[0],vertex[2])+water_offset(vertex[0],vertex[2]);}
         let a=glam::Vec3::from_array(p[1])-glam::Vec3::from_array(p[0]);let b=glam::Vec3::from_array(p[2])-glam::Vec3::from_array(p[0]);let cross=a.cross(b);
         if cross.length_squared()<1e-10 { return; }
-        debug_assert!(!top||cross.y>0.,"terrain top winding");
+        debug_assert!(!top||cross.y>0.,"terrain top winding: {p:?}");
         let normals=p.map(|v|if top&&sculpted&&base.y>0.01 {let height=|x,z|relief_height(x,z)+water_offset(x,z);let dx=(height(v[0]+0.25,v[2])-height(v[0]-0.25,v[2]))*2.;let dz=(height(v[0],v[2]+0.25)-height(v[0],v[2]-0.25))*2.;glam::Vec3::new(base.x/base.y-dx,1.,base.z/base.y-dz).normalize().to_array()}else{cross.normalize().to_array()});
         let first=mesh.positions.len() as u32;mesh.positions.extend(p);mesh.normals.extend(normals);mesh.uvs.extend(uv);mesh.indices.extend([first,first+1,first+2]);
     };
@@ -79,10 +79,11 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
         let mut rays=[glam::Vec2::ZERO;2];let mut count=0;for (a,b,ray) in [(0,1,[0.,-1.]),(1,3,[1.,0.]),(3,2,[0.,1.]),(2,0,[-1.,0.])] {if high[a]!=high[b] {if count<2 {rays[count]=glam::Vec2::from_array(ray);}count+=1;}}
         if count!=2 || rays[0].dot(rays[1]).abs()>0.01 {rays=[glam::Vec2::ZERO;2];}(p,rays)
     };
-    let crossing=|a:[usize;2],b:[usize;2]| {
+    let edge_delta=|a:[usize;2],b:[usize;2]| {
         let (first,last)=if a[1]==b[1] {let cell=a[1]*6+a[0].min(b[0])+1;let d=[heights[cell*4+3]-heights[(cell+6)*4],heights[cell*4+2]-heights[(cell+6)*4+1]];if a[0]<b[0] {(d[0],d[1])}else{(d[1],d[0])}}else{let cell=(a[1].min(b[1])+1)*6+a[0];let d=[heights[cell*4+1]-heights[(cell+1)*4],heights[cell*4+2]-heights[(cell+1)*4+3]];if a[1]<b[1] {(d[0],d[1])}else{(d[1],d[0])}};
-        if first*last<0. {Some(first/(first-last))}else{None}
+        [first,last]
     };
+    let crossing=|a,b| {let [first,last]=edge_delta(a,b);if first*last<0. {Some(first/(first-last))}else{None}};
     // MiYu: each height layer shares one curved corner; all touching tops and cliff walls use its boundary.
     let joint=|vx:usize,vz:usize,height:f32| {let (mut p,rays)=corner(vx,vz,height);let offset=(rays[0]+rays[1])*0.2;p[0]+=offset.x;p[2]+=offset.y;p};
     let boundary=|a:[usize;2],ha:f32,b:[usize;2],hb:f32,t:f32| {
@@ -90,7 +91,11 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
         let round=|rays:[glam::Vec2;2],ray:glam::Vec2,f:f32| {let sum=rays[0]+rays[1];if rays.iter().any(|r|r.dot(ray)>0.99) {if f>=0.4 {glam::Vec2::ZERO}else{let q=0.5+f/0.8;((sum-ray)*(1.-q).powi(2)+ray*q*q)*0.8-ray*f*2.}}else{sum*0.2*(1.-f)}};
         let sample=|v:[usize;2],height:f32,ray:glam::Vec2,f:f32| {let i=v[1]*6+v[0];let levels=[heights[i*4+2],heights[(i+1)*4+3],heights[(i+6)*4+1],heights[(i+7)*4]];let lo=levels.iter().copied().filter(|h|*h<=height).fold(f32::NEG_INFINITY,f32::max);let hi=levels.iter().copied().filter(|h|*h>=height).fold(f32::INFINITY,f32::min);let lo=if lo.is_finite() {lo}else{height};let hi=if hi.is_finite() {hi}else{height};let (pa,ra)=corner(v[0],v[1],lo);if hi-lo<0.001 {(pa,round(ra,ray,f))}else{let (pb,rb)=corner(v[0],v[1],hi);let blend=(height-lo)/(hi-lo);(std::array::from_fn::<_,3,_>(|axis|lerp(pa[axis],pb[axis],blend)),round(ra,ray,f).lerp(round(rb,ray,f),blend))}};
         let (pa,oa)=sample(a,ha,direction,t);let (pb,ob)=sample(b,hb,-direction,1.-t);let offset=oa+ob;let mut p=std::array::from_fn::<_,3,_>(|i|lerp(pa[i],pb[i],t));p[0]+=offset.x;p[2]+=offset.y;
-        if let Some(cut)=crossing(a,b) {let factor=if t<cut {(cut-t)/cut}else{(t-cut)/(1.-cut)};let raw_a=point(a[0] as f32*2.-4.,ha,a[1] as f32*2.-4.);let raw_b=point(b[0] as f32*2.-4.,hb,b[1] as f32*2.-4.);for axis in [0,2] {let raw=lerp(raw_a[axis],raw_b[axis],t);p[axis]=lerp(raw,p[axis],factor);}}p
+        if let Some(cut)=crossing(a,b) {let factor=if t<cut {(cut-t)/cut}else{(t-cut)/(1.-cut)};let raw_a=point(a[0] as f32*2.-4.,ha,a[1] as f32*2.-4.);let raw_b=point(b[0] as f32*2.-4.,hb,b[1] as f32*2.-4.);for axis in [0,2] {let raw=lerp(raw_a[axis],raw_b[axis],t);p[axis]=lerp(raw,p[axis],factor);}}
+        // MiYu: fracture the straight middle of level cliffs; curved corners and sloped junctions keep their common transition.
+        let [first,last]=edge_delta(a,b);let delta=if first==last&&ha==hb {first.clamp(-1.,1.)}else{0.};let wx=lerp(a[0] as f32,b[0] as f32,t)*2.-4.+origin[0];let wz=lerp(a[1] as f32,b[1] as f32,t)*2.-4.+origin[1];
+        let fracture=((wx*2.7+wz*0.9).sin()*0.16+(wz*2.3-wx*0.7).sin()*0.08)*((t-0.4)*10.).min((0.6-t)*10.).clamp(0.,1.)*delta;
+        p[if a[1]==b[1] {2}else{0}]+=fracture;p
     };
     for iz in 0..4 { for ix in 0..4 {
         let cell=(iz+1)*6+ix+1;let h=&heights[cell*4..cell*4+4];

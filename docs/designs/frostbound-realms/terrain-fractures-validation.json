@@ -1,0 +1,58 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "b03d4fbe240fe512a8565b689d1dff0b4d3c4b9c",
+  "scope": "Fractured level cliff outlines shared by native mesh and JavaScript body clearance",
+  "protocol": 28,
+  "tests": {
+    "nativeTerrainPassed": 8,
+    "nativeHostPassed": 4,
+    "surfaceFixtures": 72,
+    "surfaceStyles": 3,
+    "watertightPatterns": 192,
+    "terrainClearanceRegression": true,
+    "fullJavaScriptTcpSuite": true,
+    "unchangedMaps": 6
+  },
+  "native": {
+    "tag": "1791009181803",
+    "networkTag": "1791009432431",
+    "sourceParity": true,
+    "fixture": "AI disabled; friendly ridge hero; map telemetry",
+    "chunks": 64,
+    "shaderRejections": 0,
+    "summitAscent": true,
+    "mapSaveLoad": true,
+    "gameSaveRestore": true,
+    "network": {
+      "protocol": 28,
+      "halfRampCells": 20,
+      "clients": 2,
+      "matchingNativeMeshes": true,
+      "reconnect": true
+    },
+    "screenshots": [
+      "fracture-ridge-overview.png",
+      "fracture-ridge-summit.png"
+    ]
+  },
+  "package": {
+    "files": 730,
+    "contentHash": "3f3931b616f514355cd7fd564e5271933a69425741cb5dd4a30f30ca3f1266bf",
+    "allFileHashesVerified": true,
+    "runtimeSha256": "463413592cd560cb39dc817ca67d853bbb23d553da54c0e7bd38b29fd4ead1ed",
+    "smokeSeconds": 30,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "466041f1133ecff83a27eb35a9a84e41b5e9495b45d6f546a9f15f008ac8ddc3",
+    "samples/frostbound-realms/game/simulation.js": "4b2ca017bb9d8387ed243907cf3635f9917bd22ed9976c246cf669d142d3c116",
+    "samples/frostbound-realms/game/client.js": "1d88ed0f3099a01b2063bcff83cf24d0d7193b0dfcc08b9b94c5941e81bfd9e7",
+    "samples/frostbound-realms/server.mjs": "1ecbef29c91631690ffbe5eaa938c7d93b2267103d8d52abf26e7a7545908d86"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "physicalInput": false,
+    "steadyPerformanceAccepted": false
+  }
+}

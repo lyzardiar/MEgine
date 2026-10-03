@@ -26,6 +26,13 @@ const advance=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
   map.ramps[15*32+15]=map.ramps[17*32+15]=1;assert.ok(S.groundClear(map,-3,1,3,1,.9),'a wide ramp admits the siege footprint');
   const wide=game(map),siege=S.spawn(wide,'catapult',0,-3,1);assert.equal(S.command(wide,0,{type:'move',ids:[siege.id],x:3,z:1}),null);advance(wide,90);assert.ok(siege.x>2.8&&S.unitHeight(wide,siege)>1.99);
 }
+{
+  const map=field();for(let z=0;z<32;z++)for(let x=16;x<32;x++)map.heights[z*32+x]=1;
+  const edges=S.groundTile(map,16,16).edges,a=edges[0][0],b=edges.at(-1)[1],length=Math.hypot(b[0]-a[0],b[2]-a[2]);
+  assert.ok(edges.some(([p])=>Math.abs((b[0]-a[0])*(p[2]-a[2])-(b[2]-a[2])*(p[0]-a[0]))/length>.02),'a long level cliff has a fractured outline between shared joints');
+  assert.ok(!S.traversable(map,-1,1,1,1),'fractured outlines retain the blocked cliff boundary');
+  assert.ok(S.groundClear(map,1,1,1,1,.5),'the shelf still admits a unit body');
+}
 const fixtures=[];
 for(let mask=0;mask<16;mask++)for(let mode=0;mode<4;mode++){
   const map=field(),cells=[[14,14],[15,14],[14,15],[15,15]];

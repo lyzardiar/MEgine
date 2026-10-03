@@ -71,7 +71,7 @@ var FrostClient=(()=>{
   function collectEvents(){if(lastFrame===state.frame)return;for(const e of state.events||[])if(state.visible[team]?.[S.index(e.x,e.z)])pendingFx.push(e);if(pendingFx.length>48)pendingFx.splice(0,pendingFx.length-48);lastFrame=state.frame;}
   function receive(){
     for(const e of engine.network.poll()){
-      if(e.type==='connected'){connected=true;lastReceive=time;engine.network.send({type:'hello',protocol:27,name:'Commander'});}
+      if(e.type==='connected'){connected=true;lastReceive=time;engine.network.send({type:'hello',protocol:28,name:'Commander'});}
       if(e.type==='closed'){connected=false;if(online&&token){mode='reconnecting';intent='resume';retry=time+.5;reconnectUntil=time+12;message('Connection lost. Reconnecting...');}else if(online){online=false;mode='network';message('Connection failed. Start server.mjs and check the address.');}}
       if(e.type!=='message')continue;const m=e.data;lastReceive=time;
       if(m.type==='welcome'){
