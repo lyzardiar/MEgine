@@ -34,6 +34,12 @@ for(let mask=0;mask<16;mask++)for(let mode=0;mode<4;mode++){
   const triangles=cells.flatMap(([x,z])=>{const mesh=S.groundTile(map,x,z);for(const tri of mesh.triangles){const [px,py,pz]=tri[0].map((_,i)=>tri.reduce((n,p)=>n+p[i],0)/3),sample=S.groundSample(map,px,pz);assert.ok(sample&&Math.abs(sample.y-py)<1e-6,JSON.stringify({mask,mode,x,z,px,py,pz,sample}));}return [mesh.triangles[0],mesh.triangles[15],mesh.triangles.at(-1)];});
   fixtures.push({mask,mode,key:T.mesh(map,3,3),triangles});
 }
+for(const [r,dx,dz] of [[1,1,0],[2,-1,0],[3,0,1],[4,0,-1]]){
+  const map=field(),x=dx<0?16:15,z=dz<0?16:15;map.heights.fill(1);
+  for(let along=1;along<=3;along++)for(let across=-2;across<=2;across++)map.heights[(z+dz*along+dx*across)*32+x+dx*along+dz*across]=2;
+  for(let across=-1;across<=1;across++){const i=(z+dx*across)*32+x+dz*across;map.ramps[i]=r;S.gradeRamp(map,i);}
+  for(const [cx,cz] of [[x,z],[x+dx,z+dz]]){const mesh=S.groundTile(map,cx,cz);fixtures.push({mask:'gentle',mode:r,key:T.mesh(map,Math.floor(cx/4),Math.floor(cz/4)),triangles:[mesh.triangles[0],mesh.triangles[15],mesh.triangles.at(-1)]});}
+}
 const fixtureFile=new URL('../docs/designs/frostbound-realms/cliff-surface-fixtures.json',import.meta.url);
 if(process.argv.includes('--write-fixtures'))fs.writeFileSync(fixtureFile,JSON.stringify(fixtures)+'\n');else assert.deepEqual(JSON.parse(fs.readFileSync(fixtureFile,'utf8')),fixtures,'native parity fixtures reproduce exactly');
-console.log('PASS: curved rims, swept body clearance, enclosed cliffs, safe recovery, footprint placement, flying, saves and narrow/wide ramps; 64 native surface fixtures');
+console.log('PASS: curved rims, swept body clearance, enclosed cliffs, safe recovery, footprint placement, flying, saves and narrow/wide ramps; '+fixtures.length+' native surface fixtures');

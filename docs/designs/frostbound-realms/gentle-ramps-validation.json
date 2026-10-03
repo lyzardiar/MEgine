@@ -1,0 +1,86 @@
+{
+  "passed": true,
+  "author": "MiYu",
+  "protocol": 27,
+  "checks": {
+    "terrainMeshPassed": 8,
+    "nativeHostPassed": 4,
+    "crossLanguageCases": 72,
+    "crossLanguageStyles": 3,
+    "gentleDirections": 4,
+    "siegeTraversals": 8,
+    "fullJavaScriptTcpSuite": true,
+    "oldMapsExact": 6
+  },
+  "mapChanges": {
+    "skirmish": [
+      "heights",
+      "ramps"
+    ],
+    "highland-pass": [
+      "terrain",
+      "heights",
+      "ramps"
+    ],
+    "supply-road": [
+      "heights",
+      "ramps"
+    ],
+    "moba": [],
+    "td": [],
+    "rpg": []
+  },
+  "native": {
+    "tag": "1791001074741",
+    "networkTag": "1791001389480",
+    "sourceParity": true,
+    "fixture": "AI disabled; friendly ridge hero; map telemetry",
+    "editor": {
+      "keyboardToggle": true,
+      "pointerPaint": true,
+      "steepRestoresUpperShelf": true,
+      "undoBothCells": true,
+      "twoHalfRises": true,
+      "reliefPreserved": true,
+      "nativeMeshesMatch": true
+    },
+    "ridgeSaveLoad": true,
+    "gameSaveRestore": true,
+    "summitAscent": true,
+    "network": {
+      "protocol": 27,
+      "halfRampCells": 20,
+      "clients": 2,
+      "matchingNativeMeshes": true,
+      "reconnect": true
+    },
+    "screenshots": [
+      "gentle-ridge-overview.png",
+      "gentle-gentle-editor.png",
+      "gentle-ridge-summit.png"
+    ]
+  },
+  "package": {
+    "files": 730,
+    "contentHash": "9f2de5d7e33c70f65f519c273c638866e16f5913b37c9c338e27b4beae6a91fc",
+    "sourceParity": true,
+    "smokeSeconds": 30,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "game/simulation.js": "44082e4766f7a241e693585d1a1839c7d8935b3fbc92205a17593861f2f839d8",
+    "game/client.js": "deb0b8383ae3e0d0c7fa3a054a7bf48c4ca15b0bb5e6cd360c7924b69cd8dc6d",
+    "Assets/Shaders/Ground.mshader": "7919a503fe3eef2604ae463e3b401dcf96c9aad3c53053d6e67edf5d00f92f0e",
+    "Assets/Scenes/Main.mscene": "e7aa95e80f85a7909a5a0214099597df4dd797534b634fb168c012075524e433",
+    "Assets/Maps/skirmish.json": "34f097b752ab1557f944ee3e17e31ba85194da69faea762f6a93cff34a2ae21e",
+    "Assets/Maps/highland-pass.json": "55e543734367ccca15be95c822447392301707e715230acc49e8c59b4b05753d",
+    "Assets/Maps/supply-road.json": "650885b7167bdb16d9b2d073f50d850e92156c84b60da39b755f7a614f517631",
+    "server.mjs": "9acf4ad7141a068d4d6dc7d489615cb3d24e01d543cebfe806d3f7193b5d6de1"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "steadyPerformanceAccepted": false
+  }
+}

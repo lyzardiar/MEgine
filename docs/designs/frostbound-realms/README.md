@@ -1,6 +1,6 @@
 # Frostbound Realms 交付证据
 
-最新地形：[五种地表画刷与 MOBA 草地、石质兵线](terrain-palette.md)。
+最新地形：[双格缓坡、编辑切换与协议 27](gentle-ramps.md)、[分层岩壁与岩土坡面](terrain-strata.md)、[五种地表画刷与 MOBA 草地、石质兵线](terrain-palette.md)。
 
 最新亡灵能力：[吞食尸体研究、进食动作与持续治疗](cannibalize.md)。
 

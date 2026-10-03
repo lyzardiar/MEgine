@@ -121,9 +121,18 @@ var Frost = (() => {
   const cell = (x,z) => [clamp(Math.floor((x+32)/2),0,31),clamp(Math.floor((z+32)/2),0,31)];
   const index = (x,z) => {const p=cell(x,z);return p[1]*32+p[0];};
   const distance = (a,b) => Math.hypot(a.x-b.x,a.z-b.z);
-  const tierHeight=(map,i,x,z)=>{const h=(map.heights?.[i]||0)*2,r=map.ramps?.[i]||0;return h+(r===1?x:r===2?2-x:r===3?z:r===4?2-z:0);};
+  const tierHeight=(map,i,x,z)=>{const h=(map.heights?.[i]||0)*2,raw=map.ramps?.[i]||0,r=raw>4?raw-4:raw;return h+(r===1?x:r===2?2-x:r===3?z:r===4?2-z:0)*(raw>4?.5:1);};
   function reliefHeight(map,x,z){if(!map.relief)return 0;const px=clamp((x+32)/2,0,32),pz=clamp((z+32)/2,0,32),cx=Math.min(31,Math.floor(px)),cz=Math.min(31,Math.floor(pz)),u=px-cx,v=pz-cz,i=cz*33+cx;return (map.relief[i]*(1-u)+map.relief[i+1]*u)*(1-v)+(map.relief[i+33]*(1-u)+map.relief[i+34]*u)*v;}
   const tileHeight=(map,i,x,z)=>tierHeight(map,i,x,z)+reliefHeight(map,i%32*2-32+x,Math.floor(i/32)*2-32+z);
+  function gradeRamp(map,i,gentle=true){
+    const r=map.ramps?.[i],x=i%32,z=Math.floor(i/32),[dx,dz]=[[0,0],[1,0],[-1,0],[0,1],[0,-1]][r]||[0,0],nx=x+dx,nz=z+dz,j=nz*32+nx;
+    const neighbor=nx>=0&&nz>=0&&nx<=31&&nz<=31,paired=neighbor&&map.ramps?.[j]===r+4&&map.heights?.[j]===map.heights?.[i]+.5;
+    if(!Number.isInteger(i)||i<0||i>=1024||!Number.isInteger(r)||r<1||r>4)throw Error('Invalid ramp cell');
+    if(!gentle){if(paired){map.ramps[j]=0;map.heights[j]=map.heights[i]+1;}return map;}
+    if(!neighbor||map.terrain[i]===1||map.terrain[j]===1||!paired&&(map.ramps[j]||map.heights[j]!==map.heights[i]+1))throw Error('Gentle ramp requires a dry upper shelf');
+    // MiYu: two matching one-unit rises replace a two-unit entrance; adjoining low ground keeps its height.
+    map.ramps[i]=map.ramps[j]=r+4;map.heights[j]=map.heights[i]+.5;map.terrain[j]=map.terrain[i];return map;
+  }
   function sculptRelief(map,x,z,tool,radius=4,strength=.25,target){
     if(!['raise','lower','smooth','flatten'].includes(tool)||![x,z,radius,strength].every(Number.isFinite)||Math.abs(x)>30||Math.abs(z)>30||![2,4,6].includes(radius)||![.125,.25,.5].includes(strength)||target!==undefined&&(!Number.isFinite(target)||Math.abs(target)>1))throw Error('Invalid sculpt brush');
     map.relief??=Array(1089).fill(0);const before=[...map.relief],cx=Math.round((x+32)/2),cz=Math.round((z+32)/2);target??=before[cz*33+cx];
@@ -221,7 +230,7 @@ var Frost = (() => {
     for(let z=18;z<=21;z++){map.ramps[z*32+9]=1;map.terrain[z*32+9]=2;for(let x=10;x<=21;x++)map.terrain[z*32+x]=2;map.ramps[z*32+22]=2;map.terrain[z*32+22]=2;}
     for(let z=12;z<=14;z++){map.ramps[z*32+14]=1;map.terrain[z*32+14]=2;}
     map.units=[{kind:'tower',team:1,x:5,z:-5},{kind:'archer',team:1,x:7,z:-7},{kind:'ballista',team:0,x:-19,z:11}];
-    map.regions=[{name:'Highland outpost',x:5,z:-5,width:8,height:8}];return validateMap(map);
+    map.regions=[{name:'Highland outpost',x:5,z:-5,width:8,height:8}];for(let i=0;i<1024;i++)if(map.ramps[i]>0&&map.ramps[i]<=4)gradeRamp(map,i);return validateMap(map);
   }
   function defaultMap(mode='skirmish') {
     const map={version:1,name:mode==='moba'?'Ancients of the Vale':mode==='td'?'Serpentine Watch':'Winterfall Basin',mode,startingHour:8,cliffStyle:0,terrain:Array(1024).fill(0),surfaces:Array(1024).fill(0),heights:Array(1024).fill(0),ramps:Array(1024).fill(0),props:[],spawns:[[-23,23],[23,-23]],startingGold:mode==='td'?650:500,startingWood:mode==='skirmish'?150:250,waveInterval:mode==='td'?18:mode==='moba'?30:24,waves:12};
@@ -254,12 +263,12 @@ var Frost = (() => {
       const x=vx*2-32,z=vz*2-32,baseDistance=Math.min(...map.spawns.map(p=>Math.hypot(x-p[0],z-p[1])));if(baseDistance<16||[0,1].some(dz=>[0,1].some(dx=>map.terrain[(vz-dz)*32+vx-dx]===1)))continue;
       const edge=Math.min(vx,vz,32-vx,32-vz)/2,weight=clamp((baseDistance-16)/6,0,1)*Math.min(1,edge);map.relief[vz*33+vx]=Math.round((Math.cos(x*.33+z*.17)+Math.cos(z*.31-x*.21))*.375*weight*16)/16||0;
     }
-    return map;
+    for(let i=0;i<1024;i++)if(map.ramps[i]>0&&map.ramps[i]<=4)gradeRamp(map,i);return map;
   }
   function validateMap(raw) {
     if(!raw||raw.version!==1||!['skirmish','moba','td','rpg'].includes(raw.mode)||!Array.isArray(raw.terrain)||raw.terrain.length!==1024||raw.terrain.some(v=>!Number.isInteger(v)||v<0||v>2))throw Error('Invalid map terrain or mode');
     if(raw.cliffStyle!==undefined&&(!Number.isInteger(raw.cliffStyle)||raw.cliffStyle<0||raw.cliffStyle>2))throw Error('Invalid cliff style');
-    for(const [key,max] of [['heights',3],['ramps',4],['surfaces',4]])if(raw[key]!==undefined&&(!Array.isArray(raw[key])||raw[key].length!==1024||raw[key].some(v=>!Number.isInteger(v)||v<0||v>max)))throw Error('Invalid terrain '+key);
+    for(const [key,max] of [['heights',3],['ramps',8],['surfaces',4]])if(raw[key]!==undefined&&(!Array.isArray(raw[key])||raw[key].length!==1024||raw[key].some(v=>!Number.isInteger(key==='heights'?v*2:v)||v<0||v>max)))throw Error('Invalid terrain '+key);
     if(raw.relief!==undefined&&(!Array.isArray(raw.relief)||raw.relief.length!==1089||Array.from(raw.relief).some(v=>!Number.isFinite(v)||Math.abs(v)>1||!Number.isInteger(v*16))))throw Error('Invalid terrain relief');
     if(raw.startingHour!==undefined&&(!Number.isInteger(raw.startingHour)||raw.startingHour<0||raw.startingHour>23))throw Error('Invalid starting hour');
     const point=p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&Math.abs(v)<=27);
@@ -286,7 +295,7 @@ var Frost = (() => {
       return {name:Array.from(String(t.name||'Trigger '+(i+1))).slice(0,40).join(''),x:t.x,z:t.z,after:t.after,logic,limit,interval,conditions:conditions.map(c=>({when:c.when,team:c.team,value:c.value,region:c.region,kind:c.kind})),actions:actions.map(a=>({action:a.action,team:a.team,value:a.value,region:a.region,kind:a.kind,text:Array.from(String(a.text||'Map objective activated')).slice(0,120).join('')}))};
     });
     for(const p of map.spawns){const c=cell(...p);for(let z=c[1]-2;z<=c[1]+2;z++)for(let x=c[0]-2;x<=c[0]+2;x++)if(x>=0&&z>=0&&x<32&&z<32)map.terrain[z*32+x]=0;}
-    for(let i=0;i<1024;i++)if(map.ramps[i]&&(map.heights[i]>=3||map.terrain[i]===1))throw Error('Ramp requires dry ground below maximum height');
+    for(let i=0;i<1024;i++)if(map.ramps[i]&&(map.heights[i]+(map.ramps[i]>4?.5:1)>3||map.terrain[i]===1))throw Error('Ramp requires dry ground below maximum height');
     return map;
   }
   function eventMap(){
@@ -969,6 +978,6 @@ var Frost = (() => {
     s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
   function publicState(s,team){const state=clone(s);for(const u of state.units){u.sleeping=asleep(s,u);u.feeding=feeding(u);u.portalLeft=portalLeft(u);delete u.frenzySource;delete u.lightningSource;}state.corpses=s.corpses.filter(c=>c.team===team||s.visible[team][index(c.x,c.z)]).map(({id,kind,heroClass,team,x,y,z,yaw,age,boss,large})=>({id,kind,heroClass,team,x,y,z,yaw,age,boss,large}));state.projectiles=s.projectiles.filter(p=>s.visible[team][index(p.x,p.z)]).map(({id,x,y,z,vx,vy,vz,team,art})=>({id,x,y,z,vx,vy,vz,team,art}));delete state.projectileSerial;delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){const r=miningTarget(s,u);if(r)u.miningTarget={x:r.x,z:r.z};u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;delete u.casterResearch;delete u.cannibalizeResearch;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]&&(e.fromX===undefined||s.visible[team][index(e.fromX,e.fromZ)]));state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>({...r,amount:s.visible[team][index(r.x,r.z)]?r.amount:1}));state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {groundTile,groundSample,groundClear,walkClear,movementRadius,sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,pickHeight,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  return {gradeRamp,groundTile,groundSample,groundClear,walkClear,movementRadius,sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,pickHeight,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;
