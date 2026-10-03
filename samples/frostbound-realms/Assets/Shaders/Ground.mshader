@@ -51,7 +51,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     var s=surface;let p=world_position.xz;let geometric=normalize(surface.normal);
     // World-space offsets stay below the one-unit interpolation margin shared by adjacent chunks.
     let drift=vec2<f32>(frost_noise(p*0.42),frost_noise(p*0.42+vec2<f32>(37.0,19.0)))-vec2<f32>(0.5);
-    let shore_fields=frost_ground(p+drift*1.4).materials;let ground=frost_ground(p);let fields=ground.materials;
+    let shore_fields=frost_ground(p+drift*1.4).materials;let ground=frost_ground(p+drift*0.9);let fields=ground.materials;
     let soil_uv=p*0.32;let snow_uv=p*0.5;let stone_uv=p*0.32;
     let offset=vec2<f32>(0.37,0.61);let tile_amount=frost_noise(p*0.21+vec2<f32>(11.0,7.0));
     let soil_a=frost_atlas_nrh(soil_uv,0.0);let soil_b=frost_atlas_nrh(soil_uv+offset,0.0);
@@ -70,8 +70,9 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let wall=uv.y<0.0;let wall_depth=select(uv.y,-uv.y-1.0,wall);
     let shelf=smoothstep(0.65,0.95,abs(geometric.y))*select(1.0,0.0,wall);
     // MiYu: sloped entrances expose rock and soil; snow collects on the level shelves.
-    let slope=1.0-smoothstep(0.7,0.96,geometric.y);
-    let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32)*(1.0-slope*0.85)*(1.0-smoothstep(0.06,0.6,uv.y)*shelf*0.85);
+    let slope=1.0-smoothstep(0.86,0.99,geometric.y);
+    let rim=smoothstep(0.04,0.55,uv.y+(medium-0.5)*min(max(uv.y,0.0),0.3))*shelf;
+    let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32)*(1.0-slope*0.85)*(1.0-rim*0.95);
     let melt=(1.0-snow_cover)*smoothstep(0.18,0.5,cover);
     let road=smoothstep(0.22,0.8,fields.y+(stone_nrh.a-0.5)*0.18)*(1.0-grass_cover)*(1.0-rock_cover);
     let shore=shore_fields.x+(frost_noise(p*2.3)-0.5)*0.065;
@@ -103,10 +104,18 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let side_nx=textureSample(metallic_roughness_texture,material_sampler,side_x);let side_nz=textureSample(metallic_roughness_texture,material_sampler,side_z);
     let side_color=mix(textureSample(base_color_texture,material_sampler,side_z).rgb,textureSample(base_color_texture,material_sampler,side_x).rgb,side_weight);
     let side_normal=normalize(mix(frost_bump(side_nz,geometric,vec3<f32>(1,0,0),vec3<f32>(0,-1,0),mapping.z),frost_bump(side_nx,geometric,vec3<f32>(0,0,1),vec3<f32>(0,-1,0),mapping.z),side_weight));
+    // MiYu: the same scanned rock wraps over exposed crowns and breaks through the soil on ramps.
+    let crown_uv=p*mapping.xy;
+    let crown_nrh=textureSample(metallic_roughness_texture,material_sampler,crown_uv);
+    let crown_color=textureSample(base_color_texture,material_sampler,crown_uv).rgb*vec3<f32>(0.78,0.82,0.86);
+    let outcrop=smoothstep(0.12,0.72,rim+slope*0.7+(crown_nrh.a-soil_nrh.a)*0.18)*(1.0-snow_cover)*(1.0-road*0.8)*(1.0-wet);
+    s.base_color=mix(s.base_color,crown_color,outcrop);
+    s.normal=normalize(mix(s.normal,frost_bump(crown_nrh,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),mapping.z),outcrop));
+    s.roughness=mix(s.roughness,clamp(crown_nrh.b,0.48,1.0),outcrop);
     // MiYu: mesh UVs carry cliff depth; exposed shelves keep a soil cap and shaded rock foot.
     let cap=1.0-smoothstep(0.02,0.20,wall_depth+(side_nz.a-0.5)*0.10);
     let foot=mix(1.0,0.67,smoothstep(0.55,1.0,uv.x));
-    let cap_color=mix(litter*soil_tint,snow_color,snow_cover*(1.0-smoothstep(0.0,0.08,wall_depth)));
+    let cap_color=mix(mix(crown_color,litter*soil_tint,0.25+medium*0.2),snow_color,snow_cover*(1.0-smoothstep(0.0,0.08,wall_depth)));
     let cliff_color=mix(side_color*vec3<f32>(0.78,0.82,0.86),cap_color,cap)*foot;
     s.base_color=mix(s.base_color,cliff_color,cliff);
     s.base_color*=1.0-0.3*clamp(uv.x,0.0,1.0)*shelf;

@@ -1,0 +1,37 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "e511e94628b4a042edb56bf90910a837e152c569",
+  "scope": "Cliff crown and ramp materials; local surface boundary variation",
+  "tests": {
+    "shaderBackends": 4,
+    "shaderTestsPassed": 1,
+    "terrainRegressionPassed": true
+  },
+  "native": {
+    "tag": "1791005133552",
+    "sourceShaderSceneMapParity": true,
+    "chunks": 64,
+    "shaderRejections": 0,
+    "summitAscent": true,
+    "mapSaveLoad": true,
+    "gameSaveRestore": true,
+    "screenshots": [
+      "crown-ridge-overview.png",
+      "crown-ridge-summit.png"
+    ]
+  },
+  "package": {
+    "files": 730,
+    "contentHash": "14b8a3fe78fa2fb7de33e87b5d80ad943882b7bc57c4d9d3421ad54871a7cd11",
+    "allFileHashesVerified": true,
+    "smokeSeconds": 30,
+    "loggedErrors": 0
+  },
+  "shaderSha256": "75a3d9537529d12d09f9f329de97476ada9087bfd86f0775767f42deba126755",
+  "limitations": {
+    "warcraftTerrainArtComplete": false,
+    "physicalInput": false,
+    "steadyPerformanceAccepted": false
+  }
+}
