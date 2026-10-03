@@ -1,0 +1,78 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "ground": {
+    "chunks": 64,
+    "shaderRejections": 0,
+    "editorRendered": true,
+    "zoom": 12,
+    "profiler": {
+      "intervals": 21,
+      "averagePresentIntervalMs": 87.66666666666667,
+      "p95PresentIntervalMs": 107.79999995231628,
+      "presentedFps": 11.406844106463877,
+      "averageRequestMs": 86.00909090583974,
+      "averageRenderMs": 33.441990909090904,
+      "averageCommandMs": 66.39507272727275,
+      "averageUploadMs": 1.581818168813532,
+      "averageSimulationMs": 51.81679545454545,
+      "averageSimulationRequestMs": 83.9454545324499
+    }
+  },
+  "ridge": {
+    "ramps": 10,
+    "mirroredEntrances": true,
+    "mapSaveLoad": true,
+    "nativeSummitAscent": true,
+    "gameSaveRestore": true,
+    "shaderRejections": 0,
+    "hero": {
+      "id": 15,
+      "kind": "hero",
+      "team": 0,
+      "x": -14.89999999999999,
+      "z": -8.999999951524524,
+      "hp": 675,
+      "maxHp": 700,
+      "damage": 38,
+      "speed": 4.5,
+      "cd": 0,
+      "order": {
+        "type": "move",
+        "x": -15,
+        "z": -8.999999951034873
+      },
+      "waypoints": [],
+      "path": [],
+      "pathAt": -100,
+      "built": 1,
+      "queue": [],
+      "level": 1,
+      "xp": 0,
+      "mana": 155.59999999999968,
+      "spell": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "inventory": [],
+      "cargo": 0,
+      "respawn": 0,
+      "heroClass": 0,
+      "skills": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "skillPoints": 1,
+      "itemCooldown": 0,
+      "shield": 0,
+      "slow": 0,
+      "yaw": -1.570796321898381
+    }
+  }
+}

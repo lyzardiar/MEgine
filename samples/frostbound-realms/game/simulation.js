@@ -235,10 +235,10 @@ var Frost = (() => {
       // MiYu: two mirrored wooded ridges retain flat bases, roads and the central crossing.
       const ridge=(x,z,h,r=0)=>{const i=z*32+x,j=(31-z)*32+31-x;map.heights[i]=map.heights[j]=h;map.ramps[i]=r;map.ramps[j]=r===1?2:r===2?1:r===3?4:r===4?3:0;};
       for(let z=8;z<=15;z++)for(let x=5;x<=11;x++)if(((x-8.5)/3.5)**2+((z-11.5)/4)**2<=1.3)ridge(x,z,1);
-      for(let z=7;z<=16;z++)for(let x=4;x<=12;x++){const i=z*32+x;if(map.heights[i]||map.terrain[i]===1)continue;for(const [dx,dz,r] of [[1,0,1],[-1,0,2],[0,1,3],[0,-1,4]])if(map.heights[(z+dz)*32+x+dx]===1&&!map.ramps[(z+dz)*32+x+dx]){ridge(x,z,0,r);break;}}
       for(let z=10;z<=12;z++)for(let x=7;x<=9;x++)ridge(x,z,2);
+      // MiYu: three-cell lower and two-cell summit entrances preserve the surrounding cliff faces.
       for(let z=11;z<=13;z++)ridge(12,z,0,2);
-      ridge(10,11,1,2);
+      for(let z=11;z<=12;z++)ridge(10,z,1,2);
     }
     for(const team of [0,1]){const [x,z]=map.spawns[team];map.props.push({kind:'mine',x:x+(team?-6:6),z,amount:9000});for(let i=0;i<8;i++)map.props.push({kind:'tree',x:x+(team?-1:1)*(2+i%4*2),z:z+(team?1:-1)*(6+Math.floor(i/4)*2),amount:600});}
     for(let i=0;i<24;i++){const x=((i*17)%50)-25,z=((i*29)%48)-24;if(Math.hypot(x,z)>12&&map.spawns.every(p=>Math.hypot(p[0]-x,p[1]-z)>12))map.props.push({kind:'tree',x,z,amount:600});}

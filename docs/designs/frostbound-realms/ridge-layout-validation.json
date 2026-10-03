@@ -1,0 +1,73 @@
+{
+  "author": "MiYu",
+  "baseline": "d758eec2e23a017a2f9a3e720e074c38bf357dc7",
+  "mapChangedFields": {
+    "skirmish": [
+      "ramps"
+    ],
+    "moba": [],
+    "td": [],
+    "rpg": [],
+    "highland-pass": [],
+    "supply-road": [
+      "ramps"
+    ]
+  },
+  "rampCounts": {
+    "before": 58,
+    "after": 10
+  },
+  "tests": {
+    "summitTraversal": [
+      "hero",
+      "ballista",
+      "catapult",
+      "trebuchet",
+      "ram",
+      "siegecreep"
+    ],
+    "sides": 2,
+    "javascriptAndTCPPassed": true,
+    "legacy58RampSaveAndPublicMapRetained": true
+  },
+  "native": {
+    "beforeReport": "ridge-layout-before-native.json",
+    "afterReport": "native-ridge-layout-qa.json",
+    "passed": true,
+    "tag": 1790994300003,
+    "sourceScriptMatchesExceptDocumentedFixture": true,
+    "sourceSceneShaderMapsMatch": true,
+    "mapSaveLoad": true,
+    "gameSaveRestore": true,
+    "summitAscent": true,
+    "shaderRejections": 0,
+    "renderedScreenshotsInspected": [
+      "ridge-before-ridge-overview.png",
+      "ridge-after-ridge-overview.png",
+      "ridge-after-ridge-summit.png",
+      "ridge-after-ridge-restored.png"
+    ]
+  },
+  "package": {
+    "files": 730,
+    "contentHash": "14e9bdea4a15a4cdd25cbf8ae4d7302680b3fe58b47d35dcb89b454c36ac9512",
+    "sourceMatches": true,
+    "smoke": {
+      "seconds": 30,
+      "responding": true,
+      "loggedErrors": 0
+    }
+  },
+  "sourceHashes": {
+    "samples\\frostbound-realms\\game\\simulation.js": "80d57988ea877d8861efd917fd923e7eef6c539ff9329992598935aaa858da99",
+    "samples\\frostbound-realms\\Assets\\Maps\\skirmish.json": "2db5c1d12e6bd3e301ab1470e822be7f65f57b8e50830c02cb2b44962aa54498",
+    "samples\\frostbound-realms\\Assets\\Maps\\supply-road.json": "2ca4780507a8dcec87bd7cda76526fa17e16e1a078e0ad01a7df9d791a506b3c",
+    "samples\\frostbound-realms\\Assets\\Scripts\\Main.js": "1bc912f51eb92306558975d1a9f4cb92584924bb62259d2f32da0c2f78ff90e8"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "steadyPerformanceAccepted": false
+  }
+}

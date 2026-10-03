@@ -6,6 +6,10 @@ const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simula
 globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 const ridge=S.defaultMap();assert.ok(ridge.heights.filter(h=>h>0).length>=100);for(let i=0;i<1024;i++){assert.equal(ridge.heights[i],ridge.heights[1023-i]);}for(const spawn of ridge.spawns)assert.ok(S.flatSite(ridge,...spawn,3));assert.ok(S.traversable(ridge,-5,-7,-11,-7),'west ridge is reached over its ramp');assert.ok(S.traversable(ridge,5,7,11,7),'east ridge is reached over its mirrored ramp');assert.ok(!S.traversable(ridge,-19,-9,-17,-9),'cliff face blocks ground travel');
+{
+  assert.equal(ridge.ramps.filter(Boolean).length,10);assert.ok(!S.traversable(ridge,-5,-13,-9,-13),'ridge sides retain exposed cliffs');
+  for(const kind of ['hero',...S.siege,'siegecreep'])for(const sign of [-1,1]){const s=S.create('skirmish',{map:ridge,ai:[false,false]});s.units=[];s.resources=[];const u=S.spawn(s,kind,0,sign*5,sign*9);assert.equal(S.command(s,0,{type:'move',ids:[u.id],x:sign*15,z:sign*9}),null);step(s,180);assert.ok(Math.hypot(u.x-sign*15,u.z-sign*9)<.4,kind+' reaches summit through both ramps');assert.ok(S.unitHeight(s,u)>3,'summit is elevated');const saved=S.restore(JSON.parse(JSON.stringify(s)));assert.deepEqual(saved.map.ramps,ridge.ramps);}
+}
 const moba=S.defaultMap('moba');assert.ok(moba.surfaces.some(v=>v===3));assert.ok(moba.terrain.every((kind,i)=>moba.surfaces[i]===(kind===0?3:kind===2?4:0)),'MOBA retains stone lanes and water around grass');
 {
   const map=S.validateMap(ridge);for(let z=0;z<8;z++)for(let x=0;x<8;x++){
