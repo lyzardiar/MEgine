@@ -4214,5 +4214,53 @@
     ],
     "realistic": true,
     "attackEvent": 0.5
+  },
+  "RealBroadleaf": {
+    "material": "Assets/Materials/Real_tree_small_02.mmat",
+    "parts": [
+      {
+        "name": "RealBroadleaf",
+        "mesh": "Assets/Models/RealBroadleaf.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.901627,
+      4.577112,
+      4.243177
+    ],
+    "lods": [
+      "Assets/Models/RealBroadleaf.glb",
+      "Assets/Models/RealBroadleaf-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealQuiver": {
+    "material": "Assets/Materials/Real_quiver_tree_01.mmat",
+    "parts": [
+      {
+        "name": "RealQuiver",
+        "mesh": "Assets/Models/RealQuiver.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.181236,
+      2.715421,
+      0.968505
+    ],
+    "lods": [
+      "Assets/Models/RealQuiver.glb",
+      "Assets/Models/RealQuiver-far.glb"
+    ],
+    "realistic": true
   }
 }

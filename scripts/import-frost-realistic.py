@@ -2,6 +2,7 @@
 Requires numpy, Pillow, Node, Blender 4.5.9 via BLENDER/PATH, and pinned meshoptimizer@0.24.0.
 """
 import hashlib
+import argparse
 import importlib.util
 import json
 import math
@@ -37,9 +38,17 @@ def pad_texture(image,mask,radius=32):
         valid=filled
     return Image.fromarray(pixels)
 
+def alpha_image(path):
+    image=Image.open(path)
+    if image.mode.startswith('I'):
+        values=np.asarray(image);return Image.fromarray(np.rint(values/257).clip(0,255).astype(np.uint8))
+    return image.convert('L')
+
 def main():
     manifest=json.loads(MANIFEST.read_text(encoding='utf-8'))
+    parser=argparse.ArgumentParser();parser.add_argument('--asset',action='append',choices=[a['id'] for a in manifest['assets']]);args=parser.parse_args()
     for item in manifest['sources']:
+        if args.asset and item['asset'] not in args.asset:continue
         target=(SAMPLE/item['file']).resolve()
         if not target.is_relative_to(SAMPLE.resolve()):raise ValueError('Source escapes sample')
         if not target.exists():
@@ -48,14 +57,16 @@ def main():
             target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
         if hashlib.sha256(target.read_bytes()).hexdigest()!=item['sha256']:raise ValueError('Source changed: '+item['file'])
     spec=importlib.util.spec_from_file_location('adapter',ROOT/'scripts/import-ion-assets.py');adapter=importlib.util.module_from_spec(spec);spec.loader.exec_module(adapter)
-    catalog_path=SAMPLE/'model-catalog.json';catalog=json.loads(catalog_path.read_text());models={};generated=set();work=ROOT/'tmp/realistic-import';work.mkdir(parents=True,exist_ok=True)
+    catalog_path=SAMPLE/'model-catalog.json';catalog=json.loads(catalog_path.read_text());models=dict(manifest.get('models',{})) if args.asset else {};generated={e['file'] for e in manifest.get('generated',[])} if args.asset else set();work=ROOT/'tmp/realistic-import';work.mkdir(parents=True,exist_ok=True)
     for texture in manifest.get('textures',[]):
+        if args.asset:continue
         shutil.copyfile(SAMPLE/texture['source'],SAMPLE/texture['output']);generated.add(texture['output'])
     for asset in manifest['assets']:
+        if args.asset and asset['id'] not in args.asset:continue
         key=asset['id'];base=SAMPLE/'SourceAssets/polyhaven'/key
         if asset.get('blend'):
             base=work/key
-            subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/export-frost-foliage.py'),'--',str(base/(key+'_1k.gltf'))],check=True)
+            subprocess.run([os.environ.get('BLENDER','blender'),'--background','--factory-startup','--python-exit-code','1','--python',str(ROOT/'scripts/export-frost-foliage.py'),'--',str(base/(key+'_1k.gltf')),'--asset',key],check=True)
         doc=json.loads((base/(key+'_1k.gltf')).read_text())
         if len(doc['buffers'])!=1:raise ValueError('Expected one geometry buffer')
         blob=(base/doc['buffers'][0]['uri']).read_bytes();materials=doc['materials'];mappings=[]
@@ -80,7 +91,8 @@ def main():
                 if source_alpha:
                     source_alpha=(SAMPLE/source_alpha).resolve()
                     if not source_alpha.is_relative_to(SAMPLE.resolve()):raise ValueError('Alpha image escapes sample')
-                alpha=(Image.open(source_alpha).convert('L') if source_alpha else Image.open(base/image['uri']).convert('RGBA').getchannel('A')).resize((1024,1024),Image.Resampling.LANCZOS)
+                source_color=asset.get('material_images',{}).get(mat['name'],{}).get('base')
+                alpha=(alpha_image(source_alpha) if source_alpha else Image.open(SAMPLE/source_color if source_color else base/image['uri']).convert('RGBA').getchannel('A')).resize((1024,1024),Image.Resampling.LANCZOS)
                 if alpha.getextrema()[0]<255:alpha_masks[i]=alpha
         for channel in ['base','normal','arm']:
             atlas=Image.new('RGBA' if channel=='base' and alpha_masks else 'RGB',(1024*columns,1024*rows))
@@ -117,7 +129,8 @@ def main():
             if authored_lod is not None:
                 mesh='Assets/Models/'+name+('-far' if authored_lod else '')+'.glb';shutil.copyfile(original,SAMPLE/mesh);generated.add(mesh)
                 entry=models.setdefault(name,{'source':key,'nodes':asset['lod_nodes'][asset['names'].index(name)],'lods':[None,None]})
-                entry['lods'][authored_lod]={'triangles':len(indices)//3,'vertices':len(positions),'authored':True}
+                entry.pop('node',None);entry['nodes']=asset['lod_nodes'][asset['names'].index(name)]
+                entry['lods'][authored_lod]={'triangles':len(indices)//3,'vertices':len(positions),'authored':not bool(asset.get('decimate'))}
                 if authored_lod==0:catalog[name]={'material':material,'parts':[{'name':name,'mesh':mesh,'pivot':[0,0,0]}],'size':(hi-lo).round(6).tolist(),'lods':['Assets/Models/'+name+'.glb','Assets/Models/'+name+'-far.glb'],'realistic':True}
             else:
                 for lod,target in enumerate(asset['triangles']):

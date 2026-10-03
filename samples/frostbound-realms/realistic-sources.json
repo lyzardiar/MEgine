@@ -98,6 +98,61 @@
           "alpha": "SourceAssets/polyhaven/fir_sapling_medium/textures/fir_sapling_medium_twigs_alpha_1k.png"
         }
       }
+    },
+    {
+      "id": "tree_small_02",
+      "names": [
+        "RealBroadleaf"
+      ],
+      "triangles": [
+        55000,
+        42000
+      ],
+      "blend": "SourceAssets/polyhaven/tree_small_02/tree_small_02_1k.blend",
+      "material_images": {
+        "tree_small_02_leaves": {
+          "base": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_leaves_diff_1k.png",
+          "alpha": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_leaves_alpha_1k.png"
+        }
+      },
+      "page": "https://polyhaven.com/a/tree_small_02",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "lod_nodes": [
+        [
+          "tree_small_02_game_near",
+          "tree_small_02_game_far"
+        ]
+      ],
+      "decimate": {
+        "source": "tree_small_02_LOD1",
+        "ratios": [
+          0.1,
+          0.08
+        ]
+      }
+    },
+    {
+      "id": "quiver_tree_01",
+      "names": [
+        "RealQuiver"
+      ],
+      "triangles": [
+        12000,
+        4000
+      ],
+      "material_images": {
+        "quiver_tree_01_leaf": {
+          "base": "SourceAssets/polyhaven/quiver_tree_01/textures/quiver_tree_01_leaf_diff_1k.png"
+        }
+      },
+      "page": "https://polyhaven.com/a/quiver_tree_01",
+      "authors": {
+        "James Ray Cock": "Photography",
+        "Dario Barresi": "Photography",
+        "Rico Cilliers": "modeling"
+      }
     }
   ],
   "sources": [
@@ -373,6 +428,146 @@
       "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/fir_sapling_medium/fir_sapling_medium_twigs_rough_1k.png",
       "sha256": "a4f0a4c8bc93946dea229def779ffe5d32c555c717e4bf7b0e4b4d86bc21987a",
       "bytes": 1155354
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/tree_small_02_1k.blend",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/tree_small_02/tree_small_02_1k.blend",
+      "sha256": "af3fef6da3eb97057d9d4d3c4281c5944696b8d518715deddd8500482d30b1bd",
+      "bytes": 63805841
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_branch_diff_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_branch_diff_1k.png",
+      "sha256": "a93ce54213c4a98cd01cb5c5f7ab46b77defcd66e1dd082e6912f6e60632e630",
+      "bytes": 1277270
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_branch_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_branch_nor_gl_1k.png",
+      "sha256": "0338a1400391893fdf6c6cbd1c22a573d6ab2300ad771d4916184bf206e1a671",
+      "bytes": 5754879
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_branch_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_branch_rough_1k.png",
+      "sha256": "f285a54d141f30e39c7741e84a813c5cbccd9e9ee397af687176213f77d3e9a5",
+      "bytes": 421614
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_diff_1k.jpg",
+      "sha256": "4e0093f407b3a1120a36de49a48ebe5a465a9a9b77e361c7a3e66866e115e404",
+      "bytes": 863246
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_leaves_alpha_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_alpha_1k.png",
+      "sha256": "4f143e2dda8a6a572f427ac378b92255d21761e4611de0d26e21816c01aa533b",
+      "bytes": 264711
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_leaves_diff_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_diff_1k.png",
+      "sha256": "d3fc48522c76aa1f91076c6b86f302669822ebe4e2acabd67d42c4d57eaa5ba0",
+      "bytes": 2338424
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_leaves_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_nor_gl_1k.png",
+      "sha256": "fa4ad390f2e68b745db8f568cad64c3272696c5e01312ae564795e37724d79b8",
+      "bytes": 4903387
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_leaves_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_rough_1k.png",
+      "sha256": "f005213467e38bcb355b00c9a6eb9896b8d810ee885d5c7fa308d9f3326ef602",
+      "bytes": 1043665
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_nor_gl_1k.exr",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/tree_small_02/tree_small_02_nor_gl_1k.exr",
+      "sha256": "cf999e30663267b55b6fab43ca97c1e96176bdc67268e6c25854d53f15267d64",
+      "bytes": 2462999
+    },
+    {
+      "asset": "tree_small_02",
+      "file": "SourceAssets/polyhaven/tree_small_02/textures/tree_small_02_rough_1k.exr",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/tree_small_02/tree_small_02_rough_1k.exr",
+      "sha256": "1ed5ad24397c065beb2b2d3521470730f24e957cbd5fb323ad3f9b6d267b4585",
+      "bytes": 978557
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/quiver_tree_01_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/quiver_tree_01/quiver_tree_01_1k.gltf",
+      "sha256": "aa6885a0fe43b274584851b0947e2209dc64afce1d20a75a1567e790a12d0722",
+      "bytes": 5080
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/textures/quiver_tree_01_trunk_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/quiver_tree_01/quiver_tree_01_trunk_arm_1k.jpg",
+      "sha256": "9271edcab1c7224aa6b9e64f0321ae54ad7c074557290cd366c3392e7c330ab7",
+      "bytes": 492139
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/textures/quiver_tree_01_trunk_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/quiver_tree_01/quiver_tree_01_trunk_diff_1k.jpg",
+      "sha256": "47963e7a274bf26da0a49019d01268f5dad9e8a2e6cd17fcd3ba1d2606517f57",
+      "bytes": 741115
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/textures/quiver_tree_01_leaf_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/quiver_tree_01/quiver_tree_01_leaf_nor_gl_1k.jpg",
+      "sha256": "4480bafa755e1886073546aca1fbd6da377c463849f18588c773460c61b4ed0a",
+      "bytes": 898833
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/textures/quiver_tree_01_trunk_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/quiver_tree_01/quiver_tree_01_trunk_nor_gl_1k.jpg",
+      "sha256": "430ccf8d2545f7fe1119433ef34a02111a81f907dfb4ee50654ffdad4b655438",
+      "bytes": 940495
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/textures/quiver_tree_01_leaf_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/quiver_tree_01/quiver_tree_01_leaf_arm_1k.jpg",
+      "sha256": "c0be7dd1b7dcc61fcbe252b2ca656b1ecf7633d9a1bb52cf7006bc97bf6c560c",
+      "bytes": 737159
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/quiver_tree_01.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/quiver_tree_01/quiver_tree_01.bin",
+      "sha256": "20efdf4aa14825ffd01abb21535afd485a00022c96ad04c1269bb01c137bbe08",
+      "bytes": 4413204
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/textures/quiver_tree_01_leaf_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/quiver_tree_01/quiver_tree_01_leaf_diff_1k.jpg",
+      "sha256": "5622b466a950b74d296c3d066e0d28d85770232fd5624c5ab0f752de825fae18",
+      "bytes": 652456
+    },
+    {
+      "asset": "quiver_tree_01",
+      "file": "SourceAssets/polyhaven/quiver_tree_01/textures/quiver_tree_01_leaf_diff_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/quiver_tree_01/quiver_tree_01_leaf_diff_1k.png",
+      "sha256": "754c6ff9e543f0c88373de5b014d0d92e50a2c66dd362b72be4ce82526ab461d",
+      "bytes": 5040209
     }
   ],
   "models": {
@@ -594,12 +789,53 @@
           "authored": true
         }
       ]
+    },
+    "RealBroadleaf": {
+      "source": "tree_small_02",
+      "lods": [
+        {
+          "triangles": 49506,
+          "vertices": 128750,
+          "authored": false
+        },
+        {
+          "triangles": 39605,
+          "vertices": 103370,
+          "authored": false
+        }
+      ],
+      "nodes": [
+        "tree_small_02_game_near",
+        "tree_small_02_game_far"
+      ]
+    },
+    "RealQuiver": {
+      "source": "quiver_tree_01",
+      "node": 0,
+      "lods": [
+        {
+          "sourceTriangles": 150124,
+          "triangles": 11998,
+          "vertices": 9707,
+          "error": 0.0015434318920597434
+        },
+        {
+          "sourceTriangles": 150124,
+          "triangles": 3999,
+          "vertices": 4367,
+          "error": 0.005073987413197756
+        }
+      ]
     }
   },
   "generated": [
     {
       "file": "Assets/Materials/Real_fir_sapling_medium.mmat",
       "sha256": "bac3f5a16a34bee1ec162e32af497a49f23a48d7ed573636721c3c8793663ea5"
+    },
+    {
+      "file": "Assets/Materials/Real_quiver_tree_01.mmat",
+      "sha256": "8129f6c04954672551aec131326c75c488a6c7dda3bbf501bef16f6425c62e00"
     },
     {
       "file": "Assets/Materials/Real_rock_07.mmat",
@@ -616,6 +852,18 @@
     {
       "file": "Assets/Materials/Real_stone_fire_pit.mmat",
       "sha256": "838dcca46d4dc4d30a6e2b52937e2a7f3fdd8ec83af61166a25480883f34c131"
+    },
+    {
+      "file": "Assets/Materials/Real_tree_small_02.mmat",
+      "sha256": "fa9daad6b64d6eac6274b1169eb72a4e9155dfd778055867dbdc3370d8f6a093"
+    },
+    {
+      "file": "Assets/Models/RealBroadleaf-far.glb",
+      "sha256": "5e2ad37e7dc2206ec87141ab96c466aa8357511f03f51e6e70232c6f6d35bd18"
+    },
+    {
+      "file": "Assets/Models/RealBroadleaf.glb",
+      "sha256": "762dec337be65f4c812899ae538ccb0b539b3d014981313c588550032f11dc83"
     },
     {
       "file": "Assets/Models/RealFirePit-far.glb",
@@ -674,6 +922,14 @@
       "sha256": "cef0cf803f33283e7d43d86ac9022cea87e8c3d8431745b7cbe6bbb85d506160"
     },
     {
+      "file": "Assets/Models/RealQuiver-far.glb",
+      "sha256": "21cf622f014dfca8112108c5431d8776c7ddab16dafef3182fe8b77b86e044f7"
+    },
+    {
+      "file": "Assets/Models/RealQuiver.glb",
+      "sha256": "4c31fc9d3f4c5f9edd5e6b144d19017a3e38846586f32ece93a1ad58350d7f9c"
+    },
+    {
       "file": "Assets/Models/RealRock07-far.glb",
       "sha256": "75ee119aadcec2481acd0de9ec99b1e71c86771ca817e5e7455e914b0e6d017b"
     },
@@ -726,6 +982,18 @@
       "sha256": "e3ea0f6d424780002b6b918be330c5195eaf2e3410c8fa256bb7fef946acea42"
     },
     {
+      "file": "Assets/Textures/Real_quiver_tree_01_arm.png",
+      "sha256": "eac31803dba5507e314202cabaf5fbe1f668b44d4cbbe7affb95048b68d6c510"
+    },
+    {
+      "file": "Assets/Textures/Real_quiver_tree_01_base.png",
+      "sha256": "36a91a181ac66bc04fd602e63b41998f50fd7de4715e214a915082a1da44a9bd"
+    },
+    {
+      "file": "Assets/Textures/Real_quiver_tree_01_normal.png",
+      "sha256": "652470396cd2133d3c79886b35c0da7e81d0ad21a3f4e758bc73e48a4fb72c94"
+    },
+    {
       "file": "Assets/Textures/Real_rock_07_arm.png",
       "sha256": "15b034d28c9678646816ecb20ca0f0a6fb24258af60b9eb78d4b06b1bc066e38"
     },
@@ -772,6 +1040,18 @@
     {
       "file": "Assets/Textures/Real_stone_fire_pit_normal.png",
       "sha256": "9cb7d2ea42be14d026f27115ff9aec84164f04b03ddfd44cac9f8328fb44c41b"
+    },
+    {
+      "file": "Assets/Textures/Real_tree_small_02_arm.png",
+      "sha256": "732a3700dc491d6d703faa8cf2097424138b9834fa6ee6f3d1fca7487d76be16"
+    },
+    {
+      "file": "Assets/Textures/Real_tree_small_02_base.png",
+      "sha256": "45f39a3d54517e4765033ce34184d88db0de7bb8df893b5b1ed2b30df813bed3"
+    },
+    {
+      "file": "Assets/Textures/Real_tree_small_02_normal.png",
+      "sha256": "21f2e9f4a231864cbc27eee7db1396995819bc8d9185171c135c549d18d3afae"
     },
     {
       "file": "Assets/Textures/forest_ground_04_diff_1k.jpg",
@@ -824,5 +1104,5 @@
       "sha256": "c32a239effd6b8022be6257aedc4638b4f2377b7a8492dd4b24a88d33acd5e22"
     }
   ],
-  "foliageGenerator": "scripts/export-frost-foliage.py (Blender 4.5.9, authored LOD1/LOD2); RGBA atlas with 32-texel RGB edge padding"
+  "foliageGenerator": "scripts/export-frost-foliage.py (Blender 4.5.9, authored spruce LODs and mesh decimation for broadleaf); RGBA atlas with 32-texel RGB edge padding"
 }

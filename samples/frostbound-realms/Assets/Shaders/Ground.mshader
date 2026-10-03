@@ -26,6 +26,13 @@ fn frost_noise(p: vec2<f32>) -> f32 {
     let values=fract(sin(corners)*43758.5453);
     return mix(mix(values.x,values.y,blend.x),mix(values.z,values.w,blend.x),blend.y);
 }
+// MiYu: filled corner masks form two-unit grass tiles; scan height breaks the narrow transition edge.
+fn frost_tile_cover(p: vec2<f32>) -> f32 {
+    let cell=floor(p);let blend=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(p));
+    let corners=vec4<f32>(frost_noise(cell*0.34),frost_noise((cell+vec2<f32>(1.0,0.0))*0.34),frost_noise((cell+vec2<f32>(0.0,1.0))*0.34),frost_noise((cell+vec2<f32>(1.0,1.0))*0.34));
+    let values=select(vec4<f32>(0.0),vec4<f32>(1.0),corners>vec4<f32>(0.48));
+    return mix(mix(values.x,values.y,blend.x),mix(values.z,values.w,blend.x),blend.y);
+}
 // MiYu: shared weights keep color, normal, roughness and scan height registered across translated tiles.
 fn frost_tile_weight(amount: f32, first: vec4<f32>, second: vec4<f32>) -> f32 {
     return smoothstep(0.18,0.82,amount+(second.a-first.a)*0.35);
@@ -81,7 +88,9 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     // MiYu: the map tileset affects automatic ground; explicit soil, snow, grass and rock keep their authored weights.
     let automatic=max(0.0,1.0-fields.z-fields.w-ground.painted.x-ground.painted.y);
     let auto_snow=select(0.0,natural_cover,tileset==0.0);
-    let auto_grass=select(0.0,select(smoothstep(0.75,0.95,natural_cover)*0.45,smoothstep(0.20,0.75,natural_cover)*0.95,tileset==1.0),tileset>0.0);
+    let grass_tiles=frost_tile_cover((p+vec2<f32>(32.0))*0.5+vec2<f32>(11.0,7.0));
+    let grass_edge=smoothstep(0.38,0.62,grass_tiles+(grass_nrh.a-soil_nrh.a)*0.22);
+    let auto_grass=select(0.0,select(smoothstep(0.75,0.95,natural_cover)*0.45,grass_edge,tileset==1.0),tileset>0.0);
     let grass_cover=max(painted_grass,auto_grass*automatic*(1.0-fields.y));
     let cover=auto_snow*automatic+fields.w;
     // MiYu: thin snow settles between raised litter; a narrow wet-soil band follows the melting edge.
