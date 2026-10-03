@@ -64,7 +64,9 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let drift=vec2<f32>(frost_noise(p*0.42),frost_noise(p*0.42+vec2<f32>(37.0,19.0)))-vec2<f32>(0.5);
     let shore_fields=frost_ground(p+drift*1.4).materials;let ground=frost_ground(p+drift*0.9);let fields=ground.materials;
     let soil_uv=p*0.32;let snow_uv=p*0.5;let stone_uv=p*0.32;
-    let offset=vec2<f32>(0.37,0.61);let tile_amount=frost_noise(p*0.21+vec2<f32>(11.0,7.0));
+    // MiYu: material variants follow the two-unit tile lattice in world space across chunk borders.
+    let tile_variant=frost_noise((p+vec2<f32>(32.0))*0.5+vec2<f32>(11.0,7.0));
+    let offset=vec2<f32>(0.37,0.61);let tile_amount=tile_variant;
     let soil_a=frost_atlas_nrh(soil_uv,0.0);let soil_b=frost_atlas_nrh(soil_uv+offset,0.0);
     let snow_a=mengine_texture_snow_nrh(snow_uv);let snow_b=mengine_texture_snow_nrh(snow_uv+offset);
     let soil_weight=frost_tile_weight(tile_amount,soil_a,soil_b);let snow_weight=frost_tile_weight(tile_amount,snow_a,snow_b);
@@ -75,7 +77,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let grass_nrh=mix(grass_a,grass_b,grass_weight);let grass=mix(frost_atlas_color(grass_uv,1.0),frost_atlas_color(grass_uv+offset,1.0),grass_weight)*vec3<f32>(0.64,0.93,0.60);
     let painted_grass=smoothstep(0.18,0.82,ground.painted.x+(grass_nrh.a-soil_nrh.a)*0.15);let rock_cover=smoothstep(0.18,0.82,ground.painted.y+(stone_nrh.a-soil_nrh.a)*0.15);
     let broad=frost_noise(p*0.085+vec2<f32>(4.0,9.0));let medium=frost_noise(p*0.31+vec2<f32>(23.0,5.0));let fine=frost_noise(p*1.2);
-    let natural_cover=smoothstep(0.3,0.7,broad*0.58+medium*0.3+fine*0.12);
+    let natural_cover=smoothstep(0.28,0.72,broad*0.25+tile_variant*0.65+fine*0.10);
     // MiYu: the map tileset affects automatic ground; explicit soil, snow, grass and rock keep their authored weights.
     let automatic=max(0.0,1.0-fields.z-fields.w-ground.painted.x-ground.painted.y);
     let auto_snow=select(0.0,natural_cover,tileset==0.0);
@@ -93,7 +95,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let road=smoothstep(0.22,0.8,fields.y+(stone_nrh.a-0.5)*0.18)*(1.0-grass_cover)*(1.0-rock_cover);
     let shore=shore_fields.x+(frost_noise(p*2.3)-0.5)*0.065;
     let wet=smoothstep(0.18,0.51,shore);
-    let soil_tint=mix(mix(vec3<f32>(0.64,0.69,0.59),vec3<f32>(0.84,0.79,0.67),medium),vec3<f32>(0.98,0.83,0.62),select(0.0,0.75,tileset==2.0));
+    let soil_tint=mix(mix(vec3<f32>(0.64,0.69,0.59),vec3<f32>(0.84,0.79,0.67),tile_variant),vec3<f32>(0.98,0.83,0.62),select(0.0,0.75,tileset==2.0));
     let damp=mix(vec3<f32>(1.0),vec3<f32>(0.56,0.61,0.58),melt);
     let snow_color=snow*vec3<f32>(0.91,0.95,1.0);
     let soil=mix(litter*soil_tint*damp,snow_color,snow_cover);
@@ -132,7 +134,11 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let cap=1.0-smoothstep(0.02,0.20,wall_depth+(side_nz.a-0.5)*0.10);
     let foot=mix(1.0,0.67,smoothstep(0.55,1.0,contact));
     let cap_color=mix(mix(crown_color,litter*soil_tint,0.25+medium*0.2),snow_color,snow_cover*(1.0-smoothstep(0.0,0.08,wall_depth)));
-    let cliff_color=mix(side_color*vec3<f32>(0.78,0.82,0.86),cap_color,cap)*foot;
+    // MiYu: rock ledges receive soil caps and a recessed band at each two-unit cliff course.
+    let course=fract(wall_depth*0.5);let rock_course=select(0.0,1.0,cliff_style==0.0);
+    let ledge=rock_course*smoothstep(0.25,0.7,geometric.y)*(1.0-smoothstep(0.05,0.45,course));
+    let strata=1.0-rock_course*0.18*(1.0-smoothstep(0.0,0.12,course));
+    let cliff_color=mix(side_color*vec3<f32>(0.78,0.82,0.86)*strata,cap_color,max(cap,ledge))*foot;
     s.base_color=mix(s.base_color,cliff_color,cliff);
     s.base_color*=1.0-0.3*contact*shelf;
     s.normal=normalize(mix(s.normal,side_normal,cliff));s.roughness=mix(s.roughness,mix(side_nz.b,side_nx.b,side_weight),cliff);

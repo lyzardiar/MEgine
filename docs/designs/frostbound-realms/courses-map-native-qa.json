@@ -1,0 +1,72 @@
+{
+  "passed": true,
+  "scope": "Two native Release editors: surface painting, local map persistence, custom-map host/join and TCP reconnect",
+  "physicalInput": false,
+  "audioListening": false,
+  "ground": {
+    "chunks": 64,
+    "shaderRejections": 0,
+    "editorRendered": true,
+    "zoom": 12,
+    "profiler": {
+      "intervals": 21,
+      "averagePresentIntervalMs": 84.00476190589723,
+      "p95PresentIntervalMs": 131.30000007152557,
+      "presentedFps": 11.904087069733114,
+      "averageRequestMs": 68.80909090692347,
+      "averageRenderMs": 31.696890909090907,
+      "averageCommandMs": 53.66281818181819,
+      "averageUploadMs": 1.6363636417822405,
+      "averageSimulationMs": 44.04305,
+      "averageSimulationRequestMs": 79.56363635713404
+    }
+  },
+  "tilesets": {
+    "names": [
+      "winter",
+      "forest",
+      "barrens"
+    ],
+    "keyboardAndButton": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "gameSaveRestore": true,
+    "playtest": true,
+    "terrainSurfacesAndCliffsPreserved": true,
+    "bedAndWaterParameters": true,
+    "protocol": 30,
+    "twoClientMap": true,
+    "reconnect": true,
+    "shaderRejections": 0
+  },
+  "surfaces": {
+    "brushes": [
+      "auto",
+      "soil",
+      "snow",
+      "grass",
+      "rock"
+    ],
+    "brushSizes": [
+      1,
+      3,
+      5
+    ],
+    "counts": [
+      979,
+      10,
+      1,
+      25,
+      9
+    ],
+    "waterAndElevationPreserved": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "playtest": true,
+    "newBrushUndo": true,
+    "defaultMobaGrass": true,
+    "twoClientMap": true,
+    "materialOverrides": true,
+    "reconnect": true
+  }
+}

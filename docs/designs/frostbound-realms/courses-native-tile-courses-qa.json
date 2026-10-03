@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "ground": {
+    "chunks": 64,
+    "shaderRejections": 0,
+    "editorRendered": true,
+    "zoom": 12,
+    "profiler": {
+      "intervals": 21,
+      "averagePresentIntervalMs": 62.990476188205534,
+      "p95PresentIntervalMs": 123.60000002384186,
+      "presentedFps": 15.875415785271395,
+      "averageRequestMs": 51.900000003251165,
+      "averageRenderMs": 24.13593636363636,
+      "averageCommandMs": 35.90086363636364,
+      "averageUploadMs": 1.5318181731484153,
+      "averageSimulationMs": 29.110668181818188,
+      "averageSimulationRequestMs": 56.43181818181818
+    }
+  },
+  "tileCourses": {
+    "levels": [
+      2,
+      4,
+      6
+    ],
+    "tilesets": 3,
+    "mapSaveLoad": true,
+    "playtest": true,
+    "shaderRejections": 0,
+    "fixtureOnly": true
+  }
+}

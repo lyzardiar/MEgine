@@ -1,0 +1,87 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "1ac44c237738a1df5b2358519a2a2eda63ffce44",
+  "protocol": 30,
+  "tests": {
+    "terrainPassed": 10,
+    "terrainFailed": 0,
+    "seamConfigurations": 192,
+    "shaderPassed": 1,
+    "shaderFailed": 0,
+    "shaderBackends": 4,
+    "nativeHostPassed": 4,
+    "nativeHostFailed": 0,
+    "fullJavaScriptTcpPassed": true,
+    "bodyClearancePassed": true,
+    "gentleRampsPassed": true,
+    "sourceAssets": 25,
+    "derivedTextures": 11
+  },
+  "native": {
+    "courses": {
+      "levels": [
+        2,
+        4,
+        6
+      ],
+      "tilesets": 3,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "shaderRejections": 0,
+      "fixtureOnly": true
+    },
+    "tilesets": {
+      "names": [
+        "winter",
+        "forest",
+        "barrens"
+      ],
+      "keyboardAndButton": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "gameSaveRestore": true,
+      "playtest": true,
+      "terrainSurfacesAndCliffsPreserved": true,
+      "bedAndWaterParameters": true,
+      "protocol": 30,
+      "twoClientMap": true,
+      "reconnect": true,
+      "shaderRejections": 0
+    },
+    "movement": {
+      "groundUnitClimbed": true,
+      "shaderRejections": 0
+    },
+    "sourceParity": true,
+    "fixtureExcludedFromProduct": true
+  },
+  "package": {
+    "files": 732,
+    "contentHash": "54794dad207deaf09b1c8f47dea493658b9969c22c0b80e27c0026e5c0168570",
+    "runtimeSha256": "63a54b775974a9d6febbba7a41d3f5117a05f189f3505d783ab2b76ee82bf5d1",
+    "allHashesAndSizesVerified": true,
+    "startupSeconds": 30,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "d61a1f493f358d37beb7de8ab8de271937410f7db07326f9e90bfd296947e8ea",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "c8c292ba628e94a8c2e66bdd9fd439f9add645e252d81e923dc6583690181054",
+    "scripts/qa-frostbound.mjs": "45b513ba3ddb91b984be6d7573e6fc1eb45100cb6c3b0e41a81cb584d37aea69"
+  },
+  "screenshots": [
+    "courses-tile-courses-winter.png",
+    "courses-tile-courses-forest.png",
+    "courses-tile-courses-barrens.png",
+    "courses-map-tileset-forest.png"
+  ],
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "originalTileModulesMatched": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}

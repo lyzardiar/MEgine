@@ -1,6 +1,12 @@
 // Author: MiYu. Bounded, immutable terrain patches shared by native Scene, Game and Player.
 use crate::MeshData;
 
+// MiYu: one two-unit cliff course repeats at every terrain level, with a broad upper bevel.
+fn rock_course(distance:f32,height:f32) -> f32 {
+    let band=(distance.rem_euclid(2.)*2.).min(3.);let profile=[0.,0.28,0.38,0.16,0.];let i=band.floor() as usize;
+    (profile[i]+(profile[i+1]-profile[i])*(distance.rem_euclid(2.)*2.-i as f32))*((height-distance)*4.).clamp(0.,1.)
+}
+
 /// Four by four two-unit tiles, centered at the origin. Each tile supplies its four corner
 /// heights (NW, NE, SE, SW) as hexadecimal integers in `terrain4:` followed by 64 digits.
 /// Independent corners preserve vertical cliffs; skirts extend to -0.25. No file IO is needed.
@@ -133,8 +139,7 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
                 let bulge=match style {
                     1=>{let peak=0.35+0.2*((px+origin[0])*0.7+(pz+origin[1])*0.9).sin();let ridge=if depth<peak {depth/peak}else{(1.-depth)/(1.-peak)};0.32*(1.-(t*2.-1.).abs())*ridge},
                     2=>{let row=(depth*4.).floor();let course=(depth*4.).rem_euclid(1.);let block=(t*4.+row.rem_euclid(2.)*0.5).rem_euclid(1.);let bevel=|v:f32|(v*8.).min((1.-v)*8.).clamp(0.,1.);0.06*bevel(course)*bevel(block)*bevel(t)},
-                    // MiYu: stepped rock strata form a broad ledge and recessed upper face between shared joints.
-                    _=>{let band=(depth*4.).min(3.);let profile=[0.,0.12,0.38,0.24,0.];let i=band.floor() as usize;let ledge=lerp(profile[i],profile[i+1],depth*4.-i as f32);(std::f32::consts::PI*t).sin()*ledge*(0.85+0.15*((px+origin[0])*2.1+(pz+origin[1])*0.8).sin())}
+                    _=>(std::f32::consts::PI*t).sin()*rock_course(upper-y,upper-lower)*(0.85+0.15*((px+origin[0])*2.1+(pz+origin[1])*0.8).sin())
                 };
                 let bulge=bulge*((upper-lower)*4.).clamp(0.,1.);let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if sculpted {-1.-(upper-y)}else{upper-y}])
             };
@@ -143,7 +148,7 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
             let mut side_triangle=|params:[[f32;2];3]| {let mut polygon=Vec::new();for i in 0..3 {let a=params[i];let b=params[(i+1)%3];polygon.push(side(a[0],a[1]));if a[0]==b[0]&&(a[0]==0.||a[0]==1.) {let cuts=if a[0]==0. {&ca}else{&cb};let mut extra:Vec<_>=cuts.iter().copied().filter(|d|*d>a[1].min(b[1])+1e-6&&*d<a[1].max(b[1])-1e-6).collect();if a[1]>b[1] {extra.reverse();}for d in extra {polygon.push(side(a[0],d));}}}
                 if polygon.len()==3 {triangle([polygon[0].0,polygon[1].0,polygon[2].0],[polygon[0].1,polygon[1].1,polygon[2].1],false,style);}else{let center=side(params.iter().map(|p|p[0]).sum::<f32>()/3.,params.iter().map(|p|p[1]).sum::<f32>()/3.);for i in 0..polygon.len() {let next=(i+1)%polygon.len();triangle([center.0,polygon[i].0,polygon[next].0],[center.1,polygon[i].1,polygon[next].1],false,style);}}
             };
-            let columns=4;let bands=4;
+            let columns=4;let bands=if style==0&&da==db&&h[a]==h[b] {((da*4.).ceil() as usize).max(4)}else{4};
             for along in 0..columns { for band in 0..bands {
                 let t=(along as f32/columns as f32).max(first);let end=((along+1) as f32/columns as f32).min(last);if t>=end {continue;}let d=band as f32/bands as f32;let next=(band+1) as f32/bands as f32;
                 if style==2 {
@@ -164,6 +169,16 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn rock_cliffs_repeat_beveled_courses_without_changing_walkable_tops() {
+        for distance in [0.25,0.5,0.75,1.,1.25,1.5,1.75] {assert!((rock_course(distance,6.)-rock_course(distance+2.,6.)).abs()<1e-6);assert!((rock_course(distance,6.)-rock_course(distance+4.,6.)).abs()<1e-6);}
+        for level in [0.,2.,4.,6.] {assert_eq!(rock_course(level,6.),0.);}
+        assert_eq!(rock_course(1.,6.),0.38);assert_eq!(rock_course(6.,6.),0.);
+        let mut heights=vec!['0';144];for i in 0..4 {heights[(2*6+2)*4+i]='6';}let key=format!("terrain4h:33{}{}",heights.into_iter().collect::<String>(),"80".repeat(49));let mesh=terrain_mesh(&key).unwrap();
+        assert!(mesh.indices.len()<12000);assert!(mesh.positions.iter().flatten().all(|v|v.is_finite()));
+        assert!(mesh.positions.iter().zip(&mesh.uvs).filter(|(_,uv)|uv[1]>=0.).all(|(p,_)|p[1]==0.||p[1]==6.));
+        for depth in [0.25,2.25,4.25] {assert!(mesh.positions.iter().zip(&mesh.uvs).any(|(p,uv)|(p[1]-(6.-depth)).abs()<1e-6&&uv[1]<0.),"each height level includes its bevel vertices");}
+    }
     use super::*;
     #[test]
     fn water_layers_preserve_tops_and_lower_only_submerged_beds() {
