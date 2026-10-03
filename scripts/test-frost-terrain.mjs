@@ -23,6 +23,16 @@ const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;delete leg
 delete legacy.cliffStyle;assert.equal(S.validateMap(legacy).cliffStyle,0);
 for(const cliffStyle of [-1,3,.5,null,'1'])assert.throws(()=>S.validateMap({...legacy,cliffStyle}));
 for(let cliffStyle=0;cliffStyle<3;cliffStyle++){const map=S.validateMap({...legacy,cliffStyle}),s=S.create('skirmish',{map});assert.equal(S.restore(JSON.parse(JSON.stringify(s))).map.cliffStyle,cliffStyle);assert.equal(S.publicState(s,0).map.cliffStyle,cliffStyle);assert.equal(T.material(map),'Assets/Materials/'+['Ground','GroundIce','GroundMasonry'][cliffStyle]+'.mmat');assert.equal(T.mesh(map,3,3),T.mesh(S.validateMap(legacy),3,3)+(cliffStyle?cliffStyle:''),'cliff geometry style preserves the encoded surface heights');}
+{
+  assert.equal(S.validateMap(legacy).cliffs,undefined,'legacy maps retain map-wide cliff style');
+  for(const cliffs of [[0],Array(1024).fill(4),Array(1024).fill(-1),Array(1024).fill(.5),Array(1024).fill(NaN),null])assert.throws(()=>S.validateMap({...legacy,cliffs}));
+  const map=S.validateMap({...ridge,cliffStyle:2,cliffs:Array(1024).fill(0)});for(let i=0;i<1024;i++)if(i%32<16)map.cliffs[i]=i/32<16?1:2;
+  const saved=S.restore(S.create('skirmish',{map})).map;assert.deepEqual(saved.cliffs,map.cliffs);assert.deepEqual(S.publicState(S.create('skirmish',{map}),0).map.cliffs,map.cliffs);
+  const copy=S.validateMap(map);copy.cliffs[0]=3;assert.equal(map.cliffs[0],1,'validated maps own the cliff array');
+  assert.equal(T.cliff(map,0),0);assert.equal(T.cliff(map,31*32),1);assert.equal(T.cliff(map,31),2);
+  for(let z=0;z<8;z++)for(let x=0;x<8;x++){const key=T.mesh(map,x,z),suffix=key.slice(254);if(suffix.length===36)assert.equal(suffix,T.chunk(map.terrain.map((_,i)=>T.cliff(map,i)),x,z).flat().join(''));else assert.equal(suffix,T.cliff(map,(z*4)*32+x*4)?String(T.cliff(map,(z*4)*32+x*4)):'');assert.equal(key.slice(0,254),T.mesh(S.validateMap(ridge),x,z));assert.equal(T.mesh(saved,x,z),key);assert.equal(T.waterMesh(saved,x,z),T.waterMesh(ridge,x,z));}
+  assert.equal(S.traversable(map,-5,-7,-11,-7),S.traversable(ridge,-5,-7,-11,-7),'mixed cliff art preserves ground clearance');
+}
 assert.equal(S.validateMap(legacy).heights.reduce((a,b)=>a+b),0);
 assert.deepEqual(S.validateMap(legacy).surfaces,Array(1024).fill(0));
 for(const surfaces of [[0],Array(1024).fill(5),Array(1024).fill(-1),Array(1024).fill(.5),Array(1024).fill(NaN),null])assert.throws(()=>S.validateMap({...legacy,surfaces}));

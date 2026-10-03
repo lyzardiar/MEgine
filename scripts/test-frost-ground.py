@@ -32,12 +32,9 @@ for atlas in manifest.get('atlases',[]):
 report['atlases']={'count':len(manifest.get('atlases',[])),'exactPixelsAndWrappedGutters':True}
 shader=(s/'Assets/Shaders/Ground.mshader').read_text();schema=json.loads(shader.split('/* MENGINE_PARAMETERS',1)[1].split('*/',1)[0]);assert [t['type'] for t in schema['textures']]==['color']*3+['data']*3
 for texture in schema['textures']:assert (s/texture['default']).is_file()
-material=json.loads((s/'Assets/Materials/Ground.mmat').read_text());cliff=next(a for a in manifest['assets'] if a['id']=='rock_face_03')
-assert material['base_color_texture']==cliff['albedo']
-assert material['metallic_roughness_texture']==cliff['output']
-for name,asset in [('Ice','Ice001'),('Masonry','castle_brick_07')]:
-    material=json.loads((s/('Assets/Materials/Ground'+name+'.mmat')).read_text());cliff=next(a for a in manifest['assets'] if a['id']==asset)
-    assert material['base_color_texture']==cliff['albedo'] and material['metallic_roughness_texture']==cliff['output']
-    assert len(material['custom_parameters']['cliff_mapping'])==4 and material['custom_parameters']['cliff_mapping'][0]>0
+cliffs=next(a for a in manifest['atlases'] if len(a['assets'])==3)
+for name in ['Ground','GroundIce','GroundMasonry']:
+    material=json.loads((s/('Assets/Materials/'+name+'.mmat')).read_text())
+    assert material['base_color_texture']==cliffs['color'] and material['metallic_roughness_texture']==cliffs['data']
 (s.parents[1]/'docs/designs/frostbound-realms/ground-import-qa.json').write_text(json.dumps(report,indent=2)+'\n')
 print(f"PASS: {len(manifest['sources'])} source hashes, {len(manifest['generated'])} packed outputs, exact linear channels, 16-bit heights, normal orientation and cliff material bindings")

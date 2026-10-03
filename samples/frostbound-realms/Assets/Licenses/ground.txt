@@ -24,3 +24,5 @@ metallic_roughness_texture. Ground.mshader projects both onto vertical faces and
 supplies the final PBR channels; the packed data is not a standard ORM texture.
 
 The soil/grass color and NRH atlases preserve both scans with wrapped gutters.
+The cliff color and NRH atlases retain rock_face_03, Ice001 and castle_brick_07
+with wrapped gutters; each tile selects its own source scan panel.

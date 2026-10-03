@@ -1,0 +1,112 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "9601f97c3fe40f71913f18d52b5bd3a1450610a5",
+  "protocol": 29,
+  "tests": {
+    "nativeTerrainPassed": 9,
+    "nativeHostPassed": 4,
+    "shaderPassed": 1,
+    "shaderBackends": 4,
+    "terrainClearancePassed": true,
+    "fullJavaScriptTcpSuite": true,
+    "legacyMapsUnchanged": 6,
+    "verifiedSourceFiles": 25,
+    "derivedTextures": 11,
+    "atlasSourcePixelsAndWrappedGuttersExact": true
+  },
+  "native": {
+    "tag": "1791017574571",
+    "sourceParity": true,
+    "telemetryFixtureOnly": true,
+    "cliffTiles": {
+      "styles": [
+        "rock",
+        "ice",
+        "masonry"
+      ],
+      "counts": [
+        997,
+        9,
+        9,
+        9
+      ],
+      "pointerPaint": true,
+      "keyboardAndButton": true,
+      "undo": true,
+      "defaultInheritance": true,
+      "restoreDefault": true,
+      "mapSaveLoad": true,
+      "gameSaveRestore": true,
+      "playtest": true,
+      "waterHeightSurfacesPreserved": true,
+      "nativeMeshesMatch": true,
+      "protocol": 29,
+      "twoClientMap": true,
+      "reconnect": true
+    },
+    "surfaces": {
+      "brushes": [
+        "auto",
+        "soil",
+        "snow",
+        "grass",
+        "rock"
+      ],
+      "brushSizes": [
+        1,
+        3,
+        5
+      ],
+      "counts": [
+        979,
+        10,
+        1,
+        25,
+        9
+      ],
+      "waterAndElevationPreserved": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "newBrushUndo": true,
+      "defaultMobaGrass": true,
+      "twoClientMap": true,
+      "materialOverrides": true,
+      "reconnect": true
+    },
+    "shaderRejections": 0,
+    "screenshots": [
+      "cliff-tiles-cliffs-painted.png",
+      "cliff-tiles-cliffs-playtest.png",
+      "cliff-tiles-cliffs-reconnected.png"
+    ]
+  },
+  "package": {
+    "files": 732,
+    "contentHash": "d4b14ea97d017fe3c587c34dd9ad05f1e8d839053fdfcd83d1503b6640755de4",
+    "allHashesVerified": true,
+    "runtimeSha256": "2110ebb0907f91015e9327443a6e6d40f3b9596c81f3587d2a6db0e54271ed0d",
+    "smokeSeconds": 30,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "f68505f95b9c37257ffc56fc96bec889785a8634b67787dbc16d0368f089b9e3",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "1335b974997af0e44ae992072b2cc4ba7f7504a5e7d75400a41a0f78db9ac268",
+    "samples/frostbound-realms/Assets/Materials/Ground.mmat": "0eca0e5d3a6fd3ae58312ed000d1257a7273f0d315f6212e1437e4ec951b770d",
+    "samples/frostbound-realms/Assets/Materials/GroundIce.mmat": "2393dd9c3f2a9a7732456cf203c67f97edde2d88b4fcd9e2b0bc9c596da63c16",
+    "samples/frostbound-realms/Assets/Materials/GroundMasonry.mmat": "91824ae09fc918da047e15f8756e96eb6d9fac2d1f754892d2a3d2b2f4767372",
+    "samples/frostbound-realms/Assets/Textures/cliffs_diff.png": "68212f3721d5606b0be94070335f9019805e51a19946071727a84591a19f81a1",
+    "samples/frostbound-realms/Assets/Textures/cliffs_nrh.png": "ba321cb55d2b107b3577b34ff1303d3398fbb9ab7e72b75fd2c0def142e0b136",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "a8da5e332f252c0b5be56e7f27b7c19c3f1209d60f9b77d635529edcdb223ec8",
+    "samples/frostbound-realms/game/simulation.js": "d9694523af42ea5f85521c20e0994c4fcc9d52eb00e0ffb985e9d6c892b231ae",
+    "samples/frostbound-realms/game/client.js": "4e7f2b162566b4dc2b5533382c1a6eb31003730cf460b596668ab04b19a644df",
+    "samples/frostbound-realms/game/terrain.js": "7795de23e820c6deca423a044580ad93ace97e5476e0454dc9766712c7200ec2",
+    "samples/frostbound-realms/server.mjs": "6032a6e613f92d039e902d19589d044f1b0749b186d24ebec31fd0b9c9de6036"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "physicalInput": false,
+    "steadyPerformanceAccepted": false
+  }
+}

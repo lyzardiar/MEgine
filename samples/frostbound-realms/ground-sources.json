@@ -301,6 +301,14 @@
     {
       "file": "Assets/Textures/soil_grass_nrh.png",
       "sha256": "e36c9ae0f08eda50ef6bb53acd6627fc1b1cd3c19e596d2d6f3c84fb45e690d4"
+    },
+    {
+      "file": "Assets/Textures/cliffs_diff.png",
+      "sha256": "68212f3721d5606b0be94070335f9019805e51a19946071727a84591a19f81a1"
+    },
+    {
+      "file": "Assets/Textures/cliffs_nrh.png",
+      "sha256": "ba321cb55d2b107b3577b34ff1303d3398fbb9ab7e72b75fd2c0def142e0b136"
     }
   ],
   "atlases": [
@@ -310,6 +318,16 @@
       "assets": [
         "forest_ground_04",
         "aerial_grass_rock"
+      ],
+      "gutter": 4
+    },
+    {
+      "color": "Assets/Textures/cliffs_diff.png",
+      "data": "Assets/Textures/cliffs_nrh.png",
+      "assets": [
+        "rock_face_03",
+        "Ice001",
+        "castle_brick_07"
       ],
       "gutter": 4
     }
