@@ -602,8 +602,8 @@ const daylightMap=Frost.defaultMap;Frost.defaultMap=(mode='skirmish')=>{const ma
         const arrived=(await state(a)).hero;assert.ok(S.groundClear(map,arrived.x,arrived.z,arrived.x,arrived.z,radius),'native arrival footprint stays inside the rendered cliff rim');await capture(a,'cliff-clearance');report.cliffClearance={requested,arrived,radius,safeArrival:true};
       }
       await press(a,'F5');await press(a,'F10');await press(a,'KeyX');await until(async()=>(await state(a)).mode==='editor','return to highland editor');await until(async()=>{if((await state(a)).mode==='playing')return true;await press(a,'F7');return false;},'repeat highland playtest');await press(a,'F10');await press(a,'KeyX');await until(async()=>(await state(a)).mode==='editor','second highland editor return');
-      report.terrain={chunks:64,raisedCells:count,ramps:11,brushUndoSaveLoad:true,groundUnitClimbed:true,hero,fixture:'Highland Pass with one authored friendly hero for ramp movement; default melee opening is unchanged'};
-      const samples=await a.query('profiler.get_samples',{source:'game',limit:30});assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);report.terrain.profile=samples.nativeSummary;
+      report.terrain={chunks:chunks.length,raisedCells:count,ramps:(await state(a)).terrainRamps,brushUndoSaveLoad:true,groundUnitClimbed:true,hero,fixture:'Highland Pass with one authored friendly hero for ramp movement; default melee opening is unchanged'};
+      const samples=await a.query('profiler.get_samples',{source:'game',limit:30});assert.equal(samples.nativeLatest.counts.materialPipelinesRejected,0);report.terrain.shaderRejections=samples.nativeLatest.counts.materialPipelinesRejected;report.terrain.profile=samples.nativeSummary;
     }
     if(performanceOnly){
       const mapEditor=process.argv.includes('--map-editor');await press(a,mapEditor?'F4':'F1');await until(async()=>(await state(a)).mode===(mapEditor?'editor':'playing'),'performance mode');if(process.argv.includes('--near'))for(let i=0;i<(mapEditor?6:2);i++)await press(a,'Home');if(mapEditor){await press(a,'F9');await click(a,111,638);}await sleep(5000);

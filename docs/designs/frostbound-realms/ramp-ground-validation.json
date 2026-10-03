@@ -1,0 +1,97 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "974ccc739fbc425e81a9947bb37df0ecb99a3ecf",
+  "protocol": 29,
+  "shader": {
+    "sha256": "9888803edcb0d9828ebede3a2191687cf5ec107f6647cc8e62b9123521a7095d",
+    "testsPassed": 1,
+    "testsFailed": 0,
+    "backends": 4
+  },
+  "unchangedGeometryRulesAndMaps": [
+    "crates/mengine-assets/src/terrain_mesh.rs",
+    "samples/frostbound-realms/game/simulation.js",
+    "samples/frostbound-realms/game/terrain.js",
+    "samples/frostbound-realms/game/client.js",
+    "samples/frostbound-realms/server.mjs",
+    "samples/frostbound-realms/Assets/Maps/skirmish.json",
+    "samples/frostbound-realms/Assets/Maps/highland-pass.json",
+    "samples/frostbound-realms/Assets/Maps/supply-road.json",
+    "samples/frostbound-realms/Assets/Maps/moba.json",
+    "samples/frostbound-realms/Assets/Maps/td.json",
+    "samples/frostbound-realms/Assets/Maps/rpg.json"
+  ],
+  "native": {
+    "tags": [
+      "1791023271165",
+      "1791023724495"
+    ],
+    "ground": {
+      "chunks": 64,
+      "shaderRejections": 0,
+      "editorRendered": true,
+      "zoom": 12,
+      "profiler": {
+        "intervals": 20,
+        "averagePresentIntervalMs": 73.4449999988079,
+        "p95PresentIntervalMs": 97.5,
+        "presentedFps": 13.615630744315219,
+        "averageRequestMs": 69.30952379817055,
+        "averageRenderMs": 28.00758095238095,
+        "averageCommandMs": 52.68642380952381,
+        "averageUploadMs": 1.5428571303685505,
+        "averageSimulationMs": 40.81511904761904,
+        "averageSimulationRequestMs": 68.04285712469192
+      }
+    },
+    "terrain": {
+      "chunks": 64,
+      "raisedCells": 188,
+      "ramps": 22,
+      "brushUndoSaveLoad": true,
+      "groundUnitClimbed": true,
+      "shaderRejections": 0
+    },
+    "cliffStyles": {
+      "styles": [
+        "rock",
+        "ice",
+        "masonry"
+      ],
+      "chunks": 64,
+      "sameTopSurface": true,
+      "distinctCliffGeometry": true,
+      "editorSelection": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "gameSaveRestore": true,
+      "shaderRejections": 0
+    },
+    "sourceAndPackageShaderParity": true
+  },
+  "package": {
+    "files": 732,
+    "contentHash": "754dbe694257f2d8f70e4e5aa01718829f9c47a12b2aa4403e2458c61be930e4",
+    "runtimeSha256": "2110ebb0907f91015e9327443a6e6d40f3b9596c81f3587d2a6db0e54271ed0d",
+    "allHashesAndSizesVerified": true,
+    "smokeSeconds": 30,
+    "alive": true,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "screenshots": [
+    "ramp-ground-before-highland.png",
+    "ramp-ground-ground-highland.png",
+    "ramp-ground-highland-ascent.png",
+    "ramp-styles-cliff-masonry.png"
+  ],
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformanceAccepted": false
+  }
+}

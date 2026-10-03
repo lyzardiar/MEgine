@@ -80,8 +80,8 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     // MiYu: thin snow settles between raised litter; a narrow wet-soil band follows the melting edge.
     let wall=uv.y<0.0;let wall_depth=select(uv.y,-uv.y-1.0,wall);
     let shelf=smoothstep(0.65,0.95,abs(geometric.y))*select(1.0,0.0,wall);
-    // MiYu: sloped entrances expose rock and soil; snow collects on the level shelves.
-    let slope=1.0-smoothstep(0.86,0.99,geometric.y);
+    // MiYu: gentle entrances retain their painted ground; steep faces expose rock beneath thin snow.
+    let slope=1.0-smoothstep(0.60,0.85,geometric.y);
     let rim=smoothstep(0.04,0.55,uv.y+(medium-0.5)*min(max(uv.y,0.0),0.3))*shelf;
     let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32)*(1.0-slope*0.85)*(1.0-rim*0.95);
     let melt=(1.0-snow_cover)*smoothstep(0.18,0.5,cover);
@@ -119,7 +119,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let crown_uv=p*mapping.xy;
     let crown_nrh=frost_cliff_nrh(crown_uv,cliff_style);
     let crown_color=frost_cliff_color(crown_uv,cliff_style)*vec3<f32>(0.78,0.82,0.86);
-    let outcrop=smoothstep(0.12,0.72,rim+slope*0.7+(crown_nrh.a-soil_nrh.a)*0.18)*(1.0-snow_cover)*(1.0-road*0.8)*(1.0-wet);
+    let outcrop=smoothstep(0.12,0.72,rim+slope*0.35+(crown_nrh.a-soil_nrh.a)*0.18)*(1.0-snow_cover)*(1.0-road*0.8)*(1.0-wet);
     s.base_color=mix(s.base_color,crown_color,outcrop);
     s.normal=normalize(mix(s.normal,frost_bump(crown_nrh,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),mapping.z),outcrop));
     s.roughness=mix(s.roughness,clamp(crown_nrh.b,0.48,1.0),outcrop);
