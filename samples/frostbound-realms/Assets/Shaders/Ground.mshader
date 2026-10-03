@@ -69,7 +69,9 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     // MiYu: thin snow settles between raised litter; a narrow wet-soil band follows the melting edge.
     let wall=uv.y<0.0;let wall_depth=select(uv.y,-uv.y-1.0,wall);
     let shelf=smoothstep(0.65,0.95,abs(geometric.y))*select(1.0,0.0,wall);
-    let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32)*(1.0-smoothstep(0.06,0.6,uv.y)*shelf*0.85);
+    // MiYu: sloped entrances expose rock and soil; snow collects on the level shelves.
+    let slope=1.0-smoothstep(0.7,0.96,geometric.y);
+    let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32)*(1.0-slope*0.85)*(1.0-smoothstep(0.06,0.6,uv.y)*shelf*0.85);
     let melt=(1.0-snow_cover)*smoothstep(0.18,0.5,cover);
     let road=smoothstep(0.22,0.8,fields.y+(stone_nrh.a-0.5)*0.18)*(1.0-grass_cover)*(1.0-rock_cover);
     let shore=shore_fields.x+(frost_noise(p*2.3)-0.5)*0.065;
@@ -81,19 +83,19 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let road_snow=snow_cover*(1.0-smoothstep(0.2,0.55,stone_nrh.a))*0.6;
     let road_stone=mix(stone,vec3<f32>(dot(stone,vec3<f32>(0.2126,0.7152,0.0722))),0.65)*vec3<f32>(0.74,0.77,0.78);
     let painted=mix(mix(soil,grass,grass_cover),stone*vec3<f32>(0.81,0.84,0.85),rock_cover);
-    let dry=mix(painted,mix(road_stone,snow_color,road_snow),road);
+    let dry=mix(mix(painted,stone*vec3<f32>(0.65,0.70,0.74),slope*(1.0-snow_cover)*0.65),mix(road_stone,snow_color,road_snow),road);
     let gravel_mix=0.45+frost_noise(p*1.6)*0.35;let gravel=mix(litter,stone,gravel_mix);
     let bank=mix(dry,gravel*vec3<f32>(0.31,0.34,0.3),wet);
     let phase=mengine_param_water_time().x;
     let wave=sin(p.x*4.2+p.y*2.6+frost_noise(p*0.8)*5.0-phase*1.3);
     s.base_color=bank;
     let painted_nrh=mix(mix(mix(soil_nrh,snow_nrh,snow_cover),grass_nrh,grass_cover),stone_nrh,rock_cover);
-    let packed=mix(mix(painted_nrh,mix(stone_nrh,snow_nrh,road_snow),road),mix(soil_nrh,stone_nrh,gravel_mix),wet);
+    let packed=mix(mix(mix(painted_nrh,stone_nrh,slope*(1.0-snow_cover)*0.65),mix(stone_nrh,snow_nrh,road_snow),road),mix(soil_nrh,stone_nrh,gravel_mix),wet);
     let dry_roughness=mix(clamp(packed.b,0.48,1.0),0.52,melt*(1.0-road));
     s.roughness=mix(dry_roughness,0.4,wet);s.metallic=0.0;
     let ground_normal=frost_bump(packed,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),0.7);
     s.normal=ground_normal;
-    let cliff=select(1.0-smoothstep(0.3,0.85,abs(geometric.y)),1.0,wall);
+    let cliff=select(1.0-smoothstep(0.3,0.6,abs(geometric.y)),1.0,wall);
     let mapping=mengine_param_cliff_mapping();
     let side_x=vec2<f32>(p.y,-world_position.y)*mapping.xy;let side_z=vec2<f32>(p.x,-world_position.y)*mapping.xy;
     let side_weight=abs(geometric.x)/max(abs(geometric.x)+abs(geometric.z),0.0001);
@@ -102,9 +104,10 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let side_color=mix(textureSample(base_color_texture,material_sampler,side_z).rgb,textureSample(base_color_texture,material_sampler,side_x).rgb,side_weight);
     let side_normal=normalize(mix(frost_bump(side_nz,geometric,vec3<f32>(1,0,0),vec3<f32>(0,-1,0),mapping.z),frost_bump(side_nx,geometric,vec3<f32>(0,0,1),vec3<f32>(0,-1,0),mapping.z),side_weight));
     // MiYu: mesh UVs carry cliff depth; exposed shelves keep a soil cap and shaded rock foot.
-    let cap=1.0-smoothstep(0.04,0.32,wall_depth);
+    let cap=1.0-smoothstep(0.02,0.20,wall_depth+(side_nz.a-0.5)*0.10);
     let foot=mix(1.0,0.67,smoothstep(0.55,1.0,uv.x));
-    let cliff_color=mix(side_color*vec3<f32>(0.78,0.82,0.86),dry,cap)*foot;
+    let cap_color=mix(litter*soil_tint,snow_color,snow_cover*(1.0-smoothstep(0.0,0.08,wall_depth)));
+    let cliff_color=mix(side_color*vec3<f32>(0.78,0.82,0.86),cap_color,cap)*foot;
     s.base_color=mix(s.base_color,cliff_color,cliff);
     s.base_color*=1.0-0.3*clamp(uv.x,0.0,1.0)*shelf;
     s.normal=normalize(mix(s.normal,side_normal,cliff));s.roughness=mix(s.roughness,mix(side_nz.b,side_nx.b,side_weight),cliff);

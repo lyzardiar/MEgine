@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "author": "MiYu",
+  "changes": [
+    "rock cliff ledges",
+    "collapsed ramp tips",
+    "slope snow retention and registered PBR",
+    "thin soil and snow cliff cap"
+  ],
+  "checks": {
+    "terrainMeshPassed": 8,
+    "shaderPassed": 1,
+    "shaderBackends": 4,
+    "nativeHostPassed": 4,
+    "terrainRules": true,
+    "fullJavaScriptTcpSuite": true
+  },
+  "native": {
+    "tag": "1790997916449",
+    "sourceSceneShaderMapsMatch": true,
+    "documentedFixtureOnly": true,
+    "mapSaveLoad": true,
+    "summitAscent": true,
+    "gameSaveRestore": true,
+    "shaderRejections": 0,
+    "screenshots": [
+      "strata-ridge-overview.png",
+      "strata-ridge-summit.png",
+      "strata-ridge-restored.png",
+      "strata-ground-river.png"
+    ]
+  },
+  "package": {
+    "files": 730,
+    "contentHash": "531de76d47d8eda7b0d2fe34e71801973645b11a72f4e5d83a5ac83bf8a8602e",
+    "sourceMatches": true,
+    "smokeSeconds": 30,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "Assets/Shaders/Ground.mshader": "7919a503fe3eef2604ae463e3b401dcf96c9aad3c53053d6e67edf5d00f92f0e",
+    "Assets/Scenes/Main.mscene": "e7aa95e80f85a7909a5a0214099597df4dd797534b634fb168c012075524e433",
+    "Assets/Maps/skirmish.json": "2db5c1d12e6bd3e301ab1470e822be7f65f57b8e50830c02cb2b44962aa54498",
+    "Assets/Maps/supply-road.json": "2ca4780507a8dcec87bd7cda76526fa17e16e1a078e0ad01a7df9d791a506b3c"
+  },
+  "terrainMeshSha256": "7b1d2dcac007f2ee8418b4a400496c072a9df92199be69c263f9fe06d0d1fffd",
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "steadyPerformanceAccepted": false
+  }
+}

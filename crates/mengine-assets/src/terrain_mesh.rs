@@ -120,14 +120,14 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
             let side=|t:f32,depth:f32| {
                 let upper=lerp(h[a],h[b],t);let lower=lerp(nh[na],nh[nb],t).min(upper);let y=lerp(upper,lower,depth);
                 let upper_point=boundary(vertices[a],h[a],vertices[b],h[b],t);let px=upper_point[0];let pz=upper_point[2];
-                let taper=(std::f32::consts::PI*t).sin()*(std::f32::consts::PI*depth).sin();
                 // MiYu: all styles keep their top, foot and vertical joints on the shared contour.
                 let bulge=match style {
                     1=>{let peak=0.35+0.2*((px+origin[0])*0.7+(pz+origin[1])*0.9).sin();let ridge=if depth<peak {depth/peak}else{(1.-depth)/(1.-peak)};0.32*(1.-(t*2.-1.).abs())*ridge},
                     2=>{let row=(depth*4.).floor();let course=(depth*4.).rem_euclid(1.);let block=(t*4.+row.rem_euclid(2.)*0.5).rem_euclid(1.);let bevel=|v:f32|(v*8.).min((1.-v)*8.).clamp(0.,1.);0.06*bevel(course)*bevel(block)*bevel(t)},
-                    _=>taper*(0.12+0.07*((px+origin[0])*2.1+(pz+origin[1])*0.8+y*3.7).sin())
+                    // MiYu: stepped rock strata form a broad ledge and recessed upper face between shared joints.
+                    _=>{let band=(depth*4.).min(3.);let profile=[0.,0.12,0.38,0.24,0.];let i=band.floor() as usize;let ledge=lerp(profile[i],profile[i+1],depth*4.-i as f32);(std::f32::consts::PI*t).sin()*ledge*(0.85+0.15*((px+origin[0])*2.1+(pz+origin[1])*0.8).sin())}
                 };
-                let bulge=bulge*if style==0 {1.}else{((upper-lower)*4.).clamp(0.,1.)};let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if sculpted {-1.-(upper-y)}else{upper-y}])
+                let bulge=bulge*((upper-lower)*4.).clamp(0.,1.);let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if sculpted {-1.-(upper-y)}else{upper-y}])
             };
             // MiYu: common height subdivisions weld vertical corners between different cliff levels.
             let depths=|upper:f32,lower:f32| {let mut cuts=Vec::new();if (upper-lower).abs()>0.001 {for level in (upper.min(lower)*4.).floor() as i32..=(upper.max(lower)*4.).ceil() as i32 {let d=(upper-level as f32/4.)/(upper-lower);if d>0.&&d<1. {cuts.push(d);}}cuts.sort_by(f32::total_cmp);}cuts};let ca=depths(h[a],nh[na]);let cb=depths(h[b],nh[nb]);
